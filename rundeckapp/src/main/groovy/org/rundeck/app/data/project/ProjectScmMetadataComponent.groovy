@@ -55,11 +55,13 @@ class ProjectScmMetadataComponent implements ProjectMetadataComponent {
                             results.renamed = scmService.getRenamedJobPathsForProject(project)
                         } else {
                             results.valid = false
+                            results.validationErrorCode = 'scm.export.auth.key.noAccess'
                         }
                     }
                 }
             } catch (ScmPluginException e) {
-                results.warning = "Failed to update SCM Export status: ${e.message}".toString()
+                results.valid = false
+                results.validationError = e.message
             }
             metaItems.add(ComponentMeta.with(SCM_EXPORT, results))
         }
@@ -85,11 +87,13 @@ class ProjectScmMetadataComponent implements ProjectMetadataComponent {
                             results.actions = scmService.importPluginActions(authContext, project, status)
                         } else {
                             results.valid = false
+                            results.validationErrorCode = 'scm.import.auth.key.noAccess'
                         }
                     }
                 }
             } catch (ScmPluginException e) {
-                results.warning = "Failed to update SCM Import status: ${e.message}"
+                results.valid = false
+                results.validationError = e.message
             }
             metaItems.add(ComponentMeta.with(SCM_IMPORT, results))
         }

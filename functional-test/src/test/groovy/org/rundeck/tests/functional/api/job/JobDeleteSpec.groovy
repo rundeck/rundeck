@@ -1,6 +1,7 @@
 package org.rundeck.tests.functional.api.job
 
 import org.rundeck.util.annotations.APITest
+import org.rundeck.util.api.JobUtils
 import org.rundeck.util.container.BaseContainer
 
 @APITest
@@ -13,9 +14,9 @@ class JobDeleteSpec extends BaseContainer {
 
     def "DELETE for /api/job/{id}"() {
         given:
-            def pathFile = updateJobFileToImport("job-template-common.xml")
+            def pathFile = JobUtils.updateJobFileToImport("job-template-common.xml",PROJECT_NAME)
         when:
-            def jobId = jobImportFile(pathFile).succeeded[0].id
+            def jobId = JobUtils.jobImportFile(PROJECT_NAME,pathFile,client).succeeded[0].id
         then:
             def responseDelete = doDelete("/job/${jobId}")
         when:

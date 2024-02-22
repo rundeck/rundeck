@@ -217,6 +217,22 @@ tasks.register('runNpmPublish', NpmTask) {t ->
 
 assemble.dependsOn runNpmBuild
 
+tasks.register('runNpmTest', NpmTask) {
+    group = 'test'
+    inputs.file 'package.json'
+    inputs.file 'package-lock.json'
+
+    inputs.dir 'src'
+    inputs.dir 'tests'
+
+    def npmCommand = System.env.CI ?
+                     'ci:test:unit' :
+                     'dev:test:unit'
+
+    args = ['run', npmCommand]
+}
+check.dependsOn runNpmTest
+
 artifacts {
   lib(file: file(buildDir), name: "${project.name}", type: 'directory', builtBy: runNpmBuild)
   packages(file: file("$projectDir/build/package/rundeck-ui-trellis.tgz"), type: 'file', builtBy: runNpmPack)

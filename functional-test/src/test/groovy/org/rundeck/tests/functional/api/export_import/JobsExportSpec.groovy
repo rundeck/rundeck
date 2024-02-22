@@ -2,6 +2,7 @@ package org.rundeck.tests.functional.api.export_import
 
 import okhttp3.Headers
 import org.rundeck.util.annotations.APITest
+import org.rundeck.util.api.JobUtils
 import org.rundeck.util.container.BaseContainer
 import spock.lang.Shared
 
@@ -13,8 +14,8 @@ class JobsExportSpec extends BaseContainer {
     def setupSpec() {
         startEnvironment()
         setupProject()
-        def path = updateJobFileToImport("job-template-common.xml")
-        jobId = jobImportFile(path).succeeded[0].id
+        def path = JobUtils.updateJobFileToImport("job-template-common.xml", PROJECT_NAME)
+        jobId = JobUtils.jobImportFile(PROJECT_NAME,path,client).succeeded[0].id
     }
 
     def cleanup() {

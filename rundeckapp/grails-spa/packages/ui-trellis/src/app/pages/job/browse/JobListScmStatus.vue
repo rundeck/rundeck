@@ -1,5 +1,5 @@
 <template>
-  <template v-if="displayExport || displayImport">
+  <template v-if="displayExport || displayImport || exportError || importError">
     <popover
       trigger="hover"
       placement="left"
@@ -7,9 +7,13 @@
       append-to="#section-content"
       position-by="#section-main"
     >
-      <span class="text-info">
+      <span class="text-info" v-if="displayExportState || displayImportState">
         <i class="glyphicon glyphicon-exclamation-sign"></i>
         {{ defaultDisplayText }}
+      </span>
+      <span class="text-danger" v-if="exportError || importError">
+        <i class="glyphicon glyphicon-exclamation-sign"></i>
+        {{ $t("scm.status.ERROR.display.text") }}
       </span>
       <template #popover>
         <dl v-if="displayExport">
@@ -22,6 +26,18 @@
           <dt>{{ $t("scm.import.title") }}</dt>
           <dd>
             {{ importMessage }}
+          </dd>
+        </dl>
+        <dl v-if="exportError">
+          <dt>{{ $t("scm.export.title") }}</dt>
+          <dd>
+            {{ exportErrorText }}
+          </dd>
+        </dl>
+        <dl v-if="importError">
+          <dt>{{ $t("scm.import.title") }}</dt>
+          <dd>
+            {{ importErrorText }}
           </dd>
         </dl>
       </template>
@@ -54,17 +70,29 @@ export default defineComponent({
     importState() {
       return this.scmImport?.status?.state;
     },
+    importError() {
+      return this.scmImport?.valid !== null && this.scmImport?.valid === false;
+    },
     scmExport: function () {
       return this.jobPageStore.findMeta("scmExport");
     },
     exportState() {
       return this.scmExport?.status?.state;
     },
-    displayExport() {
+    exportError() {
+      return this.scmExport?.valid !== null && this.scmExport?.valid === false;
+    },
+    displayExportState() {
       return this.exportState && this.exportState !== "CLEAN";
     },
-    displayImport() {
+    displayExport() {
+      return this.displayExportState;
+    },
+    displayImportState() {
       return this.importState && this.importState !== "CLEAN";
+    },
+    displayImport() {
+      return this.displayImportState;
     },
     defaultDisplayText() {
       if (this.displayExport) {
@@ -73,37 +101,33 @@ export default defineComponent({
         return this.importDisplayText;
       }
     },
-    importDisplayText() {
-      switch (this.importState) {
-        case "IMPORT_NEEDED":
-          return this.$t("scm.import.status.IMPORT_NEEDED.display.text");
-        case "REFRESH_NEEDED":
-          return this.$t("scm.import.status.REFRESH_NEEDED.display.text");
-        case "UNKNOWN":
-          return this.$t("scm.import.status.UNKNOWN.display.text");
-        case "CLEAN":
-          return this.$t("scm.import.status.CLEAN.display.text");
-        case "LOADING":
-          return this.$t("scm.import.status.LOADING.display.text");
+    exportErrorText() {
+      if (this.scmExport?.validationError) {
+        return this.scmExport?.validationError;
+      } else if (this.scmExport?.validationErrorCode) {
+        return this.$t(this.scmExport?.validationErrorCode);
+      } else {
+        return this.$t("scm.export.status.ERROR.display.text");
       }
-      return this.importState;
+    },
+    importErrorText() {
+      if (this.scmImport?.validationError) {
+        return this.scmImport?.validationError;
+      } else if (this.scmImport?.validationErrorCode) {
+        return this.$t(this.scmImport?.validationErrorCode);
+      } else {
+        return this.$t("scm.import.status.ERROR.display.text");
+      }
+    },
+    importDisplayText() {
+      return this.importState
+        ? this.$t(`scm.import.status.${this.importState}.display.text`)
+        : "";
     },
     exportDisplayText() {
-      switch (this.exportState) {
-        case "EXPORT_NEEDED":
-          return this.$t("scm.export.status.EXPORT_NEEDED.display.text");
-        case "CREATE_NEEDED":
-          return this.$t("scm.export.status.CREATE_NEEDED.display.text");
-        case "REFRESH_NEEDED":
-          return this.$t("scm.export.status.REFRESH_NEEDED.display.text");
-        case "DELETED":
-          return this.$t("scm.export.status.DELETED.display.text");
-        case "CLEAN":
-          return this.$t("scm.export.status.CLEAN.display.text");
-        case "LOADING":
-          return this.$t("scm.export.status.LOADING.display.text");
-      }
-      return this.exportState;
+      return this.exportState
+        ? this.$t(`scm.export.status.${this.exportState}.display.text`)
+        : "";
     },
     exportMessage() {
       return this.scmExport?.status?.message;
