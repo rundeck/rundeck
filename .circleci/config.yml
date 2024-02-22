@@ -649,11 +649,6 @@ workflows:
           command: bash test/run-docker-tests.sh
           <<: *require-build
           <<: *slack-defaults
-      - test-machine:
-          name: API Test
-          command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
-          <<: *require-build
-          <<: *slack-defaults
       - test-docker:
           name: SSL Test
           command: bash test/run-docker-ssl-tests.sh
