@@ -1,7 +1,9 @@
 package org.rundeck.tests.functional.api.scm
 
 import org.rundeck.util.annotations.APITest
+import org.rundeck.util.api.JobUtils
 import org.rundeck.util.api.scm.GitScmApiClient
+import org.rundeck.util.api.scm.gitea.GiteaApiRemoteRepo
 import org.rundeck.util.api.scm.httpbody.GitExportSetupRequest
 import org.rundeck.util.api.scm.httpbody.ScmActionPerformRequest
 import org.rundeck.util.api.scm.httpbody.ScmJobStatusResponse
@@ -15,13 +17,19 @@ class ScmPluginJobActionInputSpec extends BaseContainer {
     final String EXPORT_INTEGRATION = "export"
     final String DUMMY_JOB_ID = "383d0599-3ea3-4fa6-ac3a-75a53d6b0000"
     final String JOB_XML_NAME = "job-template-common.xml"
+    static final GiteaApiRemoteRepo remoteRepo = new GiteaApiRemoteRepo('repoExample3')
+
+    def setupSpec() {
+        remoteRepo.setupRepo()
+    }
 
     def "test_job_action_perform"() {
         given:
         setupProject(PROJECT_NAME)
-        jobImportFile(PROJECT_NAME, updateFile(JOB_XML_NAME,null,null,null,null,null,null,DUMMY_JOB_ID))
+        def args =["uuid": DUMMY_JOB_ID]
+        JobUtils.jobImportFile(PROJECT_NAME,JobUtils.updateJobFileToImport(JOB_XML_NAME,PROJECT_NAME,args) as String,client)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(EXPORT_INTEGRATION).forProject(PROJECT_NAME)
-        scmClient.callSetupIntegration(GitExportSetupRequest.defaultRequest(PROJECT_NAME))
+        scmClient.callSetupIntegration(GitExportSetupRequest.defaultRequest().forProject(PROJECT_NAME).withRepo(remoteRepo))
         ScmJobStatusResponse firstStatus = scmClient.callGetJobStatus(DUMMY_JOB_ID).response
         ScmActionPerformRequest actionRequest = new ScmActionPerformRequest([
                 input: [message: "Commit msg example"],
@@ -40,10 +48,8 @@ class ScmPluginJobActionInputSpec extends BaseContainer {
             firstStatus.message == "Created"
             firstStatus.project == PROJECT_NAME
             firstStatus.synchState == "CREATE_NEEDED"
-
             performAction.message == "SCM export Action was Successful: ${actionId}"
             performAction.success == true
-
             ScmJobStatusResponse updatedStatus = scmClient.callGetJobStatus(DUMMY_JOB_ID).response
             updatedStatus.actions.size() == 0
             updatedStatus.commit.size()== 5
