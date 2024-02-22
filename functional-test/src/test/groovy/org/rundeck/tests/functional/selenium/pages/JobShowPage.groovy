@@ -9,7 +9,6 @@ import org.rundeck.util.container.SeleniumContext
 import java.time.Duration
 
 class JobShowPage extends BasePage{
-    By jobUuidText = By.cssSelector('#subtitlebar > div > div.subtitle-head-item.flex-item-auto > section > div > div')
     static final String PAGE_PATH = "/job/show"
     String loadPath = PAGE_PATH
     By runJobBtn = By.id("execFormRunButton")
@@ -29,7 +28,6 @@ class JobShowPage extends BasePage{
 
     void waitForLogOutput (By logOutput, Integer number, Integer seconds){
         new WebDriverWait(driver, Duration.ofSeconds(seconds)).until(ExpectedConditions.numberOfElementsToBeMoreThan(logOutput,number))
-
     }
 
     void validatePage() {
@@ -38,7 +36,7 @@ class JobShowPage extends BasePage{
         }
     }
 
-    WebElement getJobUuidText(){
-        el jobUuidText
+    void goToJob(String jobUuidText){
+        go(PAGE_PATH + "/$jobUuidText")
     }
 }

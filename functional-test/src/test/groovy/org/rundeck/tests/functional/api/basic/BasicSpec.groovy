@@ -2,7 +2,6 @@ package org.rundeck.tests.functional.api.basic
 
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.container.BaseContainer
-import org.rundeck.util.container.RdClient
 
 @APITest
 class BasicSpec extends BaseContainer {
@@ -40,5 +39,4 @@ class BasicSpec extends BaseContainer {
             json.error
             json.message == "Invalid API Request: /api/${client.apiVersion}/dnexist"
     }
-
 }

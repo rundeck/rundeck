@@ -9,6 +9,15 @@ import java.util.concurrent.TimeUnit
 
 class JobUtils {
 
+    static final String DUPE_OPTION_SKIP = "skip"
+
+    static final String DUPE_OPTION_UPDATE = "update"
+
+    static final String DUPE_OPTION_DEFAULT = "create"
+
+    static final String CONTENT_TYPE_DEFAULT = "application/xml"
+
+
     static def executeJobWithArgs = (String jobId, RdClient client, String args) -> {
         return client.doPostWithoutBody("/job/${jobId}/run?argString=${args}")
     }
@@ -115,7 +124,7 @@ class JobUtils {
         long initTime = System.currentTimeMillis()
         while(executionStatus.status != state){
             if ((System.currentTimeMillis() - initTime) >= TimeUnit.SECONDS.toMillis(timeout)) {
-                throw new InterruptedException("Timeout reached (${timeout} seconds).")
+                throw new InterruptedException("Timeout reached (${timeout} seconds), the execution had \"${executionStatus.status}\" state.")
             }
             def transientExecutionResponse = client.doGet("/execution/${executionId}")
             executionStatus = mapper.readValue(transientExecutionResponse.body().string(), Execution.class)
@@ -185,17 +194,25 @@ class JobUtils {
      * @param projectName The name of the project into which the job file is to be imported.
      *                    If null, a default project name (PROJECT_NAME) is used.
      * @param pathXmlFile The file path of the XML job file to be imported.
+     * @param client      The RdClient object used to perform the HTTP request.
+     * @param dupeOption  (Optional) The duplicate option for handling existing jobs. Defaults to DUPE_OPTION_DEFAULT.
+     * @param contentType (Optional) The content type of the request. Defaults to CONTENT_TYPE_DEFAULT.
      * @return A Map representation of the JSON response body if the import is successful.
      *         The method checks for a successful response and a 200 HTTP status code.
      * @throws IllegalArgumentException if the pathXmlFile parameter is not provided.
      */
-    static def jobImportFile = (String projectName, String filePath, RdClient client) -> {
-        URL resourceUrl = getClass().getResource(filePath)
-        def pathXmlFile = resourceUrl ? resourceUrl.getPath() : filePath
-        def responseImport = client.doPost("/project/${projectName}/jobs/import", new File(pathXmlFile), "application/xml")
-        responseImport.successful
-        responseImport.code() == 200
+    static def jobImportFile = (String projectName, String pathXmlFile, RdClient client, String dupeOption = DUPE_OPTION_DEFAULT, String contentType = CONTENT_TYPE_DEFAULT) -> {
+        URL resourceUrl = getClass().getResource(pathXmlFile);
+        pathXmlFile = resourceUrl != null ? resourceUrl.getPath() : pathXmlFile;
+        def responseImport = client.doPost("/project/${projectName}/jobs/import?dupeOption=${dupeOption}", new File(pathXmlFile), contentType);
 
-        return new ObjectMapper().readValue(responseImport.body().string(), Map.class)
-    }
+        // Check if the import was successful and return the response body as a Map
+        if (responseImport.isSuccessful() && responseImport.code() == 200) {
+            return new ObjectMapper().readValue(responseImport.body().string(), Map.class);
+        } else {
+            // Throw an exception if the import failed
+            throw new IllegalArgumentException("Job import failed. HTTP Status Code: " + responseImport.code());
+        }
+    };
+
 }
