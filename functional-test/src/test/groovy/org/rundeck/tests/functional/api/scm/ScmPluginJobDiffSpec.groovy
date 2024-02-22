@@ -25,77 +25,84 @@ class ScmPluginJobDiffSpec extends BaseContainer {
 
     def "test_job_action_perform"() {
         given:
+        // Initial setup of the project and action parameters
         setupProject(PROJECT_NAME)
-        def args = [
+        def initialArgs = [
                 "job-name": "job-test",
                 "job-description-name": "description-test",
                 "args": "echo hello there",
                 "2-args": "echo hello there 2",
                 "uuid": DUMMY_JOB_ID
         ]
-        JobUtils.jobImportFile(PROJECT_NAME,JobUtils.updateJobFileToImport(JOB_XML_NAME,PROJECT_NAME,args) as String,client)
+        JobUtils.jobImportFile(PROJECT_NAME, JobUtils.updateJobFileToImport(JOB_XML_NAME, PROJECT_NAME, initialArgs) as String, client)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(EXPORT_INTEGRATION).forProject(PROJECT_NAME)
         scmClient.callSetupIntegration(GitExportSetupRequest.defaultRequest().forProject(PROJECT_NAME).withRepo(remoteRepo))
-        ScmJobStatusResponse firstStatus = scmClient.callGetJobStatus(DUMMY_JOB_ID).response
+        ScmJobStatusResponse initialStatus = scmClient.callGetJobStatus(DUMMY_JOB_ID).response
         ScmActionPerformRequest actionRequest = new ScmActionPerformRequest([
                 input: [message: "Commit msg example"],
-                jobs : [DUMMY_JOB_ID]
+                jobs: [DUMMY_JOB_ID]
         ])
         def actionId = 'job-commit'
 
         when:
+        // Perform the action
         SetupIntegrationResponse performAction = scmClient.callPerformJobAction(actionId, actionRequest, DUMMY_JOB_ID).response
 
         then:
-        firstStatus.actions.size() == 1
-        firstStatus.commit == null
-        firstStatus.id == DUMMY_JOB_ID
-        firstStatus.integration == EXPORT_INTEGRATION
-        firstStatus.message == "Created"
-        firstStatus.project == PROJECT_NAME
-        firstStatus.synchState == "CREATE_NEEDED"
+        // Verify state before the action
+        initialStatus.actions.size() == 1
+        initialStatus.commit == null
+        initialStatus.id == DUMMY_JOB_ID
+        initialStatus.integration == EXPORT_INTEGRATION
+        initialStatus.message == "Created"
+        initialStatus.project == PROJECT_NAME
+        initialStatus.synchState == "CREATE_NEEDED"
+        // Verify action response
         performAction.message == "SCM export Action was Successful: ${actionId}"
         performAction.success == true
+        // Verify state after the action
         ScmJobStatusResponse updatedStatus = scmClient.callGetJobStatus(DUMMY_JOB_ID).response
         updatedStatus.actions.size() == 0
-        updatedStatus.commit.size()== 5
+        updatedStatus.commit.size() == 5
         updatedStatus.id == DUMMY_JOB_ID
         updatedStatus.integration == EXPORT_INTEGRATION
         updatedStatus.message == "No Change"
         updatedStatus.project == PROJECT_NAME
         updatedStatus.synchState == "CLEAN"
-        def newArgs = [
+
+        // Update job arguments and verify updated state
+        and:
+        def updatedArgs = [
                 "job-name": "job-test-updated",
                 "job-description-name": "description-test-updated",
                 "args": "echo hello there updated",
                 "2-args": "echo hello there 2 updated",
                 "uuid": DUMMY_JOB_ID
         ]
-        JobUtils.jobImportFile(PROJECT_NAME,JobUtils.updateJobFileToImport(JOB_XML_NAME,PROJECT_NAME,newArgs) as String,client, JobUtils.DUPE_OPTION_UPDATE)
+        JobUtils.jobImportFile(PROJECT_NAME, JobUtils.updateJobFileToImport(JOB_XML_NAME, PROJECT_NAME, updatedArgs) as String, client, JobUtils.DUPE_OPTION_UPDATE)
+        def exportNeededStatus = scmClient.callGetJobStatus(DUMMY_JOB_ID).response
+        exportNeededStatus.actions.size() == 1
+        exportNeededStatus.commit.size() == 5
+        exportNeededStatus.id == DUMMY_JOB_ID
+        exportNeededStatus.integration == EXPORT_INTEGRATION
+        exportNeededStatus.message == "Modified"
+        exportNeededStatus.project == PROJECT_NAME
+        exportNeededStatus.synchState == "EXPORT_NEEDED"
 
-        def updatedStatus1 = scmClient.callGetJobStatus(DUMMY_JOB_ID).response
-        updatedStatus1.actions.size() == 1
-        updatedStatus1.commit.size()== 5
-        updatedStatus1.id == DUMMY_JOB_ID
-        updatedStatus1.integration == EXPORT_INTEGRATION
-        updatedStatus1.message == "Modified"
-        updatedStatus1.project == PROJECT_NAME
-        updatedStatus1.synchState == "EXPORT_NEEDED"
-
-        def performAction1= scmClient.callPerformJobAction(actionId, actionRequest, DUMMY_JOB_ID).response
-        performAction1.message == "SCM export Action was Successful: ${actionId}"
-        performAction1.success == true
-
-        def updatedStatus2 = scmClient.callGetJobStatus(DUMMY_JOB_ID).response
-        updatedStatus2.actions.size() == 0
-        updatedStatus2.commit.size()== 5
-        updatedStatus2.id == DUMMY_JOB_ID
-        updatedStatus2.integration == EXPORT_INTEGRATION
-        updatedStatus2.message == "No Change"
-        updatedStatus2.project == PROJECT_NAME
-        updatedStatus2.synchState == "CLEAN"
-
-
+        // Perform the action again and verify final state
+        and:
+        def finalAction = scmClient.callPerformJobAction(actionId, actionRequest, DUMMY_JOB_ID).response
+        finalAction.message == "SCM export Action was Successful: ${actionId}"
+        finalAction.success == true
+        def finalStatus = scmClient.callGetJobStatus(DUMMY_JOB_ID).response
+        finalStatus.actions.size() == 0
+        finalStatus.commit.size() == 5
+        finalStatus.id == DUMMY_JOB_ID
+        finalStatus.integration == EXPORT_INTEGRATION
+        finalStatus.message == "No Change"
+        finalStatus.project == PROJECT_NAME
+        finalStatus.synchState == "CLEAN"
     }
+
 
 }
