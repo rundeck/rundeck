@@ -110,7 +110,7 @@ export default defineComponent({
         //only emit if the click was not within a button,input or link
         eventBus.emit(`browser-job-item-click:${this.job.id}`, this.job);
         if (this.loadMeta && !this.job.meta) {
-          await this.jobPageStore.getJobBrowser().loadJobMeta(this.job);
+          this.job.meta = await this.jobPageStore.getJobBrowser().loadJobMeta(this.job.id);
         }
       }
     },

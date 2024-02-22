@@ -17,6 +17,7 @@
 <%@ page import="org.rundeck.core.auth.AuthConstants;grails.util.Environment" %>
 <html>
 <head>
+    <asset:javascript src="static/pages/job/head/scm-action-buttons.js" asset-defer="true" />
     <g:set var="rkey" value="${g.rkey()}" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
