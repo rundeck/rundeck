@@ -30,7 +30,11 @@
         handle=".dragHandle"
       >
         <template #item="{ element, index }">
-          <div class="edit-option-item" :class="{ alternate: index % 2 === 1 }">
+          <div
+            class="edit-option-item"
+            :class="{ alternate: index % 2 === 1 }"
+            :id="`optitem_${index}`"
+          >
             <option-edit
               v-if="editIndex === index"
               :ui-features="{ next: false }"
@@ -60,6 +64,7 @@
         <template #footer>
           <template v-if="createMode">
             <option-edit
+              id="optitem_new"
               :ui-features="{ next: false }"
               :error="error"
               :new-option="true"
@@ -78,7 +83,7 @@
         {{ $t("no.options.message") }}
       </div>
 
-      <div style="margin: 10px 0" v-if="edit">
+      <div style="margin: 10px 0" v-if="edit" id="optnewbutton">
         <btn
           size="sm"
           class="ready"

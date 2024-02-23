@@ -9,6 +9,7 @@ import org.rundeck.tests.functional.selenium.pages.login.LoginPage
 import org.rundeck.tests.functional.selenium.pages.profile.UserProfilePage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
+import spock.lang.IgnoreRest
 import spock.lang.Stepwise
 
 @SeleniumCoreTest
@@ -92,12 +93,15 @@ class JobsSpec extends SeleniumBase {
             jobListPage.validatePage()
     }
 
+    @IgnoreRest
     def "Duplicate_options - only validations, not save jobs"() {
         when:
-            def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
+            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+            jobCreatePage.nextUi=nextUi
+            jobCreatePage.go()
             def optName = 'test'
         then:
-            jobCreatePage.fillBasicJob 'duplicate options'
+            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
             jobCreatePage.optionButton.click()
             jobCreatePage.optionName 0 sendKeys optName
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
@@ -114,6 +118,8 @@ class JobsSpec extends SeleniumBase {
         expect:
             jobCreatePage.optionNameSaved 1 getText() equals optName + '_1'
             jobCreatePage.optionNameSaved 2 getText() equals optName + '_2'
+        where:
+            nextUi << [false, true]
     }
 
     def "create job with dispatch to nodes"() {
@@ -181,12 +187,14 @@ class JobsSpec extends SeleniumBase {
             jobShowPage.jobDefinitionModal.click()
             jobShowPage.orchestratorNameLabel.getText() == 'Rank Tiered'
     }
-
+    @IgnoreRest
     def "job options config - check usage session"() {
         when:
-            def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
+            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+            jobCreatePage.nextUi=nextUi
+            jobCreatePage.go()
         then:
-            jobCreatePage.fillBasicJob 'a job with options'
+            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
             jobCreatePage.optionButton.click()
             jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
@@ -197,13 +205,17 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.waitFotOptLi 0
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
             jobCreatePage.createJobButton.click()
+        where:
+            nextUi << [false, true]
     }
-
+    @IgnoreRest
     def "job options config - check storage session"() {
         when:
-            def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
+            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+            jobCreatePage.nextUi=nextUi
+            jobCreatePage.go()
         then:
-            jobCreatePage.fillBasicJob 'a job with option secure'
+            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
             jobCreatePage.optionButton.click()
             jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
@@ -216,13 +228,17 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.waitFotOptLi 0
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
             jobCreatePage.createJobButton.click()
+        where:
+            nextUi << [false, true]
     }
-
+    @IgnoreRest
     def "job option simple redo"() {
         when:
-            def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
+            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+            jobCreatePage.nextUi=nextUi
+            jobCreatePage.go()
         then:
-            jobCreatePage.fillBasicJob 'a job with options undo test'
+            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
             jobCreatePage.optionButton.click()
             jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
@@ -244,13 +260,17 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.optionLis 1 isEmpty()
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
             jobCreatePage.createJobButton.click()
+        where:
+            nextUi << [false, true]
     }
-
+    @IgnoreRest
     def "No default value field shown in secure job option section"() {
         when:
-        def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
+            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+            jobCreatePage.nextUi=nextUi
+            jobCreatePage.go()
         then:
-        jobCreatePage.fillBasicJob 'a job with option secure'
+        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
         jobCreatePage.optionButton.click()
         jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
         jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
@@ -263,13 +283,17 @@ class JobsSpec extends SeleniumBase {
 
         expect:
         !jobCreatePage.defaultValueInput.isDisplayed()
+        where:
+        nextUi << [false, true]
     }
-
+    @IgnoreRest
     def "job option revert all"() {
         when:
-            def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
+            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+            jobCreatePage.nextUi=nextUi
+            jobCreatePage.go()
         then:
-            jobCreatePage.fillBasicJob 'a job with options revert all test'
+            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
             jobCreatePage.optionButton.click()
             jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
@@ -296,13 +320,17 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.optionLis 1 isEmpty()
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
             jobCreatePage.createJobButton.click()
+        where:
+            nextUi << [false, true]
     }
-
+    @IgnoreRest
     def "job option undo redo"() {
         when:
-            def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
+            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+            jobCreatePage.nextUi=nextUi
+            jobCreatePage.go()
         then:
-            jobCreatePage.fillBasicJob 'a job with options undo-redo test'
+            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
             jobCreatePage.optionButton.click()
             jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
@@ -328,6 +356,8 @@ class JobsSpec extends SeleniumBase {
             !(jobCreatePage.optionLis 1 isEmpty())
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
             jobCreatePage.createJobButton.click()
+        where:
+            nextUi << [false, true]
     }
 
     def "job workflow step context variables autocomplete"() {

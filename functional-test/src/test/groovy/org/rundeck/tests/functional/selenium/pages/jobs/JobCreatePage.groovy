@@ -36,6 +36,11 @@ class JobCreatePage extends BasePage {
     By createJobBy = By.id("Create")
     By cancelBy = By.id('createFormCancelButton')
     By optionBy = By.cssSelector("#optnewbutton > span")
+
+    static class NextUi {
+        static By optionBy = By.cssSelector("#optnewbutton > button")
+    }
+
     By separatorOptionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
     By saveOptionBy = By.xpath("//*[@title[contains(.,'Save the new option')]]")
     By nodeDispatchTrueBy = By.id("doNodedispatchTrue")
@@ -75,7 +80,21 @@ class JobCreatePage extends BasePage {
     By listWorkFlowItemBy = By.xpath("//*[starts-with(@id,'wfitem_')]")
     By addSimpleCommandStepBy = By.xpath("//span[contains(@onclick, 'wfnewbutton')]")
 
-    String loadPath = "/job/create"
+    private String loadPath = "/job/create"
+    String projectName
+    String jobId
+    boolean edit=false
+    @Override
+    String getLoadPath() {
+        if(edit && projectName && jobId){
+            return "/project/${projectName}/job/edit/${jobId}${nextUi?'?nextUi=true':''}"
+        }else if(projectName && !edit){
+            return "/project/${projectName}/job/create${nextUi?'?nextUi=true':''}"
+        }else{
+            return loadPath
+        }
+    }
+    boolean nextUi = false
 
     JobCreatePage(final SeleniumContext context) {
         super(context)
@@ -83,15 +102,18 @@ class JobCreatePage extends BasePage {
 
     JobCreatePage(final SeleniumContext context, String projectName) {
         super(context)
-        this.loadPath = "/project/${projectName}/job/create"
+        loadCreatePath(projectName)
     }
 
     void loadEditPath(String projectName, String jobId) {
-        loadPath = "/project/${projectName}/job/edit/${jobId}"
+        this.edit=true
+        this.projectName=projectName
+        this.jobId=jobId
     }
 
     void loadCreatePath(String projectName) {
-        this.loadPath = "/project/${projectName}/job/create"
+        this.projectName=projectName
+        this.edit=false
     }
 
     void fillBasicJob(String name) {
@@ -111,7 +133,7 @@ class JobCreatePage extends BasePage {
     }
 
     void validatePage() {
-        if (!driver.currentUrl.endsWith(loadPath)) {
+        if (!driver.currentUrl.endsWith(getLoadPath())) {
             throw new IllegalStateException("Not on job create page: " + driver.currentUrl)
         }
     }
@@ -222,11 +244,20 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getOptionButton() {
-        el optionBy
+        el nextUi ? NextUi.optionBy : optionBy
     }
 
+    WebElement optionNameNew() {
+        if(nextUi){
+            return byAndWait (By.cssSelector("#optitem_new div.optEditForm input[type=text][name=name]"))
+        }else{
+            return optionName(0)
+        }
+    }
     WebElement optionName(int index) {
-        byAndWait By.cssSelector("#optvis_$index > div.optEditForm input[type=text][name=name]")
+        byAndWait nextUi?
+                  By.cssSelector("#optitem_$index div.optEditForm input[type=text][name=name]"):
+                  By.cssSelector("#optvis_$index > div.optEditForm input[type=text][name=name]")
     }
 
     WebElement getSeparatorOption() {
