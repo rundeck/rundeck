@@ -15,10 +15,8 @@ export default {
       readme: {
         help: {
           markdown: `Edit the Readme for the project. This will be displayed on the home page. `,
-          html: `You can use
-                    <a href="http://en.wikipedia.org/wiki/Markdown" target="_blank">
-                    Markdown
-                    </a>.\ `,
+          html: `You can use`,
+          linkText: `Markdown`,
         },
       },
       warning: {

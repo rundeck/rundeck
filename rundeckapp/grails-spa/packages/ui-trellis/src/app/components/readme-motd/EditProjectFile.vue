@@ -4,8 +4,10 @@
       <div class="title">
         <span class="text-h3">
           <template v-if="filename === 'readme.md'">
-            <i class="fas fa-file-alt"></i> {{ $t("edit.readme.label") }}
+            <i class="fas fa-file-alt"></i>
+            {{ $t("edit.readme.label") }}
           </template>
+
           <template v-else>
             <i class="fas fa-comment-alt"></i> {{ $t("edit.motd.label") }}
           </template>
@@ -33,6 +35,13 @@
                       ></span>
                     </summary>
                     <span v-html="$t('file.readme.help.html')"></span>
+                    <a
+                      href="https://en.wikipedia.org/wiki/Markdown"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {{ $t("file.readme.help.linkText") }}
+                    </a>
                   </details>
                 </div>
                 <ace-editor
