@@ -1,7 +1,7 @@
 package org.rundeck.tests.functional.api.job
 
 import org.rundeck.util.annotations.APITest
-import org.rundeck.util.api.JobUtils
+import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.BaseContainer
 import spock.lang.Shared
 import spock.lang.Stepwise

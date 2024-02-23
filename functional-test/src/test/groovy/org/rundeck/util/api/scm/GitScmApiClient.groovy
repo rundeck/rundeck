@@ -2,7 +2,7 @@ package org.rundeck.util.api.scm
 
 import okhttp3.Response
 import org.rundeck.util.api.scm.httpbody.IntegrationStatusResponse
-import org.rundeck.util.api.RundeckResponse
+import org.rundeck.util.api.responses.common.RundeckResponse
 import org.rundeck.util.api.scm.httpbody.ScmActionInputFieldsResponse
 import org.rundeck.util.api.scm.httpbody.ScmActionPerformRequest
 import org.rundeck.util.api.scm.httpbody.ScmJobStatusResponse

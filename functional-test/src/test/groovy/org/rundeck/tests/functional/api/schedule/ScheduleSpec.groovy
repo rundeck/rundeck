@@ -1,10 +1,10 @@
 package org.rundeck.tests.functional.api.schedule
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.rundeck.tests.functional.api.ResponseModels.CreateJobResponse
-import org.rundeck.tests.functional.api.ResponseModels.JobsExportResponse
+import org.rundeck.util.api.responses.jobs.CreateJobResponse
+import org.rundeck.util.api.responses.jobs.JobsExportResponse
 import org.rundeck.util.annotations.APITest
-import org.rundeck.util.api.JobUtils
+import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.BaseContainer
 
 @APITest
