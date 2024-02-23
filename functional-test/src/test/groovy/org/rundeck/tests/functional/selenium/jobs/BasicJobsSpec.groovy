@@ -78,11 +78,13 @@ class BasicJobsSpec extends SeleniumBase {
 
     def "create valid job basic options"() {
         when:
-            def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
+            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+            jobCreatePage.nextUi=nextUi
+            jobCreatePage.go()
             def jobShowPage = page JobShowPage
             def optionName = 'seleniumOption1'
         then:
-            jobCreatePage.fillBasicJob 'a job with options'
+            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
             jobCreatePage.optionButton.click()
             jobCreatePage.optionName 0 sendKeys optionName
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
@@ -93,6 +95,8 @@ class BasicJobsSpec extends SeleniumBase {
             jobCreatePage.waitForUrlToContain('/job/show')
             jobShowPage.jobLinkTitleLabel.getText().contains('a job with options')
             jobShowPage.optionInputText(optionName) != null
+        where:
+            nextUi<<[false,true]
     }
 
     def "edit job set description"() {
