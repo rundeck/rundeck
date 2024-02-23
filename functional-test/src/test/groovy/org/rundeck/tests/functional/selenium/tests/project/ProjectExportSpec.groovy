@@ -48,7 +48,7 @@ class ProjectExportSpec extends SeleniumBase {
         then:
             projectExportPage.checkBoxes.size() >= 9
             projectExportPage.checkBoxes.count {it.getAttribute("checked") == "true" } >= 8
-            projectExportPage.checkBoxes.count {it.getAttribute("checked") == null } == 1
+            projectExportPage.checkBoxes.count {it.getAttribute("checked") == null } == 2
     }
 
     def "form checkbox labels work"() {
@@ -60,7 +60,7 @@ class ProjectExportSpec extends SeleniumBase {
                 projectExportPage.checkBoxLabel checkBoxId click()
             }
         expect:
-            projectExportPage.checkBoxes.count {it.getAttribute("checked") == "true" } == 1
+            projectExportPage.checkBoxes.count {it.getAttribute("checked") == "true" } == 2
             projectExportPage.checkBoxes.count {it.getAttribute("checked") == null } >= 8
     }
 
