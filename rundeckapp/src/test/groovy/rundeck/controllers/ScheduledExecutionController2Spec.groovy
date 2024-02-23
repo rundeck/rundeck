@@ -1748,9 +1748,6 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
 
-                1 * authResourceForProject('project1')
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_SCM_EXPORT])>> false
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_IMPORT, AuthConstants.ACTION_SCM_IMPORT])>>false
                 1 * authorizeProjectJobAny(_,se,['read', 'view'],'project1')>>true
                 0 * _(*_)
             }

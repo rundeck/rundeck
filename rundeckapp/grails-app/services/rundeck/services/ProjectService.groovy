@@ -727,7 +727,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 exportArchiveParams.exportAcls,
                 exportArchiveParams.exportScm,
                 importWebhookOpt,
-                importWebhookOpt && !Boolean.getBoolean(exportArchiveParams.exportOpts[WebhooksProjectComponent.COMPONENT_NAME]['inludeAuthTokens']),
+                importWebhookOpt && !Boolean.valueOf(exportArchiveParams.exportOpts[WebhooksProjectComponent.COMPONENT_NAME]['inludeAuthTokens']),
+                importWebhookOpt && Boolean.valueOf(exportArchiveParams.exportOpts[WebhooksProjectComponent.COMPONENT_NAME]['regenUuid']),
                 exportArchiveParams.exportConfigs,
                 prependStringToKeysInMap('importComponents', exportArchiveParams.exportComponents),
                 RequestBody.create(archiveToExport, RundeckClient.MEDIA_TYPE_ZIP)

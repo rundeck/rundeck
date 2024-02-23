@@ -27,7 +27,7 @@ class JobScmMetadataComponentSpec extends Specification {
                 }
                 1 * userHasAccessToScmConfiguredKeyOrPassword(auth, ScmService.IMPORT, 'project') >> true
                 1 * getJobsPluginMeta('project', false) >> [:]
-                1 * importStatusForJobIds('project', auth, ['id'], false, [:]) >>
+                1 * importStatusForJobIds('project', auth, ['id'], true, [:]) >>
                 [id: Mock(JobImportState) {
                     _ * getSynchState() >> ImportSynchState.CLEAN
                     _ * getActions() >> [
@@ -102,7 +102,7 @@ class JobScmMetadataComponentSpec extends Specification {
                 }
                 1 * userHasAccessToScmConfiguredKeyOrPassword(auth, ScmService.EXPORT, 'project') >> true
                 1 * getJobsPluginMeta('project', true) >> [:]
-                1 * exportStatusForJobIds('project', auth, ['id'], false, [:]) >>
+                1 * exportStatusForJobIds('project', auth, ['id'], true, [:]) >>
                 [id: Mock(JobState) {
                     _ * getSynchState() >> SynchState.CLEAN
                     _ * getActions() >> [

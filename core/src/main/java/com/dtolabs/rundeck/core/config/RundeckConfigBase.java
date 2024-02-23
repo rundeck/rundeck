@@ -336,6 +336,7 @@ public class RundeckConfigBase {
 
         Cookie cookie;
         Jetty jetty;
+        WebLogging logging;
 
         @Data
         public static class Cookie {
@@ -356,6 +357,10 @@ public class RundeckConfigBase {
         }
     }
 
+    @Data
+    public static class WebLogging {
+        List<String> ignorePrefixes;
+    }
     @Data
     public static class RundeckNodeServiceConfig {
 

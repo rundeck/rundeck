@@ -114,7 +114,7 @@
                                             <g:message code="actions" />
                                         <span class="caret"></span>
                                     </button>
-                                    <ul class="dropdown-menu" role="menu">
+                                    <ul id="action-menu-jobrow_${scheduledExecution.id}" class="dropdown-menu" role="menu">
                                         <li role="presentation" class="dropdown-header"><g:message code="loading.text" /></li>
                                     </ul>
                                 </div>
