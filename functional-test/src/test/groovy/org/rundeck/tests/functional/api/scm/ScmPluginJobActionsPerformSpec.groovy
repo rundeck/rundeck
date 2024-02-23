@@ -1,6 +1,7 @@
 package org.rundeck.tests.functional.api.scm
 
 import org.rundeck.util.annotations.APITest
+import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.api.JobUtils
 import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.gitea.GiteaApiRemoteRepo
@@ -10,6 +11,7 @@ import org.rundeck.util.api.scm.httpbody.SetupIntegrationResponse
 import org.rundeck.util.container.BaseContainer
 
 @APITest
+@ExcludePro
 class ScmPluginJobActionsPerformSpec extends BaseContainer{
 
     static final String PROJECT_NAME = "ScmPluginJobActionsPerform-project"

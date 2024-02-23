@@ -1,6 +1,7 @@
 package org.rundeck.tests.functional.api.scm
 
 import org.rundeck.util.annotations.APITest
+import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.gitea.GiteaApiRemoteRepo
 import org.rundeck.util.api.scm.httpbody.IntegrationStatusResponse
@@ -13,6 +14,7 @@ import org.rundeck.util.container.BaseContainer
 import org.rundeck.util.api.JobUtils
 
 @APITest
+@ExcludePro
 class ScmPluginActionsSpec extends BaseContainer {
     static final String PROJECT_NAME = 'ScmPluginActionsSpec'
     static final String BASE_EXPORT_PROJECT_LOCATION = '/projects-import/scm/project-scm-export-one-job.rdproject.jar'
