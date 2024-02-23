@@ -1134,7 +1134,9 @@ class JobExecutionSpec extends BaseContainer {
         assert responseProject.successful
         def responseImport = client.doPut(
                 "/project/${projectName}/import?jobUuidOption=preserve",
-                new File(getClass().getResource("/projects-import/webhook-notification-project.zip").getPath()))
+                createArchiveJarFile(projectName, new File(getClass().getResource("/projects-import/webhook-notification-project").getPath()))
+        )
+
         responseImport.successful
 
         // We have the jobs id, since they are already imported
