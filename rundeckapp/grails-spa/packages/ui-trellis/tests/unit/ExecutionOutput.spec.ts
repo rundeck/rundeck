@@ -15,20 +15,45 @@ import {
   rundeckPasswordAuth,
   RundeckClient,
   TokenCredentialProvider,
+  RundeckBrowser,
 } from "@rundeck/client";
 import { RundeckVcr, Cassette } from "@rundeck/client/dist/util/RundeckVcr";
 import { BtoA, AtoB } from "../utilities/Base64";
 import { RootStore } from "../../src/library/stores/RootStore";
 import fetchMock from "fetch-mock";
+import { RundeckToken } from "../../src/library/interfaces/rundeckWindow";
+import { EventBus } from "../../src/library";
 
 jest.setTimeout(60000);
+
+jest.mock("../../src/library/stores/RootStore", () => {
+  return {
+    __esModule: true,
+    RootStore: jest.fn().mockImplementation(() => {
+      return {};
+    }),
+  };
+});
 
 describe("ExecutionOutput Store", () => {
   beforeEach(() => {
     window._rundeck = {
+      activeTour: "",
+      activeTourStep: "",
+      apiVersion: "43",
+      appMeta: {},
+      data: {},
+      eventBus: {} as typeof EventBus,
+      feature: {},
       navbar: {
         items: [],
       },
+      projectName: "test",
+      rdBase: "/",
+      rootStore: {} as unknown as RootStore,
+      rundeckClient: {} as RundeckBrowser,
+      token: {} as RundeckToken,
+      tokens: {},
     };
   });
   it("Loads Output", async () => {
@@ -47,9 +72,10 @@ describe("ExecutionOutput Store", () => {
     );
     vcr.play(cassette, fetchMock);
 
-    const rootStore = new RootStore(client);
-
-    const { executionOutputStore } = rootStore;
+    const executionOutputStore = new ExecutionOutputStore(
+      window._rundeck.rootStore,
+      client,
+    );
 
     const output = executionOutputStore.createOrGet("900");
 

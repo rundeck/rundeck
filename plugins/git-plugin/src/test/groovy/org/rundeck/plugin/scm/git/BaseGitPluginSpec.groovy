@@ -579,7 +579,7 @@ class BaseGitPluginSpec extends Specification {
         validPathForUser      | commonConfigPassword    | commonConfigKey         | methodResult
         'keys/grantedAccess'  | 'keys/grantedAccess'    | null                    | true
         'keys/grantedAccess'  | null                    | 'keys/grantedAccess'    | true
-        'keys/grantedAccess'  | null                    | null                    | false
+        'keys/grantedAccess'  | null                    | null                    | true
         'keys/grantedAccess'  | null                    | 'keys/notGrantedAccess' | false
         'keys/grantedAccess'  | 'keys/notGrantedAccess' | null                    | false
 

@@ -96,7 +96,7 @@ class JobScmMetadataComponent implements JobMetadataComponent {
                         if (keyAccess) {
                             def jobsPluginMeta = scmService.getJobsPluginMeta(project, true)
                             def jobStates = scmService
-                                .exportStatusForJobIds(project, authContext, ids, false, jobsPluginMeta)
+                                .exportStatusForJobIds(project, authContext, ids, true, jobsPluginMeta)
                             jobStates.each {
                                 metaItems.computeIfAbsent(it.key, { k -> [] }).add(
                                     ComponentMeta.with(
@@ -121,9 +121,9 @@ class JobScmMetadataComponent implements JobMetadataComponent {
                         def keyAccess = scmService
                             .userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.IMPORT, project)
                         if (keyAccess) {
-                            def jobsPluginMeta = scmService.getJobsPluginMeta(project, true)
+                            def jobsPluginMeta = scmService.getJobsPluginMeta(project, false)
                             def jobStates = scmService
-                                .importStatusForJobIds(project, authContext, ids, false, jobsPluginMeta)
+                                .importStatusForJobIds(project, authContext, ids, true, jobsPluginMeta)
 
                             jobStates.each {
                                 metaItems.computeIfAbsent(it.key, { k -> [] }).add(

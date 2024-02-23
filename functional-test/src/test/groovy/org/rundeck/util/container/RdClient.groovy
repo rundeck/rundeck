@@ -71,6 +71,20 @@ class RdClient {
         ).execute()
     }
 
+    Response doGetCustomApiVersion(final String path, final String customApiVersion) {
+        httpClient.newCall(
+                new Request.Builder().
+                        url(apiUrlCustomApiVersion(path, customApiVersion)).
+                        header('Accept', '*/*').
+                        get().
+                        build()
+        ).execute()
+    }
+
+    private String apiUrlCustomApiVersion(String path, String customApiVersion) {
+        baseUrl + "/api/${customApiVersion}" + path
+    }
+
     Response request(final String path, Consumer<Request.Builder> builderConsumer) {
         def builder = new Request.Builder()
         builder.
@@ -145,6 +159,16 @@ class RdClient {
         httpClient.newCall(request).execute()
     }
 
+    /**
+     * Sends a POST request to a specified path with a file and its content type.
+     * This method is designed to transmit files, such as images or documents, to a server.
+     *
+     * @param path The endpoint URL path where the file is to be posted.
+     * @param file The file to be sent in the request body. This should be a valid {@link File} object pointing to the file intended for upload.
+     * @param contentType The MIME type of the file being sent, e.g., "image/jpeg" for JPEG images. This string must correspond to the file's actual content type.
+     * @return The response from the server as a {@link Response} object. This object contains the status code, headers, and body of the response.
+     * @throws IOException If an error occurs during the network request. This includes file read errors, network connectivity issues, and server response errors. Callers should handle this exception.
+     */
     Response doPost(final String path, final File file, final String contentType) {
         RequestBody body = RequestBody.create(file, MediaType.parse(contentType))
         Request request = new Request.Builder()
@@ -154,6 +178,17 @@ class RdClient {
         httpClient.newCall(request).execute()
     }
 
+    /**
+     * Performs a POST request to the specified path with the given file content and content type.
+     * Optional headers can also be included in the request.
+     *
+     * @param path The URL path to which the request is sent.
+     * @param file The content to be sent in the request body. This is typically the file content as a string.
+     * @param contentType The MIME type of the content being sent, e.g., "application/json".
+     * @param headers Optional. Additional headers to include in the request. Default is null, indicating no additional headers.
+     * @return The response of the request.
+     * @throws IOException If an error occurs during the execution of the request. This exception must be caught or declared to be thrown.
+     */
     Response doPost(final String path, final String file, final String contentType, final Headers headers = null) {
         RequestBody body = RequestBody.create(file, MediaType.parse(contentType))
         Request.Builder request = new Request.Builder()
@@ -165,6 +200,14 @@ class RdClient {
         httpClient.newCall(request.build()).execute()
     }
 
+    /**
+     * Performs a POST request with multipart content.
+     *
+     * @param path The path of the resource to which the request will be sent.
+     * @param multipartBody The multipart request body.
+     * @return The response of the request.
+     * @throws IOException If an error occurs during the execution of the request.
+     */
     Response doPostWithMultipart(final String path, MultipartBody multipartBody) {
         def request = new Request.Builder()
                 .url(apiUrl(path))
@@ -173,6 +216,14 @@ class RdClient {
         httpClient.newCall(request).execute()
     }
 
+    /**
+     * Performs a POST request with form data content.
+     *
+     * @param path The path of the resource to which the request will be sent.
+     * @param formBody The form data request body.
+     * @return The response of the request.
+     * @throws IOException If an error occurs during the execution of the request.
+     */
     Response doPostWithFormData(final String path, FormBody formBody) {
         Request request = new Request.Builder()
                 .url(apiUrl(path))
@@ -207,6 +258,34 @@ class RdClient {
                 .header('Content-Type', contentType)
                 .build()
         httpClient.newCall(request).execute()
+    }
+
+    Response doPostWithFormData(
+            final String path,
+            final String fileParamName,
+            final File file
+    ){
+        def formDataRequestBody = buildFormDataRequestBody(fileParamName, file)
+        Request request = new Request.Builder()
+                .url(apiUrl(path))
+                .method("POST", formDataRequestBody)
+                .header('Content-Type', 'multipart/form-data')
+                .header('Accept', '*/*')
+                .build()
+        httpClient.newCall(request).execute()
+    }
+
+    static MultipartBody buildFormDataRequestBody(
+            final String fileParamName,
+            final File file
+    ){
+        return new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart(
+                        fileParamName,
+                        "file",
+                        RequestBody.create(MediaType.parse("application/octet-stream"), file)
+                ).build()
     }
 
     <T> T post(final String path, final Object body = null, Class<T> clazz = Map) {

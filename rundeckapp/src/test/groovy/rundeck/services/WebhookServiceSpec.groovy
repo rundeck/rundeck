@@ -321,7 +321,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         1 * service.rundeckAuthTokenManagerService.deleteByTokenWithType('12345', AuthTokenType.WEBHOOK )
 
     }
-    def "webhook name must be unique in project"() {
+    def "webhook name could be used multiples times"() {
         given:
         def mockUserAuth = Mock(UserAndRolesAuthContext) {
             getUsername() >> { "webhookUser" }
@@ -329,12 +329,22 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         }
         Webhook existing = new Webhook(name:"test",project: "Test",authToken: "12345",eventPlugin: "log-webhook-event")
         existing.save()
+        service.userService = Mock(MockUserService) {
+            validateUserExists(_) >> { true }
+        }
+        service.apiService = Mock(MockApiService)
+        service.pluginService = Mock(MockPluginService) {
+            validatePluginConfig(_,_,_) >> { return new ValidatedPlugin(report: new Validator.Report(),valid:true) }
+            getPlugin(_,_) >> { new TestWebhookEventPlugin() }
+            listPlugins(WebhookEventPlugin) >> { ["log-webhook-event":new TestWebhookEventPlugin()] }
+        }
 
         when:
         def result = service.saveHook(mockUserAuth,[name:"test",project:"Test",user:"webhookUser",roles:"webhook,test",eventPlugin:"log-webhook-event","config":["cfg1":"val1"]])
 
         then:
-        result == [err:"A Webhook by that name already exists in this project"]
+        _ * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345"] }
+        result.msg == "Saved webhook"
 
     }
 
@@ -429,6 +439,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
     @Unroll
     def "import webhooks regenAuthToken: #regenFlag"() {
         given:
+        def uuid = "0dfb6080-935e-413d-a6a7-cdee9345cf72"
         service.pluginService = Mock(MockPluginService) {
             listPlugins(_) >> { ["log-webhook-event":new Object()]}
         }
@@ -441,10 +452,10 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
 
         when:
         def result = service.importWebhook(authContext,[name:"test",
-                                                        uuid: "0dfb6080-935e-413d-a6a7-cdee9345cf72",
+                                                        uuid: uuid,
                                                         project:"Test", authToken:'abc123', user:'webhookUser', roles:"webhook,test",
                                                         eventPlugin:"log-webhook-event",
-                                                        config:'{}'],regenFlag)
+                                                        config:'{}'],regenFlag,regenUuid)
         Webhook created = Webhook.findByName("test")
 
         then:
@@ -456,11 +467,13 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         1 * service.rundeckAuthTokenManagerService.parseAuthRoles("webhook,test") >> { new HashSet(['webhook','test']) }
         expectGenTokenCall * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345"] }
         expectImportWhkToken * service.rundeckAuthTokenManagerService.importWebhookToken(authContext,'abc123','webhookUser',new HashSet(['webhook','test'])) >> { true }
-
+        if(regenUuid){
+            created.uuid != uuid
+        }
         where:
-        regenFlag | expectGenTokenCall | expectImportWhkToken
-        true        |                1 |                    0
-        false       |                0 |                    1
+        regenFlag | expectGenTokenCall | expectImportWhkToken   |   regenUuid
+        true        |                1 |                    0   |   true
+        false       |                0 |                    1   |   false
     }
 
     def "import is allowed"() {
@@ -597,7 +610,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         whPersisted.name == "test-change-name"
     }
 
-    def "Cannot import a webhook with the same name and different uuid in the same project"() {
+    def "import a webhook with the same name and different uuid in the same project"() {
         given:
         def mockUserAuth = Mock(UserAndRolesAuthContext) {
             getUsername() >> { "webhookUser" }
@@ -619,11 +632,10 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         existing.save()
 
         when:
-        def result = service.importWebhook(mockUserAuth, [id: 1, uuid: "d1c6dcf7-dd12-4858-9373-c12639c689d4", name: "test", project: "Test", authToken: "12345", eventPlugin: "log-webhook-event"], false)
-
+        def result = service.importWebhook(mockUserAuth, [id: 1, uuid: "d1c6dcf7-dd12-4858-9373-c12639c689d4", name: "test", project: "Test", authToken: "12345", eventPlugin: "log-webhook-event"], true,false)
         then:
-        result == [err:"Unable to import webhoook test. Error:A Webhook by that name already exists in this project"]
-
+        result.msg == "Webhook test imported"
+        1 * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345"] }
     }
 
     def "Cannot import a webhook with existing token"() {
@@ -648,8 +660,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         existing.save()
 
         when:"import data with same token into project B"
-        def result = service.importWebhook(mockUserAuth, imported, false)
-
+        def result = service.importWebhook(mockUserAuth, imported, false,false)
         then:"should fail"
         result == [err:'Unable to import webhoook test. Error:Cannot import webhook: imported auth token does not exist or was changed']
         where:
@@ -683,7 +694,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
 
 
         when:"import data with same token into project A"
-        def result = service.importWebhook(mockUserAuth, definition, false)
+        def result = service.importWebhook(mockUserAuth, definition, false,false)
 
 
         then:"should have 1 webhook"

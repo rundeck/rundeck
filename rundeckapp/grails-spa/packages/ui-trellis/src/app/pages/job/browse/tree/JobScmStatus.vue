@@ -1,8 +1,13 @@
 <template>
+  <span v-if="!dataReady">
+      <i class="fas fa-spinner fa-pulse"></i>
+      <span v-if="showText">Loading Scm Data</span>
+  </span>
   <template v-if="jobSynchState">
     <span :title="jobText" class="scm_status">
       <span :class="jobClass">
         <i :class="jobIcon" class="glyphicon"></i>
+        {{displayText}}
       </span>
     </span>
   </template>
@@ -15,6 +20,8 @@ import {
 } from "@/library/stores/JobPageStore";
 import { JobBrowseItem, JobBrowseMeta } from "@/library/types/jobs/JobBrowse";
 import { defineComponent, inject } from "vue";
+import { ScmTextUtilities } from "@/library/utilities/scm/scmTextUtilities";
+import {$} from "vue/macros";
 
 export default defineComponent({
   name: "JobScmStatus",
@@ -23,6 +30,27 @@ export default defineComponent({
       type: Object,
       default: () => {},
     },
+    showText: {
+      type: Boolean,
+      default: false
+    },
+    showClean: {
+      type: Boolean,
+      default: false
+    },
+    showExport: {
+      type: Boolean,
+      default: true
+    },
+    dataReady: {
+      type: Boolean,
+      default: false
+    }
+  },
+  data(){
+    return {
+      scmUtilities: new ScmTextUtilities(this.$t)
+    }
   },
   setup() {
     return {
@@ -35,12 +63,11 @@ export default defineComponent({
     },
     exportSynchState(): string | undefined {
       const state = this.scmExport?.jobState?.synchState;
-      return state && state !== "CLEAN" ? state : undefined;
+      return state && (this.showClean || state !== "CLEAN") ? state : undefined;
     },
     importSynchState(): string | undefined {
       const state = this.scmImport?.jobState?.synchState;
-
-      return state && state !== "CLEAN" ? state : undefined;
+      return state && (this.showClean || state !== "CLEAN") ? state : undefined;
     },
     scmExport(): JobBrowseMeta | undefined {
       return this.job.meta?.find(
@@ -55,98 +82,23 @@ export default defineComponent({
     job(): JobBrowseItem | undefined {
       return this.itemData?.job;
     },
-    jobClass() {
-      switch (this.jobSynchState) {
-        case "EXPORT_NEEDED":
-          return "text-info";
-        case "CREATE_NEEDED":
-          return "text-success";
-        case "UNKNOWN":
-          return "text-primary";
-        case "IMPORT_NEEDED":
-        case "REFRESH_NEEDED":
-        case "LOADING":
-          return "text-warning";
-        case "DELETED":
-          return "text-danger";
-        case "CLEAN":
-          return "text-primary";
+    displayText() {
+      if(!this.showText){
+        return ""
       }
-      return "text-primary";
+      if(this.exportSynchState && (this.showClean || this.exportSynchState))
+        return this.scmUtilities.exportDisplayText(this.exportSynchState)
+
+      return this.scmUtilities.importDisplayText(this.importSynchState)
+    },
+    jobClass() {
+      return this.scmUtilities.jobScmStatusIconClass(this.jobSynchState)
     },
     jobIcon() {
-      switch (this.jobSynchState) {
-        case "EXPORT_NEEDED":
-        case "CREATE_NEEDED":
-          return "glyphicon-exclamation-sign";
-        case "UNKNOWN":
-          return "glyphicon-question-sign";
-        case "IMPORT_NEEDED":
-        case "REFRESH_NEEDED":
-          return "glyphicon-exclamation-sign";
-        case "DELETED":
-          return "glyphicon-minus-sign";
-        case "CLEAN":
-          return "glyphicon-ok";
-        case "LOADING":
-          return "glyphicon-refresh";
-      }
-      return "glyphicon-plus";
+      return this.scmUtilities.jobScmStatusIcon(this.jobSynchState)
     },
     jobText() {
-      let exportStatus = null;
-      let importStatus = null;
-      let text = null;
-      if (this.exportSynchState) {
-        exportStatus = this.exportSynchState;
-        switch (exportStatus) {
-          case "EXPORT_NEEDED":
-            text = this.$t("scm.export.status.EXPORT_NEEDED.description");
-            break;
-          case "CREATE_NEEDED":
-            text = this.$t("scm.export.status.CREATE_NEEDED.description");
-            break;
-          case "CLEAN":
-            text = this.$t("scm.export.status.CLEAN.description");
-            break;
-          case "LOADING":
-            text = this.$t("scm.export.status.LOADING.description");
-            break;
-          default:
-            text = exportStatus;
-        }
-      }
-      if (this.importSynchState) {
-        if (text) {
-          text += ", ";
-        } else {
-          text = "";
-        }
-        importStatus = this.importSynchState;
-        switch (importStatus) {
-          case "IMPORT_NEEDED":
-            text += this.$t("scm.import.status.IMPORT_NEEDED.description");
-            break;
-          case "DELETE_NEEDED":
-            text += this.$t("scm.import.status.DELETE_NEEDED.description");
-            break;
-          case "CLEAN":
-            text += this.$t("scm.import.status.CLEAN.description");
-            break;
-          case "REFRESH_NEEDED":
-            text += this.$t("scm.import.status.REFRESH_NEEDED.description");
-            break;
-          case "UNKNOWN":
-            text += this.$t("scm.import.status.UNKNOWN.description");
-            break;
-          case "LOADING":
-            text = this.$t("scm.import.status.LOADING.description");
-            break;
-          default:
-            text += importStatus;
-        }
-      }
-      return text;
+      return this.scmUtilities.jobScmDescription(this.exportSynchState, this.importSynchState)
     },
   },
   methods: {},

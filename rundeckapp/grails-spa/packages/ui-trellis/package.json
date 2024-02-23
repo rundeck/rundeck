@@ -5,6 +5,9 @@
   "main": "./lib/index.js",
   "scripts": {
     "test": "jest --no-cache",
+    "test:unit": "jest --silent",
+    "dev:test:unit": "npm install && npm run test:unit",
+    "ci:test:unit": "npm ci && npm run test:unit",
     "dev:app:build": "npm install && npm run build:app",
     "ci:app:build": "npm ci && npm run build:app",
     "dev:library:build": "npm install && npm run build:library --prefer-offline --no-audit",
@@ -42,11 +45,13 @@
     "deep-object-diff": "^1.1.9",
     "dompurify": "^3.0.3",
     "fuse.js": "^6.6.2",
+    "jest-junit": "^16.0.0",
     "mitt": "^3.0.0",
     "mobx": "^5.15.4",
     "moment": "^2.29.4",
     "npm": "^10.2.2",
     "perfect-scrollbar": "^1.5.0",
+    "primevue": "^3.47.2",
     "uiv": "^2.0.6",
     "vue": "^3.3.2",
     "vue-cookies": "^1.8.3",
@@ -133,5 +138,8 @@
   },
   "overrides": {
     "node-forge": "^1.3.1"
+  },
+  "jest-junit": {
+    "outputDirectory": "./build/test-results"
   }
 }

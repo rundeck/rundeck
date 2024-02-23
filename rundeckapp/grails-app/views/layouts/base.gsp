@@ -45,6 +45,7 @@
     <asset:stylesheet href="static/css/components/theme.css"/>
 
     <asset:stylesheet href="ansi24.css"/>
+    <asset:stylesheet href="tokens.css"/>
     %{-- Vendor CSS styles--}%
     <asset:stylesheet href="vendor/perfect-scrollbar.css"/>
     <asset:stylesheet href="github-markdown.css"/>

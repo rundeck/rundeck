@@ -10,6 +10,7 @@ services:
       RUNDECK_SERVER_FORWARDED: 'true'
       RUNDECK_TOKENS_FILE: /home/rundeck/server/config/tokens.properties
       RUNDECK_MULTIURL_ENABLED: "true"
+      RUNDECK_METRICS_ENABLED: "true"
     volumes:
       - "/etc/localtime:/etc/localtime:ro"
       - "/etc/timezone:/etc/timezone:ro"
@@ -17,3 +18,23 @@ services:
       - "../../../realm.properties:/home/rundeck/server/config/realm.properties"
       - "../../../resource-model:/home/rundeck/server/config/resource-model"
       - "../../../test-files/job-run-steps-test-script1.txt:/home/rundeck/job-run-steps-test-script1.txt"
+      - "../../../test-files/simpleScript.sh:/home/rundeck/simpleScript.sh"
+      - "../../../test-files/test-resources1.xml:/home/rundeck/test-resources1.xml"
+      - "../../../test-files/test-resources2.xml:/home/rundeck/test-resources2.xml"
+  gitea:
+    build:
+      context: "gitea"
+      args:
+        IMAGE: gitea/gitea
+    environment:
+      USER_UID: 1000
+      USER_GID: 1000
+      GITEA_ADMIN_USER: 'rundeckgitea'
+      GITEA_ADMIN_PASSWORD: 'rundeckgitea'
+    restart: always
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+      - "./gitea/gitea-cfg.ini:/data/gitea/conf/app.ini"
+    ports:
+      - "3000:3000"
