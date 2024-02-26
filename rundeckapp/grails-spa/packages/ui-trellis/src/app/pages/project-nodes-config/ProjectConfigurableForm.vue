@@ -138,19 +138,14 @@ export default defineComponent({
       }
     },
     async saveConfig() {
-      const configMap = this.transformConfigToMap(this.cacheConfig.config);
-      this.cacheConfig.config = {
-        ...this.cacheConfig.config,
-        ...configMap,
-      };
-      this.cacheConfig.config = this.convertMapNumbersToStrings(
-        this.cacheConfig.config,
+      const configsToSave = this.convertMapNumbersToStrings(
+        this.transformConfigToMap(this.cacheConfig.config),
       );
       try {
         const resp = await setProjectConfigurable(
           window._rundeck.projectName,
           this.category,
-          this.cacheConfig.config,
+          configsToSave,
         );
         if (resp.response === true) {
           this.notifySuccess("Success!", "Config saved successfully");
