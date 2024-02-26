@@ -1127,17 +1127,7 @@ class JobExecutionSpec extends BaseContainer {
         def client = getClient()
         ObjectMapper mapper = new ObjectMapper()
 
-        Object projectJsonMap = [
-                "name": projectName
-        ]
-        def responseProject = client.doPost("/projects", projectJsonMap)
-        assert responseProject.successful
-        def responseImport = client.doPut(
-                "/project/${projectName}/import?jobUuidOption=preserve",
-                createArchiveJarFile(projectName, new File(getClass().getResource("/projects-import/webhook-notification-project").getPath()))
-        )
-
-        responseImport.successful
+        setupProjectArchiveDirectoryResource(projectName, '/projects-import/webhook-notification-project')
 
         // We have the jobs id, since they are already imported
         def openNcJobId = "c81aa8af-1e0e-4fce-a7bd-102b87922ef2"
