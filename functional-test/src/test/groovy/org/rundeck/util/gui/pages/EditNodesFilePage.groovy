@@ -38,7 +38,7 @@ class EditNodesFilePage extends BasePage{
 
     void waitForAceToRender(){
         new WebDriverWait(driver, Duration.ofSeconds(30)).until(
-                ExpectedConditions.visibilityOf(aceGutterElement())
+                ExpectedConditions.elementToBeClickable(aceEditorGutter)
         )
     }
 
