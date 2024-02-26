@@ -17,7 +17,7 @@ import org.rundeck.util.api.JobUtils
 @ExcludePro
 class ScmPluginActionsSpec extends BaseContainer {
     static final String PROJECT_NAME = 'ScmPluginActionsSpec'
-    static final String BASE_EXPORT_PROJECT_LOCATION = '/projects-import/scm/project-scm-export-one-job.rdproject.jar'
+    static final String BASE_EXPORT_PROJECT_LOCATION = '/projects-import/scm/project-scm-export-one-job.rdproject'
     static final GiteaApiRemoteRepo remoteRepo = new GiteaApiRemoteRepo('repoExample')
 
     def setupSpec() {
@@ -28,7 +28,7 @@ class ScmPluginActionsSpec extends BaseContainer {
         given:
         String integration = 'export'
         String projectName = "${PROJECT_NAME}-P1"
-        setupProject(projectName, BASE_EXPORT_PROJECT_LOCATION)
+        setupProjectArchiveDirectoryResource(projectName, BASE_EXPORT_PROJECT_LOCATION)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
 
         expect:
