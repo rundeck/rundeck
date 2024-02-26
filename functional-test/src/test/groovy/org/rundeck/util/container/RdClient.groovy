@@ -24,7 +24,7 @@ class RdClient {
     String baseUrl
     OkHttpClient httpClient
     int apiVersion = 47
-    final finalApiVersion = 47
+    static final finalApiVersion = 47
 
     RdClient(String baseUrl, OkHttpClient httpClient) {
         this.baseUrl = baseUrl

@@ -1,4 +1,4 @@
-package org.rundeck.tests.functional.api.jobs
+package org.rundeck.tests.functional.api.job
 
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
