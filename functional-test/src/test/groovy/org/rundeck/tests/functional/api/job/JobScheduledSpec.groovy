@@ -1,4 +1,4 @@
-package org.rundeck.tests.functional.api.jobs
+package org.rundeck.tests.functional.api.job
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.util.annotations.APITest
