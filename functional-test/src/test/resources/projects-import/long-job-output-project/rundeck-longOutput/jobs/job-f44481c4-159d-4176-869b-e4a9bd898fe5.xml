@@ -1,6 +1,6 @@
 <joblist>
   <job>
-    <defaultTab>nodes</defaultTab>
+    <defaultTab>output</defaultTab>
     <description></description>
     <executionEnabled>true</executionEnabled>
     <id>f44481c4-159d-4176-869b-e4a9bd898fe5</id>

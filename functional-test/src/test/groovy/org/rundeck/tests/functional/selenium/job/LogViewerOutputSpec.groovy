@@ -39,7 +39,6 @@ class LogViewerOutputSpec extends SeleniumBase{
         sideBar.goTo(NavLinkTypes.JOBS)
         jobShowPage.goToJob("f44481c4-159d-4176-869b-e4a9bd898fe5")
         jobShowPage.getRunJobBtn().click()
-        jobShowPage.getLogOutputBtn().click()
         jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'log output ')]"),3,5)
         jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'log output ')]"),49,40)
         def firstLogLine = jobShowPage.el(By.xpath("//span[contains(text(),'log output 1')]"))
