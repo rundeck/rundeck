@@ -1,6 +1,7 @@
 import { mount, VueWrapper } from "@vue/test-utils";
 import { Btn } from "uiv";
 import { JobOptionsData } from "../../../../../library/types/jobs/JobEdit";
+import { Operation } from "../model/ChangeEvents";
 import OptionsEditor from "../OptionsEditor.vue";
 
 // Mock pluginService methods
@@ -356,6 +357,27 @@ describe("OptionsEditor", () => {
       let draggable = wrapper.get("[data-test=draggable-footer]");
       let item = draggable.get("[data-test-component=OptionEditComponent]");
       expect(item.text()).toEqual(`OptionEdit: ${newname}`);
+    },
+  );
+  it.each([
+    [Operation.Insert, "operationInsert"],
+    [Operation.Modify, "operationModify"],
+    [Operation.Move, "operationMove"],
+    [Operation.Remove, "operationRemove"],
+  ])(
+    "operation %p calls correct method %p",
+    async (op: Operation, method: string) => {
+      const spy = jest
+        .spyOn(OptionsEditor.methods, method)
+        .mockImplementation(() => {});
+      const indexMock = jest.spyOn(OptionsEditor.methods, "updateIndexes");
+      const wrapper = await mountBasicOptionsEditor();
+      wrapper.vm.operation(op, { index: 0, operation: op, undo: op });
+      await wrapper.vm.$nextTick();
+      expect(spy).toHaveBeenCalled();
+      expect(indexMock).toHaveBeenCalled();
+      spy.mockRestore();
+      indexMock.mockRestore();
     },
   );
 });
