@@ -255,7 +255,7 @@ export default defineComponent({
       this.intOptions.splice(index, 1);
       this.intOptions.splice(dest, 0, orig);
     },
-    async operationInsert(index: number, value: any) {
+    operationInsert(index: number, value: any) {
       this.intOptions.splice(index, 0, cloneDeep(value));
     },
     operation(op: Operation, data: any) {
