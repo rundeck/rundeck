@@ -269,7 +269,7 @@ export default defineComponent({
       this.intOptions[dest] = this.intOptions[index];
       this.intOptions[index] = temp;
     },
-    async operationInsert(index, value) {
+    async operationInsert(index: number, value: any) {
       this.intOptions.splice(index, 0, cloneDeep(value));
     },
     operation(op: Operation, data: any) {
@@ -302,7 +302,7 @@ export default defineComponent({
       this.wasChanged();
     },
     updateIndexes() {
-      this.intOptions.forEach((opt: JobOption, i) => {
+      this.intOptions.forEach((opt: JobOption, i: number) => {
         opt.sortIndex = i + 1;
       });
     },
