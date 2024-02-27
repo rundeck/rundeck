@@ -1,4 +1,4 @@
-package org.rundeck.tests.functional.schedule
+package org.rundeck.tests.functional.api.schedule
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.tests.functional.api.ResponseModels.CreateJobResponse
