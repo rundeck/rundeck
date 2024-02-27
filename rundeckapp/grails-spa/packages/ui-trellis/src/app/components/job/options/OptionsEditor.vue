@@ -265,9 +265,9 @@ export default defineComponent({
       return orig;
     },
     operationMove(index: number, dest: number) {
-      const temp = this.intOptions[dest];
-      this.intOptions[dest] = this.intOptions[index];
-      this.intOptions[index] = temp;
+      const orig = this.intOptions[index];
+      this.intOptions.splice(index, 1);
+      this.intOptions.splice(dest, 0, orig);
     },
     async operationInsert(index: number, value: any) {
       this.intOptions.splice(index, 0, cloneDeep(value));
