@@ -51,7 +51,7 @@ const mountOptionsEditor = async (options: {
             "<span v-for='(opt,i) in modelValue'>" +
             "<slot name='item' :element='opt' :index='i'></slot>" +
             "</span>" +
-            "Footer" +
+            "<div data-test='draggable-footer'><slot name='footer'></slot></div>" +
             "</div>",
         },
         UndoRedo: {
@@ -63,7 +63,8 @@ const mountOptionsEditor = async (options: {
           name: "OptionItem",
           props: ["editable", "canMoveUp", "canMoveDown", "option"],
           defineEmits: ["moveUp", "moveDown", "edit", "delete", "duplicate"],
-          template: "<div>OptionItem: {{option.name}}</div>",
+          template:
+            "<div data-test-component='OptionItemComponent'>OptionItem: {{option.name}}</div>",
         },
         OptionEdit: {
           name: "OptionEdit",
@@ -78,7 +79,8 @@ const mountOptionsEditor = async (options: {
             "uiFeatures",
           ],
           defineEmits: ["update:modelValue", "cancel"],
-          template: "<div>OptionEdit: {{option.name}}</div>",
+          template:
+            "<div data-test-component='OptionEditComponent'>OptionEdit: {{modelValue.name}}</div>",
         },
         PluginConfig: true,
       },
@@ -142,11 +144,72 @@ describe("OptionsEditor", () => {
     } as JobOptionsData;
     const wrapper = await mountOptionsEditor({ optionsData, edit: true });
     let draggable = wrapper.get("[data-test=draggable-stub]");
-    let spans = draggable.findAll("span");
+    let spans = draggable.findAll("[data-test-component=OptionItemComponent]");
     expect(spans).toHaveLength(2);
     expect(spans[0].text()).toContain("OptionItem: option1");
     expect(spans[1].text()).toContain("OptionItem: option2");
 
     expect(wrapper.find(".empty.note").exists()).toEqual(false);
+  });
+  it.each([0, 1])(
+    "shows edit form for selected edit item %p",
+    async (selected: number) => {
+      let options = [
+        {
+          name: "option1",
+          optionType: "text",
+          inputType: "plain",
+        },
+        {
+          name: "option2",
+          optionType: "file",
+          inputType: "plain",
+        },
+      ];
+      let optionsData = {
+        features: { feature1: true, feature2: false },
+        fileUploadPluginType: "fileUploadPluginType",
+        options,
+      } as JobOptionsData;
+      const wrapper = await mountOptionsEditor({ optionsData, edit: true });
+      wrapper.vm.doEdit(selected);
+      await wrapper.vm.$nextTick();
+      let draggable = wrapper.get("[data-test=draggable-stub]");
+      let spans = draggable.findAll("div[data-test-component]");
+      expect(spans).toHaveLength(2);
+      expect(spans[0].text()).toContain(
+        selected == 0 ? "OptionEdit: option1" : "OptionItem: option1",
+      );
+      expect(spans[1].text()).toContain(
+        selected == 1 ? "OptionEdit: option2" : "OptionItem: option2",
+      );
+
+      expect(wrapper.find(".empty.note").exists()).toEqual(false);
+    },
+  );
+  it("create new option shows edit form", async () => {
+    let options = [
+      {
+        name: "option1",
+        optionType: "text",
+        inputType: "plain",
+      },
+      {
+        name: "option2",
+        optionType: "file",
+        inputType: "plain",
+      },
+    ];
+    let optionsData = {
+      features: { feature1: true, feature2: false },
+      fileUploadPluginType: "fileUploadPluginType",
+      options,
+    } as JobOptionsData;
+    const wrapper = await mountOptionsEditor({ optionsData, edit: true });
+    wrapper.vm.optaddnew();
+    await wrapper.vm.$nextTick();
+    let draggable = wrapper.get("[data-test=draggable-footer]");
+    let item = draggable.get("[data-test-component=OptionEditComponent]");
+    expect(item.text()).toEqual("OptionEdit:");
   });
 });
