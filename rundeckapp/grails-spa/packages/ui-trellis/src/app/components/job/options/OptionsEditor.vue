@@ -106,6 +106,7 @@ import {
   JobOptionsData,
   OptionPrototype,
 } from "../../../../library/types/jobs/JobEdit";
+import { Operation, ChangeEvent } from "./model/ChangeEvents";
 import OptionItem from "./OptionItem.vue";
 import pluginService from "@/library/modules/pluginService";
 import { defineComponent, PropType } from "vue";
@@ -117,21 +118,6 @@ import draggable from "vuedraggable";
 const emitter = mitt();
 const localEB: Emitter<Record<EventType, any>> = emitter;
 const eventBus = getRundeckContext().eventBus;
-
-enum Operation {
-  Insert,
-  Remove,
-  Modify,
-  Move,
-}
-interface ChangeEvent {
-  index: number;
-  value?: JobOption;
-  orig?: JobOption;
-  dest?: number;
-  operation: Operation;
-  undo: Operation;
-}
 
 export default defineComponent({
   name: "OptionsEditor",
