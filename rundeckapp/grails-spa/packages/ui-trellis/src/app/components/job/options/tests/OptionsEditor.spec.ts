@@ -380,4 +380,50 @@ describe("OptionsEditor", () => {
       indexMock.mockRestore();
     },
   );
+  it("mount calls updateIndexes", async () => {
+    const indexMock = jest.spyOn(OptionsEditor.methods, "updateIndexes");
+    const wrapper = await mountBasicOptionsEditor();
+    expect(indexMock).toHaveBeenCalled();
+    indexMock.mockRestore();
+  });
+  it("sortIndex is updated after doRemove", async () => {
+    const wrapper = await mountBasicOptionsEditor();
+    //expect sortIndex to be set correctly after mount
+    let intOptions = wrapper.vm.intOptions;
+    expect(intOptions.map((item) => item.sortIndex)).toEqual([1, 2]);
+    //remove first item
+    wrapper.vm.doRemove(0);
+    expect(intOptions.map((item) => item.sortIndex)).toEqual([1]);
+  });
+  it("sortIndex is updated after doMoveUp", async () => {
+    const wrapper = await mountBasicOptionsEditor();
+    //expect sortIndex to be set correctly after mount
+    let intOptions = wrapper.vm.intOptions;
+    expect(intOptions.map((item) => item.sortIndex)).toEqual([1, 2]);
+    //remove first item
+    wrapper.vm.doMoveUp(1);
+    expect(intOptions.map((item) => item.sortIndex)).toEqual([1, 2]);
+  });
+  it("sortIndex is updated after doMoveDown", async () => {
+    const wrapper = await mountBasicOptionsEditor();
+    //expect sortIndex to be set correctly after mount
+    let intOptions = wrapper.vm.intOptions;
+    expect(intOptions.map((item) => item.sortIndex)).toEqual([1, 2]);
+    //remove first item
+    wrapper.vm.doMoveDown(0);
+    expect(intOptions.map((item) => item.sortIndex)).toEqual([1, 2]);
+  });
+  it("sortIndex is updated after saveNewOption", async () => {
+    const wrapper = await mountBasicOptionsEditor();
+    //expect sortIndex to be set correctly after mount
+    let intOptions = wrapper.vm.intOptions;
+    expect(intOptions.map((item) => item.sortIndex)).toEqual([1, 2]);
+    //remove first item
+    wrapper.vm.saveNewOption({
+      name: "newoption",
+      optionType: "text",
+      inputType: "plain",
+    });
+    expect(intOptions.map((item) => item.sortIndex)).toEqual([1, 2, 3]);
+  });
 });
