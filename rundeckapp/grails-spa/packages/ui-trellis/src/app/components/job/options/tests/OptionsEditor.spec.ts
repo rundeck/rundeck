@@ -229,6 +229,23 @@ describe("OptionsEditor", () => {
       expectOptionOrder(wrapper, result);
     },
   );
+  it.each([
+    [0, ["newoption", "option1", "option2"]],
+    [1, ["option1", "newoption", "option2"]],
+    [2, ["option1", "option2", "newoption"]],
+  ])(
+    "operation insert index %p result in %p",
+    async (index: number, result: string[]) => {
+      const wrapper = await mountBasicOptionsEditor();
+      wrapper.vm.operationInsert(index, {
+        name: "newoption",
+        optionType: "text",
+        inputType: "plain",
+      });
+      await wrapper.vm.$nextTick();
+      expectOptionOrder(wrapper, result);
+    },
+  );
   it.each([0, 1])(
     "shows edit form for selected edit item %p",
     async (selected: number) => {
