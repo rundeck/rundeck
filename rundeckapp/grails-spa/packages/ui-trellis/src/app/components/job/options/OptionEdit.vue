@@ -1178,7 +1178,6 @@ export default defineComponent({
         cloneDeep(this.modelValue),
       ) as JobOptionEdit,
       regexChoice: false,
-      urlChoice: false,
       bashVarPrefix: "RD_",
       remoteUrlAuthenticationList: [
         {
@@ -1213,23 +1212,20 @@ export default defineComponent({
     },
     "option.valuesType"(val: string) {
       if (val === "url") {
-        this.option.optionValuesPluginType = "";
+        delete this.option.optionValuesPluginType;
         this.option.valuesUrl = "";
         this.option.remoteUrlAuthenticationType = "";
         this.option.configRemoteUrl = {};
-        this.urlChoice = true;
       } else if (val === "list") {
-        this.option.optionValuesPluginType = "";
-        this.option.valuesUrl = null;
-        this.option.remoteUrlAuthenticationType = "";
-        this.option.configRemoteUrl = {};
-        this.urlChoice = false;
+        delete this.option.optionValuesPluginType;
+        delete this.option.valuesUrl;
+        delete this.option.remoteUrlAuthenticationType;
+        delete this.option.configRemoteUrl;
       } else {
         this.option.optionValuesPluginType = val;
-        this.option.valuesUrl = null;
-        this.option.remoteUrlAuthenticationType = "";
-        this.option.configRemoteUrl = {};
-        this.urlChoice = false;
+        delete this.option.valuesUrl;
+        delete this.option.remoteUrlAuthenticationType;
+        delete this.option.configRemoteUrl;
       }
     },
   },
