@@ -16,4 +16,7 @@ class ExecutionConstants {
     public static String ABORT_PENDING = "pending"
     public static String ABORT_ABORTED = "aborted"
     public static String ABORT_FAILED = "failed"
+
+    public static String ABORT_EVENT = "execution-abort"
+
 }
