@@ -51,7 +51,7 @@ class BasicSpec extends BaseContainer {
                     .cookieJar(customCookieJar)
                     .build()
             def request1 = new Request.Builder()
-                .url("http://localhost:4440")
+                .url(client.baseUrl)
                 .get()
                 .build()
         then:
@@ -62,7 +62,7 @@ class BasicSpec extends BaseContainer {
                 .add("j_password", "admin")
                 .build()
             def request2 = new Request.Builder()
-                .url("http://localhost:4440/j_security_check")
+                .url("${client.baseUrl}/j_security_check")
                 .post(formBody)
                 .build()
         then:
