@@ -1,6 +1,8 @@
 package org.rundeck.util.extensions
 
-import okhttp3.*
+import okhttp3.Cookie
+import okhttp3.CookieJar
+import okhttp3.HttpUrl
 import org.jetbrains.annotations.NotNull
 
 class CustomCookieJar implements CookieJar {
