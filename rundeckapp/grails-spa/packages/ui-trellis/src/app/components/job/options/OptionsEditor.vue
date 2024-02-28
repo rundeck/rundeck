@@ -170,33 +170,33 @@ export default defineComponent({
       this.createOption.name = this.createOption.name + "_copy";
       this.createMode = true;
     },
-    doRemove(i: number) {
-      let orig = this.operationRemove(i);
+    doRemove(index: number) {
+      let orig = this.operation(Operation.Remove, { index });
       this.changeEvent({
-        index: i,
+        index,
         dest: -1,
         orig: orig,
         operation: Operation.Remove,
         undo: Operation.Insert,
       });
     },
-    doMoveUp(i: number) {
-      if (i > 0) {
-        this.operationMove(i, i - 1);
+    doMoveUp(index: number) {
+      if (index > 0) {
+        this.operation(Operation.Move, { index, dest: index - 1 });
         this.changeEvent({
-          index: i,
-          dest: i - 1,
+          index: index,
+          dest: index - 1,
           operation: Operation.Move,
           undo: Operation.Move,
         });
       }
     },
-    doMoveDown(i: number) {
-      if (i < this.intOptions.length - 1) {
-        this.operationMove(i, i + 1);
+    doMoveDown(index: number) {
+      if (index < this.intOptions.length - 1) {
+        this.operation(Operation.Move, { index, dest: index + 1 });
         this.changeEvent({
-          index: i,
-          dest: i + 1,
+          index: index,
+          dest: index + 1,
           operation: Operation.Move,
           undo: Operation.Move,
         });
@@ -211,11 +211,11 @@ export default defineComponent({
         undo: Operation.Move,
       });
     },
-    updateOption(i: number, data: any) {
+    updateOption(index: number, data: any) {
       let value = cloneDeep(data);
-      let orig = this.operationModify(i, value);
+      let orig = this.operation(Operation.Modify, { index, value });
       this.changeEvent({
-        index: i,
+        index: index,
         dest: -1,
         orig,
         value,
@@ -229,7 +229,7 @@ export default defineComponent({
       this.createMode = false;
       let index = this.intOptions.length;
       let value = cloneDeep(data);
-      this.operationInsert(index, value);
+      this.operation(Operation.Insert, { index, value });
 
       this.changeEvent({
         index,
