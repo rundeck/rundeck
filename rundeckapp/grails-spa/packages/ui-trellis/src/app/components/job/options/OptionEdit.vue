@@ -1289,18 +1289,16 @@ export default defineComponent({
         return "none";
       },
       set(val: string) {
+        this.regexChoice = val === "regex";
         if (val === "enforced") {
           this.option.enforced = true;
-          this.option.regex = null;
-          this.regexChoice = false;
+          delete this.option.regex;
         } else if (val === "regex") {
-          this.option.enforced = false;
-          this.regexChoice = true;
+          delete this.option.enforced;
           this.option.regex = "";
         } else {
-          this.regexChoice = false;
-          this.option.enforced = false;
-          this.option.regex = null;
+          delete this.option.enforced;
+          delete this.option.regex;
         }
       },
     },
