@@ -138,7 +138,7 @@
     <div v-if="option.optionType !== 'file'">
       <div
         class="form-group"
-        :class="{ 'has-error': hasError('defaultValue') }"
+        :class="{ 'has-error': hasError('value') }"
         v-if="showDefaultValue"
       >
         <label class="col-sm-2 control-label">{{
@@ -153,8 +153,8 @@
             :placeholder="$t('form.option.defaultValue.label')"
             v-model="option.value"
           />
-          <div class="help-block" v-if="validationErrors['defaultValue']">
-            <ErrorsList :errors="validationErrors['defaultValue']" />
+          <div class="help-block" v-if="validationErrors['value']">
+            <ErrorsList :errors="validationErrors['value']" />
           </div>
         </div>
       </div>
@@ -312,7 +312,7 @@
               />
               <label
                 for="vtrlist_"
-                :class="{ 'has-error': hasError('valuesList') }"
+                :class="{ 'has-error': hasError('values') }"
               >
                 {{ $t("form.label.valuesType.list.label") }}
               </label>
@@ -365,7 +365,7 @@
           <div
             id="vlist_section"
             v-if="option.valuesType === 'list'"
-            :class="{ 'has-error': hasError('valuesList') }"
+            :class="{ 'has-error': hasError('values') }"
           >
             <input
               type="text"
@@ -376,8 +376,8 @@
               :placeholder="$t('form.option.valuesList.placeholder')"
             />
 
-            <div class="help-block" v-if="validationErrors['valuesList']">
-              <ErrorsList :errors="validationErrors['valuesList']" />
+            <div class="help-block" v-if="validationErrors['values']">
+              <ErrorsList :errors="validationErrors['values']" />
             </div>
           </div>
 
@@ -718,7 +718,7 @@
 
         <div
           class="input-group col-sm-3"
-          :class="{ 'has-error': hasError('delimiter') }"
+          :class="{ 'has-error': hasError('valuesListDelimiter') }"
         >
           <div class="input-group-addon" style="background-color: #e0e0e0">
             {{ $t("form.option.valuesDelimiter.label") }}
