@@ -86,14 +86,14 @@ class BasicJobsSpec extends SeleniumBase {
         then:
             jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
             jobCreatePage.optionButton.click()
-            jobCreatePage.optionName 0 sendKeys optionName
+            jobCreatePage.optionNameNew() sendKeys optionName
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 0
             jobCreatePage.createJobButton.click()
         then:
             jobCreatePage.waitForUrlToContain('/job/show')
-            jobShowPage.jobLinkTitleLabel.getText().contains('a job with options')
+            jobShowPage.jobLinkTitleLabel.getText().contains('create valid job basic options')
             jobShowPage.optionInputText(optionName) != null
         where:
             nextUi<<[false,true]

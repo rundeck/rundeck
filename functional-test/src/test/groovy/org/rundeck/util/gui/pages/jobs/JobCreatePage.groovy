@@ -249,7 +249,7 @@ class JobCreatePage extends BasePage {
 
     WebElement optionNameNew() {
         if(nextUi){
-            return byAndWait (By.cssSelector("#optitem_new div.optEditForm input[type=text][name=name]"))
+            return byAndWait (By.cssSelector("#optitem_new input[type=text][name=name]"))
         }else{
             return optionName(0)
         }
@@ -269,7 +269,9 @@ class JobCreatePage extends BasePage {
     }
 
     void waitFotOptLi(int index) {
-        waitForElementVisible By.cssSelector("#optli_$index")
+        waitForElementVisible nextUi?
+                              By.cssSelector("#optitem_$index"):
+                              By.cssSelector("#optli_$index")
     }
 
     List<WebElement> optionLis(int index) {
