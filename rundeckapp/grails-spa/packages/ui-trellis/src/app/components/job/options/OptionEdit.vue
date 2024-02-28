@@ -894,11 +894,12 @@
     </div>
 
     <!-- multivalue -->
-    <div class="form-group" v-if="option.optionType !== 'file'">
-      <label
-        class="col-sm-2 control-label"
-        :class="{ 'has-error': hasError('multivalued') }"
-      >
+    <div
+      class="form-group"
+      v-if="option.optionType !== 'file'"
+      :class="{ 'has-error': hasError('multivalued') || hasError('delimiter') }"
+    >
+      <label class="col-sm-2 control-label">
         {{ $t("form.option.multivalued.label") }}
       </label>
       <div class="col-sm-10">
@@ -923,10 +924,7 @@
               v-model="option.multivalued"
               id="cdelimiter_"
             />
-            <label
-              for="cdelimiter_"
-              class="${hasErrors(bean: option, field: 'multivalued', 'fieldError')}"
-            >
+            <label for="cdelimiter_">
               {{ $t("yes") }}
             </label>
           </div>
@@ -950,9 +948,9 @@
                 class="form-control"
                 id="vdelimiter_"
               />
-              <div class="help-block" v-if="validationErrors['delimiter']">
-                <ErrorsList :errors="validationErrors['delimiter']" />
-              </div>
+            </div>
+            <div class="help-block" v-if="validationErrors['delimiter']">
+              <ErrorsList :errors="validationErrors['delimiter']" />
             </div>
             <span class="help-block">
               {{ $t("form.option.delimiter.description") }}
