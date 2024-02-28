@@ -9,7 +9,6 @@ import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.profile.UserProfilePage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
-import spock.lang.IgnoreRest
 import spock.lang.Stepwise
 
 @SeleniumCoreTest
@@ -93,7 +92,6 @@ class JobsSpec extends SeleniumBase {
             jobListPage.validatePage()
     }
 
-    @IgnoreRest
     def "Duplicate_options - only validations, not save jobs"() {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
@@ -187,7 +185,6 @@ class JobsSpec extends SeleniumBase {
             jobShowPage.jobDefinitionModal.click()
             jobShowPage.orchestratorNameLabel.getText() == 'Rank Tiered'
     }
-    @IgnoreRest
     def "job options config - check usage session"() {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
@@ -208,7 +205,6 @@ class JobsSpec extends SeleniumBase {
         where:
             nextUi << [false, true]
     }
-    @IgnoreRest
     def "job options config - check storage session"() {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
@@ -231,7 +227,6 @@ class JobsSpec extends SeleniumBase {
         where:
             nextUi << [false, true]
     }
-    @IgnoreRest
     def "job option simple redo"() {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
@@ -263,7 +258,6 @@ class JobsSpec extends SeleniumBase {
         where:
             nextUi << [false, true]
     }
-    @IgnoreRest
     def "No default value field shown in secure job option section"() {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
@@ -286,7 +280,6 @@ class JobsSpec extends SeleniumBase {
         where:
         nextUi << [false, true]
     }
-    @IgnoreRest
     def "job option revert all"() {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
@@ -323,7 +316,6 @@ class JobsSpec extends SeleniumBase {
         where:
             nextUi << [false, true]
     }
-    @IgnoreRest
     def "job option undo redo"() {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
