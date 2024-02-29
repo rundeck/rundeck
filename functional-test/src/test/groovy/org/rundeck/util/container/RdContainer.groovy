@@ -52,6 +52,10 @@ class RdContainer extends DockerComposeContainer<RdContainer> implements ClientP
         RdClient.create("http://${getServiceHost(DEFAULT_SERVICE_TO_EXPOSE,DEFAULT_PORT)}:${getServicePort(DEFAULT_SERVICE_TO_EXPOSE,DEFAULT_PORT)}${CONTEXT_PATH}", token)
     }
 
+    RdClient getClusterClient() {
+        RdClient.create("http://localhost:4440", STATIC_TOKEN)
+    }
+
     @Override
     void close() {
         super.close()

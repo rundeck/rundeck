@@ -54,4 +54,8 @@ class RdDockerContainer extends GenericContainer<RdDockerContainer> implements C
     RdClient clientWithToken(String token) {
         RdClient.create("http://${host}:${firstMappedPort}${CONTEXT_PATH}", token)
     }
+
+    RdClient getClusterClient() {
+        RdClient.create("http://localhost:4440", STATIC_TOKEN)
+    }
 }

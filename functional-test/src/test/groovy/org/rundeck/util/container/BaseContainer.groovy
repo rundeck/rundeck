@@ -22,9 +22,11 @@ import java.util.jar.Manifest
 abstract class BaseContainer extends Specification implements ClientProvider {
     public static final String PROJECT_NAME = 'test'
     private static RdContainer RUNDECK
+    private static RdClusterDockerContainer RUNDECK_CLUSTER
     private static final Object LOCK = new Object()
     private static ClientProvider CLIENT_PROVIDER
     private static final String DEFAULT_DOCKERFILE_LOCATION = System.getenv("DEFAULT_DOCKERFILE_LOCATION") ?: System.getProperty("DEFAULT_DOCKERFILE_LOCATION")
+    private static final String DEFAULT_CLUSTER_PATH = System.getenv("COMPOSE_CLUSTER_PATH") ?: System.getProperty("COMPOSE_CLUSTER_PATH")
 
     ClientProvider getClientProvider() {
         if (System.getenv("TEST_RUNDECK_URL") != null) {
@@ -39,15 +41,20 @@ abstract class BaseContainer extends Specification implements ClientProvider {
                     RdClient clientWithToken(String token) {
                         return RdClient.create(System.getenv("TEST_RUNDECK_URL"), token)
                     }
+
+                    @Override
+                    RdClient getClusterClient() {
+                        return RdClient.create("http://localhost:4440", "admintoken")
+                    }
                 }
             }
-        } else if (DEFAULT_DOCKERFILE_LOCATION != null && !DEFAULT_DOCKERFILE_LOCATION.isEmpty() && CLIENT_PROVIDER == null){
+        } else if (DEFAULT_DOCKERFILE_LOCATION != null && !DEFAULT_DOCKERFILE_LOCATION.isEmpty() && CLIENT_PROVIDER == null && DEFAULT_CLUSTER_PATH == null){
             synchronized (LOCK) {
                 RdDockerContainer rdDockerContainer = new RdDockerContainer(getClass().getClassLoader().getResource(DEFAULT_DOCKERFILE_LOCATION).toURI())
                 rdDockerContainer.start()
                 CLIENT_PROVIDER = rdDockerContainer
             }
-        } else if (RUNDECK == null && DEFAULT_DOCKERFILE_LOCATION == null) {
+        } else if (RUNDECK == null && DEFAULT_DOCKERFILE_LOCATION == null && DEFAULT_CLUSTER_PATH == null) {
             synchronized (LOCK) {
                 log.info("Starting testcontainer: ${getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI()}")
                 log.info("Starting testcontainer: RUNDECK_IMAGE: ${RdContainer.RUNDECK_IMAGE}")
@@ -56,6 +63,15 @@ abstract class BaseContainer extends Specification implements ClientProvider {
                 RUNDECK = new RdContainer(getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI())
                 RUNDECK.start()
                 CLIENT_PROVIDER = RUNDECK
+            }
+        } else if (RUNDECK_CLUSTER == null && DEFAULT_CLUSTER_PATH != null) {
+            synchronized (LOCK) {
+                log.info("Starting cluster testcontainer: ${DEFAULT_CLUSTER_PATH}")
+                log.info("Starting cluster testcontainer: RUNDECK_IMAGE: ${RdClusterDockerContainer.RUNDECK_IMAGE}")
+                log.info("Starting cluster testcontainer: LICENSE_LOCATION: ${RdClusterDockerContainer.LICENSE_LOCATION}")
+                RUNDECK_CLUSTER = new RdClusterDockerContainer(getClass().getClassLoader().getResource(DEFAULT_CLUSTER_PATH).toURI())
+                RUNDECK_CLUSTER.start()
+                CLIENT_PROVIDER = RUNDECK_CLUSTER
             }
         }
         return CLIENT_PROVIDER
@@ -217,6 +233,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     }
 
     RdClient _client
+    RdClient _clientSecond
     @Override
     RdClient getClient() {
         if (null == _client) {
@@ -228,6 +245,11 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     RdClient createClient() {
         return clientProvider.getClient()
     }
+
+    RdClient createSecondClient() {
+        return clientProvider.getClusterClient()
+    }
+
     Map<String, RdClient> tokenProviders = [:]
 
     @Override
@@ -236,6 +258,14 @@ abstract class BaseContainer extends Specification implements ClientProvider {
             tokenProviders[token] = clientProvider.clientWithToken(token)
         }
         return tokenProviders[token]
+    }
+
+    @Override
+    RdClient getClusterClient() {
+        if (null == _clientSecond) {
+            _clientSecond = createSecondClient()
+        }
+        return _clientSecond
     }
 
     void startEnvironment() {
@@ -265,6 +295,10 @@ abstract class BaseContainer extends Specification implements ClientProvider {
 
     <T> T get(String path, Class<T> clazz) {
         return client.get(path, clazz)
+    }
+
+    <T> T getSecondCluster(String path, Class<T> clazz) {
+        return clusterClient.get(path, clazz)
     }
 
     Response doPost(String path, Object body = null) {
