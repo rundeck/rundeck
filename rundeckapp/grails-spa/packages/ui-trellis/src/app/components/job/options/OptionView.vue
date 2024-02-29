@@ -1,7 +1,7 @@
 <template>
   <span class="optview">
     <span
-      class="optdetail opt-detail-ext"
+      class="optdetail opt-detail-ext flow-h"
       :title="editable ? $t('option.click.to.edit.title') : ''"
     >
       <template v-if="option.optionType == 'file'">
@@ -127,4 +127,14 @@ export default defineComponent({
 });
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.flow > * + * {
+  margin-top: var(--spacing-2);
+}
+.flow-h > * + * {
+  margin-left: var(--spacing-2);
+}
+.enforceSet {
+  margin-left: var(--spacing-4);
+}
+</style>
