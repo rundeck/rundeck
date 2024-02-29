@@ -6126,6 +6126,33 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             result.duration.max == 9L * 60L * 1000L
     }
 
+    def "metrics from projection results no errors if null dateCompleted is extracted"(){
+        given:
+        Date now = new Date()
+        Date dateStarted1 = now
+        Date dateStarted2 = now
+        Date dateStarted3 = now
+        Date dateCompleted = now
+        use (TimeCategory) {
+            dateStarted1 = now - 9.minute
+            dateStarted2 = now - 4.minute
+            dateStarted3 = now - 2.minute
+        }
+        def projresult = [
+                [dateStarted: new Timestamp(dateStarted1.time), dateCompleted: null],
+                [dateStarted: new Timestamp(dateStarted2.time), dateCompleted: new Timestamp(dateCompleted.time)],
+                [dateStarted: new Timestamp(dateStarted3.time), dateCompleted: new Timestamp(dateCompleted.time)]
+        ]
+        when:
+        def result = service.metricsDataFromProjectionResult(projresult)
+        then:
+        noExceptionThrown()
+        result.total == 3
+        result.duration.average == 120000.0
+        result.duration.min == 120000
+        result.duration.max == 240000
+    }
+
     def "load additional listener"(){
         when:
             def result = service.loadAdditionalListeners([])
