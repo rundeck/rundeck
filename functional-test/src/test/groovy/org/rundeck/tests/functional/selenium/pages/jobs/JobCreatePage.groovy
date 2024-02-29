@@ -283,11 +283,15 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement optionNameSaved(int index) {
-        el By.xpath("//*[@id=\"optli_$index\"]/div/div/span[2]/span/span[1]/span[1]")
+        el nextUi?
+           By.cssSelector("#optitem_${index} .option-item .option-item-content .optdetail_name")
+           :By.xpath("//*[@id=\"optli_$index\"]/div/div/span[2]/span/span[1]/span[1]")
     }
 
-    WebElement duplicateButton(String nameOpt) {
-        el By.xpath("//*[@id='optctrls_$nameOpt']/span[2]")
+    WebElement duplicateButton(String nameOpt, int optNum = 0) {
+        el nextUi?
+           By.cssSelector("#optitem_${optNum} .option-item-content+.btn-group> .btn + .btn")
+           :By.xpath("//*[@id='optctrls_$nameOpt']/span[2]")
     }
 
     WebElement getNodeDispatchTrueCheck() {
