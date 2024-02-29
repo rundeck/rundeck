@@ -39,6 +39,7 @@ class ScmPluginJobDiffSpec extends BaseContainer {
         JobUtils.jobImportFile(PROJECT_NAME, JobUtils.updateJobFileToImport(JOB_XML_NAME, PROJECT_NAME, initialArgs) as String, client)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(EXPORT_INTEGRATION).forProject(PROJECT_NAME)
         scmClient.callSetupIntegration(GitExportSetupRequest.defaultRequest().forProject(PROJECT_NAME).withRepo(remoteRepo))
+        hold(5)
         ScmJobStatusResponse initialStatus = scmClient.callGetJobStatus(DUMMY_JOB_ID).response
         ScmActionPerformRequest actionRequest = new ScmActionPerformRequest([
                 input: [message: "Commit msg example"],
@@ -63,6 +64,7 @@ class ScmPluginJobDiffSpec extends BaseContainer {
         performAction.message == "SCM export Action was Successful: ${actionId}"
         performAction.success == true
         // Verify state after the action
+        hold(5)
         ScmJobStatusResponse updatedStatus = scmClient.callGetJobStatus(DUMMY_JOB_ID).response
         updatedStatus.actions.size() == 0
         updatedStatus.commit.size() == 5
@@ -82,6 +84,7 @@ class ScmPluginJobDiffSpec extends BaseContainer {
                 "uuid": DUMMY_JOB_ID
         ]
         JobUtils.jobImportFile(PROJECT_NAME, JobUtils.updateJobFileToImport(JOB_XML_NAME, PROJECT_NAME, updatedArgs) as String, client, JobUtils.DUPE_OPTION_UPDATE)
+        hold(5)
         def exportNeededStatus = scmClient.callGetJobStatus(DUMMY_JOB_ID).response
         exportNeededStatus.actions.size() == 1
         exportNeededStatus.commit.size() == 5
@@ -96,6 +99,7 @@ class ScmPluginJobDiffSpec extends BaseContainer {
         def finalAction = scmClient.callPerformJobAction(actionId, actionRequest, DUMMY_JOB_ID).response
         finalAction.message == "SCM export Action was Successful: ${actionId}"
         finalAction.success == true
+        hold(5)
         def finalStatus = scmClient.callGetJobStatus(DUMMY_JOB_ID).response
         finalStatus.actions.size() == 0
         finalStatus.commit.size() == 5

@@ -8,6 +8,7 @@ import okhttp3.ResponseBody
 import spock.lang.Specification
 
 import java.text.SimpleDateFormat
+import java.time.Duration
 import java.util.function.Consumer
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
@@ -310,5 +311,13 @@ abstract class BaseContainer extends Specification implements ClientProvider {
 
     def setupSpec() {
         startEnvironment()
+    }
+
+    void hold(int seconds) {
+        try {
+            sleep Duration.ofSeconds(seconds).toMillis()
+        } catch (InterruptedException e) {
+            log.error("Interrupted", e)
+        }
     }
 }
