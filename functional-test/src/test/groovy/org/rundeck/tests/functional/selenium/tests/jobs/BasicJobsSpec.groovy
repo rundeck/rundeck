@@ -205,7 +205,7 @@ class BasicJobsSpec extends SeleniumBase {
             jobShowPage.optionValidationWarningText.getText().contains 'Option \'reqOpt1\' is required'
     }
 
-    def "job filter by name 3 results"() {
+    def "job filter by name results"() {
         when:
             def jobShowPage = go JobShowPage, SELENIUM_BASIC_PROJECT
         then:
@@ -214,11 +214,18 @@ class BasicJobsSpec extends SeleniumBase {
             jobShowPage.waitForModal 1
             jobShowPage.jobSearchNameField.sendKeys 'option'
             jobShowPage.jobSearchSubmitButton.click()
-            jobShowPage.waitForNumberOfElementsToBe jobShowPage.jobRowBy, 3
-            jobShowPage.jobRowLink.size() == 3
+            jobShowPage.waitForNumberOfElementsToBe jobShowPage.jobRowBy, expected.size()
+            jobShowPage.jobRowLink.size() == expected.size()
             jobShowPage.jobRowLink.collect {
                 it.getText()
-            }.containsAll(["selenium-option-test1", "predefined job with options", "a job with options"])
+            }.containsAll(expected)
+        where:
+            expected = [
+                "selenium-option-test1",
+                "predefined job with options",
+                "create valid job basic options next ui",
+                "create valid job basic options old ui"
+            ]
     }
 
     def "job filter by name and group 1 results"() {
