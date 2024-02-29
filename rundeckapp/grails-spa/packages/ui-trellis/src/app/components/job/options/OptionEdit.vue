@@ -9,6 +9,8 @@
       </div>
     </div>
 
+    <!-- TODO restructure the following into subcomponents -->
+
     <div class="form-group">
       <label for="opttype_" class="col-sm-2 control-label">
         {{ $t("form.option.type.label") }}
