@@ -101,7 +101,7 @@ class JobsSpec extends SeleniumBase {
         then:
             jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
             jobCreatePage.optionButton.click()
-            jobCreatePage.optionName 0 sendKeys optName
+            jobCreatePage.optionNameNew() sendKeys optName
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
             jobCreatePage.executeScript "window.location.hash = '#workflowKeepGoingFail'"
             jobCreatePage.saveOptionButton.click()
@@ -193,7 +193,7 @@ class JobsSpec extends SeleniumBase {
         then:
             jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
             jobCreatePage.optionButton.click()
-            jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
+            jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.sessionSectionLabel
             jobCreatePage.sessionSectionLabel.isDisplayed()
@@ -213,7 +213,7 @@ class JobsSpec extends SeleniumBase {
         then:
             jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
             jobCreatePage.optionButton.click()
-            jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
+            jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
             jobCreatePage.sessionSectionLabel.isDisplayed()
             jobCreatePage.secureInputTypeRadio.click()
@@ -235,14 +235,14 @@ class JobsSpec extends SeleniumBase {
         then:
             jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
             jobCreatePage.optionButton.click()
-            jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
+            jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
             jobCreatePage.sessionSectionLabel.isDisplayed()
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 0
             jobCreatePage.optionButton.click()
-            jobCreatePage.optionName 1 sendKeys 'seleniumOption2'
+            jobCreatePage.optionNameNew() sendKeys 'seleniumOption2'
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
             jobCreatePage.sessionSectionLabel.isDisplayed()
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
@@ -266,7 +266,7 @@ class JobsSpec extends SeleniumBase {
         then:
         jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
         jobCreatePage.optionButton.click()
-        jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
+        jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
         jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
         jobCreatePage.sessionSectionLabel.isDisplayed()
         jobCreatePage.secureInputTypeRadio.click()
@@ -288,14 +288,14 @@ class JobsSpec extends SeleniumBase {
         then:
             jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
             jobCreatePage.optionButton.click()
-            jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
+            jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
             jobCreatePage.sessionSectionLabel.isDisplayed()
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 0
             jobCreatePage.optionButton.click()
-            jobCreatePage.optionName 1 sendKeys 'seleniumOption2'
+            jobCreatePage.optionNameNew() sendKeys 'seleniumOption2'
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
             jobCreatePage.sessionSectionLabel.isDisplayed()
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
@@ -324,14 +324,14 @@ class JobsSpec extends SeleniumBase {
         then:
             jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
             jobCreatePage.optionButton.click()
-            jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
+            jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
             jobCreatePage.sessionSectionLabel.isDisplayed()
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 0
             jobCreatePage.optionButton.click()
-            jobCreatePage.optionName 1 sendKeys 'seleniumOption2'
+            jobCreatePage.optionNameNew() sendKeys 'seleniumOption2'
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
             jobCreatePage.sessionSectionLabel.isDisplayed()
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
