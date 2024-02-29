@@ -3,26 +3,6 @@
     <undo-redo :event-bus="localEB" />
 
     <div class="optslist">
-      <div v-if="intOptions.length > 0">
-        <div class="optheader optctrlholder">
-          <span class="optdetail">
-            <span class="header">
-              {{ $t("option.list.header.name.title") }}
-            </span>
-          </span>
-          <span class="valuesSet">
-            <span class="header">
-              {{ $t("option.list.header.values.title") }}
-            </span>
-          </span>
-          <span class="enforceSet">
-            <span class="header">
-              {{ $t("option.list.header.restrictions.title") }}
-            </span>
-          </span>
-        </div>
-      </div>
-      <div class="clear"></div>
       <draggable
         v-model="intOptions"
         @update="dragUpdated"
