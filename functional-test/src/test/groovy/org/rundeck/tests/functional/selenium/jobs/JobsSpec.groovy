@@ -92,14 +92,13 @@ class JobsSpec extends SeleniumBase {
             jobListPage.validatePage()
     }
 
-    def "Duplicate_options - only validations, not save jobs"() {
+    def "Duplicate_options - only validations, not save jobs old ui"() {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi=nextUi
+            jobCreatePage.nextUi = false
             jobCreatePage.go()
             def optName = 'test'
-        then:
-            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
+            jobCreatePage.fillBasicJob specificationContext.currentIteration.name
             jobCreatePage.optionButton.click()
             jobCreatePage.optionNameNew() sendKeys optName
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
@@ -113,11 +112,59 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.duplicateButton optName click()
             jobCreatePage.waitFotOptLi 2
 
-        expect:
+        then:
             jobCreatePage.optionNameSaved 1 getText() equals optName + '_1'
             jobCreatePage.optionNameSaved 2 getText() equals optName + '_2'
+    }
+
+    def "Duplicate option create form next ui"() {
+        when:
+            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+            jobCreatePage.nextUi=true
+            jobCreatePage.go()
+            def optName = 'test'
+            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
+            jobCreatePage.optionButton.click()
+            jobCreatePage.optionNameNew() sendKeys optName
+            jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+            jobCreatePage.executeScript "window.location.hash = '#workflowKeepGoingFail'"
+            jobCreatePage.saveOptionButton.click()
+            jobCreatePage.waitFotOptLi 0
+
+            jobCreatePage.duplicateButton( optName, 0) click()
+
+
+        then: "create form is shown"
+            jobCreatePage.optionNameNew() displayed
+            jobCreatePage.optionNameNew().getAttribute('value') == optName + '_copy'
+            jobCreatePage.saveOptionButton.displayed
+        when:
+            jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
+            jobCreatePage.saveOptionButton.click()
+            jobCreatePage.waitFotOptLi 1
+
+        then:
+            jobCreatePage.optionNameSaved 0 getText() equals optName
+            jobCreatePage.optionNameSaved 1 getText() equals optName + '_copy'
+
         where:
-            nextUi << [false, true]
+            nextUi = true
+    }
+
+    def "Create option form next ui"() {
+        when:
+            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+            jobCreatePage.nextUi=true
+            jobCreatePage.go()
+            def optName = 'test'
+            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
+            jobCreatePage.optionButton.click()
+
+        then: "create form is shown"
+            jobCreatePage.optionNameNew() displayed
+            jobCreatePage.saveOptionButton.displayed
+        where:
+            nextUi = true
     }
 
     def "create job with dispatch to nodes"() {
