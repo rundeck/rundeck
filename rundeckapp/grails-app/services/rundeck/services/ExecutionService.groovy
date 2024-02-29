@@ -74,7 +74,6 @@ import org.hibernate.JDBCException
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
-import org.jsoup.select.Collector
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.data.model.v1.job.JobData
