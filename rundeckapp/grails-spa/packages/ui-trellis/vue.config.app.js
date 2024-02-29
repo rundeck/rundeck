@@ -105,7 +105,12 @@ module.exports = {
       },
     },
     output: {
-      filename: "[name].js",
+      filename: (asset) => {
+        if (asset.chunk.name.includes("chunk")) {
+          return "js/[name].js";
+        }
+        return "[name].js";
+      },
       library: "rundeckCore",
     },
     devServer: {
