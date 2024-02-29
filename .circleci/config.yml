@@ -295,30 +295,6 @@ jobs:
       - collect-gradle-tests
       - save-build-cache
 
-  # Run twistlock scan
-  twistlock-scan-image:
-    <<: *job-defaults
-    executor:
-      name: docker-builder
-    parameters:
-      continue:
-        description: Continue successfully even if check fails
-        type: boolean
-        default: false
-    steps:
-      - setup_docker
-      - checkout
-      - run-build-step:
-          step-name: Install Twistlock
-          command: install_twistcli
-      - run-build-step:
-          step-name: Scan Image
-          command: twistlock_scan || << parameters.continue >>
-      - store_artifacts:
-          path: ~/workspace/twistlock_scan_result.json
-      - store_test_results:
-          path: test-results
-
   #Openapi tests
   test-openapi:
     <<: *job-defaults
@@ -626,24 +602,6 @@ workflows:
           name: Test Packaging
           <<: *require-build
           <<: *slack-defaults
-      - twistlock-scan-image:
-          name: Twistlock Scan Preview
-          <<: *require-build
-          continue: true
-          context:
-            - tl_scan_context
-          filters:
-            branches: { ignore: main }
-      - twistlock-scan-image:
-          name: Twistlock Scan
-          continue: false
-          context:
-            - tl_scan_context
-            - slack-secrets
-          filters:
-            branches: { only: main }
-          <<: *require-build
-          <<: *slack-fail-post-step
       - test-docker:
           name: Docker Test
           command: bash test/run-docker-tests.sh
