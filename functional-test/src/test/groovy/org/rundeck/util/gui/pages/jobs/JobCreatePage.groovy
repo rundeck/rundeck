@@ -44,7 +44,7 @@ class JobCreatePage extends BasePage {
         static By optionOpenKeyStorageBy = By.cssSelector(".opt_sec_enabled div.input-group > .input-group-btn > button")
         static By optionUndoBy = By.cssSelector("[data-test=options_undo_redo] > button:nth-child(1)")
         static By optionRedoBy = By.cssSelector("[data-test=options_undo_redo] > button:nth-child(2)")
-        static By defaultValueInput=By.cssSelector("[data-test=option.value] input[name=defaultValue]")
+        static By defaultValueInput=By.cssSelector("[data-test='option.value'] input[name=defaultValue]")
     }
 
     By separatorOptionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
