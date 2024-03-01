@@ -66,12 +66,16 @@ class LogViewerOutputSpec extends SeleniumBase{
         jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'test output ')]"),9,5)
         def lineToClick = jobShowPage.el(By.xpath("//span[contains(text(),'test output 5')]/ancestor::div[contains(@class, 'execution-log__line')]/div[@class='execution-log__gutter']"))
         lineToClick.click();
-        jobShowPage.waitForUrlToContain("#outputL5")
+        def checkAfterClick = jobShowPage.waitForUrlToContain("#outputL5")
         driver.navigate().refresh();
+        def checkAfterRefresh = jobShowPage.waitForUrlToContain("#outputL5")
+        def selectedLine = jobShowPage.waitForElementVisible(By.xpath("//div[contains(@class, 'execution-log__line--selected')]")).isDisplayed()
 
         then:
-        jobShowPage.waitForUrlToContain("#outputL5")
-        def selectedLine = jobShowPage.waitForElementVisible(By.xpath("//div[contains(@class, 'execution-log__line--selected')]"))
-        assert selectedLine != null : "Expected at least one element with the specified class to be present"
+        verifyAll {
+            checkAfterClick
+            checkAfterRefresh
+            selectedLine
+        }
     }
 }
