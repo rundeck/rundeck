@@ -364,8 +364,11 @@ class JobCreatePage extends BasePage {
         el storagePathInput
     }
 
+    By getDefaultValueBy(){
+        nextUi? NextUi.defaultValueInput:defaultValueInput
+    }
     WebElement getDefaultValueInput(){
-        el nextUi? NextUi.defaultValueInput:defaultValueInput
+        el defaultValueBy
     }
 
     WebElement getOptionOpenKeyStorageButton() {
