@@ -78,11 +78,9 @@ class ScmPluginJobDiffSpec extends BaseContainer {
         and:
         def updatedArgs = [
                 "job-name": "job-test-updated",
-                "job-description-name": "description-test-updated",
-                "args": "echo hello there updated",
-                "2-args": "echo hello there 2 updated",
                 "uuid": DUMMY_JOB_ID
         ]
+        hold(5)
         JobUtils.jobImportFile(PROJECT_NAME, JobUtils.updateJobFileToImport(JOB_XML_NAME, PROJECT_NAME, updatedArgs) as String, client, JobUtils.DUPE_OPTION_UPDATE)
         hold(5)
         def exportNeededStatus = scmClient.callGetJobStatus(DUMMY_JOB_ID).response
