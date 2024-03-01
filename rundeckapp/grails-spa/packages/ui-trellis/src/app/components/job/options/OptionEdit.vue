@@ -80,6 +80,7 @@
           size="40"
           :placeholder="$t('form.option.name.label')"
           id="optname_"
+          maxlength="255"
         />
         <div class="help-block" v-if="validationErrors['name']">
           <ErrorsList :errors="validationErrors['name']" />
@@ -111,6 +112,7 @@
           @blur="validateOptionLabel"
           size="40"
           :placeholder="$t('form.option.label.label')"
+          maxlength="255"
         />
         <div class="help-block" v-if="validationErrors['label']">
           <ErrorsList :errors="validationErrors['label']" />
