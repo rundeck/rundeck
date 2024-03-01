@@ -986,104 +986,11 @@
       </div>
     </div>
 
-    <!-- preview plain -->
-    <section
-      id="preview_"
-      class="section-separator-solo"
-      v-if="
-        option.name && option.optionType !== 'file' && !validationErrors['name']
-      "
-    >
-      <div class="row">
-        <label class="col-sm-2 control-label">{{ $t("usage") }}</label>
-        <div
-          class="col-sm-10 opt_sec_nexp_disabled"
-          v-if="!option.secure || option.valueExposed"
-        >
-          <span class="text-strong">{{
-            $t("the.option.values.will.be.available.to.scripts.in.these.forms")
-          }}</span>
-          <div>
-            {{ $t("bash.prompt") }} <code>${{ bashVarPreview }}</code>
-          </div>
-          <div>
-            {{ $t("commandline.arguments.prompt") }}
-            <code>${option.{{ option.name }}}</code>
-          </div>
-          <div>
-            {{ $t("commandline.arguments.prompt.unquoted") }}
-            <code>${unquotedoption.{{ option.name }}}</code>
-            {{ $t("commandline.arguments.prompt.unquoted.warning") }}
-          </div>
-          <div>
-            {{ $t("script.content.prompt") }}
-            <code>@option.{{ option.name }}@</code>
-          </div>
-        </div>
-        <div class="col-sm-10 opt_sec_nexp_enabled" v-else>
-          <span class="warn note">{{
-            $t("form.option.usage.secureAuth.message")
-          }}</span>
-        </div>
-      </div>
-    </section>
-    <section
-      id="file_preview_"
-      v-if="
-        option.name && option.optionType === 'file' && !validationErrors['name']
-      "
-      class="section-separator-solo"
-    >
-      <div class="row">
-        <label class="col-sm-2 control-label">{{ $t("usage") }}</label>
-        <div class="col-sm-10">
-          <span class="text-info">{{
-            $t("form.option.usage.file.preview.description")
-          }}</span>
-          <div>
-            {{ $t("bash.prompt") }} <code>${{ fileBashVarPreview }}</code>
-          </div>
-          <div>
-            {{ $t("commandline.arguments.prompt") }}
-            <code>${file.{{ option.name }}}</code>
-          </div>
-          <div>
-            {{ $t("script.content.prompt") }}
-            <code>@file.{{ option.name }}@</code>
-          </div>
-
-          <span class="text-info">{{
-            $t("form.option.usage.file.fileName.preview.description")
-          }}</span>
-          <div>
-            {{ $t("bash.prompt") }}
-            <code>${{ fileFileNameBashVarPreview }}</code>
-          </div>
-          <div>
-            {{ $t("commandline.arguments.prompt") }}
-            <code>${file.{{ option.name }}.fileName}</code>
-          </div>
-          <div>
-            {{ $t("script.content.prompt") }}
-            <code>@file.{{ option.name }}.fileName@</code>
-          </div>
-          <span class="text-info">{{
-            $t("form.option.usage.file.sha.preview.description")
-          }}</span>
-          <div>
-            {{ $t("bash.prompt") }} <code>${{ fileShaBashVarPreview }}</code>
-          </div>
-          <div>
-            {{ $t("commandline.arguments.prompt") }}
-            <code>${file.{{ option.name }}.sha}</code>
-          </div>
-          <div>
-            {{ $t("script.content.prompt") }}
-            <code>@file.{{ option.name }}.sha@</code>
-          </div>
-        </div>
-      </div>
-    </section>
+    <!-- preview (text)  -->
+    <option-usage-preview
+      :option="option"
+      :validation-errors="validationErrors"
+    />
     <div class="flow-h" style="margin: 10px 0">
       <template v-if="newOption">
         <btn
@@ -1127,6 +1034,7 @@
 </template>
 <script lang="ts">
 import ErrorsList from "./ErrorsList.vue";
+import OptionUsagePreview from "./OptionUsagePreview.vue";
 import { validateJobOption } from "@/library/services/jobEdit";
 import { cloneDeep } from "lodash";
 import { defineComponent } from "vue";
@@ -1153,6 +1061,7 @@ export default defineComponent({
     AceEditor,
     VMarkdownView,
     PluginInfo,
+    OptionUsagePreview,
   },
   emits: ["update:modelValue", "cancel", "save"],
   props: {
@@ -1180,7 +1089,6 @@ export default defineComponent({
         cloneDeep(this.modelValue),
       ) as JobOptionEdit,
       regexChoice: false,
-      bashVarPrefix: "RD_",
       remoteUrlAuthenticationList: [
         {
           value: "BASIC",
@@ -1234,23 +1142,6 @@ export default defineComponent({
   computed: {
     fileUploadPluginEnabled() {
       return this.features["fileUploadPlugin"];
-    },
-    bashVarPreview() {
-      return this.option.name ? this.tobashvar(this.option.name) : "";
-    },
-    fileBashVarPreview() {
-      return this.option.name ? this.tofilebashvar(this.option.name) : "";
-    },
-
-    fileFileNameBashVarPreview() {
-      return this.option.name
-        ? this.tofilebashvar(this.option.name + ".fileName")
-        : "";
-    },
-    fileShaBashVarPreview() {
-      return this.option.name
-        ? this.tofilebashvar(this.option.name + ".sha")
-        : "";
     },
     isDate() {
       return this.option.isDate;
@@ -1333,26 +1224,6 @@ export default defineComponent({
     },
     getProviderFor(name) {
       return this.optionValuesPlugins.find((p) => p.name === name);
-    },
-    tofilebashvar(str: string) {
-      return (
-        this.bashVarPrefix +
-        "FILE_" +
-        str
-          .toUpperCase()
-          .replace(/[^a-zA-Z0-9_]/g, "_")
-          .replace(/[{}$]/, "")
-      );
-    },
-    tobashvar(str: string) {
-      return (
-        this.bashVarPrefix +
-        "OPTION_" +
-        str
-          .toUpperCase()
-          .replace(/[^a-zA-Z0-9_]/g, "_")
-          .replace(/[{}$]/, "")
-      );
     },
     validateOptionName() {
       if (!this.option.name) {
