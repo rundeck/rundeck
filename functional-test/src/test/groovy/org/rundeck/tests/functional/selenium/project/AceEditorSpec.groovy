@@ -34,13 +34,13 @@ class AceEditorSpec extends SeleniumBase {
             editNodesFilePage.setIndex(jsonFileIndex)
 
         when:
-
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
         page(HomePage)
         editNodesPage.go()
         editNodesFilePage.go()
         editNodesFilePage.waitForAceToRender()
+        editNodesFilePage.waitForAceToHaveText()
         def linesInAceGutter = editNodesFilePage.aceGutterElement().getText()
         List<String> linesAsList = Arrays.stream(linesInAceGutter.split("\\n"))
                 .collect(Collectors.toList());
