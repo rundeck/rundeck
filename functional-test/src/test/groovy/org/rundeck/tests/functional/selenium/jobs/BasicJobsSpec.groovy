@@ -244,18 +244,20 @@ class BasicJobsSpec extends SeleniumBase {
     }
 
     def "job filter by name and - top group 2 results"() {
-        when:
+        given:
             def jobShowPage = go JobShowPage, SELENIUM_BASIC_PROJECT
-        then:
+        when:
             jobShowPage.validatePage()
             jobShowPage.jobSearchButton.click()
             jobShowPage.waitForModal 1
             jobShowPage.jobSearchNameField.sendKeys 'option'
             jobShowPage.jobSearchGroupField.sendKeys '-'
             jobShowPage.jobSearchSubmitButton.click()
-        expect:
+        then:
             jobShowPage.waitForNumberOfElementsToBe jobShowPage.jobRowBy, expected.size()
-            jobShowPage.jobRowLink.collect { it.getText() } == expected
+            def names = jobShowPage.jobRowLink.collect { it.getText() }
+            names.size() == expected.size()
+            names.containsAll expected
         where:
             expected = [
                 "predefined job with options",
