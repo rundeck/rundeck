@@ -407,297 +407,16 @@
             </div>
           </div>
 
-          <div
-            data-test="option.valuesUrl"
-            id="vurl_section"
-            v-else-if="option.valuesType === 'url'"
-            :class="{ 'has-error': hasError('valuesUrl') }"
-          >
-            <input
-              type="url"
-              class="form-control"
-              name="valuesUrl"
-              v-model="option.valuesUrl"
-              size="60"
-              :placeholder="$t('form.option.valuesURL.placeholder')"
+          <template v-else-if="option.valuesType === 'url'">
+            <option-remote-url-config
+              v-model:config-remote-url="option.configRemoteUrl"
+              v-model:remote-url-authentication-type="
+                option.remoteUrlAuthenticationType
+              "
+              v-model:values-url="option.valuesUrl"
+              :validation-errors="validationErrors"
             />
-            <div class="help-block" v-if="validationErrors['valuesUrl']">
-              <ErrorsList :errors="validationErrors['valuesUrl']" />
-            </div>
-            <div class="help-block">
-              {{ $t("form.option.valuesUrl.description") }}
-              <a
-                href="https://docs.rundeck.com/docs/manual/job-options.html#option-model-provider"
-                target="_blank"
-              >
-                <i class="glyphicon glyphicon-question-sign"></i>
-                {{ $t("rundeck.user.guide.option.model.provider") }}
-              </a>
-            </div>
-
-            <div
-              class="row"
-              data-test="option.configRemoteUrl"
-              :class="{ 'has-error': hasError('configRemoteUrl') }"
-            >
-              <div class="col-md-12">
-                <label class="control-label">{{
-                  $t("form.option.valuesType.url.filter.label")
-                }}</label>
-              </div>
-
-              <div class="col-md-4">
-                <div class="">
-                  <input
-                    type="text"
-                    class="form-control"
-                    name="remoteUrlJsonFilter"
-                    v-model="option.configRemoteUrl.jsonFilter"
-                    size="30"
-                  />
-                </div>
-                <div
-                  class="help-block"
-                  v-if="validationErrors['configRemoteUrl.jsonFilter']"
-                >
-                  <ErrorsList
-                    :errors="validationErrors['configRemoteUrl.jsonFilter']"
-                  />
-                </div>
-              </div>
-              <div class="col-md-12">
-                <div class="">
-                  <div class="help-block">
-                    {{ $t("form.option.valuesType.url.filter.description") }}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col-md-12">
-                <label class="control-label">{{
-                  $t("form.option.valuesType.url.authType.label")
-                }}</label>
-              </div>
-
-              <div class="col-md-4">
-                <select
-                  class="form-control"
-                  v-model="option.remoteUrlAuthenticationType"
-                >
-                  <option value="" disabled>
-                    {{ $t("form.option.valuesType.url.authType.empty.label") }}
-                  </option>
-                  <option
-                    v-for="option in remoteUrlAuthenticationList"
-                    :value="option.value"
-                    :key="option.value"
-                  >
-                    {{ option.label }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="col-md-8">
-                <!--USER/PASSSWORD AUTH-->
-                <div
-                  id="remoteUrlUserAuth"
-                  v-if="option.remoteUrlAuthenticationType === 'BASIC'"
-                >
-                  <div>
-                    <div class="col-md-3">
-                      <label class="control-label">{{
-                        $t(
-                          "form.option.valuesType.url.authentication.username.label",
-                        )
-                      }}</label>
-                    </div>
-                    <div class="col-md-8 input-group">
-                      <input
-                        type="text"
-                        class="form-control"
-                        name="remoteUrlUsername"
-                        v-model="option.configRemoteUrl.username"
-                        size="30"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <div class="col-md-3">
-                      <label class="control-label">{{
-                        $t(
-                          "form.option.valuesType.url.authentication.password.label",
-                        )
-                      }}</label>
-                    </div>
-                    <div class="col-md-8 input-group">
-                      <span
-                        class="input-group-addon has_tooltip"
-                        :title="
-                          $t('form.option.defaultStoragePath.description')
-                        "
-                      >
-                        <i class="glyphicon glyphicon-lock"></i>
-                      </span>
-
-                      <input
-                        type="text"
-                        class="form-control"
-                        v-model="option.configRemoteUrl.passwordStoragePath"
-                        size="20"
-                      />
-
-                      <span class="input-group-btn">
-                        <key-storage-selector
-                          v-model="option.configRemoteUrl.passwordStoragePath"
-                          :storage-filter="'Rundeck-data-type=password'"
-                          :allow-upload="true"
-                          :read-only="false"
-                        />
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <!--USER/PASSSWORD AUTH-->
-
-                <!--TOKEN AUTH-->
-                <div
-                  id="remoteUrlTokenAuth"
-                  v-if="option.remoteUrlAuthenticationType === 'API_KEY'"
-                >
-                  <div>
-                    <div class="col-md-3">
-                      <label class="control-label">{{
-                        $t(
-                          "form.option.valuesType.url.authentication.key.label",
-                        )
-                      }}</label>
-                    </div>
-                    <div class="col-md-8 input-group">
-                      <input
-                        type="text"
-                        class="form-control"
-                        name="remoteUrlKey"
-                        v-model="option.configRemoteUrl.keyName"
-                        size="30"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <div class="col-md-3">
-                      <label class="control-label">{{
-                        $t(
-                          "form.option.valuesType.url.authentication.token.label",
-                        )
-                      }}</label>
-                    </div>
-                    <div class="col-md-8 input-group">
-                      <span
-                        class="input-group-addon has_tooltip"
-                        :title="
-                          $t('form.option.defaultStoragePath.description')
-                        "
-                      >
-                        <i class="glyphicon glyphicon-lock"></i>
-                      </span>
-
-                      <input
-                        type="text"
-                        class="form-control"
-                        name="remoteUrlToken"
-                        v-model="option.configRemoteUrl.tokenStoragePath"
-                        size="20"
-                        placeholder=""
-                      />
-
-                      <span class="input-group-btn">
-                        <key-storage-selector
-                          v-model="option.configRemoteUrl.tokenStoragePath"
-                          :storage-filter="'Rundeck-data-type=password'"
-                          :allow-upload="true"
-                          :read-only="false"
-                        />
-                      </span>
-                    </div>
-                  </div>
-                  <div>
-                    <div class="col-md-3">
-                      <label class="control-label">{{
-                        $t(
-                          "form.option.valuesType.url.authentication.tokenInformer.label",
-                        )
-                      }}</label>
-                    </div>
-                    <div class="col-md-8 input-group">
-                      <select
-                        name="remoteUrlApiTokenReporter"
-                        class="form-control"
-                        v-model="option.configRemoteUrl.apiTokenReporter"
-                      >
-                        <option value="HEADER">
-                          {{
-                            $t(
-                              "form.option.valuesType.url.authentication.tokenInformer.header.label",
-                            )
-                          }}
-                        </option>
-                        <option value="QUERY_PARAM">
-                          {{
-                            $t(
-                              "form.option.valuesType.url.authentication.tokenInformer.query.label",
-                            )
-                          }}
-                        </option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-                <!--TOKEN AUTH-->
-
-                <!--bearerToken AUTH-->
-                <div
-                  id="remoteUrlBearerTokenAuth"
-                  v-if="option.remoteUrlAuthenticationType === 'BEARER_TOKEN'"
-                >
-                  <div class="col-md-3">
-                    <label class="control-label">{{
-                      $t(
-                        "form.option.valuesType.url.authentication.token.label",
-                      )
-                    }}</label>
-                  </div>
-                  <div class="col-md-8 input-group">
-                    <span
-                      class="input-group-addon has_tooltip"
-                      :title="$t('form.option.defaultStoragePath.description')"
-                    >
-                      <i class="glyphicon glyphicon-lock"></i>
-                    </span>
-
-                    <input
-                      type="text"
-                      class="form-control"
-                      name="remoteUrlBearerToken"
-                      v-model="option.configRemoteUrl.tokenStoragePath"
-                      size="20"
-                      placeholder=""
-                    />
-
-                    <span class="input-group-btn">
-                      <key-storage-selector
-                        v-model="option.configRemoteUrl.tokenStoragePath"
-                        :storage-filter="'Rundeck-data-type=password'"
-                        :allow-upload="true"
-                        :read-only="false"
-                      />
-                    </span>
-                  </div>
-                </div>
-                <!--bearerToken AUTH-->
-              </div>
-            </div>
-          </div>
+          </template>
           <div v-else-if="option.valuesType && optionValuesPlugins">
             <plugin-info
               :detail="getProviderFor(option.valuesType)"
@@ -1067,6 +786,7 @@
 <script lang="ts">
 import ErrorsList from "./ErrorsList.vue";
 import OptionUsagePreview from "./OptionUsagePreview.vue";
+import OptionRemoteUrlConfig from "./OptionRemoteUrlConfig.vue";
 import { validateJobOption } from "@/library/services/jobEdit";
 import { cloneDeep } from "lodash";
 import { defineComponent } from "vue";
@@ -1094,6 +814,7 @@ export default defineComponent({
     VMarkdownView,
     PluginInfo,
     OptionUsagePreview,
+    OptionRemoteUrlConfig,
   },
   emits: ["update:modelValue", "cancel", "save"],
   props: {
@@ -1121,22 +842,6 @@ export default defineComponent({
         cloneDeep(this.modelValue),
       ) as JobOptionEdit,
       regexChoice: false,
-      remoteUrlAuthenticationList: [
-        {
-          value: "BASIC",
-          label: this.$t("form.option.valuesType.url.authType.basic.label"),
-        },
-        {
-          value: "API_KEY",
-          label: this.$t("form.option.valuesType.url.authType.apiKey.label"),
-        },
-        {
-          value: "BEARER_TOKEN",
-          label: this.$t(
-            "form.option.valuesType.url.authType.bearerToken.label",
-          ),
-        },
-      ],
       validationErrors: {},
       validationWarnings: {},
     };

@@ -170,12 +170,6 @@ describe("OptionEdit", () => {
     ["value", {}],
     ["defaultStoragePath", { secure: true }],
     ["values", {}],
-    ["valuesUrl", { valuesUrl: "http://example.com" }],
-    [
-      "configRemoteUrl",
-      { valuesUrl: "http://example.com" },
-      "configRemoteUrl.jsonFilter",
-    ],
     ["valuesListDelimiter", {}],
     ["regex", { regex: "asdf" }],
     ["hidden", {}],
