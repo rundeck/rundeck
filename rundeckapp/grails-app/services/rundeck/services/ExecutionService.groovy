@@ -3168,6 +3168,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                              retryContext.user, input, retryContext.secureOpts,
                                              retryContext.secureOptsExposed, count + 1,execution.id,originalId)
 
+                try {
+                    throw new Exception("saveExecutionState_currentTransaction ERROR!!!!")
+                }catch (Exception e){
+                    e.printStackTrace()
+                }
                 log.trace("saveExecutionState_currentTransaction: retry execute job (${scheduledExecution.getJobName()} - id: ${execution.id}) result status: ${result}")
                 if (result.success) {
                     execution.retryExecution = result.execution
