@@ -90,13 +90,13 @@
       </div>
     </div>
 
-    <!-- label -->
-    <div class="form-group">
-      <label
-        for="opt_label"
-        class="col-sm-2 control-label"
-        :class="{ 'has-error': hasError('label') }"
-      >
+    <!-- label (all)-->
+    <div
+      class="form-group"
+      data-test="optionLabelField"
+      :class="{ 'has-error': hasError('label') }"
+    >
+      <label for="opt_label" class="col-sm-2 control-label">
         {{ $t("form.option.label.label") }}
       </label>
 
@@ -107,9 +107,14 @@
           name="label"
           id="opt_label"
           v-model="option.label"
+          @input="validateOptionLabel"
+          @blur="validateOptionLabel"
           size="40"
           :placeholder="$t('form.option.label.label')"
         />
+        <div class="help-block" v-if="validationErrors['label']">
+          <ErrorsList :errors="validationErrors['label']" />
+        </div>
       </div>
     </div>
 
@@ -1229,6 +1234,13 @@ export default defineComponent({
     getProviderFor(name) {
       return this.optionValuesPlugins.find((p) => p.name === name);
     },
+    validateLen(field: string, max: number): boolean {
+      if (this.option[field] && this.option[field].length > max) {
+        return false;
+      } else {
+        return true;
+      }
+    },
     validateOptionName() {
       if (!this.option.name) {
         this.validationWarnings.name = this.$t("form.field.required.message");
@@ -1246,6 +1258,21 @@ export default defineComponent({
             validOptionNameRegex.toString(),
           ]),
         ];
+      }
+    },
+    validateOptionLabel() {
+      let errors = [];
+      if (!this.validateLen("label", 255)) {
+        errors.push(
+          this.$t("form.field.too.long.message", {
+            max: 255,
+          }),
+        );
+      }
+      if (errors.length > 0) {
+        this.validationErrors.label = errors;
+      } else {
+        delete this.validationErrors.label;
       }
     },
     async validateOption() {
