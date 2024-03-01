@@ -78,6 +78,9 @@ class ScmPluginJobDiffSpec extends BaseContainer {
         and:
         def updatedArgs = [
                 "job-name": "job-test-updated",
+                "job-description-name": "description-test-updated",
+                "args": "echo hello there updated",
+                "2-args": "echo hello there 2 updated",
                 "uuid": DUMMY_JOB_ID
         ]
         hold(5)
