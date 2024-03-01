@@ -163,4 +163,39 @@ describe("OptionEdit", () => {
       );
     },
   );
+  it.each([
+    ["label", {}],
+    ["name", {}],
+    ["description", {}],
+    ["value", {}],
+    ["defaultStoragePath", { secure: true }],
+    ["values", {}],
+    ["valuesUrl", { valuesUrl: "http://example.com" }],
+    [
+      "configRemoteUrl",
+      { valuesUrl: "http://example.com" },
+      "configRemoteUrl.jsonFilter",
+    ],
+    ["valuesListDelimiter", {}],
+    ["regex", { regex: "asdf" }],
+    ["hidden", {}],
+    ["delimiter", { multivalued: true }],
+  ])(
+    "shows validation errors for field %p",
+    async (fieldName: string, optData: any, errorName: string = null) => {
+      const wrapper = await mountOptionEdit({
+        modelValue: Object.assign(
+          { name: "aname", optionType: "text" },
+          optData,
+        ),
+        editable: true,
+      });
+      wrapper.vm.addError(errorName || fieldName, "error1");
+      await wrapper.vm.$nextTick();
+      let section = wrapper.get(`[data-test=option.${fieldName}]`);
+      expect(section.classes()).toContain("has-error");
+      let errorslist = section.get("div.help-block errorslist");
+      expect(errorslist.attributes()["errors"]).toContain("error1");
+    },
+  );
 });

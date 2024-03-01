@@ -120,8 +120,12 @@
       </div>
     </div>
 
-    <!-- description -->
-    <div class="form-group" :class="{ 'has-error': hasError('description') }">
+    <!-- description (all) -->
+    <div
+      class="form-group"
+      data-test="option.description"
+      :class="{ 'has-error': hasError('description') }"
+    >
       <label class="col-sm-2 control-label" for="optdesc_">{{
         $t("form.option.description.label")
       }}</label>
@@ -134,6 +138,9 @@
           lang="markdown"
           :readOnly="false"
         />
+        <div class="help-block" v-if="validationErrors['description']">
+          <ErrorsList :errors="validationErrors['description']" />
+        </div>
         <div class="help-block">
           {{ $t("Option.property.description.description") }}
           <a
@@ -147,10 +154,12 @@
       </div>
     </div>
 
-    <!-- TODO option MAIN section -->
+    <!-- main section (text) -->
     <div v-if="option.optionType !== 'file'">
+      <!-- default -->
       <div
         class="form-group"
+        data-test="option.value"
         :class="{ 'has-error': hasError('value') }"
         v-if="showDefaultValue"
       >
@@ -172,8 +181,10 @@
         </div>
       </div>
 
+      <!-- default key -->
       <div
         class="opt_sec_enabled form-group"
+        data-test="option.defaultStoragePath"
         :class="{ 'has-error': hasError('defaultStoragePath') }"
         v-if="shouldShowDefaultStorage"
       >
@@ -216,6 +227,7 @@
         </div>
       </div>
 
+      <!-- input type -->
       <div class="form-group">
         <label class="col-sm-2 control-label">{{
           $t("form.option.inputType.label")
@@ -377,6 +389,7 @@
         <div class="col-sm-7">
           <div
             id="vlist_section"
+            data-test="option.values"
             v-if="option.valuesType === 'list'"
             :class="{ 'has-error': hasError('values') }"
           >
@@ -395,6 +408,7 @@
           </div>
 
           <div
+            data-test="option.valuesUrl"
             id="vurl_section"
             v-else-if="option.valuesType === 'url'"
             :class="{ 'has-error': hasError('valuesUrl') }"
@@ -423,6 +437,7 @@
 
             <div
               class="row"
+              data-test="option.configRemoteUrl"
               :class="{ 'has-error': hasError('configRemoteUrl') }"
             >
               <div class="col-md-12">
@@ -696,6 +711,7 @@
           </div>
         </div>
       </div>
+      <!-- sort values -->
       <div class="form-group">
         <label class="col-sm-2 control-label">{{
           $t("form.option.sort.label")
@@ -731,6 +747,7 @@
 
         <div
           class="input-group col-sm-3"
+          data-test="option.valuesListDelimiter"
           :class="{ 'has-error': hasError('valuesListDelimiter') }"
         >
           <div class="input-group-addon" style="background-color: #e0e0e0">
@@ -754,8 +771,10 @@
           {{ $t("form.option.valuesDelimiter.description") }}
         </span>
       </div>
+      <!-- enforced -->
       <div
         class="form-group opt_keystorage_disabled"
+        data-test="option.regex"
         :class="{ 'has-error': hasError('regex') }"
         v-if="!isSecureInput"
       >
@@ -826,7 +845,7 @@
 
       <!-- end MAIN section -->
     </div>
-    <!-- required -->
+    <!-- required (all) -->
     <div class="form-group">
       <label class="col-sm-2 control-label">{{
         $t("Option.required.label")
@@ -862,10 +881,11 @@
       </div>
     </div>
 
-    <!-- hidden -->
+    <!-- hidden (text) -->
     <div
       class="form-group"
       v-if="option.optionType !== 'file'"
+      data-test="option.hidden"
       :class="{ 'has-error': hasError('hidden') }"
     >
       <label class="col-sm-2 control-label">{{
@@ -906,10 +926,11 @@
       </div>
     </div>
 
-    <!-- multivalue -->
+    <!-- multivalue (text) -->
     <div
       class="form-group"
       v-if="option.optionType !== 'file'"
+      data-test="option.delimiter"
       :class="{ 'has-error': hasError('multivalued') || hasError('delimiter') }"
     >
       <label class="col-sm-2 control-label">
@@ -1217,7 +1238,11 @@ export default defineComponent({
     async doSave() {
       this.validationErrors = {};
       this.validationWarnings = {};
+      this.validateOptionLabel();
       this.validateOptionName();
+      if (this.hasFormErrors) {
+        return;
+      }
       await this.validateOption();
       if (this.hasFormErrors) {
         return;
@@ -1233,6 +1258,22 @@ export default defineComponent({
         )
       );
     },
+    addError(field: string, error: string) {
+      if (!this.validationErrors[field]) {
+        this.validationErrors[field] = [];
+      }
+      this.validationErrors[field].push(error);
+    },
+    addWarning(field: string, error: string) {
+      if (!this.validationWarnings[field]) {
+        this.validationWarnings[field] = [];
+      }
+      this.validationWarnings[field].push(error);
+    },
+    clearValidation(field: string) {
+      delete this.validationWarnings[field];
+      delete this.validationErrors[field];
+    },
     getProviderFor(name) {
       return this.optionValuesPlugins.find((p) => p.name === name);
     },
@@ -1244,15 +1285,14 @@ export default defineComponent({
       }
     },
     validateOptionName() {
+      this.clearValidation("name");
       if (!this.option.name) {
-        this.validationWarnings.name = this.$t("form.field.required.message");
+        this.addWarning("name", this.$t("form.field.required.message"));
         return;
-      } else {
-        delete this.validationWarnings.name;
       }
-      let errors = [];
       if (!this.validateLen("name", 255)) {
-        errors.push(
+        this.addError(
+          "name",
           this.$t("form.field.too.long.message", {
             max: 255,
           }),
@@ -1261,31 +1301,23 @@ export default defineComponent({
       let validOptionNameRegex = /^[a-zA-Z_0-9.-]+$/;
       let inputResult = validOptionNameRegex.test(this.option.name);
       if (!inputResult) {
-        errors.push(
+        this.addError(
+          "name",
           this.$t("form.option.name.validation.error", [
             validOptionNameRegex.toString(),
           ]),
         );
       }
-      if (errors.length > 0) {
-        this.validationErrors.name = errors;
-      } else {
-        delete this.validationErrors.name;
-      }
     },
     validateOptionLabel() {
-      let errors = [];
+      this.clearValidation("label");
       if (!this.validateLen("label", 255)) {
-        errors.push(
+        this.addError(
+          "label",
           this.$t("form.field.too.long.message", {
             max: 255,
           }),
         );
-      }
-      if (errors.length > 0) {
-        this.validationErrors.label = errors;
-      } else {
-        delete this.validationErrors.label;
       }
     },
     async validateOption() {
