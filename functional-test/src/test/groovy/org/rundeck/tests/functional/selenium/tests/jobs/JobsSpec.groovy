@@ -292,7 +292,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 0
             jobCreatePage.optionButton.click()
-            jobCreatePage.optionNameNew() sendKeys 'seleniumOption2'
+            jobCreatePage.optionNameNew(1) sendKeys 'seleniumOption2'
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
             jobCreatePage.sessionSectionLabel.isDisplayed()
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton

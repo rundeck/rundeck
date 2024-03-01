@@ -42,6 +42,9 @@ class JobCreatePage extends BasePage {
         static By separatorOptionBy = By.cssSelector("#option_preview")
         static By optionCloseKeyStorageBy = By.cssSelector("#storage-file.modal .modal-footer > button.btn-default")
         static By optionOpenKeyStorageBy = By.cssSelector(".opt_sec_enabled div.input-group > .input-group-btn > button")
+        static By optionUndoBy = By.cssSelector("[data-test=options_undo_redo] > button:nth-child(1)")
+        static By optionRedoBy = By.cssSelector("[data-test=options_undo_redo] > button:nth-child(2)")
+        static By defaultValueInput=By.cssSelector("[data-test=option.value] input[name=defaultValue]")
     }
 
     By separatorOptionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
@@ -250,11 +253,11 @@ class JobCreatePage extends BasePage {
         el nextUi ? NextUi.optionBy : optionBy
     }
 
-    WebElement optionNameNew() {
+    WebElement optionNameNew(int index=0) {
         if(nextUi){
             return byAndWait (By.cssSelector("#optitem_new input[type=text][name=name]"))
         }else{
-            return optionName(0)
+            return optionName(index)
         }
     }
     WebElement optionName(int index) {
@@ -362,7 +365,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getDefaultValueInput(){
-        el defaultValueInput
+        el nextUi? NextUi.defaultValueInput:defaultValueInput
     }
 
     WebElement getOptionOpenKeyStorageButton() {
@@ -378,11 +381,11 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getOptionUndoButton() {
-        el optionUndoBy
+        el nextUi ? NextUi.optionUndoBy : optionUndoBy
     }
 
     WebElement getOptionRedoButton() {
-        el optionRedoBy
+        el nextUi ? NextUi.optionRedoBy : optionRedoBy
     }
 
     WebElement getOptionRevertAllButton() {
