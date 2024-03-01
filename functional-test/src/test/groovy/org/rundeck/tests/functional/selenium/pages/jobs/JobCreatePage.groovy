@@ -39,6 +39,7 @@ class JobCreatePage extends BasePage {
 
     static class NextUi {
         static By optionBy = By.cssSelector("#optnewbutton > button")
+        static By separatorOptionBy = By.cssSelector("#option_preview")
     }
 
     By separatorOptionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
@@ -261,7 +262,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getSeparatorOption() {
-        el separatorOptionBy
+        el nextUi ? NextUi.separatorOptionBy : separatorOptionBy
     }
 
     WebElement getSaveOptionButton() {
