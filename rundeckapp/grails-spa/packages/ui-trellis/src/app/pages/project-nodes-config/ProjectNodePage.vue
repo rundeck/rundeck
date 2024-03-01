@@ -57,7 +57,7 @@
                       <div class="help-block">
                         {{ $t("modifiable.node.sources.will.appear.here") }}
                       </div>
-                      <div class="project-plugin-config-vue">
+                      <div>
                         <writeable-project-node-sources
                           :event-bus="rundeckContext.eventBus"
                           class="list-group"
