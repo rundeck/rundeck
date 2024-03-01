@@ -128,6 +128,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.regex.Pattern
+import java.util.Map
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -2345,7 +2346,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return [success: false, error: 'invalid', message: exc.getMessage(), options: exc.getOptions(), errors: exc.getErrors()]
         } catch (ExecutionServiceException exc) {
             def msg = exc.getMessage()
-            log.error("Unable to create execution",exc)
+            log.error("Unable to create execution: ${exc.getMessage()}")
             return [success: false, error: exc.code ?: 'failed', message: msg, options: input.option]
         } finally {
             if (!success && e) {
@@ -3134,7 +3135,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }else{
             execution.succeededNodeList = null
         }
-
+        def execErrors = [:]
         if (!execution.cancelled && !(execution.statusSucceeded()) && scheduledExecution && retryContext) {
             //determine retry necessity
             int count = retryContext?.retryAttempt ?: 0
@@ -3168,19 +3169,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                              retryContext.user, input, retryContext.secureOpts,
                                              retryContext.secureOptsExposed, count + 1,execution.id,originalId)
 
-                try {
-                    throw new Exception("saveExecutionState_currentTransaction ERROR!!!!")
-                }catch (Exception e){
-                    e.printStackTrace()
-                }
                 log.trace("saveExecutionState_currentTransaction: retry execute job (${scheduledExecution.getJobName()} - id: ${execution.id}) result status: ${result}")
                 if (result.success) {
                     execution.retryExecution = result.execution
                 }
+
+                execErrors['errors'] = execution.errors
+                execErrors['allErrors'] = execution.errors.allErrors
+
             }
         }
 
-        if (execution.save(flush: true)) {
+        if (execution.save(flush: true, failOnError: true)) {
             log.debug("saved execution status. id: ${execution.id}")
             execSaved = true
         } else {

@@ -452,12 +452,15 @@ class ExecutionJob implements InterruptableJob {
                 }
             }
             if (wasInterrupted || stop) {
+                log.debug("wasInterrupted:${wasInterrupted} stop:${stop} killcount:${killcount} killLimit:${killLimit}")
                 if (killcount < killLimit) {
+                    log.debug("ABORTING THREAD:")
                     //send wave after wave
                     thread.abort()
                     Thread.yield();
                     killcount++;
                 } else {
+                    log.debug("STOPPING THREAD")
                     //reached pre-set kill limit, so shut down
                     thread.stop()
                 }
@@ -476,6 +479,13 @@ class ExecutionJob implements InterruptableJob {
         }
         if (!retried.complete && retried.caught) {
             throw new RuntimeException("Execution ${runContext.execution.id} failed: " + retried.caught.getMessage(), retried.caught)
+        }
+
+        if ((!success || !thread.isSuccessful()) && !wasInterrupted && !wasTimeout && !threshold){
+            log.debug("INTERRUPTED BY SHUTDOWN CASE:")
+            log.debug("Success: ${success} - threadsuccessful: ${thread.isSuccessful()}")
+            log.debug("Thread Result:")
+            log.debug(thread.getResult().toString())
         }
 
         log.debug(
