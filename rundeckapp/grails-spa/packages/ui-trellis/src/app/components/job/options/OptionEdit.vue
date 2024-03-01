@@ -52,9 +52,10 @@
       </div>
     </div>
 
-    <!-- name -->
+    <!-- name (all)-->
     <div
       class="form-group"
+      data-test="optionNameField"
       :class="{
         'has-error': validationErrors['name'],
         'has-warning': validationWarnings['name'],
