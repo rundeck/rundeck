@@ -1248,16 +1248,27 @@ export default defineComponent({
       } else {
         delete this.validationWarnings.name;
       }
-      var validOptionNameRegex = /^[a-zA-Z_0-9.-]+$/;
-      var inputResult = validOptionNameRegex.test(this.option.name);
-      if (inputResult) {
-        delete this.validationErrors.name;
-      } else {
-        this.validationErrors.name = [
+      let errors = [];
+      if (!this.validateLen("name", 255)) {
+        errors.push(
+          this.$t("form.field.too.long.message", {
+            max: 255,
+          }),
+        );
+      }
+      let validOptionNameRegex = /^[a-zA-Z_0-9.-]+$/;
+      let inputResult = validOptionNameRegex.test(this.option.name);
+      if (!inputResult) {
+        errors.push(
           this.$t("form.option.name.validation.error", [
             validOptionNameRegex.toString(),
           ]),
-        ];
+        );
+      }
+      if (errors.length > 0) {
+        this.validationErrors.name = errors;
+      } else {
+        delete this.validationErrors.name;
       }
     },
     validateOptionLabel() {
