@@ -253,11 +253,11 @@ class JobsSpec extends SeleniumBase {
             nextUi << [false, true]
     }
     def "job options config - check storage session"() {
-        when:
+        given:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
             jobCreatePage.nextUi=nextUi
             jobCreatePage.go()
-        then:
+        when:
             jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
             jobCreatePage.optionButton.click()
             jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
@@ -271,6 +271,9 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.waitFotOptLi 0
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
             jobCreatePage.createJobButton.click()
+        then:
+            jobCreatePage.waitForOptionsToBe 1, 0
+            jobCreatePage.optionLis 0 isEmpty()
         where:
             nextUi << [false, true]
     }

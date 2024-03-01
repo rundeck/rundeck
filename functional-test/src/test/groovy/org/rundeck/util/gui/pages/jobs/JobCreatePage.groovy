@@ -40,6 +40,8 @@ class JobCreatePage extends BasePage {
     static class NextUi {
         static By optionBy = By.cssSelector("#optnewbutton > button")
         static By separatorOptionBy = By.cssSelector("#option_preview")
+        static By optionCloseKeyStorageBy = By.cssSelector("#storage-file.modal .modal-footer > button.btn-default")
+        static By optionOpenKeyStorageBy = By.cssSelector(".opt_sec_enabled div.input-group > .input-group-btn > button")
     }
 
     By separatorOptionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
@@ -364,11 +366,15 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getOptionOpenKeyStorageButton() {
-        el optionOpenKeyStorageBy
+        el nextUi?
+           NextUi.optionOpenKeyStorageBy
+           :optionOpenKeyStorageBy
     }
 
     WebElement getOptionCloseKeyStorageButton() {
-        el optionCloseKeyStorageBy
+        el nextUi?
+           NextUi.optionCloseKeyStorageBy
+           :optionCloseKeyStorageBy
     }
 
     WebElement getOptionUndoButton() {
