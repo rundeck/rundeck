@@ -1,6 +1,6 @@
 <template>
   <div>
-    <undo-redo :event-bus="localEB" />
+    <undo-redo :event-bus="localEB" data-test="options_undo_redo" />
 
     <div class="optslist">
       <draggable
