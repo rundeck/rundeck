@@ -25,14 +25,17 @@
           <option value="text">
             {{ $t("form.option.optionType.text.label") }}
           </option>
-          <option value="file" v-if="fileUploadPluginEnabled">
+          <option
+            value="file"
+            v-if="fileUploadPluginEnabled && fileUploadPluginType"
+          >
             {{ $t("form.option.optionType.file.label") }}
           </option>
         </select>
       </div>
     </div>
 
-    <!-- file input -->
+    <!-- file input (file) -->
     <div class="form-group" v-if="option.optionType === 'file'">
       <div class="col-sm-10 col-sm-offset-2">
         <div v-if="fileUploadPluginEnabled && fileUploadPluginType">
