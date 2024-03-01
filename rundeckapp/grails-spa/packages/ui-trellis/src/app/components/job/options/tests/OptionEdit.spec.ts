@@ -112,4 +112,24 @@ describe("OptionEdit", () => {
       ".form-group plugin-config[servicename=FileUpload][provider=pluginType]",
     );
   });
+  it.each([
+    ["", "has-warning", "form.field.required.message"],
+    ["in valid", "has-error", "form.option.name.validation.error"],
+  ])(
+    "shows error messages for invalid name field",
+    async (value: string, cls: string, msg: string) => {
+      const wrapper = await mountOptionEdit({
+        modelValue: { name: "", optionType: "text" },
+        editable: true,
+      });
+      let optname = wrapper.get("#optname_");
+      await optname.setValue(value);
+      await optname.trigger("blur");
+      await wrapper.vm.$nextTick();
+      let section = wrapper.get("[data-test=optionNameField]");
+      expect(section.classes()).toContain(cls);
+      let errorslist = section.get("div.help-block errorslist");
+      expect(errorslist.attributes()["errors"]).toContain(msg);
+    },
+  );
 });
