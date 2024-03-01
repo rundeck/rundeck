@@ -254,8 +254,14 @@ class BasicJobsSpec extends SeleniumBase {
             jobShowPage.jobSearchGroupField.sendKeys '-'
             jobShowPage.jobSearchSubmitButton.click()
         expect:
-            jobShowPage.waitForNumberOfElementsToBe jobShowPage.jobRowBy, 2
-            jobShowPage.jobRowLink.collect { it.getText() } == ["a job with options", "predefined job with options"]
+            jobShowPage.waitForNumberOfElementsToBe jobShowPage.jobRowBy, expected.size()
+            jobShowPage.jobRowLink.collect { it.getText() } == expected
+        where:
+            expected = [
+                "predefined job with options",
+                "create valid job basic options next ui",
+                "create valid job basic options old ui"
+            ]
     }
 
     def "view jobs list page"() {
