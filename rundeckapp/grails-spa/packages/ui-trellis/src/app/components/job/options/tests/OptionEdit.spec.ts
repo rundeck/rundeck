@@ -132,4 +132,35 @@ describe("OptionEdit", () => {
       expect(errorslist.attributes()["errors"]).toContain(msg);
     },
   );
+  it.each([
+    ["optionLabelField", "#opt_label", 255],
+    ["optionNameField", "#optname_", 255],
+  ])(
+    "shows error messages for field %p %p longer than %p",
+    async (sectionName: string, id: string, len: number) => {
+      const wrapper = await mountOptionEdit({
+        modelValue: { name: "aname", optionType: "text" },
+        editable: true,
+      });
+      let field = wrapper.get(id);
+      //set to max length
+      await field.setValue("a".repeat(len));
+      await field.trigger("blur");
+      await wrapper.vm.$nextTick();
+      let section = wrapper.get(`[data-test=${sectionName}]`);
+      expect(section.classes()).not.toContain("has-error");
+      expect(section.find("div.help-block errorslist").exists()).toBeFalsy();
+
+      //1 more than max
+      await field.setValue("a".repeat(len) + "a");
+      await field.trigger("blur");
+      await wrapper.vm.$nextTick();
+
+      expect(section.classes()).toContain("has-error");
+      let errorslist = section.get("div.help-block errorslist");
+      expect(errorslist.attributes()["errors"]).toContain(
+        "form.field.too.long.message",
+      );
+    },
+  );
 });
