@@ -126,15 +126,15 @@ describe("OptionEdit", () => {
       await optname.setValue(value);
       await optname.trigger("blur");
       await wrapper.vm.$nextTick();
-      let section = wrapper.get("[data-test=optionNameField]");
+      let section = wrapper.get("[data-test=option.name]");
       expect(section.classes()).toContain(cls);
       let errorslist = section.get("div.help-block errorslist");
       expect(errorslist.attributes()["errors"]).toContain(msg);
     },
   );
   it.each([
-    ["optionLabelField", "#opt_label", 255],
-    ["optionNameField", "#optname_", 255],
+    ["option.label", "#opt_label", 255],
+    ["option.name", "#optname_", 255],
   ])(
     "shows error messages for field %p %p longer than %p",
     async (sectionName: string, id: string, len: number) => {
