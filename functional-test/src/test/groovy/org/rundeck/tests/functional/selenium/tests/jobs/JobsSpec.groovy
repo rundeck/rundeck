@@ -309,11 +309,11 @@ class JobsSpec extends SeleniumBase {
             nextUi << [false, true]
     }
     def "No default value field shown in secure job option section"() {
-        when:
+        given:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
             jobCreatePage.nextUi=nextUi
             jobCreatePage.go()
-        then:
+        when:
         jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
         jobCreatePage.optionButton.click()
         jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
@@ -325,8 +325,8 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.storagePathInput.clear()
         jobCreatePage.secureInputTypeRadio.click()
 
-        expect:
-        !jobCreatePage.defaultValueInput.isDisplayed()
+        then:
+        driver.findElements(jobCreatePage.defaultValueBy).isEmpty() || !jobCreatePage.defaultValueInput.isDisplayed()
         where:
         nextUi << [false, true]
     }
