@@ -55,7 +55,7 @@
     <!-- name (all)-->
     <div
       class="form-group"
-      data-test="optionNameField"
+      data-test="option.name"
       :class="{
         'has-error': validationErrors['name'],
         'has-warning': validationWarnings['name'],
@@ -94,7 +94,7 @@
     <!-- label (all)-->
     <div
       class="form-group"
-      data-test="optionLabelField"
+      data-test="option.label"
       :class="{ 'has-error': hasError('label') }"
     >
       <label for="opt_label" class="col-sm-2 control-label">
