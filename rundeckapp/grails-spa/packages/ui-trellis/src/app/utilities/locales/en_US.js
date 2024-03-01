@@ -786,6 +786,8 @@ const messages = {
   "form.option.name.validation.error":
     "Invalid Option Name: It must match the pattern: {0}",
   "form.field.required.message": "This field is required",
+  "form.field.too.long.message":
+    "This value cannot be longer than {max} characters",
   "form.option.validation.errors.message":
     "Correct validation errors before saving changes",
   "option.list.header.name.title": "Name",
