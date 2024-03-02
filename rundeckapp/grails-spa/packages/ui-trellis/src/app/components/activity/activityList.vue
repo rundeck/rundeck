@@ -288,21 +288,23 @@
               class="dateStarted date"
               colspan="2"
             >
+              <!--getting vue warning: Invalid prop: type check failed for prop "modelValue".Converted :value to :modelValue-->
               <progress-bar
                 v-if="exec.status === 'scheduled'"
-                :value="100"
+                :modelValue="100"
                 striped
                 type="default"
                 label
                 :label-text="
                   $t('job.execution.starting.0', [
-                    runningStartedDisplay(exec.dateStarted.date),
+                    // if exec.dateStarted is null or undefined,it doesn't throw an error but instead returns undefined
+                    runningStartedDisplay(exec.dateStarted?.date) || 'N/A',
                   ])
                 "
               ></progress-bar>
               <progress-bar
                 v-else-if="exec.status === 'queued'"
-                :value="100"
+                :modelValue="100"
                 striped
                 type="default"
                 label
@@ -310,7 +312,7 @@
               ></progress-bar>
               <progress-bar
                 v-else-if="exec.job && exec.job.averageDuration"
-                :value="jobDurationPercentage(exec)"
+                :modelValue="jobDurationPercentage(exec)"
                 striped
                 active
                 type="info"
@@ -319,7 +321,7 @@
               ></progress-bar>
               <progress-bar
                 v-else-if="exec.dateStarted.date"
-                :value="100"
+                :modelValue="100"
                 striped
                 active
                 type="info"
@@ -327,7 +329,6 @@
                 :label-text="$t('running')"
               ></progress-bar>
             </td>
-
             <td class="user text-right" style="white-space: nowrap">
               <em>{{ $t("by") }}</em>
               {{ exec.user }}
@@ -801,6 +802,25 @@ export default defineComponent({
       }
       return 0;
     },
+
+    // Below code makes the progress bar reach closer to 100%
+    /* jobDurationPercentage(exec: Execution) {
+      if (
+        exec.job &&
+        exec.job.averageDuration &&
+        exec.dateStarted &&
+        exec.dateStarted.date
+      ) {
+        const now = moment();
+        const startDate = moment(exec.dateStarted.date);
+        const diff = now.diff(startDate);
+        const percentage = Math.floor((diff / exec.job.averageDuration) * 100);
+        return Math.min(percentage, 100);
+      }
+      return 0;
+    },
+    */
+
     runningStartedDisplay(date: string) {
       if (!date) {
         return "";
