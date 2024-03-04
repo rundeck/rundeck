@@ -17,6 +17,7 @@
 for (( i=1; i<=50; i++ ))
 do
     echo "log output $i"
+    if [ $i -eq "25" ] ; then sleep 3; fi
 done]]></script>
         <scriptargs />
       </command>
