@@ -45,6 +45,9 @@ class JobCreatePage extends BasePage {
         static By optionUndoBy = By.cssSelector("[data-test=options_undo_redo] > button:nth-child(1)")
         static By optionRedoBy = By.cssSelector("[data-test=options_undo_redo] > button:nth-child(2)")
         static By defaultValueInput=By.cssSelector("[data-test='option.value'] input[name=defaultValue]")
+        static By optionItemBy(int index) {
+            By.cssSelector("#optitem_$index")
+        }
     }
 
     By separatorOptionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
@@ -273,19 +276,19 @@ class JobCreatePage extends BasePage {
     WebElement getSaveOptionButton() {
         el saveOptionBy
     }
-
+    By optionItemBy(int index) {
+        nextUi ? NextUi.optionItemBy(index) : By.cssSelector("#optli_$index")
+    }
     void waitFotOptLi(int index) {
-        waitForElementVisible nextUi?
-                              By.cssSelector("#optitem_$index"):
-                              By.cssSelector("#optli_$index")
+        waitForElementVisible optionItemBy(index)
     }
 
     List<WebElement> optionLis(int index) {
-        els By.cssSelector("#optli_$index")
+        els optionItemBy(index)
     }
 
     void waitForOptionsToBe(int index, int total) {
-        waitForNumberOfElementsToBe By.cssSelector("#optli_$index"), total
+        waitForNumberOfElementsToBe optionItemBy(index), total
     }
 
     WebElement optionNameSaved(int index) {
