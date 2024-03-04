@@ -1,4 +1,4 @@
-package org.rundeck.util.extensions
+package org.rundeck.util.api.common
 
 import okhttp3.Cookie
 import okhttp3.CookieJar
