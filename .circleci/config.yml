@@ -414,7 +414,7 @@ jobs:
   test-gradle:
     <<: *defaults
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
     steps:
       - checkout
       - install-node
@@ -480,7 +480,7 @@ jobs:
   test-docker-machine:
     <<: *defaults
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
     parameters:
       command:
         description: Command that will execute the docker tests
@@ -500,7 +500,7 @@ jobs:
   test-selenium:
     <<: *defaults
     machine:
-      image: ubuntu-2004:2023.07.1
+      image: default
     steps:
       - run: apt list --installed
       - browser-tools/install-chrome
@@ -559,7 +559,7 @@ jobs:
   test-deps:
     <<: *defaults
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
     parameters:
       continue:
         description: Continue if check fails
@@ -579,7 +579,7 @@ jobs:
   build_and_publish:
     <<: *defaults
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
     resource_class: large
 
     parameters:
@@ -605,7 +605,7 @@ jobs:
   packaging_test:
     <<: *defaults
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
     resource_class: large
     steps:
       - install-packages
