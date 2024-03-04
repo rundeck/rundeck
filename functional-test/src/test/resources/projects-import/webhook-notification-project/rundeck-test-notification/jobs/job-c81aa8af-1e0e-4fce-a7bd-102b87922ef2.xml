@@ -1,0 +1,26 @@
+<joblist>
+  <job>
+    <context>
+      <options preserveOrder='true'>
+        <option name='NC_PORT' value='9001' />
+        <option name='WAIT_SECS' value='10' />
+      </options>
+    </context>
+    <defaultTab>nodes</defaultTab>
+    <description></description>
+    <executionEnabled>true</executionEnabled>
+    <id>c81aa8af-1e0e-4fce-a7bd-102b87922ef2</id>
+    <loglevel>INFO</loglevel>
+    <name>run-nc</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <schedules />
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>echo -e "HTTP/1.1 200 OK\r\n\r\n" | nc -w $RD_OPTION_WAIT_SECS -l -p $RD_OPTION_NC_PORT &gt; /tmp/netcat-out.txt &amp;</exec>
+      </command>
+    </sequence>
+    <uuid>c81aa8af-1e0e-4fce-a7bd-102b87922ef2</uuid>
+  </job>
+</joblist>

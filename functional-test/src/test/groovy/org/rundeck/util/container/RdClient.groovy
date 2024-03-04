@@ -24,7 +24,7 @@ class RdClient {
     String baseUrl
     OkHttpClient httpClient
     int apiVersion = 47
-    final finalApiVersion = 47
+    static final finalApiVersion = 47
 
     RdClient(String baseUrl, OkHttpClient httpClient) {
         this.baseUrl = baseUrl
@@ -69,6 +69,20 @@ class RdClient {
                         get().
                         build()
         ).execute()
+    }
+
+    Response doGetCustomApiVersion(final String path, final String customApiVersion) {
+        httpClient.newCall(
+                new Request.Builder().
+                        url(apiUrlCustomApiVersion(path, customApiVersion)).
+                        header('Accept', '*/*').
+                        get().
+                        build()
+        ).execute()
+    }
+
+    private String apiUrlCustomApiVersion(String path, String customApiVersion) {
+        baseUrl + "/api/${customApiVersion}" + path
     }
 
     Response request(final String path, Consumer<Request.Builder> builderConsumer) {
@@ -244,6 +258,34 @@ class RdClient {
                 .header('Content-Type', contentType)
                 .build()
         httpClient.newCall(request).execute()
+    }
+
+    Response doPostWithFormData(
+            final String path,
+            final String fileParamName,
+            final File file
+    ){
+        def formDataRequestBody = buildFormDataRequestBody(fileParamName, file)
+        Request request = new Request.Builder()
+                .url(apiUrl(path))
+                .method("POST", formDataRequestBody)
+                .header('Content-Type', 'multipart/form-data')
+                .header('Accept', '*/*')
+                .build()
+        httpClient.newCall(request).execute()
+    }
+
+    static MultipartBody buildFormDataRequestBody(
+            final String fileParamName,
+            final File file
+    ){
+        return new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart(
+                        fileParamName,
+                        "file",
+                        RequestBody.create(MediaType.parse("application/octet-stream"), file)
+                ).build()
     }
 
     <T> T post(final String path, final Object body = null, Class<T> clazz = Map) {

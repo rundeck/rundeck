@@ -5,8 +5,6 @@ import {envOpts} from '../test/rundeck'
 import { CreateTestContext } from '../test/api'
 
 const skipTests = [
-    'test-job-run-webhook.sh', // Requires NC running
-
     'test-execution-cleaner-job.sh', // Does not handle `null` for execution server UUID in a cluster
     'test-execution-output-plain-lastlines.sh',
     'test-execution-output-plain.sh',
@@ -16,15 +14,7 @@ const skipTests = [
     /** Misc */
     'test-history.sh',
     'test-metrics.sh', // .meters length 7 instead of 8 ?
-    'test-require-version.sh',
-    'test-resource.sh',
-    'test-resources.sh',
-    'test-run-script-interpreter.sh',
-    'test-run-script.sh',
-    'test-v23-project-source-resources.sh',
-    'test-v23-project-sources-json.sh',
     'test-v23-project-sources-xml.sh',
-    'test-workflow-errorhandler.sh',
 ]
 
 export function ShimApiTests(pattern: RegExp) {

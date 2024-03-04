@@ -240,8 +240,6 @@ class ScheduledExecutionController  extends ControllerBase{
     @GrailsCompileStatic
     def actionMenuFragment(){
         ScheduledExecution scheduledExecution = authorizingJob.resource
-        String project = scheduledExecution.project
-        AuthorizingProject authorizingProject = authorizingProject(project)
 
         def model=[
                 scheduledExecution  : scheduledExecution,
@@ -249,15 +247,6 @@ class ScheduledExecutionController  extends ControllerBase{
                 jobDeleteSingle     : params.jobDeleteSingle,
                 isScheduled         : scheduledExecutionService.isScheduled(scheduledExecution)
         ]
-
-        if (authorizingProject.isAuthorized(RundeckAccess.Project.APP_SCM_EXPORT)) {
-            def scmExportOptions = scheduledExecutionService.scmActionMenuOptions(project, authorizingProject.authContext, scheduledExecution) as LinkedHashMap<String, Object>
-            model << scmExportOptions
-        }
-        if (authorizingProject.isAuthorized(RundeckAccess.Project.APP_SCM_IMPORT)) {
-            def scmImportOptions = scheduledExecutionService.scmActionMenuOptions(project, authorizingProject.authContext, scheduledExecution) as LinkedHashMap<String, Object>
-            model << scmImportOptions
-        }
 
         render(template: '/scheduledExecution/jobActionButtonMenuContent', model: model)
     }
@@ -470,30 +459,6 @@ class ScheduledExecutionController  extends ControllerBase{
                 offset: params.int('offset') ?: 0] + model
         if (params.opt && (params.opt instanceof Map)) {
             dataMap.selectedoptsmap = params.opt
-        }
-        //add scm export status
-        def projectResource = rundeckAuthContextProcessor.authResourceForProject(params.project)
-        if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
-                                                             projectResource,
-                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_EXPORT,
-                                                              AuthConstants.ACTION_SCM_EXPORT])) {
-            def scmExportActionsForShowDropdown = scheduledExecutionService.scmActionMenuOptions(
-                    scheduledExecution.project,
-                    authContext,
-                    scheduledExecution
-            )
-            dataMap << scmExportActionsForShowDropdown
-        }
-        if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
-                                                             projectResource,
-                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_IMPORT,
-                                                              AuthConstants.ACTION_SCM_IMPORT])) {
-            def scmImportActionsForShowDropdown = scheduledExecutionService.scmActionMenuOptions(
-                    scheduledExecution.project,
-                    authContext,
-                    scheduledExecution
-            )
-            dataMap << scmImportActionsForShowDropdown
         }
 
         withFormat{

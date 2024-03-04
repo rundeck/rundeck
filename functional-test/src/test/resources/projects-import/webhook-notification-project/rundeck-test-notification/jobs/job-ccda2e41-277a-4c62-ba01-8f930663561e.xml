@@ -1,0 +1,26 @@
+<joblist>
+  <job>
+    <context>
+      <options preserveOrder='true'>
+        <option name='nc_output_filepath' value='/tmp/netcat-out.txt' />
+      </options>
+    </context>
+    <defaultTab>nodes</defaultTab>
+    <description></description>
+    <executionEnabled>true</executionEnabled>
+    <id>ccda2e41-277a-4c62-ba01-8f930663561e</id>
+    <loglevel>INFO</loglevel>
+    <name>read-nc-output</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <schedules />
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <script><![CDATA[cat @option.nc_output_filepath@]]></script>
+        <scriptargs />
+      </command>
+    </sequence>
+    <uuid>ccda2e41-277a-4c62-ba01-8f930663561e</uuid>
+  </job>
+</joblist>

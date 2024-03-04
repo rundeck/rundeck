@@ -78,6 +78,8 @@ import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.job.option.OptionData
+import rundeck.data.constants.ExecutionConstants
+import rundeck.data.execution.ExecutionAbortEventData
 import rundeck.data.report.SaveReportRequestImpl
 import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
 import org.rundeck.app.data.providers.v1.user.UserDataProvider
@@ -1832,6 +1834,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             boolean forceIncomplete = false
     )
     {
+        publish(ExecutionConstants.ABORT_EVENT, new ExecutionAbortEventData(executionUuid: e.uuid))
         metricService.markMeter(this.class.name, 'executionAbortMeter')
         def eid = e.id
         def dateCompleted = e.dateCompleted

@@ -114,7 +114,6 @@ commands:
     steps:
       - setup_remote_docker:
           docker_layer_caching: << parameters.docker_layer_caching >>
-          version: 20.10.14
 
       # Due to circleci cli limitations, we need this workaround in order to run
       # the docker command as root on local builds, without running everything as root.
@@ -647,11 +646,6 @@ workflows:
       - test-docker:
           name: Docker Test
           command: bash test/run-docker-tests.sh
-          <<: *require-build
-          <<: *slack-defaults
-      - test-machine:
-          name: API Test
-          command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
           <<: *require-build
           <<: *slack-defaults
       - test-docker:

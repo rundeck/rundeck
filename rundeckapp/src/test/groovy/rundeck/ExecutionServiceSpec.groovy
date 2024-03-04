@@ -33,6 +33,7 @@ import groovy.time.TimeCategory
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
+import rundeck.data.constants.ExecutionConstants
 import rundeck.data.report.SaveReportRequestImpl
 import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
@@ -2745,13 +2746,17 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.configurationService = Mock(ConfigurationService) {
             getString('executionService.startup.cleanupStatus', _) >> 'incompletestatus'
         }
+        def seventBus = new SynchronousEventBus()
+        service.setTargetEventBus(seventBus)
         if(!cmatch) {
-            def seventBus = new SynchronousEventBus()
-            service.setTargetEventBus(seventBus)
             seventBus.subscribe("cluster.abortExecution") { eventData ->
                 println "received event data: ${eventData}"
                 return [:]
             }
+        }
+        boolean receivedAbortEvent = false
+        seventBus.subscribe(ExecutionConstants.ABORT_EVENT) { eventData ->
+            receivedAbortEvent = true
         }
 
         when:
@@ -2762,6 +2767,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             session.flush()
             e.refresh()
         }
+        receivedAbortEvent
         e.id != null
         result.abortstate == eAbortstate
         result.jobstate == eJobstate

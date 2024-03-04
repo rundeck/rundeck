@@ -25,7 +25,7 @@
 
 package org.rundeck.plugins.jsch.net;
 
-import org.rundeck.plugins.jsch.util.SSHAgentProcess;
+import com.dtolabs.rundeck.core.utils.SSHAgentProcess;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.jcraft.jsch.*;
 import org.apache.tools.ant.BuildException;

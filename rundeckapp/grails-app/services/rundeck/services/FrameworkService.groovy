@@ -1261,6 +1261,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
             }
             //construct existing values from project properties
             Map<String, String> mapping = v.getPropertiesMapping()
+            List<Property> properties = v.getProjectConfigProperties();
             if (category) {
                 mapping = mapping.subMap(valid)
             }
@@ -1270,6 +1271,9 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
                     configurable: v,
                     values      : values,
                     prefix      : prefix + k + '.',
+                    mapping     : mapping,
+                    propertyList : properties
+
             ]
         }
         extraConfig

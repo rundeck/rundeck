@@ -354,7 +354,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         true | false | false | false   | false   | false
     }
 
-    def "api v34 exportAll include webhooks auth tokens when whkIncludeAuthTokens is set to true"(){
+    def "api v34 exportAll include webhooks auth tokens when whkIncludeAuthTokens && whkRegenUuid are set to true"(){
 
         given:"a project to be exported"
         controller.projectService = Mock(ProjectService)
@@ -362,10 +362,12 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         controller.frameworkService = Mock(FrameworkService)
         setupGetResource()
         params.project = 'aproject'
+        Map<String, String> exportOpts = [(WebhooksProjectExporter.INLUDE_AUTH_TOKENS):"true",(WebhooksProjectExporter.WHK_REGEN_UUID):"true"]
 
         when:"exporting the project using the API"
         params.exportAll = "true"
         params.whkIncludeAuthTokens = "true"
+        params.whkRegenUuid = "true"
         request.api_version = ApiVersions.V34
         controller.apiProjectExport()
 
@@ -374,7 +376,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.projectService.exportProjectToOutputStream(_, _, _, _, { ArchiveOptions opts ->
                     opts.all == true &&
-                    opts.exportOpts[WebhooksProjectComponent.COMPONENT_NAME]==[(WebhooksProjectExporter.INLUDE_AUTH_TOKENS):"true"]
+                    opts.exportOpts[WebhooksProjectComponent.COMPONENT_NAME]==exportOpts
         },_
         )
     }
@@ -429,10 +431,12 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         controller.frameworkService = Mock(FrameworkService)
         setupGetResource()
 
+        Map<String, String> exportOpts = [(WebhooksProjectExporter.INLUDE_AUTH_TOKENS):whinclude.toString(),(WebhooksProjectExporter.WHK_REGEN_UUID):regenUuid.toString()]
         params.project = 'aproject'
 
         params.exportWebhooks=whenable.toString()
         params.whkIncludeAuthTokens=whinclude.toString()
+        params.whkRegenUuid=regenUuid.toString()
         request.api_version = 34
 
         when:
@@ -443,14 +447,14 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
 
         1 * controller.projectService.exportProjectToOutputStream(_, _, _, _, { ArchiveOptions opts ->
                     opts.exportComponents[WebhooksProjectComponent.COMPONENT_NAME] == whenable &&
-                    opts.exportOpts[WebhooksProjectComponent.COMPONENT_NAME]==[(WebhooksProjectExporter.INLUDE_AUTH_TOKENS):whinclude.toString()]
+                    opts.exportOpts[WebhooksProjectComponent.COMPONENT_NAME]==exportOpts
         },_
         )
 
         where:
-            whenable | whinclude
-            true     | true
-            true     | false
+            whenable | whinclude | regenUuid
+            true     | true      | true
+            true     | false     | false
     }
 
     def "api project delete error"() {
@@ -2263,6 +2267,9 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
             request.content = 'test'.bytes
             params.importWebhooks='true'
             params.whkRegenAuthTokens='true'
+        params.whkRegenUuid='true'
+        Map<String, String> exportOpts = [(WebhooksProjectImporter.WHK_REGEN_AUTH_TOKENS):"true",
+                                          (WebhooksProjectImporter.WHK_REGEN_UUID):"true"]
         when: "import project via api"
             controller.apiProjectImport(aparams)
         then: "webhook component import options are set"
@@ -2274,8 +2281,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
 //        **Deprecated**
 //            1 * controller.projectService.importToProject(project,_,_,_,{ ProjectArchiveImportRequest req->
             1 * controller.projectService.handleApiImport(_,_,project,_,{ ProjectArchiveImportRequest req->
-                req.importComponents == [(WebhooksProjectComponent.COMPONENT_NAME): true]
-                req.importOpts == [(WebhooksProjectComponent.COMPONENT_NAME): [(WebhooksProjectImporter.WHK_REGEN_AUTH_TOKENS): 'true']]
+                req.importOpts.webhooks == exportOpts
             }) >> [success:true]
     }
 

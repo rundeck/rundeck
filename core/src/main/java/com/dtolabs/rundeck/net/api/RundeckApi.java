@@ -31,6 +31,7 @@ public interface RundeckApi {
             @Query("importScm") Boolean importScm,
             @Query("importWebhooks") Boolean importWebhooks,
             @Query("whkRegenAuthTokens") Boolean whkRegenAuthTokens,
+            @Query("whkRegenUuid") Boolean whkRegenUuid,
             @Query("importNodesSources") Boolean importNodesSources,
             @QueryMap Map<String,String> params,
             @Body RequestBody body
