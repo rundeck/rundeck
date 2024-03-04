@@ -114,7 +114,6 @@ commands:
     steps:
       - setup_remote_docker:
           docker_layer_caching: << parameters.docker_layer_caching >>
-          version: 20.10.14
 
       # Due to circleci cli limitations, we need this workaround in order to run
       # the docker command as root on local builds, without running everything as root.
