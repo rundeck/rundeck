@@ -87,6 +87,7 @@ executors:
   # Machine executor
   machine-builder:
     machine:
+      image: default
       docker_layer_caching: << parameters.docker_layer_caching >>
     parameters:
       resource_class:
