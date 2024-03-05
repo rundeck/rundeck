@@ -803,7 +803,24 @@ import {
   JobOptionEdit,
   OptionPrototype,
 } from "../../../../library/types/jobs/JobEdit";
-
+interface ValidationConfig {
+  length?: number;
+  regex?: string;
+  required?: boolean;
+}
+interface ValidationSet {
+  [key: string]: ValidationConfig;
+}
+const Validations = {
+  name: {
+    length: 255,
+    regex: "^[a-zA-Z_0-9.-]+$",
+    required: true,
+  },
+  label: {
+    length: 255,
+  },
+} as ValidationSet;
 export default defineComponent({
   name: "OptionEdit",
   components: {
@@ -943,8 +960,7 @@ export default defineComponent({
     async doSave() {
       this.validationErrors = {};
       this.validationWarnings = {};
-      this.validateOptionLabel();
-      this.validateOptionName();
+      this.localValidations();
       if (this.hasFormErrors) {
         return;
       }
@@ -983,46 +999,61 @@ export default defineComponent({
       return this.optionValuesPlugins.find((p) => p.name === name);
     },
     validateLen(field: string, max: number): boolean {
-      if (this.option[field] && this.option[field].length > max) {
-        return false;
-      } else {
-        return true;
+      return !(this.option[field] && this.option[field].length > max);
+    },
+    validateRegex(field: string, regex: string): boolean {
+      let testRegex = new RegExp(regex);
+      return testRegex.test(this.option[field]);
+    },
+    validateFieldName(field: string): boolean {
+      if (Validations[field]) {
+        this.clearValidation(field);
+        return this.validateField(field, Validations[field]);
       }
+      return true;
+    },
+    validateField(field: string, validationConfig: ValidationConfig): boolean {
+      let pass = true;
+      if (validationConfig.required) {
+        if (!this.option[field]) {
+          pass = false;
+          this.addWarning(field, this.$t("form.field.required.message"));
+        }
+      }
+      if (validationConfig.length) {
+        if (!this.validateLen(field, validationConfig.length)) {
+          pass = false;
+          this.addError(
+            field,
+            this.$t("form.field.too.long.message", {
+              max: 255,
+            }),
+          );
+        }
+      }
+      if (validationConfig.regex && this.option[field]) {
+        if (!this.validateRegex(field, validationConfig.regex)) {
+          pass = false;
+          this.addError(
+            "name",
+            this.$t(`form.option.regex.validation.error`, [
+              validationConfig.regex,
+            ]),
+          );
+        }
+      }
+      return pass;
     },
     validateOptionName() {
-      this.clearValidation("name");
-      if (!this.option.name) {
-        this.addWarning("name", this.$t("form.field.required.message"));
-        return;
-      }
-      if (!this.validateLen("name", 255)) {
-        this.addError(
-          "name",
-          this.$t("form.field.too.long.message", {
-            max: 255,
-          }),
-        );
-      }
-      let validOptionNameRegex = /^[a-zA-Z_0-9.-]+$/;
-      let inputResult = validOptionNameRegex.test(this.option.name);
-      if (!inputResult) {
-        this.addError(
-          "name",
-          this.$t("form.option.name.validation.error", [
-            validOptionNameRegex.toString(),
-          ]),
-        );
-      }
+      this.validateFieldName("name");
     },
     validateOptionLabel() {
-      this.clearValidation("label");
-      if (!this.validateLen("label", 255)) {
-        this.addError(
-          "label",
-          this.$t("form.field.too.long.message", {
-            max: 255,
-          }),
-        );
+      this.validateFieldName("label");
+    },
+    localValidations() {
+      // validate all fields from Validations
+      for (const field in Validations) {
+        this.validateFieldName(field);
       }
     },
     async validateOption() {

@@ -799,8 +799,8 @@ const messages = {
   "home.table.activity": "Activity",
   "home.table.actions": "Actions",
   "option.click.to.edit.title": "Click to edit",
-  "form.option.name.validation.error":
-    "Invalid Option Name: It must match the pattern: {0}",
+  "form.option.regex.validation.error":
+    "Invalid value: It must match the pattern: {0}",
   "form.field.required.message": "This field is required",
   "form.field.too.long.message":
     "This value cannot be longer than {max} characters",

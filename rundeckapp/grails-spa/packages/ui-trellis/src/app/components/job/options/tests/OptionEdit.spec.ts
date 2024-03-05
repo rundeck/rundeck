@@ -114,7 +114,7 @@ describe("OptionEdit", () => {
   });
   it.each([
     ["", "has-warning", "form.field.required.message"],
-    ["in valid", "has-error", "form.option.name.validation.error"],
+    ["in valid", "has-error", "form.option.regex.validation.error"],
   ])(
     "shows error messages for invalid name field",
     async (value: string, cls: string, msg: string) => {
