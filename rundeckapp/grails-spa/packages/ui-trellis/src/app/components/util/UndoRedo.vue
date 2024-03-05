@@ -98,3 +98,8 @@ export default defineComponent({
   },
 });
 </script>
+<style scoped lang="scss">
+.flow-h > * + * {
+  margin-left: var(--spacing-2);
+}
+</style>
