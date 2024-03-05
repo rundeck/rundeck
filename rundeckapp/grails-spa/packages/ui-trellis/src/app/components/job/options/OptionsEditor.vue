@@ -1,6 +1,10 @@
 <template>
   <div>
-    <undo-redo :event-bus="localEB" data-test="options_undo_redo" />
+    <undo-redo
+      :event-bus="localEB"
+      data-test="options_undo_redo"
+      :revert-all-enabled="true"
+    />
 
     <div class="optslist">
       <draggable
@@ -124,6 +128,7 @@ export default defineComponent({
       error: "",
       createMode: false,
       editIndex: -1,
+      origOptions: [] as JobOption[],
       intOptions: [] as JobOption[],
       createOption: null,
       fileUploadPluginType: "",
@@ -267,6 +272,10 @@ export default defineComponent({
       this.operation(change.operation, change);
       this.wasChanged();
     },
+    doRevertAll() {
+      this.intOptions = cloneDeep(this.origOptions);
+      this.wasChanged();
+    },
     updateIndexes() {
       this.intOptions.forEach((opt: JobOption, i: number) => {
         opt.sortIndex = i + 1;
@@ -282,6 +291,7 @@ export default defineComponent({
     },
   },
   async mounted() {
+    this.origOptions = cloneDeep(this.optionsData.options);
     this.intOptions = cloneDeep(this.optionsData.options);
     this.updateIndexes();
     this.fileUploadPluginType = this.optionsData.fileUploadPluginType;
@@ -294,10 +304,12 @@ export default defineComponent({
     });
     this.localEB.on("undo", this.doUndo);
     this.localEB.on("redo", this.doRedo);
+    this.localEB.on("revertAll", this.doRevertAll);
   },
   beforeUnmount() {
     this.localEB.off("undo");
     this.localEB.off("redo");
+    this.localEB.off("revertAll");
   },
 });
 </script>
