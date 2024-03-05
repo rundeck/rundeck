@@ -288,7 +288,6 @@
               class="dateStarted date"
               colspan="2"
             >
-              <!--getting vue warning: Invalid prop: type check failed for prop "modelValue".Converted :value to :modelValue-->
               <progress-bar
                 v-if="exec.status === 'scheduled'"
                 :modelValue="100"
@@ -297,7 +296,6 @@
                 label
                 :label-text="
                   $t('job.execution.starting.0', [
-                    // if exec.dateStarted is null or undefined,it doesn't throw an error but instead returns undefined
                     runningStartedDisplay(exec.dateStarted?.date) || 'N/A',
                   ])
                 "
@@ -802,24 +800,6 @@ export default defineComponent({
       }
       return 0;
     },
-
-    // Below code makes the progress bar reach closer to 100%
-    /* jobDurationPercentage(exec: Execution) {
-      if (
-        exec.job &&
-        exec.job.averageDuration &&
-        exec.dateStarted &&
-        exec.dateStarted.date
-      ) {
-        const now = moment();
-        const startDate = moment(exec.dateStarted.date);
-        const diff = now.diff(startDate);
-        const percentage = Math.floor((diff / exec.job.averageDuration) * 100);
-        return Math.min(percentage, 100);
-      }
-      return 0;
-    },
-    */
 
     runningStartedDisplay(date: string) {
       if (!date) {
