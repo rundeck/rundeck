@@ -1,6 +1,5 @@
 <template>
-  <span>
-    <btn :class="{ disabled: !hasUndo }" @click="doUndo" size="xs">
+  <span class="flow-h">
     <btn
       :class="{ disabled: !hasUndo }"
       @click="doUndo"
