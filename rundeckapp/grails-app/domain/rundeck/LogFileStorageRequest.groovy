@@ -47,4 +47,9 @@ class LogFileStorageRequest implements LogFileStorageRequestData{
     Serializable getExecutionId() {
         return execution.id
     }
+
+    @Override
+    String getExecutionUuid() {
+        return execution.uuid
+    }
 }
