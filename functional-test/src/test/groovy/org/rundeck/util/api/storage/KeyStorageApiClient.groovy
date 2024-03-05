@@ -1,9 +1,6 @@
 package org.rundeck.util.api.storage
 
 import okhttp3.Response
-import org.rundeck.util.api.RundeckResponse
-import org.rundeck.util.api.scm.httpbody.GitExportSetupRequest
-import org.rundeck.util.api.scm.httpbody.SetupIntegrationResponse
 import org.rundeck.util.container.ClientProvider
 import org.rundeck.util.container.RdClient
 

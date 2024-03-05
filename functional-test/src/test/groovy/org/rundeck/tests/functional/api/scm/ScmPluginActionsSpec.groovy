@@ -11,7 +11,7 @@ import org.rundeck.util.api.scm.httpbody.ScmActionPerformRequest
 import org.rundeck.util.api.scm.httpbody.SetupIntegrationResponse
 import org.rundeck.util.api.storage.KeyStorageApiClient
 import org.rundeck.util.container.BaseContainer
-import org.rundeck.util.api.JobUtils
+import org.rundeck.util.common.jobs.JobUtils
 
 @APITest
 @ExcludePro
