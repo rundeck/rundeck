@@ -811,6 +811,8 @@ const messages = {
   "option.list.header.restrictions.title": "Restrictions",
   "util.undoredo.undo": "Undo",
   "util.undoredo.redo": "Redo",
+  "util.undoredo.revertAll": "Revert All Changes",
+  "util.undoredo.revertAll.confirm": "Really revert all changes?",
   "option.view.required.title": " (Required)",
   "option.view.allowedValues.label": "Allowed Values",
   "option.view.valuesUrl.title": "Values loaded from Remote URL: {0}",
