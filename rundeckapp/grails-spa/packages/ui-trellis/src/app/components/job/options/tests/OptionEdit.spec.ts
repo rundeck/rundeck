@@ -167,6 +167,68 @@ describe("OptionEdit", () => {
     },
   );
   it.each([
+    ["#vtrlist_", "list", {}],
+    [
+      "#vtrurl_",
+      "url",
+      {
+        valuesUrl: "",
+        remoteUrlAuthenticationType: "",
+        configRemoteUrl: {},
+      },
+    ],
+    [
+      "#optvalplugin_testplugin",
+      "testplugin",
+      { optionValuesPluginType: "testplugin" },
+    ],
+  ])(
+    "change values type selection %p %p",
+    async (selector: string, valuesType: string, data: any) => {
+      const wrapper = await mountOptionEdit({
+        modelValue: { name: "test", optionType: "text" },
+        features: { optionValuesPlugin: true },
+        optionValuesPlugins: [
+          { name: "testplugin", description: "", title: "Test Plugin" },
+        ],
+        editable: true,
+      });
+
+      let valuesTypeRadio = wrapper.get(selector);
+      await valuesTypeRadio.setValue();
+      //save
+      await wrapper.vm.$nextTick();
+      await wrapper.vm.doSave();
+      expect(wrapper.vm.hasFormErrors).toBeFalsy();
+      //test emitted
+      let actual = wrapper.emitted();
+      expect(actual["update:modelValue"]).toBeTruthy();
+      expect(actual["update:modelValue"].length).toBe(1);
+      let emittedOption = actual["update:modelValue"][0][0];
+      expect(emittedOption).toEqual(
+        Object.assign(
+          {
+            name: "test",
+            optionType: "text",
+            description: "",
+            inputType: "plain",
+            hidden: false,
+            multivalueAllSelected: false,
+            multivalued: false,
+            isDate: false,
+            secure: false,
+            valueExposed: false,
+            required: false,
+            sortValues: false,
+            value: "",
+            valuesType,
+          },
+          data,
+        ),
+      );
+    },
+  );
+  it.each([
     ["", "has-warning", "form.field.required.message"],
     ["in valid", "has-error", "form.option.regex.validation.error"],
   ])(
