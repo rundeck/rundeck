@@ -44,6 +44,7 @@ class JobCreatePage extends BasePage {
         static By optionOpenKeyStorageBy = By.cssSelector(".opt_sec_enabled div.input-group > .input-group-btn > button")
         static By optionUndoBy = By.cssSelector("[data-test=options_undo_redo] > button:nth-child(1)")
         static By optionRedoBy = By.cssSelector("[data-test=options_undo_redo] > button:nth-child(2)")
+        static By optionRevertAllBy = By.cssSelector("[data-test=options_undo_redo] > button:nth-child(3)")
         static By defaultValueInput=By.cssSelector("[data-test='option.value'] input[name=defaultValue]")
         static By optionItemBy(int index) {
             By.cssSelector("#optitem_$index")
@@ -148,7 +149,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement tab(JobTab tab) {
-        def tabBy = By.linkText(tab.getTabName())
+        def tabBy = By.partialLinkText(tab.getTabName())
         waitForNumberOfElementsToBeOne tabBy
         el tabBy
     }
@@ -395,7 +396,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getOptionRevertAllButton() {
-        el optionRevertAllBy
+        el nextUi ? NextUi.optionRevertAllBy : optionRevertAllBy
     }
 
     WebElement getOptionConfirmRevertAllButton() {

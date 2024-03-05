@@ -331,11 +331,10 @@ class JobsSpec extends SeleniumBase {
         nextUi << [false, true]
     }
     def "job option revert all"() {
-        when:
+        given:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
             jobCreatePage.nextUi=nextUi
             jobCreatePage.go()
-        then:
             jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
             jobCreatePage.optionButton.click()
             jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
@@ -354,15 +353,16 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.executeScript "window.location.hash = '#optundoredo'"
             jobCreatePage.waitForElementAttributeToChange jobCreatePage.optionUndoButton, 'disabled', null
             jobCreatePage.optionUndoButton
+        when:
             jobCreatePage.optionRevertAllButton.click()
-            jobCreatePage.optionConfirmRevertAllButton.click()
-        expect:
+            if(!nextUi) {
+                jobCreatePage.optionConfirmRevertAllButton.click()
+            }
+        then:
             jobCreatePage.waitForOptionsToBe 0, 0
             jobCreatePage.waitForOptionsToBe 1, 0
             jobCreatePage.optionLis 0 isEmpty()
             jobCreatePage.optionLis 1 isEmpty()
-            jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
-            jobCreatePage.createJobButton.click()
         where:
             nextUi << [false, true]
     }
