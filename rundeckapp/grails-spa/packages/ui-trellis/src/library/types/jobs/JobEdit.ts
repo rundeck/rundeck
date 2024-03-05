@@ -61,4 +61,5 @@ export const OptionPrototype = {
   description: "",
   name: "",
   value: "",
+  isDate: false,
 } as JobOptionEdit;

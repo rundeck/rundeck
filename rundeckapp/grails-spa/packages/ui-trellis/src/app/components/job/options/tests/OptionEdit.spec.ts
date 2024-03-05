@@ -15,6 +15,12 @@ jest.mock("@/library/services/jobEdit", () => ({
     messages: {},
   } as OptionValidation),
 }));
+jest.mock("@/library", () => ({
+  getRundeckContext: jest.fn().mockImplementation(() => ({
+    eventBus: { on: jest.fn(), emit: jest.fn() },
+    rdBase: "http://localhost:4440",
+  })),
+}));
 const mountOptionEdit = async (options: any): Promise<VueWrapper<any>> => {
   const wrapper = mount(OptionEdit, {
     props: {
@@ -100,7 +106,7 @@ describe("OptionEdit", () => {
       expect(sel.findAll("option[value=file]").length).toBe(expected ? 1 : 0);
     },
   );
-  it("file input type shows file plugin config", async () => {
+  it("file option type shows file plugin config", async () => {
     const wrapper = await mountOptionEdit({
       modelValue: { name: "a_test_option", optionType: "file" },
       editable: true,
@@ -112,6 +118,57 @@ describe("OptionEdit", () => {
       ".form-group plugin-config[servicename=FileUpload][provider=pluginType]",
     );
   });
+  it.each([
+    ["#inputplain_", "plain", false, false, false],
+    ["#inputdate_", "date", true, false, false],
+    ["#sectrue_", "secureExposed", false, true, true],
+    ["#secexpfalse_", "secure", false, true, false],
+  ])(
+    "change input type selection %p %p %p %p %p %p",
+    async (
+      selector: string,
+      inputType: string,
+      isDate: boolean,
+      secure: boolean,
+      valueExposed: boolean,
+    ) => {
+      const wrapper = await mountOptionEdit({
+        modelValue: { name: "test", optionType: "text" },
+        editable: true,
+      });
+
+      let plainType = wrapper.get(selector);
+      await plainType.setValue();
+      //save
+      await wrapper.vm.$nextTick();
+      await wrapper.vm.doSave();
+      expect(wrapper.vm.hasFormErrors).toBeFalsy();
+      //test emitted
+      let actual = wrapper.emitted();
+      expect(actual["update:modelValue"]).toBeTruthy();
+      expect(actual["update:modelValue"].length).toBe(1);
+      let emittedOption = actual["update:modelValue"][0][0];
+      expect(emittedOption).toEqual({
+        name: "test",
+        optionType: "text",
+        configRemoteUrl: {},
+        description: "",
+        inputType,
+        hidden: false,
+        multivalueAllSelected: false,
+        multivalued: false,
+        isDate,
+        secure,
+        valueExposed,
+        optionValuesPluginType: "",
+        remoteUrlAuthenticationType: "",
+        required: false,
+        sortValues: false,
+        value: "",
+        valuesType: "list",
+      });
+    },
+  );
   it.each([
     ["", "has-warning", "form.field.required.message"],
     ["in valid", "has-error", "form.option.regex.validation.error"],
