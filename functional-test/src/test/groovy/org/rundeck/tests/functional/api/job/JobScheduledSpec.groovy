@@ -2,9 +2,9 @@ package org.rundeck.tests.functional.api.job
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.util.annotations.APITest
-import org.rundeck.util.api.ExecutionStatus
-import org.rundeck.util.api.JobUtils
-import org.rundeck.util.api.WaitingTime
+import org.rundeck.util.common.execution.ExecutionStatus
+import org.rundeck.util.common.jobs.JobUtils
+import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.container.BaseContainer
 
 import java.time.LocalDateTime

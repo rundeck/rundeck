@@ -4,7 +4,7 @@ import org.rundeck.util.annotations.APITest
 import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.api.scm.gitea.GiteaApiRemoteRepo
 import org.rundeck.util.api.scm.GitScmApiClient
-import org.rundeck.util.api.RundeckResponse
+import org.rundeck.util.api.responses.common.RundeckResponse
 import org.rundeck.util.api.scm.httpbody.ScmPluginsListResponse
 import org.rundeck.util.api.scm.httpbody.ScmProjectConfigResponse
 import org.rundeck.util.api.scm.httpbody.GitExportSetupRequest
