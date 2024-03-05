@@ -846,18 +846,13 @@ export default defineComponent({
   },
   data() {
     return {
-      option: Object.assign(
-        {},
-        OptionPrototype,
-        {
-          valuesType: this.modelValue.optionValuesPluginType
-            ? this.modelValue.optionValuesPluginType
-            : this.modelValue.valuesUrl
-              ? "url"
-              : "list",
-        },
-        cloneDeep(this.modelValue),
-      ) as JobOptionEdit,
+      option: Object.assign({}, OptionPrototype, cloneDeep(this.modelValue), {
+        valuesType: this.modelValue.optionValuesPluginType
+          ? this.modelValue.optionValuesPluginType
+          : this.modelValue.valuesUrl
+            ? "url"
+            : "list",
+      }) as JobOptionEdit,
       regexChoice: false,
       validationErrors: {},
       validationWarnings: {},
