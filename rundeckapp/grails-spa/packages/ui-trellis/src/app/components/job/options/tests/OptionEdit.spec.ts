@@ -151,7 +151,6 @@ describe("OptionEdit", () => {
       expect(emittedOption).toEqual({
         name: "test",
         optionType: "text",
-        configRemoteUrl: {},
         description: "",
         inputType,
         hidden: false,
@@ -160,8 +159,6 @@ describe("OptionEdit", () => {
         isDate,
         secure,
         valueExposed,
-        optionValuesPluginType: "",
-        remoteUrlAuthenticationType: "",
         required: false,
         sortValues: false,
         value: "",
