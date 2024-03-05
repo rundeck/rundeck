@@ -31,8 +31,9 @@ class GiteaApiRemoteRepo {
                 .build()
     }
 
-    void setupRepo(){
+    GiteaApiRemoteRepo setupRepo(){
         doPost(CREATE_REPO_ENDPOINT, new CreateRepoRequest(name: this.repoName))
+        return this
     }
 
     private Response doPost(final String path, final Object body = null){
@@ -62,7 +63,7 @@ class GiteaApiRemoteRepo {
     /**
      *
      * @param client
-     * @param path
+     * @param path including the key name but not the "keys/" prefix
      * @return true if successful
      */
     Response storeRepoPassInRundeck(KeyStorageApiClient client, String path){

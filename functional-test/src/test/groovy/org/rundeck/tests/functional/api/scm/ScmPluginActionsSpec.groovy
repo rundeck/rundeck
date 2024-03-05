@@ -10,6 +10,8 @@ import org.rundeck.util.api.scm.httpbody.GitExportSetupRequest
 import org.rundeck.util.api.scm.httpbody.ScmActionPerformRequest
 import org.rundeck.util.api.scm.httpbody.SetupIntegrationResponse
 import org.rundeck.util.api.storage.KeyStorageApiClient
+import org.rundeck.util.common.scm.ScmActionId
+import org.rundeck.util.common.scm.ScmIntegration
 import org.rundeck.util.container.BaseContainer
 import org.rundeck.util.common.jobs.JobUtils
 
@@ -26,7 +28,7 @@ class ScmPluginActionsSpec extends BaseContainer {
 
     def "project scm status must be export needed when having a new job"(){
         given:
-        String integration = 'export'
+        ScmIntegration integration = ScmIntegration.EXPORT
         String projectName = "${PROJECT_NAME}-P1"
         setupProjectArchiveDirectoryResource(projectName, BASE_EXPORT_PROJECT_LOCATION)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
@@ -51,8 +53,8 @@ class ScmPluginActionsSpec extends BaseContainer {
     def "retrieve all input fields on scm action for project with new job"(){
         given:
         String projectName = "${PROJECT_NAME}-P2"
-        String integration = 'export'
-        String actionId = 'project-commit'
+        ScmIntegration integration = ScmIntegration.EXPORT
+        ScmActionId actionId = ScmActionId.PROJECT_COMMIT
         setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
         String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/test.xml', client).succeeded.first().id
@@ -150,14 +152,14 @@ class ScmPluginActionsSpec extends BaseContainer {
         IntegrationStatusResponse finalScmStatus = scmClient.callGetIntegrationStatus().response
         verifyAll {
             performActionResult.success
-            performActionResult.message == "SCM ${integration} Action was Successful: ${actionId}"
+            performActionResult.message == "SCM ${integration.name} Action was Successful: ${actionId}"
             finalScmStatus.actions == expectedFinalScmActions
             finalScmStatus.synchState == expectedFinalSynchState
         }
 
         where:
-        integration | actionId          | useAutoPush | expectedFinalSynchState | expectedFinalScmActions
-        'export'    | 'project-commit'  | false       | 'EXPORT_NEEDED'         | ['project-push']
-        'export'    | 'project-commit'  | true        | 'CLEAN'                 | null
+        integration           | actionId          | useAutoPush | expectedFinalSynchState | expectedFinalScmActions
+        ScmIntegration.EXPORT | 'project-commit'  | false       | 'EXPORT_NEEDED'         | ['project-push']
+        ScmIntegration.EXPORT | 'project-commit'  | true        | 'CLEAN'                 | null
     }
 }
