@@ -3,7 +3,7 @@ package org.rundeck.tests.functional.api.job
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import org.rundeck.util.annotations.APITest
-import org.rundeck.util.api.JobUtils
+import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.BaseContainer
 
 @APITest

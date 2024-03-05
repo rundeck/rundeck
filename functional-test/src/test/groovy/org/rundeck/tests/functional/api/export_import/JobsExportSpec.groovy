@@ -2,7 +2,7 @@ package org.rundeck.tests.functional.api.export_import
 
 import okhttp3.Headers
 import org.rundeck.util.annotations.APITest
-import org.rundeck.util.api.JobUtils
+import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.BaseContainer
 import spock.lang.Shared
 

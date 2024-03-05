@@ -2,7 +2,7 @@ package org.rundeck.tests.functional.api.scm
 
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.annotations.ExcludePro
-import org.rundeck.util.api.JobUtils
+import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.gitea.GiteaApiRemoteRepo
 import org.rundeck.util.api.scm.httpbody.GitExportSetupRequest
@@ -83,6 +83,7 @@ class ScmPluginJobDiffSpec extends BaseContainer {
                 "2-args": "echo hello there 2 updated",
                 "uuid": DUMMY_JOB_ID
         ]
+        hold(5)
         JobUtils.jobImportFile(PROJECT_NAME, JobUtils.updateJobFileToImport(JOB_XML_NAME, PROJECT_NAME, updatedArgs) as String, client, JobUtils.DUPE_OPTION_UPDATE)
         hold(5)
         def exportNeededStatus = scmClient.callGetJobStatus(DUMMY_JOB_ID).response

@@ -6,7 +6,7 @@ import okhttp3.Request
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.container.BaseContainer
 import org.rundeck.util.container.SeleniumBase
-import org.rundeck.util.extensions.CustomCookieJar
+import org.rundeck.util.api.common.CustomCookieJar
 
 @APITest
 class BasicSpec extends BaseContainer {

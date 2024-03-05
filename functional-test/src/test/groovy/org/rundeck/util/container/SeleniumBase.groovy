@@ -6,8 +6,8 @@ import org.openqa.selenium.TakesScreenshot
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.chrome.ChromeOptions
-import org.rundeck.util.extensions.TestResultExtension
-import org.rundeck.tests.functional.selenium.pages.BasePage
+import org.rundeck.util.spock.extensions.TestResultExtension
+import org.rundeck.util.gui.pages.BasePage
 
 /**
  * Utility Base for selenium test specs
