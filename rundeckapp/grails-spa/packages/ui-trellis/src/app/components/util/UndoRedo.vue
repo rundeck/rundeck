@@ -1,12 +1,34 @@
 <template>
   <span>
     <btn :class="{ disabled: !hasUndo }" @click="doUndo" size="xs">
+    <btn
+      :class="{ disabled: !hasUndo }"
+      @click="doUndo"
+      size="xs"
+      data-test="undo-btn"
+    >
       <i class="glyphicon glyphicon-step-backward"></i>
       {{ $t("util.undoredo.undo") }}
     </btn>
-    <btn :class="{ disabled: !hasRedo }" @click="doRedo" size="xs">
+    <btn
+      :class="{ disabled: !hasRedo }"
+      @click="doRedo"
+      size="xs"
+      data-test="redo-btn"
+    >
       {{ $t("util.undoredo.redo") }}
       <i class="glyphicon glyphicon-step-forward"></i>
+    </btn>
+    <btn
+      size="xs"
+      type="simple"
+      class="btn-muted"
+      v-if="revertAllEnabled && hasUndo"
+      @click="doRevertAll"
+      data-test="revertAll-btn"
+    >
+      <i class="glyphicon glyphicon-fast-backward"></i>
+      {{ $t("util.undoredo.revertAll") }}
     </btn>
   </span>
 </template>
@@ -18,13 +40,16 @@ export default defineComponent({
   name: "UndoRedo",
   props: {
     eventBus: Object as PropType<typeof EventBus>,
-    ident: String,
-    max: Number,
+    revertAllEnabled: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
       stack: <any>[],
       index: 0,
+      revertAllConfirm: false,
     };
   },
   computed: {
@@ -60,6 +85,10 @@ export default defineComponent({
       let change = this.stack[newindex];
       this.index = newindex;
       this.eventBus.emit("redo", change);
+    },
+    doRevertAll() {
+      this.index = this.stack.length;
+      this.eventBus.emit("revertAll");
     },
   },
   mounted() {
