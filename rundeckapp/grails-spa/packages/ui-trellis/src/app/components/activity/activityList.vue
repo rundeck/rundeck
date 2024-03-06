@@ -296,7 +296,7 @@
                 label
                 :label-text="
                   $t('job.execution.starting.0', [
-                    runningStartedDisplay(exec.dateStarted?.date) || 'N/A',
+                    runningStartedDisplay(exec.dateStarted.date),
                   ])
                 "
               ></progress-bar>
