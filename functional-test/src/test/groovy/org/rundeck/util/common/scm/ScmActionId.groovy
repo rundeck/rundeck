@@ -9,8 +9,8 @@ enum ScmActionId {
     }
 
     static ScmActionId getEnum(String value) {
-        for(ScmActionId v : values())
-            if(v.name.equalsIgnoreCase(value)) return v
+        ScmActionId action = valueOf(value.toUpperCase(Locale.ENGLISH))
+        if(action.name == value) return action
         throw new IllegalArgumentException()
     }
 }
