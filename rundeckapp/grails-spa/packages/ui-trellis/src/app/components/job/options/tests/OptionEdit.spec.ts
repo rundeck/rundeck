@@ -1,26 +1,24 @@
 import { mount, shallowMount, VueWrapper } from "@vue/test-utils";
-import { action } from "mobx";
 import { Btn } from "uiv";
-import { OptionValidation } from "../../../../../library/types/jobs/JobEdit";
+import { validateJobOption } from "../../../../../library/services/jobEdit";
 import OptionEdit from "../OptionEdit.vue";
 
-jest.mock("@/library/modules/rundeckClient", () => ({
-  client: {},
-}));
-// Mock validateJobOption method
-jest.mock("@/library/services/jobEdit", () => ({
-  validateJobOption: jest.fn().mockResolvedValue({
-    valid: true,
-    message: "",
-    messages: {},
-  } as OptionValidation),
-}));
-jest.mock("@/library", () => ({
+jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
     eventBus: { on: jest.fn(), emit: jest.fn() },
     rdBase: "http://localhost:4440",
   })),
 }));
+jest.mock("@/library/modules/rundeckClient", () => ({
+  client: {},
+}));
+// Mock validateJobOption method
+jest.mock("@/library/services/jobEdit");
+
+const mockedValidateJobOption = validateJobOption as jest.MockedFunction<
+  typeof validateJobOption
+>;
+
 const mountOptionEdit = async (options: any): Promise<VueWrapper<any>> => {
   const wrapper = mount(OptionEdit, {
     props: {
@@ -132,6 +130,9 @@ describe("OptionEdit", () => {
       secure: boolean,
       valueExposed: boolean,
     ) => {
+      mockedValidateJobOption.mockResolvedValueOnce({
+        valid: true,
+      });
       const wrapper = await mountOptionEdit({
         modelValue: { name: "test", optionType: "text" },
         editable: true,
@@ -185,6 +186,9 @@ describe("OptionEdit", () => {
   ])(
     "change values type selection %p %p",
     async (selector: string, valuesType: string, data: any) => {
+      mockedValidateJobOption.mockResolvedValueOnce({
+        valid: true,
+      });
       const wrapper = await mountOptionEdit({
         modelValue: { name: "test", optionType: "text" },
         features: { optionValuesPlugin: true },
@@ -228,6 +232,29 @@ describe("OptionEdit", () => {
       );
     },
   );
+  it("doSave does not emit value if validation fails", async () => {
+    mockedValidateJobOption.mockResolvedValueOnce({
+      valid: false,
+      message: "",
+      messages: { name: ["Wrong value"] },
+    });
+    const wrapper = await mountOptionEdit({
+      modelValue: { name: "test", optionType: "text" },
+      features: { optionValuesPlugin: true },
+      optionValuesPlugins: [
+        { name: "testplugin", description: "", title: "Test Plugin" },
+      ],
+      editable: true,
+    });
+
+    await wrapper.vm.doSave();
+    expect(wrapper.vm.validationErrors).toStrictEqual({
+      name: ["Wrong value"],
+    });
+    expect(wrapper.vm.hasFormErrors).toBeTruthy();
+    expect(wrapper.vm.hasError("name")).toBeTruthy();
+    expect(wrapper.emitted()).not.toHaveProperty("update:modelValue");
+  });
   it.each([
     ["", "has-warning", "form.field.required.message"],
     ["in valid", "has-error", "form.option.regex.validation.error"],
