@@ -1,6 +1,7 @@
 package org.rundeck.util.api.scm.httpbody
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.rundeck.util.common.scm.ScmIntegration
 
 class IntegrationStatusResponse {
     @JsonProperty
@@ -17,4 +18,8 @@ class IntegrationStatusResponse {
 
     @JsonProperty
     String synchState
+
+    ScmIntegration getIntegration(){
+        return ScmIntegration.getEnum(integration)
+    }
 }
