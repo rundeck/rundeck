@@ -10,8 +10,8 @@ enum ScmIntegration {
     }
 
     static ScmIntegration getEnum(String value) {
-        ScmIntegration action = valueOf(value.toUpperCase(Locale.ENGLISH))
-        if(action.name == value) return action
+        for(ScmIntegration v : values())
+            if(v.name == value) return v
         throw new IllegalArgumentException()
     }
 }
