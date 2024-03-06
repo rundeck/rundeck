@@ -3,6 +3,7 @@ package org.rundeck.util.api.scm.httpbody
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import okhttp3.Response
+import org.rundeck.util.common.scm.ScmIntegration
 
 class ScmPluginsListResponse {
 
@@ -11,6 +12,10 @@ class ScmPluginsListResponse {
 
     @JsonProperty
     List<ScmPlugin> plugins
+
+    ScmIntegration getIntegration(){
+        ScmIntegration.getEnum(integration)
+    }
 
     static class ScmPlugin {
         @JsonProperty

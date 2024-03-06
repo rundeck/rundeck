@@ -5,6 +5,7 @@ import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
 import org.rundeck.util.container.SeleniumContext
 import org.rundeck.util.gui.pages.BasePage
+import org.rundeck.util.gui.scm.ScmStatusBadge
 
 /**
  * Job show page
@@ -43,6 +44,7 @@ class JobShowPage extends BasePage{
     By jobSearchSubmitBy = By.cssSelector('#jobs_filters form #jobs_filters_footer input[type="submit"][name="_action_jobs"]')
 
     String loadPath = "/job/show"
+    private String project
 
     JobShowPage(final SeleniumContext context) {
         super(context)
@@ -50,7 +52,17 @@ class JobShowPage extends BasePage{
 
     JobShowPage(final SeleniumContext context, String project) {
         super(context)
+        this.project = project
         this.loadPath = "/project/$project/jobs"
+    }
+
+    JobShowPage forJob(String jobUuid){
+        this.loadPath = "/project/$project/job/show/$jobUuid"
+        return this
+    }
+
+    ScmStatusBadge getScmStatusBadge(){
+        return new ScmStatusBadge(this)
     }
 
     void validatePage() {

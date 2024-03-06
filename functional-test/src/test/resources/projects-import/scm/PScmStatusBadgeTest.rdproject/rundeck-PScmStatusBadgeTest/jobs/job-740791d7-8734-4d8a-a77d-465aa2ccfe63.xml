@@ -1,0 +1,23 @@
+<joblist>
+  <job>
+    <defaultTab>nodes</defaultTab>
+    <description></description>
+    <executionEnabled>true</executionEnabled>
+    <id>740791d7-8734-4d8a-a77d-465aa2ccfe63</id>
+    <loglevel>INFO</loglevel>
+    <name>job-created-import</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <node-step-plugin type='exec-command'>
+          <configuration>
+            <entry key='adhocRemoteString' value='ls' />
+          </configuration>
+        </node-step-plugin>
+      </command>
+    </sequence>
+    <uuid>740791d7-8734-4d8a-a77d-465aa2ccfe63</uuid>
+  </job>
+</joblist>

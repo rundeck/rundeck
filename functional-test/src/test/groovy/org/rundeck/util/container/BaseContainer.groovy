@@ -135,7 +135,8 @@ abstract class BaseContainer extends Specification implements ClientProvider {
             [
                 importConfig      : true,
                 importACL         : true,
-                importNodesSources: true
+                importNodesSources: true,
+                importScm: true
             ]
         )
     }
