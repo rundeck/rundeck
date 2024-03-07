@@ -796,7 +796,10 @@ export default defineComponent({
         exec.dateStarted.date
       ) {
         const diff = moment().diff(moment(exec.dateStarted.date));
-        return Math.floor(100 * (diff / exec.job.averageDuration));
+        return Math.min(
+          Math.floor((diff / exec.job.averageDuration) * 100),
+          100,
+        );
       }
       return 0;
     },
