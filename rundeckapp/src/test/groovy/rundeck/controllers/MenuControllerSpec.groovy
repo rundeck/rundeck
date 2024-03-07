@@ -2473,9 +2473,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             1 * requireApi(_,_)>>true
             1 * requireExists(_, true, ['project', 'aProject']) >> true
         }
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-                    params.project = 'aProject'
-        params.projFilter = 'aProject'
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        params.project = 'aProject'
         def action = 'read'
         when:
         controller.apiExecutionsRunningv14()
@@ -2483,6 +2482,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         response.status == 403
         1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, action, 'aProject')
         1 * controller.frameworkService.existsFrameworkProject('aProject') >> true
+        1 * controller.frameworkService.isFrameworkProjectDisabled('aProject') >> false
 
     }
 
@@ -2508,6 +2508,85 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         response.status == 404
         0 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, action, 'aProject')
         1 * controller.frameworkService.existsFrameworkProject('aProject') >> false
+        0 * controller.frameworkService.isFrameworkProjectDisabled('aProject') >> false
+
+    }
+
+    @Unroll
+    def "apiExecutionsRunning disable project"() {
+        given:
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.apiService = Mock(ApiService) {
+            _ * renderErrorFormat(_, { it.status == 404 }) >> {
+                it[0].status = 404
+            }
+            1 * requireApi(_,_) >> true
+            1 * requireExists(_, true, ['project', 'aProject']) >> true
+            0 * _ (*_)
+        }
+        params.project = 'aProject'
+        def action = 'read'
+        when:
+        controller.apiExecutionsRunningv14()
+        then:
+        response.status == 404
+        0 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, action, 'aProject')
+        1 * controller.frameworkService.existsFrameworkProject('aProject') >> true
+        1 * controller.frameworkService.isFrameworkProjectDisabled('aProject') >> true
+
+    }
+
+    @Unroll
+    def "apiExecutionsRunning disable project with list of projects"() {
+        given:
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.apiService = Mock(ApiService) {
+            1 * renderErrorFormat(_, { it.status == 404 }) >> {
+                it[0].status = 404
+            }
+            1 * requireApi(_,_) >> true
+            1 * requireExists(_, true, _) >> true
+            0 * _ (*_)
+        }
+        params.project = 'aProject,bProject'
+        def action = 'read'
+        when:
+        controller.apiExecutionsRunningv14()
+        then:
+        response.status == 404
+        0 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, action, _)
+        1 * controller.frameworkService.existsFrameworkProject('aProject') >> true
+        1 * controller.frameworkService.isFrameworkProjectDisabled('aProject') >> true
+
+    }
+
+    @Unroll
+    def "apiExecutionsRunning disable project with list of projects 2"() {
+        given:
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_,_) >> true
+            1 * renderErrorFormat(_, { it.status == 404 }) >> {
+                it[0].status = 404
+            }
+
+            2 * requireExists(_, true, _) >> true
+            0 * _ (*_)
+        }
+        params.project = 'aProject,bProject'
+        def action = 'read'
+        when:
+        controller.apiExecutionsRunningv14()
+        then:
+        response.status == 404
+        // response.errorMessage == 'api.error.project.disabled'
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, action, _) >> true
+        2 * controller.frameworkService.existsFrameworkProject(_) >> true
+        1 * controller.frameworkService.isFrameworkProjectDisabled('aProject') >> false
+        1 * controller.frameworkService.isFrameworkProjectDisabled('bProject') >> true
 
     }
 
@@ -2607,6 +2686,56 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
 
         }
     }
+
+    @Unroll
+    def "test api executions running list 3 projects with comma separated"() {
+        given:
+        controller.apiService = Mock(ApiService){
+            1 * requireApi(_,_) >> true
+            3 * requireExists(_, true, _) >> true
+        }
+
+        controller.userService = Mock(UserService){}
+
+        UserAndRolesAuthContext test = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> new HashSet<String>(['test'])
+        }
+
+        def executionService = Mock(ExecutionService){
+            finishQueueQuery(_,_,_) >> [:]
+        }
+
+        controller.executionService = executionService
+
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckBase() >> ''
+            getServerUUID() >> 'uuid'
+            3 * existsFrameworkProject(_) >> true
+            3 * isFrameworkProjectDisabled(_) >> false
+        }
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            3 * authorizeProjectResource(_, AuthorizationUtil.resourceType('event'),'read', _) >> true
+            0 * getAuthContextForSubject(_) >> test
+        }
+
+        params.project = 'project1,project2,project3'
+        request.api_version = 35
+
+        when:
+        def result = controller.apiExecutionsRunningv14()
+
+        then:
+        3 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, _)
+        0 * controller.frameworkService.projectNames(_)
+        0 * controller.apiService.renderErrorFormat(_,_)
+        1 * controller.executionService.queryQueue(_) >> {
+            assert it[0].projFilter == 'project1,project2,project3'
+
+        }
+    }
+
     @Unroll
     def "test nowrunningAjax list all projects with a valid project"() {
         given:

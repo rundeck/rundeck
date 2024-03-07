@@ -3578,10 +3578,27 @@ if executed in cluster mode.
         def allProjects = params.project == '*'
         //test valid project
         if (!allProjects) {
-            if (!apiService.requireExists(response, frameworkService.existsFrameworkProject(params.project), ['project', params.project])) {
-                return
+            def projects = params.project.split(',')
+            def error = projects.find { project ->
+                if (!apiService.requireExists(response, frameworkService.existsFrameworkProject(project), ['project', project])) {
+                    return true
+                }
+                def disabled = frameworkService.isFrameworkProjectDisabled(project)
+                if (disabled) {
+                    apiService.renderErrorFormat(response, [
+                            status: HttpServletResponse.SC_NOT_FOUND,
+                            code: 'api.error.project.disabled',
+                            args: [project]
+                    ])
+                    return true
+                }
+                def authorized = !apiAuthorizedForEventRead(project)
+                if (authorized) {
+                    return true
+                }
+                return false
             }
-            if (!apiAuthorizedForEventRead(params.project)) {
+            if (error) {
                 return
             }
         }

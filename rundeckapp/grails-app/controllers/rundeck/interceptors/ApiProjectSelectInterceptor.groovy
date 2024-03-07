@@ -31,6 +31,7 @@ class ApiProjectSelectInterceptor {
     ApiProjectSelectInterceptor() {
         match(uri: '/api/**')
                 .excludes(controller: 'project', action: 'apiProjectCreate', method: 'POST')
+                .excludes(controller: 'menu', action: 'apiExecutionsRunningv14')
                 .excludes(projectWithWildcard)
     }
 
