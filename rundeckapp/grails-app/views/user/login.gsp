@@ -110,7 +110,7 @@
               </div>
             </g:if>
             <div class="col-md-4 col-sm-6 col-md-offset-4 col-sm-offset-3">
-              <form action="${g.createLink(uri:"/j_security_check")}" method="post" class="form " role="form" onsubmit="return onLoginClicked()">
+              <form action="${g.createLink(uri:"/j_security_check")}" method="post" class="form " role="form" onsubmit="return onLoginClicked()" data-form-type=”login”>
                 <div class="card" data-background="color" data-color="blue">
                   <div class="card-header">
                     <h3 class="card-title">
@@ -176,12 +176,12 @@
                     </g:if>
                     <div class="form-group">
                         <label for="login"><g:message code="user.login.username.label"/></label>
-                        <input type="text" name="j_username" id="login" class="form-control input-no-border" autofocus="true"/>
+                        <input type="text" name="j_username" id="login" class="form-control input-no-border" autofocus="true" data-form-type=”username”/>
                     </div>
 
                     <div class="form-group">
                         <label for="password"><g:message code="user.login.password.label"/></label>
-                        <input type="password" name="j_password" id="password" class="form-control input-no-border" autocomplete="off"/>
+                        <input type="password" name="j_password" id="password" class="form-control input-no-border" autocomplete="off" data-form-type=”password”/>
                     </div>
                         <div class="card-footer text-center">
                             <button type="submit" id="btn-login" class="btn btn-fill btn-wd btn-primary"><g:message code="user.login.login.button"/></button>
