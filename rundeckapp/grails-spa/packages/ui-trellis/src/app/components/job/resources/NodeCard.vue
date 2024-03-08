@@ -210,7 +210,7 @@ import { getAppLinks, getRundeckContext } from "@/library";
 import NodeFilterLink from "@/app/components/job/resources/NodeFilterLink.vue";
 import NodeTable from "@/app/components/job/resources/NodeTable.vue";
 import {
-  getExecutionMode,
+  getConfigMetaForExecutionMode,
   getNodes,
   getNodeSummary,
 } from "@/app/components/job/resources/services/nodeServices";
@@ -324,8 +324,9 @@ export default defineComponent({
     },
     async fetchExecutionMode() {
       try {
-        const data = await getExecutionMode();
-        this.executionMode = data.executionMode;
+        const data = await getConfigMetaForExecutionMode(this.project);
+        // not taking scheduleEnabled into account as commands executed from here are adhoc
+        this.executionMode = data.executionsEnabled ? "active" : "passive";
       } catch (e) {
         this.error = e.message;
       }
