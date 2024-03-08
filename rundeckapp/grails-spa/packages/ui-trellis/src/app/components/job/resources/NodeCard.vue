@@ -325,8 +325,11 @@ export default defineComponent({
     async fetchExecutionMode() {
       try {
         const data = await getConfigMetaForExecutionMode(this.project);
+
         // not taking scheduleEnabled into account as commands executed from here are adhoc
-        this.executionMode = data.executionsEnabled ? "active" : "passive";
+        this.executionMode = data[0].data!.executionsEnabled
+          ? "active"
+          : "passive";
       } catch (e) {
         this.error = e.message;
       }
