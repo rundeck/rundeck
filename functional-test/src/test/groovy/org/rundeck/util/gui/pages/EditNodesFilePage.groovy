@@ -1,7 +1,9 @@
 package org.rundeck.util.gui.pages
 
 import org.openqa.selenium.By
+import org.openqa.selenium.WebDriver
 import org.openqa.selenium.WebElement
+import org.openqa.selenium.support.ui.ExpectedCondition
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.container.SeleniumContext
@@ -39,6 +41,16 @@ class EditNodesFilePage extends BasePage{
     void waitForAceToRender(){
         new WebDriverWait(driver, Duration.ofSeconds(30)).until(
                 ExpectedConditions.elementToBeClickable(aceEditorGutter)
+        )
+    }
+
+    void waitForAceToHaveText(){
+        new WebDriverWait(driver, Duration.ofSeconds(30)).until(
+                new ExpectedCondition<Boolean>() {
+                    Boolean apply(WebDriver input) {
+                        return aceGutterElement().text.length() != 0
+                    }
+                }
         )
     }
 
