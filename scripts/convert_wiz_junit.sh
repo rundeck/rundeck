@@ -23,8 +23,8 @@ convert_wiz_junit() {
   <testsuite name="Wiz Scan Vulnerabilities" tests="$totalCount" failures="$((highCount + criticalCount))">
 END
 
-    #TO-DO revert to using high and crit vulns
-    jq -c '.result.libraries[].vulnerabilities[] | select(.severity == "HIGH" or .severity == "CRITICAL")' < "$IN" |
+    # Concatenate vulnerabilities from osPackages and libraries, then filter for high and critical
+    jq -c '(.result.osPackages[].vulnerabilities[]?, .result.libraries[].vulnerabilities[]?) | select(.severity == "HIGH" or .severity == "CRITICAL")' < "$IN" |
     while IFS= read -r vuln; do
         local name=$(echo "$vuln" | jq -r '.name')
         local severity=$(echo "$vuln" | jq -r '.severity')

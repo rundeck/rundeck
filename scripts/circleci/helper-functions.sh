@@ -106,17 +106,14 @@ wizcli_scan() {
     mkdir -p test-results/junit
     bash "${RUNDECK_CORE_DIR}/scripts/convert_wiz_junit.sh" wizcli_scan_result.json > test-results/junit/wizcli-junit.xml
 
-    # Count high and critical vulnerabilities
-    #TO-DO revert to using high and crit vulns
-    local high_vulns=$(jq '[.result.libraries[].vulnerabilities[] | select(.severity == "HIGH") | .name] | length' wizcli_scan_result.json)
-    local crit_vulns=$(jq '[.result.libraries[].vulnerabilities[] | select(.severity == "CRITICAL") | .name] | length' wizcli_scan_result.json)
+    # Aggregate high and critical vulnerabilities from osPackages and libraries
+    local high_vulns=$(jq '[.result.osPackages[].vulnerabilities[]?, .result.libraries[].vulnerabilities[]? | select(.severity == "HIGH") | .name] | length' wizcli_scan_result.json)
+    local crit_vulns=$(jq '[.result.osPackages[].vulnerabilities[]?, .result.libraries[].vulnerabilities[]? | select(.severity == "CRITICAL") | .name] | length' wizcli_scan_result.json)
 
-    #TO-DO revert to using high and crit vulns
     echo "High Vulnerabilities: $high_vulns"
     echo "Critical Vulnerabilities: $crit_vulns"
 
     # Check if there are any high or critical vulnerabilities and return a non-zero exit code if found
-    #TO-DO revert to using high and crit vulns
     if [[ $high_vulns -gt 0 || $crit_vulns -gt 0 ]]; then
         echo "==> Security Alert: Found high or critical vulnerabilities."
         return 1
