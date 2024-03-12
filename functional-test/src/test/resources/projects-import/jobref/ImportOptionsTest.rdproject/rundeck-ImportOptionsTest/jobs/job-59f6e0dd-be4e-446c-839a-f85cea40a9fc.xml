@@ -1,0 +1,24 @@
+<joblist>
+  <job>
+    <context>
+      <options preserveOrder='true'>
+        <option name='ip_list' />
+      </options>
+    </context>
+    <defaultTab>output</defaultTab>
+    <description></description>
+    <executionEnabled>true</executionEnabled>
+    <id>59f6e0dd-be4e-446c-839a-f85cea40a9fc</id>
+    <loglevel>INFO</loglevel>
+    <name>ChildJob</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>echo ${option.ip_list}</exec>
+      </command>
+    </sequence>
+    <uuid>59f6e0dd-be4e-446c-839a-f85cea40a9fc</uuid>
+  </job>
+</joblist>
