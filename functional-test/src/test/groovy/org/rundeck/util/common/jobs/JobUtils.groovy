@@ -213,6 +213,6 @@ class JobUtils {
             // Throw an exception if the import failed
             throw new IllegalArgumentException("Job import failed. HTTP Status Code: " + responseImport.code());
         }
-    };
+    }
 
 }

@@ -5,6 +5,7 @@ import org.rundeck.util.annotations.APITest
 import org.rundeck.util.common.execution.ExecutionStatus
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.common.WaitingTime
+import org.rundeck.util.common.projects.ProjectUtils
 import org.rundeck.util.container.BaseContainer
 
 import java.time.LocalDateTime
@@ -24,7 +25,7 @@ class ExecutionSpec extends BaseContainer {
         client.apiVersion = client.finalApiVersion
     }
 
-    def "run command, get execution"() {
+    def "run command get execution"() {
         when: "run a command"
             def adhoc = post("/project/${PROJECT_NAME}/run/command?exec=echo+testing+execution+api", Map)
         then:
@@ -345,6 +346,56 @@ class ExecutionSpec extends BaseContainer {
                 demo.code() == 200
                 def json = jsonValue(demo.body())
                 json.executions.size() != null
+            }
+    }
+
+    def "executions-running for list projects"() {
+        given:
+            ProjectUtils.createProjectsWithJobsScheduled("project-api-forecast", 4, 2, client)
+        and:
+            hold 20
+        when:
+            def response2 = doGet("/project/project-api-forecast-1/executions/running?includePostponed=true")
+            def response3 = doGet("/project/project-api-forecast-1,project-api-forecast-2/executions/running?includePostponed=true")
+            def response4 = doGet("/project/project-api-forecast-1,project-api-forecast-2,project-api-forecast-3/executions/running?includePostponed=true")
+            def response1 = doGet("/project/*/executions/running?includePostponed=true")
+        then:
+            verifyAll {
+                def json2 = jsonValue(response2.body())
+                def json3 = jsonValue(response3.body())
+                def json4 = jsonValue(response4.body())
+                def json1 = jsonValue(response1.body())
+
+                json2.executions.size() == 4
+                json3.executions.size() == 6
+                json4.executions.size() == 8
+                json1.executions.size() == 10
+            }
+    }
+
+    def "executions-running when project is disabled"() {
+        given:
+            deleteProject("project-api-forecast-1")
+        when:
+            def response = doGet("/project/project-api-forecast-1/executions/running?includePostponed=true")
+        then:
+            verifyAll {
+                !response.successful
+                response.code() == 404
+                def json2 = jsonValue(response.body())
+                json2.errorCode == 'api.error.project.disabled'
+            }
+    }
+
+    def "executions-running when project is deleted"() {
+        when:
+            def response = doGet("/project/any-api-project/executions/running?includePostponed=true")
+        then:
+            verifyAll {
+                !response.successful
+                response.code() == 404
+                def json2 = jsonValue(response.body())
+                json2.errorCode == 'api.error.item.doesnotexist'
             }
     }
 
