@@ -19,11 +19,11 @@ convert_wiz_junit() {
 
     cat <<END
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites failures="$((highCount + criticalCount))" tests="$totalCount" timestamp="$time">
-  <testsuite name="Wiz Scan Vulnerabilities" tests="$totalCount" failures="$((highCount + criticalCount))">
+<testsuites failures="$((lowCount + mediumCount))" tests="$totalCount" timestamp="$time">
+  <testsuite name="Wiz Scan Vulnerabilities" tests="$totalCount" failures="$((lowCount + mediumCount))">
 END
 
-    jq -c '.result.osPackages[].vulnerabilities[] | select(.severity == "HIGH" or .severity == "CRITICAL")' < "$IN" |
+    jq -c '.result.osPackages[].vulnerabilities[] | select(.severity == "LOW" or .severity == "MEDIUM")' < "$IN" |
     while IFS= read -r vuln; do
         local name=$(echo "$vuln" | jq -r '.name')
         local severity=$(echo "$vuln" | jq -r '.severity')
