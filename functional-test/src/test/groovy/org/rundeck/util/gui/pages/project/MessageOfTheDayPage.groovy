@@ -43,6 +43,9 @@ class MessageOfTheDayPage extends BasePage {
 
     def waitForMessageShownInHome(String message){
         new WebDriverWait(driver,  Duration.ofSeconds(30)).until(
+                ExpectedConditions.numberOfElementsToBeMoreThan(motdMessageHome, 0)
+        )
+        new WebDriverWait(driver,  Duration.ofSeconds(30)).until(
                 ExpectedConditions.textToBe(motdMessageHome, message)
         )
     }
