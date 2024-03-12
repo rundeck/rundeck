@@ -7,10 +7,10 @@ readonly IN=${1:-/dev/stdin}
 # Convert wizcli scan results to JUnit XML format
 convert_wiz_junit() {
     # Counts of vulnerabilities by severity
-    local lowCount=$(jq -r '.analytics.vulnerabilities.lowCount' < "$IN")
-    local mediumCount=$(jq -r '.analytics.vulnerabilities.mediumCount' < "$IN")
-    local highCount=$(jq -r '.analytics.vulnerabilities.highCount' < "$IN")
-    local criticalCount=$(jq -r '.analytics.vulnerabilities.criticalCount' < "$IN")
+    local lowCount=$(jq -r '.analytics.vulnerabilities.lowCount // 0' < "$IN")
+    local mediumCount=$(jq -r '.analytics.vulnerabilities.mediumCount // 0' < "$IN")
+    local highCount=$(jq -r '.analytics.vulnerabilities.highCount // 0' < "$IN")
+    local criticalCount=$(jq -r '.analytics.vulnerabilities.criticalCount // 0' < "$IN")
 
     local time=$(jq -r '.createdAt' < "$IN" | cut -d'T' -f1)
 
