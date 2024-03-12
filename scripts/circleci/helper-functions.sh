@@ -46,7 +46,7 @@ copy_rundeck_war() {
 }
 
 install_wizcli(){
-  curl -Lo wizcli https://wizcli.app.wiz.io/latest/wizcli-linux-arm64
+  curl -Lo wizcli https://wizcli.app.wiz.io/latest/wizcli-linux-amd64
   chmod +x wizcli
   sudo cp ./wizcli /usr/local/bin
 }
