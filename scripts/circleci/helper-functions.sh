@@ -98,7 +98,7 @@ wizcli_scan() {
 
 
     #login to wizcli
-    wizcli auth --id=${WIZCLI_ID} --secret=${WIZCLI_SECRET}
+    wizcli auth --id="${WIZCLI_ID}" --secret="${WIZCLI_SECRET}"
     wizcli docker scan --image "${RUNDECK_IMAGE_TAG}" -f json > wizcli_scan_result.json
 
     sudo chown "${CURRENT_USER}" wizcli_scan_result.json
