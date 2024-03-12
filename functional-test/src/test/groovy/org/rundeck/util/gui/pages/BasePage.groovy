@@ -179,4 +179,9 @@ abstract class BasePage {
     WebElement getLink(String text){
         el By.partialLinkText(text)
     }
+
+    def expectPartialLinkToExist(String linkText, int times = 1){
+        new WebDriverWait(driver, Duration.ofSeconds(20))
+                .until(ExpectedConditions.numberOfElementsToBe(By.partialLinkText(linkText), times))
+    }
 }

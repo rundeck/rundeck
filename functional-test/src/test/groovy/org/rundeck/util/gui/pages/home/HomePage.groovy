@@ -30,8 +30,7 @@ class HomePage extends BasePage {
     }
 
     void goProjectHome(String projectName) {
-        loadPath = PAGE_PATH_PROJECT
-        driver.get("${context.client.baseUrl}${loadPath.replaceAll('\\$PROJECT', projectName)}")
+        driver.get("${context.client.baseUrl}${PAGE_PATH_PROJECT.replaceAll('\\$PROJECT', projectName)}")
         waitForUrlToContain(projectName)
     }
 
