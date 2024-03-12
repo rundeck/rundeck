@@ -103,9 +103,9 @@ wizcli_scan() {
 
     sudo chown "${CURRENT_USER}" wizcli_scan_result.json
 
-#    mkdir -p test-results/junit
-#    bash "${RUNDECK_CORE_DIR}/scripts/convert_wiz_junit.sh" wizcli_scan_result.json > test-results/junit/wizcli-junit.xml
-#
+    mkdir -p test-results/junit
+    bash "${RUNDECK_CORE_DIR}/scripts/convert_wiz_junit.sh" wizcli_scan_result.json > test-results/junit/wizcli-junit.xml
+
 #    # Count high and critical vulnerabilities
 #    local high_vulns=$(jq '[.result.osPackages[].vulnerabilities[] | select(.severity == "HIGH") | .name] | length' wizcli_scan_result.json)
 #    local critical_vulns=$(jq '[.result.osPackages[].vulnerabilities[] | select(.severity == "CRITICAL") | .name] | length')
