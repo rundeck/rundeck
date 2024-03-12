@@ -1,4 +1,4 @@
-package org.rundeck.tests.functional.selenium.job
+package org.rundeck.tests.functional.selenium.jobs
 
 import org.openqa.selenium.By
 import org.rundeck.util.gui.pages.JobCreatePage
