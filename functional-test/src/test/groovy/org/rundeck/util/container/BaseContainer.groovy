@@ -310,6 +310,20 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         }
     }
 
+    void disableScheduledAndDeleteProject(String projectName) {
+        def responseDisable = client.doPutWithJsonBody("/project/${projectName}/config",
+                ["project.name": projectName, "project.disable.schedule": "true", "project.later.schedule.enable": "false",
+                 "project.disable.executions": "true"])
+        if (!responseDisable.successful) {
+            throw new RuntimeException("Failed to disable scheduled execution: ${responseDisable.body().string()}")
+        }
+        hold 5
+        def response = client.doDelete("/project/${projectName}")
+        if (!response.successful) {
+            throw new RuntimeException("Failed to delete project: ${response.body().string()}")
+        }
+    }
+
     def setupSpec() {
         startEnvironment()
     }
