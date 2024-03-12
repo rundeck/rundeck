@@ -31,6 +31,7 @@ class MotdSpec extends SeleniumBase {
         when: "add the motd and enable motd in the navbar"
             loginPage.go()
             loginPage.login(TEST_USER, TEST_PASS)
+            homePage.validatePage()
             homePage.goProjectHome projectName
             sideBarPage.goTo NavLinkTypes.MOTD
             motdPage.setMessageOfTheDay(motdMessage)
@@ -40,6 +41,7 @@ class MotdSpec extends SeleniumBase {
             projectEditPage.clickEditConfigurationFile()
             projectEditPage.addConfigurationValue("project.gui.motd.display=projectList,projectHome,navbar\n")
             projectEditPage.save()
+            projectEditPage.validateSave()
             motdPage.clickMOTD()
         then: "validate that motd is shown in the navbar and it has the right value"
             motdPage.waitForMessageShownInProject("a simple message")

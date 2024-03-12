@@ -2,9 +2,13 @@ package org.rundeck.util.gui.pages.project
 
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
+import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.container.SeleniumContext
 import org.rundeck.util.gui.common.navigation.NavProjectSettings
 import org.rundeck.util.gui.pages.BasePage
+
+import java.time.Duration
 
 @CompileStatic
 class ProjectEditPage extends BasePage {
@@ -15,6 +19,7 @@ class ProjectEditPage extends BasePage {
     By saveButton = By.id("save")
     By editConfigurationFile = By.linkText("Edit Configuration File")
     By aceEditor = By.className("ace_text-input")
+    By successMessageDiv = By.cssSelector(".alert.alert-info")
 
     ProjectEditPage(SeleniumContext context) {
         super(context)
@@ -44,5 +49,15 @@ class ProjectEditPage extends BasePage {
 
     def clickNavLink(NavProjectSettings navProjectSettings){
         (el By.linkText(navProjectSettings.getTabLink())).click()
+    }
+
+    /**
+     * When it saves it shows a message using css "alert alert-info"
+     * When it fails to save, it shows a message using "alert alert-info"
+     */
+    def validateSave(){
+        new WebDriverWait(driver,  Duration.ofSeconds(10)).until(
+                ExpectedConditions.textToBePresentInElementLocated(successMessageDiv, "configuration file saved")
+        )
     }
 }
