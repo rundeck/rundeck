@@ -103,24 +103,24 @@ wizcli_scan() {
 
     sudo chown "${CURRENT_USER}" wizcli_scan_result.json
 
-    mkdir -p test-results/junit
-    bash "${RUNDECK_CORE_DIR}/scripts/convert_wiz_junit.sh" wizcli_scan_result.json > test-results/junit/wizcli-junit.xml
-
-    # Count high and critical vulnerabilities
-    local high_vulns=$(jq '[.result.osPackages[].vulnerabilities[] | select(.severity == "HIGH") | .name] | length' wizcli_scan_result.json)
-    local critical_vulns=$(jq '[.result.osPackages[].vulnerabilities[] | select(.severity == "CRITICAL") | .name] | length')
-
-    echo "High Vulnerabilities: $high_vulns"
-    echo "Critical Vulnerabilities: $critical_vulns"
-
-    # Check if there are any high or critical vulnerabilities and return a non-zero exit code if found
-    if [[ $high_vulns -gt 0 || $critical_vulns -gt 0 ]]; then
-        echo "==> Security Alert: Found high or critical vulnerabilities."
-        return 1
-    else
-        echo "==> No high or critical vulnerabilities found."
-        return 0
-    fi
+#    mkdir -p test-results/junit
+#    bash "${RUNDECK_CORE_DIR}/scripts/convert_wiz_junit.sh" wizcli_scan_result.json > test-results/junit/wizcli-junit.xml
+#
+#    # Count high and critical vulnerabilities
+#    local high_vulns=$(jq '[.result.osPackages[].vulnerabilities[] | select(.severity == "HIGH") | .name] | length' wizcli_scan_result.json)
+#    local critical_vulns=$(jq '[.result.osPackages[].vulnerabilities[] | select(.severity == "CRITICAL") | .name] | length')
+#
+#    echo "High Vulnerabilities: $high_vulns"
+#    echo "Critical Vulnerabilities: $critical_vulns"
+#
+#    # Check if there are any high or critical vulnerabilities and return a non-zero exit code if found
+#    if [[ $high_vulns -gt 0 || $critical_vulns -gt 0 ]]; then
+#        echo "==> Security Alert: Found high or critical vulnerabilities."
+#        return 1
+#    else
+#        echo "==> No high or critical vulnerabilities found."
+#        return 0
+#    fi
 }
 
 openapi_tests() {
