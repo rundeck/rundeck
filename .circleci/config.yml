@@ -607,25 +607,25 @@ workflows:
               value: << pipeline.git.branch >>
 
     jobs:
-#      - build-rundeck:
-#          name: Build
-#          <<: *slack-defaults
-#      - test-gradle:
-#          name: Gradle Test
-#          <<: *slack-defaults
-#      - trigger-enterprise:
-#          name: Enterprise Snapshot
-#          <<: *require-build
-#          filters:
-#            branches: { only: main }
-#      - test-openapi:
-#          name: OpenAPI Spec Validation
-#          <<: *require-build
-#          <<: *slack-defaults
-#      - packaging-test:
-#          name: Test Packaging
-#          <<: *require-build
-#          <<: *slack-defaults
+      - build-rundeck:
+          name: Build
+          <<: *slack-defaults
+      - test-gradle:
+          name: Gradle Test
+          <<: *slack-defaults
+      - trigger-enterprise:
+          name: Enterprise Snapshot
+          <<: *require-build
+          filters:
+            branches: { only: main }
+      - test-openapi:
+          name: OpenAPI Spec Validation
+          <<: *require-build
+          <<: *slack-defaults
+      - packaging-test:
+          name: Test Packaging
+          <<: *require-build
+          <<: *slack-defaults
       - wizcli-scan:
           name: WizCLI Scan Preview
           #<<: *require-build
@@ -634,64 +634,64 @@ workflows:
             - WizCLI
           filters:
             branches: { ignore: main }
-#      - wizcli-scan:
-#          name: WizCLI Scan
-#          continue: false
-#          context:
-#            - WizCLI
-#            - slack-secrets
-#          filters:
-#            branches: { only: main }
-#          <<: *require-build
-#          <<: *slack-fail-post-step
-#      - test-docker:
-#          name: Docker Test
-#          command: bash test/run-docker-tests.sh
-#          <<: *require-build
-#          <<: *slack-defaults
-#      - test-machine:
-#          name: API Test
-#          command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
-#          <<: *require-build
-#          <<: *slack-defaults
-#      - test-docker:
-#          name: SSL Test
-#          command: bash test/run-docker-ssl-tests.sh
-#          <<: *require-build
-#          <<: *slack-defaults
-#      - test-docker:
-#          name: Ansible Test
-#          command: bash test/run-docker-ansible-tests.sh
-#          <<: *require-build
-#          <<: *slack-defaults
-#      - test-docker:
-#          name: Blocklist Test
-#          command: bash test/run-docker-plugin-blocklist-test.sh
-#          <<: *require-build
-#          <<: *slack-defaults
-#      - test-machine:
-#          name: LDAP Test
-#          command: bash test/run-docker-ldap-tests.sh
-#          <<: *require-build
-#          <<: *slack-defaults
-#      - test-machine:
-#          name: LDAP Bind Test
-#          command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
-#          <<: *require-build
-#          <<: *slack-defaults
-#      - test-docker:
-#          name: PAM Test
-#          command: bash test/run-docker-pam-tests.sh
-#          <<: *require-build
-#          <<: *slack-defaults
-#      - test-gradle-functional:
-#          name: New Selenium Test
-#          gradle-task: seleniumCoreTest
-#          resource_class: large
-#          <<: *require-build
-#          <<: *slack-defaults
-#      - test-gradle-functional:
-#          name: New API Test
-#          gradle-task: apiTest
-#          <<: *require-build
-#          <<: *slack-defaults
+      - wizcli-scan:
+          name: WizCLI Scan
+          continue: false
+          context:
+            - WizCLI
+            - slack-secrets
+          filters:
+            branches: { only: main }
+          <<: *require-build
+          <<: *slack-fail-post-step
+      - test-docker:
+          name: Docker Test
+          command: bash test/run-docker-tests.sh
+          <<: *require-build
+          <<: *slack-defaults
+      - test-machine:
+          name: API Test
+          command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
+          <<: *require-build
+          <<: *slack-defaults
+      - test-docker:
+          name: SSL Test
+          command: bash test/run-docker-ssl-tests.sh
+          <<: *require-build
+          <<: *slack-defaults
+      - test-docker:
+          name: Ansible Test
+          command: bash test/run-docker-ansible-tests.sh
+          <<: *require-build
+          <<: *slack-defaults
+      - test-docker:
+          name: Blocklist Test
+          command: bash test/run-docker-plugin-blocklist-test.sh
+          <<: *require-build
+          <<: *slack-defaults
+      - test-machine:
+          name: LDAP Test
+          command: bash test/run-docker-ldap-tests.sh
+          <<: *require-build
+          <<: *slack-defaults
+      - test-machine:
+          name: LDAP Bind Test
+          command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
+          <<: *require-build
+          <<: *slack-defaults
+      - test-docker:
+          name: PAM Test
+          command: bash test/run-docker-pam-tests.sh
+          <<: *require-build
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: New Selenium Test
+          gradle-task: seleniumCoreTest
+          resource_class: large
+          <<: *require-build
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: New API Test
+          gradle-task: apiTest
+          <<: *require-build
+          <<: *slack-defaults
