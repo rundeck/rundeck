@@ -1,5 +1,3 @@
-User
-You
 #!/bin/bash
 set -euo pipefail
 
