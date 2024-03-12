@@ -45,6 +45,11 @@ copy_rundeck_war() {
     cp -pv "${warFile}" "${destFile}"
 }
 
+install_wizcli(){
+  curl -Lo wizcli https://wizcli.app.wiz.io/latest/wizcli-linux-arm64
+  chmod +x wizcli
+  sudo cp ./wizcli /usr/local/bin
+}
 
 # Pull the image built on this build and adds a custom tag if provided as argument.
 rundeck_pull_image() {
@@ -70,6 +75,52 @@ fetch_ci_shared_resources() {
     mkdir -p "${HOME}/.gnupg"
     cp -pv ci-resources/* "${HOME}/.gnupg/"
     chmod -R 700 "${HOME}/.gnupg"
+}
+
+wizcli_scan() {
+
+    docker_login
+
+    echo "==> Git Branch: ${RUNDECK_BRANCH}"
+    echo "==> Git Tag: ${RUNDECK_TAG}"
+
+    if [[ -n "${RUNDECK_TAG}" ]]; then
+        export RUNDECK_IMAGE_TAG="${DOCKER_REPO}:${RUNDECK_TAG}"
+    elif [[ "${RUNDECK_BRANCH}" == "main" ]]; then
+        export RUNDECK_IMAGE_TAG="${DOCKER_REPO}:SNAPSHOT"
+    else
+        export RUNDECK_IMAGE_TAG="${DOCKER_CI_REPO}:${RUNDECK_BRANCH_CLEAN}"
+    fi
+
+    echo "==> Scan Image: ${RUNDECK_IMAGE_TAG}"
+
+    docker pull "${RUNDECK_IMAGE_TAG}"
+
+
+    #login to wizcli
+    wizcli auth --id=${WIZCLI_ID} --secret=${WIZCLI_SECRET}
+    wizcli docker scan --image "${RUNDECK_IMAGE_TAG}" -f json > wizcli_scan_result.json
+
+    sudo chown "${CURRENT_USER}" wizcli_scan_result.json
+
+    mkdir -p test-results/junit
+    bash "${RUNDECK_CORE_DIR}/scripts/convert_wiz_junit.sh" wizcli_scan_result.json > test-results/junit/wizcli-junit.xml
+
+    # Count high and critical vulnerabilities
+    local high_vulns=$(jq '[.result.osPackages[].vulnerabilities[] | select(.severity == "HIGH") | .name] | length' wizcli_scan_result.json)
+    local critical_vulns=$(jq '[.result.osPackages[].vulnerabilities[] | select(.severity == "CRITICAL") | .name] | length')
+
+    echo "High Vulnerabilities: $high_vulns"
+    echo "Critical Vulnerabilities: $critical_vulns"
+
+    # Check if there are any high or critical vulnerabilities and return a non-zero exit code if found
+    if [[ $high_vulns -gt 0 || $critical_vulns -gt 0 ]]; then
+        echo "==> Security Alert: Found high or critical vulnerabilities."
+        return 1
+    else
+        echo "==> No high or critical vulnerabilities found."
+        return 0
+    fi
 }
 
 openapi_tests() {
