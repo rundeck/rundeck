@@ -34,6 +34,8 @@ export RUNDECK_WAR_DIR="${RUNDECK_CORE_DIR}/rundeckapp/build/libs"
 # Docker Env set in CIRCLE config
 export DOCKER_USERNAME=${DOCKER_USERNAME:-}
 export DOCKER_PASSWORD=${DOCKER_PASSWORD:-}
+export WIZCLI_ID=${WIZCLI_ID:-}
+export WIZCLI_SECRET=${WIZCLI_SECRET:-}
 
 # DockerHub
 export DOCKER_REPO=${DOCKER_REPO:-"rundeck/rundeck"}
