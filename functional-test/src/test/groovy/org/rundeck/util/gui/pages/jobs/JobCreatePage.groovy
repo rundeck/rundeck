@@ -4,8 +4,14 @@ import groovy.transform.CompileStatic
 import org.openqa.selenium.By
 import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.WebElement
+import org.openqa.selenium.interactions.Actions
+import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.Select
+import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.gui.pages.BasePage
 import org.rundeck.util.container.SeleniumContext
+
+import java.time.Duration
 
 /**
  * Job create page
@@ -13,6 +19,11 @@ import org.rundeck.util.container.SeleniumContext
 @CompileStatic
 class JobCreatePage extends BasePage {
 
+    By nodeFilterInputBy = By.id("schedJobNodeFilter")
+    By selectNode = By.cssSelector(".glyphicon-circle-arrow-right")
+    By lastNodeInList = By.cssSelector(".col-xs-6:nth-child(3) span:nth-child(2)")
+    By refreshNodesBy = By.cssSelector(".refresh_nodes")
+    By numberOfStepsBy = By.cssSelector(".autohilite.autoedit.wfitem.exectype")
     By notificationModalBy = By.cssSelector('#job-notifications-edit-modal')
     By notificationDropDownBy = By.cssSelector('#notification-edit-type-dropdown > button')
     By notificationSaveBy = By.id("job-notifications-edit-modal-btn-save")
@@ -27,6 +38,7 @@ class JobCreatePage extends BasePage {
     By multiExecFalseBy = By.cssSelector('input#multipleFalse')
     By multiExecTrueBy = By.cssSelector('input#multipleTrue')
     By workFlowStrategyBy = By.xpath('//*[@id="workflow.strategy"]')
+    By deleteStepBy = By.xpath('//*[@title="Delete this step"]')
     By strategyPluginParallelBy = By.xpath('//*[@id="strategyPluginparallel"]')
     By strategyPluginParallelMsgBy = By.xpath('//*[@id="strategyPluginparallel"]/span/span')
     By strategyPluginSequentialBy = By.xpath('//*[@id="strategyPluginsequential"]')
@@ -90,6 +102,33 @@ class JobCreatePage extends BasePage {
     By revertWfConfirmBy = By.xpath('//*[starts-with(@id,"popover")]/div[2]/span[2]')
     By listWorkFlowItemBy = By.xpath("//*[starts-with(@id,'wfitem_')]")
     By addSimpleCommandStepBy = By.xpath("//span[contains(@onclick, 'wfnewbutton')]")
+    By notificationListBy = By.cssSelector(".flex-item.flex-grow-1")
+    By nofiticationChildsBy = By.className("text-success")
+    By updateBtn        = By.name("_action_Update")
+    By defaultTabNodes  = By.id("tabSummary")
+    By defaultTabOutput = By.id("tabOutput")
+    By defaultTabHtml   = By.id("tabHTML")
+    By schedulesCronTabBy = By.linkText("Crontab")
+    By schedulesCrontabPanel = By.cssSelector("#cronstrtab .panel-body")
+    By schedulesCrontabStringBy = By.name("crontabString")
+    By stepFilterBy = By.xpath("//*[starts-with(@id, 'stepFilterField')]")
+    By stepFilterSearchBy = By.linkText("Search")
+    By emptyStepListBy = By.xpath("//*[@data-node-step-type='exec-command'][contains(@style, 'display: none;')]")
+    By jobOptionListValuesBy = By.name("valuesList")
+    By jobOptionListDelimiterBy = By.name("valuesListDelimiter")
+    By jobOptionEnforcedBy = By.id("enforcedType_enforced")
+    By jobOptionAllowedValuesRemoteUrlBy = By.xpath("//div[10]/div/div/div[2]/input")
+    By jobOptionAllowedValuesRemoteUrlValueBy = By.name("valuesUrl")
+    By jobOptionRequiredBy = By.id("option-required-yes")
+    By jobOptionMultivaluedBy = By.xpath("//div[15]/div/div/div[2]/input")
+    By jobOptionMultivaluedDelimiterBy = By.name("delimiter")
+    By jobOptionMultiValuedAllSelectedBy = By.name("multivalueAllSelected")
+    By duplicateWfStepBy = By.cssSelector(".glyphicon.glyphicon-duplicate")
+    By urlOptionInput = By.xpath("//input[@name='valuesType' and @value='url']")
+    By scriptTextAreaBy = By.xpath("//*[contains(@class, 'form-group ') and .//*[contains(text(), 'script to execute')]]")
+    By wfItemEditFormBy = By.className("wfitemEditForm")
+    By optDetailBy = By.cssSelector(".optdetail.autohilite.autoedit")
+    By optionsBy = By.cssSelector(".opt.item")
 
     private String loadPath = "/job/create"
     String projectName
@@ -133,7 +172,7 @@ class JobCreatePage extends BasePage {
         addSimpleCommandStep 'echo selenium test', 0
     }
 
-    void addSimpleCommandStep(String command, int number) {
+    JobCreatePage addSimpleCommandStep(String command, int number) {
         executeScript "window.location.hash = '#addnodestep'"
         stepLink 'exec-command', StepType.NODE click()
         byAndWaitClickable adhocRemoteStringBy
@@ -141,6 +180,54 @@ class JobCreatePage extends BasePage {
         waitForNumberOfElementsToBeOne floatBy
         adhocRemoteStringField.sendKeys command
         saveStep number
+
+        return this
+    }
+
+    JobCreatePage addStep(JobStep step, int stepNumber = 0){
+        tab(JobTab.WORKFLOW).click()
+        stepLink(step.STEP_NAME, step.stepType).click()
+
+        step.configure(this)
+
+        saveStep stepNumber
+        return this
+    }
+
+    JobCreatePage withName(String name){
+        jobNameInput.sendKeys name
+        return this
+    }
+
+    JobCreatePage addOption(JobOption option){
+        tab(JobTab.WORKFLOW).click()
+        option.configure(this)
+        return this
+    }
+
+    JobCreatePage duplicateOption(String optName, int newIdx){
+        tab(JobTab.WORKFLOW).click()
+        JobOption.duplicate(this, optName, newIdx)
+        return this
+    }
+
+    JobCreatePage addDefaultTab(String defaultTab){
+        tab(JobTab.OTHER).click()
+        driver.findElement(By.xpath("//input[@value='${defaultTab}']")).click();
+        return this
+    }
+
+    JobShowPage saveJob() {
+        if (loadPath.endsWith('create'))
+            createJobButton.click()
+        else
+            updateJobButton.click()
+
+        return new JobShowPage(context)
+    }
+
+    boolean commandStepVisible(){
+        stepLink 'exec-command', StepType.NODE displayed
     }
 
     void validatePage() {
@@ -153,6 +240,18 @@ class JobCreatePage extends BasePage {
         def tabBy = By.partialLinkText(tab.getTabName())
         waitForNumberOfElementsToBeOne tabBy
         el tabBy
+    }
+
+    WebElement getLastNodeInListSpan(){
+        el lastNodeInList
+    }
+
+    WebElement getSelectNodeArrowElement(){
+        el selectNode
+    }
+
+    WebElement getNodeFilterInput(){
+        el nodeFilterInputBy
     }
 
     WebElement addNotificationButtonByType(NotificationEvent notificationType) {
@@ -206,6 +305,10 @@ class JobCreatePage extends BasePage {
         element
     }
 
+    WebElement getRefreshNodesButton(){
+        el refreshNodesBy
+    }
+
     WebElement getScheduleRunYesField() {
         el scheduleRunYesBy
     }
@@ -239,6 +342,8 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement stepLink(String dataNodeStepType, StepType stepType) {
+        if(stepType == StepType.WORKFLOW)
+            workFlowStepLink.click()
         el By.xpath("//*[@${stepType.getStepType()}='$dataNodeStepType']")
     }
 
@@ -352,7 +457,7 @@ class JobCreatePage extends BasePage {
     WebElement getNodesSelectedByDefaultFalseCheck() {
         el nodesSelectedByDefaultFalseBy
     }
-    
+
     WebElement getOrchestratorDropdownButton() {
         el orchestratorDropdownBy
     }
@@ -456,6 +561,46 @@ class JobCreatePage extends BasePage {
         el addSimpleCommandStepBy
     }
 
+    WebElement getUpdateBtn() {
+        return el(updateBtn)
+    }
+
+    WebElement getDefaultTabNodes() {
+        (el defaultTabNodes)
+    }
+
+    WebElement getDefaultTabOutput() {
+        (el defaultTabOutput)
+    }
+
+    WebElement getDefaultTabHtml() {
+        (el defaultTabHtml)
+    }
+
+    WebElement getSchedulesCrontab(){
+        el schedulesCronTabBy
+    }
+
+    WebElement getSchedulesCrontabPanel(){
+        el schedulesCrontabPanel
+    }
+
+    WebElement getSchedulesCrontabStringInput(){
+        el schedulesCrontabStringBy
+    }
+
+    WebElement getStepFilterInput(){
+        el stepFilterBy
+    }
+
+    WebElement getStepFilterSearchButton(){
+        el stepFilterSearchBy
+    }
+
+    WebElement getEmptyStepList(){
+        el emptyStepListBy
+    }
+
     WebElement getAutocompleteSuggestions() {
         def autoAux = els autocompleteSuggestionsBy
         WebElement autoDivAux
@@ -468,6 +613,56 @@ class JobCreatePage extends BasePage {
         autoDivAux.findElement By.cssSelector("div[class='autocomplete-suggestion']")
     }
 
+    WebElement getJobOptionListValueInput(){
+        el jobOptionListValuesBy
+    }
+
+    WebElement getJobOptionListDelimiter(){
+        el jobOptionListDelimiterBy
+    }
+
+    WebElement getJobOptionEnforcedInput(){
+        el jobOptionEnforcedBy
+    }
+
+    WebElement getJobOptionAllowedValuesRemoteUrlInput(){
+        el jobOptionAllowedValuesRemoteUrlBy
+    }
+
+    void scrollToElement(WebElement el){
+        Actions actions = new Actions(driver);
+        actions.moveToElement(el);
+        actions.perform();
+    }
+
+    WebElement getJobOptionAllowedValuesRemoteUrlValueTextInput(){
+        el jobOptionAllowedValuesRemoteUrlValueBy
+    }
+
+    WebElement getJobOptionRequiredInput(){
+        el jobOptionRequiredBy
+    }
+
+    WebElement getJobOptionMultiValuedInput(){
+        el jobOptionMultivaluedBy
+    }
+
+    WebElement getJobOptionMultivaluedDelimiter(){
+        el jobOptionMultivaluedDelimiterBy
+    }
+
+    WebElement getJobOptionMultiValuedAllSelectedInput(){
+        el jobOptionMultiValuedAllSelectedBy
+    }
+
+    WebElement getDuplicateWfStepButton(){
+        el duplicateWfStepBy
+    }
+
+    WebElement getWfStepByListPosition(int position){
+        (el By.id("wfitem_${position}"))
+    }
+
     void saveStep(Integer stepNumber) {
         def button = el floatBy findElement By.cssSelector(".btn.btn-cta.btn-sm")
         executeScript "arguments[0].scrollIntoView(true);", button
@@ -475,6 +670,112 @@ class JobCreatePage extends BasePage {
         waitForElementVisible By.id("wfitem_${stepNumber}")
     }
 
+    def removeStepByIndex(int stepIndex){
+        (els deleteStepBy).get(stepIndex).click()
+    }
+
+    def expectNumberOfStepsToBe(int numberSteps){
+        new WebDriverWait(driver,  Duration.ofSeconds(5)).until(
+                ExpectedConditions.numberOfElementsToBe(numberOfStepsBy, numberSteps)
+        )
+    }
+
+    /**
+     * It gets the list of notification elements added to the job
+     */
+    def getNotificationList(){
+        (els notificationListBy)
+    }
+
+    /**
+     * It gets the list of notification childs so it can validate each config value
+     */
+    def getNotificationChilds(WebElement notificationParent){
+        notificationParent.findElements(nofiticationChildsBy)
+    }
+
+    void addScriptStep(String jobName, List<String> params, Integer waitTime = null) {
+        jobNameInput.sendKeys jobName
+        tab JobTab.WORKFLOW click()
+        executeScript "window.location.hash = '#addnodestep'"
+        stepLink 'script-inline', StepType.NODE click()
+        waitForElementVisible scriptTextAreaBy
+        params.each {scriptTextAreaInput.sendKeys(it)}
+        wfItemEditForm.click()
+        getWfItemIndex(0).isDisplayed()
+
+        waitTime?.with {
+            el(By.id("wfnewbutton")).findElement(By.cssSelector(".btn.btn-default.btn-sm.ready")).click()
+            addSimpleCommandStep("sleep $it", 1)
+            el(By.id("wfnewbutton")).findElement(By.cssSelector(".btn.btn-default.btn-sm.ready")).click()
+            addSimpleCommandStep("echo \"after wait\"", 2)
+
+            getWfItemIndex(1).isDisplayed()
+            getWfItemIndex(2).isDisplayed()
+        }
+
+        createJobButton.click()
+    }
+
+    WebElement getScriptTextAreaInput() {
+        el scriptTextAreaBy findElement By.tagName("textarea")
+    }
+
+    WebElement getWfItemEditForm() {
+        el wfItemEditFormBy findElement By.cssSelector(".btn.btn-cta.btn-sm")
+    }
+
+    WebElement getWfItemIndex(int number) {
+        el By.id("wfitem_${number}")
+    }
+
+    List<WebElement> getOptions(){
+        els optionsBy
+    }
+
+    List<WebElement> getOptDetails(){
+        els optDetailBy
+    }
+
+}
+
+
+class JobOption {
+    static final String defaultOptType = 'Text'
+    String optionType
+    String inputType
+    String name
+    int optNumber
+
+    void configure(JobCreatePage jobCreatePage){
+        final By usageSectionLocator = By.xpath("//*[contains(@id,'${notUseDefaultType() ? optionType.toLowerCase() + "_" : ""}preview_')]//span[contains(.,' will be available to scripts in these forms')]")
+
+        jobCreatePage.optionButton.click()
+        jobCreatePage.optionName(optNumber).sendKeys(name)
+
+        if(notUseDefaultType()){
+            jobCreatePage.driver.findElement(By.name("optionType")).click();
+            Select typeSelector = new Select(jobCreatePage.driver.findElement(By.name("optionType")))
+            typeSelector.selectByVisibleText(optionType)
+        }
+
+        if(inputType)
+            jobCreatePage.driver.findElement(By.cssSelector("input[value='${inputType}']")).click()
+
+        jobCreatePage.waitForElementVisible(usageSectionLocator)
+        jobCreatePage.executeScript("window.location.hash = '#workflowKeepGoingFail'")
+        jobCreatePage.saveOptionButton.click()
+        jobCreatePage.waitFotOptLi(optNumber)
+    }
+
+    boolean notUseDefaultType(){
+        optionType && optionType != defaultOptType
+    }
+
+    static void duplicate(JobCreatePage jobCreatePage, String optName, int newIdx){
+        jobCreatePage.duplicateButton(optName).click()
+        jobCreatePage.waitFotOptLi(newIdx)
+    }
 }
 
 enum NotificationType {
