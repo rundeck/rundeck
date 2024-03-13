@@ -48,4 +48,28 @@ class CreateProjectSpec extends SeleniumBase {
         cleanup:
         deleteProject(projectName)
     }
+
+    def "Create project with empty label"(){
+        given:
+        def projectName = "no-label-project"
+        def loginPage = go LoginPage
+        def homePage = page HomePage
+        def projectCreatePage = page ProjectCreatePage
+        def dashboardPage = page DashboardPage
+
+        when:
+        loginPage.login(TEST_USER, TEST_PASS)
+        homePage.createProjectButton()
+        currentUrl.contains("/resources/createProject")
+        projectCreatePage.projectNameInput.sendKeys(projectName)
+        projectCreatePage.createField.click()
+        dashboardPage.loadDashboardForProject(projectName)
+        dashboardPage.go()
+
+        then:
+        dashboardPage.expectProjectLabelToBe("")
+
+        cleanup:
+        deleteProject(projectName)
+    }
 }
