@@ -899,10 +899,12 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
             response.json.messages.get(propname).any{it.contains(message)}
             1 * controller.apiService.requireApi(_, _, 47) >> true
         where:
-            data                                            | propname    | message
-            [value: 'bad', regex: '^good$']                 | 'value'     | 'option.defaultValue.regexmismatch.message'
-            [values: new TreeSet(['bad']), regex: '^good$'] | 'values'    | 'option.values.regexmismatch.message'
-            [valuesUrl: 'notaurl']                          | 'valuesUrl' | 'option.valuesUrl.invalid.message'
+            data                                            | propname      | message
+            [value: 'bad', regex: '^good$']                 | 'value'       | 'option.defaultValue.regexmismatch.message'
+            [values: new TreeSet(['bad']), regex: '^good$'] | 'values'      | 'option.values.regexmismatch.message'
+            [valuesUrl: 'notaurl']                          | 'valuesUrl'   | 'option.valuesUrl.invalid.message'
+            [hidden: true]                                  | 'value'       | 'option.hidden.notallowed.message'
+            [hidden: true, secure: true]                    | 'storagePath' | 'option.hidden.notallowed.message'
     }
 
     def "validate option "(){
@@ -953,5 +955,27 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         then:
             !resp.valid
             resp.messages['valuesList']==['option.values.regexmismatch.message']
+    }
+    def "validate option hidden default required "(){
+        given:
+            def opt = new OptionValidateRequest(props)
+            opt.name='test'
+            opt.hidden=true
+            def resp = new OptionValidateResponse(valid:true)
+            def msgSource = Mock(MessageSource){
+                _*getMessage(*_)>>{
+                    return it[0]
+                }
+            }
+            def validator= new EditOptsController.OptionInputValidator(resp,msgSource,null)
+        when:
+            controller._validateOption(opt, validator,  null, 'text', false)
+        then:
+            !resp.valid
+            resp.messages[expectedKey] == ['option.hidden.notallowed.message']
+        where:
+            props          | expectedKey
+            [:]            | 'defaultValue'
+            [secure: true] | 'defaultStoragePath'
     }
 }
