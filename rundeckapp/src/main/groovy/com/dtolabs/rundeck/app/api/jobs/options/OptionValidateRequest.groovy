@@ -18,6 +18,19 @@ import rundeck.data.validation.shared.SharedJobOptionConstraints
 @Schema
 class OptionValidateRequest extends OptionInput implements OptionData, Validateable {
     /**
+     * The canonical name for the "optionType" field
+     */
+    String type
+    @Override
+    String getOptionType() {
+        return this.type
+    }
+    @Override
+    void setOptionType(final String optionType) {
+        this.type=optionType
+    }
+
+    /**
      * The canonical name for the "realValuesUrl" field
      */
     String storagePath
