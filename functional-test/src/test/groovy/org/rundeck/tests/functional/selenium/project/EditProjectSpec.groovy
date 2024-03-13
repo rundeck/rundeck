@@ -24,9 +24,11 @@ class EditProjectSpec extends SeleniumBase {
             setupProject(projectName)
             def projectEditPage = page ProjectEditPage
             def projectDashboard = page DashboardPage
+            def homePage = page HomePage
             def loginPage = go LoginPage
         when:
             loginPage.login(TEST_USER, TEST_PASS)
+            homePage.validatePage()
             projectEditPage.go("/project/${projectName}/configure")
             projectEditPage.setProjectDescription projectDescription
             projectEditPage.save()
@@ -83,6 +85,7 @@ class EditProjectSpec extends SeleniumBase {
         when:
             loginPage.go()
             loginPage.login(TEST_USER, TEST_PASS)
+            homePage.validatePage()
             projectEditPage.go("/project/${projectName}/configure")
             projectEditPage.clickEditConfigurationFile()
             projectEditPage.addConfigurationValue projectDescriptionProperty
