@@ -798,29 +798,13 @@ import PluginConfig from "../../../../library/components/plugins/pluginConfig.vu
 import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
 
 import AceEditor from "../../../../library/components/utils/AceEditor.vue";
+import { Validations, ValidationConfig } from "./model/Validations";
 import {
   JobOption,
   JobOptionEdit,
   OptionPrototype,
 } from "../../../../library/types/jobs/JobEdit";
-interface ValidationConfig {
-  length?: number;
-  regex?: string;
-  required?: boolean;
-}
-interface ValidationSet {
-  [key: string]: ValidationConfig;
-}
-const Validations = {
-  name: {
-    length: 255,
-    regex: "^[a-zA-Z_0-9.-]+$",
-    required: true,
-  },
-  label: {
-    length: 255,
-  },
-} as ValidationSet;
+
 export default defineComponent({
   name: "OptionEdit",
   components: {
