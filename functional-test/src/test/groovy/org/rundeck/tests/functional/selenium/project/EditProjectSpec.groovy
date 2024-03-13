@@ -150,4 +150,33 @@ class EditProjectSpec extends SeleniumBase {
         deleteProject(projectName)
     }
 
+    def "change project label"(){
+        given:
+        def projectName = "changeProjectLabel"
+        def projectLabel = "custom project label"
+        def anotherProjectLabel = "another project label"
+        setupProject(projectName)
+        def projectEditPage = page ProjectEditPage
+        def projectDashboard = page DashboardPage
+        def loginPage = go LoginPage
+
+        when:
+        loginPage.login(TEST_USER, TEST_PASS)
+        projectEditPage.go("/project/${projectName}/configure")
+        projectEditPage.setProjectLabel projectLabel
+        projectEditPage.save()
+        then:
+        projectDashboard.expectProjectLabelToBe(projectLabel)
+
+        when:
+        projectEditPage.go("/project/${projectName}/configure")
+        projectEditPage.setProjectLabel anotherProjectLabel
+        projectEditPage.save()
+        then:
+        projectDashboard.expectProjectLabelToBe(anotherProjectLabel)
+
+        cleanup:
+        deleteProject(projectName)
+    }
+
 }
