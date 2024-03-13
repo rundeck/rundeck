@@ -42,7 +42,7 @@ const mountOptionView = async (options: {
 
 describe("OptionView", () => {
   it("shows option name", async () => {
-    let option = { name: "optionName", optionType: "text" } as JobOption;
+    let option = { name: "optionName", type: "text" } as JobOption;
     const wrapper = await mountOptionView({ option, editable: true });
 
     let detail = wrapper.find(".optdetail span.optdetail_name");
@@ -54,7 +54,7 @@ describe("OptionView", () => {
   it("description in title", async () => {
     let option = {
       name: "optionName",
-      optionType: "text",
+      type: "text",
       description: "optionDescription",
     } as JobOption;
     const wrapper = await mountOptionView({ option, editable: true });
@@ -66,7 +66,7 @@ describe("OptionView", () => {
   it("required title", async () => {
     let option = {
       name: "optionName",
-      optionType: "text",
+      type: "text",
       description: "optionDescription",
       required: true,
     } as JobOption;
@@ -78,7 +78,7 @@ describe("OptionView", () => {
     expect(reqspan.attributes().title).toContain("option.view.required.title");
   });
   it("file type shows file icon", async () => {
-    let option = { name: "optionName", optionType: "file" } as JobOption;
+    let option = { name: "optionName", type: "file" } as JobOption;
     const wrapper = await mountOptionView({ option, editable: true });
 
     let detail = wrapper.find(".optdetail span.optdetail_name");

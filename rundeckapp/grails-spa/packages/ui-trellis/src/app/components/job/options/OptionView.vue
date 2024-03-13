@@ -4,7 +4,7 @@
       class="optdetail opt-detail-ext flow-h"
       :title="editable ? $t('option.click.to.edit.title') : ''"
     >
-      <template v-if="option.optionType == 'file'">
+      <template v-if="option.type == 'file'">
         <i class="glyphicon glyphicon-file"></i>
       </template>
       <span

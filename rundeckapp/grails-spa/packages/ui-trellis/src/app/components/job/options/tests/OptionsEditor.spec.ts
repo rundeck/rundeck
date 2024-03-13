@@ -47,7 +47,7 @@ const mountBasicOptionsEditor = async (
   let options = names.map((name) => {
     return {
       name,
-      optionType: "text",
+      type: "text",
       inputType: "plain",
     };
   });
@@ -240,7 +240,7 @@ describe("OptionsEditor", () => {
       const wrapper = await mountBasicOptionsEditor();
       wrapper.vm.operationInsert(index, {
         name: "newoption",
-        optionType: "text",
+        type: "text",
         inputType: "plain",
       });
       await wrapper.vm.$nextTick();
@@ -283,7 +283,7 @@ describe("OptionsEditor", () => {
       const wrapper = await mountBasicOptionsEditor();
       wrapper.vm.updateOption(index, {
         name: "newname",
-        optionType: "text",
+        type: "text",
         inputType: "plain",
       });
       await wrapper.vm.$nextTick();
@@ -299,7 +299,7 @@ describe("OptionsEditor", () => {
       const wrapper = await mountBasicOptionsEditor();
       wrapper.vm.operationModify(index, {
         name: "newname",
-        optionType: "text",
+        type: "text",
         inputType: "plain",
       });
       await wrapper.vm.$nextTick();
@@ -310,7 +310,7 @@ describe("OptionsEditor", () => {
     const wrapper = await mountBasicOptionsEditor();
     wrapper.vm.saveNewOption({
       name: "newname",
-      optionType: "text",
+      type: "text",
       inputType: "plain",
     });
     await wrapper.vm.$nextTick();
@@ -326,7 +326,7 @@ describe("OptionsEditor", () => {
       const wrapper = await mountBasicOptionsEditor();
       await wrapper.vm.operationInsert(index, {
         name: "newname",
-        optionType: "text",
+        type: "text",
         inputType: "plain",
       });
       await wrapper.vm.$nextTick();
@@ -342,7 +342,7 @@ describe("OptionsEditor", () => {
       let options = [
         {
           name: orig,
-          optionType: "text",
+          type: "text",
           inputType: "plain",
         },
       ];
@@ -421,7 +421,7 @@ describe("OptionsEditor", () => {
     //remove first item
     wrapper.vm.saveNewOption({
       name: "newoption",
-      optionType: "text",
+      type: "text",
       inputType: "plain",
     });
     expect(intOptions.map((item) => item.sortIndex)).toEqual([1, 2, 3]);

@@ -106,7 +106,7 @@ describe("OptionEdit", () => {
   );
   it("file option type shows file plugin config", async () => {
     const wrapper = await mountOptionEdit({
-      modelValue: { name: "a_test_option", optionType: "file" },
+      modelValue: { name: "a_test_option", type: "file" },
       editable: true,
       features: { fileUploadPlugin: true },
       fileUploadPluginType: "pluginType",
@@ -134,7 +134,7 @@ describe("OptionEdit", () => {
         valid: true,
       });
       const wrapper = await mountOptionEdit({
-        modelValue: { name: "test", optionType: "text" },
+        modelValue: { name: "test", type: "text" },
         editable: true,
       });
 
@@ -151,7 +151,7 @@ describe("OptionEdit", () => {
       let emittedOption = actual["update:modelValue"][0][0];
       expect(emittedOption).toEqual({
         name: "test",
-        optionType: "text",
+        type: "text",
         description: "",
         inputType,
         hidden: false,
@@ -190,7 +190,7 @@ describe("OptionEdit", () => {
         valid: true,
       });
       const wrapper = await mountOptionEdit({
-        modelValue: { name: "test", optionType: "text" },
+        modelValue: { name: "test", type: "text" },
         features: { optionValuesPlugin: true },
         optionValuesPlugins: [
           { name: "testplugin", description: "", title: "Test Plugin" },
@@ -213,7 +213,7 @@ describe("OptionEdit", () => {
         Object.assign(
           {
             name: "test",
-            optionType: "text",
+            type: "text",
             description: "",
             inputType: "plain",
             hidden: false,
@@ -239,7 +239,7 @@ describe("OptionEdit", () => {
       messages: { name: ["Wrong value"] },
     });
     const wrapper = await mountOptionEdit({
-      modelValue: { name: "test", optionType: "text" },
+      modelValue: { name: "test", type: "text" },
       features: { optionValuesPlugin: true },
       optionValuesPlugins: [
         { name: "testplugin", description: "", title: "Test Plugin" },
@@ -262,7 +262,7 @@ describe("OptionEdit", () => {
     "shows error messages for invalid name field",
     async (value: string, cls: string, msg: string) => {
       const wrapper = await mountOptionEdit({
-        modelValue: { name: "", optionType: "text" },
+        modelValue: { name: "", type: "text" },
         editable: true,
       });
       let optname = wrapper.get("#optname_");
@@ -282,7 +282,7 @@ describe("OptionEdit", () => {
     "shows error messages for field %p %p longer than %p",
     async (sectionName: string, id: string, len: number) => {
       const wrapper = await mountOptionEdit({
-        modelValue: { name: "aname", optionType: "text" },
+        modelValue: { name: "aname", type: "text" },
         editable: true,
       });
       let field = wrapper.get(id);
@@ -321,10 +321,7 @@ describe("OptionEdit", () => {
     "shows validation errors for field %p",
     async (fieldName: string, optData: any, errorName: string = null) => {
       const wrapper = await mountOptionEdit({
-        modelValue: Object.assign(
-          { name: "aname", optionType: "text" },
-          optData,
-        ),
+        modelValue: Object.assign({ name: "aname", type: "text" }, optData),
         editable: true,
       });
       wrapper.vm.addError(errorName || fieldName, "error1");
