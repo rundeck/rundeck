@@ -24,7 +24,7 @@
           {{ displayDefaultValueTruncated }}
         </span>
         {{ option.multivalued ? "(+)" : "" }}
-        <template v-if="option.secure && option.defaultStoragePath">
+        <template v-if="option.secure && option.storagePath">
           <i class="glyphicon glyphicon-lock"></i>
         </template>
       </span>

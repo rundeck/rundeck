@@ -91,7 +91,7 @@ describe("OptionView", () => {
     let option = {
       name: "optionName",
       secure: true,
-      defaultStoragePath: "path",
+      storagePath: "path",
     } as JobOption;
     const wrapper = await mountOptionView({ option, editable: true });
 

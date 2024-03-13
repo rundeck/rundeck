@@ -859,7 +859,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
             'name'                        | null      | 'null'
             'name'                        | 'a b'     | 'required pattern [[a-zA-Z_0-9.-]+]'
             'remoteUrlAuthenticationType' | 'asdf'    | 'not contained within the list [[BASIC, API_KEY, BEARER_TOKEN]]'
-            'defaultStoragePath'          | 'asdf'    | 'does not match the required pattern'
+            'storagePath'                 | 'asdf'    | 'does not match the required pattern'
     }
     def "api option validate #propname scheduled required file validation"() {
         given:
