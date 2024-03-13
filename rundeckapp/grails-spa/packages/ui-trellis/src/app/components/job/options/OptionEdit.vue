@@ -999,7 +999,7 @@ export default defineComponent({
           this.addError(
             field,
             this.$t("form.field.too.long.message", {
-              max: 255,
+              max: validationConfig.length,
             }),
           );
         }
