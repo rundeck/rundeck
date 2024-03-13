@@ -3,6 +3,8 @@ package org.rundeck.util.common.jobs
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.api.responses.jobs.Job
+import org.rundeck.util.api.scm.GitScmApiClient
+import org.rundeck.util.api.scm.httpbody.ScmJobStatusResponse
 import org.rundeck.util.container.RdClient
 
 import java.util.concurrent.TimeUnit
@@ -132,6 +134,28 @@ class JobUtils {
             Thread.sleep(iterationGap)
         }
         return executionStatus
+    }
+
+    static ScmJobStatusResponse waitForJobStatusToBe(
+            String jobId,
+            GitScmApiClient gitScmApiClient,
+            int iterationGap,
+            int timeout
+    ) {
+        ScmJobStatusResponse jobStatus;
+        long initTime = System.currentTimeMillis();
+        jobStatus = gitScmApiClient.callGetJobStatus(jobId).response;
+
+        while (jobStatus.commit == null) {
+            jobStatus = gitScmApiClient.callGetJobStatus(jobId).response;
+            if ((System.currentTimeMillis() - initTime) >= TimeUnit.SECONDS.toMillis(timeout)) {
+                throw new InterruptedException("Timeout reached (${timeout} seconds), the job SCM status was empty.");
+            }
+
+            Thread.sleep(iterationGap);
+        }
+
+        return jobStatus;
     }
 
     /**

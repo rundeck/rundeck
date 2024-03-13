@@ -39,7 +39,6 @@ class ScmPluginJobDiffSpec extends BaseContainer {
         JobUtils.jobImportFile(PROJECT_NAME, JobUtils.updateJobFileToImport(JOB_XML_NAME, PROJECT_NAME, initialArgs) as String, client)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(ScmIntegration.EXPORT).forProject(PROJECT_NAME)
         scmClient.callSetupIntegration(GitExportSetupRequest.defaultRequest().forProject(PROJECT_NAME).withRepo(remoteRepo))
-        hold(5)
         ScmJobStatusResponse initialStatus = scmClient.callGetJobStatus(DUMMY_JOB_ID).response
         ScmActionPerformRequest actionRequest = new ScmActionPerformRequest([
                 input: [message: "Commit msg example"],
@@ -64,8 +63,7 @@ class ScmPluginJobDiffSpec extends BaseContainer {
         performAction.message == "SCM export Action was Successful: ${actionId}"
         performAction.success == true
         // Verify state after the action
-        hold(5)
-        ScmJobStatusResponse updatedStatus = scmClient.callGetJobStatus(DUMMY_JOB_ID).response
+        ScmJobStatusResponse updatedStatus = JobUtils.waitForJobStatusToBe(DUMMY_JOB_ID,scmClient,5,60)
         updatedStatus.actions.size() == 0
         updatedStatus.commit.size() == 5
         updatedStatus.id == DUMMY_JOB_ID
@@ -83,10 +81,8 @@ class ScmPluginJobDiffSpec extends BaseContainer {
                 "2-args": "echo hello there 2 updated",
                 "uuid": DUMMY_JOB_ID
         ]
-        hold(5)
         JobUtils.jobImportFile(PROJECT_NAME, JobUtils.updateJobFileToImport(JOB_XML_NAME, PROJECT_NAME, updatedArgs) as String, client, JobUtils.DUPE_OPTION_UPDATE)
-        hold(5)
-        def exportNeededStatus = scmClient.callGetJobStatus(DUMMY_JOB_ID).response
+        def exportNeededStatus = JobUtils.waitForJobStatusToBe(DUMMY_JOB_ID,scmClient,5,60)
         exportNeededStatus.actions.size() == 1
         exportNeededStatus.commit.size() == 5
         exportNeededStatus.id == DUMMY_JOB_ID
@@ -100,8 +96,7 @@ class ScmPluginJobDiffSpec extends BaseContainer {
         def finalAction = scmClient.callPerformJobAction(actionId, actionRequest, DUMMY_JOB_ID).response
         finalAction.message == "SCM export Action was Successful: ${actionId}"
         finalAction.success == true
-        hold(5)
-        def finalStatus = scmClient.callGetJobStatus(DUMMY_JOB_ID).response
+        def finalStatus = JobUtils.waitForJobStatusToBe(DUMMY_JOB_ID,scmClient,5,60)
         finalStatus.actions.size() == 0
         finalStatus.commit.size() == 5
         finalStatus.id == DUMMY_JOB_ID
