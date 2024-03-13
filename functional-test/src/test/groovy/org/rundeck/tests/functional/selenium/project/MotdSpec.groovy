@@ -41,7 +41,7 @@ class MotdSpec extends SeleniumBase {
             projectEditPage.clickEditConfigurationFile()
             projectEditPage.addConfigurationValue("project.gui.motd.display=projectList,projectHome,navbar\n")
             projectEditPage.save()
-            projectEditPage.validateSave()
+            projectEditPage.validateConfigFileSave()
             motdPage.clickMOTD()
         then: "validate that motd is shown in the navbar and it has the right value"
             motdPage.waitForMessageShownInProject("a simple message")

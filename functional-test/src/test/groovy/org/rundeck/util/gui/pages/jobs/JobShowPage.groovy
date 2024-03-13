@@ -3,9 +3,13 @@ package org.rundeck.util.gui.pages.jobs
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
+import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.container.SeleniumContext
 import org.rundeck.util.gui.pages.BasePage
 import org.rundeck.util.gui.scm.ScmStatusBadge
+
+import java.time.Duration
 
 /**
  * Job show page
@@ -42,7 +46,10 @@ class JobShowPage extends BasePage{
     By jobSearchNameBy = By.cssSelector('#jobs_filters form input[name="jobFilter"]')
     By jobSearchGroupBy = By.cssSelector('#jobs_filters form input[name="groupPath"]')
     By jobSearchSubmitBy = By.cssSelector('#jobs_filters form #jobs_filters_footer input[type="submit"][name="_action_jobs"]')
+    By runJobBtn = By.id("execFormRunButton")
+    By logOutputBtn = By.id('btn_view_output')
 
+    static final String PAGE_PATH = "/job/show"
     String loadPath = "/job/show"
     private String project
 
@@ -190,6 +197,23 @@ class JobShowPage extends BasePage{
 
     WebElement getJobSearchSubmitButton() {
         el jobSearchSubmitBy
+    }
+
+    WebElement getRunJobBtn(){
+        el runJobBtn
+    }
+
+    WebElement getLogOutputBtn(){
+        el logOutputBtn
+    }
+
+    void waitForLogOutput (By logOutput, Integer number, Integer seconds){
+        new WebDriverWait(driver, Duration.ofSeconds(seconds)).until(ExpectedConditions.numberOfElementsToBeMoreThan(logOutput,number))
+    }
+
+
+    void goToJob(String jobUuidText){
+        go(PAGE_PATH + "/$jobUuidText")
     }
 
 }
