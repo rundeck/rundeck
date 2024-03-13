@@ -15,6 +15,9 @@ import org.rundeck.util.gui.pages.project.SideBarPage
 @SeleniumCoreTest
 class ExecutionModeSpec extends SeleniumBase{
 
+    /**
+     * It disables executions via edit configuration file, then checks for the job to have the run button disabled
+     */
     def "disable execution at project level"(){
         given:
             def projectName = "disabledExecutionsProject"
