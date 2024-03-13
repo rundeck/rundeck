@@ -1,4 +1,5 @@
 import { mount, shallowMount, VueWrapper } from "@vue/test-utils";
+import { VueNode } from "@vue/test-utils/dist/types";
 import { Btn } from "uiv";
 import { validateJobOption } from "../../../../../library/services/jobEdit";
 import OptionEdit from "../OptionEdit.vue";
@@ -116,6 +117,28 @@ describe("OptionEdit", () => {
       ".form-group plugin-config[servicename=FileUpload][provider=pluginType]",
     );
   });
+  it.each([
+    ["plain", {}],
+    ["date", { isDate: true }],
+    ["secure", { secure: true }],
+    ["secureExposed", { secure: true, valueExposed: true }],
+  ])(
+    "infers input type %p selection from option data",
+    async (field: string, data: any) => {
+      const inputtypes = ["plain", "date", "secure", "secureExposed"];
+      const wrapper = await mountOptionEdit({
+        modelValue: Object.assign({ name: "test", type: "text" }, data),
+        editable: true,
+      });
+      //check all radio buttons
+      inputtypes.forEach((type) => {
+        let inputRadio = wrapper.get(`input[type=radio][value=${type}]`);
+        expect((inputRadio.element as VueNode<HTMLInputElement>).checked).toBe(
+          type === field,
+        );
+      });
+    },
+  );
   it.each([
     ["#inputplain_", "plain", false, false, false],
     ["#inputdate_", "date", true, false, false],
