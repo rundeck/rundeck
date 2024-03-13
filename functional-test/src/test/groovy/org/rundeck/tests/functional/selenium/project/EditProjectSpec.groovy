@@ -150,7 +150,7 @@ class EditProjectSpec extends SeleniumBase {
         deleteProject(projectName)
     }
 
-    def "change project label"(){
+    def "Change project label"(){
         given:
         def projectName = "changeProjectLabel"
         def projectLabel = "custom project label"
