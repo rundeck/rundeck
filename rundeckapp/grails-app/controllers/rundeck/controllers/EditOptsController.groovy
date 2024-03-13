@@ -845,9 +845,14 @@ Since: V47""",
             return
         }
 
-        if (opt.hidden && !opt.defaultValue && !opt.defaultStoragePath) {
-            validator.rejectValue('hidden', 'option.hidden.notallowed.message')
-            return
+        if (opt.hidden) {
+            if (opt.secureInput && !opt.defaultStoragePath) {
+                validator.rejectValue('defaultStoragePath', 'option.hidden.notallowed.message')
+                return
+            } else if (!opt.secureInput && !opt.defaultValue) {
+                validator.rejectValue('defaultValue', 'option.hidden.notallowed.message')
+                return
+            }
         }
         if (opt.enforced && (opt.optionValues || opt.valuesList) && opt.defaultValue) {
             if(!opt.multivalued && !opt.optionValues.contains(opt.defaultValue)) {
