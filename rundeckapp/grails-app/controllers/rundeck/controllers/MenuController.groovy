@@ -3592,8 +3592,7 @@ if executed in cluster mode.
                     ])
                     return true
                 }
-                def authorized = !apiAuthorizedForEventRead(project)
-                if (authorized) {
+                if (!apiAuthorizedForEventRead(project)) {
                     return true
                 }
                 return false
