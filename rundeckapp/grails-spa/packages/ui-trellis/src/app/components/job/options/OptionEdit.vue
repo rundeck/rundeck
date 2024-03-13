@@ -835,6 +835,13 @@ export default defineComponent({
           : this.modelValue.valuesUrl
             ? "url"
             : "list",
+        inputType: this.modelValue.isDate
+          ? "date"
+          : this.modelValue.secure
+            ? this.modelValue.valueExposed
+              ? "secureExposed"
+              : "secure"
+            : "plain",
       }) as JobOptionEdit,
       regexChoice: false,
       validationErrors: {},
