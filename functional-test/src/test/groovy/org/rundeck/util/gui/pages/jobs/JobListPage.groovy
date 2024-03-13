@@ -24,6 +24,8 @@ class JobListPage extends BasePage {
     By activityHeader = By.cssSelector('h3.card-title')
     By bodyNextUIBy = By.cssSelector('body.ui-type-next')
     By runJobButtonDisabled = By.cssSelector(".btn.btn-default.btn-xs.disabled")
+    By executionPausedIcon = By.cssSelector(".glyphicon.glyphicon-pause")
+    By scheduleDisabledIcon = By.cssSelector(".glyphicon.glyphicon-ban-circle")
 
     JobListPage(final SeleniumContext context) {
         super(context)
@@ -45,6 +47,20 @@ class JobListPage extends BasePage {
     def expectExecutionsDisabled(){
         new WebDriverWait(context.driver, Duration.ofSeconds(5))
                 .until(ExpectedConditions.numberOfElementsToBeMoreThan(runJobButtonDisabled, 0))
+        new WebDriverWait(context.driver, Duration.ofSeconds(5))
+                .until(ExpectedConditions.numberOfElementsToBeMoreThan(executionPausedIcon, 2))
+    }
+
+    /**
+     * It validates this by looking for the run job button to be disabled
+     */
+    def expectScheduleDisabled(){
+        new WebDriverWait(context.driver, Duration.ofSeconds(5))
+                .until(ExpectedConditions.numberOfElementsToBe(runJobButtonDisabled, 0))
+        new WebDriverWait(context.driver, Duration.ofSeconds(5))
+                .until(ExpectedConditions.numberOfElementsToBe(executionPausedIcon, 1))
+        new WebDriverWait(context.driver, Duration.ofSeconds(5))
+                .until(ExpectedConditions.numberOfElementsToBe(scheduleDisabledIcon, 1))
     }
 
     void loadPathToNextUI(String projectName) {
