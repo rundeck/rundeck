@@ -7,6 +7,7 @@ import org.rundeck.util.gui.pages.TopMenuPage
 import org.rundeck.util.gui.pages.home.HomePage
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.project.DashboardPage
+import org.rundeck.util.gui.pages.project.ProjectCreatePage
 import org.rundeck.util.gui.pages.project.ProjectEditPage
 import org.rundeck.util.gui.pages.project.SideBarPage
 
@@ -118,6 +119,35 @@ class EditProjectSpec extends SeleniumBase {
             homePage.expectPartialLinkToExist(projectName)
         cleanup:
             deleteProject(projectName)
+    }
+
+    def "Change project description"(){
+        given:
+        def projectName = "changeDescriptionTest"
+        def projectDescription = "custom project description"
+        def anotherProjectDescription = "another custom project description"
+        setupProject(projectName)
+        def projectEditPage = page ProjectEditPage
+        def projectDashboard = page DashboardPage
+        def loginPage = go LoginPage
+
+        when:
+        loginPage.login(TEST_USER, TEST_PASS)
+        projectEditPage.go("/project/${projectName}/configure")
+        projectEditPage.setProjectDescription(projectDescription)
+        projectEditPage.save()
+        then:
+        projectDashboard.expectProjectDescriptionToBe(projectDescription)
+
+        when:
+        projectEditPage.go("/project/${projectName}/configure")
+        projectEditPage.setProjectDescription(anotherProjectDescription)
+        projectEditPage.save()
+        then:
+        projectDashboard.expectProjectDescriptionToBe(anotherProjectDescription)
+
+        cleanup:
+        deleteProject(projectName)
     }
 
 }
