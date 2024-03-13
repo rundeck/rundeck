@@ -320,29 +320,23 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     }
 
     /**
-     * Disables scheduled executions for a specific project and then deletes the project.
-     * This method first makes a PUT request to update the project's configuration,
-     * specifically to disable all scheduled executions. If this operation is successful,
-     * it proceeds to delete the project with a DELETE request. If any of the operations fail,
-     * a RuntimeException is thrown.
+     * Updates the configuration of a project with the provided settings.
      *
-     * @param projectName the name of the project to be disabled and deleted. Must not be null.
-     * @param body a map containing the configuration to be updated in the project before deletion.
-     *        Specifically, this map should include the necessary properties to disable
-     *        scheduled executions. The exact contents of the map will depend on the client API and
-     *        the project configuration.
-     * @throws RuntimeException if disabling scheduled executions or deleting the project fails.
+     * This method sends a PUT request to update the configuration of the specified project
+     * with the provided settings. The configuration data is replaced entirely with the submitted values.
+     *
+     * @param projectName The name of the project whose configuration is to be updated. Must not be null.
+     * @param body A map containing the configuration settings to be applied to the project.
+     *             The content of this map should represent the entire configuration data to replace.
+     *             The structure of the map should match the expected format for the project configuration.
+     *             Must not be null.
+     * @throws RuntimeException if updating the project configuration fails.
      *         The exception contains a detailed message obtained from the server's response.
      */
-    void disableScheduledAndDeleteProject(String projectName, Map body) {
+    void updateConfigurationProject(String projectName, Map body) {
         def responseDisable = client.doPutWithJsonBody("/project/${projectName}/config", body)
         if (!responseDisable.successful) {
             throw new RuntimeException("Failed to disable scheduled execution: ${responseDisable.body().string()}")
-        }
-        hold 5
-        def response = client.doDelete("/project/${projectName}")
-        if (!response.successful) {
-            throw new RuntimeException("Failed to delete project: ${response.body().string()}")
         }
     }
 

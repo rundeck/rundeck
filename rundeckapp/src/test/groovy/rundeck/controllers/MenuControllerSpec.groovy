@@ -2582,11 +2582,37 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.apiExecutionsRunningv14()
         then:
         response.status == 404
-        // response.errorMessage == 'api.error.project.disabled'
         1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, action, _) >> true
         2 * controller.frameworkService.existsFrameworkProject(_) >> true
         1 * controller.frameworkService.isFrameworkProjectDisabled('aProject') >> false
         1 * controller.frameworkService.isFrameworkProjectDisabled('bProject') >> true
+
+    }
+
+    @Unroll
+    def "apiExecutionsRunning one unauthorized project with list of projects"() {
+        given:
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_,_) >> true
+            1 * renderErrorFormat(_, { it.status == 403 }) >> {
+                it[0].status = 403
+            }
+
+            2 * requireExists(_, true, _) >> true
+            0 * _ (*_)
+        }
+        params.project = 'aProject,bProject,cProject'
+        def action = 'read'
+        when:
+        controller.apiExecutionsRunningv14()
+        then:
+        response.status == 403
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, action, 'aProject') >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, action, 'bProject') >> false
+        2 * controller.frameworkService.existsFrameworkProject(_) >> true
+        2 * controller.frameworkService.isFrameworkProjectDisabled(_) >> false
 
     }
 
