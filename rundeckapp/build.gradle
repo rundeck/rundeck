@@ -249,9 +249,10 @@ dependencies {
     // Database drivers
     runtimeOnly "com.h2database:h2:2.2.220"
     runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc:9.4.0.jre8'
-    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.12'
     runtimeOnly 'org.postgresql:postgresql:42.7.2'
     runtimeOnly 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
+    runtimeOnly 'software.amazon.jdbc:aws-advanced-jdbc-wrapper:2.3.4'
 
     runtimeOnly "org.springframework:spring-jcl:${springVersion}"
     runtimeOnly "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
