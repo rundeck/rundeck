@@ -2,6 +2,7 @@ package org.rundeck.util.gui.pages.project
 
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
+import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.container.SeleniumContext
@@ -55,9 +56,18 @@ class ProjectEditPage extends BasePage {
      * When it saves it shows a message using css "alert alert-info"
      * When it fails to save, it shows a message using "alert alert-info"
      */
-    def validateSave(){
+    def validateConfigFileSave(){
         new WebDriverWait(driver,  Duration.ofSeconds(10)).until(
                 ExpectedConditions.textToBePresentInElementLocated(successMessageDiv, "configuration file saved")
         )
+    }
+
+    /**
+     * It replaces the @original string by the @replacement string and it must be in edit configuration file screen
+     * @param original
+     * @param replacement
+     */
+    def replaceConfiguration(String original, String replacement){
+        ((JavascriptExecutor) context.driver).executeScript("ace.edit('_id0').session.replace(ace.edit('_id0').find('${original}',{wrap: true, wholeWord: true }), '${replacement}');")
     }
 }

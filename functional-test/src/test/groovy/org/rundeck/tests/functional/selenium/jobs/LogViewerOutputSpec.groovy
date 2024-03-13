@@ -1,13 +1,8 @@
 package org.rundeck.tests.functional.selenium.jobs
 
 import org.openqa.selenium.By
-import org.rundeck.util.gui.pages.JobCreatePage
-import org.rundeck.util.gui.pages.JobShowPage
-import org.rundeck.util.gui.pages.JobTab
-import org.rundeck.util.gui.pages.JobsListPage
-import org.rundeck.util.gui.pages.StepName
-import org.rundeck.util.gui.pages.StepType
 import org.rundeck.util.gui.pages.home.HomePage
+import org.rundeck.util.gui.pages.jobs.JobShowPage
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.project.SideBarPage
 import org.rundeck.util.annotations.SeleniumCoreTest
