@@ -26,14 +26,17 @@ class ApiProjectSelectInterceptorSpec extends Specification implements Intercept
 
         where:
         project    | controller    | action                    | match
+        'xProject' | 'menu'        | 'apiExecutionsRunningv14' | false
         '*'        | 'menu'        | 'apiExecutionsRunningv14' | false
+        '***'      | 'menu'        | 'apiExecutionsRunningv14' | false
+        '*Project' | 'menu'        | 'apiExecutionsRunningv14' | false
         '*Project' | 'anyMenu'     | 'anyAction'               | true
     }
 
     void "excluded project"() {
         given:
         params.project = 'project1'
-        request.requestURI >> '/api/15/executions/running'
+        request.requestURI >> '/api/47/executions/running'
         request.getMethod() >> 'GET'
 
         when:
