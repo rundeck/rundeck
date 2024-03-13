@@ -39,7 +39,7 @@ class GormPluginMetaDataProvider implements PluginMetaDataProvider{
     }
 
     @Override
-    void setJobPluginMeta(String project, String id, String key, Map metadata) {
+    void setJobPluginMeta(String project, String key, Map metadata) {
         def found = PluginMeta.findByProjectAndKey(project, key)
         if (!found) {
             found = new PluginMeta()
