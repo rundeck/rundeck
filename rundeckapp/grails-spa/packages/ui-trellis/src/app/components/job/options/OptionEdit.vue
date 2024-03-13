@@ -853,21 +853,16 @@ export default defineComponent({
       }
     },
     "option.valuesType"(val: string) {
+      delete this.option.optionValuesPluginType;
+      delete this.option.valuesUrl;
+      delete this.option.remoteUrlAuthenticationType;
+      delete this.option.configRemoteUrl;
       if (val === "url") {
-        delete this.option.optionValuesPluginType;
         this.option.valuesUrl = "";
         this.option.remoteUrlAuthenticationType = "";
         this.option.configRemoteUrl = {};
-      } else if (val === "list") {
-        delete this.option.optionValuesPluginType;
-        delete this.option.valuesUrl;
-        delete this.option.remoteUrlAuthenticationType;
-        delete this.option.configRemoteUrl;
-      } else {
+      } else if (val !== "list") {
         this.option.optionValuesPluginType = val;
-        delete this.option.valuesUrl;
-        delete this.option.remoteUrlAuthenticationType;
-        delete this.option.configRemoteUrl;
       }
     },
   },
