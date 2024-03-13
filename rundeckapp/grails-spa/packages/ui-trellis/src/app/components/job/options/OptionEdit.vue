@@ -216,7 +216,6 @@
                 v-model="option.storagePath"
                 :storage-filter="'Rundeck-data-type=password'"
                 :allow-upload="true"
-                :value="'keys'"
                 :read-only="false"
               />
             </span>
