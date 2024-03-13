@@ -3,9 +3,7 @@
   <section
     id="option_preview"
     class="section-separator-solo"
-    v-if="
-      option.name && option.optionType !== 'file' && !validationErrors['name']
-    "
+    v-if="option.name && option.type !== 'file' && !validationErrors['name']"
   >
     <div class="row">
       <label class="col-sm-2 control-label">{{ $t("usage") }}</label>
@@ -43,9 +41,7 @@
   <!-- preview (file) -->
   <section
     id="file_option_preview"
-    v-if="
-      option.name && option.optionType === 'file' && !validationErrors['name']
-    "
+    v-if="option.name && option.type === 'file' && !validationErrors['name']"
     class="section-separator-solo"
   >
     <div class="row">

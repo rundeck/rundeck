@@ -29,7 +29,7 @@ describe("OptionUsagePreview", () => {
 
   it("file option shows variables", async () => {
     const wrapper = await mountOptionUsagePreview({
-      option: { name: "test_name", optionType: "file" },
+      option: { name: "test_name", type: "file" },
       validationErrors: {},
     });
     const sect = wrapper.get("section");
@@ -44,8 +44,8 @@ describe("OptionUsagePreview", () => {
     expect(sect.html()).toContain(`$RD_FILE_TEST_NAME_SHA`);
   });
   it.each([
-    { name: "test_name", optionType: "text" },
-    { name: "test_name", optionType: "text", secure: true, valueExposed: true },
+    { name: "test_name", type: "text" },
+    { name: "test_name", type: "text", secure: true, valueExposed: true },
   ])("plain option shows variables", async (option: any) => {
     const wrapper = await mountOptionUsagePreview({
       option,
@@ -61,7 +61,7 @@ describe("OptionUsagePreview", () => {
     const wrapper = await mountOptionUsagePreview({
       option: {
         name: "test_name",
-        optionType: "text",
+        type: "text",
         secure: true,
         valueExposed: false,
       },
@@ -75,9 +75,9 @@ describe("OptionUsagePreview", () => {
     expect(sect.html()).toContain("form.option.usage.secureAuth.message");
   });
   it.each([
-    { option: { name: "", optionType: "text" }, validationErrors: {} },
+    { option: { name: "", type: "text" }, validationErrors: {} },
     {
-      option: { name: "in valid", optionType: "text" },
+      option: { name: "in valid", type: "text" },
       validationErrors: { name: ["invalid"] },
     },
   ])("invalid option name shows nothing %p", async (options: any) => {

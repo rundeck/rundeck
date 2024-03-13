@@ -17,7 +17,7 @@
       </label>
       <div class="col-sm-10">
         <select
-          v-model="option.optionType"
+          v-model="option.type"
           name="optionType"
           class="form-control"
           id="opttype_"
@@ -36,7 +36,7 @@
     </div>
 
     <!-- file input (file) -->
-    <div class="form-group" v-if="option.optionType === 'file'">
+    <div class="form-group" v-if="option.type === 'file'">
       <div class="col-sm-10 col-sm-offset-2">
         <div v-if="fileUploadPluginEnabled && fileUploadPluginType">
           <plugin-config
@@ -155,7 +155,7 @@
     </div>
 
     <!-- main section (text) -->
-    <div v-if="option.optionType !== 'file'">
+    <div v-if="option.type !== 'file'">
       <!-- default -->
       <div
         class="form-group"
@@ -603,7 +603,7 @@
     <!-- hidden (text) -->
     <div
       class="form-group"
-      v-if="option.optionType !== 'file'"
+      v-if="option.type !== 'file'"
       data-test="option.hidden"
       :class="{ 'has-error': hasError('hidden') }"
     >
@@ -648,7 +648,7 @@
     <!-- multivalue (text) -->
     <div
       class="form-group"
-      v-if="option.optionType !== 'file'"
+      v-if="option.type !== 'file'"
       data-test="option.delimiter"
       :class="{ 'has-error': hasError('multivalued') || hasError('delimiter') }"
     >

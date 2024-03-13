@@ -11,7 +11,7 @@ export interface JobOption {
   multivalueAllSelected?: boolean;
   multivalued?: boolean;
   name: string;
-  optionType: string;
+  type: string;
   optionValuesPluginType?: string;
   valuesUrl?: string;
   regex?: string;
@@ -46,7 +46,7 @@ export interface JobOptionsData {
 }
 
 export const OptionPrototype = {
-  optionType: "text",
+  type: "text",
   required: false,
   hidden: false,
   multivalued: false,

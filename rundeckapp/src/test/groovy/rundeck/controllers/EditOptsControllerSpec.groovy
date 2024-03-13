@@ -866,7 +866,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
             String project = 'proj1'
             def optionData = new OptionValidateRequest()
             optionData.name='test'
-            optionData.optionType='file'
+            optionData.type='file'
             optionData.required = true
             request.method = 'POST'
 
