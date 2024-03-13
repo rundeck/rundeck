@@ -599,6 +599,7 @@ Since: V47""",
         valuesUrlLong: 'valuesUrl',
         secureInput  : 'secure',
         secureExposed: 'valueExposed',
+        defaultStoragePath: 'storagePath',
     ]
     @CompileStatic
     protected static void translateApiErrors(OptionValidateResponse validate){

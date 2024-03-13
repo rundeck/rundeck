@@ -23,7 +23,7 @@ export interface JobOption {
   valuesListDelimiter?: string;
   isDate?: boolean;
   dateFormat?: string;
-  defaultStoragePath?: string;
+  storagePath?: string;
   sortIndex?: number;
 }
 

@@ -9,9 +9,29 @@ import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
 import org.springframework.validation.Errors
 import rundeck.data.validation.shared.SharedJobOptionConstraints
 
+/**
+ * Defines the fields for a request to validate an option
+ * Uses the canonical field names expected in the JSON and YAML formats, which
+ * differ from the field names used in the Java interfaces
+ */
 @GrailsCompileStatic
 @Schema
 class OptionValidateRequest extends OptionInput implements OptionData, Validateable {
+    /**
+     * The canonical name for the "realValuesUrl" field
+     */
+    String storagePath
+
+    @Override
+    String getDefaultStoragePath() {
+        return storagePath
+    }
+
+    @Override
+    void setDefaultStoragePath(final String defaultStoragePath) {
+        this.storagePath = defaultStoragePath
+    }
+
     /**
      * The canonical name for the "valuesUrl" field
      */

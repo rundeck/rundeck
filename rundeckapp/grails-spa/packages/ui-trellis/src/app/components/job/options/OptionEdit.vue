@@ -184,8 +184,8 @@
       <!-- default key -->
       <div
         class="opt_sec_enabled form-group"
-        data-test="option.defaultStoragePath"
-        :class="{ 'has-error': hasError('defaultStoragePath') }"
+        data-test="option.storagePath"
+        :class="{ 'has-error': hasError('storagePath') }"
         v-if="shouldShowDefaultStorage"
       >
         <label class="col-sm-2 control-label">
@@ -204,16 +204,16 @@
             <input
               type="text"
               class="form-control"
-              id="defaultStoragePath_"
-              name="defaultStoragePath"
-              v-model="option.defaultStoragePath"
+              id="storagePath_"
+              name="storagePath"
+              v-model="option.storagePath"
               size="40"
               :placeholder="$t('form.option.defaultStoragePath.description')"
             />
 
             <span class="input-group-btn">
               <key-storage-selector
-                v-model="option.defaultStoragePath"
+                v-model="option.storagePath"
                 :storage-filter="'Rundeck-data-type=password'"
                 :allow-upload="true"
                 :value="'keys'"
@@ -221,8 +221,8 @@
               />
             </span>
           </div>
-          <div class="help-block" v-if="validationErrors['defaultStoragePath']">
-            <ErrorsList :errors="validationErrors['defaultStoragePath']" />
+          <div class="help-block" v-if="validationErrors['storagePath']">
+            <ErrorsList :errors="validationErrors['storagePath']" />
           </div>
         </div>
       </div>
@@ -866,7 +866,7 @@ export default defineComponent({
       if (this.option.secure) {
         this.option.multivalued = false;
       } else {
-        delete this.option.defaultStoragePath;
+        delete this.option.storagePath;
       }
     },
     "option.valuesType"(val: string) {

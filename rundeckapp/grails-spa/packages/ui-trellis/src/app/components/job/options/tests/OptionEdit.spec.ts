@@ -311,7 +311,7 @@ describe("OptionEdit", () => {
     ["name", {}],
     ["description", {}],
     ["value", {}],
-    ["defaultStoragePath", { secure: true }],
+    ["storagePath", { secure: true }],
     ["values", {}],
     ["valuesListDelimiter", {}],
     ["regex", { regex: "asdf" }],
