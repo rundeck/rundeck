@@ -49,6 +49,7 @@ class JobCreatePage extends BasePage {
         static By optionItemBy(int index) {
             By.cssSelector("#optitem_$index")
         }
+        static By storagePathInput = By.name("storagePath")
     }
 
     By separatorOptionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
@@ -365,7 +366,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getStoragePathInput(){
-        el storagePathInput
+        el nextUi ? NextUi.storagePathInput : storagePathInput
     }
 
     By getDefaultValueBy(){
