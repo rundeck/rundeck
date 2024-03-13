@@ -21,6 +21,10 @@ class DashboardPage extends BasePage{
         super(context)
     }
 
+    void loadDashboardForProject(String projectName){
+        this.loadPath = "/project/${projectName}/home"
+    }
+
     def expectProjectDescriptionToBe(String projectDescription){
         new WebDriverWait(driver,  Duration.ofSeconds(10)).until(
                 ExpectedConditions.textToBe(projectDescriptionBy, projectDescription)
