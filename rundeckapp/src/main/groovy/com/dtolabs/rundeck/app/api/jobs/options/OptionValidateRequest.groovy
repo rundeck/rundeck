@@ -66,7 +66,8 @@ class OptionValidateRequest extends OptionInput implements OptionData, Validatea
     void setRealValuesUrl(final URL realValuesUrl) {
         this.valuesUrl = realValuesUrl.toString()
     }
-/**
+
+    /**
      * the canonical name for "defaultValue" field
      */
     String value
@@ -150,6 +151,8 @@ class OptionValidateRequest extends OptionInput implements OptionData, Validatea
         //nb: see RemoteUrlAuthenticationType.groovy
         remoteUrlAuthenticationType(nullable: true, inList: RemoteUrlAuthenticationType.values()*.name())
         realValuesUrl(nullable: true)
+        storagePath(nullable: true)
+        type(nullable: true, inList: ['text', 'file'])
         valuesUrl(nullable: true, blank:true, validator: { String val, OptionValidateRequest obj, Errors errors ->
             if(val){
                 try {
