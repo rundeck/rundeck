@@ -2721,7 +2721,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         }
 
         params.project = 'project1,project2,project3'
-        request.api_version = 35
+        request.api_version = 47
 
         when:
         def result = controller.apiExecutionsRunningv14()

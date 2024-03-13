@@ -368,7 +368,11 @@ class ExecutionSpec extends BaseContainer {
                 jsonValue(response4.body()).executions.size() >= 1
             }
         cleanup:
-            (2..4).each {disableScheduledAndDeleteProject("${projectNameSuffix}-${it}")}
+            (2..4).each {disableScheduledAndDeleteProject("${projectNameSuffix}-${it}", [
+                    "project.disable.schedule": "true",
+                    "project.later.schedule.enable": "false",
+                    "project.disable.executions": "true"
+            ])}
     }
 
     def "executions-running when project is disabled"() {

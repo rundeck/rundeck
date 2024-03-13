@@ -303,6 +303,15 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         }
     }
 
+    /**
+     * Deletes the specified project.
+     * This method sends a DELETE request to remove the project with the given name.
+     * If the deletion operation fails, a RuntimeException is thrown.
+     *
+     * @param projectName the name of the project to be deleted. Must not be null.
+     * @throws RuntimeException if the project deletion fails.
+     *         The exception contains a detailed message obtained from the server's response.
+     */
     void deleteProject(String projectName) {
         def response = client.doDelete("/project/${projectName}")
         if (!response.successful) {
@@ -310,10 +319,23 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         }
     }
 
-    void disableScheduledAndDeleteProject(String projectName) {
-        def responseDisable = client.doPutWithJsonBody("/project/${projectName}/config",
-                ["project.name": projectName, "project.disable.schedule": "true", "project.later.schedule.enable": "false",
-                 "project.disable.executions": "true"])
+    /**
+     * Disables scheduled executions for a specific project and then deletes the project.
+     * This method first makes a PUT request to update the project's configuration,
+     * specifically to disable all scheduled executions. If this operation is successful,
+     * it proceeds to delete the project with a DELETE request. If any of the operations fail,
+     * a RuntimeException is thrown.
+     *
+     * @param projectName the name of the project to be disabled and deleted. Must not be null.
+     * @param body a map containing the configuration to be updated in the project before deletion.
+     *        Specifically, this map should include the necessary properties to disable
+     *        scheduled executions. The exact contents of the map will depend on the client API and
+     *        the project configuration.
+     * @throws RuntimeException if disabling scheduled executions or deleting the project fails.
+     *         The exception contains a detailed message obtained from the server's response.
+     */
+    void disableScheduledAndDeleteProject(String projectName, Map body) {
+        def responseDisable = client.doPutWithJsonBody("/project/${projectName}/config", body)
         if (!responseDisable.successful) {
             throw new RuntimeException("Failed to disable scheduled execution: ${responseDisable.body().string()}")
         }
@@ -328,6 +350,14 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         startEnvironment()
     }
 
+    /**
+     * Pauses the execution for a specified number of seconds.
+     * This method utilizes the sleep function to pause the current thread for the given duration.
+     * If the thread is interrupted while sleeping, it catches the InterruptedException and logs the error.
+     *
+     * @param seconds the number of seconds to pause the execution. This value should be positive.
+     * @throws IllegalArgumentException if the `seconds` parameter is negative, as `Duration.ofSeconds` cannot process negative values.
+     */
     void hold(int seconds) {
         try {
             sleep Duration.ofSeconds(seconds).toMillis()
