@@ -1,6 +1,5 @@
 package org.rundeck.tests.functional.selenium.jobs
 
-
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.home.HomePage
