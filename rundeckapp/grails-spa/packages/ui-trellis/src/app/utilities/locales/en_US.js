@@ -783,7 +783,7 @@ const messages = {
   "option.delimiter.blank.message":
     "You must specify a delimiter for multivalued options",
   "option.hidden.notallowed.message":
-    "Hidden options must have a default value.",
+    "Hidden options must have a default value or storage path.",
   "option.values.regexmismatch.message":
     'Allowed value "{0}" does not match the regex: {1}',
   "option.defaultValue.multivalued.notallowed.message":
