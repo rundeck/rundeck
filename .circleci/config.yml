@@ -626,7 +626,7 @@ workflows:
           <<: *slack-defaults
       - wizcli-scan:
           name: WizCLI Scan Preview
-          #<<: *require-build
+          <<: *require-build
           continue: true
           context:
             - WizCLI
