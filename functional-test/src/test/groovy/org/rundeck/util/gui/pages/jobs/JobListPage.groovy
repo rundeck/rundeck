@@ -48,7 +48,7 @@ class JobListPage extends BasePage {
         new WebDriverWait(context.driver, Duration.ofSeconds(5))
                 .until(ExpectedConditions.numberOfElementsToBeMoreThan(runJobButtonDisabled, 0))
         new WebDriverWait(context.driver, Duration.ofSeconds(5))
-                .until(ExpectedConditions.numberOfElementsToBeMoreThan(executionPausedIcon, 2))
+                .until(ExpectedConditions.numberOfElementsToBe(executionPausedIcon, 1))
     }
 
     /**
