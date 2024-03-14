@@ -72,4 +72,23 @@ class CreateProjectSpec extends SeleniumBase {
         cleanup:
         deleteProject(projectName)
     }
+
+    def "Create project with empty name"(){
+        given:
+        def projectName = "no-name-project"
+        def loginPage = go LoginPage
+        def homePage = page HomePage
+        def projectCreatePage = page ProjectCreatePage
+
+        when:
+        loginPage.login(TEST_USER, TEST_PASS)
+        homePage.createProjectButton()
+        currentUrl.contains("/resources/createProject")
+        projectCreatePage.createField.click()
+
+        then:
+        projectCreatePage.projectCreateDangerAlert.displayed
+        projectCreatePage.projectCreateDangerAlertContent.text.contains("Project name is required")
+
+    }
 }
