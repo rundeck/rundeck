@@ -5,12 +5,6 @@ docker_login() {
     echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
 }
 
-
-install_twistcli() {
-    curl -sSL -u "${TWISTLOCK_USER}:${TWISTLOCK_PASSWORD}" "${TWISTLOCK_CONSOLE_URL}/api/v1/util/twistcli" --output ./twistcli
-    chmod +x twistcli
-}
-
 install_package_cloud() {
     sudo gem install package_cloud
 
@@ -76,50 +70,6 @@ fetch_ci_shared_resources() {
     mkdir -p "${HOME}/.gnupg"
     cp -pv ci-resources/* "${HOME}/.gnupg/"
     chmod -R 700 "${HOME}/.gnupg"
-}
-
-twistlock_scan() {
-
-    docker_login
-
-    echo "==> Git Branch: ${RUNDECK_BRANCH}"
-    echo "==> Git Tag: ${RUNDECK_TAG}"
-
-    if [[ -n "${RUNDECK_TAG}" ]]; then
-        #If the build is triggered by a git Tag
-        export RUNDECK_IMAGE_TAG="${DOCKER_REPO}:${RUNDECK_TAG}"
-    elif [[ "${RUNDECK_BRANCH}" == "main" ]]; then
-        export RUNDECK_IMAGE_TAG="${DOCKER_REPO}:SNAPSHOT"
-    else
-        export RUNDECK_IMAGE_TAG="${DOCKER_CI_REPO}:${RUNDECK_BRANCH_CLEAN}"
-    fi
-
-    echo "==> Scan Image: ${RUNDECK_IMAGE_TAG}"
-
-    docker pull "${RUNDECK_IMAGE_TAG}"
-
-    # We run twistcli as root so it can start containers within its circleci container without issues.
-    sudo ./twistcli images scan --details \
-        -address "${TWISTLOCK_CONSOLE_URL}" \
-        -u "${TWISTLOCK_USER}" -p "${TWISTLOCK_PASSWORD}" \
-        --output-file twistlock_scan_result.json "${RUNDECK_IMAGE_TAG}"
-
-    # Fix permissions of created file.
-    sudo chown "${CURRENT_USER}" twistlock_scan_result.json
-
-    #Translate report to junit format.
-    mkdir -p test-results/junit
-    bash "${RUNDECK_CORE_DIR}/scripts/convert_tl_junit.sh" twistlock_scan_result.json >test-results/junit/twistlock-junit.xml
-
-    #report severity filter to extract incidents count, default: high and critical
-    local reportSeverityFilter='.results[0].vulnerabilityDistribution.high + .results[0].vulnerabilityDistribution.critical'
-    local incidents=$(cat twistlock_scan_result.json | jq "$reportSeverityFilter")
-
-    if [[ $incidents -gt 0 ]]; then
-        echo "==> Security Alert: found vulnerabilities, $incidents of them must be mitigated before release. Please refer to the above report for detail."
-    fi
-
-    return $incidents
 }
 
 openapi_tests() {

@@ -57,10 +57,6 @@ DOCKER_PASSWORD=your-docker-key
 # Override repositories (optional)
 DOCKER_REPO=ahormazabal/rdimg
 DOCKER_CI_REPO=ahormazabal/rdci
-# Twistlock credentials (for rinning twistlock scan)
-TL_USER=circleci-rundeck
-TL_PASS=the-twistlock-console-password
-TL_CONSOLE_URL=https://the.twistlock.console.url
 # GPG credentials (for packaging tasks)
 RUNDECK_SIGNING_PASSWORD=gpg_signing_key_password
 RUNDECK_SIGNING_KEYID=gpg_signing_key_id
@@ -94,11 +90,6 @@ As of this writing, the following jobs are available to run locally. Execute the
 #### Build rundeck 
 ```shell
 make -f .circleci/Makefile rundeck-build
-```
-
-#### Twistlock scan 
-```shell
-make -f .circleci/Makefile twistlock-scan
 ```
 
 #### Ansible Test

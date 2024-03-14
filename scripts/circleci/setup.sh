@@ -40,11 +40,6 @@ export DOCKER_REPO=${DOCKER_REPO:-"rundeck/rundeck"}
 export DOCKER_CI_REPO=${DOCKER_CI_REPO:-"rundeck/ci"}
 export DOCKER_IMAGE_BUILD_TAG=ci-build-${RUNDECK_BUILD_NUMBER}
 
-# Set Twistlock env and map with Circle ENV.
-export TWISTLOCK_USER=${TWISTLOCK_USER:-${TL_USER:-}}
-export TWISTLOCK_PASSWORD=${TWISTLOCK_PASSWORD:-${TL_PASS:-}}
-export TWISTLOCK_CONSOLE_URL=${TWISTLOCK_CONSOLE_URL:-${TL_CONSOLE_URL:-}}
-
 # AWS Config
 export S3_CI_SHARED_RESOURCES="s3://rundeck-ci-resources/shared/resources"
 
