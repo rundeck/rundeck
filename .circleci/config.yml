@@ -462,8 +462,7 @@ jobs:
         description: Command that will execute the docker tests
         type: string
     steps:
-      - setup_docker:
-          docker_layer_caching: true
+      - setup_docker
       - checkout
       - install-testdeck-dependencies
       - attach_workspace:
