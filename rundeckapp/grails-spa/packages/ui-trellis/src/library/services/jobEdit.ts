@@ -3,10 +3,14 @@ import { api } from "./api";
 
 export async function validateJobOption(
   project: string,
+  jobWasScheduled: boolean,
   option: JobOptionEdit,
 ): Promise<OptionValidation> {
   return api
-    .post(`project/${project}/jobs/validateOption`, option)
+    .post(
+      `project/${project}/jobs/validateOption?jobWasScheduled=${jobWasScheduled}`,
+      option,
+    )
     .then((r) => r.data)
     .catch((e) => {
       if (e.response && e.response.status === 400) {

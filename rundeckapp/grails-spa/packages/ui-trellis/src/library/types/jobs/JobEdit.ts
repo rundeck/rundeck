@@ -43,6 +43,7 @@ export interface JobOptionsData {
   features: { [key: string]: boolean };
   fileUploadPluginType?: string;
   options: JobOptionEdit[];
+  jobWasScheduled: boolean;
 }
 
 export const OptionPrototype = {
