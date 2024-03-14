@@ -17,6 +17,7 @@ import java.time.Duration
 @CompileStatic
 class JobShowPage extends BasePage{
 
+    By stepsInJobDefinitionBy = By.cssSelector(".pflowitem.wfctrlholder")
     By jobDefinitionModalBy = By.cssSelector('a[href="#job-definition-modal"]')
     By notificationDefinitionBy = By.cssSelector('#detailtable.tab-pane > div.row > div.col-sm-12.table-responsive > table.table.item_details> tbody > tr > td.container > div.row > div.col-sm-12 > div.overflowx')
     By closeJobDefinitionModalBy = By.xpath("//*[contains(@id,'job-definition-modal_footer')]//*[@type='submit']")
@@ -214,6 +215,12 @@ class JobShowPage extends BasePage{
 
     void goToJob(String jobUuidText){
         go(PAGE_PATH + "/$jobUuidText")
+    }
+
+    def expectNumberOfStepsToBe(int steps){
+        new WebDriverWait(driver,  Duration.ofSeconds(10)).until(
+                ExpectedConditions.numberOfElementsToBe(stepsInJobDefinitionBy, steps)
+        )
     }
 
 }
