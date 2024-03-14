@@ -3,6 +3,7 @@ package org.rundeck.tests.functional.selenium.project
 import org.rundeck.util.gui.pages.home.HomePage
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.project.DashboardPage
+import org.rundeck.util.gui.pages.project.NodeSourcePage
 import org.rundeck.util.gui.pages.project.ProjectCreatePage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
@@ -25,57 +26,8 @@ class CreateProjectSpec extends SeleniumBase {
             projectCreatePage.descriptionInput
     }
 
-    def "Create project with empty description"(){
-        given:
-        def projectName = "no-desc-project"
-        def loginPage = go LoginPage
-        def homePage = page HomePage
-        def projectCreatePage = page ProjectCreatePage
-        def dashboardPage = page DashboardPage
-
-        when:
-        loginPage.login(TEST_USER, TEST_PASS)
-        homePage.createProjectButton()
-        currentUrl.contains("/resources/createProject")
-        projectCreatePage.projectNameInput.sendKeys(projectName)
-        projectCreatePage.createField.click()
-        dashboardPage.loadDashboardForProject(projectName)
-        dashboardPage.go()
-
-        then:
-        dashboardPage.expectProjectDescriptionToBe("")
-
-        cleanup:
-        deleteProject(projectName)
-    }
-
-    def "Create project with empty label"(){
-        given:
-        def projectName = "no-label-project"
-        def loginPage = go LoginPage
-        def homePage = page HomePage
-        def projectCreatePage = page ProjectCreatePage
-        def dashboardPage = page DashboardPage
-
-        when:
-        loginPage.login(TEST_USER, TEST_PASS)
-        homePage.createProjectButton()
-        currentUrl.contains("/resources/createProject")
-        projectCreatePage.projectNameInput.sendKeys(projectName)
-        projectCreatePage.createField.click()
-        dashboardPage.loadDashboardForProject(projectName)
-        dashboardPage.go()
-
-        then:
-        dashboardPage.expectProjectLabelToBe("")
-
-        cleanup:
-        deleteProject(projectName)
-    }
-
     def "Create project with empty name"(){
         given:
-        def projectName = "no-name-project"
         def loginPage = go LoginPage
         def homePage = page HomePage
         def projectCreatePage = page ProjectCreatePage
@@ -90,5 +42,48 @@ class CreateProjectSpec extends SeleniumBase {
         projectCreatePage.projectCreateDangerAlert.displayed
         projectCreatePage.projectCreateDangerAlertContent.text.contains("Project name is required")
 
+    }
+
+    def "Create simple project | empty label | empty description"(){
+        given:
+        def projectName = "simple-project"
+        def loginPage = go LoginPage
+        def homePage = page HomePage
+        def projectCreatePage = page ProjectCreatePage
+        NodeSourcePage nodeSourcePage = page NodeSourcePage
+
+        when:
+        loginPage.login(TEST_USER, TEST_PASS)
+        homePage.createProjectButton()
+        currentUrl.contains("/resources/createProject")
+        projectCreatePage.projectNameInput.sendKeys(projectName)
+        projectCreatePage.createField.click()
+
+        then:
+        nodeSourcePage.validatePage()
+
+        cleanup:
+        deleteProject(projectName)
+    }
+
+    def "Create project with invalid characters"(){
+        given:
+        def loginPage = go LoginPage
+        def homePage = page HomePage
+        def projectCreatePage = page ProjectCreatePage
+
+        when:
+        loginPage.login(TEST_USER, TEST_PASS)
+        homePage.createProjectButton()
+        currentUrl.contains("/resources/createProject")
+        projectCreatePage.projectNameInput.sendKeys("name")
+        projectCreatePage.descriptionInput.sendKeys("!\$%&")
+        projectCreatePage.createField.click()
+
+        then:
+        projectCreatePage.projectCreateDangerAlert.displayed
+        projectCreatePage.projectCreateDangerAlertContent.text.contains(
+                "Project description can only contain these characters: [a-zA-Z0-9p{L}p{M}\\s\\.,\\(\\)_-]."
+        )
     }
 }
