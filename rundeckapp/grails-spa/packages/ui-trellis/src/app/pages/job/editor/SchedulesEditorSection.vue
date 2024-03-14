@@ -32,8 +32,12 @@ export default {
     };
   },
   watch: {
-    updatedData() {
-      window.jobWasEdited();
+    updatedData: {
+      handler() {
+        this.eventBus.emit("job-edit-schedules-changed", this.updatedData);
+        window.jobWasEdited();
+      },
+      deep: true,
     },
   },
   async mounted() {
