@@ -54,6 +54,7 @@ const mountBasicOptionsEditor = async (
   let optionsData = {
     features: { feature1: true, feature2: false },
     fileUploadPluginType: "fileUploadPluginType",
+    jobWasScheduled: false,
     options,
   } as JobOptionsData;
   return mountOptionsEditor({ optionsData, edit: true });
@@ -64,7 +65,10 @@ const mountOptionsEditor = async (options: {
 }): Promise<VueWrapper<any>> => {
   const wrapper = mount(OptionsEditor, {
     props: {
-      optionsData: options.optionsData,
+      optionsData: Object.assign(
+        { jobWasScheduled: false },
+        options.optionsData,
+      ),
       edit: options.edit,
     },
     global: {
@@ -108,6 +112,7 @@ const mountOptionsEditor = async (options: {
             "optionValuesPlugins",
             "errors",
             "uiFeatures",
+            "jobWasScheduled",
           ],
           defineEmits: ["update:modelValue", "cancel"],
           template:
@@ -136,6 +141,7 @@ describe("OptionsEditor", () => {
     let optionsData = {
       features: { feature1: true, feature2: false },
       fileUploadPluginType: "fileUploadPluginType",
+      jobWasScheduled: false,
       options: [],
     } as JobOptionsData;
     const wrapper = await mountOptionsEditor({ optionsData, edit: true });
@@ -145,10 +151,12 @@ describe("OptionsEditor", () => {
     let icon = btn.get(".glyphicon.glyphicon-plus");
     expect(icon).toBeDefined();
   });
+
   it("shows empty list text", async () => {
     let optionsData = {
       features: { feature1: true, feature2: false },
       fileUploadPluginType: "fileUploadPluginType",
+      jobWasScheduled: false,
       options: [],
     } as JobOptionsData;
     const wrapper = await mountOptionsEditor({ optionsData, edit: true });
@@ -349,6 +357,7 @@ describe("OptionsEditor", () => {
       let optionsData = {
         features: { feature1: true, feature2: false },
         fileUploadPluginType: "fileUploadPluginType",
+        jobWasScheduled: false,
         options,
       } as JobOptionsData;
       const wrapper = await mountOptionsEditor({ optionsData, edit: true });
