@@ -85,7 +85,7 @@ class SetUserInterceptor {
             Set<String> roles = lookupTokenRoles(foundToken, servletContext)
             String user = foundToken?.getOwnerName()
 
-            if(request.getAttribute(RUNNER_RQ_ATTRIB) && foundToken.type == AuthTokenType.RUNNER) {
+            if(request.getAttribute(RUNNER_RQ_ATTRIB) && foundToken?.type == AuthTokenType.RUNNER) {
                 isRunnerToken = true
             }
 
