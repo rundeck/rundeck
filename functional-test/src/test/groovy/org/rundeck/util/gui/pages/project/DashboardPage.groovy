@@ -15,6 +15,7 @@ class DashboardPage extends BasePage{
     String loadPath = ""
     By projectDescriptionBy = By.className("text-project-description")
     By projectLabelBy = By.xpath("//div[@data-ko-bind='projectHome']")
+    By readmeMarkDownBy = By.className("markdown-body")
 
     DashboardPage(SeleniumContext context) {
         super(context)
@@ -30,5 +31,9 @@ class DashboardPage extends BasePage{
         new WebDriverWait(driver,  Duration.ofSeconds(10)).until(
                 ExpectedConditions.textToBePresentInElement(driver.findElement(projectLabelBy).findElement(By.tagName("h3")), projectLabel)
         )
+    }
+
+    def getCheckReadme(){
+        (el readmeMarkDownBy).getText()
     }
 }

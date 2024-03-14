@@ -22,6 +22,7 @@ class ProjectEditPage extends BasePage {
     By aceEditor = By.className("ace_text-input")
     By successMessageDiv = By.cssSelector(".alert.alert-info")
     By motdIdSelect = By.id("extraConfig.menuService.motdDisplay")
+    By readmeSelect = By.id("extraConfig.menuService.readmeDisplay")
 
     ProjectEditPage(SeleniumContext context) {
         super(context)
@@ -79,5 +80,12 @@ class ProjectEditPage extends BasePage {
      */
     def replaceConfiguration(String original, String replacement){
         ((JavascriptExecutor) context.driver).executeScript("ace.edit('_id0').session.replace(ace.edit('_id0').find('${original}',{wrap: true, wholeWord: true }), '${replacement}');")
+    }
+
+    /**
+     * This select all of the readme places checkboxes
+     */
+    def selectReadmeAllPlaces(){
+        (els readmeSelect).each {it.click()}
     }
 }
