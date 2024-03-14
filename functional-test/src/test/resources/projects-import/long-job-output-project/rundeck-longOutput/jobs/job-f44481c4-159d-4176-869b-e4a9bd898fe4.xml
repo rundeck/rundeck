@@ -1,0 +1,26 @@
+<joblist>
+  <job>
+    <defaultTab>nodes</defaultTab>
+    <description></description>
+    <executionEnabled>true</executionEnabled>
+    <id>f44481c4-159d-4176-869b-e4a9bd898fe4</id>
+    <loglevel>INFO</loglevel>
+    <name>output job</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <schedules />
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <script><![CDATA[#!/bin/bash
+
+for (( i=1; i<=10; i++ ))
+do
+    echo "test output $i"
+done]]></script>
+        <scriptargs />
+      </command>
+    </sequence>
+    <uuid>f44481c4-159d-4176-869b-e4a9bd898fe4</uuid>
+  </job>
+</joblist>

@@ -2,13 +2,14 @@ package org.rundeck.tests.functional.api.scm
 
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.annotations.ExcludePro
-import org.rundeck.util.api.JobUtils
+import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.gitea.GiteaApiRemoteRepo
 import org.rundeck.util.api.scm.httpbody.GitExportSetupRequest
 import org.rundeck.util.api.scm.httpbody.ScmActionPerformRequest
 import org.rundeck.util.api.scm.httpbody.ScmJobStatusResponse
 import org.rundeck.util.api.scm.httpbody.SetupIntegrationResponse
+import org.rundeck.util.common.scm.ScmIntegration
 import org.rundeck.util.container.BaseContainer
 
 @APITest
@@ -16,7 +17,6 @@ import org.rundeck.util.container.BaseContainer
 class ScmPluginJobDiffSpec extends BaseContainer {
 
     static final String PROJECT_NAME = "ScmPluginJobActionsInput-project"
-    final String EXPORT_INTEGRATION = "export"
     final String DUMMY_JOB_ID = "383d0599-3ea3-4fa6-ac3a-75a53d6b0000"
     final String JOB_XML_NAME = "job-template-common.xml"
     static final GiteaApiRemoteRepo remoteRepo = new GiteaApiRemoteRepo('repoExample4')
@@ -37,7 +37,7 @@ class ScmPluginJobDiffSpec extends BaseContainer {
                 "uuid": DUMMY_JOB_ID
         ]
         JobUtils.jobImportFile(PROJECT_NAME, JobUtils.updateJobFileToImport(JOB_XML_NAME, PROJECT_NAME, initialArgs) as String, client)
-        GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(EXPORT_INTEGRATION).forProject(PROJECT_NAME)
+        GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(ScmIntegration.EXPORT).forProject(PROJECT_NAME)
         scmClient.callSetupIntegration(GitExportSetupRequest.defaultRequest().forProject(PROJECT_NAME).withRepo(remoteRepo))
         hold(5)
         ScmJobStatusResponse initialStatus = scmClient.callGetJobStatus(DUMMY_JOB_ID).response
@@ -56,7 +56,7 @@ class ScmPluginJobDiffSpec extends BaseContainer {
         initialStatus.actions.size() == 1
         initialStatus.commit == null
         initialStatus.id == DUMMY_JOB_ID
-        initialStatus.integration == EXPORT_INTEGRATION
+        initialStatus.integration == ScmIntegration.EXPORT
         initialStatus.message == "Created"
         initialStatus.project == PROJECT_NAME
         initialStatus.synchState == "CREATE_NEEDED"
@@ -69,7 +69,7 @@ class ScmPluginJobDiffSpec extends BaseContainer {
         updatedStatus.actions.size() == 0
         updatedStatus.commit.size() == 5
         updatedStatus.id == DUMMY_JOB_ID
-        updatedStatus.integration == EXPORT_INTEGRATION
+        updatedStatus.integration == ScmIntegration.EXPORT
         updatedStatus.message == "No Change"
         updatedStatus.project == PROJECT_NAME
         updatedStatus.synchState == "CLEAN"
@@ -83,13 +83,14 @@ class ScmPluginJobDiffSpec extends BaseContainer {
                 "2-args": "echo hello there 2 updated",
                 "uuid": DUMMY_JOB_ID
         ]
+        hold(5)
         JobUtils.jobImportFile(PROJECT_NAME, JobUtils.updateJobFileToImport(JOB_XML_NAME, PROJECT_NAME, updatedArgs) as String, client, JobUtils.DUPE_OPTION_UPDATE)
         hold(5)
         def exportNeededStatus = scmClient.callGetJobStatus(DUMMY_JOB_ID).response
         exportNeededStatus.actions.size() == 1
         exportNeededStatus.commit.size() == 5
         exportNeededStatus.id == DUMMY_JOB_ID
-        exportNeededStatus.integration == EXPORT_INTEGRATION
+        exportNeededStatus.integration == ScmIntegration.EXPORT
         exportNeededStatus.message == "Modified"
         exportNeededStatus.project == PROJECT_NAME
         exportNeededStatus.synchState == "EXPORT_NEEDED"
@@ -104,7 +105,7 @@ class ScmPluginJobDiffSpec extends BaseContainer {
         finalStatus.actions.size() == 0
         finalStatus.commit.size() == 5
         finalStatus.id == DUMMY_JOB_ID
-        finalStatus.integration == EXPORT_INTEGRATION
+        finalStatus.integration == ScmIntegration.EXPORT
         finalStatus.message == "No Change"
         finalStatus.project == PROJECT_NAME
         finalStatus.synchState == "CLEAN"

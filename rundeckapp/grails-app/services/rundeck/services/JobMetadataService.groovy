@@ -124,6 +124,6 @@ class JobMetadataService {
      */
     def setJobPluginMeta(final String project, final String id, final String type, final Map metadata) {
         def key = id + '/' + type
-        pluginMetaDataProvider.setJobPluginMeta(project, id, key, metadata)
+        pluginMetaDataProvider.setJobPluginMeta(project, key, metadata)
     }
 }

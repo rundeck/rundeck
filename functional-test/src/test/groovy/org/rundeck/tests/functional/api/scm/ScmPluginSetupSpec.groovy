@@ -4,11 +4,12 @@ import org.rundeck.util.annotations.APITest
 import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.api.scm.gitea.GiteaApiRemoteRepo
 import org.rundeck.util.api.scm.GitScmApiClient
-import org.rundeck.util.api.RundeckResponse
+import org.rundeck.util.api.responses.common.RundeckResponse
 import org.rundeck.util.api.scm.httpbody.ScmPluginsListResponse
 import org.rundeck.util.api.scm.httpbody.ScmProjectConfigResponse
 import org.rundeck.util.api.scm.httpbody.GitExportSetupRequest
 import org.rundeck.util.api.scm.httpbody.SetupIntegrationResponse
+import org.rundeck.util.common.scm.ScmIntegration
 import org.rundeck.util.container.BaseContainer
 
 @APITest
@@ -23,7 +24,7 @@ class ScmPluginSetupSpec extends BaseContainer {
 
     def "should mark corresponding validation errors with 'required' on missing properties"(){
         given:
-        String integration = "export"
+        ScmIntegration integration = ScmIntegration.EXPORT
         String projectName = "${PROJECT_NAME}-P1"
         setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
@@ -51,7 +52,7 @@ class ScmPluginSetupSpec extends BaseContainer {
 
     def "should return no errors on valid setup"(){
         given:
-        String integration = "export"
+        ScmIntegration integration = ScmIntegration.EXPORT
         String projectName = "${PROJECT_NAME}-P2"
         setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
@@ -68,7 +69,7 @@ class ScmPluginSetupSpec extends BaseContainer {
 
     def "plugin must be present in scm plugins list with enabled false after disabling plugin"(){
         given:
-        String integration = "export"
+        ScmIntegration integration = ScmIntegration.EXPORT
         String projectName = "${PROJECT_NAME}-P3"
         setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
@@ -94,7 +95,7 @@ class ScmPluginSetupSpec extends BaseContainer {
 
     def "respond with success false if disabling a non existing plugin"(){
         given:
-        String integration = "export"
+        ScmIntegration integration = ScmIntegration.EXPORT
         String projectName = "${PROJECT_NAME}-P4"
         setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
@@ -119,7 +120,7 @@ class ScmPluginSetupSpec extends BaseContainer {
 
     def "disable a plugin that wasn't configured results in response with success false"(){
         given:
-        String integration = "export"
+        ScmIntegration integration = ScmIntegration.EXPORT
         String projectName = "${PROJECT_NAME}-P5"
         setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
@@ -136,7 +137,7 @@ class ScmPluginSetupSpec extends BaseContainer {
 
     def "plugin must be present in scm plugins list with enabled true after enabling plugin"(){
         given:
-        String integration = "export"
+        ScmIntegration integration = ScmIntegration.EXPORT
         String projectName = "${PROJECT_NAME}-P6"
         setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
@@ -164,7 +165,7 @@ class ScmPluginSetupSpec extends BaseContainer {
 
     def "should return the current  project scm configuration"(){
         given:
-        String integration = "export"
+        ScmIntegration integration = ScmIntegration.EXPORT
         String projectName = "${PROJECT_NAME}-P7"
         setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
@@ -215,14 +216,14 @@ class ScmPluginSetupSpec extends BaseContainer {
         }
 
         where:
-        integration | expectedTitle | expectedDescription
-        'export'    | 'Git Export'  | 'Export Jobs to a Git Repository'
-        'import'    | 'Git Import'  | 'Import Jobs from a Git Repository'
+        integration           | expectedTitle | expectedDescription
+        ScmIntegration.EXPORT | 'Git Export'  | 'Export Jobs to a Git Repository'
+        ScmIntegration.IMPORT | 'Git Import'  | 'Import Jobs from a Git Repository'
     }
 
     def "list plugins for non existing integration"() {
         given:
-        String integration = 'invalid'
+        ScmIntegration integration = ScmIntegration.INVALID
         String projectName = "${PROJECT_NAME}-P9"
         setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
@@ -233,7 +234,7 @@ class ScmPluginSetupSpec extends BaseContainer {
         then:
         verifyAll {
             scmPlugins.errorCode == 'api.error.invalid.request'
-            scmPlugins.message == 'Invalid API Request: the value "invalid" for parameter "integration" was invalid. It must be in the list: [export, import]'
+            scmPlugins.message == "Invalid API Request: the value \"${integration.name}\" for parameter \"integration\" was invalid. It must be in the list: [export, import]"
         }
     }
 }

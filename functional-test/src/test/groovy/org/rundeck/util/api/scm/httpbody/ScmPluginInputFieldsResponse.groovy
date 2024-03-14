@@ -2,6 +2,7 @@ package org.rundeck.util.api.scm.httpbody
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.rundeck.util.api.scm.httpbody.common.InputField
+import org.rundeck.util.common.scm.ScmIntegration
 
 class ScmPluginInputFieldsResponse {
 
@@ -13,4 +14,8 @@ class ScmPluginInputFieldsResponse {
 
     @JsonProperty
     List<InputField> fields
+
+    ScmIntegration getIntegration(){
+        return ScmIntegration.getEnum(integration)
+    }
 }
