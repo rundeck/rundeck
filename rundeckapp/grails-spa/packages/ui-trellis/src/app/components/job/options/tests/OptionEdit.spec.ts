@@ -8,6 +8,7 @@ jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
     eventBus: { on: jest.fn(), emit: jest.fn() },
     rdBase: "http://localhost:4440",
+    projectName: "testProject",
   })),
 }));
 jest.mock("@/library/modules/rundeckClient", () => ({
@@ -278,6 +279,35 @@ describe("OptionEdit", () => {
     expect(wrapper.vm.hasError("name")).toBeTruthy();
     expect(wrapper.emitted()).not.toHaveProperty("update:modelValue");
   });
+  it.each([true, false])(
+    "validate job option jobWasScheduled %p param is used",
+    async (jobWasScheduled: boolean) => {
+      mockedValidateJobOption.mockResolvedValueOnce({
+        valid: true,
+        message: "",
+        messages: {},
+      });
+      const wrapper = await mountOptionEdit({
+        modelValue: { name: "test", type: "text" },
+        features: { optionValuesPlugin: true },
+        jobWasScheduled,
+        optionValuesPlugins: [
+          { name: "testplugin", description: "", title: "Test Plugin" },
+        ],
+        editable: true,
+      });
+
+      await wrapper.vm.doSave();
+      expect(mockedValidateJobOption).toHaveBeenCalledWith(
+        "testProject",
+        jobWasScheduled,
+        expect.objectContaining({
+          name: "test",
+          type: "text",
+        }),
+      );
+    },
+  );
   it.each([
     ["", "has-warning", "form.field.required.message"],
     ["in valid", "has-error", "form.option.regex.validation.error"],
