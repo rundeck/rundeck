@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.util.api.scm.httpbody.common.InputField
+import org.rundeck.util.common.scm.ScmActionId
+import org.rundeck.util.common.scm.ScmIntegration
 
 class ScmActionInputFieldsResponse {
     @JsonProperty
@@ -26,6 +28,15 @@ class ScmActionInputFieldsResponse {
 
     @JsonProperty
     List<ExportItems> exportItems
+
+    ScmIntegration getIntegration(){
+        ScmIntegration.getEnum(integration)
+    }
+
+    ScmActionId getActionId(){
+        ScmActionId.getEnum(actionId)
+    }
+
 
     static class ImportItems extends CommonItems {
         @JsonProperty
