@@ -179,4 +179,41 @@ class EditProjectSpec extends SeleniumBase {
         deleteProject(projectName)
     }
 
+    def "delete description | label"(){
+        given:
+        def projectName = "removeDescriptionAndLabelTest"
+        setupProject(projectName)
+        def projectEditPage = page ProjectEditPage
+        def projectDashboard = page DashboardPage
+        def loginPage = go LoginPage
+
+        when: "Give a desc and label first"
+        loginPage.login(TEST_USER, TEST_PASS)
+        projectEditPage.go("/project/${projectName}/configure")
+        projectEditPage.setProjectLabel "a-label"
+        projectEditPage.setProjectDescription "A desc"
+        projectEditPage.save()
+        then:
+        projectDashboard.expectProjectLabelToBe("a-label")
+        projectDashboard.expectProjectDescriptionToBe("A desc")
+
+        when: "Delete description"
+        projectEditPage.go("/project/${projectName}/configure")
+        projectEditPage.clearProjectDescription()
+        projectEditPage.save()
+
+        then:
+        projectDashboard.expectProjectDescriptionToBe("")
+
+        when: "Delete project label"
+        projectEditPage.go("/project/${projectName}/configure")
+        projectEditPage.clearProjectLabel()
+        projectEditPage.save()
+        then:
+        projectDashboard.expectProjectLabelToBe("")
+
+        cleanup:
+        deleteProject(projectName)
+    }
+
 }
