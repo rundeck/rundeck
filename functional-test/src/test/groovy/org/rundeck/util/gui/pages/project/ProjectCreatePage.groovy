@@ -12,6 +12,7 @@ import org.rundeck.util.gui.pages.BasePage
 @CompileStatic
 class ProjectCreatePage extends BasePage {
 
+    By projectCreateDangerAlert = By.cssSelector(".alert.alert-danger")
     By projectDescription = By.id("description")
     By projectNameInputBy = By.cssSelector("#createform form input[name=\"newproject\"]")
     By labelInputBy = By.cssSelector("#createform form input[name=\"label\"]")
@@ -54,6 +55,14 @@ class ProjectCreatePage extends BasePage {
 
     WebElement getProjectDescriptionInput(){
         el projectDescription
+    }
+
+    WebElement getProjectCreateDangerAlert(){
+        el projectCreateDangerAlert
+    }
+
+    WebElement getProjectCreateDangerAlertContent(){
+        (el projectCreateDangerAlert).findElement(By.cssSelector(".alert li"))
     }
 
 }
