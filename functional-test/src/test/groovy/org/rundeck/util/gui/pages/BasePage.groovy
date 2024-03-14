@@ -126,11 +126,6 @@ abstract class BasePage {
                 .until(ExpectedConditions.elementToBeClickable(locator))
     }
 
-    WebElement waitForPresenceOfElementLocated(By locator) {
-        new WebDriverWait(context.driver, Duration.ofSeconds(30))
-                .until(ExpectedConditions.presenceOfElementLocated(locator))
-    }
-
     boolean waitForUrlToContain(String text) {
         new WebDriverWait(context.driver, Duration.ofSeconds(30))
                 .until(ExpectedConditions.urlContains(text))

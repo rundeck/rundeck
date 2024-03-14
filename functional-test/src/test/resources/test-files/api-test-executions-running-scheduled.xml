@@ -1,0 +1,21 @@
+<joblist>
+  <job>
+    <defaultTab>nodes</defaultTab>
+    <description></description>
+    <executionEnabled>true</executionEnabled>
+    <id>d9500676-1cba-4e67-adec-1c28ad935048</id>
+    <loglevel>INFO</loglevel>
+    <name>Simple Scheduled job</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <plugins />
+    <schedule crontab="*/4 * * ? * * *"/>
+    <scheduleEnabled>true</scheduleEnabled>
+    <multipleExecutions>true</multipleExecutions>
+    <sequence keepgoing='false'>
+      <command>
+        <exec>echo '1'; sleep 5</exec>
+      </command>
+    </sequence>
+    <uuid>xml-uuid</uuid>
+  </job>
+</joblist>
