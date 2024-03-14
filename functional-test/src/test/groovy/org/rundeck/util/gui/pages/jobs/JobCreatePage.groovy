@@ -4,8 +4,12 @@ import groovy.transform.CompileStatic
 import org.openqa.selenium.By
 import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.WebElement
+import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.gui.pages.BasePage
 import org.rundeck.util.container.SeleniumContext
+
+import java.time.Duration
 
 /**
  * Job create page
@@ -13,6 +17,7 @@ import org.rundeck.util.container.SeleniumContext
 @CompileStatic
 class JobCreatePage extends BasePage {
 
+    By numberOfStepsBy = By.cssSelector(".autohilite.autoedit.wfitem.exectype")
     By notificationModalBy = By.cssSelector('#job-notifications-edit-modal')
     By notificationDropDownBy = By.cssSelector('#notification-edit-type-dropdown > button')
     By notificationSaveBy = By.id("job-notifications-edit-modal-btn-save")
@@ -27,6 +32,7 @@ class JobCreatePage extends BasePage {
     By multiExecFalseBy = By.cssSelector('input#multipleFalse')
     By multiExecTrueBy = By.cssSelector('input#multipleTrue')
     By workFlowStrategyBy = By.xpath('//*[@id="workflow.strategy"]')
+    By deleteStepBy = By.xpath('//*[@title="Delete this step"]')
     By strategyPluginParallelBy = By.xpath('//*[@id="strategyPluginparallel"]')
     By strategyPluginParallelMsgBy = By.xpath('//*[@id="strategyPluginparallel"]/span/span')
     By strategyPluginSequentialBy = By.xpath('//*[@id="strategyPluginsequential"]')
@@ -418,6 +424,16 @@ class JobCreatePage extends BasePage {
         executeScript "arguments[0].scrollIntoView(true);", button
         button?.click()
         waitForElementVisible By.id("wfitem_${stepNumber}")
+    }
+
+    def removeStepByIndex(int stepIndex){
+        (els deleteStepBy).get(stepIndex).click()
+    }
+
+    def expectNumberOfStepsToBe(int numberSteps){
+        new WebDriverWait(driver,  Duration.ofSeconds(5)).until(
+                ExpectedConditions.numberOfElementsToBe(numberOfStepsBy, numberSteps)
+        )
     }
 
 }
