@@ -11,7 +11,9 @@ enum NavLinkTypes {
     CALENDARS("nav-calendars-link","/calendars", false),
     WEBHOOKS("nav-webhooks-link","/webhook", false),
     EDIT_NODES("nav-project-settings-edit-nodes","/nodes/sources", true),
-    MOTD("nav-project-settings-edit-motd" , "filename=motd.md", true)
+    MOTD("nav-project-settings-edit-motd" , "filename=motd.md", true),
+    README("nav-project-settings-edit-readme", "filename=readme.md", true),
+    PROJECT_CONFIG("nav-project-settings-edit-project", "/configure", true)
 
     private String id
     private String url

@@ -20,6 +20,7 @@ class HomePage extends BasePage {
     By newProject = By.linkText("New Project")
     By bodyNextUIBy = By.cssSelector('body.ui-type-next')
     By projectActionsButton = By.cssSelector('.btn-group.dropdown')
+    By readmeMessageBy = By.className("markdown-body")
 
     static final String PAGE_PATH_PROJECT = '/project/$PROJECT/home'
 
@@ -78,5 +79,12 @@ class HomePage extends BasePage {
 
     void loadPathToNextUI() {
         loadPath = "/menu/home?nextUi=true"
+    }
+
+    def getReadmeMessage(){
+        new WebDriverWait(driver, Duration.ofSeconds(20)).until(
+                ExpectedConditions.numberOfElementsToBe(readmeMessageBy, 1)
+        )
+        (el readmeMessageBy).getText()
     }
 }
