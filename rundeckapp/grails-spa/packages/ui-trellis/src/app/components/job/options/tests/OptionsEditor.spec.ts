@@ -116,7 +116,7 @@ const mountOptionsEditor = async (options: {
           ],
           defineEmits: ["update:modelValue", "cancel"],
           template:
-            "<div data-test-component='OptionEditComponent'>OptionEdit: {{modelValue.name}}</div>",
+            "<div data-test-component='OptionEditComponent' :data-job-was-scheduled='jobWasScheduled'>OptionEdit: {{modelValue.name}}</div>",
         },
         PluginConfig: true,
       },
@@ -272,6 +272,45 @@ describe("OptionsEditor", () => {
       );
 
       expect(wrapper.find(".empty.note").exists()).toEqual(false);
+    },
+  );
+  it.each([true, false])(
+    "option edit prop jobWasScheduled value %p",
+    async (jobWasScheduled: boolean) => {
+      let propVals = {
+        optionsData: {
+          features: {
+            feature1: true,
+            feature2: false,
+          },
+          fileUploadPluginType: "fileUploadPluginType",
+          jobWasScheduled,
+          options: [
+            {
+              name: "option1",
+              type: "text",
+              inputType: "plain",
+            },
+          ],
+        },
+        edit: true,
+      };
+      const wrapper = await mountOptionsEditor(propVals);
+      wrapper.vm.doEdit(0);
+      await wrapper.vm.$nextTick();
+      let draggable = wrapper.get("[data-test=draggable-stub]");
+      let spans = draggable.findAll("div[data-test-component]");
+      expect(spans).toHaveLength(1);
+      expect(spans[0].text()).toContain("OptionEdit: option1");
+      expect(spans[0].attributes("data-job-was-scheduled")).toEqual(
+        jobWasScheduled.toString(),
+      );
+      propVals.optionsData.jobWasScheduled = !jobWasScheduled;
+      //set prop value
+      await wrapper.setProps(propVals);
+      expect(spans[0].attributes("data-job-was-scheduled")).toEqual(
+        (!jobWasScheduled).toString(),
+      );
     },
   );
   it("create new option shows edit form", async () => {
