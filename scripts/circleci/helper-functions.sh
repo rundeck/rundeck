@@ -89,7 +89,7 @@ wizcli_scan() {
     elif [[ "${RUNDECK_BRANCH}" == "main" ]]; then
         export RUNDECK_IMAGE_TAG="${DOCKER_REPO}:SNAPSHOT"
     else
-        export RUNDECK_IMAGE_TAG="${DOCKER_CI_REPO}:${RUNDECK_BRANCH_CLEAN}"
+        export RUNDECK_IMAGE_TAG="${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}"
     fi
 
     echo "==> Scan Image: ${RUNDECK_IMAGE_TAG}"
