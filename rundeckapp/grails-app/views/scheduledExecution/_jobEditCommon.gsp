@@ -142,7 +142,8 @@
                      features:[
                              fileUploadPlugin:feature.isEnabled(name:'fileUploadPlugin'),
                              optionValuesPlugin:feature.isEnabled(name:'optionValuesPlugin'),
-                     ]
+                     ],
+                     jobWasScheduled: scheduledExecution?.scheduled?:false,
              ]}"/>
 <g:embedJSON id="jobResourcesJSON"
              data="${ [

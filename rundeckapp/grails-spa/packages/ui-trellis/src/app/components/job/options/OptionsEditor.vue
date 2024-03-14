@@ -28,6 +28,7 @@
               :file-upload-plugin-type="fileUploadPluginType"
               :features="features"
               :option-values-plugins="providers"
+              :job-was-scheduled="optionsData.jobWasScheduled"
               @update:modelValue="updateOption(index, $event)"
               @cancel="doCancel"
             />
@@ -56,6 +57,7 @@
               :file-upload-plugin-type="fileUploadPluginType"
               :features="features"
               :option-values-plugins="providers"
+              :job-was-scheduled="optionsData.jobWasScheduled"
               @update:modelValue="saveNewOption"
               @cancel="doCancel"
             />

@@ -826,6 +826,7 @@ export default defineComponent({
     errors: { type: Object, default: () => ({}) },
     optionValuesPlugins: { type: Array, default: () => [] },
     uiFeatures: { type: Object, default: () => ({}) },
+    jobWasScheduled: { type: Boolean, default: false },
   },
   data() {
     return {
@@ -1037,10 +1038,14 @@ export default defineComponent({
       }
     },
     async validateOption() {
-      let res = await validateJobOption(getRundeckContext().projectName, {
-        ...this.option,
-        newoption: this.newOption,
-      });
+      let res = await validateJobOption(
+        getRundeckContext().projectName,
+        this.jobWasScheduled,
+        {
+          ...this.option,
+          newoption: this.newOption,
+        },
+      );
       if (res.messages) {
         this.validationErrors = res.messages;
       }
