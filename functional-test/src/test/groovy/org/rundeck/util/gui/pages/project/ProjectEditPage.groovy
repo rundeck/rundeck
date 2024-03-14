@@ -21,6 +21,7 @@ class ProjectEditPage extends BasePage {
     By editConfigurationFile = By.linkText("Edit Configuration File")
     By aceEditor = By.className("ace_text-input")
     By successMessageDiv = By.cssSelector(".alert.alert-info")
+    By motdIdSelect = By.id("extraConfig.menuService.motdDisplay")
 
     ProjectEditPage(SeleniumContext context) {
         super(context)
@@ -50,6 +51,15 @@ class ProjectEditPage extends BasePage {
 
     def clickNavLink(NavProjectSettings navProjectSettings){
         (el By.linkText(navProjectSettings.getTabLink())).click()
+    }
+
+    /**
+     * It clicks all of the checkboxes for the motd places
+     */
+    def selectAllMotdPlaces(){
+        (els motdIdSelect).each {
+            it.click()
+        }
     }
 
     /**

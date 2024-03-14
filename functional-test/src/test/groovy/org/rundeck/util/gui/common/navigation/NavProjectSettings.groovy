@@ -2,8 +2,8 @@ package org.rundeck.util.gui.common.navigation
 
 enum NavProjectSettings {
 
-    EXEC_MODE("tab_category_executionMode"),
-    USER_INTERFACE("tab_category_gui")
+    EXEC_MODE("Execution Mode"),
+    USER_INTERFACE("User Interface")
 
     String tabLink
 
