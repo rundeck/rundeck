@@ -201,7 +201,7 @@ export function expandNodeAttributes(attrs: any, str: string) {
     /\$\{node\.([a-zA-Z-.]+)\}/g,
     function (match, g1, offset, string) {
       if (attrs[g1]) {
-        return attrs[g1]() || "";
+        return attrs[g1] || "";
       } else {
         return string;
       }

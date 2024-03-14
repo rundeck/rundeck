@@ -28,19 +28,6 @@ rundeck-build: create-caches
 		-e SLACK_ACCESS_TOKEN=$(SLACK_ACCESS_TOKEN) \
 		-v circleci-local-gradle-cache:/home/circleci/.gradle:rw
 
-twistlock-scan:
-	circleci local execute "Twistlock Scan Preview" \
-		-e CIRCLE_LOCAL_BUILD=true \
-		-e SLACK_ACCESS_TOKEN=$(SLACK_ACCESS_TOKEN) \
-		-e DOCKER_USERNAME=$(DOCKER_USERNAME) \
-		-e DOCKER_PASSWORD=$(DOCKER_PASSWORD) \
-		-e DOCKER_REPO=$(DOCKER_REPO) \
-		-e DOCKER_CI_REPO=$(DOCKER_CI_REPO) \
-		-e TL_USER=$(TL_USER) \
-		-e TL_PASS=$(TL_PASS) \
-		-e TL_CONSOLE_URL=$(TL_CONSOLE_URL)
-
-
 ansible-test:
 	circleci local execute "Ansible Test" \
 		-e CIRCLE_LOCAL_BUILD=true \

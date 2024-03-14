@@ -290,7 +290,7 @@
             >
               <progress-bar
                 v-if="exec.status === 'scheduled'"
-                :value="100"
+                :modelValue="100"
                 striped
                 type="default"
                 label
@@ -302,7 +302,7 @@
               ></progress-bar>
               <progress-bar
                 v-else-if="exec.status === 'queued'"
-                :value="100"
+                :modelValue="100"
                 striped
                 type="default"
                 label
@@ -310,7 +310,7 @@
               ></progress-bar>
               <progress-bar
                 v-else-if="exec.job && exec.job.averageDuration"
-                :value="jobDurationPercentage(exec)"
+                :modelValue="jobDurationPercentage(exec)"
                 striped
                 active
                 type="info"
@@ -319,7 +319,7 @@
               ></progress-bar>
               <progress-bar
                 v-else-if="exec.dateStarted.date"
-                :value="100"
+                :modelValue="100"
                 striped
                 active
                 type="info"
@@ -327,7 +327,6 @@
                 :label-text="$t('running')"
               ></progress-bar>
             </td>
-
             <td class="user text-right" style="white-space: nowrap">
               <em>{{ $t("by") }}</em>
               {{ exec.user }}
@@ -797,10 +796,14 @@ export default defineComponent({
         exec.dateStarted.date
       ) {
         const diff = moment().diff(moment(exec.dateStarted.date));
-        return Math.floor(100 * (diff / exec.job.averageDuration));
+        return Math.min(
+          Math.floor((diff / exec.job.averageDuration) * 100),
+          100,
+        );
       }
       return 0;
     },
+
     runningStartedDisplay(date: string) {
       if (!date) {
         return "";

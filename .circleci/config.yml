@@ -294,8 +294,8 @@ jobs:
       - collect-gradle-tests
       - save-build-cache
 
-  # Run twistlock scan
-  twistlock-scan-image:
+  # WizCLI Image Scan
+  wizcli-scan:
     <<: *job-defaults
     executor:
       name: docker-builder
@@ -308,13 +308,13 @@ jobs:
       - setup_docker
       - checkout
       - run-build-step:
-          step-name: Install Twistlock
-          command: install_twistcli
+          step-name: Install WizCLI
+          command: install_wizcli
       - run-build-step:
           step-name: Scan Image
-          command: twistlock_scan || << parameters.continue >>
+          command: wizcli_scan || << parameters.continue >>
       - store_artifacts:
-          path: ~/workspace/twistlock_scan_result.json
+          path: ~/workspace/wizcli_scan_result.json
       - store_test_results:
           path: test-results
 
@@ -462,8 +462,7 @@ jobs:
         description: Command that will execute the docker tests
         type: string
     steps:
-      - setup_docker:
-          docker_layer_caching: true
+      - setup_docker
       - checkout
       - install-testdeck-dependencies
       - attach_workspace:
@@ -625,19 +624,19 @@ workflows:
           name: Test Packaging
           <<: *require-build
           <<: *slack-defaults
-      - twistlock-scan-image:
-          name: Twistlock Scan Preview
+      - wizcli-scan:
+          name: WizCLI Scan Preview
           <<: *require-build
           continue: true
           context:
-            - tl_scan_context
+            - WizCLI
           filters:
             branches: { ignore: main }
-      - twistlock-scan-image:
-          name: Twistlock Scan
+      - wizcli-scan:
+          name: WizCLI Scan
           continue: false
           context:
-            - tl_scan_context
+            - WizCLI
             - slack-secrets
           filters:
             branches: { only: main }
