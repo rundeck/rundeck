@@ -20,6 +20,10 @@ import { defineComponent } from "vue";
 
 import { getRundeckContext } from "../../../../library";
 
+import { EventBus } from "../../../../library/utilities/vueEventBus";
+
+const eventBus = EventBus;
+
 export default defineComponent({
   name: "OptionsEditorSection",
   components: { OptionsEditor, JsonEmbed },
@@ -29,6 +33,7 @@ export default defineComponent({
       updatedData: {
         options: [],
       },
+      subs: {},
     };
   },
   methods: {
@@ -51,7 +56,19 @@ export default defineComponent({
     if (getRundeckContext() && getRundeckContext().data) {
       this.optionsData = getRundeckContext().data.optionsData;
       this.updatedData = this.optionsData;
+      this.subs["job-edit-schedules-changed"] = eventBus.on(
+        "job-edit-schedules-changed",
+        (data) => {
+          this.optionsData.jobWasScheduled = data.scheduled;
+        },
+      );
     }
+  },
+  async beforeUnmount() {
+    eventBus.off(
+      "job-edit-schedules-changed",
+      this.subs["job-edit-schedules-changed"],
+    );
   },
 });
 </script>
