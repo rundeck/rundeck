@@ -19,8 +19,8 @@ convert_wiz_junit() {
 
     cat <<END
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites failures="$((lowCount + mediumCount))" tests="$totalCount" timestamp="$time">
-  <testsuite name="Wiz Scan Vulnerabilities" tests="$totalCount" failures="$((lowCount + mediumCount))">
+<testsuites failures="$((highCount + criticalCount))" tests="$totalCount" timestamp="$time">
+  <testsuite name="Wiz Scan Vulnerabilities" tests="$totalCount" failures="$((highCount + criticalCount))">
 END
 
     # Concatenate vulnerabilities from osPackages and libraries, then filter for high and critical
