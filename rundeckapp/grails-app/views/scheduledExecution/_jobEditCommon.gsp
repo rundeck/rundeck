@@ -210,6 +210,15 @@
     var workflowEditor = new WorkflowEditor();
     var confirm = new PageConfirm(message('page.unsaved.changes'));
     _onJobEdit(confirm.setNeedsConfirm);
+    //enable page confirm handling via Vue event bus
+    _rundeck.eventBus.on('jobedit.page.confirm', function (needsConfirm) {
+        console.log('event:jobedit.page.confirm', needsConfirm);
+        if(needsConfirm) {
+            confirm.setNeedsConfirm()
+        }else{
+            confirm.clearNeedConfirm()
+        }
+    });
     jQuery(function () {
         setupTabRouter('#job_edit_tabs', 'tab_');
         jQuery('input').not(".allowenter").on('keydown', noenter);

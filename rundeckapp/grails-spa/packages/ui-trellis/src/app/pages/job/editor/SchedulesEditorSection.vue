@@ -38,7 +38,7 @@ export default {
         this.eventBus.emit("job-edit-schedules-changed", this.updatedData);
         const { timeZones, ...other } = this.updatedData;
         this.outputData = other;
-        window.jobWasEdited();
+        this.eventBus.emit("jobedit.page.confirm", true);
       },
       deep: true,
     },

@@ -49,7 +49,7 @@ export default defineComponent({
       handler() {
         if (this.watching) {
           if (!_.isEqual(this.resourcesData, this.updatedData)) {
-            window.jobWasEdited();
+            this.eventBus.emit("jobedit.page.confirm", true);
           }
         }
       },

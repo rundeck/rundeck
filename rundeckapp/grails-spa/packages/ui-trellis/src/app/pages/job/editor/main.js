@@ -9,7 +9,6 @@ import NotificationsEditorSection from "./NotificationsEditorSection.vue";
 import ResourcesEditorSection from "./ResourcesEditorSection.vue";
 import SchedulesEditorSection from "./SchedulesEditorSection.vue";
 import OtherEditorSection from "./OtherEditorSection.vue";
-import { EventBus } from "../../../../library/utilities/vueEventBus";
 import { initI18n, updateLocaleMessages } from "../../../utilities/i18n";
 import { observer } from "../../../utilities/uiSocketObserver";
 import OptionsEditorSection from "./OptionsEditorSection.vue";
@@ -24,7 +23,7 @@ const i18n = initI18n();
 const els = document.body.getElementsByClassName(
   "job-editor-notifications-vue",
 );
-
+const EventBus = getRundeckContext().eventBus;
 for (let i = 0; i < els.length; i++) {
   const e = els[i];
   const app = createApp({
