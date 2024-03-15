@@ -21,6 +21,7 @@ class JobEditPage extends BasePage {
     By secureOptionSpan = By.xpath("//span[@class='${secureOptionSelectors}']")
     By defaultValueInput = By.id(secureOptionDefaultValueId)
     By secureOptionDefaultValueHelpDiv = By.xpath("//span[@class='${secureOptionDefaultValueHelpSelector}']")
+    By editButton = By.name("_action_Update")
 
     JobEditPage(final SeleniumContext context) {
         super(context)
@@ -52,4 +53,7 @@ class JobEditPage extends BasePage {
         el secureOptionDefaultValueHelpDiv
     }
 
+    WebElement getEditButton(){
+        return el(editButton)
+    }
 }
