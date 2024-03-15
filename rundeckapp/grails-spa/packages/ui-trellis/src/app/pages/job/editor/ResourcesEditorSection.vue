@@ -14,7 +14,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { defineComponent } from "vue";
 import * as _ from "lodash";
 
@@ -39,11 +39,6 @@ export default defineComponent({
       watching: false,
     };
   },
-  computed: {
-    rootStore() {
-      return getRundeckContext().rootStore;
-    },
-  },
   watch: {
     updatedData: {
       handler() {
@@ -57,8 +52,8 @@ export default defineComponent({
     },
   },
   async mounted() {
-    if (window._rundeck && window._rundeck.data) {
-      this.resourcesData = window._rundeck.data.resourcesData;
+    if (getRundeckContext().data) {
+      this.resourcesData = getRundeckContext().data.resourcesData;
       this.updatedData = Object.assign({}, this.resourcesData);
       this.watching = true;
     }

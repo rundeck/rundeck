@@ -3,7 +3,7 @@
     <input v-model="json" type="hidden" :name="fieldName" />
   </div>
 </template>
-<script>
+<script lang="ts">
 import { defineComponent } from "vue";
 
 export default defineComponent({

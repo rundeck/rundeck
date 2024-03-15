@@ -10,7 +10,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import ScheduleEditor from "../../../components/job/schedule/ScheduleEditor.vue";
 import JsonEmbed from "./JsonEmbed.vue";
 

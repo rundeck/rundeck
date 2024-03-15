@@ -9,7 +9,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { defineComponent } from "vue";
 import * as _ from "lodash";
 import OtherEditor from "../../../components/job/other/OtherEditor.vue";
