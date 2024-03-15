@@ -6,7 +6,7 @@
       :event-bus="eventBus"
       :use-crontab-string="useCrontabString"
     />
-    <json-embed :output-data="updatedData" field-name="schedulesJsonData" />
+    <json-embed :output-data="outputData" field-name="schedulesJsonData" />
   </div>
 </template>
 
@@ -29,10 +29,13 @@ export default {
       rdBase: null,
       schedulesData: {},
       updatedData: null,
+      outputData: {},
     };
   },
   watch: {
     updatedData() {
+      const { timeZones, ...other } = this.updatedData;
+      this.outputData = other;
       window.jobWasEdited();
     },
   },
@@ -44,6 +47,8 @@ export default {
       if (rundeck && rundeck.data) {
         this.schedulesData = rundeck.data.schedulesData;
         this.updatedData = Object.assign({}, this.schedulesData);
+        const { timeZones, ...other } = this.updatedData;
+        this.outputData = other;
       }
     }
   },
