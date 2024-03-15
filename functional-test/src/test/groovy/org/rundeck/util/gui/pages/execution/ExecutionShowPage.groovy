@@ -26,6 +26,20 @@ class ExecutionShowPage extends BasePage {
     By logOutputBy = By.className("execution-log__content-text")
     By nodeFlowStateBy = By.id("nodeflowstate")
     By execStatusIcon = By.cssSelector(".exec-status.icon")
+    By autoCaretBy = By.cssSelector(".auto-caret.text-muted")
+    By execLogNodeBy = By.className("execution-log__node-chunk")
+    By execLogGutterEntryBy = By.className("execution-log_gutter-entry")
+    By execLogGutterBy = By.className("execution-log__gutter")
+    By execLogLineBy = By.className("execution-log__line")
+    By execLogSettingsBy = By.className("execution-log__settings")
+    By execRedColorTextBy = By.className("ansi-fg-red")
+    By settingsOptionsBy = By.cssSelector(".rd-drawer.rd-drawer--left.rd-drawer--active")
+    By maskSettingsOptionsBy = By.cssSelector(".ant-drawer.ant-drawer-left.ant-drawer-open.no-mask")
+    By popUpSettingsBy = By.cssSelector(".execution-log.execution-log--light")
+    By logNodeSettingsBy = By.className("execution-log__node-badge")
+    By logContentTextBy = By.className("execution-log__content-text")
+    By logContentTextOverflowBy = By.cssSelector(".execution-log__content-text.execution-log__content-text--overflow")
+    By gutterLineNumberBy = By.cssSelector(".gutter.line-number")
 
     ExecutionShowPage(final SeleniumContext context) {
         super(context)
@@ -85,6 +99,10 @@ class ExecutionShowPage extends BasePage {
         return execStatusIconElem.getAttribute('data-execstate')
     }
 
+    List<WebElement> getAutoCaret() {
+        els autoCaretBy
+    }
+
     NodesView getNodesView(){
         if(getCurrentView() != NodesView.VIEW_NAME)
             switchToView(NodesView.VIEW_NAME)
@@ -119,4 +137,99 @@ class ExecutionShowPage extends BasePage {
             expandedNode.findElements(By.cssSelector(".wfnodestep")).collect { it.findElement(By.cssSelector('.execstatedisplay')).getAttribute('data-execstate') }
         }
     }
+}
+    WebElement getExecLogNode() {
+        el execLogNodeBy
+    }
+
+    String getExecLogGutterEntryAttribute() {
+        el execLogGutterEntryBy getAttribute("pseudo-content")
+    }
+
+    String getExecLogGutterEntryAttribute(int index) {
+        els execLogGutterEntryBy get index getAttribute("pseudo-content")
+    }
+
+    List<WebElement> getExecLogEntryGutters() {
+        els execLogGutterEntryBy
+    }
+
+    WebElement getExecLogEntryGutter() {
+        el execLogGutterEntryBy
+    }
+
+    List<WebElement> getExecLogGutters() {
+        els execLogGutterBy
+    }
+
+    WebElement getExecLogGutter() {
+        el execLogGutterBy
+    }
+
+    List<WebElement> getExecLogLines() {
+        els execLogLineBy
+    }
+
+    WebElement getExecLogSettings() {
+        el execLogSettingsBy isDisplayed()
+        el execLogSettingsBy findElement(By.tagName("button"))
+    }
+
+    WebElement getExecRedColorText() {
+        el execRedColorTextBy
+    }
+
+    List<WebElement> getSettingsInputOptions() {
+        waitForElementVisible settingsOptionsBy
+        el settingsOptionsBy findElements(By.tagName("input"))
+    }
+
+    WebElement getSettingsOption() {
+        el settingsOptionsBy
+    }
+
+    WebElement getClosePopupSettingsButton() {
+        el popUpSettingsBy findElement By.cssSelector(".btn.btn-default.btn-link")
+    }
+
+    WebElement getLogNodeSetting() {
+        el logNodeSettingsBy
+    }
+
+    List<WebElement> getLogNodeSettings() {
+        els logNodeSettingsBy
+    }
+
+    List<WebElement> getTextContains(String text) {
+        els By.xpath("//*[contains(normalize-space(text()), '$text')]")
+    }
+
+    WebElement getGutterLineNumber() {
+        el gutterLineNumberBy
+    }
+
+    List<WebElement> getGutterLineNumbers() {
+        els gutterLineNumberBy
+    }
+
+    WebElement getLogContentText() {
+        el logContentTextBy
+    }
+
+    WebElement getStat() {
+        el By.className("stats")
+    }
+
+    List<WebElement> getStats() {
+        els By.className("stats")
+    }
+
+    List<WebElement> getLogContentTextOverflows() {
+        els logContentTextOverflowBy
+    }
+
+    def validateStatus(String status) {
+        waitForElementAttributeToChange executionStateDisplayLabel, 'data-execstate', status
+    }
+
 }

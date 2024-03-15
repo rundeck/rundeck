@@ -36,6 +36,11 @@ class TopMenuPage extends BasePage {
         byAndWaitClickable appUserButtonBy click()
     }
 
+    void navigateToUserProfile() {
+        openAppUserMenu()
+        byAndWaitClickable(By.linkText("Profile")) click()
+    }
+
     void logOut() {
         openAppUserMenu()
         byAndWait logOutMenuBy click()

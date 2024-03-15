@@ -28,6 +28,8 @@ class JobListPage extends BasePage {
     By scheduleDisabledIcon = By.cssSelector(".glyphicon.glyphicon-ban-circle")
     By jobRunLinkBy = By.cssSelector(".btn.btn-success.btn-simple.btn-hover.btn-xs.act_execute_job")
     By alertMessageBy = By.cssSelector(".alert.alert-info")
+    By jobListBy = By.cssSelector("jobslist")
+    By alertInfoBy = By.cssSelector(".alert.alert-info")
 
     JobListPage(final SeleniumContext context) {
         super(context)
@@ -108,8 +110,15 @@ class JobListPage extends BasePage {
         (el By.linkText(jobName))
     }
 
-    def getDeleteAlertMessage(){
+    def getDeleteAlertMessage() {
         (el alertMessageBy)
+    }
+    List<WebElement> getJobList(){
+        els jobListBy
+    }
+
+    WebElement getAlertInfo(){
+        el alertInfoBy
     }
 
 }

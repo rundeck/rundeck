@@ -230,9 +230,17 @@ class JobShowPage extends BasePage{
      * @param minimum number of log entries that should contain logLineText
      * @param timeout to be waiting for results
      */
-    void waitForLogOutput (String logLineText, Integer minimum = 0, Integer timeout = 10){
+    void waitForLogOutput (String logLineText, Integer minimum = 0, Integer timeout = 10) {
         By logLineSelector = By.xpath("//span[contains(text(),'${logLineText}')]")
-        new WebDriverWait(driver, Duration.ofSeconds(timeout)).until(ExpectedConditions.numberOfElementsToBeMoreThan(logLineSelector,minimum))
+        new WebDriverWait(driver, Duration.ofSeconds(timeout)).until(ExpectedConditions.numberOfElementsToBeMoreThan(logLineSelector, minimum))
+    }
+    WebElement getDeleteJobBtn(){
+        waitForElementVisible jobDeleteModalBy
+        el jobDeleteModalBy findElement(By.cssSelector(".btn.btn-danger.btn-sm"))
+    }
+
+    List<WebElement> getExtraOptFirsts(String optionName){
+        els By.name("extra.option.$optionName")
     }
 
     void goToJob(String jobUuidText){
