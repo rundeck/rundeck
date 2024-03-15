@@ -86,6 +86,8 @@ class JobCreatePage extends BasePage {
     By defaultTabHtml   = By.id("tabHTML")
     By notificationListBy = By.cssSelector(".flex-item.flex-grow-1")
     By nofiticationChildsBy = By.className("text-success")
+    By scriptTextAreaBy = By.xpath("//*[contains(@class, 'form-group ') and .//*[contains(text(), 'script to execute')]]")
+    By wfItemEditFormBy = By.className("wfitemEditForm")
 
     String loadPath = "/job/create"
 
@@ -150,6 +152,41 @@ class JobCreatePage extends BasePage {
             updateJobButton.click()
 
         return new JobShowPage(context)
+    }
+
+    void addScriptStep(String jobName, List<String> params, Integer waitTime = null) {
+        jobNameInput.sendKeys jobName
+        tab JobTab.WORKFLOW click()
+        executeScript "window.location.hash = '#addnodestep'"
+        stepLink 'script-inline', StepType.NODE click()
+        waitForElementVisible scriptTextAreaBy
+        params.each {scriptTextAreaInput.sendKeys(it)}
+        wfItemEditForm.click()
+        getWfItemIndex(0).isDisplayed()
+
+        waitTime?.with {
+            el(By.id("wfnewbutton")).findElement(By.cssSelector(".btn.btn-default.btn-sm.ready")).click()
+            addSimpleCommandStep("sleep $it", 1)
+            el(By.id("wfnewbutton")).findElement(By.cssSelector(".btn.btn-default.btn-sm.ready")).click()
+            addSimpleCommandStep("echo \"after wait\"", 2)
+
+            getWfItemIndex(1).isDisplayed()
+            getWfItemIndex(2).isDisplayed()
+        }
+
+        createJobButton.click()
+    }
+
+    WebElement getScriptTextAreaInput() {
+        el scriptTextAreaBy findElement By.tagName("textarea")
+    }
+
+    WebElement getWfItemEditForm() {
+        el wfItemEditFormBy findElement By.cssSelector(".btn.btn-cta.btn-sm")
+    }
+
+    WebElement getWfItemIndex(int number) {
+        el By.id("wfitem_${number}")
     }
 
     void validatePage() {
@@ -248,8 +285,6 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement stepLink(String dataNodeStepType, StepType stepType) {
-        if(stepType == StepType.WORKFLOW)
-            workFlowStepLink.click()
         el By.xpath("//*[@${stepType.getStepType()}='$dataNodeStepType']")
     }
 
@@ -348,7 +383,7 @@ class JobCreatePage extends BasePage {
     WebElement getNodesSelectedByDefaultFalseCheck() {
         el nodesSelectedByDefaultFalseBy
     }
-
+    
     WebElement getOrchestratorDropdownButton() {
         el orchestratorDropdownBy
     }
@@ -445,22 +480,6 @@ class JobCreatePage extends BasePage {
         el addSimpleCommandStepBy
     }
 
-    WebElement getUpdateBtn() {
-        return el(updateBtn)
-    }
-
-    WebElement getDefaultTabNodes() {
-        (el defaultTabNodes)
-    }
-
-    WebElement getDefaultTabOutput() {
-        (el defaultTabOutput)
-    }
-
-    WebElement getDefaultTabHtml() {
-        (el defaultTabHtml)
-    }
-
     WebElement getAutocompleteSuggestions() {
         def autoAux = els autocompleteSuggestionsBy
         WebElement autoDivAux
@@ -488,20 +507,6 @@ class JobCreatePage extends BasePage {
         new WebDriverWait(driver,  Duration.ofSeconds(5)).until(
                 ExpectedConditions.numberOfElementsToBe(numberOfStepsBy, numberSteps)
         )
-    }
-
-    /**
-     * It gets the list of notification elements added to the job
-     */
-    def getNotificationList(){
-        (els notificationListBy)
-    }
-
-    /**
-     * It gets the list of notification childs so it can validate each config value
-     */
-    def getNotificationChilds(WebElement notificationParent){
-        notificationParent.findElements(nofiticationChildsBy)
     }
 
 }

@@ -6,8 +6,10 @@ import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.profile.UserProfilePage
+import spock.lang.Stepwise
 
 @SeleniumCoreTest
+@Stepwise
 class BasicLoginSpec extends SeleniumBase {
 
     def "successful login"() {
@@ -83,7 +85,7 @@ class BasicLoginSpec extends SeleniumBase {
             def topMenuPage = page TopMenuPage
             def userProfilePage = page UserProfilePage
         then:
-            loginPage.login(user, user)
+            loginPage.login(user, "user123")
             topMenuPage.navigateToUserProfile()
             userProfilePage.validatePage()
             userProfilePage.editLink.click()

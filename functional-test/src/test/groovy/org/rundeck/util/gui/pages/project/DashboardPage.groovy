@@ -2,6 +2,7 @@ package org.rundeck.util.gui.pages.project
 
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
+import org.openqa.selenium.WebElement
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.container.SeleniumContext
@@ -16,6 +17,7 @@ class DashboardPage extends BasePage{
     By projectDescriptionBy = By.className("text-project-description")
     By projectLabelBy = By.xpath("//div[@data-ko-bind='projectHome']")
     By readmeMarkDownBy = By.className("markdown-body")
+    By projectSummaryBy = By.id("projectHome-summary")
 
     DashboardPage(SeleniumContext context) {
         super(context)
@@ -35,5 +37,9 @@ class DashboardPage extends BasePage{
 
     def getCheckReadme(){
         (el readmeMarkDownBy).getText()
+    }
+
+    WebElement getProjectSummary() {
+        el projectSummaryBy
     }
 }
