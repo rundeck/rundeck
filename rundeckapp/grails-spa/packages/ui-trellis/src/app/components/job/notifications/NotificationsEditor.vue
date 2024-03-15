@@ -297,9 +297,8 @@
     </modal>
   </div>
 </template>
-<script>
+<script lang="ts">
 import { defineComponent } from "vue";
-import { getRundeckContext } from "../../../../library";
 
 import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
 import PluginConfig from "../../../../library/components/plugins/pluginConfig.vue";
@@ -307,7 +306,8 @@ import pluginService from "../../../../library/modules/pluginService";
 import ExtendedDescription from "../../../../library/components/utils/ExtendedDescription.vue";
 import UndoRedo from "../../util/UndoRedo.vue";
 import { VMarkdownView } from "vue3-markdown";
-
+import mitt from "mitt";
+const localEB = mitt();
 export default defineComponent({
   name: "NotificationsEditor",
   components: {
@@ -348,7 +348,7 @@ export default defineComponent({
       autocompleteCallback: {
         type: Function,
       },
-      eventBus: getRundeckContext().eventBus,
+      eventBus: localEB,
     };
   },
   computed: {
