@@ -1,9 +1,9 @@
 package org.rundeck.tests.functional.api.project
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.rundeck.tests.functional.api.ResponseModels.Execution
-import org.rundeck.tests.functional.api.ResponseModels.Job
-import org.rundeck.tests.functional.api.ResponseModels.JobExecutionsResponse
+import org.rundeck.util.api.responses.execution.Execution
+import org.rundeck.util.api.responses.jobs.Job
+import org.rundeck.util.api.responses.jobs.JobExecutionsResponse
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.container.BaseContainer
 import org.rundeck.util.container.RdClient

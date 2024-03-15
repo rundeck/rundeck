@@ -1,6 +1,6 @@
 package org.rundeck.tests.functional.api.basic
 
-import org.rundeck.tests.functional.api.ResponseModels.ErrorResponse
+import org.rundeck.util.api.responses.common.ErrorResponse
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.container.BaseContainer
 

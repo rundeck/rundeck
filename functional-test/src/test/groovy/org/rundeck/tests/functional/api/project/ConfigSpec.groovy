@@ -1,12 +1,12 @@
 package org.rundeck.tests.functional.api.project
 
-import org.rundeck.tests.functional.api.ResponseModels.ConfigProperty
-import org.rundeck.tests.functional.api.ResponseModels.Node
-import org.rundeck.tests.functional.api.ResponseModels.ProjectCreateResponse
-import org.rundeck.tests.functional.api.ResponseModels.ProjectSource
-import org.rundeck.tests.functional.api.ResponseModels.SystemInfo
+import org.rundeck.util.api.responses.common.ConfigProperty
+import org.rundeck.util.api.responses.nodes.Node
+import org.rundeck.util.api.responses.project.ProjectCreateResponse
+import org.rundeck.util.api.responses.project.ProjectSource
+import org.rundeck.util.api.responses.system.SystemInfo
 import org.rundeck.util.annotations.APITest
-import org.rundeck.util.api.WaitingTime
+import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.container.BaseContainer
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper
 import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml

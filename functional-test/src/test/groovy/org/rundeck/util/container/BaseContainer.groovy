@@ -8,6 +8,7 @@ import okhttp3.ResponseBody
 import spock.lang.Specification
 
 import java.text.SimpleDateFormat
+import java.time.Duration
 import java.util.function.Consumer
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
@@ -134,7 +135,8 @@ abstract class BaseContainer extends Specification implements ClientProvider {
             [
                 importConfig      : true,
                 importACL         : true,
-                importNodesSources: true
+                importNodesSources: true,
+                importScm: true
             ]
         )
     }
@@ -301,6 +303,15 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         }
     }
 
+    /**
+     * Deletes the specified project.
+     * This method sends a DELETE request to remove the project with the given name.
+     * If the deletion operation fails, a RuntimeException is thrown.
+     *
+     * @param projectName the name of the project to be deleted. Must not be null.
+     * @throws RuntimeException if the project deletion fails.
+     *         The exception contains a detailed message obtained from the server's response.
+     */
     void deleteProject(String projectName) {
         def response = client.doDelete("/project/${projectName}")
         if (!response.successful) {
@@ -308,7 +319,44 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         }
     }
 
+    /**
+     * Updates the configuration of a project with the provided settings.
+     *
+     * This method sends a PUT request to update the configuration of the specified project
+     * with the provided settings. The configuration data is replaced entirely with the submitted values.
+     *
+     * @param projectName The name of the project whose configuration is to be updated. Must not be null.
+     * @param body A map containing the configuration settings to be applied to the project.
+     *             The content of this map should represent the entire configuration data to replace.
+     *             The structure of the map should match the expected format for the project configuration.
+     *             Must not be null.
+     * @throws RuntimeException if updating the project configuration fails.
+     *         The exception contains a detailed message obtained from the server's response.
+     */
+    void updateConfigurationProject(String projectName, Map body) {
+        def responseDisable = client.doPutWithJsonBody("/project/${projectName}/config", body)
+        if (!responseDisable.successful) {
+            throw new RuntimeException("Failed to disable scheduled execution: ${responseDisable.body().string()}")
+        }
+    }
+
     def setupSpec() {
         startEnvironment()
+    }
+
+    /**
+     * Pauses the execution for a specified number of seconds.
+     * This method utilizes the sleep function to pause the current thread for the given duration.
+     * If the thread is interrupted while sleeping, it catches the InterruptedException and logs the error.
+     *
+     * @param seconds the number of seconds to pause the execution. This value should be positive.
+     * @throws IllegalArgumentException if the `seconds` parameter is negative, as `Duration.ofSeconds` cannot process negative values.
+     */
+    void hold(int seconds) {
+        try {
+            sleep Duration.ofSeconds(seconds).toMillis()
+        } catch (InterruptedException e) {
+            log.error("Interrupted", e)
+        }
     }
 }

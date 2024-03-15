@@ -5,12 +5,6 @@ docker_login() {
     echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
 }
 
-
-install_twistcli() {
-    curl -sSL -u "${TWISTLOCK_USER}:${TWISTLOCK_PASSWORD}" "${TWISTLOCK_CONSOLE_URL}/api/v1/util/twistcli" --output ./twistcli
-    chmod +x twistcli
-}
-
 install_package_cloud() {
     sudo gem install package_cloud
 
@@ -51,6 +45,11 @@ copy_rundeck_war() {
     cp -pv "${warFile}" "${destFile}"
 }
 
+install_wizcli(){
+  curl -Lo wizcli https://wizcli.app.wiz.io/latest/wizcli-linux-amd64
+  chmod +x wizcli
+  sudo cp ./wizcli /usr/local/bin
+}
 
 # Pull the image built on this build and adds a custom tag if provided as argument.
 rundeck_pull_image() {
@@ -78,7 +77,7 @@ fetch_ci_shared_resources() {
     chmod -R 700 "${HOME}/.gnupg"
 }
 
-twistlock_scan() {
+wizcli_scan() {
 
     docker_login
 
@@ -86,40 +85,42 @@ twistlock_scan() {
     echo "==> Git Tag: ${RUNDECK_TAG}"
 
     if [[ -n "${RUNDECK_TAG}" ]]; then
-        #If the build is triggered by a git Tag
         export RUNDECK_IMAGE_TAG="${DOCKER_REPO}:${RUNDECK_TAG}"
     elif [[ "${RUNDECK_BRANCH}" == "main" ]]; then
         export RUNDECK_IMAGE_TAG="${DOCKER_REPO}:SNAPSHOT"
     else
-        export RUNDECK_IMAGE_TAG="${DOCKER_CI_REPO}:${RUNDECK_BRANCH_CLEAN}"
+        export RUNDECK_IMAGE_TAG="${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}"
     fi
 
     echo "==> Scan Image: ${RUNDECK_IMAGE_TAG}"
 
     docker pull "${RUNDECK_IMAGE_TAG}"
 
-    # We run twistcli as root so it can start containers within its circleci container without issues.
-    sudo ./twistcli images scan --details \
-        -address "${TWISTLOCK_CONSOLE_URL}" \
-        -u "${TWISTLOCK_USER}" -p "${TWISTLOCK_PASSWORD}" \
-        --output-file twistlock_scan_result.json "${RUNDECK_IMAGE_TAG}"
 
-    # Fix permissions of created file.
-    sudo chown "${CURRENT_USER}" twistlock_scan_result.json
+    #login to wizcli
+    wizcli auth --id="${WIZCLI_ID}" --secret="${WIZCLI_SECRET}"
+    wizcli docker scan --image "${RUNDECK_IMAGE_TAG}" -f json > wizcli_scan_result.json
 
-    #Translate report to junit format.
+    sudo chown "${CURRENT_USER}" wizcli_scan_result.json
+
     mkdir -p test-results/junit
-    bash "${RUNDECK_CORE_DIR}/scripts/convert_tl_junit.sh" twistlock_scan_result.json >test-results/junit/twistlock-junit.xml
+    bash "${RUNDECK_CORE_DIR}/scripts/convert_wiz_junit.sh" wizcli_scan_result.json > test-results/junit/wizcli-junit.xml
 
-    #report severity filter to extract incidents count, default: high and critical
-    local reportSeverityFilter='.results[0].vulnerabilityDistribution.high + .results[0].vulnerabilityDistribution.critical'
-    local incidents=$(cat twistlock_scan_result.json | jq "$reportSeverityFilter")
+    # Aggregate high and critical vulnerabilities from osPackages and libraries
+    local high_vulns=$(jq '[.result.osPackages[].vulnerabilities[]?, .result.libraries[].vulnerabilities[]? | select(.severity == "HIGH") | .name] | length' wizcli_scan_result.json)
+    local crit_vulns=$(jq '[.result.osPackages[].vulnerabilities[]?, .result.libraries[].vulnerabilities[]? | select(.severity == "CRITICAL") | .name] | length' wizcli_scan_result.json)
 
-    if [[ $incidents -gt 0 ]]; then
-        echo "==> Security Alert: found vulnerabilities, $incidents of them must be mitigated before release. Please refer to the above report for detail."
+    echo "High Vulnerabilities: $high_vulns"
+    echo "Critical Vulnerabilities: $crit_vulns"
+
+    # Check if there are any high or critical vulnerabilities and return a non-zero exit code if found
+    if [[ $high_vulns -gt 0 || $crit_vulns -gt 0 ]]; then
+        echo "==> Security Alert: Found high or critical vulnerabilities."
+        return 1
+    else
+        echo "==> No high or critical vulnerabilities found."
+        return 0
     fi
-
-    return $incidents
 }
 
 openapi_tests() {

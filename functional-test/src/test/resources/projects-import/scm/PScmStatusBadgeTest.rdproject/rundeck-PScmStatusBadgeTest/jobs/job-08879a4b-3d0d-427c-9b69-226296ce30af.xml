@@ -1,0 +1,23 @@
+<joblist>
+  <job>
+    <defaultTab>nodes</defaultTab>
+    <description></description>
+    <executionEnabled>true</executionEnabled>
+    <id>08879a4b-3d0d-427c-9b69-226296ce30af</id>
+    <loglevel>INFO</loglevel>
+    <name>job-to-be-exported-then-imported</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <node-step-plugin type='exec-command'>
+          <configuration>
+            <entry key='adhocRemoteString' value='ls' />
+          </configuration>
+        </node-step-plugin>
+      </command>
+    </sequence>
+    <uuid>08879a4b-3d0d-427c-9b69-226296ce30af</uuid>
+  </job>
+</joblist>

@@ -61,7 +61,10 @@ RUN mkdir -p $HOME/scripts
 COPY scripts $HOME/scripts
 RUN sudo chmod -R a+x $HOME/scripts/*
 
-RUN sudo mkdir -p /tests
+RUN sudo mkdir -p /tests && \
+    sudo chown rundeck:root /tests && \
+    sudo chmod 775 /tests
+
 COPY tests /tests
 RUN sudo chmod -R a+x /tests/*
 
@@ -70,8 +73,12 @@ RUN sudo dos2unix $HOME/api_test/api/*.sh
 RUN sudo dos2unix $HOME/api_test/src/*.sh
 RUN sudo dos2unix /tests/*.sh
 
+RUN mkdir -p $HOME/resources && \
+    sudo chown rundeck:root $HOME/resources && \
+    chmod 775 $HOME/resources
+
 VOLUME /var/lib/docker
-VOLUME /test
+VOLUME /tests
 VOLUME $HOME/resources
 
 EXPOSE 22 4440 4443 4444
