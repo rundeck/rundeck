@@ -17,6 +17,10 @@ import java.time.Duration
 @CompileStatic
 class JobCreatePage extends BasePage {
 
+    By nodeFilterInputBy = By.id("schedJobNodeFilter")
+    By selectNode = By.cssSelector(".glyphicon-circle-arrow-right")
+    By lastNodeInList = By.cssSelector(".col-xs-6:nth-child(3) span:nth-child(2)")
+    By refreshNodesBy = By.cssSelector(".refresh_nodes")
     By numberOfStepsBy = By.cssSelector(".autohilite.autoedit.wfitem.exectype")
     By notificationModalBy = By.cssSelector('#job-notifications-edit-modal')
     By notificationDropDownBy = By.cssSelector('#notification-edit-type-dropdown > button')
@@ -164,6 +168,18 @@ class JobCreatePage extends BasePage {
         el tabBy
     }
 
+    WebElement getLastNodeInListSpan(){
+        el lastNodeInList
+    }
+
+    WebElement getSelectNodeArrowElement(){
+        el selectNode
+    }
+
+    WebElement getNodeFilterInput(){
+        el nodeFilterInputBy
+    }
+
     WebElement addNotificationButtonByType(NotificationEvent notificationType) {
         el notificationType.notificationEvent
     }
@@ -213,6 +229,10 @@ class JobCreatePage extends BasePage {
         ((JavascriptExecutor) driver).executeScript(js, element)
         waitForElementVisible element
         element
+    }
+
+    WebElement getRefreshNodesButton(){
+        el refreshNodesBy
     }
 
     WebElement getScheduleRunYesField() {

@@ -80,4 +80,29 @@ class JobEditSpec extends SeleniumBase{
         cleanup:
             deleteProject(projectName)
     }
+
+    def "Filter nodes while editing a job"(){
+        given:
+        def projectName = "filter-nodes-job-edit-test"
+        setupProjectArchiveDirectoryResource(projectName, "/projects-import/resourcesTest")
+        LoginPage loginPage = page LoginPage
+        HomePage homePage = page HomePage
+        JobCreatePage jobCreatePage = page JobCreatePage
+
+        when:
+        loginPage.go()
+        loginPage.login(TEST_USER, TEST_PASS)
+        homePage.validatePage()
+        go JobCreatePage, projectName
+        jobCreatePage.tab JobTab.NODES click()
+        jobCreatePage.nodeDispatchTrueCheck.click()
+        jobCreatePage.refreshNodesButton.click()
+        jobCreatePage.lastNodeInListSpan.click()
+        jobCreatePage.selectNodeArrowElement.click()
+
+        then:
+        jobCreatePage.nodeFilterInput.getAttribute("value").split(":")[1].trim() != null
+        jobCreatePage.nodeFilterInput.getAttribute("value").split(":")[1].trim().contains("test-node2")
+
+    }
 }
