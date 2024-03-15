@@ -36,7 +36,7 @@ export default defineComponent({
       handler() {
         if (this.watching) {
           if (!_.isEqual(this.otherData, this.updatedData)) {
-            window.jobWasEdited();
+            this.eventBus.emit("jobedit.page.confirm", true);
           }
         }
       },

@@ -45,8 +45,7 @@ export default {
     changed(data) {
       if (!_.isEqual(data, this.updatedData.notifications)) {
         this.updatedData.notifications = data;
-        //nb: hook to indicate job was editted, defined in jobedit.js
-        window.jobWasEdited();
+        this.eventBus.emit("jobedit.page.confirm", true);
       }
     },
   },
