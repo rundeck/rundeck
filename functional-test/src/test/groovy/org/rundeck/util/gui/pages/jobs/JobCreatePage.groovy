@@ -108,7 +108,8 @@ class JobCreatePage extends BasePage {
     By jobOptionMultiValuedAllSelectedBy = By.name("multivalueAllSelected")
     By duplicateWfStepBy = By.cssSelector(".glyphicon.glyphicon-duplicate")
     By urlOptionInput = By.xpath("//input[@name='valuesType' and @value='url']")
-
+    By scriptTextAreaBy = By.xpath("//*[contains(@class, 'form-group ') and .//*[contains(text(), 'script to execute')]]")
+    By wfItemEditFormBy = By.className("wfitemEditForm")
     String loadPath = "/job/create"
 
     JobCreatePage(final SeleniumContext context) {
@@ -174,8 +175,43 @@ class JobCreatePage extends BasePage {
         return new JobShowPage(context)
     }
 
-    boolean commandStepVisible(){
+    boolean commandStepVisible() {
         stepLink 'exec-command', StepType.NODE displayed
+    }
+
+    void addScriptStep(String jobName, List<String> params, Integer waitTime = null) {
+        jobNameInput.sendKeys jobName
+        tab JobTab.WORKFLOW click()
+        executeScript "window.location.hash = '#addnodestep'"
+        stepLink 'script-inline', StepType.NODE click()
+        waitForElementVisible scriptTextAreaBy
+        params.each {scriptTextAreaInput.sendKeys(it)}
+        wfItemEditForm.click()
+        getWfItemIndex(0).isDisplayed()
+
+        waitTime?.with {
+            el(By.id("wfnewbutton")).findElement(By.cssSelector(".btn.btn-default.btn-sm.ready")).click()
+            addSimpleCommandStep("sleep $it", 1)
+            el(By.id("wfnewbutton")).findElement(By.cssSelector(".btn.btn-default.btn-sm.ready")).click()
+            addSimpleCommandStep("echo \"after wait\"", 2)
+
+            getWfItemIndex(1).isDisplayed()
+            getWfItemIndex(2).isDisplayed()
+        }
+
+        createJobButton.click()
+    }
+
+    WebElement getScriptTextAreaInput() {
+        el scriptTextAreaBy findElement By.tagName("textarea")
+    }
+
+    WebElement getWfItemEditForm() {
+        el wfItemEditFormBy findElement By.cssSelector(".btn.btn-cta.btn-sm")
+    }
+
+    WebElement getWfItemIndex(int number) {
+        el By.id("wfitem_${number}")
     }
 
     void validatePage() {
@@ -390,7 +426,7 @@ class JobCreatePage extends BasePage {
     WebElement getNodesSelectedByDefaultFalseCheck() {
         el nodesSelectedByDefaultFalseBy
     }
-
+    
     WebElement getOrchestratorDropdownButton() {
         el orchestratorDropdownBy
     }

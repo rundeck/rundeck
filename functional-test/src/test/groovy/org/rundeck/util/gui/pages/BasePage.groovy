@@ -62,6 +62,14 @@ abstract class BasePage {
         driver.navigate().refresh()
     }
 
+    def currentUrl() {
+        driver.getCurrentUrl()
+    }
+
+    void redirectTo(String path) {
+        driver.get(path)
+    }
+
     WebElement waitForElementVisible(WebElement locator) {
         new WebDriverWait(context.driver, Duration.ofSeconds(30))
                 .until(ExpectedConditions.visibilityOf(locator))
@@ -134,6 +142,12 @@ abstract class BasePage {
     boolean waitForAttributeContains(WebElement locator, String attribute, String value) {
         new WebDriverWait(context.driver, Duration.ofSeconds(30))
                 .until(ExpectedConditions.attributeContains(locator, attribute, value))
+    }
+
+    def waitForTextContainsIsDisplayed(List<WebElement> elements) {
+        new WebDriverWait(driver, Duration.ofSeconds(30)).until { WebDriver d ->
+            elements.any { it.isDisplayed() }
+        }
     }
 
     def waitForModal(int expected) {

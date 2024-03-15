@@ -12,6 +12,7 @@ class ActivityPage extends BasePage {
     String loadPath = "activity"
 
     By activityRowBy = By.cssSelector(".link.activity_row.autoclickable.succeed.job")
+    By timeAbs = By.className("timeabs")
 
     ActivityPage(final SeleniumContext context) {
         super(context)
@@ -19,6 +20,10 @@ class ActivityPage extends BasePage {
 
     List<WebElement> getActivityRows() {
         els activityRowBy
+    }
+
+    WebElement getTimeAbs() {
+        el timeAbs
     }
 
 }
