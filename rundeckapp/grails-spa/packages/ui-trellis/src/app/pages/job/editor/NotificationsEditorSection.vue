@@ -12,7 +12,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import * as _ from "lodash";
 import NotificationsEditor from "../../../components/job/notifications/NotificationsEditor.vue";
 import JsonEmbed from "./JsonEmbed.vue";
