@@ -121,7 +121,7 @@
           >
             <summary>
               <span class="row">
-                <span class="col-sm-2 control-label h5 header-reset">
+                <span :class="groupCss">
                   {{ group.name !== "-" ? group.name : "More" }}
                   <i
                     class="more-indicator-verbiage more-info-icon glyphicon glyphicon-chevron-right"
@@ -212,27 +212,31 @@ export default defineComponent({
     PluginPropView,
     PluginPropEdit,
   },
-  props: [
-    "serviceName",
-    "provider",
-    "config",
-    "mode",
-    "showTitle",
-    "showIcon",
-    "showDescription",
-    "modelValue",
-    "savedProps",
-    "pluginConfig",
-    "validation",
-    "readOnly",
-    "validationWarningText",
-    "scope",
-    "defaultScope",
-    "contextAutocomplete",
-    "autocompleteCallback",
-    "useRunnerSelector",
-    "eventBus",
-  ],
+  props: {
+    serviceName: { required: false },
+    provider: { required: false },
+    config: { required: false },
+    mode: { required: false },
+    showTitle: { required: false },
+    showIcon: { required: false },
+    showDescription: { required: false },
+    modelValue: { required: false },
+    savedProps: { required: false },
+    pluginConfig: { required: false },
+    validation: { required: false },
+    readOnly: { required: false },
+    validationWarningText: { required: false },
+    scope: { required: false },
+    defaultScope: { required: false },
+    contextAutocomplete: { required: false },
+    autocompleteCallback: { required: false },
+    useRunnerSelector: { required: false },
+    eventBus: { required: false },
+    groupCss: {
+      required: false,
+      default: "col-sm-2 control-label h5 header-reset",
+    },
+  },
   emits: [
     "update:modelValue",
     "change",
