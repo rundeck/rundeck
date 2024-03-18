@@ -480,7 +480,7 @@ class LogFileStorageService
                         Exception saveError
                         while (retryC > 0) {
                             try {
-                                logFileStorageRequestProvider.updateFiletypeAndCompleted(requestId as Long, ftype, success)
+                                logFileStorageRequestProvider.updateFiletypeAndCompleted(execution.uuid, ftype, success)
                                 saveDone = true
                                 break
                             } catch (Exception e) {
@@ -515,7 +515,7 @@ class LogFileStorageService
                         if (!request) {
                             log.error("Storage request [ID#${task.id}]: Error deleting: not found for id $requestId")
                         } else {
-                            logFileStorageRequestProvider.delete(request.id as Long)
+                            logFileStorageRequestProvider.delete(execution.uuid)
                             log.debug("Storage request [ID#${task.id}] cancelled.")
                         }
                     }
@@ -538,7 +538,7 @@ class LogFileStorageService
                         log.error("Storage request [ID#${task.id}]: Error saving: not found for id $requestId")
                     } else if (request) {
                         log.debug("Loaded LogFileStorageRequest ${requestId} [ID#${task.id}] after retry")
-                        logFileStorageRequestProvider.updateCompleted(request.id as Long, success)
+                        logFileStorageRequestProvider.updateCompleted(execution.uuid, success)
                         log.debug("Storage request [ID#${task.id}] complete.")
                     }
                     getStorageSuccessCounter()?.inc()
@@ -791,7 +791,7 @@ class LogFileStorageService
                 getConfiguredPluginName(),
                 filetype,
                 false,
-                e.id,
+                e.uuid,
         )
         return logFileStorageRequestProvider.create(newData)
     }
@@ -978,7 +978,8 @@ class LogFileStorageService
             }
             list.each{entry->
                 if (entry != keep) {
-                    logFileStorageRequestProvider.delete(entry.logFileStorageRequestId)
+                    def logFileStorage = logFileStorageRequestProvider.get(entry.logFileStorageRequestId)
+                    logFileStorageRequestProvider.delete(logFileStorage.executionUuid)
                     log.warn("Deleted LogFileStorageRequest id=${entry.logFileStorageRequestId} for execution_id=${execid}")
                 }
             }
@@ -1031,7 +1032,7 @@ class LogFileStorageService
             failedRequests.remove(request.id)
             failures.remove(request.id)
             Execution.get(request.executionId).logFileStorageRequest = null
-            logFileStorageRequestProvider.delete(request.id as Long)
+            logFileStorageRequestProvider.delete(request.executionUuid)
         }
         incomplete.size()
     }
@@ -1099,7 +1100,6 @@ class LogFileStorageService
     int countIncompleteLogStorageRequests(){
         def serverUUID=frameworkService.serverUUID
         def skipExecIds = getRunningExecIds()
-
         def found2=logFileStorageRequestProvider.countByIncompleteAndClusterNodeNotInExecIds(serverUUID, skipExecIds)
         found2
     }

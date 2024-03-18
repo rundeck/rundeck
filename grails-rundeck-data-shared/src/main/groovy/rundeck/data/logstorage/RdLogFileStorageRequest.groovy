@@ -6,6 +6,7 @@ import org.rundeck.app.data.model.v1.logstorage.LogFileStorageRequestData
 class RdLogFileStorageRequest implements LogFileStorageRequestData, Validateable {
     Long id
     Long executionId
+    String executionUuid
     String pluginName
     String filetype
     Boolean completed
