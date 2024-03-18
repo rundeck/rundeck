@@ -23,6 +23,8 @@ class ProjectEditPage extends BasePage {
     By successMessageDiv = By.cssSelector(".alert.alert-info")
     By motdIdSelect = By.id("extraConfig.menuService.motdDisplay")
     By readmeSelect = By.id("extraConfig.menuService.readmeDisplay")
+    By execModeCheck = By.name("extraConfig.scheduledExecutionService.disableExecution")
+    By scheduleModeCheck = By.name("extraConfig.scheduledExecutionService.disableSchedule")
 
     ProjectEditPage(SeleniumContext context) {
         super(context)
@@ -87,5 +89,21 @@ class ProjectEditPage extends BasePage {
      */
     def selectReadmeAllPlaces(){
         (els readmeSelect).each {it.click()}
+    }
+
+    /**
+     * It clicks on "Disable Execution" check
+     * it does not validate for it to be enabled or disabled
+     */
+    def clickExecutionMode(){
+        (el execModeCheck).click()
+    }
+
+    /**
+     * It clicks on "Disable Schedule" check
+     * it does not validate for it to be enabled or disabled
+     */
+    def clickScheduleMode(){
+        (el scheduleModeCheck).click()
     }
 }
