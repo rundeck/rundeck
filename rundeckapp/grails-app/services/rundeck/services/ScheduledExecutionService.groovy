@@ -2726,8 +2726,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         boolean failed = false
 
         scheduledExecution.options?.each { Option origopt ->
-            EditOptsController._validateOption(origopt, userDataProvider, scheduledExecution, null,null, scheduledExecution.scheduled)
-            fileUploadService.validateFileOptConfig(origopt)
+            EditOptsController._validateOption(origopt, userDataProvider, scheduledExecution, origopt.getConfigRemoteUrl(), null, scheduledExecution.scheduled)
+            fileUploadService.validateFileOptConfig(origopt, origopt.errors)
 
             cleanSecureOptionFromDefaultValue(origopt)
 
@@ -3017,8 +3017,25 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             input.options?.each {Option theopt ->
                 theopt.convertValuesList()
                 Option newopt = theopt.createClone()
+                //copy errors
+                if(theopt.errors.hasErrors()){
+                    newopt.errors.addAllErrors(theopt.errors)
+                }
                 scheduledExecution.addToOptions(newopt)
-                theopt.scheduledExecution = scheduledExecution
+                newopt.scheduledExecution = scheduledExecution
+            }
+        } else if(params.jobOptionsJson){
+            deleteExistingOptions(scheduledExecution)
+            def optsData = JSON.parse(params.jobOptionsJson.toString())
+            if(optsData instanceof JSONArray){
+                for(Object item: optsData){
+                    if(item instanceof JSONObject){
+                        def theopt=Option.fromMap(item.name, item)
+                        theopt.convertValuesList()
+                        scheduledExecution.addToOptions(theopt)
+                        theopt.scheduledExecution = scheduledExecution
+                    }
+                }
             }
         }else if (params['_sessionopts'] && null != params['_sessionEditOPTSObject']) {
             deleteExistingOptions(scheduledExecution)
@@ -3039,6 +3056,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         origopt = Option.fromMap(origopt.name, origopt)
                     }
                     Option theopt = origopt.createClone()
+                    // copy errors
+                    if(origopt.errors.hasErrors()){
+                        theopt.errors.addAllErrors(origopt.errors)
+                    }
                     scheduledExecution.addToOptions(theopt)
                     theopt.scheduledExecution = scheduledExecution
 
@@ -4266,7 +4287,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def optNames = [:]
         rundeckOptions?.each {Option opt ->
             EditOptsController._validateOption(opt, userDataProvider,scheduledExecution, null,null,scheduledExecution.scheduled)
-            fileUploadService.validateFileOptConfig(opt)
+            fileUploadService.validateFileOptConfig(opt, opt.errors)
             if(!opt.errors.hasErrors() && optNames.containsKey(opt.name)){
                 opt.errors.rejectValue('name', 'option.name.duplicate.message', [opt.name] as Object[], "Option already exists: {0}")
             }
@@ -4566,7 +4587,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                      executionLifecyclePlugins   : executionLifecyclePlugins,
                      projectNames                : fprojects,
                      globalVars                  : globals,
-                     jobComponents               : jobComponents
+                     jobComponents               : jobComponents,
+                     fileUploadPluginType        : fileUploadService.pluginType
         ]
 
         if(action == AuthConstants.ACTION_UPDATE){

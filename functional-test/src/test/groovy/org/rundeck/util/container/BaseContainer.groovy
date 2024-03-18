@@ -205,15 +205,26 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         if(!projectArchive.isFile()){
             throw new IllegalArgumentException("Must be a file")
         }
-        def getProject = client.doGet("/project/${name}")
-        if (getProject.code() == 404) {
-            def post = client.doPost("/projects", [name: name])
-            if (!post.successful) {
-                throw new RuntimeException("Failed to create project: ${post.body().string()}")
+        try (Response getProject = client.doGet("/project/${name}")) {
+            if (getProject.code() == 404) {
+                try(def post = client.doPost("/projects", [name: name])) {
+                    if (!post.successful) {
+                        throw new RuntimeException("Failed to create project: ${post.body().string()}")
+                    }
+                    try (def put = client.doPut("/project/${name}/import?${buildUrlParams(params)}", projectArchive)) {
+                        if (!put.successful) {
+                            throw new RuntimeException("Failed to upload archive: ${put.body().string()}")
+                        }
+                    }
+
+                }
+            } else if (getProject.code() == 200) {
+                try (def put = client.doPut("/project/${name}/import?${buildUrlParams(params)}", projectArchive)) {
+                    if (!put.successful) {
+                        throw new RuntimeException("Failed to upload archive: ${put.body().string()}")
+                    }
+                }
             }
-            client.doPut("/project/${name}/import?${buildUrlParams(params)}", projectArchive)
-        }else if(getProject.code() == 200){
-            client.doPut("/project/${name}/import?${buildUrlParams(params)}", projectArchive)
         }
     }
 

@@ -33,10 +33,14 @@ export default {
     };
   },
   watch: {
-    updatedData() {
-      const { timeZones, ...other } = this.updatedData;
-      this.outputData = other;
-      window.jobWasEdited();
+    updatedData: {
+      handler() {
+        this.eventBus.emit("job-edit-schedules-changed", this.updatedData);
+        const { timeZones, ...other } = this.updatedData;
+        this.outputData = other;
+        window.jobWasEdited();
+      },
+      deep: true,
     },
   },
   async mounted() {

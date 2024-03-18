@@ -36,6 +36,22 @@ class JobCreatePage extends BasePage {
     By createJobBy = By.id("Create")
     By cancelBy = By.id('createFormCancelButton')
     By optionBy = By.cssSelector("#optnewbutton > span")
+
+    static class NextUi {
+        static By optionBy = By.cssSelector("#optnewbutton > button")
+        static By separatorOptionBy = By.cssSelector("#option_preview")
+        static By optionCloseKeyStorageBy = By.cssSelector("#storage-file.modal .modal-footer > button.btn-default")
+        static By optionOpenKeyStorageBy = By.cssSelector(".opt_sec_enabled div.input-group > .input-group-btn > button")
+        static By optionUndoBy = By.cssSelector("[data-test=options_undo_redo] > button:nth-child(1)")
+        static By optionRedoBy = By.cssSelector("[data-test=options_undo_redo] > button:nth-child(2)")
+        static By optionRevertAllBy = By.cssSelector("[data-test=options_undo_redo] > button:nth-child(3)")
+        static By defaultValueInput=By.cssSelector("[data-test='option.value'] input[name=defaultValue]")
+        static By optionItemBy(int index) {
+            By.cssSelector("#optitem_$index")
+        }
+        static By storagePathInput = By.name("storagePath")
+    }
+
     By separatorOptionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
     By saveOptionBy = By.xpath("//*[@title[contains(.,'Save the new option')]]")
     By nodeDispatchTrueBy = By.id("doNodedispatchTrue")
@@ -75,7 +91,21 @@ class JobCreatePage extends BasePage {
     By listWorkFlowItemBy = By.xpath("//*[starts-with(@id,'wfitem_')]")
     By addSimpleCommandStepBy = By.xpath("//span[contains(@onclick, 'wfnewbutton')]")
 
-    String loadPath = "/job/create"
+    private String loadPath = "/job/create"
+    String projectName
+    String jobId
+    boolean edit=false
+    @Override
+    String getLoadPath() {
+        if(edit && projectName && jobId){
+            return "/project/${projectName}/job/edit/${jobId}${nextUi?'?nextUi=true':''}"
+        }else if(projectName && !edit){
+            return "/project/${projectName}/job/create${nextUi?'?nextUi=true':''}"
+        }else{
+            return loadPath
+        }
+    }
+    boolean nextUi = false
 
     JobCreatePage(final SeleniumContext context) {
         super(context)
@@ -83,15 +113,18 @@ class JobCreatePage extends BasePage {
 
     JobCreatePage(final SeleniumContext context, String projectName) {
         super(context)
-        this.loadPath = "/project/${projectName}/job/create"
+        loadCreatePath(projectName)
     }
 
     void loadEditPath(String projectName, String jobId) {
-        loadPath = "/project/${projectName}/job/edit/${jobId}"
+        this.edit=true
+        this.projectName=projectName
+        this.jobId=jobId
     }
 
     void loadCreatePath(String projectName) {
-        this.loadPath = "/project/${projectName}/job/create"
+        this.projectName=projectName
+        this.edit=false
     }
 
     void fillBasicJob(String name) {
@@ -111,13 +144,13 @@ class JobCreatePage extends BasePage {
     }
 
     void validatePage() {
-        if (!driver.currentUrl.endsWith(loadPath)) {
+        if (!driver.currentUrl.endsWith(getLoadPath())) {
             throw new IllegalStateException("Not on job create page: " + driver.currentUrl)
         }
     }
 
     WebElement tab(JobTab tab) {
-        def tabBy = By.linkText(tab.getTabName())
+        def tabBy = By.partialLinkText(tab.getTabName())
         waitForNumberOfElementsToBeOne tabBy
         el tabBy
     }
@@ -222,39 +255,54 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getOptionButton() {
-        el optionBy
+        el nextUi ? NextUi.optionBy : optionBy
     }
 
+    WebElement optionNameNew(int index=0) {
+        if(nextUi){
+            return byAndWait (By.cssSelector("#optitem_new input[type=text][name=name]"))
+        }else{
+            return optionName(index)
+        }
+    }
     WebElement optionName(int index) {
-        byAndWait By.cssSelector("#optvis_$index > div.optEditForm input[type=text][name=name]")
+        byAndWait nextUi?
+                  By.cssSelector("#optitem_$index div.optEditForm input[type=text][name=name]"):
+                  By.cssSelector("#optvis_$index > div.optEditForm input[type=text][name=name]")
     }
 
     WebElement getSeparatorOption() {
-        el separatorOptionBy
+        el nextUi ? NextUi.separatorOptionBy : separatorOptionBy
     }
 
     WebElement getSaveOptionButton() {
         el saveOptionBy
     }
-
+    By optionItemBy(int index) {
+        nextUi ? NextUi.optionItemBy(index) : By.cssSelector("#optli_$index")
+    }
     void waitFotOptLi(int index) {
-        waitForElementVisible By.cssSelector("#optli_$index")
+        waitForElementVisible optionItemBy(index)
     }
 
     List<WebElement> optionLis(int index) {
-        els By.cssSelector("#optli_$index")
+        els optionItemBy(index)
     }
 
     void waitForOptionsToBe(int index, int total) {
-        waitForNumberOfElementsToBe By.cssSelector("#optli_$index"), total
+        waitForNumberOfElementsToBe optionItemBy(index), total
     }
 
     WebElement optionNameSaved(int index) {
-        el By.xpath("//*[@id=\"optli_$index\"]/div/div/span[2]/span/span[1]/span[1]")
+        el nextUi?
+           By.cssSelector("#optitem_${index} .option-item .option-item-content .optdetail_name")
+           :By.xpath("//*[@id=\"optli_$index\"]/div/div/span[2]/span/span[1]/span[1]")
     }
 
-    WebElement duplicateButton(String nameOpt) {
-        el By.xpath("//*[@id='optctrls_$nameOpt']/span[2]")
+    WebElement duplicateButton(String nameOpt, int optNum = 0) {
+        el nextUi?
+           By.cssSelector("#optitem_${optNum} .option-item-content+.btn-group> .btn + .btn")
+           :By.xpath("//*[@id='optctrls_$nameOpt']/span[2]")
     }
 
     WebElement getNodeDispatchTrueCheck() {
@@ -318,31 +366,38 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getStoragePathInput(){
-        el storagePathInput
+        el nextUi ? NextUi.storagePathInput : storagePathInput
     }
 
+    By getDefaultValueBy(){
+        nextUi? NextUi.defaultValueInput:defaultValueInput
+    }
     WebElement getDefaultValueInput(){
-        el defaultValueInput
+        el defaultValueBy
     }
 
     WebElement getOptionOpenKeyStorageButton() {
-        el optionOpenKeyStorageBy
+        el nextUi?
+           NextUi.optionOpenKeyStorageBy
+           :optionOpenKeyStorageBy
     }
 
     WebElement getOptionCloseKeyStorageButton() {
-        el optionCloseKeyStorageBy
+        el nextUi?
+           NextUi.optionCloseKeyStorageBy
+           :optionCloseKeyStorageBy
     }
 
     WebElement getOptionUndoButton() {
-        el optionUndoBy
+        el nextUi ? NextUi.optionUndoBy : optionUndoBy
     }
 
     WebElement getOptionRedoButton() {
-        el optionRedoBy
+        el nextUi ? NextUi.optionRedoBy : optionRedoBy
     }
 
     WebElement getOptionRevertAllButton() {
-        el optionRevertAllBy
+        el nextUi ? NextUi.optionRevertAllBy : optionRevertAllBy
     }
 
     WebElement getOptionConfirmRevertAllButton() {

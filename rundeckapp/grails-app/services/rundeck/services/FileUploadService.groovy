@@ -9,10 +9,12 @@ import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
+import org.rundeck.app.data.model.v1.job.option.OptionData
 import org.rundeck.util.SHAInputStream
 import org.rundeck.util.SHAOutputStream
 import org.rundeck.util.Sizes
 import org.rundeck.util.ThresholdInputStream
+import org.springframework.validation.Errors
 import rundeck.Execution
 import rundeck.JobFileRecord
 import rundeck.Option
@@ -70,10 +72,10 @@ class FileUploadService {
     def validatePluginConfig(Map configMap) {
         pluginService.validatePluginConfig(pluginType, FileUploadPlugin, configMap)
     }
-    Validator.Report validateFileOptConfig(Option opt) {
-        if (opt.typeFile) {
+    Validator.Report validateFileOptConfig(OptionData opt, Errors errors) {
+        if (opt.optionType == 'file') {
             if(!featureService.featurePresent(Features.FILE_UPLOAD_PLUGIN)) {
-                opt.errors.rejectValue(
+                errors.rejectValue(
                         'configMap',
                         'option.file.config.disabled.message',
                         "option file plugin disabled: {0}"
@@ -82,7 +84,7 @@ class FileUploadService {
             def result = validatePluginConfig(opt.configMap)
             if (!result.valid) {
 
-                opt.errors.rejectValue(
+                errors.rejectValue(
                         'configMap',
                         'option.file.config.invalid.message',
                         [result.report.toString()].toArray(),
@@ -107,7 +109,7 @@ class FileUploadService {
         return plugin
     }
 
-    private String getPluginType() {
+    String getPluginType() {
         configurationService.getString('fileupload.plugin.type', FS_FILE_UPLOAD_PLUGIN)
     }
 

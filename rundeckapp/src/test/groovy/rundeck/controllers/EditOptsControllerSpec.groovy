@@ -16,7 +16,10 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.jobs.options.OptionValidateRequest
+import com.dtolabs.rundeck.app.api.jobs.options.OptionValidateResponse
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.config.FeatureService
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
@@ -24,8 +27,10 @@ import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import org.rundeck.core.auth.AuthConstants
+import org.springframework.context.MessageSource
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
+import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
@@ -48,7 +53,10 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
 
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
-
+        controller.featureService = Mock(FeatureService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.fileUploadService = Mock(FileUploadService)
+        controller.apiService = Mock(ApiService)
         defineBeans {
             configurationService(ConfigurationService) {
                 grailsApplication = grailsApplication
@@ -172,20 +180,29 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
             'undo' | 'undoOPTS'
 
     }
+
     def "validate opt required scheduled job with default storage path"() {
         given:
-        Option opt = new Option(required: true, defaultValue: defval, defaultStoragePath: defstorageval, enforced: false)
+            Option opt = new Option(
+                required: true,
+                defaultValue: defval,
+                defaultStoragePath: defstorageval,
+                enforced: false,
+                name: 'aname',
+                valuesUrlLong: urlval?new URL(urlval):null
+            )
 
         when:
-        EditOptsController._validateOption(opt, provider, null, null, params, true)
+            EditOptsController._validateOption(opt, provider, null, null, params, true)
         then:
-        iserr == opt.errors.hasFieldErrors('defaultValue')
+            iserr == opt.errors.hasFieldErrors('defaultValue')
 
         where:
-        iserr | defval | defstorageval
-        true  | null   | null
-        false | 'abc'  | null
-        false | null   | 'abc'
+            iserr | defval | defstorageval | urlval
+            true  | null   | null          | null
+            false | 'abc'  | null          | null
+            false | null   | 'abc'         | null
+            false | null   | null          | 'http://example.com'
 
     }
 
@@ -289,7 +306,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         given:
         //test insert, should have remove undo action
         def optsmap = [:]
-        controller.fileUploadService = Mock(FileUploadService)
         when:
         def result = controller._applyOptionAction(
                 optsmap,
@@ -312,7 +328,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         given:
         //test insert, should have remove undo action
         def optsmap = [:]
-        controller.fileUploadService = Mock(FileUploadService)
         when:
         def result = controller._applyOptionAction(
                 optsmap,
@@ -333,7 +348,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option test1 = new Option(name: 'optname')
         def optsmap = [optname: test1]
 
-        controller.fileUploadService = Mock(FileUploadService)
         when:
         def result = controller._applyOptionAction(
                 optsmap,
@@ -357,7 +371,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option test1 = new Option(name: 'optname', description: 'original description')
         def optsmap = [optname: test1]
 
-        controller.fileUploadService = Mock(FileUploadService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         when:
         def result = controller._applyOptionAction(
@@ -386,7 +399,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option test1 = new Option(name: 'optname', description: 'original description')
         def optsmap = [optname: test1]
 
-        controller.fileUploadService = Mock(FileUploadService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         when:
         def result = controller._applyOptionAction(
@@ -419,7 +431,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option test1 = new Option(name: 'optname', description: 'original description')
         def optsmap = [optname: test1]
 
-        controller.fileUploadService = Mock(FileUploadService)
         when:
         def result = controller._applyOptionAction(
                 optsmap,
@@ -440,7 +451,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         params.name='test1'
         params.newoption = 'insert'
         params.num = 'testNum'
-        controller.fileUploadService = Mock(FileUploadService)
         controller.optionValuesService = Mock(OptionValuesService)
 
         when:
@@ -464,7 +474,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option test1 = new Option(name: 'optname', description: 'original description')
         def optsmap = [optname: test1]
 
-        controller.fileUploadService = Mock(FileUploadService)
         when:
         def result = controller._applyOptionAction(optsmap, [action: 'remove', name: 'test2', params: [:]])
         then:
@@ -477,7 +486,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option test1 = new Option(name: 'optname', description: 'original description')
         def optsmap = [optname: test1]
 
-        controller.fileUploadService = Mock(FileUploadService)
         when:
         def result = controller._applyOptionAction(optsmap, [action: 'modify', name: 'test2', params: [:]])
         then:
@@ -491,7 +499,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option test2 = new Option(name: 'optname2', description: 'original description')
         def optsmap = [optname: test1, optname2: test2]
 
-        controller.fileUploadService = Mock(FileUploadService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         when:
         def result = controller._applyOptionAction(
@@ -509,7 +516,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         //apply insert, apply undo (remove)
         def optsmap = [:]
 
-        controller.fileUploadService = Mock(FileUploadService)
         def result = controller._applyOptionAction(
                 optsmap,
                 [action: 'insert', name: 'optname', params: [name                            : 'optname',
@@ -544,7 +550,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         )
         def optsmap = [optname: test1]
 
-        controller.fileUploadService = Mock(FileUploadService)
         def result = controller._applyOptionAction(
                 optsmap,
                 [action: 'remove', name: 'optname', params: [name: 'optname']]
@@ -589,7 +594,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         )
         def optsmap = [optname: test1]
 
-        controller.fileUploadService = Mock(FileUploadService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         def result = controller._applyOptionAction(
                 optsmap,
@@ -635,7 +639,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         )
         def optsmap = [optname: test1]
 
-        controller.fileUploadService = Mock(FileUploadService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
 
         def result = controller._applyOptionAction(
@@ -677,7 +680,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         opt.name = "opt1"
         opt.optionValuesPluginType = "optionValues"
         opt.enforced = true
-        def result = controller._validateOption(opt, provider, null)
+        def result = controller._validateOption(opt, provider, null, null, null, false)
 
         then:
         result.isEmpty()
@@ -745,7 +748,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option opt3 = new Option(name: 'ghi', sortIndex: 3)
         def opts = [opt1, opt2, opt3]
         def editopts = opts.collectEntries { [it.name, it] }
-        controller.fileUploadService = Mock(FileUploadService)
 
         params.scheduledExecutionId = 1L
         params.name = "abc"
@@ -774,7 +776,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option opt1 = new Option(name: 'abc', secureInput: true, secureExposed: true, defaultStoragePath: 'keys/asdf',required: true)
         def opts = [opt1]
         def editopts = opts.collectEntries { [it.name, it] }
-        controller.fileUploadService = Mock(FileUploadService)
 
         params.scheduledExecutionId = 1L
         params.name = "abc"
@@ -810,7 +811,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         def result = EditOptsController._validateOption(opt, provider, null, configRemoteUrl, params, true)
         then:
         opt.errors.hasErrors()==hasError
-        opt.errors.hasFieldErrors('configRemoteUrl') == hasError
+        opt.errors.hasFieldErrors('configRemoteUrl.jsonFilter') == hasError
 
         where:
         jsonFilter | hasError
@@ -837,4 +838,144 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         result.configRemoteUrl == null
     }
 
+    def "api option validate #propname validation"() {
+        given:
+            String project = 'proj1'
+            def optionData = new OptionValidateRequest()
+            optionData[propname] = testvalue
+            request.method = 'POST'
+
+        when:
+            controller.apiValidateOption(project, false, optionData)
+        then:
+            response.status == 400
+            response.json.valid==false
+            response.json.messages.containsKey(propname)
+            response.json.messages.get(propname).any{it.contains(message)}
+            1 * controller.apiService.requireApi(_, _, 47) >> true
+        where:
+            propname                      | testvalue | message
+            'name'                        | ''        | 'blank'
+            'name'                        | null      | 'null'
+            'name'                        | 'a b'     | 'required pattern [[a-zA-Z_0-9.-]+]'
+            'remoteUrlAuthenticationType' | 'asdf'    | 'not contained within the list [[BASIC, API_KEY, BEARER_TOKEN]]'
+            'storagePath'                 | 'asdf'    | 'does not match the required pattern'
+    }
+    def "api option validate #propname scheduled required file validation"() {
+        given:
+            String project = 'proj1'
+            def optionData = new OptionValidateRequest()
+            optionData.name='test'
+            optionData.type='file'
+            optionData.required = true
+            request.method = 'POST'
+
+        when:
+            controller.apiValidateOption(project, true, optionData)
+        then:
+            response.status == 400
+            response.json.valid==false
+            response.json.messages.containsKey('required')
+            response.json.messages.get('required').any{it.contains('option.file.required.message')}
+            1 * controller.apiService.requireApi(_, _, 47) >> true
+    }
+    def "api option validate #propname translated keys"() {
+        given:
+            String project = 'proj1'
+            def optionData = new OptionValidateRequest([name:'a']+data)
+            request.method = 'POST'
+            controller.messageSource = Mock(MessageSource) {
+                _ * getMessage(*_) >> {
+                    return it[0]
+                }
+            }
+
+        when:
+            controller.apiValidateOption(project, false, optionData)
+        then:
+            response.status == 400
+            response.json.valid==false
+            response.json.messages.containsKey(propname)
+            response.json.messages.get(propname).any{it.contains(message)}
+            1 * controller.apiService.requireApi(_, _, 47) >> true
+        where:
+            data                                            | propname      | message
+            [value: 'bad', regex: '^good$']                 | 'value'       | 'option.defaultValue.regexmismatch.message'
+            [values: new TreeSet(['bad']), regex: '^good$'] | 'values'      | 'option.values.regexmismatch.message'
+            [valuesUrl: 'notaurl']                          | 'valuesUrl'   | 'option.valuesUrl.invalid.message'
+            [hidden: true]                                  | 'value'       | 'option.hidden.notallowed.message'
+            [hidden: true, secure: true]                    | 'storagePath' | 'option.hidden.notallowed.message'
+    }
+
+    def "validate option "(){
+        given:
+            def opt = new OptionValidateRequest()
+            def resp = new OptionValidateResponse(valid:true)
+            def msgSource = Mock(MessageSource)
+            def validator= new EditOptsController.OptionInputValidator(resp,msgSource,null)
+        when:
+            controller._validateOption(opt, validator,  null, 'text', false)
+        then:
+            resp.valid
+    }
+    def "validate option values default enforced "(){
+        given:
+            def opt = new OptionValidateRequest()
+            opt.values=new TreeSet(['a','b'])
+            opt.enforced=true
+            opt.value='a value'
+            def resp = new OptionValidateResponse(valid:true)
+            def msgSource = Mock(MessageSource){
+                _*getMessage(*_)>>{
+                    return it[0]
+                }
+            }
+            def validator= new EditOptsController.OptionInputValidator(resp,msgSource,null)
+        when:
+            controller._validateOption(opt, validator,  null, 'text', false)
+        then:
+            !resp.valid
+            resp.messages['defaultValue']==['option.defaultValue.notallowed.message']
+    }
+    def "validate option values regex match "(){
+        given:
+            def opt = new OptionValidateRequest()
+            opt.values=new TreeSet(['a','b'])
+            opt.enforced=true
+            opt.regex='^[b-d]$'
+            def resp = new OptionValidateResponse(valid:true)
+            def msgSource = Mock(MessageSource){
+                _*getMessage(*_)>>{
+                    return it[0]
+                }
+            }
+            def validator= new EditOptsController.OptionInputValidator(resp,msgSource,null)
+        when:
+            controller._validateOption(opt, validator,  null, 'text', false)
+        then:
+            !resp.valid
+            resp.messages['valuesList']==['option.values.regexmismatch.message']
+    }
+    def "validate option hidden default required "(){
+        given:
+            def opt = new OptionValidateRequest(props)
+            opt.name='test'
+            opt.hidden=true
+            def resp = new OptionValidateResponse(valid:true)
+            def msgSource = Mock(MessageSource){
+                _*getMessage(*_)>>{
+                    return it[0]
+                }
+            }
+            def validator= new EditOptsController.OptionInputValidator(resp,msgSource,null)
+        when:
+            controller._validateOption(opt, validator,  null, 'text', false)
+        then:
+            !resp.valid
+            resp.messages[expectedKey] == ['option.hidden.notallowed.message']
+        where:
+            props          | expectedKey
+            [:]            | 'defaultValue'
+            [secure: true] | 'defaultStoragePath'
+    }
 }

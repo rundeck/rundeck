@@ -78,21 +78,25 @@ class BasicJobsSpec extends SeleniumBase {
 
     def "create valid job basic options"() {
         when:
-            def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
+            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+            jobCreatePage.nextUi=nextUi
+            jobCreatePage.go()
             def jobShowPage = page JobShowPage
             def optionName = 'seleniumOption1'
         then:
-            jobCreatePage.fillBasicJob 'a job with options'
+            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
             jobCreatePage.optionButton.click()
-            jobCreatePage.optionName 0 sendKeys optionName
+            jobCreatePage.optionNameNew() sendKeys optionName
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 0
             jobCreatePage.createJobButton.click()
         then:
             jobCreatePage.waitForUrlToContain('/job/show')
-            jobShowPage.jobLinkTitleLabel.getText().contains('a job with options')
+            jobShowPage.jobLinkTitleLabel.getText().contains('create valid job basic options')
             jobShowPage.optionInputText(optionName) != null
+        where:
+            nextUi<<[false,true]
     }
 
     def "edit job set description"() {
@@ -201,7 +205,7 @@ class BasicJobsSpec extends SeleniumBase {
             jobShowPage.optionValidationWarningText.getText().contains 'Option \'reqOpt1\' is required'
     }
 
-    def "job filter by name 3 results"() {
+    def "job filter by name results"() {
         when:
             def jobShowPage = go JobShowPage, SELENIUM_BASIC_PROJECT
         then:
@@ -210,11 +214,18 @@ class BasicJobsSpec extends SeleniumBase {
             jobShowPage.waitForModal 1
             jobShowPage.jobSearchNameField.sendKeys 'option'
             jobShowPage.jobSearchSubmitButton.click()
-            jobShowPage.waitForNumberOfElementsToBe jobShowPage.jobRowBy, 3
-            jobShowPage.jobRowLink.size() == 3
+            jobShowPage.waitForNumberOfElementsToBe jobShowPage.jobRowBy, expected.size()
+            jobShowPage.jobRowLink.size() == expected.size()
             jobShowPage.jobRowLink.collect {
                 it.getText()
-            }.containsAll(["selenium-option-test1", "predefined job with options", "a job with options"])
+            }.containsAll(expected)
+        where:
+            expected = [
+                "selenium-option-test1",
+                "predefined job with options",
+                "create valid job basic options next ui",
+                "create valid job basic options old ui"
+            ]
     }
 
     def "job filter by name and group 1 results"() {
@@ -233,18 +244,26 @@ class BasicJobsSpec extends SeleniumBase {
     }
 
     def "job filter by name and - top group 2 results"() {
-        when:
+        given:
             def jobShowPage = go JobShowPage, SELENIUM_BASIC_PROJECT
-        then:
+        when:
             jobShowPage.validatePage()
             jobShowPage.jobSearchButton.click()
             jobShowPage.waitForModal 1
             jobShowPage.jobSearchNameField.sendKeys 'option'
             jobShowPage.jobSearchGroupField.sendKeys '-'
             jobShowPage.jobSearchSubmitButton.click()
-        expect:
-            jobShowPage.waitForNumberOfElementsToBe jobShowPage.jobRowBy, 2
-            jobShowPage.jobRowLink.collect { it.getText() } == ["a job with options", "predefined job with options"]
+        then:
+            jobShowPage.waitForNumberOfElementsToBe jobShowPage.jobRowBy, expected.size()
+            def names = jobShowPage.jobRowLink.collect { it.getText() }
+            names.size() == expected.size()
+            names.containsAll expected
+        where:
+            expected = [
+                "predefined job with options",
+                "create valid job basic options next ui",
+                "create valid job basic options old ui"
+            ]
     }
 
     def "view jobs list page"() {

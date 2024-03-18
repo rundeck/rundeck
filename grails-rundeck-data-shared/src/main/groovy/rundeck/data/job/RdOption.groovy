@@ -10,8 +10,11 @@ import org.rundeck.app.data.model.v1.job.option.OptionData
 import org.rundeck.app.data.model.v1.job.option.OptionValueData
 import rundeck.data.validation.shared.SharedJobOptionConstraints
 
+import java.util.regex.Pattern
+
 @JsonIgnoreProperties(["errors"])
 class RdOption implements JobOption, OptionData, Comparable<OptionData>, Validateable {
+    static final String DEFAULT_DELIMITER = ','
     String name
     Integer sortIndex
     String description
@@ -40,10 +43,41 @@ class RdOption implements JobOption, OptionData, Comparable<OptionData>, Validat
     Boolean sortValues = false
     List<String> optionValues
 
-    static constraints={
+    static constraints = {
         importFrom(SharedJobOptionConstraints)
         realValuesUrl(nullable: true)
     }
+
+    List<String> getOptionValues() {
+        if (this.optionValues != null) {
+            return this.optionValues
+        }
+        if (valuesList != null) {
+            if (valuesListDelimiter == null) {
+                valuesListDelimiter = DEFAULT_DELIMITER
+            }
+            optionValues = new ArrayList()
+            optionValues.addAll(
+                valuesList.split(Pattern.quote(valuesListDelimiter)).collect { it.trim() }.grep { it }.unique() as List
+            )
+
+            if (optionValues && sortValues) {
+                sortValuesList()
+            }
+        }
+        return optionValues
+    }
+
+    private void sortValuesList() {
+        if (optionValues.every { it.isNumber() }) {
+            optionValues = optionValues.sort { a, b ->
+                a.toDouble() <=> b.toDouble()
+            }
+        } else {
+            optionValues = optionValues.sort()
+        }
+    }
+
 
     static RdOption convertFromJobOption(JobOption jobOption, RdOption orig) {
         RdOption o = orig ?: new RdOption()

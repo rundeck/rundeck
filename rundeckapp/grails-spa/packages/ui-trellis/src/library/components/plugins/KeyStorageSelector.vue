@@ -15,51 +15,49 @@
   -->
 
 <template>
-  <div>
-    <btn class="btn btn-sm btn-default" @click="openSelector()">
-      <slot>Select… <i class="glyphicon glyphicon-folder-open"></i></slot>
-    </btn>
-    <modal
-      id="storage-file"
-      v-model="modalOpen"
-      :before-close="beforeModalClose"
-      title="Select a Storage File"
-      disabled="readOnly"
-      auto-focus
-      append-to-body
-      cancel-text="Cancel"
-      ok-text="Save"
-    >
-      <key-storage-view
-        ref="keyStorageViewRef"
-        :read-only="readOnly"
-        :root-path="rootPath"
-        :allow-upload="allowUpload"
-        :model-value="modelValue"
-        @update:model-value="onSelectedKeyChange"
-        @close-selector="closeSelector"
-        @open-selector="openSelector"
-        @open-editor="openEditor"
-      ></key-storage-view>
-    </modal>
-    <modal
-      id="storageuploadkey"
-      ref="modalEdit"
-      v-model="modalEdit"
-      title="Add or Upload a Key"
-      :footer="false"
-      auto-focus
-      append-to-body
-    >
-      <key-storage-edit
-        :upload-setting="uploadSetting"
-        :root-path="rootPath"
-        :storage-filter="storageFilter"
-        @cancel-editing="handleCancelEditing"
-        @finish-editing="handleFinishEditing"
-      ></key-storage-edit>
-    </modal>
-  </div>
+  <btn @click="openSelector()">
+    <slot>Select… <i class="glyphicon glyphicon-folder-open"></i></slot>
+  </btn>
+  <modal
+    id="storage-file"
+    v-model="modalOpen"
+    :before-close="beforeModalClose"
+    title="Select a Storage File"
+    disabled="readOnly"
+    auto-focus
+    append-to-body
+    cancel-text="Cancel"
+    ok-text="Save"
+  >
+    <key-storage-view
+      ref="keyStorageViewRef"
+      :read-only="readOnly"
+      :root-path="rootPath"
+      :allow-upload="allowUpload"
+      :model-value="modelValue"
+      @update:model-value="onSelectedKeyChange"
+      @close-selector="closeSelector"
+      @open-selector="openSelector"
+      @open-editor="openEditor"
+    ></key-storage-view>
+  </modal>
+  <modal
+    id="storageuploadkey"
+    ref="modalEdit"
+    v-model="modalEdit"
+    title="Add or Upload a Key"
+    :footer="false"
+    auto-focus
+    append-to-body
+  >
+    <key-storage-edit
+      :upload-setting="uploadSetting"
+      :root-path="rootPath"
+      :storage-filter="storageFilter"
+      @cancel-editing="handleCancelEditing"
+      @finish-editing="handleFinishEditing"
+    ></key-storage-edit>
+  </modal>
 </template>
 
 <script lang="ts">
