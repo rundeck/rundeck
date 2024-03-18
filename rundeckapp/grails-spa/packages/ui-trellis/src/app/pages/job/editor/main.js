@@ -15,6 +15,7 @@ import OptionsEditorSection from "./OptionsEditorSection.vue";
 import { getRundeckContext } from "@/library";
 import { loadJsonData } from "@/app/utilities/loadJsonData";
 import NextUiToggle from "@/app/pages/job/browse/NextUiToggle.vue";
+import WorkflowEditorSection from "@/app/pages/job/editor/WorkflowEditorSection.vue";
 
 const locale = window._rundeck.locale || "en_US";
 moment.locale(locale);
@@ -121,22 +122,35 @@ for (let i = 0; i < scsels.length; i++) {
     return updateLocaleMessages(i18n, locale, lang, newMessages);
   });
   sapp.mount(e);
+}
 
-  const othels = document.body.getElementsByClassName("job-editor-other-vue");
+const othels = document.body.getElementsByClassName("job-editor-other-vue");
 
-  for (let i = 0; i < othels.length; i++) {
-    const e = othels[i];
-    const oapp = createApp({
-      name: "JobEditOtherApp",
-      components: { OtherEditorSection },
-      data() {
-        return { EventBus };
-      },
-    });
-    oapp.use(uiv);
-    oapp.use(i18n);
-    oapp.mount(e);
-  }
+for (let i = 0; i < othels.length; i++) {
+  const e = othels[i];
+  const oapp = createApp({
+    name: "JobEditOtherApp",
+    components: { OtherEditorSection },
+    data() {
+      return { EventBus };
+    },
+  });
+  oapp.use(uiv);
+  oapp.use(i18n);
+  oapp.mount(e);
+}
+
+const wfels = document.body.getElementsByClassName("job-editor-workflow-vue");
+
+for (let i = 0; i < wfels.length; i++) {
+  const e = wfels[i];
+  const oapp = createApp({
+    name: "JobEditWorkflowApp",
+    components: { WorkflowEditorSection },
+  });
+  oapp.use(uiv);
+  oapp.use(i18n);
+  oapp.mount(e);
 }
 
 //on job edit page listen for dom content changes and install UI Sockets

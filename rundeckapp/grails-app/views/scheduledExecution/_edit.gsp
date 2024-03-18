@@ -232,7 +232,9 @@
               </div>
           </div>
       </section>%{--//Options--}%
-
+        <div class="job-editor-workflow-vue">
+            <workflow-editor-section />
+        </div>
       %{--Workflow--}%
       <section id="workflowContent" class="section-separator section-space-lg" >
           <div class="form-group">
