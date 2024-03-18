@@ -76,6 +76,9 @@ class LogFilterSpec extends SeleniumBase{
         deleteProject(projectName)
     }
 
+    /**
+     * It adds a highlight log filter to the step and then it checks for the CSS to be present
+     */
     def "job step filter highlight"(){
         given:
         def projectName = "stepLogFilterProject"
