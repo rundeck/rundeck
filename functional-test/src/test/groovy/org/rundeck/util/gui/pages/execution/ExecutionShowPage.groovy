@@ -19,7 +19,8 @@ class ExecutionShowPage extends BasePage {
     By viewContentNodesBy = By.cssSelector("#nodes")
     By viewButtonNodesBy = By.cssSelector("#btn_view_nodes")
     By viewContentOutputBy = By.cssSelector("#output")
-    By viewButtonOutputBy = By.cssSelector("#btn_view_output")
+    By viewButtonOutputBy = By.id("btn_view_output")
+    By logOutputBy = By.className("execution-log__content-text")
 
     ExecutionShowPage(final SeleniumContext context) {
         super(context)
@@ -53,6 +54,10 @@ class ExecutionShowPage extends BasePage {
 
     WebElement getViewButtonOutput() {
         el viewButtonOutputBy
+    }
+
+    List<WebElement> getLogOutput(){
+        els logOutputBy
     }
 
 }

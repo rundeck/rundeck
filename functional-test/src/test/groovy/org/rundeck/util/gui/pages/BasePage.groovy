@@ -190,4 +190,8 @@ abstract class BasePage {
         new WebDriverWait(driver, Duration.ofSeconds(20))
                 .until(ExpectedConditions.numberOfElementsToBe(By.partialLinkText(linkText), times))
     }
+
+    WebElement getElementByCss(String css){
+        el By.cssSelector(css)
+    }
 }
