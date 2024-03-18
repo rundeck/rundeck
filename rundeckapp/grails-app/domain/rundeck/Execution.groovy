@@ -88,6 +88,8 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         retryOriginalId(nullable: true)
         retryPrevId(nullable: true)
         extraMetadata(nullable: true)
+        uuid(nullable: true)
+        jobUuid(nullable: true)
     }
 
     static mapping = {
