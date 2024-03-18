@@ -270,9 +270,18 @@
             prop.staticTextDefaultValue
           }}</span>
           <span
-            v-if="prop.options['staticTextContentType'] === 'text/markdown'"
+            v-else-if="
+              prop.options['staticTextContentType'] === 'text/markdown'
+            "
             >{{ prop.staticTextDefaultValue }}</span
           >
+          <span
+            v-else-if="
+              prop.options['staticTextContentType'] ===
+              'application/x-text-html-sanitized'
+            "
+            v-html="prop.staticTextDefaultValue"
+          ></span>
           <span v-else>{{ prop.staticTextDefaultValue }}</span>
         </template>
         <template

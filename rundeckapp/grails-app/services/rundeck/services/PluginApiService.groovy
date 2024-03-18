@@ -318,6 +318,23 @@ class PluginApiService {
      * @return
      */
     Map pluginPropertyMap(String service, String pluginName, Property prop) {
+        def optsMap = asStringMap(prop)
+        def staticTextDefaultValue = uiPluginService.getPluginMessage(
+            service,
+            pluginName,
+            "property.${prop.name}.defaultValue",
+            prop.defaultValue ?: '',
+            locale
+        )
+        if(staticTextDefaultValue && optsMap['staticTextContentType'] in ['text/html','text/markdown']){
+            if(optsMap['staticTextContentType'] == 'text/markdown') {
+                staticTextDefaultValue = staticTextDefaultValue.decodeMarkdown()
+                optsMap['staticTextContentType'] = 'application/x-text-html-sanitized'
+            }else{
+                staticTextDefaultValue = staticTextDefaultValue.encodeAsSanitizedHTML()
+                optsMap['staticTextContentType'] = 'application/x-text-html-sanitized'
+            }
+        }
         [
             name                  : prop.name,
             desc                  : uiPluginService.getPluginMessage(
@@ -335,19 +352,13 @@ class PluginApiService {
                 locale
             ),
             defaultValue          : prop.defaultValue,
-            staticTextDefaultValue: uiPluginService.getPluginMessage(
-                service,
-                pluginName,
-                "property.${prop.name}.defaultValue",
-                prop.defaultValue ?: '',
-                locale
-            ),
+            staticTextDefaultValue: staticTextDefaultValue,
             required              : prop.required,
             type                  : prop.type.toString(),
             allowed               : prop.selectValues,
             selectLabels          : prop.selectLabels,
             scope                 : prop.scope?.toString(),
-            options               : asStringMap(prop)
+            options               : optsMap
         ]
     }
 
