@@ -69,7 +69,7 @@
         v-else-if="isShowConfigForm && inputLoaded"
         class="col-xs-12 col-sm-12 form-horizontal"
       >
-        <div class="form-group">
+        <div class="form-group" v-if="$slots.extraProperties">
           <div class="col-sm-12">
             <slot name="extraProperties"></slot>
           </div>
