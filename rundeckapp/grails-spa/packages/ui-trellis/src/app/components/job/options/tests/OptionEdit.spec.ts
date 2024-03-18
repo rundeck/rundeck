@@ -369,6 +369,7 @@ describe("OptionEdit", () => {
     ["valuesListDelimiter", {}],
     ["regex", { regex: "asdf" }],
     ["hidden", {}],
+    ["required", {}],
     ["delimiter", { multivalued: true }],
   ])(
     "shows validation errors for field %p",
