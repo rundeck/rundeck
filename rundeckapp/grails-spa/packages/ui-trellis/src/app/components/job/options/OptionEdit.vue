@@ -564,7 +564,11 @@
       <!-- end MAIN section -->
     </div>
     <!-- required (all) -->
-    <div class="form-group">
+    <div
+      class="form-group"
+      data-test="option.required"
+      :class="{ 'has-error': hasError('required') }"
+    >
       <label class="col-sm-2 control-label">{{
         $t("Option.required.label")
       }}</label>
@@ -595,6 +599,9 @@
         </div>
         <div class="help-block">
           {{ $t("Option.required.description") }}
+        </div>
+        <div class="help-block" v-if="validationErrors['required']">
+          <ErrorsList :errors="validationErrors['required']" />
         </div>
       </div>
     </div>
