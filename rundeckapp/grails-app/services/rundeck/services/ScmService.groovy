@@ -301,12 +301,6 @@ class ScmService {
     }
 
     private String pathForConfigFile(String integration) {
-        if(frameworkService.isClusterModeEnabled()){ //universal config for cluster
-            return "etc/scm-${integration}.properties"
-        }
-        if (frameworkService.serverUUID) {
-            return "${frameworkService.serverUUID}/etc/scm-${integration}.properties"
-        }
         "etc/scm-${integration}.properties"
     }
 
