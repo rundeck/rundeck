@@ -166,12 +166,19 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
             1 * service.uiPluginService.getPluginMessage(
                 'svc',
                 'provider',
+                "property.prop1.description",
+                _,
+                _
+            ) >> 'description.message'
+            1 * service.uiPluginService.getPluginMessage(
+                'svc',
+                'provider',
                 "property.prop1.defaultValue",
                 _,
                 _
             ) >> 'defaultValue.message'
             result.name == 'prop1'
-            result.desc == 'A fake property for the fake plugin'
+            result.desc == 'description.message'
             result.title == 'title.message'
             result.defaultValue == 'alpha'
             result.staticTextDefaultValue == 'defaultValue.message'

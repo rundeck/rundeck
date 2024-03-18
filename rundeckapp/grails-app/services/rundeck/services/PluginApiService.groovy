@@ -320,7 +320,13 @@ class PluginApiService {
     Map pluginPropertyMap(String service, String pluginName, Property prop) {
         [
             name                  : prop.name,
-            desc                  : prop.description,
+            desc                  : uiPluginService.getPluginMessage(
+                service,
+                pluginName,
+                "property.${prop.name}.description",
+                prop.description ?: '',
+                locale
+            ),
             title                 : uiPluginService.getPluginMessage(
                 service,
                 pluginName,
