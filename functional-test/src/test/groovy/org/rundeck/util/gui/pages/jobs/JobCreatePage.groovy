@@ -74,7 +74,9 @@ class JobCreatePage extends BasePage {
     By revertWfConfirmBy = By.xpath('//*[starts-with(@id,"popover")]/div[2]/span[2]')
     By listWorkFlowItemBy = By.xpath("//*[starts-with(@id,'wfitem_')]")
     By addSimpleCommandStepBy = By.xpath("//span[contains(@onclick, 'wfnewbutton')]")
-    By defaultTabNodes = By.id("tabSummary")
+    By defaultTabNodes  = By.id("tabSummary")
+    By defaultTabOutput = By.id("tabOutput")
+    By defaultTabHtml   = By.id("tabHTML")
 
     String loadPath = "/job/create"
 
@@ -404,6 +406,14 @@ class JobCreatePage extends BasePage {
 
     WebElement getDefaultTabNodes() {
         return el(defaultTabNodes)
+    }
+
+    WebElement getDefaultTabOutput() {
+        return el(defaultTabOutput)
+    }
+
+    WebElement getDefaultTabHtml() {
+        return el(defaultTabHtml)
     }
 
     WebElement getAutocompleteSuggestions() {
