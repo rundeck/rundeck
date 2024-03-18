@@ -1,5 +1,5 @@
 <template>
-  <span v-if="showDescription" :class="descriptionCss" style="margin-left: 5px">
+  <span v-if="showDescription" :class="descriptionCss">
     {{ shortDescription }}
   </span>
   <details
