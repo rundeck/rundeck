@@ -39,7 +39,7 @@ class RundeckJaasAuthenticationSuccessEventListener implements ApplicationListen
     @Override
     void onApplicationEvent(final JaasAuthenticationSuccessEvent event) {
         try {
-            if (configurationService.getBoolean('security.syncLdapUser', false)) {
+            if (configurationService.grailsApplication?.config?.rundeck?.security?.syncLdapUser in [true, 'true']) {
                 Subject subject = ((JaasAuthenticationToken) event.authentication).loginContext.subject
 
                 String username = event.authentication.principal.toString()
