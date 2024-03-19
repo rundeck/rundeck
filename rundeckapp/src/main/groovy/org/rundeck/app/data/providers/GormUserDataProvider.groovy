@@ -48,7 +48,7 @@ class GormUserDataProvider implements UserDataProvider {
     @Override
     @Transactional
     User findOrCreateUser(String login) throws DataAccessException {
-        User user = User.findByLogin(login)
+        User user = User.findByLoginIlike(login)
         if (!user) {
             User newUser = new User(login: login)
             if (!newUser.save(flush: true)) {
@@ -60,7 +60,7 @@ class GormUserDataProvider implements UserDataProvider {
     }
 
     static User getUserByLoginOrCreate(String login) {
-        User user = User.findByLogin(login)
+        User user = User.findByLoginIlike(login)
         if (!user) {
             user = new User(login: login)
         }
@@ -214,15 +214,25 @@ class GormUserDataProvider implements UserDataProvider {
             } as List<RdUser>
         }
         def response = new UserFilteredResponse()
-        response.setTotalRecords(totalRecords)
-        response.setUsers(users)
+        //IN PROGRESS evaluate feature flag to get old behavior ?
+        boolean caseInsensitive = true
+
         response.setShowLoginStatus(showLoginStatus)
+
+        if (caseInsensitive){
+            response.setUsers(getUserListIgnoringCases(users))
+            response.setTotalRecords(getUserListIgnoringCases(users).size())
+        }
+        else{
+            response.setUsers(users)
+            response.setTotalRecords(totalRecords)
+        }
         return response
     }
 
     @Override
     boolean validateUserExists(String username) {
-        return User.countByLogin(username) > 0
+        return User.countByLoginIlike(username) > 0
     }
 
     @Override
@@ -239,7 +249,7 @@ class GormUserDataProvider implements UserDataProvider {
 
     @Override
     RdUser findByLogin(String login) {
-        return User.findByLogin(login)
+        return User.findByLoginIlike(login)
     }
 
     @Override
@@ -250,7 +260,7 @@ class GormUserDataProvider implements UserDataProvider {
     @Override
     @Transactional
     SaveUserResponse updateFilterPref(String login, String filterPref) {
-        User user = User.findByLogin(login)
+        User user = User.findByLoginIlike(login)
         user.filterPref = filterPref
         Boolean isSaved = user.save()
         return new SaveUserResponse(user: user, isSaved: isSaved, errors: user.errors)
@@ -260,7 +270,7 @@ class GormUserDataProvider implements UserDataProvider {
     String getEmailWithNewSession(String login) {
         if (!login) { return "" }
         User.withNewSession {
-            def userLogin = User.findByLogin(login)
+            def userLogin = User.findByLoginIlike(login)
             if (!userLogin || !userLogin.email) { return "" }
             return userLogin.email
         }
@@ -314,4 +324,21 @@ class GormUserDataProvider implements UserDataProvider {
     def getSessionIdRegisterMethod() {
         configurationService.getString(SESSION_ID_METHOD, 'hash')
     }
+
+    static def getUserListIgnoringCases( List<RdUser> users){
+
+        def uniqueLogin = [:]
+
+        def userList = users.findAll { user ->
+            def loginLowerCase = user.login.toLowerCase()
+            if (!uniqueLogin[loginLowerCase]) {
+                uniqueLogin[loginLowerCase] = true
+                true
+            } else {
+                false
+            }
+        }
+        return userList
+    }
+
 }
