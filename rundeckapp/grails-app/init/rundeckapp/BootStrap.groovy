@@ -467,7 +467,6 @@ class BootStrap {
                 }
             }
 
-             logFileStorageService.cleanupDuplicates()
              def resumeMode = configurationService.getString(LogFileStorageService.STARTUP_RESUMEMODE, "")
              if ('sync' == resumeMode) {
                  timer("logFileStorageService.resumeIncompleteLogStorage") {
