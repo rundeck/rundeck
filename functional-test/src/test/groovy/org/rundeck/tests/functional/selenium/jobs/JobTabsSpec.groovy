@@ -3,34 +3,37 @@ package org.rundeck.tests.functional.selenium.jobs
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
-import org.rundeck.util.gui.pages.home.HomePage
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobShowPage
 import org.rundeck.util.gui.pages.jobs.JobTab
 import org.rundeck.util.gui.pages.login.LoginPage
-import org.rundeck.util.gui.pages.project.DashboardPage
-import org.rundeck.util.gui.pages.project.ProjectCreatePage
-
 
 @SeleniumCoreTest
 class JobTabsSpec extends SeleniumBase {
 
+    static final String PROJECT_NAME = 'job_nodes_tab'
+
+    def setupSpec() {
+        startEnvironment()
+    }
+
     void setup() {
         def loginPage = go(LoginPage)
         loginPage.login(TEST_USER, TEST_PASS)
+        setupProject(PROJECT_NAME)
+    }
+
+    def cleanup() {
+        deleteProject(PROJECT_NAME)
     }
 
     void "job nodes tab"() {
         when:
-            String projectName = "job_nodes_tab"
-            def homePage = page(HomePage)
-            def projectCreatePage = page(ProjectCreatePage)
+            final String option = 'nodes'
             def jobShowPage = page(JobShowPage)
             def executionShowPage = page(ExecutionShowPage)
         then:
-            homePage.createProjectButton()
-            projectCreatePage.createProject(projectName)
-            def jobCreatePage = go(JobCreatePage, projectName)
+            def jobCreatePage = go(JobCreatePage, PROJECT_NAME)
             jobCreatePage.fillBasicJob('jobNodesTab')
             jobCreatePage.addSimpleCommandStepButton.click()
             jobCreatePage.addSimpleCommandStep('echo "hello world"', 1)
@@ -43,23 +46,17 @@ class JobTabsSpec extends SeleniumBase {
             jobCreatePage.updateBtn.click()
             jobShowPage.runJobBtn.click()
         expect:
-            currentUrl.endsWith("nodes")
+            currentUrl.endsWith(option)
+            executionShowPage.isTabOption(option)
             executionShowPage.waitForElementAttributeToChange(executionShowPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED')
-        cleanup:
-            deleteProject(projectName)
     }
 
     void "job log output tab"() {
         when:
-            String projectName = "job_log_output_tab"
-            def homePage = page(HomePage)
-            def projectCreatePage = page(ProjectCreatePage)
             def jobShowPage = page(JobShowPage)
             def executionShowPage = page(ExecutionShowPage)
         then:
-            homePage.createProjectButton()
-            projectCreatePage.createProject(projectName)
-            def jobCreatePage = go(JobCreatePage, projectName)
+            def jobCreatePage = go(JobCreatePage, PROJECT_NAME)
             jobCreatePage.fillBasicJob('jobOutputTab')
             jobCreatePage.addSimpleCommandStepButton.click()
             jobCreatePage.addSimpleCommandStep('echo "hello world"', 1)
@@ -74,21 +71,13 @@ class JobTabsSpec extends SeleniumBase {
         expect:
             currentUrl.endsWith("output")
             executionShowPage.waitForElementAttributeToChange(executionShowPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED')
-        cleanup:
-            deleteProject(projectName)
     }
 
     void "job log html tab"() {
         when:
-            String projectName = "job_log_html_tab"
-            def homePage = page(HomePage)
-            def projectCreatePage = page(ProjectCreatePage)
             def jobShowPage = page(JobShowPage)
-            def dashboardPage = page(DashboardPage)
         then:
-            homePage.createProjectButton()
-            projectCreatePage.createProject(projectName)
-            def jobCreatePage = go(JobCreatePage, projectName)
+            def jobCreatePage = go(JobCreatePage, PROJECT_NAME)
             jobCreatePage.fillBasicJob('jobHtmlTab')
             jobCreatePage.addSimpleCommandStepButton.click()
             jobCreatePage.addSimpleCommandStep('echo "hello world"', 1)
@@ -102,8 +91,5 @@ class JobTabsSpec extends SeleniumBase {
             jobShowPage.runJobBtn.click()
         expect:
             currentUrl.endsWith("convertContent=on&loglevels=on&ansicolor=on&reload=true")
-        cleanup:
-            dashboardPage.go()
-            deleteProject(projectName)
     }
 }
