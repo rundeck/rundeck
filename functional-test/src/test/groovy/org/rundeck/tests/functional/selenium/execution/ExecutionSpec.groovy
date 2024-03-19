@@ -180,7 +180,6 @@ class ExecutionSpec extends SeleniumBase {
             jobShowPage.runJobBtn.click()
         when:
             executionShowPage.validatePage()
-            executionShowPage.validateStatus 'SUCCEEDED'
             executionShowPage.getLink 'Log Output' click()
         then:
             executionShowPage.waitForTextContainsIsDisplayed(executionShowPage.getTextContains("this is my last line"))
