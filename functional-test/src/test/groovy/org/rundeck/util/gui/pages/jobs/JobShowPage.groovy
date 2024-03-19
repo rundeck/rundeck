@@ -49,6 +49,10 @@ class JobShowPage extends BasePage{
     By jobSearchSubmitBy = By.cssSelector('#jobs_filters form #jobs_filters_footer input[type="submit"][name="_action_jobs"]')
     By runJobBtn = By.id("execFormRunButton")
     By logOutputBtn = By.id('btn_view_output')
+    By jobActionsListButtonBy = By.linkText("Action")
+    By jobDeleteButtonBy = By.linkText("Delete this Job")
+    By jobDeleteConfirmBy = By.xpath("//*[@value=\"Delete\"]")
+    By jobDeleteModalBy = By.id("jobdelete")
 
     static final String PAGE_PATH = "/job/show"
     String loadPath = "/job/show"
@@ -220,6 +224,27 @@ class JobShowPage extends BasePage{
     def expectNumberOfStepsToBe(int steps){
         new WebDriverWait(driver,  Duration.ofSeconds(10)).until(
                 ExpectedConditions.numberOfElementsToBe(stepsInJobDefinitionBy, steps)
+        )
+    }
+
+    /**
+     * It returns the list of "Actions" buttons
+     */
+    def getJobActionsButtonList(){
+        (el jobActionsListButtonBy)
+    }
+
+    def getJobDeleteButtons(){
+        (el jobDeleteButtonBy)
+    }
+
+    def getJobDeleteConfirmBy(){
+        (el jobDeleteConfirmBy)
+    }
+
+    def waitForJobDeleteModalToBeShown(){
+        new WebDriverWait(driver,  Duration.ofSeconds(5)).until(
+                ExpectedConditions.visibilityOf(el jobDeleteModalBy)
         )
     }
 

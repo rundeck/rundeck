@@ -26,6 +26,8 @@ class JobListPage extends BasePage {
     By runJobButtonDisabled = By.cssSelector(".btn.btn-default.btn-xs.disabled")
     By executionPausedIcon = By.cssSelector(".glyphicon.glyphicon-pause")
     By scheduleDisabledIcon = By.cssSelector(".glyphicon.glyphicon-ban-circle")
+    By jobRunLinkBy = By.cssSelector(".btn.btn-success.btn-simple.btn-hover.btn-xs.act_execute_job")
+    By alertMessageBy = By.cssSelector(".alert.alert-info")
 
     JobListPage(final SeleniumContext context) {
         super(context)
@@ -96,6 +98,18 @@ class JobListPage extends BasePage {
 
     WebElement getBodyNextUI(){
         el bodyNextUIBy
+    }
+
+    def getCountJobList(){
+        (els jobRunLinkBy).size()
+    }
+
+    def getJobLink(String jobName){
+        (el By.linkText(jobName))
+    }
+
+    def getDeleteAlertMessage(){
+        (el alertMessageBy)
     }
 
 }
