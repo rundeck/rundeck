@@ -9,9 +9,11 @@ import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.UserService
 import rundeck.services.data.UserDataService
+import spock.lang.Stepwise
 import spock.lang.Unroll
 import testhelper.RundeckHibernateSpec
 
+@Stepwise
 class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest {
     GormUserDataProvider provider = new GormUserDataProvider()
 
@@ -25,7 +27,7 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
     def "Find or create User"() {
         given:
         User savedUser = new User(login: "saved")
-        savedUser.save()
+        1 * savedUser.save()
         when:
         User user = provider.findOrCreateUser(login)
         then:
@@ -57,7 +59,7 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         User savedUser = new User(login: "saved")
         savedUser.save()
         when:
-        User user = provider.registerLogin(login, sessionId)
+        User user = provider.registerLogin(login.toUpperCase(), sessionId)
         then:
         user.getLogin() == login
         user.getLastLogin()
@@ -115,7 +117,7 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         when:
         provider.updateUserProfile(login, lastName, firstName, email)
         then:
-        User user = User.findByLogin(login)
+        User user = provider.findOrCreateUser(login.toUpperCase())
         user.id
         user.getLogin() == login
         user.getLastName() == lastName
@@ -225,7 +227,7 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         where:
         login   | expect
         "login" | false
-        "saved" | true
+        "SAVED" | true
     }
 
     def "Should list all by order by login"() {
@@ -272,7 +274,7 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         !result == !found
         where:
         login   | found
-        "user"  | true
+        "USER"  | true
         "admin" | false
     }
 
