@@ -9,11 +9,9 @@ import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.UserService
 import rundeck.services.data.UserDataService
-import spock.lang.Stepwise
 import spock.lang.Unroll
 import testhelper.RundeckHibernateSpec
 
-@Stepwise
 class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest {
     GormUserDataProvider provider = new GormUserDataProvider()
 
@@ -27,7 +25,7 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
     def "Find or create User"() {
         given:
         User savedUser = new User(login: "saved")
-        1 * savedUser.save()
+        savedUser.save()
         when:
         User user = provider.findOrCreateUser(login)
         then:
@@ -59,7 +57,7 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         User savedUser = new User(login: "saved")
         savedUser.save()
         when:
-        User user = provider.registerLogin(login.toUpperCase(), sessionId)
+        User user = provider.registerLogin(login, sessionId)
         then:
         user.getLogin() == login
         user.getLastLogin()
