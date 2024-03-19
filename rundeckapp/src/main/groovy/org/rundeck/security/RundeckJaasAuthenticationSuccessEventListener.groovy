@@ -34,7 +34,6 @@ class RundeckJaasAuthenticationSuccessEventListener implements ApplicationListen
     EventBusAware {
     private static final Logger LOG = LoggerFactory.getLogger(RundeckJaasAuthenticationSuccessEventListener)
     ConfigurationService configurationService
-    UserService userService
 
     @Override
     void onApplicationEvent(final JaasAuthenticationSuccessEvent event) {
@@ -56,12 +55,17 @@ class RundeckJaasAuthenticationSuccessEventListener implements ApplicationListen
                 LOG.debug("First Name: " + firstNamePrincipal?.name)
                 LOG.debug("Last Name: " + lastNamePrincipal?.name)
                 LOG.debug("Email: " + emailPrincipal?.name)
-                userService.updateUserProfile(
-                        username,
-                        lastNamePrincipal?.name,
-                        firstNamePrincipal?.name,
-                        emailPrincipal?.name
-                )
+
+                eventBus.
+                    notify(
+                        UserService.G_EVENT_LOGIN_PROFILE_CHANGE,
+                        new UserService.UserProfileData(
+                            username: username,
+                            lastName: lastNamePrincipal?.name,
+                            firstName: firstNamePrincipal?.name,
+                            email: emailPrincipal?.name
+                        )
+                    )
             }
         } catch(Exception ex) {
             LOG.error("Unable to update user profile from LDAP.",ex)
