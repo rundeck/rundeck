@@ -21,6 +21,8 @@ class ExecutionShowPage extends BasePage {
     By viewContentOutputBy = By.cssSelector("#output")
     By viewButtonOutputBy = By.id("btn_view_output")
     By logOutputBy = By.className("execution-log__content-text")
+    By logOutputSwitchBy = By.id("btn_view_output")
+    By nodeFlowStateBy = By.id("nodeflowstate")
 
     ExecutionShowPage(final SeleniumContext context) {
         super(context)
@@ -58,6 +60,14 @@ class ExecutionShowPage extends BasePage {
 
     List<WebElement> getLogOutput(){
         els logOutputBy
+    }
+
+    WebElement getLogOutputSwitch(){
+        el logOutputSwitchBy
+    }
+
+    WebElement getNodeFlowState(){
+        el nodeFlowStateBy
     }
 
 }

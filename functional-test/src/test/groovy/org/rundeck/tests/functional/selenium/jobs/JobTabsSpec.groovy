@@ -3,10 +3,13 @@ package org.rundeck.tests.functional.selenium.jobs
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
+import org.rundeck.util.gui.pages.execution.HtmlRenderedOutputPage
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobShowPage
 import org.rundeck.util.gui.pages.jobs.JobTab
 import org.rundeck.util.gui.pages.login.LoginPage
+
+import java.util.stream.Collectors
 
 @SeleniumCoreTest
 class JobTabsSpec extends SeleniumBase {
@@ -34,9 +37,9 @@ class JobTabsSpec extends SeleniumBase {
             def executionShowPage = page(ExecutionShowPage)
         then:
             def jobCreatePage = go(JobCreatePage, PROJECT_NAME)
-            jobCreatePage.fillBasicJob('jobNodesTab')
-            jobCreatePage.addSimpleCommandStepButton.click()
-            jobCreatePage.addSimpleCommandStep('echo "hello world"', 1)
+            jobCreatePage.jobNameInput.sendKeys("test-output-tab")
+            jobCreatePage.tab(JobTab.WORKFLOW).click()
+            jobCreatePage.addSimpleCommandStep('echo "hello world"', 0)
             jobCreatePage.createJobButton.click()
             jobShowPage.jobActionDropdownButton.click()
             jobShowPage.waitForElementToBeClickable(jobShowPage.editJobLink)
@@ -45,9 +48,12 @@ class JobTabsSpec extends SeleniumBase {
             jobCreatePage.defaultTabNodes.click()
             jobCreatePage.updateBtn.click()
             jobShowPage.runJobBtn.click()
+            def logOutputSwitch = executionShowPage.logOutputSwitch
+            def nodeViewContainer = executionShowPage.nodeFlowState
         expect:
             currentUrl.endsWith(option)
-            executionShowPage.isTabOption(option)
+            logOutputSwitch.getAttribute("style") == ""
+            nodeViewContainer.isDisplayed()
             executionShowPage.waitForElementAttributeToChange(executionShowPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED')
     }
 
@@ -57,9 +63,9 @@ class JobTabsSpec extends SeleniumBase {
             def executionShowPage = page(ExecutionShowPage)
         then:
             def jobCreatePage = go(JobCreatePage, PROJECT_NAME)
-            jobCreatePage.fillBasicJob('jobOutputTab')
-            jobCreatePage.addSimpleCommandStepButton.click()
-            jobCreatePage.addSimpleCommandStep('echo "hello world"', 1)
+            jobCreatePage.jobNameInput.sendKeys("test-output-tab")
+            jobCreatePage.tab(JobTab.WORKFLOW).click()
+            jobCreatePage.addSimpleCommandStep('echo "hello world"', 0)
             jobCreatePage.createJobButton.click()
             jobShowPage.jobActionDropdownButton.click()
             jobShowPage.waitForElementToBeClickable(jobShowPage.editJobLink)
@@ -68,19 +74,29 @@ class JobTabsSpec extends SeleniumBase {
             jobCreatePage.defaultTabOutput.click()
             jobCreatePage.updateBtn.click()
             jobShowPage.runJobBtn.click()
+            def logOutputSwitch = executionShowPage.logOutputSwitch
+            def nodeViewContainer = executionShowPage.nodeFlowState
         expect:
             currentUrl.endsWith("output")
+            logOutputSwitch.getAttribute("style") == "display: none;"
+            !nodeViewContainer.isDisplayed()
             executionShowPage.waitForElementAttributeToChange(executionShowPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED')
     }
 
     void "job log html tab"() {
         when:
+            def commandArg = "hello world"
+            def command = "echo"
+            def fullCommand = "${command} ${commandArg}"
             def jobShowPage = page(JobShowPage)
+            def executionShowPage = page(ExecutionShowPage)
+            def htmlOutputPage = page HtmlRenderedOutputPage
+            htmlOutputPage.loadHtmlOutputForProject(PROJECT_NAME)
         then:
             def jobCreatePage = go(JobCreatePage, PROJECT_NAME)
-            jobCreatePage.fillBasicJob('jobHtmlTab')
-            jobCreatePage.addSimpleCommandStepButton.click()
-            jobCreatePage.addSimpleCommandStep('echo "hello world"', 1)
+            jobCreatePage.jobNameInput.sendKeys("test-html-output")
+            jobCreatePage.tab(JobTab.WORKFLOW).click()
+            jobCreatePage.addSimpleCommandStep(fullCommand, 0)
             jobCreatePage.createJobButton.click()
             jobShowPage.jobActionDropdownButton.click()
             jobShowPage.waitForElementToBeClickable(jobShowPage.editJobLink)
@@ -89,7 +105,10 @@ class JobTabsSpec extends SeleniumBase {
             jobCreatePage.defaultTabHtml.click()
             jobCreatePage.updateBtn.click()
             jobShowPage.runJobBtn.click()
+            executionShowPage.waitForElementVisible(htmlOutputPage.logLevelNormalBy)
         expect:
+            htmlOutputPage.validatePage()
+            htmlOutputPage.logLevelNormalLogLine.text == commandArg
             currentUrl.endsWith("convertContent=on&loglevels=on&ansicolor=on&reload=true")
     }
 }
