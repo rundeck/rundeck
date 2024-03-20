@@ -15,7 +15,7 @@ import java.time.Duration
  * Job create page
  */
 @CompileStatic
-    class JobCreatePage extends BasePage {
+class JobCreatePage extends BasePage {
 
     By numberOfStepsBy = By.cssSelector(".autohilite.autoedit.wfitem.exectype")
     By notificationModalBy = By.cssSelector('#job-notifications-edit-modal')
@@ -80,6 +80,10 @@ import java.time.Duration
     By revertWfConfirmBy = By.xpath('//*[starts-with(@id,"popover")]/div[2]/span[2]')
     By listWorkFlowItemBy = By.xpath("//*[starts-with(@id,'wfitem_')]")
     By addSimpleCommandStepBy = By.xpath("//span[contains(@onclick, 'wfnewbutton')]")
+    By updateBtn        = By.name("_action_Update")
+    By defaultTabNodes  = By.id("tabSummary")
+    By defaultTabOutput = By.id("tabOutput")
+    By defaultTabHtml   = By.id("tabHTML")
 
     String loadPath = "/job/create"
 
@@ -342,7 +346,7 @@ import java.time.Duration
     WebElement getNodesSelectedByDefaultFalseCheck() {
         el nodesSelectedByDefaultFalseBy
     }
-    
+
     WebElement getOrchestratorDropdownButton() {
         el orchestratorDropdownBy
     }
@@ -437,6 +441,22 @@ import java.time.Duration
 
     WebElement getAddSimpleCommandStepButton() {
         el addSimpleCommandStepBy
+    }
+
+    WebElement getUpdateBtn() {
+        return el(updateBtn)
+    }
+
+    WebElement getDefaultTabNodes() {
+        (el defaultTabNodes)
+    }
+
+    WebElement getDefaultTabOutput() {
+        (el defaultTabOutput)
+    }
+
+    WebElement getDefaultTabHtml() {
+        (el defaultTabHtml)
     }
 
     WebElement getAutocompleteSuggestions() {
