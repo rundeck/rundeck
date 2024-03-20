@@ -1,5 +1,6 @@
 package org.rundeck.tests.functional.selenium.jobs
 
+import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobListPage
 import org.rundeck.util.gui.pages.jobs.JobShowPage
@@ -20,8 +21,7 @@ class JobsSpec extends SeleniumBase {
     }
 
     def setup() {
-        def loginPage = go LoginPage
-        loginPage.login(TEST_USER, TEST_PASS)
+        go(LoginPage).login(TEST_USER, TEST_PASS)
     }
 
     def "change workflow strategy"() {
@@ -395,5 +395,23 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.addSimpleCommandStepButton.click()
             jobCreatePage.addSimpleCommandStep 'echo selenium test', 0
             jobCreatePage.createJobButton.click()
+    }
+
+    def "job timeout should finish job with timeout status and step marked as failed"(){
+        setup:
+        final String projectName = 'JobTimeOutTest'
+        setupProjectArchiveDirectoryResource(projectName, "/projects-import/${projectName}.rdproject")
+        JobShowPage jobPage = page(JobShowPage, projectName).forJob('1032a729-c251-4940-86b5-20f99cb5e769')
+        jobPage.go()
+
+        when:
+        ExecutionShowPage executionPage = jobPage.runJob(true)
+
+        then:
+        noExceptionThrown()
+        verifyAll {
+            executionPage.getExecutionStatus() == 'TIMEDOUT'
+            executionPage.getNodesView().expandNode(0).getExecStateForSteps() == ['SUCCEEDED', 'FAILED']
+        }
     }
 }
