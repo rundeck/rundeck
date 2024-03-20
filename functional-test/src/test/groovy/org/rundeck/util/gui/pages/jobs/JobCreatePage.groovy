@@ -80,6 +80,8 @@ import java.time.Duration
     By revertWfConfirmBy = By.xpath('//*[starts-with(@id,"popover")]/div[2]/span[2]')
     By listWorkFlowItemBy = By.xpath("//*[starts-with(@id,'wfitem_')]")
     By addSimpleCommandStepBy = By.xpath("//span[contains(@onclick, 'wfnewbutton')]")
+    By notificationListBy = By.cssSelector(".flex-item.flex-grow-1")
+    By nofiticationChildsBy = By.className("text-success")
 
     String loadPath = "/job/create"
 
@@ -466,6 +468,20 @@ import java.time.Duration
         new WebDriverWait(driver,  Duration.ofSeconds(5)).until(
                 ExpectedConditions.numberOfElementsToBe(numberOfStepsBy, numberSteps)
         )
+    }
+
+    /**
+     * It gets the list of notification elements added to the job
+     */
+    def getNotificationList(){
+        (els notificationListBy)
+    }
+
+    /**
+     * It gets the list of notification childs so it can validate each config value
+     */
+    def getNotificationChilds(WebElement notificationParent){
+        notificationParent.findElements(nofiticationChildsBy)
     }
 
 }
