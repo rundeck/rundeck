@@ -105,6 +105,7 @@ class JobCreatePage extends BasePage {
     By jobOptionMultivaluedBy = By.xpath("//div[15]/div/div/div[2]/input")
     By jobOptionMultivaluedDelimiterBy = By.name("delimiter")
     By jobOptionMultiValuedAllSelectedBy = By.name("multivalueAllSelected")
+    By duplicateWfStepBy = By.cssSelector(".glyphicon.glyphicon-duplicate")
 
     String loadPath = "/job/create"
 
@@ -570,6 +571,14 @@ class JobCreatePage extends BasePage {
 
     WebElement getJobOptionMultiValuedAllSelectedInput(){
         el jobOptionMultiValuedAllSelectedBy
+    }
+
+    WebElement getDuplicateWfStepButton(){
+        el duplicateWfStepBy
+    }
+
+    WebElement getWfStepByListPosition(int position){
+        (el By.id("wfitem_${position}"))
     }
 
     void saveStep(Integer stepNumber) {

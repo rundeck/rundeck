@@ -544,4 +544,26 @@ class JobsSpec extends SeleniumBase {
         4         | true
 
     }
+
+    def "Step duplication"(){
+        given:
+        def projectName = "step-duplication-test"
+        JobCreatePage jobCreatePage = page JobCreatePage
+        JobShowPage jobShowPage = page JobShowPage
+        ActivityPage activityPage = page ActivityPage
+
+        when:
+        setupProject(projectName)
+        go JobCreatePage, projectName
+        jobCreatePage.jobNameInput.sendKeys("test-duplication")
+        jobCreatePage.tab(JobTab.WORKFLOW).click()
+        jobCreatePage.addSimpleCommandStep 'echo asd', 0
+        jobCreatePage.duplicateWfStepButton.click()
+        jobCreatePage.waitForElementVisible(jobCreatePage.getWfStepByListPosition(1))
+        jobCreatePage.createJobButton.click()
+
+        then:
+        true
+
+    }
 }
