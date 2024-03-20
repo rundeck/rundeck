@@ -15,6 +15,9 @@ import okhttp3.Response
 import okhttp3.ResponseBody
 import org.jetbrains.annotations.NotNull
 
+import java.nio.ByteBuffer
+import java.nio.CharBuffer
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
@@ -233,7 +236,8 @@ class RdClient {
     }
 
     Response doPostWithRawText(final String path, final String contentType, final String rawBody) {
-        RequestBody body = RequestBody.create(rawBody, MediaType.parse(contentType))
+        ByteBuffer byteBuffer = StandardCharsets.UTF_8.encode(CharBuffer.wrap( rawBody.toCharArray()))
+        RequestBody body = RequestBody.create(Arrays.copyOfRange(byteBuffer.array(), byteBuffer.position(), byteBuffer.limit()), MediaType.parse(contentType))
         Request request = new Request.Builder()
                 .url(apiUrl(path))
                 .method("POST", body)
