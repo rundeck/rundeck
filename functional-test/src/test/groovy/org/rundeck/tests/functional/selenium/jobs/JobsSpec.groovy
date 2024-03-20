@@ -337,7 +337,6 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.jobNameInput.sendKeys 'job workflow step context variables autocomplete'
             jobCreatePage.tab JobTab.WORKFLOW click()
             jobCreatePage.executeScript "window.location.hash = '#addnodestep'"
-            jobCreatePage.workFlowStepLink.click()
             jobCreatePage.stepLink 'com.batix.rundeck.plugins.AnsiblePlaybookInlineWorkflowStep', StepType.WORKFLOW click()
             jobCreatePage.ansibleBinariesPathField.clear()
             jobCreatePage.ansibleBinariesPathField.sendKeys '${job.id'

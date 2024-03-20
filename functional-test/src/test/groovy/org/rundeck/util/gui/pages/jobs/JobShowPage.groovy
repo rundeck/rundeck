@@ -7,6 +7,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.container.SeleniumContext
 import org.rundeck.util.gui.pages.BasePage
+import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.rundeck.util.gui.scm.ScmStatusBadge
 
 import java.time.Duration
@@ -71,6 +72,17 @@ class JobShowPage extends BasePage{
     JobShowPage forJob(String jobUuid){
         this.loadPath = "/project/$project/job/show/$jobUuid"
         return this
+    }
+
+    ExecutionShowPage runJob(boolean waitForFinalState = false){
+        getRunJobBtn().click()
+
+        ExecutionShowPage execution = new ExecutionShowPage(context)
+        if(waitForFinalState) {
+            execution.waitForFinalState()
+        }
+
+        return execution
     }
 
     ScmStatusBadge getScmStatusBadge(){
@@ -212,10 +224,16 @@ class JobShowPage extends BasePage{
         el logOutputBtn
     }
 
-    void waitForLogOutput (By logOutput, Integer number, Integer seconds){
-        new WebDriverWait(driver, Duration.ofSeconds(seconds)).until(ExpectedConditions.numberOfElementsToBeMoreThan(logOutput,number))
+    /**
+     * Waits for the log output to have more than `qtty` log entries containing logLineText
+     * @param logLineText text to match log entries
+     * @param minimum number of log entries that should contain logLineText
+     * @param timeout to be waiting for results
+     */
+    void waitForLogOutput (String logLineText, Integer minimum = 0, Integer timeout = 10){
+        By logLineSelector = By.xpath("//span[contains(text(),'${logLineText}')]")
+        new WebDriverWait(driver, Duration.ofSeconds(timeout)).until(ExpectedConditions.numberOfElementsToBeMoreThan(logLineSelector,minimum))
     }
-
 
     void goToJob(String jobUuidText){
         go(PAGE_PATH + "/$jobUuidText")
