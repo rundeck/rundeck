@@ -37,6 +37,35 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         "login" | false
     }
 
+    @Unroll
+    def "Find or create User case insensitive "() {
+        given:
+        def loginName = "loginName1"
+        User savedUser = new User(login: loginName)
+        savedUser.save()
+        when:
+        provider.findOrCreateUser(loginName.toUpperCase())
+        then:
+        User.findAll().size() == 1
+    }
+
+    @Unroll
+    def "Find or create User case sensitive  "() {
+        given:
+        def loginName = "loginName1"
+        User savedUser = new User(login: loginName)
+        savedUser.save()
+        provider.configurationService = Mock(ConfigurationService) {
+            getBoolean("login.nameCaseSensitiveEnabled",false) >> true
+        }
+        when:
+        provider.findOrCreateUser(loginName.toUpperCase())
+        then:
+        User.findAll().size() == 2
+    }
+
+
+
     def "Throw an error on creation"() {
         when:
         provider.findOrCreateUser("~name")
@@ -115,7 +144,7 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         when:
         provider.updateUserProfile(login, lastName, firstName, email)
         then:
-        User user = provider.findOrCreateUser(login.toUpperCase())
+        User user = provider.findOrCreateUser(login)
         user.id
         user.getLogin() == login
         user.getLastName() == lastName
@@ -126,6 +155,50 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         "login" | "last"   | "first"   | "email@company.com"
         "saved" | "last2"  | "first2"  | "email2@company.com"
     }
+
+    @Unroll
+    def "Should update profile instead of creating a new user"() {
+        given:
+        User savedUser = new User(login: "user1")
+        savedUser.save()
+
+        when:
+        provider.updateUserProfile(login, lastName, firstName, email)
+        then:
+        provider.findAll().size() == 1
+
+        where:
+        login   | lastName  | firstName  | email
+        "USER1" | "last1"   | "first1"   | "email1@company.com"
+    }
+
+    @Unroll
+    def "Should update profile caseSensitive create a new user"() {
+        given:
+        User savedUser = new User(login: "user1",lastName: "otherLastName",firstName:"otherFirstName",email:"otherEmail@company.com" )
+        savedUser.save()
+        provider.configurationService = Mock(ConfigurationService) {
+            getBoolean("login.nameCaseSensitiveEnabled",false) >> true
+        }
+        when:
+        provider.updateUserProfile(login, lastName, firstName, email)
+        then:
+        def firstUser = User.findByLogin("user1")
+        firstUser.firstName == "otherFirstName"
+        firstUser.lastName == "otherLastName"
+        firstUser.email == "otherEmail@company.com"
+        def userCreatedAfterUpdate = User.findByLogin(login)
+        userCreatedAfterUpdate.firstName == firstName
+        userCreatedAfterUpdate.lastName == lastName
+        userCreatedAfterUpdate.email == email
+        provider.findAll().size() == 2
+
+        where:
+        login   | lastName  | firstName  | email
+        "USER1" | "last1"   | "first1"   | "email1@company.com"
+    }
+
+
 
     def "Should throw error on updateUserProfile with bad login"() {
         when:
