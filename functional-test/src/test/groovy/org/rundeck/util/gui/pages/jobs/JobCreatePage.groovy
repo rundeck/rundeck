@@ -116,6 +116,36 @@ import java.time.Duration
         saveStep number
     }
 
+    JobCreatePage addStep(JobStep step, int stepNumber = 0){
+        tab(JobTab.WORKFLOW).click()
+        stepLink(step.STEP_NAME, step.stepType).click()
+
+        step.configure(this)
+
+        saveStep stepNumber
+        return this
+    }
+
+    JobCreatePage withName(String name){
+        jobNameInput.sendKeys name
+        return this
+    }
+
+    JobCreatePage addDefaultTab(String defaultTab){
+        tab(JobTab.OTHER).click()
+        driver.findElement(By.xpath("//input[@value='${defaultTab}']")).click();
+        return this
+    }
+
+    JobShowPage saveJob(){
+        if(loadPath.endsWith('create'))
+            createJobButton.click()
+        else
+            updateJobButton.click()
+
+        return new JobShowPage(context)
+    }
+
     void validatePage() {
         if (!driver.currentUrl.endsWith(loadPath)) {
             throw new IllegalStateException("Not on job create page: " + driver.currentUrl)
@@ -212,6 +242,8 @@ import java.time.Duration
     }
 
     WebElement stepLink(String dataNodeStepType, StepType stepType) {
+        if(stepType == StepType.WORKFLOW)
+            workFlowStepLink.click()
         el By.xpath("//*[@${stepType.getStepType()}='$dataNodeStepType']")
     }
 

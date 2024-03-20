@@ -3,8 +3,11 @@ package org.rundeck.util.gui.pages.execution
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
+import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.container.SeleniumContext
 import org.rundeck.util.gui.pages.BasePage
+import java.time.Duration
 
 /**
  * Execution Show page
@@ -21,6 +24,7 @@ class ExecutionShowPage extends BasePage {
     By viewContentOutputBy = By.cssSelector("#output")
     By viewButtonOutputBy = By.id("btn_view_output")
     By logOutputBy = By.className("execution-log__content-text")
+    By execStatusIcon = By.cssSelector(".exec-status.icon")
 
     ExecutionShowPage(final SeleniumContext context) {
         super(context)
@@ -58,6 +62,22 @@ class ExecutionShowPage extends BasePage {
 
     List<WebElement> getLogOutput(){
         els logOutputBy
+    }
+
+    String waitForFinalState(){
+        WebElement execStatusIconElem = new WebDriverWait(driver, Duration.ofSeconds(10)).until(ExpectedConditions.visibilityOfElementLocated(execStatusIcon))
+        new WebDriverWait(driver, Duration.ofSeconds(10)).until(
+                ExpectedConditions.not(
+                        ExpectedConditions.attributeToBe(execStatusIconElem, "data-execstate", "RUNNING")
+                )
+        )
+
+        execStatusIconElem.getAttribute('data-execstate')
+    }
+
+    String getExecutionStatus(){
+        WebElement execStatusIconElem = new WebDriverWait(driver, Duration.ofSeconds(10)).until(ExpectedConditions.visibilityOfElementLocated(execStatusIcon))
+        return execStatusIconElem.getAttribute('data-execstate')
     }
 
 }

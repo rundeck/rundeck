@@ -34,8 +34,8 @@ class LogViewerOutputSpec extends SeleniumBase{
         sideBar.goTo(NavLinkTypes.JOBS)
         jobShowPage.goToJob("f44481c4-159d-4176-869b-e4a9bd898fe5")
         jobShowPage.getRunJobBtn().click()
-        jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'log output ')]"),3,5)
-        jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'log output ')]"),49,40)
+        jobShowPage.waitForLogOutput('log output ',3,5)
+        jobShowPage.waitForLogOutput('log output ',49,40)
         def firstLogLine = jobShowPage.el(By.xpath("//span[contains(text(),'log output 1')]"))
         def lastLogLine = jobShowPage.el(By.xpath("//span[contains(text(),'log output 50')]"))
 
@@ -62,7 +62,7 @@ class LogViewerOutputSpec extends SeleniumBase{
         jobShowPage.goToJob("f44481c4-159d-4176-869b-e4a9bd898fe4")
         jobShowPage.getRunJobBtn().click()
         jobShowPage.getLogOutputBtn().click()
-        jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'test output ')]"),9,5)
+        jobShowPage.waitForLogOutput('test output ',9,5)
         def lineToClick = jobShowPage.el(By.xpath("//span[contains(text(),'test output 5')]/ancestor::div[contains(@class, 'execution-log__line')]/div[@class='execution-log__gutter']"))
         lineToClick.click();
         def checkAfterClick = jobShowPage.waitForUrlToContain("#outputL5")
