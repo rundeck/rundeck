@@ -4,6 +4,7 @@ import groovy.transform.CompileStatic
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.Select
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.container.SeleniumContext
 import org.rundeck.util.gui.pages.BasePage
@@ -259,6 +260,19 @@ class JobShowPage extends BasePage{
 
     WebElement getJobStatusBar(){
         el jobStatusBarBy
+    }
+
+    void selectOptionFromOptionListByName(String optionListName,int optionNo){
+        def select = new Select(getOptionSelectByName(optionListName))
+        select.selectByValue("option${optionNo}")
+    }
+
+    WebElement getOptionSelectByName(String name){
+        driver.findElement(By.name("extra.option.${name}"))
+    }
+
+    List<WebElement> getOptionSelectChildren(String name){
+        driver.findElements(By.name("extra.option.${name}"))
     }
 
     void waitUntilSpinnerHides(){

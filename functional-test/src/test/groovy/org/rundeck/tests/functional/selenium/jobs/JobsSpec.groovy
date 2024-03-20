@@ -483,4 +483,65 @@ class JobsSpec extends SeleniumBase {
         deleteProject(projectName)
 
     }
+
+    def "Select all json list options by default"(){
+        given:
+        def projectName = "select-all-json-test"
+        def optionListOfNames = "names"
+        def optionListOfValues = "search"
+        JobCreatePage jobCreatePage = page JobCreatePage
+        JobShowPage jobShowPage = page JobShowPage
+
+        when:
+        setupProject(projectName)
+        go JobCreatePage, projectName
+        jobCreatePage.jobNameInput.sendKeys("test")
+        jobCreatePage.tab(JobTab.WORKFLOW).click()
+        jobCreatePage.optionButton.click()
+        jobCreatePage.optionName(0).sendKeys(optionListOfNames)
+        jobCreatePage.jobOptionListValueInput.sendKeys("option1,option2,option3,option4")
+        jobCreatePage.jobOptionListDelimiter.sendKeys(",")
+        jobCreatePage.jobOptionEnforcedInput.click()
+        jobCreatePage.saveOptionButton.click()
+
+        jobCreatePage.optionButton.click()
+        jobCreatePage.optionName(1).sendKeys(optionListOfValues)
+        jobCreatePage.jobOptionAllowedValuesRemoteUrlInput.click()
+        jobCreatePage.jobOptionAllowedValuesRemoteUrlValueTextInput.sendKeys("file:/home/\${option.names.value}/saved_searches.json")
+        jobCreatePage.jobOptionEnforcedInput.click()
+        jobCreatePage.jobOptionRequiredInput.click()
+        jobCreatePage.jobOptionMultiValuedInput.click()
+        jobCreatePage.waitForElementVisible(jobCreatePage.jobOptionMultivaluedDelimiterBy)
+        jobCreatePage.jobOptionMultivaluedDelimiter.sendKeys(",")
+        jobCreatePage.jobOptionMultiValuedAllSelectedInput.click()
+        jobCreatePage.saveOptionButton.click()
+
+        jobCreatePage.addSimpleCommandStep("echo 'asd'", 0)
+        jobCreatePage.createJobButton.click()
+        def jobUuid = jobShowPage.jobUuid.text
+        jobShowPage.goToJob(jobUuid)
+
+        jobShowPage.waitForElementVisible(jobShowPage.getOptionSelectByName(optionListOfNames))
+
+        jobShowPage.selectOptionFromOptionListByName(optionListOfNames, selection)
+        def searchListValues = jobShowPage.getOptionSelectChildren(optionListOfValues)
+        def flag = true
+        searchListValues.stream().forEach {
+            if( !it.isSelected() ) false
+        }
+        noUnselectedOptions = flag
+
+        then:
+        jobShowPage.validatePage()
+
+        cleanup:
+        deleteProject(projectName)
+
+        where:
+        selection | noUnselectedOptions
+        2         | true
+        3         | true
+        4         | true
+
+    }
 }

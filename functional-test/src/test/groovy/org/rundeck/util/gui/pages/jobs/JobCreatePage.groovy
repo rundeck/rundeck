@@ -96,6 +96,15 @@ class JobCreatePage extends BasePage {
     By stepFilterBy = By.xpath("//*[starts-with(@id, 'stepFilterField')]")
     By stepFilterSearchBy = By.linkText("Search")
     By emptyStepListBy = By.xpath("//*[@data-node-step-type='exec-command'][contains(@style, 'display: none;')]")
+    By jobOptionListValuesBy = By.name("valuesList")
+    By jobOptionListDelimiterBy = By.name("valuesListDelimiter")
+    By jobOptionEnforcedBy = By.id("enforcedType_enforced")
+    By jobOptionAllowedValuesRemoteUrlBy = By.xpath("//div[10]/div/div/div[2]/input")
+    By jobOptionAllowedValuesRemoteUrlValueBy = By.name("valuesUrl")
+    By jobOptionRequiredBy = By.id("option-required-yes")
+    By jobOptionMultivaluedBy = By.xpath("//div[15]/div/div/div[2]/input")
+    By jobOptionMultivaluedDelimiterBy = By.name("delimiter")
+    By jobOptionMultiValuedAllSelectedBy = By.name("multivalueAllSelected")
 
     String loadPath = "/job/create"
 
@@ -525,6 +534,42 @@ class JobCreatePage extends BasePage {
             }
         }
         autoDivAux.findElement By.cssSelector("div[class='autocomplete-suggestion']")
+    }
+
+    WebElement getJobOptionListValueInput(){
+        el jobOptionListValuesBy
+    }
+
+    WebElement getJobOptionListDelimiter(){
+        el jobOptionListDelimiterBy
+    }
+
+    WebElement getJobOptionEnforcedInput(){
+        el jobOptionEnforcedBy
+    }
+
+    WebElement getJobOptionAllowedValuesRemoteUrlInput(){
+        el jobOptionAllowedValuesRemoteUrlBy
+    }
+
+    WebElement getJobOptionAllowedValuesRemoteUrlValueTextInput(){
+        el jobOptionAllowedValuesRemoteUrlValueBy
+    }
+
+    WebElement getJobOptionRequiredInput(){
+        el jobOptionRequiredBy
+    }
+
+    WebElement getJobOptionMultiValuedInput(){
+        el jobOptionMultivaluedBy
+    }
+
+    WebElement getJobOptionMultivaluedDelimiter(){
+        el jobOptionMultivaluedDelimiterBy
+    }
+
+    WebElement getJobOptionMultiValuedAllSelectedInput(){
+        el jobOptionMultiValuedAllSelectedBy
     }
 
     void saveStep(Integer stepNumber) {
