@@ -84,6 +84,8 @@ class JobCreatePage extends BasePage {
     By defaultTabNodes  = By.id("tabSummary")
     By defaultTabOutput = By.id("tabOutput")
     By defaultTabHtml   = By.id("tabHTML")
+    By notificationListBy = By.cssSelector(".flex-item.flex-grow-1")
+    By nofiticationChildsBy = By.className("text-success")
 
     String loadPath = "/job/create"
 
@@ -486,6 +488,20 @@ class JobCreatePage extends BasePage {
         new WebDriverWait(driver,  Duration.ofSeconds(5)).until(
                 ExpectedConditions.numberOfElementsToBe(numberOfStepsBy, numberSteps)
         )
+    }
+
+    /**
+     * It gets the list of notification elements added to the job
+     */
+    def getNotificationList(){
+        (els notificationListBy)
+    }
+
+    /**
+     * It gets the list of notification childs so it can validate each config value
+     */
+    def getNotificationChilds(WebElement notificationParent){
+        notificationParent.findElements(nofiticationChildsBy)
     }
 
 }
