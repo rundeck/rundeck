@@ -153,7 +153,7 @@ class ExecutionShowPage extends BasePage {
     }
 
     List<WebElement> getTextContains(String text) {
-        els By.xpath("//*[contains(text(), '${text}')]")
+        els By.xpath("//*[contains(normalize-space(text()), '$text')]")
     }
 
     WebElement getGutterLineNumber() {

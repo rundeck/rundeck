@@ -182,7 +182,7 @@ class ExecutionSpec extends SeleniumBase {
             executionShowPage.validatePage()
             executionShowPage.getLink 'Log Output' click()
         then:
-            executionShowPage.waitForTextContainsIsDisplayed(executionShowPage.getTextContains("this is my last line"))
+            executionShowPage.waitForElementIsDisplayed(executionShowPage.getTextContains("this is my last line"))
     }
 
     def "check url with line number"() {
