@@ -15,7 +15,7 @@ import java.time.Duration
  * Job create page
  */
 @CompileStatic
-    class JobCreatePage extends BasePage {
+class JobCreatePage extends BasePage {
 
     By numberOfStepsBy = By.cssSelector(".autohilite.autoedit.wfitem.exectype")
     By notificationModalBy = By.cssSelector('#job-notifications-edit-modal')
