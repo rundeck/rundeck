@@ -43,11 +43,10 @@ class JobTabsSpec extends SeleniumBase {
         jobCreatePage.defaultTabNodes.click()
         jobCreatePage.updateBtn.click()
         jobShowPage.runJobBtn.click()
-        def logOutputSwitch = executionShowPage.logOutputSwitch
         def nodeViewContainer = executionShowPage.nodeFlowState
         expect:
         currentUrl.endsWith(option)
-        logOutputSwitch.getAttribute("style") == ""
+        executionShowPage.viewButtonOutput.getAttribute("style") == ""
         nodeViewContainer.isDisplayed()
         executionShowPage.waitForElementAttributeToChange(executionShowPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED')
     }
@@ -69,11 +68,10 @@ class JobTabsSpec extends SeleniumBase {
         jobCreatePage.defaultTabOutput.click()
         jobCreatePage.updateBtn.click()
         jobShowPage.runJobBtn.click()
-        def logOutputSwitch = executionShowPage.logOutputSwitch
         def nodeViewContainer = executionShowPage.nodeFlowState
         expect:
         currentUrl.endsWith("output")
-        logOutputSwitch.getAttribute("style") == "display: none;"
+        executionShowPage.viewButtonOutput.getAttribute("style") == "display: none;"
         !nodeViewContainer.isDisplayed()
         executionShowPage.waitForElementAttributeToChange(executionShowPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED')
     }

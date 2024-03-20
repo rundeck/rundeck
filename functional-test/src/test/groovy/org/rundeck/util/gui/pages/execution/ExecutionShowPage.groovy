@@ -7,7 +7,6 @@ import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.container.SeleniumContext
 import org.rundeck.util.gui.pages.BasePage
-
 import java.time.Duration
 
 /**
@@ -25,7 +24,6 @@ class ExecutionShowPage extends BasePage {
     By viewContentOutputBy = By.cssSelector("#output")
     By viewButtonOutputBy = By.id("btn_view_output")
     By logOutputBy = By.className("execution-log__content-text")
-    By logOutputSwitchBy = By.id("btn_view_output")
     By nodeFlowStateBy = By.id("nodeflowstate")
     By execStatusIcon = By.cssSelector(".exec-status.icon")
 
@@ -65,10 +63,6 @@ class ExecutionShowPage extends BasePage {
 
     List<WebElement> getLogOutput(){
         els logOutputBy
-    }
-
-    WebElement getLogOutputSwitch(){
-        el logOutputSwitchBy
     }
 
     WebElement getNodeFlowState(){
