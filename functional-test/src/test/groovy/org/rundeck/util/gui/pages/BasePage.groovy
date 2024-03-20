@@ -144,7 +144,7 @@ abstract class BasePage {
                 .until(ExpectedConditions.attributeContains(locator, attribute, value))
     }
 
-    def waitForTextContainsIsDisplayed(List<WebElement> elements) {
+    def waitForElementIsDisplayed(List<WebElement> elements) {
         new WebDriverWait(driver, Duration.ofSeconds(30)).until { WebDriver d ->
             elements.any { it.isDisplayed() }
         }
