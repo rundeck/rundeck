@@ -84,10 +84,10 @@ class JobCreatePage extends BasePage {
     By defaultTabNodes  = By.id("tabSummary")
     By defaultTabOutput = By.id("tabOutput")
     By defaultTabHtml   = By.id("tabHTML")
-    By notificationListBy = By.cssSelector(".flex-item.flex-grow-1")
-    By nofiticationChildsBy = By.className("text-success")
     By scriptTextAreaBy = By.xpath("//*[contains(@class, 'form-group ') and .//*[contains(text(), 'script to execute')]]")
     By wfItemEditFormBy = By.className("wfitemEditForm")
+    By optDetailBy = By.cssSelector(".optdetail.autohilite.autoedit")
+    By optFirstBy = By.id("opt_firstOption")
 
     String loadPath = "/job/create"
 
@@ -478,6 +478,14 @@ class JobCreatePage extends BasePage {
 
     WebElement getAddSimpleCommandStepButton() {
         el addSimpleCommandStepBy
+    }
+
+    List<WebElement> getOptDetails(){
+        els optDetailBy
+    }
+
+    List<WebElement> getOptFirsts(){
+        els optFirstBy
     }
 
     WebElement getAutocompleteSuggestions() {
