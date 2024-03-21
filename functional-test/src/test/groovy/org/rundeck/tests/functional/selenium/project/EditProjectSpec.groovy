@@ -7,6 +7,7 @@ import org.rundeck.util.gui.pages.TopMenuPage
 import org.rundeck.util.gui.pages.home.HomePage
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.project.DashboardPage
+import org.rundeck.util.gui.pages.project.ProjectCreatePage
 import org.rundeck.util.gui.pages.project.ProjectEditPage
 import org.rundeck.util.gui.pages.project.SideBarPage
 
@@ -118,6 +119,113 @@ class EditProjectSpec extends SeleniumBase {
             homePage.expectPartialLinkToExist(projectName)
         cleanup:
             deleteProject(projectName)
+    }
+
+    /**
+     * Checks viability to create a project with empty description.
+     *
+     */
+    def "Change project description"(){
+        given:
+        def projectName = "changeDescriptionTest"
+        def projectDescription = "custom project description"
+        def anotherProjectDescription = "another custom project description"
+        setupProject(projectName)
+        def projectEditPage = page ProjectEditPage
+        def projectDashboard = page DashboardPage
+        def loginPage = go LoginPage
+
+        when:
+        loginPage.login(TEST_USER, TEST_PASS)
+        projectEditPage.go("/project/${projectName}/configure")
+        projectEditPage.setProjectDescription(projectDescription)
+        projectEditPage.save()
+        then:
+        projectDashboard.expectProjectDescriptionToBe(projectDescription)
+
+        when:
+        projectEditPage.go("/project/${projectName}/configure")
+        projectEditPage.setProjectDescription(anotherProjectDescription)
+        projectEditPage.save()
+        then:
+        projectDashboard.expectProjectDescriptionToBe(anotherProjectDescription)
+
+        cleanup:
+        deleteProject(projectName)
+    }
+
+    /**
+     * Checks if the project label can be changed after project creation.
+     *
+     */
+    def "Change project label"(){
+        given:
+        def projectName = "changeProjectLabel"
+        def projectLabel = "custom project label"
+        def anotherProjectLabel = "another project label"
+        setupProject(projectName)
+        def projectEditPage = page ProjectEditPage
+        def projectDashboard = page DashboardPage
+        def loginPage = go LoginPage
+
+        when:
+        loginPage.login(TEST_USER, TEST_PASS)
+        projectEditPage.go("/project/${projectName}/configure")
+        projectEditPage.setProjectLabel projectLabel
+        projectEditPage.save()
+        then:
+        projectDashboard.expectProjectLabelToBe(projectLabel)
+
+        when:
+        projectEditPage.go("/project/${projectName}/configure")
+        projectEditPage.setProjectLabel anotherProjectLabel
+        projectEditPage.save()
+        then:
+        projectDashboard.expectProjectLabelToBe(anotherProjectLabel)
+
+        cleanup:
+        deleteProject(projectName)
+    }
+
+    /**
+     * Checks if the description and label can be removed from a project.
+     *
+     */
+    def "delete description | label"(){
+        given:
+        def projectName = "removeDescriptionAndLabelTest"
+        setupProject(projectName)
+        def projectEditPage = page ProjectEditPage
+        def projectDashboard = page DashboardPage
+        def loginPage = go LoginPage
+
+        when: "Give a desc and label first"
+        loginPage.login(TEST_USER, TEST_PASS)
+        projectEditPage.go("/project/${projectName}/configure")
+        projectEditPage.setProjectLabel "a-label"
+        projectEditPage.setProjectDescription "A desc"
+        projectEditPage.save()
+        then:
+        projectDashboard.expectProjectLabelToBe("a-label")
+        projectDashboard.expectProjectDescriptionToBe("A desc")
+
+        when: "Delete description"
+        projectEditPage.go("/project/${projectName}/configure")
+        projectEditPage.clearProjectDescriptionInput()
+        projectEditPage.save()
+
+        then:
+        projectDashboard.expectProjectDescriptionToBe("")
+
+        when: "Delete project label"
+        projectEditPage.go("/project/${projectName}/configure")
+        projectEditPage.clearProjectLabelInput()
+        projectEditPage.save()
+        then:
+        projectDashboard.expectProjectLabelToBe("")
+
+        cleanup:
+        deleteProject(projectName)
     }
 
 }
