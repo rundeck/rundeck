@@ -15,6 +15,10 @@ class ExecutorSpec extends SeleniumBase {
 
     private static final List<String> availableExecutors = Arrays.asList(new String[] { "SSH", "Local", "SSHJ-SSH", "Script Execution", "Stub", "Ansible Ad-Hoc Node Executor", "WinRM Node Executor Python", "openssh / executor" });
 
+    /**
+     * Checks if the node executor list renders.
+     *
+     */
     @ExcludePro
     def "Check node executor list"(){
         given:
@@ -47,6 +51,10 @@ class ExecutorSpec extends SeleniumBase {
 
     }
 
+    /**
+     * Checks if the SSH node executor configuration persists.
+     *
+     */
     def "Save project SSH configuration"(){
         given:
         def projectName = "ssh-executor-saved"
@@ -102,6 +110,10 @@ class ExecutorSpec extends SeleniumBase {
 
     }
 
+    /**
+     * Checks if the Local executor configuration persists.
+     *
+     */
     def "Save local executor"(){
         given:
         def projectName = "local-executor-saved"
@@ -134,6 +146,10 @@ class ExecutorSpec extends SeleniumBase {
 
     }
 
+    /**
+     * Checks if the script executor configuration persists.
+     *
+     */
     def "Save script executor"(){
         given:
         def projectName = "script-executor-saved"
@@ -172,6 +188,10 @@ class ExecutorSpec extends SeleniumBase {
 
     }
 
+    /**
+     * Checks if the SSHJ node executor configuration persists.
+     *
+     */
     def "Save SSHJ config"(){
         given:
         def projectName = "sshj-executor-saved"

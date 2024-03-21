@@ -14,6 +14,10 @@ import org.rundeck.util.gui.pages.project.ActivityPage
 @SeleniumCoreTest
 class ScheduledJobSpec extends SeleniumBase{
 
+    /**
+     * Schedules a job and checks if with time passing, executions reflects in activity section.
+     *
+     */
     def "Scheduled job"(){
         given:
         def projectName = "scheduled-job-test"

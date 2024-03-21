@@ -8,6 +8,10 @@ import org.rundeck.util.gui.pages.webhooks.WebhooksPage
 @SeleniumCoreTest
 class WebhooksSpec extends SeleniumBase {
 
+    /**
+     * Checks if the webhooks are enabled in a project.
+     *
+     */
     def "Webhooks enabled"(){
         given:
         def projectName = "CheckWebhookEnabled"

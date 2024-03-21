@@ -81,6 +81,9 @@ class JobEditSpec extends SeleniumBase{
             deleteProject(projectName)
     }
 
+    /**
+     * Checks the basic nodes filter functionality at job creation time.
+     */
     def "Filter nodes while editing a job"(){
         given:
         def projectName = "filter-nodes-job-edit-test"

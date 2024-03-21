@@ -121,6 +121,10 @@ class EditProjectSpec extends SeleniumBase {
             deleteProject(projectName)
     }
 
+    /**
+     * Checks viability to create a project with empty description.
+     *
+     */
     def "Change project description"(){
         given:
         def projectName = "changeDescriptionTest"
@@ -150,6 +154,10 @@ class EditProjectSpec extends SeleniumBase {
         deleteProject(projectName)
     }
 
+    /**
+     * Checks if the project label can be changed after project creation.
+     *
+     */
     def "Change project label"(){
         given:
         def projectName = "changeProjectLabel"
@@ -179,6 +187,10 @@ class EditProjectSpec extends SeleniumBase {
         deleteProject(projectName)
     }
 
+    /**
+     * Checks if the description and label can be removed from a project.
+     *
+     */
     def "delete description | label"(){
         given:
         def projectName = "removeDescriptionAndLabelTest"

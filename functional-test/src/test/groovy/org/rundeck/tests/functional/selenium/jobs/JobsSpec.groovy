@@ -425,6 +425,10 @@ class JobsSpec extends SeleniumBase {
 
     }
 
+    /**
+     * Runs a job via "Run job later" and waits until job its executed.
+     *
+     */
     def "Run job later"() {
         given:
         def projectName = "run-job-later-test"
@@ -477,6 +481,10 @@ class JobsSpec extends SeleniumBase {
         deleteProject(projectName)
     }
 
+    /**
+     * Using the step filter input, checks if the input brings up the right step to the view.
+     *
+     */
     def "Filter steps"(){
         given:
         def projectName = "filter-steps-later-test"
@@ -512,6 +520,11 @@ class JobsSpec extends SeleniumBase {
 
     }
 
+    /**
+     * Checks if the list of options of type "json file values" are all selected by default when are
+     * rendered into the view.
+     *
+     */
     def "Select all json list options by default"(){
         given:
         def projectName = "select-all-json-test"
@@ -574,6 +587,10 @@ class JobsSpec extends SeleniumBase {
 
     }
 
+    /**
+     * Checks the basic step duplication into the workflow container.
+     *
+     */
     def "Step duplication"(){
         given:
         def projectName = "step-duplication-test"
@@ -615,6 +632,10 @@ class JobsSpec extends SeleniumBase {
 
     }
 
+    /**
+     * Checks the remote URL options functionality for jobs.
+     *
+     */
     def "Url job options"(){
         given:
         def projectName = "url-job-options-test"

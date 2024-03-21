@@ -26,6 +26,10 @@ class CreateProjectSpec extends SeleniumBase {
             projectCreatePage.descriptionInput
     }
 
+    /**
+     * Creates a project with empty name, check given error.
+     *
+     */
     def "Create project with empty name"(){
         given:
         def loginPage = go LoginPage
@@ -44,6 +48,10 @@ class CreateProjectSpec extends SeleniumBase {
 
     }
 
+    /**
+     * Checks viability to create a project with empty label and description.
+     *
+     */
     def "Create simple project | empty label | empty description"(){
         given:
         def projectName = "simple-project"
@@ -66,6 +74,10 @@ class CreateProjectSpec extends SeleniumBase {
         deleteProject(projectName)
     }
 
+    /**
+     * Checks viability to create a project with label and description.
+     *
+     */
     def "Create simple project | label | description"(){
         given:
         def projectName = "simple-project"
@@ -90,6 +102,10 @@ class CreateProjectSpec extends SeleniumBase {
         deleteProject(projectName)
     }
 
+    /**
+     * Attempts to create a project with invalid chars, checks given errors.
+     *
+     */
     def "Create project with invalid characters in description | name"(){
         given:
         def loginPage = go LoginPage
