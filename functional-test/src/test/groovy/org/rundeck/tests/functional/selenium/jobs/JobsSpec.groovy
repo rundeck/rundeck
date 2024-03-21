@@ -2,6 +2,7 @@ package org.rundeck.tests.functional.selenium.jobs
 
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.openqa.selenium.Keys
+import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobListPage
@@ -588,4 +589,41 @@ class JobsSpec extends SeleniumBase {
         deleteProject(projectName)
 
     }
+
+    def "Url job options"(){
+        given:
+        def projectName = "url-job-options-test"
+        JobCreatePage jobCreatePage = page JobCreatePage
+        JobShowPage jobShowPage = page JobShowPage
+        ExecutionShowPage executionShowPage = page ExecutionShowPage
+
+        when:
+        setupProject(projectName)
+        go JobCreatePage, projectName
+        jobCreatePage.jobNameInput.sendKeys("test-url-opts")
+        jobCreatePage.tab(JobTab.WORKFLOW).click()
+        jobCreatePage.optionButton.click()
+        jobCreatePage.optionName(0).sendKeys("remote")
+        jobCreatePage.jobOptionAllowedValuesRemoteUrlInput.click()
+        jobCreatePage.jobOptionAllowedValuesRemoteUrlValueTextInput.sendKeys("https://httpbin.org/stream/4")
+        jobCreatePage.waitForElementVisible(jobCreatePage.saveOptionButton)
+        jobCreatePage.saveOptionButton.click()
+        jobCreatePage.addSimpleCommandStep "echo 'This is a simple job'", 0
+        jobCreatePage.createJobButton.click()
+        jobShowPage.waitForElementVisible(jobShowPage.jobUuid)
+        jobShowPage.goToJob(jobShowPage.jobUuid.text)
+        jobShowPage.waitForElementVisible(jobShowPage.getJobOptionValueListItem("url"))
+        jobShowPage.getJobOptionValueListItem("url").click()
+        def optionValueSelected = jobShowPage.jobOptionValueInput.getAttribute("value")
+        jobShowPage.runJob(true)
+        def optionValueExecuted = executionShowPage.optionValueSelected.text
+
+        then:
+        optionValueExecuted == optionValueSelected
+
+        cleanup:
+        deleteProject(projectName)
+
+    }
+
 }

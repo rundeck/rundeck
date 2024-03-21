@@ -26,6 +26,7 @@ class ExecutionShowPage extends BasePage {
     By logOutputBy = By.className("execution-log__content-text")
     By nodeFlowStateBy = By.id("nodeflowstate")
     By execStatusIcon = By.cssSelector(".exec-status.icon")
+    By optionValueSelected = By.cssSelector(".optvalue:nth-child(3)")
 
     ExecutionShowPage(final SeleniumContext context) {
         super(context)
@@ -67,6 +68,10 @@ class ExecutionShowPage extends BasePage {
 
     WebElement getNodeFlowState(){
         el nodeFlowStateBy
+    }
+
+    WebElement getOptionValueSelected(){
+        el optionValueSelected
     }
 
     String waitForFinalState(){

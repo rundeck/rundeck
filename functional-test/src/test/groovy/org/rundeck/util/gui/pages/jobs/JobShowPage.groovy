@@ -61,6 +61,8 @@ class JobShowPage extends BasePage{
     By runJobLaterScheduleCreateButtonBy = By.id("scheduler_buttons")
     By jobStatusBarBy = By.className("job-stats-value")
     By jobRunSpinner = By.cssSelector(".loading-spinner")
+    By jobOptionValuesBy = By.cssSelector(".optionvalues")
+    By jobOptionValueInputBy = By.cssSelector(".optionvalues > option:nth-child(6)")
 
     static final String PAGE_PATH = "/job/show"
     String loadPath = "/job/show"
@@ -229,6 +231,18 @@ class JobShowPage extends BasePage{
 
     WebElement getLogOutputBtn(){
         el logOutputBtn
+    }
+
+    WebElement getJobOptionsValuesDropdown(){
+        el jobOptionValuesBy
+    }
+
+    WebElement getJobOptionValueListItem(String name){
+        driver.findElement(By.xpath("//option[. = '${name}']"))
+    }
+
+    WebElement getJobOptionValueInput(){
+        el jobOptionValueInputBy
     }
 
     /**

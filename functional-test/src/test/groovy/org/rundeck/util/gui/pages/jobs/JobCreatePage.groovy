@@ -106,6 +106,7 @@ class JobCreatePage extends BasePage {
     By jobOptionMultivaluedDelimiterBy = By.name("delimiter")
     By jobOptionMultiValuedAllSelectedBy = By.name("multivalueAllSelected")
     By duplicateWfStepBy = By.cssSelector(".glyphicon.glyphicon-duplicate")
+    By urlOptionInput = By.xpath("//input[@name='valuesType' and @value='url']")
 
     String loadPath = "/job/create"
 
