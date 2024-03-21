@@ -2,7 +2,6 @@ package org.rundeck.tests.functional.selenium.jobs
 
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.openqa.selenium.Keys
-import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobListPage
@@ -608,9 +607,11 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.tab(JobTab.WORKFLOW).click()
         jobCreatePage.optionButton.click()
         jobCreatePage.optionName(0).sendKeys("remote")
+        jobCreatePage.scrollToElement(jobCreatePage.jobOptionAllowedValuesRemoteUrlInput)
         jobCreatePage.jobOptionAllowedValuesRemoteUrlInput.click()
         jobCreatePage.jobOptionAllowedValuesRemoteUrlValueTextInput.sendKeys("https://httpbin.org/stream/4")
         jobCreatePage.waitForElementVisible(jobCreatePage.saveOptionButton)
+        jobCreatePage.scrollToElement(jobCreatePage.saveOptionButton)
         jobCreatePage.saveOptionButton.click()
         jobCreatePage.addSimpleCommandStep "echo 'This is a simple job'", 0
         jobCreatePage.createJobButton.click()
