@@ -90,6 +90,9 @@ class JobCreatePage extends BasePage {
     By defaultTabHtml   = By.id("tabHTML")
     By notificationListBy = By.cssSelector(".flex-item.flex-grow-1")
     By nofiticationChildsBy = By.className("text-success")
+    By schedulesCronTabBy = By.linkText("Crontab")
+    By schedulesCrontabPanel = By.cssSelector("#cronstrtab .panel-body")
+    By schedulesCrontabStringBy = By.name("crontabString")
 
     String loadPath = "/job/create"
 
@@ -479,6 +482,18 @@ class JobCreatePage extends BasePage {
 
     WebElement getDefaultTabHtml() {
         (el defaultTabHtml)
+    }
+
+    WebElement getSchedulesCrontab(){
+        el schedulesCronTabBy
+    }
+
+    WebElement getSchedulesCrontabPanel(){
+        el schedulesCrontabPanel
+    }
+
+    WebElement getSchedulesCrontabStringInput(){
+        el schedulesCrontabStringBy
     }
 
     WebElement getAutocompleteSuggestions() {
