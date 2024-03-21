@@ -103,6 +103,5 @@ class JobEditSpec extends SeleniumBase{
         then:
         jobCreatePage.nodeFilterInput.getAttribute("value").split(":")[1].trim() != null
         jobCreatePage.nodeFilterInput.getAttribute("value").split(":")[1].trim().contains("test-node2")
-
     }
 }
