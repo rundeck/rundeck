@@ -25,7 +25,7 @@ class ExecutionShowPage extends BasePage {
     By viewButtonOutputBy = By.id("btn_view_output")
     By logOutputBy = By.className("execution-log__content-text")
     By nodeFlowStateBy = By.id("nodeflowstate")
-    By execStatusIcon = By.cssSelector(".exec-status.icon")
+    By execStatusIcon = By.cssSelector('#jobInfo_ .exec-status.icon')
     By optionValueSelected = By.cssSelector(".optvalue:nth-child(3)")
     By jobRunSpinner = By.cssSelector(".loading-spinner")
     By autoCaretBy = By.cssSelector(".auto-caret.text-muted")
