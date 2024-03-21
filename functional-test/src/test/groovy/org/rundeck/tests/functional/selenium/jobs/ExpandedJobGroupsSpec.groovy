@@ -27,72 +27,15 @@ class ExpandedJobGroupsSpec extends SeleniumBase {
      */
 
     def "Job Groups are expanded or hidden accordingly"(){
-        when:
+        given:
+        String projectName = "ExpandedJobGroupsSpec"
+        setupProjectArchiveDirectoryResource(
+                projectName,
+                '/projects-import/expanded-job-groups'
+        )
         def expandedGroupsProp = "project.jobs.gui.groupExpandLevel="
 
-        String projectName = "ExpandedJobGroupsSpec"
-        def homePage = go HomePage
-        homePage.validatePage()
-
-        // Project create
-        def projectCreatePage = go ProjectCreatePage
-        projectCreatePage.validatePage()
-        projectCreatePage.createProject(projectName)
-        projectCreatePage.waitForUrlToContain("project/${projectName}/nodes/sources")
-
-        // Creates job 1
-        JobCreatePage jobCreatePage = page JobCreatePage
-        jobCreatePage.loadCreatePath(projectName)
-        jobCreatePage.go()
-
-        jobCreatePage.jobNameInput.sendKeys("Level0")
-        jobCreatePage.tab JobTab.WORKFLOW click()
-        jobCreatePage.executeScript "window.location.hash = '#addnodestep'"
-        jobCreatePage.stepLink 'exec-command', StepType.NODE click()
-        jobCreatePage.waitForElementVisible jobCreatePage.adhocRemoteStringField
-        jobCreatePage.adhocRemoteStringField.click()
-        jobCreatePage.waitForNumberOfElementsToBeOne jobCreatePage.floatBy
-        jobCreatePage.adhocRemoteStringField.sendKeys "echo 'this is a parent job'"
-        jobCreatePage.saveStep 0
-        jobCreatePage.createJobButton.click()
-
-        // Extract Job 1 uuid for duplication later
-        JobShowPage jobShowPage = page JobShowPage
-        def firstJobUuid = jobShowPage.getJobUuid().text
-
-        // Creates job 2 (Duplicates job 1)
-        CreateDuplicatedJobPage createDuplicatedJobPage = page CreateDuplicatedJobPage
-        createDuplicatedJobPage.loadDuplicatedJobPath(projectName, firstJobUuid)
-        createDuplicatedJobPage.go()
-        createDuplicatedJobPage.jobNameInput.clear()
-        createDuplicatedJobPage.jobNameInput.sendKeys("Level1")
-        createDuplicatedJobPage.jobGroupField.sendKeys("Parent")
-        createDuplicatedJobPage.createJobButton.click()
-
-        // Extract Job 2 uuid for duplication later
-        def secondJobUuid = jobShowPage.getJobUuid().text
-
-        // Creates job 3 (Duplicates job 2)
-        createDuplicatedJobPage.loadDuplicatedJobPath(projectName, secondJobUuid)
-        createDuplicatedJobPage.go()
-        createDuplicatedJobPage.jobNameInput.clear()
-        createDuplicatedJobPage.jobNameInput.sendKeys("Level2")
-        createDuplicatedJobPage.jobGroupField.clear()
-        createDuplicatedJobPage.jobGroupField.sendKeys("Parent/Child")
-        createDuplicatedJobPage.createJobButton.click()
-
-        // Extract Job 3 uuid for duplication later
-        def thirdJobUuid = jobShowPage.getJobUuid().text
-
-        // Creates job 4 (Duplicates job 3)
-        createDuplicatedJobPage.loadDuplicatedJobPath(projectName, thirdJobUuid)
-        createDuplicatedJobPage.go()
-        createDuplicatedJobPage.jobNameInput.clear()
-        createDuplicatedJobPage.jobNameInput.sendKeys("Level3")
-        createDuplicatedJobPage.jobGroupField.clear()
-        createDuplicatedJobPage.jobGroupField.sendKeys("Parent/Child/SubChild")
-        createDuplicatedJobPage.createJobButton.click()
-
+        when:
         // Edit Project Configuration to expand the job groups by default
         ProjectEditPage projectEditPage = page ProjectEditPage
         projectEditPage.loadProjectEditForProject(projectName)
@@ -101,10 +44,10 @@ class ExpandedJobGroupsSpec extends SeleniumBase {
         projectEditPage.replaceConfiguration("${expandedGroupsProp}1","${expandedGroupsProp}-1")
         projectEditPage.save()
 
-        // Go to jobs list and check if all the grouped jobs are expanded
         JobListPage jobListPage = page JobListPage
         jobListPage.loadJobListForProject(projectName)
         jobListPage.go()
+        jobListPage.waitForElementToBeClickable(jobListPage.getExpandedJobGroupsContainer())
         def jobGroupsExpanded = jobListPage.getExpandedJobGroupsContainer().text
 
         then: "We check if the job groups are expanded"

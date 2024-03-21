@@ -1,0 +1,20 @@
+<joblist>
+  <job>
+    <defaultTab>nodes</defaultTab>
+    <description></description>
+    <executionEnabled>true</executionEnabled>
+    <group>Parent/Child/SubChild</group>
+    <id>bbfca140-68f4-4ee1-a68e-7136b9fb876d</id>
+    <loglevel>INFO</loglevel>
+    <name>Level3</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>echo 'this is a parent job'</exec>
+      </command>
+    </sequence>
+    <uuid>bbfca140-68f4-4ee1-a68e-7136b9fb876d</uuid>
+  </job>
+</joblist>
