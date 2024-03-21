@@ -1,6 +1,7 @@
 package org.rundeck.tests.functional.selenium.jobs
 
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
+import org.openqa.selenium.Keys
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobListPage
 import org.rundeck.util.gui.pages.jobs.JobShowPage
@@ -446,5 +447,40 @@ class JobsSpec extends SeleniumBase {
             cleanup:
             deleteProject(projectName)
         }
+    }
+
+    def "Filter steps"(){
+        given:
+        def projectName = "filter-steps-later-test"
+        JobCreatePage jobCreatePage = page JobCreatePage
+        JobShowPage jobShowPage = page JobShowPage
+
+        when:
+        setupProject(projectName)
+        go JobCreatePage, projectName
+        jobCreatePage.jobNameInput.sendKeys("test")
+        jobCreatePage.tab(JobTab.WORKFLOW).click()
+        jobCreatePage.waitForElementToBeClickable(jobCreatePage.stepFilterInput)
+        jobCreatePage.stepFilterInput.sendKeys("cmd")
+        jobCreatePage.stepFilterSearchButton.click()
+
+        then: "Command step is not visible, since the list dont have any steps"
+        !jobCreatePage.commandStepVisible()
+
+        when: "We provide a valid filter"
+        jobCreatePage.stepFilterInput.sendKeys(Keys.chord(Keys.CONTROL, "a"))
+        jobCreatePage.stepFilterInput.sendKeys(Keys.BACK_SPACE)
+        jobCreatePage.stepFilterInput.sendKeys("command")
+        jobCreatePage.stepFilterSearchButton.click()
+
+        then: "We can create the command step"
+        jobCreatePage.addSimpleCommandStep("echo 'asd'", 0)
+        jobCreatePage.createJobButton.click()
+        jobShowPage.waitForElementVisible(jobShowPage.jobUuid)
+        jobShowPage.validatePage()
+
+        cleanup:
+        deleteProject(projectName)
+
     }
 }

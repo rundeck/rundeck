@@ -93,6 +93,9 @@ class JobCreatePage extends BasePage {
     By schedulesCronTabBy = By.linkText("Crontab")
     By schedulesCrontabPanel = By.cssSelector("#cronstrtab .panel-body")
     By schedulesCrontabStringBy = By.name("crontabString")
+    By stepFilterBy = By.xpath("//*[starts-with(@id, 'stepFilterField')]")
+    By stepFilterSearchBy = By.linkText("Search")
+    By emptyStepListBy = By.xpath("//*[@data-node-step-type='exec-command'][contains(@style, 'display: none;')]")
 
     String loadPath = "/job/create"
 
@@ -150,13 +153,17 @@ class JobCreatePage extends BasePage {
         return this
     }
 
-    JobShowPage saveJob(){
-        if(loadPath.endsWith('create'))
+    JobShowPage saveJob() {
+        if (loadPath.endsWith('create'))
             createJobButton.click()
         else
             updateJobButton.click()
 
         return new JobShowPage(context)
+    }
+
+    boolean commandStepVisible(){
+        stepLink 'exec-command', StepType.NODE displayed
     }
 
     void validatePage() {
@@ -494,6 +501,18 @@ class JobCreatePage extends BasePage {
 
     WebElement getSchedulesCrontabStringInput(){
         el schedulesCrontabStringBy
+    }
+
+    WebElement getStepFilterInput(){
+        el stepFilterBy
+    }
+
+    WebElement getStepFilterSearchButton(){
+        el stepFilterSearchBy
+    }
+
+    WebElement getEmptyStepList(){
+        el emptyStepListBy
     }
 
     WebElement getAutocompleteSuggestions() {
