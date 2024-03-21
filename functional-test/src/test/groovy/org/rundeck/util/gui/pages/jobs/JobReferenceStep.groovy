@@ -33,11 +33,14 @@ class JobReferenceStep implements JobStep {
 
         if(childJobName && !useChooseAJobButton){
             jobCreatePage.driver.findElement(useNameBox).click()
-            jobCreatePage.driver.findElement(jobNameFieldBy).sendKeys(childJobName)
+            jobCreatePage.waitForElementToBeClickable(jobNameFieldBy)
+            WebElement jobNameField = jobCreatePage.driver.findElement(jobNameFieldBy)
+            jobNameField.click()
+            jobNameField.sendKeys(childJobName)
         }
 
         if (childJobUuid) {
-            new WebDriverWait(jobCreatePage.driver, Duration.ofSeconds(2)).until(ExpectedConditions.visibilityOf(jobCreatePage.driver.findElement(By.className("_wfiedit"))))
+            jobCreatePage.waitForElementVisible(By.className("_wfiedit"))
             jobCreatePage.driver.findElement(By.className("_wfiedit")).findElement(By.name("uuid")).sendKeys(childJobUuid)
         }
 

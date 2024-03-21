@@ -85,4 +85,38 @@ class ExecutionShowPage extends BasePage {
         return execStatusIconElem.getAttribute('data-execstate')
     }
 
+    NodesView getNodesView(){
+        if(getCurrentView() != NodesView.VIEW_NAME)
+            switchToView(NodesView.VIEW_NAME)
+
+        return new NodesView(this)
+    }
+
+    void switchToView(String viewName){
+        driver.get(driver.getCurrentUrl().replace("#${getCurrentView()}", "#${viewName}"))
+    }
+
+    String getCurrentView(){
+        String currentUrl = driver.getCurrentUrl()
+        return currentUrl.substring(currentUrl.lastIndexOf('#') + 1)
+    }
+
+    class NodesView {
+        static final String VIEW_NAME = 'nodes'
+        final ExecutionShowPage execPage
+        WebElement expandedNode
+        NodesView(ExecutionShowPage execPage){
+            this.execPage = execPage
+        }
+
+        NodesView expandNode(int nodeOrder){
+            expandedNode = execPage.driver.findElements(By.className('wfnodestate')).get(nodeOrder)
+            expandedNode.click()
+            return this
+        }
+
+        List<String> getExecStateForSteps(){
+            expandedNode.findElements(By.cssSelector(".wfnodestep")).collect { it.findElement(By.cssSelector('.execstatedisplay')).getAttribute('data-execstate') }
+        }
+    }
 }
