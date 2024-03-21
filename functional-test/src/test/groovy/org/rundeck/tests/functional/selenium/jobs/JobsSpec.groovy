@@ -10,6 +10,7 @@ import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.profile.UserProfilePage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.gui.pages.project.ActivityPage
 import spock.lang.Stepwise
 
 @SeleniumCoreTest
@@ -412,6 +413,38 @@ class JobsSpec extends SeleniumBase {
         verifyAll {
             executionPage.getExecutionStatus() == 'TIMEDOUT'
             executionPage.getNodesView().expandNode(0).getExecStateForSteps() == ['SUCCEEDED', 'FAILED']
+        }
+
+        def "Run job later"() {
+            given:
+            def projectName = "run-job-later-test"
+            JobCreatePage jobCreatePage = page JobCreatePage
+            JobShowPage jobShowPage = page JobShowPage
+            ActivityPage activityPage = page ActivityPage
+
+            when:
+            setupProject(projectName)
+            go JobCreatePage, projectName
+            jobCreatePage.fillBasicJob 'Run job later'
+            jobCreatePage.addSimpleCommandStepButton.click()
+            jobCreatePage.addSimpleCommandStep 'echo asd', 1
+            jobCreatePage.createJobButton.click()
+            jobShowPage.validatePage()
+            jobShowPage.executionOptionsDropdown.click()
+            jobShowPage.runJobLaterOption.click()
+            jobShowPage.runJobLaterMinuteArrowUp.click()
+            jobShowPage.runJobLaterCreateScheduleButton.click()
+            jobShowPage.waitUntilSpinnerHides()
+            jobShowPage.waitForTextToBePresentInElement(jobShowPage.jobStatusBar, "100%")
+            activityPage.loadActivityPageForProject(projectName)
+            activityPage.go()
+            def projectExecutions = Integer.parseInt(activityPage.executionCount.text)
+
+            then:
+            projectExecutions > 0
+
+            cleanup:
+            deleteProject(projectName)
         }
     }
 }

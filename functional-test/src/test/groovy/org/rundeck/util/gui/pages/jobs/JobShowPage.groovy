@@ -55,6 +55,11 @@ class JobShowPage extends BasePage{
     By jobDeleteButtonBy = By.linkText("Delete this Job")
     By jobDeleteConfirmBy = By.xpath("//*[@value=\"Delete\"]")
     By jobDeleteModalBy = By.id("jobdelete")
+    By runJobLaterBy = By.linkText("Run Job Later...")
+    By runJobLaterMinuteArrowUpBy = By.cssSelector("td:nth-child(3) .glyphicon-chevron-up")
+    By runJobLaterScheduleCreateButtonBy = By.id("scheduler_buttons")
+    By jobStatusBarBy = By.className("job-stats-value")
+    By jobRunSpinner = By.cssSelector(".loading-spinner")
 
     static final String PAGE_PATH = "/job/show"
     String loadPath = "/job/show"
@@ -234,6 +239,32 @@ class JobShowPage extends BasePage{
     void waitForLogOutput (String logLineText, Integer minimum = 0, Integer timeout = 10) {
         By logLineSelector = By.xpath("//span[contains(text(),'${logLineText}')]")
         new WebDriverWait(driver, Duration.ofSeconds(timeout)).until(ExpectedConditions.numberOfElementsToBeMoreThan(logLineSelector, minimum))
+    }
+
+    WebElement getExecutionOptionsDropdown(){
+        driver.findElement(By.id("execOptFormRunButtons")).findElement(By.className("btn-secondary"))
+    }
+
+    WebElement getRunJobLaterOption() {
+        el runJobLaterBy
+    }
+
+    WebElement getRunJobLaterMinuteArrowUp(){
+        el runJobLaterMinuteArrowUpBy
+    }
+
+    WebElement getRunJobLaterCreateScheduleButton(){
+        el runJobLaterScheduleCreateButtonBy
+    }
+
+    WebElement getJobStatusBar(){
+        el jobStatusBarBy
+    }
+
+    void waitUntilSpinnerHides(){
+        new WebDriverWait(driver, Duration.ofMinutes(2)).until(
+                ExpectedConditions.invisibilityOf((el jobRunSpinner))
+        )
     }
 
     void waitForLogOutput (By logOutput, Integer number, Integer seconds){
