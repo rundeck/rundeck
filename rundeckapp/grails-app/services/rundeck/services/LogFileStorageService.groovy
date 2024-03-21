@@ -428,6 +428,7 @@ class LogFileStorageService
         def requestId = task.requestId
         def partial = task.partial
         def execId = task.execId
+        def execUuid = task.executionUuid
         List<String> typelist = filetype != '*' ? (filetype.split(',') as List) : []
 
         if (partial) {
@@ -435,7 +436,7 @@ class LogFileStorageService
             def files=[:]
             log.debug("Partial: Storage request [ID#${task.id}]: for types: $typelist")
             Execution.withNewSession {
-                Execution execution = Execution.get(execId)
+                Execution execution = execUuid ? Execution.findByUuid(execUuid) : Execution.get(execId)
 
                 files = getExecutionFiles(execution, typelist, true)
                 try {
@@ -458,7 +459,7 @@ class LogFileStorageService
         failures.remove(requestId)
         long retryMax = 30000
         Execution.withNewSession {
-            Execution execution = Execution.get(execId)
+            Execution execution = execUuid ? Execution.findByUuid(execUuid) : Execution.get(execId)
             def files = getExecutionFiles(execution, typelist, false)
 
             try {
