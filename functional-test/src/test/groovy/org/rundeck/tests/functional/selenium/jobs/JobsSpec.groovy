@@ -1,6 +1,10 @@
 package org.rundeck.tests.functional.selenium.jobs
 
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import org.openqa.selenium.Keys
+import org.rundeck.util.api.responses.jobs.CreateJobResponse
+import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobListPage
@@ -12,6 +16,7 @@ import org.rundeck.util.gui.pages.profile.UserProfilePage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.project.ActivityPage
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper
 import spock.lang.Stepwise
 
 import java.util.stream.Collectors
@@ -423,18 +428,36 @@ class JobsSpec extends SeleniumBase {
     def "Run job later"() {
         given:
         def projectName = "run-job-later-test"
-        JobCreatePage jobCreatePage = page JobCreatePage
         JobShowPage jobShowPage = page JobShowPage
         ActivityPage activityPage = page ActivityPage
         ExecutionShowPage executionShowPage = page ExecutionShowPage
+        def mapper = new ObjectMapper()
 
         when:
         setupProject(projectName)
-        go JobCreatePage, projectName
-        jobCreatePage.fillBasicJob 'Run job later'
-        jobCreatePage.addSimpleCommandStepButton.click()
-        jobCreatePage.addSimpleCommandStep 'echo asd', 1
-        jobCreatePage.createJobButton.click()
+        def jobName = "test-run-job-later-job"
+        def yamlJob = """
+                        -
+                          project: ${projectName}
+                          loglevel: INFO
+                          sequence:
+                            keepgoing: false
+                            strategy: node-first
+                            commands:
+                            - exec: echo hello there
+                          description: ''
+                          name: ${jobName}
+                        """
+        def pathToJob = JobUtils.generateFileToImport(yamlJob, "yaml")
+        def multipartBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
+                .build()
+        def response = client.doPostWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        assert response.successful
+        def createdJob = mapper.readValue(response.body().string(), CreateJobResponse.class)
+        def jobUuid = createdJob.succeeded[0]?.id
+        jobShowPage.goToJob(jobUuid as String)
         jobShowPage.validatePage()
         jobShowPage.executionOptionsDropdown.click()
         jobShowPage.runJobLaterOption.click()
