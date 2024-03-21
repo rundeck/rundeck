@@ -28,9 +28,14 @@ class JobListPage extends BasePage {
     By scheduleDisabledIcon = By.cssSelector(".glyphicon.glyphicon-ban-circle")
     By jobRunLinkBy = By.cssSelector(".btn.btn-success.btn-simple.btn-hover.btn-xs.act_execute_job")
     By alertMessageBy = By.cssSelector(".alert.alert-info")
+    By jobListGroupTree = By.id("job_group_tree")
 
     JobListPage(final SeleniumContext context) {
         super(context)
+    }
+
+    void loadJobListForProject(String projectName){
+        this.loadPath = "/project/${projectName}/jobs"
     }
 
     void loadPathToShowJob(String projectName, String jobId) {
@@ -108,8 +113,17 @@ class JobListPage extends BasePage {
         (el By.linkText(jobName))
     }
 
-    def getDeleteAlertMessage(){
+    def getDeleteAlertMessage() {
         (el alertMessageBy)
+
+    }
+
+    WebElement getExpandedJobGroupsContainer(){
+        (el jobListGroupTree).findElement(By.cssSelector(".expandComponentHolder.expanded"))
+    }
+
+    List<WebElement> getExpandedJobGroupsContainerChildren(){
+        (el jobListGroupTree).findElements(By.cssSelector(".expandComponentHolder.expanded"))
     }
 
 }

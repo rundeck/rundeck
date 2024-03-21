@@ -19,6 +19,7 @@ import java.time.Duration
 class JobShowPage extends BasePage{
 
     By stepsInJobDefinitionBy = By.cssSelector(".pflowitem.wfctrlholder")
+    By jobUuidBy = By.xpath("//*[@class='rd-copybox__content']")
     By jobDefinitionModalBy = By.cssSelector('a[href="#job-definition-modal"]')
     By notificationDefinitionBy = By.cssSelector('#detailtable.tab-pane > div.row > div.col-sm-12.table-responsive > table.table.item_details> tbody > tr > td.container > div.row > div.col-sm-12 > div.overflowx')
     By closeJobDefinitionModalBy = By.xpath("//*[contains(@id,'job-definition-modal_footer')]//*[@type='submit']")
@@ -260,10 +261,14 @@ class JobShowPage extends BasePage{
         (el jobDeleteConfirmBy)
     }
 
-    def waitForJobDeleteModalToBeShown(){
-        new WebDriverWait(driver,  Duration.ofSeconds(5)).until(
+    def waitForJobDeleteModalToBeShown() {
+        new WebDriverWait(driver, Duration.ofSeconds(5)).until(
                 ExpectedConditions.visibilityOf(el jobDeleteModalBy)
         )
+    }
+
+    WebElement getJobUuid(){
+        el jobUuidBy
     }
 
 }
