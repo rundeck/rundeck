@@ -1,5 +1,6 @@
 package org.rundeck.tests.functional.selenium.project
 
+import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.home.HomePage
@@ -14,6 +15,7 @@ class ExecutorSpec extends SeleniumBase {
 
     private static final List<String> availableExecutors = Arrays.asList(new String[] { "SSH", "Local", "SSHJ-SSH", "Script Execution", "Stub", "Ansible Ad-Hoc Node Executor", "WinRM Node Executor Python", "openssh / executor" });
 
+    @ExcludePro
     def "Check node executor list"(){
         given:
         def projectName = "filter-nodes-job-edit-test"
