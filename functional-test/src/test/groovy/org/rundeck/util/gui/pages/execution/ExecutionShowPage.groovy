@@ -17,31 +17,34 @@ class ExecutionShowPage extends BasePage {
 
     String loadPath = "execution/show"
 
-    By executionStateDisplayBy = By.cssSelector("#subtitlebar summary > span.execution-summary-status > span.execstate.execstatedisplay.overall")
-    By abortButtonBy = By.cssSelector('#subtitlebar section.execution-action-links span.btn-danger[data-bind="click: killExecAction"]')
-    By viewContentNodesBy = By.cssSelector("#nodes")
-    By viewButtonNodesBy = By.cssSelector("#btn_view_nodes")
-    By viewContentOutputBy = By.cssSelector("#output")
-    By viewButtonOutputBy = By.id("btn_view_output")
-    By logOutputBy = By.className("execution-log__content-text")
-    By nodeFlowStateBy = By.id("nodeflowstate")
-    By execStatusIcon = By.cssSelector('#jobInfo_ .exec-status.icon')
-    By optionValueSelected = By.cssSelector(".optvalue:nth-child(3)")
-    By jobRunSpinner = By.cssSelector(".loading-spinner")
-    By autoCaretBy = By.cssSelector(".auto-caret.text-muted")
-    By execLogNodeBy = By.className("execution-log__node-chunk")
-    By execLogGutterEntryBy = By.className("execution-log_gutter-entry")
-    By execLogGutterBy = By.className("execution-log__gutter")
-    By execLogLineBy = By.className("execution-log__line")
-    By execLogSettingsBy = By.className("execution-log__settings")
-    By execRedColorTextBy = By.className("ansi-fg-red")
-    By settingsOptionsBy = By.cssSelector(".rd-drawer.rd-drawer--left.rd-drawer--active")
-    By maskSettingsOptionsBy = By.cssSelector(".ant-drawer.ant-drawer-left.ant-drawer-open.no-mask")
-    By popUpSettingsBy = By.cssSelector(".execution-log.execution-log--light")
-    By logNodeSettingsBy = By.className("execution-log__node-badge")
-    By logContentTextBy = By.className("execution-log__content-text")
-    By logContentTextOverflowBy = By.cssSelector(".execution-log__content-text.execution-log__content-text--overflow")
-    By gutterLineNumberBy = By.cssSelector(".gutter.line-number")
+    static final String execStateAttribute = 'data-execstate'
+
+    static final By executionStateDisplayBy = By.cssSelector("#subtitlebar summary > span.execution-summary-status > span.execstate.execstatedisplay.overall")
+    static final By abortButtonBy = By.cssSelector('#subtitlebar section.execution-action-links span.btn-danger[data-bind="click: killExecAction"]')
+    static final By viewContentNodesBy = By.cssSelector("#nodes")
+    static final By viewButtonNodesBy = By.cssSelector("#btn_view_nodes")
+    static final By viewContentOutputBy = By.cssSelector("#output")
+    static final By viewButtonOutputBy = By.id("btn_view_output")
+    static final By logOutputBy = By.className("execution-log__content-text")
+    static final By nodeFlowStateBy = By.id("nodeflowstate")
+    static final By execStatusIcon = By.cssSelector('#jobInfo_ .exec-status.icon')
+    static final By execCompletedIcon = By.cssSelector('#subtitlebar .fas.fa-flag-checkered')
+    static final By optionValueSelected = By.cssSelector(".optvalue:nth-child(3)")
+    static final By jobRunSpinner = By.cssSelector(".loading-spinner")
+    static final By autoCaretBy = By.cssSelector(".auto-caret.text-muted")
+    static final By execLogNodeBy = By.className("execution-log__node-chunk")
+    static final By execLogGutterEntryBy = By.className("execution-log_gutter-entry")
+    static final By execLogGutterBy = By.className("execution-log__gutter")
+    static final By execLogLineBy = By.className("execution-log__line")
+    static final By execLogSettingsBy = By.className("execution-log__settings")
+    static final By execRedColorTextBy = By.className("ansi-fg-red")
+    static final By settingsOptionsBy = By.cssSelector(".rd-drawer.rd-drawer--left.rd-drawer--active")
+    static final By maskSettingsOptionsBy = By.cssSelector(".ant-drawer.ant-drawer-left.ant-drawer-open.no-mask")
+    static final By popUpSettingsBy = By.cssSelector(".execution-log.execution-log--light")
+    static final By logNodeSettingsBy = By.className("execution-log__node-badge")
+    static final By logContentTextBy = By.className("execution-log__content-text")
+    static final By logContentTextOverflowBy = By.cssSelector(".execution-log__content-text.execution-log__content-text--overflow")
+    static final By gutterLineNumberBy = By.cssSelector(".gutter.line-number")
 
     ExecutionShowPage(final SeleniumContext context) {
         super(context)
@@ -96,19 +99,15 @@ class ExecutionShowPage extends BasePage {
     }
 
     String waitForFinalState(){
-        WebElement execStatusIconElem = new WebDriverWait(driver, Duration.ofSeconds(10)).until(ExpectedConditions.visibilityOfElementLocated(execStatusIcon))
-        new WebDriverWait(driver, Duration.ofSeconds(10)).until(
-                ExpectedConditions.not(
-                        ExpectedConditions.attributeToBe(execStatusIconElem, "data-execstate", "RUNNING")
-                )
-        )
+        WebElement execStatusIconElem = waitForElementVisible(execStatusIcon)
+        waitForElementVisible(execCompletedIcon)
 
-        execStatusIconElem.getAttribute('data-execstate')
+        return execStatusIconElem.getAttribute(execStateAttribute)
     }
 
     String getExecutionStatus(){
         WebElement execStatusIconElem = new WebDriverWait(driver, Duration.ofSeconds(10)).until(ExpectedConditions.visibilityOfElementLocated(execStatusIcon))
-        return execStatusIconElem.getAttribute('data-execstate')
+        return execStatusIconElem.getAttribute(execStateAttribute)
     }
 
     NodesView getNodesView(){
@@ -142,7 +141,7 @@ class ExecutionShowPage extends BasePage {
         }
 
         List<String> getExecStateForSteps(){
-            expandedNode.findElements(By.cssSelector(".wfnodestep")).collect { it.findElement(By.cssSelector('.execstatedisplay')).getAttribute('data-execstate') }
+            expandedNode.findElements(By.cssSelector(".wfnodestep")).collect { it.findElement(By.cssSelector('.execstatedisplay')).getAttribute(ExecutionShowPage.execStateAttribute) }
         }
     }
 
