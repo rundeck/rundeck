@@ -290,7 +290,10 @@ class JobShowPage extends BasePage{
     }
 
     List<WebElement> getOptionSelectChildren(String name){
-        driver.findElements(By.name("extra.option.${name}"))
+        final By optionSelector = By.name("extra.option.${name}")
+
+        waitForElementVisible(optionSelector)
+        driver.findElements(optionSelector)
     }
 
     void waitForLogOutput (By logOutput, Integer number, Integer seconds){
