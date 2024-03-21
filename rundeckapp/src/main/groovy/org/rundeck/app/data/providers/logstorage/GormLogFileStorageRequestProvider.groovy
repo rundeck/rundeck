@@ -4,12 +4,8 @@ import grails.compiler.GrailsCompileStatic
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
 import groovy.transform.TypeCheckingMode
-import org.hibernate.type.IntegerType
-import org.hibernate.type.LongType
 import org.rundeck.app.data.model.v1.logstorage.LogFileStorageRequestData
 import org.rundeck.app.data.providers.v1.logstorage.LogFileStorageRequestProvider
-import org.rundeck.app.data.providers.v1.logstorage.dto.CompletedStatusLogFileStorageResponse
-import org.rundeck.app.data.providers.v1.logstorage.dto.DuplicateLogFileStorageResponse
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
 
@@ -59,7 +55,7 @@ class GormLogFileStorageRequestProvider implements LogFileStorageRequestProvider
 
     @Override
     LogFileStorageRequestData update(String executionUuid, LogFileStorageRequestData data) throws Exception {
-        var currentLogFileStorage = findByExecutionUuid(executionUuid)
+        var currentLogFileStorage = findLogFileStorageRequestByExecutionUuid(executionUuid)
         currentLogFileStorage.refresh()
         currentLogFileStorage.filetype = data.filetype
         currentLogFileStorage.completed = data.completed
@@ -70,7 +66,7 @@ class GormLogFileStorageRequestProvider implements LogFileStorageRequestProvider
 
     @Override
     LogFileStorageRequestData updateFiletypeAndCompleted(String executionUuid, String filetype, Boolean completed) throws Exception {
-        var currentLogFileStorage = findByExecutionUuid(executionUuid)
+        var currentLogFileStorage = findLogFileStorageRequestByExecutionUuid(executionUuid)
         currentLogFileStorage.refresh()
         currentLogFileStorage.filetype = filetype
         currentLogFileStorage.completed = completed
@@ -79,7 +75,7 @@ class GormLogFileStorageRequestProvider implements LogFileStorageRequestProvider
 
     @Override
     LogFileStorageRequestData updateCompleted(String executionUuid, Boolean completed) throws Exception {
-        var currentLogFileStorage = findByExecutionUuid(executionUuid)
+        var currentLogFileStorage = findLogFileStorageRequestByExecutionUuid(executionUuid)
         currentLogFileStorage.refresh()
         currentLogFileStorage.completed = completed
         return currentLogFileStorage.save(flush:true)
@@ -96,30 +92,13 @@ class GormLogFileStorageRequestProvider implements LogFileStorageRequestProvider
 
     @Override
     @CompileStatic(TypeCheckingMode.SKIP)
-    LogFileStorageRequestData findByExecutionId(Long executionId) {
-        return LogFileStorageRequest.findByExecution(Execution.get(executionId))
+    LogFileStorageRequestData findByExecutionUuid(String executionUuid) {
+        return LogFileStorageRequest.findByExecution(Execution.findByUuid(executionUuid))
     }
 
     @Override
     @TypeChecked(TypeCheckingMode.SKIP)
-    List<DuplicateLogFileStorageResponse> findDuplicates() {
-        def list = LogFileStorageRequest.createCriteria().list {
-            projections{
-                sqlGroupProjection 'execution_id, count(id) as dupecount', 'execution_id having count(execution_id) > 1', ['execution_id', 'dupecount'], [
-                        LongType.INSTANCE, IntegerType.INSTANCE]
-            }
-        }.collect { new DuplicateLogFileStorageResponse(executionId: it[0] as Long, count: it[1] as Long) }
-        return list
-    }
-
-    @Override
-    List<CompletedStatusLogFileStorageResponse> listCompletedStatusByExecutionId(Long executionId) {
-        return LogFileStorageRequest.executeQuery('select org.rundeck.app.data.providers.v1.logstorage.dto.CompletedStatusLogFileStorageResponse(id,completed) from LogFileStorageRequest where execution_id=:eid',[eid:executionId])
-    }
-
-    @Override
-    @TypeChecked(TypeCheckingMode.SKIP)
-    Long countByIncompleteAndClusterNodeNotInExecIds(String serverUUID, Set<Long> skipExecIds) {
+    Long countByIncompleteAndClusterNodeNotInExecUuids(String serverUUID, Set<String> skipExecUuids) {
         return LogFileStorageRequest.createCriteria().get{
             eq('completed',false)
             execution {
@@ -128,9 +107,9 @@ class GormLogFileStorageRequestProvider implements LogFileStorageRequestProvider
                 } else {
                     eq('serverNodeUUID', serverUUID)
                 }
-                if (skipExecIds) {
+                if (skipExecUuids) {
                     not {
-                        inList('id', skipExecIds)
+                        inList('uuid', skipExecUuids)
                     }
                 }
             }
@@ -142,7 +121,7 @@ class GormLogFileStorageRequestProvider implements LogFileStorageRequestProvider
 
     @Override
     @TypeChecked(TypeCheckingMode.SKIP)
-    List<LogFileStorageRequestData> listByIncompleteAndClusterNodeNotInExecIds(String serverUUID, Set<Long> execIds, Map paging) {
+    List<LogFileStorageRequestData> listByIncompleteAndClusterNodeNotInExecUuids(String serverUUID, Set<String> execUuids, Map paging) {
         return LogFileStorageRequest.withCriteria{
             eq('completed',false)
 
@@ -152,9 +131,9 @@ class GormLogFileStorageRequestProvider implements LogFileStorageRequestProvider
                 } else {
                     eq('serverNodeUUID', serverUUID)
                 }
-                if (execIds) {
+                if (execUuids) {
                     not {
-                        inList('id', execIds)
+                        inList('uuid', execUuids)
                     }
                 }
             }
@@ -176,7 +155,7 @@ class GormLogFileStorageRequestProvider implements LogFileStorageRequestProvider
     }
 
     @CompileStatic(TypeCheckingMode.SKIP)
-    LogFileStorageRequest findByExecutionUuid(String executionUuid) {
-        return LogFileStorageRequest.findByExecution(Execution.findByUuid(executionUuid))
+    LogFileStorageRequest findLogFileStorageRequestByExecutionUuid(String uuid) {
+        return LogFileStorageRequest.findByExecution(Execution.findByUuid(uuid))
     }
 }
