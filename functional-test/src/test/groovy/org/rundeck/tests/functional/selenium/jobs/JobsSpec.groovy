@@ -2,6 +2,7 @@ package org.rundeck.tests.functional.selenium.jobs
 
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.openqa.selenium.Keys
+import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobListPage
 import org.rundeck.util.gui.pages.jobs.JobShowPage
@@ -13,6 +14,8 @@ import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.project.ActivityPage
 import spock.lang.Stepwise
+
+import java.util.stream.Collectors
 
 @SeleniumCoreTest
 @Stepwise
@@ -550,20 +553,39 @@ class JobsSpec extends SeleniumBase {
         def projectName = "step-duplication-test"
         JobCreatePage jobCreatePage = page JobCreatePage
         JobShowPage jobShowPage = page JobShowPage
-        ActivityPage activityPage = page ActivityPage
+        ExecutionShowPage executionShowPage = page ExecutionShowPage
 
         when:
         setupProject(projectName)
         go JobCreatePage, projectName
         jobCreatePage.jobNameInput.sendKeys("test-duplication")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
-        jobCreatePage.addSimpleCommandStep 'echo asd', 0
+        jobCreatePage.addSimpleCommandStep "echo 'This is a simple job'", 0
+        jobCreatePage.createJobButton.click()
+        jobShowPage.waitForElementVisible(jobShowPage.jobActionDropdownButton)
+        jobShowPage.jobActionDropdownButton.click()
+        jobShowPage.waitForElementToBeClickable(jobShowPage.editJobLink)
+        jobShowPage.editJobLink.click()
+        jobCreatePage.waitForElementVisible(jobCreatePage.tab(JobTab.WORKFLOW))
+        jobCreatePage.tab(JobTab.WORKFLOW).click()
         jobCreatePage.duplicateWfStepButton.click()
         jobCreatePage.waitForElementVisible(jobCreatePage.getWfStepByListPosition(1))
-        jobCreatePage.createJobButton.click()
+        jobCreatePage.updateBtn.click()
+        jobShowPage.waitForElementVisible(jobShowPage.jobUuid)
+        jobShowPage.runJob(true)
+        executionShowPage.viewButtonOutput.click()
+        def logLines = executionShowPage.logOutput.stream().map {
+            it.text
+        }.collect(Collectors.toList())
 
         then:
-        true
+        logLines.size() == 2
+        logLines.forEach {
+            it == 'This is a simple job'
+        }
+
+        cleanup:
+        deleteProject(projectName)
 
     }
 }
