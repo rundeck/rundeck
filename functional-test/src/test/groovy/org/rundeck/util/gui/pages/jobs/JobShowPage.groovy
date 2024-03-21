@@ -62,6 +62,7 @@ class JobShowPage extends BasePage{
     By jobStatusBarBy = By.className("job-stats-value")
     By jobOptionValuesBy = By.cssSelector(".optionvalues")
     By jobOptionValueInputBy = By.cssSelector(".optionvalues > option:nth-child(6)")
+    By Job
 
     static final String PAGE_PATH = "/job/show"
     String loadPath = "/job/show"

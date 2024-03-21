@@ -531,7 +531,7 @@ class JobsSpec extends SeleniumBase {
         jobShowPage.waitForElementVisible(jobShowPage.getOptionSelectByName(optionListOfNames))
 
         jobShowPage.selectOptionFromOptionListByName(optionListOfNames, selection)
-        jobShowPage.waitForElementVisible(jobShowPage.getOptionSelectByName(optionListOfValues))
+        jobShowPage.waitForElementToBeClickable(jobShowPage.getOptionSelectByName(optionListOfValues))
         def searchListValues = jobShowPage.getOptionSelectChildren(optionListOfValues)
         def flag = true
         searchListValues.stream().forEach {
