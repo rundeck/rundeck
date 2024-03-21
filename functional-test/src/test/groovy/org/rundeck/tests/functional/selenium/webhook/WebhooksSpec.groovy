@@ -23,6 +23,7 @@ class WebhooksSpec extends SeleniumBase {
 
         then:
         noExceptionThrown()
+        webhookPage.createWebhookButton.displayed
 
         cleanup:
         deleteProject(projectName)
