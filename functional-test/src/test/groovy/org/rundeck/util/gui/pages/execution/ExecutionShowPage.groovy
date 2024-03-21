@@ -27,6 +27,7 @@ class ExecutionShowPage extends BasePage {
     By nodeFlowStateBy = By.id("nodeflowstate")
     By execStatusIcon = By.cssSelector(".exec-status.icon")
     By optionValueSelected = By.cssSelector(".optvalue:nth-child(3)")
+    By jobRunSpinner = By.cssSelector(".loading-spinner")
 
     ExecutionShowPage(final SeleniumContext context) {
         super(context)
@@ -72,6 +73,12 @@ class ExecutionShowPage extends BasePage {
 
     WebElement getOptionValueSelected(){
         el optionValueSelected
+    }
+
+    void waitUntilSpinnerHides(){
+        new WebDriverWait(driver, Duration.ofMinutes(2)).until(
+                ExpectedConditions.invisibilityOf((el jobRunSpinner))
+        )
     }
 
     String waitForFinalState(){

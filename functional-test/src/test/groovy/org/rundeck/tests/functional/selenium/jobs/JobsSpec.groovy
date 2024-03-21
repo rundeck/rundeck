@@ -403,7 +403,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.createJobButton.click()
     }
 
-    def "job timeout should finish job with timeout status and step marked as failed"(){
+    def "job timeout should finish job with timeout status and step marked as failed"() {
         setup:
         final String projectName = 'JobTimeOutTest'
         setupProjectArchiveDirectoryResource(projectName, "/projects-import/${projectName}.rdproject")
@@ -420,12 +420,15 @@ class JobsSpec extends SeleniumBase {
             executionPage.getNodesView().expandNode(0).getExecStateForSteps() == ['SUCCEEDED', 'FAILED']
         }
 
+    }
+
         def "Run job later"() {
             given:
             def projectName = "run-job-later-test"
             JobCreatePage jobCreatePage = page JobCreatePage
             JobShowPage jobShowPage = page JobShowPage
             ActivityPage activityPage = page ActivityPage
+            ExecutionShowPage executionShowPage = page ExecutionShowPage
 
             when:
             setupProject(projectName)
@@ -439,8 +442,9 @@ class JobsSpec extends SeleniumBase {
             jobShowPage.runJobLaterOption.click()
             jobShowPage.runJobLaterMinuteArrowUp.click()
             jobShowPage.runJobLaterCreateScheduleButton.click()
-            jobShowPage.waitUntilSpinnerHides()
-            jobShowPage.waitForTextToBePresentInElement(jobShowPage.jobStatusBar, "100%")
+            executionShowPage.waitForElementVisible(executionShowPage.jobRunSpinner)
+            executionShowPage.waitUntilSpinnerHides()
+            executionShowPage.waitForElementVisible(executionShowPage.nodeFlowState)
             activityPage.loadActivityPageForProject(projectName)
             activityPage.go()
             def projectExecutions = Integer.parseInt(activityPage.executionCount.text)

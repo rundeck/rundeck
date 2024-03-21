@@ -60,7 +60,6 @@ class JobShowPage extends BasePage{
     By runJobLaterMinuteArrowUpBy = By.cssSelector("td:nth-child(3) .glyphicon-chevron-up")
     By runJobLaterScheduleCreateButtonBy = By.id("scheduler_buttons")
     By jobStatusBarBy = By.className("job-stats-value")
-    By jobRunSpinner = By.cssSelector(".loading-spinner")
     By jobOptionValuesBy = By.cssSelector(".optionvalues")
     By jobOptionValueInputBy = By.cssSelector(".optionvalues > option:nth-child(6)")
 
@@ -287,12 +286,6 @@ class JobShowPage extends BasePage{
 
     List<WebElement> getOptionSelectChildren(String name){
         driver.findElements(By.name("extra.option.${name}"))
-    }
-
-    void waitUntilSpinnerHides(){
-        new WebDriverWait(driver, Duration.ofMinutes(2)).until(
-                ExpectedConditions.invisibilityOf((el jobRunSpinner))
-        )
     }
 
     void waitForLogOutput (By logOutput, Integer number, Integer seconds){
