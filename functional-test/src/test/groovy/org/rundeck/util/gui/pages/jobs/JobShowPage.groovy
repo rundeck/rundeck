@@ -229,6 +229,10 @@ class JobShowPage extends BasePage{
         el jobUuidBy
     }
 
+    void waitForLogOutput (By logOutput, Integer number, Integer seconds){
+        new WebDriverWait(driver, Duration.ofSeconds(seconds)).until(ExpectedConditions.numberOfElementsToBeMoreThan(logOutput,number))
+    }
+
     /**
      * Waits for the log output to have more than `qtty` log entries containing logLineText
      * @param logLineText text to match log entries
