@@ -335,7 +335,7 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         result.get(2).getLogin() == "admin"
     }
 
-    def "Should find user by login"() {
+    def "Should find user by login case insensitive"() {
         given:
         User u = new User(login: "user")
         u.save()
@@ -346,8 +346,33 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         where:
         login   | found
         "USER"  | true
+        "User"  | true
+        "USer"  | true
         "admin" | false
     }
+
+    def "Should find user by login case sensitive"() {
+        given:
+        User u = new User(login: "usernameTest")
+        u.save()
+        provider.configurationService = Mock(ConfigurationService) {
+            getBoolean("login.nameCaseSensitiveEnabled",false) >> true
+        }
+        when:
+        def result = provider.findByLogin(login)
+        then:
+        !result == !found
+
+        where:
+        login           | found
+        "usernameTest"  | true
+        "nonExisting"   | false
+        "usernametest"  | false
+        "UsernametesT"  | false
+        "useRnaMetest"  | false
+    }
+
+
 
     def "Should build user"() {
         given:
