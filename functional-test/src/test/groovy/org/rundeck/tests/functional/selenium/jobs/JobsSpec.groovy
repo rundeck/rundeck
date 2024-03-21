@@ -1,6 +1,5 @@
 package org.rundeck.tests.functional.selenium.jobs
 
-import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.openqa.selenium.Keys
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
@@ -421,39 +420,38 @@ class JobsSpec extends SeleniumBase {
 
     }
 
-        def "Run job later"() {
-            given:
-            def projectName = "run-job-later-test"
-            JobCreatePage jobCreatePage = page JobCreatePage
-            JobShowPage jobShowPage = page JobShowPage
-            ActivityPage activityPage = page ActivityPage
-            ExecutionShowPage executionShowPage = page ExecutionShowPage
+    def "Run job later"() {
+        given:
+        def projectName = "run-job-later-test"
+        JobCreatePage jobCreatePage = page JobCreatePage
+        JobShowPage jobShowPage = page JobShowPage
+        ActivityPage activityPage = page ActivityPage
+        ExecutionShowPage executionShowPage = page ExecutionShowPage
 
-            when:
-            setupProject(projectName)
-            go JobCreatePage, projectName
-            jobCreatePage.fillBasicJob 'Run job later'
-            jobCreatePage.addSimpleCommandStepButton.click()
-            jobCreatePage.addSimpleCommandStep 'echo asd', 1
-            jobCreatePage.createJobButton.click()
-            jobShowPage.validatePage()
-            jobShowPage.executionOptionsDropdown.click()
-            jobShowPage.runJobLaterOption.click()
-            jobShowPage.runJobLaterMinuteArrowUp.click()
-            jobShowPage.runJobLaterCreateScheduleButton.click()
-            executionShowPage.waitForElementVisible(executionShowPage.jobRunSpinner)
-            executionShowPage.waitUntilSpinnerHides()
-            executionShowPage.waitForElementVisible(executionShowPage.nodeFlowState)
-            activityPage.loadActivityPageForProject(projectName)
-            activityPage.go()
-            def projectExecutions = Integer.parseInt(activityPage.executionCount.text)
+        when:
+        setupProject(projectName)
+        go JobCreatePage, projectName
+        jobCreatePage.fillBasicJob 'Run job later'
+        jobCreatePage.addSimpleCommandStepButton.click()
+        jobCreatePage.addSimpleCommandStep 'echo asd', 1
+        jobCreatePage.createJobButton.click()
+        jobShowPage.validatePage()
+        jobShowPage.executionOptionsDropdown.click()
+        jobShowPage.runJobLaterOption.click()
+        jobShowPage.runJobLaterMinuteArrowUp.click()
+        jobShowPage.runJobLaterCreateScheduleButton.click()
+        executionShowPage.waitForElementVisible(executionShowPage.jobRunSpinner)
+        executionShowPage.waitUntilSpinnerHides()
+        executionShowPage.waitForElementVisible(executionShowPage.nodeFlowState)
+        activityPage.loadActivityPageForProject(projectName)
+        activityPage.go()
+        def projectExecutions = Integer.parseInt(activityPage.executionCount.text)
 
-            then:
-            projectExecutions > 0
+        then:
+        projectExecutions > 0
 
-            cleanup:
-            deleteProject(projectName)
-        }
+        cleanup:
+        deleteProject(projectName)
     }
 
     def "Filter steps"(){
