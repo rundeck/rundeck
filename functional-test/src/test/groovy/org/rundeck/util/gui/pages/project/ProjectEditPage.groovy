@@ -5,6 +5,7 @@ import org.openqa.selenium.By
 import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
+import org.openqa.selenium.Keys
 import org.rundeck.util.container.SeleniumContext
 import org.rundeck.util.gui.common.navigation.NavProjectSettings
 import org.rundeck.util.gui.pages.BasePage
@@ -25,9 +26,14 @@ class ProjectEditPage extends BasePage {
     By readmeSelect = By.id("extraConfig.menuService.readmeDisplay")
     By execModeCheck = By.name("extraConfig.scheduledExecutionService.disableExecution")
     By scheduleModeCheck = By.name("extraConfig.scheduledExecutionService.disableSchedule")
+    By aceEditorText = By.cssSelector(".ace_layer.ace_text-layer")
 
     ProjectEditPage(SeleniumContext context) {
         super(context)
+    }
+
+    void loadProjectEditForProject(String projectName){
+        this.loadPath = "/project/${projectName}/configure"
     }
 
     def setProjectDescription(String projectDescription){
@@ -103,7 +109,28 @@ class ProjectEditPage extends BasePage {
      * It clicks on "Disable Schedule" check
      * it does not validate for it to be enabled or disabled
      */
-    def clickScheduleMode(){
+    def clickScheduleMode() {
         (el scheduleModeCheck).click()
+
+    }
+
+    def changeConfigValue(String configToChange, String replacement){
+        def configLines = (el aceEditorText).text
+
+        def newLine = "${configToChange}=${replacement}"
+        def newConfigString = configLines.split('\n').collect { line ->
+            def parts = line.split('=')
+            if (parts.size() == 2) {
+                def key = parts[0].trim()
+                if (key == configToChange) {
+                    return newLine
+                }
+            }
+            return line
+        }.join('\n')
+
+        (el aceEditor).sendKeys(Keys.chord(Keys.CONTROL, "a"))
+        (el aceEditor).sendKeys(Keys.BACK_SPACE)
+        (el aceEditor).sendKeys(newConfigString)
     }
 }
