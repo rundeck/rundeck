@@ -28,6 +28,22 @@ class ExecutionSpec extends SeleniumBase {
         loginPage.login(TEST_USER, TEST_PASS)
     }
 
+    /**
+     * Verifies the execution cleanup process.
+     *
+     * Steps:
+     * 1. Creation of the Job:
+     *    - Creates a job named 'executionCleanUpJob'.
+     *    - Runs the job.
+     *    - Re-runs the job multiple times.
+     * 2. Validation After Creation:
+     *    - Verifies the presence of 20 activity rows.
+     * 3. Configuration of Clean Execution History:
+     *    - Enables the clean execution history feature.
+     *    - Configures the cleanup interval and saves the changes.
+     * 4. Verification After Configuration:
+     *    - Validates that only 2 activity rows remain after the cleanup.
+     */
     def "auto execution clean up"() {
         when:
             def jobCreatePage = go JobCreatePage, SELENIUM_EXEC_PROJECT
@@ -65,6 +81,13 @@ class ExecutionSpec extends SeleniumBase {
             activityPage.activityRows.size() == 2
     }
 
+    /**
+     * Verifies the execution of an adhoc command.
+     *
+     * Steps:
+     * - Executes the command 'echo 'Hello world'' and waits for it to succeed.
+     * - Validates various elements on the command page, such as the execution content and log gutters.
+     */
     def "viewer execution check adhoc page"() {
         when:
             def commandPage = go CommandPage, SELENIUM_EXEC_PROJECT
@@ -77,6 +100,13 @@ class ExecutionSpec extends SeleniumBase {
             commandPage.runningExecState == "SUCCEEDED"
     }
 
+    /**
+     * Verifies the log node view during command execution.
+     *
+     * Steps:
+     * - Executes the command 'echo 'Hello world'' and waits for it to succeed.
+     * - Navigates to the log node view and validates its contents.
+     */
     def "viewer execution check log node view"() {
         setup:
             def commandPage = go CommandPage, SELENIUM_EXEC_PROJECT
@@ -98,6 +128,14 @@ class ExecutionSpec extends SeleniumBase {
             executionShowPage.execLogGutterEntryAttribute.matches("\\d{2}:\\d{2}:\\d{2}")
     }
 
+    /**
+     * Verifies the log view during script execution.
+     *
+     * Steps:
+     * - Creates a script job with colored output.
+     * - Runs the job and verifies the output log.
+     * - Toggles log settings and verifies the log view changes.
+     */
     def "viewer execution check log view"() {
         setup:
             def jobCreatePage = go JobCreatePage, SELENIUM_EXEC_PROJECT
@@ -136,6 +174,13 @@ class ExecutionSpec extends SeleniumBase {
             executionShowPage.logNodeSettings.size() == 1
     }
 
+    /**
+     * Verifies the line wrapping functionality in the log view.
+     *
+     * Steps:
+     * - Executes a command with a long echo statement.
+     * - Verifies the presence of line wrapping in the log view.
+     */
     def "check line wrap"() {
         setup:
             def commandPage = go CommandPage, SELENIUM_EXEC_PROJECT
@@ -158,6 +203,13 @@ class ExecutionSpec extends SeleniumBase {
             executionShowPage.waitForNumberOfElementsToBe executionShowPage.logContentTextBy, 1
     }
 
+    /**
+     * Verifies the log output for a long-running job.
+     *
+     * Steps:
+     * - Creates a job with multiple echo commands.
+     * - Runs the job and verifies the log output.
+     */
     def "check running job follow output"() {
         setup:
             def jobCreatePage = go JobCreatePage, SELENIUM_EXEC_PROJECT
@@ -183,9 +235,18 @@ class ExecutionSpec extends SeleniumBase {
             executionShowPage.validateStatus 'SUCCEEDED'
             executionShowPage.getLink 'Log Output' click()
         then:
-            executionShowPage.waitForElementIsDisplayed(executionShowPage.getTextContains("this is my last line"))
+            executionShowPage.execLogGutters.text.size() == 41
+            executionShowPage.getTextContains("this is my last line").size() == 3
     }
 
+    /**
+     * Verifies the URL behavior with line numbers in the log view.
+     *
+     * Steps:
+     * - Creates a job with multiple echo commands.
+     * - Runs the job and navigates to the log output.
+     * - Checks the URL with line numbers and verifies its correctness.
+     */
     def "check url with line number"() {
         setup:
             def jobCreatePage = go JobCreatePage, SELENIUM_EXEC_PROJECT
@@ -217,6 +278,14 @@ class ExecutionSpec extends SeleniumBase {
             executionShowPage.currentUrl().endsWith("#outputL5")
     }
 
+    /**
+     * Verifies the URL behavior with highlighted line numbers in the log view.
+     *
+     * Steps:
+     * - Creates a job with multiple echo commands.
+     * - Runs the job and navigates to the log output.
+     * - Verifies the URL with highlighted line numbers.
+     */
     def "check url with line number high lighted"() {
         setup:
             def jobCreatePage = go JobCreatePage, SELENIUM_EXEC_PROJECT
@@ -252,8 +321,17 @@ class ExecutionSpec extends SeleniumBase {
         then:
             executionShowPage.waitForElementVisible executionShowPage.execLogLines.get(4)
             executionShowPage.execLogLines.get(4).getAttribute("class") == "execution-log__line execution-log__line--selected"
+            executionShowPage.execLogLines.text.any { it == "Hello world " }
     }
 
+    /**
+     * Verifies the log view settings persistence after refreshing the page.
+     *
+     * Steps:
+     * - Creates a script job with colored output.
+     * - Runs the job and navigates to the log output.
+     * - Toggles log settings, refreshes the page, and verifies settings persistence.
+     */
     def "check after refresh"() {
         setup:
             def jobCreatePage = go JobCreatePage, SELENIUM_EXEC_PROJECT
@@ -288,6 +366,14 @@ class ExecutionSpec extends SeleniumBase {
             }
     }
 
+    /**
+     * Verifies every option in the log view settings.
+     *
+     * Steps:
+     * - Creates a script job with colored output.
+     * - Runs the job and navigates to the log output.
+     * - Toggles all log view settings options and verifies their effects.
+     */
     def "check every option"() {
         setup:
             def jobCreatePage = go JobCreatePage, SELENIUM_EXEC_PROJECT
@@ -324,13 +410,20 @@ class ExecutionSpec extends SeleniumBase {
             }.each { it.click() }
             executionShowPage.closePopupSettingsButton.click()
         then:
-            executionShowPage.execLogEntryGutters.isEmpty()
-            executionShowPage.gutterLineNumbers.isEmpty()
-            executionShowPage.logNodeSettings.isEmpty()
-            executionShowPage.stats.isEmpty()
+            executionShowPage.execLogEntryGutters.size() == 0
+            executionShowPage.gutterLineNumbers.size() == 0
+            executionShowPage.logNodeSettings.size() == 0
+            executionShowPage.stats.size() == 0
             executionShowPage.logContentTextOverflows.size() == 1
     }
 
+    /**
+     * Verifies the ability to change log view settings while a job is running.
+     *
+     * Steps:
+     * - Executes an adhoc command and navigates to the log output.
+     * - Changes log view settings while the command is running and verifies their effects.
+     */
     def "change options while running"() {
         setup:
             def commandPage = go CommandPage, SELENIUM_EXEC_PROJECT
@@ -368,9 +461,9 @@ class ExecutionSpec extends SeleniumBase {
             executionShowPage.settingsInputOptions.findAll { it.isSelected() }.each { it.click() }
             executionShowPage.settingsOption.click()
         then:
-            executionShowPage.execLogGutters.isEmpty()
-            executionShowPage.gutterLineNumbers.isEmpty()
-            executionShowPage.logNodeSettings.isEmpty()
+            executionShowPage.execLogGutters.size() == 0
+            executionShowPage.gutterLineNumbers.size() == 0
+            executionShowPage.logNodeSettings.size() == 0
     }
 
     def cleanup() {

@@ -166,8 +166,16 @@ class ExecutionShowPage extends BasePage {
         els execLogGutterEntryBy
     }
 
+    WebElement getExecLogEntryGutter() {
+        el execLogGutterEntryBy
+    }
+
     List<WebElement> getExecLogGutters() {
         els execLogGutterBy
+    }
+
+    WebElement getExecLogGutter() {
+        el execLogGutterBy
     }
 
     List<WebElement> getExecLogLines() {

@@ -293,6 +293,15 @@ class JobShowPage extends BasePage{
         new WebDriverWait(driver, Duration.ofSeconds(seconds)).until(ExpectedConditions.numberOfElementsToBeMoreThan(logOutput,number))
     }
 
+    WebElement getDeleteJobBtn(){
+        waitForElementVisible jobDeleteModalBy
+        el jobDeleteModalBy findElement(By.cssSelector(".btn.btn-danger.btn-sm"))
+    }
+
+    List<WebElement> getExtraOptFirsts(String optionName){
+        els By.name("extra.option.$optionName")
+    }
+
     void goToJob(String jobUuidText){
         go(PAGE_PATH + "/$jobUuidText")
     }

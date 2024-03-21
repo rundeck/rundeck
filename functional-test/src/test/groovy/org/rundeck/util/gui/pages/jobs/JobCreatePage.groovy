@@ -110,6 +110,9 @@ class JobCreatePage extends BasePage {
     By urlOptionInput = By.xpath("//input[@name='valuesType' and @value='url']")
     By scriptTextAreaBy = By.xpath("//*[contains(@class, 'form-group ') and .//*[contains(text(), 'script to execute')]]")
     By wfItemEditFormBy = By.className("wfitemEditForm")
+    By optDetailBy = By.cssSelector(".optdetail.autohilite.autoedit")
+    By optFirstBy = By.id("opt_firstOption")
+
     String loadPath = "/job/create"
 
     JobCreatePage(final SeleniumContext context) {
@@ -561,6 +564,14 @@ class JobCreatePage extends BasePage {
 
     WebElement getEmptyStepList(){
         el emptyStepListBy
+    }
+
+    List<WebElement> getOptDetails(){
+        els optDetailBy
+    }
+
+    List<WebElement> getOptFirsts(){
+        els optFirstBy
     }
 
     WebElement getAutocompleteSuggestions() {
