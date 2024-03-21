@@ -1,5 +1,6 @@
 package org.rundeck.tests.functional.selenium.jobs
 
+
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.home.HomePage
@@ -27,7 +28,7 @@ class ExpandedJobGroupsSpec extends SeleniumBase {
 
     def "Job Groups are expanded or hidden accordingly"(){
         when:
-        def expandedGroupsProp = "project.jobs.gui.groupExpandLevel"
+        def expandedGroupsProp = "project.jobs.gui.groupExpandLevel="
 
         String projectName = "ExpandedJobGroupsSpec"
         def homePage = go HomePage
@@ -97,7 +98,7 @@ class ExpandedJobGroupsSpec extends SeleniumBase {
         projectEditPage.loadProjectEditForProject(projectName)
         projectEditPage.go()
         projectEditPage.clickEditConfigurationFile()
-        projectEditPage.changeConfigValue(expandedGroupsProp,"-1")
+        projectEditPage.replaceConfiguration("${expandedGroupsProp}1","${expandedGroupsProp}-1")
         projectEditPage.save()
 
         // Go to jobs list and check if all the grouped jobs are expanded
@@ -112,7 +113,7 @@ class ExpandedJobGroupsSpec extends SeleniumBase {
         when: "We change the expand level to 0"
         projectEditPage.go()
         projectEditPage.clickEditConfigurationFile()
-        projectEditPage.changeConfigValue(expandedGroupsProp,"0")
+        projectEditPage.replaceConfiguration("${expandedGroupsProp}-1","${expandedGroupsProp}0")
         projectEditPage.save()
 
         jobListPage.go()
@@ -123,7 +124,7 @@ class ExpandedJobGroupsSpec extends SeleniumBase {
         when: "We change teh expand level to 1"
         projectEditPage.go()
         projectEditPage.clickEditConfigurationFile()
-        projectEditPage.changeConfigValue(expandedGroupsProp,"1")
+        projectEditPage.replaceConfiguration("${expandedGroupsProp}0","${expandedGroupsProp}1")
         projectEditPage.save()
 
         jobListPage.go()
@@ -134,7 +135,7 @@ class ExpandedJobGroupsSpec extends SeleniumBase {
         when: "We change teh expand level to 2"
         projectEditPage.go()
         projectEditPage.clickEditConfigurationFile()
-        projectEditPage.changeConfigValue(expandedGroupsProp,"2")
+        projectEditPage.replaceConfiguration("${expandedGroupsProp}1","${expandedGroupsProp}2")
         projectEditPage.save()
 
         jobListPage.go()

@@ -50,9 +50,17 @@ class ProjectEditPage extends BasePage {
         (el labelInput).clear()
     }
 
+    def clearProjectDescriptionInput(){
+        (el descriptionInput).clear()
+    }
+
     def setProjectLabel(String projectLabel){
         (el labelInput).clear()
         (el labelInput).sendKeys(projectLabel)
+    }
+
+    def clearProjectLabelInput(){
+        (el labelInput).clear()
     }
 
     def save(){

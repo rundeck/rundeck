@@ -199,7 +199,7 @@ class EditProjectSpec extends SeleniumBase {
 
         when: "Delete description"
         projectEditPage.go("/project/${projectName}/configure")
-        projectEditPage.clearProjectDescription()
+        projectEditPage.clearProjectDescriptionInput()
         projectEditPage.save()
 
         then:
@@ -207,7 +207,7 @@ class EditProjectSpec extends SeleniumBase {
 
         when: "Delete project label"
         projectEditPage.go("/project/${projectName}/configure")
-        projectEditPage.clearProjectLabel()
+        projectEditPage.clearProjectLabelInput()
         projectEditPage.save()
         then:
         projectDashboard.expectProjectLabelToBe("")

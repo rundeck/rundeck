@@ -18,8 +18,8 @@ import java.time.Duration
 @CompileStatic
 class JobShowPage extends BasePage{
 
-    By stepsInJobDefinitionBy = By.cssSelector(".pflowitem.wfctrlholder")
     By jobUuidBy = By.xpath("//*[@class='rd-copybox__content']")
+    By stepsInJobDefinitionBy = By.cssSelector(".pflowitem.wfctrlholder")
     By jobDefinitionModalBy = By.cssSelector('a[href="#job-definition-modal"]')
     By notificationDefinitionBy = By.cssSelector('#detailtable.tab-pane > div.row > div.col-sm-12.table-responsive > table.table.item_details> tbody > tr > td.container > div.row > div.col-sm-12 > div.overflowx')
     By closeJobDefinitionModalBy = By.xpath("//*[contains(@id,'job-definition-modal_footer')]//*[@type='submit']")
@@ -231,9 +231,13 @@ class JobShowPage extends BasePage{
      * @param minimum number of log entries that should contain logLineText
      * @param timeout to be waiting for results
      */
-    void waitForLogOutput (String logLineText, Integer minimum = 0, Integer timeout = 10){
+    void waitForLogOutput (String logLineText, Integer minimum = 0, Integer timeout = 10) {
         By logLineSelector = By.xpath("//span[contains(text(),'${logLineText}')]")
-        new WebDriverWait(driver, Duration.ofSeconds(timeout)).until(ExpectedConditions.numberOfElementsToBeMoreThan(logLineSelector,minimum))
+        new WebDriverWait(driver, Duration.ofSeconds(timeout)).until(ExpectedConditions.numberOfElementsToBeMoreThan(logLineSelector, minimum))
+    }
+
+    void waitForLogOutput (By logOutput, Integer number, Integer seconds){
+        new WebDriverWait(driver, Duration.ofSeconds(seconds)).until(ExpectedConditions.numberOfElementsToBeMoreThan(logOutput,number))
     }
 
     void goToJob(String jobUuidText){
