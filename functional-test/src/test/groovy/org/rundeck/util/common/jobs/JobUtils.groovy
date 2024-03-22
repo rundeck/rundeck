@@ -1,11 +1,18 @@
 package org.rundeck.util.common.jobs
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.api.responses.jobs.Job
+import org.rundeck.util.api.responses.jobs.JobDefinition
 import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.httpbody.ScmJobStatusResponse
 import org.rundeck.util.container.RdClient
+import org.testcontainers.shaded.org.yaml.snakeyaml.DumperOptions
+import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml
+import org.testcontainers.shaded.org.yaml.snakeyaml.nodes.Tag
+import org.testcontainers.shaded.org.yaml.snakeyaml.representer.Representer
 
 import java.util.concurrent.TimeUnit
 
@@ -237,6 +244,27 @@ class JobUtils {
             // Throw an exception if the import failed
             throw new IllegalArgumentException("Job import failed. HTTP Status Code: " + responseImport.code());
         }
+    }
+
+    static def generateJobDefinitionYML = (JobDefinition job) -> {
+        def options = new DumperOptions()
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK)
+        options.setPrettyFlow(true)
+        def represent = new Representer()
+        represent.addClassTag(job.class, Tag.MAP)
+        def yaml = new Yaml(represent, options)
+        yaml.dump([job])
+    }
+
+    static void importJob(String filePath, String projectName, RdClient client) {
+        def file = new File(filePath)
+        def requestBody = RequestBody.create(file, MultipartBody.FORM)
+        def multipartBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("xmlBatch", file.name, requestBody)
+                .build()
+        def response = client.doPostWithMultipart("/project/$projectName/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        print response.body().string()
     }
 
 }

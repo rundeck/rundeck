@@ -56,12 +56,8 @@ class ScheduledJobSpec extends SeleniumBase{
                 strategy: node-first
               uuid: ${jobUuid}
         """
-        def pathToJob = JobUtils.generateFileToImport(yaml, "yaml")
-        def multipartBody = new MultipartBody.Builder()
-                .setType(MultipartBody.FORM)
-                .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
-                .build()
-        client.doPostWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        def filePath = JobUtils.generateFileToImport(yaml, "yaml")
+        JobUtils.importJob(filePath, projectName, client)
         when:
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)

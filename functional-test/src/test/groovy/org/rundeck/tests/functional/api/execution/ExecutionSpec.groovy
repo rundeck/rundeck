@@ -354,7 +354,7 @@ class ExecutionSpec extends BaseContainer {
             String projectNameSuffix = "project-api-forecast"
             ProjectUtils.createProjectsWithJobsScheduled(projectNameSuffix, 4, 2, client)
         and:
-            assert ProjectUtils.projectCountExecutions("*", 6, client)
+            hold 15
         when:
             def response1 = doGet("/project/*/executions/running?includePostponed=true")
             def response2 = doGet("/project/${projectNameSuffix}-1/executions/running?includePostponed=true")

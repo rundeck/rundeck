@@ -1,6 +1,8 @@
 package org.rundeck.tests.functional.selenium.jobs
 
 import org.rundeck.util.annotations.SeleniumCoreTest
+import org.rundeck.util.api.responses.jobs.JobDefinition
+import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.common.navigation.NavLinkTypes
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
@@ -62,22 +64,36 @@ class ExportImportSpec extends SeleniumBase {
      */
     def "export import job with options"() {
         setup:
-        def jobCreatePage = go JobCreatePage, SELENIUM_EXPORT_IMPORT_PROJECT
-        def jobShowPage = page JobShowPage
+        def uuid = UUID.randomUUID().toString()
+        def jobCreatePage = page JobCreatePage, SELENIUM_EXPORT_IMPORT_PROJECT
+        def jobShowPage = page(JobShowPage, SELENIUM_EXPORT_IMPORT_PROJECT).forJob(uuid)
         def jobListPage = page JobListPage
         def jobUploadPage = page JobUploadPage
         def sideBarPage = page SideBarPage
         def jobName = "jobWithOptionsToExport"
         def optName = "firstOption"
+        def job = new JobDefinition(
+                id: uuid,
+                defaultTab: 'nodes',
+                description: '',
+                executionEnabled: true,
+                loglevel: 'INFO',
+                name: jobName,
+                nodeFilterEditable: false,
+                plugins: new JobDefinition.Plugins(),
+                options: [new JobDefinition.Option(name: optName)],
+                sequence: new JobDefinition.Sequence(commands: [new JobDefinition.Command(exec: 'echo selenium test')],
+                        keepgoing: false, strategy: 'node-first'),
+                schedule: new JobDefinition.Schedule(),
+                uuid: uuid
+        )
         when:
-        jobCreatePage.fillBasicJob jobName
-        jobCreatePage.optionButton.click()
-        jobCreatePage.optionName 0 sendKeys optName
-        jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
-        jobCreatePage.saveOptionButton.click()
-        jobCreatePage.waitFotOptLi 0
-        jobCreatePage.createJobButton.click()
+        def yaml = JobUtils.generateJobDefinitionYML(job)
+        def filePath = JobUtils.generateFileToImport(yaml, "yaml")
+        JobUtils.importJob filePath, SELENIUM_EXPORT_IMPORT_PROJECT, client
         then:
+        jobShowPage.go()
+        jobShowPage.waitForElementVisible jobShowPage.jobUuidBy
         jobShowPage.validatePage()
         jobShowPage.getLink "Action" click()
         jobShowPage.getLink "Download Job definition in YAML" click()
