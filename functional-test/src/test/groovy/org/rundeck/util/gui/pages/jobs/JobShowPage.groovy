@@ -328,4 +328,13 @@ class JobShowPage extends BasePage{
         el jobUuidBy
     }
 
+    WebElement getDeleteJobBtn(){
+        waitForElementVisible jobDeleteModalBy
+        el jobDeleteModalBy findElement(By.cssSelector(".btn.btn-danger.btn-sm"))
+    }
+
+    List<WebElement> getExtraOptFirsts(String optionName){
+        els By.name("extra.option.$optionName")
+    }
+
 }

@@ -47,6 +47,11 @@ class ProjectEditPage extends BasePage {
     By scheduleModeCheck = By.name("extraConfig.scheduledExecutionService.disableSchedule")
     By aceEditorText = By.cssSelector(".ace_layer.ace_text-layer")
     By dangerMessageContainer = By.cssSelector(".alert.alert-danger")
+    By executionHistoryTabBy = By.partialLinkText("Execution History Clean")
+    By enableCleanExecutionHistoryBy = By.id("nullenable_cleaner_input")
+    By daysToKeepExecsBy = By.id("cleanperiod")
+    By minimumExecsToKeepBy = By.id("minimumtokeep")
+    By cronScheduleCleanerBy = By.id("cronTextField")
 
     ProjectEditPage(SeleniumContext context) {
         super(context)
@@ -251,5 +256,21 @@ class ProjectEditPage extends BasePage {
         (el aceEditor).sendKeys(Keys.chord(Keys.CONTROL, "a"))
         (el aceEditor).sendKeys(Keys.BACK_SPACE)
         (el aceEditor).sendKeys(newConfigString)
+    }
+
+    def enableCleanExecutionHistory(){
+        (el executionHistoryTabBy).click()
+        (el enableCleanExecutionHistoryBy).click()
+        waitForElementVisible(el daysToKeepExecsBy)
+    }
+
+    def configureCleanExecutionHistory(int daysToKeepExecs, int minimumExecsToKeep, String cronSchedule){
+        (el daysToKeepExecsBy).clear()
+        (el daysToKeepExecsBy).sendKeys(daysToKeepExecs.toString())
+        (el minimumExecsToKeepBy).clear()
+        (el minimumExecsToKeepBy).sendKeys(minimumExecsToKeep.toString())
+        (el cronScheduleCleanerBy).clear()
+        (el cronScheduleCleanerBy).sendKeys(cronSchedule)
+        (el minimumExecsToKeepBy).click()
     }
 }

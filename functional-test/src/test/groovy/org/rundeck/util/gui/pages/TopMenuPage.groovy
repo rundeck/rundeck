@@ -44,4 +44,9 @@ class TopMenuPage extends BasePage {
     void clickHomeButton(){
         (el divHome).findElement(By.tagName("i")).click()
     }
+
+    void navigateToUserProfile() {
+        openAppUserMenu()
+        byAndWaitClickable(By.linkText("Profile")) click()
+    }
 }

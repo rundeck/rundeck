@@ -194,4 +194,18 @@ abstract class BasePage {
     WebElement getElementByCss(String css){
         el By.cssSelector(css)
     }
+
+    def currentUrl() {
+        driver.getCurrentUrl()
+    }
+
+    void redirectTo(String path) {
+        driver.get(path)
+    }
+
+    def waitForElementIsInvisible(WebElement element) {
+        new WebDriverWait(driver, Duration.ofSeconds(30)).until { WebDriver d ->
+            ExpectedConditions.invisibilityOf(element)
+        }
+    }
 }
