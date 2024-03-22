@@ -144,12 +144,6 @@ abstract class BasePage {
                 .until(ExpectedConditions.attributeContains(locator, attribute, value))
     }
 
-    def waitForElementIsInvisible(WebElement element) {
-        new WebDriverWait(driver, Duration.ofSeconds(30)).until { WebDriver d ->
-            ExpectedConditions.invisibilityOf(element)
-        }
-    }
-
     def waitForModal(int expected) {
         try {
             new WebDriverWait(driver, Duration.ofSeconds(30)).until {

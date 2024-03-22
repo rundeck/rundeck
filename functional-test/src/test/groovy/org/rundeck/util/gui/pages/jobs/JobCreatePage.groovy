@@ -111,7 +111,6 @@ class JobCreatePage extends BasePage {
     By scriptTextAreaBy = By.xpath("//*[contains(@class, 'form-group ') and .//*[contains(text(), 'script to execute')]]")
     By wfItemEditFormBy = By.className("wfitemEditForm")
     By optDetailBy = By.cssSelector(".optdetail.autohilite.autoedit")
-    By optFirstBy = By.id("opt_firstOption")
 
     String loadPath = "/job/create"
 
@@ -570,8 +569,8 @@ class JobCreatePage extends BasePage {
         els optDetailBy
     }
 
-    List<WebElement> getOptFirsts(){
-        els optFirstBy
+    List<WebElement> getOptionElements(String optionName){
+        els By.id("opt_$optionName")
     }
 
     WebElement getAutocompleteSuggestions() {

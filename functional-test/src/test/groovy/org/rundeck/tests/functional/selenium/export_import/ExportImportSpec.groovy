@@ -107,7 +107,7 @@ class ExportImportSpec extends SeleniumBase {
             jobCreatePage.tab JobTab.WORKFLOW click()
         then:
             jobCreatePage.optDetails.size() == 1
-            jobCreatePage.optFirsts.size() == 1
+            jobCreatePage.getOptionElements(optName).size() == 1
     }
 
     def cleanup() {

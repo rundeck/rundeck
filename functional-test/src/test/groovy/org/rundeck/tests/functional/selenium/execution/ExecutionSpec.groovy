@@ -422,7 +422,7 @@ class ExecutionSpec extends SeleniumBase {
      *
      * Steps:
      * - Executes an adhoc command and navigates to the log output.
-     * - Changes log view settings while the command is running and verifies their effects.
+     * - Changes log view settings while the job is running and verifies their effects.
      */
     def "change options while running"() {
         setup:
@@ -455,7 +455,6 @@ class ExecutionSpec extends SeleniumBase {
             jobShowPage.validatePage()
             jobShowPage.runJobBtn.click()
         when:
-            executionShowPage.validateStatus 'SUCCEEDED'
             executionShowPage.getLink 'Log Output' click()
             executionShowPage.execLogSettings.click()
             executionShowPage.settingsInputOptions.findAll { it.isSelected() }.each { it.click() }
