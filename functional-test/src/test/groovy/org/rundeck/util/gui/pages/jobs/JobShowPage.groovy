@@ -98,6 +98,10 @@ class JobShowPage extends BasePage{
         return new ScmStatusBadge(this)
     }
 
+    List<WebElement> getOptionsFields(){
+        driver.findElements(By.xpath("//input[contains(@name, 'extra.option.')]"))
+    }
+
     void validatePage() {
         if (!driver.currentUrl.contains(loadPath)) {
             throw new IllegalStateException("Not on job show selected page: " + driver.currentUrl)
@@ -286,7 +290,10 @@ class JobShowPage extends BasePage{
     }
 
     List<WebElement> getOptionSelectChildren(String name){
-        driver.findElements(By.name("extra.option.${name}"))
+        final By optionSelector = By.name("extra.option.${name}")
+
+        waitForElementVisible(optionSelector)
+        driver.findElements(optionSelector)
     }
 
     void waitForLogOutput (By logOutput, Integer number, Integer seconds){

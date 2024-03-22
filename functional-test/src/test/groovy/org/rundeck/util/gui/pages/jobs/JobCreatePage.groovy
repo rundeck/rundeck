@@ -6,6 +6,7 @@ import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.interactions.Actions
 import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.Select
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.gui.pages.BasePage
 import org.rundeck.util.container.SeleniumContext
@@ -138,7 +139,7 @@ class JobCreatePage extends BasePage {
         addSimpleCommandStep 'echo selenium test', 0
     }
 
-    void addSimpleCommandStep(String command, int number) {
+    JobCreatePage addSimpleCommandStep(String command, int number) {
         executeScript "window.location.hash = '#addnodestep'"
         stepLink 'exec-command', StepType.NODE click()
         byAndWaitClickable adhocRemoteStringBy
@@ -146,6 +147,8 @@ class JobCreatePage extends BasePage {
         waitForNumberOfElementsToBeOne floatBy
         adhocRemoteStringField.sendKeys command
         saveStep number
+
+        return this
     }
 
     JobCreatePage addStep(JobStep step, int stepNumber = 0){
@@ -160,6 +163,18 @@ class JobCreatePage extends BasePage {
 
     JobCreatePage withName(String name){
         jobNameInput.sendKeys name
+        return this
+    }
+
+    JobCreatePage addOption(JobOption option){
+        tab(JobTab.WORKFLOW).click()
+        option.configure(this)
+        return this
+    }
+
+    JobCreatePage duplicateOption(String optName, int newIdx){
+        tab(JobTab.WORKFLOW).click()
+        JobOption.duplicate(this, optName, newIdx)
         return this
     }
 
@@ -667,6 +682,45 @@ class JobCreatePage extends BasePage {
         els optDetailBy
     }
 
+}
+
+
+class JobOption {
+    static final String defaultOptType = 'Text'
+    String optionType
+    String inputType
+    String name
+    int optNumber
+
+    void configure(JobCreatePage jobCreatePage){
+        final By usageSectionLocator = By.xpath("//*[contains(@id,'${notUseDefaultType() ? optionType.toLowerCase() + "_" : ""}preview_')]//span[contains(.,' will be available to scripts in these forms')]")
+
+        jobCreatePage.optionButton.click()
+        jobCreatePage.optionName(optNumber).sendKeys(name)
+
+        if(notUseDefaultType()){
+            jobCreatePage.driver.findElement(By.name("optionType")).click();
+            Select typeSelector = new Select(jobCreatePage.driver.findElement(By.name("optionType")))
+            typeSelector.selectByVisibleText(optionType)
+        }
+
+        if(inputType)
+            jobCreatePage.driver.findElement(By.cssSelector("input[value='${inputType}']")).click()
+
+        jobCreatePage.waitForElementVisible(usageSectionLocator)
+        jobCreatePage.executeScript("window.location.hash = '#workflowKeepGoingFail'")
+        jobCreatePage.saveOptionButton.click()
+        jobCreatePage.waitFotOptLi(optNumber)
+    }
+
+    boolean notUseDefaultType(){
+        optionType && optionType != defaultOptType
+    }
+
+    static void duplicate(JobCreatePage jobCreatePage, String optName, int newIdx){
+        jobCreatePage.duplicateButton(optName).click()
+        jobCreatePage.waitFotOptLi(newIdx)
+    }
 }
 
 enum NotificationType {
