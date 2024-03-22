@@ -1,13 +1,13 @@
 package org.rundeck.tests.functional.selenium.jobs
 
-import org.openqa.selenium.Keys
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.common.WaitingTime
+import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.home.HomePage
-import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobShowPage
-import org.rundeck.util.gui.pages.jobs.JobTab
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.project.ActivityPage
 
@@ -24,29 +24,49 @@ class ScheduledJobSpec extends SeleniumBase{
         setupProject(projectName)
         LoginPage loginPage = page LoginPage
         HomePage homePage = page HomePage
-        JobCreatePage jobCreatePage = page JobCreatePage
-        JobShowPage jobShowPage = page JobShowPage
         ActivityPage activityPage = page ActivityPage
-
+        def jobUuid = "2de51941-605c-435b-b128-4dfa8142f111"
+        JobShowPage jobShowPage = page(JobShowPage, projectName).forJob(jobUuid)
+        def yaml = """
+            - 
+              defaultTab: nodes
+              description: ''
+              executionEnabled: true
+              id: ${jobUuid}
+              loglevel: INFO
+              name: Run job later
+              nodeFilterEditable: false
+              plugins:
+                ExecutionLifecycle: {}
+              schedule:
+                month: '*'
+                time:
+                  hour: '*'
+                  minute: '*'
+                  seconds: '*/5'
+                weekday:
+                  day: '*'
+                year: '*'
+              scheduleEnabled: true
+              sequence:
+                commands:
+                - exec: echo selenium test
+                - exec: echo asd
+                keepgoing: false
+                strategy: node-first
+              uuid: ${jobUuid}
+        """
+        def pathToJob = JobUtils.generateFileToImport(yaml, "yaml")
+        def multipartBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
+                .build()
+        client.doPostWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
         homePage.validatePage()
-        go JobCreatePage, projectName
-        jobCreatePage.fillBasicJob 'Run job later'
-        jobCreatePage.addSimpleCommandStepButton.click()
-        jobCreatePage.addSimpleCommandStep 'echo asd', 1
-        jobCreatePage.tab(JobTab.SCHEDULE).click()
-        jobCreatePage.scheduleRunYesField.click()
-        jobCreatePage.schedulesCrontab.click()
-        jobCreatePage.schedulesCrontabPanel.click()
-        jobCreatePage.waitForElementVisible(jobCreatePage.schedulesCrontabStringBy)
-        jobCreatePage.schedulesCrontabStringInput.click()
-        jobCreatePage.schedulesCrontabStringInput.sendKeys(Keys.chord(Keys.CONTROL, "a"))
-        jobCreatePage.schedulesCrontabStringInput.sendKeys(Keys.BACK_SPACE)
-        jobCreatePage.schedulesCrontabStringInput.sendKeys("*/5 * * ? * * *")
-        jobCreatePage.createJobButton.click()
-        jobCreatePage.createJobButton.click()
+        jobShowPage.go()
         jobShowPage.waitForElementVisible(jobShowPage.jobUuidBy)
         jobShowPage.validatePage()
         activityPage.loadActivityPageForProject(projectName)
