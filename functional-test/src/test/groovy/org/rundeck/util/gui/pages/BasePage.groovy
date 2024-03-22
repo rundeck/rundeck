@@ -179,4 +179,33 @@ abstract class BasePage {
     WebElement getLink(String text){
         el By.partialLinkText(text)
     }
+
+    /**
+     * It waits for the link text to exist a number of times
+     * @param linkText
+     * @param times , number of times the partial link text should be present, defaults to 1
+     * @return
+     */
+    def expectPartialLinkToExist(String linkText, int times = 1){
+        new WebDriverWait(driver, Duration.ofSeconds(20))
+                .until(ExpectedConditions.numberOfElementsToBe(By.partialLinkText(linkText), times))
+    }
+
+    WebElement getElementByCss(String css){
+        el By.cssSelector(css)
+    }
+
+    def currentUrl() {
+        driver.getCurrentUrl()
+    }
+
+    void redirectTo(String path) {
+        driver.get(path)
+    }
+
+    def waitForElementIsInvisible(WebElement element) {
+        new WebDriverWait(driver, Duration.ofSeconds(30)).until { WebDriver d ->
+            ExpectedConditions.invisibilityOf(element)
+        }
+    }
 }

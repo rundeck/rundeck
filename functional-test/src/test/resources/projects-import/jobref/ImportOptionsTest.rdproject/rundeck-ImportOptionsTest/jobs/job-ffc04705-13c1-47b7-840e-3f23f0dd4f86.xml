@@ -1,0 +1,28 @@
+<joblist>
+  <job>
+    <context>
+      <options preserveOrder='true'>
+        <option name='ip_list' value='Hello' />
+      </options>
+    </context>
+    <defaultTab>output</defaultTab>
+    <description></description>
+    <executionEnabled>true</executionEnabled>
+    <id>ffc04705-13c1-47b7-840e-3f23f0dd4f86</id>
+    <loglevel>INFO</loglevel>
+    <name>ParentJob</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <jobref name='ChildJob' nodeStep='true'>
+          <importOptions>true</importOptions>
+          <useName>true</useName>
+          <uuid>59f6e0dd-be4e-446c-839a-f85cea40a9fc</uuid>
+        </jobref>
+      </command>
+    </sequence>
+    <uuid>ffc04705-13c1-47b7-840e-3f23f0dd4f86</uuid>
+  </job>
+</joblist>

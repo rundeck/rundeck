@@ -1,0 +1,23 @@
+<joblist>
+  <job>
+    <defaultTab>nodes</defaultTab>
+    <description></description>
+    <executionEnabled>true</executionEnabled>
+    <id>1032a729-c251-4940-86b5-20f99cb5e769</id>
+    <loglevel>INFO</loglevel>
+    <name>jobTimeout</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>pwd</exec>
+      </command>
+      <command>
+        <exec>sleep 10; echo " this is an echo command after sleep "</exec>
+      </command>
+    </sequence>
+    <timeout>5s</timeout>
+    <uuid>1032a729-c251-4940-86b5-20f99cb5e769</uuid>
+  </job>
+</joblist>

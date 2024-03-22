@@ -1,0 +1,28 @@
+<joblist>
+  <job>
+    <defaultTab>output</defaultTab>
+    <description></description>
+    <executionEnabled>true</executionEnabled>
+    <id>9b559a6a-4578-4a8c-9c55-3e7ab2056341</id>
+    <loglevel>INFO</loglevel>
+    <name>ParentJob</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <jobref name='ChildJob' nodeStep='true'>
+          <dispatch>
+            <threadcount>1</threadcount>
+          </dispatch>
+          <nodefilters>
+            <filter>.*</filter>
+          </nodefilters>
+          <useName>true</useName>
+          <uuid>278a6702-2946-4bae-9e06-dcd4712794a5</uuid>
+        </jobref>
+      </command>
+    </sequence>
+    <uuid>9b559a6a-4578-4a8c-9c55-3e7ab2056341</uuid>
+  </job>
+</joblist>

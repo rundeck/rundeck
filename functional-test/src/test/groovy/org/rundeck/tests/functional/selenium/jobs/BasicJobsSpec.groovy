@@ -1,6 +1,5 @@
 package org.rundeck.tests.functional.selenium.jobs
 
-import org.rundeck.util.gui.pages.JobsListPage
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobListPage
 import org.rundeck.util.gui.pages.home.HomePage
@@ -271,7 +270,7 @@ class BasicJobsSpec extends SeleniumBase {
             HomePage homePage = page HomePage
             homePage.validatePage()
         then:
-            JobsListPage jobsListPage = page JobsListPage
+            JobListPage jobsListPage = page JobListPage
             jobsListPage.loadPathToNextUI SELENIUM_BASIC_PROJECT
             jobsListPage.go()
 

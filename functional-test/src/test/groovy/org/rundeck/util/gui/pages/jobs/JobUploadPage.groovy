@@ -20,6 +20,7 @@ class JobUploadPage extends BasePage {
     By fileInput = By.name(fileInputName)
     By formUploadButton = By.id(formUploadButtonId)
     By jobUploadInfoDiv = By.xpath("//div[@class='${jobUploadInfoSelectors}']")
+    By headerTextSuccessBy = By.cssSelector(".card-header.text-success")
 
     JobUploadPage(final SeleniumContext context) {
         super(context)
@@ -45,6 +46,11 @@ class JobUploadPage extends BasePage {
 
     WebElement jobUploadInfoDivElement(){
         el jobUploadInfoDiv
+    }
+
+    WebElement getHeaderTextSuccess(){
+        waitForElementVisible headerTextSuccessBy
+        el headerTextSuccessBy
     }
 
 }

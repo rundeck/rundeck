@@ -1,0 +1,26 @@
+<joblist>
+  <job>
+    <defaultTab>output</defaultTab>
+    <description></description>
+    <executionEnabled>true</executionEnabled>
+    <id>1b560606-909d-43c0-aaa6-77894f2fc952</id>
+    <loglevel>INFO</loglevel>
+    <name>logDataJob</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>echo "This is a Sample Job"</exec>
+      </command>
+      <command>
+        <step-plugin type='log-data-step'>
+          <configuration>
+            <entry key='debugOnly' value='false' />
+          </configuration>
+        </step-plugin>
+      </command>
+    </sequence>
+    <uuid>1b560606-909d-43c0-aaa6-77894f2fc952</uuid>
+  </job>
+</joblist>

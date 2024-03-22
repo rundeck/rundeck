@@ -1,0 +1,25 @@
+<joblist>
+  <job>
+    <context>
+      <options preserveOrder='true'>
+        <option name='OPT1' />
+      </options>
+    </context>
+    <defaultTab>nodes</defaultTab>
+    <description></description>
+    <executionEnabled>true</executionEnabled>
+    <id>52fd314a-ffaa-46c5-9c22-efa768c0d3ea</id>
+    <loglevel>INFO</loglevel>
+    <name>child</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <description>child-job </description>
+        <exec>echo ${option.OPT1} </exec>
+      </command>
+    </sequence>
+    <uuid>52fd314a-ffaa-46c5-9c22-efa768c0d3ea</uuid>
+  </job>
+</joblist>
