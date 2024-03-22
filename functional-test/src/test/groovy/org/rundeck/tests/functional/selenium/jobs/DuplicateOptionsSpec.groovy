@@ -46,7 +46,7 @@ class DuplicateOptionsSpec extends SeleniumBase {
         'fileOpt'  | 'File'
     }
 
-    def "duplicate date option and check both are present in job show page as text inputs with date format and calendar selector"(){
+    def "duplicate date option and check both are present in job show page"(){
         given:
         String optionName = 'textOpt'
         JobCreatePage jobCreatePage = go(JobCreatePage, PROJECT_NAME)
@@ -54,10 +54,10 @@ class DuplicateOptionsSpec extends SeleniumBase {
                 .addOption(new JobOption(name: optionName, optNumber: 0, inputType: 'date'))
                 .addSimpleCommandStep('echo hello ', 0)
 
-        when:
+        when: 'duplicate the date option and save the job with date format and a button to select date from a calendar widget'
         JobShowPage jobShowPage = jobCreatePage.duplicateOption(optionName, 1).saveJob()
 
-        then:
+        then: 'check both are present in job show page'
         List<WebElement> optionInputs = jobShowPage.getOptionsFields()
         optionInputs.collect { [it.getAttribute('name'), it.getAttribute('value')] } == [
                 [String.valueOf("extra.option.${optionName}"), ''],
