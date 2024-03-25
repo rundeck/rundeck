@@ -25,7 +25,8 @@ class DefaultFileCopierSpec extends SeleniumBase{
         given:
         def projectName = "fileCopierList"
         setupProject(projectName)
-        ProjectEditPage editPage = page ProjectEditPage, projectName
+        ProjectEditPage editPage = page ProjectEditPage
+        editPage.loadProjectEditForProject(projectName)
         when:
         go(LoginPage).login(TEST_USER, TEST_PASS)
         editPage.go()
