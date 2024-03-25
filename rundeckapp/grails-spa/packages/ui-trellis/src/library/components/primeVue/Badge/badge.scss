@@ -1,0 +1,16 @@
+.p-badge {
+  background: var(--colors-blue-500);
+
+  &.p-badge-success {
+    background: var(--colors-green-500);
+  }
+  &.p-badge-warning {
+    background: var(--colors-orange-500);
+  }
+  &.p-badge-danger {
+    background: var(--colors-red-500);
+  }
+  &.p-badge-secondary {
+    background: var(--colors-gray-500);
+  }
+}
