@@ -586,6 +586,7 @@ public class RundeckConfigBase {
         String favicon;
         String logocss;
         String logoHires;
+        String cdn;
         Boolean clusterIdentityInHeader;
         Boolean clusterIdentityInFooter;
         Boolean userSummaryShowLoginStatus;

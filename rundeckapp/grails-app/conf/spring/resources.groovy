@@ -135,6 +135,7 @@ import org.rundeck.app.data.workflow.WorkflowDataWorkflowExecutionItemFactory
 import org.rundeck.app.quartz.ExecutionJobQuartzJobSpecifier
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
+import org.rundeck.app.ui.UiVersionFilter
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.security.*
 import org.rundeck.web.ExceptionHandler
@@ -956,4 +957,8 @@ beans={
     projectConfigMetadataComponent(ProjectConfigMetadataComponent)
     projectScmMetadataComponent(ProjectScmMetadataComponent)
     projectExecutionMetadataComponent(ProjectMessageMetadataComponent)
+
+    uiVersionFilter(UiVersionFilter) {
+        configurationService = ref("configurationService")
+    }
 }

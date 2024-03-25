@@ -174,3 +174,8 @@ grails.plugin.springsecurity.logout.handlerNames = [
 grails.plugin.springsecurity.providerNames = [
         'anonymousAuthenticationProvider',
         'rememberMeAuthenticationProvider']
+
+grails.assets.url = { request ->
+    String cdn = request.getAttribute("CDN") ?: ""
+    return cdn
+}
