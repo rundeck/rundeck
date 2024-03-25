@@ -216,14 +216,8 @@ class GormUserDataProvider implements UserDataProvider {
         def response = new UserFilteredResponse()
         response.setShowLoginStatus(showLoginStatus)
 
-        if (isLoginNameCaseSensitiveEnabled()){
-            response.setUsers(users)
-            response.setTotalRecords(totalRecords)
-        }
-        else{
-            response.setUsers(getUserListIgnoringCases(users))
-            response.setTotalRecords(getUserListIgnoringCases(users).size())
-        }
+        response.setUsers(users)
+        response.setTotalRecords(totalRecords)
         return response
     }
 
@@ -320,22 +314,6 @@ class GormUserDataProvider implements UserDataProvider {
      */
     def getSessionIdRegisterMethod() {
         configurationService.getString(SESSION_ID_METHOD, 'hash')
-    }
-
-    static def getUserListIgnoringCases( List<RdUser> users){
-
-        def uniqueLogin = [:]
-
-        def userList = users.findAll { user ->
-            def loginLowerCase = user.login.toLowerCase()
-            if (!uniqueLogin[loginLowerCase]) {
-                uniqueLogin[loginLowerCase] = true
-                true
-            } else {
-                false
-            }
-        }
-        return userList
     }
 
     def isLoginNameCaseSensitiveEnabled(){
