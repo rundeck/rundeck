@@ -3,7 +3,6 @@ package org.rundeck.tests.functional.selenium.jobs
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import org.rundeck.util.annotations.SeleniumCoreTest
-import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.home.HomePage
@@ -71,7 +70,7 @@ class ScheduledJobSpec extends SeleniumBase{
         jobShowPage.validatePage()
         activityPage.loadActivityPageForProject(projectName)
         activityPage.go()
-        Thread.sleep(WaitingTime.MODERATE.milliSeconds) // Auto refresh doesn't work
+        Thread.sleep(10000) // Auto refresh doesn't work
         activityPage.go()
 
         then:
