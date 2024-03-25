@@ -251,7 +251,7 @@ class ProjectEditPage extends BasePage {
 
     /**
      * Given input (type text, radio or select) props, returns a map containing
-     * the given keys and its value in a GUI's input.
+     * the given keys and its value from GUI's input.
      *
      * @param props
      */
