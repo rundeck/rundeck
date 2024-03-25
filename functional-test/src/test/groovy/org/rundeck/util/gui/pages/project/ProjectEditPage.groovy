@@ -4,7 +4,9 @@ import groovy.transform.CompileStatic
 import org.openqa.selenium.By
 import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.WebElement
+import org.openqa.selenium.interactions.Actions
 import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.Select
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.openqa.selenium.Keys
 import org.openqa.selenium.WebElement
@@ -16,6 +18,8 @@ import java.time.Duration
 
 @CompileStatic
 class ProjectEditPage extends BasePage {
+
+    private static final String FILE_COPIER_CONFIG_PREFIX = "fcopy.default.config."
 
     String loadPath = ""
     By nodeExecutorBy = By.partialLinkText("Default Node Executor")
@@ -52,6 +56,8 @@ class ProjectEditPage extends BasePage {
     By daysToKeepExecsBy = By.id("cleanperiod")
     By minimumExecsToKeepBy = By.id("minimumtokeep")
     By cronScheduleCleanerBy = By.id("cronTextField")
+    By fileCopierDivBy = By.id("tab_svc_FileCopier")
+    By dropDownButtonBy = By.cssSelector(".btn.btn-primary.dropdown-toggle")
 
     ProjectEditPage(SeleniumContext context) {
         super(context)
@@ -101,6 +107,10 @@ class ProjectEditPage extends BasePage {
 
     def clickNavLink(NavProjectSettings navProjectSettings){
         (el By.linkText(navProjectSettings.getTabLink())).click()
+    }
+
+    def getSelectedDefaultFileCopier(){
+        (el fileCopierDivBy)
     }
 
     def getDefaultNodeExecutorLink(){
@@ -185,6 +195,86 @@ class ProjectEditPage extends BasePage {
 
     def getRetryCounterInput(){
         el retryCounterBy
+    }
+
+    def clickFileCopierDropDown(){
+        (el fileCopierDivBy).findElement(dropDownButtonBy).click()
+    }
+
+    List<WebElement> getFileCopierList(){
+        (el fileCopierDivBy).findElement(By.cssSelector(".form-group.spacing-lg")).findElements(By.tagName("a"))
+    }
+
+    def selectFileCopier(FileCopierEnum fileCopier){
+        (el fileCopierDivBy).findElement(By.linkText(fileCopier.getName())).click()
+    }
+
+    /**
+     * Given input (type text, radio or select) props, sets each value that match with its selector.
+     *
+     * @param props
+     */
+    def setFileCopierValues(
+            Map<String,String> properties,
+            List<String> clickableProps = null,
+            Map<String,String> selectableProps = null
+    ){
+        if( clickableProps ){
+            clickableProps.each {
+                scrollToElement((el By.name("${FILE_COPIER_CONFIG_PREFIX}${it}")))
+                (el By.name("${FILE_COPIER_CONFIG_PREFIX}${it}")).click()
+            }
+        }
+        if( selectableProps ){
+            selectableProps.each {
+                scrollToElement((el By.name("${FILE_COPIER_CONFIG_PREFIX}${it.key}")))
+                new Select((el By.name("${FILE_COPIER_CONFIG_PREFIX}${it.key}"))).selectByValue(it.value)
+            }
+        }
+        properties.each {
+            scrollToElement((el By.name("${FILE_COPIER_CONFIG_PREFIX}${it.key}")))
+            (el By.name("${FILE_COPIER_CONFIG_PREFIX}${it.key}")).clear()
+            (el By.name("${FILE_COPIER_CONFIG_PREFIX}${it.key}")).sendKeys(it.value)
+        }
+    }
+
+    /**
+     * Scroll to a given element.
+     *
+     * @param el
+     */
+    void scrollToElement(WebElement el){
+        Actions actions = new Actions(driver);
+        actions.moveToElement(el);
+        actions.perform();
+    }
+
+    /**
+     * Given input (type text, radio or select) props, returns a map containing
+     * the given keys and its value in a GUI's input.
+     *
+     * @param props
+     */
+    def getFileCopierConfig(
+            LinkedHashMap<String, String> props,
+            Iterable<String> clickableProps = null,
+            LinkedHashMap<String, String> selectableProps = null
+    ) {
+        def guiConfig = [:]
+        props.each {
+            guiConfig.put(it.key, (el By.name("${FILE_COPIER_CONFIG_PREFIX}${it.key}")).getAttribute("value"))
+        }
+        if( clickableProps ){
+            clickableProps.each {
+                guiConfig.put(it, (el By.name("${FILE_COPIER_CONFIG_PREFIX}${it}")).selected.toString())
+            }
+        }
+        if ( selectableProps ){
+            selectableProps.each {
+                guiConfig.put(it.key, new Select((el By.name("${FILE_COPIER_CONFIG_PREFIX}${it.key}"))).getFirstSelectedOption().text)
+            }
+        }
+        return guiConfig
     }
 
     /**
@@ -273,4 +363,20 @@ class ProjectEditPage extends BasePage {
         (el cronScheduleCleanerBy).sendKeys(cronSchedule)
         (el minimumExecsToKeepBy).click()
     }
+
+    enum FileCopierEnum {
+        SCP("SCP"),
+        SSHJ_SCP("SSHJ-SCP"),
+        STUB("Stub"),
+        SCRIPT_EXECUTION("Script Execution"),
+        ANSIBLE_FILE_COPIER("Ansible File Copier"),
+        WINRM_FILE_COPIER("WinRM Python File Copier"),
+        OPENSSH("openssh / file-copier")
+
+        final String name
+        FileCopierEnum(String name){
+            this.name = name
+        }
+    }
+
 }
