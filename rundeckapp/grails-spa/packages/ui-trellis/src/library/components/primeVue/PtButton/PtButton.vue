@@ -55,4 +55,30 @@ export default defineComponent({
 });
 </script>
 
-<style scoped lang="scss"></style>
+<style lang="scss">
+.p-button {
+  background: var(--colors-primaryButtonOnLight);
+  color: var(--colors-white);
+
+  &:hover {
+    background: var(--colors-primaryButtonHoverOnLight);
+  }
+
+  &:active {
+    background: var(--colors-primaryButtonActiveOnLight);
+  }
+}
+
+.p-button-danger {
+  background: var(--colors-dangerButtonOnLight);
+  color: var(--white);
+
+  &:hover {
+    background: var(--colors-dangerButtonHoverOnLight);
+  }
+
+  &:active {
+    background: var(--colors-dangerButtonOnLight);
+  }
+}
+</style>
