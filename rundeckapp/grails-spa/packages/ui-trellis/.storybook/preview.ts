@@ -3,6 +3,7 @@ import { setup } from "@storybook/vue3";
 
 import "primevue/resources/themes/lara-light-amber/theme.css";
 import "../src/library/theme/tokens.css";
+import "./storybook.css";
 
 import Tooltip from "primevue/tooltip";
 
