@@ -73,6 +73,8 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         allowed
         request.subject.principals.find { it instanceof Username }?.name == username
         request.subject.principals.findAll { it instanceof Group }.collect { it.name } == roles
+        0 * userServiceMock.findOrCreateUser(_)
+        0 * userServiceMock.parseKeyValuePref(_)
 
         where:
         username   | roles
@@ -120,6 +122,8 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         then:
         allowed == expected
         flash.loginErrorCode==code
+        0 * userServiceMock.findOrCreateUser(_)
+        0 * userServiceMock.parseKeyValuePref(_)
 
         where:
         requiredRole | username | groups            | expected | code
@@ -164,6 +168,8 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         interceptor.request.userPrincipal = new Username("User")
         interceptor.request.remoteUser = "User"
         boolean allowed = interceptor.before()
+        0 * userServiceMock.findOrCreateUser(_)
+        0 * userServiceMock.parseKeyValuePref(_)
 
         then:
         allowed == userAllowed
@@ -321,6 +327,8 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         interceptor.params.authtoken = "123"
         interceptor.request.api_version = 41
         boolean allowed = interceptor.before()
+        0 * userServiceMock.findOrCreateUser(_)
+        0 * userServiceMock.parseKeyValuePref(_)
 
         then:
         allowed
