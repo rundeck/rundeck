@@ -4,7 +4,7 @@ class JobHistory {
 
     String jobUuid
     String jobDefinition
-    String username
+    String userName
     Date dateCreated
     Date lastUpdated
 

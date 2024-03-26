@@ -97,6 +97,7 @@ import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
 import rundeck.data.job.query.RdJobQueryInput
 import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
+import rundeck.services.component.JobHistoryService
 import rundeck.services.optionvalues.OptionValuesService
 
 import javax.servlet.http.HttpServletResponse
@@ -124,6 +125,7 @@ class ScheduledExecutionController  extends ControllerBase{
     ConfigurationService configurationService
     JobDataProvider jobDataProvider
     ReferencedExecutionDataProvider referencedExecutionDataProvider
+    JobHistoryService jobHistoryService
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -5591,6 +5593,24 @@ return.''',
         }
         return apiJobExecutionsResult(true)
     }
+
+    /**
+     * API: /api/job/{id}/history , version 1
+     */
+    def apiJobHistory() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+        withFormat {
+            '*' {
+                return jobHistoryService.apiJobHistoryResult(params.id)
+            }
+        }
+    }
+
     /**
      * non-api interface to job executions results
      */

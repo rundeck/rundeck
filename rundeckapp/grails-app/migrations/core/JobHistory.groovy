@@ -11,11 +11,21 @@ databaseChangeLog = {
                 constraints(nullable: "false", primaryKey: "true", primaryKeyName: "job_history_PK")
             }
 
+            column(name: "version", type: '${number.type}') {
+                constraints(nullable: "false")
+            }
+
             column(name: "job_uuid", type: '${varchar255.type}') {
                 constraints(nullable: "false")
             }
 
-            column(name: "job_definition", type: '${varchar255.type}')
+            column(name: "job_definition", type: '${bytearray.type}'){
+                constraints(nullable: "false")
+            }
+
+            column(name: "user_name", type: '${varchar255.type}') {
+                constraints(nullable: "false")
+            }
 
             column(name: "date_created", type: '${timestamp.type}') {
                 constraints(nullable: "false")
@@ -24,7 +34,6 @@ databaseChangeLog = {
             column(name: "last_updated", type: '${timestamp.type}') {
                 constraints(nullable: "false")
             }
-
         }
     }
  }
