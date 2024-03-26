@@ -1,14 +1,30 @@
 .p-message {
-    background: var(--colors-);
-    &--info {
-        background: var(--colors-);
+    border-radius: 0;
+    color: var(--colors-gray-800);
+
+    .p-message-icon,
+    .p-message-close {
+        color: var(--colors-gray-800);
+    }
+
+    &-success {
+        background: var(--colors-green-100);
+        border-color: var(--colors-green-600);
+    }
+
+    &-info {
+        background: var(--colors-blue-100);
+        border-color: var(--colors-blue-600);
+        //color: var(--colors-gray-800);
     }
 
     &--warning {
-        background: var(--colors-);
+        background: var(--colors-orange-100);
+        border-color: var(--colors-orange-600);
     }
 
     &--danger {
-        background: var(--colors-);
+        background: var(--colors-red-100);
+        border-color: var(--colors-red-600);
     }
 }

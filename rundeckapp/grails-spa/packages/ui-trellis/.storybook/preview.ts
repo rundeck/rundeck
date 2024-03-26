@@ -1,5 +1,6 @@
 import type { Preview } from "@storybook/vue3";
 import { setup } from "@storybook/vue3";
+import PrimeVue from "primevue/config";
 
 import "primevue/resources/themes/lara-light-amber/theme.css";
 import "../src/library/theme/tokens.css";
@@ -31,6 +32,7 @@ const preview: Preview = {
 
 setup((app) => {
   app.directive("tooltip", Tooltip);
+  app.use(PrimeVue);
 });
 
 export default preview;

@@ -23,7 +23,9 @@
     "storybook": "storybook dev -p 6006 -- --debug-webpack",
     "clean": "cp -a ./lib/src/library/. ./lib && rm -rf ./lib/src && exit 0",
     "lint": "eslint src --fix",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "create-wrapper": "npx hygen primevue-generator wrapper --componentName",
+    "create-css": "npx hygen primevue-generator css --componentName",
   },
   "repository": {
     "type": "git",
