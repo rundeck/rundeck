@@ -4,7 +4,6 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobDefinitionComponent
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContextAware
 import rundeck.ScheduledExecution
 
@@ -60,7 +59,7 @@ class JobHistoryService implements JobDefinitionComponent, ApplicationContextAwa
 
     @Override
     void didDeleteJob(Object job, AuthContext authContext) {
-
+        deleteJobHistory(job.uuid)
     }
 
     /**
@@ -70,5 +69,9 @@ class JobHistoryService implements JobDefinitionComponent, ApplicationContextAwa
      */
     void saveJobHistory(ScheduledExecution scheduledExecution, String user) {
         def jobDefYaml = rundeckJobDefinitionManager.exportAsYaml([scheduledExecution])
+    }
+
+    void deleteJobHistory(String jobUuid){
+
     }
 }
