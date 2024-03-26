@@ -13,7 +13,7 @@ const meta: Meta<typeof Tag> = {
     severity: {
       control: {
         type: "select",
-        options: ["sucess", "warning", "danger"],
+        options: ["success", "warning", "danger"],
       },
     },
     icon: {
