@@ -48,7 +48,7 @@ class GormUserDataProvider implements UserDataProvider {
     @Override
     @Transactional
     User findOrCreateUser(String login) throws DataAccessException {
-        User user = User.findByLogin(login)
+        User user = isLoginNameCaseSensitiveEnabled() ? User.findByLogin(login) : User.findByLoginIlike(login)
         if (!user) {
             User newUser = new User(login: login)
             if (!newUser.save(flush: true)) {
@@ -59,8 +59,8 @@ class GormUserDataProvider implements UserDataProvider {
         return user
     }
 
-    static User getUserByLoginOrCreate(String login) {
-        User user = User.findByLogin(login)
+    User getUserByLoginOrCreate(String login) {
+        User user = isLoginNameCaseSensitiveEnabled() ? User.findByLogin(login) : User.findByLoginIlike(login)
         if (!user) {
             user = new User(login: login)
         }
@@ -214,15 +214,16 @@ class GormUserDataProvider implements UserDataProvider {
             } as List<RdUser>
         }
         def response = new UserFilteredResponse()
-        response.setTotalRecords(totalRecords)
-        response.setUsers(users)
         response.setShowLoginStatus(showLoginStatus)
+
+        response.setUsers(users)
+        response.setTotalRecords(totalRecords)
         return response
     }
 
     @Override
     boolean validateUserExists(String username) {
-        return User.countByLogin(username) > 0
+        return User.countByLoginIlike(username) > 0
     }
 
     @Override
@@ -239,7 +240,7 @@ class GormUserDataProvider implements UserDataProvider {
 
     @Override
     RdUser findByLogin(String login) {
-        return User.findByLogin(login)
+        return isLoginNameCaseSensitiveEnabled() ? User.findByLogin(login) : User.findByLoginIlike(login)
     }
 
     @Override
@@ -250,7 +251,7 @@ class GormUserDataProvider implements UserDataProvider {
     @Override
     @Transactional
     SaveUserResponse updateFilterPref(String login, String filterPref) {
-        User user = User.findByLogin(login)
+        User user = isLoginNameCaseSensitiveEnabled() ? User.findByLogin(login) : User.findByLoginIlike(login)
         user.filterPref = filterPref
         Boolean isSaved = user.save()
         return new SaveUserResponse(user: user, isSaved: isSaved, errors: user.errors)
@@ -260,7 +261,7 @@ class GormUserDataProvider implements UserDataProvider {
     String getEmailWithNewSession(String login) {
         if (!login) { return "" }
         User.withNewSession {
-            def userLogin = User.findByLogin(login)
+            def userLogin = isLoginNameCaseSensitiveEnabled() ? User.findByLogin(login) : User.findByLoginIlike(login)
             if (!userLogin || !userLogin.email) { return "" }
             return userLogin.email
         }
@@ -314,4 +315,9 @@ class GormUserDataProvider implements UserDataProvider {
     def getSessionIdRegisterMethod() {
         configurationService.getString(SESSION_ID_METHOD, 'hash')
     }
+
+    def isLoginNameCaseSensitiveEnabled(){
+        return configurationService?.getBoolean("login.nameCaseSensitiveEnabled",false)
+    }
+
 }
