@@ -2,6 +2,7 @@ import type { StorybookConfig } from "@storybook/vue3-webpack5";
 
 const config: StorybookConfig = {
   stories: [
+    "../src/library/components/primeVue/**/*.mdx",
     "../src/library/components/primeVue/**/*.stories.@(js|jsx|mjs|ts|tsx)",
   ],
   addons: [
