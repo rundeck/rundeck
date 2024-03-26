@@ -13,9 +13,6 @@ class JobHistoryService implements JobDefinitionComponent, ApplicationContextAwa
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     static final String componentName = "JobHistory"
 
-    @Autowired
-    JobHistoryDataProvider jobHistoryDataProvider
-
     @Override
     String getName() {
         return componentName
