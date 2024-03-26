@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.springframework.context.ApplicationContextAware
+import rundeck.JobHistory
 import rundeck.ScheduledExecution
 
 class JobHistoryService implements JobDefinitionComponent, ApplicationContextAware{
@@ -69,9 +70,22 @@ class JobHistoryService implements JobDefinitionComponent, ApplicationContextAwa
      */
     void saveJobHistory(ScheduledExecution scheduledExecution, String user) {
         def jobDefYaml = rundeckJobDefinitionManager.exportAsYaml([scheduledExecution])
+        JobHistory jh = new JobHistory()
+        jh.userName = user
+        jh.jobDefinition = jobDefYaml
+        jh.jobUuid = scheduledExecution.uuid
+        jh.save()
     }
 
+    /**
+     * It removes the history when a job gets deleted
+     * @param jobUuid
+     */
     void deleteJobHistory(String jobUuid){
+        JobHistory.executeUpdate("delete JobHistory jh where jh.jobUuid = :jobUuid", [jobUuid:jobUuid])
+    }
 
+    List getJobHistory(String jobUuid){
+        JobHistory.findAllByJobUuid(jobUuid, [order: "dateCreated"])
     }
 }
