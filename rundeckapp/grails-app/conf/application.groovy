@@ -176,6 +176,6 @@ grails.plugin.springsecurity.providerNames = [
         'rememberMeAuthenticationProvider']
 
 grails.assets.url = { request ->
-    String cdn = request.getAttribute("CDN") ?: ""
+    String cdn = request?.getAttribute("CDN") ?: ""
     return cdn
 }
