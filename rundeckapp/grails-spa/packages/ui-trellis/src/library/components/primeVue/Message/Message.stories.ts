@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from "@storybook/vue3";
 import "./message.scss";
 import Message from "primevue/message";
 
-
 const meta: Meta<typeof Message> = {
   title: "Message",
   component: Message,
@@ -27,7 +26,55 @@ export const Default: Story = {
     setup() {
       return { args };
     },
-    template: `<Message v-bind="args" />`,
+    template: `<Message :severity="args.severity">{{ args.content }}</Message>`,
   }),
-  args: {},
+  args: {
+    severity: "success",
+    content: "Hello world!",
+  },
+};
+
+export const Info: Story = {
+  render: (args) => ({
+    props: Object.keys(args),
+    components: { Message },
+    setup() {
+      return { args };
+    },
+    template: `<Message :severity="args.severity">{{ args.content }}</Message>`,
+  }),
+  args: {
+    ...Default.args,
+    severity: "info",
+  },
+};
+
+export const Warning: Story = {
+  render: (args) => ({
+    props: Object.keys(args),
+    components: { Message },
+    setup() {
+      return { args };
+    },
+    template: `<Message :severity="args.severity">{{ args.content }}</Message>`,
+  }),
+  args: {
+    ...Default.args,
+    severity: "warn",
+  },
+};
+
+export const Error: Story = {
+  render: (args) => ({
+    props: Object.keys(args),
+    components: { Message },
+    setup() {
+      return { args };
+    },
+    template: `<Message :severity="args.severity">{{ args.content }}</Message>`,
+  }),
+  args: {
+    ...Default.args,
+    severity: "error",
+  },
 };

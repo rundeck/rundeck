@@ -5,7 +5,7 @@ unless_exists: true
 
 .p-<%= h.changeCase.lower(componentName) %> {
     background: var(--colors-);
-<% if(variants) { %>
+<% if(locals.variants) { %>
     <% variants.split(',').forEach(variant => { %>
     &--<%= variant %> {
         background: var(--colors-);
