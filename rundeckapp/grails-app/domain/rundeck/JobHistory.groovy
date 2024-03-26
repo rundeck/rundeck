@@ -1,7 +1,7 @@
 package rundeck
 
 class JobHistory {
-    
+
     String jobUuid
     String jobDefinition
     String username
