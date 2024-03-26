@@ -5606,7 +5606,7 @@ return.''',
         }
         withFormat {
             '*' {
-                return jobHistoryService.apiJobHistoryResult(params.id)
+                return jobHistoryService.getJobHistory(params.id)
             }
         }
     }
