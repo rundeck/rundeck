@@ -336,6 +336,11 @@ class RundeckJobDefinitionManager implements JobDefinitionManager<ScheduledExecu
     }
 
     @Override
+    String exportAsJson(List<ScheduledExecution> list) {
+        exportAs('json', list)
+    }
+
+    @Override
     String exportAs(String format, List<ScheduledExecution> list) {
         def writer = new StringWriter()
         exportAs(format, list, writer)
