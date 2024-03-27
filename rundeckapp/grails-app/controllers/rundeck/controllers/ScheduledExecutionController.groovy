@@ -5604,11 +5604,12 @@ return.''',
         if (!apiService.requireParameters(params, response, ['id'])) {
             return
         }
-        withFormat {
-            '*' {
-                return jobHistoryService.getJobHistory(params.id)
-            }
+
+        response.contentType = 'application/json;charset=UTF-8'
+        response.outputStream.withWriter('UTF-8') { writer ->
+            rundeckJobDefinitionManager.exportAs("json", jobHistoryService.getJobHistory(params.id), writer)
         }
+        flush(response)
     }
 
     /**
