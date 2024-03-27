@@ -87,7 +87,11 @@ class UrlMappings {
         }
 
         "/api/$api_version/job/$id/history"(controller: 'scheduledExecution') {
-            action = [GET: 'apiJobHistory']
+            action = [GET: 'apiJobHistory', DELETE: 'apiJobHistoryDelete']
+        }
+
+        "/api/$api_version/job/history/$historyId"(controller: 'scheduledExecution') {
+            action = [DELETE: 'apiJobHistoryDeleteById']
         }
 
         "/api/$api_version/job/$id/scm/$integration/status"(controller: 'scm', action: 'apiJobStatus')
