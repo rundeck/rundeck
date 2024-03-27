@@ -30,7 +30,10 @@ export default defineComponent({
       return {
         menuItem: ({ context }) => {
           return {
-            class: context.index < this.activeStep ? "p-completed" : "",
+            class:
+              context.index < this.activeStep || context.item.completed
+                ? "p-completed"
+                : "",
           };
         },
       };

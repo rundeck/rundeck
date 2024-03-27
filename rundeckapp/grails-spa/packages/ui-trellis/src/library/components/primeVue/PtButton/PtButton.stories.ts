@@ -4,21 +4,10 @@ import PtButton from "./PtButton.vue";
 const meta: Meta<typeof PtButton> = {
   component: PtButton,
   argTypes: {
-    value: {
-      control: {
-        type: "text",
-      },
-    },
     severity: {
       control: {
         type: "select",
         options: ["sucess", "warning", "danger", "secondary"],
-      },
-    },
-    size: {
-      control: {
-        type: "select",
-        options: ["large", "xlarge"],
       },
     },
   },
@@ -46,5 +35,101 @@ export const Default: Story = {
   }),
   args: {
     label: "Submit",
+  },
+};
+
+export const DefaultGhost: Story = {
+  render: (args) => ({
+    components: { PtButton },
+    setup() {
+      return { args };
+    },
+    template: `
+      <PtButton v-bind="args" />`,
+  }),
+  args: {
+    label: "Submit",
+    text: true,
+  },
+};
+
+export const Danger: Story = {
+  render: (args) => ({
+    components: { PtButton },
+    name: "Danger button",
+    setup() {
+      return { args };
+    },
+    template: `
+      <PtButton v-bind="args" />`,
+  }),
+  args: {
+    label: "Submit",
+    severity: "danger",
+  },
+};
+
+export const DangerGhost: Story = {
+  render: (args) => ({
+    components: { PtButton },
+    setup() {
+      return { args };
+    },
+    template: `
+      <PtButton v-bind="args" />`,
+  }),
+  args: {
+    label: "Submit",
+    severity: "danger",
+    text: true,
+  },
+};
+
+export const Secondary: Story = {
+  render: (args) => ({
+    components: { PtButton },
+    name: "Secondary button",
+    setup() {
+      return { args };
+    },
+    template: `
+      <PtButton v-bind="args" />`,
+  }),
+  args: {
+    label: "Submit",
+    severity: "secondary",
+    outlined: true,
+  },
+};
+
+export const SecondaryGhost: Story = {
+  render: (args) => ({
+    components: { PtButton },
+    setup() {
+      return { args };
+    },
+    template: `
+      <PtButton v-bind="args" />`,
+  }),
+  args: {
+    label: "Submit",
+    severity: "secondary",
+    text: true,
+  },
+};
+
+export const Disabled: Story = {
+  render: (args) => ({
+    components: { PtButton },
+    setup() {
+      return { args };
+    },
+    template: `
+      <PtButton v-bind="args" />`,
+  }),
+  args: {
+    label: "Submit",
+    severity: "danger",
+    text: true,
   },
 };
