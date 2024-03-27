@@ -390,6 +390,7 @@ tasks.withType(Jar) {
 }
 
 assets {
+    skipNonDigests = true
     minifyJs = false
     minifyCss = false
     excludes = ['gulpfile.js','**/*~','*.json','bootstrap/**/*.less', '_package-manager/**/*']
