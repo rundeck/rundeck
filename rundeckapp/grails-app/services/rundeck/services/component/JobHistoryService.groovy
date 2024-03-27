@@ -69,11 +69,10 @@ class JobHistoryService implements JobDefinitionComponent, ApplicationContextAwa
      * @param user
      */
     void saveJobHistory(ScheduledExecution scheduledExecution, String user) {
-        //Here we need to add logic to allow a maximum ok X job history records
-        def jobDefJSON = rundeckJobDefinitionManager.exportAs("json",[scheduledExecution])
+        def jobDef = rundeckJobDefinitionManager.exportAsJson([scheduledExecution])
         JobHistory jh = new JobHistory()
         jh.userName = user
-        jh.jobDefinition = jobDefJSON
+        jh.jobDefinition = jobDef
         jh.jobUuid = scheduledExecution.uuid
         jh.save()
     }

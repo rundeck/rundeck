@@ -161,6 +161,8 @@ public interface JobDefinitionManager<J> {
      */
     String exportAsXml(List<J> list);
 
+    String exportAsJson(List<J> list);
+
     Map jobMapToXMap(Map map, boolean preserveUuid, String replaceId, String stripJobRef);
 
     /**
