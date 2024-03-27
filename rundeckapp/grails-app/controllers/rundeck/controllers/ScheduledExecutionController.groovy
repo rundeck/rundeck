@@ -5613,6 +5613,38 @@ return.''',
     }
 
     /**
+     * API: /api/job/{id}/history , version 1
+     */
+    def apiJobHistoryDelete() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+        jobHistoryService.deleteJobHistory(params.id)
+
+        response.contentType = 'application/json;charset=UTF-8'
+        response.status = 200
+    }
+
+    /**
+     * API: /api/job/{id}/history , version 1
+     */
+    def apiJobHistoryDeleteById() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+        if (!apiService.requireParameters(params, response, ['historyId'])) {
+            return
+        }
+        jobHistoryService.deleteJobHistoryById(params.historyId)
+
+        response.contentType = 'application/json;charset=UTF-8'
+        response.status = 200
+    }
+
+    /**
      * non-api interface to job executions results
      */
     def jobExecutionsAjax() {

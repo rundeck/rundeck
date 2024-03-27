@@ -89,6 +89,10 @@ class JobHistoryService implements JobDefinitionComponent, ApplicationContextAwa
         JobHistory.executeUpdate("delete JobHistory jh where jh.jobUuid = :jobUuid", [jobUuid:jobUuid])
     }
 
+    void deleteJobHistoryById(String historyId){
+        JobHistory.findById(historyId.toInteger()).delete(flush:true)
+    }
+
     /**
      * It retrieves all job histories and then parse the json stored in the DB to an actual ScheduledExecution
      * It adds the history parameters to the scheduledExecution so it can be shown in the request
