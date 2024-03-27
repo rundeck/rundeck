@@ -8,10 +8,14 @@ import org.springframework.context.ApplicationContextAware
 import rundeck.JobHistory
 import rundeck.ScheduledExecution
 
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+
 class JobHistoryService implements JobDefinitionComponent, ApplicationContextAware{
 
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     static final String componentName = "JobHistory"
+    static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss"
 
     @Override
     String getName() {
@@ -93,10 +97,11 @@ class JobHistoryService implements JobDefinitionComponent, ApplicationContextAwa
      */
     def getJobHistory(String jobUuid){
         def histories = []
+        DateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT)
         JobHistory.findAllByJobUuid(jobUuid, [order: "dateCreated"]).each {
             def scheduleDefs = rundeckJobDefinitionManager.decodeFormat("json", it.jobDefinition)
             scheduleDefs[0].job.modifierUserName = it.userName
-            scheduleDefs[0].job.modifiedDate = it.dateCreated
+            scheduleDefs[0].job.modifiedDate = dateFormat.format(it.dateCreated)
             scheduleDefs[0].job.historyId = it.id
             histories.add(scheduleDefs[0].job)
         }

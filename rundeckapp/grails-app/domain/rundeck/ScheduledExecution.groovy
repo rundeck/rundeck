@@ -113,7 +113,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
     String maxMultipleExecutions
     String pluginConfig
     String modifierUserName
-    Date modifiedDate
+    String modifiedDate
     Long historyId
 
     static transients = ['userRoles', 'adhocExecutionType', 'notifySuccessRecipients', 'notifyFailureRecipients',
