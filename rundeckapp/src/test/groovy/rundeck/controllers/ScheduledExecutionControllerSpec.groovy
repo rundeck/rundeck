@@ -59,6 +59,7 @@ import org.rundeck.app.jobs.options.ApiTokenReporter
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
 import rundeck.services.*
+import rundeck.services.component.JobHistoryService
 import rundeck.services.feature.FeatureService
 import rundeck.services.optionvalues.OptionValuesService
 import spock.lang.Unroll
@@ -75,7 +76,7 @@ import java.lang.annotation.Annotation
  */
 class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
 
-    List<Class> getDomainClasses() { [ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats] }
+    List<Class> getDomainClasses() { [ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats, JobHistory] }
 
     def setup() {
         mockCodec(URIComponentCodec)
@@ -118,6 +119,27 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         where:
             endpoint             | access
             'actionMenuFragment' | RundeckAccess.Job.AUTH_APP_READ_OR_VIEW
+    }
+
+    def "job history"() {
+        given:
+        def jobUuid = "13ffa515-98be-4988-8e80-af0ebabf0bb1"
+        controller.apiService = Mock(ApiService)
+        JobHistory jh = new JobHistory(userName: "pepito", jobDefinition: "- defaultTab: nodes\n" +
+                "  description: ''")
+        jh.save()
+        controller.jobHistoryService = Mock(JobHistoryService){
+            getJobHistory(jobUuid) >> jh
+        }
+        controller.response.format = "json"
+        when:
+        request.api_version = 45
+        request.method = 'GET'
+        params.id = jobUuid
+
+        controller.apiJobHistory()
+        then:
+        response.json == []
     }
 
     def "workflow json"() {

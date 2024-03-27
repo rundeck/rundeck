@@ -69,10 +69,11 @@ class JobHistoryService implements JobDefinitionComponent, ApplicationContextAwa
      * @param user
      */
     void saveJobHistory(ScheduledExecution scheduledExecution, String user) {
-        def jobDefYaml = rundeckJobDefinitionManager.exportAsYaml([scheduledExecution])
+        //Here we need to add logic to allow a maximum ok X job history records
+        def jobDefJSON = rundeckJobDefinitionManager.exportAs("json",[scheduledExecution])
         JobHistory jh = new JobHistory()
         jh.userName = user
-        jh.jobDefinition = jobDefYaml
+        jh.jobDefinition = jobDefJSON
         jh.jobUuid = scheduledExecution.uuid
         jh.save()
     }
@@ -85,7 +86,21 @@ class JobHistoryService implements JobDefinitionComponent, ApplicationContextAwa
         JobHistory.executeUpdate("delete JobHistory jh where jh.jobUuid = :jobUuid", [jobUuid:jobUuid])
     }
 
-    List getJobHistory(String jobUuid){
-        JobHistory.findAllByJobUuid(jobUuid, [order: "dateCreated"])
+    /**
+     * It retrieves all job histories and then parse the json stored in the DB to an actual ScheduledExecution
+     * It adds the history parameters to the scheduledExecution so it can be shown in the request
+     * @param jobUuid
+     * @return
+     */
+    def getJobHistory(String jobUuid){
+        def histories = []
+        JobHistory.findAllByJobUuid(jobUuid, [order: "dateCreated"]).each {
+            def scheduleDefs = rundeckJobDefinitionManager.decodeFormat("json", it.jobDefinition)
+            scheduleDefs[0].job.modifierUserName = it.userName
+            scheduleDefs[0].job.modifiedDate = it.dateCreated
+            scheduleDefs[0].job.historyId = it.id
+            histories.add(scheduleDefs[0].job)
+        }
+        return histories
     }
 }
