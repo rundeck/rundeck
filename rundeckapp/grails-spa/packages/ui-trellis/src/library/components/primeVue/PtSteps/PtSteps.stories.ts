@@ -40,3 +40,31 @@ export const Default: Story = {
     ],
   },
 };
+
+export const Completed: Story = {
+  render: (args) => ({
+    props: Object.keys(args),
+    components: { PtSteps },
+    setup() {
+      return { args };
+    },
+    template: `<PtSteps  :activeStep="args.activeStep" :items="args.items"  />`,
+  }),
+  args: {
+    activeStep: 0,
+    items: [
+      {
+        label: "Personal Info",
+        completed: true,
+      },
+      {
+        label: "Reservation",
+        completed: true,
+      },
+      {
+        label: "Review",
+        completed: false,
+      },
+    ],
+  },
+};
