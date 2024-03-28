@@ -18,10 +18,6 @@ class HtmlRenderedOutputPage extends BasePage{
         super(context)
     }
 
-    def loadHtmlOutputForProject(String projectName){
-        this.loadPath = "/project/${projectName}/execution/renderOutput/8?convertContent=on&loglevels=on&ansicolor=on&reload=true"
-    }
-
     WebElement getLogLevelNormalLogLine(){
         el logLevelNormalBy
     }
