@@ -71,7 +71,6 @@ if [[ -n "${EXEC_CMD}" ]] ; then
 fi
 
 exec java \
-    -XX:+UnlockExperimentalVMOptions \
     -XX:MaxRAMPercentage="${JVM_MAX_RAM_PERCENTAGE}" \
     -Dlog4j.configurationFile="${HOME}/server/config/log4j2.properties" \
     -Dlogging.config="file:${HOME}/server/config/log4j2.properties" \
