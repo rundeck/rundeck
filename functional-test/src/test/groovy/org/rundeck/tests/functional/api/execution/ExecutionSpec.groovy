@@ -355,6 +355,9 @@ class ExecutionSpec extends BaseContainer {
             ProjectUtils.createProjectsWithJobsScheduled(projectNameSuffix, 4, 2, client)
         and:
             assert ProjectUtils.projectCountExecutions("*", 6, client)
+            assert ProjectUtils.projectCountExecutions("${projectNameSuffix}-1", 2, client)
+            assert ProjectUtils.projectCountExecutions("${projectNameSuffix}-1,${projectNameSuffix}-2", 4, client)
+            assert ProjectUtils.projectCountExecutions("${projectNameSuffix}-1,${projectNameSuffix}-2,${projectNameSuffix}-3", 6, client)
         when:
             def response1 = doGet("/project/*/executions/running?includePostponed=true")
             def response2 = doGet("/project/${projectNameSuffix}-1/executions/running?includePostponed=true")
