@@ -5,6 +5,7 @@ import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.common.navigation.NavProjectSettings
+import org.rundeck.util.gui.pages.home.HomePage
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.project.ProjectEditPage
 
@@ -27,8 +28,10 @@ class DefaultFileCopierSpec extends SeleniumBase{
         setupProject(projectName)
         ProjectEditPage editPage = page ProjectEditPage
         editPage.loadProjectEditForProject(projectName)
+        HomePage homePage = page HomePage
         when:
         go(LoginPage).login(TEST_USER, TEST_PASS)
+        homePage.validatePage()
         editPage.go()
         editPage.clickNavLink(NavProjectSettings.DEFAULT_FILE_COPIER)
         editPage.clickFileCopierDropDown()
@@ -47,6 +50,7 @@ class DefaultFileCopierSpec extends SeleniumBase{
         setupProject(projectName)
         ProjectEditPage editPage = page ProjectEditPage
         editPage.loadProjectEditForProject(projectName)
+        HomePage homePage = page HomePage
         def fileCopierConfigMap = ["keypath":"/ssh/key/file/path",
                                    "keystoragepath":"keys/example/exampleKey.key",
                                    "passwordstoragepath":"keys/example/exampleKey.key",
@@ -57,6 +61,7 @@ class DefaultFileCopierSpec extends SeleniumBase{
         ]
         when:
         go(LoginPage).login(TEST_USER, TEST_PASS)
+        homePage.validatePage()
         editPage.go()
         editPage.clickNavLink(NavProjectSettings.DEFAULT_FILE_COPIER)
         editPage.clickFileCopierDropDown()
@@ -80,6 +85,7 @@ class DefaultFileCopierSpec extends SeleniumBase{
         setupProject(projectName)
         ProjectEditPage editPage = page ProjectEditPage
         editPage.loadProjectEditForProject(projectName)
+        HomePage homePage = page HomePage
         def fileCopierConfigMap = [
                 "retryCounter"         : "3",
                 "keypath"              : "/ssh/key/file/path",
@@ -93,6 +99,7 @@ class DefaultFileCopierSpec extends SeleniumBase{
         ]
         when:
         go(LoginPage).login(TEST_USER, TEST_PASS)
+        homePage.validatePage()
         editPage.go()
         editPage.clickNavLink(NavProjectSettings.DEFAULT_FILE_COPIER)
         editPage.clickFileCopierDropDown()
@@ -114,8 +121,10 @@ class DefaultFileCopierSpec extends SeleniumBase{
         setupProject(projectName)
         ProjectEditPage editPage = page ProjectEditPage
         editPage.loadProjectEditForProject(projectName)
+        HomePage homePage = page HomePage
         when:
         go(LoginPage).login(TEST_USER, TEST_PASS)
+        homePage.validatePage()
         editPage.go()
         editPage.clickNavLink(NavProjectSettings.DEFAULT_FILE_COPIER)
         editPage.clickFileCopierDropDown()
@@ -137,6 +146,7 @@ class DefaultFileCopierSpec extends SeleniumBase{
         setupProject(projectName)
         ProjectEditPage editPage = page ProjectEditPage
         editPage.loadProjectEditForProject(projectName)
+        HomePage homePage = page HomePage
         def fileCopierConfigMap = [
                 "command"    : "customCommand",
                 "filepath"   : "/file/path",
@@ -145,6 +155,7 @@ class DefaultFileCopierSpec extends SeleniumBase{
         ]
         when:
         go(LoginPage).login(TEST_USER, TEST_PASS)
+        homePage.validatePage()
         editPage.go()
         editPage.clickNavLink(NavProjectSettings.DEFAULT_FILE_COPIER)
         editPage.clickFileCopierDropDown()
@@ -166,6 +177,7 @@ class DefaultFileCopierSpec extends SeleniumBase{
         setupProject(projectName)
         ProjectEditPage editPage = page ProjectEditPage
         editPage.loadProjectEditForProject(projectName)
+        HomePage homePage = page HomePage
         def fileCopierConfigMap = [
                 "winrmport"    : "1111",
                 "krb5config"   : "/etc/krb.conf",
@@ -186,6 +198,7 @@ class DefaultFileCopierSpec extends SeleniumBase{
         ]
         when:
         go(LoginPage).login(TEST_USER, TEST_PASS)
+        homePage.validatePage()
         editPage.go()
         editPage.clickNavLink(NavProjectSettings.DEFAULT_FILE_COPIER)
         editPage.clickFileCopierDropDown()
@@ -217,6 +230,7 @@ class DefaultFileCopierSpec extends SeleniumBase{
         setupProject(projectName)
         ProjectEditPage editPage = page ProjectEditPage
         editPage.loadProjectEditForProject(projectName)
+        HomePage homePage = page HomePage
         def fileCopierConfigMap = [
                 "ssh_key_storage_path":"keys/example/exampleKey.key",
                 "ssh_key_passphrase_storage_path":"keys/example/exampleKey.key",
@@ -230,6 +244,7 @@ class DefaultFileCopierSpec extends SeleniumBase{
         ]
         when:
         go(LoginPage).login(TEST_USER, TEST_PASS)
+        homePage.validatePage()
         editPage.go()
         editPage.clickNavLink(NavProjectSettings.DEFAULT_FILE_COPIER)
         editPage.clickFileCopierDropDown()
