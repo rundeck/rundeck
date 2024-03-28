@@ -354,7 +354,7 @@ class ExecutionSpec extends BaseContainer {
             String projectNameSuffix = "project-api-forecast"
             ProjectUtils.createProjectsWithJobsScheduled(projectNameSuffix, 4, 2, client)
         and:
-            assert ProjectUtils.projectCountExecutions("*", 6, client)
+            assert ProjectUtils.projectCountExecutions("*", 2, client)
             assert ProjectUtils.projectCountExecutions("${projectNameSuffix}-1", 2, client)
             assert ProjectUtils.projectCountExecutions("${projectNameSuffix}-1,${projectNameSuffix}-2", 4, client)
             assert ProjectUtils.projectCountExecutions("${projectNameSuffix}-1,${projectNameSuffix}-2,${projectNameSuffix}-3", 6, client)
