@@ -124,12 +124,20 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
     def "job history"() {
         given:
         def jobUuid = "13ffa515-98be-4988-8e80-af0ebabf0bb1"
-        controller.apiService = Mock(ApiService)
+        controller.apiService = Mock(ApiService){
+            1 * requireApi(_,_) >> true
+            1 * requireParameters(_, _, ['id']) >> true
+        }
         JobHistory jh = new JobHistory(userName: "pepito", jobDefinition: "- defaultTab: nodes\n" +
-                "  description: ''")
-        jh.save()
+                "  description: ''", dateCreated: new Date(), id: 1)
+        jh.save(flush:true)
         controller.jobHistoryService = Mock(JobHistoryService){
-            getJobHistory(jobUuid) >> jh
+            getJobHistory(jobUuid) >> [jh]
+        }
+        controller.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager){
+            exportAs(_,_,_)>>{
+                it[2].write('test output')
+            }
         }
         controller.response.format = "json"
         when:
@@ -139,7 +147,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
         controller.apiJobHistory()
         then:
-        response.json == []
+        response.text == 'test output'
     }
 
     def "workflow json"() {
@@ -1637,7 +1645,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
         controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
-        
+
 
 
 

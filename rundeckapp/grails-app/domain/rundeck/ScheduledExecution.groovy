@@ -253,9 +253,15 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         map.scheduleEnabled = hasScheduleEnabled()
         map.executionEnabled = hasExecutionEnabled()
         map.nodeFilterEditable = hasNodeFilterEditable()
-        map.modifierUserName = modifierUserName
-        map.modifiedDate = modifiedDate
-        map.historyId = historyId
+        if(modifierUserName){
+            map.modifierUserName = modifierUserName
+        }
+        if(modifiedDate){
+            map.modifiedDate = modifiedDate
+        }
+        if(historyId){
+            map.historyId = historyId
+        }
 
         if(groupPath){
             map.group=groupPath
