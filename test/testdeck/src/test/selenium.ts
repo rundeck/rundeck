@@ -38,17 +38,11 @@ export function CreateContext(resources: IRequiredResources) {
     opts.addArguments('--disable-rtc-smoothness-algorithm', '--disable-gpu-compositing', '--disable-gpu', '--force-device-scale-factor=1', '--disable-lcd-text', '--disable-dev-shm-usage')
 
     let driverProvider = async () => {
-        try {
-            const driver = await new webdriver.Builder()
-              .forBrowser('chrome')
-              .setChromeOptions(opts)
-              .build()
-            const proxy = createDriverProxy(driver)
-
-            return proxy
-        } catch (e) {
-            console.log(`Error creating webdriver: ${e}`,e)
-        }
+        const driver = await new webdriver.Builder()
+          .forBrowser('chrome')
+          .setChromeOptions(opts)
+          .build()
+        return  createDriverProxy(driver)
     }
 
     let ctx = new Context(driverProvider, envOpts.TESTDECK_RUNDECK_URL, envOpts.TESTDECK_S3_UPLOAD, envOpts.TESTDECK_S3_BASE as string)
