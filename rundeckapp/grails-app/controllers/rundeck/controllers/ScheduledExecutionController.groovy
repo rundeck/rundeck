@@ -97,6 +97,7 @@ import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
 import rundeck.data.job.query.RdJobQueryInput
 import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
+import rundeck.services.component.JobHistoryService
 import rundeck.services.optionvalues.OptionValuesService
 
 import javax.servlet.http.HttpServletResponse
@@ -124,6 +125,7 @@ class ScheduledExecutionController  extends ControllerBase{
     ConfigurationService configurationService
     JobDataProvider jobDataProvider
     ReferencedExecutionDataProvider referencedExecutionDataProvider
+    JobHistoryService jobHistoryService
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -5591,6 +5593,57 @@ return.''',
         }
         return apiJobExecutionsResult(true)
     }
+
+    /**
+     * API: /api/job/{id}/history , version 1
+     */
+    def apiJobHistory() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+
+        response.contentType = 'application/json;charset=UTF-8'
+        response.outputStream.withWriter('UTF-8') { writer ->
+            rundeckJobDefinitionManager.exportAs("json", jobHistoryService.getJobHistory(params.id), writer)
+        }
+        flush(response)
+    }
+
+    /**
+     * API: /api/job/{id}/history , version 1
+     */
+    def apiJobHistoryDelete() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+        jobHistoryService.deleteJobHistory(params.id)
+
+        response.contentType = 'application/json;charset=UTF-8'
+        response.status = 200
+    }
+
+    /**
+     * API: /api/job/{id}/history , version 1
+     */
+    def apiJobHistoryDeleteById() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+        if (!apiService.requireParameters(params, response, ['historyId'])) {
+            return
+        }
+        jobHistoryService.deleteJobHistoryById(params.historyId)
+
+        response.contentType = 'application/json;charset=UTF-8'
+        response.status = 200
+    }
+
     /**
      * non-api interface to job executions results
      */

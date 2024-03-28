@@ -112,13 +112,16 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
 
     String maxMultipleExecutions
     String pluginConfig
+    String modifierUserName
+    String modifiedDate
+    Long historyId
 
     static transients = ['userRoles', 'adhocExecutionType', 'notifySuccessRecipients', 'notifyFailureRecipients',
                          'notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl',
                          'crontabString', 'notifyAvgDurationRecipients', 'notifyAvgDurationUrl',
                          'notifyRetryableFailureRecipients', 'notifyRetryableFailureUrl', 'notifyFailureAttach',
                          'notifySuccessAttach', 'notifyRetryableFailureAttach',
-                         'pluginConfigMap', 'components']
+                         'pluginConfigMap', 'components', 'modifierUserName', 'modifiedDate', 'historyId']
 
     static constraints = {
         importFrom SharedProjectNameConstraints
@@ -250,6 +253,15 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         map.scheduleEnabled = hasScheduleEnabled()
         map.executionEnabled = hasExecutionEnabled()
         map.nodeFilterEditable = hasNodeFilterEditable()
+        if(modifierUserName){
+            map.modifierUserName = modifierUserName
+        }
+        if(modifiedDate){
+            map.modifiedDate = modifiedDate
+        }
+        if(historyId){
+            map.historyId = historyId
+        }
 
         if(groupPath){
             map.group=groupPath
