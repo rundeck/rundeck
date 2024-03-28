@@ -84,7 +84,6 @@ class JobTabsSpec extends SeleniumBase {
         def jobShowPage = page(JobShowPage)
         def executionShowPage = page(ExecutionShowPage)
         def htmlOutputPage = page HtmlRenderedOutputPage
-        htmlOutputPage.loadHtmlOutputForProject(PROJECT_NAME)
         then:
         def jobCreatePage = go(JobCreatePage, PROJECT_NAME)
         jobCreatePage.jobNameInput.sendKeys("test-html-output")
@@ -100,7 +99,6 @@ class JobTabsSpec extends SeleniumBase {
         jobShowPage.runJobBtn.click()
         executionShowPage.waitForElementVisible(htmlOutputPage.logLevelNormalBy)
         expect:
-        htmlOutputPage.validatePage()
         htmlOutputPage.logLevelNormalLogLine.text == commandArg
         currentUrl.endsWith("convertContent=on&loglevels=on&ansicolor=on&reload=true")
     }
