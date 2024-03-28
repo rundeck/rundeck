@@ -55,7 +55,9 @@ abstract class BasePage {
      * Validate the page is loaded
      */
     void validatePage() {
-
+        if (loadPath && !loadPath.empty) {
+            waitForUrlToContain(loadPath)
+        }
     }
 
     void refresh() {
