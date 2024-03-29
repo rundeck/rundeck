@@ -145,6 +145,7 @@ export default defineComponent({
   }
 }
 
+.p-button-link,
 .p-button-text {
   background: transparent;
   border-color: transparent;
@@ -195,5 +196,9 @@ export default defineComponent({
       color: var(--colors-gray-800);
     }
   }
+}
+
+.p-button-link:hover {
+  background-color: transparent;
 }
 </style>
