@@ -25,7 +25,8 @@
     "lint": "eslint src --fix",
     "build-storybook": "storybook build",
     "create-wrapper": "npx hygen primevue-generator wrapper --componentName",
-    "create-css": "npx hygen primevue-generator css --componentName"
+    "create-css": "npx hygen primevue-generator css --componentName",
+    "storybook-docs": "storybook dev --docs"
   },
   "repository": {
     "type": "git",
@@ -72,7 +73,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.22.11",
-    "@chromatic-com/storybook": "^1.2.25",
     "@happy-dom/jest-environment": "^9.20.3",
     "@storybook/addon-a11y": "^8.0.4",
     "@storybook/addon-essentials": "^8.0.4",

@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/vue3";
 import PtButton from "./PtButton.vue";
+import SplitButton from "primevue/splitbutton";
 
 const meta: Meta<typeof PtButton> = {
   component: PtButton,
@@ -31,7 +32,8 @@ export const Default: Story = {
       return { args };
     },
     template: `
-      <PtButton v-bind="args" />`,
+      <PtButton v-bind="args" />
+    `,
   }),
   args: {
     label: "Submit",

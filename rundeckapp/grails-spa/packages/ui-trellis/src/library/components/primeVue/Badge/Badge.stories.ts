@@ -3,25 +3,47 @@ import "./badge.scss";
 import Badge from "primevue/badge";
 
 const meta: Meta<typeof Badge> = {
+  title: "Badge",
   component: Badge,
+  parameters: {
+    componentSubtitle: "Badge is a small status indicator for another element.",
+    actions: {
+      disable: true,
+    },
+    controls: {
+      disable: true,
+    },
+  },
   argTypes: {
     value: {
       control: {
         type: "text",
       },
+      description: "Value to display on the badge",
     },
     severity: {
+      options: [undefined, "success", "warning", "danger", "secondary"],
       control: {
         type: "select",
-        options: ["sucess", "warning", "danger", "secondary"],
       },
+      type: "string",
+      description:
+        "Severity type of the badge. Undefined will render the default badge.",
     },
     size: {
+      options: [undefined, "large", "xlarge"],
       control: {
         type: "select",
-        options: ["large", "xlarge"],
       },
+      type: "string",
+      description:
+        "Size of the badge, undefined will render the default size, which is the smallest.",
     },
+  },
+  args: {
+    value: "2",
+    severity: undefined,
+    size: undefined,
   },
   decorators: [
     () => ({
@@ -29,103 +51,79 @@ const meta: Meta<typeof Badge> = {
         '<div style="margin: 1em; display: flex; gap: 10px; align-items: flex-end"><story /></div>',
     }),
   ],
-  tags: ["autodocs"],
+  // tags: ["autodocs"],
 };
 export default meta;
 
 type Story = StoryObj<typeof Badge>;
 
+export const Playground: Story = {
+  name: "Playground",
+};
+
+const generateTemplate = (severity, args) => {
+  return `
+      <Badge value="${args.value}" severity="${severity}" size="xlarge" />
+      <Badge value="${args.value}" severity="${severity}" size="large" />
+      <Badge value="${args.value}" severity="${severity}" />
+`;
+};
+
 export const Default: Story = {
+  name: "Default - no severity defined",
   render: (args) => ({
     components: { Badge },
-    name: "Default badge",
     setup() {
       return { args };
     },
     template: `
-      <Badge v-bind="args" size="xlarge" />
-      <Badge v-bind="args" size="large" />
-      <Badge v-bind="args"/>`,
+      <Badge value="${args.value}" size="xlarge" />
+      <Badge value="${args.value}" size="large" />
+      <Badge value="${args.value}" />`,
   }),
-  args: {
-    value: "2",
-    severity: "",
-    size: null,
-  },
 };
 
 export const Success: Story = {
+  name: "Success",
   render: (args) => ({
     components: { Badge },
-    name: "Success badge",
     setup() {
       return { args };
     },
-    template: `
-      <Badge v-bind="args" size="xlarge" />
-      <Badge v-bind="args" size="large" />
-      <Badge v-bind="args"/>
-`,
+    template: generateTemplate("success", args),
   }),
-  args: {
-    ...Default.args,
-    severity: "success",
-  },
 };
 
 export const Warning: Story = {
+  name: "Warning",
   render: (args) => ({
     components: { Badge },
-    name: "Warning badge",
     setup() {
       return { args };
     },
-    template: `
-      <Badge v-bind="args" size="xlarge" />
-      <Badge v-bind="args" size="large" />
-      <Badge v-bind="args"/>
-    `,
+    template: generateTemplate("warning", args),
   }),
-  args: {
-    ...Default.args,
-    severity: "warning",
-  },
 };
 
 export const Danger: Story = {
+  name: "Danger",
   render: (args) => ({
     components: { Badge },
-    name: "Danger badge",
     setup() {
       return { args };
     },
-    template: `
-      <Badge v-bind="args" size="xlarge" />
-      <Badge v-bind="args" size="large" />
-      <Badge v-bind="args"/>
-    `,
+    template: generateTemplate("danger", args),
   }),
-  args: {
-    ...Default.args,
-    severity: "danger",
-  },
 };
 
 export const Secondary: Story = {
+  name: "Secondary",
   render: (args) => ({
     components: { Badge },
-    name: "Secondary badge",
+
     setup() {
       return { args };
     },
-    template: `
-      <Badge v-bind="args" size="xlarge" />
-      <Badge v-bind="args" size="large" />
-      <Badge v-bind="args"/>
-    `,
+    template: generateTemplate("secondary", args),
   }),
-  args: {
-    ...Default.args,
-    severity: "secondary",
-  },
 };

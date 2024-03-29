@@ -2,6 +2,16 @@
     border-radius: 0;
     color: var(--colors-gray-800);
 
+    .p-message-text {
+        display: flex;
+        align-items: center;
+        font-weight: var(--fontWeights-bold);
+    }
+
+    .p-message-subtitle {
+        font-weight: var(--fontWeights-normal);
+    }
+
     .p-message-icon,
     .p-message-close {
         color: var(--colors-gray-800);
@@ -10,21 +20,36 @@
     &-success {
         background: var(--colors-green-100);
         border-color: var(--colors-green-600);
+
+        .p-message-close:focus-visible {
+            box-shadow: 0 0 0 0.2rem var(--colors-green-600)
+        }
     }
 
     &-info {
         background: var(--colors-blue-100);
         border-color: var(--colors-blue-600);
-        //color: var(--colors-gray-800);
+
+        .p-message-close:focus-visible {
+            box-shadow: 0 0 0 0.2rem var(--colors-blue-600)
+        }
     }
 
     &--warning {
         background: var(--colors-orange-100);
         border-color: var(--colors-orange-600);
+
+        .p-message-close:focus-visible {
+            box-shadow: 0 0 0 0.2rem var(--colors-orange-600)
+        }
     }
 
     &--danger {
         background: var(--colors-red-100);
         border-color: var(--colors-red-600);
+
+        .p-message-close:focus-visible {
+            box-shadow: 0 0 0 0.2rem var(--colors-red-600)
+        }
     }
 }
