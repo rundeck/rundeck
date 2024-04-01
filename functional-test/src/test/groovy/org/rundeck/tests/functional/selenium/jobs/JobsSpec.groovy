@@ -1,5 +1,11 @@
 package org.rundeck.tests.functional.selenium.jobs
 
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import org.openqa.selenium.Keys
+import org.rundeck.util.api.responses.jobs.CreateJobResponse
+import org.rundeck.util.common.jobs.JobUtils
+import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobListPage
 import org.rundeck.util.gui.pages.jobs.JobShowPage
@@ -9,7 +15,11 @@ import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.profile.UserProfilePage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.gui.pages.project.ActivityPage
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper
 import spock.lang.Stepwise
+
+import java.util.stream.Collectors
 
 @SeleniumCoreTest
 @Stepwise
@@ -20,8 +30,7 @@ class JobsSpec extends SeleniumBase {
     }
 
     def setup() {
-        def loginPage = go LoginPage
-        loginPage.login(TEST_USER, TEST_PASS)
+        go(LoginPage).login(TEST_USER, TEST_PASS)
     }
 
     def "change workflow strategy"() {
@@ -409,7 +418,6 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.jobNameInput.sendKeys 'job workflow step context variables autocomplete'
             jobCreatePage.tab JobTab.WORKFLOW click()
             jobCreatePage.executeScript "window.location.hash = '#addnodestep'"
-            jobCreatePage.workFlowStepLink.click()
             jobCreatePage.stepLink 'com.batix.rundeck.plugins.AnsiblePlaybookInlineWorkflowStep', StepType.WORKFLOW click()
             jobCreatePage.ansibleBinariesPathField.clear()
             jobCreatePage.ansibleBinariesPathField.sendKeys '${job.id'
@@ -469,4 +477,273 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.addSimpleCommandStep 'echo selenium test', 0
             jobCreatePage.createJobButton.click()
     }
+
+    def "job timeout should finish job with timeout status and step marked as failed"() {
+        setup:
+        final String projectName = 'JobTimeOutTest'
+        setupProjectArchiveDirectoryResource(projectName, "/projects-import/${projectName}.rdproject")
+        JobShowPage jobPage = page(JobShowPage, projectName).forJob('1032a729-c251-4940-86b5-20f99cb5e769')
+        jobPage.go()
+
+        when:
+        ExecutionShowPage executionPage = jobPage.runJob(true)
+
+        then:
+        noExceptionThrown()
+        verifyAll {
+            executionPage.getExecutionStatus() == 'TIMEDOUT'
+            executionPage.getNodesView().expandNode(0).getExecStateForSteps() == ['SUCCEEDED', 'FAILED']
+        }
+
+    }
+
+    /**
+     * Runs a job via "Run job later" and waits until job its executed.
+     *
+     */
+    def "Run job later"() {
+        given:
+        def projectName = "run-job-later-test"
+        JobShowPage jobShowPage = page JobShowPage
+        ActivityPage activityPage = page ActivityPage
+        ExecutionShowPage executionShowPage = page ExecutionShowPage
+        def mapper = new ObjectMapper()
+
+        when:
+        setupProject(projectName)
+        def jobName = "test-run-job-later-job"
+        def yamlJob = """
+                        -
+                          project: ${projectName}
+                          loglevel: INFO
+                          sequence:
+                            keepgoing: false
+                            strategy: node-first
+                            commands:
+                            - exec: echo hello there
+                          description: ''
+                          name: ${jobName}
+                        """
+        def pathToJob = JobUtils.generateFileToImport(yamlJob, "yaml")
+        def multipartBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
+                .build()
+        def response = client.doPostWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        assert response.successful
+        def createdJob = mapper.readValue(response.body().string(), CreateJobResponse.class)
+        def jobUuid = createdJob.succeeded[0]?.id
+        jobShowPage.goToJob(jobUuid as String)
+        jobShowPage.validatePage()
+        jobShowPage.executionOptionsDropdown.click()
+        jobShowPage.runJobLaterOption.click()
+        jobShowPage.runJobLaterMinuteArrowUp.click()
+        jobShowPage.runJobLaterCreateScheduleButton.click()
+        executionShowPage.waitForElementVisible(executionShowPage.jobRunSpinner)
+        executionShowPage.waitUntilSpinnerHides()
+        executionShowPage.waitForElementVisible(executionShowPage.nodeFlowState)
+        activityPage.loadActivityPageForProject(projectName)
+        activityPage.go()
+        def projectExecutions = Integer.parseInt(activityPage.executionCount.text)
+
+        then:
+        projectExecutions > 0
+
+        cleanup:
+        deleteProject(projectName)
+    }
+
+    /**
+     * Using the step filter input, checks if the input brings up the right step to the view.
+     *
+     */
+    def "Filter steps"(){
+        given:
+        def projectName = "filter-steps-later-test"
+        JobCreatePage jobCreatePage = page JobCreatePage
+        JobShowPage jobShowPage = page JobShowPage
+
+        when:
+        setupProject(projectName)
+        go JobCreatePage, projectName
+        jobCreatePage.jobNameInput.sendKeys("test")
+        jobCreatePage.tab(JobTab.WORKFLOW).click()
+        jobCreatePage.waitForElementToBeClickable(jobCreatePage.stepFilterInput)
+        jobCreatePage.stepFilterInput.sendKeys("cmd")
+        jobCreatePage.stepFilterSearchButton.click()
+
+        then: "Command step is not visible, since the list dont have any steps"
+        !jobCreatePage.commandStepVisible()
+
+        when: "We provide a valid filter"
+        jobCreatePage.stepFilterInput.sendKeys(Keys.chord(Keys.CONTROL, "a"))
+        jobCreatePage.stepFilterInput.sendKeys(Keys.BACK_SPACE)
+        jobCreatePage.stepFilterInput.sendKeys("command")
+        jobCreatePage.stepFilterSearchButton.click()
+
+        then: "We can create the command step"
+        jobCreatePage.addSimpleCommandStep("echo 'asd'", 0)
+        jobCreatePage.createJobButton.click()
+        jobShowPage.waitForElementVisible(jobShowPage.jobUuid)
+        jobShowPage.validatePage()
+
+        cleanup:
+        deleteProject(projectName)
+
+    }
+
+    /**
+     * Checks if the list of options of type "json file values" are all selected by default when are
+     * rendered into the view.
+     *
+     */
+    def "Select all json list options by default"(){
+        given:
+        def projectName = "select-all-json-test"
+        def optionListOfNames = "names"
+        def optionListOfValues = "search"
+        JobCreatePage jobCreatePage = page JobCreatePage
+        JobShowPage jobShowPage = page JobShowPage
+
+        when:
+        setupProject(projectName)
+        go JobCreatePage, projectName
+        jobCreatePage.jobNameInput.sendKeys("test")
+        jobCreatePage.tab(JobTab.WORKFLOW).click()
+        jobCreatePage.optionButton.click()
+        jobCreatePage.optionName(0).sendKeys(optionListOfNames)
+        jobCreatePage.jobOptionListValueInput.sendKeys("option1,option2,option3,option4")
+        jobCreatePage.jobOptionListDelimiter.sendKeys(",")
+        jobCreatePage.jobOptionEnforcedInput.click()
+        jobCreatePage.saveOptionButton.click()
+
+        jobCreatePage.optionButton.click()
+        jobCreatePage.optionName(1).sendKeys(optionListOfValues)
+        jobCreatePage.jobOptionAllowedValuesRemoteUrlInput.click()
+        jobCreatePage.jobOptionAllowedValuesRemoteUrlValueTextInput.sendKeys("file:/home/\${option.names.value}/saved_searches.json")
+        jobCreatePage.jobOptionEnforcedInput.click()
+        jobCreatePage.jobOptionRequiredInput.click()
+        jobCreatePage.jobOptionMultiValuedInput.click()
+        jobCreatePage.waitForElementVisible(jobCreatePage.jobOptionMultivaluedDelimiterBy)
+        jobCreatePage.jobOptionMultivaluedDelimiter.sendKeys(",")
+        jobCreatePage.jobOptionMultiValuedAllSelectedInput.click()
+        jobCreatePage.saveOptionButton.click()
+
+        jobCreatePage.addSimpleCommandStep("echo 'asd'", 0)
+        jobCreatePage.createJobButton.click()
+        def jobUuid = jobShowPage.jobUuid.text
+        jobShowPage.goToJob(jobUuid)
+
+        jobShowPage.waitForElementVisible(jobShowPage.getOptionSelectByName(optionListOfNames))
+
+        jobShowPage.selectOptionFromOptionListByName(optionListOfNames, selection)
+        jobShowPage.waitForElementToBeClickable(jobShowPage.getOptionSelectByName(optionListOfValues))
+        def searchListValues = jobShowPage.getOptionSelectChildren(optionListOfValues)
+        def flag = true
+        searchListValues.stream().forEach {
+            if( !it.isSelected() ) false
+        }
+        noUnselectedOptions = flag
+
+        then:
+        jobShowPage.validatePage()
+
+        cleanup:
+        deleteProject(projectName)
+
+        where:
+        selection | noUnselectedOptions
+        2         | true
+        3         | true
+        4         | true
+
+    }
+
+    /**
+     * Checks the basic step duplication into the workflow container.
+     *
+     */
+    def "Step duplication"(){
+        given:
+        def projectName = "step-duplication-test"
+        JobCreatePage jobCreatePage = page JobCreatePage
+        JobShowPage jobShowPage = page JobShowPage
+        ExecutionShowPage executionShowPage = page ExecutionShowPage
+
+        when:
+        setupProject(projectName)
+        go JobCreatePage, projectName
+        jobCreatePage.jobNameInput.sendKeys("test-duplication")
+        jobCreatePage.tab(JobTab.WORKFLOW).click()
+        jobCreatePage.addSimpleCommandStep "echo 'This is a simple job'", 0
+        jobCreatePage.createJobButton.click()
+        jobShowPage.waitForElementVisible(jobShowPage.jobActionDropdownButton)
+        jobShowPage.jobActionDropdownButton.click()
+        jobShowPage.waitForElementToBeClickable(jobShowPage.editJobLink)
+        jobShowPage.editJobLink.click()
+        jobCreatePage.waitForElementVisible(jobCreatePage.tab(JobTab.WORKFLOW))
+        jobCreatePage.tab(JobTab.WORKFLOW).click()
+        jobCreatePage.duplicateWfStepButton.click()
+        jobCreatePage.waitForElementVisible(jobCreatePage.getWfStepByListPosition(1))
+        jobCreatePage.updateBtn.click()
+        jobShowPage.waitForElementVisible(jobShowPage.jobUuid)
+        jobShowPage.runJob(true)
+        executionShowPage.viewButtonOutput.click()
+        def logLines = executionShowPage.logOutput.stream().map {
+            it.text
+        }.collect(Collectors.toList())
+
+        then:
+        logLines.size() == 2
+        logLines.forEach {
+            it == 'This is a simple job'
+        }
+
+        cleanup:
+        deleteProject(projectName)
+
+    }
+
+    /**
+     * Checks the remote URL options functionality for jobs.
+     *
+     */
+    def "Url job options"(){
+        given:
+        def projectName = "url-job-options-test"
+        JobCreatePage jobCreatePage = page JobCreatePage
+        JobShowPage jobShowPage = page JobShowPage
+        ExecutionShowPage executionShowPage = page ExecutionShowPage
+
+        when:
+        setupProject(projectName)
+        go JobCreatePage, projectName
+        jobCreatePage.jobNameInput.sendKeys("test-url-opts")
+        jobCreatePage.tab(JobTab.WORKFLOW).click()
+        jobCreatePage.optionButton.click()
+        jobCreatePage.optionName(0).sendKeys("remote")
+        jobCreatePage.scrollToElement(jobCreatePage.jobOptionAllowedValuesRemoteUrlInput)
+        jobCreatePage.jobOptionAllowedValuesRemoteUrlInput.click()
+        jobCreatePage.jobOptionAllowedValuesRemoteUrlValueTextInput.sendKeys("https://httpbin.org/stream/4")
+        jobCreatePage.waitForElementVisible(jobCreatePage.saveOptionButton)
+        jobCreatePage.scrollToElement(jobCreatePage.saveOptionButton)
+        jobCreatePage.saveOptionButton.click()
+        jobCreatePage.addSimpleCommandStep "echo 'This is a simple job'", 0
+        jobCreatePage.createJobButton.click()
+        jobShowPage.waitForElementVisible(jobShowPage.jobUuid)
+        jobShowPage.goToJob(jobShowPage.jobUuid.text)
+        jobShowPage.waitForElementVisible(jobShowPage.getJobOptionValueListItem("url"))
+        jobShowPage.getJobOptionValueListItem("url").click()
+        def optionValueSelected = jobShowPage.jobOptionValueInput.getAttribute("value")
+        jobShowPage.runJob(true)
+        def optionValueExecuted = executionShowPage.optionValueSelected.text
+
+        then:
+        optionValueExecuted == optionValueSelected
+
+        cleanup:
+        deleteProject(projectName)
+
+    }
+
 }

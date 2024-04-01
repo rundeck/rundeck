@@ -1671,7 +1671,12 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
             LogFileStorageRequest request = new LogFileStorageRequest(filetype: filetype,execution: e,pluginName:'test1',completed: false)
             request.validate()
             request.save(flush:true)
-            def task = [execId: e.id.toString(), file: testfile, storage: testPlugin, filetype: filetype,request:request,requestId:request.id]
+            def task = [file: testfile, storage: testPlugin, filetype: filetype,request:request,requestId:request.id]
+            if(useExecId) {
+                task['execId'] = e.id.toString()
+            } else {
+                task['executionUuid'] = e.uuid
+            }
 
         when:
             def result=service.runStorageRequest(task)
@@ -1689,9 +1694,10 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         cleanup:
             testfile.delete()
         where:
+            useExecId | filetype | storeSuccess
+            true      | 'rdlog'  | false
+            false     | 'rdlog'  | false
 
-             filetype = 'rdlog'
-            storeSuccess=false
 
     }
 
