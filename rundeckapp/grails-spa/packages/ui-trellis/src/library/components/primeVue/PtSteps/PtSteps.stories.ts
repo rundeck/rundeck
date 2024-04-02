@@ -5,16 +5,56 @@ const meta: Meta<typeof PtSteps> = {
   title: "PtSteps",
   component: PtSteps,
   parameters: {
-    componentSubtitle: "A brief description of the PtSteps component",
-    controls: { sort: "requiredFirst" },
+    componentSubtitle:
+      "PtSteps is a wrapper for the component Steps, also known as Stepper, which is an indicator for the steps in a workflow.",
+    actions: {
+      disable: true,
+    },
+    controls: {
+      disable: true,
+    },
   },
-  // TODO: Replace these args with ones appropriate for the component you are building.
-  args: {},
+  argTypes: {
+    activeStep: {
+      control: {
+        type: "number",
+      },
+      type: "number",
+      description: "Active step index of menuitem.",
+    },
+    items: {
+      description: "An array of menuitems.",
+    },
+  },
+  args: {
+    activeStep: 0,
+    items: [
+      {
+        label: "Personal Info",
+      },
+      {
+        label: "Reservation",
+      },
+      {
+        label: "Review",
+      },
+    ],
+  },
 };
 
 export default meta;
 
 type Story = StoryObj<typeof PtSteps>;
+
+export const Playground: Story = {
+  render: (args) => ({
+    props: Object.keys(args),
+    components: { PtSteps },
+    setup: () => ({ args }),
+    template: `<PtSteps :activeStep="args.activeStep" :items="args.items" />`,
+  }),
+  args: {},
+};
 
 export const Default: Story = {
   render: (args) => ({
@@ -51,7 +91,6 @@ export const Completed: Story = {
     template: `<PtSteps  :activeStep="args.activeStep" :items="args.items"  />`,
   }),
   args: {
-    activeStep: 0,
     items: [
       {
         label: "Personal Info",
@@ -66,5 +105,13 @@ export const Completed: Story = {
         completed: false,
       },
     ],
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "It's also possible to mark a step as completed by passing the 'completed' key inside the items object. This is useful when users are allowed to go back to previous steps to do changes, without losing the state of more advanced steps.",
+      },
+    },
   },
 };

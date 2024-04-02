@@ -4,33 +4,57 @@ import "./progressBar.scss";
 import ProgressBar from "primevue/progressbar";
 
 const meta: Meta<typeof ProgressBar> = {
-  component: ProgressBar,
+  parameters: {
+    componentSubtitle: "ProgressBar is a process status indicator.",
+    actions: {
+      disable: true,
+    },
+    controls: {
+      disable: true,
+    },
+  },
   argTypes: {
     value: {
       control: {
         type: "number",
       },
+      type: "number",
+      description: "Current value of the progress.",
     },
     mode: {
+      options: ["determinate", "indeterminate"],
       control: {
         type: "select",
-        options: ["determinate", "indeterminate"],
       },
+      table: {
+        defaultValue: { summary: "determinate" },
+      },
+      description: "Defines the mode of the progress bar.",
     },
   },
-  tags: ["autodocs"],
+  args: {
+    value: 20,
+    mode: "determinate",
+  },
 };
 export default meta;
 
 type Story = StoryObj<typeof ProgressBar>;
 
+export const Playground: Story = {
+  name: "Playground",
+  render: (args) => ({
+    components: { ProgressBar },
+    setup: () => ({ args }),
+    template: `
+      <ProgressBar :value="args.value" :mode="args.mode" />`,
+  }),
+};
+
 export const Default: Story = {
   render: (args) => ({
     components: { ProgressBar },
-    name: "Default ProgressBar",
-    setup() {
-      return { args };
-    },
+    setup: () => ({ args }),
     template: `
       <ProgressBar v-bind="args"/>`,
   }),
@@ -41,17 +65,23 @@ export const Default: Story = {
 };
 
 export const Indeterminate: Story = {
+  name: "Indeterminate ProgressBar",
   render: (args) => ({
     components: { ProgressBar },
-    name: "Indeterminate ProgressBar",
-    setup() {
-      return { args };
-    },
+    setup: () => ({ args }),
     template: `
       <ProgressBar v-bind="args"/>`,
   }),
   args: {
     value: 30,
     mode: "indeterminate",
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "For progresses with no value to track, set the mode property to indeterminate.",
+      },
+    },
   },
 };

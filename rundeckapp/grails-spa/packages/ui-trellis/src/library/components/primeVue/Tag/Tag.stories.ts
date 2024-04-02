@@ -1,27 +1,52 @@
 import type { Meta, StoryObj } from "@storybook/vue3";
 import "./tag.scss";
 import Tag from "primevue/tag";
+import Badge from "primevue/badge";
 
 const meta: Meta<typeof Tag> = {
-  component: Tag,
+  title: "Tag",
+  parameters: {
+    componentSubtitle: "Tag component is used to categorize content.",
+    actions: {
+      disable: true,
+    },
+    controls: {
+      disable: true,
+    },
+  },
   argTypes: {
     value: {
       control: {
         type: "text",
       },
+      table: {
+        defaultValue: { summary: undefined },
+      },
+      description: "Value to display inside the tag.",
     },
     severity: {
+      options: [undefined, "success", "warning", "danger"],
       control: {
         type: "select",
-        options: ["success", "warning", "danger"],
       },
+      table: {
+        defaultValue: { summary: undefined },
+      },
+      type: "string",
+      description: "Severity type of the tag.",
     },
     icon: {
       control: {
         type: "text",
-        description: "class of icon to display",
       },
+      type: "string",
+      description: "class of icon to display next to the value.",
     },
+  },
+  args: {
+    value: "Default",
+    severity: "",
+    icon: "",
   },
   decorators: [
     () => ({
@@ -29,39 +54,39 @@ const meta: Meta<typeof Tag> = {
         '<div style="margin: 1em; display: flex; gap: 10px; align-items: flex-end"><story /></div>',
     }),
   ],
-  tags: ["autodocs"],
 };
 export default meta;
 
 type Story = StoryObj<typeof Tag>;
 
+export const Playground: Story = {
+  name: "Playground",
+  render: (args) => ({
+    components: { Tag },
+    setup: () => ({ args }),
+    template: `<Tag :severity="args.severity" :value="args.value" :icon="args.icon"  />`,
+  }),
+};
+
+const generateTemplate = (severity, args) => {
+  return `
+      <Tag value="${args.value}" severity="${severity}" ico="${args.icon}" />
+`;
+};
+
 export const Default: Story = {
   render: (args) => ({
     components: { Tag },
-    name: "Default tag",
-    setup() {
-      return { args };
-    },
-    template: `
-      <tag v-bind="args"/>`,
+    setup: () => ({ args }),
+    template: generateTemplate("default", args),
   }),
-  args: {
-    value: "Default",
-    severity: "",
-    icon: "",
-  },
 };
 
 export const Success: Story = {
   render: (args) => ({
     components: { Tag },
-    name: "Success tag",
-    setup() {
-      return { args };
-    },
-    template: `
-      <tag v-bind="args"/>
-`,
+    setup: () => ({ args }),
+    template: generateTemplate("success", args),
   }),
   args: {
     value: "Success",
@@ -72,13 +97,8 @@ export const Success: Story = {
 export const Warning: Story = {
   render: (args) => ({
     components: { Tag },
-    name: "Warning tag",
-    setup() {
-      return { args };
-    },
-    template: `
-      <tag v-bind="args"/>
-    `,
+    setup: () => ({ args }),
+    template: generateTemplate("warning", args),
   }),
   args: {
     value: "Warning",
@@ -89,13 +109,8 @@ export const Warning: Story = {
 export const Danger: Story = {
   render: (args) => ({
     components: { Tag },
-    name: "Danger tag",
-    setup() {
-      return { args };
-    },
-    template: `
-      <tag v-bind="args"/>
-    `,
+    setup: () => ({ args }),
+    template: generateTemplate("danger", args),
   }),
   args: {
     value: "Danger",
