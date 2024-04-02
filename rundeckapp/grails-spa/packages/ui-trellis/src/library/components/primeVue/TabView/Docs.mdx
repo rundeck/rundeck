@@ -1,0 +1,57 @@
+import {Meta, Subtitle, Title, Canvas, Controls, Description, Stories, Markdown} from "@storybook/blocks";
+import * as TabViewStories from './TabView.stories'
+
+<Meta of={TabViewStories} />
+
+<Title />
+
+<Subtitle />
+[Component reference on primevue](https://primevue.org/tabview/)
+
+## Import
+
+```ts
+import TabView from "primevue/tabview";
+```
+
+## Playground
+
+{/* Make sure your stories file has an export for playground, otherwise storybook will break */}
+
+<Canvas of={TabViewStories.Playground} sourceState="shown" />
+<Controls of={TabViewStories.Playground} />
+
+[//]: # (## How to use)
+
+[//]: # ()
+[//]: # ({/* Add a note here about the relevant props to change appearance of component */})
+
+
+<Description of={TabViewStories} />
+
+<Stories title='' includePrimary={false} />
+
+
+## Accessibility
+
+### Screen Reader
+TabView container is defined with the `tablist` role, as any attribute is passed to the container element `aria-labelledby` can be optionally used to specify an element to describe the TabView. Each tab header has a `tab` role along with `aria-selected` state attribute and `aria-controls` to refer to the corresponding tab content element. The content element of each tab has `tabpanel` role, an id to match the `aria-controls` of the header and `aria-labelledby` reference to the header as the accessible <name></name>
+
+### Keyboard Navigation
+
+<Markdown>
+    {`
+| Key         | Function                                                     |
+|-------------|--------------------------------------------------------------|
+| tab         | Moves focus through the header.                              |
+| enter       | Activates the focused tab header.                            |
+| space       | Activates the focused tab header.                            |
+| right arrow | Moves focus to the next header. If focus is on the last header, moves focus to the first header. |
+| left arrow  | Moves focus to the previous header. If focus is on the first header, moves focus to the last header. |
+| home        | Moves focus to the last header.                              |
+| end         | Moves focus to the first header.                             |
+| pageUp      | Moves scroll position to first header.                       |
+| pageDown    | Moves scroll position to last header.                        |
+
+`}
+</Markdown>

@@ -27,7 +27,7 @@ const meta: Meta<typeof <%=componentName%>> = {
         },
         type: "string",
         description:
-          "Severity type of the <%=componentName=>.",
+          "Severity type of the <%=componentName%>.",
       },
     },
     // TODO: Replace these args with ones appropriate for the component you are building.
@@ -40,8 +40,14 @@ export default meta;
 
 type Story = StoryObj<typeof <%=componentName%>>;
 
+// TODO: manually wire the props to the component name, so that the source will update correctly in the story
 export const Playground: Story = {
   name: "Playground",
+  render: (args) => ({
+        components: { <%=componentName%> },
+        setup: () => ({ args }),
+        template: <<%=componentName%>  />,
+      }),
 };
 
 const generateTemplate = (args: Record<string, any>) => {

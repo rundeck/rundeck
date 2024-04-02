@@ -24,7 +24,7 @@ const preview: Preview = {
         disable: false,
       },
       source: {
-        type: "dynamic",
+        type: "auto",
       },
     },
   },

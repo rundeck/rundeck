@@ -1,4 +1,5 @@
 import type { StorybookConfig } from "@storybook/vue3-webpack5";
+import remarkGfm from "remark-gfm";
 
 const config: StorybookConfig = {
   stories: [
@@ -52,6 +53,16 @@ const config: StorybookConfig = {
       },
     },
     "@storybook/addon-a11y",
+    {
+      name: "@storybook/addon-docs",
+      options: {
+        mdxPluginOptions: {
+          mdxCompileOptions: {
+            remarkPlugins: [remarkGfm],
+          },
+        },
+      },
+    },
   ],
   framework: {
     name: "@storybook/vue3-webpack5",

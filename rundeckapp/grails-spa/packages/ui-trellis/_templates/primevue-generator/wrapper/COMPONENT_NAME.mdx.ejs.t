@@ -21,12 +21,14 @@ import <%=componentName%> from "@rundeck/ui-trellis/src/library/components/prime
 
 ## Playground
 
-<Canvas of={<%=componentName%>Stories.Playground} />
+{/* Make sure your stories file has an export for playground, otherwise storybook will break */}
+
+<Canvas of={<%=componentName%>Stories.Playground} sourceState="shown" />
 <Controls of={<%=componentName%>Stories.Playground} />
 
 ## How to use
 
-// Add a note here about the relevant props to change appearance of component
+{/* Add a note here about the relevant props to change appearance of component */}
 
 
 <Description of={<%=componentName%>Stories} />
@@ -36,4 +38,4 @@ import <%=componentName%> from "@rundeck/ui-trellis/src/library/components/prime
 
 ## Accessibility
 
-// Bring in accessibility notes from primeVue here and/or add aspects important for accessibility
+{/* Bring in accessibility notes from primeVue here and\/or add aspects important for accessibility */}

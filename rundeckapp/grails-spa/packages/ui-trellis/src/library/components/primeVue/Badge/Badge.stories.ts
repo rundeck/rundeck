@@ -4,7 +4,6 @@ import Badge from "primevue/badge";
 
 const meta: Meta<typeof Badge> = {
   title: "Badge",
-  component: Badge,
   parameters: {
     componentSubtitle: "Badge is a small status indicator for another element.",
     actions: {
@@ -51,7 +50,6 @@ const meta: Meta<typeof Badge> = {
         '<div style="margin: 1em; display: flex; gap: 10px; align-items: flex-end"><story /></div>',
     }),
   ],
-  // tags: ["autodocs"],
 };
 export default meta;
 
@@ -59,6 +57,11 @@ type Story = StoryObj<typeof Badge>;
 
 export const Playground: Story = {
   name: "Playground",
+  render: (args) => ({
+    components: { Badge },
+    setup: () => ({ args }),
+    template: `<Badge :severity="args.severity" :value="args.value" :size="args.size"  />`,
+  }),
 };
 
 const generateTemplate = (severity, args) => {
@@ -76,10 +79,7 @@ export const Default: Story = {
     setup() {
       return { args };
     },
-    template: `
-      <Badge value="${args.value}" size="xlarge" />
-      <Badge value="${args.value}" size="large" />
-      <Badge value="${args.value}" />`,
+    template: generateTemplate(undefined, args),
   }),
 };
 

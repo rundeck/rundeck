@@ -1,4 +1,4 @@
-import { Meta, Subtitle, Title, Canvas, Controls, Description, Stories } from "@storybook/blocks";
+import { Meta, Subtitle, Title, Canvas, Controls, Description, Stories, Markdown } from "@storybook/blocks";
 import * as MessageStories from './Message.stories'
 
 <Meta of={MessageStories} />
@@ -16,7 +16,7 @@ import Message from "primevue/message";
 
 ## Playground
 
-<Canvas of={MessageStories.Playground} />
+<Canvas of={MessageStories.Playground} sourceState="shown" />
 <Controls of={MessageStories.Playground} />
 
 ## How to use
@@ -37,3 +37,13 @@ Message component uses `alert` role that implicitly defines `aria-live` as "asse
 
 Close element is a `button` with an `aria-label` that refers to the `aria.close` property of the locale API by default, you may use [closeButtonProps](https://primevue.org/message/#api.message.props.closeButtonProps) to customize the element and override the default `aria-label`.
 
+### Close button keyboard support
+
+<Markdown>
+    {`
+| Key   | Function              |
+|-------|-----------------------|
+| enter | Closes the message.  |
+| space | Closes the message.  |
+`}
+</Markdown>

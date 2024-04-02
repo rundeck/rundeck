@@ -5,7 +5,6 @@ import PtButton from "../PtButton/PtButton.vue";
 
 const meta: Meta<typeof Message> = {
   title: "Message",
-  component: Message,
   parameters: {
     componentSubtitle: "Message component is used to display inline messages.",
     actions: {
@@ -21,21 +20,27 @@ const meta: Meta<typeof Message> = {
       control: {
         type: "select",
       },
+      table: {
+        defaultValue: { summary: "info" },
+      },
       type: "string",
-      description:
-        "Severity type of the message. Info will render the default message.",
+      description: "Severity type of the message.",
     },
     closable: {
       control: {
         type: "boolean",
       },
+      table: {
+        defaultValue: { summary: true },
+      },
       type: "boolean",
       description:
-        "Whether the message can be closed manually using the close icon. Default is true.",
+        "Whether the message can be closed manually using the close icon.",
     },
   },
   args: {
     severity: "info",
+    closable: true,
   },
 };
 
@@ -43,19 +48,17 @@ export default meta;
 
 type Story = StoryObj<typeof Message>;
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const generateTemplate = (severity, args) => {
-  return `<Message :closable="${args.closable}" severity="${severity}">Hello world!</Message>`;
+  return `<Message :closable="args.closable" severity="${severity}">Hello world!</Message>`;
 };
 
 export const Playground: Story = {
   name: "Playground",
   render: (args) => ({
-    props: Object.keys(args),
     components: { Message },
-    setup() {
-      return { args };
-    },
-    template: generateTemplate("info", args),
+    setup: () => ({ args }),
+    template: `<Message :closable="args.closable" :severity="args.severity">Hello world!</Message>`,
   }),
 };
 
