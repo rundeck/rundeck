@@ -1,5 +1,5 @@
 <template>
-  <span v-if="!dataReady">
+  <span v-if="loading">
     <i class="fas fa-spinner fa-pulse"></i>
     <span v-if="showText">{{ $t("job.scm.status.loading.message") }}</span>
   </span>
@@ -41,7 +41,7 @@ export default defineComponent({
       type: Boolean,
       default: true,
     },
-    dataReady: {
+    loading: {
       type: Boolean,
       default: false,
     },

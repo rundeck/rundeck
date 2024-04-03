@@ -30,24 +30,24 @@ function init() {
                 meta: undefined,
               },
             });
-            let dataReady = ref(false);
+            let loading = ref(true);
 
             jobPageStore
               .getJobBrowser()
               .loadJobMeta(scmItemData.job.id)
               .then((jobMeta) => {
                 scmItemData.job.meta = jobMeta;
-                dataReady.value = true;
+                loading.value = false;
               });
 
-            return { scmItemData, dataReady };
+            return { scmItemData, loading };
           },
           template: `<job-scm-status
                         :itemData="scmItemData"
                         :show-clean="true"
                         :show-text="true"
                         :show-export="false"
-                        :data-ready="dataReady"
+                        :loading="loading"
                     />`,
         }),
       ),
