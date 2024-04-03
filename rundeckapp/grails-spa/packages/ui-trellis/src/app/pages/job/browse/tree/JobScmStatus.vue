@@ -79,7 +79,7 @@ export default defineComponent({
       )?.data;
     },
     job(): JobBrowseItem | undefined {
-      return this.itemData?.job;
+      return this.itemData?.job || {};
     },
     displayText() {
       if (!this.showText) {
