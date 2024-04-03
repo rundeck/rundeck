@@ -1,7 +1,7 @@
 <template>
   <span v-if="!dataReady">
     <i class="fas fa-spinner fa-pulse"></i>
-    <span v-if="showText">Loading Scm Data</span>
+    <span v-if="showText">{{ $t("job.scm.status.loading.message") }}</span>
   </span>
   <template v-if="jobSynchState">
     <span :title="jobText" class="scm_status">
