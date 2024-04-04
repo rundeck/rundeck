@@ -4,24 +4,24 @@
     <div class="radio radio-inline">
       <input
         type="radio"
-        id="workflowKeepGoingFail"
-        name="workflow.keepgoing"
+        id="workflowKeepGoingFail_"
+        name="workflow_keepgoing"
         :value="false"
         v-model="data.keepgoing"
       />
-      <label for="workflowKeepGoingFail">
+      <label for="workflowKeepGoingFail_">
         {{ $t("Workflow.property.keepgoing.false.description") }}
       </label>
     </div>
     <div class="radio radio-inline">
       <input
         type="radio"
-        id="workflowKeepGoingRemainingSteps"
-        name="workflow.keepgoing"
+        id="workflowKeepGoingRemainingSteps_"
+        name="workflow_keepgoing"
         :value="true"
         v-model="data.keepgoing"
       />
-      <label for="workflowKeepGoingRemainingSteps">
+      <label for="workflowKeepGoingRemainingSteps_">
         {{ $t("Workflow.property.keepgoing.true.description") }}
       </label>
     </div>
