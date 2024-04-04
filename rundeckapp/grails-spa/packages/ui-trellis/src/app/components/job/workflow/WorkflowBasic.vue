@@ -47,7 +47,7 @@ export default defineComponent({
   },
   data(props) {
     return {
-      data: {},
+      data: {} as BasicData,
     };
   },
   watch: {
