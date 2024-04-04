@@ -31,7 +31,7 @@ export interface WorkflowData
     StepsData {}
 
 export function createBasicData({ keepgoing }): BasicData {
-  return { keepgoing };
+  return { keepgoing: !!keepgoing };
 }
 
 export function createStrategyData(
