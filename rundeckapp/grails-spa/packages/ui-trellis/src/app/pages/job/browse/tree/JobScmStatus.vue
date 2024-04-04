@@ -1,13 +1,13 @@
 <template>
-  <span v-if="!dataReady">
-      <i class="fas fa-spinner fa-pulse"></i>
-      <span v-if="showText">Loading Scm Data</span>
+  <span v-if="loading">
+    <i class="fas fa-spinner fa-pulse"></i>
+    <span v-if="showText">{{ $t("job.scm.status.loading.message") }}</span>
   </span>
   <template v-if="jobSynchState">
     <span :title="jobText" class="scm_status">
       <span :class="jobClass">
         <i :class="jobIcon" class="glyphicon"></i>
-        {{displayText}}
+        {{ displayText }}
       </span>
     </span>
   </template>
@@ -21,7 +21,6 @@ import {
 import { JobBrowseItem, JobBrowseMeta } from "@/library/types/jobs/JobBrowse";
 import { defineComponent, inject } from "vue";
 import { ScmTextUtilities } from "@/library/utilities/scm/scmTextUtilities";
-import {$} from "vue/macros";
 
 export default defineComponent({
   name: "JobScmStatus",
@@ -32,25 +31,25 @@ export default defineComponent({
     },
     showText: {
       type: Boolean,
-      default: false
+      default: false,
     },
     showClean: {
       type: Boolean,
-      default: false
+      default: false,
     },
     showExport: {
       type: Boolean,
-      default: true
+      default: true,
     },
-    dataReady: {
+    loading: {
       type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
-  data(){
+  data() {
     return {
-      scmUtilities: new ScmTextUtilities(this.$t)
-    }
+      scmUtilities: new ScmTextUtilities(this.$t),
+    };
   },
   setup() {
     return {
@@ -80,25 +79,28 @@ export default defineComponent({
       )?.data;
     },
     job(): JobBrowseItem | undefined {
-      return this.itemData?.job;
+      return this.itemData?.job || {};
     },
     displayText() {
-      if(!this.showText){
-        return ""
+      if (!this.showText) {
+        return "";
       }
-      if(this.exportSynchState && (this.showClean || this.exportSynchState))
-        return this.scmUtilities.exportDisplayText(this.exportSynchState)
+      if (this.exportSynchState && (this.showClean || this.exportSynchState))
+        return this.scmUtilities.exportDisplayText(this.exportSynchState);
 
-      return this.scmUtilities.importDisplayText(this.importSynchState)
+      return this.scmUtilities.importDisplayText(this.importSynchState);
     },
     jobClass() {
-      return this.scmUtilities.jobScmStatusIconClass(this.jobSynchState)
+      return this.scmUtilities.jobScmStatusIconClass(this.jobSynchState);
     },
     jobIcon() {
-      return this.scmUtilities.jobScmStatusIcon(this.jobSynchState)
+      return this.scmUtilities.jobScmStatusIcon(this.jobSynchState);
     },
     jobText() {
-      return this.scmUtilities.jobScmDescription(this.exportSynchState, this.importSynchState)
+      return this.scmUtilities.jobScmDescription(
+        this.exportSynchState,
+        this.importSynchState,
+      );
     },
   },
   methods: {},
