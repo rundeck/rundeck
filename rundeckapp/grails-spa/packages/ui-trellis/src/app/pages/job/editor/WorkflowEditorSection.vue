@@ -35,7 +35,17 @@ export default defineComponent({
   async mounted() {
     const rundeck = getRundeckContext();
     if (rundeck && rundeck.data) {
-      this.workflowData = cloneDeep(rundeck.data.workflowData);
+      //todo: convert to expected format
+      let cloned = cloneDeep(rundeck.data.workflowData);
+      if (
+        cloned.sequence &&
+        cloned.sequence.pluginConfig &&
+        cloned.sequence.pluginConfig.LogFilters
+      ) {
+        cloned.logFilters = cloned.sequence.pluginConfig.LogFilters;
+      }
+      this.workflowData = cloned;
+      //todo: convert to expected format
       this.updatedData = this.workflowData;
     }
     this.loaded = true;
