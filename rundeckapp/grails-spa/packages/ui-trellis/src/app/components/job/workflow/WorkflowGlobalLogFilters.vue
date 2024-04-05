@@ -17,47 +17,27 @@
     </template>
     <choose-plugin-modal
       title="Add Log Filter Plugin for Step: All workflow steps"
-      :services="['LogFilter']"
+      :services="[ServiceType.LogFilter]"
       v-model="addFilterModal"
       @cancel="addFilterModal = false"
       @selected="chooseProviderAdd"
       v-if="addFilterModal"
     >
     </choose-plugin-modal>
-    <modal
-      v-model="editFilterModal"
+    <edit-plugin-modal
+      v-if="editFilterModal"
+      v-model:modal-active="editFilterModal"
+      v-model="editModel"
+      :validation="editModelValidation"
+      :service-name="ServiceType.LogFilter"
       title="Edit Log Filter Plugin for Step: All workflow steps"
-    >
-      <div v-if="findProvider(editFilterType)">
-        <plugin-info
-          :detail="findProvider(editFilterType)"
-          :show-description="true"
-          :show-extended="false"
-        ></plugin-info>
-        <plugin-config
-          v-model="editModel"
-          :mode="'edit'"
-          :service-name="'LogFilter'"
-          :provider="editFilterType"
-          :show-title="false"
-          :show-description="false"
-          :context-autocomplete="true"
-          :validation="editModelValidation"
-          scope="Instance"
-          default-scope="Instance"
-          group-css=""
-        ></plugin-config>
-      </div>
-      <template #footer>
-        <btn @click="cancelEditFilter">Cancel</btn>
-        <btn type="success" @click="saveEditFilter">Save</btn>
-      </template>
-    </modal>
+      @cancel="cancelEditFilter"
+      @save="saveEditFilter"
+    ></edit-plugin-modal>
   </div>
 </template>
 <script lang="ts">
 import { GlobalLogFiltersData } from "@/app/components/job/workflow/types/workflowTypes";
-import service from "@/app/pages/repository/components/Service.vue";
 import { getPluginProvidersForService } from "@/library/modules/pluginService";
 import { cloneDeep } from "lodash";
 import { defineComponent } from "vue";
@@ -65,6 +45,8 @@ import LogFilterButton from "./LogFilterButton.vue";
 import pluginConfig from "@/library/components/plugins/pluginConfig.vue";
 import pluginInfo from "@/library/components/plugins/PluginInfo.vue";
 import ChoosePluginModal from "@/library/components/plugins/ChoosePluginModal.vue";
+import EditPluginModal from "@/library/components/plugins/EditPluginModal.vue";
+import { ServiceType } from "@/library/stores/Plugins";
 
 export default defineComponent({
   name: "WorkflowGlobalLogFilters",
@@ -73,6 +55,7 @@ export default defineComponent({
     pluginConfig,
     pluginInfo,
     ChoosePluginModal,
+    EditPluginModal,
   },
   props: {
     modelValue: {
@@ -83,6 +66,7 @@ export default defineComponent({
   },
   data() {
     return {
+      ServiceType,
       model: { filters: [] } as GlobalLogFiltersData,
       pluginProviders: [],
       pluginLabels: [],
@@ -148,7 +132,9 @@ export default defineComponent({
       return this.pluginProviders.find((prov) => prov.name === type);
     },
     async getLogFilterPlugins() {
-      const response = await getPluginProvidersForService("LogFilter");
+      const response = await getPluginProvidersForService(
+        ServiceType.LogFilter,
+      );
       if (response.service) {
         this.pluginProviders = response.descriptions;
         this.pluginLabels = response.labels;
