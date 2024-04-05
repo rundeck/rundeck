@@ -1,19 +1,23 @@
 <template>
-  <modal v-model="modelValue" :title="title || $t('plugin.choose.title')">
+  <modal v-model="modalShown" :title="title || $t('plugin.choose.title')">
     <slot></slot>
     <!-- todo: search -->
-    <tabs v-if="loadedServices.length > 1">
+
+    <div v-if="loading">
+      <i class="fas fa-spinner fa-spin"></i> {{ $t("loading.text") }}
+    </div>
+    <tabs v-else-if="loadedServices.length > 1" class="vue-tabs">
       <tab
-        v-for="service in loadedServices"
+        v-for="(service, i) in loadedServices"
         :key="service.service"
-        :label="service.service"
+        :title="tabTitle(service.service, i)"
       >
         <div class="list-group">
           <btn
             type="plain"
             v-for="prov in service.providers"
             class="list-group-item"
-            @click="chooseProviderAdd(service, prov.name)"
+            @click="chooseProviderAdd(service.service, prov.name)"
           >
             <plugin-info
               :detail="prov"
@@ -40,9 +44,6 @@
         </plugin-info>
       </btn>
     </div>
-    <div v-else-if="loading">
-      <i class="fas fa-spinner fa-spin"></i> {{ $t("loading.text") }}
-    </div>
     <template #footer>
       <btn @click="$emit('cancel')">{{ $t("Cancel") }}</btn>
     </template>
@@ -57,7 +58,7 @@ const context = getRundeckContext();
 export default defineComponent({
   name: "ChoosePluginModal",
   components: { pluginInfo },
-  emits: ["cancel", "selected"],
+  emits: ["cancel", "selected", "update:modelValue"],
   props: {
     title: {
       type: String,
@@ -67,6 +68,11 @@ export default defineComponent({
       type: Array,
       required: true,
     },
+    tabNames: {
+      type: Array,
+      required: false,
+      default: () => [],
+    },
     modelValue: {
       type: Boolean,
       required: false,
@@ -74,6 +80,16 @@ export default defineComponent({
     },
   },
   methods: {
+    tabTitle(service: string, i: number) {
+      let name =
+        this.tabNames && this.tabNames.length > i
+          ? this.tabNames[i]
+          : $t("plugin.type." + service + ".title.plural") || service;
+      let count =
+        this.loadedServices.find((s) => s.service === service)?.providers
+          .length || 0;
+      return name + " (" + count + ")";
+    },
     chooseProviderAdd(service: string, provider: string) {
       this.$emit("selected", { service, provider });
       this.active = false;
@@ -86,15 +102,22 @@ export default defineComponent({
     return {
       loadedServices: [],
       loading: false,
+      modalShown: false,
     };
+  },
+  watch: {
+    modelValue(val) {
+      this.modalShown = val;
+    },
+    modalShown(val) {
+      this.$emit("update:modelValue", val);
+    },
   },
   async mounted() {
     this.loading = true;
-    await Promise.all(
-      this.services.map(async (service: string) => {
-        await context.rootStore.plugins.load(service);
-      }),
-    );
+    for (const service of this.services) {
+      await context.rootStore.plugins.load(service);
+    }
     this.loadedServices = this.services.map((service: string) => {
       return {
         service,
@@ -102,6 +125,7 @@ export default defineComponent({
       };
     });
     this.loading = false;
+    this.modalShown = this.modelValue;
   },
 });
 </script>
