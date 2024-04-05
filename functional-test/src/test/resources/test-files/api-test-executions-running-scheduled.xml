@@ -13,7 +13,7 @@
     <multipleExecutions>true</multipleExecutions>
     <sequence keepgoing='false'>
       <command>
-        <exec>echo '1'; sleep 10</exec>
+        <exec>echo '1'; sleep 5</exec>
       </command>
     </sequence>
     <uuid>xml-uuid</uuid>
