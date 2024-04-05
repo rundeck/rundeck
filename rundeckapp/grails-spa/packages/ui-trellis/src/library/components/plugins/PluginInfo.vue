@@ -11,6 +11,7 @@
     <span v-if="showTitle" :class="titleCss" style="margin-left: 5px">
       {{ title }}
     </span>
+    <slot name="descriptionprefix"> </slot>
     <PluginDetails
       :show-description="showDescription"
       :show-extended="showExtended"
