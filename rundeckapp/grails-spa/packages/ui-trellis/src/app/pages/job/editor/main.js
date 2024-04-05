@@ -140,17 +140,19 @@ for (let i = 0; i < othels.length; i++) {
   oapp.mount(e);
 }
 
-const wfels = document.body.getElementsByClassName("job-editor-workflow-vue");
+if (uiType === "next") {
+  const wfels = document.body.getElementsByClassName("job-editor-workflow-vue");
 
-for (let i = 0; i < wfels.length; i++) {
-  const e = wfels[i];
-  const oapp = createApp({
-    name: "JobEditWorkflowApp",
-    components: { WorkflowEditorSection },
-  });
-  oapp.use(uiv);
-  oapp.use(i18n);
-  oapp.mount(e);
+  for (let i = 0; i < wfels.length; i++) {
+    const e = wfels[i];
+    const oapp = createApp({
+      name: "JobEditWorkflowApp",
+      components: { WorkflowEditorSection },
+    });
+    oapp.use(uiv);
+    oapp.use(i18n);
+    oapp.mount(e);
+  }
 }
 
 //on job edit page listen for dom content changes and install UI Sockets
