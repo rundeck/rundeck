@@ -829,17 +829,17 @@ const messages = {
   "option.view.action.moveDown.title": "Move Down",
   "option.view.action.drag.title": "Drag to reorder",
   Workflow: {
-      label: "Workflow",
-      property: {
-          keepgoing: {
-              true: { description: "Run remaining steps before failing." },
-              false: { description: "Stop at the failed step." },
-              prompt: "If a step fails:",
-          },
-          strategy: {
-              label: "Strategy",
-          },
+    label: "Workflow",
+    property: {
+      keepgoing: {
+        true: { description: "Run remaining steps before failing." },
+        false: { description: "Stop at the failed step." },
+        prompt: "If a step fails:",
       },
+      strategy: {
+        label: "Strategy",
+      },
+    },
   },
   "plugin.choose.title": "Choose a Plugin",
 };
