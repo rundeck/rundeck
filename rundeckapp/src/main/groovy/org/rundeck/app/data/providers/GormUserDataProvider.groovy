@@ -3,6 +3,7 @@ package org.rundeck.app.data.providers
 
 import grails.compiler.GrailsCompileStatic
 import grails.gorm.DetachedCriteria
+import groovy.transform.Synchronized
 import groovy.transform.TypeCheckingMode
 import groovy.util.logging.Slf4j
 import org.hibernate.StaleStateException
@@ -39,6 +40,7 @@ class GormUserDataProvider implements UserDataProvider {
     public static final int DEFAULT_TIMEOUT = 30
     public static final String SESSION_ABANDONED_MINUTES = 'userService.login.track.sessionAbandoned'
     public static final String SHOW_LOGIN_STATUS = 'gui.userSummaryShowLoginStatus'
+    public static final String NAME_CASE_SENSITIVE_ENABLED = "login.nameCaseSensitiveEnabled"
 
     @Override
     RdUser get(Long userid) {
@@ -47,8 +49,9 @@ class GormUserDataProvider implements UserDataProvider {
 
     @Override
     @Transactional
+    @Synchronized
     User findOrCreateUser(String login) throws DataAccessException {
-        User user = User.findByLogin(login)
+        User user = isLoginNameCaseSensitiveEnabled() ? User.findByLogin(login) : User.findByLoginIlike(login)
         if (!user) {
             User newUser = new User(login: login)
             if (!newUser.save(flush: true)) {
@@ -59,18 +62,11 @@ class GormUserDataProvider implements UserDataProvider {
         return user
     }
 
-    static User getUserByLoginOrCreate(String login) {
-        User user = User.findByLogin(login)
-        if (!user) {
-            user = new User(login: login)
-        }
-        return user
-    }
-
     @Override
     @Transactional
+    @Synchronized
     User registerLogin(String login, String sessionId) throws DataAccessException {
-        User user = getUserByLoginOrCreate(login)
+        User user = findOrCreateUser(login)
         user.lastLogin = new Date()
         user.lastLoggedHostName = frameworkService.getServerHostname()
         user.lastSessionId = null
@@ -94,7 +90,7 @@ class GormUserDataProvider implements UserDataProvider {
     @Override
     @Transactional
     User registerLogout(String login) throws DataAccessException {
-        User user = getUserByLoginOrCreate(login)
+        User user = findOrCreateUser(login)
         user.lastLogout = new Date()
         if (!user.save(flush: true)) {
             throw new DataAccessException("unable to save user: ${user}, ${user.errors.allErrors.join(',')}")
@@ -214,15 +210,16 @@ class GormUserDataProvider implements UserDataProvider {
             } as List<RdUser>
         }
         def response = new UserFilteredResponse()
-        response.setTotalRecords(totalRecords)
-        response.setUsers(users)
         response.setShowLoginStatus(showLoginStatus)
+
+        response.setUsers(users)
+        response.setTotalRecords(totalRecords)
         return response
     }
 
     @Override
     boolean validateUserExists(String username) {
-        return User.countByLogin(username) > 0
+        return User.countByLoginIlike(username) > 0
     }
 
     @Override
@@ -239,7 +236,7 @@ class GormUserDataProvider implements UserDataProvider {
 
     @Override
     RdUser findByLogin(String login) {
-        return User.findByLogin(login)
+        return isLoginNameCaseSensitiveEnabled() ? User.findByLogin(login) : User.findByLoginIlike(login)
     }
 
     @Override
@@ -250,7 +247,7 @@ class GormUserDataProvider implements UserDataProvider {
     @Override
     @Transactional
     SaveUserResponse updateFilterPref(String login, String filterPref) {
-        User user = User.findByLogin(login)
+        User user = isLoginNameCaseSensitiveEnabled() ? User.findByLogin(login) : User.findByLoginIlike(login)
         user.filterPref = filterPref
         Boolean isSaved = user.save()
         return new SaveUserResponse(user: user, isSaved: isSaved, errors: user.errors)
@@ -260,7 +257,7 @@ class GormUserDataProvider implements UserDataProvider {
     String getEmailWithNewSession(String login) {
         if (!login) { return "" }
         User.withNewSession {
-            def userLogin = User.findByLogin(login)
+            def userLogin = isLoginNameCaseSensitiveEnabled() ? User.findByLogin(login) : User.findByLoginIlike(login)
             if (!userLogin || !userLogin.email) { return "" }
             return userLogin.email
         }
@@ -314,4 +311,9 @@ class GormUserDataProvider implements UserDataProvider {
     def getSessionIdRegisterMethod() {
         configurationService.getString(SESSION_ID_METHOD, 'hash')
     }
+
+    def isLoginNameCaseSensitiveEnabled(){
+        return configurationService?.getBoolean(NAME_CASE_SENSITIVE_ENABLED,false)
+    }
+
 }

@@ -23,7 +23,10 @@ class UserActionService implements LogoutHandler{
             if(userService.isSessionIdRegisterEnabled()){
                 sessionId = event.getSource()?.details?.sessionId
             }
-            userService.registerLogin(extractUsername(event.authentication), sessionId)
+            if(!userService.isLdapSyncUserEnabled()){
+                userService.registerLogin(extractUsername(event.authentication), sessionId)
+            }
+
         }else{
             log.error("Null user name on handleAuthenticationSuccessEvent")
         }

@@ -41,6 +41,7 @@ class UserService {
     public static final String SESSION_ABANDONDED_MINUTES = 'userService.login.track.sessionAbandoned'
     public static final String SHOW_LOGIN_STATUS = 'gui.userSummaryShowLoginStatus'
     public static final String SHOW_LOGGED_USERS_DEFAULT = 'gui.userSummaryShowLoggedUsersDefault'
+    public static final String LDAP_SYNC_USERS_ENABLE = 'security.syncLdapUser'
 
     RdUser findOrCreateUser(String login) {
         return userDataProvider.findOrCreateUser(login)
@@ -243,5 +244,9 @@ class UserService {
         String email
         String firstname
         String lastname
+    }
+
+    def isLdapSyncUserEnabled(){
+        configurationService.getBoolean(LDAP_SYNC_USERS_ENABLE, false)
     }
 }
