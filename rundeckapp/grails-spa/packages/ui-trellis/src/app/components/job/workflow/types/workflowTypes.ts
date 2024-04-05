@@ -1,3 +1,7 @@
+export interface PluginConfig {
+  type: string;
+  config: any;
+}
 export interface CommandData {
   label?: string;
   exec?: string;
@@ -17,7 +21,7 @@ export interface StrategyData {
 }
 
 export interface GlobalLogFiltersData {
-  logFilter?: string;
+  filters?: PluginConfig[];
 }
 
 export interface StepsData {
@@ -40,8 +44,8 @@ export function createStrategyData(
 ): StrategyData {
   return { strategy: evalFunc ? evalFunc(strategy) : strategy };
 }
-export function createLogFiltersData({ logFilter }): GlobalLogFiltersData {
-  return { logFilter };
+export function createLogFiltersData({ logFilters }): GlobalLogFiltersData {
+  return { filters: logFilters || [] };
 }
 export function createStepsData({ commands }): StepsData {
   return { commands };
