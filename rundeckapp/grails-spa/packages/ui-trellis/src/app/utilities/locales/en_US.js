@@ -841,6 +841,7 @@ const messages = {
           },
       },
   },
+  "plugin.choose.title": "Choose a Plugin",
 };
 
 export default messages;

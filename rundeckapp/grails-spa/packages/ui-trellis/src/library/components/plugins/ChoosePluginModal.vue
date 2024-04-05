@@ -41,10 +41,10 @@
       </btn>
     </div>
     <div v-else-if="loading">
-      <i class="fas fa-spinner fa-spin"></i> Loading...
+      <i class="fas fa-spinner fa-spin"></i> {{ $t("loading.text") }}
     </div>
     <template #footer>
-      <btn @click="$emit('cancel')">Cancel</btn>
+      <btn @click="$emit('cancel')">{{ $t("Cancel") }}</btn>
     </template>
   </modal>
 </template>
