@@ -16,6 +16,7 @@ export class PluginStore {
 
   @Serial
   async load(service?: string): Promise<void> {
+    if (this.pluginsByService[service]) return void 0;
     const plugins = await this.client.apiRequest({
       pathTemplate: "api/40/plugin/list",
       queryParameters: {
