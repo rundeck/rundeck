@@ -70,7 +70,7 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
         GormUserDataProvider provider = new GormUserDataProvider()
         service.userDataProvider = provider
         provider.configurationService = Mock(ConfigurationService) {
-            getBoolean("login.nameCaseSensitiveEnabled",false) >> false
+            getBoolean("login.nameCaseSensitiveEnabled",false) >> true
         }
     }
 
