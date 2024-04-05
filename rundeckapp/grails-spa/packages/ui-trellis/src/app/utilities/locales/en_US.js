@@ -842,6 +842,10 @@ const messages = {
     },
   },
   "plugin.choose.title": "Choose a Plugin",
+  "plugin.type.WorkflowStep.title.plural": "Workflow Steps",
+  "plugin.type.WorkflowStep.title": "Workflow Step",
+  "plugin.type.WorkflowNodeStep.title.plural": "Node Steps",
+  "plugin.type.WorkflowNodeStep.title": "Node Step",
 };
 
 export default messages;

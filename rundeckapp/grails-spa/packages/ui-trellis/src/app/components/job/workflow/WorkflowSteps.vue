@@ -1,8 +1,175 @@
 <template>
   <div>Workflow Steps</div>
+  <div>
+    <div v-for="(step, index) in model.commands" :key="index">
+      <plugin-config
+        :service-name="
+          step.nodeStep
+            ? ServiceType.WorkflowNodeStep
+            : ServiceType.WorkflowStep
+        "
+        :provider="step.type"
+        :config="step.configuration"
+        :read-only="true"
+        :show-title="true"
+        :show-icon="true"
+        :show-description="true"
+        mode="show"
+        v-if="!step.jobref"
+      />
+      <span v-else> Jobref: {{ step.jobref }} </span>
+      <span v-if="step.label">Label: {{ step.label }}</span>
+      <btn @click="editStepByIndex(index)">
+        <i class="fas fa-edit"></i>
+        Edit
+      </btn>
+    </div>
+    <choose-plugin-modal
+      v-model="addStepModal"
+      title="Add a Step"
+      :services="[ServiceType.WorkflowNodeStep, ServiceType.WorkflowStep]"
+      :tab-names="[
+        $t('plugin.type.WorkflowNodeStep.title.plural'),
+        $t('plugin.type.WorkflowStep.title.plural'),
+      ]"
+      @cancel="addStepModal = false"
+      @selected="chooseProviderAdd"
+    >
+      <span class="text-info">Click on a Step type to add.</span>
+    </choose-plugin-modal>
+
+    <edit-plugin-modal
+      v-if="editStepModal"
+      v-model:modal-active="editStepModal"
+      v-model="editModel"
+      :validation="editModelValidation"
+      :service-name="editService"
+      title="Edit Step"
+      @cancel="cancelEditStep"
+      @save="saveEditStep"
+    ></edit-plugin-modal>
+
+    <btn @click="addStepModal = true" size="sm">
+      <i class="fas fa-plus"></i>
+      Add a step
+    </btn>
+  </div>
 </template>
 <script lang="ts">
-export default {
-  name: 'WorkflowSteps'
-}
+import {
+  commandsToEditData,
+  editCommandsToStepsData,
+} from "@/app/components/job/workflow/types/workflowFuncs";
+import {
+  CommandData,
+  CommandEditData,
+  StepsData,
+  StepsEditData,
+} from "@/app/components/job/workflow/types/workflowTypes";
+import { getRundeckContext } from "@/library";
+import ChoosePluginModal from "@/library/components/plugins/ChoosePluginModal.vue";
+import EditPluginModal from "@/library/components/plugins/EditPluginModal.vue";
+import pluginConfig from "@/library/components/plugins/pluginConfig.vue";
+import { PluginConfig } from "@/library/interfaces/PluginConfig";
+import { ServiceType } from "@/library/stores/Plugins";
+import { cloneDeep } from "lodash";
+import { defineComponent } from "vue";
+
+const context = getRundeckContext();
+export default defineComponent({
+  name: "WorkflowSteps",
+  emits: ["update:modelValue"],
+  components: {
+    EditPluginModal,
+    pluginConfig,
+    ChoosePluginModal,
+  },
+  props: {
+    modelValue: {
+      type: Object,
+      required: true,
+      default: () => ({}) as StepsData,
+    },
+  },
+  data() {
+    return {
+      ServiceType,
+      model: {} as StepsEditData,
+      workflowStepPlugins: [],
+      workflowNodeStepPlugins: [],
+      addStepModal: false,
+      editStepModal: false,
+      editModel: {} as PluginConfig,
+      editModelValidation: null,
+      editService: null,
+      editIndex: -1,
+    };
+  },
+  methods: {
+    chooseProviderAdd({
+      service,
+      provider,
+    }: {
+      service: string;
+      provider: string;
+    }) {
+      this.addStepModal = false;
+      this.editModel = {
+        type: provider,
+        configuration: {},
+        nodeStep: service === ServiceType.WorkflowNodeStep,
+      };
+      this.editIndex = -1;
+      this.editService = service;
+      this.editStepModal = true;
+    },
+    cancelEditStep() {
+      this.editStepModal = false;
+      this.editModel = {};
+      this.editModelValidation = null;
+      this.editIndex = -1;
+    },
+
+    editStepByIndex(index: number) {
+      this.editIndex = index;
+      let command = this.model.commands[index];
+      this.editModel = cloneDeep(command);
+      //todo: jobref
+      this.editService = command.nodeStep
+        ? ServiceType.WorkflowNodeStep
+        : ServiceType.WorkflowStep;
+      this.editStepModal = true;
+    },
+    saveEditStep() {
+      if (this.editIndex >= 0) {
+        this.model.commands[this.editIndex] = cloneDeep(this.editModel);
+      } else {
+        this.model.commands.push(cloneDeep(this.editModel));
+      }
+      this.editStepModal = false;
+      this.editModel = {};
+      this.editModelValidation = null;
+      this.editIndex = -1;
+      this.wasChanged();
+    },
+    wasChanged() {
+      this.$emit("update:modelValue", editCommandsToStepsData(this.model));
+    },
+    async getStepPlugins() {
+      await context.rootStore.plugins.load(ServiceType.WorkflowNodeStep);
+      await context.rootStore.plugins.load(ServiceType.WorkflowStep);
+      this.workflowStepPlugins = context.rootStore.plugins.getServicePlugins(
+        ServiceType.WorkflowStep,
+      );
+      this.workflowNodeStepPlugins =
+        context.rootStore.plugins.getServicePlugins(
+          ServiceType.WorkflowNodeStep,
+        );
+    },
+  },
+  async mounted() {
+    await this.getStepPlugins();
+    this.model = commandsToEditData(this.modelValue);
+  },
+});
 </script>
