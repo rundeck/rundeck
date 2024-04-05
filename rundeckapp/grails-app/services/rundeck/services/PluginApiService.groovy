@@ -326,7 +326,7 @@ class PluginApiService {
             prop.defaultValue ?: '',
             locale
         )
-        if(staticTextDefaultValue && optsMap['staticTextContentType'] in ['text/html','text/markdown']){
+        if(staticTextDefaultValue && optsMap && optsMap['staticTextContentType'] in ['text/html','text/markdown']){
             if(optsMap['staticTextContentType'] == 'text/markdown') {
                 staticTextDefaultValue = staticTextDefaultValue.decodeMarkdown()
                 optsMap['staticTextContentType'] = 'application/x-text-html-sanitized'
