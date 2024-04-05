@@ -123,7 +123,7 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         String login = "user~name"
         String sessionId = "willErrSessionId"
         provider.configurationService = Mock(ConfigurationService) {
-            1 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> false
+             getBoolean(UserService.SESSION_ID_ENABLED, false) >> false
         }
         provider.frameworkService = Mock(FrameworkService) {
             getServerHostname() >> { "server" }
