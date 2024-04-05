@@ -53,7 +53,8 @@ import PluginConfig from "@/library/components/plugins/pluginConfig.vue";
 import PluginDetails from "@/library/components/plugins/PluginDetails.vue";
 import { getPluginProvidersForService } from "@/library/modules/pluginService";
 import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
-export default {
+import { defineComponent } from "vue";
+export default defineComponent({
   name: "WorkflowStrategy",
   components: {
     PluginConfig,
@@ -130,5 +131,5 @@ export default {
     await this.getStrategyPlugins();
     this.loaded = true;
   },
-};
+});
 </script>
