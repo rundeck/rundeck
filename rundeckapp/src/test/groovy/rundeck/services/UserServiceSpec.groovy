@@ -136,7 +136,7 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
 
         then:
         !user.id
-        errMsg.startsWith("unable to save user: rundeck.User")
+        errMsg.startsWith("unable to save user: user~name")
     }
 
     def "registerLogout"(){
@@ -163,7 +163,7 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
 
         then:
         !user.id
-        errMsg.startsWith("unable to save user: rundeck.User")
+        errMsg.startsWith("unable to save user: user~name")
     }
 
     def "findWithFilters basic"() {
