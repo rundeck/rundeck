@@ -82,7 +82,7 @@ export const getServiceProviderDescription = async (
   const resp = await client.sendRequest({
     pathTemplate: `/plugin/detail/{svcName}/{provider}`,
     pathParameters: { svcName: svcName, provider: provider },
-    baseUrl: params.rdBase,
+    baseUrl: params.apiBase,
     method: "GET",
     queryParameters: qparams,
   });
