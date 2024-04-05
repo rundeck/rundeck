@@ -79,7 +79,7 @@
             ></template
           >
           <ace-editor
-            v-model="value as string"
+            :modelValue="value as string"
             :lang="prop.options['codeSyntaxMode']"
             height="200"
             width="100%"
@@ -98,7 +98,7 @@
             ></template
           >
           <ace-editor
-            v-model="value as string"
+            :modelValue="value as string"
             height="200"
             width="100%"
             :read-only="true"
