@@ -69,18 +69,18 @@ export default defineComponent({
       return [
         {
           show: this.isAdmin,
-          link: `${getRundeckContext().rdBase}/project/${this.project.name}/configure`,
+          link: `${getRundeckContext().rdBase}project/${this.project.name}/configure`,
           text: "edit.configuration",
         },
         {
           show: this.createPermissions,
-          link: `${getRundeckContext().rdBase}/project/${this.project.name}/job/create`,
+          link: `${getRundeckContext().rdBase}project/${this.project.name}/job/create`,
           icon: "glyphicon-plus",
           text: "new.job.button.label",
         },
         {
           show: this.createPermissions,
-          link: `${getRundeckContext().rdBase}/project/${this.project.name}/job/upload`,
+          link: `${getRundeckContext().rdBase}project/${this.project.name}/job/upload`,
           icon: "glyphicon-upload",
           text: "upload.definition.button.label",
         },
