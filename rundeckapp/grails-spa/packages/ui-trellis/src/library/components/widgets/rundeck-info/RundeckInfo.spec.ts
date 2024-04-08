@@ -1,13 +1,13 @@
-import { shallowMount } from "@vue/test-utils";
+import { mount } from "@vue/test-utils";
 import RundeckInfo from "./RundeckInfo.vue";
 
 jest.mock("../../../rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({ rdBase: "mocked-rdBase" }),
-  url: jest.fn().mockReturnValue("mocked-url"),
+  url: jest.fn().mockReturnValue("http://localhost"),
 }));
 
 const mountRundeckInfo = async (props?: Record<string, any>) => {
-  return shallowMount(RundeckInfo, {
+  return mount(RundeckInfo, {
     props: {
       appInfo: { title: "Rundeck", logocss: "some-css" },
       ...props,
@@ -34,17 +34,22 @@ describe("RundeckInfo", () => {
       true,
     );
   });
-  it("renders RundeckVersions information correctly ", async () => {
+  it("renders RundeckVersions information correct props based on version data", async () => {
     const versionProps = {
       logo: false,
+      logocss: "some-css",
       number: "1.0.0",
       tag: "stable",
+      title: "Rundeck",
     };
     const wrapper = await mountRundeckInfo({ version: versionProps });
+
+    await wrapper.vm.$nextTick();
     const versionComponent = wrapper.findComponent({ name: "RundeckVersion" });
     expect(versionComponent.exists()).toBe(true);
+    expect(versionComponent.props()).toEqual(versionProps);
   });
-  it("renders ServerDisplay with exact server props", async () => {
+  it("renders ServerDisplay correctly based on a server props", async () => {
     const serverProps = {
       name: "localHost",
       icon: "paperclip",
@@ -52,7 +57,9 @@ describe("RundeckInfo", () => {
       showId: true,
     };
     const wrapper = await mountRundeckInfo({ server: serverProps });
+    await wrapper.vm.$nextTick();
     const serverComponent = wrapper.findComponent({ name: "ServerDisplay" });
+    expect(serverComponent.exists()).toBe(true);
     expect(serverComponent.props()).toEqual({
       name: serverProps.name,
       glyphicon: serverProps.icon,
@@ -75,30 +82,29 @@ describe("RundeckInfo", () => {
     expect(versionDisplayComponent.props("text")).toBe("Rundeck lamp icon-url");
   });
 
-  it("renders latest release information ", async () => {
+  it("renders latest release information correctly ", async () => {
     const latestProps = {
-      logo: false,
-      full: "1.0.0",
+      full: "2.0.0",
       tag: "GA",
-      logocss: "rdicon",
     };
     const wrapper = await mountRundeckInfo({
       latest: latestProps,
     });
-    const latestVersionComponent = wrapper.findComponent({
-      name: "RundeckVersion",
-    });
 
-    expect(latestVersionComponent.props()).toEqual({
-      logo: latestProps.logo,
-      number: latestProps.full,
-      tag: latestProps.tag,
-      logocss: latestProps.logocss,
-    });
+    const latestSection = wrapper
+      .find(".rundeck-info-widget__latest")
+      .findComponent({ name: "RundeckVersion" });
+    expect(latestSection.exists()).toBe(true);
+
+    expect(latestSection.props("number")).toEqual(latestProps.full);
+    expect(latestSection.props("tag")).toEqual(latestProps.tag);
   });
 
-  it("renders the correct url", async () => {
+  it("should have an anchor with the correct href", async () => {
     const wrapper = await mountRundeckInfo();
-    expect(wrapper.vm.welcomeUrl()).toBe("mocked-url");
+    const expectedHref = "http://localhost";
+    const anchorElement = wrapper.find(`a[href="${expectedHref}"]`);
+    expect(anchorElement.exists()).toBe(true);
+    expect(anchorElement.attributes("href")).toBe(expectedHref);
   });
 });
