@@ -13,7 +13,7 @@ class ScmStatusBadge {
     final String badgeText
     final String tooltips
     static final By elementSelector = By.xpath("//*[@id='jobInfo_']/span[2]/span")
-    static final String loadingFromServerText = "Loading Scm Data"
+    static final String loadingFromServerText = "Loading SCM Status..."
     static final String tooltipsAttribute = "title"
 
     ScmStatusBadge(JobShowPage jobShowPage){
