@@ -1,5 +1,5 @@
 <template>
-  <div>Workflow Steps</div>
+  <div>TODO: undo-redo</div>
   <div>
     <div
       v-for="(step, index) in model.commands"
