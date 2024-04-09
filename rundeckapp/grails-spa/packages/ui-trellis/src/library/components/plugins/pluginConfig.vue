@@ -27,6 +27,9 @@
       :detail="detail"
     >
       <slot name="titlePrefix"></slot>
+      <template #titleprefix>
+        <slot name="iconSuffix"></slot>
+      </template>
       <template #suffix>
         <slot name="titleSuffix"></slot>
       </template>
@@ -43,7 +46,15 @@
             :show-icon="inputShowIcon"
             :show-description="inputShowDescription"
             :detail="detail"
-          />
+          >
+            <slot name="titlePrefix"></slot>
+            <template #titleprefix>
+              <slot name="iconSuffix"></slot>
+            </template>
+            <template #suffix>
+              <slot name="titleSuffix"></slot>
+            </template>
+          </pluginInfo>
         </p>
       </div>
       <div v-if="isShowMode && config" class="col-xs-12 col-sm-12">
