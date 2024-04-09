@@ -7,7 +7,9 @@
       <div class="col-sm-10" style="padding-top: 1em" v-if="loaded">
         <workflow-basic v-model="basicData" />
         <WorkflowStrategy v-model="strategyData" />
+        <hr />
         <WorkflowGlobalLogFilters v-model="logFiltersData" />
+        <hr />
         <WorkflowSteps v-model="stepsData" />
       </div>
     </div>
