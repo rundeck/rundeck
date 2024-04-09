@@ -847,6 +847,7 @@ const messages = {
   "plugin.type.WorkflowStep.title": "Workflow Step",
   "plugin.type.WorkflowNodeStep.title.plural": "Node Steps",
   "plugin.type.WorkflowNodeStep.title": "Node Step",
+  "JobExec.nodeStep.true.label": "Node Step",
 };
 
 export default messages;
