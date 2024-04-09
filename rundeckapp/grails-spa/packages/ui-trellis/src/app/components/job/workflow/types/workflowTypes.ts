@@ -142,5 +142,5 @@ export function createLogFiltersData({ logFilters }): GlobalLogFiltersData {
   return { filters: logFilters || [] };
 }
 export function createStepsData({ commands }): StepsData {
-  return { commands };
+  return { commands: commands || [] };
 }
