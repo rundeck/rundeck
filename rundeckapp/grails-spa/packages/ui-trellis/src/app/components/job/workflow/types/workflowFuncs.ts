@@ -30,7 +30,10 @@ export function editCommandsToStepsData(editData: StepsEditData): StepsData {
 }
 
 export function commandToEditConfig(cmd: StepData): CommandEditData {
-  let editData = { description: cmd.description } as CommandEditData;
+  let editData = {
+    description: cmd.description,
+    id: mkid(),
+  } as CommandEditData;
   if (cmd.type) {
     editData.type = cmd.type;
     editData.config = cmd.configuration;
@@ -70,7 +73,9 @@ export function commandToEditConfig(cmd: StepData): CommandEditData {
   }
   return editData;
 }
-
+export function mkid() {
+  return Math.random().toString(36).substring(7);
+}
 export function editToCommandConfig(plugin: EditStepData): StepData {
   let data = {
     description: plugin.description,

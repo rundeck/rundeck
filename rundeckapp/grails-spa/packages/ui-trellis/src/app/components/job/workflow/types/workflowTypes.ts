@@ -117,6 +117,8 @@ export interface CommandEditData extends PluginConfig {
   nodeStep: boolean;
   description?: string;
   jobref?: JobRefDefinition;
+  //simply to provide a unique id for each step on client side
+  id: string;
 }
 export type EditStepData = CommandEditData & JobRefData;
 export interface StepsEditData {
