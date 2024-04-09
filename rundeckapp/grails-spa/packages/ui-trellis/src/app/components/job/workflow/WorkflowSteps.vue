@@ -6,35 +6,64 @@
       :key="index"
       class="step-list-item"
     >
-      <plugin-config
-        :service-name="
-          step.nodeStep
-            ? ServiceType.WorkflowNodeStep
-            : ServiceType.WorkflowStep
-        "
-        :provider="step.type"
-        :config="step.config"
-        :read-only="true"
-        :show-title="true"
-        :show-icon="true"
-        :show-description="true"
-        mode="show"
-        v-if="!step.jobref"
+      <div
+        class="step-item-display"
+        @click="editStepByIndex(index)"
+        title="Click to edit"
       >
-        <template #iconSuffix v-if="step.nodeStep">
-          <i class="fas fa-hdd"></i>
-        </template>
-      </plugin-config>
-      <span v-else>
-        <job-ref-step :step="step"></job-ref-step>
-      </span>
-      <div v-if="step.description" class="wfstep-description">
-        {{ step.description }}
+        <plugin-config
+          :service-name="
+            step.nodeStep
+              ? ServiceType.WorkflowNodeStep
+              : ServiceType.WorkflowStep
+          "
+          :provider="step.type"
+          :config="step.config"
+          :read-only="true"
+          :show-title="true"
+          :show-icon="true"
+          :show-description="true"
+          mode="show"
+          v-if="!step.jobref"
+        >
+          <template #iconSuffix v-if="step.nodeStep">
+            <i class="fas fa-hdd"></i>
+          </template>
+        </plugin-config>
+        <job-ref-step :step="step" v-else></job-ref-step>
+
+        <div v-if="step.description" class="wfstep-description">
+          {{ step.description }}
+        </div>
       </div>
-      <btn @click="editStepByIndex(index)">
-        <i class="fas fa-edit"></i>
-        Edit
-      </btn>
+      <div class="step-item-controls">
+        <div class="btn-group" role="group" aria-label="item controls">
+          <btn @click="editStepByIndex(index)" size="xs">
+            <i class="fas fa-edit"></i>
+            Edit
+          </btn>
+          <dropdown menu-right>
+            <btn size="xs" data-role="trigger"
+              ><i class="glyphicon glyphicon-cog"></i>
+              <span class="caret"></span
+            ></btn>
+            <template #dropdown>
+              <li><a role="button">Add Error Handler</a></li>
+              <li><a role="button">Add Log Filter</a></li>
+            </template>
+          </dropdown>
+          <btn size="xs" title="Delete this step">
+            <i class="glyphicon glyphicon-remove"></i>
+          </btn>
+          <btn size="xs" title="Duplicate this step">
+            <i class="glyphicon glyphicon-duplicate"></i>
+          </btn>
+        </div>
+
+        <span class="btn btn-xs dragHandle" title="Drag to reorder"
+          ><i class="glyphicon glyphicon-resize-vertical"></i
+        ></span>
+      </div>
     </div>
     <choose-plugin-modal
       v-model="addStepModal"
@@ -194,5 +223,21 @@ export default defineComponent({
   padding: 10px !important;
   margin-bottom: 10px;
   border-radius: 5px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  .step-item-display {
+    flex-grow: 1;
+    padding: 5px;
+    border-width: 1px;
+    border-style: dotted;
+    border-color: transparent;
+    &:hover {
+      cursor: pointer;
+      background-color: var(--light-gray);
+      border-color: #68b3c8;
+    }
+  }
 }
 </style>
