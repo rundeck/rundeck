@@ -239,7 +239,9 @@ class GormUserDataProvider implements UserDataProvider {
 
     @Override
     RdUser findByLogin(String login) {
-        return User.findByLogin(login)
+        User.withNewSession {
+            return User.findByLogin(login)
+        }
     }
 
     @Override
