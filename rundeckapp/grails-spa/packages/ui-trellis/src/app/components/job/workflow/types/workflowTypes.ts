@@ -60,6 +60,7 @@ export interface JobRefDefinition {
   group: string;
 
   name: string;
+  project?: string;
   uuid?: string;
   args?: string;
   failOnDisable?: boolean;
