@@ -3,7 +3,7 @@
   <div>
     <div
       v-for="(step, index) in model.commands"
-      :key="index"
+      :key="step.id"
       class="step-list-item"
     >
       <div
@@ -100,6 +100,7 @@
 import {
   commandsToEditData,
   editCommandsToStepsData,
+  mkid,
 } from "@/app/components/job/workflow/types/workflowFuncs";
 import {
   EditStepData,
@@ -184,6 +185,7 @@ export default defineComponent({
     },
     saveEditStep() {
       let saveData = cloneDeep(this.editModel);
+      saveData.id = mkid();
       saveData.nodeStep = this.editService === ServiceType.WorkflowNodeStep;
       if (this.editIndex >= 0) {
         this.model.commands[this.editIndex] = saveData;
