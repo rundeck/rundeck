@@ -16,11 +16,15 @@ services:
       - "/etc/timezone:/etc/timezone:ro"
       - "../../../tokens.properties:/home/rundeck/server/config/tokens.properties"
       - "../../../realm.properties:/home/rundeck/server/config/realm.properties"
-      - "../../../resource-model:/home/rundeck/server/config/resource-model"
+      - "../../../resource-model:/home/resource-model"
       - "../../../test-files/job-run-steps-test-script1.txt:/home/rundeck/job-run-steps-test-script1.txt"
       - "../../../test-files/simpleScript.sh:/home/rundeck/simpleScript.sh"
       - "../../../test-files/test-resources1.xml:/home/rundeck/test-resources1.xml"
       - "../../../test-files/test-resources2.xml:/home/rundeck/test-resources2.xml"
+      - "../../../test-files/saved_searches-A.json:/home/option1/saved_searches.json"
+      - "../../../test-files/saved_searches-B.json:/home/option2/saved_searches.json"
+      - "../../../test-files/saved_searches-C.json:/home/option3/saved_searches.json"
+      - "../../../test-files/saved_searches-D.json:/home/option4/saved_searches.json"
   gitea:
     build:
       context: "gitea"

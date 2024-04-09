@@ -2,9 +2,10 @@ package org.rundeck.tests.functional.api.execution
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.util.annotations.APITest
-import org.rundeck.util.api.ExecutionStatus
-import org.rundeck.util.api.JobUtils
-import org.rundeck.util.api.WaitingTime
+import org.rundeck.util.common.execution.ExecutionStatus
+import org.rundeck.util.common.jobs.JobUtils
+import org.rundeck.util.common.WaitingTime
+import org.rundeck.util.common.projects.ProjectUtils
 import org.rundeck.util.container.BaseContainer
 
 import java.time.LocalDateTime
@@ -24,7 +25,7 @@ class ExecutionSpec extends BaseContainer {
         client.apiVersion = client.finalApiVersion
     }
 
-    def "run command, get execution"() {
+    def "run command get execution"() {
         when: "run a command"
             def adhoc = post("/project/${PROJECT_NAME}/run/command?exec=echo+testing+execution+api", Map)
         then:
@@ -345,6 +346,62 @@ class ExecutionSpec extends BaseContainer {
                 demo.code() == 200
                 def json = jsonValue(demo.body())
                 json.executions.size() != null
+            }
+    }
+
+    def "executions-running for list projects"() {
+        given:
+            String projectNameSuffix = "project-api-forecast"
+            ProjectUtils.createProjectsWithJobsScheduled(projectNameSuffix, 4, 2, client)
+        and:
+            assert ProjectUtils.projectCountExecutions("*", 6, client)
+        when:
+            def response1 = doGet("/project/*/executions/running?includePostponed=true")
+            def response2 = doGet("/project/${projectNameSuffix}-1/executions/running?includePostponed=true")
+            def response3 = doGet("/project/${projectNameSuffix}-1,${projectNameSuffix}-2/executions/running?includePostponed=true")
+            def response4 = doGet("/project/${projectNameSuffix}-1,${projectNameSuffix}-2,${projectNameSuffix}-3/executions/running?includePostponed=true")
+        then:
+            verifyAll {
+                jsonValue(response1.body()).executions.size() >= 1
+                jsonValue(response2.body()).executions.size() >= 1
+                jsonValue(response3.body()).executions.size() >= 1
+                jsonValue(response4.body()).executions.size() >= 1
+            }
+        cleanup:
+            (2..4).each {
+                updateConfigurationProject("${projectNameSuffix}-${it}", [
+                    "project.disable.schedule": "true",
+                    "project.later.schedule.enable": "false",
+                    "project.disable.executions": "true"
+                ])
+                hold 5 //Wait until the executions stop
+                deleteProject("${projectNameSuffix}-${it}")
+            }
+    }
+
+    def "executions-running when project is disabled"() {
+        given:
+            deleteProject("project-api-forecast-1")
+        when:
+            def response = doGet("/project/project-api-forecast-1/executions/running?includePostponed=true")
+        then:
+            verifyAll {
+                !response.successful
+                response.code() == 404
+                def json2 = jsonValue(response.body())
+                json2.errorCode == 'api.error.project.disabled'
+            }
+    }
+
+    def "executions-running when project is deleted"() {
+        when:
+            def response = doGet("/project/any-api-project/executions/running?includePostponed=true")
+        then:
+            verifyAll {
+                !response.successful
+                response.code() == 404
+                def json2 = jsonValue(response.body())
+                json2.errorCode == 'api.error.item.doesnotexist'
             }
     }
 

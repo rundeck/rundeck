@@ -1,20 +1,18 @@
 package org.rundeck.tests.functional.api.project
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.rundeck.tests.functional.api.ResponseModels.Execution
-import org.rundeck.tests.functional.api.ResponseModels.ExecutionOutput
-import org.rundeck.tests.functional.api.ResponseModels.RunCommand
-import org.rundeck.tests.functional.api.ResponseModels.SystemInfo
+import org.rundeck.util.api.responses.execution.Execution
+import org.rundeck.util.api.responses.execution.ExecutionOutput
+import org.rundeck.util.api.responses.execution.RunCommand
+import org.rundeck.util.api.responses.system.SystemInfo
 import org.rundeck.util.annotations.APITest
-import org.rundeck.util.api.ExecutionStatus
-import org.rundeck.util.api.FileHelpers
-import org.rundeck.util.api.JobUtils
-import org.rundeck.util.api.WaitingTime
+import org.rundeck.util.common.execution.ExecutionStatus
+import org.rundeck.util.common.FileHelpers
+import org.rundeck.util.common.jobs.JobUtils
+import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.container.BaseContainer
-import org.testcontainers.shaded.org.apache.commons.io.FileUtils
 
 import java.nio.file.Files
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.stream.Collectors
 

@@ -1,19 +1,19 @@
 package org.rundeck.tests.functional.api.job
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.rundeck.tests.functional.api.ResponseModels.CreateJobResponse
-import org.rundeck.tests.functional.api.ResponseModels.ErrorResponse
-import org.rundeck.tests.functional.api.ResponseModels.Execution
-import org.rundeck.tests.functional.api.ResponseModels.ExecutionOutput
-import org.rundeck.tests.functional.api.ResponseModels.JobExecutionsResponse
-import org.rundeck.tests.functional.api.ResponseModels.RunCommand
-import org.rundeck.tests.functional.api.ResponseModels.SystemInfo
+import org.rundeck.util.api.responses.jobs.CreateJobResponse
+import org.rundeck.util.api.responses.common.ErrorResponse
+import org.rundeck.util.api.responses.execution.Execution
+import org.rundeck.util.api.responses.execution.ExecutionOutput
+import org.rundeck.util.api.responses.jobs.JobExecutionsResponse
+import org.rundeck.util.api.responses.execution.RunCommand
+import org.rundeck.util.api.responses.system.SystemInfo
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.annotations.ExcludePro
-import org.rundeck.util.api.ExecutionStatus
-import org.rundeck.util.api.FileHelpers
-import org.rundeck.util.api.JobUtils
-import org.rundeck.util.api.WaitingTime
+import org.rundeck.util.common.execution.ExecutionStatus
+import org.rundeck.util.common.FileHelpers
+import org.rundeck.util.common.jobs.JobUtils
+import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.container.BaseContainer
 import spock.lang.Shared
 import spock.lang.Stepwise
@@ -1127,15 +1127,7 @@ class JobExecutionSpec extends BaseContainer {
         def client = getClient()
         ObjectMapper mapper = new ObjectMapper()
 
-        Object projectJsonMap = [
-                "name": projectName
-        ]
-        def responseProject = client.doPost("/projects", projectJsonMap)
-        assert responseProject.successful
-        def responseImport = client.doPut(
-                "/project/${projectName}/import?jobUuidOption=preserve",
-                new File(getClass().getResource("/projects-import/webhook-notification-project.zip").getPath()))
-        responseImport.successful
+        setupProjectArchiveDirectoryResource(projectName, '/projects-import/webhook-notification-project')
 
         // We have the jobs id, since they are already imported
         def openNcJobId = "c81aa8af-1e0e-4fce-a7bd-102b87922ef2"

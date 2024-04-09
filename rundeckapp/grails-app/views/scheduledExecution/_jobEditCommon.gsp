@@ -135,6 +135,16 @@
              data="${ [notifications:scheduledExecution.notifications?.collect{it.toNormalizedMap()}?:[],
                        notifyAvgDurationThreshold:scheduledExecution?.notifyAvgDurationThreshold,
              ]}"/>
+<g:embedJSON id="jobOptionsJSON"
+             data="${ [
+                     options:scheduledExecution.options?.collect{it.toMap()}?:[],
+                     fileUploadPluginType:fileUploadPluginType?:'',
+                     features:[
+                             fileUploadPlugin:feature.isEnabled(name:'fileUploadPlugin'),
+                             optionValuesPlugin:feature.isEnabled(name:'optionValuesPlugin'),
+                     ],
+                     jobWasScheduled: scheduledExecution?.scheduled?:false,
+             ]}"/>
 <g:embedJSON id="jobResourcesJSON"
              data="${ [
                      doNodedispatch:scheduledExecution?.doNodedispatch?:false,
@@ -191,6 +201,7 @@
     window._rundeck = Object.assign(window._rundeck || {}, {
         data: {
             notificationData: loadJsonData('jobNotificationsJSON'),
+            optionsData: loadJsonData('jobOptionsJSON'),
             resourcesData: loadJsonData('jobResourcesJSON'),
             schedulesData: loadJsonData('jobSchedulesJSON'),
             otherData: loadJsonData('jobOtherJSON')

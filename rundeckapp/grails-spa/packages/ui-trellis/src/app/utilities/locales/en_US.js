@@ -189,6 +189,21 @@ const messages = {
     'Please be sure that the ACL policies enable "read" access to the Key Storage in this project for the project URN path (urn:project:name). ',
   "unauthorized.status.help.4": "Go to {0} to create a Project ACL ",
   "unauthorized.status.help.5": "Go to {0} to create a System ACL ",
+  "use.the.node.sources.tab.2": " Tab to update your Node Sources.",
+  "project.node.sources.title.short": "Sources",
+  "use.the.node.sources.tab.1": "Use the ",
+  "no.modifiable.sources.found": "No modifiable sources found",
+  "framework.service.NodeEnhancer.explanation":
+    "Node Enhancers can modify the data loaded from Node Sources.",
+  "framework.service.NodeEnhancer.label.short.plural": "Enhancers",
+  "modifiable.node.sources.will.appear.here":
+    "Modifiable Node Sources will appear here",
+  "edit.node.enhancers": "Edit Node Enhancers",
+  "add.node.enhancer": "Add a new Node Enhancer",
+  "add.node.source": "Add a new Node Source",
+  "nodes.title": "Nodes",
+  "project.edit.ResourceModelSource.explanation":
+    "Node Sources for the project. Sources are loaded in the defined order, with later sources overriding earlier sources. (You can use  {'${project.name}'} inside configuration values to substitute the project name.)",
 
   "acl.config.link.title": "Project Settings > Access Control",
   "acl.config.system.link.title": "System Settings > Access Control",
@@ -234,6 +249,7 @@ const messages = {
   "node.metadata.status": "Status",
   nodes: "Nodes",
   "notification.event.onfailure": "On Failure",
+  "edit.nodes.header": "Edit Nodes",
   "notification.event.onsuccess": "On Success",
   "notification.event.onstart": "On Start",
   "notification.event.onavgduration": "Average Duration Exceeded",
@@ -589,6 +605,7 @@ const messages = {
   "job.toggle.scm.confirm.on": "Enable all SCM configured plugins?",
   "job.toggle.scm.confirm.off": "Disable all SCM configured plugins?",
   "job.toggle.scm.button.label.on": "Enable SCM",
+  "job.scm.status.loading.message": "Loading SCM Status...",
   "page.section.Activity.for.jobs": "Activity for Jobs",
   "widget.theme.title": "Theme",
   "widget.nextUi.title": "Enable Next UI",
@@ -638,10 +655,180 @@ const messages = {
   Execution: "{n} Executions | {n} Execution | {n} Executions",
   in: "in",
   "Project.plural": "Projects",
+  discard: "Discard",
+  "commandline.arguments.prompt.unquoted": "Commandline Arguments (unquoted):",
+  usage: "Usage",
+  "form.label.valuesType.list.label": "List",
+  "scheduledExecution.option.unsaved.warning":
+    "Discard or save changes to this option before completing changes to the job",
+  "bash.prompt": "Bash:",
+  "script.content.prompt": "Script Content:",
+  "rundeck.user.guide.option.model.provider":
+    "Rundeck User Guide - Option model provider",
+  save: "Save",
+  "commandline.arguments.prompt": "Commandline Arguments:",
+  "commandline.arguments.prompt.unquoted.warning":
+    "Warning! Relying on unquoted arguments could make this job vulnerable to command injection. Use with care.",
+  "add.new.option": "Add New Option",
+  "add.an.option": "Add an option",
+  "option.values.c": "1 Value|{n} Values",
+  "no.options.message": "No Options",
+  "the.option.values.will.be.available.to.scripts.in.these.forms":
+    "The option values will be available to scripts in these forms:",
+  "form.option.date.label": "Date",
+  "form.option.enforcedType.label": "Restrictions",
+  "form.option.usage.file.fileName.preview.description":
+    "The original file name:",
+  "form.option.discard.title": "Discard changes to the option",
+  "form.option.valuesType.url.authentication.password.label": "Password",
+  "form.option.enforcedType.none.label": "Any values can be used",
+  "form.option.inputType.label": "Input Type",
+  "form.option.defaultStoragePath.present.description":
+    "A default value will be loaded from Key Storage",
+  "form.option.secureInput.false.label": "Plain text",
+  "form.option.name.label": "Option Name",
+  "form.option.valuesType.url.filter.label": "Json Path Filter",
+  "form.option.valuesType.url.authType.label": "Authentication Type",
+  "form.option.sort.description": "Sort list Allowed Values",
+  "form.option.usage.secureAuth.message":
+    "Secure authentication option values are not available to scripts or commands",
+  "form.option.valuesType.url.label": "Remote URL",
+  "form.option.valuesList.placeholder":
+    "Delimiter separated list (comma by default)",
+  "form.option.secureInput.description":
+    "Secure input values are not stored by Rundeck after use. If the exposed value is used in a script or command then the output log may contain the value.",
+  "form.option.valuesType.url.authentication.key.label": "Key",
+  "form.option.date.description":
+    "The date will pass to your job as a string formatted this way: mm/dd/yy HH:MM",
+  "form.option.valuesType.url.authentication.username.label": "Username",
+  "form.option.valuesType.url.authType.bearerToken.label": "Bearer Token",
+  "form.option.enforced.label": "Enforced from Allowed Values",
+  "form.option.description.label": "Description",
+  "form.option.save.title": "Save changes to the option",
+  "form.option.type.label": "Option Type",
+  "form.option.multivalueAllSelected.label": "Select All Values by Default",
+  "form.option.secureExposed.false.label": "Secure Remote Authentication",
+  "form.option.valuesType.url.authentication.token.label": "Token",
+  "form.option.delimiter.label": "Delimiter",
+  "form.option.valuesURL.placeholder": "Remote URL",
+  "form.option.valuesType.url.authType.empty.label": "Select Auth Type",
+  "form.option.valuesDelimiter.description":
+    "Set the delimiter for Allowed Values",
+  "form.option.usage.file.preview.description":
+    "The local file path will be available to scripts in these forms:",
+  "form.option.secureExposed.false.description":
+    "Password input, value not exposed in scripts or commands, used only by Node Executors for authentication.",
+  "form.option.valuesType.url.filter.error.label":
+    "The Remote URL Json Path Filter has an invalid syntax",
+  "form.option.valuesType.url.authType.apiKey.label": "API Key",
+  "form.option.optionType.text.label": "Text",
+  "form.option.secureExposed.true.label": "Secure",
+  "form.option.valuesType.url.filter.description":
+    'Filter JSON results using a key path, for example "$.key.path"',
+  "form.option.valuesType.url.authentication.tokenInformer.header.label":
+    "Header",
+  "form.option.defaultStoragePath.description":
+    "Key Storage path for a default password value",
+  "form.option.multivalued.label": "Multi-valued",
+  "form.option.multivalued.description":
+    "Allow multiple input values to be chosen.",
+  "form.option.valuesType.url.authentication.tokenInformer.query.label":
+    "Query Parameter",
+  "form.option.create.title": "Save the new option",
+  "form.option.regex.label": "Match Regular Expression",
+  "form.option.optionType.file.label": "File",
+  "form.option.valuesDelimiter.label": "List Delimiter",
+  "form.option.cancel.title": "Cancel adding new option",
+  "form.option.values.label": "Allowed Values",
+  "form.option.dateFormat.description.md":
+    "Enter a date format as described in [momentjs docs](http://momentjs.com/docs/#/displaying/format/)",
+  "form.option.defaultStoragePath.label": "Storage Path",
+  "form.option.defaultValue.label": "Default Value",
+  "form.option.delimiter.description":
+    "Delimiter will be used to join all input values. Can be any string: ' ' (space), ',' (comma), etc. Note: do not include quotes.",
+  "form.option.secureInput.false.description": "Plain text input.",
+  "form.option.valuesType.url.authType.basic.label": "Basic ",
+  "form.option.valuesType.url.authentication.tokenInformer.label":
+    "Inject key ",
+  "form.option.secureExposed.true.description":
+    "Password input, value exposed in scripts and commands.",
+  "form.option.dateFormat.title": "Date Format",
+  "form.option.label.label": "Option Label",
+  "form.option.valuesUrl.description": "A URL to a Remote JSON service.",
+  "form.option.multivalued.secure-conflict.message":
+    "Secure Input options do not allow multiple values",
+  "form.option.sort.label": "Sort Values",
+  "form.option.usage.file.sha.preview.description":
+    "The file content SHA-256 value:",
+  "Option.property.description.description":
+    "The description will be rendered with Markdown.",
+  "option.defaultValue.regexmismatch.message":
+    'Default value "{0}" does not match the regex: {1}',
+  "option.multivalued.secure-conflict.message":
+    "Secure input cannot be used with multi-valued input",
+  "option.defaultValue.notallowed.message":
+    "Default Value was not in the allowed values list, and values are enforced",
+  "option.enforced.secure-conflict.message":
+    "Secure input cannot be used with enforced values",
+  "option.file.config.disabled.message":
+    "File option type config plugin is not enabled",
+  "option.defaultValue.required.message":
+    "Specify a Default Value for Required options when the Job is scheduled.",
+  "option.enforced.emptyvalues.message":
+    "Allowed values (list or remote URL) must be specified if values are enforced",
+  "option.file.required.message":
+    "File option type cannot be Required when the Job is scheduled.",
+  "option.regex.invalid.message": "Invalid Regular Expression: {0}",
+  "option.file.config.invalid.message":
+    "File option type config is not valid: {0}",
+  "option.delimiter.blank.message":
+    "You must specify a delimiter for multivalued options",
+  "option.hidden.notallowed.message":
+    "Hidden options must have a default value or storage path.",
+  "option.values.regexmismatch.message":
+    'Allowed value "{0}" does not match the regex: {1}',
+  "option.defaultValue.multivalued.notallowed.message":
+    'Default Value contains a string that was not in the allowed values list, and values are enforced: "{0}". Note: whitespace is significant.',
+  "Option.required.label": "Required",
+  "Option.hidden.description": "Should be hidden from job run page",
+  "Option.required.description":
+    "Require this option to have a non-blank value when running the Job",
+  "Option.hidden.label": "Should be hidden",
+  "form.option.regex.placeholder": "Enter a Regular Expression",
   "home.user": "{n} Users | {n} User | {n} Users",
   "home.table.projects": "Projects",
   "home.table.activity": "Activity",
   "home.table.actions": "Actions",
+  "option.click.to.edit.title": "Click to edit",
+  "form.option.regex.validation.error":
+    "Invalid value: It must match the pattern: {0}",
+  "form.field.required.message": "This field is required",
+  "form.field.too.long.message":
+    "This value cannot be longer than {max} characters",
+  "form.option.validation.errors.message":
+    "Correct validation errors before saving changes",
+  "option.list.header.name.title": "Name",
+  "option.list.header.values.title": "Values",
+  "option.list.header.restrictions.title": "Restrictions",
+  "util.undoredo.undo": "Undo",
+  "util.undoredo.redo": "Redo",
+  "util.undoredo.revertAll": "Revert All Changes",
+  "util.undoredo.revertAll.confirm": "Really revert all changes?",
+  "option.view.required.title": " (Required)",
+  "option.view.allowedValues.label": "Allowed Values",
+  "option.view.valuesUrl.title": "Values loaded from Remote URL: {0}",
+  "option.view.valuesUrl.placeholder": "URL",
+  "option.view.enforced.title": "Input must be one of the allowed values",
+  "option.view.enforced.placeholder": "Strict",
+  "option.view.regex.info.note": "Values must match the regular expression:",
+  "option.view.notenforced.title": "No restrictions on input value",
+  "option.view.notenforced.placeholder": "None",
+  "option.view.action.delete.title": "Delete this Option",
+  "option.view.action.edit.title": "Edit this Option",
+  "option.view.action.duplicate.title": "Duplicate this Option",
+  "option.view.action.moveUp.title": "Move Up",
+  "option.view.action.moveDown.title": "Move Down",
+  "option.view.action.drag.title": "Drag to reorder",
 };
 
 export default messages;

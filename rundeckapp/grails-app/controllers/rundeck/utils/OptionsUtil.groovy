@@ -38,7 +38,7 @@ class OptionsUtil {
      * ${job.PROPERTY} and ${option.PROPERTY}.  available properties are
      * limited
      */
-    protected static String expandUrl(Option opt, String url, ScheduledExecution scheduledExecution, UserDataProvider userDataProvider,selectedoptsmap=[:],boolean isHttp=true, String username=null) {
+    public static String expandUrl(Option opt, String url, ScheduledExecution scheduledExecution, UserDataProvider userDataProvider,selectedoptsmap=[:],boolean isHttp=true, String username=null) {
         def invalid = []
         def frameworkService = getFrameworkServiceInstance()
         def rundeckProps=[

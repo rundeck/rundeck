@@ -6,6 +6,7 @@
   "scripts": {
     "test": "jest --no-cache",
     "test:unit": "jest --silent",
+    "dev:test:watch": "npm install && jest --silent --watch",
     "dev:test:unit": "npm install && npm run test:unit",
     "ci:test:unit": "npm ci && npm run test:unit",
     "dev:app:build": "npm install && npm run build:app",
@@ -63,6 +64,7 @@
     "vue-scrollto": "^2.17.1",
     "vue-virtual-scroller": "^2.0.0-beta.8",
     "vue3-markdown": "^1.1.9",
+    "vuedraggable": "^4.1.0",
     "vuex": "^4.1.0",
     "webpack-node-externals": "^3.0.0"
   },

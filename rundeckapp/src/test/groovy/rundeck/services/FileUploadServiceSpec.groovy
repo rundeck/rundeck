@@ -637,7 +637,7 @@ class FileUploadServiceSpec extends Specification implements ServiceUnitTest<Fil
         }
 
         when:
-        def result = service.validateFileOptConfig(option)
+        def result = service.validateFileOptConfig(option, option.errors)
 
         then:
         option.errors.hasErrors() == true

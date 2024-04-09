@@ -1,13 +1,13 @@
 package org.rundeck.tests.functional.api.execution
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.rundeck.tests.functional.api.ResponseModels.CreateJobResponse
-import org.rundeck.tests.functional.api.ResponseModels.Execution
-import org.rundeck.tests.functional.api.ResponseModels.ProjectCreateResponse
+import org.rundeck.util.api.responses.jobs.CreateJobResponse
+import org.rundeck.util.api.responses.execution.Execution
+import org.rundeck.util.api.responses.project.ProjectCreateResponse
 import org.rundeck.util.annotations.APITest
-import org.rundeck.util.api.ExecutionStatus
-import org.rundeck.util.api.JobUtils
-import org.rundeck.util.api.WaitingTime
+import org.rundeck.util.common.execution.ExecutionStatus
+import org.rundeck.util.common.jobs.JobUtils
+import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.container.BaseContainer
 import org.rundeck.util.container.RdClient
 import org.testcontainers.shaded.org.apache.commons.io.FileUtils

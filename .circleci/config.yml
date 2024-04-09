@@ -87,7 +87,7 @@ executors:
   # Machine executor
   machine-builder:
     machine:
-      image: ubuntu-2204:2023.10.1
+      image: default
       docker_layer_caching: << parameters.docker_layer_caching >>
     parameters:
       resource_class:
@@ -114,7 +114,6 @@ commands:
     steps:
       - setup_remote_docker:
           docker_layer_caching: << parameters.docker_layer_caching >>
-          version: 20.10.14
 
       # Due to circleci cli limitations, we need this workaround in order to run
       # the docker command as root on local builds, without running everything as root.
@@ -295,8 +294,8 @@ jobs:
       - collect-gradle-tests
       - save-build-cache
 
-  # Run twistlock scan
-  twistlock-scan-image:
+  # WizCLI Image Scan
+  wizcli-scan:
     <<: *job-defaults
     executor:
       name: docker-builder
@@ -309,13 +308,13 @@ jobs:
       - setup_docker
       - checkout
       - run-build-step:
-          step-name: Install Twistlock
-          command: install_twistcli
+          step-name: Install WizCLI
+          command: install_wizcli
       - run-build-step:
           step-name: Scan Image
-          command: twistlock_scan || << parameters.continue >>
+          command: wizcli_scan || << parameters.continue >>
       - store_artifacts:
-          path: ~/workspace/twistlock_scan_result.json
+          path: ~/workspace/wizcli_scan_result.json
       - store_test_results:
           path: test-results
 
@@ -463,8 +462,7 @@ jobs:
         description: Command that will execute the docker tests
         type: string
     steps:
-      - setup_docker:
-          docker_layer_caching: true
+      - setup_docker
       - checkout
       - install-testdeck-dependencies
       - attach_workspace:
@@ -626,19 +624,19 @@ workflows:
           name: Test Packaging
           <<: *require-build
           <<: *slack-defaults
-      - twistlock-scan-image:
-          name: Twistlock Scan Preview
+      - wizcli-scan:
+          name: WizCLI Scan Preview
           <<: *require-build
           continue: true
           context:
-            - tl_scan_context
+            - WizCLI
           filters:
             branches: { ignore: main }
-      - twistlock-scan-image:
-          name: Twistlock Scan
+      - wizcli-scan:
+          name: WizCLI Scan
           continue: false
           context:
-            - tl_scan_context
+            - WizCLI
             - slack-secrets
           filters:
             branches: { only: main }
@@ -647,11 +645,6 @@ workflows:
       - test-docker:
           name: Docker Test
           command: bash test/run-docker-tests.sh
-          <<: *require-build
-          <<: *slack-defaults
-      - test-machine:
-          name: API Test
-          command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
           <<: *require-build
           <<: *slack-defaults
       - test-docker:

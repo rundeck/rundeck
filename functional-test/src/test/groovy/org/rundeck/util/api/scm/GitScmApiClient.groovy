@@ -2,7 +2,7 @@ package org.rundeck.util.api.scm
 
 import okhttp3.Response
 import org.rundeck.util.api.scm.httpbody.IntegrationStatusResponse
-import org.rundeck.util.api.RundeckResponse
+import org.rundeck.util.api.responses.common.RundeckResponse
 import org.rundeck.util.api.scm.httpbody.ScmActionInputFieldsResponse
 import org.rundeck.util.api.scm.httpbody.ScmActionPerformRequest
 import org.rundeck.util.api.scm.httpbody.ScmJobStatusResponse
@@ -11,6 +11,8 @@ import org.rundeck.util.api.scm.httpbody.ScmPluginsListResponse
 import org.rundeck.util.api.scm.httpbody.ScmProjectConfigResponse
 import org.rundeck.util.api.scm.httpbody.GitExportSetupRequest
 import org.rundeck.util.api.scm.httpbody.SetupIntegrationResponse
+import org.rundeck.util.common.scm.ScmActionId
+import org.rundeck.util.common.scm.ScmIntegration
 import org.rundeck.util.container.ClientProvider
 import org.rundeck.util.container.RdClient
 
@@ -24,9 +26,9 @@ class GitScmApiClient {
         this.client = clientProvider.client
     }
 
-    GitScmApiClient forIntegration(String integration){
-        this.integration = integration
-        this.pluginName = "git-${integration}"
+    GitScmApiClient forIntegration(ScmIntegration integration){
+        this.integration = integration.name
+        this.pluginName = "git-${integration.name}"
         return this
     }
 
@@ -47,8 +49,8 @@ class GitScmApiClient {
         return new RundeckResponse(resp, IntegrationStatusResponse)
     }
 
-    RundeckResponse<ScmActionInputFieldsResponse> callGetFieldsForAction(String actionId) {
-        Response resp = client.doGet("/project/${project}/scm/${integration}/action/${actionId}/input")
+    RundeckResponse<ScmActionInputFieldsResponse> callGetFieldsForAction(ScmActionId actionId) {
+        Response resp = client.doGet("/project/${project}/scm/${integration}/action/${actionId.name}/input")
 
         return new RundeckResponse(resp, ScmActionInputFieldsResponse)
     }

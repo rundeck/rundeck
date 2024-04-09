@@ -1,15 +1,19 @@
 import axios, { AxiosResponse } from "axios";
 import { _genUrl } from "../../../../utilities/genUrl";
 import { getAppLinks, getRundeckContext } from "../../../../../library";
+import { ConfigMeta } from "../../../home/types/projectTypes";
 
-export async function getExecutionMode(): Promise<any> {
+export async function getConfigMetaForExecutionMode(
+  project: string,
+  meta: string = "config",
+): Promise<ConfigMeta[]> {
   const ctx = getRundeckContext();
   const response = await axios.request({
     method: "GET",
     headers: {
       "x-rundeck-ajax": "true",
     },
-    url: `${ctx.rdBase}api/${ctx.apiVersion}/system/executions/status`,
+    url: `${ctx.rdBase}api/${ctx.apiVersion}/project/${project}/meta?meta=${meta}`,
     validateStatus(status) {
       return status <= 403;
     },

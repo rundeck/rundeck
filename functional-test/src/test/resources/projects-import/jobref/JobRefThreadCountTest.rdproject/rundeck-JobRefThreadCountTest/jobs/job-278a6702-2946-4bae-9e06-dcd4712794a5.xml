@@ -1,0 +1,30 @@
+<joblist>
+  <job>
+    <defaultTab>nodes</defaultTab>
+    <description></description>
+    <dispatch>
+      <excludePrecedence>true</excludePrecedence>
+      <keepgoing>false</keepgoing>
+      <rankOrder>ascending</rankOrder>
+      <successOnEmptyNodeFilter>false</successOnEmptyNodeFilter>
+      <threadcount>2</threadcount>
+    </dispatch>
+    <executionEnabled>true</executionEnabled>
+    <id>278a6702-2946-4bae-9e06-dcd4712794a5</id>
+    <loglevel>INFO</loglevel>
+    <name>ChildJob</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <nodefilters>
+      <filter>.*</filter>
+    </nodefilters>
+    <nodesSelectedByDefault>true</nodesSelectedByDefault>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>echo $RD_JOB_THREADCOUNT</exec>
+      </command>
+    </sequence>
+    <uuid>278a6702-2946-4bae-9e06-dcd4712794a5</uuid>
+  </job>
+</joblist>

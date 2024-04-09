@@ -6,8 +6,8 @@ import org.openqa.selenium.TakesScreenshot
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.chrome.ChromeOptions
-import org.rundeck.util.extensions.TestResultExtension
-import org.rundeck.tests.functional.selenium.pages.BasePage
+import org.rundeck.util.spock.extensions.TestResultExtension
+import org.rundeck.util.gui.pages.BasePage
 
 /**
  * Utility Base for selenium test specs
@@ -18,6 +18,7 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
     public static final String TEST_USER = System.getenv("RUNDECK_TEST_USER") ?: "admin"
     public static final String TEST_PASS = System.getenv("RUNDECK_TEST_PASS") ?: "admin123"
     public static final String SELENIUM_BASIC_PROJECT = "SeleniumBasic"
+    public static final String downloadFolder = System.getProperty("user.dir") + "/src/test/resources" + getSeparator() +"downloads";
 
     /**
      * Create a driver
@@ -27,7 +28,9 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
     @Delegate
     WebDriver getDriver() {
         if (null == _driver) {
+            def prefs = ["download.default_directory": downloadFolder]
             ChromeOptions options = new ChromeOptions()
+            options.setExperimentalOption("prefs", prefs)
             options.addArguments("start-maximized")
             options.addArguments("enable-automation")
             options.addArguments("--no-sandbox")
@@ -39,6 +42,7 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
             options.addArguments("--disable-popup-blocking")
             options.addArguments("--disable-default-apps")
             options.addArguments("--disable-blink-features=AutomationControlled")
+            options.addArguments("--disable-features=Chrome,DownloadPromptForDownload")
             _driver = new ChromeDriver(options)
         }
         return _driver
@@ -102,5 +106,15 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
         T page = page(clazz, args)
         page.go()
         return page
+    }
+
+    /**
+     * Retrieves the file separator based on the operating system.
+     * On Windows, it returns "\\"; on other systems, it returns "/".
+     *
+     * @return The file separator.
+     */
+    static String getSeparator() {
+        return System.getProperty("os.name").toLowerCase().contains("windows") ? "\\" : "/"
     }
 }

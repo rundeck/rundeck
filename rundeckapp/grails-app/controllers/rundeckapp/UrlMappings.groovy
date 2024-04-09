@@ -120,6 +120,7 @@ class UrlMappings {
         "/api/$api_version/project/$project"(controller: 'project'){
             action = [GET: 'apiProjectGet', DELETE:'apiProjectDelete']
         }
+        "/api/$api_version/project/$project/jobs/validateOption"(controller: 'editOpts', action: 'apiValidateOption')
         "/api/$api_version/project/$project/meta"(controller: 'project', action:'apiProjectMeta')
         "/api/$api_version/project/$project/config"(controller: 'project'){
             action = [GET: 'apiProjectConfigGet', PUT: 'apiProjectConfigPut']
@@ -131,6 +132,9 @@ class UrlMappings {
         "/api/$api_version/project/$project/readme.md"(controller: 'project'){
             filename='readme.md'
             action = [GET: 'apiProjectFileGet', PUT: 'apiProjectFilePut', DELETE: 'apiProjectFileDelete']
+        }
+        "/api/$api_version/project/$project/configurable"(controller: 'framework'){
+            action = [GET: 'getProjectConfigurable', POST: 'saveProjectConfigurable']
         }
         "/api/$api_version/project/$project/motd.md"(controller: 'project'){
             filename='motd.md'
@@ -258,6 +262,7 @@ class UrlMappings {
         "/project/$project/home"(controller: 'menu', action: 'projectHome')
         "/project/$project/nodes/"(controller: 'framework', action: 'nodes')
         "/project/$project/run/"(controller: 'framework', action: 'nodes')
+
         "/project/$project/scm/$integration?/$action?"(controller: 'scm')
         "/project/$project/command/run"(controller: 'framework',action: 'adhoc')
         "/project/$project/activity"(controller: 'reports', action: 'index')
