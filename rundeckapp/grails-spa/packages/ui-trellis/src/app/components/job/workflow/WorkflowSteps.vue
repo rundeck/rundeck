@@ -16,9 +16,17 @@
         :show-description="true"
         mode="show"
         v-if="!step.jobref"
-      />
-      <span v-else> Jobref: {{ step.jobref }} </span>
-      <span v-if="step.label">Label: {{ step.label }}</span>
+      >
+        <template #iconSuffix v-if="step.nodeStep">
+          <i class="fas fa-hdd"></i>
+        </template>
+      </plugin-config>
+      <span v-else>
+        <job-ref-step :step="step"></job-ref-step>
+      </span>
+      <div v-if="step.description" class="wfstep-description">
+        {{ step.description }}
+      </div>
       <btn @click="editStepByIndex(index)">
         <i class="fas fa-edit"></i>
         Edit
@@ -71,6 +79,7 @@ import EditPluginModal from "@/library/components/plugins/EditPluginModal.vue";
 import pluginConfig from "@/library/components/plugins/pluginConfig.vue";
 import { PluginConfig } from "@/library/interfaces/PluginConfig";
 import { ServiceType } from "@/library/stores/Plugins";
+import JobRefStep from "@/app/components/job/workflow/JobRefStep.vue";
 import { cloneDeep } from "lodash";
 import { defineComponent } from "vue";
 
@@ -82,6 +91,7 @@ export default defineComponent({
     EditPluginModal,
     pluginConfig,
     ChoosePluginModal,
+    JobRefStep,
   },
   props: {
     modelValue: {
