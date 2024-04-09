@@ -219,7 +219,7 @@ class GormUserDataProvider implements UserDataProvider {
 
     @Override
     boolean validateUserExists(String username) {
-        return isLoginNameCaseSensitiveEnabled()? User.countByLogin(username) > 0 : User.countByLoginIlike(username) > 0
+        return User.countByLogin(username) > 0
     }
 
     @Override

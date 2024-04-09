@@ -40,6 +40,9 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
     @Unroll
     def "Find or create User case insensitive "() {
         given:
+        provider.configurationService = Mock(ConfigurationService) {
+           1 * getBoolean(provider.NAME_CASE_SENSITIVE_ENABLED,false) >> false
+        }
         def loginName = "loginName1"
         User savedUser = new User(login: loginName)
         savedUser.save()
@@ -56,7 +59,7 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         User savedUser = new User(login: loginName)
         savedUser.save()
         provider.configurationService = Mock(ConfigurationService) {
-            getBoolean("login.nameCaseSensitiveEnabled",false) >> true
+          1 * getBoolean(provider.NAME_CASE_SENSITIVE_ENABLED,false) >> true
         }
         when:
         provider.findOrCreateUser(loginName.toUpperCase())
@@ -177,7 +180,7 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         User savedUser = new User(login: "user1",lastName: "otherLastName",firstName:"otherFirstName",email:"otherEmail@company.com" )
         savedUser.save()
         provider.configurationService = Mock(ConfigurationService) {
-            getBoolean("login.nameCaseSensitiveEnabled",false) >> true
+            getBoolean(provider.NAME_CASE_SENSITIVE_ENABLED,false) >> true
         }
         when:
         provider.updateUserProfile(login, lastName, firstName, email)
