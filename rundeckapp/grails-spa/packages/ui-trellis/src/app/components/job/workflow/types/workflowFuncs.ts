@@ -15,7 +15,7 @@ import {
  */
 export function commandsToEditData(stepsData: StepsData): StepsEditData {
   return {
-    commands: stepsData.commands.map((cmd) => commandToEditConfig(cmd)),
+    commands: (stepsData.commands || []).map((cmd) => commandToEditConfig(cmd)),
   };
 }
 
