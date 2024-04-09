@@ -9,7 +9,7 @@
             : ServiceType.WorkflowStep
         "
         :provider="step.type"
-        :config="step.configuration"
+        :config="step.config"
         :read-only="true"
         :show-title="true"
         :show-icon="true"
@@ -61,8 +61,7 @@ import {
   editCommandsToStepsData,
 } from "@/app/components/job/workflow/types/workflowFuncs";
 import {
-  CommandData,
-  CommandEditData,
+  EditStepData,
   StepsData,
   StepsEditData,
 } from "@/app/components/job/workflow/types/workflowTypes";
@@ -99,7 +98,7 @@ export default defineComponent({
       workflowNodeStepPlugins: [],
       addStepModal: false,
       editStepModal: false,
-      editModel: {} as PluginConfig,
+      editModel: {} as EditStepData,
       editModelValidation: null,
       editService: null,
       editIndex: -1,
@@ -116,7 +115,7 @@ export default defineComponent({
       this.addStepModal = false;
       this.editModel = {
         type: provider,
-        configuration: {},
+        config: {},
         nodeStep: service === ServiceType.WorkflowNodeStep,
       };
       this.editIndex = -1;
@@ -141,10 +140,12 @@ export default defineComponent({
       this.editStepModal = true;
     },
     saveEditStep() {
+      let saveData = cloneDeep(this.editModel);
+      saveData.nodeStep = this.editService === ServiceType.WorkflowNodeStep;
       if (this.editIndex >= 0) {
-        this.model.commands[this.editIndex] = cloneDeep(this.editModel);
+        this.model.commands[this.editIndex] = saveData;
       } else {
-        this.model.commands.push(cloneDeep(this.editModel));
+        this.model.commands.push(saveData);
       }
       this.editStepModal = false;
       this.editModel = {};
