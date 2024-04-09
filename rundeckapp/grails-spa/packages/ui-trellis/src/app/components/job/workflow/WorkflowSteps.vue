@@ -42,6 +42,13 @@
             <i class="fas fa-edit"></i>
             Edit
           </btn>
+          <btn
+            size="xs"
+            title="Duplicate this step"
+            @click="duplicateStep(index)"
+          >
+            <i class="glyphicon glyphicon-duplicate"></i>
+          </btn>
           <dropdown menu-right>
             <btn size="xs" data-role="trigger"
               ><i class="glyphicon glyphicon-cog"></i>
@@ -52,11 +59,13 @@
               <li><a role="button">Add Log Filter</a></li>
             </template>
           </dropdown>
-          <btn size="xs" title="Delete this step">
+          <btn
+            size="xs"
+            type="danger"
+            title="Delete this step"
+            @click="removeStep(index)"
+          >
             <i class="glyphicon glyphicon-remove"></i>
-          </btn>
-          <btn size="xs" title="Duplicate this step">
-            <i class="glyphicon glyphicon-duplicate"></i>
           </btn>
         </div>
 
@@ -172,7 +181,17 @@ export default defineComponent({
       this.editModelValidation = null;
       this.editIndex = -1;
     },
-
+    removeStep(index: number) {
+      this.model.commands.splice(index, 1);
+      this.wasChanged();
+    },
+    duplicateStep(index: number) {
+      debugger;
+      let command = cloneDeep(this.model.commands[index]);
+      command.id = mkid();
+      this.model.commands.splice(index + 1, 0, command);
+      this.wasChanged();
+    },
     editStepByIndex(index: number) {
       this.editIndex = index;
       let command = this.model.commands[index];
