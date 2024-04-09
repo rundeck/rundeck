@@ -1,7 +1,11 @@
 <template>
   <div>Workflow Steps</div>
   <div>
-    <div v-for="(step, index) in model.commands" :key="index">
+    <div
+      v-for="(step, index) in model.commands"
+      :key="index"
+      class="step-list-item"
+    >
       <plugin-config
         :service-name="
           step.nodeStep
@@ -184,3 +188,11 @@ export default defineComponent({
   },
 });
 </script>
+<style lang="scss">
+.step-list-item {
+  border: 1px solid var(--list-item-border-color);
+  padding: 10px !important;
+  margin-bottom: 10px;
+  border-radius: 5px;
+}
+</style>
