@@ -30,7 +30,7 @@ export function editCommandsToStepsData(editData: StepsEditData): StepsData {
 }
 
 export function commandToEditConfig(cmd: StepData): CommandEditData {
-  let editData = { label: cmd.label } as CommandEditData;
+  let editData = { description: cmd.description } as CommandEditData;
   if (cmd.type) {
     editData.type = cmd.type;
     editData.config = cmd.configuration;
@@ -73,7 +73,7 @@ export function commandToEditConfig(cmd: StepData): CommandEditData {
 
 export function editToCommandConfig(plugin: EditStepData): StepData {
   let data = {
-    label: plugin.label,
+    description: plugin.description,
     nodeStep: plugin.nodeStep,
   } as StepData;
   if (plugin.type === "script-inline") {

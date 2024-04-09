@@ -87,7 +87,7 @@ export interface PluginStepData {
   nodeStep?: boolean;
 }
 export interface CommandData {
-  label?: string;
+  description?: string;
 }
 
 export interface BasicData {
@@ -114,7 +114,7 @@ export interface StepsData {
 }
 export interface CommandEditData extends PluginConfig {
   nodeStep: boolean;
-  label?: string;
+  description?: string;
   jobref?: JobRefDefinition;
 }
 export type EditStepData = CommandEditData & JobRefData;
