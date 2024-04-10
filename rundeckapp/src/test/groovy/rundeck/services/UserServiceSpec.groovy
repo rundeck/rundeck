@@ -127,7 +127,6 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         provider.configurationService = Mock(ConfigurationService) {
            0 *  getBoolean("userService.login.track.sessionId.enabled", false) >> false
            1 *  getBoolean("login.nameCaseSensitiveEnabled", false) >> false
-
         }
         provider.frameworkService = Mock(FrameworkService) {
             getServerHostname() >> { "server" }
