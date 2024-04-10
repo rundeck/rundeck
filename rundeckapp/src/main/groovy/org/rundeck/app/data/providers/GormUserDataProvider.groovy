@@ -64,7 +64,6 @@ class GormUserDataProvider implements UserDataProvider {
 
     @Override
     @Transactional
-    @Synchronized
     User registerLogin(String login, String sessionId) throws DataAccessException {
         User user = findOrCreateUser(login)
         user.lastLogin = new Date()
