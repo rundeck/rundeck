@@ -100,7 +100,8 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
     def "Should throw error on registerLogin with bad login"() {
         setup:
         provider.configurationService = Mock(ConfigurationService) {
-             getBoolean(UserService.SESSION_ID_ENABLED, false) >> false
+            0 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> false
+            1 *  getBoolean("login.nameCaseSensitiveEnabled", false) >> false
         }
         provider.frameworkService = Mock(FrameworkService) {
             getServerHostname() >> { "server" }
