@@ -63,9 +63,6 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         caseSensitiveParam << [false, true]
     }
 
-
-
-
     def "Throw an error on creation"() {
         when:
         provider.findOrCreateUser("~name")
