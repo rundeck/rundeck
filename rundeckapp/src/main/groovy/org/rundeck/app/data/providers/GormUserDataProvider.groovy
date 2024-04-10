@@ -209,10 +209,10 @@ class GormUserDataProvider implements UserDataProvider {
             } as List<RdUser>
         }
         def response = new UserFilteredResponse()
+        response.setTotalRecords(totalRecords)
+        response.setUsers(users)
         response.setShowLoginStatus(showLoginStatus)
 
-        response.setUsers(users)
-        response.setTotalRecords(totalRecords)
         return response
     }
 
@@ -311,6 +311,10 @@ class GormUserDataProvider implements UserDataProvider {
         configurationService.getString(SESSION_ID_METHOD, 'hash')
     }
 
+    /**
+     Checks if login name case sensitivity is enabled.
+     @return {@code true} if login name case sensitivity is enabled, {@code false} otherwise.
+     */
     def isLoginNameCaseSensitiveEnabled(){
         return configurationService?.getBoolean(NAME_CASE_SENSITIVE_ENABLED,false)
     }

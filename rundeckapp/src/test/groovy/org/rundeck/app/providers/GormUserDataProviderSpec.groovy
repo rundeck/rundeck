@@ -38,34 +38,32 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
     }
 
     @Unroll
-    def "Find or create User case insensitive "() {
+    def "Find or create User case sensitive #caseSensitiveParam"() {
         given:
-        provider.configurationService = Mock(ConfigurationService) {
-           1 * getBoolean(provider.NAME_CASE_SENSITIVE_ENABLED,false) >> false
-        }
         def loginName = "loginName1"
         User savedUser = new User(login: loginName)
         savedUser.save()
+
+        and:
+        provider.configurationService = Mock(ConfigurationService) {
+            1 * getBoolean(provider.NAME_CASE_SENSITIVE_ENABLED, false) >> caseSensitiveParam
+        }
+
         when:
-        provider.findOrCreateUser(loginName.toUpperCase())
+        provider.findOrCreateUser(caseSensitiveParam ? loginName : loginName.toUpperCase())
+
         then:
-        User.findAll().size() == 1
+        if (caseSensitiveParam) {
+            User.findAll().size() == 2
+        } else {
+            User.findAll().size() == 1
+        }
+
+        where:
+        caseSensitiveParam << [false, true]
     }
 
-    @Unroll
-    def "Find or create User case sensitive  "() {
-        given:
-        def loginName = "loginName1"
-        User savedUser = new User(login: loginName)
-        savedUser.save()
-        provider.configurationService = Mock(ConfigurationService) {
-          1 * getBoolean(provider.NAME_CASE_SENSITIVE_ENABLED,false) >> true
-        }
-        when:
-        provider.findOrCreateUser(loginName.toUpperCase())
-        then:
-        User.findAll().size() == 2
-    }
+
 
 
     def "Throw an error on creation"() {
@@ -163,24 +161,28 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         given:
         User savedUser = new User(login: "user1")
         savedUser.save()
+        def login = "USER1"
+        def lastName = "last1"
+        def firstName = "first1"
+        def email = "email1@company.com"
 
         when:
         provider.updateUserProfile(login, lastName, firstName, email)
         then:
         provider.findAll().size() == 1
-
-        where:
-        login   | lastName  | firstName  | email
-        "USER1" | "last1"   | "first1"   | "email1@company.com"
     }
 
     @Unroll
     def "Should update profile caseSensitive create a new user"() {
         given:
-        User savedUser = new User(login: "user1",lastName: "otherLastName",firstName:"otherFirstName",email:"otherEmail@company.com" )
+        User savedUser = new User(login: "user1", lastName: "otherLastName", firstName: "otherFirstName", email: "otherEmail@company.com")
         savedUser.save()
+        def login = "USER1"
+        def lastName = "last1"
+        def firstName = "first1"
+        def email = "email1@company.com"
         provider.configurationService = Mock(ConfigurationService) {
-            getBoolean(provider.NAME_CASE_SENSITIVE_ENABLED,false) >> true
+            getBoolean(provider.NAME_CASE_SENSITIVE_ENABLED, false) >> true
         }
         when:
         provider.updateUserProfile(login, lastName, firstName, email)
@@ -194,10 +196,6 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         userCreatedAfterUpdate.lastName == lastName
         userCreatedAfterUpdate.email == email
         provider.findAll().size() == 2
-
-        where:
-        login   | lastName  | firstName  | email
-        "USER1" | "last1"   | "first1"   | "email1@company.com"
     }
 
     def "Should throw error on updateUserProfile with bad login"() {
