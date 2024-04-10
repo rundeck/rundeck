@@ -42,7 +42,6 @@ class UserService {
     public static final String SHOW_LOGIN_STATUS = 'gui.userSummaryShowLoginStatus'
     public static final String SHOW_LOGGED_USERS_DEFAULT = 'gui.userSummaryShowLoggedUsersDefault'
 
-
     RdUser findOrCreateUser(String login) {
         return userDataProvider.findOrCreateUser(login)
     }
@@ -245,6 +244,4 @@ class UserService {
         String firstname
         String lastname
     }
-
-
 }
