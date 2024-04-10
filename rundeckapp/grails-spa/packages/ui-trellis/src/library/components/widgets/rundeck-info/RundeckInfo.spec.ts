@@ -60,7 +60,6 @@ describe("RundeckInfo", () => {
       logo: false,
       logocss: "some-css",
       number: "5.3.0",
-      tag: "SNAPSHOT",
       title: "Rundeck",
     };
 
