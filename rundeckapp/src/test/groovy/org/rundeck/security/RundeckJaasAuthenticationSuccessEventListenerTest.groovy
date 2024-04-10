@@ -49,7 +49,7 @@ class RundeckJaasAuthenticationSuccessEventListenerTest extends Specification im
         then:
         0 * listener.eventBus.notify(*_)
         listener.userService = Mock(UserService) {
-            0 * updateUserProfile({it == username},{it == last},{it == first},{it == email}) >> {}
+            0 * updateUserProfile({it == _},{it == _},{it == _},{it == _}) >> {}
         }
 
     }
@@ -108,7 +108,7 @@ class RundeckJaasAuthenticationSuccessEventListenerTest extends Specification im
 
         then:
         listener.userService = Mock(UserService) {
-            0 * updateUserProfile({it == username},{it == last},{it == first},{it == email}) >> {}
+            0 * updateUserProfile({it == _},{it == _},{it == _},{it == _}) >> {}
         }
         0 * listener.eventBus.notify(*_)
         noExceptionThrown()
