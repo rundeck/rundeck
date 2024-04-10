@@ -212,7 +212,6 @@ class GormUserDataProvider implements UserDataProvider {
         response.setTotalRecords(totalRecords)
         response.setUsers(users)
         response.setShowLoginStatus(showLoginStatus)
-
         return response
     }
 
