@@ -85,7 +85,6 @@ class RundeckJaasAuthenticationSuccessEventListenerTest extends Specification im
             }
         )
 
-
         where:
         username   | first   | last   | email
         "username" | "First" | "Last" | "user@example.com"
