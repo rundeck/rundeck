@@ -6,31 +6,29 @@
       :key="step.id"
       class="step-list-item"
     >
-      <div
-        class="step-item-display"
-        @click="editStepByIndex(index)"
-        title="Click to edit"
-      >
-        <plugin-config
-          :service-name="
-            step.nodeStep
-              ? ServiceType.WorkflowNodeStep
-              : ServiceType.WorkflowStep
-          "
-          :provider="step.type"
-          :config="step.config"
-          :read-only="true"
-          :show-title="true"
-          :show-icon="true"
-          :show-description="true"
-          mode="show"
-          v-if="!step.jobref"
-        >
-          <template #iconSuffix v-if="step.nodeStep">
-            <i class="fas fa-hdd"></i>
-          </template>
-        </plugin-config>
-        <job-ref-step :step="step" v-else></job-ref-step>
+      <div class="step-item-display" title="Click to edit">
+        <div class="step-item-config">
+          <plugin-config
+            :service-name="
+              step.nodeStep
+                ? ServiceType.WorkflowNodeStep
+                : ServiceType.WorkflowStep
+            "
+            :provider="step.type"
+            :config="step.config"
+            :read-only="true"
+            :show-title="true"
+            :show-icon="true"
+            :show-description="true"
+            mode="show"
+            v-if="!step.jobref"
+          >
+            <template #iconSuffix v-if="step.nodeStep">
+              <i class="fas fa-hdd"></i>
+            </template>
+          </plugin-config>
+          <job-ref-step :step="step" v-else></job-ref-step>
+        </div>
 
         <div v-if="step.description" class="wfstep-description">
           {{ step.description }}
@@ -270,13 +268,16 @@ export default defineComponent({
   .step-item-display {
     flex-grow: 1;
     padding: 5px;
-    border-width: 1px;
-    border-style: dotted;
-    border-color: transparent;
-    &:hover {
-      cursor: pointer;
-      background-color: var(--light-gray);
-      border-color: #68b3c8;
+    .step-item-config {
+      border-width: 1px;
+      border-style: dotted;
+      border-color: transparent;
+
+      &:hover {
+        cursor: pointer;
+        background-color: var(--light-gray);
+        border-color: #68b3c8;
+      }
     }
   }
 }
