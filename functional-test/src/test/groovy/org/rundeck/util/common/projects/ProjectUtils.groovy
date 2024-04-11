@@ -27,6 +27,7 @@ class ProjectUtils {
             (1..jobsCountsPerProject).each {it2 ->
                 def pathFile = JobUtils.updateJobFileToImport("api-test-executions-running-scheduled.xml", projectName)
                 def imported = JobUtils.jobImportFile(projectName, pathFile, client)
+                Thread.sleep(2000)
             }
         }
     }
