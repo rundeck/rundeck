@@ -89,6 +89,7 @@ export interface PluginStepData {
 }
 export interface CommandData {
   description?: string;
+  plugins?: { [key: string]: any };
 }
 
 export interface BasicData {
@@ -119,6 +120,7 @@ export interface CommandEditData extends PluginConfig {
   jobref?: JobRefDefinition;
   //simply to provide a unique id for each step on client side
   id: string;
+  filters: PluginConfig[];
 }
 export type EditStepData = CommandEditData & JobRefData;
 export interface StepsEditData {
