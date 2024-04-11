@@ -79,10 +79,10 @@ export default defineComponent({
   },
   computed: {
     addFilterTitle() {
-      return `Add Log Filter Plugin for Step: ${this.subtitle}`;
+      return `Add Log Filter Plugin: ${this.subtitle}`;
     },
     editFilterTitle() {
-      return `Edit Log Filter Plugin for Step: ${this.subtitle}`;
+      return `Edit Log Filter Plugin: ${this.subtitle}`;
     },
   },
   methods: {

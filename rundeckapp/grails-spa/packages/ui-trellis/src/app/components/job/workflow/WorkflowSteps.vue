@@ -37,7 +37,7 @@
           <log-filters
             v-model="step.filters"
             title="Log Filters"
-            subtitle="This step"
+            :subtitle="stepTitle(step, index)"
             :add-event="'step-action:add-logfilter:' + index"
           />
         </template>
@@ -244,6 +244,12 @@ export default defineComponent({
         context.rootStore.plugins.getServicePlugins(
           ServiceType.WorkflowNodeStep,
         );
+    },
+    stepTitle(step: StepsEditData, index: number) {
+      if (step.description) {
+        return `Step ${index + 1} "` + step.description + '"';
+      }
+      return `Step ${index + 1}`;
     },
   },
   watch: {
