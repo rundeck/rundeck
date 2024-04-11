@@ -1,11 +1,13 @@
 <template>
   <modal v-model="showModal" :title="title || $t('plugin.edit.title')">
     <div v-if="provider">
-      <plugin-info
-        :detail="provider"
-        :show-description="true"
-        :show-extended="false"
-      ></plugin-info>
+      <p>
+        <plugin-info
+          :detail="provider"
+          :show-description="true"
+          :show-extended="false"
+        ></plugin-info>
+      </p>
       <plugin-config
         v-model="editModel"
         :mode="'edit'"
@@ -18,6 +20,7 @@
         default-scope="Instance"
         group-css=""
       ></plugin-config>
+      <slot name="extra"></slot>
     </div>
     <div v-else-if="loading">
       <p>
