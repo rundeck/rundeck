@@ -33,6 +33,7 @@ export function commandToEditConfig(cmd: StepData): CommandEditData {
   let editData = {
     description: cmd.description,
     id: mkid(),
+    filters: cmd.plugins?.LogFilter || [],
   } as CommandEditData;
   if (cmd.type) {
     editData.type = cmd.type;
@@ -81,6 +82,11 @@ export function editToCommandConfig(plugin: EditStepData): StepData {
     description: plugin.description,
     nodeStep: plugin.nodeStep,
   } as StepData;
+  if (plugin.filters && plugin.filters.length > 0) {
+    data.plugins = {
+      LogFilter: plugin.filters,
+    };
+  }
   if (plugin.type === "script-inline") {
     let scriptInline = plugin.config as ScriptInlinePluginConfig;
     data.script = scriptInline.adhocLocalString;
