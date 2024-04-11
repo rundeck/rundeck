@@ -234,9 +234,6 @@ export default defineComponent({
       this.editIndex = -1;
       this.wasChanged();
     },
-    wasChanged() {
-      this.$emit("update:modelValue", editCommandsToStepsData(this.model));
-    },
     async getStepPlugins() {
       await context.rootStore.plugins.load(ServiceType.WorkflowNodeStep);
       await context.rootStore.plugins.load(ServiceType.WorkflowStep);
@@ -247,6 +244,14 @@ export default defineComponent({
         context.rootStore.plugins.getServicePlugins(
           ServiceType.WorkflowNodeStep,
         );
+    },
+  },
+  watch: {
+    model: {
+      handler() {
+        this.$emit("update:modelValue", editCommandsToStepsData(this.model));
+      },
+      deep: true,
     },
   },
   async mounted() {
