@@ -107,7 +107,26 @@
       title="Edit Step"
       @cancel="cancelEditStep"
       @save="saveEditStep"
-    ></edit-plugin-modal>
+    >
+      <template #extra>
+        <hr />
+        <div class="form-horizontal">
+          <div class="form-group">
+            <label class="col-sm-2 control-label input-sm" for="stepDescription"
+              >Step Label</label
+            >
+            <div class="col-sm-10">
+              <input
+                type="text"
+                class="form-control"
+                id="stepDescription"
+                v-model="editExtra.description"
+              />
+            </div>
+          </div>
+        </div>
+      </template>
+    </edit-plugin-modal>
 
     <btn @click="addStepModal = true" size="sm">
       <i class="fas fa-plus"></i>
@@ -166,6 +185,7 @@ export default defineComponent({
       addStepModal: false,
       editStepModal: false,
       editModel: {} as EditStepData,
+      editExtra: {} as EditStepData,
       editModelValidation: null,
       editService: null,
       editIndex: -1,
@@ -185,6 +205,7 @@ export default defineComponent({
         config: {},
         nodeStep: service === ServiceType.WorkflowNodeStep,
       };
+      this.editExtra = {};
       this.editIndex = -1;
       this.editService = service;
       this.editStepModal = true;
@@ -192,6 +213,7 @@ export default defineComponent({
     cancelEditStep() {
       this.editStepModal = false;
       this.editModel = {};
+      this.editExtra = {};
       this.editModelValidation = null;
       this.editIndex = -1;
     },
@@ -211,6 +233,7 @@ export default defineComponent({
       this.editIndex = index;
       let command = this.model.commands[index];
       this.editModel = cloneDeep(command);
+      this.editExtra = cloneDeep(command);
       //todo: jobref
       this.editService = command.nodeStep
         ? ServiceType.WorkflowNodeStep
@@ -218,7 +241,9 @@ export default defineComponent({
       this.editStepModal = true;
     },
     saveEditStep() {
-      let saveData = cloneDeep(this.editModel);
+      let saveData = cloneDeep(this.editExtra);
+      saveData.type = this.editModel.type;
+      saveData.config = this.editModel.config;
       saveData.id = mkid();
       saveData.nodeStep = this.editService === ServiceType.WorkflowNodeStep;
       if (this.editIndex >= 0) {
@@ -228,6 +253,7 @@ export default defineComponent({
       }
       this.editStepModal = false;
       this.editModel = {};
+      this.editExtra = {};
       this.editModelValidation = null;
       this.editIndex = -1;
     },
