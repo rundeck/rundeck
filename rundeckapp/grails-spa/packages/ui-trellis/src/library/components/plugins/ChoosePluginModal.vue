@@ -13,11 +13,10 @@
         :title="tabTitle(service.service, i)"
       >
         <div class="list-group">
-          <btn
-            type="plain"
+          <button
             v-for="prov in service.providers"
             class="list-group-item"
-            @click="chooseProviderAdd(service.service, prov.name)"
+            @click.prevent="chooseProviderAdd(service.service, prov.name)"
           >
             <plugin-info
               :detail="prov"
@@ -25,16 +24,15 @@
               :show-extended="false"
               ><template #descriptionprefix> - </template>
             </plugin-info>
-          </btn>
+          </button>
         </div>
       </tab>
     </tabs>
     <div class="list-group" v-else-if="loadedServices.length === 1">
-      <btn
-        type="plain"
+      <button
         v-for="prov in loadedServices[0].providers"
         class="list-group-item"
-        @click="chooseProviderAdd(loadedServices[0].service, prov.name)"
+        @click.prevent="chooseProviderAdd(loadedServices[0].service, prov.name)"
       >
         <plugin-info
           :detail="prov"
@@ -42,7 +40,7 @@
           :show-extended="false"
           ><template #descriptionprefix> - </template>
         </plugin-info>
-      </btn>
+      </button>
     </div>
     <template #footer>
       <btn @click="$emit('cancel')">{{ $t("Cancel") }}</btn>
