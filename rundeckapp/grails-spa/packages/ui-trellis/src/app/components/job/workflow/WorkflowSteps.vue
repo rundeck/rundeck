@@ -197,7 +197,6 @@ export default defineComponent({
     },
     removeStep(index: number) {
       this.model.commands.splice(index, 1);
-      this.wasChanged();
     },
     async addLogFilterForIndex(index: number) {
       eventBus.emit("step-action:add-logfilter:" + index);
@@ -207,7 +206,6 @@ export default defineComponent({
       let command = cloneDeep(this.model.commands[index]);
       command.id = mkid();
       this.model.commands.splice(index + 1, 0, command);
-      this.wasChanged();
     },
     editStepByIndex(index: number) {
       this.editIndex = index;
@@ -232,7 +230,6 @@ export default defineComponent({
       this.editModel = {};
       this.editModelValidation = null;
       this.editIndex = -1;
-      this.wasChanged();
     },
     async getStepPlugins() {
       await context.rootStore.plugins.load(ServiceType.WorkflowNodeStep);
