@@ -702,7 +702,7 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
 
     def "lookup user profile, with User found"() {
         given:
-        new User(login: 'bob', firstName: 'a', lastName: 'b', email: 'test@test.com').save()
+        new User(login: 'bob', firstName: 'a', lastName: 'b', email: 'test@test.com').save(flush: true)
 
         when:
         def info = service.lookupUserInfo('bob')
