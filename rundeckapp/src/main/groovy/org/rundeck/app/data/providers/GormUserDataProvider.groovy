@@ -51,7 +51,7 @@ class GormUserDataProvider implements UserDataProvider {
     @Transactional
     @Synchronized
     User findOrCreateUser(String login) throws DataAccessException {
-        User user = isLoginNameCaseSensitiveEnabled() ? User.findByLogin(login) : User.findByLoginIlike(login)
+        User user = findUserByLoginCaseSensitivity(login)
         if (!user) {
             User newUser = new User(login: login)
             if (!newUser.save(flush: true)) {
@@ -234,9 +234,7 @@ class GormUserDataProvider implements UserDataProvider {
 
     @Override
     RdUser findByLogin(String login) {
-        User.withNewSession {
-            return isLoginNameCaseSensitiveEnabled() ? User.findByLogin(login) : User.findByLoginIlike(login)
-        }
+        return findUserByLoginCaseSensitivity(login)
     }
 
     @Override
@@ -247,7 +245,7 @@ class GormUserDataProvider implements UserDataProvider {
     @Override
     @Transactional
     SaveUserResponse updateFilterPref(String login, String filterPref) {
-        User user = isLoginNameCaseSensitiveEnabled() ? User.findByLogin(login) : User.findByLoginIlike(login)
+        User user = findUserByLoginCaseSensitivity(login)
         user.filterPref = filterPref
         Boolean isSaved = user.save()
         return new SaveUserResponse(user: user, isSaved: isSaved, errors: user.errors)
@@ -257,7 +255,7 @@ class GormUserDataProvider implements UserDataProvider {
     String getEmailWithNewSession(String login) {
         if (!login) { return "" }
         User.withNewSession {
-            def userLogin = isLoginNameCaseSensitiveEnabled() ? User.findByLogin(login) : User.findByLoginIlike(login)
+            def userLogin = findUserByLoginCaseSensitivity(login)
             if (!userLogin || !userLogin.email) { return "" }
             return userLogin.email
         }
@@ -320,4 +318,12 @@ class GormUserDataProvider implements UserDataProvider {
         return configurationService?.getBoolean(NAME_CASE_SENSITIVE_ENABLED,false)
     }
 
+    /**
+     * Finds a user by their login name, considering the case sensitivity if enabled.
+     * @param login The login name of the user to search for.
+     * @return The User object corresponding to the provided login name.
+     */
+    User findUserByLoginCaseSensitivity(String login) {
+        return isLoginNameCaseSensitiveEnabled() ? User.findByLogin(login) : User.findByLoginIlike(login)
+    }
 }

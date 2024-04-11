@@ -50,17 +50,16 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         }
 
         when:
-        provider.findOrCreateUser(caseSensitiveParam ? loginName : loginName.toUpperCase())
+        def rdUser =provider.findOrCreateUser(loginName.toUpperCase())
 
         then:
-        if (caseSensitiveParam) {
-            User.findAll().size() == 2
-        } else {
-            User.findAll().size() == 1
-        }
+        User.findAll().size() == userCountSpec
+        rdUser.login == userDataSpec
 
         where:
         caseSensitiveParam << [false, true]
+        userCountSpec << [1,2]
+        userDataSpec << ["loginName1","LOGINNAME1"]
     }
 
     def "Throw an error on creation"() {
