@@ -9,8 +9,7 @@
       <plugin-config
         v-model="editModel"
         :mode="'edit'"
-        :service-name="serviceName"
-        :provider="editModel.type"
+        :plugin-config="provider"
         :show-title="false"
         :show-description="false"
         :context-autocomplete="true"
@@ -20,7 +19,7 @@
         group-css=""
       ></plugin-config>
     </div>
-    <div v-else>
+    <div v-else-if="loading">
       <p>
         <i class="fas fa-spinner fa-spin"></i>
         {{ $t("loading.text") }}
@@ -71,23 +70,54 @@ export default defineComponent({
   },
   data() {
     return {
-      showModal: this.modalActive,
+      showModalVal: this.modalActive,
       editModel: {} as PluginConfig,
       provider: null,
+      loading: false,
     };
+  },
+  computed: {
+    showModal: {
+      get() {
+        return this.showModalVal && (this.loading || !!this.provider);
+      },
+      set(val: boolean) {
+        this.showModalVal = val;
+        this.$emit("update:modalActive", val);
+      },
+    },
   },
   methods: {
     async saveChanges() {
       this.$emit("update:modelValue", this.editModel);
       this.$emit("save");
     },
+    async loadProvider() {
+      if (this.editModel.type) {
+        this.loading = true;
+        this.provider = await getServiceProviderDescription(
+          this.serviceName,
+          this.editModel.type,
+        );
+        this.loading = false;
+      } else {
+        this.loading = false;
+        this.provider = null;
+      }
+    },
+  },
+  watch: {
+    modalActive(val) {
+      this.showModalVal = val;
+    },
+    async modelValue(val) {
+      this.editModel = cloneDeep(val);
+      await this.loadProvider();
+    },
   },
   async mounted() {
     this.editModel = cloneDeep(this.modelValue);
-    this.provider = await getServiceProviderDescription(
-      this.serviceName,
-      this.editModel.type,
-    );
+    await this.loadProvider();
   },
 });
 </script>
