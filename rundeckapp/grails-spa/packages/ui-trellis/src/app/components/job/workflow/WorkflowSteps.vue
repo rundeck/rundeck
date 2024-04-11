@@ -35,6 +35,14 @@
         <div v-if="step.description" class="wfstep-description">
           {{ step.description }}
         </div>
+        <template v-if="!step.jobref">
+          <log-filters
+            v-model="step.filters"
+            title="Log Filters"
+            subtitle="This step"
+            :add-event="'step-action:add-logfilter:' + index"
+          />
+        </template>
       </div>
       <div class="step-item-controls">
         <div class="btn-group" role="group" aria-label="item controls">
@@ -56,7 +64,11 @@
             ></btn>
             <template #dropdown>
               <li><a role="button">Add Error Handler</a></li>
-              <li><a role="button">Add Log Filter</a></li>
+              <li v-if="!step.jobref">
+                <a role="button" @click="addLogFilterForIndex(index)"
+                  >Add Log Filter</a
+                >
+              </li>
             </template>
           </dropdown>
           <btn
@@ -124,9 +136,11 @@ import { PluginConfig } from "@/library/interfaces/PluginConfig";
 import { ServiceType } from "@/library/stores/Plugins";
 import JobRefStep from "@/app/components/job/workflow/JobRefStep.vue";
 import { cloneDeep } from "lodash";
-import { defineComponent } from "vue";
+import Vue, { defineComponent, nextTick } from "vue";
+import LogFilters from "./LogFilters.vue";
 
 const context = getRundeckContext();
+const eventBus = context.eventBus;
 export default defineComponent({
   name: "WorkflowSteps",
   emits: ["update:modelValue"],
@@ -135,6 +149,7 @@ export default defineComponent({
     pluginConfig,
     ChoosePluginModal,
     JobRefStep,
+    LogFilters,
   },
   props: {
     modelValue: {
@@ -146,6 +161,7 @@ export default defineComponent({
   data() {
     return {
       ServiceType,
+      eventBus,
       model: {} as StepsEditData,
       workflowStepPlugins: [],
       workflowNodeStepPlugins: [],
@@ -184,6 +200,9 @@ export default defineComponent({
     removeStep(index: number) {
       this.model.commands.splice(index, 1);
       this.wasChanged();
+    },
+    async addLogFilterForIndex(index: number) {
+      eventBus.emit("step-action:add-logfilter:" + index);
     },
     duplicateStep(index: number) {
       debugger;
