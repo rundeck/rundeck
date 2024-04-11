@@ -358,4 +358,20 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         "user"  | _
         "admin" | _
     }
+
+    def "Test isLoginNameCaseSensitiveEnabled()"() {
+        given:
+        provider.configurationService = Mock(ConfigurationService){
+            1 * getBoolean(GormUserDataProvider.NAME_CASE_SENSITIVE_ENABLED, false) >> expectedEnabled
+        }
+
+        when:
+        Boolean enabled = provider.isLoginNameCaseSensitiveEnabled()
+
+        then:
+        enabled == expectedEnabled
+
+        where:
+        expectedEnabled << [true, false]
+    }
 }
