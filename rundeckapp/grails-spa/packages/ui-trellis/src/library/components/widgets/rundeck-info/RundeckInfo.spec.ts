@@ -120,10 +120,8 @@ describe("RundeckInfo", () => {
     expect(rundeckVersionComponent.exists()).toBe(true);
     expect(rundeckVersionComponent.props("title")).toEqual(latestProps.title);
     expect(rundeckVersionComponent.props("number")).toEqual(latestProps.full);
-    const versionTextSpan = rundeckVersionComponent.find("span");
-    expect(versionTextSpan.exists()).toBe(true);
-    const versionText = versionTextSpan.text();
-    expect(versionText).toBe(`${latestProps.title} ${latestProps.full}`);
+    const versionTextSpan = rundeckVersionComponent.find("span").text();
+    expect(versionTextSpan).toBe(`${latestProps.title} ${latestProps.full}`);
   });
 
   it("should have an anchor with the correct href", async () => {
