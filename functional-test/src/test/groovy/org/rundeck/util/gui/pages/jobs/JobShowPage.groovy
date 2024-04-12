@@ -242,6 +242,7 @@ class JobShowPage extends BasePage{
     }
 
     WebElement getJobOptionValueListItem(String name){
+        waitForNumberOfElementsToBeOne(By.xpath("//option[. = '${name}']"))
         driver.findElement(By.xpath("//option[. = '${name}']"))
     }
 
