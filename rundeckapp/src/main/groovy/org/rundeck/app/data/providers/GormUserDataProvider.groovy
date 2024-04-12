@@ -3,6 +3,7 @@ package org.rundeck.app.data.providers
 
 import grails.compiler.GrailsCompileStatic
 import grails.gorm.DetachedCriteria
+import groovy.transform.Synchronized
 import groovy.transform.TypeCheckingMode
 import groovy.util.logging.Slf4j
 import org.hibernate.StaleStateException
@@ -47,6 +48,7 @@ class GormUserDataProvider implements UserDataProvider {
 
     @Override
     @Transactional
+    @Synchronized
     User findOrCreateUser(String login) throws DataAccessException {
         User user = User.findByLogin(login)
         if (!user) {
@@ -59,18 +61,10 @@ class GormUserDataProvider implements UserDataProvider {
         return user
     }
 
-    static User getUserByLoginOrCreate(String login) {
-        User user = User.findByLogin(login)
-        if (!user) {
-            user = new User(login: login)
-        }
-        return user
-    }
-
     @Override
     @Transactional
     User registerLogin(String login, String sessionId) throws DataAccessException {
-        User user = getUserByLoginOrCreate(login)
+        User user = findOrCreateUser(login)
         user.lastLogin = new Date()
         user.lastLoggedHostName = frameworkService.getServerHostname()
         user.lastSessionId = null
@@ -94,7 +88,7 @@ class GormUserDataProvider implements UserDataProvider {
     @Override
     @Transactional
     User registerLogout(String login) throws DataAccessException {
-        User user = getUserByLoginOrCreate(login)
+        User user = findOrCreateUser(login)
         user.lastLogout = new Date()
         if (!user.save(flush: true)) {
             throw new DataAccessException("unable to save user: ${user}, ${user.errors.allErrors.join(',')}")
