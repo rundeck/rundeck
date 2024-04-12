@@ -108,7 +108,11 @@ describe("RundeckInfo", () => {
   });
 
   it("renders latest release information correctly ", async () => {
-    const latestProps = { title: "Rundeck", full: "1.0.0" };
+    const latestProps = {
+      title: "Rundeck",
+      full: "1.0.0",
+      tag: "stable",
+    };
 
     const wrapper = await mountRundeckInfo({
       latest: latestProps,
@@ -120,6 +124,7 @@ describe("RundeckInfo", () => {
     expect(rundeckVersionComponent.exists()).toBe(true);
     expect(rundeckVersionComponent.props("title")).toEqual(latestProps.title);
     expect(rundeckVersionComponent.props("number")).toEqual(latestProps.full);
+    expect(rundeckVersionComponent.props("tag")).toEqual(latestProps.tag);
     const versionTextSpan = rundeckVersionComponent.find("span").text();
     expect(versionTextSpan).toBe(`${latestProps.title} ${latestProps.full}`);
   });
