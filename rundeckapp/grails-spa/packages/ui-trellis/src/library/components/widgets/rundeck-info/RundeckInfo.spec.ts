@@ -72,8 +72,7 @@ describe("RundeckInfo", () => {
     expect(rundeckVersionComponent.exists()).toBe(true);
     expect(rundeckVersionComponent.props()).toEqual(versionProps);
     const versionText = rundeckVersionComponent.find("span").text();
-    const expectedVersionText = `${versionProps.title} ${versionProps.number}`;
-    expect(versionText).toBe(expectedVersionText);
+    expect(versionText).toBe("Rundeck 5.3.0");
   });
   it("renders ServerDisplay correctly based on a server props", async () => {
     const serverProps = {
@@ -109,7 +108,7 @@ describe("RundeckInfo", () => {
   });
 
   it("renders latest release information correctly ", async () => {
-    const latestProps = { full: "1.0.0", tag: "stable" };
+    const latestProps = { title: "Rundeck", full: "1.0.0" };
 
     const wrapper = await mountRundeckInfo({
       latest: latestProps,
@@ -119,14 +118,12 @@ describe("RundeckInfo", () => {
       name: "RundeckVersion",
     });
     expect(rundeckVersionComponent.exists()).toBe(true);
-
+    expect(rundeckVersionComponent.props("title")).toEqual(latestProps.title);
     expect(rundeckVersionComponent.props("number")).toEqual(latestProps.full);
-    expect(rundeckVersionComponent.props("tag")).toEqual(latestProps.tag);
-
     const versionTextSpan = rundeckVersionComponent.find("span");
     expect(versionTextSpan.exists()).toBe(true);
     const versionText = versionTextSpan.text();
-    expect(versionText).toContain(latestProps.full);
+    expect(versionText).toBe(`${latestProps.title} ${latestProps.full}`);
   });
 
   it("should have an anchor with the correct href", async () => {
