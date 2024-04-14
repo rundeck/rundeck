@@ -44,7 +44,7 @@
     "axios": "^1.6.4",
     "core-js": "^3.6.5",
     "deep-object-diff": "^1.1.9",
-    "dompurify": "^3.0.3",
+    "dompurify": "^3.0.11",
     "fuse.js": "^6.6.2",
     "jest-junit": "^16.0.0",
     "mitt": "^3.0.0",
