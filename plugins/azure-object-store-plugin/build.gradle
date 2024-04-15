@@ -42,7 +42,7 @@ dependencies {
     testImplementation "org.spockframework:spock-core:${spockVersion}"
 
     constraints {
-        pluginLibs 'com.nimbusds:nimbus-jose-jwt:9.31'
+        pluginLibs "com.nimbusds:nimbus-jose-jwt:${nimbusJoseVersion}"
     }
 }
 
