@@ -552,6 +552,7 @@ public class RundeckConfigBase {
     public static class RundeckLoginConfig {
         LocalLogin localLogin;
         String redirectUri;
+        Boolean nameCaseSensitiveEnabled = false;
     }
 
     @Data
