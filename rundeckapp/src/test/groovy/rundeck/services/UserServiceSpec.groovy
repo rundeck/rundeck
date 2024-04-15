@@ -77,6 +77,7 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         provider.configurationService = Mock(ConfigurationService) {
             1 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> true
             1 * getString(UserService.SESSION_ID_METHOD, 'hash') >> method
+            1 *  getBoolean("login.nameCaseSensitiveEnabled", false) >> false
         }
         provider.frameworkService = Mock(FrameworkService) {
             getServerHostname() >> { "server" }
@@ -102,6 +103,7 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         String sessionId = "exampleSessionId01"
         provider.configurationService = Mock(ConfigurationService) {
             1 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> false
+            1 *  getBoolean("login.nameCaseSensitiveEnabled", false) >> false
         }
         provider.frameworkService = Mock(FrameworkService) {
             getServerHostname() >> { "server" }
@@ -123,7 +125,8 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         String login = "user~name"
         String sessionId = "willErrSessionId"
         provider.configurationService = Mock(ConfigurationService) {
-            1 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> false
+            0 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> false
+            1 *  getBoolean("login.nameCaseSensitiveEnabled", false) >> false
         }
         provider.frameworkService = Mock(FrameworkService) {
             getServerHostname() >> { "server" }
@@ -136,7 +139,7 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
 
         then:
         !user.id
-        errMsg.startsWith("unable to save user: rundeck.User")
+        errMsg.startsWith("unable to save user: user~name")
     }
 
     def "registerLogout"(){
@@ -163,7 +166,7 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
 
         then:
         !user.id
-        errMsg.startsWith("unable to save user: rundeck.User")
+        errMsg.startsWith("unable to save user: user~name")
     }
 
     def "findWithFilters basic"() {

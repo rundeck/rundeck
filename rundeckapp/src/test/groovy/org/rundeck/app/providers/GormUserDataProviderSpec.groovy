@@ -37,6 +37,31 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         "login" | false
     }
 
+    @Unroll
+    def "Find or create User case sensitive #caseSensitiveParam"() {
+        given:
+        def loginName = "loginName1"
+        User savedUser = new User(login: loginName)
+        savedUser.save()
+
+        and:
+        provider.configurationService = Mock(ConfigurationService) {
+            1 * getBoolean(provider.NAME_CASE_SENSITIVE_ENABLED, false) >> caseSensitiveParam
+        }
+
+        when:
+        def rdUser = provider.findOrCreateUser(loginName.toUpperCase())
+
+        then:
+        User.findAll().size() == userCountSpec
+        rdUser.login == userDataSpec
+
+        where:
+        caseSensitiveParam << [false, true]
+        userCountSpec << [1, 2]
+        userDataSpec << ["loginName1", "LOGINNAME1"]
+    }
+
     def "Throw an error on creation"() {
         when:
         provider.findOrCreateUser("~name")
@@ -74,7 +99,8 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
     def "Should throw error on registerLogin with bad login"() {
         setup:
         provider.configurationService = Mock(ConfigurationService) {
-            1 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> false
+            0 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> false
+            1 *  getBoolean("login.nameCaseSensitiveEnabled", false) >> false
         }
         provider.frameworkService = Mock(FrameworkService) {
             getServerHostname() >> { "server" }
@@ -125,6 +151,48 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         login   | lastName | firstName | email
         "login" | "last"   | "first"   | "email@company.com"
         "saved" | "last2"  | "first2"  | "email2@company.com"
+    }
+
+    @Unroll
+    def "Should update profile instead of creating a new user"() {
+        given:
+        User savedUser = new User(login: "user1")
+        savedUser.save()
+        def login = "USER1"
+        def lastName = "last1"
+        def firstName = "first1"
+        def email = "email1@company.com"
+
+        when:
+        provider.updateUserProfile(login, lastName, firstName, email)
+        then:
+        provider.findAll().size() == 1
+    }
+
+    @Unroll
+    def "Should update profile caseSensitive create a new user"() {
+        given:
+        User savedUser = new User(login: "user1", lastName: "otherLastName", firstName: "otherFirstName", email: "otherEmail@company.com")
+        savedUser.save()
+        def login = "USER1"
+        def lastName = "last1"
+        def firstName = "first1"
+        def email = "email1@company.com"
+        provider.configurationService = Mock(ConfigurationService) {
+            getBoolean(provider.NAME_CASE_SENSITIVE_ENABLED, false) >> true
+        }
+        when:
+        provider.updateUserProfile(login, lastName, firstName, email)
+        then:
+        def firstUser = User.findByLogin("user1")
+        firstUser.firstName == "otherFirstName"
+        firstUser.lastName == "otherLastName"
+        firstUser.email == "otherEmail@company.com"
+        def userCreatedAfterUpdate = User.findByLogin(login)
+        userCreatedAfterUpdate.firstName == firstName
+        userCreatedAfterUpdate.lastName == lastName
+        userCreatedAfterUpdate.email == email
+        provider.findAll().size() == 2
     }
 
     def "Should throw error on updateUserProfile with bad login"() {
@@ -288,5 +356,18 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         login   | _
         "user"  | _
         "admin" | _
+    }
+
+    def "Test isLoginNameCaseSensitiveEnabled()"() {
+        given:
+        provider.configurationService = Mock(ConfigurationService){
+            1 * getBoolean(GormUserDataProvider.NAME_CASE_SENSITIVE_ENABLED, false) >> expectedEnabled
+        }
+        when:
+        Boolean enabled = provider.isLoginNameCaseSensitiveEnabled()
+        then:
+        enabled == expectedEnabled
+        where:
+        expectedEnabled << [true, false]
     }
 }

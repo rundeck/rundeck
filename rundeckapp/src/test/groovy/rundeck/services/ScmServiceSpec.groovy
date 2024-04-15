@@ -69,6 +69,9 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
         mockDataService(UserDataService)
         GormUserDataProvider provider = new GormUserDataProvider()
         service.userDataProvider = provider
+        provider.configurationService = Mock(ConfigurationService) {
+            getBoolean("login.nameCaseSensitiveEnabled",false) >> true
+        }
     }
 
     class TestCloseable implements Closeable {
