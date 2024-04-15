@@ -17,6 +17,7 @@ package rundeckapp.init.servlet
 
 import com.dtolabs.rundeck.core.init.CustomWebAppInitializer
 import org.eclipse.jetty.server.Handler
+import org.eclipse.jetty.server.HostHeaderCustomizer
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.server.handler.ContextHandler
 import org.eclipse.jetty.webapp.AbstractConfiguration
@@ -36,6 +37,8 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
      */
     Map<String, String> initParams = [:]
     Boolean useForwardHeaders
+    String serverUrl
+    String serverPort
 
     @Override
     void customize(final JettyServletWebServerFactory factory) {
@@ -50,6 +53,7 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
             }
         })
         factory.addServerCustomizers(new BanHttpMethodCustomizer())
+        factory.addServerCustomizers(new RundeckHostHeaderCustomizer(serverUrl, Integer.parseInt(serverPort ?: "4440")))
         factory.addConfigurations(new JettyConfigPropsInitParameterConfiguration(initParams))
         factory.useForwardHeaders=useForwardHeaders
     }

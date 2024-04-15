@@ -887,6 +887,8 @@ beans={
             [it.key.toString(), it.value.toString()]
         }
         useForwardHeaders = useForwardHeadersConfig ?: Boolean.getBoolean('rundeck.jetty.connector.forwarded')
+        serverUrl = grailsApplication.config.getProperty('server.address', String.class)
+        serverPort = grailsApplication.config.getProperty('server.port', String.class)
     }
 
     def stsMaxAgeSeconds = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.stsMaxAgeSeconds",Integer.class,-1)
