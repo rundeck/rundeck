@@ -7,6 +7,9 @@ import groovy.transform.Synchronized
 import groovy.transform.TypeCheckingMode
 import groovy.util.logging.Slf4j
 import org.hibernate.StaleStateException
+import org.rundeck.app.config.SysConfigProp
+import org.rundeck.app.config.SystemConfig
+import org.rundeck.app.config.SystemConfigurable
 import org.rundeck.app.data.model.v1.user.LoginStatus
 import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.data.model.v1.user.dto.SaveUserResponse
@@ -27,7 +30,7 @@ import javax.transaction.Transactional
 @GrailsCompileStatic(TypeCheckingMode.SKIP)
 @Slf4j
 @Transactional
-class GormUserDataProvider implements UserDataProvider {
+class GormUserDataProvider implements UserDataProvider, SystemConfigurable{
     @Autowired
     UserDataService userDataService
     @Autowired
@@ -329,5 +332,17 @@ class GormUserDataProvider implements UserDataProvider {
         return isLoginNameCaseSensitiveEnabled() ? User.findByLogin(login) : User.findByLoginIlike(login)
     }
 
-
+    @Override
+    List<SysConfigProp> getSystemConfigProps() {
+        [
+                SystemConfig.builder().with {
+                    key "rundeck.$NAME_CASE_SENSITIVE_ENABLED"
+                    description "Enable case sensitiveness on login name "
+                    defaultValue "false"
+                    required false
+                    datatype "Boolean"
+                    build()
+                }
+        ]
+    }
 }
