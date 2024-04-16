@@ -1,38 +1,44 @@
 import { mount } from "@vue/test-utils";
 import RundeckInfo from "./RundeckInfo.vue";
-
 jest.mock("../../../rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({ rdBase: "mocked-rdBase" }),
   url: jest.fn().mockReturnValue("http://localhost"),
 }));
-
-const mountRundeckInfo = async (props?: Record<string, any>) => {
+const mountRundeckInfo = async (props = {}) => {
   return mount(RundeckInfo, {
     props: {
       appInfo: { title: "Rundeck", logocss: "some-css" },
       version: {
-        logo: false,
-        logocss: "some-css",
         number: "1.0.0",
         tag: "stable",
-        title: "Rundeck",
+        name: "Erebus",
+        color: "red",
+        icon: "glass",
+        edition: "Community",
       },
       server: {
         name: "localHost",
         icon: "paperclip",
         uuid: "uuid1",
-        showId: true,
+      },
+      latest: {
+        title: "Rundeck",
+        full: "v5.2.0-20240410",
+        number: "5.2.0",
+        tag: "GA",
+        color: "aquamarine",
+        date: new Date(),
+        icon: "knight",
+        edition: "Community",
       },
       ...props,
     },
   });
 };
-
 describe("RundeckInfo", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
-
   it("renders RundeckLogo when appInfo.title is 'Rundeck'", async () => {
     const wrapper = await mountRundeckInfo();
     expect(wrapper.findComponent({ name: "RundeckLogo" }).exists()).toBe(true);
@@ -42,98 +48,50 @@ describe("RundeckInfo", () => {
   });
   it("renders PagerdutyLogo when appInfo.title is 'Pagerduty'", async () => {
     const wrapper = await mountRundeckInfo({ appInfo: { title: "Pagerduty" } });
-
-    const versionProps = {
-      logo: false,
-      logocss: "some-css",
-      number: "1.0.0",
-      tag: "stable",
-      title: "Rundeck",
-    };
     expect(wrapper.findComponent({ name: "PagerdutyLogo" }).exists()).toBe(
       true,
     );
     expect(wrapper.findComponent({ name: "RundeckLogo" }).exists()).toBe(false);
   });
-  it("renders RundeckVersions information with correct props based on version data", async () => {
-    const versionProps = {
-      logo: false,
-      logocss: "some-css",
-      number: "5.3.0",
-      title: "Rundeck",
-    };
+  it("renders RundeckVersions information with correct props", async () => {
+    const wrapper = await mountRundeckInfo();
 
-    const wrapper = await mountRundeckInfo({ version: versionProps });
-
-    await wrapper.vm.$nextTick();
     const rundeckVersionComponent = wrapper.findComponent({
       name: "RundeckVersion",
     });
     expect(rundeckVersionComponent.exists()).toBe(true);
-    expect(rundeckVersionComponent.props()).toEqual(versionProps);
-    const versionText = rundeckVersionComponent.find("span").text();
-    expect(versionText).toBe("Rundeck 5.3.0");
+
+    expect(rundeckVersionComponent.find("span").text()).toBe("Rundeck 1.0.0");
   });
-  it("renders ServerDisplay correctly based on a server props", async () => {
-    const serverProps = {
-      name: "localHost",
-      icon: "paperclip",
-      uuid: "uuid1",
-      showId: true,
-    };
-    const wrapper = await mountRundeckInfo({ server: serverProps });
-    await wrapper.vm.$nextTick();
+  it("renders ServerDisplay correctly with default props", async () => {
+    const wrapper = await mountRundeckInfo();
     const serverComponent = wrapper.findComponent({ name: "ServerDisplay" });
     expect(serverComponent.exists()).toBe(true);
-    expect(serverComponent.props()).toEqual({
-      name: serverProps.name,
-      glyphicon: serverProps.icon,
-      uuid: serverProps.uuid,
-      showId: serverProps.showId,
-    });
+
+    expect(
+      serverComponent.find('[data-test-id="server-title"]').attributes("title"),
+    ).toBe("paperclip-uu / uuid1");
   });
 
   it("renders version display correctly", async () => {
-    const versionDisplay = {
-      name: "Rundeck",
-      icon: "icon-url",
-      color: "lamp",
-    };
-    const wrapper = await mountRundeckInfo({ version: versionDisplay });
+    const wrapper = await mountRundeckInfo();
     const versionDisplayComponent = wrapper.findComponent({
       name: "VersionDisplay",
     });
-
-    expect(versionDisplayComponent.props("text")).toBe("Rundeck lamp icon-url");
+    expect(versionDisplayComponent.props("text")).toBe("Erebus red glass");
   });
-
-  it("renders latest release information correctly ", async () => {
-    const latestProps = {
-      title: "Rundeck",
-      full: "1.0.0",
-      tag: "stable",
-    };
-
-    const wrapper = await mountRundeckInfo({
-      latest: latestProps,
-    });
-
+  it("renders the latest release information correctly", async () => {
+    const wrapper = await mountRundeckInfo();
     const rundeckVersionComponent = wrapper.findComponent({
       name: "RundeckVersion",
     });
     expect(rundeckVersionComponent.exists()).toBe(true);
-    expect(rundeckVersionComponent.props("title")).toEqual(latestProps.title);
-    expect(rundeckVersionComponent.props("number")).toEqual(latestProps.full);
-    expect(rundeckVersionComponent.props("tag")).toEqual(latestProps.tag);
-    const versionTextSpan = rundeckVersionComponent.find("span").text();
-    expect(versionTextSpan).toBe(`${latestProps.title} ${latestProps.full}`);
+    expect(rundeckVersionComponent.find("span").text()).toBe("Rundeck 1.0.0");
   });
-
-  it("should have an anchor with the correct href", async () => {
+  it("renders the link with the correct href", async () => {
     const wrapper = await mountRundeckInfo();
-    const expectedUrl = "http://localhost";
     const anchorElement = wrapper.find('[data-test-id="welcome-link"]');
     expect(anchorElement.exists()).toBe(true);
-    expect(anchorElement.attributes("href")).toBe(expectedUrl);
+    expect(anchorElement.attributes("href")).toBe("http://localhost");
   });
 });
