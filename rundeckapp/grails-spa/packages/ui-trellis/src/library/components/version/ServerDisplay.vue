@@ -1,5 +1,5 @@
 <template>
-  <span :title="title">
+  <span :title="title" data-test-id="server-title">
     <span :style="{ color }">
       <i class="glyphicon" :class="[`glyphicon-${glyphicon}`]" />
       <span v-if="showId">{{ uuidShort }}</span>
