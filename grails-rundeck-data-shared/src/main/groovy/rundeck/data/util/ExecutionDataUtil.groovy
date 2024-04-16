@@ -42,7 +42,7 @@ class ExecutionDataUtil {
         }
         return new ExecutionReferenceImpl(
                 project: executionData.project,
-                id: executionData.internalId.toString(),
+                id: executionData.internalId?.toString(),
                 uuid: executionData.uuid,
                 retryOriginalId: executionData.retryOriginalId?.toString(),
                 retryPrevId: executionData.retryPrevId?.toString(),
