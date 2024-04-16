@@ -8,6 +8,7 @@ class ExecutionToRdExecutionConverter {
     static RdExecution convert(Execution e) {
         if(!e) return null
         RdExecution re = new RdExecution()
+        re.internalId = e.internalId
         re.uuid = e.uuid
         re.jobUuid = e.jobUuid
         re.status = e.status
