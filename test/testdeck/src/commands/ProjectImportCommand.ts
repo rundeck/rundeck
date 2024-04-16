@@ -2,7 +2,7 @@ import {Argv} from 'yargs'
 
 import * as Path from 'path'
 
-import {Rundeck, PasswordCredentialProvider, TokenCredentialProvider} from 'ts-rundeck'
+import {Rundeck, PasswordCredentialProvider, TokenCredentialProvider} from '@rundeck/client'
 
 import {ProjectImporter} from '../projectImporter'
 

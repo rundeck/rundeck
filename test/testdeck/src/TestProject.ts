@@ -1,4 +1,4 @@
-import { Rundeck } from "ts-rundeck"
+import { Rundeck } from "@rundeck/client"
 
 import { ProjectImporter } from "./projectImporter"
 import { ProjectExporter } from "./projectExporter"

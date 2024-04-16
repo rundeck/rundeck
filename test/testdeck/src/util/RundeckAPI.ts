@@ -1,7 +1,7 @@
 import {WebResource, RequestPolicy, RequestPolicyFactory, RequestPolicyOptions, BaseRequestPolicy, HttpOperationResponse} from '@azure/ms-rest-js'
-import {Rundeck} from 'ts-rundeck'
-import {Status, ExecutionStatusGetResponse, RundeckJobExecutionRunOptionalParams} from 'ts-rundeck/dist/lib/models'
-import {combineCookies} from 'ts-rundeck/dist/util'
+import {Rundeck} from '@rundeck/client'
+import {Status, ExecutionStatusGetResponse, RundeckJobExecutionRunOptionalParams} from '@rundeck/client/dist/lib/models'
+import {combineCookies} from '@rundeck/client/dist/util'
 
 import {sleep} from '../async/util'
 

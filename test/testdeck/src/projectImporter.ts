@@ -1,9 +1,9 @@
 import * as Path from 'path'
 
-import { JobUuidOption } from 'ts-rundeck/dist/lib/models'
+import { JobUuidOption } from '@rundeck/client/dist/lib/models'
 
 import chalk from 'chalk'
-import {Rundeck} from 'ts-rundeck'
+import {Rundeck} from '@rundeck/client'
 import * as TmpP from 'tmp'
 import YAML from 'js-yaml'
 

@@ -1,6 +1,6 @@
 import {Argv} from 'yargs'
 
-import { Rundeck, PasswordCredentialProvider, TokenCredentialProvider } from 'ts-rundeck';
+import { Rundeck, PasswordCredentialProvider, TokenCredentialProvider } from '@rundeck/client';
 
 import {spawn} from '../async/child-process'
 import { ProjectImporter } from '../projectImporter';
