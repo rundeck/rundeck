@@ -771,6 +771,13 @@ class LogFileStorageService
      * Submit asynchronous request to store log files for the execution
      * @param e
      */
+    void submitForStorage(String executionUuid) {
+        submitForStorage(Execution.findByUuid(executionUuid))
+    }
+    /**
+     * Submit asynchronous request to store log files for the execution
+     * @param e
+     */
     void submitForStorage(Execution e) {
         def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolverFactory(e.project))
         if(null==plugin || !pluginSupportsStorage(plugin)){

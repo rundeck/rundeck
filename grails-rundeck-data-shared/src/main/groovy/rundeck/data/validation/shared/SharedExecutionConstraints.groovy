@@ -3,6 +3,7 @@ package rundeck.data.validation.shared
 import grails.validation.Validateable
 
 class SharedExecutionConstraints implements Validateable {
+    Serializable internalId
     String jobUuid
     String argString
     String status
@@ -23,6 +24,7 @@ class SharedExecutionConstraints implements Validateable {
     String retryDelay
 
     static constraints = {
+        internalId(nullable: true)
         jobUuid(nullable:true)
         argString(nullable:true)
         dateStarted(nullable:true)

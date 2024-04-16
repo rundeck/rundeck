@@ -1,7 +1,10 @@
 package rundeck.data.util
 
+import com.dtolabs.rundeck.core.execution.ExecutionReference
+import com.dtolabs.rundeck.core.jobs.JobReference
 import org.rundeck.app.data.model.v1.execution.ExecutionData
 import rundeck.data.constants.ExecutionConstants
+import rundeck.data.execution.reference.ExecutionReferenceImpl
 
 class ExecutionDataUtil {
 
@@ -30,5 +33,32 @@ class ExecutionDataUtil {
                                                  ExecutionConstants.EXECUTION_QUEUED,
                                                  ExecutionConstants.EXECUTION_SCHEDULED,
                                                  ExecutionConstants.AVERAGE_DURATION_EXCEEDED])
+    }
+
+    public static ExecutionReference createExecutionReference(ExecutionData executionData, JobReference jobRef = null, String targetNodes = null) {
+        String adhocCommand = null
+        if(!jobRef) {
+            adhocCommand = executionData.workflow.steps.get(0).summarize()
+        }
+        return new ExecutionReferenceImpl(
+                project: executionData.project,
+                id: executionData.internalId.toString(),
+                uuid: executionData.uuid,
+                retryOriginalId: executionData.retryOriginalId?.toString(),
+                retryPrevId: executionData.retryPrevId?.toString(),
+                retryNextId: executionData.retryExecutionId?.toString(),
+                options: executionData.argString,
+                filter: executionData.nodeConfig?.filter,
+                job: jobRef,
+                adhocCommand: adhocCommand,
+                dateStarted: executionData.dateStarted,
+                status: executionData.status,
+                succeededNodeList: executionData.succeededNodeList,
+                failedNodeList: executionData.failedNodeList,
+                targetNodes: targetNodes,
+                metadata: executionData.extraMetadataMap,
+                scheduled: executionData.executionType in ['scheduled','user-scheduled'],
+                executionType: executionData.executionType
+        )
     }
 }
