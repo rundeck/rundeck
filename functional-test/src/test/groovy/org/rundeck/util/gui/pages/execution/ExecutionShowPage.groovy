@@ -45,6 +45,7 @@ class ExecutionShowPage extends BasePage {
     static final By logContentTextBy = By.className("execution-log__content-text")
     static final By logContentTextOverflowBy = By.cssSelector(".execution-log__content-text.execution-log__content-text--overflow")
     static final By gutterLineNumberBy = By.cssSelector(".gutter.line-number")
+    By runAgainLink = By.linkText("Run Again")
 
     ExecutionShowPage(final SeleniumContext context) {
         super(context)
@@ -103,6 +104,13 @@ class ExecutionShowPage extends BasePage {
         waitForElementVisible(execCompletedIcon)
 
         return execStatusIconElem.getAttribute(execStateAttribute)
+    }
+
+    /**
+     * It wait for the run again link to be shown
+     */
+    void waitForRunAgainLink(){
+        new WebDriverWait(driver, Duration.ofSeconds(10)).until(ExpectedConditions.numberOfElementsToBe(runAgainLink, 1))
     }
 
     String getExecutionStatus(){

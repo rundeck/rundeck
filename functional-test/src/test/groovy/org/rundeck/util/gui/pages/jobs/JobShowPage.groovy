@@ -62,7 +62,6 @@ class JobShowPage extends BasePage{
     By jobStatusBarBy = By.className("job-stats-value")
     By jobOptionValuesBy = By.cssSelector(".optionvalues")
     By jobOptionValueInputBy = By.cssSelector(".optionvalues > option:nth-child(6)")
-    By Job
 
     static final String PAGE_PATH = "/job/show"
     String loadPath = "/job/show"
@@ -88,6 +87,7 @@ class JobShowPage extends BasePage{
 
         ExecutionShowPage execution = new ExecutionShowPage(context)
         if(waitForFinalState) {
+            execution.waitForRunAgainLink()
             execution.waitForFinalState()
         }
 
@@ -242,6 +242,7 @@ class JobShowPage extends BasePage{
     }
 
     WebElement getJobOptionValueListItem(String name){
+        waitForNumberOfElementsToBeOne(By.xpath("//option[. = '${name}']"))
         driver.findElement(By.xpath("//option[. = '${name}']"))
     }
 

@@ -265,7 +265,7 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
     def "Should find user by login"() {
         given:
         User u = new User(login: "user")
-        u.save()
+        u.save(flush: true)
         when:
         def result = provider.findByLogin(login)
         then:
