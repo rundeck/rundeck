@@ -38,6 +38,7 @@ class ExecutionToRdExecutionConverterSpec extends Specification implements DataT
         RdExecution rdExecution = converter.convert(execution)
 
         then:
+        rdExecution.internalId == execution.id
         rdExecution.uuid == execution.uuid
         rdExecution.jobUuid == execution.jobUuid
         rdExecution.workflow.steps.size() == execution.workflow.commands.size()

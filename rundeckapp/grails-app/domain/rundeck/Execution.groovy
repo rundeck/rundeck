@@ -170,6 +170,10 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         }
     }
 
+    Serializable getInternalId() {
+        return id
+    }
+
     @Override
     Serializable getRetryExecutionId() {
         return retryExecution?.id

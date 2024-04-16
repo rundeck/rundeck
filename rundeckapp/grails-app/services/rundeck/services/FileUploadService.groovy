@@ -19,6 +19,7 @@ import rundeck.Execution
 import rundeck.JobFileRecord
 import rundeck.Option
 import rundeck.ScheduledExecution
+import rundeck.events.RdExecutionCompleteEvent
 import rundeck.services.events.ExecutionPrepareEvent
 import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.feature.FeatureService
@@ -590,14 +591,29 @@ class FileUploadService {
     @Subscriber
     def executionComplete(ExecutionCompleteEvent e) {
         JobFileRecord.withNewSession {
-            findRecords(e.execution, RECORD_TYPE_OPTION_INPUT)?.each {
-                if(e.execution.willRetry){
-                    def expirationDate = (new Date().time + tempfileExpirationDelay)
-                    it.setExpirationDate(new Date(expirationDate))
-                    it.save(flush: true)
-                } else {
-                    changeFileState(it, FileUploadPlugin.ExternalState.Used)
-                }
+            _runExecComplete(e.execution)
+        }
+    }
+
+    /**
+     * Remove temp files
+     * @param event
+     */
+    @Subscriber
+    def executionComplete(RdExecutionCompleteEvent e) {
+        JobFileRecord.withNewSession {
+            _runExecComplete(Execution.findByUuid(e.executionUuid))
+        }
+    }
+
+    void _runExecComplete(Execution e) {
+        findRecords(e, RECORD_TYPE_OPTION_INPUT)?.each {
+            if(e.willRetry){
+                def expirationDate = (new Date().time + tempfileExpirationDelay)
+                it.setExpirationDate(new Date(expirationDate))
+                it.save(flush: true)
+            } else {
+                changeFileState(it, FileUploadPlugin.ExternalState.Used)
             }
         }
     }

@@ -15,6 +15,7 @@ import rundeck.data.validation.shared.SharedServerNodeUuidConstraints
 
 @JsonIgnoreProperties(["errors","executionState"])
 class RdExecution implements ExecutionData, Validateable {
+    Serializable internalId
     String uuid = UUID.randomUUID().toString()
     String jobUuid
     Date dateStarted
