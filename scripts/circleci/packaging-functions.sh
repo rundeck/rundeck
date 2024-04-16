@@ -15,7 +15,8 @@ packaging_create_packages() {
     copy_rundeck_war "${PACKAGING_DIR}/packaging/artifacts/"
 
     cd "${PACKAGING_DIR}/packaging"
-    ./gradlew ${GRADLE_BASE_OPTS} -PpackageRelease=$RELEASE_NUM clean packageArtifacts
+    LIB_DIR="${PACKAGING_DIR}/lib"
+    ./gradlew ${GRADLE_BASE_OPTS} -PlibsDir=$LIB_DIR -PpackageRelease=$RELEASE_NUM clean packageArtifacts
 }
 
 packaging_sign() {
