@@ -128,6 +128,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.regex.Pattern
+import java.util.stream.Collectors
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -4241,10 +4242,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         def avgDuration = totalCount != 0 ? (durationSum.getTime() / totalCount) : 0
 
+        def maxDurationToMillis = maxDuration != 0 ? sqlTimeToMillis(maxDuration) : 0
+        def minDurationToMillis = minDuration != 0 ? sqlTimeToMillis(minDuration) : 0
+
         return [
                 totalCount: totalCount,
-                maxDuration: sqlTimeToMillis(maxDuration),
-                minDuration: sqlTimeToMillis(minDuration),
+                maxDuration: maxDurationToMillis,
+                minDuration: minDurationToMillis,
                 avgDuration: avgDuration
         ]
 
@@ -4285,12 +4289,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     Map<String,Object> metricsDataFromProjectionResult(List<Map<String, Timestamp>> result) {
         List<Long> timeSpent = result?.collect { Map<String, Timestamp> dataResult ->
-            dataResult.dateCompleted.getTime() - dataResult.dateStarted.getTime()
+            if( dataResult.dateCompleted != null ){
+                return dataResult.dateCompleted.getTime() - dataResult.dateStarted.getTime()
+            }
+            return null // null if there are running execs (date_completed == null)
         }
+        def timeSpentWithoutRunningExecs = timeSpent
+                .stream()
+                .filter {it -> it != null}
+                .collect(Collectors.toList())
         def totalCount = result?.size()
-        Long maxDuration = timeSpent?.max()
-        Long minDuration = timeSpent?.min()
-        double avgDuration = totalCount != 0 ? (timeSpent?.sum() / totalCount) : 0
+        Long maxDuration = timeSpentWithoutRunningExecs?.max()
+        Long minDuration = timeSpentWithoutRunningExecs?.min()
+        double avgDuration = totalCount != 0 ? (timeSpentWithoutRunningExecs?.sum() / totalCount) : 0
 
         return  [
             total   : totalCount,
