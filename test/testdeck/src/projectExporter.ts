@@ -3,7 +3,7 @@ import * as util from 'util'
 
 import chalk from 'chalk'
 import Mkdirp from 'mkdirp'
-import {Rundeck} from 'ts-rundeck'
+import {Rundeck} from '@rundeck/client'
 import YAML from 'js-yaml'
 
 import {exec} from './async/child-process'

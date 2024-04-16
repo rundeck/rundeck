@@ -7,7 +7,7 @@ import {toMatchImageSnapshot} from 'jest-image-snapshot'
 import {Context} from '../context'
 import {envOpts} from './rundeck'
 import { IRequiredResources, TestProject } from '../TestProject'
-import {RundeckClient, rundeckPasswordAuth, TokenCredentialProvider} from 'ts-rundeck'
+import {RundeckClient, rundeckPasswordAuth, TokenCredentialProvider} from '@rundeck/client'
 
 import {CustomError} from '../util/Error'
 
