@@ -255,7 +255,7 @@ dependencies {
 
     runtimeOnly "org.springframework:spring-jcl:${springVersion}"
     runtimeOnly "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
-    runtimeOnly "org.apache.tomcat:tomcat-jdbc:9.0.44"
+//    runtimeOnly "org.apache.tomcat:tomcat-jdbc:9.0.44" // TODO didin't we use hikari??
     api ("com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion")
     runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
 
