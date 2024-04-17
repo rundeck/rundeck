@@ -685,7 +685,7 @@ const messages = {
   "form.option.inputType.label": "Input Type",
   "form.option.defaultStoragePath.present.description":
     "A default value will be loaded from Key Storage",
-  "form.option.secureInput.false.label": "Plain text",
+  "form.option.secureInput.false.label": "Plain Text",
   "form.option.name.label": "Option Name",
   "form.option.valuesType.url.filter.label": "Json Path Filter",
   "form.option.valuesType.url.authType.label": "Authentication Type",
@@ -722,7 +722,7 @@ const messages = {
     "The Remote URL Json Path Filter has an invalid syntax",
   "form.option.valuesType.url.authType.apiKey.label": "API Key",
   "form.option.optionType.text.label": "Text",
-  "form.option.secureExposed.true.label": "Secure",
+  "form.option.secureExposed.true.label": "Plain Text with Password Input",
   "form.option.valuesType.url.filter.description":
     'Filter JSON results using a key path, for example "$.key.path"',
   "form.option.valuesType.url.authentication.tokenInformer.header.label":
@@ -751,7 +751,7 @@ const messages = {
   "form.option.valuesType.url.authentication.tokenInformer.label":
     "Inject key ",
   "form.option.secureExposed.true.description":
-    "Password input, value exposed in scripts and commands.",
+    "Plain text with a Password input, value exposed in scripts and commands.",
   "form.option.dateFormat.title": "Date Format",
   "form.option.label.label": "Option Label",
   "form.option.valuesUrl.description": "A URL to a Remote JSON service.",
