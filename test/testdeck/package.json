@@ -81,5 +81,8 @@
   },
   "devDependencies": {
     "jest-junit": "^15.0.0"
+  },
+  "overrides": {
+    "axios": "$axios"
   }
 }
