@@ -11,7 +11,7 @@
     "jsx": "preserve",
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
-    "types": ["webpack-env", "jest", "node"],
+    "types": ["webpack-env"],
     "paths": {
       "react": [".sink.d.ts"]
     }

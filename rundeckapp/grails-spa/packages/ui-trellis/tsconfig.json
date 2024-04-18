@@ -10,8 +10,7 @@
     "esModuleInterop": true,
     "declaration": true,
     "jsx": "preserve",
-    "allowSyntheticDefaultImports": true,
-    "types": ["webpack-env", "jest", "node"]
+    "allowSyntheticDefaultImports": true
   },
   "paths": {
     "@": ["./src"]
