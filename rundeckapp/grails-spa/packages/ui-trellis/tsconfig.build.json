@@ -15,7 +15,7 @@
     "typeRoots": ["./node_modules/@types","src/library/src/types"],
     "types": ["webpack-env", "jest"]
   },
-  "include": ["./src/library/**/*","**/*.spec.ts", "main.ts"],
+  "include": ["./src/library/**/*", "main.ts"],
   "exclude": [
     "./src/app",
     "**/*.stories.ts",
