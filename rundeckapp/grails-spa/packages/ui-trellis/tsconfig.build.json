@@ -12,9 +12,10 @@
     "declaration": true,
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
-    "typeRoots": ["webpack-env", "src/library/src/types", "jest"],
+    "typeRoots": ["webpack-env", "src/library/src/types"],
+    "types": ["jest"]
   },
-  "include": ["./src/library/**/*", "main.ts"],
+  "include": ["./src/library/**/*","**/*.spec.ts", "main.ts"],
   "exclude": [
     "./src/app",
     "**/*.stories.ts",
