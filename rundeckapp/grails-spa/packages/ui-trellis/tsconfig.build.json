@@ -12,7 +12,8 @@
     "declaration": true,
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
-    "typeRoots": ["webpack-env", "src/library/src/types"]
+    "typeRoots": ["webpack-env", "src/library/src/types"],
+    "types": ["webpack-env", "jest", "node"]
   },
   "include": ["./src/library/**/*", "main.ts"],
   "exclude": [
