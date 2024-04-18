@@ -31,6 +31,7 @@
   ],
   "exclude": [
     "src/library/stories",
+    "src/library/components",
     "src/library/**/*.stories.tsx",
     "node_modules"
   ]
