@@ -12,7 +12,7 @@
     "declaration": true,
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
-    "typeRoots": ["src/library/src/types"],
+    "typeRoots": ["./node_modules/@types","src/library/src/types"],
     "types": ["webpack-env", "jest"]
   },
   "include": ["./src/library/**/*","**/*.spec.ts", "main.ts"],
