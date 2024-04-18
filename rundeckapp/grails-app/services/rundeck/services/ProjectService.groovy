@@ -1879,9 +1879,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
         promise.onComplete { DeleteResponse it ->
             log.info("Deletion of Project [${project.name}] finished with success [${it.success}]: ${it.error}")
+            return it
         }
         promise.onError { Throwable t ->
             log.error("Error deleting project [${project.name}]: ${t.getMessage()}", t)
+            return null as DeleteResponse
         }
 
         return new DeleteResponse(success: true)
