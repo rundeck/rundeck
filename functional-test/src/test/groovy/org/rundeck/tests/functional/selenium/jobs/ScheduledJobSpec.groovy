@@ -70,7 +70,7 @@ class ScheduledJobSpec extends SeleniumBase{
         jobShowPage.validatePage()
         activityPage.loadActivityPageForProject(projectName)
         activityPage.go()
-        Thread.sleep(10000) // Auto refresh doesn't work
+        Thread.sleep(15000) // Auto refresh doesn't work
         activityPage.go()
 
         then:
