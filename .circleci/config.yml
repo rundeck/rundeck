@@ -680,7 +680,6 @@ workflows:
       - test-gradle-functional:
           name: New Selenium Test
           gradle-task: seleniumCoreTest
-          resource_class: large
           <<: *require-build
           <<: *slack-defaults
       - test-gradle-functional:

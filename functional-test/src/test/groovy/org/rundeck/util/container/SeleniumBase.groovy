@@ -9,6 +9,8 @@ import org.openqa.selenium.chrome.ChromeOptions
 import org.rundeck.util.spock.extensions.TestResultExtension
 import org.rundeck.util.gui.pages.BasePage
 
+import java.time.Duration
+
 /**
  * Utility Base for selenium test specs
  */
@@ -30,6 +32,7 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
         if (null == _driver) {
             def prefs = ["download.default_directory": downloadFolder]
             ChromeOptions options = new ChromeOptions()
+            options.setImplicitWaitTimeout(Duration.ofSeconds(5))
             options.setExperimentalOption("prefs", prefs)
             options.addArguments("start-maximized")
             options.addArguments("enable-automation")
