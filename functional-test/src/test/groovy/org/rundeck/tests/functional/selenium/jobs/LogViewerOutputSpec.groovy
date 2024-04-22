@@ -77,4 +77,29 @@ class LogViewerOutputSpec extends SeleniumBase{
             selectedLine
         }
     }
+
+    def "show whale log warning message"() {
+
+        given:
+        def loginPage = page LoginPage
+        def sideBar = page SideBarPage
+        def projectHomePage = page HomePage
+        def jobShowPage = page JobShowPage
+
+        when: "We run the job to have multiple lines in log output"
+        loginPage.go()
+        loginPage.login(TEST_USER, TEST_PASS)
+        projectHomePage.validatePage()
+        projectHomePage.goProjectHome(longOutPutProjectName)
+        sideBar.goTo(NavLinkTypes.JOBS)
+        jobShowPage.goToJob("1f0306cd-e123-44f3-8977-9e52edad8ce7")
+        jobShowPage.getRunJobBtn().click()
+        jobShowPage.getLogOutputBtn().click()
+        def showWarningMessage = jobShowPage.waitForElementVisible(By.xpath("//div[contains(@class, 'execution-log__warning')]")).isDisplayed()
+
+        then:
+        verifyAll {
+            showWarningMessage
+        }
+    }
 }
