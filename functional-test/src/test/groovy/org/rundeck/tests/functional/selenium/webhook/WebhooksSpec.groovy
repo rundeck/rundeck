@@ -2,6 +2,7 @@ package org.rundeck.tests.functional.selenium.webhook
 
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.gui.pages.home.HomePage
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.webhooks.WebhooksPage
 
@@ -18,9 +19,11 @@ class WebhooksSpec extends SeleniumBase {
         setupProject(projectName)
         def webhookPage = page WebhooksPage
         def loginPage = go LoginPage
+        HomePage homePage = page HomePage
 
         when:
         loginPage.login(TEST_USER, TEST_PASS)
+        homePage.validatePage()
         webhookPage.loadPageForProject(projectName)
         webhookPage.go()
         webhookPage.validatePage()
