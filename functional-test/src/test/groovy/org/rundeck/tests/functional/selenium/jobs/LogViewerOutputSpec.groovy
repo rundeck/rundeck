@@ -1,6 +1,7 @@
 package org.rundeck.tests.functional.selenium.jobs
 
 import org.openqa.selenium.By
+import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.rundeck.util.gui.pages.home.HomePage
 import org.rundeck.util.gui.pages.jobs.JobShowPage
 import org.rundeck.util.gui.pages.login.LoginPage
@@ -85,6 +86,7 @@ class LogViewerOutputSpec extends SeleniumBase{
         def sideBar = page SideBarPage
         def projectHomePage = page HomePage
         def jobShowPage = page JobShowPage
+        def executionShowPage = page ExecutionShowPage
 
         when: "We run the job to have multiple lines in log output"
         loginPage.go()
@@ -94,9 +96,9 @@ class LogViewerOutputSpec extends SeleniumBase{
         sideBar.goTo(NavLinkTypes.JOBS)
         jobShowPage.goToJob("1f0306cd-e123-44f3-8977-9e52edad8ce7")
         jobShowPage.getRunJobBtn().click()
-        jobShowPage.getLogOutputBtn().click()
+        executionShowPage.validateStatus 'SUCCEEDED'
+        executionShowPage.getLink 'Log Output' click()
         def showWarningMessage = jobShowPage.waitForElementVisible(By.xpath("//div[contains(@class, 'execution-log__warning')]")).isDisplayed()
-
         then:
         verifyAll {
             showWarningMessage
