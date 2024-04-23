@@ -48,7 +48,6 @@ class GormUserDataProvider implements UserDataProvider {
 
     @Override
     @Transactional
-    @Synchronized
     User findOrCreateUser(String login) throws DataAccessException {
         User user = User.findByLogin(login)
         if (!user) {
