@@ -27,6 +27,8 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig;
 import com.dtolabs.rundeck.core.common.IServicesRegistration;
+import com.dtolabs.rundeck.core.config.FeatureService;
+import com.dtolabs.rundeck.core.config.Features;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor;
 import com.dtolabs.rundeck.core.execution.impl.local.NewLocalNodeExecutor;
 import com.dtolabs.rundeck.core.plugins.*;
@@ -34,6 +36,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.*;
 
@@ -59,11 +63,24 @@ public class NodeExecutorService
     public static final String DEFAULT_REMOTE_PROVIDER = "sshj-ssh";
     private static final Map<String, Class<? extends NodeExecutor>> PRESET_PROVIDERS ;
 
+    @Getter @Setter private FeatureService featureService;
     static {
         Map<String, Class<? extends NodeExecutor>> map = new HashMap<>();
         map.put(LocalNodeExecutor.SERVICE_PROVIDER_TYPE, LocalNodeExecutor.class);
         map.put(NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE, NewLocalNodeExecutor.class);
         PRESET_PROVIDERS = Collections.unmodifiableMap(map);
+    }
+
+    @Getter
+    static class Factory {
+        @Setter Framework rundeckFramework;
+        @Setter FeatureService featureService;
+
+        public NodeExecutorService create() {
+            final NodeExecutorService nodeExecutorService = new NodeExecutorService(rundeckFramework);
+            nodeExecutorService.setFeatureService(featureService);
+            return nodeExecutorService;
+        }
     }
 
     public String getName() {
@@ -72,6 +89,10 @@ public class NodeExecutorService
 
     public List<String> getBundledProviderNames() {
         return Collections.unmodifiableList(new ArrayList<>(registry.keySet()));
+    }
+    public NodeExecutorService(Framework framework, FeatureService featureService){
+        this(framework);
+        this.featureService = featureService;
     }
     public NodeExecutorService(Framework framework) {
         super(framework,true);
@@ -105,17 +126,26 @@ public class NodeExecutorService
     public String getServiceProviderNodeAttributeForNode(INodeEntry node) {
         return getNodeAttributeForProvider(framework.isLocalNode(node));
     }
-    public static String getProviderNameForNode(
+    public String getProviderNameForNode(
             final boolean localNode,
             final IRundeckProjectConfig loadProjectConfig
     )
     {
         if (localNode) {
             final String value = loadProjectConfig.getProperty( SERVICE_DEFAULT_LOCAL_PROVIDER_PROPERTY);
-            return null != value ? value : DEFAULT_LOCAL_PROVIDER;
+            return null != value ? value : getDefaultLocalProvider();
         }
         final String value = loadProjectConfig.getProperty( SERVICE_DEFAULT_PROVIDER_PROPERTY);
         return null != value ? value : DEFAULT_REMOTE_PROVIDER;
+    }
+
+    public String getDefaultLocalProvider() {
+        if (null != featureService) {
+            return featureService.featurePresent(Features.NEW_LOCAL_NODE_EXECUTOR, false)
+                   ? NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE
+                   : DEFAULT_LOCAL_PROVIDER;
+        }
+        return DEFAULT_LOCAL_PROVIDER;
     }
 
     public static String getNodeAttributeForProvider(final boolean localNode) {
