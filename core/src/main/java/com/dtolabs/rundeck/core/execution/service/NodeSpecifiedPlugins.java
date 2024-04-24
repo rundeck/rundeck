@@ -9,11 +9,13 @@ import lombok.Setter;
 /**
  * Provides provider info for {@link FileCopier} and {@link NodeExecutor} given a node and project
  */
+@Getter
 public class NodeSpecifiedPlugins
         implements NodeProviderName
 {
-    @Getter @Setter private ProjectManager projectManager;
-    @Getter @Setter private IFrameworkNodes frameworkNodes;
+    @Setter private ProjectManager projectManager;
+    @Setter private IFrameworkNodes frameworkNodes;
+    @Setter private NodeExecutorService nodeExecutorService;
 
     public <T> String getProviderNameForNodeAndProject(final INodeEntry node, final String project, Class<T> type) {
         if (type.equals(FileCopier.class)) {
@@ -32,7 +34,7 @@ public class NodeSpecifiedPlugins
         } else if (type.equals(NodeExecutor.class)) {
             String
                     copiername =
-                    NodeExecutorService.getProviderNameForNode(
+                    nodeExecutorService.getProviderNameForNode(
                             getFrameworkNodes().isLocalNode(node),
                             getProjectManager().loadProjectConfig(project)
                     );

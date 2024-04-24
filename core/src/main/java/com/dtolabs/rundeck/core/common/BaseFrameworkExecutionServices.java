@@ -23,6 +23,8 @@ public class BaseFrameworkExecutionServices
 
     @Getter @Setter private Framework framework;
 
+    @Getter @Setter private NodeExecutorService nodeExecutorService;
+
     public static BaseFrameworkExecutionServices create(final Framework framework) {
         BaseFrameworkExecutionServices impl = new BaseFrameworkExecutionServices();
         impl.setFramework(framework);
@@ -85,11 +87,6 @@ public class BaseFrameworkExecutionServices
     @Override
     public FileCopierService getFileCopierService() {
         return FileCopierService.getInstanceForFramework(getFramework(), this);
-    }
-
-    @Override
-    public NodeExecutorService getNodeExecutorService() {
-        return NodeExecutorService.getInstanceForFramework(getFramework(), this);
     }
 
     @Override

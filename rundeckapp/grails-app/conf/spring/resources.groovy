@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.app.gui.UserSummaryMenuItem
 import com.dtolabs.rundeck.app.internal.framework.ConfigFrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
+import com.dtolabs.rundeck.app.internal.framework.NodeExecutorServiceFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.app.tree.DelegateStorageTree
 import com.dtolabs.rundeck.app.tree.RundeckBootstrapStorageTreeUpdater
@@ -302,9 +303,12 @@ beans={
     rundeckNodeSpecifiedProviderNames(NodeSpecifiedPlugins){
         projectManager = ref('projectManagerService')
         frameworkNodes = ref('rundeckNodeSupport')
+        nodeExecutorService = ref('rundeckNodeExecutorService')
     }
+    rundeckNodeExecutorService(NodeExecutorServiceFactory)
     rundeckBaseFrameworkExecutionServices(BaseFrameworkExecutionServices){
         framework = ref('rundeckFramework')
+        nodeExecutorService = ref('rundeckNodeExecutorService')
     }
     rundeckBaseFrameworkExecutionProviders(BaseFrameworkExecutionProviders){
         executionServices = ref('rundeckBaseFrameworkExecutionServices')
