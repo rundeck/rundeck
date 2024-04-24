@@ -36,6 +36,37 @@ class ExecutionOutputSpec extends BaseContainer {
         ]
     }
 
+    def "execution script output using lastmod param"() {
+        def body=[
+            script:'''#!/bin/bash
+echo testing execution output api1 line 1
+sleep 1
+echo line 2
+echo line 3
+sleep 1
+echo line 4 final
+''',
+            project: PROJECT_NAME
+        ]
+        when:
+        def adhoc = post("/project/${PROJECT_NAME}/run/script?", body, Map)
+        then:
+        adhoc.execution != null
+        adhoc.execution.id != null
+        when:
+        def execid = adhoc.execution.id
+        def logs = getAllLogs(execid) {
+            "offset=${it.offset}&lastmod=${it.lastmod}"
+        }
+        then:
+        logs == [
+                "testing execution output api1 line 1",
+                "line 2",
+                "line 3",
+                "line 4 final"
+        ]
+    }
+
     def "execution output using maxlines param"() {
         def params = "exec=echo+testing+execution+output+api1+line+1;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;" +
                 "echo+line+4+final"
