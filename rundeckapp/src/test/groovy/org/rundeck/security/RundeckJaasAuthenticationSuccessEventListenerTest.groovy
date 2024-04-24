@@ -48,6 +48,9 @@ class RundeckJaasAuthenticationSuccessEventListenerTest extends Specification im
 
         then:
         0 * listener.eventBus.notify(*_)
+        listener.userService = Mock(UserService) {
+            0 * updateUserProfile({it == _},{it == _},{it == _},{it == _}) >> {}
+        }
 
     }
 
@@ -69,7 +72,10 @@ class RundeckJaasAuthenticationSuccessEventListenerTest extends Specification im
         listener.onApplicationEvent(new JaasAuthenticationSuccessEvent(new JaasAuthenticationToken(username,null,loginContext)))
 
         then:
-        1 * listener.eventBus.notify(
+        listener.userService = Mock(UserService) {
+            1 * updateUserProfile({it == username},{it == last},{it == first},{it == email}) >> {}
+        }
+        0 * listener.eventBus.notify(
             UserService.G_EVENT_LOGIN_PROFILE_CHANGE,
             {
                 it.username == username
@@ -100,6 +106,9 @@ class RundeckJaasAuthenticationSuccessEventListenerTest extends Specification im
         listener.onApplicationEvent(new JaasAuthenticationSuccessEvent(new UsernamePasswordAuthenticationToken("un","pwd")))
 
         then:
+        listener.userService = Mock(UserService) {
+            0 * updateUserProfile({it == _},{it == _},{it == _},{it == _}) >> {}
+        }
         0 * listener.eventBus.notify(*_)
         noExceptionThrown()
     }
