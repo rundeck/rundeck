@@ -218,11 +218,21 @@ public class FrameworkBase implements IFramework{
     public static PropertyRetriever createPropertyRetriever(File basedir) {
         return FilesystemFramework.createPropertyRetriever(basedir);
     }
+
+    /**
+     *
+     * @param basedir
+     * @param projectsdir
+     * @return
+     * @Deprecated used in tests
+     */
+    @Deprecated
     public static Framework getInstance(String basedir, String projectsdir) {
         ServiceSupport serviceSupport = new ServiceSupport();
         BaseFrameworkExecutionServices executionServices = new BaseFrameworkExecutionServices();
         serviceSupport.setExecutionServices(executionServices);
         Framework framework = FrameworkFactory.createForFilesystem(basedir, serviceSupport);
+        executionServices.setNodeExecutorService(new NodeExecutorService(framework));
         executionServices.setFramework(framework);
         return framework;
     }
