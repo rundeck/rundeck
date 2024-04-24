@@ -167,9 +167,11 @@ class EditProjectSpec extends SeleniumBase {
         def projectEditPage = page ProjectEditPage
         def projectDashboard = page DashboardPage
         def loginPage = go LoginPage
+        def homePage = page HomePage
 
         when:
         loginPage.login(TEST_USER, TEST_PASS)
+        homePage.validatePage()
         projectEditPage.go("/project/${projectName}/configure")
         projectEditPage.setProjectLabel projectLabel
         projectEditPage.save()
@@ -198,9 +200,11 @@ class EditProjectSpec extends SeleniumBase {
         def projectEditPage = page ProjectEditPage
         def projectDashboard = page DashboardPage
         def loginPage = go LoginPage
+        def homePage = page HomePage
 
         when: "Give a desc and label first"
         loginPage.login(TEST_USER, TEST_PASS)
+        homePage.validatePage()
         projectEditPage.go("/project/${projectName}/configure")
         projectEditPage.setProjectLabel "a-label"
         projectEditPage.setProjectDescription "A desc"
