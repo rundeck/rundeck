@@ -70,7 +70,7 @@ public class LocalNodeExecutor implements NodeExecutor {
         this.disableLocalExecutor = getDisableLocalExecutorEnv();
     }
 
-    static Boolean getDisableLocalExecutorEnv(){
+    public static Boolean getDisableLocalExecutorEnv(){
         String disableLocalExecutor = System.getenv(DISABLE_LOCAL_EXECUTOR_ENV);
 
         if(disableLocalExecutor!=null && disableLocalExecutor.equals("true")){
