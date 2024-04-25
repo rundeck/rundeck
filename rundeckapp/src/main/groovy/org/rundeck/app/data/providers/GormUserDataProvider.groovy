@@ -345,6 +345,7 @@ class GormUserDataProvider implements UserDataProvider, SystemConfigurable{
                     .strata("default")
                     .required(false)
                     .restart(true)
+                    .authRequired('ops_admin')
                     .build()
                 }
         ]
