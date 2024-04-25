@@ -1,9 +1,9 @@
-import {BaseCredentialProvider} from 'ts-rundeck/dist/baseCredProvider'
+import {BaseCredentialProvider} from '@rundeck/client/dist/baseCredProvider'
 import { parse } from 'url'
 
 import { RundeckCluster, RundeckInstance } from '../RundeckCluster'
 import { TestProject, IRequiredResources } from '../TestProject'
-import {PasswordCredentialProvider, RundeckClient, rundeckPasswordAuth, TokenCredentialProvider} from 'ts-rundeck'
+import {PasswordCredentialProvider, RundeckClient, rundeckPasswordAuth, TokenCredentialProvider} from '@rundeck/client'
 import { cookieEnrichPolicy, waitForRundeckReady } from '../util/RundeckAPI'
 import { ClusterFactory } from '../ClusterManager'
 import { RequestPolicyFactory } from "@azure/ms-rest-js"
