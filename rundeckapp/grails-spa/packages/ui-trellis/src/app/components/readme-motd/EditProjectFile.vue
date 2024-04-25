@@ -2,7 +2,7 @@
   <div class="content">
     <div id="layoutBody">
       <div class="title">
-        <span class="text-h3">
+        <span class="text-h3" data-test-id="title">
           <template v-if="filename === 'readme.md'">
             <i class="fas fa-file-alt"></i> {{ $t("edit.readme.label") }}
           </template>
@@ -36,12 +36,14 @@
                   </details>
                 </div>
                 <ace-editor
+                  v-if="authAdmin"
                   v-model="fileText"
                   :soft-wrap-control="true"
                   height="250"
                   width="100%"
                   lang="markdown"
                   :read-only="false"
+                  data-test-id="ace-editor"
                 />
               </div>
               <div class="card-footer">
@@ -49,13 +51,16 @@
                   type="button"
                   class="btn btn-default reset_page_confirm"
                   @click="createProjectHomeLink"
+                  data-test-id="cancel"
                 >
                   Cancel
                 </button>
                 <button
+                  v-if="authAdmin"
                   type="submit"
                   class="btn btn-cta reset_page_confirm"
                   @click="saveProjectFile"
+                  data-test-id="save"
                 >
                   Save
                 </button>
@@ -129,6 +134,7 @@ export default defineComponent({
   },
   mounted() {
     this.getFileText();
+    this.originalFileText = this.fileText;
   },
   methods: {
     async saveProjectFile() {
@@ -176,6 +182,7 @@ export default defineComponent({
     async getFileText() {
       try {
         const response = await getFileText(this.project, this.filename);
+
         if (response.success) {
           this.fileText = response.contents;
         }
