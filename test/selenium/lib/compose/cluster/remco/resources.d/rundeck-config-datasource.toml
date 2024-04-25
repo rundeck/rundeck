@@ -1,4 +1,0 @@
-[[template]]
-    src         = "${REMCO_TEMPLATE_DIR}/rundeck-config-datasource.properties"
-    dst         = "${RUNDECK_HOME}/server/config/rundeck-config-datasource.properties"
-    mode        = "0644"
