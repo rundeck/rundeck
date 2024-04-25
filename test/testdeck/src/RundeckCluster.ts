@@ -4,7 +4,7 @@ import FS from 'fs'
 import {promisify} from 'util'
 
 import URL from 'url'
-import { RundeckClient, rundeckPasswordAuth } from 'ts-rundeck'
+import { RundeckClient, rundeckPasswordAuth } from '@rundeck/client'
 import { IClusterManager } from './ClusterManager'
 
 const readfileAsync = promisify(FS.readFile)
