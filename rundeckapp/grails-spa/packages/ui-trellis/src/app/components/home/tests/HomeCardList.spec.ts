@@ -1,4 +1,4 @@
-import { shallowMount } from "@vue/test-utils";
+import { shallowMount, VueWrapper } from "@vue/test-utils";
 import HomeCardList from "../HomeCardList.vue";
 import HomeSearchBar from "../HomeSearchBar.vue";
 
@@ -8,7 +8,7 @@ jest.mock("@/library/rundeckService.ts", () => ({
   })),
 }));
 
-const createWrapper = (props = {}) => {
+const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
   return shallowMount(HomeCardList, {
     props: {
       loadedProjectNames: false,
@@ -30,7 +30,7 @@ describe("HomeCardList", () => {
   });
 
   it("renders HomeSearchBar and table header when no projects are available", async () => {
-    const wrapper = createWrapper();
+    const wrapper = await createWrapper();
     await wrapper.vm.$nextTick();
 
     expect(wrapper.findComponent(HomeSearchBar).exists()).toBe(true);
@@ -38,7 +38,7 @@ describe("HomeCardList", () => {
   });
 
   it("renders correct alert info message based on searchedProjectsCount", async () => {
-    const wrapper = createWrapper({
+    const wrapper = await createWrapper({
       projects: [{ name: "Project1" }, { name: "Project2" }],
       loadedProjectNames: true,
     });
@@ -67,7 +67,7 @@ describe("HomeCardList", () => {
   });
 
   it("handles search by label and updates filteredProjects and showSearchResults", async () => {
-    const wrapper = createWrapper({
+    const wrapper = await createWrapper({
       projects: [
         { name: "Project1", label: "Label1" },
         { name: "Project2", label: "Label2" },
@@ -83,7 +83,7 @@ describe("HomeCardList", () => {
   });
 
   it("hides search results on focus and blur", async () => {
-    const wrapper = createWrapper({
+    const wrapper = await createWrapper({
       projects: [
         { name: "Project1", label: "Label1" },
         { name: "Project2", label: "Label2" },
@@ -101,7 +101,7 @@ describe("HomeCardList", () => {
   });
 
   it("ensures that resultsPage contains only favorite projects when filterFavoritesOnly and favoriteProjectNames are provided", async () => {
-    const wrapper = createWrapper({
+    const wrapper = await createWrapper({
       loadedProjectNames: true,
       projects: [
         { name: "Project1", label: "Label1" },
