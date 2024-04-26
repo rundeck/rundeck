@@ -69,8 +69,6 @@ COPY tests /tests
 RUN sudo chmod -R a+x /tests/*
 
 RUN sudo dos2unix $HOME/scripts/*.sh
-RUN sudo dos2unix $HOME/api_test/api/*.sh
-RUN sudo dos2unix $HOME/api_test/src/*.sh
 RUN sudo dos2unix /tests/*.sh
 
 RUN mkdir -p $HOME/resources && \
