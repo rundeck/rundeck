@@ -73,7 +73,6 @@ task pluginBlocklistTest(type: Test){
     useJUnitPlatform()
     systemProperty('TEST_IMAGE', "rundeck/rundeck:SNAPSHOT")
     systemProperty("COMPOSE_PATH", "docker/compose/oss/docker-compose-blocklist.yml")
-    systemProperty("BLOCKLIST_FILE", "blocklist-test/blocklist.yaml")
     systemProperty('spock.configuration','spock-configs/IncludeBlocklistTestsConfig.groovy')
     description = "Run Plugin Blocklist tests"
 }
