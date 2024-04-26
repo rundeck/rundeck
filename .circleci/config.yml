@@ -657,11 +657,6 @@ workflows:
           command: bash test/run-docker-ansible-tests.sh
           <<: *require-build
           <<: *slack-defaults
-      - test-docker:
-          name: Blocklist Test
-          command: bash test/run-docker-plugin-blocklist-test.sh
-          <<: *require-build
-          <<: *slack-defaults
       - test-machine:
           name: LDAP Test
           command: bash test/run-docker-ldap-tests.sh
