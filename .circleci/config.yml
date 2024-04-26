@@ -687,3 +687,8 @@ workflows:
           gradle-task: apiTest
           <<: *require-build
           <<: *slack-defaults
+      - test-gradle-functional:
+          name: New Plugin Blocklist Test
+          gradle-task: pluginBlocklistTest
+          <<: *require-build
+          <<: *slack-defaults
