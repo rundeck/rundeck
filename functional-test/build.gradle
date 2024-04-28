@@ -87,3 +87,11 @@ task tomcatTest(type: Test){
         checkWarFile("${buildDir}/resources/test/docker/file/tomcat/data/", "rundeck-launcher.war")
     }
 }
+
+task ldapTest(type: Test){
+    useJUnitPlatform()
+    systemProperty("TEST_IMAGE", "rundeck/rundeck:SNAPSHOT")
+    systemProperty("COMPOSE_PATH", "docker/ldap/docker-compose.yml")
+    systemProperty('spock.configuration', 'spock-configs/IncludeLdapTestsConfig.groovy')
+    description = "Run Rundeck OSS LDAP Tests"
+}
