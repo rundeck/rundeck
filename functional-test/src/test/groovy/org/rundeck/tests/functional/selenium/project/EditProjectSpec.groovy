@@ -134,9 +134,11 @@ class EditProjectSpec extends SeleniumBase {
         def projectEditPage = page ProjectEditPage
         def projectDashboard = page DashboardPage
         def loginPage = go LoginPage
+        def homePage = page HomePage
 
         when:
         loginPage.login(TEST_USER, TEST_PASS)
+        homePage.validatePage()
         projectEditPage.go("/project/${projectName}/configure")
         projectEditPage.setProjectDescription(projectDescription)
         projectEditPage.save()
