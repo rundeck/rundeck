@@ -437,6 +437,7 @@ public class RundeckConfigBase {
         Enabled legacyUi = new Enabled();
         Enabled legacyXml = new Enabled();
         Enabled apiProjectConfigValidation = new Enabled();
+        Enabled caseInsensitiveUsername = new Enabled();
 
 
         @Data
@@ -552,7 +553,6 @@ public class RundeckConfigBase {
     public static class RundeckLoginConfig {
         LocalLogin localLogin;
         String redirectUri;
-        Boolean nameCaseSensitiveEnabled = false;
     }
 
     @Data

@@ -3,7 +3,6 @@ package org.rundeck.app.data.providers
 
 import grails.compiler.GrailsCompileStatic
 import grails.gorm.DetachedCriteria
-import groovy.transform.Synchronized
 import groovy.transform.TypeCheckingMode
 import groovy.util.logging.Slf4j
 import org.hibernate.StaleStateException
@@ -43,7 +42,7 @@ class GormUserDataProvider implements UserDataProvider, SystemConfigurable{
     public static final int DEFAULT_TIMEOUT = 30
     public static final String SESSION_ABANDONED_MINUTES = 'userService.login.track.sessionAbandoned'
     public static final String SHOW_LOGIN_STATUS = 'gui.userSummaryShowLoginStatus'
-    public static final String NAME_CASE_SENSITIVE_ENABLED = "login.nameCaseSensitiveEnabled"
+    public static final String NAME_CASE_INSENSITIVE_ENABLED = "feature.caseInsensitiveUsername.enabled"
 
     @Override
     RdUser get(Long userid) {
@@ -319,7 +318,7 @@ class GormUserDataProvider implements UserDataProvider, SystemConfigurable{
      @return {@code true} if login name case sensitivity is enabled, {@code false} otherwise.
      */
     def isLoginNameCaseSensitiveEnabled(){
-        return configurationService?.getBoolean(NAME_CASE_SENSITIVE_ENABLED,false)
+        return configurationService?.getBoolean(NAME_CASE_INSENSITIVE_ENABLED,false)
     }
 
     /**
@@ -335,9 +334,9 @@ class GormUserDataProvider implements UserDataProvider, SystemConfigurable{
     List<SysConfigProp> getSystemConfigProps() {
         return [
                 SystemConfig.builder().with {
-                    key("rundeck."+NAME_CASE_SENSITIVE_ENABLED)
+                    key("rundeck."+NAME_CASE_INSENSITIVE_ENABLED)
                     .datatype("Boolean")
-                    .label("Enable case sensitiveness on login name")
+                    .label("Enable case insensitive on login name")
                     .defaultValue("false")
                     .category("Custom")
                     .visibility("Advanced")
