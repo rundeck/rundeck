@@ -12,8 +12,11 @@ import org.rundeck.util.gui.pages.usersummary.UserSummaryPage
 class LdapLogin extends SeleniumBase {
 
 
+    /**
+     * Test case to verify that logging in with ldapSync=true user property doesn't duplicate users.
+     */
     def "login on ldap with ldapSync=true user property doesn't duplicate users"() {
-        when:
+        when:"login a first time with two different users"
         def loginPage = go LoginPage
         def topMenuPage = page TopMenuPage
         def loggedOutPage = page LoggedOutPage
@@ -25,8 +28,7 @@ class LdapLogin extends SeleniumBase {
         //second login
         loginPage.login("jdoe", "jdoe")
         userSummaryPage.go()
-        userSummaryPage.waitForTextToBePresentBySelector(By.className("text-info"),"2",5)
-        then:
-        userSummaryPage.getUserCountField().getText() == "2"
+        then:"only two users should appear on the user summary page"
+        userSummaryPage.waitForTextToBePresentBySelector(userSummaryPage.userCountFieldBy,"2",5)
     }
 }
