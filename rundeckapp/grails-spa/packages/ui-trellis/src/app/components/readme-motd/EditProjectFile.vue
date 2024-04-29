@@ -50,8 +50,8 @@
                 <button
                   type="button"
                   class="btn btn-default reset_page_confirm"
-                  @click="createProjectHomeLink"
                   data-test-id="cancel"
+                  @click="createProjectHomeLink"
                 >
                   Cancel
                 </button>
@@ -59,8 +59,8 @@
                   v-if="authAdmin"
                   type="submit"
                   class="btn btn-cta reset_page_confirm"
-                  @click="saveProjectFile"
                   data-test-id="save"
+                  @click="saveProjectFile"
                 >
                   Save
                 </button>
@@ -123,6 +123,7 @@ export default defineComponent({
   data() {
     return {
       fileText: "",
+
       markdownSectionOpen: false,
       errorMsg: "",
     };
