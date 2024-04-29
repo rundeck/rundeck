@@ -108,7 +108,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.referencedExecutionDataProvider = referencedExecutionDataProvider
         service.jobStatsDataProvider = new GormJobStatsDataProvider()
         provider.configurationService = Mock(ConfigurationService) {
-            getBoolean("login.nameCaseSensitiveEnabled",false) >> true
+            getBoolean("feature.caseInsensitiveUsername.enabled",false) >> true
         }
     }
 
