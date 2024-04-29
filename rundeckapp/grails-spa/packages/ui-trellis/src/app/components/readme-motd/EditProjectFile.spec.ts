@@ -42,6 +42,7 @@ const mountEditProjectFile = async (props = {}) => {
       filename: "readme.md",
       project: "default",
       authAdmin: true,
+      displayConfig: ["none"],
       ...props,
     },
     global: {
@@ -50,6 +51,7 @@ const mountEditProjectFile = async (props = {}) => {
       },
     },
   });
+  await wrapper.vm.$nextTick();
 };
 
 describe("EditProjectFile", () => {
@@ -60,7 +62,6 @@ describe("EditProjectFile", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
-
   it.each([
     ["readme.md", "edit.readme.label"],
     ["motd.md", "edit.motd.label"],
@@ -72,7 +73,6 @@ describe("EditProjectFile", () => {
   });
 
   it("renders file content when getFileText method returns successfully", async () => {
-    await wrapper.vm.$nextTick();
     expect(wrapper.vm.fileText).toBe("sample file content");
   });
 
@@ -104,9 +104,6 @@ describe("EditProjectFile", () => {
   });
 
   it("displays admin specific message and configuration link when user is an admin", async () => {
-    await mountEditProjectFile({
-      displayConfig: ["none"],
-    });
     const footerText = wrapper.find(".card-footer").text();
     expect(footerText).toContain("file.warning.not.displayed.admin.message");
     expect(wrapper.find(".card-footer a").text()).toBe(
@@ -117,24 +114,33 @@ describe("EditProjectFile", () => {
   it("displays non-admin specific message when user is not an admin", async () => {
     await mountEditProjectFile({
       authAdmin: false,
-      displayConfig: ["none"],
     });
-    await wrapper.vm.$nextTick();
     expect(wrapper.text()).toContain(
       "file.warning.not.displayed.nonadmin.message",
     );
   });
   it("does not allow non-admin user to save the file", async () => {
     await mountEditProjectFile({ authAdmin: false });
-    expect(wrapper.find('[data-test-id="save"]').exists()).toBe(false);
+    wrapper.vm.save = jest.fn();
+    wrapper.vm.getFileText = jest.fn();
+
+    wrapper.find('[data-test-id="save"]').trigger("click");
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.save).not.toHaveBeenCalled();
   });
   it("does not allow non-admin user to edit the file", async () => {
     await mountEditProjectFile({ authAdmin: false });
     expect(wrapper.find('[data-test-id="editor"]').exists()).toBe(false);
   });
-
-  //TODO: working on this one
-  // it("does not change file content when user cancels the edit", async () => {
-  //
-  // });
+  it("renders the correct strings when user doesn't have permissions", async () => {
+    await mountEditProjectFile({ authAdmin: false });
+    expect(wrapper.text()).toContain(
+      "file.warning.not.displayed.nonadmin.message",
+    );
+  });
+  it("renders the correct strings when user has permissions", async () => {
+    expect(wrapper.text()).toContain(
+      "file.warning.not.displayed.admin.message",
+    );
+  });
 });
