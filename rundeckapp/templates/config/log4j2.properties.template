@@ -288,3 +288,8 @@ logger.liquibase.name = liquibase
 logger.liquibase.level = info
 logger.liquibase.additivity = false
 logger.liquibase.appenderRef.stdout.ref = STDOUT
+
+logger.preauth.name = org.rundeck.security.RundeckPreauthenticationRequestHeaderFilter
+logger.preauth.level = info
+logger.preauth.additivity = false
+logger.preauth.appenderRef.stdout.ref = STDOUT
