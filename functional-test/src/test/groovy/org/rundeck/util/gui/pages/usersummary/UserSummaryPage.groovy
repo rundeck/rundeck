@@ -28,13 +28,11 @@ class UserSummaryPage extends BasePage{
         el userCountField
     }
 
-    String getUserCountNumberToBe( String expectedNumber) {
-        long startTime = System.currentTimeMillis();
-        long timeout = 3000
-        while (System.currentTimeMillis() - startTime < timeout && getUserCountField().getText()!=expectedNumber) {
-            sleep(500)
-        }
-        return getUserCountField().getText()
+    String getUserCountNumberToBe(String expectedNumber, int seconds) {
+        Duration duration = Duration.ofSeconds(seconds);
+        WebDriverWait wait = new WebDriverWait(driver,duration)
+        wait.until(ExpectedConditions.textToBe(userCountField, expectedNumber));
+        return getUserCountField().getText();
     }
 
 }

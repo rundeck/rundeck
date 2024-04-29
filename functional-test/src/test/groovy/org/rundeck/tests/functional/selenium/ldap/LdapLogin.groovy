@@ -26,7 +26,7 @@ class LdapLogin extends SeleniumBase {
         userSummaryPage.go()
 
 
-        def result= userSummaryPage.getUserCountNumberToBe("2")
+        def result= userSummaryPage.getUserCountNumberToBe("2",3)
         then:
         result == "2"
     }
