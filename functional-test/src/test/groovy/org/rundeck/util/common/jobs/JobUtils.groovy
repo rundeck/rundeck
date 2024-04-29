@@ -61,13 +61,14 @@ class JobUtils {
         return client.doPostWithRawText(CREATE_JOB_ENDPOINT, "application/xml", jobDefinitionXml)
     }
 
-    static def generateExecForEnabledXmlTest(String jobName){
+    static def generateScheduledExecutionXml(String jobName){
         return  "<joblist>\n" +
                 "   <job>\n" +
                 "      <name>${jobName}</name>\n" +
                 "      <group>api-test</group>\n" +
                 "      <description></description>\n" +
                 "      <loglevel>INFO</loglevel>\n" +
+                "      <multipleExecutions>true</multipleExecutions>\n" +
                 "      <dispatch>\n" +
                 "        <threadcount>1</threadcount>\n" +
                 "        <keepgoing>true</keepgoing>\n" +
@@ -81,19 +82,20 @@ class JobUtils {
                 "</joblist>"
     }
 
-    static def generateScheduledJobsXml(String jobname){
+    static def generateScheduledJobsXml(String jobname, String schedule = "<time hour='*' seconds='*' minute='0/20' />"){
         return "<joblist>\n" +
                 "   <job>\n" +
                 "      <name>${jobname}</name>\n" +
                 "      <group>api-test</group>\n" +
                 "      <description></description>\n" +
                 "      <loglevel>INFO</loglevel>\n" +
+                "      <multipleExecutions>true</multipleExecutions>\n" +
                 "      <dispatch>\n" +
                 "        <threadcount>1</threadcount>\n" +
                 "        <keepgoing>true</keepgoing>\n" +
                 "      </dispatch>\n" +
                 "      <schedule>\n" +
-                "        <time hour='*' seconds='*' minute='0/20' />\n" +
+                "        ${schedule}\n" +
                 "        <month month='*' />\n" +
                 "        <year year='*' />\n" +
                 "      </schedule>\n" +
