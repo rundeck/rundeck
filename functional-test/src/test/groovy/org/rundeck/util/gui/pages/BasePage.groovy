@@ -106,8 +106,7 @@ abstract class BasePage {
      * @param seconds The amount of time to wait.
      */
     String waitForTextToBePresentBySelector(By selector, String text ,int seconds) {
-        Duration duration = Duration.ofSeconds(seconds)
-        WebDriverWait wait = new WebDriverWait(driver,duration)
+        WebDriverWait wait = new WebDriverWait(driver,Duration.ofSeconds(seconds))
         wait.until(ExpectedConditions.textToBe(selector, text))
     }
 
