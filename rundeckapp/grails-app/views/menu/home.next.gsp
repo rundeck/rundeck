@@ -63,7 +63,6 @@
   <asset:javascript src="menu/home.js"/>
 
   <!-- VUE CSS MODULES -->
-  <asset:stylesheet href="static/css/components/version-notification.css"/>
   <!-- /VUE CSS MODULES -->
   <asset:javascript src="static/pages/login.js"/>
   <style type="text/css">
@@ -104,7 +103,6 @@
   </div>
   <!-- VUE JS MODULES -->
   <asset:stylesheet href="static/css/pages/home.css"/>
-  <asset:javascript src="static/components/version-notification.js"/>
   <!-- /VUE JS MODULES -->
 </body>
 </html>
