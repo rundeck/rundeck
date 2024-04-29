@@ -1,5 +1,6 @@
 package org.rundeck.tests.functional.selenium.ldap
 
+import org.openqa.selenium.By
 import org.rundeck.util.annotations.LdapTest
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.TopMenuPage
@@ -11,7 +12,7 @@ import org.rundeck.util.gui.pages.usersummary.UserSummaryPage
 class LdapLogin extends SeleniumBase {
 
 
-    def "ldap login"() {
+    def "login on ldap with ldapSync=true user property doesn't duplicate users"() {
         when:
         def loginPage = go LoginPage
         def topMenuPage = page TopMenuPage
@@ -24,10 +25,8 @@ class LdapLogin extends SeleniumBase {
         //second login
         loginPage.login("jdoe", "jdoe")
         userSummaryPage.go()
-
-
-        def result= userSummaryPage.getUserCountNumberToBe("2",3)
+        userSummaryPage.waitForTextToBePresentBySelector(By.className("text-info"),"2",5)
         then:
-        result == "2"
+        userSummaryPage.getUserCountField().getText() == "2"
     }
 }

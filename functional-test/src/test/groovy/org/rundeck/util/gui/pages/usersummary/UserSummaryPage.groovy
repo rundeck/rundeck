@@ -12,7 +12,7 @@ import java.time.Duration
 class UserSummaryPage extends BasePage{
 
     String loadPath = "/menu/userSummary"
-    By userCountField = By.className("text-info")
+    By userCountFieldBy = By.className("text-info")
 
     UserSummaryPage(final SeleniumContext context) {
         super(context)
@@ -25,14 +25,6 @@ class UserSummaryPage extends BasePage{
     }
 
     WebElement getUserCountField() {
-        el userCountField
+        el userCountFieldBy
     }
-
-    String getUserCountNumberToBe(String expectedNumber, int seconds) {
-        Duration duration = Duration.ofSeconds(seconds);
-        WebDriverWait wait = new WebDriverWait(driver,duration)
-        wait.until(ExpectedConditions.textToBe(userCountField, expectedNumber));
-        return getUserCountField().getText();
-    }
-
 }
