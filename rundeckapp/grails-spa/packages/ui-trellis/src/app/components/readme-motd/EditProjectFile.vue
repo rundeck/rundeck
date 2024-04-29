@@ -45,7 +45,6 @@
                   </details>
                 </div>
                 <ace-editor
-                  v-if="authAdmin"
                   v-model="fileText"
                   :soft-wrap-control="true"
                   height="250"
@@ -65,7 +64,6 @@
                   Cancel
                 </button>
                 <button
-                  v-if="authAdmin"
                   type="submit"
                   class="btn btn-cta reset_page_confirm"
                   data-test-id="save"
@@ -152,7 +150,7 @@ export default defineComponent({
         const resp = await saveProjectFile(
           this.project,
           this.filename,
-          this.fileText,
+          this.fileText
         );
         if (resp.success) {
           this.notifySuccess("Success", "Saved Project File " + this.filename);
@@ -203,7 +201,7 @@ export default defineComponent({
               this.filename +
               " does not exist in project " +
               this.project +
-              " yet. Please save to create it.",
+              " yet. Please save to create it."
           );
         } else {
           this.notifyError(e.message);
