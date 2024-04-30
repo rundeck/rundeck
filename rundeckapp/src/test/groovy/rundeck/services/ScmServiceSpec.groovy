@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
@@ -55,6 +56,7 @@ import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.Storage
 import rundeck.services.data.UserDataService
+import rundeck.services.feature.FeatureService
 import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -69,8 +71,8 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
         mockDataService(UserDataService)
         GormUserDataProvider provider = new GormUserDataProvider()
         service.userDataProvider = provider
-        provider.configurationService = Mock(ConfigurationService) {
-            getBoolean("feature.caseInsensitiveUsername.enabled",false) >> true
+        provider.featureService = Mock(FeatureService){
+            featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> false
         }
     }
 

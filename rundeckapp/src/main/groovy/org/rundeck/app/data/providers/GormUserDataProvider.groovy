@@ -1,6 +1,6 @@
 package org.rundeck.app.data.providers
 
-
+import com.dtolabs.rundeck.core.config.Features
 import grails.compiler.GrailsCompileStatic
 import grails.gorm.DetachedCriteria
 import groovy.transform.TypeCheckingMode
@@ -23,6 +23,7 @@ import rundeck.User
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.data.UserDataService
+import rundeck.services.feature.FeatureService
 
 import javax.transaction.Transactional
 
@@ -36,13 +37,14 @@ class GormUserDataProvider implements UserDataProvider, SystemConfigurable{
     FrameworkService frameworkService
     @Autowired
     ConfigurationService configurationService
+    @Autowired
+    FeatureService featureService
 
     public static final String SESSION_ID_ENABLED = 'userService.login.track.sessionId.enabled'
     public static final String SESSION_ID_METHOD = 'userService.login.track.sessionId.method'
     public static final int DEFAULT_TIMEOUT = 30
     public static final String SESSION_ABANDONED_MINUTES = 'userService.login.track.sessionAbandoned'
     public static final String SHOW_LOGIN_STATUS = 'gui.userSummaryShowLoginStatus'
-    public static final String NAME_CASE_INSENSITIVE_ENABLED = "feature.caseInsensitiveUsername.enabled"
 
     @Override
     RdUser get(Long userid) {
@@ -315,10 +317,10 @@ class GormUserDataProvider implements UserDataProvider, SystemConfigurable{
 
     /**
      Checks if login name case sensitivity is enabled.
-     @return {@code true} if login name case sensitivity is enabled, {@code false} otherwise.
+     @return {@code true} if login name case insensitivity is enabled, {@code false} otherwise.
      */
-    def isLoginNameCaseSensitiveEnabled(){
-        return configurationService?.getBoolean(NAME_CASE_INSENSITIVE_ENABLED,false)
+    def isLoginNameCaseInsensitiveEnabled(){
+        return featureService?.featurePresent(Features.CASE_INSENSITIVE_USERNAME)
     }
 
     /**
@@ -327,14 +329,14 @@ class GormUserDataProvider implements UserDataProvider, SystemConfigurable{
      * @return The User object corresponding to the provided login name.
      */
     User findUserByLoginCaseSensitivity(String login) {
-        return isLoginNameCaseSensitiveEnabled() ? User.findByLogin(login) : User.findByLoginIlike(login)
+        return isLoginNameCaseInsensitiveEnabled() ? User.findByLoginIlike(login) : User.findByLogin(login)
     }
 
     @Override
     List<SysConfigProp> getSystemConfigProps() {
         return [
                 SystemConfig.builder().with {
-                    key("rundeck."+NAME_CASE_INSENSITIVE_ENABLED)
+                    key("rundeck."+Features.CASE_INSENSITIVE_USERNAME)
                     .datatype("Boolean")
                     .label("Enable case insensitive on login name")
                     .defaultValue("false")
