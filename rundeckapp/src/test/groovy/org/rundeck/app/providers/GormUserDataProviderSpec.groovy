@@ -10,7 +10,7 @@ import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.UserService
 import rundeck.services.data.UserDataService
-import rundeck.services.feature.FeatureService
+import com.dtolabs.rundeck.core.config.FeatureService
 import spock.lang.Unroll
 import testhelper.RundeckHibernateSpec
 

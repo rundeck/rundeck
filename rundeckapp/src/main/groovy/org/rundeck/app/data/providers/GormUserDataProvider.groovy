@@ -23,7 +23,7 @@ import rundeck.User
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.data.UserDataService
-import rundeck.services.feature.FeatureService
+import com.dtolabs.rundeck.core.config.FeatureService
 
 import javax.transaction.Transactional
 

@@ -32,7 +32,7 @@ import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.Workflow
 import rundeck.services.data.UserDataService
-import rundeck.services.feature.FeatureService
+import com.dtolabs.rundeck.core.config.FeatureService
 import spock.lang.Specification
 import spock.lang.Unroll
 
