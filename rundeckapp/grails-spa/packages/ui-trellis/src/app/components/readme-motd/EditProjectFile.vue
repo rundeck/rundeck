@@ -151,6 +151,7 @@ export default defineComponent({
       }
     },
     createProjectHomeLink() {
+      this.fileText = this.originalFileText;
       document.location = url("project/" + this.project + "/home").href;
     },
     notifyError(msg) {
