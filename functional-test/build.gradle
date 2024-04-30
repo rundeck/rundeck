@@ -77,3 +77,11 @@ task seleniumCoreTest(type: Test){
     systemProperty('spock.configuration', 'spock-configs/IncludeSeleniumCoreTestsConfig.groovy')
     description = "Run Rundeck OSS Selenium Tests"
 }
+
+task ldapTest(type: Test){
+    useJUnitPlatform()
+    systemProperty("TEST_IMAGE", "rundeck/rundeck:SNAPSHOT")
+    systemProperty("COMPOSE_PATH", "docker/ldap/docker-compose.yml")
+    systemProperty('spock.configuration', 'spock-configs/IncludeLdapTestsConfig.groovy')
+    description = "Run Rundeck OSS LDAP Tests"
+}
