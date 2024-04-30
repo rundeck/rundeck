@@ -56,7 +56,7 @@ import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.Storage
 import rundeck.services.data.UserDataService
-import rundeck.services.feature.FeatureService
+import com.dtolabs.rundeck.core.config.FeatureService
 import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Specification
 import spock.lang.Unroll

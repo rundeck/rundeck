@@ -75,7 +75,7 @@ import org.springframework.context.MessageSource
 import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
 import rundeck.services.data.UserDataService
-import rundeck.services.feature.FeatureService
+import com.dtolabs.rundeck.core.config.FeatureService
 import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
