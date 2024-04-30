@@ -26,4 +26,8 @@ class ActivityPage extends BasePage {
         el timeAbs
     }
 
+    List<WebElement> getActivityRowsByJobName(String jobName) {
+        els By.xpath("//*[contains(text(),'${jobName}')]")
+    }
+
 }

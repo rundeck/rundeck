@@ -21,7 +21,7 @@ class JobReferenceSpec extends SeleniumBase {
 
     def "import options from parent"(){
         setup:
-        final String projectName = 'ImportOptionsTest'
+        String projectName = 'ImportOptionsTest'
         setupProjectArchiveDirectoryResource(projectName, "${PROJECT_LOCATION}/${projectName}.rdproject")
         JobShowPage jobPage = page(JobShowPage, projectName).forJob('ffc04705-13c1-47b7-840e-3f23f0dd4f86')
         jobPage.go()
@@ -32,11 +32,13 @@ class JobReferenceSpec extends SeleniumBase {
         then:
         noExceptionThrown()
         executionPage.getLogOutput().first().getText() == 'Hello'
+        cleanup:
+        deleteProject(projectName)
     }
 
     def "pass parent option as an argument to child"(){
         setup:
-        final String projectName = 'JobReferenceCreationUsingArgTest'
+        String projectName = 'JobReferenceCreationUsingArgTest'
         setupProjectArchiveDirectoryResource(projectName, "${PROJECT_LOCATION}/${projectName}.rdproject")
         JobShowPage jobPage = page(JobShowPage, projectName).forJob('54dc738b-02aa-4d56-8b6b-45f93f47a0d6')
         jobPage.go()
@@ -47,11 +49,13 @@ class JobReferenceSpec extends SeleniumBase {
         then:
         noExceptionThrown()
         executionPage.getLogOutput().first().getText() == 'parent option default value'
+        cleanup:
+        deleteProject(projectName)
     }
 
     def "create a job with referenced execution node step by uuid and run it successfully"(){
         setup:
-        final String projectName = 'JobReferenceUUIDTest'
+        String projectName = 'JobReferenceUUIDTest'
         setupProject(projectName)
         String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/simple-job-ref.xml', client).succeeded.first().id
 
@@ -73,11 +77,13 @@ class JobReferenceSpec extends SeleniumBase {
             executionPage.getExecutionStatus() == 'SUCCEEDED'
             executionPage.getLogOutput().first().getText() == 'this is my jobref'
         }
+        cleanup:
+        deleteProject(projectName)
     }
 
     def "create a job with referenced execution node step by name and run it successfully"(){
         setup:
-        final String projectName = 'JobReferenceByNameTest'
+        String projectName = 'JobReferenceByNameTest'
         setupProject(projectName)
 
         expect:
@@ -101,11 +107,13 @@ class JobReferenceSpec extends SeleniumBase {
             executionPage.getExecutionStatus() == 'SUCCEEDED'
             executionPage.getLogOutput().first().getText() == 'this is my jobref'
         }
+        cleanup:
+        deleteProject(projectName)
     }
 
     def "create a job with referenced execution workflow step by using 'choose a job' button and run it successfully"() {
         setup:
-        final String projectName = 'JobReferenceByNameTest'
+        String projectName = 'JobReferenceByNameTest'
         setupProject(projectName)
 
         expect:
@@ -130,11 +138,13 @@ class JobReferenceSpec extends SeleniumBase {
             executionPage.getExecutionStatus() == 'SUCCEEDED'
             executionPage.getLogOutput().first().getText() == 'this is my jobref'
         }
+        cleanup:
+        deleteProject(projectName)
     }
 
     def "override node filters thread count"(){
         setup:
-        final String projectName = 'JobRefThreadCountTest'
+        String projectName = 'JobRefThreadCountTest'
         setupProjectArchiveDirectoryResource(projectName, "${PROJECT_LOCATION}/${projectName}.rdproject")
         JobShowPage jobPage = page(JobShowPage, projectName).forJob('9b559a6a-4578-4a8c-9c55-3e7ab2056341')
         jobPage.go()
@@ -145,5 +155,7 @@ class JobReferenceSpec extends SeleniumBase {
         then:
         noExceptionThrown()
         executionPage.getLogOutput().first().getText() == '1'
+        cleanup:
+        deleteProject(projectName)
     }
 }

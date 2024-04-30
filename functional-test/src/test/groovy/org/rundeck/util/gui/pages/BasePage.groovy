@@ -98,6 +98,18 @@ abstract class BasePage {
         wait.until { ExpectedConditions.textToBePresentInElement(locator, text) }
     }
 
+    /**
+     * Waits for the specified text to be present within the element located by the given selector.
+     *
+     * @param selector The selector used to locate the element.
+     * @param text The text to wait for within the element.
+     * @param seconds The amount of time to wait.
+     */
+    String waitForTextToBePresentBySelector(By selector, String text ,int seconds) {
+        WebDriverWait wait = new WebDriverWait(driver,Duration.ofSeconds(seconds))
+        wait.until(ExpectedConditions.textToBe(selector, text))
+    }
+
     boolean waitForElementAttributeToChange(WebElement locator, String attribute, String valueCompare) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30))
         wait.until {

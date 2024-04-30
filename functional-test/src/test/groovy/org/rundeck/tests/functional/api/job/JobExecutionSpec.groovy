@@ -234,7 +234,7 @@ class JobExecutionSpec extends BaseContainer {
         assert responseProject.successful
 
         def jobName1 = "xmljob"
-        def jobXml1 = JobUtils.generateExecForEnabledXmlTest(jobName1)
+        def jobXml1 = JobUtils.generateScheduledExecutionXml(jobName1)
 
         def job1CreatedResponse = JobUtils.createJob(projectName, jobXml1, client)
         assert job1CreatedResponse.successful
@@ -308,10 +308,10 @@ class JobExecutionSpec extends BaseContainer {
         assert responseProject.successful
 
         def jobName1 = "xmljob"
-        def jobXml1 = JobUtils.generateExecForEnabledXmlTest(jobName1)
+        def jobXml1 = JobUtils.generateScheduledExecutionXml(jobName1)
 
         def jobName2 = "xmljob2"
-        def jobXml2 = JobUtils.generateExecForEnabledXmlTest(jobName2)
+        def jobXml2 = JobUtils.generateScheduledExecutionXml(jobName2)
 
         def job1CreatedResponse = JobUtils.createJob(projectName, jobXml1, client)
         assert job1CreatedResponse.successful

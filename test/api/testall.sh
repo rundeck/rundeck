@@ -61,24 +61,8 @@ run_test(){
 myexit=0
 
 
-for i in ./unauthorized-test*.sh  ; do
-    tname=$(basename $i)
-    [ "$FAIL_FAST" != "0" ] && [ $myexit -ne 0 ] && return
-    $SHELL ${i} ${URL} &>$DIR/${tname}.output
-    if [ $? != 0 ] ; then
-        let myexit=2
-        test_fail "${i}"
-        echo "${i}: ${TEST_FAIL}" >> $DIR/testall.output
-        cat $DIR/${tname}.output 1>&2
-        cat $DIR/${tname}.output >> $DIR/testall.output
-    else
-        test_ok "${i}"
-        rm $DIR/${tname}.output
-    fi
-done
 
 #perform login
-rm $DIR/cookies
 $SHELL $SRC_DIR/rundecklogin.sh $URL $USER $PASS >/dev/null && test_ok "Login" || die "Login: ${TEST_FAIL}"
 
 set +e

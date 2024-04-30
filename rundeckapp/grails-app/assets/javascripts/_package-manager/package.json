@@ -16,8 +16,6 @@
   "license": "ISC",
   "devDependencies": {
     "autoprefixer": "^10.2.5",
-    "browser-sync": "^2.26.14",
-    "browser-sync-webpack-plugin": "^2.3.0",
     "laravel-mix": "^6.0.16",
     "node-forge": "^1.3.1",
     "postcss": "^8.2.12",
@@ -30,7 +28,6 @@
     "dotenv-webpack": "^7.0.2",
     "install": "^0.13.0",
     "jquery": "^3.6.4",
-    "jquery-ui": "^1.13.2",
     "jquery-ui-dist": "^1.13.2",
     "jquery-ui-timepicker-addon": "^1.6.3",
     "knockout": "3.5.1",

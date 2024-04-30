@@ -1,0 +1,36 @@
+version: "3"
+services:
+  rundeck:
+    build:
+      context: ""
+      args:
+        IMAGE: ${TEST_IMAGE}
+    links:
+      - ldap
+    environment:
+      RUNDECK_MULTIURL_ENABLED: "true"
+      RUNDECK_GRAILS_URL: ${TEST_RUNDECK_GRAILS_URL}
+      RUNDECK_SECURITY_SYNCLDAPUSER: "true"
+      RUNDECK_JAAS_MODULES_0: JettyCombinedLdapLoginModule
+      RUNDECK_JAAS_LDAP_PROVIDERURL: ldap://ldap:3333
+      RUNDECK_JAAS_LDAP_BINDDN: cn=admin,dc=rdtest,dc=com
+      RUNDECK_JAAS_LDAP_BINDPASSWORD: AdminPass123
+      RUNDECK_JAAS_LDAP_USERBASEDN: ou=users,dc=rdtest,dc=com
+      RUNDECK_JAAS_LDAP_ROLEBASEDN: ou=roles,dc=rdtest,dc=com
+      RUNDECK_JAAS_LDAP_USEREMAILATTRIBUTE: mail
+      RUNDECK_JAAS_LDAP_USERFIRSTNAMEATTRIBUTE: givenName
+      RUNDECK_JAAS_LDAP_USERLASTNAMEATTRIBUTE: sn
+    volumes:
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/etc/timezone:/etc/timezone:ro"
+  ldap:
+    hostname: ldap
+    image: osixia/openldap:1.5.0
+    environment:
+      - LDAP_ORGANISATION=RD Test
+      - LDAP_DOMAIN=rdtest.com
+      - LDAP_ADMIN_PASSWORD=AdminPass123
+      - LDAP_PORT=3333
+    volumes:
+      - ./ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom:rw
+    command: --copy-service
