@@ -1,5 +1,6 @@
 package org.rundeck.app.providers
 
+import com.dtolabs.rundeck.core.config.Features
 import grails.testing.gorm.DataTest
 import org.rundeck.app.data.model.v1.user.LoginStatus
 import org.rundeck.app.data.providers.GormUserDataProvider
@@ -9,6 +10,7 @@ import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.UserService
 import rundeck.services.data.UserDataService
+import rundeck.services.feature.FeatureService
 import spock.lang.Unroll
 import testhelper.RundeckHibernateSpec
 
@@ -45,8 +47,8 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         savedUser.save()
 
         and:
-        provider.configurationService = Mock(ConfigurationService) {
-            1 * getBoolean(provider.NAME_CASE_INSENSITIVE_ENABLED, false) >> caseSensitiveParam
+        provider.featureService = Mock(FeatureService){
+            featurePresent(Features.CASE_INSENSITIVE_USERNAME)>>caseSensitiveParam
         }
 
         when:
@@ -56,9 +58,9 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         User.findAll().size() == userCountSpec
 
         where:
-        caseSensitiveParam << [false, true, true, true, false]
-        userCountSpec << [1, 2, 2, 2]
-        userDataSpec << ["loginName1", "LOGINNAME1", "loGinNaMe1", "LoginNaME1"]
+        caseSensitiveParam << [true, false]
+        userCountSpec << [1, 2]
+        userDataSpec << ["loginName1", "LOGINNAME1"]
     }
 
     def "Throw an error on creation"() {
@@ -99,7 +101,9 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         setup:
         provider.configurationService = Mock(ConfigurationService) {
             0 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> false
-            1 *  getBoolean(provider.NAME_CASE_INSENSITIVE_ENABLED, false) >> false
+        }
+        provider.featureService = Mock(FeatureService){
+            featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> false
         }
         provider.frameworkService = Mock(FrameworkService) {
             getServerHostname() >> { "server" }
@@ -155,6 +159,9 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
     @Unroll
     def "Should update profile instead of creating a new user"() {
         given:
+        provider.featureService = Mock(FeatureService){
+            featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> true
+        }
         User savedUser = new User(login: "user1")
         savedUser.save()
         def login = "USER1"
@@ -177,8 +184,8 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         def lastName = "last1"
         def firstName = "first1"
         def email = "email1@company.com"
-        provider.configurationService = Mock(ConfigurationService) {
-            getBoolean(provider.NAME_CASE_INSENSITIVE_ENABLED, false) >> true
+        provider.featureService = Mock(FeatureService){
+            featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> false
         }
         when:
         provider.updateUserProfile(login, lastName, firstName, email)
@@ -359,11 +366,11 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
 
     def "Test isLoginNameCaseSensitiveEnabled()"() {
         given:
-        provider.configurationService = Mock(ConfigurationService){
-            1 * getBoolean(GormUserDataProvider.NAME_CASE_INSENSITIVE_ENABLED, false) >> expectedEnabled
+        provider.featureService = Mock(FeatureService){
+            featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> expectedEnabled
         }
         when:
-        Boolean enabled = provider.isLoginNameCaseSensitiveEnabled()
+        Boolean enabled = provider.isLoginNameCaseInsensitiveEnabled()
         then:
         enabled == expectedEnabled
         where:

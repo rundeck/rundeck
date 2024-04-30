@@ -15,6 +15,7 @@
  */
 package rundeck.services
 
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
@@ -31,6 +32,7 @@ import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.Workflow
 import rundeck.services.data.UserDataService
+import rundeck.services.feature.FeatureService
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -77,7 +79,9 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         provider.configurationService = Mock(ConfigurationService) {
             1 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> true
             1 * getString(UserService.SESSION_ID_METHOD, 'hash') >> method
-            1 *  getBoolean("feature.caseInsensitiveUsername.enabled", false) >> false
+        }
+        provider.featureService = Mock(FeatureService){
+            1 * featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> false
         }
         provider.frameworkService = Mock(FrameworkService) {
             getServerHostname() >> { "server" }
@@ -103,7 +107,9 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         String sessionId = "exampleSessionId01"
         provider.configurationService = Mock(ConfigurationService) {
             1 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> false
-            1 *  getBoolean("feature.caseInsensitiveUsername.enabled", false) >> false
+        }
+        provider.featureService = Mock(FeatureService){
+            1 * featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> false
         }
         provider.frameworkService = Mock(FrameworkService) {
             getServerHostname() >> { "server" }
@@ -126,7 +132,9 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         String sessionId = "willErrSessionId"
         provider.configurationService = Mock(ConfigurationService) {
             0 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> false
-            1 *  getBoolean("feature.caseInsensitiveUsername.enabled", false) >> false
+        }
+        provider.featureService = Mock(FeatureService){
+            1 * featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> false
         }
         provider.frameworkService = Mock(FrameworkService) {
             getServerHostname() >> { "server" }
