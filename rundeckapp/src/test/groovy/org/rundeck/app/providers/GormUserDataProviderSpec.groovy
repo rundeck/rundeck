@@ -60,7 +60,6 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         where:
         caseSensitiveParam << [true, false]
         userCountSpec << [1, 2]
-        userDataSpec << ["loginName1", "LOGINNAME1"]
     }
 
     def "Throw an error on creation"() {
