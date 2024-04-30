@@ -60,7 +60,7 @@ module.exports = {
     config.module.rule("tsx").uses.delete("cache-loader");
   },
   configureWebpack: (config) => {
-    config.devtool = false;
+    config.devtool = "cheap-module-source-map";
     config.output.assetModuleFilename = "[name][ext]";
     config.output.chunkFilename = "[name][ext]";
 
