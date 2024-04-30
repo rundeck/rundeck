@@ -23,4 +23,4 @@ providerNameEntries:
     - script
     - local
   WorkflowStep:
-      - github-script-step
+    - github-script-step
