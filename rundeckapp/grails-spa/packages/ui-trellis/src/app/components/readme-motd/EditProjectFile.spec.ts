@@ -130,7 +130,7 @@ describe("EditProjectFile", () => {
   });
   it("does not allow non-admin user to edit the file", async () => {
     await mountEditProjectFile({ authAdmin: false });
-    expect(wrapper.find('[data-test-id="editor"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test-id="my-ace-editor"]').exists()).toBe(false);
   });
   it("renders the correct strings when user doesn't have permissions", async () => {
     await mountEditProjectFile({ authAdmin: false });
@@ -142,5 +142,15 @@ describe("EditProjectFile", () => {
     expect(wrapper.text()).toContain(
       "file.warning.not.displayed.admin.message",
     );
+  });
+  it("cancels edits when the user clicks the cancel button", async () => {
+    wrapper.vm.originalFileText = "sample file content";
+    wrapper.vm.fileText = "edited content";
+    wrapper.vm.createProjectHomeLink = jest.fn(() => {
+      wrapper.vm.fileText = wrapper.vm.originalFileText;
+    });
+    await wrapper.find('[data-test-id="cancel"]').trigger("click");
+    expect(wrapper.vm.createProjectHomeLink).toHaveBeenCalled();
+    expect(wrapper.vm.fileText).toBe("sample file content");
   });
 });
