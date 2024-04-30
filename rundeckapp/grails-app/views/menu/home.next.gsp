@@ -79,7 +79,7 @@
   <div id="layoutBody">
     <div class="vue-ui-socket">
       <g:set var="createProjectAllowed"
-             value="${auth.resourceAllowedTest(action: AuthConstants.ACTION_CREATE, type: AuthConstants.TYPE_PROJECT, context: AuthConstants.CTX_APPLICATION)}"/>
+             value="${auth.resourceAllowedTest(action: [AuthConstants.ACTION_CREATE], type: AuthConstants.TYPE_PROJECT, context: AuthConstants.CTX_APPLICATION, has:true)}"/>
       <g:set var="roles"
              value="${request.subject?.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class)?.collect { it.name }}"/>
       <g:set var="buildIdent" value="${servletContextAttribute(attribute: 'app.ident')}"/>
