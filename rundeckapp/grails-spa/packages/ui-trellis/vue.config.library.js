@@ -60,7 +60,7 @@ module.exports = {
     config.module.rule("tsx").uses.delete("cache-loader");
   },
   configureWebpack: (config) => {
-    config.devtool = "cheap-module-source-map";
+    config.devtool = false;
     config.output.assetModuleFilename = "[name][ext]";
     config.output.chunkFilename = "[name][ext]";
 
@@ -73,8 +73,9 @@ module.exports = {
       if (asset.chunk.name.endsWith("test")) return "[name].js";
       else return "[name].vue.js";
     };
-    config.output.library = "rundeckUiTrellis";
+
     config.output.libraryTarget = "commonjs2";
+    config.output.libraryExport = "default";
 
     config.externals = [
       /** Externalize everything under node_modules: Use peer deps */
