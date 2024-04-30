@@ -7,6 +7,7 @@ import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.httpbody.ScmJobStatusResponse
 import org.rundeck.util.container.RdClient
 
+import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 
 class JobUtils {
@@ -82,7 +83,7 @@ class JobUtils {
                 "</joblist>"
     }
 
-    static def generateScheduledJobsXml(String jobname, String schedule = "<time hour='*' seconds='*' minute='0/20' />"){
+    static def generateScheduledJobsXml(String jobname, String schedule = "<time hour='*' seconds='*' minute='0/20' />", ZoneId tz = ZoneId.systemDefault()){
         return "<joblist>\n" +
                 "   <job>\n" +
                 "      <name>${jobname}</name>\n" +
@@ -104,6 +105,7 @@ class JobUtils {
                 "        <exec>echo hello there</exec>\n" +
                 "        </command>\n" +
                 "      </sequence>\n" +
+                "      <timeZone>${tz.toString()}</timeZone>\n" +
                 "   </job>\n" +
                 "</joblist>"
     }
