@@ -129,6 +129,7 @@ class JobCreatePage extends BasePage {
     By wfItemEditFormBy = By.className("wfitemEditForm")
     By optDetailBy = By.cssSelector(".optdetail.autohilite.autoedit")
     By optionsBy = By.cssSelector(".opt.item")
+    By timeZoneBy = By.id("timeZone")
 
     private String loadPath = "/job/create"
     String projectName
@@ -172,14 +173,20 @@ class JobCreatePage extends BasePage {
         addSimpleCommandStep 'echo selenium test', 0
     }
 
-    JobCreatePage addSimpleCommandStep(String command, int number) {
+    /**
+     * It adds a command with the given string and it verifies that the stepIndexNumber is added
+     * @param command
+     * @param stepIndexNumber it starts from 0
+     * @return
+     */
+    JobCreatePage addSimpleCommandStep(String command, int stepIndexNumber) {
         executeScript "window.location.hash = '#addnodestep'"
         stepLink 'exec-command', StepType.NODE click()
         byAndWaitClickable adhocRemoteStringBy
         adhocRemoteStringField.click()
         waitForNumberOfElementsToBeOne floatBy
         adhocRemoteStringField.sendKeys command
-        saveStep number
+        saveStep stepIndexNumber
 
         return this
     }
@@ -353,6 +360,10 @@ class JobCreatePage extends BasePage {
 
     WebElement getCreateJobButton() {
         el createJobBy
+    }
+
+    void clickTimeZone(){
+        (el timeZoneBy).click()
     }
 
     WebElement getCancelButton() {
