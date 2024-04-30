@@ -8,7 +8,7 @@ services:
       RUNDECK_TOKENS_FILE: /home/rundeck/server/config/tokens.properties
       RUNDECK_MULTIURL_ENABLED: "true"
       RUNDECK_METRICS_ENABLED: "true"
-      RUNDECK_PLUGIN_BLOCKLISTFILE: /home/rundeck/blocklist.yaml
+      RUNDECK_PLUGINS_PROVIDERBLOCKLISTFILE: /home/rundeck/blocklist.yaml
     volumes:
       - "/etc/localtime:/etc/localtime:ro"
       - "/etc/timezone:/etc/timezone:ro"
