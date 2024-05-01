@@ -1,5 +1,6 @@
 package org.rundeck.app.providers
 
+import com.dtolabs.rundeck.core.config.Features
 import grails.testing.gorm.DataTest
 import org.rundeck.app.data.model.v1.user.LoginStatus
 import org.rundeck.app.data.providers.GormUserDataProvider
@@ -9,6 +10,7 @@ import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.UserService
 import rundeck.services.data.UserDataService
+import com.dtolabs.rundeck.core.config.FeatureService
 import spock.lang.Unroll
 import testhelper.RundeckHibernateSpec
 
@@ -35,6 +37,29 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         login   | expect
         "saved" | true
         "login" | false
+    }
+
+    @Unroll
+    def "Find or create User case sensitive #caseSensitiveParam"() {
+        given:
+        def loginName = "loginName1"
+        User savedUser = new User(login: loginName)
+        savedUser.save()
+
+        and:
+        provider.featureService = Mock(FeatureService){
+            featurePresent(Features.CASE_INSENSITIVE_USERNAME)>>caseSensitiveParam
+        }
+
+        when:
+        provider.findOrCreateUser(loginName.toUpperCase())
+
+        then:
+        User.findAll().size() == userCountSpec
+
+        where:
+        caseSensitiveParam << [true, false]
+        userCountSpec << [1, 2]
     }
 
     def "Throw an error on creation"() {
@@ -75,6 +100,9 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         setup:
         provider.configurationService = Mock(ConfigurationService) {
             0 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> false
+        }
+        provider.featureService = Mock(FeatureService){
+            featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> false
         }
         provider.frameworkService = Mock(FrameworkService) {
             getServerHostname() >> { "server" }
@@ -125,6 +153,51 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         login   | lastName | firstName | email
         "login" | "last"   | "first"   | "email@company.com"
         "saved" | "last2"  | "first2"  | "email2@company.com"
+    }
+
+    @Unroll
+    def "Should update profile instead of creating a new user"() {
+        given:
+        provider.featureService = Mock(FeatureService){
+            featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> true
+        }
+        User savedUser = new User(login: "user1")
+        savedUser.save()
+        def login = "USER1"
+        def lastName = "last1"
+        def firstName = "first1"
+        def email = "email1@company.com"
+
+        when:
+        provider.updateUserProfile(login, lastName, firstName, email)
+        then:
+        provider.findAll().size() == 1
+    }
+
+    @Unroll
+    def "Should update profile caseSensitive create a new user"() {
+        given:
+        User savedUser = new User(login: "user1", lastName: "otherLastName", firstName: "otherFirstName", email: "otherEmail@company.com")
+        savedUser.save()
+        def login = "USER1"
+        def lastName = "last1"
+        def firstName = "first1"
+        def email = "email1@company.com"
+        provider.featureService = Mock(FeatureService){
+            featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> false
+        }
+        when:
+        provider.updateUserProfile(login, lastName, firstName, email)
+        then:
+        def firstUser = User.findByLogin("user1")
+        firstUser.firstName == "otherFirstName"
+        firstUser.lastName == "otherLastName"
+        firstUser.email == "otherEmail@company.com"
+        def userCreatedAfterUpdate = User.findByLogin(login)
+        userCreatedAfterUpdate.firstName == firstName
+        userCreatedAfterUpdate.lastName == lastName
+        userCreatedAfterUpdate.email == email
+        provider.findAll().size() == 2
     }
 
     def "Should throw error on updateUserProfile with bad login"() {
@@ -288,5 +361,18 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
         login   | _
         "user"  | _
         "admin" | _
+    }
+
+    def "Test isLoginNameCaseSensitiveEnabled()"() {
+        given:
+        provider.featureService = Mock(FeatureService){
+            featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> expectedEnabled
+        }
+        when:
+        Boolean enabled = provider.isLoginNameCaseInsensitiveEnabled()
+        then:
+        enabled == expectedEnabled
+        where:
+        expectedEnabled << [true, false]
     }
 }

@@ -437,6 +437,7 @@ public class RundeckConfigBase {
         Enabled legacyUi = new Enabled();
         Enabled legacyXml = new Enabled();
         Enabled apiProjectConfigValidation = new Enabled();
+        Enabled caseInsensitiveUsername = new Enabled();
 
 
         @Data
