@@ -1,6 +1,6 @@
 <template>
   <div class="form-group">
-    <span class="checkbox col-sm-2">
+    <span class="checkbox col-sm-2" data-testid="checkbox-span">
       <input :id="uid" v-model="enabled" type="checkbox" class="checkbox" />
       <label :for="uid"><slot>Enabled</slot></label>
     </span>
