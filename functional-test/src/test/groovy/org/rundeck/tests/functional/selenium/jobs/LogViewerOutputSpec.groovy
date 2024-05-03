@@ -129,7 +129,7 @@ class LogViewerOutputSpec extends SeleniumBase{
         def showWarningMessage = jobShowPage.waitForElementVisible(By.xpath("//div[contains(@class, 'execution-log__warning')]")).isDisplayed()
         then:
         verifyAll {
-            showWarningMessage
+            !showWarningMessage
         }
     }
 }
