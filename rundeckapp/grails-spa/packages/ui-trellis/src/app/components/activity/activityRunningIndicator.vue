@@ -15,7 +15,7 @@
 -->
 
 <template>
-  <span v-if="count > 0" @click="clickAction">
+  <span v-if="count > 0" data-test-id="activity-indicator" @click="clickAction">
     <slot :count="count">{{ count }}</slot>
   </span>
 </template>
@@ -26,7 +26,16 @@ import { defineComponent } from "vue";
 export default defineComponent({
   name: "ActivityRunningIndicator",
   components: {},
-  props: ["eventBus", "displayMode"],
+  props: {
+    eventBus: {
+      type: Object,
+      required: true,
+    },
+    displayMode: {
+      type: String,
+      default: "default",
+    },
+  },
   data() {
     return {
       count: 0,
