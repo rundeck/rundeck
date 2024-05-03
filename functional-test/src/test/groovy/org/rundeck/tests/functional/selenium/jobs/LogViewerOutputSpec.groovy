@@ -79,7 +79,7 @@ class LogViewerOutputSpec extends SeleniumBase{
         }
     }
 
-    def "doesnt show whale log warning message if maxLogSize is set"() {
+    def "show whale log warning message"() {
 
         given:
         def loginPage = page LoginPage
@@ -105,7 +105,7 @@ class LogViewerOutputSpec extends SeleniumBase{
         }
     }
 
-    def "show whale log warning message"() {
+    def "doesnt show whale log warning message if maxLogSize is set"() {
 
         given:
         def loginPage = page LoginPage
@@ -121,7 +121,7 @@ class LogViewerOutputSpec extends SeleniumBase{
         projectHomePage.validatePage()
         projectHomePage.goProjectHome(longOutPutProjectName)
         sideBar.goTo(NavLinkTypes.JOBS)
-        jobShowPage.goToJob("1f0306cd-e123-44f3-8977-9e52edad8ce7")
+        jobShowPage.goToJob("1f0306cd-e123-44f3-8977-9e52edad8ce8")
         jobShowPage.getRunJobBtn().click()
         executionShowPage.validateStatus 'SUCCEEDED'
         executionShowPage.go()
