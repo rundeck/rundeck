@@ -79,7 +79,7 @@ class LogViewerOutputSpec extends SeleniumBase{
         }
     }
 
-    def "show whale log warning message"() {
+    def "doesnt show whale log warning message if maxLogSize is set"() {
 
         given:
         def loginPage = page LoginPage
@@ -97,6 +97,34 @@ class LogViewerOutputSpec extends SeleniumBase{
         jobShowPage.goToJob("1f0306cd-e123-44f3-8977-9e52edad8ce7")
         jobShowPage.getRunJobBtn().click()
         executionShowPage.validateStatus 'SUCCEEDED'
+        executionShowPage.getLink 'Log Output' click()
+        def showWarningMessage = jobShowPage.waitForElementVisible(By.xpath("//div[contains(@class, 'execution-log__warning')]")).isDisplayed()
+        then:
+        verifyAll {
+            showWarningMessage
+        }
+    }
+
+    def "show whale log warning message"() {
+
+        given:
+        def loginPage = page LoginPage
+        def sideBar = page SideBarPage
+        def projectHomePage = page HomePage
+        def jobShowPage = page JobShowPage
+        def executionShowPage = page ExecutionShowPage
+        executionShowPage.setLoadPath("/execution/show/1?maxLogSize=5000000")
+
+        when: "We run the job to have multiple lines in log output"
+        loginPage.go()
+        loginPage.login(TEST_USER, TEST_PASS)
+        projectHomePage.validatePage()
+        projectHomePage.goProjectHome(longOutPutProjectName)
+        sideBar.goTo(NavLinkTypes.JOBS)
+        jobShowPage.goToJob("1f0306cd-e123-44f3-8977-9e52edad8ce7")
+        jobShowPage.getRunJobBtn().click()
+        executionShowPage.validateStatus 'SUCCEEDED'
+        executionShowPage.go()
         executionShowPage.getLink 'Log Output' click()
         def showWarningMessage = jobShowPage.waitForElementVisible(By.xpath("//div[contains(@class, 'execution-log__warning')]")).isDisplayed()
         then:

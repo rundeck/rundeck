@@ -3,7 +3,7 @@
     <defaultTab>nodes</defaultTab>
     <description></description>
     <executionEnabled>true</executionEnabled>
-    <id>1f0306cd-e123-44f3-8977-9e52edad8ce7</id>
+    <id>1f0306cd-e123-44f3-8977-9e52edad8ce8</id>
     <loglevel>INFO</loglevel>
     <name>output job</name>
     <nodeFilterEditable>false</nodeFilterEditable>
@@ -25,6 +25,6 @@ done]]></script>
         <scriptargs />
       </command>
     </sequence>
-    <uuid>1f0306cd-e123-44f3-8977-9e52edad8ce7</uuid>
+    <uuid>1f0306cd-e123-44f3-8977-9e52edad8ce8</uuid>
   </job>
 </joblist>
