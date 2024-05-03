@@ -51,9 +51,7 @@ class CommandNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin,
                 entry
         );
 
-        if(nodeExecutorResult.resultCode != 0){
-            throw new NodeStepException( nodeExecutorResult.failureMessage, nodeExecutorResult.failureReason, entry.getNodename())
-        }
+        Util.handleFailureResult(nodeExecutorResult, entry)
     }
 
     @Override
