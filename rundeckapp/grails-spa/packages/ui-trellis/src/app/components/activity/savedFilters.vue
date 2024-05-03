@@ -1,14 +1,17 @@
 <template>
   <span>
     <btn
-      v-if="hasQuery && (!query || !query.ftilerName)"
+      v-if="hasQuery && (!query || !query.filterName)"
       size="xs"
       type="default"
+      data-test-id="save-filter-button"
       @click="saveFilterPrompt"
     >
       {{ $t("filter.save.button") }}
     </btn>
-    <span v-if="query && query.filterName">{{ query.filterName }}</span>
+    <span v-if="query && query.filterName" data-test-id="filter-name">{{
+      query.filterName
+    }}</span>
 
     <dropdown v-if="filters && filters.length > 0">
       <span
@@ -20,7 +23,11 @@
       </span>
       <template #dropdown>
         <li v-if="query && query.filterName">
-          <a role="button" @click="deleteFilter">
+          <a
+            role="button"
+            data-test-id="delete-filter-btn"
+            @click="deleteFilter"
+          >
             <i class="glyphicon glyphicon-trash"></i>
             {{ $t("filter.delete.named.text", [query.filterName]) }}
           </a>
@@ -34,7 +41,11 @@
           <i class="glyphicon glyphicon-filter"></i>
           {{ $t("saved.filters") }}
         </li>
-        <li v-for="filter in filters" :key="filter.filterName">
+        <li
+          v-for="filter in filters"
+          :key="filter.filterName"
+          data-test-id="filter-item"
+        >
           <a role="button" @click="selectFilter(filter)">
             {{ filter.filterName }}
             <span v-if="query && filter.filterName === query.filterName"
@@ -44,6 +55,7 @@
         </li>
       </template>
     </dropdown>
+    <span v-else data-test-id="no-filters-message"> No filters available </span>
   </span>
 </template>
 <script lang="ts">
@@ -53,7 +65,20 @@ import { getRundeckContext } from "../../../library";
 import { MessageBox, Notification } from "uiv";
 
 export default defineComponent({
-  props: ["query", "hasQuery", "eventBus"],
+  props: {
+    hasQuery: {
+      type: Boolean,
+      required: true,
+    },
+    query: {
+      type: Object,
+      required: true,
+    },
+    eventBus: {
+      type: Object,
+      required: true,
+    },
+  },
   emits: ["select_filter"],
   data() {
     return {
@@ -67,8 +92,11 @@ export default defineComponent({
     };
   },
   mounted() {
+    console.log(this.filters);
+    console.log(this.$el.querySelectorAll('[data-test-id="filter-item"]'));
     this.projectName = getRundeckContext().projectName;
     this.loadFilters();
+
     this.eventBus &&
       this.eventBus.on("invoke-save-filter", this.saveFilterPrompt);
   },
@@ -85,6 +113,7 @@ export default defineComponent({
       });
     },
     async loadFilters() {
+      console.log("loadFilters is called");
       this.filters =
         this.filterStore.loadForProject(this.projectName).filters || [];
     },
@@ -92,22 +121,29 @@ export default defineComponent({
       this.$emit("select_filter", filter);
     },
     deleteFilter() {
+      console.log("Before deletion:", this.filters);
+
       if (!this.query || !this.query.filterName) {
         return;
       }
+
       this.$confirm({
         title: this.$t("Delete Saved Filter"),
         content: this.$t("filter.delete.confirm.text", [this.query.filterName]),
       })
+
         .then(() => {
           this.doDeleteFilter(this.query.filterName);
+          console.log("After deletion:", this.filters);
         })
+
         .catch(() => {
           //this.$notify("Delete canceled.");
         });
     },
     async doDeleteFilter(name) {
       this.filterStore.removeFilter(this.projectName, name);
+      console.log("Immediately after deletion:", this.filters);
       await this.loadFilters();
     },
     async doSaveFilter(name) {
@@ -122,8 +158,11 @@ export default defineComponent({
       }
     },
     saveFilterPrompt() {
+      console.log("saveFilterPrompt is called");
+      console.log("About to call MessageBox.prompt");
       MessageBox.prompt({
         title: this.promptTitle,
+
         content: this.promptContent,
         validator(value) {
           return /.+/.test(value) ? null : this.promptError;
