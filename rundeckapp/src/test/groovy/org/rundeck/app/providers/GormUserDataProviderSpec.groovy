@@ -294,14 +294,14 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
             savedUser.save()
         }
         provider.featureService = Mock(FeatureService){
-            1 * featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> caseSensitive
+            1 * featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> caseInsensitive
         }
         when:
         Boolean userExists = provider.validateUserExists(login.toUpperCase())
         then:
         userExists == expect
         where:
-        login   | expect   | caseSensitive | persitUser
+        login   | expect   | caseInsensitive | persitUser
         "user1" | false    | false         |    true
         "user2" | true     | true          |    true
         "user3" | false    | true          |    false
