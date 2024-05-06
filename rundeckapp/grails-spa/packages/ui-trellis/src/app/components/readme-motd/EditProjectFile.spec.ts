@@ -3,18 +3,15 @@ import EditProjectFile from "./EditProjectFile.vue";
 import * as editProjectFileService from "./editProjectFileService";
 
 jest.mock("@/app/components/readme-motd/editProjectFileService", () => ({
-  getFileText: jest.fn(() =>
-    Promise.resolve({
-      success: true,
-      contents: "sample file content",
-    }),
-  ),
-  saveProjectFile: jest.fn(() =>
-    Promise.resolve({
-      success: true,
-      message: "File saved successfully.",
-    }),
-  ),
+  getFileText: jest.fn().mockResolvedValue({
+    success: true,
+    contents: "sample file content",
+  }),
+
+  saveProjectFile: jest.fn().mockResolvedValue({
+    success: true,
+    message: "File saved successfully.",
+  }),
 }));
 
 jest.mock("@/library/rundeckService", () => ({
@@ -143,7 +140,7 @@ describe("EditProjectFile", () => {
       "file.warning.not.displayed.admin.message",
     );
   });
-  it("cancels edits when the user clicks the cancel button", async () => {
+  it("reverts edits and triggers the correct action when the cancel button is clicked", async () => {
     wrapper.vm.originalFileText = "sample file content";
     wrapper.vm.fileText = "edited content";
     wrapper.vm.createProjectHomeLink = jest.fn(() => {

@@ -142,7 +142,6 @@ export default defineComponent({
   },
   mounted() {
     this.getFileText();
-    this.originalFileText = this.fileText;
   },
   methods: {
     async saveProjectFile() {
@@ -150,7 +149,7 @@ export default defineComponent({
         const resp = await saveProjectFile(
           this.project,
           this.filename,
-          this.fileText
+          this.fileText,
         );
         if (resp.success) {
           this.notifySuccess("Success", "Saved Project File " + this.filename);
@@ -160,7 +159,6 @@ export default defineComponent({
       }
     },
     createProjectHomeLink() {
-      this.fileText = this.originalFileText;
       document.location = url("project/" + this.project + "/home").href;
     },
     notifyError(msg) {
@@ -202,7 +200,7 @@ export default defineComponent({
               this.filename +
               " does not exist in project " +
               this.project +
-              " yet. Please save to create it."
+              " yet. Please save to create it.",
           );
         } else {
           this.notifyError(e.message);
