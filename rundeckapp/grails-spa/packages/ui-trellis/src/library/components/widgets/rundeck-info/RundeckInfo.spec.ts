@@ -35,6 +35,7 @@ const mountRundeckInfo = async (props = {}) => {
     },
   });
 };
+
 describe("RundeckInfo", () => {
   afterEach(() => {
     jest.clearAllMocks();
@@ -43,17 +44,17 @@ describe("RundeckInfo", () => {
     const wrapper = await mountRundeckInfo();
     expect(wrapper.findComponent({ name: "RundeckLogo" }).exists()).toBe(true);
     expect(wrapper.findComponent({ name: "PagerdutyLogo" }).exists()).toBe(
-      false,
+      false
     );
   });
   it("renders PagerdutyLogo when appInfo.title is 'Pagerduty'", async () => {
     const wrapper = await mountRundeckInfo({ appInfo: { title: "Pagerduty" } });
     expect(wrapper.findComponent({ name: "PagerdutyLogo" }).exists()).toBe(
-      true,
+      true
     );
     expect(wrapper.findComponent({ name: "RundeckLogo" }).exists()).toBe(false);
   });
-  it("renders RundeckVersions information with correct props", async () => {
+  it("renders the correct Rundeck version based on number and title props", async () => {
     const wrapper = await mountRundeckInfo();
 
     const rundeckVersionComponent = wrapper.findComponent({
@@ -63,17 +64,18 @@ describe("RundeckInfo", () => {
 
     expect(rundeckVersionComponent.find("span").text()).toBe("Rundeck 1.0.0");
   });
-  it("renders ServerDisplay correctly with default props", async () => {
+  it("renders the server's shortened uuid along with a title attribute", async () => {
     const wrapper = await mountRundeckInfo();
     const serverComponent = wrapper.findComponent({ name: "ServerDisplay" });
     expect(serverComponent.exists()).toBe(true);
 
     expect(
-      serverComponent.find('[data-test-id="server-title"]').attributes("title"),
+      serverComponent.find('[data-test-id="server-title"]').attributes("title")
     ).toBe("paperclip-uu / uuid1");
+    expect(serverComponent.find("span").text()).toBe("uulocalHost");
   });
 
-  it("renders version display correctly", async () => {
+  it("renders Rundeck's version display name", async () => {
     const wrapper = await mountRundeckInfo();
     const versionDisplayComponent = wrapper.findComponent({
       name: "VersionDisplay",
@@ -82,11 +84,12 @@ describe("RundeckInfo", () => {
   });
   it("renders the latest release information correctly", async () => {
     const wrapper = await mountRundeckInfo();
-    const rundeckVersionComponent = wrapper.findComponent({
+    const rundeckVersionComponents = wrapper.findAllComponents({
       name: "RundeckVersion",
     });
-    expect(rundeckVersionComponent.exists()).toBe(true);
-    expect(rundeckVersionComponent.find("span").text()).toBe("Rundeck 1.0.0");
+    const latestReleaseComponent = rundeckVersionComponents[1];
+    expect(latestReleaseComponent.exists()).toBe(true);
+    expect(latestReleaseComponent.find("span").text()).toBe("v5.2.0-20240410");
   });
   it("renders the link with the correct href", async () => {
     const wrapper = await mountRundeckInfo();
