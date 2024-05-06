@@ -130,6 +130,7 @@ class JobCreatePage extends BasePage {
     By optDetailBy = By.cssSelector(".optdetail.autohilite.autoedit")
     By optionsBy = By.cssSelector(".opt.item")
     By timeZoneBy = By.id("timeZone")
+    By optEditFormBy = By.className("optEditForm")
 
     private String loadPath = "/job/create"
     String projectName
