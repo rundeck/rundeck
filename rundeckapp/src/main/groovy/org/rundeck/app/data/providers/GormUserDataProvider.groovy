@@ -220,7 +220,7 @@ class GormUserDataProvider implements UserDataProvider, SystemConfigurable{
 
     @Override
     boolean validateUserExists(String username) {
-        return User.countByLogin(username) > 0
+        return isLoginNameCaseInsensitiveEnabled() ? User.countByLoginIlike(username) > 0 : User.countByLogin(username) > 0
     }
 
     @Override
