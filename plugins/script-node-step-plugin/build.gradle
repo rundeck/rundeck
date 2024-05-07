@@ -20,6 +20,8 @@ configurations{
 dependencies {
     // Use the latest Groovy version for building this library
     implementation "org.codehaus.groovy:groovy:${groovyVersion}"
+
+    testImplementation "org.spockframework:spock-core:${spockVersion}"
 }
 
 repositories {
