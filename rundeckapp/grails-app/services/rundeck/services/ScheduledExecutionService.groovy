@@ -17,7 +17,9 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
-import com.dtolabs.rundeck.app.support.BaseNodeFilters
+import rundeck.data.job.reference.JobReferenceImpl
+import rundeck.data.job.reference.JobRevReferenceImpl
+import rundeck.support.filters.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.audit.ActionTypes
 import com.dtolabs.rundeck.core.audit.ResourceTypes
@@ -3365,6 +3367,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         ].each {
             scheduledExecution."$it" = null
         }
+        basicProps.remove("id") //id is a uuid and should not attempt to set the id field of the scheduled execution domain class
         scheduledExecution.properties = basicProps
         if (scheduledExecution.groupPath) {
             def re = /^\/*(.+?)\/*$/

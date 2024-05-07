@@ -68,6 +68,7 @@ import rundeck.User
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import rundeck.data.constants.NotificationConstants
 import rundeck.data.job.RdJobDataSummary
+import rundeck.data.job.reference.JobReferenceImpl
 import spock.lang.Specification
 
 import static org.junit.Assert.*

@@ -63,6 +63,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import rundeck.ScheduledExecution
 import rundeck.User
+import rundeck.data.job.reference.JobRevReferenceImpl
 import rundeck.services.scm.ContextJobImporter
 import rundeck.services.scm.ResolvedJobImporter
 import rundeck.services.scm.ScmPluginConfig
