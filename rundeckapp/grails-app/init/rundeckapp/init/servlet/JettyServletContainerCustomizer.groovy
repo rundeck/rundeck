@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.boot.web.embedded.jetty.JettyServerCustomizer
 import org.springframework.boot.web.embedded.jetty.JettyServletWebServerFactory
 import org.springframework.boot.web.server.WebServerFactoryCustomizer
+import rundeck.services.feature.FeatureService
 
 /**
  * Customize embedded jetty
@@ -39,6 +40,7 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
     Boolean useForwardHeaders
     String serverUrl
     String serverPort
+    FeatureService featureService
 
     @Override
     void customize(final JettyServletWebServerFactory factory) {
@@ -53,7 +55,9 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
             }
         })
         factory.addServerCustomizers(new BanHttpMethodCustomizer())
-        factory.addServerCustomizers(new RundeckHostHeaderCustomizer(serverUrl, Integer.parseInt(serverPort ?: "4440")))
+        if(featureService.featurePresent("setServerUrlOnNohostHeader", false)) {
+            factory.addServerCustomizers(new RundeckHostHeaderCustomizer(serverUrl, Integer.parseInt(serverPort ?: "4440")))
+        }
         factory.addConfigurations(new JettyConfigPropsInitParameterConfiguration(initParams))
         factory.useForwardHeaders=useForwardHeaders
     }
