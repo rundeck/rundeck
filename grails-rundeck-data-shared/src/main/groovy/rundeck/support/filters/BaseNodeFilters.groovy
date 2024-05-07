@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.app.support
+package rundeck.support.filters
 
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
