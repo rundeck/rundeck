@@ -23,7 +23,7 @@ class ScriptFileNodeStepExecutor {
     private final String adhocLocalString;
     private final boolean expandTokenInScriptFile;
 
-    private final DefaultScriptFileNodeStepUtils scriptUtils = new DefaultScriptFileNodeStepUtils();
+    protected DefaultScriptFileNodeStepUtils scriptUtils = new DefaultScriptFileNodeStepUtils();
 
     ScriptFileNodeStepExecutor(
             String scriptInterpreter,
