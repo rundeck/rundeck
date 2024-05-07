@@ -880,6 +880,7 @@ beans={
     }
 
     jettyServletCustomizer(JettyServletContainerCustomizer) {
+        featureService = ref('featureService')
         def configParams = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.initParams", String.class)
         def useForwardHeadersConfig = grailsApplication.config.getProperty("server.useForwardHeaders",Boolean.class)
 
