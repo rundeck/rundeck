@@ -23,9 +23,9 @@ import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.config.FeatureService
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
-import groovy.xml.MarkupBuilder
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.acl.AppACLContext
@@ -50,6 +50,10 @@ import rundeck.services.FrameworkService
 import rundeck.services.ImportResponse
 import rundeck.services.ProgressSummary
 import rundeck.services.ProjectService
+import rundeck.services.asyncimport.AsyncImportException
+import rundeck.services.asyncimport.AsyncImportMilestone
+import rundeck.services.asyncimport.AsyncImportService
+import rundeck.services.asyncimport.AsyncImportStatusDTO
 import spock.lang.Specification
 import spock.lang.Unroll
 import webhooks.component.project.WebhooksProjectComponent
@@ -73,6 +77,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         session.subject = new Subject()
         controller.rundeckWebDefaultParameterNamesMapper=Mock(WebDefaultParameterNamesMapper)
         controller.rundeckExceptionHandler=Mock(WebExceptionHandler)
+        controller.featureService = Mock(FeatureService)
     }
     private void setupAuthExport(
         boolean auth = true,
@@ -349,7 +354,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         true | false | false | false   | false   | false
     }
 
-    def "api v34 exportAll include webhooks auth tokens when whkIncludeAuthTokens is set to true"(){
+    def "api v34 exportAll include webhooks auth tokens when whkIncludeAuthTokens && whkRegenUuid are set to true"(){
 
         given:"a project to be exported"
         controller.projectService = Mock(ProjectService)
@@ -357,10 +362,12 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         controller.frameworkService = Mock(FrameworkService)
         setupGetResource()
         params.project = 'aproject'
+        Map<String, String> exportOpts = [(WebhooksProjectExporter.INLUDE_AUTH_TOKENS):"true",(WebhooksProjectExporter.WHK_REGEN_UUID):"true"]
 
         when:"exporting the project using the API"
         params.exportAll = "true"
         params.whkIncludeAuthTokens = "true"
+        params.whkRegenUuid = "true"
         request.api_version = ApiVersions.V34
         controller.apiProjectExport()
 
@@ -369,7 +376,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.projectService.exportProjectToOutputStream(_, _, _, _, { ArchiveOptions opts ->
                     opts.all == true &&
-                    opts.exportOpts[WebhooksProjectComponent.COMPONENT_NAME]==[(WebhooksProjectExporter.INLUDE_AUTH_TOKENS):"true"]
+                    opts.exportOpts[WebhooksProjectComponent.COMPONENT_NAME]==exportOpts
         },_
         )
     }
@@ -424,10 +431,12 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         controller.frameworkService = Mock(FrameworkService)
         setupGetResource()
 
+        Map<String, String> exportOpts = [(WebhooksProjectExporter.INLUDE_AUTH_TOKENS):whinclude.toString(),(WebhooksProjectExporter.WHK_REGEN_UUID):regenUuid.toString()]
         params.project = 'aproject'
 
         params.exportWebhooks=whenable.toString()
         params.whkIncludeAuthTokens=whinclude.toString()
+        params.whkRegenUuid=regenUuid.toString()
         request.api_version = 34
 
         when:
@@ -438,14 +447,14 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
 
         1 * controller.projectService.exportProjectToOutputStream(_, _, _, _, { ArchiveOptions opts ->
                     opts.exportComponents[WebhooksProjectComponent.COMPONENT_NAME] == whenable &&
-                    opts.exportOpts[WebhooksProjectComponent.COMPONENT_NAME]==[(WebhooksProjectExporter.INLUDE_AUTH_TOKENS):whinclude.toString()]
+                    opts.exportOpts[WebhooksProjectComponent.COMPONENT_NAME]==exportOpts
         },_
         )
 
         where:
-            whenable | whinclude
-            true     | true
-            true     | false
+            whenable | whinclude | regenUuid
+            true     | true      | true
+            true     | false     | false
     }
 
     def "api project delete error"() {
@@ -754,7 +763,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         given:
         params.filename="readme.md"
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
         }
         request.api_version=11
@@ -772,7 +781,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         controller.frameworkService=Mock(FrameworkService){
         }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
 
         }
@@ -791,7 +800,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         controller.frameworkService=Mock(FrameworkService){
         }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
         }
         setupAuthConfigure(false)
@@ -810,7 +819,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         setupAuthConfigure()
         request.api_version=11
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * renderErrorFormat(_,{it.code=='api.error.item.doesnotexist' && it.args==['resource','wrong.md']})
         }
@@ -830,7 +839,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         })
         request.api_version=11
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * renderErrorFormat(_,{it.code=='api.error.item.doesnotexist' && it.args==['resource','readme.md']})
         }
@@ -846,7 +855,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         params.project="test"
         controller.frameworkService=Mock(FrameworkService)
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'text'
         }
@@ -861,40 +870,12 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         then:
         response.contentType=='text/plain'
     }
-    def "project file GET xml format"(String filename,String text){
-        given:
-        controller.frameworkService=Mock(FrameworkService)
-
-        controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
-            1 * requireApi(_,_) >> true
-            1 * extractResponseFormat(_,_,_,_) >> 'xml'
-            1 * renderSuccessXml(_,_,_) >> text
-        }
-        setupAuthConfigure(true,true,'test',Mock(IRundeckProject){
-            1 * existsFileResource(filename) >> true
-            1 * loadFileResource(filename,!null)
-        })
-        request.api_version=11
-        when:
-        params.filename=filename
-        params.project="test"
-        def result=controller.apiProjectFileGet()
-
-        then:
-        result==text
-
-        where:
-        filename    | text
-        'readme.md' | 'test'
-        'motd.md'   | 'test2'
-    }
     def "project file GET json format"(String filename,String text){
         setup:
         controller.frameworkService=Mock(FrameworkService)
 
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
         }
@@ -926,7 +907,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         given:
         controller.frameworkService=Mock(FrameworkService)
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_) >> 'xml'
         }
@@ -989,7 +970,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         given:
         controller.frameworkService=Mock(FrameworkService)
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(*_) >> 'xml'
             1 * parseJsonXmlWith(*_) >> {args->
@@ -1015,45 +996,14 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         'readme.md' | 'test'
         'motd.md'   | 'test2'
     }
-    def "project file PUT xml"(String filename,String text){
-        given:
-        controller.frameworkService=Mock(FrameworkService)
-        controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
-            1 * requireApi(_,_) >> true
-            1 * extractResponseFormat(*_) >> 'xml'
-            1 * parseJsonXmlWith(_,_,_) >> {args->
-                args[2].xml.call(args[0].XML)
-                true
-            }
-        }
-        setupAuthProjectFilePut(filename,text)
-        request.api_version=11
-        when:
-        params.filename=filename
-        params.project="test"
-        request.method='PUT'
-        request.format='xml'
-        request.content=('<contents>'+text+'</contents>').bytes
-
-        def result=controller.apiProjectFilePut()
-
-        then:
-        response.status==200
-
-        where:
-        filename    | text
-        'readme.md' | 'test'
-        'motd.md'   | 'test2'
-    }
     def "project file PUT text"(String filename,String text){
         given:
         controller.frameworkService=Mock(FrameworkService)
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
             1 * requireApi(_,_) >> true
-            1 * extractResponseFormat(*_) >> 'xml'
-            1 * renderSuccessXml(*_)
+            1 * requireApi(_,_) >> true
+            1 * extractResponseFormat(*_) >> 'json'
+            0 * renderSuccessXml(*_)
 
         }
         setupAuthProjectFilePut(filename,text)
@@ -1076,10 +1026,10 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
     }
 
 
-    def "project acls require api_version 14"(){
+    def "project acls require api"(){
         setup:
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> {args->
+            1 * requireApi(_,_) >> {args->
                 args[1].status=400
                 false
             }
@@ -1093,7 +1043,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
     def "project acls require project parameter"(){
         setup:
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * renderErrorFormat(_,[status:400,code:'api.error.parameter.required',args:['project']]) >> {args->
                 args[0].status=args[1].status
@@ -1108,7 +1058,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
     def "project acls project not found"(){
         setup:
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * renderErrorFormat(_,[status:404,code:'api.error.item.doesnotexist',args:['Project','monkey']]) >> {args->
                 args[0].status=args[1].status
@@ -1128,7 +1078,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
     def "project acls not authorized"(){
         setup:
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * renderErrorFormat(_,[status:403,code:'api.error.item.unauthorized',args:[action,'ACL for Project', 'monkey']]) >> {args->
                 args[0].status=args[1].status
@@ -1160,7 +1110,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
     def "project acls invalid path"(){
         setup:
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
 
             1 * extractResponseFormat(_,_,_,_) >> 'json'
@@ -1215,7 +1165,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
             _* existsPolicyFile(ctx,_)>>false
         }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
             1 * renderErrorFormat(_,_) >> {args->
@@ -1254,7 +1204,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 }
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
         }
@@ -1289,7 +1239,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 0 * loadPolicyFileContents(ctx,'blah.aclpolicy',_)
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> {it[3]}
             1 * renderErrorFormat(_,[status:406,code:'api.error.resource.format.unsupported',args:['jambajuice']])>>{it[0].status=it[1].status}
@@ -1327,7 +1277,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 }
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> {it[3]}
             0 * _(*_)
@@ -1341,44 +1291,6 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         response.status==200
         response.contentType.split(';').contains('application/json')
         response.json==[contents:"blah"]
-    }
-    def "project acls GET xml"(){
-        setup:
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                1 * getAuthContextForSubject(_) >> null
-                1 * authResourceForProjectAcl('test') >> null
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
-            controller.frameworkService=Mock(FrameworkService){
-                1 * existsFrameworkProject('test') >> true
-                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                    _* getName()>>'test'
-                    0 * _(*_)
-                }
-            }
-            def ctx = AppACLContext.project('test')
-            controller.aclFileManagerService=Mock(AclFileManagerService){
-                1* existsPolicyFile(ctx,'blah.aclpolicy')>>true
-                1 * loadPolicyFileContents(ctx,'blah.aclpolicy',_)>>{args->
-                    args[2].write('blah'.bytes)
-                    4
-                }
-            }
-        controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
-            1 * requireApi(_,_) >> true
-            1 * extractResponseFormat(_,_,_,_) >> 'xml'
-            1 * renderWrappedFileContentsXml('blah','xml',_) >> {args-> args[2]}
-        }
-        when:
-        params.path='blah.aclpolicy'
-        params.project="test"
-        response.format='xml'
-        controller.apiProjectAcls()
-
-        then:
-        response.status==200
-        response.contentType.split(';').contains('application/xml')
     }
     def "project acls GET text/yaml"(String respFormat, String contentType){
         setup:
@@ -1403,7 +1315,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 }
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> respFormat
         }
@@ -1441,7 +1353,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 1* listStoredPolicyFiles(ctx)>>['blah.aclpolicy']
             }
             controller.apiService=Mock(ApiService){
-                1 * requireApi(_,_,14) >> true
+                1 * requireApi(_,_) >> true
                 1 * requireApi(_,_) >> true
                 1 * jsonRenderDirlist('',_,_,['blah.aclpolicy']) >> {args->
                     [success: true]
@@ -1460,40 +1372,6 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         response.contentType.split(';').contains('application/json')
         response.json==[success:true]
 
-    }
-    def "project acls GET dir XML"(){
-        setup:
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                1 * getAuthContextForSubject(_) >> null
-                1 * authResourceForProjectAcl('test') >> null
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
-            controller.frameworkService=Mock(FrameworkService){
-                1 * existsFrameworkProject('test') >> true
-                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                    _* getName()>>'test'
-                    0 * _(*_)
-                }
-            }
-            def ctx = AppACLContext.project('test')
-            controller.aclFileManagerService=Mock(AclFileManagerService){
-                1* listStoredPolicyFiles(ctx)>>['blah.aclpolicy']
-            }
-        controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
-            1 * requireApi(_,_) >> true
-            1 * xmlRenderDirList('',_,_,['blah.aclpolicy'],_)
-            0*_(*_)
-        }
-        when:
-        params.path=''
-        params.project="test"
-        response.format='xml'
-        def result=controller.apiProjectAcls()
-
-        then:
-        response.status==200
-        response.contentType.split(';').contains('application/xml')
     }
     def "project acls POST text"(){
         setup:
@@ -1526,7 +1404,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
 
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
         }
@@ -1558,7 +1436,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
             controller.apiService=Mock(ApiService){
-                1 * requireApi(_,_,14) >> true
+                1 * requireApi(_,_) >> true
                 1 * requireApi(_,_) >> true
                 1 * extractResponseFormat(_,_,_,_) >> 'json'
                 1 * renderJsonAclpolicyValidation(_)>>{args-> [contents: 'blah']}
@@ -1606,7 +1484,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
             controller.apiService=Mock(ApiService){
-                1 * requireApi(_,_,14) >> true
+                1 * requireApi(_,_) >> true
                 1 * requireApi(_,_) >> true
                 1 * extractResponseFormat(_,_,_,_) >> 'xml'
                 1 * renderXmlAclpolicyValidation(_,_)>>{args->args[1].contents('data')}
@@ -1655,7 +1533,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
             1 * renderErrorFormat(
@@ -1707,7 +1585,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
             controller.apiService=Mock(ApiService){
-                1 * requireApi(_,_,14) >> true
+                1 * requireApi(_,_) >> true
                 1 * requireApi(_,_) >> true
                 1 * extractResponseFormat(_,_,_,_) >> 'json'
             }
@@ -1774,7 +1652,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 0* deletePolicyFile(ctx,'test.aclpolicy')
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
             1 * renderErrorFormat(
@@ -1818,7 +1696,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 1* deletePolicyFile(ctx,'test.aclpolicy')>>true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
 
@@ -1849,17 +1727,21 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 0 * _(*_)
             }
             controller.projectService=Mock(ProjectService){
-                1*importToProject(_,_,_,_, {
-                    it.importComponents == [(WebhooksProjectComponent.COMPONENT_NAME): true]
-                }
-                ) >> [success: false, importerErrors: ['err1', 'err2']]
-
+//                **Deprecated**
+//                1*importToProject(_,_,_,_, {
+//                    it.importComponents == [(WebhooksProjectComponent.COMPONENT_NAME): true]
+//                }
+//                ) >> [success: false, importerErrors: ['err1', 'err2']]
+                handleApiImport(_,_,_,_,_) >> [success: false, importerErrors: ['err1', 'err2']]
                 0 * _(*_)
+            }
+            controller.asyncImportService = Mock(AsyncImportService){
+                statusFileExists(_) >> false
             }
             controller.apiService=Mock(ApiService){
                 1 * requireApi(_, _) >> true
                 1 * requireRequestFormat(_, _, _) >> true
-                1 * extractResponseFormat(_, _, _, _) >> 'json'
+                _ * extractResponseFormat(_, _, _, _) >> 'json'
             }
 
             params.project="test"
@@ -1879,72 +1761,6 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
             response.json.import_status=='failed'
             response.json.successful==false
             response.json.other_errors==['err1','err2']
-    }
-
-    def "api v35 import archive webhooks error has detail response xml"(){
-        setup:
-
-            setupGetResource()
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                1 * getAuthContextForSubjectAndProject(_,'test') >> null
-            }
-            controller.frameworkService=Mock(FrameworkService){
-                1 * getRundeckFramework() >> null
-
-                0 * _(*_)
-            }
-            controller.projectService=Mock(ProjectService){
-                1*importToProject(_,_,_,_, {
-                    it.importComponents == [(WebhooksProjectComponent.COMPONENT_NAME): true]
-                }
-                ) >> [success: false, importerErrors: ['err1', 'err2'], joberrors:[]]
-
-                0 * _(*_)
-            }
-            controller.apiService=Mock(ApiService){
-                1 * requireApi(_, _) >> true
-                1 * requireRequestFormat(_, _, _) >> true
-                1 * extractResponseFormat(_, _, _, _) >> 'xml'
-                1 * renderSuccessXml(_, _, _) >> { args ->
-                    def writer = new StringWriter()
-                    def xml = new MarkupBuilder(writer)
-                    def response = args[1]
-                    def recall = args[2]
-                    xml.with {
-                        recall.delegate = delegate
-                        recall.resolveStrategy = Closure.DELEGATE_FIRST
-                        recall()
-                    }
-                    def xmlstr = writer.toString()
-                    response.setContentType('application/xml')
-                    response.setCharacterEncoding('UTF-8')
-                    def out = response.outputStream
-                    out << xmlstr
-                    out.flush()
-                }
-            }
-
-            params.project="test"
-            params.importWebhooks='true'
-            response.format='xml'
-            request.method='PUT'
-
-            request.content='test'.bytes
-            request.api_version=35
-        when:
-
-            def result=controller.apiProjectImport()
-
-        then:
-            response.status==200
-            response.contentType.contains 'application/xml'
-            response.xml.@status=='failed'
-            response.xml.@successful==false
-            response.xml.otherErrors.@count=='2'
-            response.xml.otherErrors.size()==1
-            response.xml.otherErrors[0].error.size()==2
-            response.xml.otherErrors[0].error[0].text()=='err1'
-            response.xml.otherErrors[0].error[1].text()=='err2'
     }
 
 
@@ -2316,16 +2132,15 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 getName()>>'aproject'
             }
         }
-        1 * controller.projectService.exportProjectToInstanceAsync(_, _, _, { ArchiveOptions opts ->
-            opts.executionsOnly == false &&
-                    opts.all == true &&
-                    opts.jobs == true &&
-                    opts.executions == true &&
-                    opts.configs == true &&
-                    opts.readmes == true &&
-                    opts.acls == true
-        },_,_,_,preserveuuid?:false,_
-        ) >> 'dummytoken'
+        1 * controller.projectService.exportProjectToInstanceAsync(_, _, _, { ProjectArchiveParams opts ->
+                    opts.exportAll == true &&
+                    opts.exportJobs == true &&
+                    opts.exportExecutions == true &&
+                    opts.exportConfigs == true &&
+                    opts.exportReadmes == true &&
+                    opts.exportAcls == true &&
+                    opts.preserveuuid == preserveuuid
+        }, _ ) >> 'dummytoken'
         1 * controller.projectService.validateAllProjectComponentExportOptions(_) >> [:]
         response.redirectedUrl == '/project/aproject/exportWait/dummytoken?instance=' + url + '&iproject=' + target
 
@@ -2415,17 +2230,16 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
 
         }
 
-        1 * controller.projectService.exportProjectToInstanceAsync(_, _, _, { ArchiveOptions opts ->
-            opts.executionsOnly == false &&
-                    opts.all == true &&
-                    opts.jobs == true &&
-                    opts.executions == true &&
-                    opts.configs == true &&
-                    opts.readmes == true &&
-                    opts.acls == true &&
-                    opts.scm == true
-        },_,_,_,preserveuuid?:false,_
-        ) >> 'dummytoken'
+        1 * controller.projectService.exportProjectToInstanceAsync(_, _, _, { ProjectArchiveParams opts ->
+            opts.exportAll == true &&
+                    opts.exportJobs == true &&
+                    opts.exportExecutions == true &&
+                    opts.exportConfigs == true &&
+                    opts.exportReadmes == true &&
+                    opts.exportAcls == true &&
+                    opts.exportScm == true &&
+                    opts.preserveuuid == preserveuuid
+        }, _ ) >> 'dummytoken'
         1 * controller.projectService.validateAllProjectComponentExportOptions(_) >> [:]
         response.redirectedUrl == '/project/aproject/exportWait/dummytoken?instance=' + url + '&iproject=' + target
 
@@ -2447,21 +2261,170 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
             def project = Mock(IRundeckProject)
             setupGetResource(project)
             controller.projectService = Mock(ProjectService)
+            controller.asyncImportService = Mock(AsyncImportService){
+                statusFileExists(_) >> true
+            }
             request.content = 'test'.bytes
             params.importWebhooks='true'
             params.whkRegenAuthTokens='true'
+        params.whkRegenUuid='true'
+        Map<String, String> exportOpts = [(WebhooksProjectImporter.WHK_REGEN_AUTH_TOKENS):"true",
+                                          (WebhooksProjectImporter.WHK_REGEN_UUID):"true"]
         when: "import project via api"
             controller.apiProjectImport(aparams)
         then: "webhook component import options are set"
             response.status == 200
             1 * controller.apiService.requireApi(_, _) >> true
             1 * controller.apiService.requireRequestFormat(_,_,['application/zip'])>>true
-            1 * controller.apiService.extractResponseFormat(_, _, ['xml', 'json'], 'xml') >> 'json'
+            0 * controller.apiService.extractResponseFormat(_, _, ['xml', 'json'], 'json') >> 'json'
             1 * controller.frameworkService.getRundeckFramework()>>Mock(IFramework)
-            1 * controller.projectService.importToProject(project,_,_,_,{ ProjectArchiveImportRequest req->
-                req.importComponents == [(WebhooksProjectComponent.COMPONENT_NAME): true]
-                req.importOpts == [(WebhooksProjectComponent.COMPONENT_NAME): [(WebhooksProjectImporter.WHK_REGEN_AUTH_TOKENS): 'true']]
+//        **Deprecated**
+//            1 * controller.projectService.importToProject(project,_,_,_,{ ProjectArchiveImportRequest req->
+            1 * controller.projectService.handleApiImport(_,_,project,_,{ ProjectArchiveImportRequest req->
+                req.importOpts.webhooks == exportOpts
             }) >> [success:true]
+    }
+
+    def "import via api with async import flag true"(){
+        given:
+
+        def aparams = new ProjectArchiveParams()
+            aparams.asyncImport = true
+            aparams.importExecutions = true
+        request.method = 'PUT'
+        request.api_version = 34
+        params.project = 'test'
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        def project = Mock(IRundeckProject)
+        setupGetResource(project)
+        controller.projectService = Mock(ProjectService)
+        controller.asyncImportService = Mock(AsyncImportService){
+            statusFileExists(_) >> true
+        }
+        request.content = 'test'.bytes
+        params.importWebhooks='true'
+        params.whkRegenAuthTokens='true'
+
+        when:
+        controller.apiProjectImport(aparams)
+
+        then:
+        response.status == 200
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.apiService.requireRequestFormat(_,_,['application/zip'])>>true
+        1 * controller.frameworkService.getRundeckFramework()>>Mock(IFramework)
+        1 * controller.projectService.handleApiImport(_,_,_,_,_) >> [success: true]
+    }
+
+    def "import via api with async import flag true return handle API custom errors"(){
+        given:
+
+        def aparams = new ProjectArchiveParams()
+        aparams.asyncImport = true
+        aparams.importExecutions = true
+        request.method = 'PUT'
+        request.api_version = 40
+        params.project = 'test'
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        def project = Mock(IRundeckProject)
+        setupGetResource(project)
+        controller.projectService = Mock(ProjectService){
+            isIncompleteAsyncImportForProject(_) >> false
+        }
+        controller.asyncImportService = Mock(AsyncImportService){
+            statusFileExists(_) >> true
+        }
+        request.content = 'test'.bytes
+        params.importWebhooks='true'
+        params.whkRegenAuthTokens='true'
+
+        when:
+        controller.apiProjectImport(aparams)
+
+        then:
+        response.status == 200
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.apiService.requireRequestFormat(_,_,['application/zip'])>>true
+        1 * controller.frameworkService.getRundeckFramework()>>Mock(IFramework)
+        1 * controller.projectService.handleApiImport(_,_,_,_,_) >> [success: false, importerErrors: [async_importer_errors: "a message"]]
+        response.json.other_errors == [async_importer_errors: "a message"]
+    }
+
+    def "Call async import with existent operation in progress"(){
+        given:
+        def aparams = new ProjectArchiveParams()
+        aparams.asyncImport = true
+        aparams.importExecutions = true
+        request.method = 'PUT'
+        request.api_version = 40
+        params.project = 'test'
+        controller.asyncImportService = Mock(AsyncImportService){
+            statusFileExists(_) >> true
+        }
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.projectService = Mock(ProjectService){
+            isIncompleteAsyncImportForProject(_) >> true
+        }
+        request.content = 'test'.bytes
+        params.importWebhooks='true'
+        params.whkRegenAuthTokens='true'
+
+        when:
+        controller.apiProjectImport(aparams)
+
+        then:
+        0 * controller.projectService.handleApiImport(_,_,_,_,_)
+    }
+
+    def "async import status endpoint"(){
+        given:
+        def projectName = 'test'
+        request.method = 'GET'
+        request.api_version = 40
+        response.format='json'
+        params.project = projectName
+        controller.apiService = Mock(ApiService)
+        def dto = new AsyncImportStatusDTO(projectName, AsyncImportMilestone.M1_CREATED.milestoneNumber).with {
+            it.lastUpdate = 'This is a test'
+            it.lastUpdated = new Date()
+            it.errors = null
+            return it
+        }
+        controller.projectService = Mock(ProjectService){
+            it.getAsyncImportStatusFileForProject(projectName) >> dto
+        }
+
+        when:
+        controller.apiProjectAsyncImportStatus()
+
+        then:
+        response.status == 200
+        response.json.lastUpdate == dto.lastUpdate
+        response.json.lastUpdated == dto.lastUpdated
+        response.json.errors == 'No errors.'
+    }
+
+    def "async import status requested and no status file is found in db"(){
+        given:
+        def projectName = 'test'
+        request.method = 'GET'
+        request.api_version = 40
+        response.format='json'
+        params.project = projectName
+        controller.apiService = Mock(ApiService)
+        controller.projectService = Mock(ProjectService){
+            1 * it.getAsyncImportStatusFileForProject(projectName) >> { throw new AsyncImportException("Errors") }
+        }
+
+        when:
+        controller.apiProjectAsyncImportStatus()
+
+        then:
+        noExceptionThrown()
+        1 * controller.apiService.renderErrorFormat(_,['status':500, 'code':'api.error.async.import.status.file.retrieval.error', 'args':['Errors']])>>{it[0].status=it[1].status}
     }
 
     def "api import component options"() {
@@ -2471,6 +2434,9 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
             params.project = 'test'
             controller.apiService = Mock(ApiService)
             controller.frameworkService = Mock(FrameworkService)
+            controller.asyncImportService = Mock(AsyncImportService){
+                statusFileExists(_) >> false
+            }
             controller.projectService = Mock(ProjectService)
             def auth = Mock(UserAndRolesAuthContext)
             def project = Mock(IRundeckProject)
@@ -2486,10 +2452,12 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
             1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_) >> auth
             1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'test') >> auth
             1 * controller.apiService.requireRequestFormat(_, _, ['application/zip']) >> true
-            1 * controller.apiService.extractResponseFormat(_, _, ['xml', 'json'], 'xml') >> 'json'
+            0 * controller.apiService.extractResponseFormat(_, _, ['xml', 'json'], 'xml') >> 'json'
             1 * controller.frameworkService.getRundeckFramework() >> Mock(IFramework)
-            1 * controller.projectService.importToProject(
-                project, _, auth, _, { ProjectArchiveImportRequest req ->
+//        **Deprecated**
+//            1 * controller.projectService.importToProject(
+            1 * controller.projectService.handleApiImport(
+                _, auth, project, _, { ProjectArchiveImportRequest req ->
                 req.importComponents.mycomponent
                 req.importOpts.mycomponent?.someoption == 'avalue'
             } ) >> [success: true]

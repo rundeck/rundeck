@@ -22,6 +22,7 @@ import org.rundeck.app.spi.Services;
 import java.util.List;
 import java.util.Map;
 
+@Deprecated
 public interface ProxySecretBundleCreator {
     default SecretBundle prepareSecretBundle(ExecutionContext context, INodeEntry node){
         return null;

@@ -20,7 +20,9 @@ apply plugin:"org.grails.grails-plugin"
 apply plugin:"org.grails.grails-gsp"
 
 repositories {
+    mavenLocal()
     maven { url "https://repo.grails.org/grails/core" }
+    mavenCentral()
 }
 
 configurations {
@@ -53,7 +55,6 @@ dependencies {
     implementation "org.grails.plugins:gsp"
     implementation 'org.quartz-scheduler:quartz:2.3.2'
     implementation project(":core")
-    implementation project(':rundeck-data-model')
     implementation project(':rundeck-app-util')
     profile "org.grails.profiles:web-plugin"
     runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"

@@ -35,6 +35,7 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public abstract class ScriptFileCommand extends BaseExecutionItem implements ScriptFileCommandExecutionItem {
+    public static final String SERVICE_IMPLEMENTATION_NAME = "script-file";
 
     public String getType() {
         return NodeDispatchStepExecutor.STEP_EXECUTION_TYPE;
@@ -42,7 +43,7 @@ public abstract class ScriptFileCommand extends BaseExecutionItem implements Scr
 
     @Override
     public String getNodeStepType() {
-        return ScriptFileNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME;
+        return SERVICE_IMPLEMENTATION_NAME;
     }
 
 }

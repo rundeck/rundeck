@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
@@ -55,6 +56,7 @@ import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.Storage
 import rundeck.services.data.UserDataService
+import com.dtolabs.rundeck.core.config.FeatureService
 import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -69,6 +71,9 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
         mockDataService(UserDataService)
         GormUserDataProvider provider = new GormUserDataProvider()
         service.userDataProvider = provider
+        provider.featureService = Mock(FeatureService){
+            featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> false
+        }
     }
 
     class TestCloseable implements Closeable {
@@ -699,7 +704,7 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
 
     def "lookup user profile, with User found"() {
         given:
-        new User(login: 'bob', firstName: 'a', lastName: 'b', email: 'test@test.com').save()
+        new User(login: 'bob', firstName: 'a', lastName: 'b', email: 'test@test.com').save(flush: true)
 
         when:
         def info = service.lookupUserInfo('bob')
@@ -730,7 +735,7 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
         def response = service.userHasAccessToScmConfiguredKeyOrPassword(authContext, integration, project);
 
         then:
-        response.hasAccess
+        response
 
     }
 
@@ -1256,6 +1261,35 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
         false       | "xxx/scm-export"    | "{}"                                                    | 0     | "456"
         true        | "1234/scm-export"   | '{"name":"test","groupPath":"test"}'                    | 1     | "456"
         true        | "1234/scm-export"   | '{"name":"test","groupPath":"test","srcId":"1234"}'     | 1     | "1234"
+    }
+
+    def "Call for jobs plugin metadata, no exception thrown"() {
+        given:
+        def project = "test"
+        def scmIntegration = 'scm-import'
+
+        service.pluginConfigService = Mock(PluginConfigService)
+        service.frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> true
+        }
+        service.storageService = Mock(StorageService)
+        service.pluginService = Mock(PluginService)
+        service.jobEventsService = Mock(JobEventsService)
+        service.jobMetadataService = Mock(JobMetadataService){
+            getJobsPluginMeta(project, scmIntegration) >> List.of()
+        }
+
+
+        PluginMeta importPluginMeta = new PluginMeta()
+        importPluginMeta.key = "1234/scm-import"
+        importPluginMeta.project = project
+        importPluginMeta.jsonData = '{"name":"test","groupPath":"test","srcId":"456"}'
+
+        when:
+        def result = service.getJobsPluginMeta(project,scmIntegration)
+
+        then:
+        noExceptionThrown()
     }
 
     def "get srcId job export plugin metadata"() {

@@ -16,6 +16,7 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
 import com.dtolabs.rundeck.app.api.project.ProjectExport
 import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
@@ -26,6 +27,7 @@ import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
@@ -57,7 +59,6 @@ import org.rundeck.core.auth.access.AuthActions
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import org.rundeck.core.auth.web.RdAuthorizeProject
-import org.rundeck.web.WebUtil
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
 import com.dtolabs.rundeck.util.JsonUtil
@@ -68,6 +69,7 @@ import rundeck.services.PluginService
 import rundeck.services.ProjectService
 import rundeck.services.ProjectServiceException
 import rundeck.services.ScheduledExecutionService
+import rundeck.services.asyncimport.AsyncImportService
 import webhooks.component.project.WebhooksProjectComponent
 import webhooks.exporter.WebhooksProjectExporter
 import webhooks.importer.WebhooksProjectImporter
@@ -85,6 +87,7 @@ class ProjectController extends ControllerBase{
     PluginService pluginService
     ContextACLManager<AppACLContext> aclFileManagerService
     ConfigurationService configurationService
+    AsyncImportService asyncImportService
 
     def static allowedMethods = [
             apiProjectConfigKeyDelete:['DELETE'],
@@ -98,6 +101,7 @@ class ProjectController extends ControllerBase{
             apiProjectAcls:['GET','POST','PUT','DELETE'],
             importArchive: ['POST'],
             delete: ['POST'],
+            apiProjectAsyncImportStatus: ['GET']
     ]
 
     def index () {
@@ -204,6 +208,17 @@ class ProjectController extends ControllerBase{
             return redirect(controller: 'menu', action: 'projectExport', params: [project: params.project])
         }
         params.instance = params.url
+
+        if(params.importWebhooks == 'true') {
+            if (archiveParams.importComponents != null) {
+                archiveParams.importComponents[WebhooksProjectComponent.COMPONENT_NAME] = true
+            } else {
+                archiveParams.importComponents = [(WebhooksProjectComponent.COMPONENT_NAME): true]
+            }
+            archiveParams.importOpts[WebhooksProjectComponent.COMPONENT_NAME][WebhooksProjectImporter.WHK_REGEN_AUTH_TOKENS] = (String) params.whkRegenAuthTokens
+            archiveParams.importOpts[WebhooksProjectComponent.COMPONENT_NAME][WebhooksProjectImporter.WHK_REGEN_UUID] = (String) params.whkRegenUuid
+        }
+
         if (archiveParams.hasErrors()) {
             flash.errors = archiveParams.errors
             return redirect(controller: 'menu', action: 'projectExport', params: [project: params.project])
@@ -228,16 +243,11 @@ class ProjectController extends ControllerBase{
             return redirect(controller: 'menu', action: 'projectExport', params: [project: params.project])
         }
 
-        ProjectArchiveExportRequest options = archiveParams.toArchiveOptions()
         def token = projectService.exportProjectToInstanceAsync(
             project1,
             framework,
             authorizing.authContext.username,
-            options,
-            archiveParams.targetproject,
-            archiveParams.apitoken,
-            archiveParams.url,
-            archiveParams.preserveuuid,
+            archiveParams,
             authorizing.authContext
         )
         return redirect(action: 'exportWait',
@@ -530,7 +540,7 @@ class ProjectController extends ControllerBase{
      * @param vers api version requested
      */
     @PackageScope
-    def renderApiProjectXml (def pject, delegate, hasConfigAuth=false, vers=1){
+    def renderApiProjectXml (IRundeckProject pject, delegate, hasConfigAuth=false, vers=1){
         Map data = basicProjectDetails(pject,vers)
         def pmap = [url: data.url]
         delegate.'project'(pmap) {
@@ -605,6 +615,19 @@ class ProjectController extends ControllerBase{
                 retMap.created = created?:''
             }
         }
+        if(version>=ApiVersions.V47 && params.meta) {
+            String meta = params.meta
+            def authContext =
+                    rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, name)
+
+
+            retMap.meta = projectService.loadProjectMetaItems(
+                    name as String,
+                    new HashSet<>(meta.split(',').toList()),
+                    authContext
+            )
+        }
+
         retMap
 
     }
@@ -627,13 +650,26 @@ class ProjectController extends ControllerBase{
 Authorization required: `read` for project resource
 ''',
         tags = ['project'],
+        parameters = [
+                @Parameter(
+                        name = 'meta',
+                        in = ParameterIn.QUERY,
+                        description = 'Comma-separated list of metadata items to include, or "*" for all',
+                        allowEmptyValue = false,
+                        required = false,
+                        schema = @Schema(implementation = String.class)
+                ),
+        ],
         responses = @ApiResponse(
             responseCode = '200',
             description = '''
 *Since API version 26*: add the project `label` to the response
 
 *Since API version 33*: add the project `created` date to the response. This is based on the creation of the 
-`project.properties` file in the file system or in the DB storage.''',
+`project.properties` file in the file system or in the DB storage.
+
+*Since API version 47*: add the project `metadata` to the response. To retrieve this information, use the query param meta
+(Comma-separated list of metadata items to include, or "*" for all (default)).''',
             content = @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 array = @ArraySchema(schema = @Schema(type = 'object')),
@@ -650,24 +686,15 @@ Authorization required: `read` for project resource
     /**
      * API: /api/11/projects
      */
+
     def apiProjectList(){
         if (!apiService.requireApi(request, response)) {
             return
         }
         def projlist = frameworkService.projects(systemAuthContext)
+        def controller = this
         withFormat{
-
-            xml{
-                apiService.renderSuccessXml(request, response) {
-                    delegate.'projects'(count: projlist.size()) {
-                        projlist.sort { a, b -> a.name <=> b.name }.each { pject ->
-                            //don't include config data
-                            renderApiProjectXml(pject, delegate, false, request.api_version)
-                        }
-                    }
-                }
-            }
-            json{
+            '*' {
                 List details = []
                 projlist.sort { a, b -> a.name <=> b.name }.each { pject ->
                     //don't include config data
@@ -675,6 +702,18 @@ Authorization required: `read` for project resource
                 }
 
                 render details as JSON
+            }
+            if(controller.isAllowXml()) {
+                xml {
+                    apiService.renderSuccessXml(request, response) {
+                        delegate.'projects'(count: projlist.size()) {
+                            projlist.sort { a, b -> a.name <=> b.name }.each { pject ->
+                                //don't include config data
+                                renderApiProjectXml(pject, delegate, false, request.api_version)
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -721,15 +760,18 @@ Authorization required: `read` access for `project` resource type to get basic p
         }
         def configAuth = authorizingProject.isAuthorized(RundeckAccess.Project.APP_CONFIGURE)
         def pject = authorizingProject.resource
-        withFormat{
-            xml{
-
-                apiService.renderSuccessXml(request, response) {
-                    renderApiProjectXml(pject, delegate, configAuth, request.api_version)
-                }
-            }
-            json{
+        def controller = this
+        withFormat {
+            '*' {
                 render renderApiProjectJson(pject, configAuth, request.api_version) as JSON
+            }
+            if(controller.isAllowXml()) {
+                xml {
+
+                    apiService.renderSuccessXml(request, response) {
+                        renderApiProjectXml(pject, delegate, configAuth, request.api_version)
+                    }
+                }
             }
         }
     }
@@ -779,7 +821,8 @@ Authorization required: `create` for resource type `project`
             return
         }
         //allow Accept: header, but default to the request format
-        def respFormat = apiService.extractResponseFormat(request,response,['xml','json'])
+
+        def respFormat = apiService.extractResponseFormat(request,response, responseFormats,'json')
 
         def project = null
         def description = null
@@ -895,10 +938,12 @@ Authorization required: `create` for resource type `project`
         }
         switch(respFormat) {
             case 'xml':
-                apiService.renderSuccessXml(HttpServletResponse.SC_CREATED,request, response) {
-                    renderApiProjectXml(proj,delegate,true,request.api_version)
+                if(isAllowXml()) {
+                    apiService.renderSuccessXml(HttpServletResponse.SC_CREATED, request, response) {
+                        renderApiProjectXml(proj, delegate, true, request.api_version)
+                    }
+                    break
                 }
-                break
             case 'json':
                 response.status = HttpServletResponse.SC_CREATED
                 render renderApiProjectJson(proj, true, request.api_version) as JSON
@@ -1097,29 +1142,32 @@ key2=value''')
         def proj = authorizingProject.resource
         //render project config only
 
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json','text'], 'xml')
+
+        def allowedFormats = ['json', 'text']
+        if (allowXml) {
+            allowedFormats << 'xml'
+        }
+        def respFormat = apiService.extractResponseFormat(request, response, allowedFormats, 'json')
         respondProjectConfig(respFormat, proj)
     }
 
     @CompileStatic
     @PackageScope
     void respondProjectConfig(String respFormat, IRundeckProject proj) {
-        switch (respFormat) {
-            case 'text':
-                response.setContentType("text/plain")
-                def props = proj.getProjectProperties() as Properties
-                props.store(response.outputStream, request.forwardURI)
-                flush(response)
-                break
-            case 'xml':
-                apiService.renderSuccessXml(request, response) {
-                    renderApiProjectConfigXml(proj, delegate)
-                }
-                break
-            case 'json':
-                def config=frameworkService.loadProjectProperties(proj)
-                render(config as JSON)
-                break
+        if (respFormat=='text') {
+
+            response.setContentType("text/plain")
+            def props = proj.getProjectProperties() as Properties
+            props.store(response.outputStream, request.forwardURI)
+            flush(response)
+        }else if( isAllowXml() && respFormat=='xml'){
+
+            apiService.renderSuccessXml(request, response) {
+                renderApiProjectConfigXml(proj, delegate)
+            }
+        }else{
+            def config=frameworkService.loadProjectProperties(proj)
+            render(config as JSON)
         }
     }
 
@@ -1489,7 +1537,7 @@ Since: v14""",
     protected def apiProjectAclsDelete_docs(){}
 
     def apiProjectAcls() {
-        if (!apiService.requireApi(request, response, ApiVersions.V14)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
 
@@ -1604,12 +1652,12 @@ Since: v14""",
                 def j={
                     render apiService.renderJsonAclpolicyValidation(validation) as JSON
                 }
+                json j
                 xml{
                     render(contentType: 'application/xml'){
                         apiService.renderXmlAclpolicyValidation(validation,delegate)
                     }
                 }
-                json j
                 '*' j
             }
         }
@@ -1626,16 +1674,19 @@ Since: v14""",
         }else{
             def baos=new ByteArrayOutputStream()
             aclFileManagerService.loadPolicyFileContents(AppACLContext.project(project.name), projectFilePath, baos)
-            withFormat{
-                json{
+            def controller = this
+            withFormat {
+                '*' {
                     def content = [contents: baos.toString()]
                     render content as JSON
                 }
-                xml{
-                    render(contentType: 'application/xml'){
-                        apiService.renderWrappedFileContentsXml(baos.toString(),respFormat,delegate)
-                    }
+                if (controller.isAllowXml()) {
+                    xml {
+                        render(contentType: 'application/xml') {
+                            apiService.renderWrappedFileContentsXml(baos.toString(), respFormat, delegate)
+                        }
 
+                    }
                 }
             }
         }
@@ -1665,16 +1716,19 @@ Since: v14""",
                 //render as json/xml with contents as string
                 def baos=new ByteArrayOutputStream()
                 aclFileManagerService.loadPolicyFileContents(AppACLContext.project(project.name),projectFilePath, baos)
-                withFormat{
-                    json{
+                def controller = this
+                withFormat {
+                    '*' {
                         def content = [contents: baos.toString()]
                         render content as JSON
                     }
-                    xml{
-                        render(contentType: 'application/xml'){
-                            apiService.renderWrappedFileContentsXml(baos.toString(),'xml',delegate)
-                        }
+                    if (controller.isAllowXml()) {
+                        xml {
+                            render(contentType: 'application/xml') {
+                                apiService.renderWrappedFileContentsXml(baos.toString(), 'xml', delegate)
+                            }
 
+                        }
                     }
                 }
             }else{
@@ -1704,8 +1758,9 @@ Since: v14""",
         //list aclpolicy files in the dir
         def projectName = project.name
         def list = aclFileManagerService.listStoredPolicyFiles(AppACLContext.project(projectName))
-        withFormat{
-            json{
+        def controller = this
+        withFormat {
+            '*' {
                 render apiService.jsonRenderDirlist(
                             '',
                             {p->p},
@@ -1713,17 +1768,19 @@ Since: v14""",
                             list
                     ) as JSON
             }
-            xml{
-                render(contentType: 'application/xml'){
-                    apiService.xmlRenderDirList(
-                            '',
-                            {p->p},
-                            {p->renderProjectAclHref(projectName,p)},
-                            list,
-                            delegate
-                    )
-                }
+            if (controller.isAllowXml()) {
+                xml {
+                    render(contentType: 'application/xml') {
+                        apiService.xmlRenderDirList(
+                                '',
+                                { p -> p },
+                                { p -> renderProjectAclHref(projectName, p) },
+                                list,
+                                delegate
+                        )
+                    }
 
+                }
             }
         }
     }
@@ -1831,7 +1888,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             )
     )
     def apiProjectFilePut() {
-        if (!apiService.requireApi(request, response, ApiVersions.V13)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         def project = validateProjectConfigApiRequest()
@@ -1912,15 +1969,15 @@ Authorization required: `configure` access for `project` resource type or `admin
             String respFormat
     )
     {
-        if (respFormat=='json') {
-            def jsonContent = [contents: contentString]
-            render jsonContent as JSON
-        }else{
+        if (respFormat == 'xml' && allowXml) {
             apiService.renderSuccessXml(request, response) {
                 delegate.'contents' {
                     mkp.yieldUnescaped("<![CDATA[" + contentString.replaceAll(']]>', ']]]]><![CDATA[>') + "]]>")
                 }
             }
+        } else {
+            def jsonContent = [contents: contentString]
+            render jsonContent as JSON
         }
     }
 
@@ -1981,7 +2038,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             )
     )
     def apiProjectFileGet() {
-        if (!apiService.requireApi(request, response, ApiVersions.V13)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         def project = validateProjectConfigApiRequest()
@@ -2064,7 +2121,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             )
     )
     def apiProjectFileDelete() {
-        if (!apiService.requireApi(request, response, ApiVersions.V13)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         def project = validateProjectConfigApiRequest()
@@ -2177,10 +2234,16 @@ key2=value'''
             return
         }
         def project = authorizingProject.resource
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json', 'text'])
+
+        def allowedFormats = ['json', 'text']
+        if (isAllowXml()) {
+            allowedFormats << 'xml'
+        }
+        def respFormat = apiService.extractResponseFormat(request, response, allowedFormats, 'json')
         //parse config data
         def config=null
         def configProps=new Properties()
+        def errors=[]
         if (request.format in ['text']) {
             def error=null
             try{
@@ -2322,7 +2385,12 @@ key2=value''')
         }
         def project = authorizingProject.resource
         def key_ = apiService.restoreUriPath(request, params.keypath)
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json','text'],'text')
+
+        def allowedFormats = ['json', 'text']
+        if(isAllowXml()) {
+            allowedFormats << 'xml'
+        }
+        def respFormat = apiService.extractResponseFormat(request, response, allowedFormats,'text')
         def properties = frameworkService.loadProjectProperties(project)
         if(null==properties.get(key_)){
             return apiService.renderErrorFormat(response,[
@@ -2338,10 +2406,12 @@ key2=value''')
                 render (contentType: 'text/plain', text: value_)
                 break
             case 'xml':
-                apiService.renderSuccessXml(request, response) {
-                    property(key:key_,value:value_)
+                if(isAllowXml()) {
+                    apiService.renderSuccessXml(request, response) {
+                        property(key: key_, value: value_)
+                    }
+                    break
                 }
-                break
             case 'json':
                 render(contentType: 'application/json') {
                     key key_
@@ -2430,6 +2500,14 @@ Authorization required: `configure` access for `project` resource type or `admin
                             allowEmptyValue = false,
                             required = true,
                             schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'enablePluginValidation',
+                            in = ParameterIn.QUERY,
+                            description = 'Enable plugin validation',
+                            allowEmptyValue = false,
+                            required = false,
+                            schema = @Schema(implementation = Boolean.class)
                     )
             ]
     )
@@ -2475,8 +2553,19 @@ Authorization required: `configure` access for `project` resource type or `admin
         }
         def project = authorizingProject.resource
         def key_ = apiService.restoreUriPath(request, params.keypath)
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json', 'text'])
+        boolean enablePluginValidation = params.get("enablePluginValidation", false)
+
+        if(featureService.featurePresent(Features.API_PROJECT_CONFIG_VALIDATION)){
+            enablePluginValidation = true
+        }
+
+        def allowedFormats = ['json', 'text']
+        if(isAllowXml()) {
+            allowedFormats << 'xml'
+        }
+        def respFormat = apiService.extractResponseFormat(request, response, allowedFormats)
         def value_=null
+        def errors=[]
         if(request.format in ['text']){
            value_ = request.inputStream.text
         }else{
@@ -2507,34 +2596,41 @@ Authorization required: `configure` access for `project` resource type or `admin
             propValueBefore = new Properties([(key_): ''])
         }
 
-        Properties projProp = new Properties([(key_): value_])
+        Map prop = [(key_): value_]
+        Map currentProps = frameworkService.getFrameworkProject(project.name).getProjectProperties()
+        Properties mergedProjProps = new Properties(currentProps + prop)
 
-        //validate plugin property values
-        def projectScopedConfigs = frameworkService.discoverScopedConfiguration(projProp, "project.plugin")
-        projectScopedConfigs.each { String svcName, Map<String, Map<String, String>> providers ->
-            final pluginDescriptions = pluginService.listPluginDescriptions(svcName)
-            providers.each { String provider, Map<String, String> providerConfig ->
-                def desc = pluginDescriptions.find { it.name == provider }
-                if (desc) {
-                    def validation = frameworkService.validateDescription(desc, "", providerConfig)
-                    if (!validation.valid) {
-                        Validator.Report report = validation.report
-                        errors << (
-                                report.errors ?
-                                        "${provider} configuration was invalid: " + report.errors :
-                                        "${provider} configuration was invalid"
-                        )
+        Properties projProp = new Properties(prop)
+
+        if(enablePluginValidation){
+            //validate plugin property values
+            def projectScopedConfigs = frameworkService.discoverScopedConfiguration(mergedProjProps, "project.plugin")
+            projectScopedConfigs.each { String svcName, Map<String, Map<String, String>> providers ->
+                final pluginDescriptions = pluginService.listPluginDescriptions(svcName)
+                providers.each { String provider, Map<String, String> providerConfig ->
+                    def desc = pluginDescriptions.find { it.name == provider }
+                    if (desc) {
+                        def validation = frameworkService.validateDescription(desc, "", providerConfig)
+                        if (!validation.valid) {
+                            Validator.Report report = validation.report
+                            errors << (
+                                    report.errors ?
+                                            "${provider} configuration was invalid: " + report.errors :
+                                            "${provider} configuration was invalid"
+                            )
+                        }
                     }
                 }
             }
+            if(errors){
+                return apiService.renderErrorFormat(response,[
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        message:errors,
+                        format:respFormat
+                ])
+            }
         }
-        if(errors){
-            return apiService.renderErrorFormat(response,[
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    message:errors,
-                    format:respFormat
-            ])
-        }
+
         def result=frameworkService.updateFrameworkProjectConfig(project.name, projProp,null)
 
         if(!result.success){
@@ -2553,10 +2649,13 @@ Authorization required: `configure` access for `project` resource type or `admin
                 render(contentType: 'text/plain', text: resultValue)
                 break
             case 'xml':
-                apiService.renderSuccessXml(request, response) {
-                    property(key: key_, value: resultValue)
+
+                if(isAllowXml()) {
+                    apiService.renderSuccessXml(request, response) {
+                        property(key: key_, value: resultValue)
+                    }
+                    break
                 }
-                break
             case 'json':
                 render(contentType: 'application/json') {
                     key key_
@@ -2730,6 +2829,8 @@ Requires `export` authorization for the project resource.""",
             }
             archiveParams.exportOpts[WebhooksProjectComponent.COMPONENT_NAME][
                 WebhooksProjectExporter.INLUDE_AUTH_TOKENS] = params.whkIncludeAuthTokens
+            archiveParams.exportOpts[WebhooksProjectComponent.COMPONENT_NAME][
+                    WebhooksProjectExporter.WHK_REGEN_UUID] = params.whkRegenUuid
         }
 
         ProjectArchiveExportRequest options
@@ -2756,7 +2857,7 @@ Requires `export` authorization for the project resource.""",
             def percentage = projectService.promiseSummary(session.user, token).percent()
             return respond(
                     new ProjectExport(token: token, ready: null != outfile, percentage: percentage),
-                    [formats: ['xml', 'json']]
+                    [formats: responseFormats]
             )
         }
         SimpleDateFormat dateFormater = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US);
@@ -2942,7 +3043,7 @@ Since: v19""",
         def percentage = projectService.promiseSummary(session.user, token).percent()
         respond(
                 new ProjectExport(token: token, ready: null != outfile, percentage: percentage),
-                [formats: ['xml', 'json']]
+                [formats: responseFormats]
         )
     }
 
@@ -3139,7 +3240,12 @@ Note: `other_errors` included since API v35""",
         if(!apiService.requireRequestFormat(request,response,['application/zip'])){
             return
         }
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'], 'xml')
+
+        def respFormat='json'
+        if(isAllowXml()) {
+            respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'], 'json')
+        }
+
         if(archiveParams.hasErrors()){
             return apiService.renderErrorFormat(response,[
                     status:HttpServletResponse.SC_BAD_REQUEST,
@@ -3148,6 +3254,7 @@ Note: `other_errors` included since API v35""",
                     format:respFormat
             ])
         }
+
         def framework = frameworkService.rundeckFramework
 
         AuthContext appContext = systemAuthContext
@@ -3208,6 +3315,8 @@ Note: `other_errors` included since API v35""",
             }
             archiveParams.importOpts[WebhooksProjectComponent.COMPONENT_NAME][
                 WebhooksProjectImporter.WHK_REGEN_AUTH_TOKENS] = params.whkRegenAuthTokens
+            archiveParams.importOpts[WebhooksProjectComponent.COMPONENT_NAME][
+                    WebhooksProjectImporter.WHK_REGEN_UUID] = params.whkRegenUuid
         }
 
         //previous version must import nodes together with the project config
@@ -3215,18 +3324,79 @@ Note: `other_errors` included since API v35""",
             archiveParams.importNodesSources = archiveParams.importConfig
         }
 
-        def result = projectService.importToProject(
-                project,
+        if( asyncImportService.statusFileExists(project.name) ){
+            if( projectService.isIncompleteAsyncImportForProject(project.name) ){
+                return apiService.renderErrorFormat(response,[
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code: 'api.error.async.import.status.file.exist',
+                        args: [project.name],
+                        format:respFormat
+                ])
+            }
+            projectService.restartAsyncImport(project.name)
+        }
+
+        def result = projectService.handleApiImport(
                 framework,
                 projectAuthContext,
+                project,
                 stream,
                 archiveParams
         )
+
         switch (respFormat) {
+
+            case 'xml':
+                if(isAllowXml()) {
+                    apiService.renderSuccessXml(request, response) {
+                        delegate.'import'(status: result.success ? 'successful' : 'failed', successful: result.success) {
+                            if (!result.success) {
+                                //list errors
+                                delegate.'errors'(count: result.joberrors.size()) {
+                                    result.joberrors.each {
+                                        delegate.'error'(it)
+                                    }
+                                }
+                            }
+                            if (result.execerrors) {
+                                delegate.'executionErrors'(count: result.execerrors.size()) {
+                                    result.execerrors.each {
+                                        delegate.'error'(it)
+                                    }
+                                }
+                            }
+                            if (result.aclerrors) {
+                                delegate.'aclErrors'(count: result.aclerrors.size()) {
+                                    result.aclerrors.each {
+                                        delegate.'error'(it)
+                                    }
+                                }
+                            }
+                            if (result.scmerrors) {
+                                delegate.'scmErrors'(count: result.scmerrors.size()) {
+                                    result.scmerrors.each {
+                                        delegate.'error'(it)
+                                    }
+                                }
+                            }
+                            if (request.api_version > ApiVersions.V34) {
+                                if (result.importerErrors) {
+                                    delegate.'otherErrors'(count: result.importerErrors.size()) {
+                                        result.importerErrors.each {
+                                            delegate.'error'(it)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
             case 'json':
                 render(contentType: 'application/json'){
-                    import_status result.success?'successful':'failed'
+                    import_status result.success ? 'successful' : 'failed'
                     successful result.success
+
                     if (!result.success) {
                         //list errors
                         errors result.joberrors
@@ -3249,51 +3419,101 @@ Note: `other_errors` included since API v35""",
                     }
                 }
                 break;
-            case 'xml':
-                apiService.renderSuccessXml(request, response) {
-                    delegate.'import'(status: result.success ? 'successful' : 'failed', successful:result.success){
-                        if(!result.success){
-                            //list errors
-                            delegate.'errors'(count: result.joberrors.size()){
-                                result.joberrors.each{
-                                    delegate.'error'(it)
-                                }
-                            }
-                        }
-                        if(result.execerrors){
-                            delegate.'executionErrors'(count: result.execerrors.size()){
-                                result.execerrors.each{
-                                    delegate.'error'(it)
-                                }
-                            }
-                        }
-                        if(result.aclerrors){
-                            delegate.'aclErrors'(count: result.aclerrors.size()){
-                                result.aclerrors.each{
-                                    delegate.'error'(it)
-                                }
-                            }
-                        }
-                        if(result.scmerrors){
-                            delegate.'scmErrors'(count: result.scmerrors.size()){
-                                result.scmerrors.each{
-                                    delegate.'error'(it)
-                                }
-                            }
-                        }
-                        if(request.api_version> ApiVersions.V34) {
-                            if(result.importerErrors){
-                                delegate.'otherErrors'(count: result.importerErrors.size()){
-                                    result.importerErrors.each{
-                                        delegate.'error'(it)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                break;
-
         }
+    }
+
+    /**
+     * Status endpoint, gives status for the given project if the process has been started (status file exists in db)
+     *
+     * @param project (name) - mandatory to hit the endpoint
+     * @return JSON with info
+     */
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
+    def apiProjectAsyncImportStatus(){
+        def statusFileContent
+        try{
+            if( !params.project ){
+                return apiService.renderErrorFormat(response,[
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code: 'api.error.async.import.projectName.param.missing',
+                ])
+            }
+            def projectName = params.project as String
+            statusFileContent = projectService.getAsyncImportStatusFileForProject(projectName)
+        }catch(Exception e){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    code: 'api.error.async.import.status.file.retrieval.error',
+                    args: [e.message]
+            ])
+        }
+        render(
+                contentType: 'application/json', text:
+                (
+                        [
+                                lastUpdate        : statusFileContent.lastUpdate,
+                                lastUpdated       : statusFileContent.lastUpdated,
+                                errors            : statusFileContent.errors ? statusFileContent.errors : "No errors."
+                        ]
+                ) as JSON
+        )
+    }
+
+    @Get('/{project}/meta')
+    @Operation(
+        method = "GET",
+        summary = "Get Project UI Metadata",
+        description = """Get project metadata.
+
+Requires `read` authorization for the project resource.
+Since: v46"""
+
+    )
+    @Tags(
+        [
+            @Tag(name="project")
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = "Project Metadata results",
+        content = [
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                array = @ArraySchema(schema = @Schema(implementation = ItemMeta))
+            )
+        ]
+
+    )
+    @GrailsCompileStatic
+    @RdAuthorizeProject(RundeckAccess.General.AUTH_APP_READ)
+    def apiProjectMeta(
+        @Parameter(
+            name = 'project',
+            in = ParameterIn.PATH,
+            description = 'Project name',
+            required = true,
+            schema = @Schema(type = 'string')
+        ) String project,
+        @Parameter(
+            name = 'meta',
+            in = ParameterIn.QUERY,
+            description = 'Comma-separated list of metadata items to include, or "*" for all (default)',
+            schema = @Schema(type = 'string')
+        ) String meta
+    ) {
+        if (!apiService.requireApi(request, response, ApiVersions.V46)) {
+            return
+        }
+        if (!meta) {
+            meta = '*'
+        }
+        def result = projectService.loadProjectMetaItems(
+            project,
+            new HashSet<>(meta.split(',').toList()),
+            projectAuthContext
+        )
+
+        respond result
     }
 }

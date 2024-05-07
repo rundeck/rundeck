@@ -2,8 +2,8 @@ version = '2.0.3-SNAPSHOT'
 defaultTasks 'clean','build'
 apply plugin: 'java'
 apply plugin: 'idea'
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
 ext.rundeckPluginVersion= '1.1'
 
 
@@ -15,7 +15,7 @@ repositories {
 dependencies {
     implementation( [group: 'org.rundeck', name: 'rundeck-core', version: version,ext:'jar'])
     implementation( [group: 'org.rundeck', name: 'rundeck-storage-api', version: version,ext:'jar'])
-    implementation( [group: 'commons-codec', name: 'commons-codec', version: '1.5',ext:'jar'])
+    implementation( [group: 'commons-codec', name: 'commons-codec', version: "${commonsCodecVersion}",ext:'jar'])
     testImplementation(
         //[group: 'junit', name: 'junit', version: '3.8.1',ext:'jar']
     )

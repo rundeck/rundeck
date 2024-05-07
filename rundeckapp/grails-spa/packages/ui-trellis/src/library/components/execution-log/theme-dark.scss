@@ -15,13 +15,14 @@
   border-width: 1px;
   border-color: rgb(39, 66, 66);
 
-  &.execution-log__content--level-warn{
+  &.execution-log__content--level-warn {
     color: #aa8800;
   }
-  &.execution-log__content--level-error{
+  &.execution-log__content--level-error {
     color: #ff3300;
   }
-  &.execution-log__content--level-debug, &.execution-log__content--level-verbose{
+  &.execution-log__content--level-debug,
+  &.execution-log__content--level-verbose {
     color: darkgray;
   }
 }
@@ -44,7 +45,7 @@
 
 .execution-log--dark .execution-log__warning {
   background-color: slategray;
-  color: whitesmoke
+  color: whitesmoke;
 }
 
 .execution-log--dark .execution-log__line--selected .execution-log__gutter {

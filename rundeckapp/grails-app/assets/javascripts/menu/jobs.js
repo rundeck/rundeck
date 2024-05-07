@@ -20,7 +20,6 @@
 //= require knockout-foreachprop
 //= require nodeFiltersKO
 //= require executionOptions
-//= require jobFiltersKO
 //= require knockout-onenter
 //= require knockout-node-filter-link
 //= require menu/job-remote-options

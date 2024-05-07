@@ -6,7 +6,6 @@ import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.event.EventImpl
 import com.dtolabs.rundeck.core.event.EventQueryImpl
 import com.dtolabs.rundeck.core.event.EventQueryResult
-import com.dtolabs.rundeck.core.event.EventQueryType
 import com.dtolabs.rundeck.core.event.EventStoreService
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
@@ -26,11 +25,13 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import grails.gorm.transactions.Transactional
 import groovy.transform.PackageScope
 import org.apache.commons.lang.RandomStringUtils
-import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
+import org.rundeck.app.data.model.v1.storedevent.StoredEventQueryType
 import org.rundeck.app.data.model.v1.webhook.RdWebhook
 import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookRequest
 import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookResponse
-import org.rundeck.app.data.providers.v1.WebhookDataProvider
+import org.rundeck.app.data.providers.v1.webhook.WebhookDataProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.app.spi.SimpleServiceProvider
 import org.slf4j.Logger
@@ -50,7 +51,7 @@ class WebhookService {
     static final String TOPIC_RECENT_EVENTS = 'webhook:events:recent'
     static final String TOPIC_DEBUG_EVENTS = 'webhook:events:debug'
 
-    WebhookDataProvider webhookDataProvider;
+    WebhookDataProvider webhookDataProvider
 
     @Autowired
     EventStoreService eventStoreService
@@ -113,12 +114,12 @@ class WebhookService {
      */
     private def deleteEvents(String eventTopic, RdWebhook webhook) {
         EventQueryResult queryResult = eventStoreService.query(new EvtQuery(
-                queryType: EventQueryType.DELETE,
+                queryType: StoredEventQueryType.DELETE,
                 projectName: webhook.project,
                 subsystem: "webhooks",
                 topic: "${eventTopic}:${webhook.uuid}"
         ))
-        return queryResult.totalCount;
+        return queryResult.totalCount
     }
 
     @PackageScope
@@ -179,31 +180,27 @@ class WebhookService {
     }
 
     def saveHook(UserAndRolesAuthContext authContext, def hookData) {
-        RdWebhook hook
+        RdWebhook hook = null
         SaveWebhookRequest saveWebhookRequest = mapperSaveRequest(hookData)
-        boolean shouldUpdate = false
+        boolean shouldUpdate = hookData.update ?: false
         if(saveWebhookRequest.id) {
-            hook = webhookDataProvider.getWebhook(saveWebhookRequest.id)
+            hook = webhookDataProvider.findByUuidAndProject(saveWebhookRequest.uuid,saveWebhookRequest.project)
             if (!hook) return [err: "Webhook not found"]
+
+            shouldUpdate = true
             if(saveWebhookRequest.roles && !hookData.importData) {
                 try {
                     rundeckAuthTokenManagerService.updateAuthRoles(authContext, hook.authToken,rundeckAuthTokenManagerService.parseAuthRoles(hookData.roles))
-                    shouldUpdate = true
                     validateNulls(hook, saveWebhookRequest)
                 } catch (Exception e) {
                     return [err: "Failed to update Auth Token roles: "+e.message]
                 }
             }
         } else {
-            int countByNameInProject = webhookDataProvider.countByNameAndProject(saveWebhookRequest.name, saveWebhookRequest.project)
-            if(countByNameInProject > 0) return [err: "A Webhook by that name already exists in this project"]
             String checkUser = hookData.user ?: authContext.username
             if (!hookData.importData && !userService.validateUserExists(checkUser)) return [err: "Webhook user '${checkUser}' not found"]
-            saveWebhookRequest.setUuid(UUID.randomUUID().toString())
-        }
-        def whsFound = webhookDataProvider.findAllByNameAndProjectAndUuidNotEqual(saveWebhookRequest.name, saveWebhookRequest.project, saveWebhookRequest.uuid)
-        if( whsFound.size() > 0) {
-            return [err: " A Webhook by that name already exists in this project"]
+            saveWebhookRequest.setUuid(hookData.uuid ?: UUID.randomUUID().toString())
+
         }
         String generatedSecureString = null
         if(hookData.useAuth == true && hookData.regenAuth == true) {
@@ -211,6 +208,8 @@ class WebhookService {
             saveWebhookRequest.setAuthConfigJson(mapper.writeValueAsString(new AuthorizationHeaderAuthenticator.Config(secret:generatedSecureString.sha256())))
         } else if(hookData.useAuth == false) {
             saveWebhookRequest.setAuthConfigJson(null)
+        } else if(shouldUpdate && hookData.useAuth == true && hookData.regenAuth == false) {
+            saveWebhookRequest.setAuthConfigJson(hook?.authConfigJson)
         }
 
         if(hookData.enabled != null) saveWebhookRequest.setEnabled(hookData.enabled)
@@ -237,7 +236,7 @@ class WebhookService {
             String checkUser = hookData.user ?: authContext.username
             try {
                 def at=apiService.generateUserToken(authContext, null, checkUser, roles, false,
-                                                            AuthenticationToken.AuthTokenType.WEBHOOK)
+                                                            AuthTokenType.WEBHOOK)
                 saveWebhookRequest.setAuthToken(at.token)
             } catch (Exception e) {
                 return [err: "Failed to create associated Auth Token: "+e.message]
@@ -254,10 +253,15 @@ class WebhookService {
             }
             saveWebhookRequest.authToken = hookData.authToken
         }
+        if(hookData.regenUuid){
+            saveWebhookRequest.setUuid(UUID.randomUUID().toString())
+        }
         SaveWebhookResponse saveWebhookResponse
-        if(shouldUpdate){
-            saveWebhookResponse = webhookDataProvider.updateWebhook(saveWebhookRequest)
-        }else{
+        if (shouldUpdate) {
+            saveWebhookResponse = hookData.regenUuid
+                    ? webhookDataProvider.createWebhook(saveWebhookRequest)
+                    : webhookDataProvider.updateWebhook(saveWebhookRequest)
+        } else {
             saveWebhookResponse = webhookDataProvider.createWebhook(saveWebhookRequest)
         }
 
@@ -268,7 +272,7 @@ class WebhookService {
         } else {
             if(!saveWebhookResponse.webhook.id && saveWebhookRequest.authToken){
                 //delete the created token
-                rundeckAuthTokenManagerService.deleteByTokenWithType(saveWebhookResponse.webhook.authToken, AuthenticationToken.AuthTokenType.WEBHOOK)
+                rundeckAuthTokenManagerService.deleteByTokenWithType(saveWebhookResponse.webhook.authToken, AuthTokenType.WEBHOOK)
             }
             return [err: saveWebhookResponse.errors]
         }
@@ -280,7 +284,7 @@ class WebhookService {
             && webhookDataProvider.countByAuthToken(hookData.authToken) == 0
             && !rundeckAuthTokenManagerService.getTokenWithType(
             hookData.authToken,
-            AuthenticationToken.AuthTokenType.WEBHOOK
+            AuthTokenType.WEBHOOK
         )) {
             return true
         }
@@ -330,8 +334,8 @@ class WebhookService {
         try {
             // Deleting all stored debug data for this particular hook from the DB
             deleteWebhookEventsData(hook)
-            webhookDataProvider.delete(hook.id)
-            rundeckAuthTokenManagerService.deleteByTokenWithType(authToken, AuthenticationToken.AuthTokenType.WEBHOOK)
+            webhookDataProvider.deleteByUuid(hook.uuid)
+            rundeckAuthTokenManagerService.deleteByTokenWithType(authToken, AuthTokenType.WEBHOOK)
             return [msg: "Deleted ${name} webhook"]
         } catch(Exception ex) {
             log.error("delete webhook failed",ex)
@@ -339,16 +343,24 @@ class WebhookService {
         }
     }
 
-    def importWebhook(UserAndRolesAuthContext authContext, Map hook, boolean regenAuthTokens) {
+    def importWebhook(UserAndRolesAuthContext authContext, Map hook, boolean regenAuthTokens,boolean regenUuid) {
 
         RdWebhook existing = webhookDataProvider.findByUuidAndProject(hook.uuid, hook.project)
-        if(existing) hook.id = existing.id
+        if(existing) {
+            hook.id = existing.id
+            hook.update = true
+        } else {
+            hook.id = null
+        }
         hook.importData = true
 
         if(!regenAuthTokens && hook.authToken) {
             hook.shouldImportToken = true
         } else {
             hook.authToken = null
+        }
+        if(regenUuid){
+            hook.regenUuid = true
         }
 
         try {
@@ -380,7 +392,7 @@ class WebhookService {
     private Map getWebhookWithAuthAsMap(RdWebhook hook) {
         AuthenticationToken authToken = rundeckAuthTokenManagerService.getTokenWithType(
             hook.authToken,
-            AuthenticationToken.AuthTokenType.WEBHOOK
+                AuthTokenType.WEBHOOK
         )
         return [id:hook.id, uuid:hook.uuid, name:hook.name, project: hook.project, enabled: hook.enabled, user:authToken.ownerName, creator:authToken.creator, roles: authToken.getAuthRolesSet().join(","), authToken:hook.authToken, useAuth: hook.authConfigJson != null, regenAuth: false, eventPlugin:hook.eventPlugin, config:mapper.readValue(hook.pluginConfigurationJson, HashMap)]
     }
@@ -393,11 +405,11 @@ class WebhookService {
     }
 
     RdWebhook getWebhookByUuid(String uuid) {
-        return webhookDataProvider.getWebhookByUuid(uuid);
+        return webhookDataProvider.getWebhookByUuid(uuid)
     }
 
     RdWebhook getWebhookByToken(String token) {
-        return webhookDataProvider.getWebhookByToken(token);
+        return webhookDataProvider.getWebhookByToken(token)
     }
 
     class Evt extends EventImpl {}

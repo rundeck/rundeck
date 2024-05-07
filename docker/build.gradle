@@ -10,6 +10,7 @@ dependencies{
 
 project.evaluationDependsOn(":rundeckapp")
 
+def dockerRepository = findProperty("dockerRepository")?: 'rundeck/rundeck'
 def providedTags = findProperty('dockerTags')?: ''
 
 def dockerTags = [].plus(providedTags.split(',').findAll())
@@ -26,12 +27,13 @@ if (vTag != 'SNAPSHOT'){
     dockerTags << vTag //SNAPSHOT
 }
 
+// Ensure war exists, or build it otherwise.
 tasks.register('ensureWar') {
     def rundeckapp = project(":rundeckapp")
+    def bootArchiveFile = rundeckapp.bootWar.archiveFile.get()
 
-    /* A bit dirty but will allow building container between Travis stages without rebuilding the war */
-    def warFile = file(rundeckapp.war.archiveFile)
-    if (!warFile.exists()) {
+    def warFile = file(bootArchiveFile)
+    if (!warFile.isFile()) {
         dependsOn rundeckapp.bootWar
     }
 }
@@ -56,13 +58,13 @@ tasks.register('officialBuild') {
         file(outputDir).mkdir()
 
         def rundeckapp = project(":rundeckapp")
-        def archiveFile = rundeckapp.war.archiveFile.get().toString().replace("-plain", "")
-        def archiveFileName = rundeckapp.war.archiveFileName.get().replace("-plain", "")
+        def bootArchiveFile = rundeckapp.bootWar.archiveFile.get()
+        def bootArchiveFilename = rundeckapp.bootWar.archiveFileName.get()
 
         copy {
-            from archiveFile
+            from bootArchiveFile
             into "$projectDir/official/.build"
-            rename "${archiveFileName}", "rundeck.war"
+            rename "${bootArchiveFilename}", "rundeck.war"
         }
 
         def args = [
@@ -73,7 +75,7 @@ tasks.register('officialBuild') {
         ]
 
         for (tag in dockerTags)
-            args.add("-t=rundeck/rundeck:$tag")
+            args.add("-t=${dockerRepository}:$tag")
 
         args.add(".")
 
@@ -98,7 +100,7 @@ tasks.register('officialPush') {
     doLast {
         for (tag in dockerTags) {
             exec {
-                commandLine "docker", "push", "rundeck/rundeck:$tag"
+                commandLine "docker", "push", "${dockerRepository}:$tag"
             }
         }
 

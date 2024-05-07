@@ -15,6 +15,7 @@
   --}%
 
 <%@ page import="org.rundeck.core.auth.AuthConstants; rundeck.ScheduledExecution" %>
+<asset:javascript src="static/pages/job/head/scm-status-badge.js" asset-defer="true" />
 
 <div class="jobInfoSection">
     <g:if test="${scheduledExecution.groupPath}">
@@ -37,9 +38,6 @@
             any: true,
             name: scheduledExecution.project
     )}"/>
-    <g:set var="exportStatus" value="${authProjectExport && scmExportEnabled ? scmExportStatus?.get(scheduledExecution.extid) :null}"/>
-    <g:set var="importStatus" value="${authProjectImport && scmImportEnabled ? scmImportStatus?.get(scheduledExecution.extid):null}"/>
-
       <span>
       <g:if test="${includeExecStatus}">
           <b class="exec-status icon "
@@ -60,20 +58,12 @@
           </div>
         </g:if>
       </span>
-      <g:render template="/scm/statusBadge"
-                model="[
-                        showClean:true,
-                        linkClean:true,
-                        exportStatus: exportStatus?.synchState?.toString(),
-                        importStatus: importStatus?.synchState?.toString(),
-                        text  : '',
-                        notext: false,
-                        link: true,
-                        integration:'export',
-                        job:scheduledExecution,
-                        exportCommit  : exportStatus?.commit,
-                        importCommit  : importStatus?.commit,
-                ]"/>
+
+      <g:if test="${includeStatusBadge}">
+          <span class="vue-ui-socket">
+              <ui-socket section="job-head" location="job-status-badge" socket-data="${enc(attr: [ jobUuid: scheduledExecution.uuid ].encodeAsJSON())}"></ui-socket>
+          </span>
+      </g:if>
 
       <g:if test="${ !scheduledExecution.hasExecutionEnabled()}">
           <span class=" label label-warning has_tooltip" data-toggle="tooltip"
@@ -102,11 +92,14 @@
               </span>
               <g:if test="${remoteClusterNodeUUID}">
                   on
-                  <span data-server-uuid="${remoteClusterNodeUUID}" data-server-name="${remoteClusterNodeUUID.substring(0,8)}"
-                        data-show-id="false"
-                        class="rundeck-server-uuid">
+                  <span class="vue-ui-socket">
+                      <ui-socket
+                              section="server-info-display"
+                              location="main"
+                              socket-data="${enc(attr:[remoteClusterNodeUUID:remoteClusterNodeUUID,showId:false,serverName:remoteClusterNodeUUID.substring(0,8)].encodeAsJSON())}"
+                      >
+                      </ui-socket>
                   </span>
-                  <i class="fas fa-dot-circle cluster-status-icon"></i>
               </g:if>
           </span>
       </g:if>

@@ -7,6 +7,7 @@ import com.dtolabs.rundeck.core.common.NodeSetImpl;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants;
+import com.dtolabs.rundeck.plugins.ExecutionEnvironmentConstants;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -127,6 +128,7 @@ public class LocalResourceModelSource implements ResourceModelSource {
                     .description("Custom attributes, in Java properties format")
             )
             .metadata("faicon", "hdd")
+            .metadata(ExecutionEnvironmentConstants.ENVIRONMENT_TYPE_KEY,ExecutionEnvironmentConstants.LOCAL_RUNNER)
         );
     }
 

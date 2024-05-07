@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
+import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import grails.web.JSONBuilder
@@ -27,16 +28,18 @@ import groovy.transform.CompileStatic
 import groovy.xml.MarkupBuilder
 import org.apache.commons.lang.RandomStringUtils
 import org.rundeck.app.authorization.AppAuthContextEvaluator
-import org.rundeck.app.data.model.v1.AuthTokenMode
-import org.rundeck.app.data.model.v1.AuthenticationToken
-import org.rundeck.app.data.model.v1.AuthenticationToken.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
 import org.rundeck.app.data.model.v1.user.RdUser
-import org.rundeck.app.data.model.v1.SimpleTokenBuilder
-import org.rundeck.app.data.providers.v1.TokenDataProvider
+import org.rundeck.app.data.model.v1.authtoken.SimpleTokenBuilder
+import org.rundeck.app.data.providers.v1.authtoken.TokenDataProvider
 import org.rundeck.app.web.WebUtilService
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.util.Sizes
 import rundeck.Execution
+import rundeck.data.util.AuthenticationTokenUtils
+import rundeck.data.util.OptionsParserUtil
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -111,12 +114,12 @@ class ApiService implements WebUtilService{
 
         def uuid = UUID.randomUUID().toString()
         String newtoken = tokenData.token?:genRandomString()
-        String encToken = AuthenticationToken.encodeTokenValue(newtoken, tokenMode)
+        String encToken = AuthenticationTokenUtils.encodeTokenValue(newtoken, tokenMode)
 
         // regenerate if we find collisions.
         while (tokenDataProvider.tokenLookup(encToken) != null) {
             newtoken = genRandomString()
-            encToken = AuthenticationToken.encodeTokenValue(newtoken, tokenMode)
+            encToken = AuthenticationTokenUtils.encodeTokenValue(newtoken, tokenMode)
         }
 
         SimpleTokenBuilder token1 =  new SimpleTokenBuilder()
@@ -145,7 +148,7 @@ class ApiService implements WebUtilService{
     def Map authResourceForUserToken(String username, Set<String> roles) {
         return AuthorizationUtil.resource(
                 AuthConstants.TYPE_APITOKEN,
-                [username: username, roles: AuthenticationToken.generateAuthRoles(roles)]
+                [username: username, roles: AuthenticationTokenUtils.generateAuthRoles(roles)]
         )
     }
     /**
@@ -708,7 +711,7 @@ class ApiService implements WebUtilService{
                             description(e.scheduledExecution.description)
                             if(e.argString){
                                 options{
-                                    FrameworkService.parseOptsFromString(e.argString).each{k,v->
+                                    OptionsParserUtil.parseOptsFromString(e.argString).each{ k, v->
                                         option(name:k,value:v)
                                     }
                                 }
@@ -795,7 +798,7 @@ class ApiService implements WebUtilService{
                     execMap.job.project=(e.scheduledExecution.project)
                     execMap.job.description=(e.scheduledExecution.description)
                     if(e.argString){
-                        execMap.job.options=FrameworkService.parseOptsFromString(e.argString)
+                        execMap.job.options= OptionsParserUtil.parseOptsFromString(e.argString)
                     }
                     execMap.job.href=apiHrefForJob(e.scheduledExecution)
                     execMap.job.permalink=guiHrefForJob(e.scheduledExecution)
@@ -926,7 +929,7 @@ class ApiService implements WebUtilService{
 
     @Transactional
     @CompileStatic
-    AuthenticationToken tokenLookupWithType(final String token, AuthenticationToken.AuthTokenType type){
+    AuthenticationToken tokenLookupWithType(final String token, AuthTokenType type){
         return tokenDataProvider.tokenLookupWithType(token, type)
     }
 

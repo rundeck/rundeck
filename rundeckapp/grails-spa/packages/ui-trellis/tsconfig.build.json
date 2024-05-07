@@ -1,31 +1,26 @@
 {
-    "compilerOptions": {
-        "jsx": "preserve",
-        "outDir": "lib",
-        "baseUrl": ".",
-        "sourceMap": true,
-        "strict": true,
-        "moduleResolution": "node",
-        "target": "esnext",
-        "experimentalDecorators": true,
-        "esModuleInterop": true,
-        "declaration": true,
-        "allowSyntheticDefaultImports": true,
-        "skipLibCheck": true,
-        "typeRoots": [
-            "webpack-env",
-            "src/library/src/types"
-        ]
-    },
-    "include": [
-        "./src/library/**/*",
-        "main.ts"
-    ],
-    "exclude": [
-        "./src/app",
-        "**/*.stories.ts",
-        "**/*.stories.tsx",
-        "**/*.test.ts",
-        "./src/library/stories/**/*"
-    ]
+  "compilerOptions": {
+    "jsx": "preserve",
+    "outDir": "lib",
+    "baseUrl": ".",
+    "sourceMap": true,
+    "strict": true,
+    "moduleResolution": "node",
+    "target": "esnext",
+    "experimentalDecorators": true,
+    "esModuleInterop": true,
+    "declaration": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "typeRoots": ["./node_modules/@types","src/library/src/types"],
+    "types": ["webpack-env", "jest"]
+  },
+  "include": ["./src/library/**/*", "main.ts"],
+  "exclude": [
+    "./src/app",
+    "**/*.stories.ts",
+    "**/*.stories.tsx",
+    "**/*.test.ts",
+    "./src/library/stories/**/*"
+  ]
 }

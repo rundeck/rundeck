@@ -11,13 +11,15 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import grails.compiler.GrailsCompileStatic
 import grails.events.annotation.Publisher
 import grails.gorm.transactions.Transactional
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import groovy.util.logging.Log4j2
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
-import org.rundeck.app.data.exception.DataValidationException
+import org.rundeck.app.data.model.v1.job.JobDataSummary
+import rundeck.data.validation.exception.DataValidationException
 import org.rundeck.app.data.job.schedule.DefaultJobDataChangeDetector
 import org.rundeck.app.data.model.v1.DeletionResult
 import org.rundeck.app.data.model.v1.job.component.JobComponentData
@@ -79,6 +81,27 @@ class GormJobDataProvider extends GormJobQueryProvider implements JobDataProvide
     JobData findByUuid(String uuid) {
         return ScheduledExecutionToJobConverter.convert(scheduledExecutionDataService.findByUuid(uuid))
     }
+    @Override
+    @CompileDynamic
+    Optional<JobDataSummary> findBasicByUuid(String uuid) {
+        def crit = createCriteria()
+        def scheduled = crit.get{
+            eq("uuid", uuid)
+            projections{
+                for (String key : PROJECTION_KEYS) {
+                    property key
+                }
+            }
+        }
+        if(!scheduled) {
+            return Optional.empty()
+        }
+        else{
+            return Optional.of(
+                summaryFromProjection(scheduled)
+            )
+        }
+    }
 
     @Override
     boolean existsByUuid(String uuid) {
@@ -86,6 +109,7 @@ class GormJobDataProvider extends GormJobQueryProvider implements JobDataProvide
     }
 
     @Override
+    @CompileStatic(TypeCheckingMode.SKIP)
     boolean existsByProjectAndJobNameAndGroupPath(String project, String jobName, String groupPath) {
         return ScheduledExecution.countByProjectAndJobNameAndGroupPath(project, jobName, groupPath) == 1
     }
@@ -144,6 +168,7 @@ class GormJobDataProvider extends GormJobQueryProvider implements JobDataProvide
     }
 
     @Override
+    @CompileStatic(TypeCheckingMode.SKIP)
     DeletionResult deleteByUuid(String uuid) throws DataAccessException {
         _deleteJob(ScheduledExecution.findByUuid(uuid))
     }

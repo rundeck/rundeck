@@ -1,6 +1,18 @@
+# Build remco from specific commit
+##################################
+FROM golang:1.22.1 as remco
+
+# REMCO_VERSION can be a release version "v0.XX.X", commit id, tag or branch name.
+
+# 2024-03-15: As of this writing, the latest remco version (v0.12.4) doesn't include the fixes for CVE-2023-44487
+# however, the following commit (fbd1eb0) includes the fix. We will use this commit until a new release is available.
+ENV REMCO_VERSION=fbd1eb066af9ca58fc452263eeceee685e2a14fd
+
+RUN go install github.com/HeavyHorst/remco/cmd/remco@$REMCO_VERSION
+
 # Build base container
 ######################
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
@@ -42,14 +54,7 @@ RUN curl -sSL https://github.com/krallin/tini/releases/download/v${TINI_VERSION}
     chmod +x /tini
 
 # Install Remco
-ENV REMCO_VERSION=0.12.4
-RUN curl -ssL "https://github.com/HeavyHorst/remco/releases/download/v${REMCO_VERSION}/remco_${REMCO_VERSION}_linux_amd64.zip" -o remco.zip && \
-    echo 'c7eae0db823660f8cf0c0ccba1beebec64ee1c2e5b6b66ca3d20208cbcb70962  remco.zip' > remco.zip.sha && \
-    sha256sum -c remco.zip.sha && \
-    unzip remco.zip && \
-    cp remco_linux /usr/local/bin/remco && \
-    chmod +x /usr/local/bin/remco && \
-    rm remco.zip remco.zip.sha
+COPY --from=remco /go/bin/remco /usr/local/bin/remco
 
 USER rundeck
 

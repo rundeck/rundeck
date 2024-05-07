@@ -4,12 +4,10 @@
 set -e
 
 FLAV=${EDITION:-cluster}
-DIR=$HOME/"${PACKAGING_DIR_PARENT}"packaging/packaging/build/distributions
-
 
 install_rundeck(){
-	echo "Install Rundeck from file: " "$DIR"/$PACKAGE
-	dpkg -i $PACKAGE
+	echo "Install Rundeck from file: " $PACKAGE
+	dpkg -i "$PACKAGE"
 }
 
 main(){

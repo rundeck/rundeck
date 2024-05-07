@@ -19,11 +19,13 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
+import com.dtolabs.rundeck.app.internal.framework.RundeckFramework
 import com.dtolabs.rundeck.app.support.ProjAclFile
 import com.dtolabs.rundeck.app.support.SaveProjAclFile
 import com.dtolabs.rundeck.app.support.SaveSysAclFile
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.support.SysAclFile
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -35,6 +37,7 @@ import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
 import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IProjectInfo
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
@@ -90,6 +93,7 @@ import spock.lang.Unroll
 import testhelper.RundeckHibernateSpec
 
 import javax.security.auth.Subject
+import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import java.lang.annotation.Annotation
 import java.nio.file.Files
@@ -106,6 +110,9 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
 
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+        controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService){
+            _ * featurePresent(Features.LEGACY_UI) >> true
+        }
 
         defineBeans {
             configurationService(ConfigurationService) {
@@ -126,50 +133,6 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         then:
             model!=null
             model.projectNames==null
-    }
-    def "api job detail xml"() {
-        given:
-        def testUUID = UUID.randomUUID().toString()
-        def testUUID2 = UUID.randomUUID().toString()
-        controller.apiService = Mock(ApiService)
-        controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-                    controller.scheduledExecutionService = Mock(ScheduledExecutionService)
-        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
-        job1.serverNodeUUID = testUUID2
-        job1.totalTime=200*1000
-        job1.execCount=100
-        job1.save()
-        def jobSchedulesService = Mock(JobSchedulesService){
-            shouldScheduleExecution(_) >> job1.shouldScheduleExecution()
-        }
-        controller.jobSchedulesService = jobSchedulesService
-        controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
-
-        controller.executionService = new ExecutionService()
-        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
-
-        when:
-        params.id=testUUID
-        controller.response.format = "xml"
-        def result = controller.apiJobDetail()
-
-        then:
-        1 * controller.apiService.requireApi(_, _, 18) >> true
-        1 * controller.apiService.requireParameters(_, _, ['id']) >> true
-        1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
-        1 * controller.apiService.requireExists(_, job1, _) >> true
-        1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
-        1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
-
-        response.xml != null
-        response.xml.id  == testUUID
-        response.xml.description  == 'a job'
-        response.xml.name  == 'job1'
-        response.xml.group  == 'some/where'
-        response.xml.href  == 'api/href'
-        response.xml.permalink  == 'gui/href'
-        response.xml.averageDuration  == '2000'
     }
     def "api job detail json"() {
         given:
@@ -278,7 +241,48 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_,job1,['read','view'],'AProject')>>true
         0 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_,unscheduledJob,['read','view'],'AProject')
         1 * controller.frameworkService.isClusterModeEnabled()>>true
-        1 * controller.apiService.renderSuccessXml(_,_,_)
+        1 * controller.apiService.renderSuccessJson(_,_)
+
+    }
+    def "scheduler list this servers jobs apiv18"() {
+        given:
+        def testUUID = UUID.randomUUID().toString()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.jobSchedulesService = new JobSchedulesService()
+        controller.jobSchedulesService.rundeckJobSchedulesManager = new LocalJobSchedulesManager()
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+                    ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName:'job1'))
+        job1.scheduled=true
+        job1.serverNodeUUID=testUUID
+        job1.save()
+
+        ScheduledExecution job2 = new ScheduledExecution(createJobParams(jobName:'job2'))
+        job2.scheduled=true
+        job2.serverNodeUUID=UUID.randomUUID().toString()
+        job2.save()
+
+        ScheduledExecution unscheduledJob = new ScheduledExecution(createJobParams(jobName:'unscheduled'))
+        unscheduledJob.scheduled=false
+        unscheduledJob.serverNodeUUID=testUUID
+        unscheduledJob.save()
+        request.api_version=18
+
+        when:
+        def result = controller.apiSchedulerListJobs(null, true)
+
+        then:
+        1 * controller.apiService.requireApi(_, _, 17) >> true
+        _ * controller.frameworkService.getServerUUID() >> testUUID
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,'AProject') >> Mock(UserAndRolesAuthContext)
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_,job1,['read','view'],'AProject')>>true
+        0 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_,unscheduledJob,['read','view'],'AProject')
+        1 * controller.frameworkService.isClusterModeEnabled()>>true
+        0 * controller.apiService.renderSuccessJson(_,_)
+        response.json.count==1
+        response.json.jobs.size()==1
+        response.json.jobs[0].id==job1.id.toString()
 
     }
     def "scheduler list other server jobs"() {
@@ -315,7 +319,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_,job2,['read','view'],'AProject')>>true
         0 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_,unscheduledJob,['read','view'],'AProject')
         1 * controller.frameworkService.isClusterModeEnabled()>>true
-        1 * controller.apiService.renderSuccessXml(_,_,_)
+        1 * controller.apiService.renderSuccessJson(_,_)
 
     }
 
@@ -1472,6 +1476,80 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             true      | true          | false
     }
 
+    def "api returns expected json containing homeSummary information"() {
+        given:
+        def execCount = 0
+        def totalFailedCount = 0
+        def recentUsers = []
+        def recentProjects = []
+        def frameworkNodeName = 'localhost'
+
+        controller.apiService = Mock(ApiService){
+            requireApi(_ as HttpServletRequest, _ as HttpServletResponse,45) >> true
+        }
+        new Project(name: 'proj',description: 'desc').save(flush: true)
+        def iproj = Mock(IRundeckProject) {
+            getName() >> 'proj'
+        }
+        def projects = [iproj]
+
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
+            getAuthContextForSubject(_)>>Mock(UserAndRolesAuthContext)
+        }
+
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(Framework){
+                getFrameworkProjectMgr() >> Mock(ProjectManager)
+                getFrameworkNodeName() >> frameworkNodeName
+            }
+            projectNames(_ as AuthContext) >> ['proj']
+        }
+
+
+        controller.configurationService = Mock(ConfigurationService){
+            getBoolean("menuController.projectStats.queryAlt",false)>>false
+        }
+
+
+        controller.configurationService = Mock(ConfigurationService)
+        controller.menuService = Mock(MenuService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.projectService = Mock(ProjectService)
+
+        when:
+        request.api_version = 45
+        response.format='json'
+
+        def result = controller.apiHomeSummary()
+
+        then:
+        def json=response.json
+        assert execCount == json.execCount
+        assert totalFailedCount == json.totalFailedCount
+        assert recentUsers == json.recentUsers
+        assert recentProjects == json.recentProjects
+        assert frameworkNodeName == json.frameworkNodeName
+    }
+
+    def "api returns error for homeSummary if request isn't json/all"() {
+        given:
+        controller.apiService = Mock(ApiService){
+            requireApi(_ as HttpServletRequest, _ as HttpServletResponse,45) >> true
+            _ * renderErrorFormat(_, { it.status == 415 }) >> {
+                it[0].status = 415
+            }
+        }
+
+        when:
+        request.api_version = 45
+
+        def result = controller.apiHomeSummary()
+
+        then:
+            assert response.status == 415
+    }
+
     def "list Export"() {
         given:
         controller.frameworkService = Mock(FrameworkService)
@@ -1479,7 +1557,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
                     controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService){
-            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: true, message: 'message']
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> true
         }
         def project = 'test'
         def scmConfig = Mock(ScmPluginConfigData){
@@ -1524,7 +1602,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService){
-            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: true, message: 'message']
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> true
         }
         def project = 'test'
         def scmConfig = Mock(ScmPluginConfigData)
@@ -1578,7 +1656,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService){
-            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: true, message: 'message']
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> true
         }
         controller.storageService = Mock(StorageService)
         def project = 'test'
@@ -1637,7 +1715,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             getEnabled() >> true
         }
         controller.scmService = Mock(ScmService){
-            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: access, message: 'message']
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> access
             it.loadScmConfig(_,integration) >> scmConfig
         }
         controller.storageService = Mock(StorageService)
@@ -1692,7 +1770,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             getEnabled() >> true
         }
         controller.scmService = Mock(ScmService){
-            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: access, message: 'message']
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> access
             it.loadScmConfig(_,integration) >> scmConfig
         }
         controller.storageService = Mock(StorageService)
@@ -2124,7 +2202,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         def model = controller.apiJobsListv2(query)
 
         then:
-        response.xml.count == count
+        response.json.count == count
 
         where:
         guiPagEnabled | apiPagDisabled| offset | apiPagMax  | count
@@ -2269,50 +2347,6 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
     }
 
 
-    def "api job forecast xml"() {
-        given:
-        def testUUID = UUID.randomUUID().toString()
-        def testUUID2 = UUID.randomUUID().toString()
-        controller.apiService = Mock(ApiService)
-        controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-                    controller.scheduledExecutionService = Mock(ScheduledExecutionService)
-        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
-        job1.serverNodeUUID = testUUID2
-        job1.totalTime=200*1000
-        job1.execCount=100
-        job1.scheduled=true
-        job1.save()
-        def jobSchedulesService = Mock(JobSchedulesService){
-            shouldScheduleExecution(_) >> job1.shouldScheduleExecution()
-        }
-        controller.jobSchedulesService = jobSchedulesService
-        controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
-
-        when:
-        controller.response.format = "xml"
-        params.id=testUUID
-        def result = controller.apiJobForecast()
-
-        then:
-        1 * controller.apiService.requireApi(_, _, 31) >> true
-        1 * controller.apiService.requireParameters(_, _, ['id']) >> true
-        1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
-        1 * controller.apiService.requireExists(_, job1, _) >> true
-        1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
-        1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
-
-        response.xml != null
-        response.xml.id  == testUUID
-        response.xml.description  == 'a job'
-        response.xml.name  == 'job1'
-        response.xml.group  == 'some/where'
-        response.xml.href  == 'api/href'
-        response.xml.permalink  == 'gui/href'
-        response.xml.futureScheduledExecutions != null
-        response.xml.futureScheduledExecutions.size() == 1
-
-    }
     def "api job forecast json"() {
         given:
         def testUUID = UUID.randomUUID().toString()
@@ -2436,12 +2470,11 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             _ * renderErrorFormat(_, { it.status == 403 }) >> {
                 it[0].status = 403
             }
-            1 * requireApi(_,_,14)>>true
+            1 * requireApi(_,_)>>true
             1 * requireExists(_, true, ['project', 'aProject']) >> true
         }
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-                    params.project = 'aProject'
-        params.projFilter = 'aProject'
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        params.project = 'aProject'
         def action = 'read'
         when:
         controller.apiExecutionsRunningv14()
@@ -2449,6 +2482,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         response.status == 403
         1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, action, 'aProject')
         1 * controller.frameworkService.existsFrameworkProject('aProject') >> true
+        1 * controller.frameworkService.isFrameworkProjectDisabled('aProject') >> false
 
     }
 
@@ -2458,7 +2492,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
                     controller.apiService = Mock(ApiService) {
-            1 * requireApi(_,_,14)>>true
+            1 * requireApi(_,_)>>true
             1 * requireExists(_, false, ['project', 'aProject']) >> {
                 it[0].status=404
                 return false
@@ -2474,6 +2508,111 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         response.status == 404
         0 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, action, 'aProject')
         1 * controller.frameworkService.existsFrameworkProject('aProject') >> false
+        0 * controller.frameworkService.isFrameworkProjectDisabled('aProject') >> false
+
+    }
+
+    @Unroll
+    def "apiExecutionsRunning disable project"() {
+        given:
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.apiService = Mock(ApiService) {
+            _ * renderErrorFormat(_, { it.status == 404 }) >> {
+                it[0].status = 404
+            }
+            1 * requireApi(_,_) >> true
+            1 * requireExists(_, true, ['project', 'aProject']) >> true
+            0 * _ (*_)
+        }
+        params.project = 'aProject'
+        def action = 'read'
+        when:
+        controller.apiExecutionsRunningv14()
+        then:
+        response.status == 404
+        0 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, action, 'aProject')
+        1 * controller.frameworkService.existsFrameworkProject('aProject') >> true
+        1 * controller.frameworkService.isFrameworkProjectDisabled('aProject') >> true
+
+    }
+
+    @Unroll
+    def "apiExecutionsRunning disable project with list of projects"() {
+        given:
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.apiService = Mock(ApiService) {
+            1 * renderErrorFormat(_, { it.status == 404 }) >> {
+                it[0].status = 404
+            }
+            1 * requireApi(_,_) >> true
+            1 * requireExists(_, true, _) >> true
+            0 * _ (*_)
+        }
+        params.project = 'aProject,bProject'
+        def action = 'read'
+        when:
+        controller.apiExecutionsRunningv14()
+        then:
+        response.status == 404
+        0 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, action, _)
+        1 * controller.frameworkService.existsFrameworkProject('aProject') >> true
+        1 * controller.frameworkService.isFrameworkProjectDisabled('aProject') >> true
+
+    }
+
+    @Unroll
+    def "apiExecutionsRunning disable project with list of projects 2"() {
+        given:
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_,_) >> true
+            1 * renderErrorFormat(_, { it.status == 404 }) >> {
+                it[0].status = 404
+            }
+
+            2 * requireExists(_, true, _) >> true
+            0 * _ (*_)
+        }
+        params.project = 'aProject,bProject'
+        def action = 'read'
+        when:
+        controller.apiExecutionsRunningv14()
+        then:
+        response.status == 404
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, action, _) >> true
+        2 * controller.frameworkService.existsFrameworkProject(_) >> true
+        1 * controller.frameworkService.isFrameworkProjectDisabled('aProject') >> false
+        1 * controller.frameworkService.isFrameworkProjectDisabled('bProject') >> true
+
+    }
+
+    @Unroll
+    def "apiExecutionsRunning one unauthorized project with list of projects"() {
+        given:
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_,_) >> true
+            1 * renderErrorFormat(_, { it.status == 403 }) >> {
+                it[0].status = 403
+            }
+
+            2 * requireExists(_, true, _) >> true
+            0 * _ (*_)
+        }
+        params.project = 'aProject,bProject,cProject'
+        def action = 'read'
+        when:
+        controller.apiExecutionsRunningv14()
+        then:
+        response.status == 403
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, action, 'aProject') >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, action, 'bProject') >> false
+        2 * controller.frameworkService.existsFrameworkProject(_) >> true
+        2 * controller.frameworkService.isFrameworkProjectDisabled(_) >> false
 
     }
 
@@ -2523,7 +2662,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
     def "test api executions running list all projects with a valid project"() {
         given:
         controller.apiService = Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
         }
 
         controller.userService = Mock(UserService){}
@@ -2573,6 +2712,56 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
 
         }
     }
+
+    @Unroll
+    def "test api executions running list 3 projects with comma separated"() {
+        given:
+        controller.apiService = Mock(ApiService){
+            1 * requireApi(_,_) >> true
+            3 * requireExists(_, true, _) >> true
+        }
+
+        controller.userService = Mock(UserService){}
+
+        UserAndRolesAuthContext test = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> new HashSet<String>(['test'])
+        }
+
+        def executionService = Mock(ExecutionService){
+            finishQueueQuery(_,_,_) >> [:]
+        }
+
+        controller.executionService = executionService
+
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckBase() >> ''
+            getServerUUID() >> 'uuid'
+            3 * existsFrameworkProject(_) >> true
+            3 * isFrameworkProjectDisabled(_) >> false
+        }
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            3 * authorizeProjectResource(_, AuthorizationUtil.resourceType('event'),'read', _) >> true
+            0 * getAuthContextForSubject(_) >> test
+        }
+
+        params.project = 'project1,project2,project3'
+        request.api_version = 47
+
+        when:
+        def result = controller.apiExecutionsRunningv14()
+
+        then:
+        3 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, _)
+        0 * controller.frameworkService.projectNames(_)
+        0 * controller.apiService.renderErrorFormat(_,_)
+        1 * controller.executionService.queryQueue(_) >> {
+            assert it[0].projFilter == 'project1,project2,project3'
+
+        }
+    }
+
     @Unroll
     def "test nowrunningAjax list all projects with a valid project"() {
         given:
@@ -2680,7 +2869,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
     def "test list all projects with an invalid project"() {
         given:
         controller.apiService = Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
         }
 
         controller.userService = Mock(UserService){}
@@ -2736,7 +2925,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
     def "test list all projects with an invalid and a valid project"() {
         given:
         controller.apiService = Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
         }
 
         controller.userService = Mock(UserService){}
@@ -2792,7 +2981,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
     def "test list all projects with multiple valid projects"() {
         given:
         controller.apiService = Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
         }
 
         controller.userService = Mock(UserService){}
@@ -2979,7 +3168,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.apiJobsExportv14(query)
         then:
         1 * controller.scheduledExecutionService.listWorkflows(_,_) >> [schedlist: [job1]]
-        1 * controller.apiService.requireApi(_, _, _) >> true
+        1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.rundeckAuthContextProcessor.authResourceForJob(_) >>
                 [authorized: true, action: AuthConstants.ACTION_READ, resource: job1]
         1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, _, _) >> true
@@ -3040,7 +3229,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.apiJobsExportv14(query)
         then: "result use default format for the api version"
         1 * controller.scheduledExecutionService.listWorkflows(_,_) >> [schedlist: [job1]]
-        1 * controller.apiService.requireApi(_, _, _) >> true
+        1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.rundeckAuthContextProcessor.authResourceForJob(_) >>
                 [authorized: true, action: AuthConstants.ACTION_READ, resource: job1]
         1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, _, _) >> true
@@ -3054,10 +3243,10 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         response.status == 200
         response.text=="format: $format"
         response.contentType=="$contentType;charset=UTF-8"
-        where:"default format is xml"
+        where:"default format is json"
         format | contentType        | apivers
-        'xml'  | 'text/xml'         | 14
-        'xml'  | 'text/xml'         | 44
+        'json' | 'application/json' | 14
+        'json' | 'application/json' | 44
     }
 
     @Unroll
@@ -3098,7 +3287,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.apiJobsExportv14(query)
         then:
         0 * controller.scheduledExecutionService.listWorkflows(_,_)
-        1 * controller.apiService.requireApi(_, _, _) >> true
+        1 * controller.apiService.requireApi(_, _) >> true
         0 * controller.rundeckAuthContextProcessor.authResourceForJob(_)
         0 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, _, _)
         0 * controller.rundeckAuthContextProcessor.authorizeProjectResources(_, _, _, _)

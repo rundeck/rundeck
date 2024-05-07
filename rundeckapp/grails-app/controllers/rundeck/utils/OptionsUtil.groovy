@@ -1,7 +1,7 @@
 package rundeck.utils
 
 import grails.util.Holders
-import org.rundeck.app.data.providers.v1.UserDataProvider
+import org.rundeck.app.data.providers.v1.user.UserDataProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.web.context.request.RequestContextHolder
@@ -38,7 +38,7 @@ class OptionsUtil {
      * ${job.PROPERTY} and ${option.PROPERTY}.  available properties are
      * limited
      */
-    protected static String expandUrl(Option opt, String url, ScheduledExecution scheduledExecution, UserDataProvider userDataProvider,selectedoptsmap=[:],boolean isHttp=true, String username=null) {
+    public static String expandUrl(Option opt, String url, ScheduledExecution scheduledExecution, UserDataProvider userDataProvider,selectedoptsmap=[:],boolean isHttp=true, String username=null) {
         def invalid = []
         def frameworkService = getFrameworkServiceInstance()
         def rundeckProps=[

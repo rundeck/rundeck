@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import grails.testing.gorm.DataTest
+import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
 import spock.lang.Specification
 
@@ -69,7 +70,7 @@ class ExecutionServiceTempSpec extends Specification implements DataTest {
         Map secureOptsExposed = [:]
         Map secureOpts = [:]
         def authContext = Mock(AuthContext)
-        Map<String, String> args = FrameworkService.parseOptsFromString(job.argString)
+        Map<String, String> args = OptionsParserUtil.parseOptsFromString(job.argString)
         service.storageService = Mock(StorageService)
 
         def jobcontext = [:]
@@ -114,6 +115,55 @@ class ExecutionServiceTempSpec extends Specification implements DataTest {
 
     }
 
+    def "ignoreDefaultValuesForSecureOptions removes secure options from context if default values"(){
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec(
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                )
+                        ]
+                ),
+                options: [
+                        new Option(
+                                name: 'secure1',
+                                secureInput: true,
+                                secureExposed: true,
+                                defaultValue: "default_value1",
+                                defaultStoragePath: 'keys/secure/pass'
+                        ),
+                        new Option(
+                                name: 'secure2',
+                                secureInput: true,
+                                secureExposed: false,
+                                defaultValue: "default_value2",
+                                defaultStoragePath: 'keys/secure/pass2'
+                        )
+                ]
+        )
+        job.save()
+
+        Map secureOptsExposed = testExposed
+        Map secureOpts = testSecure
+
+        when:
+        service.ignoreDefaultValuesForSecureOptions(job, secureOpts, secureOptsExposed)
+
+        then:
+        secureOptsExposed == resultExposed
+        secureOpts == resultSecure
+
+        where:
+        testExposed       | testSecure         | resultExposed | resultSecure
+        [secure1: "test"] | [:]                | [:]           | [:]
+        [secure1: "test"] | [secure2: "test"]  | [:]           | [:]
+    }
 
     def "loadSecureOptionStorageDefaults node deferred variables"() {
         given:
@@ -145,7 +195,7 @@ class ExecutionServiceTempSpec extends Specification implements DataTest {
         Map secureOptsExposed = [:]
         Map secureOpts = [:]
         def authContext = Mock(AuthContext)
-        Map<String, String> args = FrameworkService.parseOptsFromString(job.argString)
+        Map<String, String> args = OptionsParserUtil.parseOptsFromString(job.argString)
         service.storageService = Mock(StorageService)
 
         def jobcontext = [:]

@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
@@ -42,9 +43,14 @@ import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.app.components.schedule.TriggerBuilderHelper
 import org.rundeck.app.components.schedule.TriggersExtender
+import org.rundeck.app.data.model.v1.job.JobDataSummary
+import org.rundeck.app.data.model.v1.query.JobQueryInputData
+import org.rundeck.app.data.providers.GormJobQueryProvider
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.GormJobStatsDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
+import org.rundeck.app.data.providers.v1.job.JobDataProvider
+import org.rundeck.app.quartz.ExecutionJobQuartzJobSpecifier
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.core.auth.AuthConstants
@@ -61,6 +67,7 @@ import rundeck.ScheduledExecutionStats
 import rundeck.User
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import rundeck.data.constants.NotificationConstants
+import rundeck.data.job.RdJobDataSummary
 import spock.lang.Specification
 
 import static org.junit.Assert.*
@@ -104,7 +111,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
     def setupSpec() { mockDomains Workflow, ScheduledExecution, CommandExec, Notification, Option, PluginStep, JobExec,
                                       WorkflowStep, Execution, ReferencedExecution, ScheduledExecutionStats, Orchestrator, User }
-
+    def setup(){
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.fileUploadService = Mock(FileUploadService)
+    }
     def setupSchedulerService(clusterEnabled = false){
         SchedulesManager rundeckJobSchedulesManager = new LocalJobSchedulesManager()
         rundeckJobSchedulesManager.frameworkService = Mock(FrameworkService){
@@ -123,6 +133,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.jobSchedulesService = Mock(JobSchedulesService){
             shouldScheduleExecution(_) >> true
         }
+        service.quartzJobSpecifier = new ExecutionJobQuartzJobSpecifier()
     }
 
     def setupDoValidate(boolean enabled=false){
@@ -155,6 +166,49 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             getMessage(_, _) >> { it[0].toString() }
         }
         TEST_UUID1
+    }
+    def "option json input validation option name"() {
+        given:
+        mockCodec(JSONCodec)
+        setupDoValidate()
+        def json=[[name:nameVal]].encodeAsJSON().toString()
+
+        def params = baseJobParams()+[
+                workflow      : new Workflow(
+                        threadcount: 1,
+                        keepgoing: true,
+                        commands: [new CommandExec(adhocRemoteString: 'a remote string')]
+                ),
+                jobOptionsJson: json,
+        ]
+        def authContext = Mock(UserAndRolesAuthContext){
+            getUsername()>>'auser'
+            getRoles()>>(['a','b'] as Set)
+        }
+        when:
+
+        def results = service._dovalidate(params, authContext)
+
+        then:
+        def ScheduledExecution scheduledExecution = results.scheduledExecution
+
+        results.failed
+        scheduledExecution != null
+        scheduledExecution instanceof ScheduledExecution
+
+        scheduledExecution.errors != null
+        scheduledExecution.errors.hasErrors()
+        scheduledExecution.errors.hasFieldErrors('options')
+        scheduledExecution.errors.hasFieldErrors('options[0].name')
+        scheduledExecution.options[0].errors.hasErrors()
+        scheduledExecution.options[0].errors.hasFieldErrors('name')
+        where:
+            nameVal<<[
+                '',
+                'in valid',
+                'not$#valid'
+            ]
+
     }
     def "blank email notification"() {
         given:
@@ -1164,6 +1218,32 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         NotificationConstants.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'monkey@ example.com'
         NotificationConstants.ONRETRYABLEFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'
     }
+    @Unroll
+    def "do update job invalid option valuesUrl"() {
+        given:
+        setupDoUpdateJob()
+        def se = new ScheduledExecution(createJobParams()).save()
+        def newjob = new ScheduledExecution(createJobParams()).save()
+            newjob.addToOptions(new Option(
+                name:'anopt',
+                valuesUrlLong:'notaurl',
+                enforced:false
+            ))
+        def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newjob, associations: [:])
+        service.jobSchedulesService = Mock(SchedulesManager)
+
+        when:
+        def results = service._doupdateJob(se.id,importedJob, mockAuth())
+
+        then:
+        _ * service.rundeckAuthContextProcessor.authorizeProjectJobAny(*_)>>true
+        !results.success
+        results.scheduledExecution.errors.hasErrors()
+        results.scheduledExecution.errors.hasFieldErrors('options')
+        results.scheduledExecution.options[0].errors.hasErrors()
+        results.scheduledExecution.options[0].errors.hasFieldErrors('valuesUrlLong')
+
+    }
     def "validate notifications email json"() {
         given:
 
@@ -1279,6 +1359,49 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         results.scheduledExecution.options[0].defaultValue == 'val3'
         !results.scheduledExecution.options[0].enforced
         results.scheduledExecution.options[0].realValuesUrl.toExternalForm() == 'http://test.com/test3'
+    }
+
+    def "validate options data json"() {
+        given:
+        mockCodec(JSONCodec)
+        def extraParams=[jobOptionsJson: [[
+                                              name: 'test3',
+                                              value: 'val3',
+                                              enforced: false,
+                                              valuesUrl: "http://test.com/test3"
+                                          ]].encodeAsJSON().toString()]
+        setupDoValidate()
+        def params = baseJobParams()+extraParams
+        service.fileUploadService = Mock(FileUploadService)
+        when:
+        def results = service._dovalidate(params, mockAuth())
+
+        then:
+        !results.failed
+        results.scheduledExecution.options.size()==1
+        results.scheduledExecution.options[0].name == 'test3'
+        results.scheduledExecution.options[0].defaultValue == 'val3'
+        !results.scheduledExecution.options[0].enforced
+        results.scheduledExecution.options[0].realValuesUrl.toExternalForm() == 'http://test.com/test3'
+
+    }
+    def "validate options data json test value"() {
+        given:
+        mockCodec(JSONCodec)
+        def extraParams=[jobOptionsJson: '''[{"optionType":"text","required":false,"hidden":false,"multivalued":false,"multivalueAllSelected":false,"secureInput":false,"secureExposed":false,"inputType":"plain","valuesUrl":"http://test.com/test3","optionValuesPluginType":"","remoteUrlAuthenticationType":"","configRemoteUrl":{},"sortValues":false,"regex":null,"description":"","name":"test3","value":"val3","valuesType":"list"}]''']
+        setupDoValidate()
+        def params = baseJobParams()+extraParams
+        service.fileUploadService = Mock(FileUploadService)
+        when:
+        def results = service._dovalidate(params, mockAuth())
+
+        then:
+        !results.failed
+        results.scheduledExecution.options.size()==1
+        results.scheduledExecution.options[0].name == 'test3'
+        results.scheduledExecution.options[0].defaultValue == 'val3'
+        !results.scheduledExecution.options[0].enforced
+        results.scheduledExecution.options[0].realValuesUrl.toExternalForm() == 'http://test.com/test3'
 
     }
     def "validate scheduled job with required option without default"() {
@@ -1334,6 +1457,34 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         results.scheduledExecution.options[0].multivalued
         results.scheduledExecution.options[0].delimiter==','
     }
+    def "validate options json multivalued"() {
+        given:
+        mockCodec(JSONCodec)
+        setupDoValidate()
+        def params = baseJobParams() + [
+            jobOptionsJson: [
+                [
+                    name       : 'test3',
+                    value      : 'val3',
+                    enforced   : false,
+                    multivalued: true,
+                    delimiter  : ','
+                ]
+            ].encodeAsJSON().toString()
+        ]
+        service.fileUploadService = Mock(FileUploadService)
+        when:
+        def results = service._dovalidate(params, mockAuth())
+
+        then:
+        !results.failed
+        results.scheduledExecution.options.size()==1
+        results.scheduledExecution.options[0].name == 'test3'
+        results.scheduledExecution.options[0].defaultValue == 'val3'
+        !results.scheduledExecution.options[0].enforced
+        results.scheduledExecution.options[0].multivalued
+        results.scheduledExecution.options[0].delimiter==','
+    }
     def "invalid options data"() {
         given:
         setupDoValidate()
@@ -1362,6 +1513,34 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         null | 'val3'    | false    | 'http://test.com/test3' | 'name'
         'test1' | 'val3' | false    | 'hzzp://test.com/test3' | 'valuesUrl'
     }
+    def "invalid options json data"() {
+        given:
+        mockCodec(JSONCodec)
+        setupDoValidate()
+        def params = baseJobParams()+[
+                      jobOptionsJson: [
+                          [
+                                  name: name,
+                                  value: defval,
+                                  enforced: enforced,
+                                  valuesUrl: valuesUrl
+                          ]
+                      ].encodeAsJSON().toString()
+        ]
+        service.fileUploadService = Mock(FileUploadService)
+        when:
+        def results = service._dovalidate(params, mockAuth())
+
+        then:
+        results.failed
+        results.scheduledExecution.errors.hasFieldErrors('options')
+        results.scheduledExecution.errors.getFieldError('options').getRejectedValue()[0].errors.hasFieldErrors(fieldName)
+
+        where:
+        name| defval     | enforced | valuesUrl               | fieldName
+        null | 'val3'    | false    | 'http://test.com/test3' | 'name'
+        'test1' | 'val3' | false    | 'hzzp://test.com/test3' | 'valuesUrlLong'
+    }
     def "validate options multivalued with multiple defaults"() {
         given:
         setupDoValidate()
@@ -1377,6 +1556,36 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                                               valuesList: 'val1,val2,val3'
                                       ]
                       ]
+        ]
+        service.fileUploadService = Mock(FileUploadService)
+        when:
+        def results = service._dovalidate(params, mockAuth())
+
+        then:
+        !results.failed
+        results.scheduledExecution.options.size()==1
+        results.scheduledExecution.options[0].name == 'test3'
+        results.scheduledExecution.options[0].defaultValue == 'val1,val2'
+        results.scheduledExecution.options[0].enforced
+        results.scheduledExecution.options[0].multivalued
+        results.scheduledExecution.options[0].delimiter==','
+        results.scheduledExecution.options[0].optionValues==['val1','val2','val3'] as List
+    }
+    def "validate options json multivalued with multiple defaults"() {
+        given:
+        mockCodec(JSONCodec)
+        setupDoValidate()
+        def params = baseJobParams()+[
+                      jobOptionsJson: [
+                          [
+                                  name: 'test3',
+                                  value: 'val1,val2',
+                                  enforced: true,
+                                  multivalued:true,
+                                  delimiter: ',',
+                                  values: ['val1','val2','val3']
+                          ]
+                      ].encodeAsJSON().toString()
         ]
         service.fileUploadService = Mock(FileUploadService)
         when:
@@ -1422,6 +1631,37 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         [delimiter: null]                | 'delimiter'
         [defaultValue: 'val1,val2,val4'] | 'defaultValue'
         [secureInput: true]              | 'multivalued'
+    }
+    def "invalid options json multivalued"() {
+        given:
+        mockCodec(JSONCodec)
+        setupDoValidate()
+        def params = baseJobParams()+[
+                      jobOptionsJson: [
+                          [
+                                  name: 'test3',
+                                  value: 'val1,val2',
+                                  enforced: true,
+                                  multivalued:true,
+                                  delimiter: ',',
+                                  values: ['val1','val2','val3']
+                          ]+data
+                      ].encodeAsJSON().toString()
+        ]
+        service.fileUploadService = Mock(FileUploadService)
+        when:
+        def results = service._dovalidate(params, mockAuth())
+
+        then:
+        results.failed
+        results.scheduledExecution.errors.hasFieldErrors('options')
+        results.scheduledExecution.errors.getFieldError('options').getRejectedValue()[0].errors.hasFieldErrors(fieldName)
+
+        where:
+        data                      | fieldName
+        [delimiter: null]         | 'delimiter'
+        [value: 'val1,val2,val4'] | 'defaultValue'
+        [secure: true]            | 'multivalued'
     }
     def setupDoUpdate(enabled=false, serverUUID = null){
         def uuid=serverUUID?:UUID.randomUUID().toString()
@@ -2741,6 +2981,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         job.workflow.commands[3].errorHandler instanceof JobExec
 
     }
+
     def "load jobs cannot load job with same uuid in different project"(){
         given:
         setupDoUpdate()
@@ -2951,6 +3192,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def job1 = new ScheduledExecution(createJobParams(userRoleList: 'a,b', user: 'bob')).save()
         service.executionServiceBean = Mock(ExecutionService)
         service.quartzScheduler = Mock(Scheduler)
+        service.quartzJobSpecifier = new ExecutionJobQuartzJobSpecifier()
         def projectMock = Mock(IRundeckProject) {
             getProjectProperties() >> [:]
         }
@@ -3481,6 +3723,34 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         job.save()
         then:
         job.nodeThreadcount == 30
+    }
+
+    def "Option validation removes the default value from a secure option"(){
+        given:
+        def opt1 = new Option(
+                name: 'opt1',
+                required: false,
+                description: 'monkey1',
+                enforced: false,
+                secureInput: true,
+                defaultValue: "default",
+        )
+        def opt2 = new Option(
+                name: 'opt2',
+                required: false,
+                description: 'monkey',
+                enforced: false,
+                secureInput: true,
+                defaultValue: "default",
+                defaultStoragePath: "keys/keypath/key.key"
+        )
+        when:
+        service.cleanSecureOptionFromDefaultValue(opt1)
+        service.cleanSecureOptionFromDefaultValue(opt2)
+
+        then:
+        opt2.defaultValue == null
+        opt1.defaultValue == null
     }
 
     @Unroll
@@ -4042,6 +4312,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         assert se.id!=null
         def oldQuartzJob=se.generateJobScheduledName()
         def oldQuartzGroup=se.generateJobGroupName()
+        service.quartzJobSpecifier = new ExecutionJobQuartzJobSpecifier()
 
         def auth = Mock(UserAndRolesAuthContext){
             getUsername()>>'bob'
@@ -4982,6 +5253,28 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             job.options[0].toMap()==opt1.toMap()
             job.options[1].toMap()==opt2.toMap()
     }
+
+    def "job definition options from options json"() {
+        given:
+            mockCodec(JSONCodec)
+            def job = new ScheduledExecution(options:[new Option(name:'optX')])
+            def opt1 = [name: 'opt1']
+            def opt2 = [name: 'opt2', required: true, description: 'monkey']
+            def params = [
+                jobOptionsJson: [
+                    opt1,
+                    opt2,
+                ].encodeAsJSON().toString()
+            ]
+            def auth = Mock(UserAndRolesAuthContext)
+        when:
+            service.jobDefinitionOptions(job, null, params, auth)
+        then:
+            job.options!=null
+            job.options.size()==2
+            job.options[0].toMap()==new Option(opt1).toMap()
+            job.options[1].toMap()==new Option(opt2).toMap()
+    }
     def "job definition options from params.options map"() {
         given:
             def job = new ScheduledExecution(options:[new Option(name:'optX')])
@@ -5048,6 +5341,21 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             !failed
             !job.errors.hasErrors()
     }
+    def "validate definition options json should not have errors for unvalidated scheduledExecution"() {
+        given:
+            mockCodec(JSONCodec)
+            def opt2 = [name: 'opt2', required: false, description: 'monkey', enforced: false]
+            def params = [jobOptionsJson: [opt2].encodeAsJSON().toString()]
+            def job = new ScheduledExecution()
+            def auth = Mock(UserAndRolesAuthContext)
+            service.fileUploadService = Mock(FileUploadService)
+            service.jobDefinitionOptions(job, null, params, auth)
+        when:
+            def failed = service.validateDefinitionOptions(job, params)
+        then:
+            !failed
+            !job.errors.hasErrors()
+    }
 
     def "validate definition options should have errors for option"() {
         given:
@@ -5069,11 +5377,54 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             job.errors.hasFieldErrors('options')
             job.errors.hasFieldErrors('jobName')
     }
+    def "validate definition options json should have errors for option"() {
+        given:
+            mockCodec(JSONCodec)
+            def opt2 = [name: 'opt2', required: true, description: 'monkey', enforced: false]
+            def params = [jobOptionsJson: [opt2].encodeAsJSON().toString()]
+            def job = new ScheduledExecution(scheduled: true, crontabString: '0 0 0 0 * * ?')
+            job.validate()
+            def auth = Mock(UserAndRolesAuthContext)
+            service.fileUploadService = Mock(FileUploadService)
+            service.jobDefinitionOptions(job, null, params, auth)
+        when:
+            def failed = service.validateDefinitionOptions(job, params)
+        then:
+            failed
+            def erropt = job.options.find{it.name=='opt2'}
+            erropt.errors.hasFieldErrors('defaultValue')
+            !erropt.errors.hasFieldErrors('scheduledExecution.name')
+            job.errors.hasErrors()
+            job.errors.hasFieldErrors('options')
+            job.errors.hasFieldErrors('jobName')
+    }
 
     def "validate definition options should not have errors for invalid scheduledExecution"() {
         given:
             def opt2 = new Option(name: 'opt2', required: false, description: 'monkey', enforced: false)
             def params = [options: [opt2,]]
+            def job = new ScheduledExecution(scheduled: true, crontabString: '0 0 0 0 * * ?')
+            job.validate()
+            def auth = Mock(UserAndRolesAuthContext)
+            service.fileUploadService = Mock(FileUploadService)
+            service.jobDefinitionOptions(job, null, params, auth)
+        when:
+            def failed = service.validateDefinitionOptions(job, params)
+        then:
+            !failed
+            def erropt = job.options.find{it.name=='opt2'}
+            !erropt.hasErrors()
+            !erropt.errors.hasFieldErrors('defaultValue')
+            !erropt.errors.hasFieldErrors('scheduledExecution.name')
+            job.errors.hasErrors()
+            !job.errors.hasFieldErrors('options')
+            job.errors.hasFieldErrors('jobName')
+    }
+    def "validate definition options json should not have errors for invalid scheduledExecution"() {
+        given:
+            mockCodec(JSONCodec)
+            def opt2 = [name: 'opt2', required: false, description: 'monkey', enforced: false]
+            def params = [jobOptionsJson: [opt2,].encodeAsJSON().toString()]
             def job = new ScheduledExecution(scheduled: true, crontabString: '0 0 0 0 * * ?')
             job.validate()
             def auth = Mock(UserAndRolesAuthContext)
@@ -5648,7 +5999,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 }
                 getProjectGlobals(_) >> [:]
                 getPluginControlService(_) >> pluginControlService
-                getNodeStepPluginDescriptions() >> [[name:'test'],[name:'test2']]
+                getNodeStepPluginDescriptions() >> [
+                        DescriptionBuilder.builder().name("test").isHighlighted(false).build(),
+                        DescriptionBuilder.builder().name("test2").isHighlighted(false).build()
+                ]
             }
 
             service.frameworkService = frameworkService
@@ -5893,11 +6247,11 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         where:
         importIntegrationConfigured | exportIntegrationConfigured | hasAccessToKeyOrPassword | hasImportKeys | hasExportKeys
-        true                        | false                       | ["hasAccess": true]      | true          | false
-        false                       | true                        | ["hasAccess": true]      | false         | true
-        true                        | true                        | ["hasAccess": true]      | true          | true
-        false                       | false                       | ["hasAccess": true]      | false         | false
-        true                        | true                        | ["hasAccess": false]     | false         | false
+        true                        | false                       | true      | true          | false
+        false                       | true                        | true      | false         | true
+        true                        | true                        | true      | true          | true
+        false                       | false                       | true      | false         | false
+        true                        | true                        | false     | false         | false
 
     }
 
@@ -5997,37 +6351,56 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         "parallel"       | "parallel"          | false
     }
 
+    def "basicQueryJobs"(){
+        given:
+            service.jobDataProvider=Mock(JobDataProvider)
+            def authContext=Mock(UserAndRolesAuthContext)
+
+            def project = 'test'
+            def path = 'some/path'
+            def queryInput = Mock(JobQueryInputData){
+                getGroupPath()>>path
+            }
+            def params =[:]
+        when:
+            def result=service.basicQueryJobs(project, queryInput, authContext)
+        then:
+            1 * service.jobDataProvider.queryJobs(queryInput)>>new GormJobQueryProvider.GormPage<JobDataSummary>(results:[
+                new RdJobDataSummary(uuid:'1', jobName:'test1', groupPath: path+'/test1', project:project),
+                new RdJobDataSummary(uuid:'2', jobName:'test2', groupPath: path+'/test2/authok', project:project),
+                new RdJobDataSummary(uuid:'3', jobName:'test3', groupPath: path+'/test3/noauth', project:project),
+                new RdJobDataSummary(uuid:'4', jobName:'test4', groupPath: path, project:project),
+                new RdJobDataSummary(uuid:'5', jobName:'test5', groupPath: path, project:project),
+                new RdJobDataSummary(uuid:'6', jobName:'test6', groupPath: path+'/test3/other', project:project),
+            ])
+            _ * service.rundeckAuthContextProcessor.authResourceForJob(_,_,_)>>{
+                [
+                    jobName:it[0],
+                    groupPath:it[1],
+                    uuid:it[2],
+                ]
+            }
+            _ * service.rundeckAuthContextProcessor.authorizeProjectResourceAny(
+                authContext,
+                _,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
+                project
+            ) >> {
+                return (it[1].uuid in authorized)
+            }
+
+            result.findAll{it.job}.collect{it.jobData.uuid}==expectedJobs
+            result.findAll{!it.job}.collect{it.groupPath}.sort()==expectedGroups
+        where:
+            authorized                | expectedJobs | expectedGroups
+            ['1', '4']                | ['4']        | ['some/path/test1']
+            ['2', '4']                | ['4']        | ['some/path/test2']
+            ['3', '4']                | ['4']        | ['some/path/test3']
+            ['1', '2', '4']           | ['4']        | ['some/path/test1', 'some/path/test2']
+            ['1', '2', '5']           | ['5']        | ['some/path/test1', 'some/path/test2']
+            ['1', '4', '5']           | ['4', '5']   | ['some/path/test1']
+            ['1', '2', '3', '4', '5'] | ['4', '5']   | ['some/path/test1', 'some/path/test2', 'some/path/test3']
+
+    }
 }
 
-@CompileStatic
-class TriggersExtenderImpl implements TriggersExtender {
-
-    ScheduledExecution job
-
-    TriggersExtenderImpl(ScheduledExecution job) {
-        this.job = job
-    }
-
-    @Override
-    void extendTriggers(Object jobDetail, List<TriggerBuilderHelper> triggerBuilderHelpers) {
-        triggerBuilderHelpers << new TriggerBuilderHelper(){
-
-            LocalJobSchedulesManager schedulesManager = new LocalJobSchedulesManager()
-            @Override
-            Object getTriggerBuilder() {
-                schedulesManager.createTriggerBuilder(job).getTriggerBuilder()
-            }
-
-            @Override
-            Map getParams() {
-                return null
-            }
-
-            @Override
-            Object getTimeZone() {
-                return null
-            }
-        }
-    }
-
-}

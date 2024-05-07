@@ -21,7 +21,7 @@ export RD_OPTS="-Dfile.encoding=utf-8"
 if [ -n "$SETUP_SSL" ] ; then
   export RD_URL=https://$RUNDECK_NODE:4443
   export TRUSTSTORE="$HOME/etc/truststore"
-  export RD_OPTS="$RD_OPTS -Djavax.net.ssl.trustStore=$TRUSTSTORE"
+  export RD_OPTS="$RD_OPTS -Djavax.net.ssl.trustStore=$TRUSTSTORE -Djavax.net.ssl.trustStorePassword=adminadmin"
 fi
 
 echo "API_KEY=$API_KEY"

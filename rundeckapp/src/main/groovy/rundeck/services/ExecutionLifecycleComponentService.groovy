@@ -252,7 +252,7 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
     }
 
     List<NamedExecutionLifecycleComponent> loadConfiguredComponents(PluginConfigSet configurations, String project) {
-        List compList = []
+        List<NamedExecutionLifecycleComponent> compList = []
         if(beanComponents){
             List<NamedExecutionLifecycleComponent> namedComponents = beanComponents.collect {name, component->
                 new NamedExecutionLifecycleComponent(
@@ -346,10 +346,11 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
     }
 }
 
-@CompileStatic
+
 class NamedExecutionLifecycleComponent implements ExecutionLifecycleComponent {
-    @Delegate ExecutionLifecycleComponent component
     String name
+    ExecutionLifecycleComponent component
+
     boolean isPlugin() {
         return component instanceof ExecutionLifecyclePlugin
     }

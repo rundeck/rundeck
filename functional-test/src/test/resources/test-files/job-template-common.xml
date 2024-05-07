@@ -1,0 +1,25 @@
+<joblist>
+    <job>
+        <uuid>xml-uuid</uuid>
+        <name>xml-job-name</name>
+        <group>xml-job-group-name</group>
+        <description>xml-job-description-name</description>
+        <loglevel>INFO</loglevel>
+        <context>
+            <project>xml-project-name</project>
+            <options>
+                <option name="opt1" value="testvalue" required="true"/>
+                <option name="opt2" values="a,b,c" required="true"/>
+            </options>
+        </context>
+        <dispatch>
+            <threadcount>1</threadcount>
+            <keepgoing>true</keepgoing>
+        </dispatch>
+        <sequence>
+            <command>
+                <exec>xml-args</exec>
+            </command>
+        </sequence>
+    </job>
+</joblist>

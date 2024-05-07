@@ -1,0 +1,38 @@
+<template>
+  <a
+    v-if="jobPageStore.jobAuthz['create']"
+    :href="jobPageStore.uploadJobHref()"
+    class="btn"
+    :class="`btn-${btnType}`"
+  >
+    <slot>{{ $t("job.upload.button.title") }}</slot>
+  </a>
+</template>
+
+<script lang="ts">
+import {
+  JobPageStore,
+  JobPageStoreInjectionKey,
+} from "@/library/stores/JobPageStore";
+import { defineComponent, inject } from "vue";
+
+export default defineComponent({
+  name: "UploadJobButton",
+  props: {
+    btnType: {
+      type: String,
+      default: "default",
+    },
+  },
+  setup(props) {
+    const jobPageStore: JobPageStore = inject(
+      JobPageStoreInjectionKey,
+    ) as JobPageStore;
+    return {
+      jobPageStore,
+    };
+  },
+});
+</script>
+
+<style scoped lang="scss"></style>

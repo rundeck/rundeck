@@ -19,7 +19,6 @@ package com.dtolabs.rundeck.core.execution.utils;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
-import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor;
 
 /**
  * Created by greg on 3/19/15.
@@ -30,6 +29,9 @@ public class ResolverUtil {
      * named "project.X", then framework properties named "framework.X". If none of those exist, return the default
      * value
      */
+    public static final String PROJ_PROP_PREFIX = "project.";
+    public static final String FWK_PROP_PREFIX = "framework.";
+
     public static String resolveProperty(
             final String nodeAttribute,
             final String defaultValue,
@@ -40,11 +42,11 @@ public class ResolverUtil {
     {
         if (null != node.getAttributes().get(nodeAttribute)) {
             return node.getAttributes().get(nodeAttribute);
-        } else if (frameworkProject.hasProperty(JschNodeExecutor.PROJ_PROP_PREFIX + nodeAttribute)
-                   && !"".equals(frameworkProject.getProperty(JschNodeExecutor.PROJ_PROP_PREFIX + nodeAttribute))) {
-            return frameworkProject.getProperty(JschNodeExecutor.PROJ_PROP_PREFIX + nodeAttribute);
-        } else if (framework.hasProperty(JschNodeExecutor.FWK_PROP_PREFIX + nodeAttribute)) {
-            return framework.getProperty(JschNodeExecutor.FWK_PROP_PREFIX + nodeAttribute);
+        } else if (frameworkProject.hasProperty(PROJ_PROP_PREFIX + nodeAttribute)
+                   && !"".equals(frameworkProject.getProperty(PROJ_PROP_PREFIX + nodeAttribute))) {
+            return frameworkProject.getProperty(PROJ_PROP_PREFIX + nodeAttribute);
+        } else if (framework.hasProperty(FWK_PROP_PREFIX + nodeAttribute)) {
+            return framework.getProperty(FWK_PROP_PREFIX + nodeAttribute);
         } else {
             return defaultValue;
         }

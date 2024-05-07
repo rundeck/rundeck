@@ -14,108 +14,121 @@
  * limitations under the License.
  */
 
-import {client} from './rundeckClient'
+import { client } from "./rundeckClient";
 
-const ServicesCache : { [svc: string]: { [provider: string]: any } }= {}
-const ServiceProvidersCache: { [provider: string]: any } = {}
+const ServicesCache: { [svc: string]: { [provider: string]: any } } = {};
+const ServiceProvidersCache: { [provider: string]: any } = {};
 
-const getParameters = () :Promise<{[key:string]:string}>=> {
+const getParameters = (): Promise<{ [key: string]: string }> => {
   return new Promise((resolve, reject) => {
-    if (window._rundeck && window._rundeck.rdBase && window._rundeck.apiVersion) {
+    if (
+      window._rundeck &&
+      window._rundeck.rdBase &&
+      window._rundeck.apiVersion
+    ) {
       resolve({
         apiBase: `${window._rundeck.rdBase}/api/${window._rundeck.apiVersion}`,
         rdBase: window._rundeck.rdBase,
-        project:window._rundeck.projectName
-      })
+        project: window._rundeck.projectName,
+      });
     } else {
-      reject(new Error('No rdBase found'))
+      reject(new Error("No rdBase found"));
     }
-  })
-}
-export const getPluginProvidersForService = async (svcName:string) => {
+  });
+};
+export const getPluginProvidersForService = async (svcName: string) => {
   if (ServicesCache[svcName]) {
     return new Promise((resolve, reject) => {
-      resolve(ServicesCache[svcName])
-    })
+      resolve(ServicesCache[svcName]);
+    });
   }
-  const params=await getParameters()
+  const params = await getParameters();
   try {
     const resp = await client.sendRequest({
       pathTemplate: `/plugin/providers/{svcName}`,
-      pathParameters: {svcName: svcName},
+      pathParameters: { svcName: svcName },
       baseUrl: params.rdBase,
-      method: 'GET'
+      method: "GET",
     });
     if (!resp.parsedBody) {
       throw new Error(`Error getting service providers list for ${svcName}`);
-    }
-    else {
+    } else {
       ServicesCache[svcName] = resp.parsedBody;
       return resp.parsedBody;
     }
+  } catch (e) {
+    return console.warn("Error getting service providers list", e);
   }
-  catch (e) {
-    return console.warn('Error getting service providers list', e);
-  }
-}
+};
 
-export const getServiceProviderDescription = async (svcName:string, provider:string) => {
-  if (ServiceProvidersCache[svcName] && ServiceProvidersCache[svcName].providers[provider]) {
+export const getServiceProviderDescription = async (
+  svcName: string,
+  provider: string,
+) => {
+  if (
+    ServiceProvidersCache[svcName] &&
+    ServiceProvidersCache[svcName].providers[provider]
+  ) {
     return new Promise((resolve, reject) => {
-      resolve(ServiceProvidersCache[svcName].providers[provider])
-    })
+      resolve(ServiceProvidersCache[svcName].providers[provider]);
+    });
   }
-  const params=await getParameters()
-  let qparams:any={}
-  if(params.project){
-    qparams.project=params.project
+  const params = await getParameters();
+  const qparams: any = {};
+  if (params.project) {
+    qparams.project = params.project;
   }
 
   const resp = await client.sendRequest({
     pathTemplate: `/plugin/detail/{svcName}/{provider}`,
-    pathParameters: {svcName:svcName,provider:provider},
+    pathParameters: { svcName: svcName, provider: provider },
     baseUrl: params.rdBase,
-    method: 'GET',
-    queryParameters:qparams
+    method: "GET",
+    queryParameters: qparams,
   });
   if (!resp.parsedBody) {
-    throw new Error(`Error getting service provider detail for ${svcName}/${provider}`);
+    throw new Error(
+      `Error getting service provider detail for ${svcName}/${provider}`,
+    );
   }
 
   if (!ServiceProvidersCache[svcName]) {
     ServiceProvidersCache[svcName] = {
-      providers: {}
+      providers: {},
     };
   }
   ServiceProvidersCache[svcName].providers[provider] = resp.parsedBody;
   return resp.parsedBody;
+};
 
-}
-
-
-export const validatePluginConfig = async (svcName:string, provider:string, config:any, ignoredScope:string|null = null) => {
-  const params = await getParameters()
-  const qparams = {} as {[key:string]:string}
-  if(ignoredScope!=null){
-    qparams['ignoredScope']=ignoredScope
+export const validatePluginConfig = async (
+  svcName: string,
+  provider: string,
+  config: any,
+  ignoredScope: string | null = null,
+) => {
+  const params = await getParameters();
+  const qparams = {} as { [key: string]: string };
+  if (ignoredScope != null) {
+    qparams["ignoredScope"] = ignoredScope;
   }
   const resp = await client.sendRequest({
     pathTemplate: `/plugin/validate/{svcName}/{provider}`,
-    pathParameters: {svcName:svcName,provider:provider},
-    queryParameters:qparams,
+    pathParameters: { svcName: svcName, provider: provider },
+    queryParameters: qparams,
     baseUrl: params.rdBase,
-    method: 'POST',
-    body: {config: config}
-  })
+    method: "POST",
+    body: { config: config },
+  });
   if (!resp.parsedBody) {
-    throw new Error(`Error getting service providers list for ${svcName}`)
+    throw new Error(`Error getting service providers list for ${svcName}`);
   } else {
-    return resp.parsedBody
+    return resp.parsedBody;
   }
-}
+};
 
 export default {
   getPluginProvidersForService,
   getServiceProviderDescription,
-  validatePluginConfig
-}
+  validatePluginConfig,
+};

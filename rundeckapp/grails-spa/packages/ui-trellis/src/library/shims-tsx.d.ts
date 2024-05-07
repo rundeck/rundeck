@@ -1,6 +1,6 @@
-import 'vue-tsx-support/enable-check';
+import "vue-tsx-support/enable-check";
 
-import Vue, { VNode } from 'vue'
+import Vue, { VNode } from "vue";
 
 declare global {
   namespace JSX {

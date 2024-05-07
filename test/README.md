@@ -64,9 +64,3 @@ bash test/run-docker-plugin-blocklist-test.sh
 ```shell
 bash test/run-docker-ansible-tests.sh
 ```
-
-## API Test
-```shell
-# Run tests test/api/test-*.sh
-DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
-```

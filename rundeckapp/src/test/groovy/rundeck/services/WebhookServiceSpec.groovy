@@ -18,7 +18,6 @@ package rundeck.services
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.config.Features
-import com.dtolabs.rundeck.core.event.EventQueryType
 import com.dtolabs.rundeck.core.event.EventStoreService
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
@@ -39,9 +38,11 @@ import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.dtolabs.rundeck.plugins.webhook.WebhookResponder
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
-import org.rundeck.app.data.model.v1.AuthTokenMode
-import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
 import org.rundeck.app.data.providers.GormWebhookDataProvider
+import org.rundeck.app.data.providers.storedEvent.GormStoredEventProvider
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.app.util.spi.AuthTokenManager
@@ -79,6 +80,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
             it.serverUUID >> '16b02806-f4b3-4628-9d9c-2dd2cc67d53c'
         }
         eventStoreService.frameworkService = framework
+        eventStoreService.storedEventProvider = new GormStoredEventProvider()
         service.eventStoreService = eventStoreService
         service.rundeckAuthTokenManagerService = Mock(RundeckAuthTokenManagerService)
     }
@@ -253,7 +255,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
     }
     def "save new webhook token creation unauthorized"() {
         given:
-        Webhook existing = new Webhook(name:"test",project: "Test",authToken: "12345",eventPlugin: "log-webhook-event")
+        Webhook existing = new Webhook(name:"test",project: "Test",authToken: "12345",eventPlugin: "log-webhook-event", uuid: "existing-uuid")
         existing.save()
 
         def mockUserAuth = Mock(UserAndRolesAuthContext) {
@@ -282,7 +284,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         }
 
         when:
-        def result = service.saveHook(mockUserAuth,[id:existing.id,name:"test",project:"Test",user:"webhookUser",roles:"webhook,test,bogus",eventPlugin:"log-webhook-event","config":["cfg1":"val1"]])
+        def result = service.saveHook(mockUserAuth,[id:existing.id, uuid: existing.uuid,name:"test",project:"Test",user:"webhookUser",roles:"webhook,test,bogus",eventPlugin:"log-webhook-event","config":["cfg1":"val1"]])
 
         then:
         result.err ==~ /^Failed to update Auth Token roles: Unauthorized to update roles$/
@@ -316,10 +318,10 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         result.err
         !created
         1 * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345"] }
-        1 * service.rundeckAuthTokenManagerService.deleteByTokenWithType('12345', AuthenticationToken.AuthTokenType.WEBHOOK )
+        1 * service.rundeckAuthTokenManagerService.deleteByTokenWithType('12345', AuthTokenType.WEBHOOK )
 
     }
-    def "webhook name must be unique in project"() {
+    def "webhook name could be used multiples times"() {
         given:
         def mockUserAuth = Mock(UserAndRolesAuthContext) {
             getUsername() >> { "webhookUser" }
@@ -327,12 +329,22 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         }
         Webhook existing = new Webhook(name:"test",project: "Test",authToken: "12345",eventPlugin: "log-webhook-event")
         existing.save()
+        service.userService = Mock(MockUserService) {
+            validateUserExists(_) >> { true }
+        }
+        service.apiService = Mock(MockApiService)
+        service.pluginService = Mock(MockPluginService) {
+            validatePluginConfig(_,_,_) >> { return new ValidatedPlugin(report: new Validator.Report(),valid:true) }
+            getPlugin(_,_) >> { new TestWebhookEventPlugin() }
+            listPlugins(WebhookEventPlugin) >> { ["log-webhook-event":new TestWebhookEventPlugin()] }
+        }
 
         when:
         def result = service.saveHook(mockUserAuth,[name:"test",project:"Test",user:"webhookUser",roles:"webhook,test",eventPlugin:"log-webhook-event","config":["cfg1":"val1"]])
 
         then:
-        result == [err:"A Webhook by that name already exists in this project"]
+        _ * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345"] }
+        result.msg == "Saved webhook"
 
     }
 
@@ -427,6 +439,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
     @Unroll
     def "import webhooks regenAuthToken: #regenFlag"() {
         given:
+        def uuid = "0dfb6080-935e-413d-a6a7-cdee9345cf72"
         service.pluginService = Mock(MockPluginService) {
             listPlugins(_) >> { ["log-webhook-event":new Object()]}
         }
@@ -439,10 +452,10 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
 
         when:
         def result = service.importWebhook(authContext,[name:"test",
-                                                        uuid: "0dfb6080-935e-413d-a6a7-cdee9345cf72",
+                                                        uuid: uuid,
                                                         project:"Test", authToken:'abc123', user:'webhookUser', roles:"webhook,test",
                                                         eventPlugin:"log-webhook-event",
-                                                        config:'{}'],regenFlag)
+                                                        config:'{}'],regenFlag,regenUuid)
         Webhook created = Webhook.findByName("test")
 
         then:
@@ -454,11 +467,13 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         1 * service.rundeckAuthTokenManagerService.parseAuthRoles("webhook,test") >> { new HashSet(['webhook','test']) }
         expectGenTokenCall * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345"] }
         expectImportWhkToken * service.rundeckAuthTokenManagerService.importWebhookToken(authContext,'abc123','webhookUser',new HashSet(['webhook','test'])) >> { true }
-
+        if(regenUuid){
+            created.uuid != uuid
+        }
         where:
-        regenFlag | expectGenTokenCall | expectImportWhkToken
-        true        |                1 |                    0
-        false       |                0 |                    1
+        regenFlag | expectGenTokenCall | expectImportWhkToken   |   regenUuid
+        true        |                1 |                    0   |   true
+        false       |                0 |                    1   |   false
     }
 
     def "import is allowed"() {
@@ -492,7 +507,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
     def "import is not allowed - token exists"() {
         setup:
         service.rundeckAuthTokenManagerService=Mock(AuthTokenManager){
-            1 * getTokenWithType('12345', AuthenticationToken.AuthTokenType.WEBHOOK)>>Mock(AuthenticationToken)
+            1 * getTokenWithType('12345', AuthTokenType.WEBHOOK)>>Mock(AuthenticationToken)
         }
         Webhook hook = new Webhook(name:"new")
         def hookData = [authToken:"12345"]
@@ -534,6 +549,37 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
 
     }
 
+    def "edit webhook keep authConfigJson"() {
+        given:
+        def mockUserAuth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> { "webhookUser" }
+            getRoles() >> { ["webhook", "test"] }
+        }
+        service.apiService = Mock(MockApiService)
+        service.rundeckAuthTokenManagerService = Mock(AuthTokenManager) {
+            parseAuthRoles(_) >> { ["webhook", "test"] }
+        }
+        service.userService = Mock(MockUserService) {
+            validateUserExists(_) >> { true }
+        }
+        service.pluginService = Mock(MockPluginService) {
+            validatePluginConfig(_, _, _) >> { return new ValidatedPlugin(report: new Validator.Report(), valid: true) }
+            getPlugin(_, _) >> { new TestWebhookEventPlugin() }
+            listPlugins(WebhookEventPlugin) >> { ["log-webhook-event": new TestWebhookEventPlugin()] }
+        }
+        Webhook existing = new Webhook(id: "1", uuid: "2c2d614b-34f5-4f52-969a-9c6a90fb8b75", name: "test", project: "Test", authToken: "12345", eventPlugin: "log-webhook-event", authConfigJson: '{"cfg1":"val1"}');
+        existing.save()
+
+        when:
+        def result = service.saveHook(mockUserAuth, [id: 1, uuid: "2c2d614b-34f5-4f52-969a-9c6a90fb8b75", name: "test", project: "Test", user: "webhookUser", roles: "webhook,test", useAuth: true, regenAuth: false, eventPlugin: "log-webhook-event", "config": ["cfg1": "val1"]])
+
+        then:
+        result.msg == "Saved webhook"
+        result.uuid
+        Webhook.get("1").authConfigJson == '{"cfg1":"val1"}'
+
+    }
+
     def "edit webhook's name"() {
         given:
         def mockUserAuth = Mock(UserAndRolesAuthContext) {
@@ -564,7 +610,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         whPersisted.name == "test-change-name"
     }
 
-    def "Cannot import a webhook with the same name and different uuid in the same project"() {
+    def "import a webhook with the same name and different uuid in the same project"() {
         given:
         def mockUserAuth = Mock(UserAndRolesAuthContext) {
             getUsername() >> { "webhookUser" }
@@ -586,11 +632,10 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         existing.save()
 
         when:
-        def result = service.importWebhook(mockUserAuth, [id: 1, uuid: "d1c6dcf7-dd12-4858-9373-c12639c689d4", name: "test", project: "Test", authToken: "12345", eventPlugin: "log-webhook-event"], false)
-
+        def result = service.importWebhook(mockUserAuth, [id: 1, uuid: "d1c6dcf7-dd12-4858-9373-c12639c689d4", name: "test", project: "Test", authToken: "12345", eventPlugin: "log-webhook-event"], true,false)
         then:
-        result == [err:"Unable to import webhoook test. Error: A Webhook by that name already exists in this project"]
-
+        result.msg == "Webhook test imported"
+        1 * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345"] }
     }
 
     def "Cannot import a webhook with existing token"() {
@@ -615,13 +660,48 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         existing.save()
 
         when:"import data with same token into project B"
-        def result = service.importWebhook(mockUserAuth, imported, false)
-
+        def result = service.importWebhook(mockUserAuth, imported, false,false)
         then:"should fail"
         result == [err:'Unable to import webhoook test. Error:Cannot import webhook: imported auth token does not exist or was changed']
         where:
             existingMap = [uuid: "2c2d614b-34f5-4f52-969a-9c6a90fb8b75", name: "test", project: "Test", authToken: "12345", eventPlugin: "log-webhook-event"]
             imported=     [uuid: "d1c6dcf7-dd12-4858-9373-c12639c689d4", name: "test", project: "Test2", authToken: "12345", eventPlugin: "log-webhook-event"]
+    }
+
+    def "import a webhook that already exits in a project"() {
+        given:"webhook exists with token in project A"
+        def mockUserAuth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> { "webhookUser" }
+            getRoles() >> { ["webhook", "test"] }
+        }
+        service.apiService = Mock(MockApiService)
+        service.rundeckAuthTokenManagerService = Mock(AuthTokenManager) {
+            parseAuthRoles(_) >> { ["webhook", "test"] }
+        }
+        service.userService = Mock(MockUserService) {
+            validateUserExists(_) >> { true }
+        }
+        service.pluginService = Mock(MockPluginService) {
+            validatePluginConfig(_, _, _) >> { return new ValidatedPlugin(report: new Validator.Report(), valid: true) }
+            getPlugin(_, _) >> { new TestWebhookEventPlugin() }
+            listPlugins(WebhookEventPlugin) >> { ["log-webhook-event": new TestWebhookEventPlugin()] }
+        }
+        def webhookUUID="c1c6dcf7-dd12-4858-9373-c12639c689d4"
+        def definition=     [uuid: webhookUUID, name: "test", project: "Test", authToken: "12345", eventPlugin: "log-webhook-event"]
+
+        Webhook existing = new Webhook(definition)
+        existing.save()
+
+
+        when:"import data with same token into project A"
+        def result = service.importWebhook(mockUserAuth, definition, false,false)
+
+
+        then:"should have 1 webhook"
+        def existingWebhooks = service.webhookDataProvider.findAllByProject("Test")
+        result == [msg:'Webhook test imported']
+        existingWebhooks.size() == 1
+
     }
 
     def "getWebhookWithAuth"() {
@@ -635,7 +715,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         hook.save()
 
         service.rundeckAuthTokenManagerService = Mock(AuthTokenManager) {
-            1 * getTokenWithType("abc123", AuthenticationToken.AuthTokenType.WEBHOOK) >> Mock(AuthenticationToken){
+            1 * getTokenWithType("abc123", AuthTokenType.WEBHOOK) >> Mock(AuthenticationToken){
                 getToken()>>'abc123'
                 getCreator()>>'admin'
                 getAuthRolesSet()>>(["webhook,role1"] as Set)
@@ -778,7 +858,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
     }
 
     interface MockApiService {
-        Map generateUserToken(UserAndRolesAuthContext ctx, Integer expiration, String user, Set<String> roles, boolean forceExpiration, AuthenticationToken.AuthTokenType tokenType) throws Exception
+        Map generateUserToken(UserAndRolesAuthContext ctx, Integer expiration, String user, Set<String> roles, boolean forceExpiration, AuthTokenType tokenType) throws Exception
     }
 
     interface MockStorageService {

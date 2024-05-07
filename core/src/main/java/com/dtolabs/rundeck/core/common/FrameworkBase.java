@@ -184,10 +184,10 @@ public class FrameworkBase implements IFramework{
     }
 
     @Override
-    public NodeStepExecutor getNodeStepExecutorForItem(final NodeStepExecutionItem item, String project)
+    public NodeStepExecutor getNodeStepExecutorForItem(final NodeStepExecutionItem item, ExecutionContext context, INodeEntry node)
             throws ExecutionServiceException
     {
-        return frameworkServices.getNodeStepExecutorForItem(item, project);
+        return frameworkServices.getNodeStepExecutorForItem(item, context,node);
     }
 
     @Override

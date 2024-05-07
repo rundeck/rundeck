@@ -1,41 +1,84 @@
-import { client } from '../../services/rundeckClient'
+import { client } from "../../services/rundeckClient";
 
-import {
-  getRundeckContext
-} from "../../../library"
+import { getRundeckContext } from "../../../library";
 
 export interface NodeSourceResources {
-  href: string
-  editPermalink?: string
-  writeable: boolean
-  description?: string
-  syntaxMimeType?:string
-  empty?: boolean
+  href: string;
+  editPermalink?: string;
+  writeable: boolean;
+  description?: string;
+  syntaxMimeType?: string;
+  empty?: boolean;
 }
 export interface NodeSource {
-  index: number
-  type: string
-  resources: NodeSourceResources
-  errors?:string
+  index: number;
+  type: string;
+  resources: NodeSourceResources;
+  errors?: string;
 }
-export interface StorageAccess{
+export interface StorageAccess {
   authorized: boolean;
   action: string;
   description: string;
 }
 export async function getProjectNodeSources(): Promise<NodeSource[]> {
-
-  const rundeckContext = getRundeckContext()
+  const rundeckContext = getRundeckContext();
   const resp = await client.sendRequest({
-    pathTemplate: '/api/{apiVersion}/project/{projectName}/sources',
+    pathTemplate: "/api/{apiVersion}/project/{projectName}/sources",
     pathParameters: rundeckContext,
     baseUrl: rundeckContext.rdBase,
-    method: 'GET'
-  })
+    method: "GET",
+  });
   if (!resp.parsedBody) {
-    throw new Error(`Error getting node sources list for ${rundeckContext.projectName}`)
+    throw new Error(
+      `Error getting node sources list for ${rundeckContext.projectName}`,
+    );
+  } else {
+    return resp.parsedBody as NodeSource[];
   }
-  else {
-    return resp.parsedBody as NodeSource[]
+}
+
+export async function getProjectConfigurable(
+  project: string,
+  category: string,
+) {
+  const resp = await client.sendRequest({
+    baseUrl: `${getRundeckContext().rdBase}api/${getRundeckContext().apiVersion}`,
+    pathTemplate: "/project/" + project + "/configurable",
+    method: "GET",
+    queryParameters: {
+      category: category,
+      project: project,
+    },
+  });
+
+  if (resp.status === 200) {
+    return { success: true, response: resp.parsedBody };
+  } else {
+    throw { success: false, message: resp.parsedBody.message };
+  }
+}
+
+export async function setProjectConfigurable(
+  project: string,
+  category: string,
+  extraConfig: any,
+) {
+  const resp = await client.sendRequest({
+    baseUrl: `${getRundeckContext().rdBase}api/${getRundeckContext().apiVersion}`,
+    pathTemplate: "/project/" + project + "/configurable",
+    method: "POST",
+    queryParameters: {
+      category: category,
+    },
+    body: {
+      extraConfig: extraConfig,
+    },
+  });
+
+  if (resp.parsedBody.result?.success) {
+    return { success: true, response: resp.parsedBody.result.success };
+  } else {
+    throw { success: false, message: resp.parsedBody.errors };
   }
 }

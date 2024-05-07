@@ -18,7 +18,7 @@ package rundeck.services
 
 import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
-import org.rundeck.app.data.providers.v1.PluginMetaDataProvider
+import org.rundeck.app.data.providers.v1.pluginmeta.PluginMetaDataProvider
 import rundeck.PluginMeta
 import rundeck.ScheduledExecution
 
@@ -124,6 +124,6 @@ class JobMetadataService {
      */
     def setJobPluginMeta(final String project, final String id, final String type, final Map metadata) {
         def key = id + '/' + type
-        pluginMetaDataProvider.setJobPluginMeta(project, id, key, metadata)
+        pluginMetaDataProvider.setJobPluginMeta(project, key, metadata)
     }
 }

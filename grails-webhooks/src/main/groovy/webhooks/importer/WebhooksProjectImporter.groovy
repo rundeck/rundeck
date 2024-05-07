@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import org.rundeck.core.projects.ProjectDataImporter
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.yaml.snakeyaml.LoaderOptions
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.SafeConstructor
 import webhooks.exporter.WebhooksProjectExporter
@@ -29,19 +30,26 @@ class WebhooksProjectImporter implements ProjectDataImporter {
 
     private static final Logger logger = LoggerFactory.getLogger(WebhooksProjectImporter)
     public static final String WHK_REGEN_AUTH_TOKENS = 'regenAuthTokens'
+    public static final String WHK_REGEN_UUID = 'regenUuid'
 
     def webhookService
 
     final List<String> importFilePatterns = [WebhooksProjectExporter.WEBHOOKS_YAML_FILE]
 
     final List<Property> importProperties = [
-        PropertyBuilder.builder().
+        PropertyBuilder.builder().with {
             booleanType(WHK_REGEN_AUTH_TOKENS).
             title('Create and overwrite a new Webhook Auth Token').
             description(
                 'Regenerate all webhook auth tokens. If unchecked only webhooks without defined auth tokens will have' +
                 ' their auth tokens regenerated.'
-            ).
+            )}.
+            build(),
+        PropertyBuilder.builder().with {
+            booleanType(WHK_REGEN_UUID).
+            title('Remove UUIDs').
+            description('Strip UUIDs from imported Webhook'
+            )}.
             build()
     ]
 
@@ -59,7 +67,7 @@ class WebhooksProjectImporter implements ProjectDataImporter {
             return ["Import file ${WebhooksProjectExporter.WEBHOOKS_YAML_FILE} was not found"]
         }
         def errors = []
-        Yaml yaml = new Yaml(new SafeConstructor())
+        Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()))
         def data = yaml.load(new FileReader(file))
         if(data instanceof Map) {
             data.webhooks.each { hook ->
@@ -70,7 +78,8 @@ class WebhooksProjectImporter implements ProjectDataImporter {
                 def importResult = webhookService.importWebhook(
                     authContext,
                     hook,
-                    importOptions[WHK_REGEN_AUTH_TOKENS] == 'true'
+                    importOptions[WHK_REGEN_AUTH_TOKENS] == 'true',
+                    importOptions[WHK_REGEN_UUID] == 'true'
                 )
                 if (importResult.msg) {
                     logger.debug(importResult.msg)

@@ -15,6 +15,7 @@
  */
 package rundeck.services
 
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
@@ -31,6 +32,7 @@ import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.Workflow
 import rundeck.services.data.UserDataService
+import com.dtolabs.rundeck.core.config.FeatureService
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -78,6 +80,9 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
             1 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> true
             1 * getString(UserService.SESSION_ID_METHOD, 'hash') >> method
         }
+        provider.featureService = Mock(FeatureService){
+            1 * featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> false
+        }
         provider.frameworkService = Mock(FrameworkService) {
             getServerHostname() >> { "server" }
         }
@@ -103,6 +108,9 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         provider.configurationService = Mock(ConfigurationService) {
             1 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> false
         }
+        provider.featureService = Mock(FeatureService){
+            1 * featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> false
+        }
         provider.frameworkService = Mock(FrameworkService) {
             getServerHostname() >> { "server" }
         }
@@ -123,7 +131,10 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         String login = "user~name"
         String sessionId = "willErrSessionId"
         provider.configurationService = Mock(ConfigurationService) {
-            1 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> false
+            0 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> false
+        }
+        provider.featureService = Mock(FeatureService){
+            1 * featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> false
         }
         provider.frameworkService = Mock(FrameworkService) {
             getServerHostname() >> { "server" }
@@ -136,7 +147,7 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
 
         then:
         !user.id
-        errMsg.startsWith("unable to save user: rundeck.User")
+        errMsg.startsWith("unable to save user: user~name")
     }
 
     def "registerLogout"(){
@@ -163,7 +174,7 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
 
         then:
         !user.id
-        errMsg.startsWith("unable to save user: rundeck.User")
+        errMsg.startsWith("unable to save user: user~name")
     }
 
     def "findWithFilters basic"() {
@@ -230,12 +241,14 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         def roles = service.getUserGroupSourcePluginRoles(userA)
 
         then:
-        roles == groups
+        roles == expect
 
         where:
-        userA | groups
-        "any" | ["one","two"]
-        "any" | []
+        userA | groups           | expect
+        "any" | ["one", "two"]   | ["one", "two"]
+        "any" | []               | []
+        //make sure nulls are filtered
+        "any" | ["a", null, "b"] | ["a", "b"]
     }
 
     def "User Group Source Plugin doesn't process misconfigured plugin"() {
@@ -440,5 +453,31 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         new Date() | baseDate - 2 | 2
         new Date() | null         | 3
         new Date() | baseDate     | 0
+    }
+
+    def "validateUserNameWithSingleQuotes"() {
+        def userName = "O'Test, First"
+        setup:
+        User uone = new User(login: userName)
+        uone.save()
+
+        when:
+        boolean result = service.validateUserExists(userName)
+
+        then:
+        result == true
+    }
+
+    def "validateInvalidUserName"() {
+        def userName = "O|Test, First"
+        setup:
+        User uone = new User(login: userName)
+        uone.save()
+
+        when:
+        boolean result = service.validateUserExists(userName)
+
+        then:
+        result == false
     }
 }

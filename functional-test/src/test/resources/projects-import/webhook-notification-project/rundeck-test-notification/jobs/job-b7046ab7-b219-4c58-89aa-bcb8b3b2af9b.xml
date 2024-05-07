@@ -1,0 +1,26 @@
+<joblist>
+   <job>
+      <name>webhook job</name>
+      <group>api-test/job-run-webhook</group>
+      <description></description>
+      <loglevel>INFO</loglevel>
+      <context>
+          <project>test-notification</project>
+      </context>
+      <dispatch>
+        <threadcount>1</threadcount>
+        <keepgoing>true</keepgoing>
+      </dispatch>
+      <notification>
+        <onsuccess>
+        <webhook urls="http://localhost:9001/test?id=${execution.id}&amp;status=${execution.status}"/>
+        </onsuccess>
+      </notification>
+      <sequence>
+        <command>
+        <exec>echo a</exec>
+        </command>
+      </sequence>
+      <uuid>a20106e4-37e6-489b-a783-2beb04a367c1</uuid>
+   </job>
+</joblist>

@@ -4,7 +4,7 @@ apply from: "../../gradle/java-version.gradle"
 
 dependencies {
     testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
-    testImplementation "org.spockframework:spock-core:2.0-groovy-3.0"
+    testImplementation "org.spockframework:spock-core:${spockVersion}"
     implementation project(':rundeck-authz:rundeck-authz-api')
 
     compileOnly "org.projectlombok:lombok:${lombokVersion}"

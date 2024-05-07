@@ -19,7 +19,7 @@ buildscript {
 plugins {
     id "org.springframework.boot" version "${springBootVersion}"
     id "org.dvaske.gradle.git-build-info"
-    id "com.github.node-gradle.node" version "3.1.1"
+    id "com.github.node-gradle.node" version "7.0.1"
     id "java-library"
     id "war"
 }
@@ -47,6 +47,7 @@ ext.coreGrailsPlugins = [
     ':grails-webhooks',
     ':grails-execution-mode-timer',
     ':grails-rundeck-data-shared',
+    ':grails-job-kill-handler'
 ]
 
 if(!project.findProperty('isRunning')) {
@@ -79,6 +80,7 @@ configurations {
     runtimeClasspath {
         extendsFrom developmentOnly
     }
+
     implementation.exclude module: "spring-boot-starter-tomcat"
     implementation.exclude module: "spring-boot-cli"
 
@@ -104,12 +106,13 @@ dependencies {
     //Rundeck plugin dependencies
     pluginFiles project.findProperty('bundledPlugins')?:[]
 
+    testImplementation group: 'com.squareup.retrofit2', name: 'retrofit-mock', version: '2.9.0'
+
     spa project(path: ':rundeckapp:grails-spa', configuration: 'spa')
 
     // Rundeck project dependencies.
     implementation project(':core')
     implementation project(':rundeck-storage:rundeck-storage-filesys')
-    implementation project(':rundeck-data-model')
     implementation project(':rundeck-app-util')
 
 
@@ -154,6 +157,7 @@ dependencies {
     implementation 'org.grails.plugins:external-config:2.0.0'
     implementation 'commons-fileupload:commons-fileupload:1.5'
     implementation 'commons-beanutils:commons-beanutils:1.9.4'
+    implementation "commons-codec:commons-codec:${commonsCodecVersion}"
 
     implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
 
@@ -196,7 +200,7 @@ dependencies {
     implementation "org.grails.plugins:events"
     implementation "org.grails.plugins:gsp"
     implementation 'org.grails:grails-plugin-codecs:4.0.1'
-    implementation "org.grails.plugins:cache:5.0.1"
+    implementation "org.grails.plugins:cache"
     implementation "io.micronaut:micronaut-inject-groovy"
     implementation "com.google.code.gson:gson:${gsonVersion}"
     implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
@@ -242,17 +246,16 @@ dependencies {
     implementation "io.micronaut:micronaut-core:${micronautVersion}"
 
     runtimeOnly 'org.aspectj:aspectjweaver:1.9.7'
-    runtimeOnly "com.h2database:h2:2.1.210"
 
     // Database drivers
+    runtimeOnly "com.h2database:h2:2.2.220"
     runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc:9.4.0.jre8'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
-    runtimeOnly 'org.postgresql:postgresql:42.3.8'
+    runtimeOnly 'org.postgresql:postgresql:42.7.2'
     runtimeOnly 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
 
     runtimeOnly "org.springframework:spring-jcl:${springVersion}"
     runtimeOnly "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
-    runtimeOnly "org.apache.tomcat:tomcat-jdbc:9.0.44"
     api ("com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion")
     runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
 
@@ -381,36 +384,43 @@ tasks.withType(Test).configureEach {
     forkEvery = 500
 }
 
+// To make Spring boot bootWar task work, we need to declare the duplicateStrategy explicitly
+tasks.withType(Jar) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 assets {
     minifyJs = false
     minifyCss = false
     excludes = ['gulpfile.js','**/*~','*.json','bootstrap/**/*.less', '_package-manager/**/*']
 }
 
-buildProperties.doLast {
-    File grailsBuildInfoFile = it.outputs.files.files.find { it.name == 'grails.build.info' }
-    if (!grailsBuildInfoFile) return
-    Properties properties = new Properties()
+project.gradle.projectsEvaluated {
+    buildProperties.doLast {
+        File grailsBuildInfoFile = it.outputs.files.files.find { it.name == 'grails.build.info' }
+        if (!grailsBuildInfoFile) return
+        Properties properties = new Properties()
 
-    grailsBuildInfoFile.withInputStream {
-        properties.load(it)
-    }
+        grailsBuildInfoFile.withInputStream {
+            properties.load(it)
+        }
 
-    properties.setProperty("build.ident",properties.getProperty("info.app.version"))
-    properties.setProperty("core.version",properties.getProperty("info.app.version"))
+        properties.setProperty("build.ident", properties.getProperty("info.app.version"))
+        properties.setProperty("core.version", properties.getProperty("info.app.version"))
 
-    if (project.gitDescribeInfo) {
-        properties.setProperty("build.core.git.description", project.gitDescribeInfo)
-    }
-    if (project.gitCommit) {
-        properties.setProperty("build.core.git.commit", project.gitCommit)
-    }
-    if (project.gitBranch) {
-        properties.setProperty("build.core.git.branch", project.gitBranch)
-    }
+        if (project.gitDescribeInfo) {
+            properties.setProperty("build.core.git.description", project.gitDescribeInfo)
+        }
+        if (project.gitCommit) {
+            properties.setProperty("build.core.git.commit", project.gitCommit)
+        }
+        if (project.gitBranch) {
+            properties.setProperty("build.core.git.branch", project.gitBranch)
+        }
 
-    grailsBuildInfoFile.withOutputStream {
-        properties.store(it,null)
+        grailsBuildInfoFile.withOutputStream {
+            properties.store(it, null)
+        }
     }
 }
 
@@ -499,6 +509,9 @@ assetCompile.dependsOn vendorAssetDeps
 
 archivesBaseName = 'rundeck'
 
+tasks.withType(War).configureEach { War war ->
+    war.dependsOn compileGroovyPages
+}
 
 bootWar {
     enabled=true
@@ -521,6 +534,7 @@ artifacts {
     war war
     bootWar bootWar
 }
+
 //install.dependsOn assemble
 def signArchives = project.tasks.findByName('signArchives')
 if (signArchives) {

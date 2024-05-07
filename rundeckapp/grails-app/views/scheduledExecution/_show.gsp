@@ -34,10 +34,7 @@
                               jobDescriptionMode: 'expanded',
                               jobActionButtons  : false,
                               linkCss           : 'text-h4',
-                              scmExportEnabled  : scmExportEnabled,
-                              scmExportStatus   : scmExportStatus,
-                              scmImportEnabled  : scmImportEnabled,
-                              scmImportStatus   : scmImportStatus
+                              includeStatusBadge : true
                       ]"/>
 
             <section class="section-space">

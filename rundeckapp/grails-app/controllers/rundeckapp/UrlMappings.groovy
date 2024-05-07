@@ -48,18 +48,14 @@ class UrlMappings {
         }
         "/api/$api_version/incubator/executions/$id"(controller: 'rdExecution', action: "listForJob")
 
-        "/api/$api_version/incubator/job/$id?"(controller: 'rdJob') {
-            action = [GET: 'get', POST: 'save', DELETE: 'delete']
-        }
-
-        "/api/$api_version/incubator/jobs"(controller: 'rdJob', action: "query")
-
         "/api/$api_version/job/$id"(controller: 'scheduledExecution') {
             action = [GET: 'apiJobExport', DELETE: 'apiJobDelete']
         }
         "/api/$api_version/job/$id/info"(controller: 'menu', action: 'apiJobDetail')
+        "/api/$api_version/job/$id/meta"(controller: 'scheduledExecution', action: 'apiJobMeta')
 
         "/api/$api_version/job/$id/forecast"(controller: 'menu', action: 'apiJobForecast')
+        "/api/$api_version/home/summary"(controller: 'menu', action: 'apiHomeSummary')
 
         "/api/$api_version/job/$id/execution/enable"(controller: 'scheduledExecution') {
             action = [POST: 'apiFlipExecutionEnabled']
@@ -118,11 +114,14 @@ class UrlMappings {
 
         "/api/$api_version/project/$project/executions/running"(controller: 'menu', action: 'apiExecutionsRunningv14')
         "/api/$api_version/project/$project/executions"(controller: 'execution', action: 'apiExecutionsQueryv14')
+        "/api/$api_version/project/$project/jobs/browse"(controller: 'scheduledExecution', action: 'apiJobBrowse')
         "/api/$api_version/project/$project/jobs/export"(controller: 'menu', action: 'apiJobsExportv14')
         "/api/$api_version/project/$project/jobs/import"(controller: 'scheduledExecution', action: 'apiJobsImportv14')
         "/api/$api_version/project/$project"(controller: 'project'){
             action = [GET: 'apiProjectGet', DELETE:'apiProjectDelete']
         }
+        "/api/$api_version/project/$project/jobs/validateOption"(controller: 'editOpts', action: 'apiValidateOption')
+        "/api/$api_version/project/$project/meta"(controller: 'project', action:'apiProjectMeta')
         "/api/$api_version/project/$project/config"(controller: 'project'){
             action = [GET: 'apiProjectConfigGet', PUT: 'apiProjectConfigPut']
         }
@@ -133,6 +132,9 @@ class UrlMappings {
         "/api/$api_version/project/$project/readme.md"(controller: 'project'){
             filename='readme.md'
             action = [GET: 'apiProjectFileGet', PUT: 'apiProjectFilePut', DELETE: 'apiProjectFileDelete']
+        }
+        "/api/$api_version/project/$project/configurable"(controller: 'framework'){
+            action = [GET: 'getProjectConfigurable', POST: 'saveProjectConfigurable']
         }
         "/api/$api_version/project/$project/motd.md"(controller: 'project'){
             filename='motd.md'
@@ -151,6 +153,7 @@ class UrlMappings {
                 action: 'apiProjectExportAsyncDownload'
         )
         "/api/$api_version/project/$project/import"(controller: 'project',action: 'apiProjectImport')
+        "/api/$api_version/project/$project/import/status"(controller: 'project',action: 'apiProjectAsyncImportStatus')
 //        "/api/$api_version/project/$project/resources/refresh"(controller: 'framework', action: 'apiProjectResourcesRefresh')
         "/api/$api_version/project/$project/sources"(controller: 'framework') {
             action = [GET: "apiSourcesList"]
@@ -181,6 +184,7 @@ class UrlMappings {
         "/api/$api_version/project/$project/scm/$integration/config"(controller: 'scm', action: 'apiProjectConfig')
         "/api/$api_version/project/$project/scm/$integration/action/$actionId/input"(controller: 'scm', action: 'apiProjectActionInput')
         "/api/$api_version/project/$project/scm/$integration/action/$actionId"(controller: 'scm', action: 'apiProjectActionPerform')
+        "/api/$api_version/project/$project/scm/toggle"(controller: 'scm', action: 'apiProjectToggleSCM')
 
         "/api/$api_version/projects"(controller: 'project'){
             action = [GET: 'apiProjectList', POST:'apiProjectCreate']
@@ -258,6 +262,7 @@ class UrlMappings {
         "/project/$project/home"(controller: 'menu', action: 'projectHome')
         "/project/$project/nodes/"(controller: 'framework', action: 'nodes')
         "/project/$project/run/"(controller: 'framework', action: 'nodes')
+
         "/project/$project/scm/$integration?/$action?"(controller: 'scm')
         "/project/$project/command/run"(controller: 'framework',action: 'adhoc')
         "/project/$project/activity"(controller: 'reports', action: 'index')

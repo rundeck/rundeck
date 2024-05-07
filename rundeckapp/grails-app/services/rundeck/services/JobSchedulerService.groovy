@@ -24,6 +24,7 @@ import org.quartz.impl.matchers.GroupMatcher
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.Execution
+import rundeck.data.quartz.QuartzJobSpecifier
 import rundeck.quartzjobs.ExecutionJob
 
 import java.time.Instant
@@ -110,6 +111,9 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
     @Autowired
     ScheduledExecutionService scheduledExecutionService
 
+    @Autowired
+    QuartzJobSpecifier quartzJobSpecifier
+
     static String TRIGGER_GROUP_PENDING = 'pending'
 
     ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(1)
@@ -138,11 +142,13 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
     Date scheduleJob(final String quartzJobName, final String quartzJobGroup, final Map data, final Date atTime, final boolean pending)
             throws JobScheduleFailure
     {
+        interruptScheduleOnPassiveMode()
+
         data.put('meta.created', Instant.now())
 
         String triggerGroup = pending ? TRIGGER_GROUP_PENDING : quartzJobGroup
 
-        def jobDetail = JobBuilder.newJob(ExecutionJob)
+        def jobDetail = JobBuilder.newJob(quartzJobSpecifier.getJobClass())
                                   .withIdentity(quartzJobName, quartzJobGroup)
                                   .usingJobData(new JobDataMap(data ?: [:])).build()
 
@@ -166,11 +172,13 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
 
     @Override
     boolean scheduleJobNow(final String quartzJobName, final String quartzJobGroup, final Map data, final boolean pending) throws JobScheduleFailure {
+        interruptScheduleOnPassiveMode()
+
         data.put('meta.created', Instant.now())
 
         String triggerGroup = pending ? TRIGGER_GROUP_PENDING : quartzJobGroup
 
-        def jobDetail = JobBuilder.newJob(ExecutionJob)
+        def jobDetail = JobBuilder.newJob(quartzJobSpecifier.getJobClass())
                                   .withIdentity(quartzJobName, quartzJobGroup)
                                   .usingJobData(new JobDataMap(data ?: [:])).build()
 
@@ -280,5 +288,10 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
         def ident = scheduledExecutionService.getJobIdent(execution.scheduledExecution, execution)
 
         reschedulePendingJob(ident.jobname, ident.groupname)
+    }
+
+    private void interruptScheduleOnPassiveMode() throws JobScheduleFailure{
+        if(!frameworkService.configurationService.isExecutionModeActive())
+            throw new JobScheduleFailure("Execution mode is PASSIVE")
     }
 }

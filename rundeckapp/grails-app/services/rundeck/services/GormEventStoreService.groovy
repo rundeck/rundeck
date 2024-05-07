@@ -2,24 +2,24 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.event.Event
 import com.dtolabs.rundeck.core.event.EventImpl
-import com.dtolabs.rundeck.core.event.EventQuery
 import com.dtolabs.rundeck.core.event.EventQueryImpl
 import com.dtolabs.rundeck.core.event.EventQueryResult
 import com.dtolabs.rundeck.core.event.EventQueryResultImpl
-import com.dtolabs.rundeck.core.event.EventQueryType
 import com.dtolabs.rundeck.core.event.EventStoreService
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.compiler.GrailsCompileStatic
-import grails.gorm.DetachedCriteria
-import grails.gorm.PagedResultList
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
-import rundeck.StoredEvent
-
+import org.rundeck.app.data.model.v1.page.Page
+import org.rundeck.app.data.model.v1.storedevent.StoredEventData
+import org.rundeck.app.data.model.v1.storedevent.StoredEventQuery
+import org.rundeck.app.data.model.v1.storedevent.StoredEventQueryType
+import org.rundeck.app.data.providers.v1.storedevent.StoredEventProvider
 
 @GrailsCompileStatic
 class GormEventStoreService implements EventStoreService {
     FrameworkService frameworkService
+    StoredEventProvider storedEventProvider
 
     @Transactional
     void storeEventBatch(List<Event> events) {
@@ -37,7 +37,7 @@ class GormEventStoreService implements EventStoreService {
 
         String serverUUID = frameworkService.getServerUUID()
 
-        StoredEvent domainEvent = new StoredEvent(
+        storedEventProvider.createStoredEvent(
                 serverUUID,
                 event.projectName,
                 event.subsystem,
@@ -45,79 +45,41 @@ class GormEventStoreService implements EventStoreService {
                 event.objectId,
                 event.sequence,
                 eventMetaString)
-
-        domainEvent.save(failOnError: true)
     }
 
     @Transactional
-    EventQueryResult query(EventQuery query) {
-        DetachedCriteria<StoredEvent> c = genericCriteria(query)
-
+    EventQueryResult query(StoredEventQuery query) {
         switch (query.queryType) {
-            case EventQueryType.COUNT:
-                long count = c.count().longValue()
+            case StoredEventQueryType.COUNT:
+                long count = storedEventProvider.countStoredEvent(query).longValue()
                 return new EvtQueryResult(
                     totalCount: count,
                     events: Collections.emptyList() as List<Event>
                 )
-            case EventQueryType.SELECT:
-                long count = c.count().longValue()
-                List<StoredEvent> events = c.build {
-                    order('lastUpdated', 'desc')
-                    order('sequence', 'desc')
-                }.list(max: query.maxResults, offset: query.offset)
+            case StoredEventQueryType.SELECT:
+                Page<StoredEventData> events = storedEventProvider.listStoredEvent(query)
 
                 return new EvtQueryResult(
-                    totalCount: count,
-                    events: events
+                    totalCount: events.total,
+                    events: events.results as List<Event>
                 )
-            case EventQueryType.DELETE:
-                long count = c.deleteAll().longValue()
+            case StoredEventQueryType.DELETE:
+                long count = storedEventProvider.deleteStoredEvent(query).longValue()
                 return new EvtQueryResult(
                     totalCount: count,
                     events: Collections.emptyList() as List<Event>
                 )
+            default:
+                return new EvtQueryResult(totalCount: 0, events: Collections.emptyList() as List<Event>)
         }
     }
 
     @Transactional
-    private PagedResultList<StoredEvent> queryGeneric(EventQuery event) {
-        DetachedCriteria<StoredEvent> c = genericCriteria(event)
-
-        c.list (max: event.maxResults, offset: event.offset) as PagedResultList<StoredEvent>
+    private Page<StoredEventData> queryGeneric(StoredEventQuery event) {
+        storedEventProvider.listStoredEvent(event)
     }
 
-    private DetachedCriteria<StoredEvent> genericCriteria(EventQuery query) {
-        new DetachedCriteria(StoredEvent).build {
-            if (query.projectName)
-                eq('projectName', query.projectName)
-
-            if (query.subsystem)
-                eq('subsystem', query.subsystem)
-
-            if (query.topic)
-                like('topic', query.topic.replace('*', '%'))
-
-            if (query.objectId)
-                eq('objectId', query.objectId)
-
-            if (query.dateFrom && query.dateTo)
-                between('lastUpdated', query.dateFrom, query.dateTo)
-
-            if (query.dateTo && !query.dateFrom)
-                le('lastUpdated', query.dateTo)
-
-            if (query.dateFrom && !query.dateTo)
-                ge('lastUpdated', query.dateFrom)
-
-            max(query.maxResults)
-            if (query.offset)
-                offset(query.offset)
-
-        }
-    }
-
-    EventStoreService scoped(Event eventTemplate, EventQuery queryTemplate) {
+    EventStoreService scoped(Event eventTemplate, StoredEventQuery queryTemplate) {
         return new ScopedEventStoreService(this, eventTemplate, queryTemplate)
     }
 }

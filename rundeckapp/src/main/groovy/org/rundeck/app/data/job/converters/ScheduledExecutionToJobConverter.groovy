@@ -62,6 +62,7 @@ class ScheduledExecutionToJobConverter {
         if(se.scheduled) job.schedule = se.schedule
         job.orchestrator = OrchestratorToRdOrchestratorConverter.convertOrchestrator(se.orchestrator)
         job.pluginConfigMap = se.getPluginConfigMap()
+        job.serverNodeUUID = se.serverNodeUUID
         addJobComponents(job)
         return job
     }
@@ -126,7 +127,7 @@ class ScheduledExecutionToJobConverter {
         o.secureInput = opt.secureInput
         o.secureExposed = opt.secureExposed
         o.optionType = opt.optionType
-        o.configMap = opt.configMap
+        o.configData = opt.optionConfigData
         o.multivalueAllSelected = opt.multivalueAllSelected
         o.optionValuesPluginType = opt.optionValuesPluginType
         o.valuesFromPlugin = opt.valuesFromPlugin?.collect { oval -> new RdOptionValue(name: oval.name, value: oval.value)}

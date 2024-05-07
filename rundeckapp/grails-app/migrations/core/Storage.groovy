@@ -39,4 +39,17 @@ databaseChangeLog = {
             }
         }
     }
+
+    changeSet(author: "rundeckuser (generated)", id: "migrate-storage-data-column-to-longblob-1", dbms: "mysql,mariadb") {
+        preConditions(onFail: "MARK_RAN") {
+            tableExists(tableName: "storage")
+        }
+        grailsChange {
+            change {
+                sql.execute("ALTER TABLE storage MODIFY data longblob;")
+            }
+            rollback {
+            }
+        }
+    }
 }

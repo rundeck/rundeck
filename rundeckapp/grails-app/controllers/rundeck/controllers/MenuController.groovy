@@ -16,8 +16,9 @@
 
 package rundeck.controllers
 
-import com.dtolabs.client.utils.Constants
+
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.app.api.homeSummary.HomeSummary
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfo
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfoList
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
@@ -42,7 +43,6 @@ import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.swagger.v3.oas.annotations.ExternalDocumentation
-import io.swagger.v3.oas.annotations.Hidden
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.enums.Explode
@@ -57,7 +57,6 @@ import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobQuery
-import org.rundeck.app.data.model.v1.project.SimpleProjectBuilder
 import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
@@ -72,9 +71,8 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import rundeck.*
-import rundeck.codecs.JobsYAMLCodec
+import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
-import rundeck.services.feature.FeatureService
 
 import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
@@ -98,7 +96,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     JobListLinkHandlerRegistry jobListLinkHandlerRegistry
     AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
-    FeatureService featureService
     StorageService storageService
 
     def configurationService
@@ -107,10 +104,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     ContextACLManager<AppACLContext> aclFileManagerService
     def ApplicationContext applicationContext
     static allowedMethods = [
-            deleteJobfilter                : 'POST',
-            storeJobfilter                 : 'POST',
-            deleteJobFilterAjax            : 'POST',
-            saveJobFilterAjax              : 'POST',
             apiJobDetail                   : 'GET',
             apiResumeIncompleteLogstorage  : 'POST',
             cleanupIncompleteLogStorageAjax:'POST',
@@ -269,7 +262,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     }
                 }
                 if (it.argString) {
-                    data.jobArguments = FrameworkService.parseOptsFromString(it.argString)
+                    data.jobArguments = OptionsParserUtil.parseOptsFromString(it.argString)
                 }
             }
             map + data
@@ -318,12 +311,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     def jobs (ScheduledExecutionQuery query ){
 
         def RdUser u = userService.findOrCreateUser(session.user)
-        if(params.size()<1 && !params.filterName && u ){
-            Map filterpref = userService.parseKeyValuePref(u.filterPref)
-            if(filterpref['workflows']){
-                params.filterName=filterpref['workflows']
-            }
-        }
         if(!params.project){
             return redirect(controller: 'menu',action: 'home')
         }
@@ -332,6 +319,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             if(jobListLinkHandler && GroupedJobListLinkHandler.NAME != jobListLinkHandler.name) {
                 return redirect(jobListLinkHandler.generateRedirectMap([project:params.project]))
             }
+        }
+        if (request.getCookies().find { it.name == 'nextUi' }?.value == 'true' || params.nextUi == 'true') {
+            params.nextUi = true
+            return render(view: 'jobs.next', model: [:])
         }
 
         if(configurationService.getBoolean('gui.paginatejobs.enabled',false)) {
@@ -361,22 +352,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
 
-        withFormat{
-            html {
-                results + [jobQueryComponents:jobQueryComponents]
-            }
-            yaml{
-                final def encoded = JobsYAMLCodec.encode(results.nextScheduled as List)
-                render(text:encoded,contentType:"text/yaml",encoding:"UTF-8")
-            }
-            xml{
-                response.setHeader(Constants.X_RUNDECK_RESULT_HEADER,"Jobs found: ${results.nextScheduled?.size()}")
-                def writer = new StringWriter()
-                rundeckJobDefinitionManager.exportAs('xml',results.nextScheduled, writer)
-                writer.flush()
-                render(text:writer.toString(),contentType:"text/xml",encoding:"UTF-8")
-            }
-        }
+        return results + [jobQueryComponents:jobQueryComponents]
     }
     /**
      *
@@ -388,7 +364,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return
         }
         if(!params.project){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                                                         code: 'api.error.parameter.required', args: ['project']])
         }
 
@@ -498,26 +474,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     def jobsFragment(ScheduledExecutionQuery query, JobsScmInfo scmFlags) {
         long start=System.currentTimeMillis()
         UserAndRolesAuthContext authContext
-        def usedFilter=null
 
-        if(params.filterName){
-            //load a named filter and create a query from it
-            def RdUser u = userService.findOrCreateUser(session.user)
-            if(u){
-                ScheduledExecutionFilter filter = ScheduledExecutionFilter.findByNameAndUser(params.filterName,u)
-                if(filter){
-                    def query2 = filter.createQuery()
-                    query2.setPagination(query)
-                    query=query2
-                    def props=query.properties
-                    params.putAll(props)
-                    usedFilter=params.filterName
-                }
-            }
-        }
         if(params['Clear']){
             query=new ScheduledExecutionQuery()
-            usedFilter=null
         }
         if(query && !query.projFilter && params.project) {
             query.projFilter = params.project
@@ -555,10 +514,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
 
-        if(usedFilter){
-            results.filterName=usedFilter
-            results.paginateParams['filterName']=usedFilter
-        }
         results.params=params
 
         def remoteClusterNodeUUID=null
@@ -586,7 +541,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     def jobsPicker(ScheduledExecutionQuery query) {
 
         AuthContext authContext
-        def usedFilter=null
         if(!query){
             query = new ScheduledExecutionQuery()
         }
@@ -599,10 +553,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         }
         def results=listWorkflows(query,authContext,session.user)
-        if(usedFilter){
-            results.filterName=usedFilter
-            results.paginateParams['filterName']=usedFilter
-        }
         results.params=params
         if(params.jobsjscallback){
             results.jobsjscallback=params.jobsjscallback
@@ -613,7 +563,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     public def jobsSearchJson(ScheduledExecutionQuery query) {
         AuthContext authContext
-        def usedFilter = null
         if (!query) {
             query = new ScheduledExecutionQuery()
         }
@@ -765,174 +714,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         totalauthorized: readauthcount,
         ]
     }
-
-
-    def storeJobfilter(ScheduledExecutionQuery query, StoreFilterCommand storeFilterCommand){
-        withForm{
-        if (storeFilterCommand.hasErrors()) {
-            flash.errors = storeFilterCommand.errors
-            params.saveFilter = true
-            return redirect(controller: 'menu', action: 'jobs',
-                    params: params.subMap(['newFilterName', 'existsFilterName', 'project', 'saveFilter']))
-        }
-
-        def RdUser u = userService.findOrCreateUser(session.user)
-        def ScheduledExecutionFilter filter
-        def boolean saveuser=false
-        if(params.newFilterName && !params.existsFilterName){
-            filter= ScheduledExecutionFilter.fromQuery(query)
-            filter.name=params.newFilterName
-            filter.user=u
-            if(!filter.validate()){
-                flash.errors = filter.errors
-                params.saveFilter=true
-                def map = params.subMap(params.keySet().findAll { !it.startsWith('_') })
-                return redirect(controller:'menu',action:'jobs',params:map)
-            }
-            u.addToJobfilters(filter)
-            saveuser=true
-        }else if(params.existsFilterName){
-            filter = ScheduledExecutionFilter.findByNameAndUser(params.existsFilterName,u)
-            if(filter){
-                filter.properties=query.properties
-                filter.fix()
-            }
-        }else if(!params.newFilterName && !params.existsFilterName){
-            flash.error="Filter name not specified"
-            params.saveFilter=true
-            return redirect(controller:'menu',action:'jobs',params:params)
-        }
-        if(!filter.save(flush:true)){
-            flash.errors = filter.errors
-            params.saveFilter=true
-            return redirect(controller:'menu',action:'jobs',params:params)
-        }
-        if(saveuser){
-            if(!u.save(flush:true)){
-                return renderErrorView([beanErrors: filter.errors])
-            }
-        }
-        redirect(controller:'menu',action:'jobs',params:[filterName:filter.name,project:params.project])
-        }.invalidToken {
-            renderErrorView(g.message(code:'request.error.invalidtoken.message'))
-        }
-    }
-
-
-    def deleteJobfilter={
-        withForm{
-        def RdUser u = userService.findOrCreateUser(session.user)
-        def filtername=params.delFilterName
-        final def ffilter = ScheduledExecutionFilter.findByNameAndUser(filtername, u)
-        if(ffilter){
-            ffilter.delete(flush:true)
-            flash.message="Filter deleted: ${filtername.encodeAsHTML()}"
-        }
-        redirect(controller:'menu',action:'jobs',params:[project: params.project])
-        }.invalidToken{
-            renderErrorView(g.message(code:'request.error.invalidtoken.message'))
-        }
-    }
-
-    def deleteJobFilterAjax(String project, String filtername) {
-        withForm {
-            g.refreshFormTokensHeader()
-            def RdUser u = userService.findOrCreateUser(session.user)
-            final def ffilter = ScheduledExecutionFilter.findByNameAndUser(filtername, u)
-            if (ffilter) {
-                ffilter.delete(flush: true)
-            }
-            render(contentType: 'application/json') {
-                success true
-            }
-        }.invalidToken {
-            return apiService.renderErrorFormat(
-                    response, [
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    code  : 'request.error.invalidtoken.message',
-            ]
-            )
-        }
-    }
-
-    def saveJobFilterAjax(ScheduledExecutionQueryFilterCommand query) {
-        withForm {
-            g.refreshFormTokensHeader()
-            if (query.hasErrors()) {
-                return apiService.renderErrorFormat(
-                        response, [
-                        status: HttpServletResponse.SC_BAD_REQUEST,
-                        code  : 'api.error.invalid.request',
-                        args  : [query.errors.allErrors.collect { it.toString() }.join("; ")]
-                ]
-                )
-            }
-            def RdUser u = userService.findOrCreateUser(session.user)
-            def ScheduledExecutionFilter filter
-            def boolean saveuser = false
-            if (query.newFilterName && !query.existsFilterName) {
-                if (ScheduledExecutionFilter.findByNameAndUser(query.newFilterName, u)) {
-                    return apiService.renderErrorFormat(
-                            response, [
-                            status: HttpServletResponse.SC_BAD_REQUEST,
-                            code  : 'request.error.conflict.already-exists.message',
-                            args  : ["Job Filter", query.newFilterName]
-                    ]
-                    )
-                }
-                filter = ScheduledExecutionFilter.fromQuery(query)
-                filter.name = query.newFilterName
-                filter.user = u
-                if (!filter.validate()) {
-                    return apiService.renderErrorFormat(
-                            response, [
-                            status: HttpServletResponse.SC_BAD_REQUEST,
-                            code  : 'api.error.invalid.request',
-                            args  : [filter.errors.allErrors.collect { it.toString() }.join("; ")]
-                    ]
-                    )
-                }
-                u.addToJobfilters(filter)
-                saveuser = true
-            } else if (query.existsFilterName) {
-                filter = ScheduledExecutionFilter.findByNameAndUser(query.existsFilterName, u)
-                if (filter) {
-                    filter.properties = query.properties
-                    filter.fix()
-                }
-            }
-            if (!filter.save(flush: true)) {
-                flash.errors = filter.errors
-//                params.saveFilter = true
-                return apiService.renderErrorFormat(
-                        response, [
-                        status: HttpServletResponse.SC_BAD_REQUEST,
-                        code  : 'api.error.invalid.request',
-                        args  : [filter.errors.allErrors.collect { it.toString() }.join("; ")]
-                ]
-                )
-            }
-            if (saveuser) {
-                if (!u.save(flush: true)) {
-                    return renderErrorView([beanErrors: filter.errors])
-                }
-            }
-
-            render(contentType: 'application/json') {
-                success true
-                filterName query.newFilterName
-            }
-        }.invalidToken {
-
-            return apiService.renderErrorFormat(
-                    response, [
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    code  : 'request.error.invalidtoken.message',
-            ]
-            )
-        }
-    }
-
+    
     def executionMode(){
         def executionModeActive=configurationService.executionModeActive
         authorizingSystem.authorize(
@@ -983,19 +765,21 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             g.refreshFormTokensHeader()
 
             logFileStorageService.resumeIncompleteLogStorageAsync(frameworkService.serverUUID,id)
-//            logFileStorageService.resumeCancelledLogStorageAsync(frameworkService.serverUUID)
             def message="Resumed log storage requests"
-            LogFileStorageRequest req=null
+
+            LinkedHashMap<String, Object> requestMap = null
             if(id){
-                req=LogFileStorageRequest.get(id)
+                LogFileStorageRequest req=LogFileStorageRequest.get(id)
+                requestMap = exportRequestMap(req, true, false, null)
             }
+
             withFormat{
                 ajax{
                     render(contentType: 'application/json'){
                         status 'ok'
                         delegate.message message
-                        if(req){
-                            contents exportRequestMap(req, true, false, null)
+                        if(requestMap){
+                            contents requestMap
                         }
                     }
                 }
@@ -2125,6 +1909,20 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             stats=cachedSummaryProjectStats(fprojects)
             statsLoaded=true
         }
+
+        if (params.nextUi == 'true') {
+            params.nextUi = true
+            return render(view: 'home.next', model: [
+                    isFirstRun:isFirstRun,
+                    projectNames: fprojects,
+                    statsLoaded: statsLoaded,
+                    execCount:stats.execCount,
+                    totalFailedCount:stats.totalFailedCount,
+                    recentUsers:stats.recentUsers,
+                    recentProjects:stats.recentProjects
+            ])
+        }
+
         //isFirstRun = true //as
         render(view: 'home', model: [
                 isFirstRun:isFirstRun,
@@ -2497,6 +2295,93 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     * API Actions
      */
 
+    @Get(uri="/home/summary")
+    @Operation(
+            method="GET",
+            summary="Summary of executions and projects",
+            description = '''Get Summary information about executions and projects.
+
+Since: V45
+''',
+            tags=["summary","projects","executions"],
+            responses = @ApiResponse(
+                    responseCode = "200",
+                    description = '''Success response, with summary information.
+
+Fields:
+
+`execCount`
+
+:   Number of executions
+
+`totalFailedCount`
+
+:   Number of failed executions in the last 24 hours
+
+`recentUsers`
+
+:   Name of users who triggered executions in the last 24 hours
+
+`recentProjects`
+
+:   Name of projects with executions in the last 24 hours
+
+`frameworkNodeName`
+
+:   Name of framework node
+''',
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = HomeSummary),
+                            examples = @ExampleObject("""{
+    "execCount": 0,
+    "totalFailedCount": 0,
+    "recentUsers": [],
+    "recentProjects": [],
+    "frameworkNodeName": "localhost"
+
+}""")
+                    )
+            )
+    )
+
+    def apiHomeSummary(){
+        if (!apiService.requireApi(request, response, ApiVersions.V45)) {
+            return
+        }
+
+        if (!(response.format in ['all', 'json'])) {
+            return apiService.renderErrorFormat(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                            code  : 'api.error.item.unsupported-format',
+                            args  : [response.format]
+                    ]
+            )
+        }
+
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+        Framework framework = frameworkService.rundeckFramework
+        long start=System.currentTimeMillis()
+        //select paged projects to return
+        List<String> projectNames = frameworkService.projectNames(authContext)
+
+        log.debug("frameworkService.homeSummaryAjax(context)... ${System.currentTimeMillis()-start}")
+        start=System.currentTimeMillis()
+        def allsummary=cachedSummaryProjectStats(projectNames)
+        def projects=allsummary.recentProjects
+        def users=allsummary.recentUsers
+        def execCount=allsummary.execCount
+        def totalFailedCount=allsummary.totalFailedCount
+
+        def fwkNode = framework.getFrameworkNodeName()
+
+        respond(
+                new HomeSummary(execCount as Integer, totalFailedCount as Integer, users as List<String>, projects as List<String>, fwkNode as String),
+        )
+    }
+
     @Get(uri="/system/logstorage")
     @Operation(
         method="GET",
@@ -2586,8 +2471,9 @@ Fields:
                 'missingCount',
                 'retriesCount'
         ]
+        def controller = this
         withFormat {
-            json {
+            '*' {
                 apiService.renderSuccessJson(response) {
                     enabled = data.pluginName ? true : false
                     pluginName = data.pluginName
@@ -2596,12 +2482,14 @@ Fields:
                     }
                 }
             }
-            xml {
+            if(controller.isAllowXml()) {
+                xml {
 
-                apiService.renderSuccessXml(request, response) {
-                    delegate.'logStorage'(enabled: data.pluginName ? true : false, pluginName: data.pluginName) {
-                        for (String name : propnames) {
-                            delegate."${name}"(data[name])
+                    apiService.renderSuccessXml(request, response) {
+                        delegate.'logStorage'(enabled: data.pluginName ? true : false, pluginName: data.pluginName) {
+                            for (String name : propnames) {
+                                delegate."${name}"(data[name])
+                            }
                         }
                     }
                 }
@@ -2715,8 +2603,9 @@ Since: V17''',
         def retryIds=logFileStorageService.getQueuedRetryRequestIds()
         def queuedIds=logFileStorageService.getQueuedRequestIds()
         def failedIds=logFileStorageService.getFailedRequestIds()
-        withFormat{
-            json{
+        def controller = this
+        withFormat {
+            '*' {
                 apiService.renderSuccessJson(response) {
                     delegate.'total' = total
                     max = query.max ?: 20
@@ -2745,29 +2634,31 @@ Since: V17''',
                     }
                 }
             }
-            xml{
-                apiService.renderSuccessXml (request,response) {
-                    logstorage {
-                        incompleteExecutions(total: total, max: query.max ?: 20, offset: query.offset ?: 0) {
-                            list.each { LogFileStorageRequest req ->
-                                def data=exportRequestMap(
-                                        req,
-                                        queuedIds.contains(req.id),
-                                        failedIds.contains(req.id),
-                                        failedIds.contains(req.id) ? logFileStorageService.getFailures(req.id) : null
-                                )
-                                execution(id:data.executionId,project:data.project,href:data.href,permalink:data.permalink){
-                                    delegate.'storage'(
-                                            incompleteFiletypes:data.filetype,
-                                            queued:data.queued,
-                                            failed:data.failed,
-                                            date: apiService.w3cDateValue(req.dateCreated),
-                                            localFilesPresent:data.localFilesPresent,
-                                    ) {
-                                        if(data.messages){
-                                            delegate.'errors' {
-                                                data.messages.each {
-                                                    delegate.'message'(it)
+            if(controller.isAllowXml()) {
+                xml {
+                    apiService.renderSuccessXml(request, response) {
+                        logstorage {
+                            incompleteExecutions(total: total, max: query.max ?: 20, offset: query.offset ?: 0) {
+                                list.each { LogFileStorageRequest req ->
+                                    def data = exportRequestMap(
+                                            req,
+                                            queuedIds.contains(req.id),
+                                            failedIds.contains(req.id),
+                                            failedIds.contains(req.id) ? logFileStorageService.getFailures(req.id) : null
+                                    )
+                                    execution(id: data.executionId, project: data.project, href: data.href, permalink: data.permalink) {
+                                        delegate.'storage'(
+                                                incompleteFiletypes: data.filetype,
+                                                queued: data.queued,
+                                                failed: data.failed,
+                                                date: apiService.w3cDateValue(req.dateCreated),
+                                                localFilesPresent: data.localFilesPresent,
+                                        ) {
+                                            if (data.messages) {
+                                                delegate.'errors' {
+                                                    data.messages.each {
+                                                        delegate.'message'(it)
+                                                    }
                                                 }
                                             }
                                         }
@@ -2809,16 +2700,19 @@ Since: V17''',
         }
 
         logFileStorageService.resumeIncompleteLogStorageAsync(frameworkService.serverUUID)
+        def controller = this
         withFormat {
-            json {
+            '*'  {
                 apiService.renderSuccessJson(response) {
                     resumed=true
                 }
             }
-            xml {
+            if(controller.isAllowXml()) {
+                xml {
 
-                apiService.renderSuccessXml(request, response) {
-                    delegate.'logStorage'(resumed:true)
+                    apiService.renderSuccessXml(request, response) {
+                        delegate.'logStorage'(resumed: true)
+                    }
                 }
             }
         }
@@ -2916,7 +2810,7 @@ Since: V18''',
                         extra
                 ),
 
-                [formats: ['xml', 'json']]
+                [formats: responseFormats]
         )
     }
 
@@ -3051,7 +2945,7 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                         extra
                 ),
 
-                [formats: ['xml', 'json']]
+                [formats: responseFormats]
         )
     }
 
@@ -3121,10 +3015,11 @@ Format is a string like `2d1h4n5s` using the following characters for time units
             )
             respond(
                     data,
-                    [formats: ['xml', 'json']]
+                    [formats: responseFormats]
             )
             return
         }
+        def controller = this
         withFormat {
             def xmlresponse= {
                 return apiService.renderSuccessXml(request, response) {
@@ -3151,8 +3046,7 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                     }
                 }
             }
-            xml xmlresponse
-            json {
+            '*'  {
                 return apiService.renderSuccessJson(response) {
                     results.each { ScheduledExecution se ->
                         def jobparams = [id         : se.extid,
@@ -3175,7 +3069,9 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                     }
                 }
             }
-            '*' xmlresponse
+            if(controller.isAllowXml()) {
+                xml xmlresponse
+            }
         }
     }
     @Get(uri='/scheduler/jobs')
@@ -3378,13 +3274,6 @@ Authorization required: `view` or `read` for each Job resource.
             }
         }
 
-        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
-            return apiService.renderErrorFormat(response,[
-                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code: 'api.error.item.unsupported-format',
-                    args: [response.format]
-            ])
-        }
         if(query.hasErrors()){
             return apiService.renderErrorFormat(response,
                     [
@@ -3479,12 +3368,12 @@ Since: v14
         @Parameter(in = ParameterIn.QUERY, explode = Explode.TRUE)
         ScheduledExecutionQuery query
     ){
-        if(!apiService.requireApi(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response)){
             return
         }
 
         if(!params.project){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
         }
         def supportedFormats = ['all', 'xml', 'yaml', 'html']
@@ -3512,7 +3401,8 @@ Since: v14
         }
         //don't load scm status for api response
         def results = jobsFragment(query,JobsScmInfo.NONE)
-        def defaultFormat = 'xml'//TODO: use json default in 5.0
+        def defaultFormat = 'json'
+        //NOTE: XML is supported for job export
         def contentTypes = [
             json: 'application/json',
             xml : 'text/xml',
@@ -3675,7 +3565,7 @@ if executed in cluster mode.
      * API: /project/PROJECT/executions/running, version 14
      */
     def apiExecutionsRunningv14 (){
-        if(!apiService.requireApi(request,response,ApiVersions.V14)) {
+        if(!apiService.requireApi(request,response)) {
             return
         }
 
@@ -3688,19 +3578,28 @@ if executed in cluster mode.
         def allProjects = params.project == '*'
         //test valid project
         if (!allProjects) {
-            if (!apiService.requireExists(response, frameworkService.existsFrameworkProject(params.project), ['project', params.project])) {
+            def projects = params.project.split(',')
+            def error = projects.find { project ->
+                if (!apiService.requireExists(response, frameworkService.existsFrameworkProject(project), ['project', project])) {
+                    return true
+                }
+                def disabled = frameworkService.isFrameworkProjectDisabled(project)
+                if (disabled) {
+                    apiService.renderErrorFormat(response, [
+                            status: HttpServletResponse.SC_NOT_FOUND,
+                            code: 'api.error.project.disabled',
+                            args: [project]
+                    ])
+                    return true
+                }
+                if (!apiAuthorizedForEventRead(project)) {
+                    return true
+                }
+                return false
+            }
+            if (error) {
                 return
             }
-            if (!apiAuthorizedForEventRead(params.project)) {
-                return
-            }
-        }
-        if (request.api_version < ApiVersions.V14 && !(response.format in ['all', 'xml'])) {
-            return apiService.renderErrorXml(response, [
-                    status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code  : 'api.error.item.unsupported-format',
-                    args  : [response.format]
-            ])
         }
 
         def projectNameAuthorized = "";
@@ -3740,20 +3639,9 @@ if executed in cluster mode.
 
         def results = nowrunning(query)
 
-        withFormat{
-            xml {
-                return executionService.respondExecutionsXml(
-                        request,
-                        response,
-                        results.nowrunning,
-                        [
-                                total: results.total,
-                                offset: results.offset,
-                                max: results.max
-                        ]
-                )
-            }
-            json {
+        def controller = this
+        withFormat {
+            '*'  {
                 return executionService.respondExecutionsJson(
                         request,
                         response,
@@ -3764,6 +3652,21 @@ if executed in cluster mode.
                                 max: results.max
                         ]
                 )
+            }
+
+            if (controller.isAllowXml()) {
+                xml {
+                    return executionService.respondExecutionsXml(
+                            request,
+                            response,
+                            results.nowrunning,
+                            [
+                                    total : results.total,
+                                    offset: results.offset,
+                                    max   : results.max
+                            ]
+                    )
+                }
             }
         }
 
@@ -3801,15 +3704,15 @@ if executed in cluster mode.
                     if (scmService.projectHasConfiguredExportPlugin(params.project)) {
                         pluginData.scmExportEnabled = scmService.loadScmConfig(params.project, 'export')?.enabled
                         if (pluginData.scmExportEnabled) {
-                            def validation = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.EXPORT, params.project)
-                            if( null !== validation && validation.hasAccess ){
+                            def keyAccess = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.EXPORT, params.project)
+                            if( keyAccess ){
                                 def jobsPluginMeta = scmService.getJobsPluginMeta(params.project, true)
                                 pluginData.scmStatus = scmService.exportStatusForJobs(params.project, authContext, result.nextScheduled, false, jobsPluginMeta)
                                 pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
                                 pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
                                 pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
                             }else{
-                                results.warning = validation.message
+                                results.warning = g.message(code:'scm.export.auth.key.noAccess')
                             }
                         }
                         results.putAll(pluginData)
@@ -3830,15 +3733,15 @@ if executed in cluster mode.
                     if (scmService.projectHasConfiguredImportPlugin(params.project)) {
                         pluginData.scmImportEnabled = scmService.loadScmConfig(params.project, 'import')?.enabled
                         if (pluginData.scmImportEnabled) {
-                            def validation = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.IMPORT, params.project)
-                            if( null !== validation && validation.hasAccess ){
+                            def keyAccess = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.IMPORT, params.project)
+                            if( keyAccess ){
                                 def jobsPluginMeta = scmService.getJobsPluginMeta(params.project, false)
                                 pluginData.scmImportJobStatus = scmService.importStatusForJobs(params.project, authContext, result.nextScheduled, false, jobsPluginMeta)
                                 pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
                                 pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project, pluginData.scmImportStatus)
                                 results.putAll(pluginData)
                             }else{
-                                results.warning = validation.message
+                                results.warning = g.message(code:'scm.import.auth.key.noAccess')
                             }
                         }
                     }

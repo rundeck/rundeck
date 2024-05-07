@@ -11,7 +11,7 @@ import net.schmizz.sshj.userauth.keyprovider.FileKeyProvider
 import net.schmizz.sshj.userauth.keyprovider.KeyFormat
 import net.schmizz.sshj.userauth.keyprovider.KeyProviderUtil
 import org.eclipse.jgit.errors.TransportException
-import org.eclipse.jgit.transport.OpenSshConfig
+import org.eclipse.jgit.transport.ssh.jsch.OpenSshConfig
 import org.eclipse.jgit.transport.RemoteSession
 import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.util.io.IsolatedOutputStream

@@ -47,4 +47,11 @@ public interface StorageFile {
      * @return true if the file is complete
      */
     boolean isComplete();
+
+    /**
+     * @return true if the file is available for streaming
+     */
+    default boolean storageFileExists(){
+        return true;
+    }
 }

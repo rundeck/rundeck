@@ -1,0 +1,18 @@
+[
+  {
+    "name": "search1",
+    "value": "rundeck_demo_search1"
+  },
+  {
+    "name": "search2",
+    "value": "rundeck_demo_search2"
+  },
+  {
+    "name": "search3",
+    "value": "rundeck_demo_search3"
+  },
+  {
+    "name": "search4",
+    "value": "rundeck_demo_search4"
+  }
+]

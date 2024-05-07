@@ -27,18 +27,4 @@ class RdUserCommandObject implements RdUser, Validateable{
         lastUpdated(nullable: true)
     }
 
-    @Override
-    Object getJobfilters() {
-        return null
-    }
-
-    @Override
-    Object getNodefilters() {
-        return null
-    }
-
-    @Override
-    Object getReportfilters() {
-        return null
-    }
 }

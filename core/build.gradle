@@ -56,6 +56,7 @@ dependencies {
     api project(":rundeck-authz:rundeck-authz-api")
     api project(":rundeck-authz:rundeck-authz-core")
     api project(":rundeck-authz:rundeck-authz-yaml")
+    api "org.rundeck:rundeck-data-models:1.0.5"
 
     api ('com.google.guava:guava:32.0.1-jre') {
         exclude group:'org.codehaus.mojo', module: 'animal-sniffer-annotations'
@@ -71,15 +72,15 @@ dependencies {
         exclude group: 'pull-parser'
     }
 
-    api 'org.apache.ant:ant:1.10.13',
+    api 'org.apache.ant:ant:1.10.14',
         'org.slf4j:slf4j-api:1.7.32',
-        'commons-codec:commons-codec:1.15',
+        "commons-codec:commons-codec:${commonsCodecVersion}",
         'commons-beanutils:commons-beanutils:1.9.4',
         'commons-collections:commons-collections:3.2.2',
         'commons-lang:commons-lang:2.6',
         'jaxen:jaxen:1.2.0',
         'commons-cli:commons-cli:1.0',
-        'org.apache.ant:ant-jsch:1.9.16',
+        'org.apache.ant:ant-jsch:1.10.14',
         'com.jcraft:jsch:0.1.55',
         'com.jcraft:jsch.agentproxy.jsch:0.0.9',
         'com.jcraft:jsch.agentproxy.sshagent:0.0.9',
@@ -91,6 +92,7 @@ dependencies {
         "org.yaml:snakeyaml:${snakeyamlVersion}",
         'com.squareup.retrofit2:retrofit:2.9.0',
         'com.squareup.retrofit2:converter-jackson:2.9.0',
+        'com.squareup.retrofit2:converter-jaxb:2.9.0',
         'javax.servlet:javax.servlet-api:4.0.1'
 
 
@@ -107,7 +109,7 @@ dependencies {
         'org.mockito:mockito-all:1.10.19'
 
     testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
-    testImplementation platform("org.spockframework:spock-bom:2.0-groovy-3.0")
+    testImplementation platform("org.spockframework:spock-bom:${spockVersion}")
     testImplementation "org.spockframework:spock-core"
     testImplementation "org.spockframework:spock-junit4"
     testImplementation "com.squareup.retrofit2:retrofit-mock:2.7.2"
@@ -132,12 +134,6 @@ buildConfig {
     buildConfigField('String', 'GIT_DESCRIPTION', "\"${project.gitDescribeInfo}\"")
     buildConfigField('String', 'BUILD_NUM', "\"${buildNum}\"")
     buildConfigField('String', 'BUILD_IDENT', "\"${version + '-' + buildNum}\"")
-    // Only add date if in CI mode to avoid UP-TO-DATE and build cache misses
-    if (System.env.CI) {
-        buildConfigField('String', 'BUILD_DATE', "\"${new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").format(new Date())}\"")
-    } else {
-        buildConfigField('String', 'BUILD_DATE', "\"1970-01-01T00:00:00-00\"")
-    }
 }
 
 def archiveName = project.name
@@ -161,6 +157,7 @@ task gitInfo {
 jar.doFirst {
     manifest {
         attributes 'Rundeck-Version': version
+        attributes 'Rundeck-Build-Date': "${new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").format(new Date())}"
     }
 }
 

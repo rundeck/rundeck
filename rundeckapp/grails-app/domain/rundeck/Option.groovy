@@ -19,6 +19,7 @@ package rundeck
 
 import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData
 import com.dtolabs.rundeck.core.jobs.JobOption
+import grails.web.databinding.DataBindingUtils
 import org.rundeck.app.jobs.options.JobOptionConfigPluginAttributes
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
@@ -243,85 +244,73 @@ public class Option implements Comparable, OptionData {
         JobOptionImpl.fromOptionMap(toMap())
     }
 
-    public static Option fromMap(String name,Map data){
+    public static Option fromMap(String name,Map datain){
         Option opt = new Option()
-        opt.name=name
-        if(data.label){
-            opt.label=data.label
+        Map data = [:]
+        data.putAll(datain)
+        data['name']=name
+
+
+        data.enforced=data.enforced?true:false
+        data.required=data.required?true:false
+        data.isDate=data.isDate?true:false
+        if(!data.isDate){
+            data.remove('dateFormat')
         }
-        opt.enforced=data.enforced?true:false
-        opt.required=data.required?true:false
-        opt.isDate=data.isDate?true:false
-        if(opt.isDate){
-            opt.dateFormat=data.dateFormat
-        }
-        if (data.type) {
-            opt.optionType = data.type
-            def config = data.config
-            if (config && config instanceof Map) {
-                opt.configMap = config
+        if(data.type){
+            data.optionType = data.remove('type')
+            if (data.config && data.config instanceof Map) {
+                data.configMap = data.remove('config')
             }
-        }
-        if(data.sortValues){
-            opt.sortValues =data.sortValues
-        }
-        if(data.description){
-            opt.description=data.description
-        }
-        if(data.sortIndex!=null){
-            opt.sortIndex=data.sortIndex
         }
         if(data.value){
-            opt.defaultValue = data.value
+            data.defaultValue=data.remove('value')
         }
         if(data.storagePath){
-            opt.defaultStoragePath=data.storagePath
+            data.defaultStoragePath=data.remove('storagePath')
         }
         if(data.valuesUrl){
-            opt.realValuesUrl=new URL(data.valuesUrl)
+            data.valuesUrlLong = data.remove('valuesUrl')
         }
-        if(null!=data.regex){
-            opt.regex=data.regex
-        }
+
         if(data.values){
-            def values = data.values instanceof Collection ? data.values : new TreeSet([data.values])
-            if(data.valuesListDelimiter){
-                opt.valuesListDelimiter=data.valuesListDelimiter
-            }else{
-                opt.valuesListDelimiter=DEFAULT_DELIMITER
+            def dataval = data.remove('values')
+            def values = dataval instanceof Collection ? dataval : new TreeSet([dataval])
+            if(!data.valuesListDelimiter){
+                data.valuesListDelimiter=DEFAULT_DELIMITER
             }
-            opt.optionValues=new ArrayList<String>(values);
-            opt.valuesList = opt.produceValuesList()
+            data.optionValues=new ArrayList<String>(values);
+            data.valuesList =values
         }
-        if(data.multivalued){
-            opt.multivalued=true
-            if(data.delimiter){
-                opt.delimiter=data.delimiter
+
+        def multivalued = data.remove('multivalued')
+        def delimiter = data.remove('delimiter')
+        if(multivalued in [true, 'true']){
+            data.multivalued=true
+            data.multivalueAllSelected = Boolean.valueOf(data.multivalueAllSelected)
+            if(delimiter) {
+                data.delimiter = delimiter
             }
-            opt.multivalueAllSelected = Boolean.valueOf(data.multivalueAllSelected)
         }
         if(data.secure){
-            opt.secureInput=Boolean.valueOf(data.secure)
+            data.secureInput=Boolean.valueOf(data.remove('secure'))
         }else{
-            opt.secureInput=false
+            data.secureInput=false
         }
-        if(opt.secureInput && data.valueExposed){
-            opt.secureExposed=Boolean.valueOf(data.valueExposed)
+        if(data.secureInput && data.valueExposed){
+            data.secureExposed=Boolean.valueOf(data.remove('valueExposed'))
         }else{
-            opt.secureExposed=false
+            data.secureExposed=false
         }
-        if(data.optionValuesPluginType) {
-            opt.optionValuesPluginType = data.optionValuesPluginType
-        }
-        if(data.hidden){
-            opt.hidden = data.hidden
-        }
-        if(data.configRemoteUrl){
-            def configRemoteUrl = JobOptionConfigRemoteUrl.fromMap(data.configRemoteUrl)
+        def configRemoteUrlData = data.remove('configRemoteUrl')
+        if(configRemoteUrlData!=null && configRemoteUrlData instanceof Map && configRemoteUrlData.size()>0){
+            def configRemoteUrl = JobOptionConfigRemoteUrl.fromMap(configRemoteUrlData)
             def configData = new JobOptionConfigData()
             configData.addConfig(configRemoteUrl)
-            opt.setOptionConfigData(configData)
+            data.optionConfigData=configData
         }
+
+        DataBindingUtils.bindObjectToInstance opt, data, [], [], null
         return opt
     }
     /**

@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import groovy.cli.commons.CliBuilder
 
 
 //Test the result of the build to verify expected artifacts are created
@@ -45,7 +46,7 @@ def debug=Boolean.getBoolean('debug')?:("-debug" in args)
 
 //versions of dependency we want to verify
 def versions=[
-        jetty:'9.4.51.v20230217',
+        jetty:'9.4.53.v20231009',
         servlet:'api-3.1.0',
         log4j:'2.17.1'
 ]
@@ -55,7 +56,7 @@ def coreJarFile = "core/${target}/rundeck-core-${version}.jar"
 //def launcherJarFile = "rundeck-launcher/launcher/${target}/rundeck-launcher-${version}.jar"
 
 //the list of bundled plugins to verify in the war and jar
-def plugins=['script','stub','localexec','copyfile','job-state','flow-control','jasypt-encryption','git','object-store','azure-object-store','orchestrator', 'source-refresh','upvar', 'audit-logging']
+def plugins=['script','script-node-step','stub','localexec','copyfile','job-state','flow-control','jasypt-encryption','git','object-store','azure-object-store','orchestrator', 'source-refresh','upvar', 'audit-logging','jsch']
 //load build.yaml from rundeckcore
 def corebuild = new File('build.yaml').withReader{reader->
     new groovy.yaml.YamlSlurper().parse(reader)
@@ -64,6 +65,7 @@ def coreExternalPlugins= corebuild.rundeck.plugins.collectEntries{
     def parts=it.split(':')
     [parts[1],parts[2].replaceAll('@','.')]
 }
+
 //manifest describing expected build results
 def manifest=[
     "rundeck-storage/rundeck-storage-api/${target}/rundeck-storage-api-${version}.jar":[:],
@@ -129,6 +131,7 @@ def manifest=[
         "WEB-INF/lib/slf4j-api-1.7.36.jar",
         "WEB-INF/lib/libpam4j-1.11.jar"
     ],
+    "plugins/script-node-step-plugin/${target}/rundeck-script-node-step-plugin-${version}.jar":[:],
     "plugins/script-plugin/${target}/rundeck-script-plugin-${version}.jar":[:],
     "plugins/stub-plugin/${target}/rundeck-stub-plugin-${version}.jar":[:],
     "plugins/localexec-plugin/${target}/rundeck-localexec-plugin-${version}.jar":[:],
@@ -139,7 +142,8 @@ def manifest=[
     "plugins/upvar-plugin/${target}/rundeck-upvar-plugin-${version}.jar":[:],
     "plugins/object-store-plugin/${target}/rundeck-object-store-plugin-${version}.jar":[:],
     "plugins/audit-logging-plugin/${target}/rundeck-audit-logging-plugin-${version}.jar":[:],
-    "plugins/azure-object-store-plugin/${target}/rundeck-azure-object-store-plugin-${version}.jar":[:]
+    "plugins/azure-object-store-plugin/${target}/rundeck-azure-object-store-plugin-${version}.jar":[:],
+    "plugins/jsch-plugin/${target}/rundeck-jsch-plugin-${version}.jar":[:],
 ]
 def pluginsum=1
 //generate list of plugin files in the jar to validate

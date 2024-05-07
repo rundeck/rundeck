@@ -2,6 +2,8 @@ package rundeck.data.util
 
 import rundeck.data.constants.ExecutionConstants
 import rundeck.data.execution.RdExecution
+import rundeck.data.job.RdJob
+import rundeck.data.job.RdNodeConfig
 import spock.lang.Specification
 
 class ExecutionDataUtilSpec extends Specification {
@@ -45,5 +47,46 @@ class ExecutionDataUtilSpec extends Specification {
         "custom"                                                   | true
         "other"                                                    | true
 
+    }
+
+    def "create execution reference"() {
+        given:
+        def jobData = new RdJob(uuid: UUID.randomUUID().toString(),
+                                jobName: "test",
+                                groupPath: "test",
+                                project: "test"
+        )
+        def execution = new RdExecution(internalId: 1L,
+                                    uuid: UUID.randomUUID().toString(),
+                                    jobUuid: jobData.uuid,
+                                    project: jobData.project,
+                                    dateStarted: new Date(1024,1,1),
+                                    dateCompleted: new Date(1024,1,2),
+                                    status: "completed",
+                                    succeededNodeList: "node1,node2",
+                                    failedNodeList: "node3",
+                                    executionType: "scheduled",
+                                    nodeConfig: new RdNodeConfig(filter: "tag: gold")
+        )
+
+
+        when:
+        def execRef = ExecutionDataUtil.createExecutionReference(execution, JobDataUtil.asJobReference(jobData))
+
+        then:
+        execRef.project == execution.project
+        execRef.id == execution.internalId.toString()
+        execRef.project == execution.project
+        execRef.job.project == jobData.project
+        execRef.job.id == jobData.uuid
+        execRef.job.jobName == jobData.jobName
+        execRef.job.groupPath == jobData.groupPath
+        execRef.adhocCommand == null
+        execRef.filter == execution.nodeConfig.filter
+        execRef.dateStarted == execution.dateStarted
+        execRef.status == execution.status
+        execRef.succeededNodeList == execution.succeededNodeList
+        execRef.failedNodeList == execution.failedNodeList
+        execRef.executionType == execution.executionType
     }
 }

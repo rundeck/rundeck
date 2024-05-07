@@ -28,6 +28,7 @@ import org.apache.tools.ant.types.Environment;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -210,10 +211,51 @@ public class DataContextUtils {
                                                             boolean blankIfUnexpanded
     )
     {
+        return replaceDataReferences(
+                input,
+                data,
+                converter,
+                failIfUnexpanded,
+                blankIfUnexpanded,
+                null,
+                null
+        );
+    }
+    /**
+     * Recursively replace data references in the values in a map which contains either string, collection or Map
+     * values.
+     *
+     * @param input input map
+     * @param data  context data
+     * @param converter converter to encode/convert the expanded values
+     * @param failIfUnexpanded true to fail if a reference is not found
+     * @param blankIfUnexpanded true to use blank if a reference is not found
+     * @param inputConverter converter to apply to input values before replacing references
+     * @param outputConverter converter to apply to output values after replacing references
+     *
+     * @return Map with all string values having references replaced
+     */
+    public static Map<String, Object> replaceDataReferences(final Map<String, Object> input,
+                                                             final Map<String, Map<String, String>> data,
+                                                            Converter<String, String> converter,
+                                                            boolean failIfUnexpanded,
+                                                            boolean blankIfUnexpanded,
+                                                            BiFunction<String,Object, Object> inputConverter,
+                                                            BiFunction<String, Object, Object> outputConverter
+    )
+    {
         final HashMap<String, Object> output = new HashMap<>();
         for (final String s : input.keySet()) {
             Object o = input.get(s);
-            output.put(s, replaceDataReferencesInObject(o, data, converter, failIfUnexpanded, blankIfUnexpanded));
+            if (inputConverter != null) {
+                o = inputConverter.apply(s, o);
+            }
+            Object value = replaceDataReferencesInObject(o, data, converter, failIfUnexpanded, blankIfUnexpanded);
+
+            if (outputConverter != null) {
+                value = outputConverter.apply(s, value);
+            }
+            output.put(s, value);
         }
         return output;
     }

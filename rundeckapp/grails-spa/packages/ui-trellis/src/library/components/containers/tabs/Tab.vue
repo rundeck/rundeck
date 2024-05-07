@@ -5,31 +5,29 @@
 </template>
 
 <script lang="ts">
-import {defineComponent} from "vue";
-import {webhookui} from "../../../stores/Webhooks";
+import { defineComponent } from "vue";
+import { webhookui } from "../../../stores/Webhooks";
 
 export default defineComponent({
-    name: 'Tab',
-    props:{
-        index: {
-            type: Number,
-            default: 0
-        },
-        title: {
-            type: String,
-            default: ''
-        },
-        keep: { type: Boolean, default: true}
+  name: "Tab",
+  inject: ["selectedIndex"],
+  props: {
+    index: {
+      type: Number,
+      default: 0,
     },
-    inject: ['selectedIndex'],
-    computed: {
-        isActive() {
-            return this.index === this.selectedIndex
-        },
-    }
-})
+    title: {
+      type: String,
+      default: "",
+    },
+    keep: { type: Boolean, default: true },
+  },
+  computed: {
+    isActive() {
+      return this.index === this.selectedIndex;
+    },
+  },
+});
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

@@ -1,6 +1,6 @@
 package org.rundeck.app.authentication;
 
-import org.rundeck.app.data.model.v1.AuthenticationToken;
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType;
 
 import java.io.Serializable;
 import java.security.Principal;
@@ -13,14 +13,14 @@ public class Token
 {
     private static final long serialVersionUID = 1L;
 
-    public Token(String tokenId, AuthenticationToken.AuthTokenType type) {
+    public Token(String tokenId, AuthTokenType type) {
         super();
         this.tokenId = tokenId;
         this.type = type;
     }
 
     private final String tokenId;
-    private final AuthenticationToken.AuthTokenType type;
+    private final AuthTokenType type;
 
     /**
      * @see java.security.Principal#getName()
@@ -29,7 +29,7 @@ public class Token
         return tokenId;
     }
 
-    public AuthenticationToken.AuthTokenType getType() {
+    public AuthTokenType getType() {
         return type;
     }
 

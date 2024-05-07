@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project>
+  <node name="mynode1" description="" tags="api, test" hostname="mynode1" osArch="" osFamily="" osName="" osVersion="" username="" attr1="testvalue"/>
+</project>

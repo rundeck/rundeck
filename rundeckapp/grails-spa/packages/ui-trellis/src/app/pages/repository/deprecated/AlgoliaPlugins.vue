@@ -1,8 +1,10 @@
-
 <template>
   <div>
     <div v-if="pluginsLoaded">
-      <ais-instant-search :search-client="searchClient" index-name="wp_posts_rundeck_plugin">
+      <ais-instant-search
+        :search-client="searchClient"
+        index-name="wp_posts_rundeck_plugin"
+      >
         <div id="search" class="omnisearch-box">
           <div class="row">
             <div class="col-xs-12">
@@ -13,7 +15,7 @@
                     :class-names="{
                       'ais-SearchBox-input': 'form-control input-lg',
                       'ais-SearchBox-submit': 'hidden',
-                      'ais-SearchBox-reset': 'onmisearch-reset-button'
+                      'ais-SearchBox-reset': 'onmisearch-reset-button',
                     }"
                   />
                 </div>
@@ -30,10 +32,17 @@
                   <div class="omnisearch-filter--body card-content">
                     <div class="body-inner row">
                       <div class="body-title col-xs-12 col-sm-2">Support</div>
-                      <div class="body-results results-tags col-xs-12 col-sm-10">
+                      <div
+                        class="body-results results-tags col-xs-12 col-sm-10"
+                      >
                         <ais-refinement-list
                           attribute="taxonomies.plugin_support_type"
-                          :transformItems="items => items.sort((a,b) => a.value.localeCompare(b.value))"
+                          :transform-items="
+                            (items) =>
+                              items.sort((a, b) =>
+                                a.value.localeCompare(b.value),
+                              )
+                          "
                         />
                       </div>
                     </div>
@@ -42,7 +51,12 @@
                       <div class="column body-results results-types">
                         <ais-refinement-list
                           attribute="taxonomies.plugin_type"
-                          :transformItems="items => items.sort((a,b) => a.value.localeCompare(b.value))"
+                          :transform-items="
+                            (items) =>
+                              items.sort((a, b) =>
+                                a.value.localeCompare(b.value),
+                              )
+                          "
                         />
                       </div>
                     </div>
@@ -53,28 +67,30 @@
           </div>
         </div>
         <div class="omnisearch-stats">
-          <ais-stats/>
+          <ais-stats />
         </div>
         <div class="omnisearch-results row">
           <ais-hits>
-            <template v-slot:item="item">
+            <template #item="item">
               <div class="ais-Hits-item-inner col-sm-4">
                 <div class="card result">
                   <div class="card-header">
                     <div class="card-title">
-                      <h4>{{item.post_title}}</h4>
+                      <h4>{{ item.post_title }}</h4>
                     </div>
                   </div>
                   <div class="card-content" v-html="item.post_excerpt"></div>
                   <div class="card-footer">
                     <ul class="plugin-types">
                       <li
-                        class="label label-default"
                         v-for="(type, index) in item.taxonomies.plugin_type"
                         :key="index"
-                      >{{type}}</li>
+                        class="label label-default"
+                      >
+                        {{ type }}
+                      </li>
                     </ul>
-                    <hr>
+                    <hr />
                     <div>
                       <div v-if="item.current_version && item.object_id">
                         <install-button
@@ -92,7 +108,8 @@
                               :href="`https://online.rundeck.com/plugins/${item.post_slug}`"
                               target="_blank"
                               class="btn btn-sm btn-default pull-right"
-                            >Docs</a>
+                              >Docs</a
+                            >
                             <!-- <a
                         :href="item.source_link"
                         target="_blank"
@@ -110,10 +127,10 @@
         </div>
         <div class="omnisearch-pagination">
           <ais-pagination
-            @page-change="scrollTop"
             :class-names="{
-        'ais-Pagination-list':'pagination'
-      }"
+              'ais-Pagination-list': 'pagination',
+            }"
+            @page-change="scrollTop"
           ></ais-pagination>
         </div>
       </ais-instant-search>
@@ -141,16 +158,37 @@ export default {
       errors: null,
       pluginsLoaded: false,
       installedPlugins: [],
-      installedPluginIds: []
+      installedPluginIds: [],
     };
   },
+  created() {
+    if (window._rundeck && window._rundeck.rdBase) {
+      const apiVersion = window._rundeck.apiVersion;
+      axios({
+        method: "get",
+        headers: {
+          "x-rundeck-ajax": true,
+        },
+        url: `/api/${apiVersion}/plugins/listInstalledArtifacts`,
+        withCredentials: true,
+      }).then((response) => {
+        if (response.data) {
+          this.installedPlugins = response.data;
+          this.installedPluginIds = _.map(response.data, (plugin) => {
+            return plugin.artifactId;
+          });
+          this.pluginsLoaded = true;
+        }
+      });
+    }
+  },
   methods: {
-    toggleFilter: function() {
+    toggleFilter: function () {
       this.showFilter = !this.showFilter;
     },
-    scrollTop: function() {
+    scrollTop: function () {
       this.$scrollTo("#search", 300, {
-        offset: -100
+        offset: -100,
       });
     },
     checkInstalled(item) {
@@ -163,14 +201,16 @@ export default {
         method: "post",
         headers: { "x-rundeck-ajax": true },
         url: `${rdBase}repository/${this.repoName}/install/${pluginId}`,
-        withCredentials: true
+        withCredentials: true,
       })
-        .then(response => {
-          let repo = this.repositories.find(r => r.repositoryName === repoName);
-          let plugin = repo.results.find(r => r.id === pluginId);
+        .then((response) => {
+          const repo = this.repositories.find(
+            (r) => r.repositoryName === repoName,
+          );
+          const plugin = repo.results.find((r) => r.id === pluginId);
           plugin.installed = true;
         })
-        .catch(error => {
+        .catch((error) => {
           this.errors = error.response.data;
         });
     },
@@ -181,39 +221,20 @@ export default {
         method: "post",
         headers: { "x-rundeck-ajax": true },
         url: `${rdBase}repository/${this.repoName}/uninstall/${pluginId}`,
-        withCredentials: true
+        withCredentials: true,
       })
-        .then(response => {
-          let repo = this.repositories.find(r => r.repositoryName === repoName);
-          let plugin = repo.results.find(r => r.id === pluginId);
+        .then((response) => {
+          const repo = this.repositories.find(
+            (r) => r.repositoryName === repoName,
+          );
+          const plugin = repo.results.find((r) => r.id === pluginId);
           plugin.installed = true;
         })
-        .catch(error => {
+        .catch((error) => {
           this.errors = error.response.data;
         });
-    }
+    },
   },
-  created() {
-    if (window._rundeck && window._rundeck.rdBase) {
-      const apiVersion = window._rundeck.apiVersion;
-      axios({
-        method: "get",
-        headers: {
-          "x-rundeck-ajax": true
-        },
-        url: `/api/${apiVersion}/plugins/listInstalledArtifacts`,
-        withCredentials: true
-      }).then(response => {
-        if (response.data) {
-          this.installedPlugins = response.data;
-          this.installedPluginIds = _.map(response.data, plugin => {
-            return plugin.artifactId;
-          });
-          this.pluginsLoaded = true;
-        }
-      });
-    }
-  }
 };
 </script>
 <style lang="scss">

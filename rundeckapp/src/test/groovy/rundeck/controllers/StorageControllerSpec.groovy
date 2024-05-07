@@ -29,6 +29,7 @@ import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.StorageService
+import rundeck.services.feature.FeatureService
 import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -43,6 +44,9 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         def token = SynchronizerTokensHolder.store(session)
         sec.params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
         sec.params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
+    }
+    def setup(){
+        controller.featureService = Mock(FeatureService)
     }
 
     def "key storage access no params"() {
@@ -575,7 +579,6 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         where:
             format | ctype
             'json' | 'application/json;charset=UTF-8'
-            'xml' | 'application/xml;charset=utf-8'
 
     }
 

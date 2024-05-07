@@ -3,7 +3,7 @@
 set -euo pipefail
 
 export RUNDECK_VERSION=${RUNDECK_VERSION:-2.9.2}
-export CLI_VERS=${CLI_VERS:-1.4.3-1}
+export CLI_VERS=${CLI_VERS:-2.0.7-1}
 
 # Builds the rdtest:latest image which is required as a base image by many test images
 build_rdtest_docker(){
@@ -15,10 +15,6 @@ build_rdtest_docker(){
 	if [ -f rd.deb ] ; then
 		mv rd.deb dockers/rundeck/data/
 	fi
-
-	# setup test dirs
-	cp -r ../src dockers/rundeck/api_test/
-	cp -r ../api dockers/rundeck/api_test/
 
 	# tickle installer for it to rebuild
 	#date > dockers/rundeck/data/build_control

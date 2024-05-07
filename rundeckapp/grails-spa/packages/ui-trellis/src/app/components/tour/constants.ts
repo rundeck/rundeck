@@ -1,11 +1,11 @@
-import {getRundeckContext} from '../../../library'
+import { getRundeckContext } from "../../../library";
 
-const context = getRundeckContext()
+const context = getRundeckContext();
 
-export const tourManifestUrl = `${context.rdBase}tour/listAll`
-export const tourUrl = `${context.rdBase}tour/get/`
+export const tourManifestUrl = `${context.rdBase}tour/listAll`;
+export const tourUrl = `${context.rdBase}tour/get/`;
 
 export default {
   tourManifestUrl,
-  tourUrl
-}
+  tourUrl,
+};

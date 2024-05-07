@@ -202,10 +202,17 @@
       %{--Options--}%
     <div class="tab-pane" id="tab_workflow">
       <section id="optionsContent" class=" section-space-lg" >
+          <g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
+
           <div class="form-group">
               <div class="${labelColSize} control-label text-form-label"><span id="optsload"></span><g:message code="options.label" /></div>
               <div class="${fieldColSize}">
-
+                  <g:if test="${uiType=='next'}">
+                      <div class="job-editor-options-vue" id="job-editor-options-vue">
+                          <options-editor-section  />
+                      </div>
+                  </g:if>
+                  <g:else>
                   <div  id="editoptssect" class="rounded">
                       <%
                           def options = sessionOpts
@@ -221,6 +228,7 @@
                       <g:hiddenField name="_sessionopts" value="true"/>
 
                   </div>
+                  </g:else>
               </div>
           </div>
       </section>%{--//Options--}%
@@ -483,6 +491,7 @@ function getCurSEID(){
         }
         var nodeFilter;
         var nodeFilterMap = {};
+        window.nodeFilterMap = nodeFilterMap
         function registerNodeFilters(obj,key){
             nodeFilterMap[key]=obj;
         }

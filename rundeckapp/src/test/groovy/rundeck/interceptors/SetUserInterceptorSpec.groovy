@@ -3,11 +3,12 @@ package rundeck.interceptors
 import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
-import org.rundeck.app.data.model.v1.AuthTokenMode
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
 import grails.testing.gorm.DataTest
 import grails.testing.web.interceptor.InterceptorUnitTest
 import org.rundeck.app.access.InterceptorHelper
-import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
 import org.rundeck.app.data.providers.GormTokenDataProvider
 import rundeck.AuthToken
 import rundeck.ConfigTagLib
@@ -16,6 +17,7 @@ import rundeck.UtilityTagLib
 import rundeck.codecs.HTMLAttributeCodec
 import rundeck.codecs.HTMLContentCodec
 import rundeck.codecs.URIComponentCodec
+import rundeck.controllers.ApiController
 import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.UserService
@@ -71,6 +73,8 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         allowed
         request.subject.principals.find { it instanceof Username }?.name == username
         request.subject.principals.findAll { it instanceof Group }.collect { it.name } == roles
+        0 * userServiceMock.findOrCreateUser(_)
+        0 * userServiceMock.parseKeyValuePref(_)
 
         where:
         username   | roles
@@ -118,6 +122,8 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         then:
         allowed == expected
         flash.loginErrorCode==code
+        0 * userServiceMock.findOrCreateUser(_)
+        0 * userServiceMock.parseKeyValuePref(_)
 
         where:
         requiredRole | username | groups            | expected | code
@@ -162,6 +168,8 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         interceptor.request.userPrincipal = new Username("User")
         interceptor.request.remoteUser = "User"
         boolean allowed = interceptor.before()
+        0 * userServiceMock.findOrCreateUser(_)
+        0 * userServiceMock.parseKeyValuePref(_)
 
         then:
         allowed == userAllowed
@@ -187,11 +195,11 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         User u1 = new User(login: "admin")
         User u2 = new User(login: "whk")
         AuthToken userTk1 = new AuthToken(token: "123",user:u1,authRoles:"admin",type: null)
-        AuthToken userTk2 = new AuthToken(token: "456", user:u1, authRoles:"admin", type: AuthenticationToken.AuthTokenType.USER, tokenMode: AuthTokenMode.LEGACY)
-        AuthToken userTk3 = new AuthToken(token: "ABC", user:u1, authRoles:"admin", type: AuthenticationToken.AuthTokenType.USER, tokenMode: AuthTokenMode.SECURED)
-        AuthToken userTk4 = new AuthToken(token: "DEF", user:u1, authRoles:"admin", type: AuthenticationToken.AuthTokenType.USER, tokenMode: null)
-        AuthToken runnerTk1 = new AuthToken(token: "RN1", user:u1, authRoles:"admin", type: AuthenticationToken.AuthTokenType.RUNNER, tokenMode: AuthTokenMode.SECURED)
-        AuthToken whkTk = new AuthToken(token: "789", user:u2, authRoles:"admin", type:AuthenticationToken.AuthTokenType.WEBHOOK, tokenMode: AuthTokenMode.LEGACY)
+        AuthToken userTk2 = new AuthToken(token: "456", user:u1, authRoles:"admin", type: AuthTokenType.USER, tokenMode: AuthTokenMode.LEGACY)
+        AuthToken userTk3 = new AuthToken(token: "ABC", user:u1, authRoles:"admin", type: AuthTokenType.USER, tokenMode: AuthTokenMode.SECURED)
+        AuthToken userTk4 = new AuthToken(token: "DEF", user:u1, authRoles:"admin", type: AuthTokenType.USER, tokenMode: null)
+        AuthToken runnerTk1 = new AuthToken(token: "RN1", user:u1, authRoles:"admin", type: AuthTokenType.RUNNER, tokenMode: AuthTokenMode.SECURED)
+        AuthToken whkTk = new AuthToken(token: "789", user:u2, authRoles:"admin", type:AuthTokenType.WEBHOOK, tokenMode: AuthTokenMode.LEGACY)
         u1.save()
         u2.save()
         userTk1.save()
@@ -236,7 +244,7 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         given:
         User u1 = new User(login: "admin")
 
-        AuthToken userTk3 = new AuthToken(token: tk, user:u1, authRoles:authRoles, type: AuthenticationToken.AuthTokenType.USER, tokenMode: AuthTokenMode.SECURED)
+        AuthToken userTk3 = new AuthToken(token: tk, user:u1, authRoles:authRoles, type: AuthTokenType.USER, tokenMode: AuthTokenMode.SECURED)
         u1.save()
         userTk3.save()
         def svCtx = Mock(ServletContext)
@@ -266,6 +274,66 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         then:
             result
             request.invalidApiAuthentication
+    }
+
+    def "skip requiredRoles check if the call is performed by the runner"() {
+        setup:
+        defineBeans {
+            rundeckConfig(RundeckConfig)
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+
+        }
+        GroovyMock(ConfigurationService, global: true)
+
+        User u1 = new User(login: "_runner")
+        AuthToken userTk1 = new AuthToken(token: "123",user:u1,authRoles:"_runner",type: AuthTokenType.RUNNER)
+        u1.save()
+        userTk1.save()
+
+        def svCtx = Mock(ServletContext)
+        request.setAttribute(SetUserInterceptor.RUNNER_RQ_ATTRIB, true)
+        def apiService = new ApiService()
+        apiService.tokenDataProvider = new GormTokenDataProvider()
+
+        mockCodec(URIComponentCodec)
+        mockCodec(HTMLContentCodec)
+        mockCodec(HTMLAttributeCodec)
+        mockTagLib(UtilityTagLib)
+        mockTagLib(ConfigTagLib)
+
+        def username = "_runner"
+        def role = "_runner"
+
+        def userServiceMock = Mock(UserService) {
+            getUserGroupSourcePluginRoles(username) >> { [role] }
+        }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
+        }
+
+        interceptor.configurationService = Mock(ConfigurationService) {
+            getString("security.requiredRole","")>>"enter,admin"
+            getString(_,_)>>""
+            getString(_)>>""
+        }
+
+        when:
+
+        interceptor.apiService = apiService
+        interceptor.userService = userServiceMock
+
+        interceptor.params.authtoken = "123"
+        interceptor.request.api_version = 41
+        boolean allowed = interceptor.before()
+        0 * userServiceMock.findOrCreateUser(_)
+        0 * userServiceMock.parseKeyValuePref(_)
+
+        then:
+        allowed
+
+
     }
 
 }

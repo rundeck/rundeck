@@ -1,12 +1,16 @@
 <template>
-  <div class="loading" v-show="overlay">
-    <div class="loading-spinner" v-show="loadingSpinner">
+  <div v-show="overlay" class="loading">
+    <div v-show="loadingSpinner" class="loading-spinner">
       <i class="fas fa-spinner fa-spin fa-5x"></i>
-      <div class="loading-text" v-show="loadingMessage" v-html="loadingMessage"></div>
+      <div
+        v-show="loadingMessage"
+        class="loading-text"
+        v-html="loadingMessage"
+      ></div>
     </div>
-    <div class="errors" v-if="errors && errors.length" v-show="errors">
+    <div v-if="errors && errors.length" v-show="errors" class="errors">
       <div>
-        <a @click="closeOverlay" class="btn btn-default">Close</a>
+        <a class="btn btn-default" @click="closeOverlay">Close</a>
       </div>
       <div class="error-list">
         <h3 v-html="errors.code"></h3>
@@ -29,12 +33,12 @@ export default {
       "overlay",
       "errors",
       "loadingMessage",
-      "loadingSpinner"
-    ])
+      "loadingSpinner",
+    ]),
   },
   methods: {
-    ...mapActions("overlay", ["closeOverlay"])
-  }
+    ...mapActions("overlay", ["closeOverlay"]),
+  },
 };
 </script>
 <style lang="scss" scoped>

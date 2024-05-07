@@ -17,8 +17,8 @@
 package rundeck.services
 
 
-import com.dtolabs.rundeck.app.internal.logging.LogEventBufferManager
-import com.dtolabs.rundeck.app.internal.logging.LogFlusher
+import com.dtolabs.rundeck.core.logging.internal.LogEventBufferManager
+import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 import com.dtolabs.rundeck.core.execution.Contextual
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.logging.LogLevel

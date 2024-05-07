@@ -37,7 +37,7 @@ import org.eclipse.jgit.errors.TransportException
 import org.eclipse.jgit.lib.BaseRepositoryBuilder
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.transport.FetchConnection
-import org.eclipse.jgit.transport.OpenSshConfig
+import org.eclipse.jgit.transport.ssh.jsch.OpenSshConfig
 import org.eclipse.jgit.transport.PushConnection
 import org.eclipse.jgit.transport.SshSessionFactory
 import org.eclipse.jgit.transport.SshTransport
@@ -579,7 +579,7 @@ class BaseGitPluginSpec extends Specification {
         validPathForUser      | commonConfigPassword    | commonConfigKey         | methodResult
         'keys/grantedAccess'  | 'keys/grantedAccess'    | null                    | true
         'keys/grantedAccess'  | null                    | 'keys/grantedAccess'    | true
-        'keys/grantedAccess'  | null                    | null                    | false
+        'keys/grantedAccess'  | null                    | null                    | true
         'keys/grantedAccess'  | null                    | 'keys/notGrantedAccess' | false
         'keys/grantedAccess'  | 'keys/notGrantedAccess' | null                    | false
 

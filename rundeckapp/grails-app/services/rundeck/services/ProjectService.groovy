@@ -16,9 +16,11 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
+import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
@@ -28,8 +30,9 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
-import com.dtolabs.rundeck.net.api.Client
-import com.dtolabs.rundeck.net.model.ProjectImportStatus
+import com.dtolabs.rundeck.net.api.RundeckClient
+import com.dtolabs.rundeck.net.model.ErrorDetail
+import com.dtolabs.rundeck.net.model.ErrorResponse
 import com.dtolabs.rundeck.util.XmlParserUtil
 import com.dtolabs.rundeck.util.ZipBuilder
 import com.dtolabs.rundeck.util.ZipReader
@@ -39,25 +42,28 @@ import com.google.common.cache.RemovalNotification
 import grails.async.Promises
 import grails.compiler.GrailsCompileStatic
 import grails.events.EventPublisher
-import grails.gorm.transactions.TransactionService
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
+import groovy.transform.TypeCheckingMode
 import groovy.xml.MarkupBuilder
+import okhttp3.ResponseBody
 import org.apache.commons.io.FileUtils
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.components.jobs.ComponentMeta
 import org.rundeck.app.components.jobs.JobDefinitionException
 import org.rundeck.app.components.jobs.JobFormat
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
+import org.rundeck.app.components.project.ProjectMetadataComponent
 import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
-import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
-import org.rundeck.app.data.providers.v1.ExecReportDataProvider
+import rundeck.data.report.SaveReportRequestImpl
+import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
 import org.rundeck.core.auth.AuthConstants
@@ -67,13 +73,21 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.transaction.TransactionStatus
+
+import retrofit2.Converter
 import rundeck.Execution
 import rundeck.JobFileRecord
-import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
+import rundeck.services.asyncimport.AsyncImportEvents
+import rundeck.services.asyncimport.AsyncImportException
+import rundeck.services.asyncimport.AsyncImportMilestone
+import rundeck.services.asyncimport.AsyncImportService
+import rundeck.services.asyncimport.AsyncImportStatusDTO
 import rundeck.services.logging.ProducedExecutionFile
+import webhooks.component.project.WebhooksProjectComponent
 
+import java.lang.annotation.Annotation
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.jar.Attributes
@@ -81,8 +95,12 @@ import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+import java.util.stream.Collectors
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
+import com.dtolabs.rundeck.net.model.ProjectImportStatus
+import okhttp3.RequestBody
+import retrofit2.Response
 
 @Transactional
 class ProjectService implements InitializingBean, ExecutionFileProducer, EventPublisher {
@@ -91,6 +109,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     final String executionFileType = EXECUTION_XML_LOG_FILETYPE
 
     def grailsApplication
+    AsyncImportService asyncImportService
     ScheduledExecutionService scheduledExecutionService
     ExecutionService executionService
     FileUploadService fileUploadService
@@ -182,21 +201,32 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         new ProducedExecutionFile(localFile: localfile, fileDeletePolicy: ExecutionFile.DeletePolicy.ALWAYS)
     }
 
-    def exportExecution(ZipBuilder zip, Execution exec, String name) throws ProjectServiceException {
-
-        def File logfile = loggingService.getLogFileForExecution(exec)
+    /**
+     * Generates log files for the given execution.
+     * output-<execId>.rdlog containing the log output
+     * state-<execId>.state.json containing the execution state
+     * <name>.xml containing the summary of the execution
+     * @param zip builder to pack the execution
+     * @param exec execution to export
+     * @param name of the target xml file
+     * @param remotePathTemplate configured path for remote log storage
+     *
+     * @throws ProjectServiceException
+     */
+    def exportExecution(ZipBuilder zip, Execution exec, String name, String remotePathTemplate = null) throws ProjectServiceException {
+        File logfile = loggingService.getLogFileForExecution(exec)
         String logfilepath = null
         if (logfile && logfile.isFile()) {
             logfilepath = "output-${exec.id}.rdlog"
+            zip.file logfilepath, logfile
+        } else if (remotePathTemplate != null){ // if there's a configured remote storage
+            logfilepath = "ext:${exec.getExecIdForLogStore()}:${exec.isRemoteOutputfilepath() ? exec.outputfilepath : logFileStorageService.getRemotePathForExecutionFromPathTemplate(exec, remotePathTemplate)}"
         }
         //convert map to xml
         zip.file("$name") { Writer writer ->
             executionUtilService.exportExecutionXml(exec, writer, logfilepath)
         }
-        if (logfile && logfile.isFile()) {
-            zip.file logfilepath, logfile
-        }
-        def File statefile = workflowService.getStateFileForExecution(exec)
+        File statefile = workflowService.getStateFileForExecution(exec)
         if (statefile && statefile.isFile()) {
             zip.file "state-${exec.id}.state.json", statefile
         }
@@ -518,13 +548,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             IRundeckProject project,
             IFramework framework,
             String ident,
-            ProjectArchiveExportRequest options,
-            String iProject,
-            String apiToken,
-            String instanceUrl,
-            boolean preserveUUID,
+            ProjectArchiveParams archiveParams,
             AuthContext authContext
     ) {
+        String instanceUrl = archiveParams.url
         projectLogger.info("Begin export [" + project.name + "] to [" + instanceUrl + "]/" + project)
         String token = UUID.randomUUID().toString()
         def summary = new ExportFileProgress()
@@ -533,11 +560,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def p = Promises.task {
             try {
                 ScheduledExecution.withNewSession {
-                    request.project = iProject
-                    request.apitoken = apiToken
+                    request.project = archiveParams.targetproject
+                    request.apitoken = archiveParams.apitoken
                     request.instance = instanceUrl
-                    request.result = exportProjectToInstance(project, framework, summary, options,
-                            iProject, apiToken, instanceUrl, preserveUUID, authContext)
+                    request.result = exportProjectToInstance(project, framework, summary, archiveParams, authContext)
                     request.file = request.result.file
                     projectLogger.info("Export [" + project.name + "] to [" + instanceUrl + "]/" + project + " succeeded")
                 }
@@ -653,19 +679,116 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         outfile
     }
 
-    def exportProjectToInstance(IRundeckProject project, IFramework framework, ProgressListener listener,
-                                ProjectArchiveExportRequest options, String iProject,
-                                String apiToken, String instanceUrl, boolean preserveUUID,
+    ImportResponse exportProjectToInstance(IRundeckProject project, IFramework framework, ProgressListener listener,
+                                ProjectArchiveParams archiveParams,
                                 AuthContext authContext
     ) throws ProjectServiceException {
-        File file = exportProjectToFile(project, framework, listener, options, authContext)
-        Client client = new Client(instanceUrl, apiToken)
-        ProjectImportStatus ret = client.importProjectArchive(iProject, file, true, options.executions,
-                options.configs, options.acls, options.scm)
+        File file = exportProjectToFile(project, framework, listener, archiveParams.toArchiveOptions(), authContext)
+
+        ProjectImportStatus ret = importArchiveToInstance(file, archiveParams, new RundeckClient(archiveParams.url,archiveParams.apitoken))
+
         ImportResponse response = new ImportResponse(file: file, errors: ret.errors, ok: ret.getResultSuccess(),
                 executionErrors: ret.executionErrors, aclErrors: ret.aclErrors)
         listener?.done()
         response
+    }
+
+    /**
+     * It returns a copy of the given map but the keys have strToPrepend as prefix and the values were converted to strings
+     * @param strToPrepend the prefix to be used in the keys of the returned map
+     * @param inputMap to copy and convert values to string and change keys
+     * @return a map with keys "strToPrepend.inputMapKey" and values "inputMapValue.toString"
+     */
+    static Map<String,String> prependStringToKeysInMap(String strToPrepend, Map<String, Object> inputMap){
+        Map<String,String> prependedMap = [:]
+        inputMap.each { String key, Object value ->
+            String newKey = "${strToPrepend}.${key}"
+            prependedMap[newKey] = value.toString()
+        }
+        return prependedMap
+    }
+
+    /**
+     * It communicates with the destiny server api to make it import the given archive
+     * @param archiveToExport file with project to export content
+     * @param exportArchiveParams metadata of the archive to export from this server
+     * @return an import status object where the import progress of the destiny server is updated
+     */
+    static ProjectImportStatus importArchiveToInstance(File archiveToExport, ProjectArchiveParams exportArchiveParams, RundeckClient rundeckClient) throws RuntimeException {
+        ProjectImportStatus response = new ProjectImportStatus()
+        response.successful = true
+        boolean importWebhookOpt = exportArchiveParams.exportComponents[WebhooksProjectComponent.COMPONENT_NAME]
+
+        Response<ProjectImportStatus> status = rundeckClient.importProjectArchive(
+                exportArchiveParams.getTargetproject(),
+                exportArchiveParams.preserveuuid?'preserve':'remove',
+                exportArchiveParams.exportExecutions,
+                exportArchiveParams.exportConfigs,
+                exportArchiveParams.exportAcls,
+                exportArchiveParams.exportScm,
+                importWebhookOpt,
+                importWebhookOpt && !Boolean.valueOf(exportArchiveParams.exportOpts[WebhooksProjectComponent.COMPONENT_NAME]['inludeAuthTokens']),
+                importWebhookOpt && Boolean.valueOf(exportArchiveParams.exportOpts[WebhooksProjectComponent.COMPONENT_NAME]['regenUuid']),
+                exportArchiveParams.exportConfigs,
+                prependStringToKeysInMap('importComponents', exportArchiveParams.exportComponents),
+                RequestBody.create(archiveToExport, RundeckClient.MEDIA_TYPE_ZIP)
+        )
+
+        if(status.isSuccessful()){
+            if(null != status.body()) {
+                response = status.body()
+                if(!response.getResultSuccess()){
+                    if(null != response.errors) {
+                        projectLogger.error(
+                                String.format("Error on import jobs to new project: %d", response.errors.size())
+                        )
+                    }
+                    if(null != response.executionErrors) {
+                        projectLogger.error(
+                                String.format("Error on import executions to new project: %d", response.executionErrors.size())
+                        )
+                    }
+                    if(null != response.aclErrors) {
+                        projectLogger.error(
+                                String.format("Error on import acls to new project: %d", response.aclErrors.size())
+                        )
+                    }
+                }
+            }else{
+                projectLogger.error("Null body on response")
+                response.successful=false
+            }
+
+        }else{
+            ResponseBody responseBody = status.errorBody()
+            Converter<ResponseBody, ErrorResponse> errorConverter = rundeckClient.getRetrofit().responseBodyConverter(
+                    ErrorResponse.class,
+                    new Annotation[0]
+            )
+            ErrorDetail error = errorConverter.convert(responseBody)
+            if (status.code() == 401 || status.code() == 403) {
+                throw new RuntimeException(
+                        String.format("Authorization failed: %d %s", status.code(), error.getErrorMessage()))
+            }
+            if (status.code() == 409) {
+                throw new RuntimeException(String.format(
+                        "Could not create resource: %d %s",
+                        status.code(),
+                        error.getErrorMessage()
+                ))
+            }
+            if (status.code() == 404) {
+                throw new RuntimeException(String.format(
+                        "Could not find resource:  %d %s",
+                        status.code(),
+                        error.getErrorMessage()
+                ))
+            }
+            throw new RuntimeException(
+                    String.format("Request failed:  %d %s", status.code(), error.getErrorMessage()))
+        }
+
+        return response
     }
     /**
      * Export the project to an outputstream
@@ -812,8 +935,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         dir('executions/') {
                             //export executions
                             //export execution logs
+                            String remotePathTemplate = null
                             execs.each { Execution exec ->
-                                exportExecution zip, exec, "execution-${exec.id}.xml"
+                                if(remotePathTemplate == null)
+                                    remotePathTemplate = logFileStorageService.getStorePathTemplateForExecution(exec)
+
+                                exportExecution zip, exec, "execution-${exec.id}.xml", remotePathTemplate
 
                                 jobfilerecords.addAll JobFileRecord.findAllByExecution(exec)
 
@@ -1290,7 +1417,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                     authContext,
                                     project.name,
                                     importerstemp[importer.name],
-                                    options.importOpts[importer.name]
+                                    options.importOpts?options.importOpts[importer.name]:[:]
                             )
                             if (result) {
                                 importerErrors[importer.name] = result
@@ -1644,25 +1771,31 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     oldidtoexec[oldids[e]] = e
                 }
                 //check outputfile exists in mapping
-                if (e.outputfilepath && execout[e.outputfilepath]) {
-                    File oldfile = execout[e.outputfilepath]
-                    //move to appropriate location and update outputfilepath
-                    File newfile = logFileStorageService.getFileForExecutionFiletype(
-                            e,
-                            LoggingService.LOG_FILE_FILETYPE,
-                            false,
-                            false
-                    )
-                    try {
-                        FileUtils.moveFile(oldfile, newfile)
-                    } catch (IOException exc) {
-                        execerrors << "Failed to move temp log file to destination: ${newfile.absolutePath} (old id ${oldids[e]}): ${exc.message}"
-                        log.error("Failed to move temp log file to destination: ${newfile.absolutePath} (old id ${oldids[e]})", exc)
+                String oldOutputFilePath = e.outputfilepath
+                if (oldOutputFilePath) {
+                    if(e.isRemoteOutputfilepath()){
+                        log.warn("Log file for imported execution \"${e.id}\" is not present in archive. This logs will be loaded when accessed if its path \"${e.outputfilepath}\" is present in configured log storage")
+                    } else if (execout[oldOutputFilePath]) {
+                        File oldfile = execout[oldOutputFilePath]
+                        //move to appropriate location and update outputfilepath
+                        File newfile = logFileStorageService.getFileForExecutionFiletype(
+                                e,
+                                LoggingService.LOG_FILE_FILETYPE,
+                                false,
+                                false
+                        )
+                        try {
+                            FileUtils.moveFile(oldfile, newfile)
+                        } catch (IOException exc) {
+                            execerrors << "Failed to move temp log file to destination: ${newfile.absolutePath} (old id ${oldids[e]}): ${exc.message}"
+                            log.error("Failed to move temp log file to destination: ${newfile.absolutePath} (old id ${oldids[e]})", exc)
+                        }
+                        e.outputfilepath = newfile.absolutePath
                     }
-                    e.outputfilepath = newfile.absolutePath
-                } else {
-                    execerrors << "New execution ${e.id}, NO matching outfile: ${e.outputfilepath}"
-                    log.error("New execution ${e.id}, NO matching outfile: ${e.outputfilepath}")
+                }
+                if (!oldOutputFilePath || !(execout[oldOutputFilePath] || e.isRemoteOutputfilepath())){
+                    execerrors << "New execution ${e.id}, NO matching outfile: ${e.outputfilepath}. It might be present in configured remote log storage plugin."
+                    log.error("New execution ${e.id}, NO matching outfile: ${e.outputfilepath}. It might be present in configured remote log storage plugin.")
                 }
 
                 //copy state.json file
@@ -1746,9 +1879,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
         promise.onComplete { DeleteResponse it ->
             log.info("Deletion of Project [${project.name}] finished with success [${it.success}]: ${it.error}")
+            return it
         }
         promise.onError { Throwable t ->
             log.error("Error deleting project [${project.name}]: ${t.getMessage()}", t)
+            return null as DeleteResponse
         }
 
         return new DeleteResponse(success: true)
@@ -1761,7 +1896,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param framework frameowkr
      * @return map [success:true/false, error: (String errorMessage)]
      */
-    @GrailsCompileStatic
+    @CompileStatic(TypeCheckingMode.SKIP)
     protected DeleteResponse deleteProjectInternal(IRundeckProject project, IFramework framework, AuthContext authContext, String username) {
         log.info("Starting deletion of project ${project.name} by username $username")
         notify('projectWillBeDeleted', project.name)
@@ -1825,6 +1960,145 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         return result
     }
 
+    /**
+     * Creates the status file in db storage, the status file is the document that will have all the information
+     * about what is going on in the whole import operation. Will be requested in 'apiProjectAsyncImportStatus'
+     * endpoint.
+     *
+     * @param projectName
+     * @return true/false if its created or not
+     */
+    Boolean createAsyncImportStatusFile(String projectName){
+        try{
+            return asyncImportService.createStatusFile(projectName)
+        }catch(Exception e){
+            projectLogger.error("There was an unexpected error during async project import status file creation", e)
+            throw new AsyncImportException("There was an unexpected error during async project import status file creation", e)
+        }
+    }
+
+    /**
+     * Gets the info of a existing status file in db, if there isn't a status file.
+     *
+     * @param projectName
+     * @return
+     */
+    AsyncImportStatusDTO getAsyncImportStatusFileForProject(String projectName){
+        try{
+            if( !asyncImportService.statusFileExists(projectName) ){
+                throw new AsyncImportException("No status file in DB for project: ${projectName}")
+            }
+            def dto = asyncImportService.getAsyncImportStatusForProject(projectName)
+            return dto
+        }catch(Exception e){
+            projectLogger.error("Unexpected error while getting async project import status file in db", e)
+            throw new AsyncImportException("Unexpected error while getting async project import status file in db", e)
+        }
+    }
+
+    /**
+     * Starts async import milestones 1 and 2.
+     *
+     * @param projectName
+     * @param authContext
+     * @param project
+     * @param milestoneNumber
+     */
+    void beginAsyncImportMilestone(
+            final String projectName,
+            final AuthContext authContext,
+            final IRundeckProject project,
+            final int asyncImportStep
+    ){
+        switch (asyncImportStep){
+            case AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber:
+                notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_2, projectName, authContext, project)
+                break
+            case AsyncImportMilestone.M3_IMPORTING.milestoneNumber:
+                notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3, projectName, authContext, project)
+                break
+            default:
+                throw new AsyncImportException("Invalid milestone number: ${asyncImportStep} please, provide a valid async import milestone number.")
+        }
+    }
+
+    /**
+     * Handles project api import, returns the import result.
+     *
+     * Based on the params, the method will handle async or regular import.
+     *
+     * @param framework - Rundeck framework from Framework service
+     * @param userAndRolesAuthContext - Auth context from controller
+     * @param project - Rundeck project
+     * @param is - Stream made with uploaded project
+     * @param params - Archive params passed in request
+     */
+    def handleApiImport(
+            IFramework framework,
+            UserAndRolesAuthContext userAndRolesAuthContext,
+            IRundeckProject project,
+            InputStream is,
+            ProjectArchiveParams params
+    ) {
+        try{
+            if (params.asyncImport) {
+                // Creates the async import status file
+                if( !createAsyncImportStatusFile(project.name) ){
+                    throw new AsyncImportException("Error creating status file.")
+                }
+                // Start the process synchronously
+                return asyncImportService.startAsyncImport(
+                        project.name,
+                        userAndRolesAuthContext,
+                        project,
+                        is,
+                        params
+                )
+            }else{
+                return importToProject(
+                        project,
+                        framework,
+                        userAndRolesAuthContext,
+                        is,
+                        params
+                )
+            }
+        }catch(AsyncImportException e){
+            def badResult = [success: false, importerErrors: [async_importer_errors: e.message]]
+            return badResult
+        }
+    }
+
+    /**
+     * Checks if an async import status operation is not complete for given project
+     *
+     * @param projectName
+     * @return
+     */
+    boolean isIncompleteAsyncImportForProject(String projectName){
+        def incomplete = true
+        try{
+            def statusFileContent = asyncImportService.getAsyncImportStatusForProject(projectName)
+            if (statusFileContent.milestoneNumber == AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.milestoneNumber) {
+                incomplete = false
+            }
+        }catch (Exception e){
+            throw new AsyncImportException("There was an error while retrieving import status information.", e)
+        }
+        return incomplete
+    }
+
+    /**
+     * Restart a complete async import operation for given project.
+     *
+     * @param projectName
+     * @return
+     */
+    boolean restartAsyncImport(String projectName) {
+        projectLogger.info("Restarting async project import for project: ${projectName}")
+        return asyncImportService.removeAsyncImportStatusFile(projectName)
+    }
+
     boolean hasAclReadAuth(AuthContext authContext, String project) {
         rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
                 authContext,
@@ -1838,6 +2112,34 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 authContext,
                 project
         )
+    }
+
+    /**
+     * load metadata for a specific project
+     * @param project
+     * @param metakeys
+     * @param uuid
+     * @param authContext
+     * @return
+     */
+    @GrailsCompileStatic
+    List<ItemMeta> loadProjectMetaItems(
+        String project,
+        Set<String> metakeys,
+        UserAndRolesAuthContext authContext
+    ) {
+        List<ItemMeta> metaVals = []
+        def components = applicationContext.getBeansOfType(ProjectMetadataComponent) ?: [:]
+        components.each { name, component ->
+            Optional<List<ComponentMeta>> metaItems = component.getMetadataForProject(project, metakeys, authContext)
+            metaItems.ifPresent {
+                metaVals.addAll(
+                    it.stream().map(ItemMeta.&from).collect(Collectors.toList())
+                )
+            }
+        }
+
+        return metaVals
     }
 }
 

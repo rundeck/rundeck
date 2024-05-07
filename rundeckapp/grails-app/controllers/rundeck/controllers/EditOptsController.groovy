@@ -16,22 +16,35 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.app.api.jobs.options.OptionValidateRequest
+import com.dtolabs.rundeck.app.api.jobs.options.OptionValidateResponse
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.http.ApacheHttpClient
-import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData
 import com.jayway.jsonpath.JsonPath
-import org.apache.http.HttpResponse
-import org.rundeck.util.HttpClientCreator
+import groovy.transform.CompileStatic
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Post
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.rundeck.app.jobs.options.ApiTokenReporter
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
 import groovy.transform.PackageScope
-import org.rundeck.app.data.providers.v1.UserDataProvider
+import org.rundeck.app.data.providers.v1.user.UserDataProvider
 import org.rundeck.app.data.model.v1.job.option.OptionData
 import org.rundeck.core.auth.AuthConstants
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.context.MessageSource
+import org.springframework.validation.Errors
+import org.springframework.validation.FieldError
 import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.services.FrameworkService
@@ -42,14 +55,15 @@ import java.util.regex.PatternSyntaxException
 /**
  * Controller for manipulating the session-stored set of Options during job edit
  */
+@Controller
 class EditOptsController extends ControllerBase{
     static Logger logger = LoggerFactory.getLogger(EditOptsController)
     def FrameworkService frameworkService
     UserDataProvider userDataProvider
     def fileUploadService
     def optionValuesService
-    def userService
     def scheduledExecutionService
+    MessageSource messageSource
     def static allowedMethods = [
             redo: 'POST',
             remove: 'POST',
@@ -57,6 +71,7 @@ class EditOptsController extends ControllerBase{
             revert: 'POST',
             save: 'POST',
             undo: 'POST',
+            apiValidateOption: 'POST'
     ]
 
     def index() {
@@ -118,7 +133,7 @@ class EditOptsController extends ControllerBase{
         if(null != params.name && editopts[params.name]){
             def opt = editopts[params.name]
             outparams = _validateOption(opt, userDataProvider, null,null, null, params.jobWasScheduled == 'true')
-            outparams = validateFileOpt(opt, outparams)
+            outparams.configMapValidate = validateFileOpt(opt)
         }
 
         def model = [
@@ -506,6 +521,137 @@ class EditOptsController extends ControllerBase{
         }
     }
 
+    @Post(uri='/project/{project}/jobs/validateOption')
+    @Operation(
+        method = "POST",
+        requestBody = @RequestBody(description='Option validation request',content = @Content(
+            mediaType = "application/json",
+            schema = @Schema(implementation = OptionValidateRequest)
+        )),
+        responses=[
+            @ApiResponse(
+                responseCode = "200",
+                description = "Option validation with no errors",
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = OptionValidateResponse)
+                )
+            ),
+            @ApiResponse(
+                responseCode = "400",
+                description = "Option validation with errors, the messages will contain the validation errors keyed by input field path",
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = OptionValidateResponse)
+                )
+            )
+        ],
+        description = """Validates an option defintion for a job, returns any validation errors.
+
+If any validation errors occur, the response will use code 400, otherwise 200 will be returned.
+
+The request body should be a JSON object describing a Job Option definition, 
+and a `jobWasScheduled` parameter to indicate if the job was scheduled.
+
+The data format corresponds with a Job Option definition in Job JSON format, with these additional fields:
+
+* `remoteUrlAuthenticationType`: the type of authentication to use for a remote URL
+* `configRemoteUrl`: a configuration object for the remote URL values
+* `valuesType`: indicates the type of chosen values list, one of "url", "list", or a Option Values plugin type.
+
+
+Since: V47""",
+        summary = "Validate an option"
+    )
+    def apiValidateOption(
+        @Parameter(in= ParameterIn.PATH,description='Project name') String project,
+        @Parameter(
+            in = ParameterIn.QUERY,
+            description = "True if job was scheduled",
+            schema = @Schema(type = "boolean")
+        ) boolean jobWasScheduled,
+        OptionValidateRequest optionData
+    ) {
+        if (!apiService.requireApi(request, response, ApiVersions.V47)) {
+            return
+        }
+        def validate = new OptionValidateResponse(valid:true)
+        def validator = new OptionInputValidator(validate, messageSource, response.locale)
+        optionData.validate()
+        validator.receiveErrors(optionData.errors)
+        _validateOption(
+            (OptionData) optionData,
+            validator,
+            optionData.convertConfigRemoteUrlData(),
+            optionData.valuesType,
+            jobWasScheduled
+        )
+        def report = fileUploadService.validateFileOptConfig(optionData, optionData.errors)
+        if(report?.errors){
+            //TODO pass config errors
+        }
+        translateApiErrors(validate)
+        respond(validate,[status:validate.valid?200:400])
+    }
+    static final Map<String, String> FieldTranslations = [
+        valuesList   : 'values',
+        defaultValue : 'value',
+        valuesUrlLong: 'valuesUrl',
+        secureInput  : 'secure',
+        secureExposed: 'valueExposed',
+        defaultStoragePath: 'storagePath',
+    ]
+    @CompileStatic
+    protected static void translateApiErrors(OptionValidateResponse validate){
+        if(validate.messages){
+            FieldTranslations.each { from, to ->
+                if (validate.messages.containsKey(from)) {
+                    validate.messages[to] = validate.messages.remove(from)
+                }
+            }
+        }
+    }
+    static class OptionInputValidator implements OptionValidator{
+        OptionValidateResponse validate
+        MessageSource messageSource
+        Locale locale
+
+        OptionInputValidator(OptionValidateResponse validate, MessageSource messageSource, Locale locale){
+            this.validate = validate
+            this.messageSource = messageSource
+            this.locale = locale
+        }
+        void receiveErrors(Errors errors){
+            if(errors.hasErrors()){
+                validate.valid =false
+            }
+            errors.fieldErrors.each{ FieldError err->
+                validate.messages.computeIfAbsent(err.field, {String key->[]}).add(
+                    messageSource.getMessage(err, locale)
+                )
+            }
+        }
+        void rejectValue(String prop, String messageCode) {
+            validate.valid = false
+            validate.messages.computeIfAbsent(prop, {String key->[]}).add(
+                messageSource.getMessage(messageCode, null, messageCode, locale)
+            )
+        }
+
+        void rejectValue(String prop, String messageCode, Object[] args, String defaultMessage) {
+            validate.valid = false
+            validate.messages.computeIfAbsent(prop, {String key->[]}).add(
+                messageSource.getMessage(messageCode, args, defaultMessage, locale)
+            )
+        }
+
+        @Override
+        void registerErrorMessage(final String prop, final String message) {
+            validate.valid = false
+            validate.messages.computeIfAbsent(prop, {_->[]}).add(message)
+        }
+    }
+
     /**
      *
      * handles ALL modifications to the options via named actions, input is a map:
@@ -539,8 +685,9 @@ class EditOptsController extends ControllerBase{
         } else if ('insert' == input.action) {
             def name = input.name
             def option = _setOptionFromParams(new Option(), input.params)
-            def vres = _validateOption(option, userDataProvider, scheduledExecution, null, input.params,input.params.jobWasScheduled=='true')
-            vres = validateFileOpt(option, vres)
+            JobOptionConfigRemoteUrl configRemoteUrl = scheduledExecutionService.getJobOptionConfigRemoteUrl(option, authContext)
+            def vres = _validateOption(option, userDataProvider, scheduledExecution, configRemoteUrl, input.params,input.params.jobWasScheduled=='true')
+            vres.configMapValidate = validateFileOpt(option)
             if (null != editopts[name]) {
                 option.errors.rejectValue('name', 'option.name.duplicate.message', [name] as Object[], "Option already exists: {0}")
             }
@@ -606,7 +753,7 @@ class EditOptsController extends ControllerBase{
             _setOptionFromParams(moditem, input.params)
             JobOptionConfigRemoteUrl configRemoteUrl = scheduledExecutionService.getJobOptionConfigRemoteUrl(option, authContext)
             def vres = _validateOption(moditem, userDataProvider,scheduledExecution,  configRemoteUrl, input.params,input.params.jobWasScheduled=='true')
-            vres = validateFileOpt(moditem, vres)
+            vres.configMapValidate = validateFileOpt(moditem)
             if (moditem.name != name && null != editopts[moditem.name]) {
                 moditem.errors.rejectValue('name', 'option.name.duplicate.message', [moditem.name] as Object[], "Option already exists: {0}")
             }
@@ -631,44 +778,98 @@ class EditOptsController extends ControllerBase{
      * @param opt the option
      * @param params input params if any
      */
-    protected validateFileOpt(OptionData opt, Map results) {
-        results.configMapValidate = fileUploadService.validateFileOptConfig(opt)
-        results
+    protected validateFileOpt(Option opt) {
+        return fileUploadService.validateFileOptConfig(opt, opt.errors)
     }
     /**
      * Validate the Option, return any output parameters in a map
      * @param opt the option
      * @param params input params if any
+     * @deprecated
      */
-    public static _validateOption(Option opt, UserDataProvider udp, ScheduledExecution scheduledExecution, JobOptionConfigRemoteUrl configRemoteUrl= null, Map params = null, boolean jobWasScheduled=false) {
+    @Deprecated
+    @CompileStatic
+    public static Map _validateOption(Option opt, UserDataProvider udp, ScheduledExecution scheduledExecution, JobOptionConfigRemoteUrl configRemoteUrl, Map params , boolean jobWasScheduled) {
         opt.validate(deepValidate: false)
-        def result = [:]
-        if (jobWasScheduled && opt.required && opt.typeFile) {
-            opt.errors.rejectValue('required', 'option.file.required.message')
-            return result
+        opt.convertValuesList()
+        def validator = new DomainValidatorShim(opt.errors)
+        _validateOption(opt, validator, configRemoteUrl, params?.valuesType?.toString(), jobWasScheduled)
+        return validator.results
+    }
+
+    @CompileStatic
+    static class DomainValidatorShim implements OptionValidator{
+        Errors errors
+        Map<String,String> results=[:]
+        DomainValidatorShim(Errors errors){
+            this.errors = errors
         }
 
-        if (opt.hidden && !opt.defaultValue && !opt.defaultStoragePath) {
-            opt.errors.rejectValue('hidden', 'option.hidden.notallowed.message')
-            return result
+        @Override
+        void rejectValue(final String prop, final String messageCode) {
+            errors.rejectValue(prop,messageCode)
+        }
+
+        @Override
+        void rejectValue(
+            final String prop,
+            final String messageCode,
+            final Object[] args,
+            final String defaultMessage
+        ) {
+            errors.rejectValue(prop,messageCode,args,defaultMessage)
+        }
+
+        @Override
+        void registerErrorMessage(final String prop, final String message) {
+            results.put(prop,message)
+        }
+    }
+    @CompileStatic
+    static interface OptionValidator{
+        void rejectValue(String prop, String messageCode)
+        void rejectValue(String prop, String messageCode, Object[] args, String defaultMessage)
+        void registerErrorMessage(String prop, String message)
+    }
+
+    @CompileStatic
+    static void _validateOption(
+        OptionData opt,
+        OptionValidator validator,
+        JobOptionConfigRemoteUrl configRemoteUrl,
+        String valuesType,
+        boolean jobWasScheduled
+    ) {
+        if (jobWasScheduled && opt.required && opt.optionType == 'file') {
+            validator.rejectValue('required', 'option.file.required.message')
+            return
+        }
+
+        if (opt.hidden) {
+            if (opt.secureInput && !opt.defaultStoragePath) {
+                validator.rejectValue('defaultStoragePath', 'option.hidden.notallowed.message')
+                return
+            } else if (!opt.secureInput && !opt.defaultValue) {
+                validator.rejectValue('defaultValue', 'option.hidden.notallowed.message')
+                return
+            }
         }
         if (opt.enforced && (opt.optionValues || opt.valuesList) && opt.defaultValue) {
-            opt.convertValuesList()
             if(!opt.multivalued && !opt.optionValues.contains(opt.defaultValue)) {
-                opt.errors.rejectValue('defaultValue', 'option.defaultValue.notallowed.message')
+                validator.rejectValue('defaultValue', 'option.defaultValue.notallowed.message')
             }else if(opt.multivalued && opt.delimiter){
                 //validate each default value
                 def found = opt.defaultValue.split(Pattern.quote(opt.delimiter)).find{ !opt.optionValues.contains(it) }
                 if(found){
-                    opt.errors.rejectValue('defaultValue', 'option.defaultValue.multivalued.notallowed.message',[found] as Object[],"{0} invalid value")
+                    validator.rejectValue('defaultValue', 'option.defaultValue.multivalued.notallowed.message',[found] as Object[],"{0} invalid value")
                 }
             }
         }
         if (opt.enforced && (!opt.optionValues && !opt.valuesList && !opt.realValuesUrl && !opt.optionValuesPluginType)) {
-            if (params && params.valuesType == 'url') {
-                opt.errors.rejectValue('valuesUrl', 'option.enforced.emptyvalues.message')
+            if (valuesType == 'url') {
+                validator.rejectValue('valuesUrlLong', 'option.enforced.emptyvalues.message')
             } else {
-                opt.errors.rejectValue('valuesList', 'option.enforced.emptyvalues.message')
+                validator.rejectValue('valuesList', 'option.enforced.emptyvalues.message')
             }
         }
         if (opt.regex) {
@@ -676,62 +877,39 @@ class EditOptsController extends ControllerBase{
             try {
                 Pattern.compile(opt.regex)
             } catch (PatternSyntaxException e) {
-                result.regexError = e.message
-                opt.errors.rejectValue('regex', 'option.regex.invalid.message', [opt.regex] as Object[], "Invalid Regex: {0}")
+                validator.registerErrorMessage('regexError', e.message)
+                validator.rejectValue('regex', 'option.regex.invalid.message', [opt.regex] as Object[], "Invalid Regex: {0}")
             }
             if (opt.optionValues || opt.valuesList) {
-                opt.convertValuesList()
                 def inval = []
                 opt.optionValues.each {val ->
                     if (!(val =~ /${opt.regex}/)) {
-                        opt.errors.rejectValue('values', 'option.values.regexmismatch.message', [val.toString(), opt.regex] as Object[], "Value does not match regex: {0}")
+                        validator.rejectValue('valuesList', 'option.values.regexmismatch.message', [val.toString(), opt.regex] as Object[], "Value does not match regex: {0}")
                     }
                 }
             }
             if (opt.defaultValue) {
                 if (!(opt.defaultValue =~ /${opt.regex}/)) {
-                    opt.errors.rejectValue('defaultValue', 'option.defaultValue.regexmismatch.message', [opt.defaultValue, opt.regex] as Object[], "Default value does not match regex: {0}")
+                    validator.rejectValue('defaultValue', 'option.defaultValue.regexmismatch.message', [opt.defaultValue, opt.regex] as Object[], "Default value does not match regex: {0}")
                 }
             }
         }
         if(opt.multivalued && !opt.delimiter){
-            opt.errors.rejectValue('delimiter', 'option.delimiter.blank.message')
+            validator.rejectValue('delimiter', 'option.delimiter.blank.message')
         }
         if(opt.multivalued && opt.secureInput){
-            opt.errors.rejectValue('multivalued', 'option.multivalued.secure-conflict.message')
+            validator.rejectValue('multivalued', 'option.multivalued.secure-conflict.message')
         }
-        if(jobWasScheduled && opt.required && !(opt.defaultValue||opt.defaultStoragePath)){
-            boolean hasSelectedOnRemoteValue = false
-            if(opt.realValuesUrl){
-                try{
-                    def realUrl = opt.realValuesUrl.toExternalForm()
-                    ScheduledExecution se = opt.scheduledExecution
-                    if(!se){
-                        se = scheduledExecution
-                    }
-                    def urlExpanded = OptionsUtil.expandUrl(opt, realUrl, se, udp, [:], realUrl.matches(/(?i)^https?:.*$/))
-                    def remoteResult=ScheduledExecutionController.getRemoteJSON({->new ApacheHttpClient()}, urlExpanded,configRemoteUrl,  10, 0, 5)
-                    if(remoteResult){
-                        def remoteJson = remoteResult.json
-                        if(remoteJson && remoteJson instanceof List && ((List<Map>)remoteJson).any {Map item -> return item.selected}){
-                            hasSelectedOnRemoteValue = true
-                        }
-                    }
-                } catch (Exception e){
-                    logger.error("getRemoteJSON error: ${e.message}")
-                    e.printStackTrace()
-                }
-            }
-            if(!hasSelectedOnRemoteValue) opt.errors.rejectValue('defaultValue', 'option.defaultValue.required.message')
+        if(jobWasScheduled && opt.required && !(opt.defaultValue||opt.defaultStoragePath||opt.realValuesUrl)){
+            validator.rejectValue('defaultValue', 'option.defaultValue.required.message')
         }
-        if(opt.realValuesUrl && opt.getConfigRemoteUrl()?.getJsonFilter()){
+        if(opt.realValuesUrl && configRemoteUrl?.getJsonFilter()){
             try{
-                JsonPath.compile(opt.getConfigRemoteUrl()?.getJsonFilter())
+                JsonPath.compile(configRemoteUrl?.getJsonFilter())
             } catch (Exception e){
-                opt.errors.rejectValue('configRemoteUrl', 'form.option.valuesType.url.filter.error.label')
+                validator.rejectValue('configRemoteUrl.jsonFilter', 'form.option.valuesType.url.filter.error.label')
             }
         }
-        return result
     }
 
         /**

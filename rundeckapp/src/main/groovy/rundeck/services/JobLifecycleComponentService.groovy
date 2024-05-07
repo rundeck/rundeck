@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
-import rundeck.ScheduledExecution
 import rundeck.services.feature.FeatureService
 
 /**
@@ -161,7 +160,7 @@ class JobLifecycleComponentService implements ProjectConfigurable, ApplicationCo
      * @return
      */
     List<NamedJobLifecycleComponent> loadProjectComponents(String project) {
-        List compList = []
+        List<NamedJobLifecycleComponent> compList = []
         if (beanComponents) {
             compList.addAll(beanComponents.collect { name, component->
                 new NamedJobLifecycleComponent(
@@ -224,7 +223,7 @@ class JobLifecycleComponentService implements ProjectConfigurable, ApplicationCo
         
         for (NamedJobLifecycleComponent component : components) {
             try {
-                JobLifecycleStatus result = handleEventForPlugin(eventType, component, currentEvent)
+                JobLifecycleStatus result = handleEventForComponent(eventType, component, currentEvent)
 
                 if (result != null && !result.successful) {
                     throw new JobLifecycleComponentException("Error dispatcing event [${eventType}] for component [${component.name}]: " + result?.errorMessage)
@@ -308,16 +307,16 @@ class JobLifecycleComponentService implements ProjectConfigurable, ApplicationCo
     }
 
     @CompileDynamic
-    static JobLifecycleStatus handleEventForPlugin(
+    static JobLifecycleStatus handleEventForComponent(
         EventType eventType,
-        NamedJobLifecycleComponent plugin,
+        NamedJobLifecycleComponent component,
         Object event
     ) {
         switch (eventType) {
             case EventType.PRE_EXECUTION:
-                return plugin.beforeJobExecution(event)
+                return component.beforeJobExecution(event)
             case EventType.BEFORE_SAVE:
-                return plugin.beforeSaveJob(event)
+                return component.beforeSaveJob(event)
         }
     }
 
@@ -408,11 +407,11 @@ class JobLifecycleComponentService implements ProjectConfigurable, ApplicationCo
     
 }
 
-@CompileStatic
+
 class NamedJobLifecycleComponent implements JobLifecycleComponent {
-    @Delegate JobLifecycleComponent component
     String name
-    
+    JobLifecycleComponent component
+
     boolean isPlugin() {
         return component instanceof JobLifecyclePlugin
     }

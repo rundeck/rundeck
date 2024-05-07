@@ -25,7 +25,7 @@ import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.data.model.v1.user.dto.UserProperties
-import org.rundeck.app.data.providers.v1.UserDataProvider
+import org.rundeck.app.data.providers.v1.user.UserDataProvider
 import org.rundeck.spi.data.DataAccessException
 
 @Transactional
@@ -178,7 +178,7 @@ class UserService {
             }
         }
 
-        return roles
+        return roles.findAll { it != null }
     }
 
     def getLoginStatus(RdUser user){

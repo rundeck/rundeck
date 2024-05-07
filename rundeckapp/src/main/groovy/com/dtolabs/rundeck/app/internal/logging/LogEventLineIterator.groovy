@@ -19,6 +19,8 @@ package com.dtolabs.rundeck.app.internal.logging
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogEventIterator
 import com.dtolabs.rundeck.core.logging.OffsetIterator
+import com.dtolabs.rundeck.core.logging.internal.DefaultLogEvent
+import com.dtolabs.rundeck.core.logging.internal.LineLogFormat
 
 /**
  * $INTERFACE is ...

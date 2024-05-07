@@ -163,7 +163,7 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
             return false;
         }
         for (Object groupName : groups) {
-            if (pattern.matcher(groupName.toString()).matches()) {
+            if (groupName != null && pattern.matcher(groupName.toString()).matches()) {
                 return true;
             }
         }

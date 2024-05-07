@@ -1,6 +1,7 @@
 package rundeck
 
-import com.dtolabs.rundeck.app.internal.logging.LogFlusher
+import com.dtolabs.rundeck.core.config.Features
+import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
@@ -33,7 +34,8 @@ import groovy.time.TimeCategory
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
-import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
+import rundeck.data.constants.ExecutionConstants
+import rundeck.data.report.SaveReportRequestImpl
 import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.GormJobStatsDataProvider
@@ -70,13 +72,14 @@ import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
 import org.springframework.context.MessageSource
+import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
 import rundeck.services.data.UserDataService
+import com.dtolabs.rundeck.core.config.FeatureService
 import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import java.sql.Time
 import java.sql.Timestamp
 import java.time.Duration
 import java.time.Instant
@@ -106,6 +109,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.execReportDataProvider = providerExec
         service.referencedExecutionDataProvider = referencedExecutionDataProvider
         service.jobStatsDataProvider = new GormJobStatsDataProvider()
+        provider.featureService = Mock(FeatureService){
+            featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> false
+        }
     }
 
     private Map createJobParams(Map overrides = [:]) {
@@ -2745,13 +2751,17 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.configurationService = Mock(ConfigurationService) {
             getString('executionService.startup.cleanupStatus', _) >> 'incompletestatus'
         }
+        def seventBus = new SynchronousEventBus()
+        service.setTargetEventBus(seventBus)
         if(!cmatch) {
-            def seventBus = new SynchronousEventBus()
-            service.setTargetEventBus(seventBus)
             seventBus.subscribe("cluster.abortExecution") { eventData ->
                 println "received event data: ${eventData}"
                 return [:]
             }
+        }
+        boolean receivedAbortEvent = false
+        seventBus.subscribe(ExecutionConstants.ABORT_EVENT) { eventData ->
+            receivedAbortEvent = true
         }
 
         when:
@@ -2762,6 +2772,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             session.flush()
             e.refresh()
         }
+        receivedAbortEvent
         e.id != null
         result.abortstate == eAbortstate
         result.jobstate == eJobstate
@@ -2927,7 +2938,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         Map secureOptsExposed = [:]
         Map secureOpts = [:]
         def authContext = Mock(AuthContext)
-        Map<String, String> args = FrameworkService.parseOptsFromString(job.argString)
+        Map<String, String> args = OptionsParserUtil.parseOptsFromString(job.argString)
         service.storageService = Mock(StorageService)
 
 
@@ -4107,7 +4118,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         Map secureOptsExposed = [:]
         Map secureOpts = [:]
         def authContext = Mock(AuthContext)
-        Map<String, String> args = FrameworkService.parseOptsFromString(job.argString)
+        Map<String, String> args = OptionsParserUtil.parseOptsFromString(job.argString)
         service.storageService = Mock(StorageService)
 
         def jobcontext = [:]
@@ -4185,7 +4196,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         Map secureOptsExposed = [:]
         Map secureOpts = [:]
         def authContext = Mock(AuthContext)
-        Map<String, String> args = FrameworkService.parseOptsFromString(job.argString)
+        Map<String, String> args = OptionsParserUtil.parseOptsFromString(job.argString)
         service.storageService = Mock(StorageService)
 
         def jobcontext = [:]
@@ -6118,6 +6129,33 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             result.duration.average == 5L * 60L * 1000L
             result.duration.min == 2L * 60L * 1000L
             result.duration.max == 9L * 60L * 1000L
+    }
+
+    def "metrics from projection results no errors if null dateCompleted is extracted"(){
+        given:
+        Date now = new Date()
+        Date dateStarted1 = now
+        Date dateStarted2 = now
+        Date dateStarted3 = now
+        Date dateCompleted = now
+        use (TimeCategory) {
+            dateStarted1 = now - 9.minute
+            dateStarted2 = now - 4.minute
+            dateStarted3 = now - 2.minute
+        }
+        def projresult = [
+                [dateStarted: new Timestamp(dateStarted1.time), dateCompleted: null],
+                [dateStarted: new Timestamp(dateStarted2.time), dateCompleted: new Timestamp(dateCompleted.time)],
+                [dateStarted: new Timestamp(dateStarted3.time), dateCompleted: new Timestamp(dateCompleted.time)]
+        ]
+        when:
+        def result = service.metricsDataFromProjectionResult(projresult)
+        then:
+        noExceptionThrown()
+        result.total == 3
+        result.duration.average == 120000.0
+        result.duration.min == 120000
+        result.duration.max == 240000
     }
 
     def "load additional listener"(){

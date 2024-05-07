@@ -1,16 +1,16 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.config.FeatureService
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.AppAuthorizer
-import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
 import org.rundeck.app.data.model.v1.user.LoginStatus
 import org.rundeck.app.data.providers.GormUserDataProvider
-import org.rundeck.app.data.providers.v1.TokenDataProvider
-import org.rundeck.app.data.providers.v1.UserDataProvider
+import org.rundeck.app.data.providers.v1.authtoken.TokenDataProvider
 import org.rundeck.app.web.WebExceptionHandler
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.UnauthorizedAccess
@@ -57,6 +57,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         mockDataService(UserDataService)
         GormUserDataProvider provider = new GormUserDataProvider()
         controller.userDataProvider = provider
+        controller.featureService = Mock(FeatureService)
 
     }
 
@@ -135,7 +136,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         }
         controller.apiService = Mock(ApiService) {
             1 * requireVersion(_, _, 21) >> true
-            0 * renderErrorXml(_, _) >> { HttpServletResponse response, Map error ->
+            0 * renderErrorFormat(_, _) >> { HttpServletResponse response, Map error ->
                 response.status = error.status
                 null
             }
@@ -167,7 +168,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
-            0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
+            0 * renderErrorFormat(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
             }
@@ -202,7 +203,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
-            1 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
+            1 * renderErrorFormat(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
             }
@@ -234,7 +235,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
-            1 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
+            1 * renderErrorFormat(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
             }
@@ -274,7 +275,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
-            0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
+            0 * renderErrorFormat(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
             }
@@ -313,7 +314,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
-            0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
+            0 * renderErrorFormat(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
             }
@@ -356,7 +357,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
-            0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
+            0 * renderErrorFormat(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
             }
@@ -417,7 +418,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
-            1 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
+            1 * renderErrorFormat(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
             }
@@ -451,7 +452,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
-            0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
+            0 * renderErrorFormat(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
             }
@@ -558,9 +559,9 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         def userTks = []
         def adminTks = []
         adminTks.add(createAuthToken(user:user,type:null))
-        adminTks.add(createAuthToken(user:user,type: AuthenticationToken.AuthTokenType.USER))
-        adminTks.add(createAuthToken(user:user,type: AuthenticationToken.AuthTokenType.WEBHOOK))
-        userTks.add(createAuthToken(user:user,creator:'admin',type: AuthenticationToken.AuthTokenType.USER))
+        adminTks.add(createAuthToken(user:user,type: AuthTokenType.USER))
+        adminTks.add(createAuthToken(user:user,type: AuthTokenType.WEBHOOK))
+        userTks.add(createAuthToken(user:user,creator:'admin',type: AuthTokenType.USER))
         def authCtx = Mock(UserAndRolesAuthContext)
         session.user='admin'
         controller.tokenDataProvider = Mock(TokenDataProvider) {
@@ -601,8 +602,8 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         User user = new User(login: "admin")
         user.save()
         createAuthToken(user:user,type:null)
-        createAuthToken(user:user,type: AuthenticationToken.AuthTokenType.USER)
-        createAuthToken(user:user,type: AuthenticationToken.AuthTokenType.WEBHOOK)
+        createAuthToken(user:user,type: AuthTokenType.USER)
+        createAuthToken(user:user,type: AuthTokenType.WEBHOOK)
         controller.apiService = Stub(ApiService)
 
         controller.metaClass.unauthorizedResponse = { Object tst, String action, Object name, boolean fg -> false }

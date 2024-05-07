@@ -127,8 +127,12 @@
           <g:ifServletContextAttribute attribute="CLUSTER_MODE_ENABLED" value="true">
             <g:set var="clusterIdentityInHeader" value="${cfg.getBoolean(config: "gui.clusterIdentityInHeader", default:false)}"/>
             <g:if test="${clusterIdentityInHeader}">
-              <li>
-                <span class="rundeck-server-uuid" data-server-uuid="${ servletContextAttribute(attribute: 'SERVER_UUID')}" data-server-name="${ servletContextAttribute(attribute: 'FRAMEWORK_NODE')}"></span>
+              <li class="vue-ui-socket">
+                  <ui-socket
+                          section="server-info-display"
+                          location="main"
+                          socket-data="${enc(attr:[serverUuid:servletContextAttribute(attribute: 'SERVER_UUID'),serverName:servletContextAttribute(attribute: 'FRAMEWORK_NODE')].encodeAsJSON())}"
+                  ></ui-socket>
               </li>
             </g:if>
           </g:ifServletContextAttribute>

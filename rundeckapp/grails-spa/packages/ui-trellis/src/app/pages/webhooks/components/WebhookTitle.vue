@@ -1,41 +1,47 @@
 <template>
-    <span class="webhook-title">
-        <PluginInfo v-if="webhook.eventPlugin" style="margin-right: 10px" :detail="webhook.eventPlugin" :showTitle="false" :showDescription="false"/><h3>{{webhook.name}}</h3>
-    </span>
+  <span class="webhook-title">
+    <PluginInfo
+      v-if="webhook.eventPlugin"
+      style="margin-right: 10px"
+      :detail="webhook.eventPlugin"
+      :show-title="false"
+      :show-description="false"
+    />
+    <h3>{{ webhook.name }}</h3>
+  </span>
 </template>
 
-
 <script lang="ts">
-import {defineComponent} from 'vue'
+import { defineComponent } from "vue";
 
-import PluginInfo from '../../../../library/components/plugins/PluginInfo.vue'
+import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
 
 export default defineComponent({
-    components: {
-        PluginInfo
-    },
-    props: {
-        webhook: {type: Object}
-    }
-})
+  components: {
+    PluginInfo,
+  },
+  props: {
+    webhook: { type: Object },
+  },
+});
 </script>
 
 <style scoped lang="scss">
 :deep(.plugin-icon) {
-    border-radius: 4px;
-    height: 35px !important;
-    width: 35px !important;
+  border-radius: 4px;
+  height: 35px !important;
+  width: 35px !important;
 }
 
 .webhook-title {
-    display: flex;
-    align-items: center;
-    align-content: center;
+  display: flex;
+  align-items: center;
+  align-content: center;
 
-    h3 {
-      color: var(--font-color);
-      font-weight: 700;
-      margin: 0;
-    }
+  h3 {
+    color: var(--font-color);
+    font-weight: 700;
+    margin: 0;
+  }
 }
 </style>

@@ -46,6 +46,7 @@ public class RundeckConfigBase {
     RepositoryConfig repository;
     RundeckLog4jConfig log4j;
     RundeckProjectConfig project;
+    RundeckAsyncImportConfig asyncImportConfig;
     RundeckLogConfig log;
     RundeckGuiConfig gui;
     RundeckLoginConfig login;
@@ -86,6 +87,10 @@ public class RundeckConfigBase {
         @Data public static class ProjectKeypath{
             Boolean enabled;
         }
+    }
+
+    @Data public static class RundeckAsyncImportConfig{
+        int maxDistributedExecutions;
     }
 
     @Data
@@ -169,6 +174,7 @@ public class RundeckConfigBase {
 
             Checkpoint checkpoint;
             boolean generateExecutionXml;
+            boolean forcePartialChecking;
         }
 
         @Data
@@ -197,8 +203,9 @@ public class RundeckConfigBase {
     @Data
     public static class Enabled {
         Boolean enabled;
+        Boolean defaultEnabled;
 
-        public Enabled() { this(false); }
+        public Enabled() { this(null); }
         public Enabled(final Boolean enabled) {
             this.enabled = enabled;
         }
@@ -329,6 +336,7 @@ public class RundeckConfigBase {
 
         Cookie cookie;
         Jetty jetty;
+        WebLogging logging;
 
         @Data
         public static class Cookie {
@@ -349,6 +357,10 @@ public class RundeckConfigBase {
         }
     }
 
+    @Data
+    public static class WebLogging {
+        List<String> ignorePrefixes;
+    }
     @Data
     public static class RundeckNodeServiceConfig {
 
@@ -417,13 +429,15 @@ public class RundeckConfigBase {
         Enabled workflowDesigner = new Enabled(true);
         Enabled eventStore = new Enabled(true);
         Enabled projectKeyStorage = new Enabled(true);
-        Enabled pluginSecurity = new Enabled(false);
+        Enabled pluginSecurity = new Enabled();
         Enabled healthEndpoint = new Enabled(true);
         Enabled fileUploadPlugin = new Enabled(true);
         Enabled pluginGroups = new Enabled(true);
         Enabled vueKeyStorage = new Enabled(true);
-        Enabled legacyUi = new Enabled(false);
-        Debug debug = new Debug();
+        Enabled legacyUi = new Enabled();
+        Enabled legacyXml = new Enabled();
+        Enabled apiProjectConfigValidation = new Enabled();
+        Enabled caseInsensitiveUsername = new Enabled();
 
 
         @Data
@@ -436,11 +450,6 @@ public class RundeckConfigBase {
         @Data
         public static class RepositoryInstalledPlugins {
             String storageTreePath;
-        }
-
-        @Data
-        public static class Debug {
-            Boolean showTracesOnResponse = false;
         }
     }
 

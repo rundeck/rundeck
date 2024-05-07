@@ -1,0 +1,32 @@
+<executions>
+  <execution id='1300'>
+    <jobId>808b4a49-67db-4576-866e-2ee3e57011b9</jobId>
+    <dateStarted>2014-03-06T18:47:40Z</dateStarted>
+    <dateCompleted>2014-03-06T18:47:41Z</dateCompleted>
+    <status>true</status>
+    <outputfilepath>output-1300.rdlog</outputfilepath>
+    <failedNodeList />
+    <succeededNodeList>dignan</succeededNodeList>
+    <abortedby />
+    <cancelled>false</cancelled>
+    <argString>-node dignan</argString>
+    <loglevel>INFO</loglevel>
+    <doNodedispatch>true</doNodedispatch>
+    <nodefilters>
+      <dispatch>
+        <threadcount>1</threadcount>
+        <keepgoing>true</keepgoing>
+        <excludePrecedence>true</excludePrecedence>
+        <rankOrder>ascending</rankOrder>
+      </dispatch>
+      <filter>${option.node}</filter>
+    </nodefilters>
+    <project>monkey</project>
+    <user>admin</user>
+    <workflow keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>uptime</exec>
+      </command>
+    </workflow>
+  </execution>
+</executions>

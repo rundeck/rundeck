@@ -30,7 +30,6 @@ import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
-import com.dtolabs.rundeck.core.storage.StorageTree;
 import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
@@ -41,7 +40,6 @@ import org.rundeck.app.spi.Services;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
@@ -145,11 +143,13 @@ public class StepPluginAdapter implements StepExecutor, Describable, DynamicProp
         return new StepExecutionResultImpl();
     }
 
+
     public Map<String, Object> createConfig(StepExecutionContext executionContext,
                                   StepExecutionItem item){
         Map<String, Object> instanceConfiguration = getStepConfiguration(item);
         Description description = getDescription();
         Map<String,Boolean> blankIfUnexMap = new HashMap<>();
+        CustomFieldsAdapter customFieldsAdapter = CustomFieldsAdapter.create(description);
         if(description != null) {
             description.getProperties().forEach(p -> {
                 blankIfUnexMap.put(p.getName(), p.isBlankIfUnexpandable());
@@ -163,7 +163,9 @@ public class StepPluginAdapter implements StepExecutor, Describable, DynamicProp
                     null,
                     executionContext.getSharedDataContext(),
                     false,
-                    blankIfUnexMap
+                    blankIfUnexMap,
+                    customFieldsAdapter::convertInput,
+                    customFieldsAdapter::convertOutput
             );
         }
 

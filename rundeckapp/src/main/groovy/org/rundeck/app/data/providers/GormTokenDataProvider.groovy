@@ -1,19 +1,20 @@
 package org.rundeck.app.data.providers
 
-import org.rundeck.app.data.model.v1.AuthTokenMode
+import groovy.transform.CompileStatic
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
 import grails.compiler.GrailsCompileStatic
 import groovy.transform.TypeCheckingMode
 import groovy.util.logging.Slf4j
-import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
 import org.rundeck.app.data.model.v1.page.Pageable
-import org.rundeck.app.data.model.v1.user.RdUser
-import org.rundeck.app.data.providers.v1.TokenDataProvider
+import org.rundeck.app.data.providers.v1.authtoken.TokenDataProvider
 import org.rundeck.spi.data.DataAccessException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.MessageSource
 import rundeck.AuthToken
 import rundeck.User
-import rundeck.services.UserService
+import rundeck.data.util.AuthenticationTokenUtils
 import rundeck.services.data.AuthTokenDataService
 
 import javax.transaction.Transactional
@@ -21,11 +22,12 @@ import javax.transaction.Transactional
 @GrailsCompileStatic
 @Slf4j
 @Transactional
+@CompileStatic(TypeCheckingMode.SKIP)
 class GormTokenDataProvider implements TokenDataProvider {
     @Autowired
     AuthTokenDataService authTokenDataService
     @Autowired
-    UserService userService
+    GormUserDataProvider userDataProvider
     @Autowired
     MessageSource messageSource
 
@@ -45,58 +47,61 @@ class GormTokenDataProvider implements TokenDataProvider {
 
     @Override
     String createWithId( final String id, final AuthenticationToken data) throws DataAccessException {
-        RdUser tokenOwner = userService.findOrCreateUser(data.ownerName)
-        if (!tokenOwner) {
-            throw new DataAccessException("Couldn't find user: ${data.ownerName}")
-        }
-
-        def tokenType = AuthenticationToken.AuthTokenType.valueOf(data.type.toString())
-
-        AuthToken token = new AuthToken(
-                token: data.token,
-                authRoles: AuthenticationToken.generateAuthRoles(data.getAuthRolesSet()),
-                user: User.get(tokenOwner.getId()),
-                expiration: data.expiration,
-                uuid: id,
-                creator: data.creator,
-                name: data.name,
-                type: tokenType,
-                tokenMode: (tokenType == AuthenticationToken.AuthTokenType.WEBHOOK) ? AuthTokenMode.LEGACY : AuthTokenMode.SECURED
-        )
-        if (token.save(flush: true)) {
-            return token.uuid
-        } else {
-            log.warn(token.errors.allErrors.collect { messageSource.getMessage(it, null) }.join(","))
-            throw new DataAccessException("Failed to save token for User ${tokenOwner.login}")
+        AuthToken.withTransaction {
+            User tokenOwner = userDataProvider.findOrCreateUser(data.ownerName)
+            if (!tokenOwner) {
+                throw new DataAccessException("Couldn't find user: ${data.ownerName}")
+            }
+            def tokenType = AuthTokenType.valueOf(data.type.toString())
+            AuthToken token = new AuthToken(
+                    token: data.token,
+                    authRoles: AuthenticationTokenUtils.generateAuthRoles(data.getAuthRolesSet()),
+                    user: tokenOwner,
+                    expiration: data.expiration,
+                    uuid: id,
+                    creator: data.creator,
+                    name: data.name,
+                    type: tokenType,
+                    tokenMode: (tokenType == AuthTokenType.WEBHOOK) ? AuthTokenMode.LEGACY : AuthTokenMode.SECURED
+            )
+            if (token.save(flush: true)) {
+                return token.uuid
+            } else {
+                log.warn(token.errors.allErrors.collect { messageSource.getMessage(it, null) }.join(","))
+                throw new DataAccessException("Failed to save token for User ${tokenOwner.login}")
+            }
         }
     }
 
     @Override
     void update(final String id, final AuthenticationToken data) throws DataAccessException {
-        def token = authTokenDataService.getByUuid(id)
-        if (!token) {
-            throw new DataAccessException("Not found: token with ID: ${id}")
-        }
-        token.name = data.name
-        token.setAuthRoles(AuthToken.generateAuthRoles(data.getAuthRolesSet()))
-
-        try {
-            token.save(failOnError: true)
-        } catch (Exception e) {
-            throw new DataAccessException("Error: could not update token ${id}: ${e}", e)
+        AuthToken.withTransaction {
+            def token = authTokenDataService.getByUuid(id)
+            if (!token) {
+                throw new DataAccessException("Not found: token with ID: ${id}")
+            }
+            token.name = data.name
+            token.setAuthRoles(AuthToken.generateAuthRoles(data.getAuthRolesSet()))
+            try {
+                token.save(failOnError: true)
+            } catch (Exception e) {
+                throw new DataAccessException("Error: could not update token ${id}: ${e}", e)
+            }
         }
     }
 
     @Override
     void delete(final String id) throws DataAccessException {
-        def token = authTokenDataService.getByUuid(id)
-        if (!token) {
-            throw new DataAccessException("Not found: token with ID: ${id}")
-        }
-        try {
-            authTokenDataService.deleteByUuid(id)
-        } catch (Exception e) {
-            throw new DataAccessException("Could not delete token ${id}: ${e}", e)
+        AuthToken.withTransaction {
+            def token = authTokenDataService.getByUuid(id)
+            if (!token) {
+                throw new DataAccessException("Not found: token with ID: ${id}")
+            }
+            try {
+                authTokenDataService.deleteByUuid(id)
+            } catch (Exception e) {
+                throw new DataAccessException("Could not delete token ${id}: ${e}", e)
+            }
         }
     }
 
@@ -151,8 +156,8 @@ class GormTokenDataProvider implements TokenDataProvider {
 
     }
     @Override
-    AuthenticationToken findByTokenAndType(final String token, AuthenticationToken.AuthTokenType type) {
-        def tokenType = AuthenticationToken.AuthTokenType.valueOf(type.toString())
+    AuthenticationToken findByTokenAndType(final String token, AuthTokenType type) {
+        def tokenType = AuthTokenType.valueOf(type.toString())
         AuthenticationToken authToken = AuthToken.findByTokenAndType(token, tokenType)
         return authToken ?: null
 
@@ -195,14 +200,14 @@ class GormTokenDataProvider implements TokenDataProvider {
             }
             or {
                 isNull("type")
-                eq("type", AuthenticationToken.AuthTokenType.USER)
+                eq("type", AuthTokenType.USER)
             }
         }
     }
 
     @Override
     @GrailsCompileStatic(TypeCheckingMode.SKIP)
-    AuthenticationToken tokenLookupWithType(final String token, AuthenticationToken.AuthTokenType tokenType){
+    AuthenticationToken tokenLookupWithType(final String token, AuthTokenType tokenType){
         def tokenHash = AuthToken.encodeTokenValue(token, AuthTokenMode.SECURED)
         return AuthToken.createCriteria().get {
             eq("type", tokenType)
@@ -230,7 +235,7 @@ class GormTokenDataProvider implements TokenDataProvider {
         return AuthToken.createCriteria().count {
             eq("user", user)
             or {
-                eq("type", AuthenticationToken.AuthTokenType.USER)
+                eq("type", AuthTokenType.USER)
                 isNull("type")
             }
         }
@@ -242,7 +247,7 @@ class GormTokenDataProvider implements TokenDataProvider {
         return AuthToken.createCriteria().count {
             eq("creator", creatorLoginName)
             or {
-                eq("type", AuthenticationToken.AuthTokenType.USER)
+                eq("type", AuthTokenType.USER)
                 isNull("type")
             }
         }
@@ -250,7 +255,7 @@ class GormTokenDataProvider implements TokenDataProvider {
 
     @Override
     @GrailsCompileStatic(TypeCheckingMode.SKIP)
-    Integer countTokensByType(AuthenticationToken.AuthTokenType type) {
+    Integer countTokensByType(AuthTokenType type) {
         return AuthToken.createCriteria().count {
             or {
                 eq("type", type)
@@ -261,7 +266,7 @@ class GormTokenDataProvider implements TokenDataProvider {
 
     @Override
     @GrailsCompileStatic(TypeCheckingMode.SKIP)
-    Integer countTokensByCreatorAndType(String creatorLoginName, AuthenticationToken.AuthTokenType type) {
+    Integer countTokensByCreatorAndType(String creatorLoginName, AuthTokenType type) {
         return AuthToken.createCriteria().count {
             eq("creator", creatorLoginName)
             or {
@@ -273,7 +278,7 @@ class GormTokenDataProvider implements TokenDataProvider {
 
     @Override
     @GrailsCompileStatic(TypeCheckingMode.SKIP)
-    List<AuthenticationToken> findAllTokensByType(AuthenticationToken.AuthTokenType type, Pageable pageable) {
+    List<AuthenticationToken> findAllTokensByType(AuthTokenType type, Pageable pageable) {
         return AuthToken.createCriteria().list {
             if (pageable.offset) {
                 firstResult(pageable.offset)
@@ -303,7 +308,7 @@ class GormTokenDataProvider implements TokenDataProvider {
                 maxResults(pageable.max)
             }
             or {
-                eq("type", AuthenticationToken.AuthTokenType.USER)
+                eq("type", AuthTokenType.USER)
                 isNull("type")
             }
             pageable.sortOrders.each { so ->

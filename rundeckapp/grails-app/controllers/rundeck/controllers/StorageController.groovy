@@ -164,13 +164,16 @@ class StorageController extends ControllerBase{
 
     private def renderDirectory(HttpServletRequest request, HttpServletResponse response, Resource resource,
                                 Set<Resource<ResourceMeta>> dirlist) {
+        def controller = this
         withFormat {
-            json {
+            '*'  {
                 render jsonRenderResource(resource,dirlist) as JSON
             }
-            xml {
-                render(contentType: 'application/xml') {
-                    xmlRenderResource(delegate, resource, dirlist)
+            if(controller.isAllowXml()) {
+                xml {
+                    render(contentType: 'application/xml') {
+                        xmlRenderResource(delegate, resource, dirlist)
+                    }
                 }
             }
         }
@@ -245,11 +248,14 @@ class StorageController extends ControllerBase{
         if(!(response.format in ['json','xml'])){
             return jsonResponseclosure.call()
         }
+        def controller = this
         withFormat {
-            json(jsonResponseclosure)
-            xml {
-                render(contentType: "application/xml") {
-                    delegate.'error'(message)
+            '*' (jsonResponseclosure)
+            if(controller.isAllowXml()) {
+                xml {
+                    render(contentType: "application/xml") {
+                        delegate.'error'(message)
+                    }
                 }
             }
         }
@@ -883,12 +889,12 @@ Authorization under the key path `project/{project}` can be granted at the proje
         }
         AuthContext authContext = getAuthContextForPath(session.subject, storageParams.resourcePath)
         String resourcePath = storageParams.resourcePath
-        def found = storageService.hasPath(authContext, resourcePath)
-        if(!found){
-            response.status=404
-            return renderError("resource not found: ${resourcePath}")
-        }
         try{
+            def found = storageService.hasPath(authContext, resourcePath)
+            if(!found){
+                response.status=404
+                return renderError("resource not found: ${resourcePath}")
+            }
             def resource = storageService.getResource(authContext, resourcePath)
             if (resource.directory) {
                 //list directory and render resources

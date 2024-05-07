@@ -1,5 +1,5 @@
 plugins {
-  id "com.github.node-gradle.node"
+  id "com.github.node-gradle.node" version "7.0.1"
   id 'base'
 }
 
@@ -27,7 +27,7 @@ node{
     
     // Version of node to download and install (only used if download is true)
     // It will be unpacked in the workDir
-    version = "16.18.0"
+    version = "18.18.1"
 }
 
 
@@ -39,6 +39,7 @@ task noop() {
 
 tasks.register("runNpmBuild", NpmTask) {
     // dependsOn configurations.uiTrellis
+    dependsOn ':rundeckapp:grails-spa:packages:ui-trellis:runNpmBuild'
 
     // inputs.files(configurations.uiTrellis.allArtifacts)
     // inputs.file 'packages/ui-trellis/build/package/rundeck-ui-trellis.tgz'

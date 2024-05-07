@@ -4,18 +4,16 @@ import com.google.common.collect.Lists
 import grails.gorm.DetachedCriteria
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
-import org.grails.datastore.mapping.query.api.BuildableCriteria
 import org.rundeck.app.data.model.v1.query.RdExecQuery
 import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
 import org.rundeck.app.data.model.v1.report.dto.SaveReportResponse
-import org.rundeck.app.data.model.v1.report.dto.SaveReportResponseImpl;
-import org.rundeck.app.data.providers.v1.ExecReportDataProvider
+import rundeck.data.report.SaveReportResponseImpl;
+import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.context.MessageSource
 import org.springframework.transaction.TransactionStatus
-import org.springframework.validation.Errors
 import rundeck.BaseReport;
 import rundeck.ExecReport
 import rundeck.Execution
@@ -23,6 +21,7 @@ import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
 import rundeck.services.ConfigurationService
 
+import javax.persistence.EntityNotFoundException
 import javax.sql.DataSource;
 
 @CompileStatic(TypeCheckingMode.SKIP)
@@ -42,9 +41,21 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
     @Override
     SaveReportResponse createReportFromExecution(Long id) {
         Execution execution = Execution.get(id)
+        if(!execution) throw new EntityNotFoundException("Execution not found with id: ${id}")
+        createReportFromExecution(execution)
+    }
+
+    @Override
+    SaveReportResponse createReportFromExecution(String uuid) {
+        Execution execution = Execution.findByUuid(uuid)
+        if(!execution) throw new EntityNotFoundException("Execution not found with uuid: ${uuid}")
+        createReportFromExecution(execution)
+    }
+
+    SaveReportResponse createReportFromExecution(Execution execution) {
         ExecReport execReport = ExecReport.fromExec(execution)
         boolean isUpdated = execReport.save(flush: true)
-        Errors errors = execReport.errors
+        String errors = execReport.errors.hasErrors() ? execReport.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")  : null
         return new SaveReportResponseImpl(report: execReport, isSaved: isUpdated, errors: errors)
     }
 
@@ -73,7 +84,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
         execReport.dateCompleted = saveReportRequest.dateCompleted
         execReport.jobUuid = execution.scheduledExecution?.uuid
         boolean isUpdated = execReport.save(flush: true)
-        String errors = execReport.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")
+        String errors = execReport.errors.hasErrors() ? execReport.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",") : null
         return new SaveReportResponseImpl(report: execReport, isSaved: isUpdated, errors: errors)
     }
 
