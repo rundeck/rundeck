@@ -45,7 +45,6 @@
                   </details>
                 </div>
                 <ace-editor
-                  ref="aceEditor"
                   v-model="fileText"
                   :soft-wrap-control="true"
                   height="250"
@@ -163,8 +162,7 @@ export default defineComponent({
       }
     },
     createProjectHomeLink() {
-      window.location.href =
-        "http://localhost:4440/project/" + this.project + "/home";
+      window.location = url("project/" + this.project + "/home").href;
     },
     notifyError(msg) {
       Notification.notify({
@@ -197,7 +195,6 @@ export default defineComponent({
 
         if (response.success) {
           this.fileText = response.contents;
-          console.log(this.fileText);
         }
       } catch (e) {
         if (e.warning) {
