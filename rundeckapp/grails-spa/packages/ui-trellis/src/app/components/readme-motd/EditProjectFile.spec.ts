@@ -36,7 +36,8 @@ jest.mock("@/library/rundeckService", () => ({
 
 jest.mock("../../../library/components/utils/AceEditor.vue", () => ({
   name: "AceEditor",
-  render: () => {},
+  functional: true,
+  template: '<span class="ace_text ace_xml"></span>',
   methods: {
     getValue: jest.fn().mockReturnValue("sample file content"),
   },
@@ -93,16 +94,17 @@ describe("EditProjectFile", () => {
     );
   });
 
-  it("renders file content when getFileText method returns successfully", async () => {
+  it("renders file content inside AceEditor's span element when getFileText method returns successfully", async () => {
     wrapper.vm.getFileText = jest.fn().mockResolvedValue("sample file content");
     await wrapper.vm.getFileText();
     await wrapper.vm.$nextTick();
     const aceEditor = wrapper.findComponent({ name: "AceEditor" });
     expect(aceEditor.exists()).toBe(true);
-    const editorContent = aceEditor.vm.getValue();
-    expect(editorContent).toBe("sample file content");
+    const span = aceEditor.find("span.ace_text.ace_xml");
+    expect(span.exists()).toBe(true);
+    const spanHtml = span.html();
+    expect(spanHtml).toContain("sample file content");
   });
-
   it("handles failure when getFileText method fails", async () => {
     (editProjectFileService.getFileText as jest.Mock).mockImplementationOnce(
       () => Promise.reject(new Error("Failed to fetch file"))
