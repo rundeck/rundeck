@@ -45,6 +45,7 @@
                   </details>
                 </div>
                 <ace-editor
+                  ref="aceEditor"
                   v-model="fileText"
                   :soft-wrap-control="true"
                   height="250"

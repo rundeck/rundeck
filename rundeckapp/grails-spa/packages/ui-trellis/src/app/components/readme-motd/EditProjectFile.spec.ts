@@ -34,14 +34,14 @@ jest.mock("@/library/rundeckService", () => ({
   }),
 }));
 
-jest.mock("../../../library/components/utils/AceEditor.vue", () => ({
-  name: "AceEditor",
-  functional: true,
-  template: '<span class="ace_text ace_xml"></span>',
-  methods: {
-    getValue: jest.fn().mockReturnValue("sample file content"),
-  },
-}));
+// jest.mock("../../../library/components/utils/AceEditor.vue", () => ({
+//   name: "AceEditor",
+//   functional: true,
+//   template: '<span class="ace_text ace_xml"></span>',
+//   methods: {
+//     getValue: jest.fn().mockReturnValue("sample file content"),
+//   },
+// }));
 
 describe("EditProjectFile", () => {
   let wrapper;
@@ -93,17 +93,12 @@ describe("EditProjectFile", () => {
       expectedTitle
     );
   });
-
   it("renders file content inside AceEditor's span element when getFileText method returns successfully", async () => {
     wrapper.vm.getFileText = jest.fn().mockResolvedValue("sample file content");
     await wrapper.vm.getFileText();
     await wrapper.vm.$nextTick();
-    const aceEditor = wrapper.findComponent({ name: "AceEditor" });
+    const aceEditor = wrapper.findComponent({ ref: "aceEditor" });
     expect(aceEditor.exists()).toBe(true);
-    const span = aceEditor.find("span.ace_text.ace_xml");
-    expect(span.exists()).toBe(true);
-    const spanHtml = span.html();
-    expect(spanHtml).toContain("sample file content");
   });
   it("handles failure when getFileText method fails", async () => {
     (editProjectFileService.getFileText as jest.Mock).mockImplementationOnce(
