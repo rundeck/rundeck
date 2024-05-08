@@ -34,14 +34,14 @@ jest.mock("@/library/rundeckService", () => ({
   }),
 }));
 
-// jest.mock("../../../library/components/utils/AceEditor.vue", () => ({
-//   name: "AceEditor",
-//   functional: true,
-//   template: '<span class="ace_text ace_xml"></span>',
-//   methods: {
-//     getValue: jest.fn().mockReturnValue("sample file content"),
-//   },
-// }));
+jest.mock("../../../library/components/utils/AceEditor.vue", () => ({
+  name: "AceEditor",
+  functional: true,
+  template: '<span class="ace_text ace_xml"></span>',
+  methods: {
+    getValue: jest.fn().mockReturnValue("sample file content"),
+  },
+}));
 
 describe("EditProjectFile", () => {
   let wrapper;
@@ -97,26 +97,32 @@ describe("EditProjectFile", () => {
     wrapper.vm.getFileText = jest.fn().mockResolvedValue("sample file content");
     await wrapper.vm.getFileText();
     await wrapper.vm.$nextTick();
-    const aceEditor = wrapper.findComponent({ ref: "aceEditor" });
+    const aceEditor = wrapper.findComponent({ name: "AceEditor" });
     expect(aceEditor.exists()).toBe(true);
+    const span = aceEditor.find("span.ace_text.ace_xml");
+    expect(span.exists()).toBe(true);
+    const spanHtml = span.html();
+    expect(spanHtml).toContain("sample file content");
   });
   it("handles failure when getFileText method fails", async () => {
+    const notifyErrorSpy = jest.spyOn(wrapper.vm, "notifyError");
     (editProjectFileService.getFileText as jest.Mock).mockImplementationOnce(
       () => Promise.reject(new Error("Failed to fetch file"))
     );
-    jest.spyOn(wrapper.vm, "notifyError");
     await wrapper.vm.getFileText();
-    expect(wrapper.vm.notifyError).toHaveBeenCalledWith("Failed to fetch file");
+    expect(notifyErrorSpy).toHaveBeenCalledWith("Failed to fetch file");
   });
 
   it("handles failure when user edits the file and fails to save it", async () => {
-    (editProjectFileService.saveProjectFile as jest.Mock).mockRejectedValue(
-      new Error("Failed to save file")
+    (
+      editProjectFileService.saveProjectFile as jest.Mock
+    ).mockImplementationOnce(() =>
+      Promise.reject(new Error("Failed to save file"))
     );
-    jest.spyOn(wrapper.vm, "notifyError");
+    const notifyErrorSpy = jest.spyOn(wrapper.vm, "notifyError");
     wrapper.vm.fileText = "new content";
     await wrapper.find('[data-test-id="save"]').trigger("click");
-    expect(wrapper.vm.notifyError).toHaveBeenCalledWith("Failed to save file");
+    expect(notifyErrorSpy).toHaveBeenCalledWith("Failed to save file");
   });
   it("handles success when user edits the file and saves it", async () => {
     wrapper.vm.fileText = "new content";
