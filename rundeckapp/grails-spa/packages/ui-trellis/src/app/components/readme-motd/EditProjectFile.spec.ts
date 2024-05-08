@@ -94,7 +94,7 @@ describe("EditProjectFile", () => {
   ])("renders the correct title for %s", async (filename, expectedTitle) => {
     await mountEditProjectFile({ filename });
     expect(wrapper.find('[data-test-id="title"]').text()).toContain(
-      expectedTitle
+      expectedTitle,
     );
   });
   // it("renders file content when getFileText method returns successfully", async () => {
@@ -131,7 +131,7 @@ describe("EditProjectFile", () => {
 
   it("handles failure when getFileText method fails", async () => {
     (editProjectFileService.getFileText as jest.Mock).mockImplementationOnce(
-      () => Promise.reject(new Error("Failed to fetch file"))
+      () => Promise.reject(new Error("Failed to fetch file")),
     );
     jest.spyOn(wrapper.vm, "notifyError");
     await wrapper.vm.getFileText();
@@ -140,7 +140,7 @@ describe("EditProjectFile", () => {
 
   it("handles failure when user edits the file and fails to save it", async () => {
     (editProjectFileService.saveProjectFile as jest.Mock).mockRejectedValue(
-      new Error("Failed to save file")
+      new Error("Failed to save file"),
     );
     jest.spyOn(wrapper.vm, "notifyError");
     wrapper.vm.fileText = "new content";
@@ -151,7 +151,7 @@ describe("EditProjectFile", () => {
     wrapper.vm.fileText = "new content";
     await wrapper.find('[data-test-id="save"]').trigger("click");
     expect(
-      editProjectFileService.saveProjectFile as jest.Mock
+      editProjectFileService.saveProjectFile as jest.Mock,
     ).toHaveBeenCalledWith("default", "readme.md", "new content");
   });
 
@@ -159,7 +159,7 @@ describe("EditProjectFile", () => {
     const footerText = wrapper.find(".card-footer").text();
     expect(footerText).toContain("file.warning.not.displayed.admin.message");
     expect(wrapper.find(".card-footer a").text()).toBe(
-      "project.configuration.label"
+      "project.configuration.label",
     );
   });
 
@@ -168,7 +168,7 @@ describe("EditProjectFile", () => {
       authAdmin: false,
     });
     expect(
-      wrapper.find('[data-test-id="nonadmin-warning-message"]').text()
+      wrapper.find('[data-test-id="nonadmin-warning-message"]').text(),
     ).toContain("file.warning.not.displayed.nonadmin.message");
   });
 
@@ -181,5 +181,3 @@ describe("EditProjectFile", () => {
     expect(window.location.href).toBe(expectedUrl);
   });
 });
-
-//<span class="ace_text ace_xml">sample file content</span>

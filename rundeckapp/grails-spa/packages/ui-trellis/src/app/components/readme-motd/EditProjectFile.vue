@@ -156,7 +156,7 @@ export default defineComponent({
     createProjectHomeLink() {
       window.location.href =
         "http://localhost:4440/project/" + this.project + "/home";
-},
+    },
     notifyError(msg) {
       Notification.notify({
         type: "danger",
@@ -188,6 +188,7 @@ export default defineComponent({
 
         if (response.success) {
           this.fileText = response.contents;
+          console.log(this.fileText);
         }
       } catch (e) {
         if (e.warning) {
