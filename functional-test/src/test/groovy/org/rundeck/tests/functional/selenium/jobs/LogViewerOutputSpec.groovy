@@ -113,7 +113,6 @@ class LogViewerOutputSpec extends SeleniumBase{
         def projectHomePage = page HomePage
         def jobShowPage = page JobShowPage
         def executionShowPage = page ExecutionShowPage
-        executionShowPage.setLoadPath("/execution/show/1?maxLogSize=5000000")
 
         when: "We run the job to have multiple lines in log output"
         loginPage.go()
@@ -124,6 +123,8 @@ class LogViewerOutputSpec extends SeleniumBase{
         jobShowPage.goToJob("1f0306cd-e123-44f3-8977-9e52edad8ce8")
         jobShowPage.getRunJobBtn().click()
         executionShowPage.validateStatus 'SUCCEEDED'
+        String executionId = executionShowPage.getCurrentExecutionId()
+        executionShowPage.setLoadPath("/project/${longOutPutProjectName}/execution/show/${executionId}?maxLogSize=5000000")
         executionShowPage.go()
         executionShowPage.getLink 'Log Output' click()
         def showWarningMessage = jobShowPage.waitForElementVisible(By.xpath("//div[contains(@class, 'execution-log__line')]")).isDisplayed()
