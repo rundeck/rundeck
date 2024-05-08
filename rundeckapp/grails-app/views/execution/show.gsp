@@ -859,7 +859,7 @@ search
                                        class="card-content-full-width"
                                        data-bind="visible: activeTab() === 'output' || activeTab().startsWith('outputL')"
                                   >
-                                      <div class="execution-log-viewer" style="height: 100%" data-execution-id="${execution.id}" data-theme="light" data-follow="true" data-trim-output="${trimOutput}"></div>
+                                      <div class="execution-log-viewer" style="height: 100%" data-execution-id="${execution.id}" data-max-log-size="${params.maxLogSize ? params.maxLogSize.toInteger() : maxLogSize}" data-theme="light" data-follow="true" data-trim-output="${trimOutput}"></div>
                                   </div>
 
                               </div>

@@ -80,6 +80,7 @@ function mount(e) {
     :jumpToLine="${jumpToLine || null}"
     ref="viewer"
     ${e.dataset.trimOutput ? `trimOutput="${e.dataset.trimOutput}"` : ""}
+    ${e.dataset.maxLogSize ? `maxLogSize="${e.dataset.maxLogSize}"` : ""}
   />
   `;
   const vue = createApp({
