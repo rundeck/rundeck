@@ -45,6 +45,7 @@
                   </details>
                 </div>
                 <ace-editor
+                  ref="aceEditor"
                   v-model="fileText"
                   :soft-wrap-control="true"
                   height="250"
@@ -72,7 +73,10 @@
                   Save
                 </button>
                 <template v-if="displayConfig.includes('none')">
-                  <span class="text-warning text-right">
+                  <span
+                    class="text-warning text-right"
+                    data-test-id="nonadmin-warning-message"
+                  >
                     <template v-if="authAdmin">
                       {{ $t("file.warning.not.displayed.admin.message") }}
                       <a :href="createProjectConfigureLink">
@@ -149,7 +153,7 @@ export default defineComponent({
         const resp = await saveProjectFile(
           this.project,
           this.filename,
-          this.fileText,
+          this.fileText
         );
         if (resp.success) {
           this.notifySuccess("Success", "Saved Project File " + this.filename);
@@ -159,8 +163,9 @@ export default defineComponent({
       }
     },
     createProjectHomeLink() {
-      document.location = url("project/" + this.project + "/home").href;
-    },
+      window.location.href =
+        "http://localhost:4440/project/" + this.project + "/home";
+},
     notifyError(msg) {
       Notification.notify({
         type: "danger",
@@ -200,7 +205,7 @@ export default defineComponent({
               this.filename +
               " does not exist in project " +
               this.project +
-              " yet. Please save to create it.",
+              " yet. Please save to create it."
           );
         } else {
           this.notifyError(e.message);

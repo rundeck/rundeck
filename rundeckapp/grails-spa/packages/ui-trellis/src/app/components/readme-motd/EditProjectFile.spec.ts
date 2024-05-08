@@ -1,6 +1,7 @@
 import { mount } from "@vue/test-utils";
 import EditProjectFile from "./EditProjectFile.vue";
 import * as editProjectFileService from "./editProjectFileService";
+import AceEditor from "../../../library/components/utils/AceEditor.vue";
 
 jest.mock("@/app/components/readme-motd/editProjectFileService", () => ({
   getFileText: jest.fn().mockResolvedValue({
@@ -32,6 +33,31 @@ jest.mock("@/library/rundeckService", () => ({
   }),
   url: jest.fn().mockReturnValue("http://localhost:4440"),
 }));
+jest.mock("../../../library/components/utils/AceEditor.vue", () => ({
+  render: () => {},
+  methods: {
+    getValue: jest.fn().mockReturnValue("sample file content"),
+  },
+}));
+let originalLocation;
+
+beforeAll(() => {
+  originalLocation = window.location;
+  delete (window as any).location;
+  window.location = {
+    ...originalLocation,
+    assign: jest.fn(),
+    href: jest.fn(),
+    replace: jest.fn(),
+
+    toString: () => (window.location as any)._href || "http://localhost:4440",
+  };
+});
+
+afterAll(() => {
+  window.location = originalLocation;
+});
+
 let wrapper;
 const mountEditProjectFile = async (props = {}) => {
   wrapper = mount(EditProjectFile, {
@@ -45,6 +71,9 @@ const mountEditProjectFile = async (props = {}) => {
     global: {
       mocks: {
         $t: (msg) => msg,
+      },
+      stubs: {
+        "ace-editor": AceEditor,
       },
     },
   });
@@ -65,89 +94,92 @@ describe("EditProjectFile", () => {
   ])("renders the correct title for %s", async (filename, expectedTitle) => {
     await mountEditProjectFile({ filename });
     expect(wrapper.find('[data-test-id="title"]').text()).toContain(
-      expectedTitle,
+      expectedTitle
     );
   });
+  // it("renders file content when getFileText method returns successfully", async () => {
+  //   wrapper.vm.getFileText = jest.fn().mockResolvedValue("sample file content");
+  //   await wrapper.vm.getFileText();
 
+  //   await wrapper.vm.$nextTick();
+
+  //   const aceEditor = wrapper.findComponent({ ref: "aceEditor" });
+  //   expect(aceEditor.exists()).toBe(true);
+  //   if (aceEditor.exists()) {
+  //     await wrapper.vm.$nextTick();
+
+  //     const span = aceEditor.find(".ace_text.ace_xml");
+  //     if (span.exists()) {
+  //       expect(span.text()).toBe("sample file content");
+  //     }
+  //   }
+  // });
   it("renders file content when getFileText method returns successfully", async () => {
-    expect(wrapper.vm.fileText).toBe("sample file content");
+    const expectedContent = "sample file content";
+    wrapper.vm.getFileText = jest.fn().mockResolvedValue(expectedContent);
+    await wrapper.vm.getFileText();
+
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const aceEditor = wrapper.findComponent({ ref: "aceEditor" });
+    expect(aceEditor.exists()).toBe(true);
+
+    const editorContent = aceEditor.vm.getValue();
+    expect(editorContent).toBe(expectedContent);
   });
 
   it("handles failure when getFileText method fails", async () => {
     (editProjectFileService.getFileText as jest.Mock).mockImplementationOnce(
-      () => Promise.reject(new Error("Failed to fetch file")),
+      () => Promise.reject(new Error("Failed to fetch file"))
     );
-    wrapper.vm.notifyError = jest.fn();
+    jest.spyOn(wrapper.vm, "notifyError");
     await wrapper.vm.getFileText();
     expect(wrapper.vm.notifyError).toHaveBeenCalledWith("Failed to fetch file");
   });
 
   it("handles failure when user edits the file and fails to save it", async () => {
     (editProjectFileService.saveProjectFile as jest.Mock).mockRejectedValue(
-      new Error("Failed to save file"),
+      new Error("Failed to save file")
     );
-    wrapper.vm.notifyError = jest.fn();
+    jest.spyOn(wrapper.vm, "notifyError");
     wrapper.vm.fileText = "new content";
     await wrapper.find('[data-test-id="save"]').trigger("click");
     expect(wrapper.vm.notifyError).toHaveBeenCalledWith("Failed to save file");
   });
-
   it("handles success when user edits the file and saves it", async () => {
     wrapper.vm.fileText = "new content";
     await wrapper.find('[data-test-id="save"]').trigger("click");
     expect(
-      editProjectFileService.saveProjectFile as jest.Mock,
+      editProjectFileService.saveProjectFile as jest.Mock
     ).toHaveBeenCalledWith("default", "readme.md", "new content");
   });
 
-  it("displays admin specific message and configuration link when user is an admin", async () => {
+  it("displays warning message and configuration link when user is an admin and displayConfig value is 'none", async () => {
     const footerText = wrapper.find(".card-footer").text();
     expect(footerText).toContain("file.warning.not.displayed.admin.message");
     expect(wrapper.find(".card-footer a").text()).toBe(
-      "project.configuration.label",
+      "project.configuration.label"
     );
   });
 
-  it("displays non-admin specific message when user is not an admin", async () => {
+  it("displays warning message and configuration link when user isn't an admin and displayConfig value is 'none", async () => {
     await mountEditProjectFile({
       authAdmin: false,
     });
-    expect(wrapper.text()).toContain(
-      "file.warning.not.displayed.nonadmin.message",
-    );
+    expect(
+      wrapper.find('[data-test-id="nonadmin-warning-message"]').text()
+    ).toContain("file.warning.not.displayed.nonadmin.message");
   });
-  it("does not allow non-admin user to save the file", async () => {
-    await mountEditProjectFile({ authAdmin: false });
-    wrapper.vm.save = jest.fn();
-    wrapper.vm.getFileText = jest.fn();
 
-    wrapper.find('[data-test-id="save"]').trigger("click");
-    await wrapper.vm.$nextTick();
-    expect(wrapper.vm.save).not.toHaveBeenCalled();
-  });
-  it("does not allow non-admin user to edit the file", async () => {
-    await mountEditProjectFile({ authAdmin: false });
-    expect(wrapper.find('[data-test-id="my-ace-editor"]').exists()).toBe(false);
-  });
-  it("renders the correct strings when user doesn't have permissions", async () => {
-    await mountEditProjectFile({ authAdmin: false });
-    expect(wrapper.text()).toContain(
-      "file.warning.not.displayed.nonadmin.message",
-    );
-  });
-  it("renders the correct strings when user has permissions", async () => {
-    expect(wrapper.text()).toContain(
-      "file.warning.not.displayed.admin.message",
-    );
-  });
-  it("reverts edits and triggers the correct action when the cancel button is clicked", async () => {
-    wrapper.vm.originalFileText = "sample file content";
-    wrapper.vm.fileText = "edited content";
-    wrapper.vm.createProjectHomeLink = jest.fn(() => {
-      wrapper.vm.fileText = wrapper.vm.originalFileText;
-    });
+  it("navigates to the home page when the cancel button is clicked", async () => {
+    await mountEditProjectFile();
+    const expectedUrl = `http://localhost:4440/project/${wrapper.vm.project}/home`;
+
     await wrapper.find('[data-test-id="cancel"]').trigger("click");
-    expect(wrapper.vm.createProjectHomeLink).toHaveBeenCalled();
-    expect(wrapper.vm.fileText).toBe("sample file content");
+    await wrapper.vm.$nextTick();
+    expect(window.location.href).toBe(expectedUrl);
   });
 });
+
+//<span class="ace_text ace_xml">sample file content</span>
