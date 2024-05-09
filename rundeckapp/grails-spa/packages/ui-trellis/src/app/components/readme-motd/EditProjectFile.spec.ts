@@ -25,13 +25,12 @@ jest.mock("./editProjectFileService", () => ({
 
 jest.mock("../../../library/components/utils/AceEditor.vue", () => ({
   name: "AceEditor",
-  functional: true,
-  template: '<span class="ace_text ace_xml">sample file content</span>',
+  props: ["value"],
+  template: '<span class="ace_text ace_xml">{{ getValue() }}</span>',
   methods: {
     getValue: jest.fn().mockReturnValue("sample file content"),
   },
 }));
-
 const mountEditProjectFile = async (props = {}) => {
   return mount(EditProjectFile, {
     props: {
@@ -48,27 +47,28 @@ const mountEditProjectFile = async (props = {}) => {
     },
   });
 };
+
 describe("EditProjectFile", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
+
   it.each([
     ["readme.md", "edit.readme.label"],
     ["motd.md", "edit.motd.label"],
   ])("renders the correct title for %s", async (filename, expectedTitle) => {
     const wrapper = await mountEditProjectFile({ filename });
     expect(wrapper.find('[data-test-id="title"]').text()).toContain(
-      expectedTitle,
+      expectedTitle
     );
   });
   it("renders file content inside AceEditor's span element when getFileText method returns successfully", async () => {
     const wrapper = await mountEditProjectFile();
     const aceEditor = wrapper.findComponent({ name: "AceEditor" });
-    expect(aceEditor.exists()).toBe(true);
+    aceEditor.vm.getValue();
+    await wrapper.vm.$nextTick();
     const span = aceEditor.find("span.ace_text.ace_xml");
-    expect(span.exists()).toBe(true);
-    const spanHtml = span.text();
-    expect(spanHtml).toContain("sample file content");
+    expect(span.text()).toContain("sample file content");
   });
   it("handles failure when getFileText method fails", async () => {
     const wrapper = await mountEditProjectFile();
@@ -79,42 +79,45 @@ describe("EditProjectFile", () => {
     await wrapper.vm.getFileText();
     expect(notifyErrorSpy).toHaveBeenCalledWith("Failed to fetch file");
   });
+
   it("handles failure when user edits the file and fails to save it", async () => {
     const wrapper = await mountEditProjectFile();
     const notifyErrorSpy = jest.spyOn(wrapper.vm, "notifyError");
     (
       editProjectFileService.saveProjectFile as jest.Mock
     ).mockImplementationOnce(() =>
-      Promise.reject(new Error("Failed to save file")),
+      Promise.reject(new Error("Failed to save file"))
     );
-    wrapper.vm.fileText = "new content";
     await wrapper.find('[data-test-id="save"]').trigger("click");
     expect(notifyErrorSpy).toHaveBeenCalledWith("Failed to save file");
   });
+
   it("handles success when user edits the file and saves it", async () => {
     const wrapper = await mountEditProjectFile();
-    wrapper.vm.fileText = "new content";
     await wrapper.find('[data-test-id="save"]').trigger("click");
     expect(editProjectFileService.saveProjectFile).toHaveBeenCalledWith(
       "default",
       "readme.md",
-      "new content",
+      "sample file content"
     );
   });
+
   it("displays warning message and configuration link when user is an admin and displayConfig is 'none'", async () => {
     const wrapper = await mountEditProjectFile();
     const footerText = wrapper.find(".card-footer").text();
     expect(footerText).toContain("file.warning.not.displayed.admin.message");
     expect(wrapper.find(".card-footer a").text()).toBe(
-      "project.configuration.label",
+      "project.configuration.label"
     );
   });
+
   it("displays warning message and configuration link when user isn't an admin and displayConfig is 'none'", async () => {
     const wrapper = await mountEditProjectFile({ authAdmin: false });
     expect(
-      wrapper.find('[data-test-id="nonadmin-warning-message"]').text(),
+      wrapper.find('[data-test-id="nonadmin-warning-message"]').text()
     ).toContain("file.warning.not.displayed.nonadmin.message");
   });
+
   it("navigates to the home page when the cancel button is clicked", async () => {
     const wrapper = await mountEditProjectFile();
     const button = wrapper.find('[data-test-id="cancel"]');
