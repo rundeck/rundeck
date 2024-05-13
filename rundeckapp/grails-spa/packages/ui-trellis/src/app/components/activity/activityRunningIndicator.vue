@@ -44,6 +44,9 @@ export default defineComponent({
   mounted(): void {
     this.eventBus.on("activity-nowrunning-count", this.updateNowrunning);
   },
+  beforeUnmount(): void {
+    this.eventBus.off("activity-nowrunning-count", this.updateNowrunning);
+  },
   methods: {
     updateNowrunning(count: number) {
       this.count = count;
