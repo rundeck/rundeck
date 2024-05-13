@@ -64,6 +64,11 @@ public class RundeckConfigBase {
     RundeckHealthIndicatorConfig health;
     RundeckJobsConfig jobs;
     JobsImport jobsImport;
+    Startup startup;
+
+    @Data public static class Startup {
+        Boolean detectFirstRun;
+    }
 
     @Data public static class JobsImport{
         XmlValueListDelimiter xmlValueListDelimiter;
