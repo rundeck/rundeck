@@ -45,6 +45,9 @@ export default defineComponent({
     this.eventBus.on("activity-nowrunning-count", this.updateNowrunning);
   },
   beforeUnmount(): void {
+    // Unregister the 'activity-nowrunning-count' event when the component is unmounted
+    // This is to prevent memory leaks and unnecessary executions of the updateNowrunning function
+    // when the component is no longer in use.
     this.eventBus.off("activity-nowrunning-count", this.updateNowrunning);
   },
   methods: {
