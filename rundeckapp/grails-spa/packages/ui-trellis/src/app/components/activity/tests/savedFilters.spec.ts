@@ -1,7 +1,7 @@
 import { mount } from "@vue/test-utils";
 import SavedFilters from "../savedFilters.vue";
 import { Notification, MessageBox } from "uiv";
-
+import dropdown from "../../../components/job/resources/NodeDefaultFilterDropdown.vue";
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({ projectName: "test" }),
 }));
@@ -47,6 +47,9 @@ describe("SavedFilters", () => {
         },
         stubs: {
           btn: true,
+          dropdown: {
+            template: '<div><slot name="drpdown"></slot></div>',
+          },
         },
       },
     });
@@ -61,7 +64,7 @@ describe("SavedFilters", () => {
     it("registers event listeners on mount", () => {
       expect(eventBus.on).toHaveBeenCalledWith(
         "invoke-save-filter",
-        expect.any(Function),
+        expect.any(Function)
       );
     });
     it("unregisters event listeners on unmount", () => {
@@ -84,6 +87,7 @@ describe("SavedFilters", () => {
           },
           stubs: {
             btn: true,
+            Dropdown: true,
           },
         },
       });
@@ -98,12 +102,12 @@ describe("SavedFilters", () => {
   describe("User Interactions", () => {
     it("renders save button when hasQuery is true and query is empty", () => {
       expect(wrapper.find('[data-test-id="save-filter-button"]').exists()).toBe(
-        true,
+        true
       );
     });
     it("does not render delete filter button when query has no filterName", () => {
       expect(wrapper.find('[data-test-id="delete-filter-btn"]').exists()).toBe(
-        false,
+        false
       );
     });
     it("emits 'select_filter' when a filter is selected", async () => {
@@ -117,6 +121,106 @@ describe("SavedFilters", () => {
       expect(MessageBox.prompt).toHaveBeenCalled();
     });
   });
+  describe("Button Rendering", () => {
+    it("renders save button when hasQuery is true and query is not defined", () => {
+      wrapper.props({ hasQuery: true, query: undefined });
+      expect(wrapper.find('[data-test-id="save-filter-button"]').exists()).toBe(
+        true
+      );
+    });
+    it("should render a delete button if query and query.filterName are defined", async () => {
+      await wrapper.setProps({ query: { filterName: "test" } });
+      await wrapper.vm.$nextTick();
+      const deleteButton = wrapper.find('[data-test-id="delete-filter-btn"]');
+      expect(deleteButton.exists()).toBe(true);
+    });
+
+    it("does not render save button when hasQuery is false", () => {
+      wrapper.props({ hasQuery: false });
+      expect(wrapper.find('[data-test-id="save-filter-button"]').exists()).toBe(
+        false
+      );
+    });
+
+    it("does not render save button when query is defined and query.filterName is also defined", () => {
+      wrapper.props({ hasQuery: true, query: { filterName: "Test Filter" } });
+      expect(wrapper.find('[data-test-id="save-filter-button"]').exists()).toBe(
+        false
+      );
+    });
+
+    it("calls saveFilterPrompt when save button is clicked", async () => {
+      wrapper.props({ hasQuery: true, query: undefined });
+      await wrapper
+        .find('[data-test-id="save-filter-button"]')
+        .trigger("click");
+      expect(MessageBox.prompt).toHaveBeenCalled();
+    });
+  });
+
+  describe("Span Rendering", () => {
+    it("renders span when query is defined and query.filterName is also defined", () => {
+      wrapper.props({ query: { filterName: "Test Filter" } });
+      expect(wrapper.find("span").exists()).toBe(true);
+    });
+  });
+
+  describe("Dropdown Rendering", () => {
+    it("renders dropdown when filters is defined and its length is greater than zero", () => {
+      wrapper.setData({ filters: [{ filterName: "Test Filter" }] });
+      expect(wrapper.find("dropdown").exists()).toBe(true);
+    });
+  });
+
+  describe("Delete Filter", () => {
+    it("calls deleteFilter when delete filter button is clicked", async () => {
+      wrapper.props({ query: { filterName: "Test Filter" } });
+      await wrapper.find('[role="button"]').trigger("click");
+      expect(wrapper.vm.deleteFilter).toHaveBeenCalled();
+    });
+  });
+
+  describe("Separator Rendering", () => {
+    it("renders separator when query is defined and query.filterName is also defined", () => {
+      wrapper.setProps({ query: { filterName: "test1" } });
+      expect(wrapper.find('[data-test-id="separator"]').exists()).toBe(true);
+    });
+  });
+
+  describe("Filter Selection", () => {
+    it("calls selectFilter when a filter is clicked", async () => {
+      wrapper.setData({ filters: [{ filterName: "Test Filter" }] });
+      await wrapper.find('[role="button"]').trigger("click");
+      expect(wrapper.vm.selectFilter).toHaveBeenCalled();
+    });
+    it("calls deleteFilter when delete filter button is clicked", async () => {
+      await wrapper.setProps({ query: { filterName: "Test Filter" } });
+      await wrapper.vm.$nextTick();
+      const deleteButton = wrapper.find('[data-test-id="delete-filter-btn"]');
+      if (deleteButton.exists()) {
+        await deleteButton.trigger("click");
+        expect(wrapper.vm.deleteFilter).toHaveBeenCalled();
+      } else {
+        console.log(wrapper.html()); // Log the rendered HTML of the component
+        throw new Error("Delete button not found in the DOM");
+      }
+    });
+    it("displays checkmark when condition is met", async () => {
+      const filters = [
+        { filterName: "Filter 1" },
+        { filterName: "Filter 2" },
+        // Add more filters as needed...
+      ];
+
+      // Set the necessary props and data
+      await wrapper.setProps({ filters });
+      wrapper.vm.query = { filterName: "Filter 1" }; // This should match one of the filterNames in the filters array
+      await wrapper.vm.$nextTick();
+
+      const checkmarkSpan = wrapper.find('[data-testid="checkmark-span"]');
+      expect(checkmarkSpan.exists()).toBe(true);
+    });
+  });
   describe("Filter Management", () => {
     it("updates filters after successful deletion", async () => {
       await wrapper.vm.loadFilters();
@@ -127,7 +231,7 @@ describe("SavedFilters", () => {
         // Mock the deleteFilter method
         wrapper.vm.deleteFilter = (filterName) => {
           const index = wrapper.vm.filters.findIndex(
-            (filter) => filter.filterName === filterName,
+            (filter) => filter.filterName === filterName
           );
           if (index !== -1) {
             wrapper.vm.filters.splice(index, 1);
@@ -155,7 +259,7 @@ describe("SavedFilters", () => {
     it("updates visible elements when 'query.filterName' changes", async () => {
       await wrapper.setProps({ query: { filterName: "Updated Filter" } });
       expect(wrapper.find('[data-test-id="filter-name"]').text()).toBe(
-        "Updated Filter",
+        "Updated Filter"
       );
     });
   });

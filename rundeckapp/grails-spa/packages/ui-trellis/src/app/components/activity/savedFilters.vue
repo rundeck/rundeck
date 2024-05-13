@@ -49,6 +49,7 @@
           <a role="button" @click="selectFilter(filter)">
             {{ filter.filterName }}
             <span v-if="query && filter.filterName === query.filterName"
+            data-testid="checkmark-span"
               >√</span
             >
           </a>
@@ -122,7 +123,7 @@ export default defineComponent({
     },
     deleteFilter() {
       console.log("Before deletion:", this.filters);
-
+      console.log("deleteFilter was called");
       if (!this.query || !this.query.filterName) {
         return;
       }
@@ -171,10 +172,12 @@ export default defineComponent({
         .then((value) => {
           console.log("save value", value);
           this.doSaveFilter(value);
+          console.log("After save value", value);
         })
         .catch((e) => {
           console.log(e);
           //this.$notify("Save canceled.");
+          
         });
     },
   },
