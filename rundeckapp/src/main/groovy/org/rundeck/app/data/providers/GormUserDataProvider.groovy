@@ -340,7 +340,7 @@ class GormUserDataProvider implements UserDataProvider, SystemConfigurable{
                 SystemConfig.builder().with {
                      key("rundeck.feature.caseInsensitiveUsername.enabled")
                     .datatype("Boolean")
-                    .label("Enable case insensitive on login name")
+                    .label("Enable case insensitive login name")
                     .defaultValue("false")
                     .category("Custom")
                     .visibility("Advanced")
