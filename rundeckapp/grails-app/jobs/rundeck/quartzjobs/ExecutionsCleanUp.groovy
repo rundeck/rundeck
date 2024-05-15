@@ -91,7 +91,7 @@ class ExecutionsCleanUp implements InterruptableJob {
             referencedExecutionDataProvider.deleteByExecutionId(e.id)
 
             //delete all reports
-            reportService.deleteByExecutionId(e.id)
+            reportService.deleteByExecutionUuid(e.uuid)
             def executionFiles = logFileStorageService.getExecutionFiles(e, [], false)
 
             List<File> files = []

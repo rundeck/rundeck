@@ -924,7 +924,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                             }
                         }
                         execs = Execution.findAllByProjectAndIdInList(projectName, execIds)
-                        reports = execReportDataProvider.findAllByProjectAndExecutionIdInList(projectName, execIds)
+                        reports = execReportDataProvider.findAllByProjectAndExecutionUuidInList(projectName, execs.collect{it.uuid})
                     } else if (isExportExecutions) {
                         execs = Execution.findAllByProject(projectName)
                         reports = execReportDataProvider.findAllByProject(projectName)
@@ -958,6 +958,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         dir('reports/') {
                             reports.each { RdExecReport report ->
                                 exportHistoryReport zip, report, "report-${report.id}.xml"
+                                def a = report.toMap()
                                 listener?.inc('export', 1)
                             }
                         }
@@ -1668,7 +1669,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
         //generate reports for executions without matching reports
         execids.each { eid ->
-            def saveReportResponse = execReportDataProvider.createReportFromExecution(eid)
+            def execution = Execution.get(eid)
+            if(!execution) {
+                log.error("Execution not found with id: ${eid}")
+                return
+            }
+            def saveReportResponse = execReportDataProvider.saveReport(execution.toSaveReportRequest())
             if (!saveReportResponse.isSaved) {
                 log.error("Unable to save generated report: ${saveReportResponse.errors} (execution ${eid})")
                 return

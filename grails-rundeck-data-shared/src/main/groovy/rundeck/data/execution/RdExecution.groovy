@@ -77,4 +77,5 @@ class RdExecution implements ExecutionData, Validateable {
     boolean statusSucceeded(){
         return getExecutionState()== ExecutionConstants.EXECUTION_SUCCEEDED
     }
+
 }
