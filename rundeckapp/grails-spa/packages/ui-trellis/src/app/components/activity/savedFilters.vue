@@ -17,6 +17,7 @@
       <span
         class="dropdown-toggle btn btn-secondary btn-sm"
         :class="query && query.filterName ? 'text-info' : 'text-secondary'"
+        data-test-id="dropdown-toggle"
       >
         {{ $t("Filters") }}
         <span class="caret"></span>
@@ -48,8 +49,9 @@
         >
           <a role="button" @click="selectFilter(filter)">
             {{ filter.filterName }}
-            <span v-if="query && filter.filterName === query.filterName"
-            data-testid="checkmark-span"
+            <span
+              v-if="query && filter.filterName === query.filterName"
+              data-test-id="checkmark-span"
               >√</span
             >
           </a>
@@ -93,8 +95,6 @@ export default defineComponent({
     };
   },
   mounted() {
-    console.log(this.filters);
-    console.log(this.$el.querySelectorAll('[data-test-id="filter-item"]'));
     this.projectName = getRundeckContext().projectName;
     this.loadFilters();
 
@@ -114,7 +114,6 @@ export default defineComponent({
       });
     },
     async loadFilters() {
-      console.log("loadFilters is called");
       this.filters =
         this.filterStore.loadForProject(this.projectName).filters || [];
     },
@@ -122,8 +121,6 @@ export default defineComponent({
       this.$emit("select_filter", filter);
     },
     deleteFilter() {
-      console.log("Before deletion:", this.filters);
-      console.log("deleteFilter was called");
       if (!this.query || !this.query.filterName) {
         return;
       }
@@ -135,7 +132,7 @@ export default defineComponent({
 
         .then(() => {
           this.doDeleteFilter(this.query.filterName);
-          console.log("After deletion:", this.filters);
+          this.$emit("delete-filter", this.query.filterName);
         })
 
         .catch(() => {
@@ -144,7 +141,7 @@ export default defineComponent({
     },
     async doDeleteFilter(name) {
       this.filterStore.removeFilter(this.projectName, name);
-      console.log("Immediately after deletion:", this.filters);
+
       await this.loadFilters();
     },
     async doSaveFilter(name) {
@@ -159,8 +156,6 @@ export default defineComponent({
       }
     },
     saveFilterPrompt() {
-      console.log("saveFilterPrompt is called");
-      console.log("About to call MessageBox.prompt");
       MessageBox.prompt({
         title: this.promptTitle,
 
@@ -170,14 +165,11 @@ export default defineComponent({
         },
       })
         .then((value) => {
-          console.log("save value", value);
           this.doSaveFilter(value);
-          console.log("After save value", value);
         })
         .catch((e) => {
           console.log(e);
           //this.$notify("Save canceled.");
-          
         });
     },
   },

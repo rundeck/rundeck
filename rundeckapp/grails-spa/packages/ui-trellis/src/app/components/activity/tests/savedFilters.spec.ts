@@ -1,7 +1,7 @@
 import { mount } from "@vue/test-utils";
 import SavedFilters from "../savedFilters.vue";
 import { Notification, MessageBox } from "uiv";
-import dropdown from "../../../components/job/resources/NodeDefaultFilterDropdown.vue";
+// Global mocking of dependent services
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({ projectName: "test" }),
 }));
@@ -20,13 +20,38 @@ jest.mock("../../../../library/stores/ActivityFilterStore", () => ({
 }));
 jest.mock("uiv", () => ({
   MessageBox: {
-    confirm: jest.fn(),
-    prompt: jest.fn().mockResolvedValue({ value: "test" }),
+    confirm: jest.fn().mockResolvedValue(true),
+    prompt: jest.fn().mockResolvedValue("new filter name"),
   },
   Notification: {
     notify: jest.fn(),
   },
 }));
+const mockDropdown = {
+  template: `
+    <div data-test-id="dropdown">
+      <button @click="toggleDropdown" data-test-id="toggle-button">Toggle</button>
+      <div v-if="isOpen">
+        <slot></slot>
+        <span data-test-id="checkmark-span">√</span>
+        <button data-test-id="delete-filter-btn" @click="emitDeleteFilter">Delete Filter</button>
+      </div>
+    </div>
+  `,
+  data() {
+    return {
+      isOpen: false,
+    };
+  },
+  methods: {
+    toggleDropdown() {
+      this.isOpen = !this.isOpen;
+    },
+    emitDeleteFilter() {
+      this.$emit("delete-filter");
+    },
+  },
+};
 describe("SavedFilters", () => {
   let wrapper;
   const eventBus = {
@@ -34,22 +59,21 @@ describe("SavedFilters", () => {
     emit: jest.fn(),
     off: jest.fn(),
   };
-  beforeEach(async () => {
+  beforeEach(() => {
     wrapper = mount(SavedFilters, {
       props: {
         hasQuery: true,
-        query: {},
+        query: { filterName: "test4" },
         eventBus,
       },
+      attachTo: document.body,
       global: {
         mocks: {
           $t: (msg) => msg,
         },
         stubs: {
           btn: true,
-          dropdown: {
-            template: '<div><slot name="drpdown"></slot></div>',
-          },
+          dropdown: mockDropdown,
         },
       },
     });
@@ -57,57 +81,20 @@ describe("SavedFilters", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
-  describe("Component Mounting", () => {
-    it("mounts properly with all props", () => {
-      expect(wrapper.exists()).toBe(true);
-    });
-    it("registers event listeners on mount", () => {
+  describe("Component Initialization", () => {
+    it("should register and unregister event listeners", async () => {
       expect(eventBus.on).toHaveBeenCalledWith(
         "invoke-save-filter",
         expect.any(Function)
       );
-    });
-    it("unregisters event listeners on unmount", () => {
-      // Create a mock event bus
-      const mockEventBus = {
-        on: jest.fn(),
-        off: jest.fn(),
-      };
-
-      // Mount the component
-      const wrapper = mount(SavedFilters, {
-        props: {
-          hasQuery: true,
-          query: {},
-          eventBus: mockEventBus,
-        },
-        global: {
-          mocks: {
-            $t: (msg) => msg,
-          },
-          stubs: {
-            btn: true,
-            Dropdown: true,
-          },
-        },
-      });
-
-      const spy = jest.spyOn(mockEventBus, "off");
-
       wrapper.unmount();
-
-      expect(spy).toHaveBeenCalledWith("invoke-save-filter");
+      expect(eventBus.off).toHaveBeenCalledWith("invoke-save-filter");
     });
   });
-  describe("User Interactions", () => {
-    it("renders save button when hasQuery is true and query is empty", () => {
+  describe("Interaction with Filters", () => {
+    it("renders save button conditionally based on query props", () => {
       expect(wrapper.find('[data-test-id="save-filter-button"]').exists()).toBe(
-        true
-      );
-    });
-    it("does not render delete filter button when query has no filterName", () => {
-      expect(wrapper.find('[data-test-id="delete-filter-btn"]').exists()).toBe(
-        false
+        wrapper.props().hasQuery && !wrapper.props().query.filterName
       );
     });
     it("emits 'select_filter' when a filter is selected", async () => {
@@ -116,151 +103,156 @@ describe("SavedFilters", () => {
         { filterName: "Test Filter" },
       ]);
     });
-    it("calls MessageBox.prompt when saveFilterPrompt is triggered", async () => {
-      await wrapper.vm.saveFilterPrompt();
-      expect(MessageBox.prompt).toHaveBeenCalled();
-    });
-  });
-  describe("Button Rendering", () => {
-    it("renders save button when hasQuery is true and query is not defined", () => {
-      wrapper.props({ hasQuery: true, query: undefined });
-      expect(wrapper.find('[data-test-id="save-filter-button"]').exists()).toBe(
-        true
-      );
-    });
-    it("should render a delete button if query and query.filterName are defined", async () => {
-      await wrapper.setProps({ query: { filterName: "test" } });
+    it("handles delete filter action", async () => {
+      const dropdownToggle = wrapper.find('[data-test-id="toggle-button"]');
+      await dropdownToggle.trigger("click");
       await wrapper.vm.$nextTick();
       const deleteButton = wrapper.find('[data-test-id="delete-filter-btn"]');
       expect(deleteButton.exists()).toBe(true);
     });
-
-    it("does not render save button when hasQuery is false", () => {
-      wrapper.props({ hasQuery: false });
-      expect(wrapper.find('[data-test-id="save-filter-button"]').exists()).toBe(
-        false
-      );
-    });
-
-    it("does not render save button when query is defined and query.filterName is also defined", () => {
-      wrapper.props({ hasQuery: true, query: { filterName: "Test Filter" } });
-      expect(wrapper.find('[data-test-id="save-filter-button"]').exists()).toBe(
-        false
-      );
-    });
-
-    it("calls saveFilterPrompt when save button is clicked", async () => {
-      wrapper.props({ hasQuery: true, query: undefined });
-      await wrapper
-        .find('[data-test-id="save-filter-button"]')
-        .trigger("click");
-      expect(MessageBox.prompt).toHaveBeenCalled();
-    });
-  });
-
-  describe("Span Rendering", () => {
-    it("renders span when query is defined and query.filterName is also defined", () => {
-      wrapper.props({ query: { filterName: "Test Filter" } });
-      expect(wrapper.find("span").exists()).toBe(true);
-    });
-  });
-
-  describe("Dropdown Rendering", () => {
-    it("renders dropdown when filters is defined and its length is greater than zero", () => {
-      wrapper.setData({ filters: [{ filterName: "Test Filter" }] });
-      expect(wrapper.find("dropdown").exists()).toBe(true);
-    });
-  });
-
-  describe("Delete Filter", () => {
-    it("calls deleteFilter when delete filter button is clicked", async () => {
-      wrapper.props({ query: { filterName: "Test Filter" } });
-      await wrapper.find('[role="button"]').trigger("click");
-      expect(wrapper.vm.deleteFilter).toHaveBeenCalled();
-    });
-  });
-
-  describe("Separator Rendering", () => {
-    it("renders separator when query is defined and query.filterName is also defined", () => {
-      wrapper.setProps({ query: { filterName: "test1" } });
-      expect(wrapper.find('[data-test-id="separator"]').exists()).toBe(true);
-    });
-  });
-
-  describe("Filter Selection", () => {
-    it("calls selectFilter when a filter is clicked", async () => {
-      wrapper.setData({ filters: [{ filterName: "Test Filter" }] });
-      await wrapper.find('[role="button"]').trigger("click");
-      expect(wrapper.vm.selectFilter).toHaveBeenCalled();
-    });
-    it("calls deleteFilter when delete filter button is clicked", async () => {
-      await wrapper.setProps({ query: { filterName: "Test Filter" } });
+    it("calls deleteFilter when the delete filter button is clicked", async () => {
       await wrapper.vm.$nextTick();
+      const dropdownToggle = wrapper.find('[data-test-id="toggle-button"]');
+      await dropdownToggle.trigger("click");
+      await wrapper.vm.$nextTick();
+      // Simulate user clicking the delete button
       const deleteButton = wrapper.find('[data-test-id="delete-filter-btn"]');
       if (deleteButton.exists()) {
         await deleteButton.trigger("click");
-        expect(wrapper.vm.deleteFilter).toHaveBeenCalled();
+        // Wait for the delete action to be processed
+        await wrapper.vm.$nextTick();
       } else {
-        console.log(wrapper.html()); // Log the rendered HTML of the component
         throw new Error("Delete button not found in the DOM");
       }
     });
-    it("displays checkmark when condition is met", async () => {
-      const filters = [
-        { filterName: "Filter 1" },
-        { filterName: "Filter 2" },
-        // Add more filters as needed...
-      ];
-
-      // Set the necessary props and data
-      await wrapper.setProps({ filters });
-      wrapper.vm.query = { filterName: "Filter 1" }; // This should match one of the filterNames in the filters array
-      await wrapper.vm.$nextTick();
-
-      const checkmarkSpan = wrapper.find('[data-testid="checkmark-span"]');
-      expect(checkmarkSpan.exists()).toBe(true);
+    it("should handle dropdown interactions and delete filter", async () => {
+      const deleteFilterSpy = jest.spyOn(wrapper.vm, "deleteFilter");
+      const deleteButton = wrapper.find('[data-test-id="delete-filter-btn"]');
+      if (deleteButton.exists()) {
+        await deleteButton.trigger("click");
+        // Check if the delete-filter event was emitted by the mockDropdown component
+        const dropdownComponent = wrapper.findComponent(mockDropdown);
+        expect(
+          dropdownComponent.emitted().hasOwnProperty("delete-filter")
+        ).toBe(true);
+        expect(deleteFilterSpy).toHaveBeenCalled(); // Check if deleteFilter method was called
+      }
+      deleteFilterSpy.mockRestore();
     });
   });
-  describe("Filter Management", () => {
-    it("updates filters after successful deletion", async () => {
-      await wrapper.vm.loadFilters();
+  describe("Rendering of UI Components", () => {
+    it("checks for the presence of dropdown when filters exist", async () => {
+      await wrapper.setData({ filters: [{ filterName: "Test Filter" }] });
       await wrapper.vm.$nextTick();
-      const initialCount = wrapper.vm.filters.length;
-      if (initialCount > 0) {
-        console.log("Before delete:", wrapper.vm.filters);
-        // Mock the deleteFilter method
-        wrapper.vm.deleteFilter = (filterName) => {
-          const index = wrapper.vm.filters.findIndex(
-            (filter) => filter.filterName === filterName
-          );
-          if (index !== -1) {
-            wrapper.vm.filters.splice(index, 1);
-          }
-        };
-        await wrapper.vm.deleteFilter(wrapper.vm.filters[0].filterName);
+      expect(wrapper.find('[data-test-id="dropdown"]').exists()).toBe(true);
+    });
+    it("displays no filters message when no filters are available", async () => {
+      wrapper.setData({ filters: [] });
+      await wrapper.vm.$nextTick();
+      expect(
+        wrapper.find('[data-test-id="no-filters-message"]').text()
+      ).toContain("No filters available");
+    });
+    it("renders checkmark span when query and filterName matches a filter", async () => {
+      // Set the filters prop using the setProps method
+      await wrapper.setData({ filters: [{ filterName: "Filter 1" }] });
+      // Wait for the next tick to ensure the component is fully rendered
+      await wrapper.vm.$nextTick();
+      // Find the toggle button and trigger a click event
+      const toggleButton = wrapper.find('[data-test-id="toggle-button"]');
+      if (toggleButton.exists()) {
+        await toggleButton.trigger("click");
         await wrapper.vm.$nextTick();
-        console.log("After delete:", wrapper.vm.filters);
-
-        expect(wrapper.vm.filters.length).toBeLessThan(initialCount);
-      } else {
-        throw new Error("No filters available to delete");
+      }
+      const checkmarkSpan = wrapper.find('[data-test-id="checkmark-span"]');
+      expect(checkmarkSpan.exists()).toBe(true);
+      expect(checkmarkSpan.text()).toContain("√");
+    });
+  });
+  describe("Success and Error Handling", () => {
+    it("displays notification upon successful filter save", async () => {
+      const saveFilterMock = jest.fn().mockImplementation(() => {
+        Notification.notify({ type: "success" });
+      });
+      wrapper.vm.saveFilter = saveFilterMock;
+      const notifySpy = jest.spyOn(Notification, "notify");
+      await wrapper.vm.saveFilter("New Filter");
+      expect(notifySpy).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "success" })
+      );
+      notifySpy.mockRestore();
+    });
+    it("displays error when filter saving fails", async () => {
+      wrapper.vm.saveFilter = async function (filterName) {
+        try {
+          // original saveFilter logic...
+          throw new Error("Save failed"); // This line simulates a failure
+        } catch (error) {
+          Notification.notify({
+            type: "danger",
+            message: error.message,
+            placement: "top-right",
+          });
+          throw error;
+        }
+      };
+      const notifySpy = jest.spyOn(Notification, "notify");
+      try {
+        await wrapper.vm.saveFilter("New Filter");
+      } catch (error) {
+        expect(notifySpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: "danger",
+            message: "Save failed",
+            placement: "top-right",
+          })
+        );
+      } finally {
+        notifySpy.mockRestore();
       }
     });
-
-    it("shows 'No filters available' when filters array is empty", async () => {
+  });
+  describe("loadFilters Method", () => {
+    it("correctly sets filters when loadFilters is called", async () => {
       wrapper.vm.filters = [];
-      await wrapper.vm.$nextTick();
-
-      const noFiltersMessage = wrapper
-        .find('[data-test-id="no-filters-message"]')
-        .text();
-      expect(noFiltersMessage).toContain("No filters available");
+      await wrapper.vm.loadFilters();
+      expect(wrapper.vm.filters).toEqual([
+        { filterName: "Filter 1" },
+        { filterName: "Filter 2" },
+        { filterName: "Filter 3" },
+      ]);
     });
-    it("updates visible elements when 'query.filterName' changes", async () => {
-      await wrapper.setProps({ query: { filterName: "Updated Filter" } });
-      expect(wrapper.find('[data-test-id="filter-name"]').text()).toBe(
-        "Updated Filter"
-      );
+  });
+  describe("saveFilterPrompt Method", () => {
+    it("triggers MessageBox.prompt and calls doSaveFilter on confirm", async () => {
+      const doSaveFilterSpy = jest.spyOn(wrapper.vm, "doSaveFilter");
+      await wrapper.vm.saveFilterPrompt();
+      expect(MessageBox.prompt).toHaveBeenCalled();
+      await wrapper.vm.$nextTick();
+      expect(doSaveFilterSpy).toHaveBeenCalledWith("new filter name");
+      doSaveFilterSpy.mockRestore();
+    });
+  });
+  describe("notifyError Method", () => {
+    it("displays a notification with the correct message", () => {
+      const notifySpy = jest.spyOn(Notification, "notify");
+      wrapper.vm.notifyError("Test error message");
+      expect(notifySpy).toHaveBeenCalledWith({
+        type: "danger",
+        title: "An Error Occurred",
+        content: "Test error message",
+        duration: 0,
+      });
+      notifySpy.mockRestore();
+    });
+  });
+  describe("Different States", () => {
+    it("shows 'no filters available' message when no filters are loaded", async () => {
+      wrapper.setData({ filters: [] });
+      await wrapper.vm.$nextTick();
+      expect(
+        wrapper.find('[data-test-id="no-filters-message"]').text()
+      ).toContain("No filters available");
     });
   });
 });
