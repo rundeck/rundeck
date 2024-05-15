@@ -1,12 +1,14 @@
 package org.rundeck.app.data.providers
 
 import grails.testing.gorm.DataTest
+import org.springframework.context.MessageSource
 import rundeck.CommandExec
 import rundeck.ExecReport
 import rundeck.Execution
 import rundeck.JobExec
 import rundeck.PluginStep
 import rundeck.Workflow
+import rundeck.data.report.SaveReportRequestImpl
 import spock.lang.Specification
 import testhelper.TestDomainFactory
 
@@ -17,15 +19,16 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
 
     def setupSpec() {
         mockDomains(Execution, ExecReport, Workflow, CommandExec, PluginStep, JobExec)
+
     }
 
-    def "CreateReportFromExecutionId"() {
+    def "CreateReportFromExecution"() {
         given:
         String uuid = UUID.randomUUID().toString()
         Execution e = TestDomainFactory.createExecution(uuid: uuid, status: 'succeeded', dateCompleted: new Date())
 
         when:
-        def actual = provider.createReportFromExecution(e.id)
+        def actual = provider.saveReport(e.toSaveReportRequest())
         def created = provider.get(actual.report.id)
 
         then:
@@ -34,31 +37,35 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
         created
     }
 
-    def "CreateReportFromExecutionUuid"() {
+    def "CreateReportFromWithEmptyRequestShouldReturnError"() {
+        when:
+
+        provider.messageSource = Mock(MessageSource) {
+            getMessage(_,_) >> "Error saving report"
+        }
+
+        def response = provider.saveReport(new SaveReportRequestImpl())
+
+        then:
+        !response.isSaved
+        response.errors != null
+
+    }
+
+    def "ShouldDeleteExecReportsByExecutionUuid"() {
         given:
         String uuid = UUID.randomUUID().toString()
         Execution e = TestDomainFactory.createExecution(uuid: uuid, status: 'succeeded', dateCompleted: new Date())
+        def report = provider.saveReport(e.toSaveReportRequest())
 
         when:
-        def actual = provider.createReportFromExecution(e.uuid)
-        def created = provider.get(actual.report.id)
+        def created = provider.get(report.report.id)
+        provider.deleteAllByExecutionUuid(report.report.executionUuid)
+        def deleted = provider.get(report.report.id)
 
         then:
-        actual.isSaved
-        !actual.errors
         created
-    }
+        deleted == null
 
-    def "CreateReportFromExecutionShouldThrowErrorIfExceptionDoesNotExist"() {
-        when:
-        provider.createReportFromExecution(execId)
-
-        then:
-        thrown(EntityNotFoundException)
-
-        where:
-        execId | _
-        -1011L | 'Execution with id -1011 does not exist'
-        "some-uuid" | 'Execution with uuid some-uuid does not exist'
     }
 }

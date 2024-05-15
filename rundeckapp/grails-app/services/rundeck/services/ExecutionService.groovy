@@ -918,7 +918,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     public logExecution(uri,project,user,issuccess,statusString,execId,Date startDate=null, jobExecId=null, jobName=null,
                         jobSummary=null,iscancelled=false,istimedout=false,willretry=false, nodesummary=null,
-                        abortedby=null, succeededNodeList=null, failedNodeList=null, filter=null){
+                        abortedby=null, succeededNodeList=null, failedNodeList=null, filter=null, executionUuid=null, jobUuid=null){
 
         SaveReportRequestImpl saveReportRequest = new SaveReportRequestImpl()
         def internalLog = LoggerFactory.getLogger("ExecutionService")
@@ -930,6 +930,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         if(execId){
             saveReportRequest.executionId=execId
+        }
+        if(executionUuid){
+            saveReportRequest.executionUuid=executionUuid
         }
         if(startDate){
             saveReportRequest.dateStarted=startDate
@@ -961,6 +964,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }else if(iscancelled){
             saveReportRequest.abortedByUser=user
         }
+        if(jobUuid){
+            saveReportRequest.jobUuid = jobUuid
+        }
         saveReportRequest.author=user
         saveReportRequest.title= jobSummary?jobSummary:"Rundeck Job Execution"
 
@@ -981,7 +987,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         saveReportRequest.dateCompleted=new Date()
         def result=reportService.reportExecutionResult(saveReportRequest)
         if(result.error){
-            log.error("Failed to create report: "+result.report.errors.allErrors.collect{it.toString()}).join("; ")
+            log.error("Failed to create report: "+result.errors)
         }
     }
 
@@ -2030,7 +2036,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
             referencedExecutionDataProvider.deleteByExecutionId(e.id)
                 //delete all reports
-            execReportDataProvider.deleteAllByExecutionId(e.id)
+            execReportDataProvider.deleteAllByExecutionUuid(e.uuid)
 
             List<File> files = []
             def execs = []
@@ -3186,10 +3192,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         def jobname="adhoc"
         def jobid=null
+        def jobUuid=null
         def summary= summarizeJob(scheduledExecution, execution)
         if (scheduledExecution) {
             jobname = scheduledExecution.groupPath ? scheduledExecution.generateFullName() : scheduledExecution.jobName
             jobid = scheduledExecution.id
+            jobUuid = scheduledExecution.uuid
         }
         if(execSaved) {
             //summarize node success
@@ -3226,7 +3234,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 execution.abortedby,
                 execution.succeededNodeList,
                 execution.failedNodeList,
-                execution.filter
+                execution.filter,
+                execution.uuid,
+                jobUuid
             )
             logExecutionLog4j(execution, "finish", execution.user)
 
@@ -4450,7 +4460,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         missed.status = 'missed'
         missed.save()
 
-        execReportDataProvider.createReportFromExecution(missed.id)
+        execReportDataProvider.saveReport(missed.toSaveReportRequest())
 
         if(scheduledExecution.notifications) {
             AuthContext authContext = rundeckAuthContextProcessor.

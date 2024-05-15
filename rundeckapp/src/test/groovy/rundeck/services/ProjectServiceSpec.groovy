@@ -1333,7 +1333,6 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                 status: 'true',
                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'exec command')]),
                 scheduledExecution: se
-
             )
             assertNotNull exec.save()
             ExecReport er = ExecReport.fromExec(exec).save()
@@ -2593,6 +2592,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
   <failedNodeList />
   <filterApplied />
   <jobUuid>test-job-uuid</jobUuid>
+  <executionUuid>uuid</executionUuid>
 </report>'''
     /**
      * uses deprecated jcExecId
@@ -2611,6 +2611,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
   <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
   <jcExecId>123</jcExecId>
   <jcJobId>test-job-uuid</jcJobId>
+  <executionUuid>uuid</executionUuid>
   <adhocExecution />
   <adhocScript />
   <abortedByUser />
@@ -2654,6 +2655,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             dateCompleted: new Date(3600000),
             message: 'Report message',
             jobUuid: se.uuid,
+            executionUuid: 'uuid'
             )
         assertNotNull exec.save()
 
@@ -2749,6 +2751,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             dateStarted: new Date(0),
             dateCompleted: new Date(3600000),
             message: 'Report message',
+            executionUuid: 'uuid'
             )
         assertNotNull exec.save()
 
