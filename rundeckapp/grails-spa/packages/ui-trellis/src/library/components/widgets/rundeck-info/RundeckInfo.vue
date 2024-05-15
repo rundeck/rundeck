@@ -7,22 +7,24 @@
           <PagerdutyLogo v-else />
         </a>
       </div>
-      <div v-if="version && appInfo" class="rundeck-info-widget__header">
-        <RundeckVersion
-          :logo="false"
-          :title="appInfo.title"
-          :logocss="appInfo.logocss"
-          :number="version.number"
-          :tag="version.tag"
-        />
-      </div>
-      <div v-if="version && version.icon && version.color">
-        <VersionDisplay
-          :text="`${version.name} ${version.color} ${version.icon}`"
-          :icon="version.icon"
-          :color="version.color"
-        />
-      </div>
+      <template v-if="!hideVersion">
+        <div v-if="version && appInfo" class="rundeck-info-widget__header">
+          <RundeckVersion
+            :logo="false"
+            :title="appInfo.title"
+            :logocss="appInfo.logocss"
+            :number="version.number"
+            :tag="version.tag"
+          />
+        </div>
+        <div v-if="version && version.icon && version.color">
+          <VersionDisplay
+            :text="`${version.name} ${version.color} ${version.icon}`"
+            :icon="version.icon"
+            :color="version.color"
+          />
+        </div>
+      </template>
       <div v-if="server">
         <span class="server-display">
           <ServerDisplay
@@ -34,7 +36,7 @@
       </div>
     </div>
     <div
-      v-if="latest"
+      v-if="!hideVersion && latest"
       class="rundeck-info-widget__group"
       style="border-top: solid 1px grey"
     >
@@ -89,6 +91,10 @@ export default defineComponent({
     },
     appInfo: {
       type: Object as PropType<AppInfo>,
+    },
+    hideVersion: {
+      type: Boolean,
+      default: false,
     },
   },
   methods: {

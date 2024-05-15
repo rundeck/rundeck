@@ -31,6 +31,7 @@ const mountRundeckInfo = async (props = {}) => {
         icon: "knight",
         edition: "Community",
       },
+      hideVersion: false,
       ...props,
     },
   });
@@ -107,5 +108,12 @@ describe("RundeckInfo", () => {
     expect(latestReleaseComponent.find("span").text()).toBe("v5.2.0-20240410");
     expect(latestReleaseComponent.props().number).toBe("v5.2.0-20240410");
     expect(latestReleaseComponent.props().tag).toBe("GA");
+  });
+  it("does not render release information when hideVersion is true", async () => {
+    const wrapper = await mountRundeckInfo({ hideVersion: true });
+    const rundeckVersionComponent = wrapper.find('div.rundeck-version-display');
+    const versionDisplayComponent = wrapper.find('span.rundeck-version-icon');
+    expect(rundeckVersionComponent.exists()).toBe(false);
+    expect(versionDisplayComponent.exists()).toBe(false);
   });
 });
