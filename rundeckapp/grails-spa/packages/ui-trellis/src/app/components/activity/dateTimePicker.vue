@@ -5,8 +5,9 @@
       :class="dateClass"
       :clear-btn="false"
       class="bs-date-picker"
+      role="combobox"
     />
-    <time-picker v-model="time" :class="timeClass" />
+    <time-picker v-model="time" :class="timeClass" role="combobox" />
   </div>
 </template>
 <script>
@@ -14,7 +15,20 @@ import { defineComponent } from "vue";
 import moment from "moment";
 
 export default defineComponent({
-  props: ["modelValue", "dateClass", "timeClass"],
+  props: {
+    modelValue: {
+      type: [String, Date],
+      required: true,
+    },
+    dateClass: {
+      type: String,
+      default: "",
+    },
+    timeClass: {
+      type: String,
+      default: "",
+    },
+  },
   emits: ["update:modelValue"],
   data() {
     return {
