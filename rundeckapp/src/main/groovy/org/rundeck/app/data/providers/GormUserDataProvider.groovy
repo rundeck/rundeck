@@ -329,7 +329,9 @@ class GormUserDataProvider implements UserDataProvider, SystemConfigurable{
      * @return The User object corresponding to the provided login name.
      */
     User findUserByLoginCaseSensitivity(String login) {
-        return isLoginNameCaseInsensitiveEnabled() ? User.findByLoginIlike(login) : User.findByLogin(login)
+        return isLoginNameCaseInsensitiveEnabled() ?
+                User.findAllByLoginIlike(login).find(){ user -> user.login.equalsIgnoreCase(login)} :
+                User.findByLogin(login)
     }
 
     @Override
