@@ -24,6 +24,7 @@
       size="xs"
       :class="hasQuery ? 'btn-queried btn-info' : 'btn-default'"
       @click="filterOpen = true"
+      data-test-id="display-button"
     >
       <span v-if="hasQuery" class="query-params-summary">
         <ul class="list-inline">
