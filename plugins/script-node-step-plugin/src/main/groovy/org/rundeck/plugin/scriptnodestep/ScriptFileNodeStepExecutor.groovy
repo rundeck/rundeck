@@ -6,7 +6,6 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionService
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.DefaultScriptFileNodeStepUtils;
 import com.dtolabs.rundeck.core.utils.OptsUtil;
@@ -24,7 +23,7 @@ class ScriptFileNodeStepExecutor {
     private final String adhocLocalString;
     private final boolean expandTokenInScriptFile;
 
-    private final DefaultScriptFileNodeStepUtils scriptUtils = new DefaultScriptFileNodeStepUtils();
+    protected DefaultScriptFileNodeStepUtils scriptUtils = new DefaultScriptFileNodeStepUtils();
 
     ScriptFileNodeStepExecutor(
             String scriptInterpreter,
@@ -97,8 +96,6 @@ class ScriptFileNodeStepExecutor {
                 expandTokens
         );
 
-        if(!nodeExecutorResult.isSuccess()){
-            throw new NodeStepException( nodeExecutorResult.failureMessage, nodeExecutorResult.failureReason, entry.getNodename())
-        }
+        Util.handleFailureResult(nodeExecutorResult, entry)
     }
 }

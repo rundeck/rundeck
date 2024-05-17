@@ -329,16 +329,18 @@ class GormUserDataProvider implements UserDataProvider, SystemConfigurable{
      * @return The User object corresponding to the provided login name.
      */
     User findUserByLoginCaseSensitivity(String login) {
-        return isLoginNameCaseInsensitiveEnabled() ? User.findByLoginIlike(login) : User.findByLogin(login)
+        return isLoginNameCaseInsensitiveEnabled() ?
+                User.findAllByLoginIlike(login).find(){ user -> user.login.equalsIgnoreCase(login)} :
+                User.findByLogin(login)
     }
 
     @Override
     List<SysConfigProp> getSystemConfigProps() {
         return [
                 SystemConfig.builder().with {
-                    key("rundeck."+Features.CASE_INSENSITIVE_USERNAME)
+                     key("rundeck.feature.caseInsensitiveUsername.enabled")
                     .datatype("Boolean")
-                    .label("Enable case insensitive on login name")
+                    .label("Enable case insensitive login name")
                     .defaultValue("false")
                     .category("Custom")
                     .visibility("Advanced")

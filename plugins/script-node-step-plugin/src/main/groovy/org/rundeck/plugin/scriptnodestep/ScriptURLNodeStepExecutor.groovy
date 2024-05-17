@@ -105,9 +105,7 @@ class ScriptURLNodeStepExecutor {
                 expandTokens
         );
 
-        if(!nodeExecutorResult.isSuccess()){
-            throw new NodeStepException( nodeExecutorResult.failureMessage, nodeExecutorResult.failureReason, entry.getNodename())
-        }
+        Util.handleFailureResult(nodeExecutorResult, entry)
     }
 
     private static String hashURL(final String url) {

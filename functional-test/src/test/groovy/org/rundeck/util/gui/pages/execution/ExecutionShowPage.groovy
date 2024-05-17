@@ -46,6 +46,7 @@ class ExecutionShowPage extends BasePage {
     static final By logContentTextOverflowBy = By.cssSelector(".execution-log__content-text.execution-log__content-text--overflow")
     static final By gutterLineNumberBy = By.cssSelector(".gutter.line-number")
     By runAgainLink = By.linkText("Run Again")
+    By executionIdBy = By.cssSelector(".flex-item-1.text-right")
 
     ExecutionShowPage(final SeleniumContext context) {
         super(context)
@@ -251,5 +252,13 @@ class ExecutionShowPage extends BasePage {
 
     def validateStatus(String status) {
         waitForElementAttributeToChange executionStateDisplayLabel, 'data-execstate', status
+    }
+
+    /**
+     * Gets the execution id shown in the UI and removes the "*" from the element text
+     * @return String executionId
+     */
+    String getCurrentExecutionId(){
+        (el executionIdBy).getText().replace("#", "")
     }
 }
