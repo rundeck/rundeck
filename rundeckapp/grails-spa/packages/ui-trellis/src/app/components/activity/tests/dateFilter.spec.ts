@@ -24,7 +24,7 @@ const mountDateFilter = (options: any = {}) => {
         $t: (msg) => msg,
       },
       stubs: {
-        btn: true,
+        // btn: true,
       },
     },
   });
@@ -281,14 +281,36 @@ describe("Unique IDs", () => {
       }
     });
     it("renders glyphicon glyphicon-calendar icon in btn", async () => {
-      wrapper.setData({ enabled: true });
+      const localWrapper = mountDateFilter({
+        props: { modelValue: { enabled: true, datetime: "" } },
+        global: {
+          stubs: {
+            Dropdown: {
+              template: `
+                <div>
+                  <div class="input-group">
+                    <div class="input-group-btn">
+                      <btn class="dropdown-toggle">
+                        <i class="glyphicon glyphicon-calendar"></i>
+                      </btn>
+                    </div>
+                    <input type="text" class="form-control" />
+                  </div>
+                  <slot name="dropdown"></slot>
+                </div>
+              `,
+            },
+          },
+        },
+      });
 
-      await wrapper.vm.$nextTick();
+      await localWrapper.vm.$nextTick();
 
-      const dropdownToggle = wrapper.find(".dropdown-toggle");
+      const dropdownToggle = localWrapper.find(".dropdown-toggle");
       expect(dropdownToggle.exists()).toBe(true);
+      console.log(localWrapper.html());
 
-      const glyphiconCalendar = wrapper.find(".glyphicon-calendar");
+      const glyphiconCalendar = localWrapper.find(".glyphicon-calendar");
       expect(glyphiconCalendar.exists()).toBe(true);
     });
   });
