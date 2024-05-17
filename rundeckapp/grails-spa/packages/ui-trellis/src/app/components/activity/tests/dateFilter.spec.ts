@@ -1,10 +1,10 @@
 import { mount } from "@vue/test-utils";
 import dateFilter from "../dateFilter.vue";
 import _ from "lodash";
-
+import DateTimePicker from "../dateTimePicker.vue";
 let idCounter = 0;
 jest.spyOn(_, "uniqueId").mockImplementation(() => `uniqueId_${idCounter++}`);
-jest.mock("../dateTimePicker", () => ({
+jest.mock("../dateTimePicker.vue", () => ({
   __esModule: true,
   default: {
     template: '<div id="DateTimePicker" />',
@@ -34,7 +34,10 @@ const mountDateFilter = (options: MountOptions = {}) => {
       default: options.slots?.default || "slotContent",
     },
     global: {
-      stubs: options.global?.stubs,
+      stubs: {
+        DateTimePicker,
+        ...options.global?.stubs,
+      },
       mocks: {
         $t: (msg) => msg,
         ...options.global?.mocks,
@@ -108,12 +111,12 @@ describe("DateFilter", () => {
       expect(findDropdown().exists()).toBe(true);
     });
     it("renders DateTimePicker when dropdown is enabled", async () => {
-      wrapper = mount(dateFilter, {
+      wrapper = mountDateFilter({
         props: {
           modelValue: { enabled: true, datetime: "" },
         },
         global: {
-          components: {
+          stubs: {
             DateTimePicker: {
               template: '<div id="DateTimePicker" />',
             },
@@ -121,9 +124,13 @@ describe("DateFilter", () => {
         },
       });
       await wrapper.vm.$nextTick();
+      await wrapper.vm.$nextTick();
+      console.log(wrapper.html()); // Added logging
       const dateTimePicker = wrapper.find("#DateTimePicker");
+      console.log("Is DateTimePicker found:", dateTimePicker.exists());
       expect(dateTimePicker.exists()).toBe(true);
     });
+
     it("renders provided slot content in label", async () => {
       const slotContent = "Provided slot content";
       wrapper = mountDateFilter({ slots: { default: slotContent } });
@@ -280,7 +287,7 @@ describe("DateFilter", () => {
     const firstInstance = mountDateFilter();
     const secondInstance = mountDateFilter();
     expect((firstInstance.vm as any).uid).not.toBe(
-      (secondInstance.vm as any).uid
+      (secondInstance.vm as any).uid,
     );
   });
   it("enabled changes when checkbox is clicked", async () => {

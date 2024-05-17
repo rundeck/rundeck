@@ -52,6 +52,7 @@ export default defineComponent({
   watch: {
     enabled: {
       handler(newVal, oldVal) {
+        console.log("enabled changed", this.enabled);
         this.$emit("update:modelValue", {
           enabled: this.enabled,
           datetime: this.datetime,
@@ -60,6 +61,7 @@ export default defineComponent({
     },
     datetime: {
       handler(newVal, oldVal) {
+        console.log("datetime changed", newVal);
         this.$emit("update:modelValue", {
           enabled: this.enabled,
           datetime: this.datetime,
@@ -67,6 +69,7 @@ export default defineComponent({
       },
     },
     modelValue() {
+      console.log("modelValue changed", this.modelValue);
       this.enabled = this.modelValue.enabled;
       this.datetime = this.modelValue.datetime;
     },
