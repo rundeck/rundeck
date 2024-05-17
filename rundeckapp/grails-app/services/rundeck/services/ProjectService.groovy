@@ -79,6 +79,7 @@ import rundeck.Execution
 import rundeck.JobFileRecord
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
+import rundeck.data.util.ExecReportUtil
 import rundeck.services.asyncimport.AsyncImportEvents
 import rundeck.services.asyncimport.AsyncImportException
 import rundeck.services.asyncimport.AsyncImportMilestone
@@ -1674,7 +1675,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 log.error("Execution not found with id: ${eid}")
                 return
             }
-            def saveReportResponse = execReportDataProvider.saveReport(execution.toSaveReportRequest())
+            def saveReportResponse = execReportDataProvider.saveReport(ExecReportUtil.buildSaveReportRequest(execution, execution.scheduledExecution))
             if (!saveReportResponse.isSaved) {
                 log.error("Unable to save generated report: ${saveReportResponse.errors} (execution ${eid})")
                 return
