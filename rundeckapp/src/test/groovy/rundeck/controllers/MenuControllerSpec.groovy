@@ -113,6 +113,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService){
             _ * featurePresent(Features.LEGACY_UI) >> true
         }
+        controller.menuService = Mock(MenuService)
 
         defineBeans {
             configurationService(ConfigurationService) {
@@ -133,6 +134,25 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         then:
             model!=null
             model.projectNames==null
+            model.isFirstRun==false
+    }
+    def "home with first run true"(){
+        given:
+            controller.configurationService=Mock(ConfigurationService)
+            controller.frameworkService=Mock(FrameworkService){
+                getRundeckFramework()>>Mock(IFramework)
+            }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+            controller.featureService=Mock(FeatureService)
+            controller.menuService=Mock(MenuService){
+                1 * shouldShowFirstRunInfo()>>true
+            }
+        when:
+            def result = controller.home()
+        then:
+            model!=null
+            model.projectNames==null
+            model.isFirstRun==true
     }
     def "api job detail json"() {
         given:
