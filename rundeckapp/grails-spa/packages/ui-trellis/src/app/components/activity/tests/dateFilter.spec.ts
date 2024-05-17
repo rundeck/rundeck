@@ -127,7 +127,6 @@ describe("DateFilter", () => {
         },
       });
 
-      console.log(wrapper.html());
       const dropdown = wrapper.find(".dropdown");
       await dropdown.trigger("click");
       await wrapper.vm.$nextTick();
