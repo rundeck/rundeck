@@ -1,7 +1,7 @@
 import { mount } from "@vue/test-utils";
 import dateFilter from "../dateFilter.vue";
 import _ from "lodash";
-import DateTimePicker from "../dateTimePicker.vue";
+
 let idCounter = 0;
 jest.spyOn(_, "uniqueId").mockImplementation(() => `uniqueId_${idCounter++}`);
 jest.mock("../dateTimePicker.vue", () => ({
@@ -35,7 +35,6 @@ const mountDateFilter = (options: MountOptions = {}) => {
     },
     global: {
       stubs: {
-        DateTimePicker,
         ...options.global?.stubs,
       },
       mocks: {
