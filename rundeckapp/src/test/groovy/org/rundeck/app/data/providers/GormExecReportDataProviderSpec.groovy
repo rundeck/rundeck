@@ -9,6 +9,7 @@ import rundeck.JobExec
 import rundeck.PluginStep
 import rundeck.Workflow
 import rundeck.data.report.SaveReportRequestImpl
+import rundeck.data.util.ExecReportUtil
 import spock.lang.Specification
 import testhelper.TestDomainFactory
 
@@ -28,7 +29,7 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
         Execution e = TestDomainFactory.createExecution(uuid: uuid, status: 'succeeded', dateCompleted: new Date())
 
         when:
-        def actual = provider.saveReport(e.toSaveReportRequest())
+        def actual = provider.saveReport(ExecReportUtil.buildSaveReportRequest(e))
         def created = provider.get(actual.report.id)
 
         then:
@@ -56,7 +57,7 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
         given:
         String uuid = UUID.randomUUID().toString()
         Execution e = TestDomainFactory.createExecution(uuid: uuid, status: 'succeeded', dateCompleted: new Date())
-        def report = provider.saveReport(e.toSaveReportRequest())
+        def report = provider.saveReport(ExecReportUtil.buildSaveReportRequest(e))
 
         when:
         def created = provider.get(report.report.id)

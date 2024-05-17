@@ -27,13 +27,10 @@ import com.fasterxml.jackson.core.JsonParseException
 import grails.gorm.DetachedCriteria
 import org.rundeck.app.data.model.v1.execution.ExecutionData
 import org.rundeck.app.data.model.v1.execution.ExecutionDataSummary
-import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
 import rundeck.data.execution.RdExecutionDataSummary
 import rundeck.data.job.RdNodeConfig
-import rundeck.data.report.SaveReportRequestImpl
 import rundeck.data.validation.shared.SharedExecutionConstraints
 import rundeck.data.validation.shared.SharedNodeConfigConstraints
-import rundeck.data.validation.shared.SharedProjectNameConstraints
 import rundeck.data.validation.shared.SharedServerNodeUuidConstraints
 import rundeck.services.ExecutionService
 import rundeck.services.execution.ExecutionReferenceImpl
@@ -567,51 +564,6 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
                 serverNodeUUID: this.serverNodeUUID
         )
     }
-
-    SaveReportRequest toSaveReportRequest() {
-        def failedCount = failedNodeList ? failedNodeList.split(',').size() : 0
-        def successCount = succeededNodeList ? succeededNodeList.split(',').size() : 0;
-        def failedList = failedNodeList ? failedNodeList : ''
-        def succeededList = succeededNodeList ? succeededNodeList : '';
-        def totalCount = failedCount + successCount;
-        def adhocScript = null
-        if (
-                null == scheduledExecution
-                        && workflow.commands
-                        && workflow.commands.size() == 1
-                        && workflow.commands[0] instanceof CommandExec
-        ) {
-            adhocScript = workflow.commands[0].adhocRemoteString
-        }
-        def summary = "[${workflow.commands ? workflow.commands.size() : 0} steps]"
-        def issuccess = statusSucceeded()
-        def iscancelled = cancelled
-        def istimedout = timedOut
-        def ismissed = status == "missed"
-        def status = issuccess ? "succeed" : iscancelled ? "cancel" : willRetry ? "retry" : istimedout ?
-                "timedout" : ismissed ? "missed" : "fail"
-        return new SaveReportRequestImpl(
-                executionId: id,
-                jobId: scheduledExecution?.id,
-                adhocExecution: null == scheduledExecution,
-                adhocScript: adhocScript,
-                abortedByUser: iscancelled ? abortedby ?: user : null,
-                node: "${successCount}/${failedCount}/${totalCount}",
-                title: adhocScript ? adhocScript : summary,
-                status: status,
-                project: project,
-                reportId: scheduledExecution ? (scheduledExecution.groupPath ? scheduledExecution.generateFullName() : scheduledExecution.jobName) : 'adhoc',
-                author: user,
-                message: (issuccess ? 'Job completed successfully' : iscancelled ? ('Job killed by: ' + (abortedby ?: user)) : ismissed ? "Job missed execution at: ${dateStarted}" : 'Job failed'),
-                dateStarted: dateStarted,
-                dateCompleted: dateCompleted,
-                failedNodeList: failedList,
-                succeededNodeList: succeededList,
-                filterApplied: filter,
-                jobUuid: scheduledExecution?.uuid,
-                executionUuid: uuid)
-    }
-
 
 }
 

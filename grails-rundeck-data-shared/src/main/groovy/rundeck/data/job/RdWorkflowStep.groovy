@@ -40,6 +40,6 @@ class RdWorkflowStep implements WorkflowStepData, PluginProviderConfiguration, V
     @Override
     @JsonIgnore
     String summarize() {
-        return "implement summarization"
+        return "Plugin["+ pluginType + ', nodeStep: '+nodeStep+']'
     }
 }

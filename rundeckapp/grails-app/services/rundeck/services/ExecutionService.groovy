@@ -19,6 +19,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
+import rundeck.data.util.ExecReportUtil
 import rundeck.support.filters.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.app.support.ExecutionQuery
@@ -4460,7 +4461,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         missed.status = 'missed'
         missed.save()
 
-        execReportDataProvider.saveReport(missed.toSaveReportRequest())
+        execReportDataProvider.saveReport(ExecReportUtil.buildSaveReportRequest(missed, scheduledExecution))
 
         if(scheduledExecution.notifications) {
             AuthContext authContext = rundeckAuthContextProcessor.
