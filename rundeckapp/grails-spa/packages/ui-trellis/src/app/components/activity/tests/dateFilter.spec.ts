@@ -119,17 +119,21 @@ describe("DateFilter", () => {
             DateTimePicker: {
               template: '<div id="DateTimePicker" />',
             },
+            Dropdown: {
+              template:
+                '<div class="dropdown"><slot name="dropdown"></slot></div>',
+            },
           },
         },
       });
+
+      console.log(wrapper.html());
+      const dropdown = wrapper.find(".dropdown");
+      await dropdown.trigger("click");
       await wrapper.vm.$nextTick();
-      await wrapper.vm.$nextTick();
-      console.log(wrapper.html()); // Added logging
-      const dateTimePicker = wrapper.find("#DateTimePicker");
-      console.log("Is DateTimePicker found:", dateTimePicker.exists());
+      const dateTimePicker = wrapper.get("#DateTimePicker");
       expect(dateTimePicker.exists()).toBe(true);
     });
-
     it("renders provided slot content in label", async () => {
       const slotContent = "Provided slot content";
       wrapper = mountDateFilter({ slots: { default: slotContent } });
