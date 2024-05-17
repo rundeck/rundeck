@@ -136,7 +136,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             model.projectNames==null
             model.isFirstRun==false
     }
-    def "home without first run"(){
+    def "home with first run true"(){
         given:
             controller.configurationService=Mock(ConfigurationService)
             controller.frameworkService=Mock(FrameworkService){
