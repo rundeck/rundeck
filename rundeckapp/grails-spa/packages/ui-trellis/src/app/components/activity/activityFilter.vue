@@ -207,11 +207,9 @@
               class="container-fluid"
               data-test-id="date-filter-container"
             >
-              <date-filter
-                v-model="df.filter"
-                :data-testid="'date-filter-' + df.name"
-                >{{ $t("jobquery.title." + df.name) }}</date-filter
-              >
+              <date-filter v-model="df.filter">{{
+                $t("jobquery.title." + df.name)
+              }}</date-filter>
             </div>
           </div>
         </div>
@@ -454,7 +452,7 @@ export default defineComponent({
         this.query.recentFilter !== this.period.params.recentFilter
       ) {
         const p = this.periods.find(
-          (v) => v.params.recentFilter === this.query.recentFilter,
+          (v) => v.params.recentFilter === this.query.recentFilter
         );
         if (p && p !== this.period) {
           this.period = p;
