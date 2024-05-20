@@ -3,32 +3,47 @@
     <dropdown
       v-if="query.recentFilter !== '-' && displayOpts.showRecentFilter"
       style="vertical-align: inherit"
+      data-test-id="dropdown"
     >
-      <span class="dropdown-toggle text-info cursor-pointer mr-2">
+      <span
+        class="dropdown-toggle text-info cursor-pointer mr-2"
+        data-test-id="dropdown-toggle"
+      >
         {{ $t(`period.label.${period.name}`) }}
         <span class="caret"></span>
       </span>
       <template #dropdown>
-        <li v-for="perobj in periods" :key="perobj.name">
-          <a role="button" @click="changePeriod(perobj)">
+        <li
+          v-for="perobj in periods"
+          :key="perobj.name"
+          data-test-id="dropdown-item"
+        >
+          <a
+            role="button"
+            @click="changePeriod(perobj)"
+            data-test-id="period-option"
+          >
             {{ $t(`period.label.${perobj.name}`) }}
             <span v-if="period.name === perobj.name">√</span>
           </a>
         </li>
       </template>
     </dropdown>
-
     <btn
       v-if="displayOpts.showFilter"
       v-tooltip="hasQuery ? $t('Click to edit Search Query') : ''"
       size="xs"
       :class="hasQuery ? 'btn-queried btn-info' : 'btn-default'"
       @click="filterOpen = true"
-      data-test-id="display-button"
+      data-test-id="filter-button"
     >
       <span v-if="hasQuery" class="query-params-summary">
         <ul class="list-inline">
-          <li v-for="qname in queryParamsList" :key="qname">
+          <li
+            v-for="qname in queryParamsList"
+            :key="qname"
+            data-test-id="query-param"
+          >
             {{ $t(`jobquery.title.${qname}`) }}:
             <code class="queryval">{{ query[qname] }}</code>
           </li>
@@ -36,15 +51,14 @@
       </span>
       <span v-else>{{ $t("search.ellipsis") }}</span>
     </btn>
-
     <saved-filters
       v-if="modelValue && displayOpts.showSavedFilters"
       :query="modelValue"
       :has-query="hasQuery"
       :event-bus="eventBus"
       @select_filter="selectFilter($event)"
+      data-test-id="saved-filters"
     ></saved-filters>
-
     <modal
       id="activityFilter"
       v-model="filterOpen"
@@ -52,6 +66,7 @@
       size="lg"
       append-to-body
       @hide="closing"
+      data-test-id="modal"
     >
       <div>
         <div class="base-filters">
@@ -68,9 +83,9 @@
                   autofocus="true"
                   class="form-control"
                   :placeholder="$t('jobquery.title.jobFilter')"
+                  data-test-id="job-filter"
                 />
               </div>
-
               <div v-if="query.jobIdFilter" class="form-group">
                 <label for="jobIdFilter" class="sr-only">
                   {{ $t("jobquery.title.jobIdFilter") }}
@@ -81,6 +96,7 @@
                   name="jobIdFilter"
                   class="form-control"
                   :placeholder="$t('jobquery.title.jobIdFilter')"
+                  data-test-id="job-id-filter"
                 />
               </div>
             </div>
@@ -95,6 +111,7 @@
                   name="userFilter"
                   class="form-control"
                   :placeholder="$t('jobquery.title.userFilter')"
+                  data-test-id="user-filter"
                 />
               </div>
             </div>
@@ -109,6 +126,7 @@
                   name="execnodeFilter"
                   class="form-control"
                   :placeholder="$t('jobquery.title.filter')"
+                  data-test-id="execnode-filter"
                 />
               </div>
             </div>
@@ -125,6 +143,7 @@
                   name="titleFilter"
                   class="form-control"
                   :placeholder="$t('jobquery.title.titleFilter')"
+                  data-test-id="title-filter"
                 />
               </div>
             </div>
@@ -139,6 +158,7 @@
                   noSelection="['': 'Any']"
                   valueMessagePrefix="status.label"
                   class="form-control"
+                  data-test-id="stat-filter"
                 >
                   <option value>Any</option>
                   <option>succeed</option>
@@ -158,6 +178,7 @@
                     v-model="query.recentFilter"
                     name="recentFilter"
                     class="form-control"
+                    data-test-id="recent-filter"
                   >
                     <option value>Any Time</option>
                     <option
@@ -177,16 +198,20 @@
         <div
           v-if="query.recentFilter === '-'"
           class="date-filters panel panel-default"
+          data-test-id="date-filters"
         >
           <div class="panel-body form-horizontal">
             <div
               v-for="df in DateFilters"
               :key="df.name"
               class="container-fluid"
+              data-test-id="date-filter-container"
             >
-              <date-filter v-model="df.filter">{{
-                $t("jobquery.title." + df.name)
-              }}</date-filter>
+              <date-filter
+                v-model="df.filter"
+                :data-testid="'date-filter-' + df.name"
+                >{{ $t("jobquery.title." + df.name) }}</date-filter
+              >
             </div>
           </div>
         </div>
@@ -209,7 +234,6 @@ import { defineComponent } from "vue";
 import DateTimePicker from "./dateTimePicker.vue";
 import DateFilter from "./dateFilter.vue";
 import SavedFilters from "./savedFilters.vue";
-
 export default defineComponent({
   name: "ActivityFilter",
   components: {
@@ -217,7 +241,20 @@ export default defineComponent({
     DateFilter,
     SavedFilters,
   },
-  props: ["eventBus", "modelValue", "eventBus", "opts"],
+  props: {
+    eventBus: {
+      type: Object,
+      required: true,
+    },
+    modelValue: {
+      type: Object,
+      required: true,
+    },
+    opts: {
+      type: Object,
+      required: true,
+    },
+  },
   emit: ["update:modelValue"],
   data() {
     return {
@@ -253,7 +290,6 @@ export default defineComponent({
             datetime: "",
           },
         },
-
         {
           name: "startbeforeFilter",
           filter: {
@@ -298,7 +334,6 @@ export default defineComponent({
         "1m": "1 Month",
       },
       didSearch: false,
-
       period: { name: "All", params: {} },
       periods: [
         { name: "All", params: { recentFilter: "" } },
@@ -327,7 +362,7 @@ export default defineComponent({
       deep: true,
     },
     DateFilters: {
-      handler(newValue, oldVale) {
+      handler(newValue, oldValue) {
         newValue.forEach((element) => {
           if (element.filter.enabled) {
             this.query["do" + element.name] = "true";
@@ -348,7 +383,6 @@ export default defineComponent({
   methods: {
     checkQueryIsPresent() {
       const isquery = this.QueryNames.findIndex((q) => this.query[q]) >= 0;
-
       this.hasQuery = isquery;
     },
     updated() {
@@ -371,7 +405,6 @@ export default defineComponent({
       if (filter.query.recentFilter) {
         this.query.recentFilter = filter.query.recentFilter;
       }
-
       this.query.filterName = filter.filterName;
       this.checkQueryIsPresent();
       this.updateSelectedPeriod();
