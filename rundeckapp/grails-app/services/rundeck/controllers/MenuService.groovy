@@ -1,12 +1,20 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.VersionConstants
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
+import grails.core.GrailsApplication
+import groovy.transform.CompileStatic
+import org.rundeck.app.config.ConfigService
+import org.rundeck.app.config.SysConfigProp
+import org.rundeck.app.config.SystemConfig
+import org.rundeck.app.config.SystemConfigurable
 import org.rundeck.core.projects.ProjectConfigurable
+import rundeck.services.FrameworkService
 
-
-class MenuService implements ProjectConfigurable {
+@CompileStatic
+class MenuService implements ProjectConfigurable, SystemConfigurable {
     static transactional = false
     public static final List<Property> ProjectConfigProperties = [
             PropertyBuilder.builder().with {
@@ -44,6 +52,25 @@ If enabled, and a command's log filter specifies the `no-strip` meta tag, the ou
             'allowUnsanitized': CONF_PROJ_ALLOW_UNSANITIZED
     ]
 
+    static final SysConfigProp SYS_CONFIG_DETECT_FIRST_RUN = SystemConfig.builder().with {
+        key 'rundeck.startup.detectFirstRun'
+        authRequired 'ops_admin'
+        category 'Startup'
+        datatype "Boolean"
+        label "Detect First Run Version Splash"
+        description 'Detect the first run and show the first run version splash info.'
+        defaultValue "true"
+        category "Custom"
+        visibility "Advanced"
+        strata "default"
+        required false
+        restart false
+        build()
+    }
+    ConfigService configurationService
+    FrameworkService frameworkService
+    GrailsApplication grailsApplication
+
     @Override
     Map<String, String> getCategories() {
         [readmeDisplay: "gui", motdDisplay: 'gui', allowUnsanitized: 'gui']
@@ -57,6 +84,35 @@ If enabled, and a command's log filter specifies the `no-strip` meta tag, the ou
     @Override
     Map<String, String> getPropertiesMapping() {
         ConfigPropertiesMapping
+    }
+
+    @Override
+    List<SysConfigProp> getSystemConfigProps() {
+        [
+            SYS_CONFIG_DETECT_FIRST_RUN
+        ]
+    }
+
+    /**
+     *
+     * @return true if the "First run" splash info should be displayed
+     */
+    boolean shouldShowFirstRunInfo(){
+        boolean isFirstRun = false
+        if(configurationService.getBoolean(MenuService.SYS_CONFIG_DETECT_FIRST_RUN, true) &&
+           frameworkService.rundeckFramework.getPropertyLookup().hasProperty('framework.var.dir')) {
+            def vardir = frameworkService.rundeckFramework.getPropertyLookup().getProperty('framework.var.dir')
+            String buildIdent = VersionConstants.VERSION
+            def vers = buildIdent.replaceAll('\\s+\\(.+\\)$','')
+            def file = new File(vardir, ".first-run-${vers}")
+            if(!file.exists()){
+                isFirstRun=true
+                file.withWriter("UTF-8"){out->
+                    out.write('#'+(new Date().toString()))
+                }
+            }
+        }
+        return isFirstRun
     }
 
     /**

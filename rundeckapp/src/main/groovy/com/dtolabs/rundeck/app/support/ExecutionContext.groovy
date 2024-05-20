@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.app.support
 
 import grails.gorm.dirty.checking.DirtyCheck
+import rundeck.support.filters.BaseNodeFilters
 
 /**
  * ExecutionContext

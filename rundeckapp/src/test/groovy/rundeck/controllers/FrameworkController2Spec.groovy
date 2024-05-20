@@ -16,7 +16,7 @@
 
 package rundeck.controllers
 
-import com.dtolabs.rundeck.app.support.ExtNodeFilters
+import rundeck.support.filters.ExtNodeFilters
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.config.Features
@@ -33,7 +33,6 @@ import grails.testing.web.controllers.ControllerUnitTest
 import groovy.mock.interceptor.MockFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.core.auth.AuthConstants
 import rundeck.*
 import rundeck.services.*

@@ -1875,25 +1875,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     def home() {
         //first-run html info
-        def isFirstRun=false
-
-        if (configurationService.getBoolean('startup.alwaysFirstRun', false)) {
-            isFirstRun=true
-        }else{
-            if(configurationService.getBoolean("startup.detectFirstRun",true) &&
-                    frameworkService.rundeckFramework.hasProperty('framework.var.dir')) {
-                def vardir = frameworkService.rundeckFramework.getProperty('framework.var.dir')
-                String buildIdent = grailsApplication.metadata.getProperty('build.ident', String).get()
-                def vers = buildIdent.replaceAll('\\s+\\(.+\\)$','')
-                def file = new File(vardir, ".first-run-${vers}")
-                if(!file.exists()){
-                    isFirstRun=true
-                    file.withWriter("UTF-8"){out->
-                        out.write('#'+(new Date().toString()))
-                    }
-                }
-            }
-        }
+        def isFirstRun = menuService.shouldShowFirstRunInfo()
 
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
