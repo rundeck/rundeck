@@ -38,11 +38,16 @@
         v-model="query"
         :event-bus="eventBus"
         :opts="filterOpts"
+        data-test-id="activity-list-filter-button"
       ></activity-filter>
 
       <div class="pull-right">
-        <span v-if="runningOpts.allowAutoRefresh" class="pr-2">
-          <input id="auto-refresh" v-model="autorefresh" type="checkbox" />
+        <span
+          v-if="runningOpts.allowAutoRefresh"
+          class="pr-2"
+          
+        >
+          <input id="auto-refresh" v-model="autorefresh" type="checkbox"  />
           <label for="auto-refresh" class="pr-2">{{
             $t("Auto refresh")
           }}</label>
