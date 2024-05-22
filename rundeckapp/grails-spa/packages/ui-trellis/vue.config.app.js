@@ -73,8 +73,8 @@ module.exports = {
     extract:
       process.env.VUE_APP_CSS_EXTRACT === "true"
         ? {
-            filename: "/css/[name].css",
-            chunkFilename: "/css/[name].css",
+            filename: "./css/[name].css",
+            chunkFilename: "./css/[name].css",
           }
         : false,
   },
@@ -105,7 +105,12 @@ module.exports = {
       },
     },
     output: {
-      filename: "[name].js",
+      filename: (asset) => {
+        if (asset.chunk.name.includes("chunk")) {
+          return "js/[name].js";
+        }
+        return "[name].js";
+      },
       library: "rundeckCore",
     },
     devServer: {

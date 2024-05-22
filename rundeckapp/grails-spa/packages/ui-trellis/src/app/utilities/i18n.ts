@@ -6,7 +6,6 @@ import fr_FR from "./locales/fr_FR";
 import ja_JP from "./locales/ja_JP";
 import pt_BR from "./locales/pt_BR";
 import zh_CN from "./locales/zh_CN";
-import uivLang from "../../library/utilities/uivi18n";
 import { createI18n } from "vue-i18n";
 import { mergeDeep } from "./objectUtils";
 
@@ -25,7 +24,6 @@ const initI18n = (options = {}) => {
   const messages = {
     [locale]: Object.assign(
       {},
-      uivLang[locale] || uivLang[lang] || {},
       internationalization[locale] ||
         internationalization[lang] ||
         internationalization["en_US"] ||
