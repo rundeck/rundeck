@@ -34,12 +34,6 @@
     %{-- Core theme styles from ui-trellis --}%
     <asset:stylesheet href="static/css/components/theme.css"/>
 
-    <g:if test="${Environment.isDevelopmentEnvironmentAvailable()}">
-        <asset:javascript src="vendor/vue.js"/>
-    </g:if>
-    <g:else>
-        <asset:javascript src="vendor/vue.min.js"/>
-    </g:else>
     <asset:javascript src="static/components/server-identity.js" asset-defer="true" />
 
     <asset:javascript src="static/js/chunk-common.js"/>

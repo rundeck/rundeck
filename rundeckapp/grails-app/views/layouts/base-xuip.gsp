@@ -21,12 +21,6 @@
 <!--[if IE 9 ]>    <html class="ie9"> <![endif]-->
 <!--[if (gt IE 9)|!(IE)]><!--> <html lang="${response.locale.language}"><!--<![endif]-->
 <head>
-    <g:if test="${Environment.isDevelopmentEnvironmentAvailable()}">
-        <asset:javascript src="vendor/vue.js"/>
-    </g:if>
-    <g:else>
-        <asset:javascript src="vendor/vue.min.js"/>
-    </g:else>
     <title>
       <g:layoutTitle default="${g.appTitle()}"/>
     </title>
