@@ -48,7 +48,10 @@
             tabindex="0"
           >
             <input
-              :checked="selectedProjects.includes(item.name)"
+              :checked="
+                selectedProjects.includes(item.name) ||
+                (item.name === '_all' && allProjectsAreSelected)
+              "
               type="checkbox"
               :value="item.name"
               class="vue-multiselect-checkbox"
@@ -160,6 +163,7 @@ export default defineComponent({
     return {
       projectStore: window._rundeck.rootStore.projects,
       searchTerm: "",
+      allProjectsAreSelected: false,
     };
   },
   computed: {
@@ -217,10 +221,21 @@ export default defineComponent({
     if (this.projectStore.projects.length) {
       /** May be necessary for virtual scroller to update */
       this.proxy?.$forceUpdate();
+
+      if (this.mode === "multi") {
+        this.allProjectsAreSelected =
+          this.selectedProjects.length === this.allProjectNames.length;
+      }
     }
     nextTick().then(() => {
       (<HTMLElement>this.$refs["search"]).focus();
     });
+  },
+  watch: {
+    selectedProjects(newVal) {
+      this.allProjectsAreSelected =
+        newVal.length === this.allProjectNames.length;
+    },
   },
 });
 </script>
