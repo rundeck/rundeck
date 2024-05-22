@@ -1,5 +1,6 @@
 package org.rundeck.tests.functional.selenium.jobs
 
+import org.openqa.selenium.By
 import org.openqa.selenium.Keys
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
@@ -7,7 +8,7 @@ import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobListPage
 import org.rundeck.util.gui.pages.jobs.JobTab
 import org.rundeck.util.gui.pages.login.LoginPage
-import org.rundeck.util.gui.pages.project.ActivityPage
+import org.rundeck.util.gui.pages.activity.ActivityPage
 
 @SeleniumCoreTest
 class ScheduledJobSpec extends SeleniumBase{
@@ -43,6 +44,7 @@ class ScheduledJobSpec extends SeleniumBase{
         jobCreatePage.getSchedulesCrontab().click()
         jobCreatePage.getSchedulesCrontabStringInput().sendKeys(Keys.chord(Keys.CONTROL, "a"))
         jobCreatePage.getSchedulesCrontabStringInput().sendKeys(Keys.BACK_SPACE)
+        jobCreatePage.driver.findElement(By.name("crontabString"))
         jobCreatePage.getSchedulesCrontabStringInput().sendKeys("*/5 * * ? * * *")
         jobCreatePage.clickTimeZone() //This is to lose focus in crontab string
         jobCreatePage.getCreateJobButton().click()
