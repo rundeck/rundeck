@@ -23,7 +23,7 @@ class KillHandlerExecutionLifecyclePlugin implements ExecutionLifecyclePlugin {
     static final String PROVIDER_NAME = 'killhandler'
     static final String PLUGIN_TITLE = "Kill tracked processes after execution"
     static final String PLUGIN_DESC = '''Kill all processes collected by the 'Capture Process IDs' log filter\n\n
-This operation will only affect nodes with 'unix' as osFamily, and will use the 'kill' and 'pkill' commands which must be available at the node.
+This operation will use the 'kill' and 'pkill' for Unix and 'taskkill' for Windows commands. These commands must be available at the node.
 '''
 
     private static final String OSFAMILY_WINDOWS = "windows"
@@ -32,7 +32,7 @@ This operation will only affect nodes with 'unix' as osFamily, and will use the 
     KillHandlerProcessTrackingService processTrackingService
 
     @PluginProperty(
-            title = "Kill Children",
+            title = "Kill spawned processes",
             description = "Also kill processes whose process SID matches the tracked PIDs"
     )
     boolean killChilds = true
