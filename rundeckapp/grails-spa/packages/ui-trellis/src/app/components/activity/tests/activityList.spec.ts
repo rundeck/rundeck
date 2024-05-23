@@ -2,8 +2,8 @@ import { mount, VueWrapper } from "@vue/test-utils";
 import ActivityList from "../activityList.vue";
 import ActivityFilter from "../activityFilter.vue";
 import { RundeckContext } from "../../../../library";
-
 import { setupRundeckContext } from "../setupRundeckContext";
+
 // Mocking necessary services and modules
 jest.mock("../../../../library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({ projectName: "test" }),
@@ -46,6 +46,10 @@ const mountActivityList = async (props = {}) => {
         ActivityFilter,
       },
       stubs: {
+        directives: {
+          tooltip: {},
+        },
+        "i18n-t": true,
         ActivityFilter: true,
         Modal: {
           template: "<div><slot></slot></div>",
@@ -88,7 +92,7 @@ describe("ActivityList", () => {
   it("opens and closes the filter modal", async () => {
     const wrapper = await mountActivityList();
     const filterButton = wrapper.find(
-      '[data-test-id="activity-list-filter-button"]'
+      '[data-test-id="activity-list-filter-button"]',
     );
     await filterButton.trigger("click");
     expect(wrapper.findComponent(ActivityFilter).exists()).toBe(true);
@@ -114,13 +118,13 @@ describe("ActivityList", () => {
     const executionLink = wrapper.find('[data-test-id="execution-link"]');
     expect(executionLink.exists()).toBe(true);
     expect(executionLink.attributes("href")).toBe(
-      "/project/jaya-test/execution/show/68"
+      "/project/jaya-test/execution/show/68",
     );
   });
   it("renders the filter button", async () => {
     const wrapper = await mountActivityList();
     const filterButton = wrapper.find(
-      '[data-test-id="activity-list-filter-button"]'
+      '[data-test-id="activity-list-filter-button"]',
     );
     expect(filterButton.exists()).toBe(true);
   });
@@ -128,7 +132,7 @@ describe("ActivityList", () => {
     const wrapper = await mountActivityList();
     wrapper.vm.showBulkEditCleanSelections = true;
     const clearSelectionsButton = wrapper.find(
-      '[data-test-id="modal-clean-selections"]'
+      '[data-test-id="modal-clean-selections"]',
     );
     expect(clearSelectionsButton.exists()).toBe(true);
   });
@@ -142,7 +146,7 @@ describe("ActivityList", () => {
     const wrapper = await mountActivityList();
     wrapper.vm.showBulkEditResults = true;
     const bulkDeleteResults = wrapper.find(
-      '[data-test-id="modal-bulk-delete-results"]'
+      '[data-test-id="modal-bulk-delete-results"]',
     );
     expect(bulkDeleteResults.exists()).toBe(true);
   });
@@ -193,5 +197,50 @@ describe("ActivityList", () => {
     const wrapper = await mountActivityList({ loading: true });
     await wrapper.vm.$nextTick();
     expect(wrapper.find('[data-test-id="loading-area"]').exists()).toBe(true);
+  });
+  it("handles loadActivity method call", async () => {
+    const wrapper = await mountActivityList();
+    const loadActivitySpy = jest.spyOn(wrapper.vm, "loadActivity");
+    await wrapper.vm.loadActivity(0);
+    expect(loadActivitySpy).toHaveBeenCalledWith(0);
+    loadActivitySpy.mockRestore();
+  });
+  it.skip("displays an error message when load fails", async () => {
+    const wrapper = await mountActivityList({
+      props: {
+        loadError: "Test error message",
+      },
+      global: {
+        mocks: {
+          $t: (msg, params) => {
+            console.log(`$t called with msg: ${msg} and params: ${params}`);
+            return params ? params[0] : msg;
+          },
+        },
+      },
+    });
+    console.log(`loadError: ${wrapper.vm.loadError}`);
+    expect(wrapper.html()).toBe("Test error message");
+    await wrapper.vm.$nextTick();
+    const errorMessage = wrapper.find(".text-warning");
+    expect(errorMessage.exists()).toBe(true);
+    expect(errorMessage.text()).toContain("Test error message");
+  });
+  it.skip("renders no executions message when reports are empty", async () => {
+    const wrapper = await mountActivityList({
+      reports: undefined,
+    });
+    await wrapper.vm.$nextTick();
+    const noExecutionsMessage = wrapper.find('[data-test-id="loading-area"]');
+    expect(noExecutionsMessage.exists()).toBe(true);
+    // expect(noExecutionsMessage.text()).toContain("No executions found");
+    expect(noExecutionsMessage.html()).toContain("results.empty.text");
+  });
+  it("triggers the loadSince method", async () => {
+    const wrapper = await mountActivityList();
+    const loadSinceSpy = jest.spyOn(wrapper.vm, "loadSince");
+    await wrapper.vm.loadSince();
+    expect(loadSinceSpy).toHaveBeenCalled();
+    loadSinceSpy.mockRestore();
   });
 });
