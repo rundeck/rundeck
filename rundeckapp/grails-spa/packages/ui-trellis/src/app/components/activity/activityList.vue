@@ -13,7 +13,7 @@
         <span v-else class="text-muted">
           <i class="fas fa-spinner fa-pulse"></i>
         </span>
-        of
+        {{ $t("pagination.of") }}
       </span>
 
       <a :href="activityHref" class="link-quiet">
@@ -576,7 +576,7 @@
 
 <script lang="ts">
 import axios from "axios";
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
 import moment, { MomentInput } from "moment";
 import OffsetPagination from "../../../library/components/utils/OffsetPagination.vue";
 import ActivityFilter from "./activityFilter.vue";
@@ -588,6 +588,7 @@ import {
 } from "@rundeck/client/dist/lib/models";
 import * as DOMPurify from "dompurify";
 import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
+import { EventBus } from "primevue/utils";
 
 /**
  * Generate a URL
@@ -654,12 +655,12 @@ export default defineComponent({
   },
   props: {
     eventBus: {
-      type: Object,
-      required: true,
+      type: Object as PropType<typeof EventBus>,
+      required: false,
     },
     displayMode: {
-      type: String,
-      required: true,
+      type: String as PropType<string>,
+      required: false,
     },
   },
 
