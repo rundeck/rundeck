@@ -4,8 +4,7 @@ const messages = {
   Delete: "Supprimer",
   Cancel: "Annuler",
   Revert: "Retour arri\u00e8re",
-  jobAverageDurationPlaceholder:
-    "laisser vide pour la dur\u00e9e moyenne du traitement",
+  jobAverageDurationPlaceholder: "laisser vide pour la dur\u00e9e moyenne du traitement",
   resourcesEditor: {
     "Dispatch to Nodes": "Envoyer vers les n\u0153uds",
     Nodes: "N\u0153uds",
@@ -40,7 +39,7 @@ const messages = {
   message_fieldLabel: "Label du champ",
   message_fieldKey: "Cl\u00e9 du champ",
   message_fieldFilter: "Ecrire pour filtrer un champ",
-  message_empty: "Peut être vide",
+  message_empty: "Peut \u00eatre vide",
   message_cancel: "Annuler",
   message_add: "Ajouter",
   message_addField: "Ajouter un champ personnalis\u00e9",
@@ -48,7 +47,7 @@ const messages = {
   message_pageUsersLoginLabel: "Nom d\u02bcutilisateur",
   message_pageUsersCreatedLabel: "Cr\u00e9\u00e9",
   message_pageUsersUpdatedLabel: "Mis \u00e0 jour",
-  message_pageUsersLastjobLabel: "Dernier ex\u00e9cution de traitement",
+  message_pageUsersLastjobLabel: "Derni\u00e8re ex\u00e9cution de traitement",
   message_domainUserFirstNameLabel: "Pr\u00e9nom",
   message_domainUserLastNameLabel: "Nom",
   message_domainUserEmailLabel: "Email",
@@ -76,7 +75,7 @@ const messages = {
     "LOGGED OUT": "D\u00e9connect\u00e9",
   },
   message_userSummary: {
-    desc: "Ceci est une liste des profils d\u02bcutilisateurs qui se sont connect\u00e9s \u00e0 Rundeck.",
+    desc: "Liste des profils utilisateurs qui se sont connect\u00e9s \u00e0 Rundeck.",
   },
   message_webhookPageTitle: "Webhooks",
   message_webhookListTitle: "Webhooks",
@@ -90,7 +89,7 @@ const messages = {
   message_webhookDeleteBtn: "Supprimer",
   message_webhookPostUrlLabel: "URL Post",
   message_webhookPostUrlHelp:
-    "Lorsqu\u02bcune requête HTTP POST vers cette URL est reçue, le plugin webhook choisi ci-dessous recevra les donn\u00e9es.",
+    "Lorsqu\u02bcune requ\u00eate HTTP POST vers cette URL est re\u00e7ue, le plugin webhook choisi ci-dessous recevra les donn\u00e9es.",
   message_webhookPostUrlPlaceholder:
     "L\u02bcURL sera g\u00e9n\u00e9r\u00e9e apr\u00e8s la cr\u00e9ation du Webhook",
   message_webhookNameLabel: "Nom",
@@ -99,22 +98,20 @@ const messages = {
     "Nom d\u02bcutilisateur d\u02bcautorisation utilis\u00e9 lors de l\u02bcex\u00e9cution de ce webhook. Toutes les politiques ACL correspondant \u00e0 ce nom d\u02bcutilisateur s\u02bcappliqueront.",
   message_webhookRolesLabel: "R\u00f4les",
   message_webhookRolesHelp:
-    "Les r\u00f4les d\u02bcautorisation assum\u00e9s lors de l\u02bcex\u00e9cution de ce webhook (s\u00e9par\u00e9s par des virgules). Toutes les politiques ACL correspondant \u00e0 ces r\u00f4les s’appliqueront.",
+    "Les r\u00f4les d\u02bcautorisation assum\u00e9s lors de l\u02bcex\u00e9cution de ce webhook (s\u00e9par\u00e9s par des virgules). Toutes les politiques ACL correspondant \u00e0 ces r\u00f4les s\u02bcappliqueront.",
   message_webhookAuthLabel: "Cha\u00eene d\u02bcautorisation HTTP",
-  message_webhookGenerateSecurityLabel: "Utiliser l'en-tête d'autorisation",
+  message_webhookGenerateSecurityLabel: "Utiliser l\u02bcen-t\u00eate d\u02bcautorisation",
   message_webhookGenerateSecretCheckboxHelp:
-    "[Optionnel] Une jeton d'autorisation Webhook peut être g\u00e9n\u00e9r\u00e9e pour augmenter la s\u00e9curit\u00e9 de ce webhook. Tous les messages devront inclure le jeton g\u00e9n\u00e9r\u00e9e dans l'en-tête Autorisation.",
+    "[Optionnel] Un jeton d\u02bcautorisation Webhook peut \u00eatre g\u00e9n\u00e9r\u00e9e pour augmenter la s\u00e9curit\u00e9 de ce webhook. Tous les messages devront inclure le jeton g\u00e9n\u00e9r\u00e9e dans l\u02bcen-t\u00eate Autorisation.",
   message_webhookSecretMessageHelp:
-    "Copiez ce jeton d'autorisation maintenant. Apr\u00e8s avoir quitt\u00e9 ce webhook, vous ne pourrez plus voir la cha\u00eene.",
+    "Copiez ce jeton d\u02bcautorisation maintenant. Apr\u00e8s avoir quitt\u00e9 ce webhook, vous ne pourrez plus voir la cha\u00eene.",
   message_webhookRegenClicked:
     "Un nouveau jeton d\u02bcautorisation sera g\u00e9n\u00e9r\u00e9 et affich\u00e9 lorsque le webhook sera enregistr\u00e9.",
   message_webhookPluginLabel: "Choisir le plugin webhook",
   message_hello: "Bonjour",
-  message_sidebarNotificationText:
-    "Une mise \u00e0 jour pour Rundeck est disponible",
+  message_sidebarNotificationText: "Une mise \u00e0 jour pour Rundeck est disponible",
   message_updateAvailable: "Mise \u00e0 jour disponible",
-  message_updateHasBeenReleased:
-    "Une mise \u00e0 jour de Rundeck a \u00e9t\u00e9 publi\u00e9e.",
+  message_updateHasBeenReleased: "Une mise \u00e0 jour de Rundeck a \u00e9t\u00e9 publi\u00e9e.",
   message_installedVersion: "La version install\u00e9e de Rundeck est",
   message_currentVersion: "La version la plus r\u00e9cente de Rundeck est",
   message_getUpdate: "Obtenir la mise \u00e0 jour",
@@ -125,24 +122,20 @@ const messages = {
   "in.of": "dans",
   execution: "Ex\u00e9cution | Ex\u00e9cutions",
   "execution.count": "1 Ex\u00e9cution | {0} Ex\u00e9cutions",
-  "Bulk Delete Executions: R\u00e9sultats":
-    "Suppression en masse des ex\u00e9cutions: R\u00e9sultats",
+  "Bulk Delete Executions: R\u00e9sultats": "Suppression en masse des ex\u00e9cutions: R\u00e9sultats",
   "Requesting bulk delete, please wait.":
     "Demande de suppression en masse, veuillez patienter.",
-  "bulkresult.attempted.text":
-    "{0} ex\u00e9cutions ont \u00e9t\u00e9 tent\u00e9es.",
-  "bulkresult.success.text":
-    "{0} Les ex\u00e9cutions ont \u00e9t\u00e9 supprim\u00e9es avec succ\u00e8s.",
-  "bulkresult.failed.text":
-    "{0} Les \u00e9x\u00e9cutions n\u02bcont pas pu être supprim\u00e9es:",
+  "bulkresult.attempted.text": "{0} ex\u00e9cutions ont \u00e9t\u00e9 tent\u00e9es.",
+  "bulkresult.success.text": "{0} Les ex\u00e9cutions ont \u00e9t\u00e9 supprim\u00e9es avec succ\u00e8s.",
+  "bulkresult.failed.text": "{0} Les \u00e9x\u00e9cutions n\u02bcont pas pu \u00eatre supprim\u00e9es:",
   "delete.confirm.text": "Vraiment supprimer {0} {1}?",
   "clearselected.confirm.text":
     "Effacer tous les {0} \u00e9l\u00e9ments s\u00e9lectionn\u00e9s ou uniquement les \u00e9l\u00e9ments affich\u00e9s sur cette page ?",
   "bulk.selected.count": "{0} selectionn\u00e9s",
-  "results.empty.text": "Pas de r\u00e9sultats pour cette requête",
+  "results.empty.text": "Pas de r\u00e9sultats pour cette requ\u00eate",
   "Only shown executions": "Uniquement les ex\u00e9cutions affich\u00e9es",
   "Clear bulk selection": "D\u00e9cocher la s\u00e9lection en masse",
-  "Click to edit Search Query": "Cliquez pour modifier la requête de recherche",
+  "Click to edit Search Query": "Cliquez pour modifier la requ\u00eate de recherche",
   "Auto refresh": "Actualisation automatique",
   "error.message.0": "Une erreur est survenue: {0}",
   "info.completed.0": "Termin\u00e9: {0}",
@@ -162,11 +155,10 @@ const messages = {
   "filter.delete.named.text": 'Supprimer le filtre "{0}"...',
   "Delete Saved Filter": "Supprimer le filtre enregistr\u00e9",
   "filter.delete.confirm.text":
-    'Êtes-vous sûr de vouloir supprimer le filtre enregistr\u00e9 nomm\u00e9 "{0}" ?',
+    '\u00eates-vous s\u00fbr de vouloir supprimer le filtre enregistr\u00e9 nomm\u00e9 "{0}" ?',
   "filter.save.name.prompt": "Nom:",
-  "filter.save.validation.name.blank": "Le nom ne peut pas être vide",
+  "filter.save.validation.name.blank": "Le nom ne peut pas \u00eatre vide",
   "filter.save.button": "Enregistrer le filtre...",
-  "saved.filters": "Filtres enregistr\u00e9s",
   failed: "\u00e9chou\u00e9",
   ok: "ok",
   "0.total": "{0} total",
@@ -180,56 +172,68 @@ const messages = {
       Month: "au cours du dernier mois",
     },
   },
-  "empty.message.default":
-    "Aucune configuration trouv\u00e9e. Cliquez sur {0} pour ajouter un nouveau plugin.",
   CreateAcl: "Cr\u00e9er l\u02bcACL",
   CreateAclName: "Description de l\u02bcACL",
   CreateAclTitle: "Cr\u00e9er une ACL de stockage de cl\u00e9s pour le projet",
   "Edit Nodes": "Modifier les n\u0153uds",
   Modify: "Modifier",
   "Edit Node Sources": "Modifier les sources de n\u0153ud",
-  "The Node Source had an error":
-    "La source de n\u0153ud a rencontr\u00e9 une erreur",
+  "The Node Source had an error": "La source de n\u0153ud a rencontr\u00e9 une erreur",
   "Validation errors": "Erreurs de validation",
 
   "unauthorized.status.help.1":
-    "Certaines sources de n\u0153ud ont renvoy\u00e9 un message « Non autoris\u00e9 ».",
+    "Certaines sources de n\u0153ud ont renvoy\u00e9 un message 'Non autoris\u00e9'.",
   "unauthorized.status.help.2":
-    "Le plugin de source de n\u0153ud peut avoir besoin d\u02bcacc\u00e9der \u00e0 la ressource de stockage de cl\u00e9s. il pourrait être activ\u00e9 par les entr\u00e9es de la politique de contr\u00f4le d\u02bcacc\u00e8s.",
+    "Le plugin de source de n\u0153ud peut avoir besoin d\u02bcacc\u00e9der \u00e0 la ressource de stockage de cl\u00e9s. il pourrait \u00eatre activ\u00e9 par les entr\u00e9es de la politique de contr\u00f4le d\u02bcacc\u00e8s.",
   "unauthorized.status.help.3":
-    "Assurez-vous que les strat\u00e9gies ACL autorisent l\u02bcacc\u00e8s en « lecture » au stockage de cl\u00e9s dans ce projet pour le chemin URN du projet (urn:project:name). ",
-  "unauthorized.status.help.4":
-    "Aller \u00e0 {0} pour cr\u00e9er une ACL de projet ",
-  "unauthorized.status.help.5":
-    "Aller \u00e0 {0} pour cr\u00e9er une ACL syst\u00e8me ",
+    "Assurez-vous que les strat\u00e9gies ACL autorisent l\u02bcacc\u00e8s en lecture au stockage de cl\u00e9s dans ce projet pour le chemin URN du projet (urn:project:name). ",
+  "unauthorized.status.help.4": "Aller \u00e0 {0} pour cr\u00e9er une ACL de projet ",
+  "unauthorized.status.help.5": "Aller \u00e0 {0} pour cr\u00e9er une ACL syst\u00e8me ",
+  "use.the.node.sources.tab.2": " Onglet pour mettre \u00e0 jour vos sources de n\u0153uds.",
+  "project.node.sources.title.short": "Sources",
+  "use.the.node.sources.tab.1": "Utiliser le ",
+  "no.modifiable.sources.found": "Aucune source modifiable trouv\u00e9e",
+  "framework.service.NodeEnhancer.explanation":
+    "Les Node Enhancers peuvent modifier les donn\u00e9es charg\u00e9es \u00e0 partir des sources de nœuds",
+  "framework.service.NodeEnhancer.label.short.plural": "Enhancers",
+  "modifiable.node.sources.will.appear.here":
+    "Les sources de n\u0153uds modifiables appara\u00cetront ici",
+  "edit.node.enhancers": "Modifier les Node Enhancers",
+  "add.node.enhancer": "Ajouter un nouveau Node Enhancer",
+  "add.node.source": "Ajouter une nouvelle source de n\u0153ud",
+  "nodes.title": "N\u0153uds",
+  "project.edit.ResourceModelSource.explanation":
+    "Node Sources for the project. Sources are loaded in the defined order, with later sources overriding earlier sources. (You can use  {'${project.name}'} inside configuration values to substitute the project name.)",												
 
-  "acl.config.link.title":
-    "Param\u00e8tres du projet > Contr\u00f4le d\u02bcacc\u00e8s",
-  "acl.config.system.link.title":
-    "Param\u00e8tres syst\u00e8me > Contr\u00f4le d\u02bcacc\u00e8s",
+  "acl.config.link.title": "Param\u00e8tres du projet > Contr\u00f4le d\u02bcacc\u00e8s",
+  "acl.config.system.link.title": "Param\u00e8tres syst\u00e8me > Contr\u00f4le d\u02bcacc\u00e8s",
   "acl.example.summary": "Exemple de strat\u00e9gie ACL",
+
+  "empty.message.default": "Aucune configuration trouv\u00e9e. Cliquez sur {0} pour ajouter un nouveau plugin.",
 
   "page.keyStorage.description":
     "Le stockage de cl\u00e9s fournit une structure globale de type r\u00e9pertoire pour enregistrer les cl\u00e9s et mots de passe publics et priv\u00e9s, \u00e0 utiliser avec l\u02bcauthentification des n\u0153uds d\u02bcex\u00e9cution..",
 
-  Duplicate: "Dupliquer",
   "bulk.delete": "Suppression en masse",
   "select.none": "Ne rien s\u00e9lectionner",
   "select.all": "Tout s\u00e9lectionner",
   "cancel.bulk.delete": "Annuler la suppression en masse",
-  "delete.selected.executions":
-    "Supprimer les ex\u00e9cutions s\u00e9lectionn\u00e9es",
+  "delete.selected.executions": "Supprimer les ex\u00e9cutions s\u00e9lectionn\u00e9es",
   "click.to.refresh": "cliquez pour actualiser",
   "count.nodes.matched": "{0} {1} Correspondant",
   "count.nodes.shown": "{0} n\u0153uds affich\u00e9s.",
+  "delete.this.filter": "Delete this Filter",										 
   "delete.this.filter.confirm": "Vraiment supprimer ce filtre ?",
-  "enter.a.node.filter":
-    "Entrez un filtre de n\u0153ud, ou .* Pour tous les n\u0153uds",
+  "saved.filters": "Filtres enregistr\u00e9s",
+  "save.node.filter": "Enregistrer le filtre de n\u0153ud",
+  "name.prompt": "Nom",
+  "delete.saved.node.filter": "Supprimer le filtre de n\u0153ud enregistr\u00e9",
+  duplicate: "Dupliquer",
+  "enter.a.node.filter": "Entrez un filtre de n\u0153ud, ou .* Pour tous les n\u0153uds",
   "execute.locally": "Ex\u00e9cuter localement",
   "execution.page.show.tab.Nodes.title": "N\u0153uds",
   "execution.show.mode.Log.title": "Sortie de journal",
   filter: "Filtre :",
-  "name.prompt": "Nom :",
   "loading.matched.nodes": "Chargement des n\u0153uds correspondants...",
   "loading.text": "Chargement...",
   "loglevel.debug": "D\u00e9boguer",
@@ -245,11 +249,11 @@ const messages = {
   "node.metadata.status": "Status",
   nodes: "N\u0153uds :",
   "notification.event.onfailure": "En cas d\u02bc\u00e9chec",
+  "edit.nodes.header": "Edit Nodes",									
   "notification.event.onsuccess": "En cas de succ\u00e8s",
   "notification.event.onstart": "Au d\u00e9marrage",
   "notification.event.onavgduration": "Dur\u00e9e moyenne d\u00e9pass\u00e9e",
-  "notification.event.onretryablefailure":
-    "En cas d\u02bc\u00e9chec r\u00e9essayable",
+  "notification.event.onretryablefailure": "En cas d\u02bc\u00e9chec r\u00e9essayable",
   refresh: "rafra\u00eechir",
   "save.filter.ellipsis": "Enregistrer le filtre \u2026",
   "search.ellipsis": "Rechercher\u2026",
@@ -259,81 +263,83 @@ const messages = {
   "scheduledExecution.property.excludeFilterUncheck.label":
     "Montrer les n\u0153uds exclus",
   "scheduledExecution.property.excludeFilterUncheck.description":
-    "Si vrai, les n\u0153uds exclus seront indiqu\u00e9s lors de l'ex\u00e9cution du Job. Sinon, ils ne seront pas affich\u00e9s du tout.",
-  "scheduledExecution.property.logOutputThreshold.label":
-    "Limite de sortie du journal",
+    "Si vrai, les n\u0153uds exclus seront indiqu\u00e9s lors de l\u02bcex\u00e9cution du Job. Sinon, ils ne seront pas affich\u00e9s du tout.",
+  "scheduledExecution.property.logOutputThreshold.label": "Limite de sortie du journal",
   "scheduledExecution.property.logOutputThreshold.description":
     'Entrez soit le nombre de lignes total maximum (par exemple "100"), le nombre maximum de lignes par n\u0153ud ("100 / n\u0153ud") ou la taille maximale du fichier journal ("100MB", "100KB", etc. "," MB "," KB "," B "comme Giga- Mega-Kilo et octets.',
   "scheduledExecution.property.logOutputThreshold.placeholder":
-    "E.g comme \u02bc100\u02bc, \u02bc100 / n\u0153ud\u02bcou \u02bc100MB\u02bc",
-  "scheduledExecution.property.logOutputThresholdAction.label":
-    "Action de limite de journal",
+    "Par exemple comme \u02bc100\u02bc, \u02bc100 / n\u0153ud\u02bcou \u02bc100MB\u02bc",
   "scheduledExecution.property.logOutputThresholdAction.description":
     "Action \u00e0 effectuer si la limite de sortie est atteinte.",
   "scheduledExecution.property.logOutputThresholdAction.halt.label":
     "Arr\u00eater avec le status:",
+  "scheduledExecution.property.logOutputThresholdAction.label":
+    "Action de limite de journal",
   "scheduledExecution.property.logOutputThresholdAction.truncate.label":
     "Tronquer et continuer",
   "scheduledExecution.property.logOutputThresholdStatus.placeholder":
-    "\u02bcfailed\u02bc, \u02bcaborted\u02bc, ou n\u02bcimporte quelle cha\u00eene",
+    "'failed', 'aborted' ou n\u02bcimporte quelle cha\u00eene",
   "scheduledExecution.property.loglevel.help":
     "Le niveau de d\u00e9bogage produit plus de sortie",
-  "scheduledExecution.property.maxMultipleExecutions.label":
-    "Limiter ex\u00e9cutions multiples?",
   "scheduledExecution.property.maxMultipleExecutions.description":
     "Nombre maximal d\u02bcex\u00e9cutions multiples. Utilisez vide ou 0 pour indiquer illimit\u00e9.",
+  "scheduledExecution.property.maxMultipleExecutions.label":
+    "Limiter ex\u00e9cutions multiples?",
   "scheduledExecution.property.multipleExecutions.description":
     "Autoriser ce traitement \u00e0 \u00eatre ex\u00e9cut\u00e9 plus d\u02bcune fois simultan\u00e9ment ?",
-  "scheduledExecution.property.nodeKeepgoing.prompt":
-    "Si un n\u0153ud \u00e9choue",
-  "scheduledExecution.property.nodeKeepgoing.true.description":
-    "Continuez l\u02bcex\u00e9cution sur tous les n\u0153uds restants avant de faire \u00e9chouer l\u02bc\u00e9tape.",
   "scheduledExecution.property.nodeKeepgoing.false.description":
     "Faire \u00e9chouer l\u02bc\u00e9tape sans continuer d\u02bcex\u00e9cuter sur les n\u0153uds restants.",
-  "scheduledExecution.property.nodeRankAttribute.label":
-    "Attribut de classement",
+  "scheduledExecution.property.nodeKeepgoing.prompt": "Si un n\u0153ud \u00e9choue",
+  "scheduledExecution.property.nodeKeepgoing.true.description":
+    "Continuez l\u02bcex\u00e9cution sur tous les n\u0153uds restants avant de faire \u00e9chouer l\u02bc\u00e9tape.",
   "scheduledExecution.property.nodeRankAttribute.description":
     "Attribut des n\u0153uds utilis\u00e9 pour le tri. La valeur par d\u00e9faut est le nom du n\u0153ud.",
+  "scheduledExecution.property.nodeRankAttribute.label": "Attribut de classement",
   "scheduledExecution.property.nodeRankOrder.label": "Ordre de classement",
   "scheduledExecution.property.nodeRankOrder.ascending.label": "Croissant",
-  "scheduledExecution.property.nodeRankOrder.descending.label":
-    "D\u00e9croissant",
+  "scheduledExecution.property.nodeRankOrder.descending.label": "D\u00e9croissant",
   "scheduledExecution.property.nodeThreadcount.label": "Nombre de threads",
   "scheduledExecution.property.nodeThreadcount.description":
     "Nombre maximal de threads parall\u00e8les \u00e0 utiliser. (Par d\u00e9faut : 1)",
   "scheduledExecution.property.nodefiltereditable.label": "Filtre modifiable",
-  "scheduledExecution.property.nodesSelectedByDefault.label":
-    "S\u00e9lection de n\u0153ud",
-  "scheduledExecution.property.nodesSelectedByDefault.true.description":
-    "Les n\u0153uds cibles sont s\u00e9lectionn\u00e9s par d\u00e9faut",
   "scheduledExecution.property.nodesSelectedByDefault.false.description":
     "L\u02bcutilisateur doit s\u00e9lectionner explicitement les n\u0153uds cibles",
-  "scheduledExecution.property.notifyAvgDurationThreshold.label": "Seuil",
+  "scheduledExecution.property.nodesSelectedByDefault.label": "S\u00e9lection de n\u0153ud",
+  "scheduledExecution.property.nodesSelectedByDefault.true.description":
+    "Les n\u0153uds cibles sont s\u00e9lectionn\u00e9s par d\u00e9faut",
   "scheduledExecution.property.notifyAvgDurationThreshold.description":
-    "Ajoutez ou d\u00e9finissez une valeur de seuil \u00e0 la dur\u00e9e moyenne pour d\u00e9clencher cette notification. Options : - pourcentage => ex .: 20% - temps delta => ex .: + 20s, +20 - temps absolu => 30s, 5m Temps en secondes si vous ne sp\u00e9cifiez pas d\u02bcunit\u00e9s de temps Peut inclure des r\u00e9f\u00e9rences de valeur d\u02bcoption comme {'$'}{'{'}option{'.'}avgDurationThreshold{'}'}.",
-  "scheduledExecution.property.orchestrator.label": "Orchestrateur",
+    "Ajoutez ou d\u00e9finissez une valeur de seuil \u00e0 la dur\u00e9e moyenne pour d\u00e9clencher les notifications.\n\n" +
+	"- pourcentage => ex .: 20%\n" +
+	"- temps delta => ex .: + 20s, +20\n" +
+	"- temps absolu => 30s, 5m\n" +
+	"Utilisez `s`,`m`,`h`,`d`,`w`,`y` etc. comme unit\u00e9s de temps pour les secondes, les minutes, les heures, etc..." +
+	"L\u02bcunit\u00e9 de temps par d\u00e9faut sera la seconde si elle n\u02bcest pas sp\u00e9cifi\u00e9e\n" +
+	"Peut inclure des r\u00e9f\u00e9rences de valeur d\u02bcoption telles que `{'$'}{'{'}option{'.'}avgDurationThreshold{'}'}`.",
+  "scheduledExecution.property.notifyAvgDurationThreshold.label": "Seuil",
   "scheduledExecution.property.orchestrator.description":
-    "Il peut \u00eatre utilis\u00e9 pour contr\u00f4ler l\u02bcordre et le timing dans lequel les n\u0153uds sont trait\u00e9s",
+    "Cela peut \u00eatre utilis\u00e9 pour contr\u00f4ler l\u02bcordre et le moment dans lesquels les n\u0153uds sont trait\u00e9s",
+  "scheduledExecution.property.retry.delay.description":
+    "Le temps entre l\u02bcchec de l\u02bcex\u00e9cution et la nouvelle tentative. Temps en secondes, " +
+    'ou pr\u00e9cisez les unit\u00e9s de temps : "120m", "2h", "3d". Utilisez vide ou 0 pour indiquer aucun d\u00e9lai. Peut inclure la valeur de l\u02bcoption ' +
+    "r\u00e9f\u00e9rences comme \"{'$'}{'{'}option{'.'}delay{'}'}\".",
   "scheduledExecution.property.retry.description":
     "Nombre maximal de tentatives de r\u00e9-ex\u00e9cution lorsque ce traitement est directement appel\u00e9. Une nouvelle tentative se produira si le traitement \u00e9choue ou expire, mais pas s\u02bcil est tu\u00e9 manuellement. Peut utiliser une r\u00e9f\u00e9rence de valeur d\u02bcoption comme \"{'$'}{'{'}option{'.'}retry{'}'}\".",
-  "scheduledExecution.property.retry.delay.description":
-    "Le d\u00e9lai entre l\u02bcex\u00e9cution \u00e9chou\u00e9e et la nouvelle tentative. Temps en secondes, ou sp\u00e9cifier les unit\u00e9s de temps: \"120m\", \"2h\", \"3d\". Utilisez vide ou 0 pour indiquer aucun d\u00e9lai. Peut inclure des r\u00e9f\u00e9rences de valeur d\u02bcoption telles que \"{'$'}{'{'}option{'.'}delay{'}'}\".",
+  "scheduledExecution.property.successOnEmptyNodeFilter.false.description":
+    "\u00c9chec du traitement",
   "scheduledExecution.property.successOnEmptyNodeFilter.prompt":
     "Si le n\u0153ud est vide",
   "scheduledExecution.property.successOnEmptyNodeFilter.true.description":
     "Poursuivre l\u02bcex\u00e9cution",
-  "scheduledExecution.property.successOnEmptyNodeFilter.false.description":
-    "\u00c9chec du traitement",
   "scheduledExecution.property.timeout.description":
-    "La dur\u00e9e maximale d\u02bcex\u00e9cution d\u02bcune ex\u00e9cution. Temps en secondes, ou sp\u00e9cifier les unit\u00e9s de temps : \"120m\", \"2h\", \"3d\". Utilisez vide ou 0 pour n\u02bcindiquer aucun d\u00e9lai. Peut inclure des r\u00e9f\u00e9rences de valeur d\u02bcoption telles que \"{'$'}{'{'}option{'.'}timeout{'}'}\".",
+    "Dur\u00e9e maximale d\u02bcex\u00e9cution d\u02bcune ex\u00e9cution. Temps en secondes, " +
+    'ou pr\u00e9cisez les unit\u00e9s de temps : "120m", "2h", "3d". Utilisez vide ou 0 pour indiquer qu\u02bcil n\u02bcy a pas de d\u00e9lai d\u02bcattente. Peut inclure la valeur de l\u02bcoption ' +
+    "r\u00e9f\u00e9rences comme \"{'$'}{'{'}option{'.'}timeout{'}'}\".",
   "scheduledExecution.property.scheduleEnabled.description":
     "Autoriser ce traitement \u00e0 \u00eatre planifi\u00e9 ?",
-  "scheduledExecution.property.scheduleEnabled.label":
-    "Activer la planification ?",
+  "scheduledExecution.property.scheduleEnabled.label": "Activer la planification ?",
   "scheduledExecution.property.executionEnabled.description":
     "Autoriser l\u02bcex\u00e9cution de ce traitement ?",
-  "scheduledExecution.property.executionEnabled.label":
-    "Activer l\u02bcex\u00e9cution?",
+  "scheduledExecution.property.executionEnabled.label": "Activer l\u02bcex\u00e9cution?",
   "scheduledExecution.property.timezone.prompt": "Fuseau horaire",
   "scheduledExecution.property.timezone.description":
     'Un fuseau horaire valide, soit une abr\u00e9viation telle que "PST", un nom complet tel que "America / Los_Angeles", ou un identifiant personnalis\u00e9 tel que "GMT-8{\':\'} 00".',
@@ -382,7 +388,7 @@ const messages = {
   "jobquery.title.groupPath": "Groupe",
   "jobquery.title.summary": "R\u00e9sum\u00e9",
   "jobquery.title.duration": "Dur\u00e9e",
-  "jobquery.title.loglevelFilter": "Loglevel",
+  "jobquery.title.loglevelFilter": "Niveau de log",
   "jobquery.title.loglevelFilter.label.DEBUG": "D\u00e9boguer",
   "jobquery.title.loglevelFilter.label.VERBOSE": "Verbeux",
   "jobquery.title.loglevelFilter.label.INFO": "Information",
@@ -400,12 +406,428 @@ const messages = {
   "project.node.file.source.label": "Source",
   "file.display.format.label": "Format",
   "project.node.file.source.description.label": "Description",
-  "project.nodes.edit.save.error.message":
-    "Erreur lors de l'enregistrement du contenu:",
-  "project.nodes.edit.empty.description":
-    "Remarque : Aucun contenu n'\u00e9tait disponible.",
+  "project.nodes.edit.save.error.message": "Erreur lors de l\u02bcenregistrement du contenu:",
+  "project.nodes.edit.empty.description": "Remarque : Aucun contenu n'\u00e9tait disponible.",
   "button.action.Cancel": "Annuler",
   "button.action.Save": "Enregistrer",
+  "job-edit-page": {
+    "nodes-tab-title": "N\u0153uds & Runners",
+    "node-dispatch-true-label": "Envoi aux n\u0153uds via le Runner",
+    "node-dispatch-false-label": "Ex\u00e9cuter sur le Runner",
+    "section-title": "Dispatch",
+    "section-title-help": "Choisissez le Runner et les n\u0153uds s\u00e9lectionn\u00e9s",
+  },
+  "job-exec-page": {
+    "nodes-tab-title": "Runner/N\u0153uds",
+  },
+  JobRunnerEdit: {
+    section: {
+      title: "D\u00e9finir le Runner",
+    },
+  },
+  gui: {
+    menu: {
+      Nodes: "N\u0153uds",
+    },
+  },
+  search: "Rechercher",
+  browse: "Parcourir",
+  result: "R\u00e9sultat:",
+  actions: "Actions",
+  none: "Aucun",
+  set: {
+    "all.nodes.as.default.filter": "D\u00e9finir tous les n\u0153uds comme filtre par d\u00e9faut",
+    "as.default.filter": "D\u00e9finir en tant que filtre par d\u00e9faut",
+  },
+  remove: {
+    "all.nodes.as.default.filter": "Supprimer tous les n\u0153uds comme filtre par d\u00e9faut",
+    "default.filter": "Supprimer le filtre par d\u00e9faut",
+  },
+  "run.a.command.on.count.nodes.ellipsis": "Ex\u00e9cuter une commande sur {0} {1}",
+  "create.a.job.for.count.nodes.ellipsis": "Cr\u00e9er un traitement pour {0} {1}",
+  "resource.metadata.entity.tags": "Tags",
+  filters: "Filtres",
+  "all.nodes": "Tous les n\u0153uds",
+  "delete.this.filter.ellipsis": "Supprimer ce filtre...",
+  "enter.a.filter": "Entrer un filtre",
+  "remove.all.nodes.as.default.filter": "Supprimer tous les n\u0153uds comme filtre par d\u00e9faut",
+  "set.all.nodes.as.default.filter": "D\u00e9finir tous les n\u0153uds comme filtre par d\u00e9faut",
+  "not.authorized": "Non autoris\u00e9",
+  "disabled.execution.run": "Les ex\u00e9cutions sont d\u00e9sactiv\u00e9es.",
+  "user.at.host": "Utilisateur {'@'} nom d\u02bch\u00f4te",
+  "node.changes.success": "Les modifications de n\u0153ud ont \u00e9t\u00e9 enregistr\u00e9es avec succ\u00e8s.",
+  "node.changes.notsaved": "Les modifications de n\u0153ud n\u0027ont pas \u00e9t\u00e9 enregistr\u00e9es.",
+  "node.remoteEdit.edit": "Modifier le n\u0153ud:",
+  "node.remoteEdit.continue": "Continuer...",
+  node: "N\u0153ud",
+  "this.will.select.both.nodes": "Cela s\u00e9lectionnera les deux n\u0153uds.",
+  "node.metadata.hostname": "Nom d\u02bch\u00f4te",
+  "select.nodes.by.name": "S\u00e9lectionner les n\u0153uds par leur nom",
+  "filter.nodes.by.attribute.value": "Filtrer les n\u0153uds par valeur d\u02bcattribut",
+  "use.regular.expressions": "Utiliser des expressions r\u00e9guli\u00e8res:",
+  "regex.syntax.checking": "V\u00e9rification de la syntaxe de l\u02bcexpression r\u00e9guli\u00e8re",
+  "edit.ellipsis": "Modifier...",
+  "node.metadata.username-at-hostname": "Nom d\u02bcutilisateur & h\u00f4te",
+  "node.metadata.osFamily": "Famille OS",
+  "node.metadata.osName": "Nom d\u02bcOS",
+  "node.metadata.osArch": "Architecture OS",
+  "node.metadata.osVersion": "Version d\u02bcOS",
+  "node.metadata.type": "Type",
+  "node.metadata.username": "Utilisateur",
+  "node.metadata.tags": "Tags",
+  "button.Edit.label": "Modifier",
+  "default.paginate.prev": "-",
+  "default.paginate.next": "+",
+  "jump.to": "Sauter \u00e0\:",
+  "per.page": "Par page",
+  "remove.default.filter": "Supprimer le filtre par d\u00e9faut",
+  "scheduledExecution.action.edit.button.label": "Modifier ce traitement...",
+  "scheduledExecution.action.duplicate.button.label": "Dupliquer ce traitement...",
+  "scheduledExecution.action.duplicate.other.button.label":
+    "Dupliquer ce traitement vers un autre projet...",
+  "scheduledExecution.action.download.button.label": "T\u00e9l\u00e9charger la d\u00e9finition",
+  "scheduledExecution.action.downloadformat.button.label":
+    "T\u00e9l\u00e9charger la d\u00e9finition du traitement vers {0}",
+  "scheduledExecution.action.delete.button.label": "Supprimer ce traitement",
+  "scheduledExecution.action.edit.button.tooltip": "Modifier ce traitement",
+  "scheduledExecution.action.duplicate.button.tooltip": "Dupliquer le traitement",
+  "enable.schedule.this.job": "Activer la planification",
+  "disable.schedule.this.job": "D\u00e9sctiver la planification",
+  "scheduledExecution.action.enable.schedule.button.label": "Activer la planification",
+  "scheduledExecution.action.disable.schedule.button.label": "D\u00e9sactiver la planification",
+  "scheduleExecution.schedule.disabled": "La planification du traitement est d\u00e9sactiv\u00e9e",
+  "enable.execution.this.job": "Activer l\u02bcex\u00e9cution",
+  "disable.execution.this.job": "D\u00e9sactiver l\u02bcex\u00e9cution",
+  "scheduledExecution.action.enable.execution.button.label": "Activer l\u02bcex\u00e9cution",
+  "scheduledExecution.action.disable.execution.button.label":
+    "D\u00e9sactiver l\u02bcex\u00e9cution",
+  "scheduleExecution.execution.disabled": "L\u02bcex\u00e9cution du traitement est d\u00e9sactiv\u00e9e",
+  "delete.this.job": "Supprimer ce traitement",
+  "action.prepareAndRun.tooltip": "Choisir les options et lancer l\u02bcex\u00e9cution du traitement…",
+  "job.bulk.modify.confirm.panel.title": "Confirmer la modification du traitement en masse",
+
+  "job.bulk.delete.confirm.message": "Voulez-vous vraiment supprimer les traitements s\u00e9lectionn\u00e9s ?",
+  "job.bulk.disable_schedule.confirm.message":
+    "D\u00e9planifier la planification pour tous les traitements s\u00e9lectionn\u00e9s ?",
+  "job.bulk.enable_schedule.confirm.message":
+    "Activer la planification pour tous les traitements s\u00e9lectionn\u00e9s ?",
+  "job.bulk.disable_execution.confirm.message":
+    "D\u00e9planifier l\u02bcex\u00e9cution pour tous les traitements s\u00e9lectionn\u00e9s ?",
+  "job.bulk.enable_execution.confirm.message":
+    "Activer l\u02bcex\u00e9cution pour tous les traitements s\u00e9lectionn\u00e9s ?",
+
+  "job.bulk.disable_schedule.button": "D\u00e9sactiver les planifications",
+  "job.bulk.enable_schedule.button": "Activer les planifications",
+  "job.bulk.delete.button": "Supprimer les traitements",
+  "job.bulk.disable_execution.button": "D\u00e9sactiver l\u02bcex\u00e9cution",
+  "job.bulk.enable_execution.button": "Activer l\u02bcex\u00e9cution",
+  "job.bulk.enable_execution.success": "Ex\u00e9cution activ\u00e9e pour {0} traitements.",
+  "job.bulk.enable_schedule.success": "Planification activ\u00e9e pour {0} traitements.",
+  "job.bulk.disable_schedule.success": "Planification d\u00e9sactiv\u00e9e pour {0} traitements.",
+  "job.bulk.disable_execution.success": "Ex\u00e9cution d\u00e9sactiv\u00e9e pour {0} traitements.",
+  "job.bulk.delete.success": " {0} traitements supprim\u00e9s.",
+  "delete.selected.jobs": "Supprimer les traitements s\u00e9lectionn\u00e9s",
+  "job.bulk.panel.select.title": "S\u00e9lectionner les traitements pour une modification en masse",
+  "job.bulk.perform.action.menu.label": "Effectuer une action",
+  "job.create.button": "Cr\u00e9er un nouveau traitement",
+  "job.upload.button.title": "Charger une d\u00e9finition de traitement",
+  cancel: "Annuler",
+  "job.actions": "Actions de traitement",
+  "job.bulk.activate.menu.label": "Modification en masse…",
+  "job.bulk.deactivate.menu.label": "Quitter le mode d'\u00e9dition en masse",
+  "upload.definition.button.label": "Charger une d\u00e9finition",
+  "new.job.button.label": "Nouveau traitement",
+  "job.bulk.panel.select.message": "{n} Traitement s\u00e9lectionn\u00e9 | {n} Traitements s\u00e9lectionn\u00e9s",
+  "cannot.run.job": "Ne peut pas ex\u00e9cuter le traitement",
+  "disabled.schedule.run": "Les ex\u00e9cutions sont d\u00e9sactiv\u00e9es.",
+  "disabled.job.run": "Les ex\u00e9cutions sont d\u00e9sactiv\u00e9es.",
+  "schedule.on.server.x.at.y": "Planifi\u00e9 pour \u00eatre ex\u00e9cut\u00e9 sur le serveur {0} \u00e0 {1}",
+  "schedule.time.in.future": "dans {0}",
+  never: "Jamais",
+  disabled: "D\u00e9sactiv\u00e9",
+  "project.schedule.disabled": "La planification du projet est d\u00e9sactiv\u00e9e",
+  "project.execution.disabled": "L\u02bcex\u00e9cution du projet est d\u00e9sactiv\u00e9e",
+  "job.schedule.will.never.fire": "La planification du traitement ne se lancera jamais",
+  "scm.import.status.UNKNOWN.display.text": "Statut de l\u02bcimport : non suivi",
+  "scm.import.status.LOADING.description": "Import: le status du traitement est en cours de chargement",
+  "scm.export.status.DELETED.display.text": "Supprim\u00e9",
+  "scm.export.status.EXPORT_NEEDED.display.text": "Modifi\u00e9",
+  "scm.export.status.CLEAN.description": "Status de l\u02bcexport: propre",
+  "scm.import.status.DELETE_NEEDED.title.text": "Import: fichiers supprim\u00e9s",
+  "scm.export.status.EXPORT_NEEDED.title.text": "Export: Modifi\u00e9",
+  "scm.import.status.UNKNOWN.description": "Non suivi pour l\u02bcimport SCM",
+  "scm.import.status.REFRESH_NEEDED.display.text": "Synchronisation n\u00e9cessaire",
+  "scm.export.status.CREATE_NEEDED.description":
+    "Status de l\u02bcexport: Nouveau traitement, pas encore ajout\u00e9 \u00e0 SCM",
+  "scm.import.status.DELETE_NEEDED.description":
+    "Status de l\u02bcimport: le fichier source a \u00e9t\u00e9 supprim\u00e9",
+  "scm.export.status.CLEAN.display.text": "Pas de changement",
+  "scm.export.status.LOADING.description": "Export: le status du traitement est en cours de chargement",
+  "scm.import.status.IMPORT_NEEDED.description":
+    "Status de l\u02bcimport: Les modifications du traitement doivent \u00eatre synchronis\u00e9es",
+  "scm.import.status.REFRESH_NEEDED.title.text": "Import: Synchroniser les changements",
+  "scm.export.status.REFRESH_NEEDED.title.text":
+    "Export: Les modifications \u00e0 distance doivent \u00eatre synchronis\u00e9es",
+  "scm.export.status.LOADING.display.text": "En cours de chargement",
+  "scm.export.status.EXPORT_NEEDED.description": "Statut d\u02bcexportation \: modifi\u00e9",
+  "scm.export.status.CREATE_NEEDED.display.text": "Cr\u00e9\u00e9",
+  "scm.import.status.IMPORT_NEEDED.display.text": "Importation n\u00e9cessaire",
+  "scm.import.status.DELETE_NEEDED.display.text": "Le fichier source a \u00e9t\u00e9 supprim\u00e9",
+  "scm.import.status.IMPORT_NEEDED.title.text": "Import: modifications entrantes",
+  "scm.import.status.CLEAN.display.text": "\u00c0 jour",
+  "scm.import.status.CLEAN.description": "Statut d\u02bcimportation: \u00e0 jour",
+  "scm.import.status.REFRESH_NEEDED.description":
+    "Statut d\u02bcimportation : les modifications du traitement doivent \u00eatre extraites",
+  "scm.export.status.REFRESH_NEEDED.display.text": "Synchronisation n\u00e9cessaire",
+  "scm.import.status.LOADING.display.text": "En cours de chargement",
+  "scm.export.status.ERROR.display.text": "Une erreur inconnue est survenue.",
+  "scm.import.status.ERROR.display.text": "Une erreur inconnue est survenue.",
+  "scm.status.ERROR.display.text": "Erreur SCM",
+  "scm.export.auth.key.noAccess":
+    "L\u02bcutilisateur n'a pas acc\u00e8s \u00e0 la cl\u00e9 ou au mot de passe sp\u00e9cifi\u00e9",
+  "scm.import.auth.key.noAccess":
+    "L\u02bcutilisateur n'a pas acc\u00e8s \u00e0 la cl\u00e9 ou au mot de passe sp\u00e9cifi\u00e9",
+  "scm.action.diff.clean.button.label": "Afficher les informations de Commit",
+  "scm.import.plugin": "Plugin d\u02bcimportation SCM",
+  "scm.action.diff.button.label": "Modifications des diff\u00e9rences",
+  "scm.export.commit.job.link.title": "Cliquer pour valider ou ajouter ce traitement",
+  "scm.export.commit.link.title": "Cliquer pour valider ou ajouter des changements",
+  "scm.export.plugin": "Plugin d'export SCM",
+  "job.toggle.scm.menu.on": "Activer SCM",
+  "job.toggle.scm.menu.off": "D\u00e9sactiver SCM",
+  "scm.import.actions.title": "Actions d'import SCM",
+  "scm.export.actions.title": "Actions d'export SCM",
+  "scm.export.title": "Export SCM",
+  "scm.import.title": "Import SCM",
+  "job.toggle.scm.button.label.off": "D\u00e9sactiver SCM",
+  "job.toggle.scm.confirm.panel.title": "Confirmer la modification SCM",
+  "job.toggle.scm.confirm.on": "Activer tous les plugins configur\u00e9s par SCM ?",
+  "job.toggle.scm.confirm.off": "D\u00e9sctiver tous les plugins configur\u00e9s par SCM ?",
+  "job.toggle.scm.button.label.on": "Activer SCM",
+  "job.scm.status.loading.message": "Chargement du status SCM...",
+  "page.section.Activity.for.jobs": "Activit\u00e9 des traitements",
+  "widget.theme.title": "Th\u00e8me",
+  "widget.nextUi.title": "Activer Next UI",
+  "page.section.title.AllJobs": "Tous les traitements",
+  "advanced.search": "Avanc\u00e9",
+  "jobs.advanced.search.title": "Cliquer pour modifier le filtre",
+  "filter.jobs": "Rechercher des traitements",
+  "job.filter.quick.placeholder": "Rechercher",
+  "job.filter.apply.button.title": "Rechercher",
+  "job.filter.clear.button.title": "Effacer la recherche",
+  all: "Tous",
+  "job.tree.breakpoint.hit.info":
+    "Remarque : Tous les d\u00e9tails du traitement n'ont pas \u00e9t\u00e9 charg\u00e9s car ce groupe contient trop de traitements. Cliquez sur le bouton pour charger les d\u00e9tails manquants.",
+  "job.tree.breakpoint.load.button.title": "Charger tous les d\u00e9tails du traitement",
+  "job.list.filter.save.modal.title": "Enregistrer le filtre",
+  "job.filter.save.button.title": "Enregistrer en tant que filtre...",
+  "job.list.filter.save.button": "Enregistrer le filtre",
+  "job.list.filter.delete.filter.link.text": 'Supprimer le filtre "{0}"',
+  "app.firstRun.title": "Bienvenue \u00e0 {0} {1}",
+  "you.can.see.this.message.again.by.clicking.the":
+    "Vous pouvez revoir ce message en cliquant sur le",
+  "version.number": "num\u00e9ro de version",
+  "in.the.page.footer": "dans le pied de page.",
+  "no.authorized.access.to.projects":
+    "Vous n\u02bcavez aucun acc\u00e8s autoris\u00e9 aux projets.",
+  "no.authorized.access.to.projects.contact.your.administrator.user.roles.0":
+    "Contactez votre administrateur. (R\u00f4les de l\u02bcutilisateur \: {0})",
+  "page.home.loading.projects": "Chargement de projets",
+  "app.firstRun.md":
+    "Merci d'\u00eatre abonn\u00e9 \u00e0 {0}.\n\n" +
+    "  \n\n\n" +
+    "* [{0} Portail d'assistance &raquo;](http://support.rundeck.com)\n\n" +
+    "* [{0} Documentation &raquo;]({1})",
+  "page.home.section.project.title": "{0} Projet",
+  "page.home.section.project.title.plural": "{0} Projets",
+  "page.home.duration.in.the.last.day": "Au cours des derni\u00e8res 24 heures",
+  by: "par",
+  user: "Utilisateur",
+  "user.plural": "Utilisateurs",
+  "page.home.project.executions.0.failed.parenthetical": "({0} \u00e9chou\u00e9)",
+  "page.home.search.projects.input.placeholder":
+    "Recherche de projet : nom, label ou /regex/",
+  "page.home.search.project.title": "{n} Projet trouv\u00e9 | {n} Projets trouv\u00e9s",
+  "button.Action": "Action",
+  "edit.configuration": "Modifier la configuration",
+  "page.home.new.project.button.label": "Nouveau project",
+  Execution: "{n} Ex\u00e9cutions | {n} Ex\u00e9cution | {n} Ex\u00e9cutions",
+  in: "dans",
+  "Project.plural": "Projets",
+  discard: "Ignorer",
+  "commandline.arguments.prompt.unquoted": "Arguments de la ligne de commande (sans quotes):",
+  usage: "Utilisation",
+  "form.label.valuesType.list.label": "Liste",
+  "scheduledExecution.option.unsaved.warning":
+    "Ignorez ou enregistrez les modifications apport\u00e9es \u00e0 cette option avant de finaliser les modifications apport\u00e9es au traitement.",
+  "bash.prompt": "Bash:",
+  "script.content.prompt": "Contenu du script:",
+  "rundeck.user.guide.option.model.provider":
+    "Guide utilisateur Rundeck - Fournisseur de mod\u00e8les d'options",
+  save: "Enregistrer",
+  "commandline.arguments.prompt": "Arguments de ligne de commande :",
+  "commandline.arguments.prompt.unquoted.warning":
+    "Avertissement ! S'appuyer sur des arguments sans quotes pourrait rendre ce traitement vuln\u00e9rable \u00e0 l\u02bcinjection de commandes. Utiliser avec pr\u00e9caution.",
+  "add.new.option": "Ajouter une nouvelle option",
+  "add.an.option": "Ajouter une option",
+  "option.values.c": "1 valeur|{n} valeurs",
+  "no.options.message": "Pas d'options",
+  "the.option.values.will.be.available.to.scripts.in.these.forms":
+    "Les valeurs des options seront disponibles pour les scripts sous ces formes:",
+  "form.option.date.label": "Date",
+  "form.option.enforcedType.label": "Restrictions",
+  "form.option.usage.file.fileName.preview.description":
+    "Le nom du fichier d'origine:",
+  "form.option.discard.title": "Annuler les modifications apport\u00e9es \u00e0 l\u02bcoption",
+  "form.option.valuesType.url.authentication.password.label": "Mot de passe",
+  "form.option.enforcedType.none.label": "N\u02bcimporte quelle valeur peut \u00eatre utilis\u00e9e",
+  "form.option.inputType.label": "Type d'entr\u00e9e",
+  "form.option.defaultStoragePath.present.description":
+    "Une valeur par d\u00e9faut sera charg\u00e9e \u00e0 partir du stockage de cl\u00e9s",
+  "form.option.secureInput.false.label": "Texte brut",
+  "form.option.name.label": "Nom de l\u02bcoption",
+  "form.option.valuesType.url.filter.label": "Filtre de chemin JSON",
+  "form.option.valuesType.url.authType.label": "Type d'authentification",
+  "form.option.sort.description": "Trier la liste des valeurs autoris\u00e9es",
+  "form.option.usage.secureAuth.message":
+    "Les valeurs des options d'authentification s\u00e9curis\u00e9e ne sont pas disponibles pour les scripts ou les commandes",
+  "form.option.valuesType.url.label": "URL distante",
+  "form.option.valuesList.placeholder":
+    "Liste s\u00e9par\u00e9e par des d\u00e9limiteurs (virgule par d\u00e9faut)",
+  "form.option.secureInput.description":
+    "Les valeurs d'entr\u00e9e s\u00e9curis\u00e9es ne sont pas stock\u00e9es par Rundeck apr\u00e8s utilisation. Si la valeur expos\u00e9e est utilis\u00e9e dans un script ou une commande, le journal de sortie peut contenir la valeur.",
+  "form.option.valuesType.url.authentication.key.label": "Cl\u00e9",
+  "form.option.date.description":
+    "La date sera transmise \u00e0 votre traitement sous forme de cha\u00eene format\u00e9e de cette fa\u00e7on : mm/jj/aa HH:MM",
+  "form.option.valuesType.url.authentication.username.label": "Nom d'utilisateur",
+  "form.option.valuesType.url.authType.bearerToken.label": "Bearer Token",
+  "form.option.enforced.label": "Appliqu\u00e9 \u00e0 partir des valeurs autoris\u00e9es",
+  "form.option.description.label": "Description",
+  "form.option.save.title": "Enregistrer les modifications apport\u00e9es \u00e0 l\u02bcoption",
+  "form.option.type.label": "Type d'option",
+  "form.option.multivalueAllSelected.label": "S\u00e9lectionner toutes les valeurs par d\u00e9faut",
+  "form.option.secureExposed.false.label": "Authentification \u00e0 distance s\u00e9curis\u00e9e",
+  "form.option.valuesType.url.authentication.token.label": "Jeton",
+  "form.option.delimiter.label": "D\u00e9limiteur",
+  "form.option.valuesURL.placeholder": "URL distante",
+  "form.option.valuesType.url.authType.empty.label": "S\u00e9lectionner le type d\u02bcauthentification",
+  "form.option.valuesDelimiter.description":
+    "D\u00e9finir le d\u00e9limiteur pour les valeurs autoris\u00e9es",
+  "form.option.usage.file.preview.description":
+    "Le chemin d\u02bcacc\u00e8s local sera accessible aux scripts sous ces formes:",
+  "form.option.secureExposed.false.description":
+    "Entr\u00e9e de mot de passe, valeur non expos\u00e9e dans les scripts ou les commandes, utilis\u00e9e uniquement par Node Executors pour l\u02bcauthentification.",
+  "form.option.valuesType.url.filter.error.label":
+    "Le filtre de chemin JSON de l\u02bcURL distante a une syntaxe non valide",
+  "form.option.valuesType.url.authType.apiKey.label": "Cl\u00e9 API",
+  "form.option.optionType.text.label": "Texte",
+  "form.option.secureExposed.true.label": "Texte brut avec saisie du mot de passe",
+  "form.option.valuesType.url.filter.description":
+    'Filtrez les r\u00e9sultats JSON \u00e0 l\u02bcaide d\u02bcun chemin de cl\u00e9. Par exemple "$.key.path"',
+  "form.option.valuesType.url.authentication.tokenInformer.header.label":
+    "En-t\u00eate",
+  "form.option.defaultStoragePath.description":
+    "Chemin de stockage des cl\u00e9s pour une valeur de mot de passe par d\u00e9faut",
+  "form.option.multivalued.label": "Valeurs multiples",
+  "form.option.multivalued.description":
+    "Autoriser \u00e0 choisir plusieurs valeurs d\u02bcentr\u00e9e.",
+  "form.option.valuesType.url.authentication.tokenInformer.query.label":
+    "Requ\u00eater un param\u00e8tre",
+  "form.option.create.title": "Enregistrer la nouvelle option",
+  "form.option.regex.label": "Correspondance avec une expression r\u00e9guli\u00e8re",
+  "form.option.optionType.file.label": "Fichier",
+  "form.option.valuesDelimiter.label": "D\u00e9limiteur de liste",
+  "form.option.cancel.title": "Annuler l\u02bcajout d\u02bcune nouvelle option",
+  "form.option.values.label": "Valeurs autoris\u00e9es",
+  "form.option.dateFormat.description.md":
+    "Entrez un format de date comme d\u00e9crit dans [docs momentjs] (http://momentjs.com/docs/#/displaying/format/)",
+  "form.option.defaultStoragePath.label": "Chemin de stockage",
+  "form.option.defaultValue.label": "Valeur par d\u00e9faut",
+  "form.option.delimiter.description":
+    "Le d\u00e9limiteur sera utilis\u00e9 pour joindre toutes les valeurs d\u02bcentr\u00e9e. Cela peut \u00eatre n\u02bcimporte quelle cha\u00eene : \u02bc\u02bc(espace), \u02bc, \u02bc(virgule), etc. Note : ne pas utiliser de guillemets.",
+  "form.option.secureInput.false.description": "Entr\u00e9e de texte brut.",
+  "form.option.valuesType.url.authType.basic.label": "Basique ",
+  "form.option.valuesType.url.authentication.tokenInformer.label":
+    "Injecter une cl\u00e9 ",
+  "form.option.secureExposed.true.description":
+    "Mot de passe entr\u00e9, valeur expos\u00e9e dans les scripts et les commandes.",
+  "form.option.dateFormat.title": "Format de date",
+  "form.option.label.label": "\u00c9tiquette d\u02bcoption",
+  "form.option.valuesUrl.description": "URL vers un service JSON distant.",
+  "form.option.multivalued.secure-conflict.message":
+    "Les options d\u02bcentr\u00e9e s\u00e9curis\u00e9e n\u02bcautorisent pas plusieurs valeurs",
+  "form.option.sort.label": "Trier les valeurs",
+  "form.option.usage.file.sha.preview.description":
+    "La valeur SHA-256 du contenu du fichier:",
+  "Option.property.description.description":
+    "La description sera affich\u00e9 avec Markdown.",
+  "option.defaultValue.regexmismatch.message":
+    'La valeur par d\u00e9faut "{0}" ne correspond pas \u00e0 la regex: {1}',
+  "option.multivalued.secure-conflict.message":
+    "L\u02bcentr\u00e9e s\u00e9curis\u00e9e ne peut pas \u00eatre utilis\u00e9e avec une entr\u00e9e \u00e0 valeurs multiples",
+  "option.defaultValue.notallowed.message":
+    "La valeur par d\u00e9faut ne figurait pas dans la liste des valeurs autoris\u00e9es et les valeurs sont pr\u00e9d\u00e9finies",
+  "option.enforced.secure-conflict.message":
+    "L\u02bcentr\u00e9e s\u00e9curis\u00e9e ne peut pas \u00eatre utilis\u00e9e avec des valeurs pr\u00e9d\u00e9finies",
+  "option.file.config.disabled.message":
+    "Le plugin de configuration du type d\u02bcoption de fichier n\u02bcest pas activ\u00e9",
+  "option.defaultValue.required.message":
+    "Sp\u00e9cifiez une valeur par d\u00e9faut pour les options requises lorsque le traitement est planifi\u00e9.",
+  "option.enforced.emptyvalues.message":
+    "Les valeurs autoris\u00e9es (liste ou URL distante) doivent \u00eatre sp\u00e9cifi\u00e9es si les valeurs sont obligatoires",
+  "option.file.required.message":
+    "Le type d'option de fichier ne peut pas \u00eatre obligatoire lorsque le traitement est planifi\u00e9.",
+  "option.regex.invalid.message": "Expression r\u00e9guli\u00e8re non valide : {0}",
+  "option.file.config.invalid.message":
+    "La configuration du type d'option de fichier n'est pas valide : {0}",
+  "option.delimiter.blank.message":
+    "Vous devez sp\u00e9cifier un d\u00e9limiteur pour les options \u00e0 plusieurs valeurs",
+  "option.hidden.notallowed.message":
+    "Les options masqu\u00e9es doivent avoir une valeur par d\u00e9faut ou un chemin de stockage.",
+  "option.values.regexmismatch.message":
+    'La valeur autoris\u00e9e "{0}" ne correspond pas \u00e0 l\u02bcexpression r\u00e9guli\u00e8re : {1}',
+  "option.defaultValue.multivalued.notallowed.message":
+    'La valeur par d\u00e9faut contient une cha\u00eene qui ne figurait pas dans la liste des valeurs autoris\u00e9es et ces valeurs sont pr\u00e9d\u00e9fnies : "{0}". Remarque : les espaces sont importants.',
+  "Option.required.label": "Obligatoire",
+  "Option.hidden.description": "Doit \u00eatre masqu\u00e9 sur la page d\u02bcex\u00e9cution du traitement",
+  "Option.required.description":
+    "Exiger que cette option ait une valeur non vide lors de l\u02bcex\u00e9cution du traitement",
+  "Option.hidden.label": "Devrait \u00eatre masqu\u00e9",
+  "form.option.regex.placeholder": "Entrez une expression r\u00e9guli\u00e8re",
+  "home.user": "{n} Utilisateurs | {n} Utilisateur | {n} Utilisateurs",
+  "home.table.projects": "Projets",
+  "home.table.activity": "Activit\u00e9",
+  "home.table.actions": "Actions",
+  "option.click.to.edit.title": "Cliquer pour modifier",
+  "form.option.regex.validation.error":
+    "Valeur non valide : elle doit correspondre au mod\u00e8le : {0}",
+  "form.field.required.message": "Ce champ est requis",
+  "form.field.too.long.message":
+    "Cette valeur ne peut pas comporter plus de {max} caract\u00e8res",
+  "form.option.validation.errors.message":
+    "Corriger les erreurs de validation avant d’enregistrer les modifications",
+  "option.list.header.name.title": "Nom",
+  "option.list.header.values.title": "Valeurs",
+  "option.list.header.restrictions.title": "Restrictions",
+  "util.undoredo.undo": "Annuler",
+  "util.undoredo.redo": "Refaire",
+  "util.undoredo.revertAll": "Annuler toutes les modifications",
+  "util.undoredo.revertAll.confirm": "Vraiment annuler toutes les modifications ?",
+  "option.view.required.title": " (Obligatoire)",
+  "option.view.allowedValues.label": "Valeurs autoris\u00e9es",
+  "option.view.valuesUrl.title": "Valeurs charg\u00e9es \u00e0 partir de l\u02bcURL distante : {0}",
+  "option.view.valuesUrl.placeholder": "URL",
+  "option.view.enforced.title": "L\u02bcentr\u00e9e doit \u00eatre une valeur autoris\u00e9e",
+  "option.view.enforced.placeholder": "Strict",
+  "option.view.regex.info.note": "Les valeurs doivent correspondre \u00e0 l\u02bcexpression r\u00e9guli\u00e8re:",
+  "option.view.notenforced.title": "Aucune restriction sur la valeur d\u02bcentr\u00e9e",
+  "option.view.notenforced.placeholder": "Aucun",
+  "option.view.action.delete.title": "Supprimer cette option",
+  "option.view.action.edit.title": "Modifier cette option",
+  "option.view.action.duplicate.title": "Duplicate this Option",
+  "option.view.action.moveUp.title": "D\u00e9placer vers le haut",
+  "option.view.action.moveDown.title": "D\u00e9placer vers le bas",
+  "option.view.action.drag.title": "Faire glisser pour r\u00e9organiser",
 };
 
 export default messages;
