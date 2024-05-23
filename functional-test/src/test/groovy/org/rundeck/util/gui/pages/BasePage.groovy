@@ -222,4 +222,8 @@ abstract class BasePage {
             ExpectedConditions.invisibilityOf(element)
         }
     }
+
+    List<WebElement> findElementsByXpath(String xpath){
+        return driver.findElements(By.xpath(xpath))
+    }
 }
