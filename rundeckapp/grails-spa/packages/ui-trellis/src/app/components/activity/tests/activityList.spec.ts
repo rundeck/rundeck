@@ -2,10 +2,8 @@ import { mount, VueWrapper } from "@vue/test-utils";
 import ActivityList from "../activityList.vue";
 import ActivityFilter from "../activityFilter.vue";
 import { RundeckContext } from "../../../../library";
-import { EventBus } from "../../../../library";
-import { RundeckBrowser } from "@rundeck/client";
-import { RootStore } from "../../../../library/stores/RootStore";
-import { NavItem } from "../../../../library/stores/NavBar";
+
+import { setupRundeckContext } from "../setupRundeckContext";
 // Mocking necessary services and modules
 jest.mock("../../../../library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({ projectName: "test" }),
@@ -74,58 +72,7 @@ declare global {
 }
 beforeAll(() => {
   jest.useFakeTimers();
-  window._rundeck = {
-    eventBus: mockEventBus as unknown as typeof EventBus,
-    rdBase: "mocked-rdBase",
-    apiVersion: "47",
-    projectName: "test",
-    activeTour: "",
-    activeTourStep: "",
-    appMeta: {},
-    token: {
-      TOKEN: "mocked-token",
-      URI: "mocked-uri",
-    },
-    tokens: {
-      default: {
-        TOKEN: "mocked-token",
-        URI: "mocked-uri",
-      },
-    },
-    rundeckClient: new RundeckBrowser("mocked-token", "mocked-uri"),
-    data: {
-      jobslistDateFormatMoment: "MM/DD/YYYY",
-      projectAdminAuth: true,
-      deleteExecAuth: true,
-      activityUrl: "/project/jaya-test/events/eventsAjax",
-      nowrunningUrl: "/api/47/project/jaya-test/executions/running",
-      bulkDeleteUrl: "/execution/deleteBulkApi",
-      activityPageHref: "/project/jaya-test/activity",
-      sinceUpdatedUrl: "/project/jaya-test/events/since.json",
-      autorefreshms: 5000,
-      pagination: {
-        max: 10,
-      },
-      filterOpts: {},
-      query: {},
-      runningOpts: {
-        allowAutoRefresh: true,
-        loadRunning: true,
-      },
-      viewOpts: {
-        showBulkDelete: true,
-      },
-    },
-    feature: {
-      exampleFeature: {
-        enabled: true,
-      },
-    },
-    navbar: {
-      items: [] as Array<NavItem>,
-    },
-    rootStore: {} as RootStore,
-  } as RundeckContext;
+  setupRundeckContext();
 });
 afterAll(() => {
   jest.useRealTimers();
