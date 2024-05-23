@@ -42,12 +42,8 @@
       ></activity-filter>
 
       <div class="pull-right">
-        <span
-          v-if="runningOpts.allowAutoRefresh"
-          class="pr-2"
-          
-        >
-          <input id="auto-refresh" v-model="autorefresh" type="checkbox"  />
+        <span v-if="runningOpts.allowAutoRefresh" class="pr-2">
+          <input id="auto-refresh" v-model="autorefresh" type="checkbox" />
           <label for="auto-refresh" class="pr-2">{{
             $t("Auto refresh")
           }}</label>
@@ -106,6 +102,7 @@
       v-model="showBulkEditCleanSelections"
       :title="$t('Clear bulk selection')"
       append-to-body
+      data-test-id="modal-clean-selections"
     >
       <i18n-t keypath="clearselected.confirm.text" tag="p">
         <strong>{{ bulkSelectedIds.length }}</strong>
@@ -142,6 +139,7 @@
       v-model="showBulkEditConfirm"
       :title="$t('Bulk Delete Executions')"
       append-to-body
+      data-test-id="modal-bulk-delete"
     >
       <i18n-t keypath="delete.confirm.text" tag="p">
         <strong>{{ bulkSelectedIds.length }}</strong>
@@ -165,6 +163,7 @@
       v-model="showBulkEditResults"
       :title="$t('Bulk Delete Executions: Results')"
       append-to-body
+      data-test-id="modal-bulk-delete-results"
     >
       <div v-if="bulkEditProgress">
         <em>
@@ -341,7 +340,7 @@
               v-if="exec.job"
               v-tooltip="
                 purify(
-                  exec.job.group ? exec.job.group + '/' + exec.job.name : '',
+                  exec.job.group ? exec.job.group + '/' + exec.job.name : ''
                 )
               "
               class="eventtitle job"
@@ -370,6 +369,7 @@
                 class="link-quiet"
                 title="View execution output"
                 :href="exec.permalink"
+                data-test-id="execution-link"
                 >#{{ exec.id }}</a
               >
             </td>
@@ -404,6 +404,7 @@
             ]"
             @click="autoBulkEdit(rpt)"
             @click.middle="middleClickRow(rpt)"
+            data-test-id="report-row-item"
           >
             <td v-if="bulkEditMode" class="eventicon">
               <input
@@ -430,7 +431,7 @@
                   [
                     jobCompletedISOFormat(rpt.dateCompleted),
                     jobCompletedFromNow(rpt.dateCompleted),
-                  ],
+                  ]
                 ),
                 viewport: `.ali-${rpt.execution.id}`,
               }"
@@ -545,7 +546,11 @@
       </table>
     </div>
 
-    <div v-if="reports.length < 1" class="loading-area">
+    <div
+      v-if="reports.length < 1"
+      class="loading-area"
+      data-test-id="loading-area"
+    >
       <span v-if="!loading && !loadError" class="loading-text">
         {{ $t("results.empty.text") }}
       </span>
@@ -598,7 +603,7 @@ function _genUrl(url: string, params: any) {
   } else if (typeof params == "object") {
     for (const e in params) {
       urlparams.push(
-        encodeURIComponent(e) + "=" + encodeURIComponent(params[e]),
+        encodeURIComponent(e) + "=" + encodeURIComponent(params[e])
       );
     }
   }
@@ -761,7 +766,7 @@ export default defineComponent({
         this.query = Object.assign(
           {},
           this.query,
-          window._rundeck.data["query"],
+          window._rundeck.data["query"]
         );
       } else {
         this.loadActivity(0);
@@ -803,7 +808,7 @@ export default defineComponent({
         const diff = moment().diff(moment(exec.dateStarted.date));
         return Math.min(
           Math.floor((diff / exec.job.averageDuration) * 100),
-          100,
+          100
         );
       }
       return 0;
@@ -1022,7 +1027,7 @@ export default defineComponent({
           params: Object.assign(
             { offset: this.pagination.offset, max: this.pagination.max },
             this.query,
-            { since: this.lastDate },
+            { since: this.lastDate }
           ),
           withCredentials: true,
         });
@@ -1091,7 +1096,7 @@ export default defineComponent({
           headers: { "x-rundeck-ajax": true },
           params: Object.assign(
             { offset: offset, max: this.pagination.max },
-            xquery,
+            xquery
           ),
           withCredentials: true,
         });
@@ -1127,7 +1132,7 @@ export default defineComponent({
         this.autorefreshtimeout = setTimeout(() => {
           const cur = new Date();
           Promise.all([this.loadRunning(), this.loadSince()]).then(() =>
-            this.checkrefresh(cur.getTime()),
+            this.checkrefresh(cur.getTime())
           );
         }, ms);
       }
