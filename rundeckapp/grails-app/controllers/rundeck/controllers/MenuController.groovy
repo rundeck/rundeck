@@ -3149,7 +3149,7 @@ Since: v17''',
         }
 
 
-        def list = jobSchedulesService.getAllScheduled(uuid)
+        def list = jobSchedulesService.getAllScheduled(uuid, null)
         //filter authorized jobs
         Map<String, UserAndRolesAuthContext> projectAuths = [:]
         def authForProject = { String project ->
