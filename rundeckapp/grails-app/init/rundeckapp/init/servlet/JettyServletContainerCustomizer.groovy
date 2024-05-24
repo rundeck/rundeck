@@ -54,7 +54,7 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
             }
         })
         factory.addServerCustomizers(new BanHttpMethodCustomizer())
-        if(featureService.featurePresent("setServerUrlOnNoHostHeader", false) && serverUrl) {
+        if(serverUrl && featureService.featurePresent("setServerUrlOnNoHostHeader", false)) {
             factory.addServerCustomizers(new RundeckHostHeaderCustomizer(serverUrl: serverUrl))
         }
         factory.addConfigurations(new JettyConfigPropsInitParameterConfiguration(initParams))
