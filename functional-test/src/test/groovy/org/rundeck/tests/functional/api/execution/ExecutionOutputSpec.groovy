@@ -1,5 +1,6 @@
 package org.rundeck.tests.functional.api.execution
 
+import org.rundeck.util.annotations.APIExecOutputTest
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.container.BaseContainer
@@ -7,6 +8,7 @@ import org.rundeck.util.container.BaseContainer
 import java.util.function.Function
 
 @APITest
+@APIExecOutputTest
 class ExecutionOutputSpec extends BaseContainer {
 
     def setupSpec() {
