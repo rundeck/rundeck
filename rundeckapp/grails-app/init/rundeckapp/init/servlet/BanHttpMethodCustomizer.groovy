@@ -25,28 +25,6 @@ class BanHttpMethodCustomizer implements JettyServerCustomizer {
     }
 }
 
-class RundeckHostHeaderCustomizer implements JettyServerCustomizer {
-    String serverUrl
-    int serverPort
-
-    RundeckHostHeaderCustomizer(String serverUrl) {
-        this.serverUrl = serverUrl
-    }
-
-    RundeckHostHeaderCustomizer(String serverUrl, int serverPort) {
-        this.serverUrl = serverUrl
-        this.serverPort = serverPort
-    }
-
-    @Override
-    void customize(Server server) {
-        server.connectors.each {connector ->
-            HttpConfiguration config = connector.getConnectionFactory(HttpConnectionFactory.class).httpConfiguration
-            config.addCustomizer(new HostHeaderCustomizer(serverUrl, serverPort))
-        }
-    }
-}
-
 /**
  * Includes and validates paths and http methods banned for security reasons
  */
