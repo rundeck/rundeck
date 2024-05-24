@@ -3,7 +3,6 @@ package rundeckapp.init.servlet
 import org.eclipse.jetty.http.HttpMethod
 import org.eclipse.jetty.http.HttpStatus
 import org.eclipse.jetty.server.Connector
-import org.eclipse.jetty.server.HostHeaderCustomizer
 import org.eclipse.jetty.server.HttpConfiguration
 import org.eclipse.jetty.server.HttpConnectionFactory
 import org.eclipse.jetty.server.Request
