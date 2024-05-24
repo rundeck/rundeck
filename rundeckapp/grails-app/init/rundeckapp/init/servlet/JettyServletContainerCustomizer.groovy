@@ -39,7 +39,6 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
     Map<String, String> initParams = [:]
     Boolean useForwardHeaders
     String serverUrl
-    String serverPort
     FeatureService featureService
 
     @Override
@@ -55,8 +54,8 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
             }
         })
         factory.addServerCustomizers(new BanHttpMethodCustomizer())
-        if(featureService.featurePresent("setServerUrlOnNohostHeader", false)) {
-            factory.addServerCustomizers(new RundeckHostHeaderCustomizer(serverUrl, Integer.parseInt(serverPort ?: "4440")))
+        if(featureService.featurePresent("setServerUrlOnNoHostHeader", false) && serverUrl) {
+            factory.addServerCustomizers(new RundeckHostHeaderCustomizer(serverUrl: serverUrl))
         }
         factory.addConfigurations(new JettyConfigPropsInitParameterConfiguration(initParams))
         factory.useForwardHeaders=useForwardHeaders
