@@ -45,6 +45,11 @@ module.exports = {
   parallel: true,
   css: {
     extract: false,
+    loaderOptions: {
+      css: {
+        url: false,
+      },
+    },
   },
   /** Don't emit index html files */
   chainWebpack: (config) => {

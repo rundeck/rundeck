@@ -58,8 +58,12 @@ module.exports = {
     "pages/nodes": { entry: "./src/app/pages/nodes/main.ts" },
     "pages/job/browse": { entry: "./src/app/pages/job/browse/main.ts" },
     "pages/home": { entry: "./src/app/pages/home/main.ts" },
-    "pages/job/head/scm-action-buttons": { entry: './src/app/pages/job/head/scm/scm-action-buttons.ts'},
-    "pages/job/head/scm-status-badge": { entry: './src/app/pages/job/head/scm/scm-status-badge.ts'}
+    "pages/job/head/scm-action-buttons": {
+      entry: "./src/app/pages/job/head/scm/scm-action-buttons.ts",
+    },
+    "pages/job/head/scm-status-badge": {
+      entry: "./src/app/pages/job/head/scm/scm-status-badge.ts",
+    },
   },
 
   outputDir: process.env.VUE_APP_OUTPUT_DIR,
@@ -78,6 +82,11 @@ module.exports = {
             chunkFilename: "./css/[name].css",
           }
         : false,
+    loaderOptions: {
+      css: {
+        url: false,
+      },
+    },
   },
   chainWebpack: (config) => {
     /** Do not create index pages for entry points */
