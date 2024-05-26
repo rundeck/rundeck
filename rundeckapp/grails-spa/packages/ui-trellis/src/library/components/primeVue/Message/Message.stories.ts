@@ -6,7 +6,10 @@ import PtButton from "../PtButton/PtButton.vue";
 const meta: Meta<typeof Message> = {
   title: "Message",
   parameters: {
-    componentSubtitle: "Message component is used to display inline messages.",
+    docs: {
+      componentSubtitle:
+        "Message component is used to display inline messages.",
+    },
     actions: {
       disable: true,
     },

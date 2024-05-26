@@ -5,7 +5,9 @@ import ProgressBar from "primevue/progressbar";
 
 const meta: Meta<typeof ProgressBar> = {
   parameters: {
-    componentSubtitle: "ProgressBar is a process status indicator.",
+    docs: {
+      componentSubtitle: "ProgressBar is a process status indicator.",
+    },
     actions: {
       disable: true,
     },

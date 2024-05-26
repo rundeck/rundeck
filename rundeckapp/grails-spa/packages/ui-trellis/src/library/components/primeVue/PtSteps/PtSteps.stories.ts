@@ -5,8 +5,10 @@ const meta: Meta<typeof PtSteps> = {
   title: "PtSteps",
   component: PtSteps,
   parameters: {
-    componentSubtitle:
-      "PtSteps is a wrapper for the component Steps, also known as Stepper, which is an indicator for the steps in a workflow.",
+    docs: {
+      componentSubtitle:
+        "PtSteps is a wrapper for the component Steps, also known as Stepper, which is an indicator for the steps in a workflow.",
+    },
     actions: {
       disable: true,
     },
