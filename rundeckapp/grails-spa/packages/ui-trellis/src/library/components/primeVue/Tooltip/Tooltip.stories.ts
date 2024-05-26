@@ -8,8 +8,10 @@ import Tag from "primevue/tag";
 const meta: Meta<TooltipDirectiveBinding> = {
   title: "Tooltip",
   parameters: {
-    componentSubtitle:
-      "Tooltip directive provides advisory information for a component.",
+    docs: {
+      componentSubtitle:
+        "Tooltip directive provides advisory information for a component.",
+    },
     actions: {
       disable: true,
     },

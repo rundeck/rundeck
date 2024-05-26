@@ -6,8 +6,10 @@ import TabPanel from "primevue/tabpanel";
 const meta: Meta<typeof TabView> = {
   title: "TabView",
   parameters: {
-    componentSubtitle:
-      "TabView is a container component to group content with tabs.",
+    docs: {
+      componentSubtitle:
+        "TabView is a container component to group content with tabs.",
+    },
     actions: {
       disable: true,
     },

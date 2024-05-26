@@ -43,7 +43,6 @@
     "@iconfu/svg-inject": "^1.2.3",
     "@popperjs/core": "^2.8.4",
     "@rundeck/client": "^0.2.5",
-    "@storybook/vue3": "^7.0.0",
     "ace-builds": "^1.23.4",
     "axios": "^1.6.4",
     "core-js": "^3.6.5",
