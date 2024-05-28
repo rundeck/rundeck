@@ -252,7 +252,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     execution: e,
                     href: apiService.apiHrefForExecution(e),
                     status: getExecutionState(e),
-                    summary: summarizeJob(e.scheduledExecution, e),
+                    summary: ExecReportUtil.summarizeJob(e),
                     permalink: apiService.guiHrefForExecution(e)
             ]
 
@@ -277,7 +277,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         permalink: apiService.guiHrefForExecution(e),
                         href: apiService.apiHrefForExecution(e),
                         status: getExecutionState(e),
-                        summary: summarizeJob(e.scheduledExecution, e)
+                        summary: ExecReportUtil.summarizeJob(e)
                 ]
             if(e.customStatusString){
                 data.customStatus=e.customStatusString
@@ -3194,7 +3194,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def jobname="adhoc"
         def jobid=null
         def jobUuid=null
-        def summary= summarizeJob(scheduledExecution, execution)
+        def summary= ExecReportUtil.summarizeJob(execution)
         if (scheduledExecution) {
             jobname = scheduledExecution.groupPath ? scheduledExecution.generateFullName() : scheduledExecution.jobName
             jobid = scheduledExecution.id
@@ -3266,25 +3266,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
-    public String summarizeJob(ScheduledExecution job=null,Execution exec){
-//        if(job){
-//            return job.groupPath?job.generateFullName():job.jobName
-//        }else{
-            //summarize execution
-            StringBuffer sb = new StringBuffer()
-            final def wfsize = exec?.workflow?.commands?.size() ?: 0
-
-            if(wfsize>0){
-                sb<<exec.workflow.commands[0].summarize()
-            }else{
-                sb<< "[Empty workflow]"
-            }
-            if(wfsize>1){
-                sb << " [... ${wfsize} steps]"
-            }
-            return sb.toString()
-//        }
-    }
     /**
      * Update a scheduledExecution statistics with a successful execution duration
      * @param schedId
