@@ -3,7 +3,7 @@ package rundeck.data.util
 import org.rundeck.app.data.model.v1.execution.ExecutionData
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
-import org.rundeck.core.execution.BaseCommandExec
+import rundeck.data.constants.WorkflowStepConstants
 import rundeck.data.report.SaveReportRequestImpl
 
 class ExecReportUtil {
@@ -18,7 +18,7 @@ class ExecReportUtil {
                 null == job
                         && exec.workflow.steps
                         && exec.workflow.steps.size() == 1
-                        && exec.workflow.steps[0] instanceof BaseCommandExec
+                        && exec.workflow.steps[0].pluginType == WorkflowStepConstants.TYPE_COMMAND
         ) {
             adhocScript = exec.workflow.steps[0].adhocRemoteString
         }
@@ -58,7 +58,7 @@ class ExecReportUtil {
         final def wfsize = exec?.workflow?.steps?.size() ?: 0
 
         if(wfsize>0){
-            sb<<exec.workflow.steps[0].summarize()
+            sb<<WorkflowStepUtil.summarize(exec.workflow.steps[0])
         }else{
             sb<< "[Empty workflow]"
         }

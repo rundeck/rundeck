@@ -63,6 +63,7 @@ import rundeck.Notification
 import rundeck.ScheduledExecution
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.data.notification.SendNotificationEvent
+import rundeck.data.util.ExecReportUtil
 
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
@@ -630,7 +631,7 @@ public class NotificationService implements ApplicationContextAware{
                 href: grailsLinkGenerator.link(controller: 'execution', action: 'show', id: e.id, absolute: true,
                         params: [project: e.project]),
                 status: e.executionState,
-                summary: executionService.summarizeJob(e.scheduledExecution, e)
+                summary: ExecReportUtil.summarizeJob(e)
             ]
         },paging,delegate)
     }
@@ -644,7 +645,7 @@ public class NotificationService implements ApplicationContextAware{
                     href: grailsLinkGenerator.link(controller: 'execution', action: 'show', id: e.id, absolute: true,
                                                    params: [project: e.project]),
                     status: e.executionState,
-                    summary: executionService.summarizeJob(e.scheduledExecution, e)
+                    summary: ExecReportUtil.summarizeJob(e)
             ]
         },paging,delegate)
     }
