@@ -35,6 +35,12 @@ class GitExportSetupRequest {
         @JsonProperty
         String gitPasswordPath
 
+        @JsonProperty
+        String apiToken
+
+        @JsonProperty
+        String project
+
         Map toMap(){
             return [
                     dir: dir,

@@ -2915,6 +2915,13 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                     && extra.futureScheduledExecutions.size() > max) {
                 extra.futureScheduledExecutions = extra.futureScheduledExecutions[0..<max]
             }
+
+            if(request.api_version >= ApiVersions.V48) {
+                def averageDuration = executionService.getAverageDuration(scheduledExecution.uuid)
+                if (averageDuration > 0) {
+                    extra.averageDuration = averageDuration
+                }
+            }
         }
 
 

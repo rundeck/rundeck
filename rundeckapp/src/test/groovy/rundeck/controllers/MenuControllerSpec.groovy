@@ -2386,8 +2386,11 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         }
         controller.jobSchedulesService = jobSchedulesService
         controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
+        controller.executionService = new ExecutionService()
+        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
 
         when:
+        request.api_version = 48
         params.id=testUUID
         response.format='json'
         def result = controller.apiJobForecast()
@@ -2408,10 +2411,59 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         response.json.group  == 'some/where'
         response.json.href  == 'api/href'
         response.json.permalink  == 'gui/href'
+        response.json.averageDuration  == 2000
         response.json.futureScheduledExecutions != null
         response.json.futureScheduledExecutions.size() == 1
     }
 
+    def "api job forecast json prior version 48"() {
+        given:
+        def testUUID = UUID.randomUUID().toString()
+        def testUUID2 = UUID.randomUUID().toString()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
+        job1.serverNodeUUID = testUUID2
+        job1.totalTime=200*1000
+        job1.execCount=100
+        job1.scheduled=true
+        job1.save()
+        def jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> job1.shouldScheduleExecution()
+        }
+        controller.jobSchedulesService = jobSchedulesService
+        controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
+        controller.executionService = new ExecutionService()
+        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
+
+        when:
+        request.api_version = 32
+        params.id=testUUID
+        response.format='json'
+        def result = controller.apiJobForecast()
+
+        then:
+        1 * controller.apiService.requireApi(_, _, 31) >> true
+        1 * controller.apiService.requireParameters(_, _, ['id']) >> true
+        1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
+        1 * controller.apiService.requireExists(_, job1, _) >> true
+        1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
+        1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
+        1 * controller.scheduledExecutionService.nextExecutions(_,_,false) >> [new Date()]
+
+        response.json != null
+        response.json.id  == testUUID
+        response.json.description  == 'a job'
+        response.json.name  == 'job1'
+        response.json.group  == 'some/where'
+        response.json.href  == 'api/href'
+        response.json.permalink  == 'gui/href'
+        response.json.averageDuration  == null
+        response.json.futureScheduledExecutions != null
+        response.json.futureScheduledExecutions.size() == 1
+    }
 
     def "api job forecast json past mode"() {
         given:
@@ -2432,9 +2484,11 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         }
         controller.jobSchedulesService = jobSchedulesService
         controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
+        controller.executionService = new ExecutionService()
+        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
 
         when:
-        request.api_version = 32
+        request.api_version = 48
         params.id=testUUID
         params.past='true'
         response.format='json'
@@ -2456,6 +2510,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         response.json.group  == 'some/where'
         response.json.href  == 'api/href'
         response.json.permalink  == 'gui/href'
+        response.json.averageDuration  == 2000
         response.json.futureScheduledExecutions != null
         response.json.futureScheduledExecutions.size() == 1
     }
