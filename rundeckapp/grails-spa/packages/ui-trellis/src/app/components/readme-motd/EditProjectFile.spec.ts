@@ -25,11 +25,8 @@ jest.mock("./editProjectFileService", () => ({
 
 jest.mock("../../../library/components/utils/AceEditor.vue", () => ({
   name: "AceEditor",
-  props: ["value"],
-  template: '<span class="ace_text ace_xml">{{ getValue() }}</span>',
-  methods: {
-    getValue: jest.fn().mockReturnValue("sample file content"),
-  },
+  props: ["modelValue"],
+  template: '<span class="ace_text ace_xml">{{modelValue }}</span>',
 }));
 const mountEditProjectFile = async (props = {}) => {
   return mount(EditProjectFile, {
@@ -65,7 +62,6 @@ describe("EditProjectFile", () => {
   it("renders file content inside AceEditor's span element when getFileText method returns successfully", async () => {
     const wrapper = await mountEditProjectFile();
     const aceEditor = wrapper.findComponent({ name: "AceEditor" });
-    aceEditor.vm.getValue();
     await wrapper.vm.$nextTick();
     const span = aceEditor.find("span.ace_text.ace_xml");
     expect(span.text()).toContain("sample file content");
@@ -74,7 +70,7 @@ describe("EditProjectFile", () => {
     const wrapper = await mountEditProjectFile();
     const notifyErrorSpy = jest.spyOn(wrapper.vm, "notifyError");
     (editProjectFileService.getFileText as jest.Mock).mockImplementationOnce(
-      () => Promise.reject(new Error("Failed to fetch file")),
+      () => Promise.reject(new Error("Failed to fetch file"))
     );
     await wrapper.vm.getFileText();
     expect(notifyErrorSpy).toHaveBeenCalledWith("Failed to fetch file");
