@@ -1,8 +1,8 @@
 // setupRundeckContext.ts
-import { EventBus } from "../../../library";
+import { EventBus } from "../../../../library";
 import { RundeckBrowser } from "@rundeck/client";
-import { RootStore } from "../../../library/stores/RootStore";
-import { NavItem } from "../../../library/stores/NavBar";
+import { RootStore } from "../../../../library/stores/RootStore";
+import { NavItem } from "../../../../library/stores/NavBar";
 
 export const mockEventBus = {
   on: jest.fn(),
