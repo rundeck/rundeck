@@ -102,7 +102,17 @@ public class CommandExec extends WorkflowStep implements BaseCommandExec {
         return ce
     }
 
-    public Map getConfiguration() { null }
+    public Map getConfiguration() {
+        return [
+                scriptInterpreter: scriptInterpreter,
+                interpreterArgsQuoted: interpreterArgsQuoted,
+                adhocRemoteString: adhocRemoteString,
+                adhocLocalString: adhocLocalString,
+                adhocFilepath: adhocFilepath,
+                argString: argString,
+                fileExtension: fileExtension,
+        ]
+    }
 
     public String getPluginType() {
         if(adhocRemoteString) {

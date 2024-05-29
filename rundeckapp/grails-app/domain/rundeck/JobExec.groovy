@@ -95,7 +95,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         return "job: ${this.getJobIdentifier()}${argString?' -- '+argString:''}"
     }
 
-    public Map getConfiguration() { null }
+    public Map getConfiguration() {
+        return [jobIdentifier: this.getJobIdentifier(), argString: argString]
+    }
 
     public String getPluginType() {
         return WorkflowStepConstants.TYPE_JOB_REF

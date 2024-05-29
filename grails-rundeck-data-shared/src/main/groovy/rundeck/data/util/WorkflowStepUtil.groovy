@@ -17,20 +17,20 @@ class WorkflowStepUtil {
     }
 
     static String summarizeJobStep(WorkflowStepData step) {
-        return "job: ${step.getJobIdentifier()}${step.argString?' -- '+step.argString:''}"
+        return "job: ${step.configuration.jobIdentifier}${step.configuration.argString?' -- '+step.configuration.argString:''}"
     }
 
     static String summarizeCommandStep(WorkflowStepData step){
         StringBuffer sb = new StringBuffer()
-        sb << (step.scriptInterpreter ? "${step.scriptInterpreter}" : '')
-        sb << (step.interpreterArgsQuoted ? "'" : '')
-        sb << (step.adhocRemoteString ? "${step.adhocRemoteString}" : '')
-        sb << (step.adhocLocalString ? "${step.adhocLocalString}" : '')
-        sb << (step.adhocFilepath ? "${step.adhocFilepath}" : '')
-        sb << (step.argString ? " -- ${step.argString}" : '')
-        sb << (step.interpreterArgsQuoted ? "'" : '')
+        sb << (step.configuration.scriptInterpreter ? "${step.configuration.scriptInterpreter}" : '')
+        sb << (step.configuration.interpreterArgsQuoted ? "'" : '')
+        sb << (step.configuration.adhocRemoteString ? "${step.configuration.adhocRemoteString}" : '')
+        sb << (step.configuration.adhocLocalString ? "${step.configuration.adhocLocalString}" : '')
+        sb << (step.configuration.adhocFilepath ? "${step.configuration.adhocFilepath}" : '')
+        sb << (step.configuration.argString ? " -- ${step.configuration.argString}" : '')
+        sb << (step.configuration.interpreterArgsQuoted ? "'" : '')
         sb << (step.description ?( " ('" + step.description + "')" ) : '')
-        sb << (step.fileExtension ?( " [" + step.fileExtension + "]" ) : '')
+        sb << (step.configuration.fileExtension ?( " [" + step.configuration.fileExtension + "]" ) : '')
         return sb.toString()
     }
 }
