@@ -16,8 +16,6 @@ import org.springframework.context.MessageSource
 import org.springframework.transaction.TransactionStatus
 import rundeck.BaseReport
 import rundeck.ExecReport
-import rundeck.ReferencedExecution
-import rundeck.ScheduledExecution
 import rundeck.services.ConfigurationService
 import javax.sql.DataSource
 

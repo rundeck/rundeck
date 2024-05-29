@@ -25,9 +25,11 @@ class WorkflowStepUtilSpec extends Specification {
         def step = Mock(WorkflowStepData){
             pluginType >> "builtin-jobref"
             nodeStep >> false
+            configuration >> [
+                jobIdentifier: "uuid",
+                argString: "arg"
+            ]
         }
-        step.metaClass.getJobIdentifier = { -> "uuid" }
-        step.metaClass.getArgString = { -> "arg" }
         when:
         def summary = WorkflowStepUtil.summarize(step)
         then:
@@ -39,14 +41,16 @@ class WorkflowStepUtilSpec extends Specification {
         def step = Mock(WorkflowStepData){
             pluginType >> "builtin-command"
             description >> "description"
+            configuration >> [
+                scriptInterpreter: "interpreter",
+                interpreterArgsQuoted: true,
+                adhocRemoteString: "remote",
+                adhocLocalString: "local",
+                adhocFilepath: "filepath",
+                argString: "arg",
+                fileExtension: "extension"
+            ]
         }
-        step.metaClass.getScriptInterpreter = { -> "interpreter" }
-        step.metaClass.getInterpreterArgsQuoted = { -> true }
-        step.metaClass.getAdhocRemoteString = { -> "remote" }
-        step.metaClass.getAdhocLocalString = { -> "local" }
-        step.metaClass.getAdhocFilepath = { -> "filepath" }
-        step.metaClass.getArgString = { -> "arg" }
-        step.metaClass.getFileExtension = { -> "extension" }
         when:
         def summary = WorkflowStepUtil.summarize(step)
         then:
@@ -58,13 +62,15 @@ class WorkflowStepUtilSpec extends Specification {
         def step = new RdWorkflowStep()
         step.pluginType = "builtin-command"
         step.description = "descriptionTest"
-        step.metaClass.getScriptInterpreter = { -> "interpreter" }
-        step.metaClass.getInterpreterArgsQuoted = { -> true }
-        step.metaClass.getAdhocRemoteString = { -> "remote" }
-        step.metaClass.getAdhocLocalString = { -> "local" }
-        step.metaClass.getAdhocFilepath = { -> "filepath" }
-        step.metaClass.getArgString = { -> "arg" }
-        step.metaClass.getFileExtension = { -> "extension" }
+        step.configuration = [
+            scriptInterpreter: "interpreter",
+            interpreterArgsQuoted: true,
+            adhocRemoteString: "remote",
+            adhocLocalString: "local",
+            adhocFilepath: "filepath",
+            argString: "arg",
+            fileExtension: "extension"
+        ] as Map<String, Object>
 
         when:
         def summary = WorkflowStepUtil.summarize(step as WorkflowStepData)
