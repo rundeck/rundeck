@@ -2386,6 +2386,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         }
         controller.jobSchedulesService = jobSchedulesService
         controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
+        controller.executionService = new ExecutionService()
+        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
 
         when:
         request.api_version = 48
@@ -2409,6 +2411,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         response.json.group  == 'some/where'
         response.json.href  == 'api/href'
         response.json.permalink  == 'gui/href'
+        response.json.averageDuration  == 2000
         response.json.futureScheduledExecutions != null
         response.json.futureScheduledExecutions.size() == 1
     }
@@ -2481,6 +2484,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         }
         controller.jobSchedulesService = jobSchedulesService
         controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
+        controller.executionService = new ExecutionService()
+        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
 
         when:
         request.api_version = 48
@@ -2505,6 +2510,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         response.json.group  == 'some/where'
         response.json.href  == 'api/href'
         response.json.permalink  == 'gui/href'
+        response.json.averageDuration  == 2000
         response.json.futureScheduledExecutions != null
         response.json.futureScheduledExecutions.size() == 1
     }
