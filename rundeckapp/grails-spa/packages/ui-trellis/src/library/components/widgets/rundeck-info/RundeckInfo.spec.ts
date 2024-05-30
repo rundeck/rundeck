@@ -73,10 +73,8 @@ describe("RundeckInfo", () => {
 
   it("renders Rundeck's version display name", async () => {
     const wrapper = await mountRundeckInfo();
-    const versionDisplayComponent = wrapper.findComponent({
-      name: "VersionDisplay",
-    });
-    expect(versionDisplayComponent.props("text")).toBe("Erebus red glass");
+    const versionDisplayElement = wrapper.find("span.rundeck-version-icon")
+    expect(versionDisplayElement.text()).toBe("Erebus red glass");
   });
 
   it("renders the link with the correct href", async () => {
@@ -88,24 +86,23 @@ describe("RundeckInfo", () => {
 
   it("renders the correct Rundeck version based on number and title props", async () => {
     const wrapper = await mountRundeckInfo();
-
-    const rundeckVersionComponent = wrapper.findComponent({
-      name: "RundeckVersion",
-    });
-    expect(rundeckVersionComponent.exists()).toBe(true);
-
-    expect(rundeckVersionComponent.find("span").text()).toBe("Rundeck 1.0.0");
-    expect(rundeckVersionComponent.props().title).toBe("Rundeck");
+    const rundeckVersionElement = wrapper.find('div.rundeck-version-display');
+    expect(rundeckVersionElement.exists()).toBe(true);
+    expect(rundeckVersionElement.find("span").text()).toBe("Rundeck 1.0.0");
   });
+
+  it("renders only the version when there is no title", async () => {
+    const wrapper = await mountRundeckInfo({ appInfo: {  } });
+    const rundeckVersionElement = wrapper.find('div.rundeck-version-display');
+    expect(rundeckVersionElement.exists()).toBe(true);
+    expect(rundeckVersionElement.find("span").text()).toBe("1.0.0");
+  });
+
   it("renders the latest release information correctly", async () => {
     const wrapper = await mountRundeckInfo();
-    const rundeckVersionComponents = wrapper.findAllComponents({
-      name: "RundeckVersion",
-    });
-    const latestReleaseComponent = rundeckVersionComponents[1];
+    const rundeckVersionElements = wrapper.findAll('div.rundeck-version-display');
+    const latestReleaseComponent = rundeckVersionElements[1];
     expect(latestReleaseComponent.exists()).toBe(true);
     expect(latestReleaseComponent.find("span").text()).toBe("v5.2.0-20240410");
-    expect(latestReleaseComponent.props().number).toBe("v5.2.0-20240410");
-    expect(latestReleaseComponent.props().tag).toBe("GA");
   });
 });
