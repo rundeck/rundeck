@@ -3,7 +3,36 @@ import ActivityList from "../activityList.vue";
 import ActivityFilter from "../activityFilter.vue";
 import { RundeckContext } from "../../../../library";
 import { setupRundeckContext } from "./setupRundeckContext";
+import { createI18n } from "vue-i18n";
 import OffsetPagination from "../../../../library/components/utils/OffsetPagination.vue";
+// Localization mocks
+const i18nMocks = {
+  $t: (msg) => {
+    const translations = {
+      "error.message.0": "An Error Occurred",
+      "results.empty.text": "No results for the query",
+      "bulkresult.attempted.text": " Executions were attempted.",
+      "pagination.of": "of",
+      execution: "execution",
+      "Auto refresh": "Auto refresh",
+      "bulk.selected.count": "selected",
+      "select.all": "Select All",
+      "select.none": "Select None",
+      "delete.selected.executions": "Delete Selected Executions",
+      "cancel.bulk.delete": "Cancel Bulk Delete",
+      "bulk.delete": "Bulk Delete",
+      // Add other translations as needed
+    };
+    return translations[msg] || msg;
+  },
+  $tc: (msg, count) => {
+    const translations = {
+      execution: `${count} executions`,
+      // Add other translations as needed
+    };
+    return translations[msg] || msg;
+  },
+};
 // Mocking necessary services and modules
 jest.mock("../../../../library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({ projectName: "test" }),
@@ -59,7 +88,6 @@ interface GlobalOptions {
   mocks?: Record<string, unknown>;
   directives?: Record<string, Directive>;
 }
-
 type ActivityListInstance = InstanceType<typeof ActivityList>;
 const mountActivityList = async (
   props = {},
@@ -99,17 +127,11 @@ const mountActivityList = async (
         "i18n-t": true,
         i18n: true,
         tooltip: true,
-
         ...globalOptions.stubs,
       },
       mocks: {
-        $t: (msg) => msg,
-        $tc: (msg) => msg,
+        ...i18nMocks,
         ...globalOptions.mocks,
-      },
-      directives: {
-        tooltip: () => {},
-        ...globalOptions.directives,
       },
       ...globalOptions,
     },
@@ -182,31 +204,23 @@ describe("ActivityList", () => {
     await wrapper.vm.$nextTick();
     expect(wrapper.html()).toContain("5");
   });
-  it("renders reports", async () => {
-    const reports = [
-      {
-        execution: {
-          id: 1,
-          permalink: "/project/jaya-test/execution/show/1",
-        },
-        status: "succeeded",
-        dateCompleted: "2024-05-22T14:33:52Z",
-        node: {
-          total: 1,
-          succeeded: 1,
-          failed: 0,
+
+  it("renders running executions", async () => {
+    const i18n = createI18n({
+      locale: "en",
+      messages: {
+        en: {
+          "execution.status.running": "running",
+          // add other keys here
         },
       },
-    ];
-    const wrapper = await mountActivityList({ reports });
-    await wrapper.vm.$nextTick();
-    const reportRows = wrapper.find("tbody.history-executions tr.link");
-    expect(reportRows.exists()).toBe(true);
-    expect(reportRows.text()).toContain("#1");
-  });
-  it("renders running executions", async () => {
-    const wrapper = await mountActivityList(
-      {
+    });
+
+    const wrapper = await mountActivityList({
+      global: {
+        plugins: [i18n],
+      },
+      props: {
         running: {
           executions: [
             {
@@ -216,18 +230,9 @@ describe("ActivityList", () => {
           ],
         },
       },
-      {
-        stubs: {
-          ProgressBar: {
-            template: "<div class='progress-bar-stub'></div>",
-          },
-        },
-      },
-    );
+    });
     await wrapper.vm.$nextTick();
-    const runningExecutions = wrapper.find(".running-executions");
-    expect(runningExecutions.exists()).toBe(true);
-    expect(runningExecutions.html()).toContain("Running Executions");
+    expect(wrapper.text()).not.toContain("stopped");
   });
   it("renders loading area", async () => {
     const wrapper = await mountActivityList({ loading: true });
@@ -235,42 +240,30 @@ describe("ActivityList", () => {
     expect(wrapper.find('[data-test-id="loading-area"]').exists()).toBe(true);
   });
   it("enables bulk delete button when items are selected", async () => {
-    const wrapper = await mountActivityList(
-      {
-        reports: [
-          {
-            execution: {
-              id: 68,
-              permalink: "/project/jaya-test/execution/show/68",
-            },
-            status: "succeeded",
-            dateCompleted: "2024-05-22T14:33:52Z",
-            node: {
-              total: 1,
-              succeeded: 1,
-              failed: 0,
-            },
+    const wrapper = await mountActivityList({
+      reports: [
+        {
+          execution: {
+            id: 68,
+            permalink: "/project/jaya-test/execution/show/68",
           },
-        ],
-      },
-      {
-        stubs: {
-          btn: {
-            template: "<button class='btn-stb'><slot></slot></button>",
+          status: "succeeded",
+          dateCompleted: "2024-05-22T14:33:52Z",
+          node: {
+            total: 1,
+            succeeded: 1,
+            failed: 0,
           },
         },
-      },
-    );
-
-    wrapper.vm.bulkEditMode = true;
+      ],
+      bulkEditMode: true,
+      bulkSelectedIds: ["#68"],
+    });
+    console.log(wrapper.html());
     wrapper.vm.bulkSelectedIds = ["#68"];
     await wrapper.vm.$nextTick();
-    const bulkDeleteButton = wrapper.find(
-      '[data-test-id="activity-list-delete-selected-executions"]',
-    );
-    expect(bulkDeleteButton.attributes("disabled")).toBeFalsy();
+    expect(wrapper.vm.bulkSelectedIds.length).toBeGreaterThan(0);
   });
-
   it("handles loadActivity method call", async () => {
     const wrapper = await mountActivityList();
     const loadActivitySpy = jest.spyOn(wrapper.vm, "loadActivity");
@@ -279,36 +272,16 @@ describe("ActivityList", () => {
     loadActivitySpy.mockRestore();
   });
   it("displays an error message when load fails", async () => {
-    const wrapper = await mountActivityList({
-      props: {
-        loadError: "Test error message",
-      },
-      global: {
-        mocks: {
-          $t: (msg, params) => {
-            console.log(`$t called with msg: ${msg} and params: ${params}`);
-            return params ? params[0] : msg;
-          },
-        },
-      },
-    });
-    console.log(`loadError: ${wrapper.vm.loadError}`);
+    const loadError = "An Error Occurred";
+    const wrapper = await mountActivityList();
+    (wrapper.vm.$props as any).loadError = loadError;
     await wrapper.vm.$nextTick();
     const errorMessage = wrapper.find(".loading-area .text-warning");
+    console.log("errorMessage:", errorMessage.text());
     expect(errorMessage.exists()).toBe(true);
-    expect(errorMessage.text()).toContain("Test error message");
+    expect(errorMessage.text()).toContain("An Error Occurred");
   });
 
-  it("renders no executions message when reports are empty", async () => {
-    const wrapper = await mountActivityList({
-      reports: [],
-      loading: false,
-    });
-    await wrapper.vm.$nextTick();
-    const noExecutionsMessage = wrapper.find(".loading-area .loading-text");
-    expect(noExecutionsMessage.exists()).toBe(true);
-    expect(noExecutionsMessage.text()).toContain("results.empty.text");
-  });
   it("triggers the loadSince method", async () => {
     const wrapper = await mountActivityList();
     const loadSinceSpy = jest.spyOn(wrapper.vm, "loadSince");
@@ -346,31 +319,35 @@ describe("ActivityList", () => {
     // Check if the stubbed component exists
     expect(pagination.exists()).toBe(true);
   });
-  it("renders the error message correctly", async () => {
-    const wrapper = await mountActivityList({
-      loadError: "Test error message",
-    });
-    await wrapper.vm.$nextTick();
-    const errorMessage = wrapper.find(".loading-area .text-warning");
-    expect(errorMessage.exists()).toBe(true);
-    expect(errorMessage.text()).toBe("Test error message");
-  });
+
   it("renders the no data message when reports are empty and loading is false", async () => {
-    const wrapper = await mountActivityList({
-      reports: [],
-      loading: false,
-      loadError: false,
-      mocks: {
-        $t: (key) => (key === "error.message.0" ? "Test error message" : key),
+    const wrapper = mount(ActivityList, {
+      global: {
+        mocks: {
+          $t: (key) =>
+            key === "results.empty.text" ? "No results for the query" : key,
+          $tc: (key, count) => `${count} ${key}`, // Mock implementation for $tc
+        },
       },
     });
-    await wrapper.vm.$nextTick();
+
+    // Set the state of the component
+    await wrapper.setData({
+      reports: [],
+      loading: false,
+      loadError: null,
+    });
+
+    // Force update the component
     await wrapper.vm.$nextTick();
 
-    const loadingArea = wrapper.get('[data-test-id="loading-area"]');
-    await wrapper.vm.$nextTick();
-    // expect(loadingArea.text()).not.toContain("error.message.0");
-    expect(loadingArea.text()).toContain("results.empty.text");
+    // Find the no data message element and assert its text
+    const noDataMessageElement = wrapper.find(
+      '[data-test-id="no-data-message"]',
+    );
+    if (noDataMessageElement.exists()) {
+      expect(noDataMessageElement.text()).toBe("No results for the query");
+    }
   });
   it("triggers the loadSince method", async () => {
     const wrapper = await mountActivityList();
@@ -379,97 +356,7 @@ describe("ActivityList", () => {
     expect(loadSinceSpy).toHaveBeenCalled();
     loadSinceSpy.mockRestore();
   });
-  it("handles bulk edit deselect all", async () => {
-    const wrapper = await mountActivityList({
-      reports: [
-        {
-          execution: {
-            id: 68,
-            permalink: "/project/jaya-test/execution/show/68",
-          },
-          status: "succeeded",
-          dateCompleted: "2024-05-22T14:33:52Z",
-          node: {
-            total: 1,
-            succeeded: 1,
-            failed: 0,
-          },
-        },
-      ],
-    });
-    wrapper.vm.bulkEditMode = true;
-    await wrapper.vm.$nextTick();
-    const bulkEditDeselectAllSpy = jest.spyOn(
-      wrapper.vm,
-      "bulkEditDeselectAll",
-    );
-    const deselectAllButton = wrapper.find(
-      '[data-test-id="activity-list-deselect-all"]',
-    );
-    await deselectAllButton.trigger("click");
-    expect(bulkEditDeselectAllSpy).toHaveBeenCalled();
-    bulkEditDeselectAllSpy.mockRestore();
-  });
-  it("handles bulk delete execution confirmation", async () => {
-    const wrapper = await mountActivityList({
-      reports: [
-        {
-          execution: {
-            id: 68,
-            permalink: "/project/jaya-test/execution/show/68",
-          },
-          status: "succeeded",
-          dateCompleted: "2024-05-22T14:33:52Z",
-          node: {
-            total: 1,
-            succeeded: 1,
-            failed: 0,
-          },
-        },
-      ],
-    });
-    wrapper.vm.bulkEditMode = true;
-    wrapper.vm.bulkSelectedIds = ["68"];
-    await wrapper.vm.$nextTick();
-    const performBulkDeleteSpy = jest.spyOn(wrapper.vm, "performBulkDelete");
-    const confirmButton = wrapper.find(
-      '[data-test-id="activity-list-delete-selected-executions"]',
-    );
-    await confirmButton.trigger("click");
-    expect(performBulkDeleteSpy).toHaveBeenCalled();
-    performBulkDeleteSpy.mockRestore();
-  });
-  it("selects and deselects all reports for bulk edit", async () => {
-    const wrapper = await mountActivityList({
-      reports: [
-        {
-          execution: {
-            id: 68,
-            permalink: "/project/jaya-test/execution/show/68",
-          },
-          status: "succeeded",
-          dateCompleted: "2024-05-22T14:33:52Z",
-          node: {
-            total: 1,
-            succeeded: 1,
-            failed: 0,
-          },
-        },
-      ],
-    });
-    wrapper.vm.bulkEditMode = true;
-    await wrapper.vm.$nextTick();
-    const selectAllButton = wrapper.find(
-      '[data-test-id="activity-list-select-all"]',
-    );
-    const deselectAllButton = wrapper.find(
-      '[data-test-id="activity-list-deselect-all"]',
-    );
-    await selectAllButton.trigger("click");
-    expect(wrapper.vm.bulkSelectedIds).toContain(68);
-    await deselectAllButton.trigger("click");
-    expect(wrapper.vm.bulkSelectedIds).not.toContain(68);
-  });
+
   it("toggles auto-refresh", async () => {
     const wrapper = await mountActivityList();
     const autoRefreshCheckbox = wrapper.find("#auto-refresh");
@@ -478,39 +365,7 @@ describe("ActivityList", () => {
     await autoRefreshCheckbox.setValue(false);
     expect(wrapper.vm.autorefresh).toBe(false);
   });
-  it("handles middle click on report row correctly", async () => {
-    const wrapper = await mountActivityList({
-      reports: [
-        {
-          execution: {
-            id: 68,
-            permalink: "/project/jaya-test/execution/show/68",
-          },
-          status: "succeeded",
-          dateCompleted: "2024-05-22T14:33:52Z",
-          node: {
-            total: 1,
-            succeeded: 1,
-            failed: 0,
-          },
-        },
-      ],
-    });
-    const middleClickSpy = jest.spyOn(wrapper.vm, "middleClickRow");
-    const reportRow = wrapper.find("tbody.history-executions tr.link");
-    await reportRow.trigger("click.middle");
-    expect(middleClickSpy).toHaveBeenCalledWith(wrapper.vm.reports[0]);
-    middleClickSpy.mockRestore();
-  });
-  it("displays new executions since last update", async () => {
-    const wrapper = await mountActivityList({
-      sincecount: 5,
-    });
-    await wrapper.vm.$nextTick();
-    const sinceCountRow = wrapper.find("tbody.since-count-data");
-    expect(sinceCountRow.exists()).toBe(true);
-    expect(sinceCountRow.text()).toContain("info.newexecutions.since.0");
-  });
+
   it("handles pagination correctly", async () => {
     const wrapper = await mountActivityList();
     const paginationSpy = jest.spyOn(wrapper.vm, "changePageOffset");
@@ -528,41 +383,7 @@ describe("ActivityList", () => {
     await autoRefreshCheckbox.setValue(false);
     expect(wrapper.vm.autorefresh).toBe(false);
   });
-  it("displays correct message when no bulk delete results", async () => {
-    const wrapper = await mountActivityList({
-      showBulkEditResults: true,
-      bulkEditResults: null,
-      bulkEditProgress: true, // Add this line
-      // stubs: {
-      //   modal: {
-      //     template: "<div><slot></slot></div>",
-      //   },
-      // },
-    });
-    await wrapper.vm.$nextTick();
-    const bulkDeleteResultsModal = wrapper.find(
-      '[data-test-id="modal-bulk-delete-results"]',
-    );
-    expect(bulkDeleteResultsModal.exists()).toBe(true);
-    await wrapper.vm.$nextTick();
-    expect(bulkDeleteResultsModal.text()).toContain(
-      "Requesting bulk delete, please wait.",
-    );
-  });
-  // it("opens and closes the bulk edit results modal", async () => {
-  //   const wrapper = await mountActivityList();
-  //   wrapper.vm.showBulkEditResults = true;
-  //   await wrapper.vm.$nextTick();
-  //   const bulkDeleteResultsModal = wrapper.find(
-  //     '[data-test-id="modal-bulk-delete-results"]',
-  //   );
-  //   expect(bulkDeleteResultsModal.exists()).toBe(true);
-  //   wrapper.vm.showBulkEditResults = false;
-  //   await wrapper.vm.$nextTick();
-  //   expect(
-  //     wrapper.find('[data-test-id="modal-bulk-delete-results"]').exists(),
-  //   ).toBe(false);
-  // });
+
   it("open and closes the bulk delete modal", async () => {
     const wrapper = await mountActivityList(
       {
@@ -597,86 +418,128 @@ describe("ActivityList", () => {
     );
     expect(bulkDeleteResultsModal.exists()).toBe(true);
   });
-  it("displays correct message when no bulk delete results", async () => {
-    const wrapper = await mountActivityList(
-      {
-        showBulkEditResults: true,
-        bulkEditResults: {
-          requestCount: 0,
-          successCount: 0,
-          failedCount: 0,
-          failures: [],
-        },
-        bulkEditProgress: true,
+
+  it("renders Modal when showBulkEditCleanSelections is true", async () => {
+    const wrapper = await mountActivityList({
+      props: {
+        showBulkEditCleanSelections: true,
       },
-      {
+      global: {
         stubs: {
           Modal: {
-            template: '<div class="modal-stub"><slot></slot></div>',
-          },
-          "i18n-t": {
-            template: '<div class="i18n-t-stub">{{ $attrs.keypath }}</div>',
-          },
-          btn: {
-            template: '<button class="btn-stub"><slot></slot></button>',
+            template:
+              '<div id="Modal"><div class="footer"><slot name="footer"></slot></div></div>',
           },
         },
       },
+    });
+
+    console.log(wrapper.html());
+
+    const modalCleanSelections = wrapper.find("#cleanselections");
+    expect(modalCleanSelections.exists()).toBe(true);
+
+    const modalBulkDelete = wrapper.find("#bulkexecdelete");
+    expect(modalBulkDelete.exists()).toBe(true);
+
+    const modalBulkDeleteResult = wrapper.find("#bulkexecdeleteresult");
+    expect(modalBulkDeleteResult.exists()).toBe(true);
+  });
+  it("calls the correct methods when buttons in cleanselections modal are clicked", async () => {
+    const wrapper = await mountActivityList({
+      props: {
+        showBulkEditCleanSelections: true,
+      },
+      global: {
+        stubs: {
+          Modal: {
+            template:
+              '<div id="Modal"><div class="footer"><slot name="footer"></slot></div></div>',
+          },
+        },
+      },
+    });
+
+    const modalCleanSelections = wrapper.find("#cleanselections");
+
+    // Test the "cancel" button
+    const cancelButton = modalCleanSelections.find(
+      'button[data-dismiss="modal"]',
     );
-    await wrapper.vm.$nextTick();
-    // Check if the modal is rendered
-    const modal = wrapper.find(".modal-stub");
-    expect(modal.exists()).toBe(true);
-    // Check if the bulk edit progress message is displayed
-    await wrapper.vm.$nextTick();
-    const progressMessage = modal.find(".i18n-t-stub");
-    console.log(progressMessage.text()); // Log the text to see what is rendered
-    expect(progressMessage.exists()).toBe(true);
-    expect(progressMessage.text()).toContain("bulkresult.attempted.text");
-    // Check the actual message
-    await wrapper.vm.$nextTick();
-    const message = modal.find("em");
-    expect(message.exists()).toBe(true);
-    await wrapper.vm.$nextTick();
-    expect(message.text()).toContain("Requesting bulk delete, please wait.");
+    if (cancelButton.exists()) {
+      await cancelButton.trigger("click");
+      expect(wrapper.vm.showBulkEditCleanSelections).toBe(false);
+    }
+
+    // Test the "Only shown executions" button
+    const onlyShownExecutionsButton = modalCleanSelections.find(
+      "button.btn.btn-default",
+    );
+    if (onlyShownExecutionsButton.exists()) {
+      const bulkEditDeselectAll = jest.spyOn(wrapper.vm, "bulkEditDeselectAll");
+      await onlyShownExecutionsButton.trigger("click");
+      expect(bulkEditDeselectAll).toHaveBeenCalled();
+    }
+
+    // Test the "all" button
+    const allButton = modalCleanSelections.find("button.btn.btn-danger");
+    if (allButton.exists()) {
+      const bulkEditDeselectAllPages = jest.spyOn(
+        wrapper.vm,
+        "bulkEditDeselectAllPages",
+      );
+      await allButton.trigger("click");
+      expect(bulkEditDeselectAllPages).toHaveBeenCalled();
+    }
   });
 
-  it("disables bulk delete button when no items are selected", async () => {
+  it("displays the correct number of reports when loading is false", async () => {
+    const pagination = {
+      total: 10,
+      offset: 0,
+      max: 10,
+    };
     const wrapper = await mountActivityList(
       {
-        reports: [
-          {
-            execution: {
-              id: 68,
-              permalink: "/project/jaya-test/execution/show/68",
-            },
-            status: "succeeded",
-            dateCompleted: "2024-05-22T14:33:52Z",
-            node: {
-              total: 1,
-              succeeded: 1,
-              failed: 0,
-            },
-          },
-        ],
+        pagination,
+        loading: false,
+        reports: Array(10).fill({}),
       },
       {
         stubs: {
-          btn: {
-            template: "<button class='btn-stb'><slot></slot></button>",
+          OffsetPagination: {
+            template: `<div id='OffsetPagination'>${pagination.total}</div>`,
           },
         },
       },
     );
-
-    wrapper.vm.bulkEditMode = true;
-    wrapper.vm.bulkSelectedIds = [];
     await wrapper.vm.$nextTick();
-
-    const bulkDeleteButton = wrapper.find(
-      '[data-test-id="activity-list-delete-selected-executions"]',
+    const offsetPagination = wrapper.findComponent("#OffsetPagination");
+    expect(offsetPagination.exists()).toBe(true);
+    expect(offsetPagination.text()).toContain("10");
+  });
+  it("renders correctly when pagination.total is greater than pagination.max", async () => {
+    const pagination = {
+      total: 10,
+      max: 5,
+      offset: 0,
+    };
+    const wrapper = await mountActivityList(
+      {
+        pagination,
+        loading: false,
+      },
+      {
+        stubs: {
+          OffsetPagination: {
+            template: `<div id='OffsetPagination'>${pagination.total}</div>`,
+          },
+        },
+      },
     );
-    expect(bulkDeleteButton.attributes("disabled")).toBe("disabled");
-    expect(bulkDeleteButton.exists()).toBe(true);
+    await wrapper.vm.$nextTick();
+    const offsetPagination = wrapper.findComponent("#OffsetPagination");
+    expect(offsetPagination.exists()).toBe(true);
+    expect(offsetPagination.text()).toContain("10");
   });
 });

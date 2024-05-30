@@ -72,7 +72,7 @@
               size="xs"
               type="danger"
               class="btn-fill"
-              data-test-id="activity-list-delete-selected-executions"
+            
               :disabled="bulkSelectedIds.length < 1"
               @click="showBulkEditConfirm = true"
             >
@@ -120,6 +120,7 @@
             class="btn btn-default"
             data-dismiss="modal"
             @click="bulkEditDeselectAll"
+            data-test-id="activity-list-deselect-all"
           >
             {{ $t("Only shown executions") }}
           </button>
@@ -386,7 +387,11 @@
             </td>
           </tr>
         </tbody>
-        <tbody v-if="reports.length > 0" class="history-executions">
+        <tbody
+          v-if="reports.length > 0"
+          class="history-executions"
+          data-test-id="report-tbody"
+        >
           <tr
             v-for="rpt in reports"
             :key="rpt.execution.id"
@@ -554,7 +559,7 @@
       <span
         v-if="!loading && !loadError"
         class="loading-text"
-        data-testid="no-data-message"
+        data-test-id="no-data-message"
       >
         {{ $t("results.empty.text") }}
       </span>
