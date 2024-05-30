@@ -24,6 +24,7 @@
     <Popper v-if="open" :open="open" @close="close">
       <div
         id="projectPicker"
+        :data-test-id="`${mode}ProjectPicker`"
         class="card card--popover project-select-btn__popper"
       >
         <ProjectSelect
