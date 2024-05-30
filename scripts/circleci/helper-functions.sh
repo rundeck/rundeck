@@ -54,7 +54,7 @@ install_wizcli(){
 # Pull the image built on this build and adds a custom tag if provided as argument.
 rundeck_pull_image() {
     docker_login
-    local sourceTag="${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}"
+    local sourceTag="rundeckpro/ci:RUN-2487"
     docker pull $sourceTag
     docker tag "${sourceTag}" "rundeck/testdeck"
 
