@@ -1,97 +1,26 @@
+// import { mountActivityList } from "./utils";
+import {
+  rundeckServiceMock,
+  rundeckClientMock,
+  axiosMock,
+  i18nMocks,
+  mockEventBus,
+} from "./mock";
+jest.mock("../../../../library/rundeckService", () => rundeckServiceMock);
+jest.mock("@rundeck/client", () => rundeckClientMock);
+jest.mock("axios", () => axiosMock);
 import { mount, VueWrapper } from "@vue/test-utils";
-import ActivityList from "../activityList.vue";
-import ActivityFilter from "../activityFilter.vue";
 import { RundeckContext } from "../../../../library";
 import { setupRundeckContext } from "./setupRundeckContext";
-import { createI18n } from "vue-i18n";
+import ActivityList from "../activityList.vue";
+import ActivityFilter from "../activityFilter.vue";
 import OffsetPagination from "../../../../library/components/utils/OffsetPagination.vue";
-// Localization mocks
-const i18nMocks = {
-  $t: (msg) => {
-    const translations = {
-      "error.message.0": "An Error Occurred",
-      "results.empty.text": "No results for the query",
-      "bulkresult.attempted.text": " Executions were attempted.",
-      "pagination.of": "of",
-      execution: "execution",
-      "Auto refresh": "Auto refresh",
-      "bulk.selected.count": "selected",
-      "select.all": "Select All",
-      "select.none": "Select None",
-      "delete.selected.executions": "Delete Selected Executions",
-      "cancel.bulk.delete": "Cancel Bulk Delete",
-      "bulk.delete": "Bulk Delete",
-      // Add other translations as needed
-    };
-    return translations[msg] || msg;
-  },
-  $tc: (msg, count) => {
-    const translations = {
-      execution: `${count} executions`,
-      // Add other translations as needed
-    };
-    return translations[msg] || msg;
-  },
-};
-// Mocking necessary services and modules
-jest.mock("../../../../library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockReturnValue({ projectName: "test" }),
-  url: jest.fn().mockReturnValue("http://localhost"),
-}));
-jest.mock("@rundeck/client", () => {
-  return {
-    RundeckBrowser: jest.fn().mockImplementation(() => ({
-      executionBulkDelete: jest.fn().mockResolvedValue({ allsuccessful: true }),
-      executionListRunning: jest.fn().mockResolvedValue({ executions: [] }),
-    })),
-  };
-});
-jest.mock("axios");
-const mockEventBus = {
-  on: jest.fn(),
-  emit: jest.fn(),
-  off: jest.fn(),
-  all: new Map(),
-};
-type ComponentStub = boolean | { template: string };
-type Stubs = string[] | Record<string, ComponentStub>;
-interface Directive {
-  beforeMount?: (
-    el: HTMLElement,
-    binding: any,
-    vnode: any,
-    prevVnode: any,
-  ) => void;
-  mounted?: (el: HTMLElement, binding: any, vnode: any, prevVnode: any) => void;
-  beforeUpdate?: (
-    el: HTMLElement,
-    binding: any,
-    vnode: any,
-    prevVnode: any,
-  ) => void;
-  updated?: (el: HTMLElement, binding: any, vnode: any, prevVnode: any) => void;
-  beforeUnmount?: (
-    el: HTMLElement,
-    binding: any,
-    vnode: any,
-    prevVnode: any,
-  ) => void;
-  unmounted?: (
-    el: HTMLElement,
-    binding: any,
-    vnode: any,
-    prevVnode: any,
-  ) => void;
-}
-interface GlobalOptions {
-  stubs?: Stubs;
-  mocks?: Record<string, unknown>;
-  directives?: Record<string, Directive>;
-}
+import { GlobalOptions } from "./type";
+import { createI18n } from "vue-i18n";
 type ActivityListInstance = InstanceType<typeof ActivityList>;
 const mountActivityList = async (
   props = {},
-  globalOptions: GlobalOptions = {},
+  globalOptions: GlobalOptions = {}
 ) => {
   const wrapper = mount(ActivityList, {
     props: {
@@ -139,6 +68,7 @@ const mountActivityList = async (
   await wrapper.vm.$nextTick();
   return wrapper as VueWrapper<ActivityListInstance>;
 };
+
 declare global {
   interface Window {
     _rundeck: RundeckContext;
@@ -162,7 +92,7 @@ describe("ActivityList", () => {
   it("opens and closes the filter modal", async () => {
     const wrapper = await mountActivityList();
     const filterButton = wrapper.find(
-      '[data-test-id="activity-list-filter-button"]',
+      '[data-test-id="activity-list-filter-button"]'
     );
     await filterButton.trigger("click");
     expect(wrapper.findComponent(ActivityFilter).exists()).toBe(true);
@@ -171,7 +101,7 @@ describe("ActivityList", () => {
   it("renders the filter button", async () => {
     const wrapper = await mountActivityList();
     const filterButton = wrapper.find(
-      '[data-test-id="activity-list-filter-button"]',
+      '[data-test-id="activity-list-filter-button"]'
     );
     expect(filterButton.exists()).toBe(true);
   });
@@ -179,7 +109,7 @@ describe("ActivityList", () => {
     const wrapper = await mountActivityList();
     wrapper.vm.showBulkEditCleanSelections = true;
     const clearSelectionsButton = wrapper.find(
-      '[data-test-id="modal-clean-selections"]',
+      '[data-test-id="modal-clean-selections"]'
     );
     expect(clearSelectionsButton.exists()).toBe(true);
   });
@@ -193,7 +123,7 @@ describe("ActivityList", () => {
     const wrapper = await mountActivityList();
     wrapper.vm.showBulkEditResults = true;
     const bulkDeleteResults = wrapper.find(
-      '[data-test-id="modal-bulk-delete-results"]',
+      '[data-test-id="modal-bulk-delete-results"]'
     );
     expect(bulkDeleteResults.exists()).toBe(true);
   });
@@ -211,7 +141,6 @@ describe("ActivityList", () => {
       messages: {
         en: {
           "execution.status.running": "running",
-          // add other keys here
         },
       },
     });
@@ -308,7 +237,7 @@ describe("ActivityList", () => {
         stubs: {
           OffsetPagination: OffsetPaginationStub, // Use the stub here
         },
-      },
+      }
     );
 
     await wrapper.vm.$nextTick();
@@ -343,7 +272,7 @@ describe("ActivityList", () => {
 
     // Find the no data message element and assert its text
     const noDataMessageElement = wrapper.find(
-      '[data-test-id="no-data-message"]',
+      '[data-test-id="no-data-message"]'
     );
     if (noDataMessageElement.exists()) {
       expect(noDataMessageElement.text()).toBe("No results for the query");
@@ -395,7 +324,7 @@ describe("ActivityList", () => {
             template: "<div class='modal-stub'><slot></slot></div>",
           },
         },
-      },
+      }
     );
     const bulkDeleteModal = wrapper.find('[data-test-id="modal-bulk-delete"]');
     expect(bulkDeleteModal.exists()).toBe(true);
@@ -411,10 +340,10 @@ describe("ActivityList", () => {
             template: "<div class='modal-stub'><slot></slot></div>",
           },
         },
-      },
+      }
     );
     const bulkDeleteResultsModal = wrapper.find(
-      '[data-test-id="modal-bulk-delete-results"]',
+      '[data-test-id="modal-bulk-delete-results"]'
     );
     expect(bulkDeleteResultsModal.exists()).toBe(true);
   });
@@ -464,7 +393,7 @@ describe("ActivityList", () => {
 
     // Test the "cancel" button
     const cancelButton = modalCleanSelections.find(
-      'button[data-dismiss="modal"]',
+      'button[data-dismiss="modal"]'
     );
     if (cancelButton.exists()) {
       await cancelButton.trigger("click");
@@ -473,7 +402,7 @@ describe("ActivityList", () => {
 
     // Test the "Only shown executions" button
     const onlyShownExecutionsButton = modalCleanSelections.find(
-      "button.btn.btn-default",
+      "button.btn.btn-default"
     );
     if (onlyShownExecutionsButton.exists()) {
       const bulkEditDeselectAll = jest.spyOn(wrapper.vm, "bulkEditDeselectAll");
@@ -486,7 +415,7 @@ describe("ActivityList", () => {
     if (allButton.exists()) {
       const bulkEditDeselectAllPages = jest.spyOn(
         wrapper.vm,
-        "bulkEditDeselectAllPages",
+        "bulkEditDeselectAllPages"
       );
       await allButton.trigger("click");
       expect(bulkEditDeselectAllPages).toHaveBeenCalled();
@@ -499,11 +428,12 @@ describe("ActivityList", () => {
       offset: 0,
       max: 10,
     };
+    const reports = Array(10).fill({});
     const wrapper = await mountActivityList(
       {
         pagination,
         loading: false,
-        reports: Array(10).fill({}),
+        reports,
       },
       {
         stubs: {
@@ -511,11 +441,11 @@ describe("ActivityList", () => {
             template: `<div id='OffsetPagination'>${pagination.total}</div>`,
           },
         },
-      },
+      }
     );
     await wrapper.vm.$nextTick();
-    const offsetPagination = wrapper.findComponent("#OffsetPagination");
-    expect(offsetPagination.exists()).toBe(true);
+    console.log(wrapper.html());
+    const offsetPagination = wrapper.get("#OffsetPagination");
     expect(offsetPagination.text()).toContain("10");
   });
   it("renders correctly when pagination.total is greater than pagination.max", async () => {
@@ -535,11 +465,11 @@ describe("ActivityList", () => {
             template: `<div id='OffsetPagination'>${pagination.total}</div>`,
           },
         },
-      },
+      }
     );
     await wrapper.vm.$nextTick();
-    const offsetPagination = wrapper.findComponent("#OffsetPagination");
-    expect(offsetPagination.exists()).toBe(true);
+    const offsetPagination = wrapper.get("#OffsetPagination");
     expect(offsetPagination.text()).toContain("10");
+    expect(pagination.total).toBeGreaterThan(pagination.max);
   });
 });
