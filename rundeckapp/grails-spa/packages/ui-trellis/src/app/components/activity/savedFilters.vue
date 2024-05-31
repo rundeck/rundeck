@@ -12,7 +12,6 @@
     <span v-if="query && query.filterName" data-test-id="filter-name">{{
       query.filterName
     }}</span>
-
     <dropdown v-if="filters && filters.length > 0">
       <span
         class="dropdown-toggle btn btn-secondary btn-sm"
@@ -26,6 +25,7 @@
           <a
             role="button"
             data-test-id="delete-filter-btn"
+            data-test="filter-item-delete-button"
             @click="deleteFilter"
           >
             <i class="glyphicon glyphicon-trash"></i>
@@ -46,7 +46,11 @@
           :key="filter.filterName"
           data-test-id="filter-item"
         >
-          <a role="button" @click="selectFilter(filter)">
+          <a
+            role="button"
+            @click="selectFilter(filter)"
+            data-test="filter-link"
+          >
             {{ filter.filterName }}
             <span v-if="query && filter.filterName === query.filterName"
               >√</span
@@ -55,15 +59,13 @@
         </li>
       </template>
     </dropdown>
-    <span v-else data-test-id="no-filters-message"> No filters available </span>
   </span>
 </template>
 <script lang="ts">
+import { defineComponent, PropType } from "vue";
 import { ActivityFilterStore } from "../../../library/stores/ActivityFilterStore";
-import { defineComponent } from "vue";
-import { getRundeckContext } from "../../../library";
+import { EventBus, getRundeckContext } from "../../../library";
 import { MessageBox, Notification } from "uiv";
-
 export default defineComponent({
   props: {
     hasQuery: {
@@ -75,7 +77,7 @@ export default defineComponent({
       required: true,
     },
     eventBus: {
-      type: Object,
+      type: Object as PropType<typeof EventBus>,
       required: true,
     },
   },
@@ -92,8 +94,6 @@ export default defineComponent({
     };
   },
   mounted() {
-    console.log(this.filters);
-    console.log(this.$el.querySelectorAll('[data-test-id="filter-item"]'));
     this.projectName = getRundeckContext().projectName;
     this.loadFilters();
 
@@ -101,7 +101,7 @@ export default defineComponent({
       this.eventBus.on("invoke-save-filter", this.saveFilterPrompt);
   },
   beforeUnmount() {
-    this.eventBus && this.eventBus.off("invoke-save-filter");
+    this.eventBus.off("invoke-save-filter");
   },
   methods: {
     notifyError(msg) {
@@ -113,7 +113,6 @@ export default defineComponent({
       });
     },
     async loadFilters() {
-      console.log("loadFilters is called");
       this.filters =
         this.filterStore.loadForProject(this.projectName).filters || [];
     },
@@ -121,36 +120,30 @@ export default defineComponent({
       this.$emit("select_filter", filter);
     },
     deleteFilter() {
-      console.log("Before deletion:", this.filters);
-
       if (!this.query || !this.query.filterName) {
         return;
       }
 
-      this.$confirm({
+      MessageBox.confirm({
         title: this.$t("Delete Saved Filter"),
         content: this.$t("filter.delete.confirm.text", [this.query.filterName]),
       })
-
         .then(() => {
           this.doDeleteFilter(this.query.filterName);
-          console.log("After deletion:", this.filters);
         })
-
         .catch(() => {
-          //this.$notify("Delete canceled.");
+          // this.$notify("Delete canceled.");
         });
     },
     async doDeleteFilter(name) {
-      this.filterStore.removeFilter(this.projectName, name);
-      console.log("Immediately after deletion:", this.filters);
+      await this.filterStore.removeFilter(this.projectName, name);
       await this.loadFilters();
     },
     async doSaveFilter(name) {
       if (this.filters.find((f) => f.filterName === name)) {
         this.notifyError(`Filter with name ${name} already exists`);
       } else {
-        this.filterStore.saveFilter(this.projectName, {
+        await this.filterStore.saveFilter(this.projectName, {
           filterName: name,
           query: { ...this.query, projFilter: this.projectName },
         });
@@ -158,23 +151,18 @@ export default defineComponent({
       }
     },
     saveFilterPrompt() {
-      console.log("saveFilterPrompt is called");
-      console.log("About to call MessageBox.prompt");
       MessageBox.prompt({
         title: this.promptTitle,
-
         content: this.promptContent,
-        validator(value) {
+        validator: (value) => {
           return /.+/.test(value) ? null : this.promptError;
         },
       })
         .then((value) => {
-          console.log("save value", value);
           this.doSaveFilter(value);
         })
-        .catch((e) => {
-          console.log(e);
-          //this.$notify("Save canceled.");
+        .catch(() => {
+          // this.$notify("Save canceled.");
         });
     },
   },
