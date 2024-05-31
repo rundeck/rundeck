@@ -19,6 +19,9 @@ class WebhooksPage extends BasePage{
     By trashButtonBy = By.xpath("//div[contains(@id,'rule-')]//i[contains(@class,'fa-trash')]")
     By okButtonBy = By.xpath("//button[contains(.,'OK')]")
     By saveButtonBy = By.xpath("//button[contains(.,'Save')]")
+    By formControl = By.className("form-control")
+    By logEventsBy = By.xpath("//li/a//*[contains(text(),'Log Events')]")
+    By webhookSelectItem = By.className('webhook-select__item')
 
     WebhooksPage(SeleniumContext context) {
         super(context)
@@ -50,6 +53,18 @@ class WebhooksPage extends BasePage{
 
     WebElement getAlertDanger() {
         return el(alertDangerBy)
+    }
+
+    WebElement getNameFormField() {
+        return els(formControl).get(3)
+    }
+
+    WebElement getLogEventsPlugin() {
+        return el(whEditBy).findElement(dropdownMenu).findElement(logEventsBy)
+    }
+
+    List<WebElement> getWebhookSelectItems() {
+        return els(webhookSelectItem)
     }
 
     void validatePage() {
