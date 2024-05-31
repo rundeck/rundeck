@@ -75,6 +75,7 @@
             
               :disabled="bulkSelectedIds.length < 1"
               @click="showBulkEditConfirm = true"
+              data-test-id="activity-list-delete-selected-executions"
             >
               {{ $t("delete.selected.executions") }}
             </btn>
