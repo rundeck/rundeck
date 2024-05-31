@@ -56,7 +56,7 @@
 
       <asset:javascript src="execution/show.js"/>
 
-      <g:embedJSON id="execInfoJSON" data="${[jobId:scheduledExecution?.extid,execId:execution.id]}"/>
+      <g:embedJSON id="execInfoJSON" data="${[jobId:scheduledExecution?.extid,execId:execution.id,execUuid:execution.uuid]}"/>
       <g:embedJSON id="execDataJSON" data="${execution.toMap()}"/>
       <g:embedJSON id="jobDetail"
                    data="${[id: scheduledExecution?.extid, name: scheduledExecution?.jobName, group: scheduledExecution?.groupPath,

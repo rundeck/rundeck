@@ -370,6 +370,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
             map.timeout = timeout
         }
         map.id= this.id
+        map.uuid= this.uuid
         map.doNodedispatch= this.doNodedispatch
         if(this.executionType) {
             map.executionType=executionType

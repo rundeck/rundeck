@@ -1922,7 +1922,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
     }
 
-
+    static String EXEC_UUID = "9f0509eb-f89c-4fb3-a520-edf5a34eb52f"
     static String EXECS_START='<executions>'
     static String EXECS_END= '</executions>'
     static String EXEC_XML_TEST1_DEF_START= '''
@@ -1937,6 +1937,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     <cancelled>false</cancelled>
     <argString>-test args</argString>
     <loglevel>WARN</loglevel>
+    <uuid>9f0509eb-f89c-4fb3-a520-edf5a34eb52f</uuid>
     <doNodedispatch>true</doNodedispatch>
     <nodefilters>
       <dispatch>
@@ -2064,6 +2065,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     <cancelled>false</cancelled>
     <argString>-test args</argString>
     <loglevel>WARN</loglevel>
+    <uuid>9f0509eb-f89c-4fb3-a520-edf5a34eb52f</uuid>
     <doNodedispatch>true</doNodedispatch>
     <nodefilters>
       <dispatch>
@@ -2099,6 +2101,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     <cancelled>false</cancelled>
     <argString>-test args</argString>
     <loglevel>WARN</loglevel>
+    <uuid>9f0509eb-f89c-4fb3-a520-edf5a34eb52f</uuid>
     <doNodedispatch>true</doNodedispatch>
     <nodefilters>
       <dispatch>
@@ -2150,6 +2153,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 //        zipmock.demand.file(1..1){name,File outfile-> }
         def zip = zipmock.proxyInstance()
         Execution exec = new Execution(
+            uuid: EXEC_UUID,
             argString: "-test args",
             user: "testuser",
             project: "testproj",
@@ -2196,8 +2200,8 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def zipmock=new MockFor(ZipBuilder)
         def outwriter = new StringWriter()
 
-
         Execution exec = new Execution(
+            uuid: EXEC_UUID,
             argString: "-test args",
             user: "testuser",
             project: "testproj",
@@ -2262,6 +2266,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def outwriter = new StringWriter()
 
         Execution exec = new Execution(
+            uuid: EXEC_UUID,
             argString: "-test args",
             user: "testuser",
             project: "testproj",
@@ -2919,6 +2924,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         assertNotNull job.save()
 
         Execution exec = new Execution(
+            uuid: EXEC_UUID,
             argString: "-test args",
             user: "testuser",
             project: "testproj",
@@ -3069,6 +3075,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         assertNotNull job.save()
 
         Execution exec = new Execution(
+            uuid: EXEC_UUID,
             argString: "-test args",
             user: "testuser",
             project: "testproj",

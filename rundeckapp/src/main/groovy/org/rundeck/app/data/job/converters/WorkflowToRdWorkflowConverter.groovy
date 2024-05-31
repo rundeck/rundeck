@@ -32,19 +32,22 @@ class WorkflowToRdWorkflowConverter {
             rds.configuration = pstep.configuration
         } else if(wstep instanceof JobExec) {
             def jrstep = (JobExec)wstep
-            rds.configuration = new HashMap<>(jrstep.toMap())
-            rds.configuration.remove("plugins")
-            rds.configuration.remove("description")
-            rds.configuration.remove("keepgoingOnSuccess")
+            rds.configuration = convertConfiguration(jrstep.toMap())
         } else if(wstep instanceof CommandExec) {
             def cstep = (CommandExec)wstep
-            rds.configuration = new HashMap<>(cstep.toMap()) as Map<String, Object>
-            rds.configuration.remove("plugins")
-            rds.configuration.remove("description")
-            rds.configuration.remove("keepgoingOnSuccess")
+            rds.configuration = convertConfiguration(cstep.toMap())
         }
         rds.nodeStep = wstep.nodeStep
         rds.pluginType = wstep.getPluginType()
         return rds
+    }
+
+    static Map<String,Object> convertConfiguration(Map config) {
+        Map convertedCfg = new HashMap<>(config)
+        convertedCfg.remove("plugins")
+        convertedCfg.remove("description")
+        convertedCfg.remove("errorHandler")
+        convertedCfg.remove("keepgoingOnSuccess")
+        return convertedCfg
     }
 }

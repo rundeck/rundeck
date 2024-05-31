@@ -17,6 +17,7 @@
 package rundeck
 
 import com.dtolabs.rundeck.execution.IWorkflowJobItem
+import org.rundeck.app.data.job.converters.WorkflowToRdWorkflowConverter
 import rundeck.data.constants.WorkflowStepConstants
 
 /*
@@ -96,7 +97,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     }
 
     public Map getConfiguration() {
-        return [jobIdentifier: this.getJobIdentifier(), argString: argString]
+        return WorkflowToRdWorkflowConverter.convertConfiguration(this.toMap())
     }
 
     public String getPluginType() {
