@@ -25,15 +25,16 @@ class WorkflowStepUtilSpec extends Specification {
         def step = Mock(WorkflowStepData){
             pluginType >> "builtin-jobref"
             nodeStep >> false
-            configuration >> [
-                jobIdentifier: "uuid",
-                argString: "arg"
-            ]
+            configuration >> [jobref:jobrefcfg]
         }
         when:
         def summary = WorkflowStepUtil.summarize(step)
         then:
-        summary == "job: uuid -- arg"
+        summary == expectedSummary
+        where:
+        expectedSummary                 | jobrefcfg
+        "job: jobgroup/jobname -- arg"  | [uuid: "uuid", useName: "true", group:"jobgroup", name:"jobname", argString: "arg"]
+        "job: uuid -- arg"              | [uuid: "uuid", group:"jobgroup", name:"jobname", argString: "arg"]
     }
 
     def "test summarize method command"() {
@@ -44,17 +45,17 @@ class WorkflowStepUtilSpec extends Specification {
             configuration >> [
                 scriptInterpreter: "interpreter",
                 interpreterArgsQuoted: true,
-                adhocRemoteString: "remote",
-                adhocLocalString: "local",
-                adhocFilepath: "filepath",
-                argString: "arg",
+                exec: "remote",
+                script: "local",
+                scriptfile: "/filepath",
+                args: "arg",
                 fileExtension: "extension"
             ]
         }
         when:
         def summary = WorkflowStepUtil.summarize(step)
         then:
-        summary == "interpreter'remotelocalfilepath -- arg' ('description') [extension]"
+        summary == "interpreter'remotelocal/filepath -- arg' ('description') [extension]"
     }
 
     def "test summarize method with RdWorkflowStep"() {
@@ -65,17 +66,17 @@ class WorkflowStepUtilSpec extends Specification {
         step.configuration = [
             scriptInterpreter: "interpreter",
             interpreterArgsQuoted: true,
-            adhocRemoteString: "remote",
-            adhocLocalString: "local",
-            adhocFilepath: "filepath",
-            argString: "arg",
+            exec: "remote",
+            script: "local",
+            scriptfile: "/filepath",
+            args: "arg",
             fileExtension: "extension"
         ] as Map<String, Object>
 
         when:
         def summary = WorkflowStepUtil.summarize(step as WorkflowStepData)
         then:
-        summary == "interpreter'remotelocalfilepath -- arg' ('descriptionTest') [extension]"
+        summary == "interpreter'remotelocal/filepath -- arg' ('descriptionTest') [extension]"
     }
 
 }

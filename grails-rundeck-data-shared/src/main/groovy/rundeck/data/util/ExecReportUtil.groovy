@@ -20,7 +20,7 @@ class ExecReportUtil {
                         && exec.workflow.steps.size() == 1
                         && exec.workflow.steps[0].pluginType == WorkflowStepConstants.TYPE_COMMAND
         ) {
-            adhocScript = exec.workflow.steps[0].adhocRemoteString
+            adhocScript = exec.workflow.steps[0].configuration.exec
         }
         def summary = summarizeJob(exec)
         def issuccess = exec.statusSucceeded()
@@ -32,7 +32,7 @@ class ExecReportUtil {
 
         return new SaveReportRequestImpl(
                 executionId: (exec.getInternalId() as String).toLong(),
-                jobId: job?.id,
+                jobId: job?.uuid,
                 adhocExecution: null == job,
                 adhocScript: adhocScript,
                 abortedByUser: iscancelled ? exec.abortedby ?: exec.user : null,

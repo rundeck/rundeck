@@ -39,7 +39,7 @@ class ExecReportUtilSpec extends Specification {
         def request = ExecReportUtil.buildSaveReportRequest(exec, job)
         then:
         request.executionId == 1
-        request.jobId == "1"
+        request.jobId == "uuidJob"
         request.adhocExecution == false
         request.adhocScript == null
         request.abortedByUser == null

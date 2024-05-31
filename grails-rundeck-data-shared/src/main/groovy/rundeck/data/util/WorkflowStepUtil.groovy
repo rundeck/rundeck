@@ -17,20 +17,24 @@ class WorkflowStepUtil {
     }
 
     static String summarizeJobStep(WorkflowStepData step) {
-        return "job: ${step.configuration.jobIdentifier}${step.configuration.argString?' -- '+step.configuration.argString:''}"
+        Map jobRef = step.configuration.jobref
+        String jobIdentifier = jobRef.useName!="true" ? jobRef.uuid : (null==jobRef.group?'':jobRef.group+"/")+jobRef.name
+        return "job: ${jobIdentifier}${jobRef.argString?' -- '+jobRef.argString:''}"
     }
 
     static String summarizeCommandStep(WorkflowStepData step){
+        Map cfg = step.configuration
         StringBuffer sb = new StringBuffer()
-        sb << (step.configuration.scriptInterpreter ? "${step.configuration.scriptInterpreter}" : '')
-        sb << (step.configuration.interpreterArgsQuoted ? "'" : '')
-        sb << (step.configuration.adhocRemoteString ? "${step.configuration.adhocRemoteString}" : '')
-        sb << (step.configuration.adhocLocalString ? "${step.configuration.adhocLocalString}" : '')
-        sb << (step.configuration.adhocFilepath ? "${step.configuration.adhocFilepath}" : '')
-        sb << (step.configuration.argString ? " -- ${step.configuration.argString}" : '')
-        sb << (step.configuration.interpreterArgsQuoted ? "'" : '')
+        sb << (cfg.scriptInterpreter ? "${cfg.scriptInterpreter}" : '')
+        sb << (cfg.interpreterArgsQuoted ? "'" : '')
+        sb << (cfg.exec ? "${cfg.exec}" : '')
+        sb << (cfg.script ? "${cfg.script}" : '')
+        sb << (cfg.scripturl ? "${cfg.scripturl}" : '')
+        sb << (cfg.scriptfile ? "${cfg.scriptfile}" : '')
+        sb << (cfg.args ? " -- ${cfg.args}" : '')
+        sb << (cfg.interpreterArgsQuoted ? "'" : '')
         sb << (step.description ?( " ('" + step.description + "')" ) : '')
-        sb << (step.configuration.fileExtension ?( " [" + step.configuration.fileExtension + "]" ) : '')
+        sb << (cfg.fileExtension ?( " [" + cfg.fileExtension + "]" ) : '')
         return sb.toString()
     }
 }
