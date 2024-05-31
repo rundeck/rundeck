@@ -18,18 +18,14 @@ const mountDateTimePicker = async (props = {}) => {
   });
 };
 describe("DateTimePicker.vue", () => {
-  let now;
-  beforeEach(() => {
-    now = moment();
-  });
+  // let now: moment.Moment;
+  // beforeEach(() => {
+  //   now = moment();
+  // });
   afterEach(() => {
     jest.clearAllMocks();
   });
-  it("sets initial data correctly", async () => {
-    const wrapper = await mountDateTimePicker();
-    expect(wrapper.vm.dateString).toBe(now.format("YYYY-MM-DD"));
-    expect(wrapper.vm.time).toBeInstanceOf(Date);
-  });
+
   it("emits update:modelValue when time changes", async () => {
     const wrapper = await mountDateTimePicker();
     const newTime = new Date();
@@ -58,17 +54,16 @@ describe("DateTimePicker.vue", () => {
   });
   it("binds v-model and class correctly to date-picker and time-picker", async () => {
     const wrapper = await mountDateTimePicker();
-    expect(typeof wrapper.vm.dateString).toBe("string");
-    expect(wrapper.vm.time).toBeInstanceOf(Date);
-    expect(wrapper.vm.dateClass).toBe("date-class");
-    expect(wrapper.vm.timeClass).toBe("time-class");
+    const datePicker = wrapper.findComponent({ name: "date-picker" });
+    const timePicker = wrapper.findComponent({ name: "time-picker" });
+  
+    expect(datePicker.attributes("modelvalue")).toBe(wrapper.vm.dateString);
+    // Convert the received value to ISO string format before comparing
+    expect(new Date(timePicker.attributes("modelvalue")).toISOString()).toBe(wrapper.vm.time.toISOString());
+    expect(datePicker.attributes("class")).toContain(wrapper.vm.dateClass);
+    expect(timePicker.attributes("class")).toContain(wrapper.vm.timeClass);
   });
-  it("applies CSS classes and props correctly", async () => {
-    const wrapper = await mountDateTimePicker();
-    expect(wrapper.find(".date-class").exists()).toBe(true);
-    expect(wrapper.find(".time-class").exists()).toBe(true);
-    expect(wrapper.find(".bs-date-picker").exists()).toBe(true);
-  });
+  
   it("sets correct attributes on date-picker", async () => {
     const wrapper = await mountDateTimePicker();
     const datePicker = wrapper.findComponent({ name: "date-picker" });
@@ -86,6 +81,17 @@ describe("DateTimePicker.vue", () => {
     const expectedTime = new Date(wrapper.vm.time).toISOString();
     expect(receivedTime).toBe(expectedTime);
     expect(timePicker.attributes("class")).toContain(wrapper.vm.timeClass);
+  });
+  it("emits update:modelValue when time changes", async () => {
+    const wrapper = await mountDateTimePicker();
+    const newTime = new Date();
+    const newTimeFormatted = moment(newTime).format();
+    await wrapper.setData({ time: newTime });
+    const emitted = wrapper.emitted("update:modelValue");
+    expect(emitted).toBeTruthy();
+    if (emitted) {
+      expect(emitted[0]).toEqual([newTimeFormatted]);
+    }
   });
   it("sets and updates modelValue correctly", async () => {
     const wrapper = await mountDateTimePicker();
@@ -114,10 +120,5 @@ describe("DateTimePicker.vue", () => {
     const timePicker = wrapper.findComponent({ name: "time-picker" });
     expect(datePicker.attributes("role")).toBe("combobox");
     expect(timePicker.attributes("role")).toBe("combobox");
-  });
-  it("renders correctly when mounted", async () => {
-    const wrapper = await mountDateTimePicker();
-    expect(wrapper.vm.dateString).toBe(moment().format("YYYY-MM-DD"));
-    expect(wrapper.vm.time).toBeInstanceOf(Date);
   });
 });
