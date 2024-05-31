@@ -64,24 +64,7 @@ describe("DateTimePicker.vue", () => {
     expect(timePicker.attributes("class")).toContain(wrapper.vm.timeClass);
   });
   
-  it("sets correct attributes on date-picker", async () => {
-    const wrapper = await mountDateTimePicker();
-    const datePicker = wrapper.findComponent({ name: "date-picker" });
-    expect(datePicker.attributes("modelvalue")).toBe(wrapper.vm.dateString);
-    expect(datePicker.attributes("class")).toContain(wrapper.vm.dateClass);
-    expect(datePicker.attributes("clear-btn")).toBe("false");
-  });
-  it("sets correct attributes on time-picker", async () => {
-    const wrapper = await mountDateTimePicker();
-    const timePicker = wrapper.findComponent({ name: "time-picker" });
-    // Convert both values to ISO string format before comparing them
-    const receivedTime = new Date(
-      timePicker.attributes("modelvalue")
-    ).toISOString();
-    const expectedTime = new Date(wrapper.vm.time).toISOString();
-    expect(receivedTime).toBe(expectedTime);
-    expect(timePicker.attributes("class")).toContain(wrapper.vm.timeClass);
-  });
+  
   it("emits update:modelValue when time changes", async () => {
     const wrapper = await mountDateTimePicker();
     const newTime = new Date();
@@ -120,5 +103,26 @@ describe("DateTimePicker.vue", () => {
     const timePicker = wrapper.findComponent({ name: "time-picker" });
     expect(datePicker.attributes("role")).toBe("combobox");
     expect(timePicker.attributes("role")).toBe("combobox");
+  });
+  it("binds v-model, class correctly and sets correct attributes on date-picker and time-picker", async () => {
+    const wrapper = await mountDateTimePicker();
+    const datePicker = wrapper.findComponent({ name: "date-picker" });
+    const timePicker = wrapper.findComponent({ name: "time-picker" });
+  
+    // Check v-model and class for date-picker
+    expect(datePicker.attributes("modelvalue")).toBe(wrapper.vm.dateString);
+    expect(datePicker.attributes("class")).toContain(wrapper.vm.dateClass);
+    expect(datePicker.attributes("clear-btn")).toBe("false");
+  
+    // Check v-model and class for time-picker
+    const receivedTime = new Date(timePicker.attributes("modelvalue")).toISOString();
+    const expectedTime = new Date(wrapper.vm.time).toISOString();
+    expect(receivedTime).toBe(expectedTime);
+    expect(timePicker.attributes("class")).toContain(wrapper.vm.timeClass);
+  
+    // Check CSS classes and props
+    expect(wrapper.find(".date-class").exists()).toBe(true);
+    expect(wrapper.find(".time-class").exists()).toBe(true);
+    expect(wrapper.find(".bs-date-picker").exists()).toBe(true);
   });
 });
