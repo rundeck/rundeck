@@ -1,5 +1,6 @@
 import { mount } from "@vue/test-utils";
 import ActivityRunningIndicator from "../activityRunningIndicator.vue";
+import mitt, { Emitter, EventType } from "mitt";
 
 const mountActivityRunningIndicator = async (props = {}) => {
   const mockEventBus = {
@@ -28,8 +29,11 @@ describe("ActivityRunningIndicator.vue", () => {
   });
 
   it("renders correctly when count is greater than 0", async () => {
-    const wrapper = await mountActivityRunningIndicator();
-    wrapper.vm.updateNowrunning(5);
+    const eventBus: Emitter<Record<EventType, any>> = mitt();
+    const wrapper = await mountActivityRunningIndicator({
+      eventBus: eventBus,
+    });
+    eventBus.emit("activity-nowrunning-count", 5);
     await wrapper.vm.$nextTick();
     const indicator = wrapper.find('[data-test-id="activity-indicator"]');
     expect(indicator.exists()).toBe(true);

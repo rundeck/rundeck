@@ -21,14 +21,15 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { PropType, defineComponent } from "vue";
+import { EventBus } from "../../../library/utilities/vueEventBus";
 
 export default defineComponent({
   name: "ActivityRunningIndicator",
   components: {},
   props: {
     eventBus: {
-      type: Object,
+      type: Object as PropType<typeof EventBus>,
       required: true,
     },
     displayMode: {
