@@ -84,28 +84,32 @@
 		<div class="container-fluid" data-bind="if: projectCount()>0 || !loadedProjectNames()">
 			<div class="row">
 				<g:if test="${isFirstRun}">
-					<div id="first-run-message" class="col-sm-12">
-						<div class="card">
-							<div class="card-header">
-								<h2 class="card-title">
-									<g:message code="app.firstRun.title"
-									           args="${[g.appTitle(), grailsApplication.metadata['build.ident']]}"/>
-								</h2>
-							</div>
+					<div class="vue-ui-socket">
+                        <ui-socket section="home-first-run" location="home-first-run-card">
+							<div id="first-run-message" class="col-sm-12">
+								<div class="card">
+									<div class="card-header">
+										<h2 class="card-title">
+											<g:message code="app.firstRun.title"
+													   args="${[g.appTitle(), grailsApplication.metadata['build.ident']]}"/>
+										</h2>
+									</div>
 
-							<div class="card-content">
-								<g:set var="logoImage" value="${"static/img/${g.appLogo()}"}"/>
-								<asset:image src="${logoImage}" alt="${[g.appTitle()]}"
-								             style="width: 400px; padding-bottom: 10px" onload="SVGInject(this)"/>
-								<g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
-								<p class="h6 text-strong" style="margin-top:1em;">
-									<g:message code="you.can.see.this.message.again.by.clicking.the"/>
-									<g:link action="welcome" controller="menu"><g:message
-											code="version.number"/></g:link>
-									<g:message code="in.the.page.footer"/>
-								</p>
+									<div class="card-content">
+										<g:set var="logoImage" value="${"static/img/${g.appLogo()}"}"/>
+										<asset:image src="${logoImage}" alt="${[g.appTitle()]}"
+													 style="width: 400px; padding-bottom: 10px" onload="SVGInject(this)"/>
+										<g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
+										<p class="h6 text-strong" style="margin-top:1em;">
+											<g:message code="you.can.see.this.message.again.by.clicking.the"/>
+											<g:link action="welcome" controller="menu"><g:message
+													code="version.number"/></g:link>
+											<g:message code="in.the.page.footer"/>
+										</p>
+									</div>
+								</div>
 							</div>
-						</div>
+						</ui-socket>
 					</div>
 				</g:if>
 			</div>
