@@ -39,7 +39,12 @@ export default defineComponent({
   components: {
     DateTimePicker,
   },
-  props: ["modelValue"],
+  props: {
+    modelValue: {
+      type: Object,
+      required: true
+    }
+  },
   emits: ["update:modelValue"],
   data() {
     return {
