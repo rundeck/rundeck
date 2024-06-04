@@ -257,10 +257,10 @@ public class ScriptExecUtil {
             Consumer<ProcessHandle> killHandler
     )
             throws IOException, InterruptedException {
-        final String[] envarr = createEnvironmentArray(envMap);
+        final ProcessBuilder processBuilder = new ProcessBuilder().command(command);
+        processBuilder.environment().putAll(envMap);
 
-        final Runtime runtime = Runtime.getRuntime();
-        final Process exec = runtime.exec(command, envarr, workingdir);
+        final Process exec = processBuilder.start();
         exec.getOutputStream().close();
         final Streams.StreamCopyThread errthread = Streams.copyStreamThread(exec.getErrorStream(), errorStream);
         final Streams.StreamCopyThread outthread = Streams.copyStreamThread(exec.getInputStream(), outputStream);
