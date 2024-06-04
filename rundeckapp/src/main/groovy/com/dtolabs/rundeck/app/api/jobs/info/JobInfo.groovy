@@ -83,6 +83,16 @@ class JobInfo {
     @Ignore(onlyIfNull = true)
     List<Date> futureScheduledExecutions
 
+    @ApiVersion(38)
+    @Ignore(onlyIfNull = true)
+    @XmlAttribute
+    Boolean projectDisableExecutions
+
+    @ApiVersion(38)
+    @Ignore(onlyIfNull = true)
+    @XmlAttribute
+    Boolean projectDisableSchedule
+
 //    Map blah=[
 //            z:'x'
 //    ]
@@ -106,7 +116,7 @@ class JobInfo {
                      scheduleEnabled: se.scheduleEnabled,
                      enabled        : se.executionEnabled
                     ] + extra?.subMap('serverNodeUUID', 'serverOwner', 'averageDuration', 'nextScheduledExecution',
-                        'futureScheduledExecutions')
+                        'futureScheduledExecutions', 'projectDisableExecutions', 'projectDisableSchedule')
         )
     }
 }
