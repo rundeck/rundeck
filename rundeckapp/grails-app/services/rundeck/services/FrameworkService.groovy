@@ -486,7 +486,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
     /**
      * Create a new project
      * @param project name
-     * @param properties config propertiescreateFrameworkProject
+     * @param properties config properties
      * @return [project, [error list]]
      */
     def createFrameworkProject(String project, Properties properties){
