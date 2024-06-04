@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -223,6 +224,39 @@ public class ScriptExecUtil {
             final OutputStream errorStream
     )
             throws IOException, InterruptedException {
+        return runLocalCommand(
+                command,
+                envMap,
+                workingdir,
+                outputStream,
+                errorStream,
+                ScriptExecUtil::killProcessHandleDescend
+        );
+    }
+
+    /**
+     * Run a command with environment variables in a working dir, and copy the streams
+     *
+     * @param command      the command array to run
+     * @param envMap       the environment variables to pass in
+     * @param workingdir   optional working dir location (or null)
+     * @param outputStream stream for stdout
+     * @param errorStream  stream for stderr
+     *
+     * @return the exit code of the command
+     *
+     * @throws IOException          if any IO exception occurs
+     * @throws InterruptedException if interrupted while waiting for the command to finish
+     */
+    public static int runLocalCommand(
+            final String[] command,
+            final Map<String, String> envMap,
+            final File workingdir,
+            final OutputStream outputStream,
+            final OutputStream errorStream,
+            Consumer<ProcessHandle> killHandler
+    )
+            throws IOException, InterruptedException {
         final String[] envarr = createEnvironmentArray(envMap);
 
         final Runtime runtime = Runtime.getRuntime();
@@ -248,12 +282,22 @@ public class ScriptExecUtil {
             }
             return result;
         } catch (InterruptedException e) {
-            exec.destroy();
+            if (null != killHandler) {
+                killHandler.accept(exec.toHandle());
+            }
             if(exec.isAlive()){
                 exec.waitFor();
             }
             throw new InterruptedException("Execution interrupted with code: " + exec.exitValue());
         }
+    }
+
+    protected static void killProcessHandleDescend(ProcessHandle handle) {
+        handle.descendants().forEach(ScriptExecUtil::killProcessHandleDescend);
+        handle.destroy();
+    }
+    protected static void killProcessHandle(ProcessHandle handle) {
+        handle.destroy();
     }
 
     /**
