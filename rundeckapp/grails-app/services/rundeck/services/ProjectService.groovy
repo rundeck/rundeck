@@ -1462,9 +1462,23 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def types = componentBeanProvider.getBeans()
         Map<String, ProjectComponent> values = [:]
         types.each { k, v ->
-            values[v.name] = v
+            if(v.componentEnabled){
+                values[v.name] = v
+            }
         }
         values
+    }
+
+    //Call project component after the project was created
+    @CompileStatic
+    void afterCreationProjectComponents(String project){
+        getProjectComponents().each {key, component->
+            try{
+                component.afterProjectCreate(project)
+            }catch (Exception e){
+                log.error("error afterProjectCreate component ${key}: ${e.message}")
+            }
+        }
     }
 
     @CompileStatic

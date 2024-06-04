@@ -37,4 +37,12 @@ public interface ProjectComponent
     default void projectDeleted(String name) throws Exception{
 
     }
+
+    default boolean isComponentEnabled(){
+        return true;
+    }
+
+    default void afterProjectCreate(String name) throws Exception{
+
+    }
 }
