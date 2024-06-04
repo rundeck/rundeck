@@ -1023,6 +1023,27 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             ['z', 'y', 'x'] | ['z',]          | ['z']           | ['z Label']
     }
 
+    def "test after project creation projectComponent "(){
+        given:
+        def manager = Mock(ProjectManager)
+
+
+        def project="testProject"
+        Properties properties = new Properties()
+        service.projectService = Mock(ProjectService)
+
+        when:
+        service.rundeckFramework = Mock(Framework) {
+            getFrameworkProjectMgr() >> manager
+        }
+
+        service.createFrameworkProject(project,properties)
+
+        then:
+        1* manager.createFrameworkProjectStrict(_,_)
+        1* service.projectService.afterCreationProjectComponents(project)
+    }
+
     class MockScheduledExecutionService{
         def workflows = []
         def rescheduleJobs(String uuuid, String project){
