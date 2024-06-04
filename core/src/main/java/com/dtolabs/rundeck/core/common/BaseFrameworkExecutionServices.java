@@ -11,6 +11,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionS
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -37,6 +38,9 @@ public class BaseFrameworkExecutionServices
      */
     @Override
     public FrameworkSupportService getService(String name) {
+        if(ServiceNameConstants.NodeExecutor.equals(name)){
+            return getNodeExecutorService();
+        }
         return services.get(name);
     }
 
