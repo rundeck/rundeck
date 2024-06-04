@@ -71,18 +71,6 @@ public class NodeExecutorService
         PRESET_PROVIDERS = Collections.unmodifiableMap(map);
     }
 
-    @Getter
-    static class Factory {
-        @Setter Framework rundeckFramework;
-        @Setter FeatureService featureService;
-
-        public NodeExecutorService create() {
-            final NodeExecutorService nodeExecutorService = new NodeExecutorService(rundeckFramework);
-            nodeExecutorService.setFeatureService(featureService);
-            return nodeExecutorService;
-        }
-    }
-
     public String getName() {
         return SERVICE_NAME;
     }
