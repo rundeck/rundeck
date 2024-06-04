@@ -2909,7 +2909,7 @@ Format is a string like `2d1h4n5s` using the following characters for time units
             }
         }
 
-        extra.futureScheduledExecutions = []
+//        extra.futureScheduledExecutions = []
 
         if (jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid)) {
             extra.futureScheduledExecutions += scheduledExecutionService.nextExecutions(scheduledExecution, futureDate, retro)
@@ -2919,7 +2919,7 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                 extra.futureScheduledExecutions = extra.futureScheduledExecutions[0..<max]
             }
         } else {
-            extra.futureScheduledExecutions=scheduledExecutionService.nextExecutionTime(scheduledExecution)
+            extra.futureScheduledExecutions = scheduledExecutionService.nextOneTimeScheduledExecutions([scheduledExecution] as List<ScheduledExecution>)
         }
 
         if(request.api_version >= ApiVersions.V48) {
