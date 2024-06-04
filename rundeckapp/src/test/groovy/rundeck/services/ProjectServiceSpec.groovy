@@ -1333,7 +1333,6 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                 status: 'true',
                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'exec command')]),
                 scheduledExecution: se
-
             )
             assertNotNull exec.save()
             ExecReport er = ExecReport.fromExec(exec).save()
@@ -1923,7 +1922,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
     }
 
-
+    static String EXEC_UUID = "9f0509eb-f89c-4fb3-a520-edf5a34eb52f"
     static String EXECS_START='<executions>'
     static String EXECS_END= '</executions>'
     static String EXEC_XML_TEST1_DEF_START= '''
@@ -1938,6 +1937,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     <cancelled>false</cancelled>
     <argString>-test args</argString>
     <loglevel>WARN</loglevel>
+    <uuid>9f0509eb-f89c-4fb3-a520-edf5a34eb52f</uuid>
     <doNodedispatch>true</doNodedispatch>
     <nodefilters>
       <dispatch>
@@ -2064,6 +2064,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     <cancelled>false</cancelled>
     <argString>-test args</argString>
     <loglevel>WARN</loglevel>
+    <uuid>9f0509eb-f89c-4fb3-a520-edf5a34eb52f</uuid>
     <doNodedispatch>true</doNodedispatch>
     <nodefilters>
       <dispatch>
@@ -2098,6 +2099,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     <cancelled>false</cancelled>
     <argString>-test args</argString>
     <loglevel>WARN</loglevel>
+    <uuid>9f0509eb-f89c-4fb3-a520-edf5a34eb52f</uuid>
     <doNodedispatch>true</doNodedispatch>
     <nodefilters>
       <dispatch>
@@ -2147,6 +2149,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 //        zipmock.demand.file(1..1){name,File outfile-> }
         def zip = zipmock.proxyInstance()
         Execution exec = new Execution(
+            uuid: EXEC_UUID,
             argString: "-test args",
             user: "testuser",
             project: "testproj",
@@ -2193,8 +2196,8 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def zipmock=new MockFor(ZipBuilder)
         def outwriter = new StringWriter()
 
-
         Execution exec = new Execution(
+            uuid: EXEC_UUID,
             argString: "-test args",
             user: "testuser",
             project: "testproj",
@@ -2259,6 +2262,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def outwriter = new StringWriter()
 
         Execution exec = new Execution(
+            uuid: EXEC_UUID,
             argString: "-test args",
             user: "testuser",
             project: "testproj",
@@ -2589,6 +2593,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
   <failedNodeList />
   <filterApplied />
   <jobUuid>test-job-uuid</jobUuid>
+  <executionUuid>uuid</executionUuid>
 </report>'''
     /**
      * uses deprecated jcExecId
@@ -2607,6 +2612,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
   <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
   <jcExecId>123</jcExecId>
   <jcJobId>test-job-uuid</jcJobId>
+  <executionUuid>uuid</executionUuid>
   <adhocExecution />
   <adhocScript />
   <abortedByUser />
@@ -2650,6 +2656,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             dateCompleted: new Date(3600000),
             message: 'Report message',
             jobUuid: se.uuid,
+            executionUuid: 'uuid'
             )
         assertNotNull exec.save()
 
@@ -2745,6 +2752,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             dateStarted: new Date(0),
             dateCompleted: new Date(3600000),
             message: 'Report message',
+            executionUuid: 'uuid'
             )
         assertNotNull exec.save()
 
@@ -2912,6 +2920,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         assertNotNull job.save()
 
         Execution exec = new Execution(
+            uuid: EXEC_UUID,
             argString: "-test args",
             user: "testuser",
             project: "testproj",
@@ -3062,6 +3071,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         assertNotNull job.save()
 
         Execution exec = new Execution(
+            uuid: EXEC_UUID,
             argString: "-test args",
             user: "testuser",
             project: "testproj",

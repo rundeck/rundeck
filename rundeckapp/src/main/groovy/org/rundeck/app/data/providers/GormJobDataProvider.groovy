@@ -19,6 +19,8 @@ import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.data.model.v1.job.JobDataSummary
+import rundeck.data.job.reference.JobReferenceImpl
+import rundeck.data.job.reference.JobRevReferenceImpl
 import rundeck.data.validation.exception.DataValidationException
 import org.rundeck.app.data.job.schedule.DefaultJobDataChangeDetector
 import org.rundeck.app.data.model.v1.DeletionResult
@@ -39,8 +41,7 @@ import rundeck.ScheduledExecution
 import rundeck.data.job.RdOption
 import rundeck.services.FrameworkService
 import rundeck.services.JobLifecycleComponentService
-import rundeck.services.JobReferenceImpl
-import rundeck.services.JobRevReferenceImpl
+
 import rundeck.services.JobSchedulerService
 import rundeck.services.JobSchedulesService
 import rundeck.services.ScheduledExecutionService

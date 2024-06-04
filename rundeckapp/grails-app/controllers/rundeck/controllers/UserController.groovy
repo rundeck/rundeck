@@ -212,7 +212,7 @@ class UserController extends ControllerBase{
         if(userExists){
            return redirect(action:'edit')
         }
-        def u = userDataProvider.buildUser(login: user)
+        def u = userDataProvider.buildUser(user)
 
         def model=[user: u,newRegistration:true]
         return model

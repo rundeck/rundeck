@@ -289,16 +289,24 @@ class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest 
     @Unroll
     def "Should validate user exists"() {
         given:
-        User savedUser = new User(login: "saved")
-        savedUser.save()
+        User savedUser = new User(login: login)
+        if(persitUser){
+            savedUser.save()
+        }
+        provider.featureService = Mock(FeatureService){
+            1 * featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> caseInsensitive
+        }
         when:
-        Boolean userExists = provider.validateUserExists(login)
+        Boolean userExists = provider.validateUserExists(login.toUpperCase())
         then:
         userExists == expect
         where:
-        login   | expect
-        "login" | false
-        "saved" | true
+        login   | expect   | caseInsensitive | persitUser
+        "user1" | false    | false         |    true
+        "user2" | true     | true          |    true
+        "user3" | false    | true          |    false
+        "user4" | false    | false         |    false
+
     }
 
     def "Should list all by order by login"() {

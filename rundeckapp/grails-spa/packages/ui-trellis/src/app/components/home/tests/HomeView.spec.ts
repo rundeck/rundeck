@@ -1,4 +1,4 @@
-import { shallowMount } from "@vue/test-utils";
+import { shallowMount, VueWrapper } from "@vue/test-utils";
 import HomeView from "../HomeView.vue";
 import { getProjects, getProjectNames } from "../services/homeServices";
 
@@ -16,7 +16,7 @@ const mockedGetProjectNames = getProjectNames as jest.MockedFunction<
   typeof getProjectNames
 >;
 
-const createWrapper = (props = {}) => {
+const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
   return shallowMount(HomeView, {
     props: {
       appTitle: "Test App",
@@ -45,7 +45,7 @@ describe("HomeView", () => {
 
   it("renders HomeHeader component when data is loaded and projectCount > 0", async () => {
     mockedGetProjects.mockResolvedValueOnce([]);
-    const wrapper = createWrapper();
+    const wrapper = await createWrapper();
     await wrapper.setData({ dataLoaded: true, projectCount: 1 });
 
     expect(wrapper.findComponent({ name: "HomeHeader" }).exists()).toBe(true);
@@ -53,7 +53,7 @@ describe("HomeView", () => {
 
   it("renders FirstRun component when data is loaded, projectCount is 0, and createProjectAllowed is true", async () => {
     mockedGetProjects.mockResolvedValueOnce([]);
-    const wrapper = createWrapper({ createProjectAllowed: true });
+    const wrapper = await createWrapper({ createProjectAllowed: true });
     await wrapper.setData({ dataLoaded: true, projectCount: 0 });
 
     expect(wrapper.findComponent({ name: "FirstRun" }).exists()).toBe(true);
@@ -61,7 +61,7 @@ describe("HomeView", () => {
 
   it("renders warning message when data is loaded, projectCount is 0, and createProjectAllowed is false", async () => {
     mockedGetProjects.mockResolvedValueOnce([]);
-    const wrapper = createWrapper();
+    const wrapper = await createWrapper();
     await wrapper.setData({ dataLoaded: true, projectCount: 0 });
     await wrapper.vm.$nextTick();
 
@@ -70,7 +70,7 @@ describe("HomeView", () => {
 
   it("renders HomeCardList component when data is loaded, projectCount is greater than 0, and createProjectAllowed is false", async () => {
     mockedGetProjects.mockResolvedValueOnce([]);
-    const wrapper = createWrapper();
+    const wrapper = await createWrapper();
     await wrapper.setData({ dataLoaded: true, projectCount: 1 });
 
     expect(wrapper.findComponent({ name: "HomeCardList" }).exists()).toBe(true);
@@ -80,7 +80,7 @@ describe("HomeView", () => {
     const getProjectsSpy = jest.spyOn(HomeView.methods, "getProjects");
     const getPartialDataSpy = jest.spyOn(HomeView.methods, "getPartialData");
 
-    createWrapper();
+    await createWrapper();
 
     expect(getProjectsSpy).toHaveBeenCalled();
     expect(getPartialDataSpy).toHaveBeenCalled();
@@ -92,7 +92,7 @@ describe("HomeView", () => {
   it("correctly sets projects and projectCount when getProjects is successful", async () => {
     const projectsData = [{ name: "Project1" }, { name: "Project2" }];
     mockedGetProjects.mockResolvedValueOnce(projectsData);
-    const wrapper = createWrapper();
+    const wrapper = await createWrapper();
 
     await wrapper.vm.$nextTick();
 
@@ -103,7 +103,7 @@ describe("HomeView", () => {
   it("correctly sets projectCount when getPartialData is successful", async () => {
     const projectNamesData = ["Project1", "Project2"];
     mockedGetProjectNames.mockResolvedValueOnce(projectNamesData);
-    const wrapper = createWrapper();
+    const wrapper = await createWrapper();
 
     await wrapper.vm.$nextTick();
 

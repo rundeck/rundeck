@@ -15,7 +15,7 @@ import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.profile.UserProfilePage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
-import org.rundeck.util.gui.pages.project.ActivityPage
+import org.rundeck.util.gui.pages.activity.ActivityPage
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper
 import spock.lang.Stepwise
 
@@ -616,7 +616,8 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.jobOptionListDelimiter.sendKeys(",")
         jobCreatePage.jobOptionEnforcedInput.click()
         jobCreatePage.saveOptionButton.click()
-
+        jobCreatePage.waitForNumberOfElementsToBe(jobCreatePage.optEditFormBy, 0)
+        jobCreatePage.waitForElementToBeClickable(jobCreatePage.optionButton)
         jobCreatePage.optionButton.click()
         jobCreatePage.optionName(1).sendKeys(optionListOfValues)
         jobCreatePage.jobOptionAllowedValuesRemoteUrlInput.click()
@@ -641,6 +642,7 @@ class JobsSpec extends SeleniumBase {
         def searchListValues = jobShowPage.getOptionSelectChildren(optionListOfValues)
         def flag = true
         searchListValues.stream().forEach {
+            jobCreatePage.waitForElementToBeClickable(it)
             if( !it.isSelected() ) false
         }
         noUnselectedOptions = flag
