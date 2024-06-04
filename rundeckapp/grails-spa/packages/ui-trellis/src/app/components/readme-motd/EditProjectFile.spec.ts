@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { mount } from "@vue/test-utils";
 import EditProjectFile from "./EditProjectFile.vue";
 import * as editProjectFileService from "./editProjectFileService";
@@ -56,7 +57,7 @@ describe("EditProjectFile", () => {
   ])("renders the correct title for %s", async (filename, expectedTitle) => {
     const wrapper = await mountEditProjectFile({ filename });
     expect(wrapper.find('[data-test-id="title"]').text()).toContain(
-      expectedTitle
+      expectedTitle,
     );
   });
   it("renders file content inside AceEditor's span element when getFileText method returns successfully", async () => {
@@ -70,7 +71,7 @@ describe("EditProjectFile", () => {
     const wrapper = await mountEditProjectFile();
     const notifyErrorSpy = jest.spyOn(wrapper.vm, "notifyError");
     (editProjectFileService.getFileText as jest.Mock).mockImplementationOnce(
-      () => Promise.reject(new Error("Failed to fetch file"))
+      () => Promise.reject(new Error("Failed to fetch file")),
     );
     await wrapper.vm.getFileText();
     expect(notifyErrorSpy).toHaveBeenCalledWith("Failed to fetch file");
@@ -82,7 +83,7 @@ describe("EditProjectFile", () => {
     (
       editProjectFileService.saveProjectFile as jest.Mock
     ).mockImplementationOnce(() =>
-      Promise.reject(new Error("Failed to save file"))
+      Promise.reject(new Error("Failed to save file")),
     );
     await wrapper.find('[data-test-id="save"]').trigger("click");
     expect(notifyErrorSpy).toHaveBeenCalledWith("Failed to save file");
@@ -94,7 +95,7 @@ describe("EditProjectFile", () => {
     expect(editProjectFileService.saveProjectFile).toHaveBeenCalledWith(
       "default",
       "readme.md",
-      "sample file content"
+      "sample file content",
     );
   });
 
@@ -103,14 +104,14 @@ describe("EditProjectFile", () => {
     const footerText = wrapper.find(".card-footer").text();
     expect(footerText).toContain("file.warning.not.displayed.admin.message");
     expect(wrapper.find(".card-footer a").text()).toBe(
-      "project.configuration.label"
+      "project.configuration.label",
     );
   });
 
   it("displays warning message and configuration link when user isn't an admin and displayConfig is 'none'", async () => {
     const wrapper = await mountEditProjectFile({ authAdmin: false });
     expect(
-      wrapper.find('[data-test-id="nonadmin-warning-message"]').text()
+      wrapper.find('[data-test-id="nonadmin-warning-message"]').text(),
     ).toContain("file.warning.not.displayed.nonadmin.message");
   });
 
