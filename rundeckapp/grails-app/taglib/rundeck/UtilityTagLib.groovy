@@ -870,7 +870,7 @@ class UtilityTagLib{
             if (path)
                 helpBase="https://docs.rundeck.com/${docVersion}"
             else
-                helpBase="https://docs.rundeck.com/${docVersion}/manual/02-getting-help.html"
+                helpBase="https://docs.rundeck.com/${docVersion}/about/getting-help.html"
 
             def helpParams = helpLinkParams(attrs,body)
             helpUrl= helpBase + path + '?' + helpParams + fragment
