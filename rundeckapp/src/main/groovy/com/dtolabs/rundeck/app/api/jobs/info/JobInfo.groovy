@@ -83,12 +83,12 @@ class JobInfo {
     @Ignore(onlyIfNull = true)
     List<Date> futureScheduledExecutions
 
-    @ApiVersion(38)
+    @ApiVersion(48)
     @Ignore(onlyIfNull = true)
     @XmlAttribute
     Boolean projectDisableExecutions
 
-    @ApiVersion(38)
+    @ApiVersion(48)
     @Ignore(onlyIfNull = true)
     @XmlAttribute
     Boolean projectDisableSchedule
