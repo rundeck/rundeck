@@ -2961,53 +2961,53 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
     def "test nowrunningAjax with single project"() {
         given:
 
-        controller.userService = Mock(UserService) {}
+            controller.userService = Mock(UserService) {}
 
-        UserAndRolesAuthContext test = Mock(UserAndRolesAuthContext) {
-            getUsername() >> 'test'
-            getRoles() >> new HashSet<String>(['test'])
-        }
+            UserAndRolesAuthContext test = Mock(UserAndRolesAuthContext) {
+                getUsername() >> 'test'
+                getRoles() >> new HashSet<String>(['test'])
+            }
 
-        def projectMock = Mock(IRundeckProject) {
-            getProperties() >> [:]
-            getName() >> 'aProject'
-        }
+            def projectMock = Mock(IRundeckProject) {
+                getProperties() >> [:]
+                getName() >> 'aProject'
+            }
 
-        def executionService = Mock(ExecutionService) {
-            finishQueueQuery(_, _, _) >> [:]
-        }
+            def executionService = Mock(ExecutionService) {
+                finishQueueQuery(_, _, _) >> [:]
+            }
 
-        controller.executionService = executionService
+            controller.executionService = executionService
 
-        controller.frameworkService = Mock(FrameworkService) {
-            _ * getRundeckBase() >> ''
-            _ * getFrameworkProject(_) >> projectMock
-            _ * getServerUUID() >> 'uuid'
-            1 * existsFrameworkProject('aProject') >> true
-            0 * projectNames(_) >> ['aProject']
-        }
+            controller.frameworkService = Mock(FrameworkService) {
+                _ * getRundeckBase() >> ''
+                _ * getFrameworkProject(_) >> projectMock
+                _ * getServerUUID() >> 'uuid'
+                1 * existsFrameworkProject('aProject') >> true
+                0 * projectNames(_) >> ['aProject']
+            }
 
-        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-            1 * authorizeProjectResource(_, AuthorizationUtil.resourceType('event'), 'read', 'aProject') >>
-                    true
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeProjectResource(_, AuthorizationUtil.resourceType('event'), 'read', 'aProject') >>
+                        true
 
-            1 * getAuthContextForSubjectAndProject(_, 'aProject')
-        }
-        controller.apiService = Mock(ApiService)
+                1 * getAuthContextForSubjectAndProject(_, 'aProject')
+            }
+            controller.apiService = Mock(ApiService)
 
-        params[qparam] = 'aProject'
-        request.api_version = 35
-        request.addHeader('x-rundeck-ajax', 'true')
+            params[qparam] = 'aProject'
+            request.api_version = 35
+            request.addHeader('x-rundeck-ajax', 'true')
 
         when:
-        def result = controller.nowrunningAjax()
+            def result = controller.nowrunningAjax()
 
         then:
-        0 * controller.apiService.renderErrorFormat(_, _)
-        1 * controller.apiService.requireExists(_, true, ['project', 'aProject']) >> true
-        1 * controller.executionService.queryQueue({ it.projFilter == 'aProject' })
+            0 * controller.apiService.renderErrorFormat(_, _)
+            1 * controller.apiService.requireExists(_, true, ['project', 'aProject']) >> true
+            1 * controller.executionService.queryQueue({ it.projFilter == 'aProject' })
         where:
-        qparam << ['project', 'projFilter']
+            qparam << ['project', 'projFilter']
     }
 
     def "test list all projects with an invalid project"() {
@@ -3181,39 +3181,39 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
     @Unroll
     def "RdAuthorizeSystem required for endpoint #endpoint authorize #access"() {
         when:
-        def result = getControllerMethodAnnotation(endpoint, RdAuthorizeSystem)
+            def result = getControllerMethodAnnotation(endpoint, RdAuthorizeSystem)
         then:
-        result.value() == access
+            result.value() == access
         where:
-        endpoint                                | access
-        'logStorageIncompleteAjax'              | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
-        'logStorageMissingAjax'                 | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
-        'logStorageAjax'                        | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
-        'apiLogstorageInfo'                     | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
-        'apiLogstorageListIncompleteExecutions' | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
-        'systemConfig'                          | RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN
-        'systemInfo'                            | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
+            endpoint                                | access
+            'logStorageIncompleteAjax'              | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
+            'logStorageMissingAjax'                 | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
+            'logStorageAjax'                        | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
+            'apiLogstorageInfo'                     | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
+            'apiLogstorageListIncompleteExecutions' | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
+            'systemConfig'                          | RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN
+            'systemInfo'                            | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
     }
 
     @Unroll
     def "RdAuthorizeJob required for endpoint #endpoint authorize #access"() {
         when:
-        def result = getControllerMethodAnnotation(endpoint, RdAuthorizeJob)
+            def result = getControllerMethodAnnotation(endpoint, RdAuthorizeJob)
         then:
-        result.value() == access
+            result.value() == access
         where:
-        endpoint                                | access
-        'apiJobDetail'                          | RundeckAccess.Job.AUTH_APP_READ_OR_VIEW
-        'apiJobForecast'                        | RundeckAccess.Job.AUTH_APP_READ_OR_VIEW
+            endpoint                                | access
+            'apiJobDetail'                          | RundeckAccess.Job.AUTH_APP_READ_OR_VIEW
+            'apiJobForecast'                        | RundeckAccess.Job.AUTH_APP_READ_OR_VIEW
     }
 
     @Unroll
     @Ignore("TODO: could enforce authorize annotation of every controller Action")
     def "all methods #method authorize check"() {
         expect:
-        NamedAuthRequestUtil.requestsFromAnnotations(method).size() >0
+            NamedAuthRequestUtil.requestsFromAnnotations(method).size() >0
         where:
-        method << MenuController.declaredMethods.findAll { it.getAnnotation(Action) != null }
+            method << MenuController.declaredMethods.findAll { it.getAnnotation(Action) != null }
     }
 
     def "jobs group"() {
@@ -3437,7 +3437,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         0 * controller.rundeckAuthContextProcessor.authorizeProjectResources(_, _, _, _)
         0 * controller.scheduledExecutionService.finishquery(_, _, _)
         1 * controller.apiService.renderErrorFormat(
-                _, {
+            _, {
             it.status == HttpServletResponse.SC_NOT_ACCEPTABLE
             it.code == 'api.error.item.unsupported-format'
             it.args == [format]
