@@ -1,5 +1,6 @@
 package org.rundeck.tests.functional.selenium.login
 
+import org.openqa.selenium.By
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.gui.pages.TopMenuPage
 import org.rundeck.util.gui.pages.login.LoginPage
@@ -93,13 +94,14 @@ class BasicLoginSpec extends SeleniumBase {
         topMenuPage.logOut()
     }
 
-    def "visits help link"(){
+    def "visits help link from login page"(){
         when:
         def loginPage = go LoginPage
+        loginPage.executeScript("arguments[0].setAttribute('target', '_self');", loginPage.getHelpLink())
         loginPage.getHelpLink().click()
-        loginPage.waitForUrlToContain("/about/getting-help.html")
 
         then:
-        loginPage.waitForElementVisible(By.id("getting-help"))
+        loginPage.waitForUrlToContain("/about/getting-help.html")
+        loginPage.waitForElementVisible(By.xpath("//h1[text()='Getting Help']"))
     }
 }
