@@ -2909,17 +2909,16 @@ Format is a string like `2d1h4n5s` using the following characters for time units
             }
         }
 
-//        extra.futureScheduledExecutions = []
-
         if (jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid)) {
-            extra.futureScheduledExecutions += scheduledExecutionService.nextExecutions(scheduledExecution, futureDate, retro)
+            extra.futureScheduledExecutions = scheduledExecutionService.nextExecutions(scheduledExecution, futureDate, retro)
             if (max
                     && extra.futureScheduledExecutions
                     && extra.futureScheduledExecutions.size() > max) {
                 extra.futureScheduledExecutions = extra.futureScheduledExecutions[0..<max]
             }
-        } else {
-            extra.futureScheduledExecutions = scheduledExecutionService.nextOneTimeScheduledExecutions([scheduledExecution] as List<ScheduledExecution>)
+        } else if(request.api_version >= ApiVersions.V48) {
+            def map = scheduledExecutionService.nextOneTimeScheduledExecutions([scheduledExecution] as List<ScheduledExecution>)
+            extra.futureScheduledExecutions = map ? map.values().toList() : []
         }
 
         if(request.api_version >= ApiVersions.V48) {
