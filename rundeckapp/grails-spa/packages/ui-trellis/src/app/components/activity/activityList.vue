@@ -560,7 +560,7 @@
       <span
         v-if="!loading && !loadError"
         class="loading-text"
-        data-test-id="no-data-message"
+        data-test="no-data-message"
       >
         {{ $t("results.empty.text") }}
       </span>
