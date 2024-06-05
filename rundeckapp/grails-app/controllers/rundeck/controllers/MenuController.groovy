@@ -34,7 +34,6 @@ import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
-import com.rundeck.plugin.UpdateModeProjectService
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
@@ -2916,22 +2915,28 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                     && extra.futureScheduledExecutions.size() > max) {
                 extra.futureScheduledExecutions = extra.futureScheduledExecutions[0..<max]
             }
-        } else if(request.api_version >= ApiVersions.V48) {
-            def map = scheduledExecutionService.nextOneTimeScheduledExecutions([scheduledExecution] as List<ScheduledExecution>)
+        }
+
+        def map = scheduledExecutionService.nextOneTimeScheduledExecutions([scheduledExecution] as List<ScheduledExecution>)
+
+        if(extra.futureScheduledExecutions && map) {
+            extra.futureScheduledExecutions += map.values().toList()
+        } else {
             extra.futureScheduledExecutions = map ? map.values().toList() : []
         }
 
+
+
         if(request.api_version >= ApiVersions.V48) {
-            if (scheduledExecution?.project) {
-                IRundeckProject rundeckProject =  frameworkService.getFrameworkProject(scheduledExecution.project)
-                Map properties = rundeckProject.getProjectProperties()
+            IRundeckProject rundeckProject =  frameworkService.getFrameworkProject(scheduledExecution.project)
+            Map properties = rundeckProject.getProjectProperties()
 
-                def isExecutionDisabledNow = properties[UpdateModeProjectService.CONF_PROJECT_DISABLE_EXECUTION] == 'true'
-                def isScheduleDisabledNow = properties[UpdateModeProjectService.CONF_PROJECT_DISABLE_SCHEDULE] == 'true'
+            def isExecutionDisabledNow = properties[ScheduledExecutionService.CONF_PROJECT_DISABLE_EXECUTION] == 'true'
+            def isScheduleDisabledNow = properties[ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE] == 'true'
 
-                extra.projectDisableExecutions = isExecutionDisabledNow
-                extra.projectDisableSchedule = isScheduleDisabledNow
-            }
+            extra.projectDisableExecutions = isExecutionDisabledNow
+            extra.projectDisableSchedule = isScheduleDisabledNow
+
 
             def averageDuration = executionService.getAverageDuration(scheduledExecution.uuid)
             if (averageDuration > 0) {

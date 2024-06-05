@@ -2539,7 +2539,11 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         def testUUID = UUID.randomUUID().toString()
         def testUUID2 = UUID.randomUUID().toString()
         controller.apiService = Mock(ApiService)
-        controller.frameworkService = Mock(FrameworkService)
+        controller.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject('AProject') >> Mock(IRundeckProject) {
+                getProjectProperties() >> ["project.disable.executions": "false", "project.disable.schedule": "false"]
+            }
+        }
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
