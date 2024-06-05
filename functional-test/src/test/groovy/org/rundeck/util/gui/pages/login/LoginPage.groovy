@@ -16,17 +16,21 @@ class LoginPage extends BasePage {
     By passwordFieldBy = By.id("password")
     By loginBtnBy = By.id("btn-login")
     By errorBy = By.cssSelector(".alert.alert-danger > span")
+    By helpLinkBy = By.linkText("Help")
 
     String loadPath = "/user/login"
 
     LoginPage(final SeleniumContext context) {
         super(context)
     }
-
     void validatePage() {
         if (!driver.currentUrl.contains(loadPath)) {
             throw new IllegalStateException("Not on login page: " + driver.currentUrl)
         }
+    }
+
+    WebElement getHelpLink() {
+        el helpLinkBy
     }
 
     WebElement getLoginField() {
