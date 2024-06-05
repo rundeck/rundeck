@@ -67,7 +67,7 @@ module.exports = {
   },
 
   outputDir: process.env.VUE_APP_OUTPUT_DIR,
-  publicPath: "auto",
+  publicPath: process.env.VUE_APP_PUBLIC_PATH || "auto",
   assetsDir: process.env.VUE_APP_ASSETS_DIR || "",
   filenameHashing: false,
   parallel: true,
