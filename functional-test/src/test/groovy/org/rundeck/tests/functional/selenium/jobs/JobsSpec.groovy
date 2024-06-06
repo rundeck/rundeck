@@ -3,6 +3,7 @@ package org.rundeck.tests.functional.selenium.jobs
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import org.openqa.selenium.Keys
+import org.openqa.selenium.support.ui.ExpectedConditions
 import org.rundeck.util.api.responses.jobs.CreateJobResponse
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
@@ -639,11 +640,9 @@ class JobsSpec extends SeleniumBase {
 
         jobShowPage.selectOptionFromOptionListByName(optionListOfNames, selection)
         jobShowPage.waitForElementToBeClickable(jobShowPage.getOptionSelectByName(optionListOfValues))
-        def searchListValues = jobShowPage.getOptionSelectChildren(optionListOfValues)
         def flag = true
-        searchListValues.stream().forEach {
-            jobCreatePage.waitForElementToBeClickable(it)
-            if( !it.isSelected() ) false
+        (0..(selection-1)).each{
+            if(!jobShowPage.getOptionSelectChildren(optionListOfValues)[it].isSelected()) flag = false
         }
         noUnselectedOptions = flag
 
@@ -654,10 +653,10 @@ class JobsSpec extends SeleniumBase {
         deleteProject(projectName)
 
         where:
-        selection | noUnselectedOptions
-        2         | true
-        3         | true
-        4         | true
+        selection   | noUnselectedOptions
+        2           | true
+        3           | true
+        4           | true
 
     }
 
