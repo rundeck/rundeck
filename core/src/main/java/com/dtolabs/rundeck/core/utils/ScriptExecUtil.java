@@ -292,11 +292,11 @@ public class ScriptExecUtil {
         }
     }
 
-    protected static void killProcessHandleDescend(ProcessHandle handle) {
+    public static void killProcessHandleDescend(ProcessHandle handle) {
         handle.descendants().forEach(ScriptExecUtil::killProcessHandleDescend);
         handle.destroy();
     }
-    protected static void killProcessHandle(ProcessHandle handle) {
+    public static void killProcessHandle(ProcessHandle handle) {
         handle.destroy();
     }
 
