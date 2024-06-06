@@ -230,6 +230,7 @@ public class ScriptExecUtil {
                 workingdir,
                 outputStream,
                 errorStream,
+                false,
                 ScriptExecUtil::killProcessHandleDescend
         );
     }
@@ -254,11 +255,17 @@ public class ScriptExecUtil {
             final File workingdir,
             final OutputStream outputStream,
             final OutputStream errorStream,
+            boolean clearEnv,
             Consumer<ProcessHandle> killHandler
     )
             throws IOException, InterruptedException {
         final ProcessBuilder processBuilder = new ProcessBuilder().command(command);
-        processBuilder.environment().putAll(envMap);
+
+        final Map<String, String> environment = processBuilder.environment();
+        if(clearEnv) {
+            environment.clear();
+        }
+        environment.putAll(envMap);
 
         final Process exec = processBuilder.start();
         exec.getOutputStream().close();
