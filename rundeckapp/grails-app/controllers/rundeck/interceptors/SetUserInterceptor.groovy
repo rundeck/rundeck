@@ -1,7 +1,7 @@
 package rundeck.interceptors
 
 import com.dtolabs.rundeck.core.authentication.Group
-import grails.compiler.GrailsCompileStatic
+import rundeck.log.LogMarker
 import org.rundeck.app.authentication.Token
 import com.dtolabs.rundeck.core.authentication.Username
 import groovy.transform.CompileStatic
@@ -116,9 +116,11 @@ class SetUserInterceptor {
                 request.authenticatedUser = null
                 request.invalidApiAuthentication = true
                 if(authtoken){
-                    log.error("Invalid API token used: ${AuthenticationTokenUtils.printable(authtoken)}");
+                    LogMarker.markCustomerLog {
+                        log.error("Invalid API token used: ${AuthenticationTokenUtils.printable(authtoken)}");
+                    }
                 }else{
-                    log.error("Unauthenticated API request");
+                    LogMarker.markCustomerLog { log.error("Unauthenticated API request"); }
                 }
             }
         } else if (!request.remoteUser) {
@@ -143,7 +145,7 @@ class SetUserInterceptor {
             List<String> matchedRoles = new ArrayList<>(requiredRoles)
             matchedRoles.retainAll(requestRoles)
             if( !matchedRoles.size() ){
-                log.error("User ${request.remoteUser} must have an allowed role to log in.")
+                LogMarker.markCustomerLog { log.error("User ${request.remoteUser} must have an allowed role to log in.") }
                 SecurityContextHolder.clearContext()
                 request.logout()
                 response.status = 403

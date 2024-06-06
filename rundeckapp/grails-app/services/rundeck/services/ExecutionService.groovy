@@ -19,6 +19,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
+import rundeck.log.LogMarker
 import rundeck.data.util.ExecReportUtil
 import rundeck.support.filters.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ExecutionContext
@@ -882,7 +883,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def state = getExecutionState(e)
         def execprops = ['user', 'id', 'abortedby', 'dateStarted', 'dateCompleted', 'project', 'argString']
         def jobProps = ['uuid', 'jobName', 'groupPath']
-        Map mdcprops=[:]
+        Map mdcprops=[logtype:'cust']
         execprops.each { k ->
             def v = e[k]
             if (v instanceof Date) {
@@ -2353,7 +2354,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return [success: false, error: 'invalid', message: exc.getMessage(), options: exc.getOptions(), errors: exc.getErrors()]
         } catch (ExecutionServiceException exc) {
             def msg = exc.getMessage()
-            log.error("Unable to create execution",exc)
+            LogMarker.markCustomerLog { log.error("Unable to create execution",exc) }
             return [success: false, error: exc.code ?: 'failed', message: msg, options: input.option]
         } finally {
             if (!success && e) {
@@ -3954,7 +3955,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 if (!disableRefStats) {
                     updateJobRefScheduledExecStatistics(se.uuid, duration)
                 }
-                saveRefExecution(wresult.result.success ? EXECUTION_SUCCEEDED : EXECUTION_FAILED, refId)
+                wwsaveRefExecution(wresult.result.success ? EXECUTION_SUCCEEDED : EXECUTION_FAILED, refId)
             }
 
             Execution execution = Execution.get(execid as Long)

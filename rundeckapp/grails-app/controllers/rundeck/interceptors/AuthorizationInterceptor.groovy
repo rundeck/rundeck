@@ -1,7 +1,8 @@
 package rundeck.interceptors
 
-import com.dtolabs.client.utils.Constants
+
 import com.dtolabs.rundeck.app.api.ApiVersions
+import rundeck.log.LogMarker
 import org.rundeck.app.access.InterceptorHelper
 
 import javax.servlet.http.HttpServletResponse
@@ -24,7 +25,7 @@ class AuthorizationInterceptor {
         }else if (request.invalidApiAuthentication) {
             response.setStatus(403)
             def authid = session.user ?: "(${request.invalidAuthToken ?: 'unauthenticated'})"
-            log.error("${authid} UNAUTHORIZED for ${controllerName}/${actionName}");
+            LogMarker.markCustomerLog { log.error("${authid} UNAUTHORIZED for ${controllerName}/${actionName}"); }
             //api request
             if (response.format in ['xml']) {
                 render(contentType: "text/xml", encoding: "UTF-8") {

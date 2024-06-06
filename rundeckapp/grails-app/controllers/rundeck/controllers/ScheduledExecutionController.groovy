@@ -41,6 +41,7 @@ import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import rundeck.log.LogMarker
 import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.JsonPath
 import grails.compiler.GrailsCompileStatic
@@ -70,7 +71,6 @@ import org.apache.http.client.utils.URIBuilder
 import org.grails.web.json.JSONElement
 import org.quartz.CronExpression
 import org.rundeck.app.api.model.ApiErrorResponse
-import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.data.model.v1.job.JobBrowseItem
@@ -3202,7 +3202,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
             request.errorCode = 'request.error.invalidtoken.message'
         }
         if (results.failed) {
-            log.error(results.message)
+            LogMarker.markCustomerLog { log.error(results.message) }
             if (results.error == 'unauthorized'){
                 return render(view: "/common/execUnauthorized", model: results)
             }else {

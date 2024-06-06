@@ -16,7 +16,7 @@
 
 package rundeck.controllers
 
-import com.dtolabs.client.utils.Constants
+
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequest
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequestLong
@@ -31,8 +31,6 @@ import com.dtolabs.rundeck.app.support.ExecutionQueryException
 import com.dtolabs.rundeck.app.support.ExecutionViewParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.PluginDisabledException
-import com.dtolabs.rundeck.core.config.FeatureService
-import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
 import com.dtolabs.rundeck.core.execution.workflow.state.StepIdentifier
@@ -45,6 +43,7 @@ import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
+import rundeck.log.LogMarker
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import groovy.transform.PackageScope
@@ -3696,5 +3695,26 @@ Note: This endpoint has the same query parameters and response as the `/executio
         return String.valueOf(duration)
     }
 
+    def logCustomerException() {
+        try {
+            println "creating a customer exception"
+            throw new RuntimeException("This is my customer exception")
+        } catch(Exception ex) {
+            LogMarker.markCustomerLog {
+                log.error("Error processing customer exception", ex)
+            }
+        }
+        render text: "done"
+    }
+
+    def logSystemException() {
+        try {
+            println "creating a system exception"
+            throw new RuntimeException("This is my system exception")
+        } catch(Exception ex) {
+            log.error("Error processing customer exception", ex)
+        }
+        render text: "done"
+    }
 
 }
