@@ -2802,6 +2802,7 @@ Since: V18''',
         method = "GET",
         summary = "Get Job Forecast",
         description = '''Get Metadata for the job including a schedule forecast for a specific amount of time of the job by ID.
+(**API v48** or later): forecast includes information about one time scheduled execution, and information if the project related to the job allows executions and scheduling
 
 Authorization required: `read` or `view` for the Job
 
