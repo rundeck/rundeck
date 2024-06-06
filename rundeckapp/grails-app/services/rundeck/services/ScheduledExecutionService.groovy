@@ -19,6 +19,7 @@ package rundeck.services
 import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
 import rundeck.data.job.reference.JobReferenceImpl
 import rundeck.data.job.reference.JobRevReferenceImpl
+import rundeck.log.LogMarker
 import rundeck.support.filters.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.audit.ActionTypes
@@ -918,8 +919,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 log.info("rescheduled job in project ${se.project}: ${se.extid}")
             } catch (Exception e) {
                 failedJobs << [job: se, error: e.message]
-                log.error("Job not rescheduled in project ${se.project}: ${se.extid}: ${e.message}", e)
-                //log.error(e)
+                LogMarker.markCustomerLog {
+                    log.error("Job not rescheduled in project ${se.project}: ${se.extid}: ${e.message}", e)
+                }
             }
         }
 
