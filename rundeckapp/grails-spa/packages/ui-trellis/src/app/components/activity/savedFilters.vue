@@ -25,7 +25,6 @@
           <a
             role="button"
             data-test-id="delete-filter-btn"
-            data-test="filter-item-delete-button"
             @click="deleteFilter"
           >
             <i class="glyphicon glyphicon-trash"></i>
@@ -44,7 +43,7 @@
         <li
           v-for="filter in filters"
           :key="filter.filterName"
-          data-test-id="filter-item"
+          data-test="filter-item"
         >
           <a
             role="button"
@@ -124,7 +123,7 @@ export default defineComponent({
         return;
       }
 
-      MessageBox.confirm({
+      this.confirm({
         title: this.$t("Delete Saved Filter"),
         content: this.$t("filter.delete.confirm.text", [this.query.filterName]),
       })
