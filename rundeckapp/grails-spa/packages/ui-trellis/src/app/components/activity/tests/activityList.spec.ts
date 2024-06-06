@@ -6,13 +6,14 @@ import {
   mockEventBus,
 } from "./mock";
 import { mount, VueWrapper } from "@vue/test-utils";
-import { createI18n } from "vue-i18n";
+
 import ActivityList from "../activityList.vue";
 import ActivityFilter from "../activityFilter.vue";
 import OffsetPagination from "../../../../library/components/utils/OffsetPagination.vue";
 
 import { setupRundeckContext } from "./setupRundeckContext";
 import { GlobalOptions } from "./type";
+
 jest.mock("../../../../library/rundeckService", () => rundeckServiceMock);
 jest.mock("@rundeck/client", () => rundeckClientMock);
 jest.mock("axios", () => axiosMock);
@@ -34,7 +35,7 @@ const defaultProps = {
 };
 const mountActivityList = async (
   props = {},
-  globalOptions: GlobalOptions = {},
+  globalOptions: GlobalOptions = {}
 ) => {
   const wrapper = mount(ActivityList, {
     props: {
@@ -109,7 +110,7 @@ describe("ActivityList Component", () => {
     });
     await wrapper.vm.$nextTick();
     const noDataMessageElement = wrapper.find(
-      ':contains("No results for the query")',
+      ':contains("No results for the query")'
     );
     expect(noDataMessageElement.exists()).toBe(true);
   });
@@ -126,7 +127,7 @@ describe("ActivityList Component", () => {
         stubs: {
           OffsetPagination: { template: '<div id="OffsetPagination" />' },
         },
-      },
+      }
     );
     const pagination = wrapper.find("#OffsetPagination");
     expect(pagination.exists()).toBe(true);
@@ -134,7 +135,7 @@ describe("ActivityList Component", () => {
   it("renders the filter button", async () => {
     const wrapper = await mountActivityList();
     const filterButton = wrapper.find(
-      '[data-test-id="activity-list-filter-button"]',
+      '[data-test-id="activity-list-filter-button"]'
     );
     expect(filterButton.exists()).toBe(true);
   });
@@ -143,7 +144,7 @@ describe("ActivityList Bulk Edit Modals", () => {
   it("opens and closes the filter modal", async () => {
     const wrapper = await mountActivityList();
     const filterButton = wrapper.find(
-      '[data-test-id="activity-list-filter-button"]',
+      '[data-test-id="activity-list-filter-button"]'
     );
     await filterButton.trigger("click");
     expect(wrapper.findComponent(ActivityFilter).exists()).toBe(true);
@@ -158,7 +159,7 @@ describe("ActivityList Bulk Edit Modals", () => {
     const wrapper = await mountActivityList();
     wrapper.vm.showBulkEditResults = true;
     const bulkDeleteResults = wrapper.find(
-      '[data-test-id="modal-bulk-delete-results"]',
+      '[data-test-id="modal-bulk-delete-results"]'
     );
     expect(bulkDeleteResults.exists()).toBe(true);
   });
@@ -229,7 +230,7 @@ describe("ActivityList Miscellaneous", () => {
             template: '<div class="progress-bar-stub"></div>',
           },
         },
-      },
+      }
     );
     await wrapper.vm.$nextTick();
     const modal = wrapper.find("#cleanselections");
@@ -249,10 +250,10 @@ describe("ActivityList Miscellaneous", () => {
             template: "<div class='modal-stub'><slot></slot></div>",
           },
         },
-      },
+      }
     );
     const bulkDeleteResultsModal = wrapper.find(
-      '[data-test-id="modal-bulk-delete-results"]',
+      '[data-test-id="modal-bulk-delete-results"]'
     );
     expect(bulkDeleteResultsModal.exists()).toBe(true);
   });
@@ -265,10 +266,28 @@ describe("ActivityList Miscellaneous", () => {
     if (allButton.exists()) {
       const bulkEditDeselectAllPages = jest.spyOn(
         wrapper.vm,
-        "bulkEditDeselectAllPages",
+        "bulkEditDeselectAllPages"
       );
       await allButton.trigger("click");
       expect(bulkEditDeselectAllPages).toHaveBeenCalled();
     }
+  });
+  it("renders running executions", async () => {
+    const wrapper = await mountActivityList();
+    wrapper.vm.running = {
+      executions: [
+        {
+          id: "1",
+          status: "running",
+          dateStarted: { date: new Date() },
+        },
+      ],
+      paging: {},
+    };
+    await wrapper.vm.$nextTick();
+    const execution = wrapper.vm.running.executions[0];
+    expect(execution).toHaveProperty("id", "1");
+    expect(execution).toHaveProperty("status", "running");
+    expect(execution.dateStarted).toHaveProperty("date");
   });
 });
