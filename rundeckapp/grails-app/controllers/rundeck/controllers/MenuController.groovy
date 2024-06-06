@@ -2917,17 +2917,15 @@ Format is a string like `2d1h4n5s` using the following characters for time units
             }
         }
 
-        def map = scheduledExecutionService.nextOneTimeScheduledExecutions([scheduledExecution] as List<ScheduledExecution>)
-
-        if(extra.futureScheduledExecutions && map) {
-            extra.futureScheduledExecutions += map.values().toList()
-        } else {
-            extra.futureScheduledExecutions = map ? map.values().toList() : []
-        }
-
-
-
         if(request.api_version >= ApiVersions.V48) {
+            def map = scheduledExecutionService.nextOneTimeScheduledExecutions([scheduledExecution] as List<ScheduledExecution>)
+
+            if(extra.futureScheduledExecutions && map) {
+                extra.futureScheduledExecutions += map.values().toList()
+            } else {
+                extra.futureScheduledExecutions = map ? map.values().toList() : extra.futureScheduledExecutions
+            }
+
             IRundeckProject rundeckProject =  frameworkService.getFrameworkProject(scheduledExecution.project)
             Map properties = rundeckProject.getProjectProperties()
 

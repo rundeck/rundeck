@@ -2374,7 +2374,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService) {
             getFrameworkProject('AProject') >> Mock(IRundeckProject) {
-                getProjectProperties() >> ["project.disable.executions": "true", "project.disable.schedule": "false"]
+                getProjectProperties() >> ["project.disable.executions": "false", "project.disable.schedule": "false"]
             }
         }
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
@@ -2418,7 +2418,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         response.json.averageDuration  == 2000
         response.json.futureScheduledExecutions != null
         response.json.futureScheduledExecutions.size() == 1
-        response.json.projectDisableExecutions == true
+        response.json.projectDisableExecutions == false
         response.json.projectDisableSchedule == false
     }
 
@@ -2483,6 +2483,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         response.json.averageDuration  == 2000
         response.json.futureScheduledExecutions != null
         response.json.futureScheduledExecutions.size() == 1
+        response.json.projectDisableExecutions == true
+        response.json.projectDisableSchedule == false
     }
 
     def "api job forecast json prior version 48"() {
@@ -2586,6 +2588,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         response.json.averageDuration  == 2000
         response.json.futureScheduledExecutions != null
         response.json.futureScheduledExecutions.size() == 1
+        response.json.projectDisableExecutions == false
+        response.json.projectDisableSchedule == false
     }
 
     @Unroll
