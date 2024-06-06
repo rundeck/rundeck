@@ -158,7 +158,7 @@ public class NodeExecutorService
     }
 
     public List<Description> listDescriptions() {
-        return DescribableServiceUtil.listDescriptions(this, false);
+        return DescribableServiceUtil.listDescriptions(this, true);
     }
 
     public List<ProviderIdent> listDescribableProviders() {
