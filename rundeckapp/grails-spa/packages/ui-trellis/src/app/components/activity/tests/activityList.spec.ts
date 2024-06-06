@@ -168,8 +168,8 @@ describe("ActivityList Bulk Edit Modals", () => {
       reports: [
         {
           execution: {
-            id: 68,
-            permalink: "/project/jaya-test/execution/show/68",
+            id: 2,
+            permalink: "/project/test/execution/show/2",
           },
           status: "succeeded",
           dateCompleted: "2024-05-22T14:33:52Z",
@@ -181,9 +181,9 @@ describe("ActivityList Bulk Edit Modals", () => {
         },
       ],
       bulkEditMode: true,
-      bulkSelectedIds: ["#68"],
+      bulkSelectedIds: ["#2"],
     });
-    wrapper.vm.bulkSelectedIds = ["#68"];
+    wrapper.vm.bulkSelectedIds = ["#2"];
     await wrapper.vm.$nextTick();
     expect(wrapper.vm.bulkSelectedIds.length).toBeGreaterThan(0);
   });
