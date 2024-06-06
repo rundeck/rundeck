@@ -74,7 +74,6 @@ const mountSavedFilters = (
     global: {
       mocks: {
         $t: (msg) => msg,
-        $confirm: () => Promise.resolve(),
         filterStore,
       },
       stubs: {
@@ -148,27 +147,22 @@ describe("SavedFilters", () => {
   });
   describe("Filter Management", () => {
     it("does not call removeFilter and filters remain the same when filterName is not defined", async () => {
-      const wrapper = mountSavedFilters();
+      const wrapper = mountSavedFilters({
+        hasQuery: true,
+      });
       const removeFilterSpy = jest.spyOn(
         wrapper.vm.filterStore,
         "removeFilter"
       );
       await wrapper.vm.loadFilters();
       await wrapper.vm.$nextTick();
-      const initialCount = wrapper.findAll(
-        '[data-test-id="filter-item"]'
-      ).length;
+      const initialCount = wrapper.findAll('[data-test="filter-item"]').length;
       expect(initialCount).toBeGreaterThan(0);
       const deleteButton = wrapper.find('[data-test-id="delete-filter-btn"]');
-      if (deleteButton.exists()) {
-        await deleteButton.trigger("click");
-        await wrapper.vm.$nextTick();
-        const finalCount = wrapper.findAll(
-          '[data-test-id="filter-item"]'
-        ).length;
-        expect(removeFilterSpy).not.toHaveBeenCalled();
-        expect(finalCount).toBe(initialCount);
-      }
+      expect(deleteButton.exists()).toBe(false);
+      const finalCount = wrapper.findAll('[data-test="filter-item"]').length;
+      expect(removeFilterSpy).not.toHaveBeenCalled();
+      expect(finalCount).toBe(initialCount);
     });
     it("shows an empty dropdown when filters array is empty", async () => {
       const wrapper = mountSavedFilters({ filters: [] });
@@ -188,16 +182,17 @@ describe("SavedFilters", () => {
         hasQuery: true,
         query: { filterName: "Filter 1" },
       });
+      wrapper.vm.deleteFilter = jest.fn().mockImplementation(() => {
+        return wrapper.vm.doDeleteFilter(wrapper.vm.query.filterName);
+      });
       await wrapper.vm.$nextTick();
-      const initialCount = wrapper.findAll(
-        '[data-test-id="filter-item"]'
-      ).length;
+      const initialCount = wrapper.findAll('[data-test="filter-item"]').length;
       await wrapper.find('[data-test-id="delete-filter-btn"]').trigger("click");
       await wrapper.vm.$nextTick();
       await wrapper.vm.doDeleteFilter(wrapper.vm.query.filterName);
       await wrapper.vm.$nextTick();
-      const finalCount = wrapper.findAll('[data-test-id="filter-item"]').length;
-      expect(finalCount).toBeLessThan(initialCount);
+      const finalCount = wrapper.findAll('[data-test="filter-item"]').length;
+      expect(finalCount).toBe(initialCount - 1);
     });
   });
 });

@@ -40,23 +40,18 @@ describe("ActivityRunningIndicator.vue", () => {
     expect(indicator.text()).toBe("5");
   });
 
-  it("updates count correctly", async () => {
-    const wrapper = await mountActivityRunningIndicator();
-    wrapper.vm.updateNowrunning(10);
+  it("emits the right event and updates the count correctly", async () => {
+    const eventBus: Emitter<Record<EventType, any>> = mitt();
+    const emitSpy = jest.spyOn(eventBus, "emit");
+    const wrapper = await mountActivityRunningIndicator({
+      eventBus: eventBus,
+    });
+    eventBus.emit("activity-nowrunning-count", 10);
     await wrapper.vm.$nextTick();
     expect(wrapper.vm.count).toBe(10);
-  });
-
-  it("emits 'activity-nowrunning-click-action' event when clicked", async () => {
-    const wrapper = await mountActivityRunningIndicator();
-    wrapper.vm.updateNowrunning(5);
-    await wrapper.vm.$nextTick();
     wrapper.find("span").trigger("click");
-    expect(wrapper.vm.eventBus.emit).toHaveBeenCalledWith(
-      "activity-nowrunning-click-action"
-    );
+    expect(emitSpy).toHaveBeenCalledWith("activity-nowrunning-click-action");
   });
-
   it("registers 'activity-nowrunning-count' event on mount", async () => {
     const wrapper = await mountActivityRunningIndicator();
     expect(wrapper.vm.eventBus.on).toHaveBeenCalledWith(
