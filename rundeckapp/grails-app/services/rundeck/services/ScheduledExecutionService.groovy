@@ -217,6 +217,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     UserDataProvider userDataProvider
     JobDataProvider jobDataProvider
     UserService userService
+    RdJobService rdJobService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -237,7 +238,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     Map<String, String> getPropertiesMapping() { ConfigPropertiesMapping }
 
     JobData saveJob(JobData job) {
-        jobDataProvider.save(job)
+        rdJobService.saveJob(job)
     }
     /**
      * Return project config for node cache delay
@@ -810,7 +811,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param serverUUID
      */
     def unscheduleJobs(String serverUUID=null){
-        def schedJobs = serverUUID ? jobSchedulesService.getAllScheduled(serverUUID) : jobSchedulesService.getAllScheduled()
+        def schedJobs = jobSchedulesService.getAllScheduled(serverUUID, null)
         schedJobs.each { ScheduledExecution se ->
             def jobname = se.generateJobScheduledName()
             def groupname = se.generateJobGroupName()

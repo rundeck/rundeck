@@ -254,6 +254,7 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql:42.7.2'
     runtimeOnly 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
 
+    runtimeOnly "org.apache.tomcat:tomcat-jdbc:9.0.89"
     runtimeOnly "org.springframework:spring-jcl:${springVersion}"
     runtimeOnly "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
     api ("com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion")
@@ -474,6 +475,10 @@ task copySpa(type: Copy) {
         include('provided/**')
     }
     into "$projectDir/grails-app/assets"
+    from(configurations.spa){
+        include('fonts/**', 'img/**')
+        into('provided/static')
+    }
     outputs.dir "$projectDir/grails-app/assets/provided"
 }
 assetPluginPackage.dependsOn copySpa

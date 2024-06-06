@@ -62,3 +62,5 @@ tsconfig.tsbuildinfo
 .env
 
 scratch.js
+
+*storybook.log

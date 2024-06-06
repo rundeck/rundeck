@@ -3,34 +3,25 @@ package org.rundeck.app.data.job.converters
 import com.dtolabs.rundeck.plugins.option.OptionValue
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.compiler.GrailsCompileStatic
-import grails.util.Holders
-import groovy.transform.CompileStatic
-import org.rundeck.app.components.RundeckJobDefinitionManager
-import rundeck.data.job.RdJob
-import rundeck.data.job.RdLogConfig
-import rundeck.data.job.RdNodeConfig
-import rundeck.data.job.RdNotification
-import rundeck.data.job.RdOption
-import rundeck.data.job.RdOptionValue
-import rundeck.data.job.RdOrchestrator
-import rundeck.data.job.RdSchedule
-import rundeck.data.job.RdWorkflow
-import rundeck.data.job.RdWorkflowStep
-import rundeck.CommandExec
-import rundeck.JobExec
+import org.rundeck.app.data.model.v1.job.JobData
+import org.rundeck.app.data.model.v1.job.config.LogConfig
+import org.rundeck.app.data.model.v1.job.config.NodeConfig
+import org.rundeck.app.data.model.v1.job.notification.NotificationData
+import org.rundeck.app.data.model.v1.job.option.OptionData
+import org.rundeck.app.data.model.v1.job.orchestrator.OrchestratorData
+import org.rundeck.app.data.model.v1.job.schedule.ScheduleData
 import rundeck.Notification
 import rundeck.Option
 import rundeck.Orchestrator
-import rundeck.PluginStep
 import rundeck.ScheduledExecution
 import rundeck.Workflow
-import rundeck.WorkflowStep
+import rundeck.data.job.RdOptionValue
 
 @GrailsCompileStatic
 class ScheduledExecutionFromRdJobUpdater {
     static ObjectMapper mapper = new ObjectMapper()
 
-    static void update(ScheduledExecution se, RdJob job) {
+    static void update(ScheduledExecution se, JobData job) {
         se.uuid = job.uuid
         if(!se.id && !se.uuid) se.uuid = UUID.randomUUID().toString()
         se.jobName = job.jobName
@@ -63,7 +54,7 @@ class ScheduledExecutionFromRdJobUpdater {
         updatePluginConfig(se, job)
     }
 
-    static updateOrchestrator(ScheduledExecution se, RdOrchestrator rdo) {
+    static updateOrchestrator(ScheduledExecution se, OrchestratorData rdo) {
         if(!se.orchestrator && !rdo) return
         if(se.orchestrator && !rdo) {
             se.orchestrator = null
@@ -73,11 +64,11 @@ class ScheduledExecutionFromRdJobUpdater {
         OrchestratorUpdater.updateOrchestrator(se.orchestrator, rdo)
     }
 
-    static updatePluginConfig(ScheduledExecution se, RdJob job) {
+    static updatePluginConfig(ScheduledExecution se, JobData job) {
         se.pluginConfig = mapper.writeValueAsString(job.pluginConfigMap)
     }
 
-    static updateNotifications(ScheduledExecution se, RdJob job) {
+    static updateNotifications(ScheduledExecution se, JobData job) {
         //remove all notifications
         for(int i = 0; i < se.notifications?.size(); i++) {
             def notif = se.notifications[i]
@@ -93,14 +84,14 @@ class ScheduledExecutionFromRdJobUpdater {
         }
     }
 
-    static void updateNotification(Notification n, RdNotification rdn) {
+    static void updateNotification(Notification n, NotificationData rdn) {
         n.type = rdn.type
         n.configuration = rdn.configuration
         n.eventTrigger = rdn.eventTrigger
         n.format = rdn.format
     }
 
-    static void updateJobOptions(ScheduledExecution se, SortedSet<RdOption> rdopts) {
+    static void updateJobOptions(ScheduledExecution se, SortedSet<OptionData> rdopts) {
         //remove old options
         for(int i = 0; i < se.options?.size(); i++) {
             def opt = se.options[i]
@@ -117,7 +108,7 @@ class ScheduledExecutionFromRdJobUpdater {
         }
     }
 
-    static void updateJobOption(Option opt, RdOption rdo) {
+    static void updateJobOption(Option opt, OptionData rdo) {
         opt.sortIndex = rdo.sortIndex
         opt.name = rdo.name
         opt.description = rdo.description
@@ -146,14 +137,14 @@ class ScheduledExecutionFromRdJobUpdater {
         opt.optionValues = rdo.optionValues ? new ArrayList(rdo.optionValues) : null
     }
 
-    static void updateLogConfig(ScheduledExecution se, RdLogConfig logConfig) {
+    static void updateLogConfig(ScheduledExecution se, LogConfig logConfig) {
         se.loglevel = logConfig.loglevel
         se.logOutputThreshold = logConfig.logOutputThreshold
         se.logOutputThresholdAction = logConfig.logOutputThresholdAction
         se.logOutputThresholdStatus = logConfig.logOutputThresholdStatus
     }
 
-    static void updateNodeConfig(ScheduledExecution se, RdNodeConfig nodeConfig) {
+    static void updateNodeConfig(ScheduledExecution se, NodeConfig nodeConfig) {
         se.nodeInclude = nodeConfig.nodeInclude
         se.nodeIncludeName = nodeConfig.nodeIncludeName
         se.nodeIncludeTags = nodeConfig.nodeIncludeTags
@@ -183,7 +174,7 @@ class ScheduledExecutionFromRdJobUpdater {
         se.excludeFilterUncheck = nodeConfig.excludeFilterUncheck
     }
 
-    static void updateSchedule(ScheduledExecution se, RdSchedule schedule) {
+    static void updateSchedule(ScheduledExecution se, ScheduleData schedule) {
         se.year = schedule?.year
         se.month = schedule?.month
         se.dayOfWeek = schedule?.dayOfWeek

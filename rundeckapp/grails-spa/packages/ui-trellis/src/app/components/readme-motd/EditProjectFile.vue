@@ -153,7 +153,7 @@ export default defineComponent({
         const resp = await saveProjectFile(
           this.project,
           this.filename,
-          this.fileText
+          this.fileText,
         );
         if (resp.success) {
           this.notifySuccess("Success", "Saved Project File " + this.filename);
@@ -204,7 +204,7 @@ export default defineComponent({
               this.filename +
               " does not exist in project " +
               this.project +
-              " yet. Please save to create it."
+              " yet. Please save to create it.",
           );
         } else {
           this.notifyError(e.message);
