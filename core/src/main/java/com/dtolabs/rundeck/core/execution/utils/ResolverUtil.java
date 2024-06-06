@@ -16,7 +16,7 @@
 
 package com.dtolabs.rundeck.core.execution.utils;
 
-import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
 
@@ -37,7 +37,7 @@ public class ResolverUtil {
             final String defaultValue,
             final INodeEntry node,
             final IRundeckProject frameworkProject,
-            final Framework framework
+            final IFramework framework
     )
     {
         if (null != node.getAttributes().get(nodeAttribute)) {
@@ -45,8 +45,8 @@ public class ResolverUtil {
         } else if (frameworkProject.hasProperty(PROJ_PROP_PREFIX + nodeAttribute)
                    && !"".equals(frameworkProject.getProperty(PROJ_PROP_PREFIX + nodeAttribute))) {
             return frameworkProject.getProperty(PROJ_PROP_PREFIX + nodeAttribute);
-        } else if (framework.hasProperty(FWK_PROP_PREFIX + nodeAttribute)) {
-            return framework.getProperty(FWK_PROP_PREFIX + nodeAttribute);
+        } else if (framework.getPropertyLookup().hasProperty(FWK_PROP_PREFIX + nodeAttribute)) {
+            return framework.getPropertyLookup().getProperty(FWK_PROP_PREFIX + nodeAttribute);
         } else {
             return defaultValue;
         }
@@ -57,7 +57,7 @@ public class ResolverUtil {
             final int defaultValue,
             final INodeEntry iNodeEntry,
             final IRundeckProject frameworkProject,
-            final Framework framework
+            final IFramework framework
     )
     {
 
@@ -77,7 +77,7 @@ public class ResolverUtil {
             final long defaultValue,
             final INodeEntry iNodeEntry,
             final IRundeckProject frameworkProject,
-            final Framework framework
+            final IFramework framework
     )
     {
 
@@ -97,7 +97,7 @@ public class ResolverUtil {
             final boolean defaultValue,
             final INodeEntry iNodeEntry,
             final IRundeckProject frameworkProject,
-            final Framework framework
+            final IFramework framework
     )
     {
 
