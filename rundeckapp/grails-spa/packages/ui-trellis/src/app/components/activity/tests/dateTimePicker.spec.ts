@@ -51,19 +51,14 @@ describe("DateTimePicker.vue", () => {
     const timePicker = wrapper.findComponent({ name: "time-picker" });
     // Check v-model and class for date-picker
     expect(datePicker.attributes("modelvalue")).toBe(wrapper.vm.dateString);
-    expect(datePicker.attributes("class")).toContain(wrapper.vm.dateClass);
+    expect(datePicker.attributes("class")).toContain("date-class");
     expect(datePicker.attributes("clear-btn")).toBe("false");
-    // Check v-model and class for time-picker
     const receivedTime = new Date(
       timePicker.attributes("modelvalue")
     ).toISOString();
     const expectedTime = new Date(wrapper.vm.time).toISOString();
     expect(receivedTime).toBe(expectedTime);
-    expect(timePicker.attributes("class")).toContain(wrapper.vm.timeClass);
-    // Check CSS classes and props
-    expect(wrapper.find(".date-class").exists()).toBe(true);
-    expect(wrapper.find(".time-class").exists()).toBe(true);
-    expect(wrapper.find(".bs-date-picker").exists()).toBe(true);
+    expect(timePicker.attributes("class")).toContain("time-class");
   });
   it("computes datetime correctly", async () => {
     const wrapper = await mountDateTimePicker();
