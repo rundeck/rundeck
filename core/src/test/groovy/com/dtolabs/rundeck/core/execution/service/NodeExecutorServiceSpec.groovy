@@ -10,9 +10,21 @@ import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor
 import com.dtolabs.rundeck.core.execution.impl.local.NewLocalNodeExecutor
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
+import spock.lang.Shared
 import spock.lang.Specification
 
 class NodeExecutorServiceSpec extends Specification {
+    @Shared NodeExecutorServiceProfile defaultProfile
+
+    def setupSpec() {
+        defaultProfile = Mock(NodeExecutorServiceProfile){
+            _ * getDefaultLocalProvider() >> LocalNodeExecutor.SERVICE_PROVIDER_TYPE
+            _ * getDefaultRemoteProvider() >> 'test-default-remote'
+            _ * getLocalRegistry() >> [(LocalNodeExecutor.SERVICE_PROVIDER_TYPE): LocalNodeExecutor]
+        }
+
+    }
+
     def "test use local node executor when it is local node and another isnt specified"() {
 
         given:
@@ -27,7 +39,8 @@ class NodeExecutorServiceSpec extends Specification {
             }
         }
 
-        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(framework,framework)
+        NodeExecutorService service = new NodeExecutorService(framework, defaultProfile)
+
 
         final StepExecutionContext context = ExecutionContextImpl.builder()
                 .frameworkProject("testProject")
@@ -55,8 +68,8 @@ class NodeExecutorServiceSpec extends Specification {
                 loadProjectConfig(_) >> Mock(IRundeckProjectConfig)
             }
         }
-        NodeExecutorService service = Spy(NodeExecutorService.getInstanceForFramework(framework,framework)){
-            providerOfType(NodeExecutorService.DEFAULT_REMOTE_PROVIDER) >> new DummyNodeExecutor()
+        NodeExecutorService service = Spy(new NodeExecutorService(framework, defaultProfile)){
+            providerOfType('test-default-remote') >> new DummyNodeExecutor()
         }
 
 
@@ -88,7 +101,7 @@ class NodeExecutorServiceSpec extends Specification {
                 loadProjectConfig(_) >> Mock(IRundeckProjectConfig)
             }
         }
-        NodeExecutorService service = Spy(NodeExecutorService.getInstanceForFramework(framework,framework)){
+        NodeExecutorService service = Spy(new NodeExecutorService(framework, defaultProfile)){
             providerOfType("testProvider") >> new DummyNodeExecutor()
         }
 
@@ -121,7 +134,7 @@ class NodeExecutorServiceSpec extends Specification {
                 loadProjectConfig(_) >> Mock(IRundeckProjectConfig)
             }
         }
-        NodeExecutorService service = Spy(NodeExecutorService.getInstanceForFramework(framework,framework)){
+        NodeExecutorService service = Spy(new NodeExecutorService(framework, defaultProfile)){
             providerOfType("local") >> new LocalNodeExecutor(framework)
         }
 
@@ -152,14 +165,14 @@ class NodeExecutorServiceSpec extends Specification {
                     loadProjectConfig(_) >> Mock(IRundeckProjectConfig)
                 }
             }
-            NodeExecutorService service = Spy(NodeExecutorService.getInstanceForFramework(framework, framework)) {
+            def profile = Mock(NodeExecutorServiceProfile){
+                _ * getDefaultLocalProvider() >> 'test-default-local'
+                _ * getDefaultRemoteProvider() >> 'test-default-remote'
+                _ * getLocalRegistry() >> [(LocalNodeExecutor.SERVICE_PROVIDER_TYPE): LocalNodeExecutor]
+            }
+            NodeExecutorService service = Spy(new NodeExecutorService(framework, profile)) {
                 providerOfType("local") >> new LocalNodeExecutor(framework)
             }
-            service.setFeatureService(
-                Mock(FeatureService) {
-                    _ * featurePresent(Features.NEW_LOCAL_NODE_EXECUTOR, false) >> flag
-                }
-            )
             def config = Mock(IRundeckProjectConfig){
                 _*getProperty('service.NodeExecutor.default.provider') >> pDefaultRemote
                 _*getProperty('service.NodeExecutor.default.local.provider') >> pDefaultLocal
@@ -170,42 +183,11 @@ class NodeExecutorServiceSpec extends Specification {
         then:
             result == expect
         where:
-            isLocal | flag  | pDefaultLocal   | pDefaultRemote | expect
-            false   | false | null            | null           | NodeExecutorService.DEFAULT_REMOTE_PROVIDER
-            true    | false | null            | null           | NodeExecutorService.DEFAULT_LOCAL_PROVIDER
-            true    | true  | null            | null           | NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE
-            false   | false | null            | 'remote'       | 'remote'
-            true    | false | 'project-local' | null           | 'project-local'
+            isLocal |  pDefaultLocal   | pDefaultRemote | expect
+            false   |  null            | null           | 'test-default-remote'
+            true    |  null            | null           | 'test-default-local'
+            false   |  null            | 'remote'       | 'remote'
+            true    |  'project-local' | null           | 'project-local'
     }
 
-    def "get default local provider with newLocalNodeExecutor feature flag #feature"() {
-        given:
-
-            final NodeEntryImpl test1 = new NodeEntryImpl("test1");
-            test1.setAttributes(new HashMap<String, String>())
-            test1.getAttributes().put(NodeExecutorService.NODE_SERVICE_SPECIFIER_ATTRIBUTE, "local")
-            Framework framework = Mock(Framework) {
-                isLocalNode(_) >> false
-                getProjectManager() >> Mock(ProjectManager) {
-                    loadProjectConfig(_) >> Mock(IRundeckProjectConfig)
-                }
-            }
-            NodeExecutorService service = Spy(NodeExecutorService.getInstanceForFramework(framework, framework)) {
-                providerOfType("local") >> new LocalNodeExecutor(framework)
-            }
-            service.setFeatureService(
-                Mock(FeatureService) {
-                    _ * featurePresent(Features.NEW_LOCAL_NODE_EXECUTOR, false) >> feature
-                }
-            )
-
-        when:
-            def result = service.getDefaultLocalProvider()
-        then:
-            result == expect
-        where:
-            feature | expect
-            false   | LocalNodeExecutor.SERVICE_PROVIDER_TYPE
-            true    | NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE
-    }
 }
