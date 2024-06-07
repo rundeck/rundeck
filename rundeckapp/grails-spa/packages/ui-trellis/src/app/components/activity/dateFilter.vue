@@ -1,7 +1,13 @@
 <template>
   <div class="form-group">
     <span class="checkbox col-sm-2" data-testid="checkbox-span">
-      <input :id="uid" v-model="enabled" type="checkbox" class="checkbox" />
+      <input
+        :id="uid"
+        v-model="enabled"
+        type="checkbox"
+        class="checkbox"
+        @click="toggleEnabled"
+      />
       <label :for="uid"><slot>Enabled</slot></label>
     </span>
     <div class="col-sm-10">
@@ -30,10 +36,11 @@
     </div>
   </div>
 </template>
-<script>
+<script lang="ts">
 import { defineComponent } from "vue";
 import _ from "lodash";
 import DateTimePicker from "./dateTimePicker.vue";
+import { ModelValue } from "./tests/type";
 
 export default defineComponent({
   components: {
@@ -41,9 +48,9 @@ export default defineComponent({
   },
   props: {
     modelValue: {
-      type: Object,
-      required: true
-    }
+      type: Object as () => ModelValue,
+      required: true,
+    },
   },
   emits: ["update:modelValue"],
   data() {
@@ -74,6 +81,11 @@ export default defineComponent({
     modelValue() {
       this.enabled = this.modelValue.enabled;
       this.datetime = this.modelValue.datetime;
+    },
+  },
+  methods: {
+    toggleEnabled() {
+      this.enabled = !this.enabled;
     },
   },
 });

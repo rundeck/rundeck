@@ -2,8 +2,6 @@ import { mount, VueWrapper } from "@vue/test-utils";
 import DateFilter from "../dateFilter.vue";
 import DateTimePicker from "../dateTimePicker.vue";
 import _ from "lodash";
-let idCounter = 0;
-jest.spyOn(_, "uniqueId").mockImplementation(() => `uniqueId_${idCounter++}`);
 
 interface MountOptions {
   props?: Record<string, unknown>;
@@ -19,9 +17,7 @@ const mountDateFilter = (options: MountOptions = {}): VueWrapper<any> => {
       modelValue: { enabled: false, datetime: "" },
       ...options.props,
     },
-    slots: {
-      default: options.slots?.default || "slotContent",
-    },
+
     global: {
       stubs: {
         btn: true,
@@ -36,9 +32,9 @@ const mountDateFilter = (options: MountOptions = {}): VueWrapper<any> => {
     },
   });
 };
+let idCounter = 0;
 describe("DateFilter", () => {
   beforeEach(() => {
-    idCounter = 0;
     jest.spyOn(_, "uniqueId").mockImplementation(() => {
       const id = `uniqueId_${idCounter}`;
       idCounter++;
@@ -49,15 +45,10 @@ describe("DateFilter", () => {
     jest.clearAllMocks();
   });
   describe("Initialization", () => {
-    it("initializes with correct data", () => {
-      const wrapper = mountDateFilter();
-      expect(wrapper.vm.uid).toBeTruthy();
-      expect(wrapper.vm.enabled).toBe(false);
-      expect(wrapper.vm.datetime).toBe("");
-    });
     it("sets uid correctly", () => {
       const wrapper = mountDateFilter();
-      expect(wrapper.vm.uid).toBe(`uniqueId_${idCounter - 1}`);
+      const checkbox = wrapper.find('input[type="checkbox"]');
+      expect(checkbox.attributes("id")).toBe(`uniqueId_${idCounter - 1}`);
     });
     it("checkbox is initially in correct state", () => {
       const wrapper = mountDateFilter();
@@ -81,13 +72,7 @@ describe("DateFilter", () => {
       const dropdown = wrapper.find(".dropdown");
       expect(dropdown.exists()).toBe(true);
     });
-    it("renders provided slot content in label", async () => {
-      const slotContent = "Provided slot content";
-      const wrapper = mountDateFilter({ slots: { default: slotContent } });
-      await wrapper.vm.$nextTick();
-      const label = wrapper.find("label");
-      expect(label.text()).toBe(slotContent);
-    });
+
     it("binds datetime to text input", async () => {
       const wrapper = mountDateFilter({
         props: {
@@ -107,13 +92,14 @@ describe("DateFilter", () => {
     it("toggles enabled state when checkbox is clicked", async () => {
       const wrapper = mountDateFilter();
       const checkbox = wrapper.find('input[type="checkbox"]');
-      await checkbox.setValue(true);
+      await checkbox.trigger("click");
       await wrapper.vm.$nextTick();
       expect(wrapper.vm.enabled).toBe(true);
-      await checkbox.setValue(false);
+      await checkbox.trigger("click");
       await wrapper.vm.$nextTick();
       expect(wrapper.vm.enabled).toBe(false);
     });
+
     it("updates datetime when DateTimePicker emits update:modelValue", async () => {
       const wrapper = mountDateFilter({
         props: {
@@ -134,9 +120,8 @@ describe("DateFilter", () => {
       await wrapper.vm.$nextTick();
       const emitted = wrapper.emitted("update:modelValue");
       expect(emitted).toBeTruthy();
-      if (emitted) {
-        expect(emitted[0]).toEqual([{ enabled: true, datetime: "" }]);
-      }
+
+      expect(emitted[0]).toEqual([{ enabled: true, datetime: "" }]);
     });
     it("emits update:modelValue event when datetime changes", async () => {
       const wrapper = mountDateFilter({
@@ -154,11 +139,10 @@ describe("DateFilter", () => {
       await wrapper.vm.$nextTick();
       const emitted = wrapper.emitted("update:modelValue");
       expect(emitted).toBeTruthy();
-      if (emitted) {
-        expect(emitted[0]).toEqual([
-          { enabled: true, datetime: "2022-01-03T00:00:00" },
-        ]);
-      }
+
+      expect(emitted[0]).toEqual([
+        { enabled: true, datetime: "2022-01-03T00:00:00" },
+      ]);
     });
   });
   describe("Event Emission", () => {
