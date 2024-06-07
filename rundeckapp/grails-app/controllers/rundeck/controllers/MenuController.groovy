@@ -2802,6 +2802,7 @@ Since: V18''',
         method = "GET",
         summary = "Get Job Forecast",
         description = '''Get Metadata for the job including a schedule forecast for a specific amount of time of the job by ID.
+(**API v48** or later): forecast includes information about one time scheduled execution, and information if the project related to the job allows executions and scheduling
 
 Authorization required: `read` or `view` for the Job
 
@@ -2915,12 +2916,30 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                     && extra.futureScheduledExecutions.size() > max) {
                 extra.futureScheduledExecutions = extra.futureScheduledExecutions[0..<max]
             }
+        }
 
-            if(request.api_version >= ApiVersions.V48) {
-                def averageDuration = executionService.getAverageDuration(scheduledExecution.uuid)
-                if (averageDuration > 0) {
-                    extra.averageDuration = averageDuration
-                }
+        if(request.api_version >= ApiVersions.V48) {
+            def map = scheduledExecutionService.nextOneTimeScheduledExecutions([scheduledExecution] as List<ScheduledExecution>)
+
+            if(extra.futureScheduledExecutions && map) {
+                extra.futureScheduledExecutions += map.values().toList()
+            } else {
+                extra.futureScheduledExecutions = map ? map.values().toList() : extra.futureScheduledExecutions
+            }
+
+            IRundeckProject rundeckProject =  frameworkService.getFrameworkProject(scheduledExecution.project)
+            Map properties = rundeckProject.getProjectProperties()
+
+            def isExecutionDisabledNow = properties[ScheduledExecutionService.CONF_PROJECT_DISABLE_EXECUTION] == 'true'
+            def isScheduleDisabledNow = properties[ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE] == 'true'
+
+            extra.projectDisableExecutions = isExecutionDisabledNow
+            extra.projectDisableSchedule = isScheduleDisabledNow
+
+
+            def averageDuration = executionService.getAverageDuration(scheduledExecution.uuid)
+            if (averageDuration > 0) {
+                extra.averageDuration = averageDuration
             }
         }
 
