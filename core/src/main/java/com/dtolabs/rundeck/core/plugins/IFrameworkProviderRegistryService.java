@@ -36,7 +36,7 @@ public abstract class IFrameworkProviderRegistryService<T>
         implements ProviderService<T>, ProviderRegistryService<T>
 {
     protected final IFramework framework;
-
+    @Deprecated
     public IFrameworkProviderRegistryService() {
         this((IFramework) null);
     }
@@ -45,7 +45,7 @@ public abstract class IFrameworkProviderRegistryService<T>
         super();
         this.framework = framework;
     }
-
+    @Deprecated
     public IFrameworkProviderRegistryService(final IFramework framework, final boolean cacheInstances) {
         super(cacheInstances);
         this.framework = framework;
@@ -56,6 +56,7 @@ public abstract class IFrameworkProviderRegistryService<T>
         this.framework = framework;
     }
 
+    @Deprecated
     public IFrameworkProviderRegistryService(
             final Map<String, Class<? extends T>> registry,
             final IFramework framework,
