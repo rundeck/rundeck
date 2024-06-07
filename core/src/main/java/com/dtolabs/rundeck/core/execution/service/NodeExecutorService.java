@@ -100,15 +100,6 @@ public class NodeExecutorService
         );
     }
 
-    public static NodeExecutorService getInstanceForFramework(final Framework framework,
-                                                              final IServicesRegistration registration) {
-        if (null == registration.getService(SERVICE_NAME)) {
-            final NodeExecutorService service = new NodeExecutorService(framework);
-            registration.setService(SERVICE_NAME, service);
-            return service;
-        }
-        return (NodeExecutorService) registration.getService(SERVICE_NAME);
-    }
 
     @Override
     public String getServiceProviderNodeAttributeForNode(INodeEntry node) {
