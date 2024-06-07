@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.core.authorization;
 
+import com.dtolabs.rundeck.core.logging.LogUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +36,7 @@ public class LoggingAuthorization
         if (decision.isAuthorized()) {
             logger.info(MessageFormat.format("Evaluating {0} ({1}ms)", decision, decision.evaluationDuration()));
         } else {
-            logger.warn(MessageFormat.format("Evaluating {0} ({1}ms)", decision, decision.evaluationDuration()));
+            LogUtil.markCustomer(() -> logger.warn(MessageFormat.format("Evaluating {0} ({1}ms)", decision, decision.evaluationDuration())));
         }
         return decision;
     }
@@ -57,7 +58,7 @@ public class LoggingAuthorization
         }
         for (Decision decision : decisions) {
             if (!anyAuthorized) {
-                logger.warn(MessageFormat.format("Evaluating {0} ({1}ms)", decision, decision.evaluationDuration()));
+                LogUtil.markCustomer(() -> logger.warn(MessageFormat.format("Evaluating {0} ({1}ms)", decision, decision.evaluationDuration())));
             } else {
                 logger.info(MessageFormat.format("Evaluating {0} ({1}ms)", decision, decision.evaluationDuration()));
             }

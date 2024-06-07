@@ -16,8 +16,12 @@
 
 package com.dtolabs.rundeck.core.logging;
 
+import org.slf4j.MDC;
+
 import java.util.Date;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Utility methods for logs
@@ -72,5 +76,11 @@ public class LogUtil {
 
     public static LogEvent event(String type, LogLevel level, String message, Map<String, String> metadata) {
         return LogEventImpl.create(type, new Date(), level, message, metadata);
+    }
+
+    public static void markCustomer(LogFunction fcn) {
+        MDC.put("logtype","cust");
+        fcn.log();
+        MDC.remove("logtype");
     }
 }
