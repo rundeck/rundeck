@@ -2,6 +2,7 @@ package org.rundeck.tests.functional.selenium.jobs
 
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
+import org.openqa.selenium.By
 import org.openqa.selenium.Keys
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.rundeck.util.api.responses.jobs.CreateJobResponse
@@ -640,6 +641,7 @@ class JobsSpec extends SeleniumBase {
 
         jobShowPage.selectOptionFromOptionListByName(optionListOfNames, selection)
         jobShowPage.waitForElementToBeClickable(jobShowPage.getOptionSelectByName(optionListOfValues))
+        jobShowPage.waitForNumberOfElementsToBe(By.name("extra.option.search"), Integer.valueOf(selection))
         def flag = true
         (0..(selection-1)).each{
             if(!jobShowPage.getOptionSelectChildren(optionListOfValues)[it].isSelected()) flag = false

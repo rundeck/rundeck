@@ -30,7 +30,7 @@ class ScheduledJobSpec extends SeleniumBase{
         loginPage.login(TEST_USER, TEST_PASS)
         jobListPage.go()
         jobListPage.validatePage()
-        hold(10)
+        hold(15)
         activityPage.loadActivityPageForProject(projectName)
         activityPage.go()
 
