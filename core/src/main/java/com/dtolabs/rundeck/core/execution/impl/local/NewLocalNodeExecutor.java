@@ -29,15 +29,15 @@ import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
 import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
+import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor.getDisableLocalExecutorEnv;
 
@@ -48,11 +48,28 @@ import static com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor.ge
 @Plugin(name = NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE, service = ServiceNameConstants.NodeExecutor)
 @PluginDescription(title = "Local (New)", description = "Beta - Executes commands locally on the Rundeck server")
 public class NewLocalNodeExecutor
-        implements NodeExecutor
+        implements NodeExecutor, DescriptionBuilder.Collaborator
 {
     public static final String SERVICE_PROVIDER_TYPE = "newlocal";
+    public static final String PROP_MERGE_ENV = "mergeEnv";
     private ExecTaskParameterGenerator parameterGenerator = new ExecTaskParameterGeneratorImpl();
     private boolean disableLocalExecutor = false;
+
+    @PluginProperty(
+            title = "Merge Environment",
+            description = "Merge the environment variables from the Rundeck server with the local environment",
+            defaultValue = "true",
+            scope = PropertyScope.Framework
+    )
+    Boolean mergeEnv;
+
+    @Override
+    public void buildWith(final DescriptionBuilder builder) {
+        builder.frameworkMapping(
+                PROP_MERGE_ENV,
+                String.join(".", "framework", ServiceNameConstants.NodeExecutor, SERVICE_PROVIDER_TYPE, PROP_MERGE_ENV)
+        );
+    }
 
     public NewLocalNodeExecutor() {
         this.disableLocalExecutor = getDisableLocalExecutorEnv();
@@ -104,7 +121,9 @@ public class NewLocalNodeExecutor
                             env,
                             null,
                             System.out,
-                            System.err
+                            System.err,
+                            !mergeEnv,
+                            ScriptExecUtil::killProcessHandleDescend
                     );
         } catch (IOException e) {
             return NodeExecutorResultImpl.createFailure(
