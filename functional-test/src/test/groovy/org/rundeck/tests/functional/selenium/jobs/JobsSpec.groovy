@@ -2,7 +2,9 @@ package org.rundeck.tests.functional.selenium.jobs
 
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
+import org.openqa.selenium.By
 import org.openqa.selenium.Keys
+import org.openqa.selenium.support.ui.ExpectedConditions
 import org.rundeck.util.api.responses.jobs.CreateJobResponse
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
@@ -15,7 +17,7 @@ import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.profile.UserProfilePage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
-import org.rundeck.util.gui.pages.project.ActivityPage
+import org.rundeck.util.gui.pages.activity.ActivityPage
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper
 import spock.lang.Stepwise
 
@@ -639,11 +641,10 @@ class JobsSpec extends SeleniumBase {
 
         jobShowPage.selectOptionFromOptionListByName(optionListOfNames, selection)
         jobShowPage.waitForElementToBeClickable(jobShowPage.getOptionSelectByName(optionListOfValues))
-        def searchListValues = jobShowPage.getOptionSelectChildren(optionListOfValues)
+        jobShowPage.waitForNumberOfElementsToBe(By.name("extra.option.search"), Integer.valueOf(selection))
         def flag = true
-        searchListValues.stream().forEach {
-            jobCreatePage.waitForElementToBeClickable(it)
-            if( !it.isSelected() ) false
+        (0..(selection-1)).each{
+            if(!jobShowPage.getOptionSelectChildren(optionListOfValues)[it].isSelected()) flag = false
         }
         noUnselectedOptions = flag
 
@@ -654,10 +655,10 @@ class JobsSpec extends SeleniumBase {
         deleteProject(projectName)
 
         where:
-        selection | noUnselectedOptions
-        2         | true
-        3         | true
-        4         | true
+        selection   | noUnselectedOptions
+        2           | true
+        3           | true
+        4           | true
 
     }
 

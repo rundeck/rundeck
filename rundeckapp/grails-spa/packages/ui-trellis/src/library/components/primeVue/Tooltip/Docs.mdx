@@ -1,0 +1,50 @@
+import { Meta, Subtitle, Title, Canvas, Controls, Description, Stories, Markdown } from "@storybook/blocks";
+import * as TooltipStories from './Tooltip.stories'
+
+<Meta of={TooltipStories} />
+
+<Title />
+
+<Subtitle />
+[Component reference on primevue](https://primevue.org/tooltip/)
+
+## Import
+
+```ts
+import Tooltip from "primevue/tooltip";
+
+app.directive('tooltip', Tooltip);
+```
+
+## Playground
+
+{/* Make sure your stories file has an export for playground, otherwise storybook will break */}
+
+<Canvas of={TooltipStories.Playground} sourceState="shown" />
+<Controls of={TooltipStories.Playground} />
+
+## How to use
+
+{/* Add a note here about the relevant props to change appearance of component */}
+
+
+<Description of={TooltipStories} />
+
+<Stories title='' includePrimary={false} />
+
+
+## Accessibility
+
+### Screen Reader
+
+Tooltip component uses `tooltip` role and when it becomes visible the generated id of the tooltip is defined as the `aria-describedby` of the target.
+
+### Keyboard Support
+
+<Markdown>
+    {`
+| Key     | Function                                        |
+| ------- | ----------------------------------------------- |
+| escape  | Closes the tooltip when focus is on the target. |
+`}
+</Markdown>

@@ -468,9 +468,11 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         given:
         ProjectComponent component1 = Mock(ProjectComponent){
             getName()>>'comp1'
+            isComponentEnabled() >> true
         }
         ProjectComponent component2 = Mock(ProjectComponent){
             getName()>>'comp2'
+            isComponentEnabled() >> true
         }
         service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
             Map<String, ProjectComponent> beans = [comp1: component1,comp2:component2]
@@ -819,6 +821,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         ProjectComponent component = Mock(ProjectComponent){
             getName()>>'webhooks'
             getImportFilePatterns()>>['webhooks.yaml']
+            isComponentEnabled() >> true
         }
             service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
                 Map<String, ProjectComponent> beans = [webhooks: component]
@@ -885,6 +888,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             ProjectComponent component = Mock(ProjectComponent) {
                 getName() >> 'webhooks'
                 getImportFilePatterns() >> ['webhooks.yaml']
+                isComponentEnabled() >> true
             }
             service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
                 Map<String, ProjectComponent> beans = [webhooks: component]
@@ -948,7 +952,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
     def "import project archive with component with matching pattern"() {
         setup:
-            ProjectComponent component = Mock(ProjectComponent)
+            ProjectComponent component = Mock(ProjectComponent){
+                isComponentEnabled() >> true
+            }
             service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
                 Map<String, ProjectComponent> beans = [test1: component]
             }
@@ -1006,8 +1012,12 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     @Unroll
     def "import project archive with component ordering"() {
 
-            ProjectComponent component = Mock(ProjectComponent)
-            ProjectComponent component2 = Mock(ProjectComponent)
+            ProjectComponent component = Mock(ProjectComponent){
+                isComponentEnabled() >> true
+            }
+            ProjectComponent component2 = Mock(ProjectComponent){
+                isComponentEnabled() >> true
+            }
             service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
                 Map<String, ProjectComponent> beans = [bean1: component, bean2: component2]
             }
@@ -1098,7 +1108,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     }
     def "import project archive with importComponent option false"() {
         setup:
-            ProjectComponent component = Mock(ProjectComponent)
+            ProjectComponent component = Mock(ProjectComponent){
+                isComponentEnabled() >> true
+            }
             service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
                 Map<String, ProjectComponent> beans = [test1: component]
             }
@@ -1154,7 +1166,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     }
     def "import project archive with component unauthorized"() {
         setup:
-            ProjectComponent component = Mock(ProjectComponent)
+            ProjectComponent component = Mock(ProjectComponent){
+                isComponentEnabled() >> true
+            }
             service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
                 Map<String, ProjectComponent> beans = [test1: component]
             }
@@ -1213,7 +1227,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     @Unroll
     def "import project archive with component with matching pattern #pattern"() {
         setup:
-            ProjectComponent component = Mock(ProjectComponent)
+            ProjectComponent component = Mock(ProjectComponent){
+                isComponentEnabled() >> true
+            }
             service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
                 Map<String, ProjectComponent> beans = [test1: component]
             }
@@ -1391,7 +1407,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     }
     def "component export project to stream"() {
         given:
-            ProjectComponent component = Mock(ProjectComponent)
+            ProjectComponent component = Mock(ProjectComponent){
+                isComponentEnabled() >> true
+            }
             component.getName() >> 'test1'
             service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
                 Map<String, ProjectComponent> beans = [test1: component]
@@ -1425,8 +1443,12 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     @Unroll
     def "export project with components ordered"() {
         given:
-            ProjectComponent component = Mock(ProjectComponent)
-            ProjectComponent component2 = Mock(ProjectComponent)
+            ProjectComponent component = Mock(ProjectComponent){
+                isComponentEnabled() >> true
+            }
+            ProjectComponent component2 = Mock(ProjectComponent){
+                isComponentEnabled() >> true
+            }
 
             service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
                 Map<String, ProjectComponent> beans = [test1: component,test2:component2]
@@ -1485,9 +1507,15 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     @Unroll
     def "export project with components ordered cyclic"() {
         given:
-            ProjectComponent component = Mock(ProjectComponent)
-            ProjectComponent component2 = Mock(ProjectComponent)
-            ProjectComponent component3 = Mock(ProjectComponent)
+            ProjectComponent component = Mock(ProjectComponent){
+                isComponentEnabled() >> true
+            }
+            ProjectComponent component2 = Mock(ProjectComponent){
+                isComponentEnabled() >> true
+            }
+            ProjectComponent component3 = Mock(ProjectComponent){
+                isComponentEnabled() >> true
+            }
 
             service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
                 Map<String, ProjectComponent> beans = [test1: component, test2: component2, test3: component3]
@@ -1544,7 +1572,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
     def "export project to stream optional component no components specified"() {
         given:
-            ProjectComponent component = Mock(ProjectComponent)
+            ProjectComponent component = Mock(ProjectComponent){
+                isComponentEnabled() >> true
+            }
             component.getName() >> 'test1'
             component.isExportOptional() >> true
             service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
@@ -1577,7 +1607,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     @Unroll
     def "component export project to stream when authorized #authorized"() {
         given:
-            ProjectComponent component = Mock(ProjectComponent)
+            ProjectComponent component = Mock(ProjectComponent){
+                isComponentEnabled() >> true
+            }
             component.getName() >> 'test1'
             component.getExportAuthRequiredActions() >> ['a', 'b']
             service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
@@ -1657,7 +1689,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     @Unroll
     def "component export project to stream optional"() {
         given:
-            ProjectComponent component = Mock(ProjectComponent)
+            ProjectComponent component = Mock(ProjectComponent){
+                isComponentEnabled() >> true
+            }
             component.getName() >> 'test1'
             component.isExportOptional() >> exportOptional
             service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
@@ -1922,7 +1956,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
     }
 
-
+    static String EXEC_UUID = "9f0509eb-f89c-4fb3-a520-edf5a34eb52f"
     static String EXECS_START='<executions>'
     static String EXECS_END= '</executions>'
     static String EXEC_XML_TEST1_DEF_START= '''
@@ -1937,6 +1971,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     <cancelled>false</cancelled>
     <argString>-test args</argString>
     <loglevel>WARN</loglevel>
+    <uuid>9f0509eb-f89c-4fb3-a520-edf5a34eb52f</uuid>
     <doNodedispatch>true</doNodedispatch>
     <nodefilters>
       <dispatch>
@@ -2063,6 +2098,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     <cancelled>false</cancelled>
     <argString>-test args</argString>
     <loglevel>WARN</loglevel>
+    <uuid>9f0509eb-f89c-4fb3-a520-edf5a34eb52f</uuid>
     <doNodedispatch>true</doNodedispatch>
     <nodefilters>
       <dispatch>
@@ -2097,6 +2133,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     <cancelled>false</cancelled>
     <argString>-test args</argString>
     <loglevel>WARN</loglevel>
+    <uuid>9f0509eb-f89c-4fb3-a520-edf5a34eb52f</uuid>
     <doNodedispatch>true</doNodedispatch>
     <nodefilters>
       <dispatch>
@@ -2146,6 +2183,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 //        zipmock.demand.file(1..1){name,File outfile-> }
         def zip = zipmock.proxyInstance()
         Execution exec = new Execution(
+            uuid: EXEC_UUID,
             argString: "-test args",
             user: "testuser",
             project: "testproj",
@@ -2192,8 +2230,8 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def zipmock=new MockFor(ZipBuilder)
         def outwriter = new StringWriter()
 
-
         Execution exec = new Execution(
+            uuid: EXEC_UUID,
             argString: "-test args",
             user: "testuser",
             project: "testproj",
@@ -2258,6 +2296,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def outwriter = new StringWriter()
 
         Execution exec = new Execution(
+            uuid: EXEC_UUID,
             argString: "-test args",
             user: "testuser",
             project: "testproj",
@@ -2915,6 +2954,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         assertNotNull job.save()
 
         Execution exec = new Execution(
+            uuid: EXEC_UUID,
             argString: "-test args",
             user: "testuser",
             project: "testproj",
@@ -3065,6 +3105,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         assertNotNull job.save()
 
         Execution exec = new Execution(
+            uuid: EXEC_UUID,
             argString: "-test args",
             user: "testuser",
             project: "testproj",
@@ -3260,6 +3301,78 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         then:
         created
 
+    }
+
+    def "call afterProjectCreate of projectComponents"() {
+        given:
+        ProjectComponent component1 = Mock(ProjectComponent){
+            getName()>>'comp1'
+            isComponentEnabled() >> true
+        }
+        ProjectComponent component2 = Mock(ProjectComponent){
+            getName()>>'comp2'
+            isComponentEnabled() >> true
+        }
+        service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
+            Map<String, ProjectComponent> beans = [comp1: component1,comp2:component2]
+        }
+
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.targetEventBus = Mock(EventBus)
+
+        def prjMgr = Mock(ProjectManager) {
+            removeFrameworkProject(_) >> {}
+        }
+        def fwk = Mock(Framework) {
+            getFrameworkProjectMgr() >> { prjMgr }
+        }
+
+        when:
+        service.afterCreationProjectComponents("myproject")
+
+        then:
+        1 * component1.afterProjectCreate('myproject')
+        1 * component2.afterProjectCreate('myproject')
+    }
+
+
+    def "don't load project componets marked as disabled"() {
+        given:
+        ProjectComponent component1 = Mock(ProjectComponent){
+            getName()>>'comp1'
+            isComponentEnabled() >> true
+        }
+        ProjectComponent component2 = Mock(ProjectComponent){
+            getName()>>'comp2'
+            isComponentEnabled() >> false
+        }
+        service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
+            Map<String, ProjectComponent> beans = [comp1: component1,comp2:component2]
+        }
+
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.targetEventBus = Mock(EventBus)
+
+        def prjMgr = Mock(ProjectManager) {
+            removeFrameworkProject(_) >> {}
+        }
+        def fwk = Mock(Framework) {
+            getFrameworkProjectMgr() >> { prjMgr }
+        }
+
+        when:
+        service.afterCreationProjectComponents("myproject")
+
+        then:
+        1 * component1.afterProjectCreate('myproject')
+        0 * component2.afterProjectCreate('myproject')
     }
 }
 

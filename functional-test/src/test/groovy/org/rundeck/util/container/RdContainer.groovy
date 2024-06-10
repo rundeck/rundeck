@@ -38,7 +38,7 @@ class RdContainer extends DockerComposeContainer<RdContainer> implements ClientP
         waitingFor(DEFAULT_SERVICE_TO_EXPOSE,
                 Wait.forHttp("${CONTEXT_PATH}/api/14/system/info")
                         .forStatusCodeMatching(it -> it >= 200 && it < 500 && it != 404)
-                        .withStartupTimeout(Duration.ofMinutes(5))
+                        .withStartupTimeout(Duration.ofMinutes(10))
         )
 
     }

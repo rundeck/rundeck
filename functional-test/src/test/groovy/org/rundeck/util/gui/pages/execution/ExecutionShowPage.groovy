@@ -45,8 +45,10 @@ class ExecutionShowPage extends BasePage {
     static final By logContentTextBy = By.className("execution-log__content-text")
     static final By logContentTextOverflowBy = By.cssSelector(".execution-log__content-text.execution-log__content-text--overflow")
     static final By gutterLineNumberBy = By.cssSelector(".gutter.line-number")
-    By runAgainLink = By.linkText("Run Again")
+    By runAgainLink = By.xpath('//button[contains(text(), "Run Again")]')
     By executionIdBy = By.cssSelector(".flex-item-1.text-right")
+    By expandStepsBy = By.cssSelector(".auto-caret.text-muted")
+    By stepsRanBy = By.cssSelector("[data-bind-action='stepoutput']");
 
     ExecutionShowPage(final SeleniumContext context) {
         super(context)
@@ -260,5 +262,17 @@ class ExecutionShowPage extends BasePage {
      */
     String getCurrentExecutionId(){
         (el executionIdBy).getText().replace("#", "")
+    }
+
+    void clickRunAgainLink(){
+        (el runAgainLink).click()
+    }
+
+    void clickExpandSteps(){
+        (el expandStepsBy).click()
+    }
+
+    String getStepsRanText(){
+        (el stepsRanBy).getText()
     }
 }
