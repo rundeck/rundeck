@@ -480,7 +480,7 @@ Since: v33
                 )
             ),
             @ApiResponse(
-                responseCode = "503",
+                responseCode = "404",
                 description = "Webhook not enabled",
                 content = @Content(
                     mediaType = "application/json",
@@ -499,7 +499,7 @@ Since: v33
             return
         }
         if(!hook.enabled) {
-            sendJsonError("Webhook not enabled",503)
+            sendJsonError("Webhook not enabled",404)
             return
         }
 

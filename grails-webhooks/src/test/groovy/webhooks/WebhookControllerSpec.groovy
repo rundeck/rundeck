@@ -188,7 +188,7 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
             ) >> true
     }
 
-    def "503 if webhook is not enabled"() {
+    def "404 if webhook is not enabled"() {
         given:
         controller.webhookService = Mock(MockWebhookService)
 
@@ -201,7 +201,7 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
         1 * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234",enabled:false)}
         0 * controller.webhookService.processWebhook(_,_,_,_)
         response.text == '{"err":"Webhook not enabled"}'
-        response.status == 503
+        response.status == 404
     }
 
     def "POST method is the only valid method"() {
