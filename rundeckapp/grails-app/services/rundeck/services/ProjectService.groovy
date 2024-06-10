@@ -79,6 +79,7 @@ import rundeck.Execution
 import rundeck.JobFileRecord
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
+import rundeck.data.util.ExecReportUtil
 import rundeck.services.asyncimport.AsyncImportEvents
 import rundeck.services.asyncimport.AsyncImportException
 import rundeck.services.asyncimport.AsyncImportMilestone
@@ -924,7 +925,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                             }
                         }
                         execs = Execution.findAllByProjectAndIdInList(projectName, execIds)
-                        reports = execReportDataProvider.findAllByProjectAndExecutionIdInList(projectName, execIds)
+                        reports = execReportDataProvider.findAllByProjectAndExecutionUuidInList(projectName, execs.collect{it.uuid})
                     } else if (isExportExecutions) {
                         execs = Execution.findAllByProject(projectName)
                         reports = execReportDataProvider.findAllByProject(projectName)
@@ -958,6 +959,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         dir('reports/') {
                             reports.each { RdExecReport report ->
                                 exportHistoryReport zip, report, "report-${report.id}.xml"
+                                def a = report.toMap()
                                 listener?.inc('export', 1)
                             }
                         }
@@ -1460,9 +1462,23 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def types = componentBeanProvider.getBeans()
         Map<String, ProjectComponent> values = [:]
         types.each { k, v ->
-            values[v.name] = v
+            if(v.componentEnabled){
+                values[v.name] = v
+            }
         }
         values
+    }
+
+    //Call project component after the project was created
+    @CompileStatic
+    void afterCreationProjectComponents(String project){
+        getProjectComponents().each {key, component->
+            try{
+                component.afterProjectCreate(project)
+            }catch (Exception e){
+                log.error("error afterProjectCreate component ${key}: ${e.message}")
+            }
+        }
     }
 
     @CompileStatic
@@ -1668,7 +1684,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
         //generate reports for executions without matching reports
         execids.each { eid ->
-            def saveReportResponse = execReportDataProvider.createReportFromExecution(eid)
+            def execution = Execution.get(eid)
+            if(!execution) {
+                log.error("Execution not found with id: ${eid}")
+                return
+            }
+            def saveReportResponse = execReportDataProvider.saveReport(ExecReportUtil.buildSaveReportRequest(execution, execution.scheduledExecution))
             if (!saveReportResponse.isSaved) {
                 log.error("Unable to save generated report: ${saveReportResponse.errors} (execution ${eid})")
                 return

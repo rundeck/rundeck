@@ -2,7 +2,6 @@ package rundeck.services.scm
 
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
-import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobScmReference
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
@@ -12,8 +11,9 @@ import grails.events.bus.EventBus
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import rundeck.ScheduledExecution
+import rundeck.data.job.reference.JobRevReferenceImpl
 import rundeck.services.FrameworkService
-import rundeck.services.JobRevReferenceImpl
+
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 import spock.lang.Specification

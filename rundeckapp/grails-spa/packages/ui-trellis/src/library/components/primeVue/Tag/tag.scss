@@ -1,0 +1,14 @@
+.p-tag {
+  background: var(--colors-blue-500);
+  font-weight: 600;
+
+  &.p-tag-success {
+    background: var(--colors-green-500);
+  }
+  &.p-tag-warning {
+    background: var(--colors-orange-500);
+  }
+  &.p-tag-danger {
+    background: var(--colors-red-500);
+  }
+}

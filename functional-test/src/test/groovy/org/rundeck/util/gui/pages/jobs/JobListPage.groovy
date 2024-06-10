@@ -31,6 +31,8 @@ class JobListPage extends BasePage {
     By jobListGroupTree = By.id("job_group_tree")
     By jobListBy = By.cssSelector("jobslist")
     By alertInfoBy = By.cssSelector(".alert.alert-info")
+    By jobGraphBy = By.id("jobgraphtab")
+    By dashboardTabBy = By.id("joblisttab")
 
     JobListPage(final SeleniumContext context) {
         super(context)

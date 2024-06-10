@@ -63,7 +63,6 @@
   <asset:javascript src="menu/home.js"/>
 
   <!-- VUE CSS MODULES -->
-  <asset:stylesheet href="static/css/components/version-notification.css"/>
   <!-- /VUE CSS MODULES -->
   <asset:javascript src="static/pages/login.js"/>
   <style type="text/css">
@@ -80,7 +79,7 @@
   <div id="layoutBody">
     <div class="vue-ui-socket">
       <g:set var="createProjectAllowed"
-             value="${auth.resourceAllowedTest(action: AuthConstants.ACTION_CREATE, type: AuthConstants.TYPE_PROJECT, context: AuthConstants.CTX_APPLICATION)}"/>
+             value="${auth.resourceAllowedTest(action: [AuthConstants.ACTION_CREATE], type: AuthConstants.TYPE_PROJECT, context: AuthConstants.CTX_APPLICATION, has:true)}"/>
       <g:set var="roles"
              value="${request.subject?.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class)?.collect { it.name }}"/>
       <g:set var="buildIdent" value="${servletContextAttribute(attribute: 'app.ident')}"/>
@@ -104,7 +103,6 @@
   </div>
   <!-- VUE JS MODULES -->
   <asset:stylesheet href="static/css/pages/home.css"/>
-  <asset:javascript src="static/components/version-notification.js"/>
   <!-- /VUE JS MODULES -->
 </body>
 </html>

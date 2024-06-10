@@ -17,7 +17,9 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
-import com.dtolabs.rundeck.app.support.BaseNodeFilters
+import rundeck.data.job.reference.JobReferenceImpl
+import rundeck.data.job.reference.JobRevReferenceImpl
+import rundeck.support.filters.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.audit.ActionTypes
 import com.dtolabs.rundeck.core.audit.ResourceTypes
@@ -215,6 +217,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     UserDataProvider userDataProvider
     JobDataProvider jobDataProvider
     UserService userService
+    RdJobService rdJobService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -235,7 +238,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     Map<String, String> getPropertiesMapping() { ConfigPropertiesMapping }
 
     JobData saveJob(JobData job) {
-        jobDataProvider.save(job)
+        rdJobService.saveJob(job)
     }
     /**
      * Return project config for node cache delay
@@ -808,7 +811,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param serverUUID
      */
     def unscheduleJobs(String serverUUID=null){
-        def schedJobs = serverUUID ? jobSchedulesService.getAllScheduled(serverUUID) : jobSchedulesService.getAllScheduled()
+        def schedJobs = jobSchedulesService.getAllScheduled(serverUUID, null)
         schedJobs.each { ScheduledExecution se ->
             def jobname = se.generateJobScheduledName()
             def groupname = se.generateJobGroupName()
@@ -3333,6 +3336,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         ].each {
             scheduledExecution."$it" = null
         }
+        basicProps.remove("id") //id is a uuid and should not attempt to set the id field of the scheduled execution domain class
         scheduledExecution.properties = basicProps
         if (scheduledExecution.groupPath) {
             def re = /^\/*(.+?)\/*$/

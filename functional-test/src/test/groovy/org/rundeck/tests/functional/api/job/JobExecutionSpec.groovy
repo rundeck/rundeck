@@ -1,6 +1,8 @@
 package org.rundeck.tests.functional.api.job
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import org.rundeck.util.api.responses.jobs.CreateJobResponse
 import org.rundeck.util.api.responses.common.ErrorResponse
 import org.rundeck.util.api.responses.execution.Execution
@@ -1895,6 +1897,43 @@ class JobExecutionSpec extends BaseContainer {
 
     def createSampleProject = (Object projectJsonMap) -> {
         return client.doPost("/projects", projectJsonMap)
+    }
+
+    def "multiple executions job"(){
+        given:
+        String projectName = "multiExecutionProject"
+        String jobUuid = "e3aad000-7d0e-4a0e-8ded-f70431de7aaa"
+        setupProject(projectName)
+        def yamlJob = """
+                            -
+                              defaultTab: nodes
+                              executionEnabled: true
+                              name: "multiExecutionsJob"
+                              sequence:
+                                commands:
+                                - exec: sleep 5
+                                keepgoing: false
+                                strategy: sequential
+                              multipleExecutions: true
+                              uuid: ${jobUuid}
+                            """
+        def pathToJob = JobUtils.generateFileToImport(yamlJob, "yaml")
+        def multipartBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
+                .build()
+        client.doPostWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        when:
+        def jobExecResponseFor1 = JobUtils.executeJob(jobUuid, client)
+        def jobExecResponseFor2 = JobUtils.executeJob(jobUuid, client)
+        def jobExecResponseFor3 = JobUtils.executeJob(jobUuid, client)
+        then:
+        assert jobExecResponseFor1.successful
+        assert jobExecResponseFor2.successful
+        assert jobExecResponseFor3.successful
+        cleanup:
+        hold 10 //This is to allow the executions to finish
+        deleteProject(projectName)
     }
 
 }
