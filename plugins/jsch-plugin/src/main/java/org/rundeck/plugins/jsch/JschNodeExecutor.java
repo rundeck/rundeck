@@ -337,12 +337,12 @@ public class JschNodeExecutor implements NodeExecutor, Describable, ProxyRunnerP
             );
         }
         boolean forceNewPty = ResolverUtil.resolveBooleanProperty(CONFIG_SET_PTY,false,
-                node,context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
-                context.getFramework());
+                node,context.getIFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
+                context.getIFramework());
 
         boolean passEnvVar = ResolverUtil.resolveBooleanProperty(CONFIG_PASS_ENV,false,
-                node,context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
-                context.getFramework());
+                node,context.getIFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
+                context.getIFramework());
 
         final ExecutionListener listener = context.getExecutionListener();
         final Project project = new Project();
