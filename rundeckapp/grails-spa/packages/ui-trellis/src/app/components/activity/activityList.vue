@@ -72,7 +72,6 @@
               size="xs"
               type="danger"
               class="btn-fill"
-            
               :disabled="bulkSelectedIds.length < 1"
               @click="showBulkEditConfirm = true"
               data-test-id="activity-list-delete-selected-executions"
@@ -342,7 +341,7 @@
               v-if="exec.job"
               v-tooltip="
                 purify(
-                  exec.job.group ? exec.job.group + '/' + exec.job.name : ''
+                  exec.job.group ? exec.job.group + '/' + exec.job.name : '',
                 )
               "
               class="eventtitle job"
@@ -437,7 +436,7 @@
                   [
                     jobCompletedISOFormat(rpt.dateCompleted),
                     jobCompletedFromNow(rpt.dateCompleted),
-                  ]
+                  ],
                 ),
                 viewport: `.ali-${rpt.execution.id}`,
               }"
@@ -598,7 +597,7 @@ import {
 } from "@rundeck/client/dist/lib/models";
 import * as DOMPurify from "dompurify";
 import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
-import { EventBus } from "primevue/utils";
+import { EventBus } from "../../../library";
 
 /**
  * Generate a URL
@@ -614,7 +613,7 @@ function _genUrl(url: string, params: any) {
   } else if (typeof params == "object") {
     for (const e in params) {
       urlparams.push(
-        encodeURIComponent(e) + "=" + encodeURIComponent(params[e])
+        encodeURIComponent(e) + "=" + encodeURIComponent(params[e]),
       );
     }
   }
@@ -663,17 +662,17 @@ export default defineComponent({
     OffsetPagination,
     ActivityFilter,
   },
-  // props: {
-  //   eventBus: {
-  //     type: Object as PropType<typeof EventBus>,
-  //     required: false,
-  //   },
-  //   displayMode: {
-  //     type: String as PropType<string>,
-  //     required: false,
-  //   },
-  // },
-  props: ["eventBus", "displayMode"],
+  props: {
+    eventBus: {
+      type: Object as PropType<typeof EventBus>,
+      required: false,
+    },
+    displayMode: {
+      type: String as PropType<string>,
+      required: false,
+    },
+  },
+  // props: ["eventBus", "displayMode"],
   data() {
     return {
       projectName: "",
@@ -787,7 +786,7 @@ export default defineComponent({
         this.query = Object.assign(
           {},
           this.query,
-          window._rundeck.data["query"]
+          window._rundeck.data["query"],
         );
       } else {
         this.loadActivity(0);
@@ -829,7 +828,7 @@ export default defineComponent({
         const diff = moment().diff(moment(exec.dateStarted.date));
         return Math.min(
           Math.floor((diff / exec.job.averageDuration) * 100),
-          100
+          100,
         );
       }
       return 0;
@@ -1048,7 +1047,7 @@ export default defineComponent({
           params: Object.assign(
             { offset: this.pagination.offset, max: this.pagination.max },
             this.query,
-            { since: this.lastDate }
+            { since: this.lastDate },
           ),
           withCredentials: true,
         });
@@ -1117,7 +1116,7 @@ export default defineComponent({
           headers: { "x-rundeck-ajax": true },
           params: Object.assign(
             { offset: offset, max: this.pagination.max },
-            xquery
+            xquery,
           ),
           withCredentials: true,
         });
@@ -1153,7 +1152,7 @@ export default defineComponent({
         this.autorefreshtimeout = setTimeout(() => {
           const cur = new Date();
           Promise.all([this.loadRunning(), this.loadSince()]).then(() =>
-            this.checkrefresh(cur.getTime())
+            this.checkrefresh(cur.getTime()),
           );
         }, ms);
       }
