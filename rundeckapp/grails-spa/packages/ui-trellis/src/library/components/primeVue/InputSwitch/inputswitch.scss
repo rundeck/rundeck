@@ -1,0 +1,12 @@
+.p-inputswitch {
+    .p-inputswitch-slider {
+        background: var(--colors-gray-300);
+    }
+    &.p-highlight .p-inputswitch-slider {
+        background: var(--colors-blue-500);
+    }
+
+    &.p-disabled .p-inputswitch-slider {
+        background: var(--colors-blue-200);
+    }
+}
