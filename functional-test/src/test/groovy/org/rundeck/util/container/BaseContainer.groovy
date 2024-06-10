@@ -25,19 +25,20 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     private static final Object LOCK = new Object()
     private static ClientProvider CLIENT_PROVIDER
     private static final String DEFAULT_DOCKERFILE_LOCATION = System.getenv("DEFAULT_DOCKERFILE_LOCATION") ?: System.getProperty("DEFAULT_DOCKERFILE_LOCATION")
+    private static final String TEST_RUNDECK_URL = System.getenv("TEST_RUNDECK_URL")?: System.getProperty("TEST_RUNDECK_URL")
 
     ClientProvider getClientProvider() {
-        if (System.getenv("TEST_RUNDECK_URL") != null) {
+        if (TEST_RUNDECK_URL != null) {
             if (CLIENT_PROVIDER == null) {
                 CLIENT_PROVIDER = new ClientProvider() {
                     @Override
                     RdClient getClient() {
-                        return RdClient.create(System.getenv("TEST_RUNDECK_URL"), System.getenv("TEST_RUNDECK_TOKEN"))
+                        return RdClient.create(TEST_RUNDECK_URL, System.getenv("TEST_RUNDECK_TOKEN"))
                     }
 
                     @Override
                     RdClient clientWithToken(String token) {
-                        return RdClient.create(System.getenv("TEST_RUNDECK_URL"), token)
+                        return RdClient.create(TEST_RUNDECK_URL, token)
                     }
                 }
             }

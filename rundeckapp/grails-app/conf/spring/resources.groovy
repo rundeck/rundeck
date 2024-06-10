@@ -880,6 +880,7 @@ beans={
     }
 
     jettyServletCustomizer(JettyServletContainerCustomizer) {
+        featureService = ref('featureService')
         def configParams = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.initParams", String.class)
         def useForwardHeadersConfig = grailsApplication.config.getProperty("server.useForwardHeaders",Boolean.class)
 
@@ -887,6 +888,7 @@ beans={
             [it.key.toString(), it.value.toString()]
         }
         useForwardHeaders = useForwardHeadersConfig ?: Boolean.getBoolean('rundeck.jetty.connector.forwarded')
+        serverUrl = grailsApplication.config.getProperty('grails.serverURL', String.class)
     }
 
     def stsMaxAgeSeconds = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.stsMaxAgeSeconds",Integer.class,-1)

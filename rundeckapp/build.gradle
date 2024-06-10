@@ -199,7 +199,7 @@ dependencies {
     implementation "org.grails.plugins:scaffolding"
     implementation "org.grails.plugins:events"
     implementation "org.grails.plugins:gsp"
-    implementation 'org.grails:grails-plugin-codecs:4.0.1'
+    implementation "org.grails:grails-codecs"
     implementation "org.grails.plugins:cache"
     implementation "io.micronaut:micronaut-inject-groovy"
     implementation "com.google.code.gson:gson:${gsonVersion}"
@@ -254,6 +254,7 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql:42.7.2'
     runtimeOnly 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
 
+    runtimeOnly "org.apache.tomcat:tomcat-jdbc:9.0.89"
     runtimeOnly "org.springframework:spring-jcl:${springVersion}"
     runtimeOnly "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
     api ("com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion")
@@ -263,7 +264,6 @@ dependencies {
     testImplementation "org.grails:grails-gorm-testing-support"
     testImplementation "org.mockito:mockito-core"
     testImplementation "org.grails:grails-web-testing-support"
-    testImplementation "org.grails.plugins:geb"
     testImplementation "org.grails:grails-test-mixins:3.3.0.RC1"
     testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"
     testImplementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
@@ -375,9 +375,6 @@ tasks.withType(GroovyCompile).configureEach {
 
 tasks.withType(Test) {
     useJUnitPlatform()
-    systemProperty "geb.env", System.getProperty('geb.env')
-    systemProperty "webdriver.chrome.driver", System.getProperty('webdriver.chrome.driver')
-    systemProperty "webdriver.gecko.driver", System.getProperty('webdriver.gecko.driver')
 }
 
 tasks.withType(Test).configureEach {
@@ -478,6 +475,10 @@ task copySpa(type: Copy) {
         include('provided/**')
     }
     into "$projectDir/grails-app/assets"
+    from(configurations.spa){
+        include('fonts/**', 'img/**')
+        into('provided/static')
+    }
     outputs.dir "$projectDir/grails-app/assets/provided"
 }
 assetPluginPackage.dependsOn copySpa

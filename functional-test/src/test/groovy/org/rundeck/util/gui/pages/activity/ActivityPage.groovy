@@ -13,9 +13,18 @@ class ActivityPage extends BasePage {
 
     By activityRowBy = By.cssSelector(".link.activity_row.autoclickable.succeed.job")
     By timeAbs = By.className("timeabs")
+    By executionCount = By.className("summary-count")
 
     ActivityPage(final SeleniumContext context) {
         super(context)
+    }
+
+    void loadActivityPageForProject(String projectName){
+        this.loadPath = "/project/${projectName}/activity"
+    }
+
+    WebElement getExecutionCount(){
+        el executionCount
     }
 
     List<WebElement> getActivityRows() {

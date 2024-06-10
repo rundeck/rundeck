@@ -84,10 +84,13 @@ class GormLogFileStorageRequestProvider implements LogFileStorageRequestProvider
     @Override
     void delete(String executionUuid) {
         def execution = findExecutionByUuid(executionUuid)
+        if(!execution){
+            return
+        }
         def request = findByExecution(execution)
         execution.setLogFileStorageRequest(null)
         execution.save(flush:true)
-        request.delete(flush:true)
+        request?.delete(flush:true)
     }
 
     @Override

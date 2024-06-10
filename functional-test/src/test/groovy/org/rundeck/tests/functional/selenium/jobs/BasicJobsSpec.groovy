@@ -1,5 +1,6 @@
 package org.rundeck.tests.functional.selenium.jobs
 
+import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobListPage
 import org.rundeck.util.gui.pages.home.HomePage
@@ -191,6 +192,7 @@ class BasicJobsSpec extends SeleniumBase {
             jobShowPage.closeJobDefinitionModalButton.click()
     }
 
+    @ExcludePro
     def "run job modal should show validation error"() {
         when:
             def jobShowPage = go JobShowPage, SELENIUM_BASIC_PROJECT

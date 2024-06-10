@@ -1,0 +1,30 @@
+<joblist>
+  <job>
+    <defaultTab>nodes</defaultTab>
+    <description></description>
+    <executionEnabled>true</executionEnabled>
+    <id>1f0306cd-e123-44f3-8977-9e52edad8ce8</id>
+    <loglevel>INFO</loglevel>
+    <name>output job</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <plugins />
+    <runnerSelector>
+      <runnerFilterMode>LOCAL</runnerFilterMode>
+      <runnerFilterType>LOCAL_RUNNER</runnerFilterType>
+    </runnerSelector>
+    <scheduleEnabled>true</scheduleEnabled>
+    <schedules />
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <script><![CDATA[#!/bin/bash
+
+for (( i=1; i<=32000; i++ ))
+do
+    echo "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+done]]></script>
+        <scriptargs />
+      </command>
+    </sequence>
+    <uuid>1f0306cd-e123-44f3-8977-9e52edad8ce8</uuid>
+  </job>
+</joblist>

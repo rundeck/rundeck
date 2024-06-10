@@ -35,12 +35,11 @@ import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.job.notification.NotificationData
 import org.rundeck.app.data.model.v1.job.option.OptionData
 import org.rundeck.util.Sizes
+import rundeck.data.job.reference.JobReferenceImpl
 import rundeck.data.validation.shared.SharedJobConstraints
-import rundeck.data.validation.shared.SharedJobScheduleConstraints
 import rundeck.data.validation.shared.SharedLogConfigConstraints
 import rundeck.data.validation.shared.SharedNodeConfigConstraints
 import rundeck.data.validation.shared.SharedProjectNameConstraints
-import rundeck.services.JobReferenceImpl
 
 import java.util.stream.Collectors
 

@@ -22,7 +22,6 @@ import com.dtolabs.rundeck.app.api.project.sources.Source
 import com.dtolabs.rundeck.app.api.project.sources.Sources
 import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.PluginConfigParams
-import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.NodeFileParserException
@@ -99,9 +98,8 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorExceptio
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.FrameworkResource
-import com.dtolabs.rundeck.app.support.BaseNodeFilters
-import com.dtolabs.rundeck.app.support.ExtNodeFilters
-import rundeck.User
+import rundeck.support.filters.BaseNodeFilters
+import rundeck.support.filters.ExtNodeFilters
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.UserService

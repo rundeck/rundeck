@@ -14,6 +14,8 @@ RUN go install github.com/HeavyHorst/remco/cmd/remco@$REMCO_VERSION
 ######################
 FROM ubuntu:22.04
 
+ARG TARGETARCH
+
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
@@ -47,8 +49,8 @@ RUN adduser --gid 0 --shell /bin/bash --home /home/rundeck --gecos "" --disabled
 
 # Install Tini
 ENV TINI_VERSION=0.19.0
-RUN curl -sSL https://github.com/krallin/tini/releases/download/v${TINI_VERSION}/tini -o /tini && \
-    curl -sSL https://github.com/krallin/tini/releases/download/v${TINI_VERSION}/tini.asc -o /tini.asc && \
+RUN curl -sSL https://github.com/krallin/tini/releases/download/v${TINI_VERSION}/tini-${TARGETARCH} -o /tini && \
+    curl -sSL https://github.com/krallin/tini/releases/download/v${TINI_VERSION}/tini-${TARGETARCH}.asc -o /tini.asc && \
     gpg --batch --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 595E85A6B1B4779EA4DAAEC70B588DFF0527A9B7 && \
     gpg --batch --verify /tini.asc /tini && \
     chmod +x /tini

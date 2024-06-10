@@ -1281,12 +1281,15 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
                                 [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
                         )]
                 ).save(flush:true),
-                notifications : [
-                    new Notification(
-                            eventTrigger: 'onstart',
-                            type: 'SimpleNotificationPlugin'
-                    )]
-        ).save(flush:true)
+                notifications : []
+        )
+        job.save(flush:true)
+        def notification = new Notification(
+                eventTrigger: 'onstart',
+                type: 'SimpleNotificationPlugin',
+                scheduledExecution: job
+        )
+        notification.save(flush:true)
         def execution = new Execution(
                 uuid: 'exec1',
                 jobUuid: 'test1',
