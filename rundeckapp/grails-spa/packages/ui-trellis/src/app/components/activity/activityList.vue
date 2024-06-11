@@ -64,6 +64,7 @@
             <span
               class="btn btn-default btn-xs"
               @click="showBulkEditCleanSelections = true"
+              data-test-id="activity-list-delete-selected-executions"
             >
               {{ $t("select.none") }}
             </span>
@@ -672,7 +673,7 @@ export default defineComponent({
       required: false,
     },
   },
-  // props: ["eventBus", "displayMode"],
+
   data() {
     return {
       projectName: "",
