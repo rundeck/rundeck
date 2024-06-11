@@ -48,6 +48,7 @@ class JobCreatePage extends BasePage {
     By createJobBy = By.id("Create")
     By cancelBy = By.id('createFormCancelButton')
     By optionBy = By.cssSelector("#optnewbutton > span")
+    By nodeStepSectionActiveBy = By.cssSelector(".node_step_section.tab-pane.active")
 
     static class NextUi {
         static By optionBy = By.cssSelector("#optnewbutton > button")
@@ -749,6 +750,10 @@ class JobCreatePage extends BasePage {
         els optDetailBy
     }
 
+    def getTotalFoundPlugins(String pluginName){
+        return (el nodeStepSectionActiveBy).findElements(By.name(pluginName)).size()
+    }
+
 }
 
 
@@ -873,4 +878,5 @@ enum JobTab {
     String getTabName() {
         return tabName
     }
+
 }
