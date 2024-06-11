@@ -123,7 +123,7 @@ export default defineComponent({
         return;
       }
 
-      this.confirm({
+      this.$confirm({
         title: this.$t("Delete Saved Filter"),
         content: this.$t("filter.delete.confirm.text", [this.query.filterName]),
       })

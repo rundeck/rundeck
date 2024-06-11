@@ -7,6 +7,7 @@ const mountActivityRunningIndicator = async (props = {}) => {
     on: jest.fn(),
     emit: jest.fn(),
     off: jest.fn(),
+    all: new Map(),
   };
 
   return mount(ActivityRunningIndicator, {
@@ -48,7 +49,7 @@ describe("ActivityRunningIndicator.vue", () => {
     });
     eventBus.emit("activity-nowrunning-count", 10);
     await wrapper.vm.$nextTick();
-    expect(wrapper.vm.count).toBe(10);
+    expect((wrapper.vm as any).count).toBe(10);
     wrapper.find("span").trigger("click");
     expect(emitSpy).toHaveBeenCalledWith("activity-nowrunning-click-action");
   });
