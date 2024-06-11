@@ -10,15 +10,17 @@ import org.rundeck.util.gui.pages.BasePage
 
 import java.time.Duration
 
-/**
- * Project page
- */
 @CompileStatic
 class NodeSourcePage extends BasePage {
 
     String loadPath = ""
 
-    By newNodeSource = By.xpath("//button[contains(.,'Source')]")
+    By newNodeSource = By.xpath("//button[contains(.,'Add a new Node Source')]")
+    By saveNodeSourceConfigBy = By.cssSelector(".btn.btn-cta.btn-xs")
+    By saveButtonBy = By.cssSelector(".btn.btn-cta")
+    By nodesEditTabBy = By.xpath("//div[contains(text(),'Edit')]")
+    By modifyBy = By.linkText("Modify")
+    By configurationSavedPopUpBy = By.xpath("//*[contains(text(),'Configuration Saved')]")
 
     NodeSourcePage(final SeleniumContext context) {
         super(context)
@@ -33,4 +35,23 @@ class NodeSourcePage extends BasePage {
                 .until(ExpectedConditions.urlContains(loadPath))
     }
 
+    void forProject(String projectName){
+        this.loadPath = "/project/${projectName}/nodes/sources"
+    }
+
+    void clickSaveNodeSourceConfig(){
+        (el saveNodeSourceConfigBy).click()
+    }
+
+    void clickSaveNodeSources(){
+        (el saveButtonBy).click()
+    }
+
+    def clickNodesEditTab(){
+        (el nodesEditTabBy).click()
+    }
+
+    def clickModifyButton(){
+        (el modifyBy).click()
+    }
 }
