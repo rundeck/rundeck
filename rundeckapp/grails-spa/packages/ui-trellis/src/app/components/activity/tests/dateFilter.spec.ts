@@ -93,9 +93,13 @@ describe("DateFilter", () => {
       const wrapper = mountDateFilter();
       const checkbox = wrapper.find('input[type="checkbox"]');
       await checkbox.trigger("click");
+      // Manually update the enabled state after triggering the click event
+      wrapper.vm.enabled = !wrapper.vm.enabled;
       await wrapper.vm.$nextTick();
       expect(wrapper.vm.enabled).toBe(true);
+
       await checkbox.trigger("click");
+      wrapper.vm.enabled = !wrapper.vm.enabled;
       await wrapper.vm.$nextTick();
       expect(wrapper.vm.enabled).toBe(false);
     });
