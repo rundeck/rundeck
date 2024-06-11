@@ -1,10 +1,29 @@
-import { mount } from "@vue/test-utils";
+import { mount, VueWrapper } from "@vue/test-utils";
 import DateTimePicker from "../dateTimePicker.vue";
 import moment from "moment";
-const mountDateTimePicker = async (props = {}) => {
+import { ComponentPublicInstance } from "vue";
+interface DateTimePickerProps {
+  modelValue: string | Date;
+  dateClass?: string;
+  timeClass?: string;
+}
+interface DateTimePickerInstance extends ComponentPublicInstance {
+  dateString: string;
+  time: Date;
+  datetime: string;
+  setFromValue: () => void;
+  recalcDate: () => void;
+}
+const mountDateTimePicker = async (
+  props: Partial<DateTimePickerProps> = {}
+) => {
+  const modelValue =
+    typeof props.modelValue === "string"
+      ? moment(props.modelValue).format()
+      : props.modelValue || moment().format();
   return mount(DateTimePicker, {
     props: {
-      modelValue: moment().format(),
+      modelValue,
       dateClass: "date-class",
       timeClass: "time-class",
       ...props,
@@ -15,7 +34,7 @@ const mountDateTimePicker = async (props = {}) => {
         "time-picker": true,
       },
     },
-  });
+  }) as unknown as VueWrapper<DateTimePickerInstance>;
 };
 describe("DateTimePicker.vue", () => {
   afterEach(() => {
@@ -49,7 +68,6 @@ describe("DateTimePicker.vue", () => {
     const wrapper = await mountDateTimePicker();
     const datePicker = wrapper.findComponent({ name: "date-picker" });
     const timePicker = wrapper.findComponent({ name: "time-picker" });
-    // Check v-model and class for date-picker
     expect(datePicker.attributes("modelvalue")).toBe(wrapper.vm.dateString);
     expect(datePicker.attributes("class")).toContain("date-class");
     expect(datePicker.attributes("clear-btn")).toBe("false");
