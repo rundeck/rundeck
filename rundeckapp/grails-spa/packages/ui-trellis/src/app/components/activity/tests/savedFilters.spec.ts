@@ -68,6 +68,7 @@ const mountSavedFilters = (
         on: jest.fn(),
         emit: jest.fn(),
         off: jest.fn(),
+        all: new Map(),
       },
       ...props,
     },
@@ -154,7 +155,6 @@ describe("SavedFilters", () => {
         wrapper.vm.filterStore,
         "removeFilter"
       );
-      await wrapper.vm.loadFilters();
       await wrapper.vm.$nextTick();
       const initialCount = wrapper.findAll('[data-test="filter-item"]').length;
       expect(initialCount).toBeGreaterThan(0);
