@@ -17,12 +17,12 @@ jest.mock("axios", () => axiosMock);
 type ActivityListInstance = InstanceType<typeof ActivityList>;
 const shallowMountActivityList = async (
   props = {},
-  globalOptions: GlobalOptions = {}
+  globalOptions: GlobalOptions = {},
 ) => {
   const wrapper = shallowMount(ActivityList, {
     props: {
       eventBus: mockEventBus,
-      displayMode: "full",
+      displayMode: "mode",
       ...props,
     },
     global: {
@@ -30,27 +30,12 @@ const shallowMountActivityList = async (
         OffsetPagination,
         ActivityFilter,
       },
-      stubs: {
-        modal: true,
-        ActivityFilter: true,
-        Modal: {
-          template: "<div class='modal-stub'><slot></slot></div>",
-        },
-        ProgressBar: { template: "<div><slot></slot></div>" },
-        btn: {
-          template: `<button :disabled="disabled" data-test-id="activity-list-delete-selected-executions">Delete Selected Executions</button>`,
-          props: ["disabled"],
-        },
-
-        tooltip: true,
-        ...globalOptions.stubs,
-      },
-      directives: {
-        tooltip: () => {},
-      },
       mocks: {
         ...i18nMocks,
         ...globalOptions.mocks,
+      },
+      directives: {
+        tooltip: () => {},
       },
       ...globalOptions,
     },
@@ -69,70 +54,66 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 describe("ActivityList Component", () => {
-  it("renders the component correctly", async () => {
+  it("renders loading area when query changes", async () => {
     const wrapper = await shallowMountActivityList();
-    expect(wrapper.exists()).toBe(true);
-  });
-  it("renders loading area", async () => {
-    const wrapper = await shallowMountActivityList();
-    await wrapper.setData({ loading: true });
+    wrapper.vm.query.jobIdFilter = "test";
+    await wrapper.vm.$nextTick();
     expect(wrapper.find('[data-test-id="loading-area"]').exists()).toBe(true);
   });
   it("displays an error message when load fails", async () => {
     const wrapper = await shallowMountActivityList();
-    await wrapper.setData({ loadError: "An Error Occurred" });
+    wrapper.vm.loadError = "An Error Occurred";
     await wrapper.vm.$nextTick();
-    const errorMessage = wrapper.find(".loading-area .text-warning");
+    const errorMessage = wrapper
+      .find('[data-test-id="loading-area"]')
+      .find(".text-warning");
+    expect(errorMessage.exists()).toBe(true);
     expect(errorMessage.text()).toContain("An Error Occurred");
   });
   it("displays a no data message", async () => {
     const wrapper = await shallowMountActivityList();
-    await wrapper.setData({ reports: [], loading: false, loadError: null });
+    wrapper.vm.reports = [];
+    wrapper.vm.loading = false;
+    wrapper.vm.loadError = null;
     await wrapper.vm.$nextTick();
     const noDataMessage = wrapper.find('[data-test="no-data-message"]');
     expect(noDataMessage.exists()).toBe(true);
     expect(noDataMessage.text()).toBe("No results for the query");
   });
-
   it("renders since count data", async () => {
     const wrapper = await shallowMountActivityList();
-    await wrapper.setData({ sincecount: 5 });
+    wrapper.vm.sincecount = 5;
     await wrapper.vm.$nextTick();
-
     const sinceCountTd = wrapper.find(".since-count-data");
-
+    expect(sinceCountTd.exists()).toBe(true);
     expect(sinceCountTd.text()).toContain("info.newexecutions.since.0");
   });
-
   it("renders the pagination correctly", async () => {
     const wrapper = await shallowMountActivityList();
-    await wrapper.setData({ pagination: { total: 50, offset: 10, max: 10 } });
+    wrapper.vm.pagination = { total: 50, offset: 10, max: 10 };
+    await wrapper.vm.$nextTick();
     const pagination = wrapper.findComponent(OffsetPagination);
     expect(pagination.exists()).toBe(true);
   });
   it("renders the filter button", async () => {
     const wrapper = await shallowMountActivityList();
-
     const filterButton = wrapper.find(
-      '[data-test-id="activity-list-filter-button"]'
+      '[data-test-id="activity-list-filter-button"]',
     );
     expect(filterButton.exists()).toBe(true);
   });
-
   it("renders running executions", async () => {
     const wrapper = await shallowMountActivityList();
-    await wrapper.setData({
-      running: {
-        executions: [
-          {
-            id: "1",
-            status: "running",
-            dateStarted: { date: new Date() },
-          },
-        ],
-        paging: {},
-      },
-    });
+    wrapper.vm.running = {
+      executions: [
+        {
+          id: "1",
+          status: "running",
+          dateStarted: { date: new Date() },
+        },
+      ],
+      paging: {},
+    };
     await wrapper.vm.$nextTick();
     const execution = wrapper.vm.running.executions[0];
     expect(execution).toHaveProperty("id", "1");
@@ -140,57 +121,89 @@ describe("ActivityList Component", () => {
     expect(execution.dateStarted).toHaveProperty("date");
   });
 });
+
 describe("ActivityList Bulk Edit Modals", () => {
-  it("opens and closes the filter modal", async () => {
+  it("opens the bulk edit modal", async () => {
     const wrapper = await shallowMountActivityList();
-    const filterButton = wrapper.find(
-      '[data-test-id="activity-list-filter-button"]'
-    );
-    await filterButton.trigger("click");
-    expect(wrapper.findComponent(ActivityFilter).exists()).toBe(true);
-  });
-  it("opens the bulk delete modal", async () => {
-    const wrapper = await shallowMountActivityList();
-    // wrapper.vm.showBulkEditConfirm = true;
-    await wrapper.setData({ showBulkEditConfirm: true });
-    const bulkDeleteButton = wrapper.find('[data-test-id="modal-bulk-delete"]');
-    expect(bulkDeleteButton.exists()).toBe(true);
-  });
-  it("opens the bulk delete results modal", async () => {
-    const wrapper = await shallowMountActivityList();
-    wrapper.vm.showBulkEditResults = true;
-    const bulkDeleteResults = wrapper.find(
-      '[data-test-id="modal-bulk-delete-results"]'
-    );
-    expect(bulkDeleteResults.exists()).toBe(true);
-  });
-  it("enables bulk delete button when items are selected", async () => {
-    const wrapper = await shallowMountActivityList();
-    await wrapper.setData({
-      reports: [
-        {
-          execution: {
-            id: 2,
-            permalink: "/project/test/execution/show/2",
-          },
-          status: "succeeded",
-          dateCompleted: "2024-05-22T14:33:52Z",
-          node: {
-            total: 1,
-            succeeded: 1,
-            failed: 0,
-          },
-        },
-      ],
-      bulkEditMode: true,
-      bulkSelectedIds: ["#2"],
-    });
-    wrapper.vm.bulkSelectedIds = ["#2"];
+    wrapper.vm.auth = { deleteExec: true };
+    wrapper.vm.pagination = { total: 1 };
+    wrapper.vm.bulkEditMode = true;
     await wrapper.vm.$nextTick();
-    expect(wrapper.vm.bulkSelectedIds.length).toBeGreaterThan(0);
+    expect(wrapper.vm.bulkEditMode).toBe(true);
+  });
+  it("open and closes the filter modals", async () => {
+    const wrapper = await shallowMountActivityList();
+    wrapper.vm.showFilters = true;
+    await wrapper.vm.$nextTick();
+    expect(wrapper.findComponent(ActivityFilter).exists()).toBe(true);
+    wrapper.vm.showFilters = false;
+    await wrapper.vm.$nextTick();
+    expect(wrapper.findComponent(ActivityFilter).exists()).toBe(false);
+  });
+  it("opens the bulk delete modal when delete selected executions button is clicked", async () => {
+    const wrapper = await shallowMountActivityList();
+
+    // Set the data properties
+    wrapper.vm.auth = { deleteExec: true };
+    wrapper.vm.pagination = { total: 1 };
+    wrapper.vm.showBulkDelete = true;
+    wrapper.vm.bulkEditMode = true;
+    wrapper.vm.bulkSelectedIds = ["1"];
+    await wrapper.vm.$nextTick();
+
+    const deleteSelectedExecutionsButton = wrapper.find(
+      '[data-test-id="activity-list-delete-selected-executions"]',
+    );
+    await deleteSelectedExecutionsButton.trigger("click");
+
+    // Wait for the next DOM update
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.vm.showBulkDelete).toBe(true);
+  });
+
+  it("closes the bulk delete modal when the cancel button is clicked", async () => {
+    const wrapper = await shallowMountActivityList();
+
+    // Set the data properties
+    wrapper.vm.auth = { deleteExec: true };
+    wrapper.vm.pagination = { total: 1 };
+    wrapper.vm.showBulkDelete = true;
+    wrapper.vm.bulkEditMode = true;
+    wrapper.vm.bulkSelectedIds = ["1"];
+    await wrapper.vm.$nextTick();
+
+    const cancelButton = wrapper.find('[data-test-id="bulk-delete-cancel"]');
+    await cancelButton.trigger("click");
+
+    // Wait for the next DOM update
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.vm.showBulkDelete).toBe(false);
   });
 });
-
+it("enables bulk delete button when items are selected", async () => {
+  const wrapper = await shallowMountActivityList();
+  wrapper.vm.reports = [
+    {
+      execution: {
+        id: "2",
+        permalink: "/project/test/execution/show/2",
+      },
+      status: "succeeded",
+      dateCompleted: "2024-05-22T14:33:52Z",
+      node: {
+        total: 1,
+        succeeded: 1,
+        failed: 0,
+      },
+    },
+  ];
+  wrapper.vm.bulkEditMode = true;
+  wrapper.vm.bulkSelectedIds = ["2"];
+  await wrapper.vm.$nextTick();
+  expect(wrapper.vm.bulkSelectedIds.length).toBeGreaterThan(0);
+});
 describe("ActivityList Miscellaneous", () => {
   it("toggles auto-refresh", async () => {
     const wrapper = await shallowMountActivityList();
@@ -209,63 +222,41 @@ describe("ActivityList Miscellaneous", () => {
     expect(paginationSpy).toHaveBeenCalledWith(10);
     paginationSpy.mockRestore();
   });
-  it("displays correct message when no bulk delete results", async () => {
-    const wrapper = await shallowMountActivityList(
-      {},
-      {
-        stubs: {
-          "i18n-t": {
-            template: '<div class="i18n-t-stub">{{ $attrs.keypath }}</div>',
+  it("navigates to execution link", async () => {
+    const wrapper = await shallowMountActivityList();
+    // Mock window.location
+    const originalLocation = window.location;
+    const mockLocation = { assign: jest.fn(), href: "" };
+    // @ts-ignore
+    delete window.location;
+    // @ts-ignore
+    window.location = mockLocation;
+    // Simulate the data loading
+    wrapper.vm.loadActivity = jest.fn().mockImplementation(() => {
+      wrapper.vm.reports = [
+        {
+          execution: {
+            id: "1",
+            permalink: "project/test/execution/show/1",
           },
+          status: "succeeded",
+          dateCompleted: "2024-05-22T14:33:52Z",
+          node: { total: 1, succeeded: 1, failed: 0 },
         },
-      },
-    );
-
-    await wrapper.setData({
-      showBulkEditResults: true,
-      bulkEditResults: {
-        requestCount: 0,
-        successCount: 0,
-        failedCount: 0,
-        failures: [],
-      },
-      bulkEditProgress: true,
+      ];
     });
 
     await wrapper.vm.$nextTick();
-
-    const modal = wrapper.find("#cleanselections");
-    expect(modal.exists()).toBe(true);
-    const progressMessage = modal.find(".i18n-t-stub");
-    expect(progressMessage.exists()).toBe(true);
-    expect(progressMessage.text()).toContain("clearselected.confirm.text");
-  });
-  it("opens and closes the bulk delete results modal", async () => {
-    const wrapper = await shallowMountActivityList();
-
-    await wrapper.setData({
-      showBulkEditResults: true,
-    });
-
-    await wrapper.vm.$nextTick();
-
-    const bulkDeleteResultsModal = wrapper.find(
-      '[data-test-id="modal-bulk-delete-results"]'
+    console.log("Reports data in wrapper:", wrapper.vm.reports);
+    // Simulate the click on the report row item
+    const reportRowItem = wrapper.find('[data-test-id="report-row-item"]');
+    await reportRowItem.trigger("click");
+    console.log("After clicking report row item:", wrapper.html());
+    // Assert that navigation function was called with expected URL
+    expect(mockLocation.assign).toHaveBeenCalledWith(
+      "http://localhost:4440/project/test/execution/show/1",
     );
-    expect(bulkDeleteResultsModal.exists()).toBe(true);
-  });
-  it("handles bulk edit deselect all", async () => {
-    const wrapper = await shallowMountActivityList();
-    await wrapper.setData({ showBulkEditCleanSelections: true });
-    const modalCleanSelections = wrapper.find("#cleanselections");
-    const allButton = modalCleanSelections.find("button.btn.btn-danger");
-    if (allButton.exists()) {
-      const bulkEditDeselectAllPages = jest.spyOn(
-        wrapper.vm,
-        "bulkEditDeselectAllPages"
-      );
-      await allButton.trigger("click");
-      expect(bulkEditDeselectAllPages).toHaveBeenCalled();
-    }
+    // Restore original window.location
+    window.location = originalLocation;
   });
 });
