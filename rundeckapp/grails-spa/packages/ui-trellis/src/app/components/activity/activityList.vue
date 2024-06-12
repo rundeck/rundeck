@@ -342,7 +342,7 @@
               v-if="exec.job"
               v-tooltip="
                 purify(
-                  exec.job.group ? exec.job.group + '/' + exec.job.name : '',
+                  exec.job.group ? exec.job.group + '/' + exec.job.name : ''
                 )
               "
               class="eventtitle job"
@@ -391,7 +391,7 @@
         <tbody
           v-if="reports.length > 0"
           class="history-executions"
-          data-test-id="report-tbody"
+          data-test-id="report-row-item"
         >
           <tr
             v-for="rpt in reports"
@@ -437,7 +437,7 @@
                   [
                     jobCompletedISOFormat(rpt.dateCompleted),
                     jobCompletedFromNow(rpt.dateCompleted),
-                  ],
+                  ]
                 ),
                 viewport: `.ali-${rpt.execution.id}`,
               }"
@@ -599,6 +599,7 @@ import {
 import * as DOMPurify from "dompurify";
 import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
 import { EventBus } from "../../../library";
+import type { Reports } from "./tests/type";
 
 /**
  * Generate a URL
@@ -614,7 +615,7 @@ function _genUrl(url: string, params: any) {
   } else if (typeof params == "object") {
     for (const e in params) {
       urlparams.push(
-        encodeURIComponent(e) + "=" + encodeURIComponent(params[e]),
+        encodeURIComponent(e) + "=" + encodeURIComponent(params[e])
       );
     }
   }
@@ -679,7 +680,7 @@ export default defineComponent({
       projectName: "",
       activityPageHref: "",
       sinceUpdatedUrl: "",
-      reports: [],
+      reports: [] as Reports,
       running: null as null | { executions: any[]; paging: any },
       lastDate: -1,
       pagination: {
@@ -700,7 +701,7 @@ export default defineComponent({
       sincecount: 0,
       loading: false,
       loadingRunning: false,
-      loadError: null,
+      loadError: null as null | string,
       momentJobFormat: "M/DD/YY h:mm a",
       momentRunFormat: "h:mm a",
       bulkEditMode: false,
@@ -787,7 +788,7 @@ export default defineComponent({
         this.query = Object.assign(
           {},
           this.query,
-          window._rundeck.data["query"],
+          window._rundeck.data["query"]
         );
       } else {
         this.loadActivity(0);
@@ -829,7 +830,7 @@ export default defineComponent({
         const diff = moment().diff(moment(exec.dateStarted.date));
         return Math.min(
           Math.floor((diff / exec.job.averageDuration) * 100),
-          100,
+          100
         );
       }
       return 0;
@@ -1048,7 +1049,7 @@ export default defineComponent({
           params: Object.assign(
             { offset: this.pagination.offset, max: this.pagination.max },
             this.query,
-            { since: this.lastDate },
+            { since: this.lastDate }
           ),
           withCredentials: true,
         });
@@ -1117,7 +1118,7 @@ export default defineComponent({
           headers: { "x-rundeck-ajax": true },
           params: Object.assign(
             { offset: offset, max: this.pagination.max },
-            xquery,
+            xquery
           ),
           withCredentials: true,
         });
@@ -1153,7 +1154,7 @@ export default defineComponent({
         this.autorefreshtimeout = setTimeout(() => {
           const cur = new Date();
           Promise.all([this.loadRunning(), this.loadSince()]).then(() =>
-            this.checkrefresh(cur.getTime()),
+            this.checkrefresh(cur.getTime())
           );
         }, ms);
       }
