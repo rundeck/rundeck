@@ -35,3 +35,19 @@ export interface GlobalOptions {
   mocks?: Record<string, unknown>;
   directives?: Record<string, Directive>;
 }
+
+export interface Report {
+  execution: {
+    id: string;
+    permalink: string;
+  };
+  status: string;
+  dateCompleted: string;
+  node: {
+    total: number;
+    succeeded: number;
+    failed: number;
+  };
+}
+
+export type Reports = Report[];

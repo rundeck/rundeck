@@ -264,12 +264,13 @@ describe("ActivityList Miscellaneous", () => {
     const modalCleanSelections = wrapper.find("#cleanselections");
     const allButton = modalCleanSelections.find("button.btn.btn-danger");
     if (allButton.exists()) {
-      const bulkEditDeselectAllPages = jest.spyOn(
+      const bulkEditDeselectAllPagesSpy = jest.spyOn(
         wrapper.vm,
         "bulkEditDeselectAllPages"
       );
       await allButton.trigger("click");
-      expect(bulkEditDeselectAllPages).toHaveBeenCalled();
+      expect(bulkEditDeselectAllPagesSpy).toHaveBeenCalled();
+      bulkEditDeselectAllPagesSpy.mockRestore();
     }
   });
   it("renders running executions", async () => {
