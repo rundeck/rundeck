@@ -16,7 +16,7 @@ packaging_create_packages() {
 
     cd "${PACKAGING_DIR}/packaging"
     LIB_DIR="${PACKAGING_DIR}/lib"
-    ./gradlew ${GRADLE_BASE_OPTS} -PlibsDir=$LIB_DIR -PpackageRelease=$RELEASE_NUM clean packageArtifacts
+    ./gradlew ${GRADLE_BASE_OPTS} -PlibsDir=${LIB_DIR} -PpackageRelease=$RELEASE_NUM clean packageArtifacts
 }
 
 packaging_sign() {
@@ -35,9 +35,11 @@ packaging_test_packages() {
 
 packaging_publish() {
     cd "${PACKAGING_DIR}/packaging"
+    LIB_DIR="${PACKAGING_DIR}/lib"
     for PACKAGE in deb rpm; do
         ./gradlew ${GRADLE_BASE_OPTS} --info \
             -PpackagePrefix="rundeck-" \
+            -PlibsDir=${LIB_DIR} \
             -PpackageType=${PACKAGE} \
             -PpackageOrg=rundeck \
             -PpackageRevision=1 \
@@ -47,9 +49,11 @@ packaging_publish() {
 
 packaging_publish_war() {
     cd "${PACKAGING_DIR}/packaging"
+    LIB_DIR="${PACKAGING_DIR}/lib"
     ./gradlew ${GRADLE_BASE_OPTS} --info \
         -PpackageType=war \
         -PpackageOrg=rundeck \
+        -PlibsDir=${LIB_DIR} \
         -PpackageRevision=1 \
         publishWar
 }
