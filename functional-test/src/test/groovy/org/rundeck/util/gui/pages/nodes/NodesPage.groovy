@@ -33,9 +33,6 @@ class NodesPage extends BasePage {
         (el searchNodesButtonBy).click()
     }
 
-    /**
-     *
-     */
     boolean findNodeByName(String nodeName){
         (el searchNodeInputBy).clear()
         (el searchNodeInputBy).sendKeys(nodeName)
