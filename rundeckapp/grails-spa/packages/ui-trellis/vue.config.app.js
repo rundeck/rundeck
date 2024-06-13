@@ -1,6 +1,5 @@
 const Path = require("path");
 const webpack = require("webpack");
-const { VueLoaderPlugin } = require("vue-loader");
 
 const BUILD_COPYRIGHT = `© ${new Date().getFullYear()} PagerDuty, Inc. All Rights Reserved.`;
 
@@ -65,10 +64,8 @@ module.exports = {
       entry: "./src/app/pages/job/head/scm/scm-status-badge.ts",
     },
   },
-
+  publicPath: "assets/static/",
   outputDir: process.env.VUE_APP_OUTPUT_DIR,
-  publicPath: process.env.VUE_APP_PUBLIC_PATH || "auto",
-  assetsDir: process.env.VUE_APP_ASSETS_DIR || "",
   filenameHashing: false,
   parallel: true,
   css: {
@@ -102,6 +99,120 @@ module.exports = {
       .use("source-map-loader")
       .loader("source-map-loader")
       .end();
+
+    config.module.rule("images").set("generator", {
+      filename: "img/[name][ext]",
+    });
+
+    config.module.rule("svg").set("generator", {
+      filename: "img/[name][ext]",
+    });
+
+    config.module.rule("fonts").set("generator", {
+      filename: "fonts/[name][ext]",
+    });
+
+    config.module
+      .rule("css")
+      .oneOf("vue-modules")
+      .use("extract-css-loader")
+      .set("options", {
+        publicPath: "../../",
+      });
+
+    config.module
+      .rule("css")
+      .oneOf("vue")
+      .use("extract-css-loader")
+      .set("options", {
+        publicPath: "../../",
+      });
+
+    config.module
+      .rule("css")
+      .oneOf("normal-modules")
+      .use("extract-css-loader")
+      .set("options", {
+        publicPath: "../../",
+      });
+
+    config.module
+      .rule("css")
+      .oneOf("normal")
+      .use("extract-css-loader")
+      .set("options", {
+        publicPath: "../../",
+      });
+
+    config.module
+      .rule("scss")
+      .oneOf("vue")
+      .use("extract-css-loader")
+      .set("options", {
+        publicPath: "../../",
+      });
+
+    config.module
+      .rule("scss")
+      .oneOf("normal-modules")
+      .use("extract-css-loader")
+      .set("options", {
+        publicPath: "../../",
+      });
+
+    config.module
+      .rule("scss")
+      .oneOf("normal")
+      .use("extract-css-loader")
+      .set("options", {
+        publicPath: "../../",
+      });
+    //
+    // config.module
+    //   .rule("css")
+    //   .oneOf("normal")
+    //   .use("extract-css-loader")
+    //   .set("options", {
+    //     publicPath: "../../",
+    //   });
+    //
+    // config.module
+    //   .rule("scss")
+    //   .oneOf("vue")
+    //   .use("extract-css-loader")
+    //   .set("options", {
+    //     publicPath: (resourcePath, context) => {
+    //       return Path.relative(Path.dirname(resourcePath), context) + "/";
+    //     },
+    //   });
+
+    // .set("options", {
+    //   publicPath: "../../",
+    // });
+
+    // if (config.plugins.has("extract-css")) {
+    //   const extractCSSPlugin = config.plugin("extract-css");
+    //   extractCSSPlugin &&
+    //     extractCSSPlugin.tap(() => [
+    //       {
+    //         filename: "./css/[name].css",
+    //         chunkFilename: "./css/[name].css",
+    //       },
+    //     ]);
+    // }
+
+    // config.module
+    //   .rule("images")
+    //   .test(/\.(png|jpe?g|gif|webp)(\?.*)?$/)
+    //   .use("url-loader")
+    //   .loader("file-loader") // not url-loader but file-loader !
+    //   .tap((options) => {
+    //     // not .option() but .tap(options...)
+    //     // modify the options...
+    //     // options.name = "css/img/[name].[ext]";
+    //     console.log(options);
+    //     return options;
+    //   });
   },
   configureWebpack: {
     devtool: process.env.VUE_APP_DEVTOOL,
@@ -118,9 +229,11 @@ module.exports = {
         return "[name].js";
       },
       library: "rundeckCore",
+
+      // assetModuleFilename: "static/[hash][ext][query]", useless
     },
     devServer: {
-      hot: true,
+      hot: false,
       watchOptions: {
         followSymlinks: true,
       },
@@ -137,7 +250,6 @@ module.exports = {
         filename: "[file].map",
         include: [/\.css$/],
       }),
-      new VueLoaderPlugin(),
     ],
   },
   transpileDependencies: ["uiv"],
