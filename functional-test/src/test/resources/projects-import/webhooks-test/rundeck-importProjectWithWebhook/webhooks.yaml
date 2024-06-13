@@ -1,0 +1,4 @@
+webhooks:
+- {uuid: 934ab7fb-65a9-4318-a914-a9040076201e, name: importWebhook, project: importProjectWithWebhook,
+  eventPlugin: log-webhook-event, config: '{}', enabled: true, user: appadmin, roles: 'admin,user',
+  authToken: NbCPwNoYgAOMi8SsXPRx5sHwDa8jEZhx}
