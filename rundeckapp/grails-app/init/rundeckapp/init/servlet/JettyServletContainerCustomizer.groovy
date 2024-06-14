@@ -49,7 +49,6 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
         factory.addServerCustomizers(new JettyServerCustomizer() {
             @Override
             void customize(Server server) {
-                //add jmx?
                 MBeanContainer mbContainer=new MBeanContainer(ManagementFactory.getPlatformMBeanServer());
                 server.addEventListener(mbContainer);
                 server.addBean(mbContainer);
