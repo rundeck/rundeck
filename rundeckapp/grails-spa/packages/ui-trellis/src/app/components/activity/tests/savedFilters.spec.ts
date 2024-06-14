@@ -12,9 +12,6 @@ jest.mock("uiv", () => ({
     confirm: jest.fn().mockResolvedValue(true),
     prompt: jest.fn().mockResolvedValue({ value: "test" }),
   },
-  Notification: {
-    notify: jest.fn(),
-  },
 }));
 const originalFilters = [
   { filterName: "Filter 1" },
@@ -76,6 +73,7 @@ const mountSavedFilters = (
       mocks: {
         $t: (msg) => msg,
         filterStore,
+        $confirm: jest.fn().mockResolvedValue(true),
       },
       stubs: {
         btn: true,
@@ -182,14 +180,9 @@ describe("SavedFilters", () => {
         hasQuery: true,
         query: { filterName: "Filter 1" },
       });
-      wrapper.vm.deleteFilter = jest.fn().mockImplementation(() => {
-        return wrapper.vm.doDeleteFilter(wrapper.vm.query.filterName);
-      });
       await wrapper.vm.$nextTick();
       const initialCount = wrapper.findAll('[data-test="filter-item"]').length;
       await wrapper.find('[data-test-id="delete-filter-btn"]').trigger("click");
-      await wrapper.vm.$nextTick();
-      await wrapper.vm.doDeleteFilter(wrapper.vm.query.filterName);
       await wrapper.vm.$nextTick();
       const finalCount = wrapper.findAll('[data-test="filter-item"]').length;
       expect(finalCount).toBe(initialCount - 1);
