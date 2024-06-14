@@ -1,6 +1,5 @@
 const Path = require("path");
 const webpack = require("webpack");
-const { VueLoaderPlugin } = require("vue-loader");
 
 const BUILD_COPYRIGHT = `© ${new Date().getFullYear()} PagerDuty, Inc. All Rights Reserved.`;
 
@@ -65,10 +64,8 @@ module.exports = {
       entry: "./src/app/pages/job/head/scm/scm-status-badge.ts",
     },
   },
-
+  publicPath: "/assets/static/",
   outputDir: process.env.VUE_APP_OUTPUT_DIR,
-  publicPath: "auto",
-  assetsDir: "../../",
   filenameHashing: false,
   parallel: true,
   css: {
@@ -102,6 +99,49 @@ module.exports = {
       .use("source-map-loader")
       .loader("source-map-loader")
       .end();
+
+    /** adjust mini css extract loader to use a relative publicPath **/
+    config.module
+      .rule("css")
+      .oneOf("vue-modules")
+      .use("extract-css-loader")
+      .set("options", {
+        publicPath: "../../",
+      })
+      .end()
+      .oneOf("vue")
+      .use("extract-css-loader")
+      .set("options", {
+        publicPath: "../../",
+      })
+      .end()
+      .oneOf("normal-modules")
+      .use("extract-css-loader")
+      .set("options", {
+        publicPath: "../../",
+      })
+      .end()
+      .oneOf("normal")
+      .use("extract-css-loader")
+      .set("options", {
+        publicPath: "../../",
+      });
+
+    config.module
+      .rule("scss")
+      .oneOf("vue")
+      .use("extract-css-loader")
+      .set("options", {
+        publicPath: "../../",
+      });
+
+    config.module
+      .rule("scss")
+      .oneOf("normal")
+      .use("extract-css-loader")
+      .set("options", {
+        publicPath: "../../",
+      });
   },
   configureWebpack: {
     devtool: process.env.VUE_APP_DEVTOOL,
@@ -137,7 +177,6 @@ module.exports = {
         filename: "[file].map",
         include: [/\.css$/],
       }),
-      new VueLoaderPlugin(),
     ],
   },
   transpileDependencies: ["uiv"],
