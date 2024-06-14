@@ -100,32 +100,27 @@ module.exports = {
       .loader("source-map-loader")
       .end();
 
+    /** adjust mini css extract loader to use a relative publicPath **/
     config.module
       .rule("css")
       .oneOf("vue-modules")
       .use("extract-css-loader")
       .set("options", {
         publicPath: "../../",
-      });
-
-    config.module
-      .rule("css")
+      })
+      .end()
       .oneOf("vue")
       .use("extract-css-loader")
       .set("options", {
         publicPath: "../../",
-      });
-
-    config.module
-      .rule("css")
+      })
+      .end()
       .oneOf("normal-modules")
       .use("extract-css-loader")
       .set("options", {
         publicPath: "../../",
-      });
-
-    config.module
-      .rule("css")
+      })
+      .end()
       .oneOf("normal")
       .use("extract-css-loader")
       .set("options", {
@@ -142,28 +137,11 @@ module.exports = {
 
     config.module
       .rule("scss")
-      .oneOf("normal-modules")
-      .use("extract-css-loader")
-      .set("options", {
-        publicPath: "../../",
-      });
-
-    config.module
-      .rule("scss")
       .oneOf("normal")
       .use("extract-css-loader")
       .set("options", {
         publicPath: "../../",
       });
-    //
-    // config.module
-    //   .rule("css")
-    //   .oneOf("normal")
-    //   .use("extract-css-loader")
-    //   .set("options", {
-    //     publicPath: "../../",
-    //   });
-    //
   },
   configureWebpack: {
     devtool: process.env.VUE_APP_DEVTOOL,
@@ -183,8 +161,11 @@ module.exports = {
     },
     devServer: {
       hot: true,
+      // clientLogLevel: "info",
+      // disableHostCheck: true,
       watchOptions: {
         followSymlinks: true,
+        poll: true,
       },
       proxy: {
         ".": {
