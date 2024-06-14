@@ -69,11 +69,9 @@ export default defineComponent({
   props: {
     hasQuery: {
       type: Boolean,
-      required: true,
     },
     query: {
       type: Object,
-      required: true,
     },
     eventBus: {
       type: Object as PropType<typeof EventBus>,
