@@ -100,7 +100,12 @@
       <g:if test="${isSecondary}">
           <details ${hasValue ? 'open' : ''} class="details-reset more-info">
               <summary class="${groupTitleCss?:''}">
-                  ${group != '-' ? group : defaultGroupName}
+                  <stepplugin:message
+                          service="${service}"
+                          name="${provider}"
+                          code="${messagePrefix?:''}property.secondary.${group}.groupName"
+                          messagesType="${messagesType}"
+                          default="${group != '-' ? group : defaultGroupName}"/>
                   <span class="more-indicator-verbiage more-info-icon"><g:icon name="chevron-right"/></span>
                   <span class="less-indicator-verbiage more-info-icon"><g:icon name="chevron-down"/></span>
               </summary>
@@ -130,7 +135,14 @@
 
       </g:if>
       <g:else>
-          <div class="${groupTitleCss?:''}">${group!='-'?group:defaultGroupName}</div>
+          <div class="${groupTitleCss?:''}">
+              <stepplugin:message
+                      service="${service}"
+                      name="${provider}"
+                      code="${messagePrefix?:''}property.primary.${group}.groupName"
+                      messagesType="${messagesType}"
+                      default="${group != '-' ? group : defaultGroupName}"/>
+          </div>
 
           <div>
               <g:each in="${groupProps}" var="prop">
