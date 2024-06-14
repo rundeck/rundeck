@@ -161,11 +161,8 @@ module.exports = {
     },
     devServer: {
       hot: true,
-      // clientLogLevel: "info",
-      // disableHostCheck: true,
       watchOptions: {
         followSymlinks: true,
-        poll: true,
       },
       proxy: {
         ".": {
