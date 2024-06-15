@@ -2,36 +2,35 @@ import { mount, VueWrapper } from "@vue/test-utils";
 import DateFilter from "../dateFilter.vue";
 import DateTimePicker from "../dateTimePicker.vue";
 import _ from "lodash";
+import { Dropdown } from "uiv";
 
 interface MountOptions {
   props?: Record<string, unknown>;
   slots?: { default?: string };
   global?: {
     stubs?: Record<string, unknown>;
-    mocks?: Record<string, unknown>;
+    components?: Record<string, unknown>;
   };
 }
+
 const mountDateFilter = (options: MountOptions = {}): VueWrapper<any> => {
   return mount(DateFilter, {
     props: {
       modelValue: { enabled: false, datetime: "" },
       ...options.props,
     },
-
     global: {
       stubs: {
         btn: true,
         DateTimePicker: true,
-        Dropdown: {
-          template: '<div class="dropdown"><slot name="dropdown"></slot></div>',
-        },
       },
-      mocks: {
-        $t: (msg) => msg,
+      components: {
+        Dropdown,
       },
     },
   });
 };
+
 let idCounter = 0;
 describe("DateFilter", () => {
   beforeEach(() => {
@@ -83,7 +82,7 @@ describe("DateFilter", () => {
         },
       });
       await wrapper.vm.$nextTick();
-      const dateTimePicker = wrapper.findComponent({ name: "DateTimePicker" });
+      const dateTimePicker = wrapper.findComponent(DateTimePicker);
       expect(dateTimePicker.exists()).toBe(true);
       expect(dateTimePicker.props("modelValue")).toBe("2022-01-01T00:00:00");
     });
@@ -92,16 +91,13 @@ describe("DateFilter", () => {
     it("toggles enabled state when checkbox is clicked", async () => {
       const wrapper = mountDateFilter();
       const checkbox = wrapper.find('input[type="checkbox"]');
-      await checkbox.trigger("click");
-      // Manually update the enabled state after triggering the click event
-      wrapper.vm.enabled = !wrapper.vm.enabled;
+      await checkbox.setValue(true);
       await wrapper.vm.$nextTick();
-      expect(wrapper.vm.enabled).toBe(true);
-
-      await checkbox.trigger("click");
-      wrapper.vm.enabled = !wrapper.vm.enabled;
+      const dropdown = wrapper.findComponent(Dropdown);
+      expect(dropdown.exists()).toBe(true);
+      await checkbox.setValue(false);
       await wrapper.vm.$nextTick();
-      expect(wrapper.vm.enabled).toBe(false);
+      expect(dropdown.exists()).toBe(false);
     });
 
     it("updates datetime when DateTimePicker emits update:modelValue", async () => {
@@ -147,21 +143,6 @@ describe("DateFilter", () => {
       expect(emitted[0]).toEqual([
         { enabled: true, datetime: "2022-01-03T00:00:00" },
       ]);
-    });
-  });
-  describe("Event Emission", () => {
-    it("handles custom event and updates state correctly", async () => {
-      const newDate = "2022-01-02T00:00:00";
-      const wrapper = mountDateFilter({
-        props: {
-          modelValue: { enabled: true },
-        },
-      });
-      await wrapper.vm.$nextTick();
-      const dateTimePicker = wrapper.findComponent(DateTimePicker);
-      dateTimePicker.vm.$emit("update:modelValue", newDate);
-      await wrapper.vm.$nextTick();
-      expect(wrapper.vm.datetime).toBe(newDate);
     });
   });
 });
