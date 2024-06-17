@@ -167,10 +167,6 @@ class WebhooksSpec extends SeleniumBase {
         projectExportPage.exportReadmesCheckbox.click()
         projectExportPage.exportAclsCheckbox.click()
         projectExportPage.exportScmCheckbox.click()
-        projectExportPage.tourManagerCheckbox.click()
-        projectExportPage.calendarsCheckbox.click()
-        projectExportPage.scheduleDefinitionsCheckbox.click()
-        projectExportPage.nodeWizardCheckbox.click()
         // Includes auth token for webhooks
         projectExportPage.authTokensCheckbox.click()
         // Do export
