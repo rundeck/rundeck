@@ -25,10 +25,6 @@ class ProjectExportPage extends BasePage {
     By exportReadmesCheckboxBy = By.id('exportReadmes')
     By exportAclsCheckboxBy = By.id('exportAcls')
     By exportScmCheckboxBy = By.id('exportScm')
-    By tourManagerCheckboxBy = By.id('exportComponents.tours-manager')
-    By calendarsCheckboxBy = By.id('exportComponents.calendars')
-    By scheduleDefinitionsCheckboxBy = By.id('exportComponents.Schedule Definitions')
-    By nodeWizardCheckboxBy = By.id('exportComponents.node-wizard')
     By authTokensCheckboxBy = By.xpath("//*[contains(text(), 'Include Webhook Auth Tokens')]")
     By exportArchiveButtonBy = By.xpath("//button[contains(text(),'Export Archive')]")
     By btnCtaButtonBy = By.cssSelector('a.btn.btn-cta')
@@ -94,22 +90,6 @@ class ProjectExportPage extends BasePage {
 
     WebElement getExportScmCheckbox() {
         return el(exportScmCheckboxBy)
-    }
-
-    WebElement getTourManagerCheckbox() {
-        return el(tourManagerCheckboxBy)
-    }
-
-    WebElement getCalendarsCheckbox() {
-        return el(calendarsCheckboxBy)
-    }
-
-    WebElement getScheduleDefinitionsCheckbox() {
-        return el(scheduleDefinitionsCheckboxBy)
-    }
-
-    WebElement getNodeWizardCheckbox() {
-        return el(nodeWizardCheckboxBy)
     }
 
     WebElement getAuthTokensCheckbox() {
