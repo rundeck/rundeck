@@ -18,7 +18,7 @@ jest.mock("axios", () => axiosMock);
 type ActivityListInstance = InstanceType<typeof ActivityList>;
 const shallowMountActivityList = async (
   props = {},
-  globalOptions: GlobalOptions = {},
+  globalOptions: GlobalOptions = {}
 ) => {
   const wrapper = shallowMount(ActivityList, {
     props: {
@@ -94,7 +94,7 @@ describe("ActivityList Component", () => {
   it("renders the filter button", async () => {
     const wrapper = await shallowMountActivityList();
     const filterButton = wrapper.find(
-      '[data-test-id="activity-list-filter-button"]',
+      '[data-test-id="activity-list-filter-button"]'
     );
     expect(filterButton.exists()).toBe(true);
   });
@@ -146,7 +146,7 @@ describe("ActivityList Bulk Edit Modals", () => {
     await wrapper.vm.$nextTick();
 
     const deleteSelectedExecutionsButton = wrapper.find(
-      '[data-test-id="activity-list-delete-selected-executions"]',
+      '[data-test-id="activity-list-delete-selected-executions"]'
     );
     await deleteSelectedExecutionsButton.trigger("click");
     await wrapper.vm.$nextTick();
@@ -161,7 +161,7 @@ describe("ActivityList Bulk Edit Modals", () => {
       .mockReturnValue(true);
 
     const bulkDeleteResults = wrapper.find(
-      '[data-test-id="modal-bulk-delete-results"]',
+      '[data-test-id="modal-bulk-delete-results"]'
     );
     expect(bulkDeleteResults.exists()).toBe(true);
     // Restore the original implementation
@@ -207,5 +207,38 @@ describe("ActivityList Miscellaneous", () => {
     await wrapper.vm.$nextTick();
     expect(paginationSpy).toHaveBeenCalledWith(10);
     paginationSpy.mockRestore();
+  });
+  it("navigates to execution link", async () => {
+    const wrapper = await shallowMountActivityList();
+    const originalLocation = window.location;
+    const mockLocation = { href: "", assign: jest.fn() };
+    // @ts-ignore
+    delete window.location;
+    // @ts-ignore
+    window.location = mockLocation;
+    wrapper.vm.reports = [
+      {
+        execution: {
+          id: "1",
+          permalink: "http://localhost:4440/project/test/execution/show/1",
+        },
+        status: "succeeded",
+        dateCompleted: "2024-05-22T14:33:52Z",
+        node: { total: 1, succeeded: 1, failed: 0 },
+      },
+    ];
+    await wrapper.vm.$nextTick();
+    console.log("Reports data in wrapper:", wrapper.vm.reports);
+    const reportRowItem = wrapper.find('[data-test-id="report-row-item"]');
+    if (reportRowItem.exists()) {
+      await reportRowItem.trigger("click");
+      console.log("After clicking report row item:", wrapper.html());
+    }
+    // Assert that navigation function was called with expected URL
+    expect(mockLocation.assign).toHaveBeenCalledWith(
+      "http://localhost:4440/project/test/execution/show/1"
+    );
+    // Restore original window.location
+    window.location = originalLocation;
   });
 });

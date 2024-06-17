@@ -391,7 +391,7 @@
         <tbody
           v-if="reports.length > 0"
           class="history-executions"
-          data-test-id="report-row-item"
+          data-test-id="report-rows-item"
         >
           <tr
             v-for="rpt in reports"
