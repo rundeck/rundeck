@@ -68,8 +68,7 @@ class FileUrlScriptStepSpec extends BaseContainer{
                 WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
         )
         String execId = json.id
-        ExecutionOutput execOutput = getExecutionOutput(execId)
-        def entries = execOutput.entries.stream().map {it.log}.collect(Collectors.toList())
+        def entries = getExecutionOutput(execId)
         entries.contains("Hello, World!")
 
     }
