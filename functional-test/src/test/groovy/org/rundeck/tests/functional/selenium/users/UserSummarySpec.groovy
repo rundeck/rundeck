@@ -18,7 +18,7 @@ class UserSummarySpec extends SeleniumBase {
         def userSummaryPage = page UserSummaryPage
 
         and: "Login with the first user"
-        loginPage.login("user", "user")
+        loginPage.login("user", "user123")
 
         and: "Log out the first user"
         topMenuPage.logOut()
@@ -45,7 +45,7 @@ class UserSummarySpec extends SeleniumBase {
         def loggedOutPage = page LoggedOutPage
 
         and: "Login with the first user"
-        loginPage.login("user", "user")
+        loginPage.login("user", "user123")
 
         and: "Log out the first user"
         topMenuPage.logOut()
