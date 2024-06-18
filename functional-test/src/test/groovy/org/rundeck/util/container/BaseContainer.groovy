@@ -24,7 +24,7 @@ import java.util.stream.Collectors
  */
 @CompileStatic
 @Slf4j
-class BaseContainer extends Specification implements ClientProvider {
+abstract class BaseContainer extends Specification implements ClientProvider {
     public static final String PROJECT_NAME = 'test'
     private static RdContainer RUNDECK
     private static final Object LOCK = new Object()
@@ -167,7 +167,7 @@ class BaseContainer extends Specification implements ClientProvider {
         tempFile.delete()
     }
 
-    List<String> getExecutionOutput(String execId){
+    List getExecutionOutput(String execId){
         def mapper = new ObjectMapper()
         def execOutputResponse = client.doGetAcceptAll("/execution/${execId}/output")
         ExecutionOutput execOutput = mapper.readValue(execOutputResponse.body().string(), ExecutionOutput.class)
