@@ -13,7 +13,7 @@ class TokenSpec extends SeleniumBase{
         loginPage.login(TEST_USER, TEST_PASS)
     }
 
-    def "validate default token duration is 0"() {
+    def "validate default token duration and modification"() {
         when: "User navigates to the User Profile Page and generates a token"
         def userProfilePage = go UserProfilePage
         userProfilePage.waitForElementToBeClickable(userProfilePage.genTokenButton)
@@ -32,18 +32,14 @@ class TokenSpec extends SeleniumBase{
 
         and: "The token's time until expiration should be shown as '29d'"
         userProfilePage.waitForElementVisible(userProfilePage.timeUntil)
-        userProfilePage.timeUntil.getText().contains("29d")
+        assert userProfilePage.timeUntil.getText().contains("29d")
 
         and: "User deletes the generated token"
         userProfilePage.deleteTokenButton.click()
         userProfilePage.waitForElementToBeClickable(userProfilePage.modalDeleteInput)
         userProfilePage.modalDeleteInput.submit()
-    }
 
-    def "validate default token duration can be modified"() {
-        when: "User navigates to the User Profile Page and generates a token"
-        def userProfilePage = go UserProfilePage
-        userProfilePage.waitForElementToBeClickable(userProfilePage.genTokenButton)
+        when: "User navigates to the User Profile Page and generates another token"
         userProfilePage.genTokenButton.click()
         userProfilePage.waitForElementVisible(userProfilePage.modalGenerateNewTokenHeader)
 
@@ -51,6 +47,7 @@ class TokenSpec extends SeleniumBase{
         userProfilePage.tokenNameInput.clear()
         userProfilePage.tokenNameInput.sendKeys("TEST_TOKEN_2")
         userProfilePage.waitForTextToBePresentInElement(userProfilePage.tokenTimeInput, "0")
+        userProfilePage.tokenTimeInput.clear() // Clear the input before setting new value
         userProfilePage.tokenTimeInput.sendKeys("50m")
         userProfilePage.modalGenerateTokenBtnBy.click()
         userProfilePage.waitForElementToBeClickable(userProfilePage.modalCloseBtn)
@@ -58,6 +55,11 @@ class TokenSpec extends SeleniumBase{
 
         and: "The token's time until expiration should show 'm' (minutes)"
         userProfilePage.waitForElementVisible(userProfilePage.timeUntil)
-        userProfilePage.timeUntil.getText().contains("m")
+        assert userProfilePage.timeUntil.getText().contains("m")
+
+        and: "User deletes the modified token"
+        userProfilePage.deleteTokenButton.click()
+        userProfilePage.waitForElementToBeClickable(userProfilePage.modalDeleteInput)
+        userProfilePage.modalDeleteInput.submit()
     }
 }
