@@ -139,14 +139,16 @@ class WebhooksSpec extends SeleniumBase {
         webhookPage.go()
         webhookPage.validatePage()
         webhookPage.waitForElementToBeClickable(webhookPage.createWebhookButton)
-        webhookPage.createWebhookButton.click()
-        webhookPage.nameFormField.clear()
-        webhookPage.nameFormField.sendKeys(webhookName)
-        webhookPage.handlerConfigTab.click()
-        webhookPage.chooseWebhookPlugin.click()
-        webhookPage.waitForNumberOfElementsToBe(webhookPage.logEventsBy, 1)
-        webhookPage.logEventsPlugin.click()
-        webhookPage.saveButton.click()
+        if (!containsName(webhookPage, webhookName)) {
+            webhookPage.createWebhookButton.click()
+            webhookPage.nameFormField.clear()
+            webhookPage.nameFormField.sendKeys(webhookName)
+            webhookPage.handlerConfigTab.click()
+            webhookPage.chooseWebhookPlugin.click()
+            webhookPage.waitForNumberOfElementsToBe(webhookPage.logEventsBy, 1)
+            webhookPage.logEventsPlugin.click()
+            webhookPage.saveButton.click()
+        }
     }
 
     /**
