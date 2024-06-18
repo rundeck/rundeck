@@ -3,10 +3,13 @@ package org.rundeck.tests.functional.api.workflowSteps
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.util.annotations.APITest
+import org.rundeck.util.api.responses.execution.ExecutionOutput
 import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.execution.ExecutionStatus
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.BaseContainer
+
+import java.util.stream.Collectors
 
 @APITest
 class FileUrlScriptStepSpec extends BaseContainer{
@@ -54,6 +57,8 @@ class FileUrlScriptStepSpec extends BaseContainer{
         when:
 
         def json = client.jsonValue(response.body(), Map)
+
+        then:
         def exec= JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 json.id as String,
@@ -62,8 +67,10 @@ class FileUrlScriptStepSpec extends BaseContainer{
                 WaitingTime.MODERATE.milliSeconds,
                 WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
         )
-        then:
-        exec.status==ExecutionStatus.SUCCEEDED.state
+        String execId = json.id
+        ExecutionOutput execOutput = getExecutionOutput(execId)
+        def entries = execOutput.entries.stream().map {it.log}.collect(Collectors.toList())
+        entries.contains("Hello, World!")
 
     }
 
@@ -84,6 +91,8 @@ class FileUrlScriptStepSpec extends BaseContainer{
         when:
 
         def json = client.jsonValue(response.body(), Map)
+
+        then:
         def exec= JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 json.id as String,
@@ -92,8 +101,9 @@ class FileUrlScriptStepSpec extends BaseContainer{
                 WaitingTime.MODERATE.milliSeconds,
                 WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
         )
-        then:
-        exec.status==ExecutionStatus.SUCCEEDED.state
+        String execId = json.id
+        def entries = getExecutionOutput(execId)
+        entries.contains("Hello, World!")
 
     }
 }
