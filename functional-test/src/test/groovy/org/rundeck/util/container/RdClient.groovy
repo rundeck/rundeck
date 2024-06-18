@@ -39,10 +39,10 @@ class RdClient {
                 baseUrl,
                 new OkHttpClient.Builder().
                         addInterceptor(new HeaderInterceptor("X-Rundeck-Auth-token", apiToken)).
-                        connectTimeout(25, TimeUnit.SECONDS).
-                        readTimeout(25, TimeUnit.SECONDS).
-                        writeTimeout(25, TimeUnit.SECONDS).
-                        connectionPool(new ConnectionPool(2, 25, TimeUnit.SECONDS)).
+                        connectTimeout(360, TimeUnit.SECONDS).
+                        readTimeout(360, TimeUnit.SECONDS).
+                        writeTimeout(360, TimeUnit.SECONDS).
+                        connectionPool(new ConnectionPool(10, 360, TimeUnit.SECONDS)).
                         build()
         )
     }
