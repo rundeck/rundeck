@@ -1,10 +1,12 @@
 package org.rundeck.util.container
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
+import org.rundeck.util.api.storage.KeyStorageApiClient
 import spock.lang.Specification
 
 import java.text.SimpleDateFormat
@@ -111,6 +113,15 @@ abstract class BaseContainer extends Specification implements ClientProvider {
      */
     void setupProject(String name, String archiveFileResourcePath, Map params) {
         setupProjectArchiveFile(name,new File(getClass().getResource(archiveFileResourcePath).getPath()), params)
+    }
+
+    def loadKeysForNodes(String baseKeyPath, String project, String nodeKeyPassPhrase, String nodeUserPassword, String userVaultPassword){
+        client.doPost("/storage/keys/project/$project/ssh-node.key", new File("${baseKeyPath}/id_rsa"), "application/octet-stream")
+        client.doPost("/storage/keys/project/$project/ssh-node-passphrase.key", new File("${baseKeyPath}/id_rsa_passphrase"), "application/octet-stream")
+
+        KeyStorageApiClient keyStorageApiClient = new KeyStorageApiClient(clientProvider)
+        if(nodeKeyPassPhrase) keyStorageApiClient.callUploadKey("project/$project/ssh-node-passphrase.pass", "password", nodeKeyPassPhrase)
+        if(nodeUserPassword) keyStorageApiClient.callUploadKey("project/$project/ssh-node.pass", "password", nodeUserPassword)
     }
 
     /**
