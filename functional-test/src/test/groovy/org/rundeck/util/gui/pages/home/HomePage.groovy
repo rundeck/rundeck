@@ -21,7 +21,6 @@ class HomePage extends BasePage {
     By bodyNextUIBy = By.cssSelector('body.ui-type-next')
     By projectActionsButton = By.cssSelector('.btn-group.dropdown')
     By readmeMessageBy = By.className("markdown-body")
-    By tourLinkBy = By.className("fa-lightbulb")
 
     static final String PAGE_PATH_PROJECT = '/project/$PROJECT/home'
 
@@ -66,10 +65,6 @@ class HomePage extends BasePage {
 
     WebElement getProjectActionsButton(){
         waitPresent(projectActionsButton, 5)
-    }
-
-    WebElement getTourLink(){
-        el tourLinkBy
     }
 
     private WebElement waitPresent(By selector, Integer seconds) {
