@@ -6,22 +6,25 @@ import groovy.util.logging.Slf4j
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
+import org.rundeck.util.api.responses.execution.ExecutionOutput
 import org.rundeck.util.api.storage.KeyStorageApiClient
 import spock.lang.Specification
 
 import java.text.SimpleDateFormat
 import java.time.Duration
 import java.util.function.Consumer
+import java.util.function.Function
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
+import java.util.stream.Collectors
 
 /**
  * Base class for tests, starts a shared static container for all tests
  */
 @CompileStatic
 @Slf4j
-abstract class BaseContainer extends Specification implements ClientProvider {
+class BaseContainer extends Specification implements ClientProvider {
     public static final String PROJECT_NAME = 'test'
     private static RdContainer RUNDECK
     private static final Object LOCK = new Object()
@@ -162,6 +165,14 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         File tempFile = createArchiveJarFile(name, projectArchiveDirectory)
         setupProjectArchiveFile(name, tempFile, params)
         tempFile.delete()
+    }
+
+    List<String> getExecutionOutput(String execId){
+        def mapper = new ObjectMapper()
+        def execOutputResponse = client.doGetAcceptAll("/execution/${execId}/output")
+        ExecutionOutput execOutput = mapper.readValue(execOutputResponse.body().string(), ExecutionOutput.class)
+        def entries = execOutput.entries.stream().map {it.log}.collect(Collectors.toList())
+         return entries
     }
 
     /**
