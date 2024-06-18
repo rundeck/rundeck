@@ -14,8 +14,8 @@ import java.util.stream.Collectors
 @APITest
 class FileUrlScriptStepSpec extends BaseContainer{
 
-    public static final String TEST_PROJECT = "jsch-executor-test"
-    public static final String TEST_SSH_ARCHIVE_DIR = "/projects-import/jsch-executor-test"
+    public static final String TEST_PROJECT = "core-jsch-executor-test"
+    public static final String TEST_SSH_ARCHIVE_DIR = "/projects-import/core-jsch-executor-test"
     public static final String NODE_KEY_PASSPHRASE = "testpassphrase123"
     public static final String NODE_USER_PASSWORD  = "testpassword123"
     public static final String USER_VAULT_PASSWORD = "vault123"

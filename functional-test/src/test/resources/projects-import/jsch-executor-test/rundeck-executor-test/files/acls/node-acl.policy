@@ -1,8 +1,0 @@
-by:
-  urn: project:jsch-executor-test
-for:
-  storage:
-    - match:
-        path: 'keys/project/jsch-executor-test/.*'
-      allow: [read]
-description: Allow access to key storage
