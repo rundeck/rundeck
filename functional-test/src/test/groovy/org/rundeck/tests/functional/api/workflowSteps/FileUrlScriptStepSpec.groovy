@@ -38,6 +38,7 @@ class FileUrlScriptStepSpec extends BaseContainer{
                         "jobUuidOption": "preserve"
                 ]
         )
+        waitingResourceEnabled(TEST_PROJECT, "ssh-node")
     }
 
     def "test execute script from URL running locally"() {
