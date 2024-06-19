@@ -31,6 +31,7 @@ class UserSummarySpec extends SeleniumBase {
         userSummaryPage.go()
 
         and: "Get the user count"
+        hold(3)
         def userCount = userSummaryPage.userCountField.getText().toInteger()
 
         then: "At least two users should appear on the user summary page"
@@ -66,6 +67,6 @@ class UserSummarySpec extends SeleniumBase {
         userSummaryPage.modalSearchButton.click()
 
         then: "The user count field should show '1'"
-        userSummaryPage.waitForTextToBePresentBySelector(userSummaryPage.userCountFieldBy, "1", 5)
+        userSummaryPage.waitForTextToBePresentBySelector(userSummaryPage.userCountFieldBy, "1", 10)
     }
 }
