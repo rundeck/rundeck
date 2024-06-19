@@ -256,6 +256,25 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         }
     }
 
+    def waitingResourceEnabled(String project, String nodename){
+        def client = clientProvider.client
+        def response = client.doGet("/project/$project/resources")
+        def mapper = new ObjectMapper()
+        Map<String, Map> nodeList = mapper.readValue(response.body().string(), Map.class)
+        println(nodeList)
+        def count =0
+
+        while(nodeList.get(nodename)==null && count<5){
+            sleep(5000)
+            //force refresh project
+            client.doPutWithJsonBody("/project/$project/config/time", ["time": System.currentTimeMillis()])
+
+            response = client.doGet("/project/$project/resources")
+            nodeList = mapper.readValue(response.body().string(), Map.class)
+            count++
+        }
+    }
+
     RdClient _client
     @Override
     RdClient getClient() {
