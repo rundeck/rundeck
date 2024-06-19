@@ -3,7 +3,7 @@ ssh-node:
   hostname: ssh-node
   osFamily: unix
   username: rundeck
-  ssh-key-storage-path: keys/project/jsch-executor-test/ssh-node.key
+  ssh-key-storage-path: keys/project/core-jsch-executor-test/ssh-node.key
   node-executor: jsch-ssh
   file-copier: jsch-scp
   ssh-authentication: privateKey
@@ -17,5 +17,5 @@ password-node:
   node-executor: jsch-ssh
   file-copier: jsch-scp
   ssh-authentication: password
-  ssh-password-storage-path: keys/project/jsch-executor-test/ssh-node.pass
+  ssh-password-storage-path: keys/project/core-jsch-executor-test/ssh-node.pass
   tags: executor-test
