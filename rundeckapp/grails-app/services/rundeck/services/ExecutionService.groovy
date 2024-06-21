@@ -20,6 +20,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
 import rundeck.data.util.ExecReportUtil
+import rundeck.services.workflow.WorkflowMetricsWriterImpl
 import rundeck.support.filters.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.app.support.ExecutionQuery
@@ -1171,10 +1172,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     extraParamsExposed
             )
             Consumer<Long> checkpoint = logFileStorageService.createPeriodicCheckpoint(execution)
-
             def wfEventListener = new WorkflowEventLoggerListener(executionListener)
             def logOutFlusher = new LogFlusher()
             def logErrFlusher = new LogFlusher()
+            def wfStepMetricsListener = new WorkflowExecutionListenerStepMetrics(new WorkflowMetricsWriterImpl(metricService))
             def listenersList = [
                     contextmanager,
                     executionListener, //manages context for logging
@@ -1182,6 +1183,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     execStateListener, //updates WF execution state model
                     logOutFlusher, //flushes stdout output after node steps
                     logErrFlusher, //flush stderr output after node steps
+                    wfStepMetricsListener, //collects step metrics
                     /*new EchoExecListener() */
             ]
             def multiListener = MultiWorkflowExecutionListener.create(
