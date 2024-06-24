@@ -392,6 +392,9 @@ class BootStrap {
         metricRegistry.register(MetricRegistry.name("rundeck.scheduler.quartz","runningExecutions"),new CallableGauge<Integer>({
             quartzScheduler.getCurrentlyExecutingJobs().size()
         }))
+        metricRegistry.register(MetricRegistry.name("rundeck.scheduler.quartz","threadPoolSize"),new CallableGauge<Integer>({
+            quartzScheduler.getMetaData().threadPoolSize
+        }))
         def counter = metricRegistry.counter(MetricRegistry.name("rundeck.scheduler.quartz", "scheduledJobs"))
         quartzScheduler.getListenerManager().addSchedulerListener(new MetricsSchedulerListener(counter))
 
