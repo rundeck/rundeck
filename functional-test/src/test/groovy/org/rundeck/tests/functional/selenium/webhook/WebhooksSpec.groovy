@@ -58,6 +58,11 @@ class WebhooksSpec extends SeleniumBase {
         homePage.validatePage()
         webhookPage.loadPageForProject(projectName)
         createSimpleWebhook(webhookPage, webhookName)
+
+        then: "verifies the existence of the Webhook"
+        containsName(webhookPage, webhookName)
+
+        when: "removes the Webhook"
         webhookPage.waitForNumberOfElementsToBe(webhookPage.alertInfoBy, 0)
         removeWebhook(webhookPage, webhookName)
         webhookPage.waitForNumberOfElementsToBe(webhookPage.alertInfoBy, 0)
