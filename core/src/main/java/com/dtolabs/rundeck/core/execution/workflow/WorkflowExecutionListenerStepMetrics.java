@@ -8,9 +8,12 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class WorkflowExecutionListenerStepMetrics implements WorkflowExecutionListener {
     private final WorkflowMetricsWriter workflowMetricsWriter;
+    static Logger workflowLogger = LoggerFactory.getLogger("org.rundeck.api.workflowstatus");
 
     public WorkflowExecutionListenerStepMetrics(WorkflowMetricsWriter workflowMetricsWriter) {
         this.workflowMetricsWriter = workflowMetricsWriter;
@@ -49,10 +52,16 @@ public class WorkflowExecutionListenerStepMetrics implements WorkflowExecutionLi
 
     @Override
     public void finishStepExecution(StepExecutor executor, StatusResult result, StepExecutionContext context, StepExecutionItem item) {
-        if(result.isSuccess()){
+        if(result.isSuccess()) {
             workflowMetricsWriter.markMeterStepMetric(this.getClass().getName(), "finishWorkflowStepSucceededMeter");
-        }else{
+        } else {
             workflowMetricsWriter.markMeterStepMetric(this.getClass().getName(), "finishWorkflowStepFailedMeter");
+            if (item instanceof NodeStepExecutionItem) {
+                NodeStepExecutionItem nodeStepExecutionItem = (NodeStepExecutionItem) item;
+                logError(nodeStepExecutionItem.getNodeStepType(), context.getStepNumber());
+            } else {
+                logError(item.getType(), context.getStepNumber());
+            }
         }
     }
 
@@ -64,5 +73,9 @@ public class WorkflowExecutionListenerStepMetrics implements WorkflowExecutionLi
     @Override
     public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item, INodeEntry node) {
 
+    }
+
+    private void logError(String pluginName, Integer step) {
+        workflowLogger.error("Step {} failed: {}", step, pluginName);
     }
 }
