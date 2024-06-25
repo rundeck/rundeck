@@ -8,6 +8,7 @@
             filter-key="tags"
             :filter-val="tag[0]"
             @nodefilterclick="filterClick"
+            data-test-id="node-hostname-filter"
           >
             <template #suffix> ({{ tag[1] }}) </template>
           </node-filter-link>
@@ -43,6 +44,7 @@
             <tbody>
               <template v-for="(node, index) in nodeSet.nodes">
                 <tr
+                  :data-test-id="'node-entry-' + index"
                   class="node_entry hover-action-holder ansicolor-on"
                   :class="{ server: node.islocal || false }"
                 >
@@ -51,6 +53,7 @@
                       class="link-quiet"
                       data-toggle="collapse"
                       :href="`#detail_${index}1`"
+                      data-test-id="node-collapse-link"
                     >
                       <i class="auto-caret text-muted"></i>
                       <span
@@ -70,6 +73,7 @@
                             styleForIcon(node.attributes),
                             'margin-right: 4px',
                           ]"
+                          data-test-id="node-icon"
                         >
                           <i
                             v-if="node.attributes['ui:icon:name']"
@@ -79,7 +83,7 @@
                           ></i>
                           <i v-else class="fas fa-hdd"></i>
                         </span>
-                        <span>
+                        <span data-test-id="node-name">
                           {{ node.nodename }}
                         </span>
                       </span>
@@ -138,13 +142,14 @@
                         </span>
                       </span>
                       <span v-else>
-                        <span>
+                        <span :data-test-id="'node-attribute-' + filter">
                           {{ node.attributes[filter] }}
                         </span>
                         <node-filter-link
                           class="textbtn textbtn-info"
                           :filter-key="filter"
                           :filter-val="node.attributes[filter]"
+                          :data-test-id="'node-attribute-link-' + filter"
                           @nodefilterclick="filterClick"
                         >
                           <i
