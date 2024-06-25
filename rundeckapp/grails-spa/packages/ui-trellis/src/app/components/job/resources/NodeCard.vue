@@ -186,7 +186,11 @@
           class="tab-pane"
           :class="{ active: nodeFilterStore.filter }"
         >
-          <div id="nodeview" class="clear matchednodes">
+          <div
+            id="nodeview"
+            class="clear matchednodes"
+            data-test-id="node-view"
+          >
             <NodeTable
               :node-set="nodeSet"
               :filter-columns="filterColumns"
@@ -197,6 +201,7 @@
               :page="page"
               :filter-all="filterAll"
               :filter="nodeFilterStore.filter"
+              data-test-id="node-table"
               @filter="saveFilter"
               @change-page="updatePage"
               @change-paging-max="updatePagingMax"
@@ -383,7 +388,7 @@ export default defineComponent({
           params,
           getAppLinks().frameworkNodesQueryAjax
         );
-
+        console.log("Fetched nodes:", data);
         this.nodeSet = {
           nodes: data.allnodes,
           tagsummary: data.tagsummary,
@@ -393,6 +398,7 @@ export default defineComponent({
         this.truncated = data.truncated;
         this.colKeys = data.colkeys;
         this.maxShown = data.max;
+        console.log("Node set:", this.nodeSet);
       } catch (e) {
         this.error = e.message;
       } finally {
