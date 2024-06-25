@@ -1,21 +1,7 @@
+import messages from "../../../../../src/app/utilities/locales/en_US";
 export const i18nMocks = {
   $t: (msg) => {
-    const translations = {
-      "error.message.0": "An Error Occurred",
-      "results.empty.text": "No results for the query",
-      "bulkresult.attempted.text": " Executions were attempted.",
-      "pagination.of": "of",
-      "Auto refresh": "Auto refresh",
-      "bulk.selected.count": "selected",
-      "select.all": "Select All",
-      "select.none": "Select None",
-      "delete.selected.executions": "Delete Selected Executions",
-      "cancel.bulk.delete": "Cancel Bulk Delete",
-      "bulk.delete": "Bulk Delete",
-      "clearselected.confirm.text":
-        "Clear all {0} selected items, or only items shown on this page?",
-    };
-    return translations[msg] || msg;
+    return messages[msg] || msg;
   },
   $tc: (msg, count) => {
     const translations = {
@@ -29,19 +15,16 @@ export const i18nMocks = {
     return translations[msg] || msg;
   },
 };
-
 export const rundeckServiceMock = {
   getRundeckContext: jest.fn().mockReturnValue({ projectName: "test" }),
   url: jest.fn().mockImplementation((path) => `http://localhost${path}`),
 };
-
 export const rundeckClientMock = {
   RundeckBrowser: jest.fn().mockImplementation(() => ({
     executionBulkDelete: jest.fn().mockResolvedValue({ allsuccessful: true }),
     executionListRunning: jest.fn().mockResolvedValue({ executions: [] }),
   })),
 };
-
 export const axiosMock = {
   get: jest.fn(),
   post: jest.fn(),

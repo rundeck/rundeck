@@ -4,22 +4,19 @@ import {
   axiosMock,
   i18nMocks,
   mockEventBus,
-} from "./mock";
+} from "../mocks/mock";
 import { shallowMount, VueWrapper } from "@vue/test-utils";
 import ActivityList from "../activityList.vue";
 import ActivityFilter from "../activityFilter.vue";
 import OffsetPagination from "../../../../library/components/utils/OffsetPagination.vue";
-import { setupRundeckContext } from "./setupRundeckContext";
-import { GlobalOptions } from "./type";
-
+import { setupRundeckContext } from "../mocks/setupRundeckContext";
 jest.mock("../../../../library/rundeckService", () => rundeckServiceMock);
-
 jest.mock("@rundeck/client", () => rundeckClientMock);
 jest.mock("axios", () => axiosMock);
 type ActivityListInstance = InstanceType<typeof ActivityList>;
 const shallowMountActivityList = async (
   props = {},
-  globalOptions: GlobalOptions = {},
+  options: Record<string, any> = {}, // Use a more generic type for options
 ) => {
   const wrapper = shallowMount(ActivityList, {
     props: {
@@ -32,21 +29,25 @@ const shallowMountActivityList = async (
         OffsetPagination,
         ActivityFilter,
       },
+      stubs: {
+        modal: true,
+        "i18n-t": true,
+        btn: true,
+        ProgressBar: true,
+      },
       mocks: {
         ...i18nMocks,
-        ...globalOptions.mocks,
+        ...options.mocks, // Use the generic options object
       },
       directives: {
         tooltip: () => {},
       },
-
-      ...globalOptions,
+      ...options, // Spread the generic options object
     },
   });
   await wrapper.vm.$nextTick();
   return wrapper as VueWrapper<ActivityListInstance>;
 };
-
 beforeAll(() => {
   jest.useFakeTimers();
   setupRundeckContext();
