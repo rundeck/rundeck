@@ -1,18 +1,23 @@
 package org.rundeck.util.container
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
+import org.rundeck.util.api.responses.execution.ExecutionOutput
+import org.rundeck.util.api.storage.KeyStorageApiClient
 import spock.lang.Specification
 
 import java.text.SimpleDateFormat
 import java.time.Duration
 import java.util.function.Consumer
+import java.util.function.Function
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
+import java.util.stream.Collectors
 
 /**
  * Base class for tests, starts a shared static container for all tests
@@ -113,6 +118,20 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         setupProjectArchiveFile(name,new File(getClass().getResource(archiveFileResourcePath).getPath()), params)
     }
 
+    def loadKeysForNodes(String baseKeyPath, String project, String nodeKeyPassPhrase, String nodeUserPassword, String userVaultPassword){
+        client.doPost("/storage/keys/project/$project/ssh-node.key", new File("${baseKeyPath}/id_rsa"), "application/octet-stream")
+        client.doPost("/storage/keys/project/$project/ssh-node-passphrase.key", new File("${baseKeyPath}/id_rsa_passphrase"), "application/octet-stream")
+        if(nodeKeyPassPhrase) loadKey("project/$project/ssh-node-passphrase.pass", nodeKeyPassPhrase, "password")
+        if(nodeUserPassword) loadKey("project/$project/ssh-node.pass", nodeUserPassword, "password")
+        if(userVaultPassword) loadKey("project/$project/vault-user.pass", userVaultPassword, "password")
+
+    }
+
+    def loadKey(String path, String dbPass, String keyType){
+        KeyStorageApiClient keyStorageApiClient = new KeyStorageApiClient(clientProvider)
+        keyStorageApiClient.callUploadKey(path, keyType, dbPass)
+    }
+
     /**
      * Setup a project with a project archive directory resource path
      * @param name
@@ -151,6 +170,14 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         File tempFile = createArchiveJarFile(name, projectArchiveDirectory)
         setupProjectArchiveFile(name, tempFile, params)
         tempFile.delete()
+    }
+
+    List getExecutionOutput(String execId){
+        def mapper = new ObjectMapper()
+        def execOutputResponse = client.doGetAcceptAll("/execution/${execId}/output")
+        ExecutionOutput execOutput = mapper.readValue(execOutputResponse.body().string(), ExecutionOutput.class)
+        def entries = execOutput.entries.stream().map {it.log}.collect(Collectors.toList())
+         return entries
     }
 
     /**
@@ -226,6 +253,25 @@ abstract class BaseContainer extends Specification implements ClientProvider {
                     }
                 }
             }
+        }
+    }
+
+    def waitingResourceEnabled(String project, String nodename){
+        def client = clientProvider.client
+        def response = client.doGet("/project/$project/resources")
+        def mapper = new ObjectMapper()
+        Map<String, Map> nodeList = mapper.readValue(response.body().string(), Map.class)
+        println(nodeList)
+        def count =0
+
+        while(nodeList.get(nodename)==null && count<5){
+            sleep(5000)
+            //force refresh project
+            client.doPutWithJsonBody("/project/$project/config/time", ["time": System.currentTimeMillis()])
+
+            response = client.doGet("/project/$project/resources")
+            nodeList = mapper.readValue(response.body().string(), Map.class)
+            count++
         }
     }
 
