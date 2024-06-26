@@ -4175,16 +4175,22 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
             if (result.error == 'unauthorized') {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                         code: 'api.error.item.unauthorized', args: ['Execute', 'Job ID', jobid]])
+            } else if (result.error=='disabled') {
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                                                               code: 'api.error.job.disabled', message: result.message])
             } else if (result.error=='invalid') {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                         code: 'api.error.job.options-invalid', args: [result.message]])
+            } else if (result.error=='failed') {
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                                                               code: 'api.error.execution.failed', args: [result.message]])
             } else if (result.error=='conflict') {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_CONFLICT,
                         code: 'api.error.execution.conflict', args: [result.message]])
             } else {
                 //failed
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                        code: 'api.error.execution.failed', args: [result.message]])
+                        code: 'api.error.execution.error', args: [result.message]])
             }
         }
         def e = result.execution
@@ -5312,13 +5318,19 @@ For Content-Type: `multipart/form-data`
             if (results.error == 'unauthorized') {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                         code: 'api.error.item.unauthorized', args: ['Execute', 'Adhoc', 'Command']])
+            } else if (results.error=='disabled') {
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                                                               code: 'api.error.job.disabled', args: [results.message]])
             } else if (results.error == 'invalid') {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                         code: 'api.error.execution.invalid', args: [errors.join(", ")]])
+            } else if (results.error=='failed') {
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                                                               code: 'api.error.execution.failed', args: [results.message]])
             } else {
                 //failed
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                        code: 'api.error.execution.failed', args: [errors.join(", ")]])
+                        code: 'api.error.execution.error', args: [errors.join(", ")]])
             }
         } else {
             def controller = this
