@@ -687,3 +687,8 @@ workflows:
           gradle-task: pluginBlocklistTest
           <<: *require-build
           <<: *slack-defaults
+      - test-gradle-functional:
+          name: Test Feature NewLocalExec
+          gradle-task: apiTestNewLocal
+          <<: *require-build
+          <<: *slack-defaults

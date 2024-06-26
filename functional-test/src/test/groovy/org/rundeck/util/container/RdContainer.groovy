@@ -24,7 +24,12 @@ class RdContainer extends DockerComposeContainer<RdContainer> implements ClientP
     public static final String TEST_RUNDECK_GRAILS_URL = System.getenv("TEST_RUNDECK_GRAILS_URL") ?: "http://localhost:4440"
 
 
-    RdContainer(URI composeFilePath) {
+    /**
+     *
+     * @param composeFilePath
+     * @param featureName an optional feature name to enable
+     */
+    RdContainer(URI composeFilePath, String featureName) {
 
         super(new File(composeFilePath))
         if (CONTEXT_PATH && !CONTEXT_PATH.startsWith('/')) {
@@ -34,6 +39,7 @@ class RdContainer extends DockerComposeContainer<RdContainer> implements ClientP
         withEnv("TEST_IMAGE", RUNDECK_IMAGE)
         withEnv("LICENSE_LOCATION", LICENSE_LOCATION)
         withEnv("TEST_RUNDECK_GRAILS_URL", TEST_RUNDECK_GRAILS_URL)
+        withEnv("TEST_RUNDECK_FEATURE_NAME", featureName ?: 'placeholderFeatureName')
         withLogConsumer(DEFAULT_SERVICE_TO_EXPOSE, new Slf4jLogConsumer(log))
         waitingFor(DEFAULT_SERVICE_TO_EXPOSE,
                 Wait.forHttp("${CONTEXT_PATH}/api/14/system/info")

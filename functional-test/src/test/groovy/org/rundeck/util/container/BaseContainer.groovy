@@ -55,11 +55,15 @@ abstract class BaseContainer extends Specification implements ClientProvider {
             }
         } else if (RUNDECK == null && DEFAULT_DOCKERFILE_LOCATION == null) {
             synchronized (LOCK) {
+                String featureName = System.getProperty("TEST_FEATURE_ENABLED_NAME")
                 log.info("Starting testcontainer: ${getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI()}")
                 log.info("Starting testcontainer: RUNDECK_IMAGE: ${RdContainer.RUNDECK_IMAGE}")
                 log.info("Starting testcontainer: LICENSE_LOCATION: ${RdContainer.LICENSE_LOCATION}")
                 log.info("Starting testcontainer: TEST_RUNDECK_GRAILS_URL: ${RdContainer.TEST_RUNDECK_GRAILS_URL}")
-                RUNDECK = new RdContainer(getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI())
+                RUNDECK = new RdContainer(
+                    getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI(),
+                    featureName
+                )
                 RUNDECK.start()
                 CLIENT_PROVIDER = RUNDECK
             }
