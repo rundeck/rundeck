@@ -262,7 +262,7 @@ class JobExecutionSpec extends BaseContainer {
         assert disabledJobsResponse.successful
 
         def jobExecResponseFor1AfterDisable = JobUtils.executeJob(job1Id, client)
-        assert jobExecResponseFor1AfterDisable.code() == 500 // bc execs are disabled
+        assert jobExecResponseFor1AfterDisable.code() == 400 // bc execs are disabled
 
         def executionsForJob1AfterDisable = doGet("/job/${job1Id}/executions")
         JobExecutionsResponse parsedExecutionsResponseForExecution1AfterDisable = mapper.readValue(executionsForJob1AfterDisable.body().string(), JobExecutionsResponse.class)
@@ -364,10 +364,10 @@ class JobExecutionSpec extends BaseContainer {
         assert disabledJobsResponse.successful
 
         def jobExecResponseFor1AfterDisable = JobUtils.executeJob(job1Id, client)
-        assert jobExecResponseFor1AfterDisable.code() == 500 // bc execs are disabled
+        assert jobExecResponseFor1AfterDisable.code() == 400 // bc execs are disabled
 
         def jobExecResponseFor2AfterDisable = JobUtils.executeJob(job2Id, client)
-        assert jobExecResponseFor2AfterDisable.code() == 500  // bc execs are disabled
+        assert jobExecResponseFor2AfterDisable.code() == 400  // bc execs are disabled
 
         def executionsForJob1AfterDisable = doGet("/job/${job1Id}/executions")
         JobExecutionsResponse parsedExecutionsResponseForExecution1AfterDisable = mapper.readValue(executionsForJob1AfterDisable.body().string(), JobExecutionsResponse.class)
