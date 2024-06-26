@@ -1,14 +1,13 @@
 import { mount, VueWrapper } from "@vue/test-utils";
 import NodeCard from "../NodeCard.vue";
 import NodeFilterLink from "../NodeFilterLink.vue";
-import NodeTable from "../NodeTable.vue";
 import NodeDetailsSimple from "../NodeDetailsSimple.vue";
-
 import * as nodeServices from "../services/nodeServices";
 import {
   getNodeSummary as mockGetNodeSummary,
   getNodes as mockGetNodes,
 } from "../services/nodeServices";
+
 function createMockEventBus() {
   return {
     on: jest.fn(),
@@ -93,6 +92,8 @@ const mountNodeCard = async (propsData = {}): Promise<VueWrapper<any>> => {
         $tc: (msg) => msg,
       },
       stubs: {
+        btn: true,
+        dropdown: true,
         NodeStatus: {
           template: `<span><i :class="node.attributes['ui:status:icon']" class="node-status-icon"></i><span v-if="showText" class="node-status-text">{{ node.attributes['ui:status:text'] }}</span></span>`,
           props: ["node", "showText"],

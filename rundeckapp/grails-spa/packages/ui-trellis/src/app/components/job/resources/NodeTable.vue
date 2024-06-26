@@ -7,8 +7,8 @@
             class="label label-muted link-quiet"
             filter-key="tags"
             :filter-val="tag[0]"
+            data-test-id="node-tag-link"
             @nodefilterclick="filterClick"
-            data-test-id="node-hostname-filter"
           >
             <template #suffix> ({{ tag[1] }}) </template>
           </node-filter-link>
@@ -94,12 +94,14 @@
                       style="margin: 0 5px"
                       filter-key="name"
                       :filter-val="node.nodename!"
+                      data-test-id="node-name-filter"
                       @nodefilterclick="filterClick"
                     >
                       <i class="glyphicon glyphicon-circle-arrow-right"></i>
                     </node-filter-link>
 
-                    <span class="nodedesc"></span>
+                    <span class="nodedesc" data-test-id="node-badge"></span>
+
                     <span class="text-strong">
                       <i
                         v-for="badge in glyphiconBadges(node.attributes)"
@@ -107,21 +109,26 @@
                         :key="badge"
                         :class="glyphiconForName(badge)"
                       ></i>
-                      <span>
+                      <span data-test-id="node-description">
                         {{ node.attributes.description }}
                       </span>
                     </span>
                     <span
                       :class="statusIconCss(node.attributes)"
                       :style="statusIconStyle(node.attributes)"
+                      data-test-id="node-status"
                     >
                       <i
                         v-if="node.attributes['ui:status:icon']"
                         :class="
                           glyphiconForName(node.attributes['ui:status:icon'])
                         "
+                        data-test-id="node-status-icon"
                       ></i>
-                      <span v-if="node.attributes['ui:status:text']">
+                      <span
+                        v-if="node.attributes['ui:status:text']"
+                        data-test-id="node-status-text"
+                      >
                         {{ node.attributes["ui:status:text"] }}
                       </span>
                     </span>
@@ -136,6 +143,7 @@
                               class="label label-muted link-quiet"
                               filter-key="tags"
                               :filter-val="tag"
+                              data-test-id="node-tag-link"
                               @nodefilterclick="filterClick"
                             ></node-filter-link>
                           </span>
@@ -170,6 +178,7 @@
                               style="margin-right: 2px"
                               filter-key="tags"
                               :filter-val="tag"
+                              data-test-id="node-tag-link"
                               @nodefilterclick="filterClick"
                             ></node-filter-link>
                           </span>
@@ -182,6 +191,7 @@
                           class="link-quiet"
                           filter-key="username"
                           :filter-val="node.attributes.username"
+                          data-test-id="node-username-filter"
                           @nodefilterclick="filterClick"
                         ></node-filter-link>
                         <span class="atsign">@</span>
@@ -193,6 +203,7 @@
                           class="link-quiet"
                           filter-key="hostname"
                           :filter-val="node.attributes.hostname"
+                          data-test-id="node-hostname-filter"
                           @nodefilterclick="filterClick"
                         ></node-filter-link>
                       </span>
@@ -250,6 +261,7 @@
                       :tags="node.tags || []"
                       :node-columns="true"
                       :filter-columns="filterColumns"
+                      data-test-id="node-details-simple"
                       @filter="filterClick"
                     />
                   </td>
