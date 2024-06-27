@@ -16,6 +16,7 @@ class SideBarPage extends BasePage {
     String loadPath = ""
 
     By projectSettings = By.id("nav-project-settings")
+    By projectSettingsExportArchive = By.id("nav-project-settings-export-archive")
     By navContainer = By.cssSelector('.navbar__item-container.active')
     By isOverflow = By.id("overflow")
 
@@ -37,6 +38,10 @@ class SideBarPage extends BasePage {
 
     WebElement getProjectSettingsField() {
         el projectSettings
+    }
+
+    WebElement getProjectSettingsExportArchiveField() {
+        el projectSettingsExportArchive
     }
 
     WebElement getOverflowField() {

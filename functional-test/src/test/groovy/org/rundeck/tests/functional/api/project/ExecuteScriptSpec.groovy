@@ -107,9 +107,8 @@ class ExecuteScriptSpec extends BaseContainer{
                 WaitingTime.MODERATE.milliSeconds / 1000 as int
         )
         assert readJobSucceeded.status == ExecutionStatus.SUCCEEDED.state
-        def execOutputResponse = client.doGetAcceptAll("/execution/$readJobRunResponse.id/output")
-        ExecutionOutput execOutput = mapper.readValue(execOutputResponse.body().string(), ExecutionOutput.class)
-        def entries = execOutput.entries.stream().map {it.log}.collect(Collectors.toList())
+        String execId = readJobRunResponse.id
+        def entries = getExecutionOutput(execId)
 
         //Extract local nodename, this name have to be the only line in output file
         def systemInfoResponse = doGet("/system/info")

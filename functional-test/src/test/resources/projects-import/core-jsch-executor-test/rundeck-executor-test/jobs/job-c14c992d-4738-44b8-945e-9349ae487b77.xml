@@ -1,0 +1,36 @@
+<joblist>
+  <job>
+    <defaultTab>nodes</defaultTab>
+    <description></description>
+    <dispatch>
+      <excludePrecedence>true</excludePrecedence>
+      <keepgoing>false</keepgoing>
+      <rankOrder>ascending</rankOrder>
+      <successOnEmptyNodeFilter>false</successOnEmptyNodeFilter>
+      <threadcount>1</threadcount>
+    </dispatch>
+    <executionEnabled>true</executionEnabled>
+    <id>c14c992d-4738-44b8-945e-9349ae487b77</id>
+    <loglevel>INFO</loglevel>
+    <name>Run script through URL and filesystem on node</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <nodefilters>
+      <filter>name: ssh-node</filter>
+    </nodefilters>
+    <nodesSelectedByDefault>true</nodesSelectedByDefault>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <schedules />
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <scriptargs />
+        <scripturl>http://mock-server/helloWorld.sh</scripturl>
+      </command>
+      <command>
+        <scriptargs />
+        <scriptfile>mock-scripts/helloWorld.sh</scriptfile>
+      </command>
+    </sequence>
+    <uuid>c14c992d-4738-44b8-945e-9349ae487b77</uuid>
+  </job>
+</joblist>

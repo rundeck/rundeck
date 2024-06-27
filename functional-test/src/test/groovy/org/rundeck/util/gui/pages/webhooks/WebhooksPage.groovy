@@ -19,6 +19,11 @@ class WebhooksPage extends BasePage{
     By trashButtonBy = By.xpath("//div[contains(@id,'rule-')]//i[contains(@class,'fa-trash')]")
     By okButtonBy = By.xpath("//button[contains(.,'OK')]")
     By saveButtonBy = By.xpath("//button[contains(.,'Save')]")
+    By deleteButtonBy = By.linkText('Delete')
+    By formControl = By.className("form-control")
+    By logEventsBy = By.xpath("//li/a//*[contains(text(),'Log Events')]")
+    By webhookSelectItem = By.className('webhook-select__item')
+    By alertInfoBy = By.cssSelector(".alert.alert-info")
 
     WebhooksPage(SeleniumContext context) {
         super(context)
@@ -48,8 +53,28 @@ class WebhooksPage extends BasePage{
         return el(whHeaderBy).findElement(saveButtonBy)
     }
 
+    WebElement getDeleteButton() {
+        return el(whHeaderBy).findElement(deleteButtonBy)
+    }
+
     WebElement getAlertDanger() {
         return el(alertDangerBy)
+    }
+
+    WebElement getNameFormField() {
+        return els(formControl).get(3)
+    }
+
+    WebElement getLogEventsPlugin() {
+        return el(whEditBy).findElement(dropdownMenu).findElement(logEventsBy)
+    }
+
+    List<WebElement> getWebhookSelectItems() {
+        return els(webhookSelectItem)
+    }
+
+    WebElement getAlertInfo() {
+        return el(alertInfoBy)
     }
 
     void validatePage() {
@@ -61,4 +86,5 @@ class WebhooksPage extends BasePage{
     void loadPageForProject(String projectName){
         this.loadPath = "/webhook/admin?project=${projectName}"
     }
+
 }

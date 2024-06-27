@@ -208,6 +208,7 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-annotations"
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonDataformatCBORVersion}"
     implementation "org.eclipse.jetty:jetty-jaas"
+    implementation "org.eclipse.jetty:jetty-jmx"
     implementation "org.eclipse.jetty:jetty-util"
     implementation "org.eclipse.jetty:jetty-security"
     implementation ("org.grails.plugins:spring-security-core:${grailsSpringSecurityVersion}"){
@@ -475,10 +476,6 @@ task copySpa(type: Copy) {
         include('provided/**')
     }
     into "$projectDir/grails-app/assets"
-    from(configurations.spa){
-        include('fonts/**', 'img/**')
-        into('provided/static')
-    }
     outputs.dir "$projectDir/grails-app/assets/provided"
 }
 assetPluginPackage.dependsOn copySpa

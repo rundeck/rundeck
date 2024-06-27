@@ -262,7 +262,7 @@ class JobExecutionSpec extends BaseContainer {
         assert disabledJobsResponse.successful
 
         def jobExecResponseFor1AfterDisable = JobUtils.executeJob(job1Id, client)
-        assert jobExecResponseFor1AfterDisable.code() == 500 // bc execs are disabled
+        assert jobExecResponseFor1AfterDisable.code() == 400 // bc execs are disabled
 
         def executionsForJob1AfterDisable = doGet("/job/${job1Id}/executions")
         JobExecutionsResponse parsedExecutionsResponseForExecution1AfterDisable = mapper.readValue(executionsForJob1AfterDisable.body().string(), JobExecutionsResponse.class)
@@ -364,10 +364,10 @@ class JobExecutionSpec extends BaseContainer {
         assert disabledJobsResponse.successful
 
         def jobExecResponseFor1AfterDisable = JobUtils.executeJob(job1Id, client)
-        assert jobExecResponseFor1AfterDisable.code() == 500 // bc execs are disabled
+        assert jobExecResponseFor1AfterDisable.code() == 400 // bc execs are disabled
 
         def jobExecResponseFor2AfterDisable = JobUtils.executeJob(job2Id, client)
-        assert jobExecResponseFor2AfterDisable.code() == 500  // bc execs are disabled
+        assert jobExecResponseFor2AfterDisable.code() == 400  // bc execs are disabled
 
         def executionsForJob1AfterDisable = doGet("/job/${job1Id}/executions")
         JobExecutionsResponse parsedExecutionsResponseForExecution1AfterDisable = mapper.readValue(executionsForJob1AfterDisable.body().string(), JobExecutionsResponse.class)
@@ -1565,20 +1565,18 @@ class JobExecutionSpec extends BaseContainer {
         def readResponse = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs}")
         def readResponseBody = readResponse.body().string()
         def parsedReadBody = mapper.readValue(readResponseBody, RunCommand.class)
-        def readExecId = parsedReadBody.execution.id
+        String readExecId = parsedReadBody.execution.id
 
         assert JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
-                readExecId as String,
+                readExecId,
                 mapper,
                 client,
                 WaitingTime.LOW.milliSeconds,
                 WaitingTime.MODERATE.milliSeconds / 1000 as int
         ).status == ExecutionStatus.SUCCEEDED.state
 
-        def execOutputResponse = client.doGetAcceptAll("/execution/$readExecId/output")
-        ExecutionOutput execOutput = mapper.readValue(execOutputResponse.body().string(), ExecutionOutput.class)
-        def entries = execOutput.entries.stream().map {it.log}.collect(Collectors.toList())
+        def entries = getExecutionOutput(readExecId)
 
         then: "test that errorhandler output was correct"
         FileHelpers.assertLinesInsideEntries(
@@ -1627,20 +1625,18 @@ class JobExecutionSpec extends BaseContainer {
         def readResponse2 = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs2}")
         def readResponseBody2 = readResponse2.body().string()
         def parsedReadBody2 = mapper.readValue(readResponseBody2, RunCommand.class)
-        def readExecId2 = parsedReadBody2.execution.id
+        String readExecId2 = parsedReadBody2.execution.id
 
         assert JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
-                readExecId2 as String,
+                readExecId2,
                 mapper,
                 client,
                 WaitingTime.LOW.milliSeconds,
                 WaitingTime.MODERATE.milliSeconds / 1000 as int
         ).status == ExecutionStatus.SUCCEEDED.state
 
-        def execOutputResponse2 = client.doGetAcceptAll("/execution/$readExecId2/output")
-        ExecutionOutput execOutput2 = mapper.readValue(execOutputResponse2.body().string(), ExecutionOutput.class)
-        def entries2 = execOutput2.entries.stream().map {it.log}.collect(Collectors.toList())
+        def entries2 = getExecutionOutput(readExecId2)
 
         then: "test that errorhandler output was correct"
         FileHelpers.assertLinesInsideEntries(
@@ -1689,20 +1685,18 @@ class JobExecutionSpec extends BaseContainer {
         def readResponse3 = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs3}")
         def readResponseBody3 = readResponse3.body().string()
         def parsedReadBody3 = mapper.readValue(readResponseBody3, RunCommand.class)
-        def readExecId3 = parsedReadBody3.execution.id
+        String readExecId3 = parsedReadBody3.execution.id
 
         assert JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
-                readExecId3 as String,
+                readExecId3,
                 mapper,
                 client,
                 WaitingTime.LOW.milliSeconds,
                 WaitingTime.MODERATE.milliSeconds / 1000 as int
         ).status == ExecutionStatus.SUCCEEDED.state
 
-        def execOutputResponse3 = client.doGetAcceptAll("/execution/$readExecId3/output")
-        ExecutionOutput execOutput3 = mapper.readValue(execOutputResponse3.body().string(), ExecutionOutput.class)
-        def entries3 = execOutput3.entries.stream().map {it.log}.collect(Collectors.toList())
+        def entries3 = getExecutionOutput(readExecId3)
 
         then: "test that errorhandler output was correct"
         FileHelpers.assertLinesInsideEntries(
@@ -1750,20 +1744,18 @@ class JobExecutionSpec extends BaseContainer {
         def readResponse4 = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs4}")
         def readResponseBody4 = readResponse4.body().string()
         def parsedReadBody4 = mapper.readValue(readResponseBody4, RunCommand.class)
-        def readExecId4 = parsedReadBody4.execution.id
+        String readExecId4 = parsedReadBody4.execution.id
 
         assert JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
-                readExecId4 as String,
+                readExecId4,
                 mapper,
                 client,
                 WaitingTime.LOW.milliSeconds,
                 WaitingTime.MODERATE.milliSeconds / 1000 as int
         ).status == ExecutionStatus.SUCCEEDED.state
 
-        def execOutputResponse4 = client.doGetAcceptAll("/execution/$readExecId4/output")
-        ExecutionOutput execOutput4 = mapper.readValue(execOutputResponse4.body().string(), ExecutionOutput.class)
-        def entries4 = execOutput4.entries.stream().map {it.log}.collect(Collectors.toList())
+        def entries4 = getExecutionOutput(readExecId4)
 
         then: "test that errorhandler output was correct"
         FileHelpers.assertLinesInsideEntries(
@@ -1811,20 +1803,18 @@ class JobExecutionSpec extends BaseContainer {
         def readResponse5 = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs5}")
         def readResponseBody5 = readResponse5.body().string()
         def parsedReadBody5 = mapper.readValue(readResponseBody5, RunCommand.class)
-        def readExecId5 = parsedReadBody5.execution.id
+        String readExecId5 = parsedReadBody5.execution.id
 
         assert JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
-                readExecId5 as String,
+                readExecId5,
                 mapper,
                 client,
                 WaitingTime.LOW.milliSeconds,
                 WaitingTime.MODERATE.milliSeconds / 1000 as int
         ).status == ExecutionStatus.SUCCEEDED.state
 
-        def execOutputResponse5 = client.doGetAcceptAll("/execution/$readExecId5/output")
-        ExecutionOutput execOutput5 = mapper.readValue(execOutputResponse5.body().string(), ExecutionOutput.class)
-        def entries5 = execOutput5.entries.stream().map {it.log}.collect(Collectors.toList())
+        def entries5 = getExecutionOutput(readExecId5)
 
         then: "test that errorhandler output was correct"
         FileHelpers.assertLinesInsideEntries(
