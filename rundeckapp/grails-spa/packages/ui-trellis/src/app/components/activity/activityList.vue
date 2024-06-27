@@ -13,7 +13,7 @@
         <span v-else class="text-muted">
           <i class="fas fa-spinner fa-pulse"></i>
         </span>
-        of
+        {{ $t("pagination.of") }}
       </span>
 
       <a :href="activityHref" class="link-quiet">
@@ -38,6 +38,7 @@
         v-model="query"
         :event-bus="eventBus"
         :opts="filterOpts"
+        data-test-id="activity-list-filter-button"
       ></activity-filter>
 
       <div class="pull-right">
@@ -62,6 +63,7 @@
             </span>
             <span
               class="btn btn-default btn-xs"
+              data-test-id="activity-list-delete-selected-executions"
               @click="showBulkEditCleanSelections = true"
             >
               {{ $t("select.none") }}
@@ -71,8 +73,8 @@
               size="xs"
               type="danger"
               class="btn-fill"
-              data-test-id="activity-list-delete-selected-executions"
               :disabled="bulkSelectedIds.length < 1"
+              data-test-id="activity-list-delete-selected-executions"
               @click="showBulkEditConfirm = true"
             >
               {{ $t("delete.selected.executions") }}
@@ -101,6 +103,7 @@
       v-model="showBulkEditCleanSelections"
       :title="$t('Clear bulk selection')"
       append-to-body
+      data-test-id="modal-clean-selections"
     >
       <i18n-t keypath="clearselected.confirm.text" tag="p">
         <strong>{{ bulkSelectedIds.length }}</strong>
@@ -117,6 +120,7 @@
             type="submit"
             class="btn btn-default"
             data-dismiss="modal"
+            data-test-id="activity-list-deselect-all"
             @click="bulkEditDeselectAll"
           >
             {{ $t("Only shown executions") }}
@@ -137,6 +141,7 @@
       v-model="showBulkEditConfirm"
       :title="$t('Bulk Delete Executions')"
       append-to-body
+      data-test-id="modal-bulk-delete"
     >
       <i18n-t keypath="delete.confirm.text" tag="p">
         <strong>{{ bulkSelectedIds.length }}</strong>
@@ -160,6 +165,7 @@
       v-model="showBulkEditResults"
       :title="$t('Bulk Delete Executions: Results')"
       append-to-body
+      data-test-id="modal-bulk-delete-results"
     >
       <div v-if="bulkEditProgress">
         <em>
@@ -290,7 +296,7 @@
             >
               <progress-bar
                 v-if="exec.status === 'scheduled'"
-                :modelValue="100"
+                :model-value="100"
                 striped
                 type="default"
                 label
@@ -302,7 +308,7 @@
               ></progress-bar>
               <progress-bar
                 v-else-if="exec.status === 'queued'"
-                :modelValue="100"
+                :model-value="100"
                 striped
                 type="default"
                 label
@@ -310,7 +316,7 @@
               ></progress-bar>
               <progress-bar
                 v-else-if="exec.job && exec.job.averageDuration"
-                :modelValue="jobDurationPercentage(exec)"
+                :model-value="jobDurationPercentage(exec)"
                 striped
                 active
                 type="info"
@@ -319,7 +325,7 @@
               ></progress-bar>
               <progress-bar
                 v-else-if="exec.dateStarted.date"
-                :modelValue="100"
+                :model-value="100"
                 striped
                 active
                 type="info"
@@ -365,6 +371,7 @@
                 class="link-quiet"
                 title="View execution output"
                 :href="exec.permalink"
+                data-test-id="execution-link"
                 >#{{ exec.id }}</a
               >
             </td>
@@ -381,7 +388,11 @@
             </td>
           </tr>
         </tbody>
-        <tbody v-if="reports.length > 0" class="history-executions">
+        <tbody
+          v-if="reports.length > 0"
+          class="history-executions"
+          data-test-id="report-rows-item"
+        >
           <tr
             v-for="rpt in reports"
             :key="rpt.execution.id"
@@ -397,6 +408,7 @@
                 adhoc: !rpt.jobId,
               },
             ]"
+            data-test-id="report-row-item"
             @click="autoBulkEdit(rpt)"
             @click.middle="middleClickRow(rpt)"
           >
@@ -540,8 +552,16 @@
       </table>
     </div>
 
-    <div v-if="reports.length < 1" class="loading-area">
-      <span v-if="!loading && !loadError" class="loading-text">
+    <div
+      v-if="reports.length < 1"
+      class="loading-area"
+      data-test-id="loading-area"
+    >
+      <span
+        v-if="!loading && !loadError"
+        class="loading-text"
+        data-test="no-data-message"
+      >
         {{ $t("results.empty.text") }}
       </span>
       <div v-if="loading && lastDate < 0" class="loading-text">
@@ -566,7 +586,7 @@
 
 <script lang="ts">
 import axios from "axios";
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
 import moment, { MomentInput } from "moment";
 import OffsetPagination from "../../../library/components/utils/OffsetPagination.vue";
 import ActivityFilter from "./activityFilter.vue";
@@ -578,6 +598,7 @@ import {
 } from "@rundeck/client/dist/lib/models";
 import * as DOMPurify from "dompurify";
 import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
+import { EventBus } from "../../../library";
 
 /**
  * Generate a URL
@@ -642,7 +663,17 @@ export default defineComponent({
     OffsetPagination,
     ActivityFilter,
   },
-  props: ["eventBus", "displayMode"],
+  props: {
+    eventBus: {
+      type: Object as PropType<typeof EventBus>,
+      required: false,
+    },
+    displayMode: {
+      type: String as PropType<string>,
+      required: false,
+    },
+  },
+
   data() {
     return {
       projectName: "",
@@ -669,7 +700,7 @@ export default defineComponent({
       sincecount: 0,
       loading: false,
       loadingRunning: false,
-      loadError: null,
+      loadError: null as null | string,
       momentJobFormat: "M/DD/YY h:mm a",
       momentRunFormat: "h:mm a",
       bulkEditMode: false,
@@ -700,6 +731,7 @@ export default defineComponent({
       } as { [key: string]: string },
       currentFilter: "",
       disableRefresh: false,
+      rundeckContext: getRundeckContext(),
     };
   },
   computed: {
@@ -727,46 +759,46 @@ export default defineComponent({
     },
   },
   mounted() {
-    if (window._rundeck.data.jobslistDateFormatMoment) {
-      this.momentJobFormat = window._rundeck.data.jobslistDateFormatMoment;
+    if (this.rundeckContext.data.jobslistDateFormatMoment) {
+      this.momentJobFormat = this.rundeckContext.data.jobslistDateFormatMoment;
     }
 
-    this.projectName = window._rundeck.projectName;
-    if (window._rundeck && window._rundeck.data) {
-      this.auth.projectAdmin = window._rundeck.data["projectAdminAuth"];
-      this.auth.deleteExec = window._rundeck.data["deleteExecAuth"];
-      this.activityUrl = window._rundeck.data["activityUrl"];
-      this.nowrunningUrl = window._rundeck.data["nowrunningUrl"];
-      this.bulkDeleteUrl = window._rundeck.data["bulkDeleteUrl"];
-      this.activityPageHref = window._rundeck.data["activityPageHref"];
-      this.sinceUpdatedUrl = window._rundeck.data["sinceUpdatedUrl"];
-      this.autorefreshms = window._rundeck.data["autorefreshms"] || 5000;
+    this.projectName = this.rundeckContext.projectName;
+    if (this.rundeckContext && this.rundeckContext.data) {
+      this.auth.projectAdmin = this.rundeckContext.data["projectAdminAuth"];
+      this.auth.deleteExec = this.rundeckContext.data["deleteExecAuth"];
+      this.activityUrl = this.rundeckContext.data["activityUrl"];
+      this.nowrunningUrl = this.rundeckContext.data["nowrunningUrl"];
+      this.bulkDeleteUrl = this.rundeckContext.data["bulkDeleteUrl"];
+      this.activityPageHref = this.rundeckContext.data["activityPageHref"];
+      this.sinceUpdatedUrl = this.rundeckContext.data["sinceUpdatedUrl"];
+      this.autorefreshms = this.rundeckContext.data["autorefreshms"] || 5000;
 
       if (
-        window._rundeck.data["pagination"] &&
-        window._rundeck.data["pagination"].max
+        this.rundeckContext.data["pagination"] &&
+        this.rundeckContext.data["pagination"].max
       ) {
-        this.pagination.max = window._rundeck.data["pagination"].max;
+        this.pagination.max = this.rundeckContext.data["pagination"].max;
       }
-      if (window._rundeck.data["filterOpts"]) {
-        this.filterOpts = window._rundeck.data.filterOpts;
+      if (this.rundeckContext.data["filterOpts"]) {
+        this.filterOpts = this.rundeckContext.data.filterOpts;
       }
       this.showFilters = true;
-      if (window._rundeck.data["query"]) {
+      if (this.rundeckContext.data["query"]) {
         this.query = Object.assign(
           {},
           this.query,
-          window._rundeck.data["query"],
+          this.rundeckContext.data["query"],
         );
       } else {
         this.loadActivity(0);
       }
-      if (window._rundeck.data["runningOpts"]) {
-        this.runningOpts = window._rundeck.data.runningOpts;
+      if (this.rundeckContext.data["runningOpts"]) {
+        this.runningOpts = this.rundeckContext.data.runningOpts;
       }
 
-      if (window._rundeck.data["viewOpts"]) {
-        this.showBulkDelete = window._rundeck.data.viewOpts.showBulkDelete;
+      if (this.rundeckContext.data["viewOpts"]) {
+        this.showBulkDelete = this.rundeckContext.data.viewOpts.showBulkDelete;
       }
       if (this.runningOpts["autorefresh"]) {
         this.autorefresh = true;
@@ -984,12 +1016,11 @@ export default defineComponent({
       this.loadActivity(0);
     },
     async bulkDeleteExecutions(ids: string[]) {
-      const rundeckContext = getRundeckContext();
       this.bulkEditProgress = true;
       this.showBulkEditResults = true;
       try {
         this.bulkEditResults =
-          await rundeckContext.rundeckClient.executionBulkDelete({ ids });
+          await this.rundeckContext.rundeckClient.executionBulkDelete({ ids });
         this.bulkEditProgress = false;
         this.bulkSelectedIds = [];
         if (this.bulkEditResults.allsuccessful) {
@@ -1007,7 +1038,6 @@ export default defineComponent({
       this.bulkDeleteExecutions(this.bulkSelectedIds);
     },
     async loadSince() {
-      const rundeckContext = getRundeckContext();
       if (this.lastDate < 0) {
         return;
       }
@@ -1036,7 +1066,6 @@ export default defineComponent({
       }
     },
     async loadRunning() {
-      // const rundeckContext = getRundeckContext()
       this.loadingRunning = true;
       const qparams: { [key: string]: string } = {};
 
