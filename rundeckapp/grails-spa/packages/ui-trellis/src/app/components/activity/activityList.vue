@@ -63,8 +63,8 @@
             </span>
             <span
               class="btn btn-default btn-xs"
-              @click="showBulkEditCleanSelections = true"
               data-test-id="activity-list-delete-selected-executions"
+              @click="showBulkEditCleanSelections = true"
             >
               {{ $t("select.none") }}
             </span>
@@ -74,8 +74,8 @@
               type="danger"
               class="btn-fill"
               :disabled="bulkSelectedIds.length < 1"
-              @click="showBulkEditConfirm = true"
               data-test-id="activity-list-delete-selected-executions"
+              @click="showBulkEditConfirm = true"
             >
               {{ $t("delete.selected.executions") }}
             </btn>
@@ -120,8 +120,8 @@
             type="submit"
             class="btn btn-default"
             data-dismiss="modal"
-            @click="bulkEditDeselectAll"
             data-test-id="activity-list-deselect-all"
+            @click="bulkEditDeselectAll"
           >
             {{ $t("Only shown executions") }}
           </button>
@@ -296,7 +296,7 @@
             >
               <progress-bar
                 v-if="exec.status === 'scheduled'"
-                :modelValue="100"
+                :model-value="100"
                 striped
                 type="default"
                 label
@@ -308,7 +308,7 @@
               ></progress-bar>
               <progress-bar
                 v-else-if="exec.status === 'queued'"
-                :modelValue="100"
+                :model-value="100"
                 striped
                 type="default"
                 label
@@ -316,7 +316,7 @@
               ></progress-bar>
               <progress-bar
                 v-else-if="exec.job && exec.job.averageDuration"
-                :modelValue="jobDurationPercentage(exec)"
+                :model-value="jobDurationPercentage(exec)"
                 striped
                 active
                 type="info"
@@ -325,7 +325,7 @@
               ></progress-bar>
               <progress-bar
                 v-else-if="exec.dateStarted.date"
-                :modelValue="100"
+                :model-value="100"
                 striped
                 active
                 type="info"
@@ -342,7 +342,7 @@
               v-if="exec.job"
               v-tooltip="
                 purify(
-                  exec.job.group ? exec.job.group + '/' + exec.job.name : ''
+                  exec.job.group ? exec.job.group + '/' + exec.job.name : '',
                 )
               "
               class="eventtitle job"
@@ -408,9 +408,9 @@
                 adhoc: !rpt.jobId,
               },
             ]"
+            data-test-id="report-row-item"
             @click="autoBulkEdit(rpt)"
             @click.middle="middleClickRow(rpt)"
-            data-test-id="report-row-item"
           >
             <td v-if="bulkEditMode" class="eventicon">
               <input
@@ -437,7 +437,7 @@
                   [
                     jobCompletedISOFormat(rpt.dateCompleted),
                     jobCompletedFromNow(rpt.dateCompleted),
-                  ]
+                  ],
                 ),
                 viewport: `.ali-${rpt.execution.id}`,
               }"
@@ -600,6 +600,7 @@ import * as DOMPurify from "dompurify";
 import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
 import { EventBus } from "../../../library";
 import type { Reports } from "./tests/type";
+import { RundeckContext } from "../../../../src/library/interfaces/rundeckWindow";
 
 /**
  * Generate a URL
@@ -615,7 +616,7 @@ function _genUrl(url: string, params: any) {
   } else if (typeof params == "object") {
     for (const e in params) {
       urlparams.push(
-        encodeURIComponent(e) + "=" + encodeURIComponent(params[e])
+        encodeURIComponent(e) + "=" + encodeURIComponent(params[e]),
       );
     }
   }
@@ -759,46 +760,49 @@ export default defineComponent({
     },
   },
   mounted() {
-    if (window._rundeck.data.jobslistDateFormatMoment) {
-      this.momentJobFormat = window._rundeck.data.jobslistDateFormatMoment;
+    // Type-cast window._rundeck to RundeckContext
+    const rundeckContext = window._rundeck as RundeckContext;
+
+    if (rundeckContext.data.jobslistDateFormatMoment) {
+      this.momentJobFormat = rundeckContext.data.jobslistDateFormatMoment;
     }
 
-    this.projectName = window._rundeck.projectName;
-    if (window._rundeck && window._rundeck.data) {
-      this.auth.projectAdmin = window._rundeck.data["projectAdminAuth"];
-      this.auth.deleteExec = window._rundeck.data["deleteExecAuth"];
-      this.activityUrl = window._rundeck.data["activityUrl"];
-      this.nowrunningUrl = window._rundeck.data["nowrunningUrl"];
-      this.bulkDeleteUrl = window._rundeck.data["bulkDeleteUrl"];
-      this.activityPageHref = window._rundeck.data["activityPageHref"];
-      this.sinceUpdatedUrl = window._rundeck.data["sinceUpdatedUrl"];
-      this.autorefreshms = window._rundeck.data["autorefreshms"] || 5000;
+    this.projectName = rundeckContext.projectName;
+    if (rundeckContext && rundeckContext.data) {
+      this.auth.projectAdmin = rundeckContext.data["projectAdminAuth"];
+      this.auth.deleteExec = rundeckContext.data["deleteExecAuth"];
+      this.activityUrl = rundeckContext.data["activityUrl"];
+      this.nowrunningUrl = rundeckContext.data["nowrunningUrl"];
+      this.bulkDeleteUrl = rundeckContext.data["bulkDeleteUrl"];
+      this.activityPageHref = rundeckContext.data["activityPageHref"];
+      this.sinceUpdatedUrl = rundeckContext.data["sinceUpdatedUrl"];
+      this.autorefreshms = rundeckContext.data["autorefreshms"] || 5000;
 
       if (
-        window._rundeck.data["pagination"] &&
-        window._rundeck.data["pagination"].max
+        rundeckContext.data["pagination"] &&
+        rundeckContext.data["pagination"].max
       ) {
-        this.pagination.max = window._rundeck.data["pagination"].max;
+        this.pagination.max = rundeckContext.data["pagination"].max;
       }
-      if (window._rundeck.data["filterOpts"]) {
-        this.filterOpts = window._rundeck.data.filterOpts;
+      if (rundeckContext.data["filterOpts"]) {
+        this.filterOpts = rundeckContext.data.filterOpts;
       }
       this.showFilters = true;
-      if (window._rundeck.data["query"]) {
+      if (rundeckContext.data["query"]) {
         this.query = Object.assign(
           {},
           this.query,
-          window._rundeck.data["query"]
+          rundeckContext.data["query"],
         );
       } else {
         this.loadActivity(0);
       }
-      if (window._rundeck.data["runningOpts"]) {
-        this.runningOpts = window._rundeck.data.runningOpts;
+      if (rundeckContext.data["runningOpts"]) {
+        this.runningOpts = rundeckContext.data.runningOpts;
       }
 
-      if (window._rundeck.data["viewOpts"]) {
-        this.showBulkDelete = window._rundeck.data.viewOpts.showBulkDelete;
+      if (rundeckContext.data["viewOpts"]) {
+        this.showBulkDelete = rundeckContext.data.viewOpts.showBulkDelete;
       }
       if (this.runningOpts["autorefresh"]) {
         this.autorefresh = true;
@@ -830,7 +834,7 @@ export default defineComponent({
         const diff = moment().diff(moment(exec.dateStarted.date));
         return Math.min(
           Math.floor((diff / exec.job.averageDuration) * 100),
-          100
+          100,
         );
       }
       return 0;
@@ -1049,7 +1053,7 @@ export default defineComponent({
           params: Object.assign(
             { offset: this.pagination.offset, max: this.pagination.max },
             this.query,
-            { since: this.lastDate }
+            { since: this.lastDate },
           ),
           withCredentials: true,
         });
@@ -1118,7 +1122,7 @@ export default defineComponent({
           headers: { "x-rundeck-ajax": true },
           params: Object.assign(
             { offset: offset, max: this.pagination.max },
-            xquery
+            xquery,
           ),
           withCredentials: true,
         });
@@ -1154,7 +1158,7 @@ export default defineComponent({
         this.autorefreshtimeout = setTimeout(() => {
           const cur = new Date();
           Promise.all([this.loadRunning(), this.loadSince()]).then(() =>
-            this.checkrefresh(cur.getTime())
+            this.checkrefresh(cur.getTime()),
           );
         }, ms);
       }
