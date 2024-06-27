@@ -599,8 +599,6 @@ import {
 import * as DOMPurify from "dompurify";
 import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
 import { EventBus } from "../../../library";
-import type { Reports } from "./tests/type";
-import { RundeckContext } from "../../../../src/library/interfaces/rundeckWindow";
 
 /**
  * Generate a URL
@@ -681,7 +679,7 @@ export default defineComponent({
       projectName: "",
       activityPageHref: "",
       sinceUpdatedUrl: "",
-      reports: [] as Reports,
+      reports: [],
       running: null as null | { executions: any[]; paging: any },
       lastDate: -1,
       pagination: {
@@ -733,6 +731,7 @@ export default defineComponent({
       } as { [key: string]: string },
       currentFilter: "",
       disableRefresh: false,
+      rundeckContext: getRundeckContext(),
     };
   },
   computed: {
@@ -760,49 +759,46 @@ export default defineComponent({
     },
   },
   mounted() {
-    // Type-cast window._rundeck to RundeckContext
-    const rundeckContext = window._rundeck as RundeckContext;
-
-    if (rundeckContext.data.jobslistDateFormatMoment) {
-      this.momentJobFormat = rundeckContext.data.jobslistDateFormatMoment;
+    if (this.rundeckContext.data.jobslistDateFormatMoment) {
+      this.momentJobFormat = this.rundeckContext.data.jobslistDateFormatMoment;
     }
 
-    this.projectName = rundeckContext.projectName;
-    if (rundeckContext && rundeckContext.data) {
-      this.auth.projectAdmin = rundeckContext.data["projectAdminAuth"];
-      this.auth.deleteExec = rundeckContext.data["deleteExecAuth"];
-      this.activityUrl = rundeckContext.data["activityUrl"];
-      this.nowrunningUrl = rundeckContext.data["nowrunningUrl"];
-      this.bulkDeleteUrl = rundeckContext.data["bulkDeleteUrl"];
-      this.activityPageHref = rundeckContext.data["activityPageHref"];
-      this.sinceUpdatedUrl = rundeckContext.data["sinceUpdatedUrl"];
-      this.autorefreshms = rundeckContext.data["autorefreshms"] || 5000;
+    this.projectName = this.rundeckContext.projectName;
+    if (this.rundeckContext && this.rundeckContext.data) {
+      this.auth.projectAdmin = this.rundeckContext.data["projectAdminAuth"];
+      this.auth.deleteExec = this.rundeckContext.data["deleteExecAuth"];
+      this.activityUrl = this.rundeckContext.data["activityUrl"];
+      this.nowrunningUrl = this.rundeckContext.data["nowrunningUrl"];
+      this.bulkDeleteUrl = this.rundeckContext.data["bulkDeleteUrl"];
+      this.activityPageHref = this.rundeckContext.data["activityPageHref"];
+      this.sinceUpdatedUrl = this.rundeckContext.data["sinceUpdatedUrl"];
+      this.autorefreshms = this.rundeckContext.data["autorefreshms"] || 5000;
 
       if (
-        rundeckContext.data["pagination"] &&
-        rundeckContext.data["pagination"].max
+        this.rundeckContext.data["pagination"] &&
+        this.rundeckContext.data["pagination"].max
       ) {
-        this.pagination.max = rundeckContext.data["pagination"].max;
+        this.pagination.max = this.rundeckContext.data["pagination"].max;
       }
-      if (rundeckContext.data["filterOpts"]) {
-        this.filterOpts = rundeckContext.data.filterOpts;
+      if (this.rundeckContext.data["filterOpts"]) {
+        this.filterOpts = this.rundeckContext.data.filterOpts;
       }
       this.showFilters = true;
-      if (rundeckContext.data["query"]) {
+      if (this.rundeckContext.data["query"]) {
         this.query = Object.assign(
           {},
           this.query,
-          rundeckContext.data["query"],
+          this.rundeckContext.data["query"],
         );
       } else {
         this.loadActivity(0);
       }
-      if (rundeckContext.data["runningOpts"]) {
-        this.runningOpts = rundeckContext.data.runningOpts;
+      if (this.rundeckContext.data["runningOpts"]) {
+        this.runningOpts = this.rundeckContext.data.runningOpts;
       }
 
-      if (rundeckContext.data["viewOpts"]) {
-        this.showBulkDelete = rundeckContext.data.viewOpts.showBulkDelete;
+      if (this.rundeckContext.data["viewOpts"]) {
+        this.showBulkDelete = this.rundeckContext.data.viewOpts.showBulkDelete;
       }
       if (this.runningOpts["autorefresh"]) {
         this.autorefresh = true;
@@ -1020,12 +1016,11 @@ export default defineComponent({
       this.loadActivity(0);
     },
     async bulkDeleteExecutions(ids: string[]) {
-      const rundeckContext = getRundeckContext();
       this.bulkEditProgress = true;
       this.showBulkEditResults = true;
       try {
         this.bulkEditResults =
-          await rundeckContext.rundeckClient.executionBulkDelete({ ids });
+          await this.rundeckContext.rundeckClient.executionBulkDelete({ ids });
         this.bulkEditProgress = false;
         this.bulkSelectedIds = [];
         if (this.bulkEditResults.allsuccessful) {
@@ -1043,7 +1038,6 @@ export default defineComponent({
       this.bulkDeleteExecutions(this.bulkSelectedIds);
     },
     async loadSince() {
-      const rundeckContext = getRundeckContext();
       if (this.lastDate < 0) {
         return;
       }
@@ -1072,7 +1066,6 @@ export default defineComponent({
       }
     },
     async loadRunning() {
-      // const rundeckContext = getRundeckContext()
       this.loadingRunning = true;
       const qparams: { [key: string]: string } = {};
 

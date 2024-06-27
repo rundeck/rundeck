@@ -9,7 +9,7 @@ import { shallowMount, VueWrapper } from "@vue/test-utils";
 import ActivityList from "../activityList.vue";
 import ActivityFilter from "../activityFilter.vue";
 import OffsetPagination from "../../../../library/components/utils/OffsetPagination.vue";
-import { setupRundeckContext } from "../mocks/setupRundeckContext";
+// import { setupRundeckContext } from "../mocks/setupRundeckContext";
 jest.mock("../../../../library/rundeckService", () => rundeckServiceMock);
 jest.mock("@rundeck/client", () => rundeckClientMock);
 jest.mock("axios", () => axiosMock);
@@ -50,7 +50,7 @@ const shallowMountActivityList = async (
 };
 beforeAll(() => {
   jest.useFakeTimers();
-  setupRundeckContext();
+  // setupRundeckContext();
 });
 afterAll(() => {
   jest.useRealTimers();
