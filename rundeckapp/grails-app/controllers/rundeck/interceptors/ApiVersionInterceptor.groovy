@@ -6,6 +6,8 @@ import grails.converters.XML
 import org.grails.web.converters.exceptions.ConverterException
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.grails.web.util.WebUtils
+
+import org.rundeck.web.RequestIdProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
@@ -43,6 +45,7 @@ class ApiVersionInterceptor {
 
         Map context = [
                 remoteHost: request.remoteHost,
+                requestId: request.getAttribute(RequestIdProvider.HTTP_ATTRIBUTE_NAME),
                 version: request.api_version ?: '?',
                 remoteUser: request.remoteUser ?: request.authenticatedUser,
                 valid: !(request.invalidApiAuthentication),
