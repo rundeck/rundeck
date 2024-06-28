@@ -42,6 +42,7 @@ class ApiVersionInterceptor {
         request[METRIC_TIMER].stop()
 
         Map context = [
+                requestId: request.getAttribute("requestId"),
                 remoteHost: request.remoteHost,
                 version: request.api_version ?: '?',
                 remoteUser: request.remoteUser ?: request.authenticatedUser,
