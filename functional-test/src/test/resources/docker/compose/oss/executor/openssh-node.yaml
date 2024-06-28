@@ -1,0 +1,21 @@
+ssh-node:
+  description: "SSH Node for Rundeck"
+  hostname: ssh-node
+  osFamily: unix
+  username: rundeck
+  ssh-key-storage-path: keys/project/openssh-executor-test/ssh-node.key
+  node-executor: ssh-exec
+  file-copier: ssh-copier
+  ssh-authentication: privateKey
+  tags: executor-test
+
+password-node:
+  description: "Password Node for Rundeck"
+  hostname: ssh-node
+  osFamily: unix
+  username: rundeck
+  node-executor: ssh-exec
+  file-copier: ssh-copier
+  ssh-authentication: password
+  ssh-password-storage-path: keys/project/openssh-executor-test/ssh-node.pass
+  tags: executor-test
