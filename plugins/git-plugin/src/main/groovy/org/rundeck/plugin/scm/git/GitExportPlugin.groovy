@@ -26,9 +26,14 @@ import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.api.errors.GitAPIException
 import org.eclipse.jgit.api.errors.JGitInternalException
 import org.eclipse.jgit.lib.BranchTrackingStatus
+import org.eclipse.jgit.lib.StoredConfig
 import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.storage.file.FileBasedConfig
 import org.eclipse.jgit.storage.file.WindowCacheConfig
+import org.eclipse.jgit.transport.URIish
+import org.eclipse.jgit.util.FS
 import org.eclipse.jgit.util.FileUtils
+import org.eclipse.jgit.util.SystemReader
 import org.rundeck.plugin.scm.git.config.Export
 import org.rundeck.plugin.scm.git.exp.actions.CommitJobsAction
 import org.rundeck.plugin.scm.git.exp.actions.FetchAction
@@ -103,11 +108,32 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         ]
     }
 
+    private static validateUrl(String url){
+        StoredConfig userConfig = SystemReader.getInstance().getJGitConfig()
+        String whiteListConfig  = userConfig.getString("http", null, "whitelist");
+        if(whiteListConfig){
+            def whiteList = whiteListConfig.split(',')
+            whiteList.each{whiteUrl->
+                URIish uri = new URIish(url)
+                String host = uri.getHost()
+                if(whiteUrl.contains(host)){
+                    return true
+                }
+            }
+            return false
+        }
+        return true
+    }
+
     void setup(ScmOperationContext context, Export config) throws ScmPluginException {
 
         if (inited) {
             log.debug("already inited, not doing setup")
             return
+        }
+
+        if(!validateUrl(config.url)){
+            throw new ScmPluginException("Invalid URL: ${config.url}")
         }
 
         format = config.format ?: 'xml'
