@@ -1,0 +1,31 @@
+<joblist>
+    <job>
+        <defaultTab>nodes</defaultTab>
+        <description>Simple command step</description>
+        <dispatch>
+            <excludePrecedence>true</excludePrecedence>
+            <keepgoing>false</keepgoing>
+            <rankOrder>ascending</rankOrder>
+            <successOnEmptyNodeFilter>false</successOnEmptyNodeFilter>
+            <threadcount>1</threadcount>
+        </dispatch>
+        <executionEnabled>true</executionEnabled>
+        <id>7c58a292-d987-4864-8882-6f5e5c6a4cb9</id>
+        <loglevel>INFO</loglevel>
+        <name>simple-command-step</name>
+        <nodeFilterEditable>false</nodeFilterEditable>
+        <nodefilters>
+            <filter> tags: executor-test </filter>
+        </nodefilters>
+        <nodesSelectedByDefault>true</nodesSelectedByDefault>
+        <plugins />
+        <scheduleEnabled>true</scheduleEnabled>
+        <schedules />
+        <sequence keepgoing='false' strategy='node-first'>
+            <command>
+                <exec>echo "hello"</exec>
+            </command>
+        </sequence>
+        <uuid>7c58a292-d987-4864-8882-6f5e5c6a4cb9</uuid>
+    </job>
+</joblist>
