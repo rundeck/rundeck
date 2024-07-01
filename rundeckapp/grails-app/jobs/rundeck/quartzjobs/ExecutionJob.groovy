@@ -657,8 +657,8 @@ class ExecutionJob implements InterruptableJob {
 
     def ScheduledExecution fetchScheduledExecution(JobDataMap jobDataMap, JobExecutionContext context) {
         String seid = requireEntry(jobDataMap, "scheduledExecutionId", String)
-        def se=null
-        se = ScheduledExecution.findByUUID(seid).find()
+        String projectName = requireEntry(jobDataMap, "project", String)
+        ScheduledExecution se = ScheduledExecution.findByUUID(seid).find()
         if(se && se instanceof ScheduledExecution){
             se.refreshOptions() //force fetch options and option values before return object
         }
@@ -667,6 +667,11 @@ class ExecutionJob implements InterruptableJob {
             context.getScheduler().deleteJob(context.jobDetail.key)
             throw new ScheduledExecutionDeletedException("Failed to lookup scheduledException object from job data map: id: ${seid} , job will be unscheduled")
         }
+        else if(!projectName.equals(se.project)){
+            context.getScheduler().deleteJob(context.jobDetail.key)
+            throw new RuntimeException("ScheduledExecution found but it does not match the original project name to schedule. Project name orinally scheduled : ${projectName} , Project name from scheduled execution : ${se.project}")
+        }
+
         if (! se instanceof ScheduledExecution) {
             throw new RuntimeException("JobDataMap contained invalid ScheduledExecution type: " + se.getClass().getName())
         }
