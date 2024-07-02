@@ -592,6 +592,7 @@ beans={
 
     auditEventsService(AuditEventsService) {
         frameworkService = ref('frameworkService')
+        metricService = ref('metricService')
     }
 
     scmJobImporter(ScmJobImporter)

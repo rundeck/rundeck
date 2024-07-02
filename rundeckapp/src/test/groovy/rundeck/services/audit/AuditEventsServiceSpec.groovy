@@ -1,15 +1,25 @@
 package rundeck.services.audit
 
+import com.codahale.metrics.Counter
 import com.dtolabs.rundeck.core.audit.ActionTypes
 import com.dtolabs.rundeck.core.audit.AuditEvent
 import com.dtolabs.rundeck.core.audit.ResourceTypes
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.plugins.audit.AuditEventListener
 import grails.testing.services.ServiceUnitTest
+import org.grails.plugins.metricsweb.MetricService
+import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent
+import org.springframework.security.authentication.event.AuthenticationSuccessEvent
+import org.springframework.security.core.Authentication
 import rundeck.services.FrameworkService
+import rundeck.services.PluginService
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 import java.security.Principal
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -117,5 +127,41 @@ class AuditEventsServiceSpec extends Specification implements ServiceUnitTest<Au
         receivedEvent.requestInfo.serverUUID == uuid
     }
 
+    def "test metric counters"() {
+        given:
+        defineBeans {
+            frameworkService(InstanceFactoryBean, Mock(FrameworkService) {
+                getServerUUID() >> "serverUUID"
+                getServerHostname() >> "serverHostname"
+                pluginService >> Mock(PluginService) {
+                    listPluginDescriptions(_) >> []
+                }
+            })
+            metricService(InstanceFactoryBean, Mock(MetricService) {
+                counter("userLogin", "success") >> Mock(Counter) {
+                    1 * inc()
+                }
+                counter("userLogin", "failure") >> Mock(Counter) {
+                    1 * inc()
+                }
+                counter("userLogout", "success") >> Mock(Counter) {
+                    1 * inc()
+                }
+            })
+        }
+
+        when:
+        service.handleAuthenticationSuccessEvent(Stub(AuthenticationSuccessEvent) {
+            getAuthentication() >> new UsernamePasswordAuthenticationToken("admin", "admin")
+        })
+        service.handleAuthenticationFailureEvent(Stub(AuthenticationFailureBadCredentialsEvent){
+            getAuthentication() >> new UsernamePasswordAuthenticationToken("admin", "admin")
+        })
+        service.logout(Stub(HttpServletRequest), Stub(HttpServletResponse), new UsernamePasswordAuthenticationToken("admin", "admin"))
+
+        then:
+        noExceptionThrown()
+
+    }
 
 }
