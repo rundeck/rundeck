@@ -1,13 +1,11 @@
 import { mount, VueWrapper } from "@vue/test-utils";
 import NodeCard from "../NodeCard.vue";
 import NodeFilterLink from "../NodeFilterLink.vue";
-import NodeDetailsSimple from "../NodeDetailsSimple.vue";
 import * as nodeServices from "../services/nodeServices";
 import {
   getNodeSummary as mockGetNodeSummary,
   getNodes as mockGetNodes,
 } from "../services/nodeServices";
-
 function createMockEventBus() {
   return {
     on: jest.fn(),
@@ -92,43 +90,9 @@ const mountNodeCard = async (propsData = {}): Promise<VueWrapper<any>> => {
         $tc: (msg) => msg,
       },
       stubs: {
-        btn: true,
-        dropdown: true,
         NodeStatus: {
           template: `<span><i :class="node.attributes['ui:status:icon']" class="node-status-icon"></i><span v-if="showText" class="node-status-text">{{ node.attributes['ui:status:text'] }}</span></span>`,
           props: ["node", "showText"],
-        },
-        NodeDetailsSimple: {
-          template: `<div></div>`,
-          props: [
-            "attributes",
-            "authrun",
-            "tags",
-            "useNamespace",
-            "filterColumns",
-            "nodeColumns",
-          ],
-        },
-        NodeTable: {
-          template: `<div data-test-id="node-table">
-            <div v-for="(node, index) in nodeSet.nodes" :key="index">
-              <node-status :node="node" :showText="true" />
-            </div>
-          </div>`,
-          props: [
-            "nodeSet",
-            "filterColumns",
-            "loading",
-            "hasPaging",
-            "pagingMax",
-            "page",
-            "maxPages",
-            "filterAll",
-            "filter",
-          ],
-          components: {
-            NodeDetailsSimple,
-          },
         },
       },
     },
@@ -139,12 +103,12 @@ const mountNodeCard = async (propsData = {}): Promise<VueWrapper<any>> => {
 beforeEach(() => {
   jest.clearAllMocks();
   (
-    nodeServices.getNodeSummary as jest.MockedFunction<
+    mockGetNodeSummary as jest.MockedFunction<
       typeof nodeServices.getNodeSummary
     >
   ).mockResolvedValue(mockNodeSummary);
   (
-    nodeServices.getNodes as jest.MockedFunction<typeof nodeServices.getNodes>
+    mockGetNodes as jest.MockedFunction<typeof nodeServices.getNodes>
   ).mockResolvedValue({
     allnodes: mockNodeSet.nodes,
     tagsummary: mockNodeSummary.tags,
