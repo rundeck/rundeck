@@ -181,11 +181,7 @@
           class="tab-pane"
           :class="{ active: nodeFilterStore.filter }"
         >
-          <div
-            id="nodeview"
-            class="clear matchednodes"
-            data-test-id="node-view"
-          >
+          <div id="nodeview" class="clear matchednodes">
             <NodeTable
               :node-set="nodeSet"
               :filter-columns="filterColumns"
@@ -196,7 +192,6 @@
               :page="page"
               :filter-all="filterAll"
               :filter="nodeFilterStore.filter"
-              data-test-id="node-table"
               @filter="saveFilter"
               @change-page="updatePage"
               @change-paging-max="updatePagingMax"
