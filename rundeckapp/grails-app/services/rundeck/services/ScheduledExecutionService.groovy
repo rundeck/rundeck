@@ -1664,7 +1664,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         data.put("scheduledExecutionId", se.uuid)
         data.put("rdeck.base", frameworkService.getRundeckBase())
 
-        if(se.scheduled){
+        if(se.scheduled ||jobSchedulesService.shouldScheduleExecution(se.uuid)){
             data.put("userRoles", se.userRoleList)
             if(frameworkService.isClusterModeEnabled()){
                 data.put("serverUUID", frameworkService.getServerUUID())
