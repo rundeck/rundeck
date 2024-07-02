@@ -1,5 +1,6 @@
 package rundeck.services.audit
 
+import com.codahale.metrics.Counter
 import com.dtolabs.rundeck.core.audit.*
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
@@ -45,17 +46,21 @@ import java.util.stream.Collectors
  *
  */
 class AuditEventsService
-    implements LogoutHandler {
+    implements LogoutHandler, InitializingBean {
 
     static final Logger LOG = LoggerFactory.getLogger(AuditEventsService.class)
 
     FrameworkService frameworkService
+    def metricService
 
     private ContextACLManager<AppACLContext> aclFileManagerService
     protected AsyncTaskExecutor asyncTaskExecutor
     protected final CopyOnWriteArrayList<AuditEventListener> internalListeners = new CopyOnWriteArrayList<>()
 
     protected volatile Map<String, DescribedPlugin> installedPlugins = null
+    Counter userLoginSuccess
+    Counter userLoginFailure
+    Counter userLogoutSuccess
 
     AuditEventsService() {
         LOG.info("Init auditing events service")
@@ -63,6 +68,13 @@ class AuditEventsService
         asyncTaskExecutor.setCorePoolSize(1)
         asyncTaskExecutor.setMaxPoolSize(1)
         asyncTaskExecutor.initialize()
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        userLoginSuccess = metricService.counter("userLogin","success")
+        userLoginFailure = metricService.counter("userLogin","failure")
+        userLogoutSuccess = metricService.counter("userLogout","success")
     }
 
     @Subscriber('rundeck.bootstrap')
@@ -162,6 +174,7 @@ class AuditEventsService
      */
     @EventListener
     void handleAuthenticationSuccessEvent(AuthenticationSuccessEvent event) {
+        userLoginSuccess.inc()
         eventBuilder()
                 .setUsername(extractUsername(event.authentication))
                 .setUserRoles(extractAuthorities(event.authentication))
@@ -173,6 +186,7 @@ class AuditEventsService
 
     @EventListener
     void handleAuthenticationFailureEvent(AuthenticationFailureBadCredentialsEvent event) {
+        userLoginFailure.inc()
         if (!event.authentication) {
             LOG.error("Null authentication on login failure event. Cancelling event dispatch.")
             return
@@ -199,6 +213,7 @@ class AuditEventsService
             LOG.error("Null authentication on logout event. Cancelling event dispatch.")
             return
         }
+        userLogoutSuccess.inc()
 
         eventBuilder()
                 .setUsername(extractUsername(authentication))
