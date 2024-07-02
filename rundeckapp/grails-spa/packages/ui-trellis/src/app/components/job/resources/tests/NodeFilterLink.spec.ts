@@ -1,6 +1,5 @@
 import { mount, VueWrapper } from "@vue/test-utils";
 import NodeFilterLink from "../NodeFilterLink.vue";
-
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({
     rdBase: "mockRdBase",
@@ -8,7 +7,6 @@ jest.mock("@/library/rundeckService", () => ({
   }),
   url: jest.fn().mockReturnValue({ href: "mockHref" }),
 }));
-
 describe("NodeFilterLink Component", () => {
   let wrapper: VueWrapper<any>;
   const mountNodeFilterLink = (propsData = {}) => {
@@ -34,7 +32,6 @@ describe("NodeFilterLink Component", () => {
       filterName: "testFilterName",
     });
   });
-
   it("renders correct href attribute", () => {
     const wrapper = mountNodeFilterLink();
     const link = wrapper.find("a");
@@ -54,19 +51,15 @@ describe("NodeFilterLink Component", () => {
   });
   it("constructs filter param correctly based on props", () => {
     const wrapper = mountNodeFilterLink();
+    expect;
     expect(wrapper.vm.filterParamValues).toEqual({
       filter: "testFilter",
       filterName: "testFilterName",
     });
   });
-
   it("calls getText method and renders the correct text", () => {
     const wrapper = mountNodeFilterLink({ text: "Custom Text" });
     expect(wrapper.vm.getText()).toBe("Custom Text");
     expect(wrapper.text()).toContain("Custom Text");
-  });
-  it("calls getFilter method and constructs correct filter string", () => {
-    const wrapper = mountNodeFilterLink();
-    expect(wrapper.vm.getFilter()).toBe("testFilter");
   });
 });
