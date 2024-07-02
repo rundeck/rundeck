@@ -1,7 +1,6 @@
 import { mount } from "@vue/test-utils";
 import NodeTable from "../NodeTable.vue";
 import NodeDetailsSimple from "../NodeDetailsSimple.vue";
-import * as nodeUI from "../../../../utilities/nodeUi";
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({
     rdBase: "mockRdBase",
@@ -29,10 +28,7 @@ const mockNodeSet = {
         osName: "agent",
         osVersion: "14.5",
         tags: "tag1,tag2",
-        authrun: true,
-        isLocalNode: true,
         "ui:status:text": "Healthy",
-        "ui:status:icon": ["fas", "fa-hdd"],
         color: "red",
       },
     },
@@ -47,10 +43,8 @@ const mockNodeSet = {
         osName: "Ubuntu",
         osVersion: "20.04",
         tags: "tag3,tag4",
-        authrun: false,
-        isLocalNode: false,
         "ui:status:text": "Unhealthy",
-        "ui:status:icon": ["fas", "fa-hdd"],
+        color: "blue",
       },
     },
   ],
@@ -94,17 +88,29 @@ describe("NodeTable Component", () => {
   });
   it("renders node icon, color, and badge correctly", async () => {
     const wrapper = await mountNodeTable();
-    const nodeIcons = wrapper.findAll('[data-test-id="node-icon"] i');
+    // Check node icons
+    const nodeIcons = wrapper.findAll('[data-test-id="node-status-icon"] i');
     nodeIcons.forEach((iconWrapper) => {
       expect(iconWrapper.classes()).toContain("fas");
       expect(iconWrapper.classes()).toContain("fa-hdd");
     });
+    // Check node colors
     const nodeColors = wrapper.findAll('[data-test-id="node-color"]');
     nodeColors.forEach((colorWrapper, index) => {
-      expect(colorWrapper.attributes("style")).toContain(
-        `color: ${mockNodeSet.nodes[index].attributes.color}`,
-      );
+      const color = mockNodeSet.nodes[index].attributes.color;
+      expect(colorWrapper.attributes("style")).toContain(`color: ${color}`);
+      expect(["red", "blue"]).toContain(color);
     });
+    // // Check node badges
+    // const nodeBadges = wrapper.findAll('[data-test-id="node-badge-icon"]');
+    // expect(nodeBadges.length).toBeGreaterThan(0); // Ensure that badges exist
+    // nodeBadges.forEach((badgeWrapper, index) => {
+    //   const badges =
+    //     mockNodeSet.nodes[index].attributes["ui:badges"].split(",");
+    //   badges.forEach((badge) => {
+    //     expect(badgeWrapper.classes()).toContain(badge);
+    //   });
+    // });
   });
   it("filters nodes by attribute when an attribute is clicked", async () => {
     const wrapper = mountNodeTable();

@@ -100,7 +100,7 @@
                       <i class="glyphicon glyphicon-circle-arrow-right"></i>
                     </node-filter-link>
 
-                    <span class="nodedesc" data-test-id="node-badge"></span>
+                    <span class="nodedesc"></span>
 
                     <span class="text-strong">
                       <i
@@ -108,6 +108,7 @@
                         v-if="node.attributes['ui:badges']"
                         :key="badge"
                         :class="glyphiconForName(badge)"
+                        data-test-id="node-badge-icon"
                       ></i>
                       <span data-test-id="node-description">
                         {{ node.attributes.description }}

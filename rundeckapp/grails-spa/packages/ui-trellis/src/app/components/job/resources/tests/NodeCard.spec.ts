@@ -94,6 +94,8 @@ const mountNodeCard = async (propsData = {}): Promise<VueWrapper<any>> => {
           template: `<span><i :class="node.attributes['ui:status:icon']" class="node-status-icon"></i><span v-if="showText" class="node-status-text">{{ node.attributes['ui:status:text'] }}</span></span>`,
           props: ["node", "showText"],
         },
+        btn: true,
+        dropdown: true,
       },
     },
   });
