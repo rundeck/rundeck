@@ -1,6 +1,5 @@
 import { mount } from "@vue/test-utils";
 import NodeDetailsSimple from "../NodeDetailsSimple.vue";
-
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({
     rdBase: "mockRdBase",
@@ -8,7 +7,6 @@ jest.mock("@/library/rundeckService", () => ({
   }),
   url: jest.fn().mockReturnValue({ href: "mockHref" }),
 }));
-
 const mockNodeAttributes = {
   description: "Test Node 1",
   osFamily: "Linux",
@@ -16,7 +14,6 @@ const mockNodeAttributes = {
   "ui:status:text": "Healthy",
   "ui:status:icon": "fa-check",
 };
-
 const mountNodeDetailsSimple = async (propsData = {}) => {
   const wrapper = mount(NodeDetailsSimple, {
     props: {
@@ -26,25 +23,22 @@ const mountNodeDetailsSimple = async (propsData = {}) => {
     },
     global: {
       mocks: {
-        $t: (msg) => msg, // Mock implementation of $t
+        $t: (msg) => msg,
       },
     },
   });
   await wrapper.vm.$nextTick();
   return wrapper;
 };
-
 describe("NodeDetailsSimple Component", () => {
   it("displays node attributes", async () => {
     const wrapper = await mountNodeDetailsSimple();
     const attributes = wrapper.findAll(".setting");
-    // Directly iterate over the array-like object of DOMWrapper instances
     const hasExpectedText = attributes.some((attributeWrapper) =>
       attributeWrapper.text().includes("Test Node 1"),
     );
     expect(hasExpectedText).toBe(true);
   });
-
   it("displays tags", async () => {
     const wrapper = await mountNodeDetailsSimple();
     const tags = wrapper.findAll(".label-muted");
