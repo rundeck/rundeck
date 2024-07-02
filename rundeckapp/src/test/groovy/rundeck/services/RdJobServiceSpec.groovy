@@ -166,7 +166,6 @@ class RdJobServiceSpec extends Specification implements DataTest {
 
     def "DetectJobChanges"() {
         given:
-        String uuid = "uuid"
         RdJob job = new RdJob(uuid: uuid, jobName: newjob, project:"one")
         ScheduledExecution se = new ScheduledExecution( uuid: uuid, jobName: oldjob, project:"one")
         se.id = 1L
@@ -182,15 +181,15 @@ class RdJobServiceSpec extends Specification implements DataTest {
         def actual = service.detectJobChanges(se, job, event)
 
         then:
-        actual.scheduledJobName == expectedJobName
+        actual.scheduledJobName == uuid
         actual.renamed == renamed
-        event.changeinfo.origName == expectedJobName
+        event.changeinfo.origName == uuid
         if(renamed) event.changeinfo.rename
 
         where:
-        expectedJobName | renamed  | oldjob      | newjob
-        "1:oldjob"      | true     | "oldjob"    | "newjob"
-        null            | false    | "job1"      | "job1"
+        uuid        | renamed  | oldjob      | newjob
+        "uuid"      | true     | "oldjob"    | "newjob"
+        null        | false    | "job1"      | "job1"
 
     }
 

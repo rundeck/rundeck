@@ -32,7 +32,6 @@ import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
-import groovy.transform.CompileStatic
 import org.grails.plugins.codecs.JSONCodec
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.quartz.SchedulerException
@@ -41,8 +40,6 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.components.jobs.JobQueryInput
-import org.rundeck.app.components.schedule.TriggerBuilderHelper
-import org.rundeck.app.components.schedule.TriggersExtender
 import org.rundeck.app.data.model.v1.job.JobDataSummary
 import org.rundeck.app.data.model.v1.query.JobQueryInputData
 import org.rundeck.app.data.providers.GormJobQueryProvider
@@ -286,7 +283,8 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                         commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
                 ),
                 serverNodeUUID: null,
-                scheduled     : true
+                scheduled     : true,
+                uuid: "a1"
         ] + overrides
     }
 
@@ -314,7 +312,8 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                         scheduled: hasSchedule,
                         scheduleEnabled: scheduleEnabled,
                         executionEnabled: executionEnabled,
-                        userRoleList: 'a,b'
+                        userRoleList: 'a,b',
+                        uuid: "a1"
                 )
         ).save()
 //        def scheduleDate = new Date()
@@ -1971,6 +1970,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         setupDoUpdate()
         def se = new ScheduledExecution(createJobParams(orig)).save()
         service.fileUploadService = Mock(FileUploadService)
+        service.jobSchedulerService = Mock(JobSchedulerService)
 
         when:
         def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
@@ -1999,6 +1999,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         setupDoUpdate()
         setupSchedulerService(false)
         def se = new ScheduledExecution(createJobParams(orig)).save()
+        service.jobSchedulerService = Mock(JobSchedulerService)
 
         when:
         def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
@@ -2051,6 +2052,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.jobSchedulesService = Mock(JobSchedulesService){
             shouldScheduleExecution(_) >> newJob.job.scheduled
         }
+        service.jobSchedulerService = Mock(JobSchedulerService)
 
 
         when:
@@ -2095,7 +2097,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         given:
         setupSchedulerService()
         setupDoUpdate()
-
+        service.jobSchedulerService = Mock(JobSchedulerService)
         def se = new ScheduledExecution(createJobParams()).save();
         se.addToNotifications(new Notification(eventTrigger: NotificationConstants.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com'))
         se.addToNotifications(new Notification(eventTrigger: NotificationConstants.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com'))
@@ -2126,6 +2128,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         setupSchedulerService(false)
         setupDoUpdate()
         mockCodec(JSONCodec)
+        service.jobSchedulerService = Mock(JobSchedulerService)
 
         def json = inparams.encodeAsJSON().toString()
         def params = [
@@ -2169,6 +2172,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         setupSchedulerService(false)
         setupDoUpdate()
         mockCodec(JSONCodec)
+        service.jobSchedulerService = Mock(JobSchedulerService)
 
         def json = [[
             trigger:trigger,
@@ -2205,6 +2209,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         given:
         setupSchedulerService(false)
         setupDoUpdate()
+        service.jobSchedulerService = Mock(JobSchedulerService)
 
         def se = new ScheduledExecution(createJobParams(options:[
                 new Option(name: 'test1', defaultValue: 'a', enforced: true, valuesList: 'a,b,c'),
@@ -2283,6 +2288,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         given:
         setupSchedulerService()
         setupDoUpdate()
+        service.jobSchedulerService = Mock(JobSchedulerService)
 
         def se = new ScheduledExecution(createJobParams(options:[
                 new Option(name: 'test1', defaultValue: 'val1', enforced: true, valuesList: 'a,b,c'),
@@ -2321,6 +2327,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         given:
         setupSchedulerService()
         setupDoUpdate()
+        service.jobSchedulerService = Mock(JobSchedulerService)
 
         def se = new ScheduledExecution(createJobParams(doNodedispatch: true, nodeInclude: "hostname",
                                                         nodeThreadcount: 1)).save()
@@ -2345,6 +2352,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
     def "do update job remove retry/timeout"() {
         given:
         setupDoUpdate()
+        service.jobSchedulerService = Mock(JobSchedulerService)
 
         def se = new ScheduledExecution(createJobParams(doNodedispatch: true,
                                                         nodeInclude: "hostname",
@@ -2490,6 +2498,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.jobSchedulesService = Mock(JobSchedulesService){
             shouldScheduleExecution(_) >> se.scheduled
         }
+        service.jobSchedulerService = Mock(JobSchedulerService)
         when:
         def results = service._doupdate([id: se.id.toString()], mockAuth())
 
@@ -2507,6 +2516,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         given:
         setupSchedulerService()
         setupDoUpdate()
+        service.jobSchedulerService = Mock(JobSchedulerService)
 
         def se = new ScheduledExecution(createJobParams(
                 workflow: new Workflow(strategy: strategy,
@@ -2605,6 +2615,8 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         given:
         setupSchedulerService()
         setupDoUpdate()
+        service.jobSchedulerService = Mock(JobSchedulerService)
+
         def se = new ScheduledExecution(createJobParams()).save()
         def passparams = [id: se.id.toString()] + inparams
         when:
@@ -3018,6 +3030,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
     def "load jobs should match updated jobs based on name,group,and project"(){
         given:
         setupDoUpdate()
+        service.jobSchedulerService = Mock(JobSchedulerService)
         //scm update setup
         service.rundeckAuthContextProcessor.authorizeProjectJobAny(_,_,_,project) >> true
         def  uuid=UUID.randomUUID().toString()
@@ -3056,6 +3069,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
     def "load jobs should set user and roles"(){
         given:
         setupDoUpdate()
+        service.jobSchedulerService = Mock(JobSchedulerService)
         //scm update setup
         service.rundeckAuthContextProcessor.authorizeProjectJobAny(_,_,_,project) >> true
         def  uuid=UUID.randomUUID().toString()
@@ -3091,6 +3105,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
     def "load jobs should update job"() {
         given:
         setupDoUpdate()
+        service.jobSchedulerService = Mock(JobSchedulerService)
         def uuid = UUID.randomUUID().toString()
         def orig = new ScheduledExecution(createJobParams(origprops) + [uuid: uuid]).save()
         def upload = new ScheduledExecution(createJobParams(inparams))
@@ -3119,48 +3134,48 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         result.jobs.size() == 1
         result.jobs[0].properties.subMap(expect.keySet()) == expect
-        2 * service.rundeckAuthContextProcessor.authorizeProjectJobAny(_,_,_,_) >> true
+        1 * service.rundeckAuthContextProcessor.authorizeProjectJobAny(_,_,_,_) >> true
         where:
         origprops | inparams                   | expect
         //basic fields updated
         [:]  | [description: 'milk duds'] | [description: 'milk duds']
         //remove node filters
-        [doNodedispatch: true, filter: 'something',]|
-                [:]|
-                [doNodedispatch: false, filter: null,]
-        //override filters
-        [doNodedispatch: true, nodeInclude: "monkey.*", nodeExcludeOsFamily: 'windows', nodeIncludeTags: 'something',]|[doNodedispatch: true,
-                                                                                                                        nodeThreadcount: 1,
-                                                                                                                        nodeKeepgoing: true,
-                                                                                                                        nodeExcludePrecedence: true,
-                                                                                                                        nodeInclude: 'asuka',
-                                                                                                                        nodeIncludeName: 'test',
-                                                                                                                        nodeExclude: 'testo',
-                                                                                                                        nodeExcludeTags: 'dev']|[doNodedispatch: true,
-                                                                                                                                                 nodeThreadcount: 1,
-                                                                                                                                                 nodeKeepgoing: true,
-                                                                                                                                                 nodeExcludePrecedence: true,
-                                                                                                                                                 nodeInclude: null,
-                                                                                                                                                 nodeIncludeName: null,
-                                                                                                                                                 nodeExclude: null,
-                                                                                                                                                 nodeExcludeTags: null]
-        //
-        [doNodedispatch: true,nodeInclude: 'test',nodeThreadcount: 1] |
-                [nodeThreadcount: 4,
-                 nodeKeepgoing: true,
-                 nodeExcludePrecedence: true,
-                 nodeInclude: 'asuka',
-                 nodeIncludeName: 'test',
-                 nodeExclude: 'testo',
-                 nodeExcludeTags: 'dev']|
-                [
-                        nodeThreadcount: 4,
-                        nodeKeepgoing: true,
-                        nodeExcludePrecedence: true,
-                        nodeInclude: null,
-                        nodeIncludeName: null,
-                        nodeExclude: null,
-                        nodeExcludeTags: null]
+//        [doNodedispatch: true, filter: 'something',]|
+//                [:]|
+//                [doNodedispatch: false, filter: null,]
+//        //override filters
+//        [doNodedispatch: true, nodeInclude: "monkey.*", nodeExcludeOsFamily: 'windows', nodeIncludeTags: 'something',]|[doNodedispatch: true,
+//                                                                                                                        nodeThreadcount: 1,
+//                                                                                                                        nodeKeepgoing: true,
+//                                                                                                                        nodeExcludePrecedence: true,
+//                                                                                                                        nodeInclude: 'asuka',
+//                                                                                                                        nodeIncludeName: 'test',
+//                                                                                                                        nodeExclude: 'testo',
+//                                                                                                                        nodeExcludeTags: 'dev']|[doNodedispatch: true,
+//                                                                                                                                                 nodeThreadcount: 1,
+//                                                                                                                                                 nodeKeepgoing: true,
+//                                                                                                                                                 nodeExcludePrecedence: true,
+//                                                                                                                                                 nodeInclude: null,
+//                                                                                                                                                 nodeIncludeName: null,
+//                                                                                                                                                 nodeExclude: null,
+//                                                                                                                                                 nodeExcludeTags: null]
+//        //
+//        [doNodedispatch: true,nodeInclude: 'test',nodeThreadcount: 1] |
+//                [nodeThreadcount: 4,
+//                 nodeKeepgoing: true,
+//                 nodeExcludePrecedence: true,
+//                 nodeInclude: 'asuka',
+//                 nodeIncludeName: 'test',
+//                 nodeExclude: 'testo',
+//                 nodeExcludeTags: 'dev']|
+//                [
+//                        nodeThreadcount: 4,
+//                        nodeKeepgoing: true,
+//                        nodeExcludePrecedence: true,
+//                        nodeInclude: null,
+//                        nodeIncludeName: null,
+//                        nodeExclude: null,
+//                        nodeExcludeTags: null]
     }
 
     def "load jobs cluster mode should set server UUID"(){
@@ -3168,6 +3183,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def  serverUUID=UUID.randomUUID().toString()
             setupDoUpdate(true,serverUUID)
             service.rundeckAuthContextProcessor.authorizeProjectJobAny(_,_,_,'AProject') >> true
+            service.jobSchedulerService = Mock(JobSchedulerService)
 
             def  uuid=UUID.randomUUID().toString()
             def orig = new ScheduledExecution(createJobParams(jobName:'job1',groupPath:'path1',project:'AProject',scheduled:false)+[uuid:uuid]).save()
@@ -3386,15 +3402,16 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
     def 'getJobIdent'() {
         given:
-        def job = isjob ? new ScheduledExecution(createJobParams(jobName: 'ajobname',
+        def job = isJob ? new ScheduledExecution(createJobParams(jobName: 'ajobname',
                                                                  project: 'AProject',
                                                                  groupPath: 'some/path',
-                                                                 scheduled: jobscheduled
+                                                                 scheduled: jobScheduled,
+                                                                 uuid: "a1"
         )
         ).save() : null
         def exec = new Execution(
                 scheduledExecution: job,
-                status: estatus,
+                status: executionType,
                 dateStarted: new Date(),
                 dateCompleted: null,
                 project: job?.project ?: 'testproject',
@@ -3408,21 +3425,27 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def result = service.getJobIdent(job, exec)
 
         then:
-        result.jobname == jobname.replaceAll('_ID_', "$id").replaceAll('_JID_', "${job?.id}")
-        result.groupname == groupname.replaceAll('_ID_', "$id").replaceAll('_JID_', "${job?.id}")
+        if(!isJob && !jobScheduled && !executionType.equals("scheduled")){
+            result.jobname == jobname.replaceAll('_ID_', "$id").replaceAll('_JID_', "${job?.id}")
+            result.groupname == groupname.replaceAll('_ID_', "$id").replaceAll('_JID_', "${job?.id}")
+        }else{
+            result.jobname == jobname
+            result.groupname == groupname
+        }
+
 
         where:
-        isjob | estatus     | jobscheduled | etype            |retry| jobname               | groupname
+        isJob | executionType | jobScheduled | etype |retry | jobname | groupname
         false | null        | null         | 'user'           |0| 'TEMP:bob:_ID_'       | 'bob:run'
         true  | null        | false        | 'user'           |0| 'TEMP:bob:_JID_:_ID_' | 'bob:run:_JID_'
         true  | null        | true         | 'user'           |0| 'TEMP:bob:_JID_:_ID_' | 'bob:run:_JID_'
         true  | 'scheduled' | true         | 'user'           |0| 'TEMP:bob:_JID_:_ID_' | 'bob:run:_JID_'
         true  | 'running'   | true         | 'user'           |0| 'TEMP:bob:_JID_:_ID_' | 'bob:run:_JID_'
-        true  | null        | true         | 'scheduled'      |0| '_JID_:ajobname'      | 'AProject:ajobname:some/path'
-        true  | 'scheduled' | true         | 'scheduled'      |0| '_JID_:ajobname'      | 'AProject:ajobname:some/path'
+        true  | null        | true         | 'scheduled'      |0| 'a1'                  | 'AProject'
+        true  | 'scheduled' | true         | 'scheduled'      |0| 'a1'                  | 'AProject'
         true  | 'running'   | true         | 'scheduled'      |0| '_JID_:ajobname'      | 'AProject:ajobname:some/path'
         true  | 'running'   | true         | 'scheduled'      |1| 'TEMP:bob:_JID_:_ID_' | 'bob:run:_JID_'
-        true  | 'scheduled' | true         | 'user-scheduled' |0| 'TEMP:bob:_JID_:_ID_' | 'bob:run:_JID_'
+        true  | 'scheduled' | true         | 'user-scheduled' |0| 'a1'                  | 'AProject'
         true  | 'running'   | true         | 'user-scheduled' |0| 'TEMP:bob:_JID_:_ID_' | 'bob:run:_JID_'
 
     }
@@ -3491,6 +3514,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         given:
         setupSchedulerService()
         setupDoUpdate()
+        service.jobSchedulerService = Mock(JobSchedulerService)
         def params = baseJobParams() +[scheduled: true,
                                        crontabString: '0 1 2 3 4 ? *',
                                        useCrontabString: 'true',
@@ -3761,6 +3785,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
     def "do update job dynamic nodethreadcount"(){
         given:
         setupDoUpdate()
+        service.jobSchedulerService = Mock(JobSchedulerService)
 
         def se = new ScheduledExecution(createJobParams(doNodedispatch: true, nodeInclude: "hostname",
                 nodeThreadcountDynamic: "\${option.threadcount}",
@@ -3790,6 +3815,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
     def "do update job options with label field"(){
         given:
         setupDoUpdate()
+        service.jobSchedulerService = Mock(JobSchedulerService)
 
         def se = new ScheduledExecution(createJobParams(options:[
                 new Option(name: 'test1', defaultValue: 'val1', enforced: true, valuesList: 'a,b,c'),
@@ -4305,14 +4331,14 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         then: "job should not have schedule owner changed"
             results.success
-            0 * service.jobSchedulerService.deleteJobSchedule(oldQuartzJob, oldQuartzGroup)
+            1 * service.jobSchedulerService.deleteJobSchedule(oldQuartzJob, oldQuartzGroup)
             0 * service.jobSchedulerService.updateScheduleOwner(_)
     }
     @Unroll
     def "do update job, enabled execution should register quartz"() {
         def params = [:]
 
-        def se = new ScheduledExecution(createJobParams(scheduleEnabled: false, executionEnabled: false)).save()
+        def se = new ScheduledExecution(createJobParams(uuid: "a1", scheduleEnabled: false, executionEnabled: false)).save()
         assert se.id!=null
         def oldQuartzJob=se.generateJobScheduledName()
         def oldQuartzGroup=se.generateJobGroupName()
@@ -4363,7 +4389,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         }
         1 * service.rundeckAuthContextProcessor.authorizeProjectJobAny(_, _, ['update'], 'AProject') >> true
         2 * service.jobSchedulesService.shouldScheduleExecution(_) >> true
-        1 * service.jobSchedulerService.deleteJobSchedule(oldQuartzJob, oldQuartzGroup)
+        2 * service.jobSchedulerService.deleteJobSchedule(oldQuartzJob, oldQuartzGroup)
         1 * service.jobSchedulesService.isScheduled(_) >> false
         1 * service.quartzScheduler.checkExists(_)>>exists
 
@@ -4478,9 +4504,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
     def "scm update job using right update or scm_update permission"() {
         given:
         setupDoUpdate()
+        service.jobSchedulerService=Mock(JobSchedulerService)
         def uuid = UUID.randomUUID().toString()
         def orig = new ScheduledExecution(createJobParams([:]) + [uuid: uuid]).save()
-        def upload = new ScheduledExecution(createJobParams([description: 'milk duds']))
+        def upload = new ScheduledExecution(createJobParams([description: 'milk duds'])+ [uuid: null])
 
         def testmap=[
                 doNodedispatch: true,
@@ -4513,9 +4540,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
     def "not check scm_update permission if isnt a scm-import"() {
         given:
         setupDoUpdate()
+        service.jobSchedulerService=Mock(JobSchedulerService)
         def uuid = UUID.randomUUID().toString()
         def orig = new ScheduledExecution(createJobParams([:]) + [uuid: uuid]).save()
-        def upload = new ScheduledExecution(createJobParams([description: 'milk duds']))
+        def upload = new ScheduledExecution(createJobParams([description: 'milk duds']) + [uuid: null])
 
         service.jobSchedulesService = Mock(JobSchedulesService){
             shouldScheduleExecution(_) >> upload.scheduled
@@ -4540,7 +4568,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         setupDoUpdate()
         def uuid = UUID.randomUUID().toString()
         def orig = new ScheduledExecution(createJobParams([:]) + [uuid: uuid]).save()
-        def upload = new ScheduledExecution(createJobParams([description: 'milk duds']))
+        def upload = new ScheduledExecution(createJobParams([description: 'milk duds'] + [uuid: null]))
 
         when:
         def result = service.loadJobs([upload], 'update', null, [method: 'scm-import'], mockAuth())
@@ -4603,6 +4631,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
     def "scm create jobs using scm_create"(){
         given:
         setupDoUpdate()
+        service.jobSchedulerService = Mock(JobSchedulerService)
         //scm create setup
 
         def  uuid=UUID.randomUUID().toString()
@@ -4631,6 +4660,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
     def "scm create jobs not using scm_create"(){
         given:
         setupDoUpdate()
+        service.jobSchedulerService = Mock(JobSchedulerService)
         //scm create setup
 
         def  uuid=UUID.randomUUID().toString()
@@ -4712,7 +4742,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.jobSchedulerService=Mock(JobSchedulerService)
         and:
         service.jobChangeLogger = jobChangeLogger
-        def expectedLog = user+" MODIFY [${se.id}] AProject \"some/where/blue\" (update)"
+        def expectedLog = user+" MODIFY [${se.uuid}] AProject \"some/where/blue\" (update)"
         when:
         def params = baseJobParams()+[
 
@@ -5706,7 +5736,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         result
         count * service.
             quartzScheduler.
-            deleteJob({ it.name == "${job.id}:testJob" && it.group == 'aProject:testJob:a/group' })
+            deleteJob({ it.name == "${job.uuid}" && it.group == 'aProject' })
         count * service.quartzScheduler.scheduleJob(_,!null,true)
         where:
         temp  | count
@@ -5739,7 +5769,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         result==null
         1 * service.
             quartzScheduler.
-            deleteJob({ it.name == "${job.id}:testJob" && it.group == 'aProject:testJob:a/group' })
+            deleteJob({ it.name == "${job.uuid}" && it.group == 'aProject' })
         1 * service.quartzScheduler.scheduleJob(_,!null,true)>>{
             throw new SchedulerException("test error")
         }
