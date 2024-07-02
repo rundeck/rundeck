@@ -1,6 +1,7 @@
 import { mount } from "@vue/test-utils";
 import NodeTable from "../NodeTable.vue";
 import NodeDetailsSimple from "../NodeDetailsSimple.vue";
+import * as nodeUI from "../../../../utilities/nodeUi";
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({
     rdBase: "mockRdBase",
@@ -10,6 +11,10 @@ jest.mock("@/library/rundeckService", () => ({
 }));
 jest.mock("../services/nodeServices", () => ({
   getNodes: jest.fn(),
+}));
+jest.mock("../../../../utilities/nodeUi", () => ({
+  ...jest.requireActual("../../../../utilities/nodeUi"),
+  glyphiconForName: jest.fn().mockReturnValue("fas fa-hdd"),
 }));
 const mockNodeSet = {
   nodes: [
@@ -27,7 +32,8 @@ const mockNodeSet = {
         authrun: true,
         isLocalNode: true,
         "ui:status:text": "Healthy",
-        "ui:status:icon": "icon-class",
+        "ui:status:icon": ["fas", "fa-hdd"],
+        color: "red",
       },
     },
     {
@@ -44,7 +50,7 @@ const mockNodeSet = {
         authrun: false,
         isLocalNode: false,
         "ui:status:text": "Unhealthy",
-        "ui:status:icon": "icon-class1",
+        "ui:status:icon": ["fas", "fa-hdd"],
       },
     },
   ],
@@ -79,7 +85,6 @@ describe("NodeTable Component", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
-
   it("renders health status from attributes", () => {
     const wrapper = mountNodeTable();
     const statusTexts = wrapper.findAll(".node-status-text");
@@ -87,18 +92,20 @@ describe("NodeTable Component", () => {
     expect(statusTexts.at(0).text()).toContain("Healthy");
     expect(statusTexts.at(1).text()).toContain("Unhealthy");
   });
-
-  it("renders node icon, color, and badge correctly ", async () => {
+  it("renders node icon, color, and badge correctly", async () => {
     const wrapper = await mountNodeTable();
     const nodeIcons = wrapper.findAll('[data-test-id="node-icon"] i');
-    // Check each icon to ensure it has the correct classes
     nodeIcons.forEach((iconWrapper) => {
-      // Assuming 'fas' and 'fa-hdd' are the expected classes
       expect(iconWrapper.classes()).toContain("fas");
       expect(iconWrapper.classes()).toContain("fa-hdd");
     });
+    const nodeColors = wrapper.findAll('[data-test-id="node-color"]');
+    nodeColors.forEach((colorWrapper, index) => {
+      expect(colorWrapper.attributes("style")).toContain(
+        `color: ${mockNodeSet.nodes[index].attributes.color}`,
+      );
+    });
   });
-
   it("filters nodes by attribute when an attribute is clicked", async () => {
     const wrapper = mountNodeTable();
     const attributeLink = wrapper.find(
@@ -112,13 +119,10 @@ describe("NodeTable Component", () => {
   });
   it("filters nodes by name when the hostname is clicked", async () => {
     const wrapper = mountNodeTable();
-
     const hostnameFilter = wrapper.find(
       '[data-test-id="node-attribute-link-hostname"]',
     );
-
     await hostnameFilter.trigger("click");
-
     expect(wrapper.emitted().filter).toBeTruthy();
     expect(wrapper.emitted().filter[0][0]).toEqual({
       filter: 'hostname: "node2"',
