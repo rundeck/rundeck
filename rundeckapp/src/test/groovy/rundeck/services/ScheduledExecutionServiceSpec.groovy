@@ -3283,6 +3283,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         service.fileUploadService = Mock(FileUploadService)
         service.jobSchedulerService = Mock(JobSchedulerService)
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> true
+        }
 
         when:
         def result = service.rescheduleOnetimeExecutions(Arrays.asList(exec1))
