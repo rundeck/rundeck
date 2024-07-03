@@ -3284,7 +3284,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.fileUploadService = Mock(FileUploadService)
         service.jobSchedulerService = Mock(JobSchedulerService)
         service.jobSchedulesService = Mock(JobSchedulesService){
-            shouldScheduleExecution(_) >> true
+          1 * shouldScheduleExecution(_) >> true
         }
 
         when:
