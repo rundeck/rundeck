@@ -7,17 +7,23 @@ jest.mock("@/library/rundeckService", () => ({
   }),
   url: jest.fn().mockReturnValue({ href: "mockHref" }),
 }));
-const mockNodeAttributes = {
-  description: "Test Node 1",
+const mockAttributes = {
   osFamily: "Linux",
+  osName: "Ubuntu",
+  osVersion: "20.04",
   osArch: "x86_64",
+  description: "Test Node 1",
   "ui:status:text": "Healthy",
   "ui:status:icon": "fa-check",
+  "ns1:attr1": "value1",
+  "ns1:attr2": "value2",
+  "ns1:attr3": "value3",
+  "ns1:attr4": "value4",
 };
 const mountNodeDetailsSimple = async (propsData = {}) => {
   const wrapper = mount(NodeDetailsSimple, {
     props: {
-      attributes: mockNodeAttributes,
+      attributes: mockAttributes,
       tags: ["Tag1", "Tag2"],
       ...propsData,
     },
@@ -31,19 +37,32 @@ const mountNodeDetailsSimple = async (propsData = {}) => {
   return wrapper;
 };
 describe("NodeDetailsSimple Component", () => {
-  it("displays node attributes", async () => {
+  it("renders node attributes and checks for 'Test Node 1'", async () => {
     const wrapper = await mountNodeDetailsSimple();
     const attributes = wrapper.findAll(".setting");
-    const hasExpectedText = attributes.some((attributeWrapper) =>
-      attributeWrapper.text().includes("Test Node 1"),
+    const attributeTexts = attributes.map((attr) => attr.text());
+    // This checks if any attribute text includes "Test Node 1"
+    const descriptionFound = attributeTexts.some((text) =>
+      text.includes("Test Node 1"),
     );
-    expect(hasExpectedText).toBe(true);
+    expect(descriptionFound).toBe(true);
   });
-  it("displays tags", async () => {
+  it("renders tags", async () => {
     const wrapper = await mountNodeDetailsSimple();
     const tags = wrapper.findAll(".label-muted");
     expect(tags.length).toBe(2);
     expect(tags.at(0).text()).toContain("Tag1");
     expect(tags.at(1).text()).toContain("Tag2");
+  });
+  it("renders expandable attributes using class", async () => {
+    const wrapper = await mountNodeDetailsSimple();
+    const toggleButton = wrapper.find(".textbtn");
+    expect(toggleButton.exists()).toBe(true);
+    await toggleButton.trigger("click");
+    await wrapper.vm.$nextTick();
+    // Adjust the selector if necessary based on the actual HTML structure
+    const expandedAttributes = wrapper.findAll(".hover-action-holder");
+    console.log("Expandable attributes count:", expandedAttributes.length);
+    expect(expandedAttributes.length).toBeGreaterThan(0);
   });
 });

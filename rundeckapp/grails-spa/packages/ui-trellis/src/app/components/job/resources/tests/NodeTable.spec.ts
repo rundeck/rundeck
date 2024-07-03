@@ -1,10 +1,10 @@
 import { mount } from "@vue/test-utils";
 import NodeTable from "../NodeTable.vue";
 import NodeDetailsSimple from "../NodeDetailsSimple.vue";
+
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({
     rdBase: "mockRdBase",
-    projectName: "test-project",
   }),
   url: jest.fn().mockReturnValue({ href: "mockHref" }),
 }));
@@ -14,6 +14,7 @@ jest.mock("../services/nodeServices", () => ({
 jest.mock("../../../../utilities/nodeUi", () => ({
   ...jest.requireActual("../../../../utilities/nodeUi"),
   glyphiconForName: jest.fn().mockReturnValue("fas fa-hdd"),
+  glyphiconBadges: jest.fn().mockReturnValue(["badge1", "badge2"]),
 }));
 const mockNodeSet = {
   nodes: [
@@ -29,7 +30,8 @@ const mockNodeSet = {
         osVersion: "14.5",
         tags: "tag1,tag2",
         "ui:status:text": "Healthy",
-        color: "red",
+        "ui:badges": "badge1,badge2",
+        "ui:color": "red",
       },
     },
     {
@@ -44,7 +46,8 @@ const mockNodeSet = {
         osVersion: "20.04",
         tags: "tag3,tag4",
         "ui:status:text": "Unhealthy",
-        color: "blue",
+        "ui:badges": "badge3,badge4",
+        "ui:color": "blue",
       },
     },
   ],
@@ -89,28 +92,24 @@ describe("NodeTable Component", () => {
   it("renders node icon, color, and badge correctly", async () => {
     const wrapper = await mountNodeTable();
     // Check node icons
-    const nodeIcons = wrapper.findAll('[data-test-id="node-status-icon"] i');
+    const nodeIcons = wrapper.findAll('[data-test-id="node-icon"] i');
     nodeIcons.forEach((iconWrapper) => {
       expect(iconWrapper.classes()).toContain("fas");
       expect(iconWrapper.classes()).toContain("fa-hdd");
     });
     // Check node colors
-    const nodeColors = wrapper.findAll('[data-test-id="node-color"]');
-    nodeColors.forEach((colorWrapper, index) => {
-      const color = mockNodeSet.nodes[index].attributes.color;
-      expect(colorWrapper.attributes("style")).toContain(`color: ${color}`);
-      expect(["red", "blue"]).toContain(color);
+    const nodeColors = wrapper.findAll('[data-test-id="node-icon"]');
+    console.log("Node colors count:", nodeColors.length);
+    nodeColors.forEach((colorWrapper) => {
+      const styleAttribute = colorWrapper.attributes("style");
+      console.log("Style attribute:", styleAttribute);
+      // Check for color set by styleForIcon method
+      expect(styleAttribute).toMatch(/color:\s*(red|blue);?/);
     });
-    // // Check node badges
-    // const nodeBadges = wrapper.findAll('[data-test-id="node-badge-icon"]');
-    // expect(nodeBadges.length).toBeGreaterThan(0); // Ensure that badges exist
-    // nodeBadges.forEach((badgeWrapper, index) => {
-    //   const badges =
-    //     mockNodeSet.nodes[index].attributes["ui:badges"].split(",");
-    //   badges.forEach((badge) => {
-    //     expect(badgeWrapper.classes()).toContain(badge);
-    //   });
-    // });
+    // Check node badges
+    const nodeBadges = wrapper.findAll('[data-test-id="node-badge-icon"]');
+    console.log("Node badges count:", nodeBadges.length);
+    expect(nodeBadges.length).toBeGreaterThan(0);
   });
   it("filters nodes by attribute when an attribute is clicked", async () => {
     const wrapper = mountNodeTable();
@@ -139,6 +138,7 @@ describe("NodeTable Component", () => {
     const collapseLink = wrapper.find('[data-test-id="node-collapse-link"]');
     await collapseLink.trigger("click");
     const nestedAttributes = wrapper.findComponent(NodeDetailsSimple);
-    expect(nestedAttributes.exists()).toBe(true);
+
+    expect(nestedAttributes.text()).toMatch(/status:text: Healthy/);
   });
 });
