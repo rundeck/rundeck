@@ -158,6 +158,7 @@
                 role="button"
                 :class="{ active: uiNs[namespace.ns] }"
                 class="textbtn textbtn-muted textbtn-saturated"
+                data-test-id="namespace-toggle"
                 @click="toggleNs(namespace.ns)"
               >
                 {{ namespace.ns }}
@@ -171,6 +172,7 @@
           <tbody
             class="subattrs collapse collapse-expandable"
             :class="{ in: uiNs[namespace.ns] }"
+            data-test-id="namespace-attributes"
           >
             <template v-for="nsattr in namespace.values">
               <tr class="hover-action-holder">
