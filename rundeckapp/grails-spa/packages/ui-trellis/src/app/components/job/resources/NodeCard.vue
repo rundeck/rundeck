@@ -289,6 +289,9 @@ export default defineComponent({
     },
   },
   watch: {
+    nodeSet(newVal) {
+      console.log("nodeSet updated..........", newVal);
+    },
     nodeFilterStore: {
       async handler(newValue) {
         if (newValue.selectedFilter === "" && this.hideAll) {
@@ -303,6 +306,7 @@ export default defineComponent({
     },
   },
   async mounted() {
+    console.log('NodeTable mounted with nodeSet:', this.nodeSet);
     await this.fetchNodeSummary();
     await this.fetchExecutionMode();
     await this.fetchNodes();
