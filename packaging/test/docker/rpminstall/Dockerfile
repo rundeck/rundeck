@@ -1,5 +1,5 @@
 # original https://hub.docker.com/r/bwits/rundeck-build/
-FROM rdpro-centos7-util:latest
+FROM rdpro-rockylinux8-util:latest
 
 RUN useradd rundeck
 #USER rundeck
