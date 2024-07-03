@@ -1,24 +1,26 @@
-import { mount, VueWrapper } from "@vue/test-utils";
+import { mount } from "@vue/test-utils";
 import NodeCard from "../NodeCard.vue";
+import NodeTable from "../NodeTable.vue";
 import NodeFilterLink from "../NodeFilterLink.vue";
+
 import * as nodeServices from "../services/nodeServices";
-import {
-  getNodeSummary as mockGetNodeSummary,
-  getNodes as mockGetNodes,
-} from "../services/nodeServices";
-function createMockEventBus() {
-  return {
-    on: jest.fn(),
-    emit: jest.fn(),
-    off: jest.fn(),
-    all: new Map(),
-  };
-}
+
+const mockedGetNodeSummary = nodeServices.getNodeSummary as jest.MockedFunction<
+  typeof nodeServices.getNodeSummary
+>;
+const mockedGetNodes = nodeServices.getNodes as jest.MockedFunction<
+  typeof nodeServices.getNodes
+>;
+
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({
     rdBase: "mockRdBase",
     projectName: "test-project",
-    eventBus: createMockEventBus(),
+    eventBus: {
+      on: jest.fn(),
+      off: jest.fn(),
+      emit: jest.fn(),
+    },
   }),
   url: jest.fn().mockReturnValue({ href: "mockHref" }),
 }));
@@ -32,11 +34,6 @@ const mockNodeSummary = {
     { tag: "Tag2", count: 3 },
   ],
 };
-const mockNodeFilterStore = {
-  filter: "",
-  selectedFilter: "",
-  loadStoredProjectNodeFilters: jest.fn(() => {}),
-};
 const mockNodeSet = {
   nodes: [
     {
@@ -47,7 +44,6 @@ const mockNodeSet = {
         icon: "icon1",
         description: "desc1",
         "ui:status:text": "Healthy",
-        "ui:status:icon": "some-icon-class",
       },
     },
     {
@@ -58,16 +54,13 @@ const mockNodeSet = {
         icon: "icon2",
         description: "desc2",
         "ui:status:text": "Unhealthy",
-        "ui:status:icon": "some-icon-class",
       },
     },
   ],
 };
-const mountNodeCard = async (propsData = {}): Promise<VueWrapper<any>> => {
-  (
-    mockGetNodeSummary as jest.MockedFunction<typeof mockGetNodeSummary>
-  ).mockResolvedValue(mockNodeSummary);
-  (mockGetNodes as jest.MockedFunction<typeof mockGetNodes>).mockResolvedValue({
+const mountNodeCard = async (propsData = {}) => {
+  mockedGetNodeSummary.mockResolvedValue(mockNodeSummary);
+  mockedGetNodes.mockResolvedValue({
     allnodes: mockNodeSet.nodes,
     tagsummary: mockNodeSummary.tags,
     allcount: 2,
@@ -81,7 +74,10 @@ const mountNodeCard = async (propsData = {}): Promise<VueWrapper<any>> => {
       project: "test-project",
       runAuthorized: true,
       jobCreateAuthorized: true,
-      nodeFilterStore: mockNodeFilterStore,
+      nodeFilterStore: {
+        filter: "",
+        selectedFilter: "",
+      },
       ...propsData,
     },
     global: {
@@ -90,10 +86,6 @@ const mountNodeCard = async (propsData = {}): Promise<VueWrapper<any>> => {
         $tc: (msg) => msg,
       },
       stubs: {
-        NodeStatus: {
-          template: `<span><i :class="node.attributes['ui:status:icon']" class="node-status-icon"></i><span v-if="showText" class="node-status-text">{{ node.attributes['ui:status:text'] }}</span></span>`,
-          props: ["node", "showText"],
-        },
         btn: true,
         dropdown: true,
       },
@@ -102,25 +94,6 @@ const mountNodeCard = async (propsData = {}): Promise<VueWrapper<any>> => {
   await wrapper.vm.$nextTick();
   return wrapper;
 };
-beforeEach(() => {
-  jest.clearAllMocks();
-  (
-    mockGetNodeSummary as jest.MockedFunction<
-      typeof nodeServices.getNodeSummary
-    >
-  ).mockResolvedValue(mockNodeSummary);
-  (
-    mockGetNodes as jest.MockedFunction<typeof nodeServices.getNodes>
-  ).mockResolvedValue({
-    allnodes: mockNodeSet.nodes,
-    tagsummary: mockNodeSummary.tags,
-    allcount: 2,
-    total: 2,
-    truncated: false,
-    colkeys: ["name", "attributes"],
-    max: 20,
-  });
-});
 describe("NodeCard Component", () => {
   afterEach(() => {
     jest.clearAllMocks();
@@ -138,6 +111,19 @@ describe("NodeCard Component", () => {
       const tagLink = wrapper.findAllComponents(NodeFilterLink).at(0);
       await tagLink.trigger("click");
       expect(wrapper.emitted().filter).toBeTruthy();
+    });
+    it("displays the node list results", async () => {
+      const wrapper = await mountNodeCard();
+      await wrapper.vm.$nextTick();
+      const nodeTable = wrapper.findComponent(NodeTable);
+      expect(nodeTable.exists()).toBe(true);
+      const nodeSet = nodeTable.props().nodeSet;
+      expect(nodeSet).toBeDefined();
+      expect(mockNodeSet.nodes).toBeDefined();
+      expect(mockNodeSet.nodes[0].attributes["ui:status:text"]).toBe("Healthy");
+      expect(mockNodeSet.nodes[1].attributes["ui:status:text"]).toBe(
+        "Unhealthy",
+      );
     });
   });
 });

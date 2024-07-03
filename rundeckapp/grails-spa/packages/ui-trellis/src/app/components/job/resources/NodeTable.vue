@@ -204,7 +204,7 @@
                           class="link-quiet"
                           filter-key="hostname"
                           :filter-val="node.attributes.hostname"
-                          data-test-id="node-hostname-filter"
+                          data-test-id="node-attribute-link-hostname"
                           @nodefilterclick="filterClick"
                         ></node-filter-link>
                       </span>
