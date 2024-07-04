@@ -161,6 +161,7 @@ module.exports = {
     },
     devServer: {
       hot: true,
+      compress: true,
       watchOptions: {
         followSymlinks: true,
       },
