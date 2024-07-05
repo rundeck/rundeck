@@ -336,6 +336,9 @@
     <g:if test="${executionLifecyclePlugins}">
         <g:set var="executionLifecyclePluginConfigMap" value="${scheduledExecution?.pluginConfigMap?.get('ExecutionLifecycle')?:[:]}"/>
         <div class="tab-pane" id="tab_execution_plugins">
+            <div class="job-editor-execution-vue" id="job-editor-execution-vue">
+              <execution-editor-section />
+            </div>
             <div class="help-block">
                 <g:message code="scheduledExecution.property.executionLifecyclePluginConfig.help.text" />
             </div>

@@ -187,6 +187,11 @@
                      useCrontabString:scheduledExecution?.crontabString?true:scheduledExecution?.shouldUseCrontabString()?true:false,
                      timeZones:timeZones ?: []
              ]}"/>
+<g:embedJSON id="jobExecutionPluginsJSON"
+             data="${ [
+                     executionLifecyclePlugins: enc(attr:executionLifecyclePlugins?.collect{it}),
+                     executionLifecyclePluginConfigMap: scheduledExecution?.pluginConfigMap?.get('ExecutionLifecycle')?:[:]
+             ]}"/>
 <g:embedJSON id="jobOtherJSON"
              data="${ [
                      multipleExecutions:scheduledExecution.multipleExecutions ? true: false,
@@ -210,6 +215,7 @@
             optionsData: loadJsonData('jobOptionsJSON'),
             resourcesData: loadJsonData('jobResourcesJSON'),
             schedulesData: loadJsonData('jobSchedulesJSON'),
+            executionData: loadJsonData('jobExecutionPluginsJSON'),
             otherData: loadJsonData('jobOtherJSON')
         }
     })
