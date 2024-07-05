@@ -9,12 +9,6 @@ const messages = {
     "Dispatch to Nodes": "Dispatch to Nodes",
     Nodes: "Nodes",
   },
-  uiv: {
-    modal: {
-      cancel: "Cancel",
-      ok: "OK",
-    },
-  },
   cron: {
     section: {
       0: "Seconds",
@@ -829,6 +823,45 @@ const messages = {
   "option.view.action.moveUp.title": "Move Up",
   "option.view.action.moveDown.title": "Move Down",
   "option.view.action.drag.title": "Drag to reorder",
+  uiv: {
+    datePicker: {
+      clear: "Clear",
+      today: "Today",
+      month: "Month",
+      month1: "January",
+      month2: "February",
+      month3: "March",
+      month4: "April",
+      month5: "May",
+      month6: "June",
+      month7: "July",
+      month8: "August",
+      month9: "September",
+      month10: "October",
+      month11: "November",
+      month12: "December",
+      year: "Year",
+      week1: "Mon",
+      week2: "Tue",
+      week3: "Wed",
+      week4: "Thu",
+      week5: "Fri",
+      week6: "Sat",
+      week7: "Sun",
+    },
+    timePicker: {
+      am: "AM",
+      pm: "PM",
+    },
+    modal: {
+      cancel: "Cancel",
+      ok: "OK",
+    },
+    multiSelect: {
+      placeholder: "Select...",
+      filterPlaceholder: "Search...",
+    },
+  },
 };
 
 export default messages;
