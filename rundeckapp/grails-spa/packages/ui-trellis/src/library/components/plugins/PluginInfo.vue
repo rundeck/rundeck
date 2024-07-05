@@ -6,18 +6,21 @@
       <i v-else-if="glyphicon" :class="'glyphicon glyphicon-' + glyphicon"></i>
       <i v-else-if="faicon" :class="'fas fa-' + faicon"></i>
       <i v-else-if="fabicon" :class="'fab fa-' + fabicon"></i>
+      <i v-else-if="showNodeIcon" class="rdicon icon-small plugin"></i>
       <i v-else class="rdicon icon-small plugin"></i>
     </span>
     <span v-if="showTitle" :class="titleCss" style="margin-left: 5px">
       {{ title }}
     </span>
-    <PluginDetails
-      :show-description="showDescription"
-      :show-extended="showExtended"
-      :description="description"
-      :description-css="descriptionCss"
-      :extended-css="extendedCss"
-    />
+    <slot name="description">
+      <PluginDetails
+        :show-description="showDescription"
+        :show-extended="showExtended"
+        :description="description"
+        :description-css="descriptionCss"
+        :extended-css="extendedCss"
+      />
+    </slot>
 
     <slot name="suffix"></slot>
   </span>
@@ -98,6 +101,9 @@ export default defineComponent({
     },
     fabicon(): string {
       return this.providerMeta.fabicon;
+    },
+    showNodeIcon(): boolean {
+      return this.providerMeta.showNodeIcon || false;
     },
   },
 });
