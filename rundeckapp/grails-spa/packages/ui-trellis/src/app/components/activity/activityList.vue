@@ -4,6 +4,7 @@
       <span
         v-if="pagination.total > 0 && pagination.total > pagination.max"
         class="text-muted"
+        data-testid="page-info"
       >
         {{ pagination.offset + 1 }}
         -
@@ -16,7 +17,7 @@
         {{ $t("pagination.of") }}
       </span>
 
-      <a :href="activityHref" class="link-quiet">
+      <a :href="activityHref" class="link-quiet" data-testid="summary-count">
         <span
           v-if="pagination.total >= 0"
           class="summary-count"

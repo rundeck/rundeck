@@ -4,6 +4,7 @@ import {
   axiosMock,
   i18nMocks,
   mockEventBus,
+  mockReports,
 } from "../mocks/mock";
 import { shallowMount, VueWrapper } from "@vue/test-utils";
 import ActivityList from "../activityList.vue";
@@ -48,16 +49,50 @@ const shallowMountActivityList = async (
   await wrapper.vm.$nextTick();
   return wrapper as VueWrapper<ActivityListInstance>;
 };
-beforeAll(() => {
-  jest.useFakeTimers();
-  // setupRundeckContext();
+
+describe("ActivityList", () => {
+  beforeAll(() => {
+    jest.useFakeTimers();
+    // setupRundeckContext();
+  });
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe("renders", () => {
+    it("information about the page being shown and total number of results", async () => {
+      axiosMock.get.mockResolvedValue({
+        data: {
+          total: 20,
+          offset: 0,
+          reports: mockReports,
+        },
+      });
+      const wrapper = await shallowMountActivityList();
+      const pageInfoSpan = wrapper.find('[data-testid="page-info"]');
+      const summaryCount = wrapper.find('[data-testid="summary-count"]');
+      expect(pageInfoSpan.text()).toBe("1 - 2 of");
+      expect(summaryCount.text()).toBe("20 executions");
+    });
+    it("information about the current executions and finished jobs", async () => {});
+    it("error message when loading(apis) fails", async () => {});
+    it("message when there is no info available", async () => {});
+    it("message when there are no executions since timestamp", async () => {});
+  });
+
+  describe("trigger bulk actions", () => {
+    // delete
+    // search
+  });
+
+  it("navigates to the execution page", async () => {});
+
+  it("fetches data automatically when auto-refresh is true", async () => {});
 });
-afterAll(() => {
-  jest.useRealTimers();
-});
-afterEach(() => {
-  jest.clearAllMocks();
-});
+
 describe("ActivityList Component", () => {
   it("renders loading area when query changes", async () => {
     const wrapper = await shallowMountActivityList();
