@@ -1,4 +1,4 @@
-FROM rockylinux:8
+FROM redhat/ubi8
 
 RUN yum -y update
 RUN yum -y install java-11-openjdk java-11-openjdk-devel initscripts openssh openssl
