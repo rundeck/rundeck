@@ -39,7 +39,7 @@
         v-model="query"
         :event-bus="eventBus"
         :opts="filterOpts"
-        data-test-id="activity-list-filter-button"
+        data-testid="activity-list-filter-button"
       ></activity-filter>
 
       <div class="pull-right">
@@ -64,7 +64,7 @@
             </span>
             <span
               class="btn btn-default btn-xs"
-              data-test-id="activity-list-delete-selected-executions"
+              data-testid="activity-list-delete-selected-executions"
               @click="showBulkEditCleanSelections = true"
             >
               {{ $t("select.none") }}
@@ -89,7 +89,7 @@
             v-if="auth.deleteExec && !bulkEditMode"
             size="xs"
             type="default"
-            data-test-id="activity-list-bulk-delete"
+            data-testid="activity-list-bulk-delete"
             @click="bulkEditMode = true"
           >
             {{ $t("bulk.delete") }}
@@ -232,6 +232,7 @@
             :key="exec.id"
             class="execution link activity_row autoclickable"
             :class="{ nowrunning: !exec.dateCompleted, [exec.status]: true }"
+            data-testid="execution-item"
             @click="autoBulkEdit(exec)"
             @click.middle="middleClickRow(exec)"
           >
@@ -372,7 +373,7 @@
                 class="link-quiet"
                 title="View execution output"
                 :href="exec.permalink"
-                data-test-id="execution-link"
+                data-testid="execution-link"
                 >#{{ exec.id }}</a
               >
             </td>
@@ -381,6 +382,7 @@
         <tbody
           v-if="sincecount > 0"
           class="since-count-data autoclickable"
+          data-testid="since-count-data"
           @click="reload"
         >
           <tr>
@@ -392,7 +394,7 @@
         <tbody
           v-if="reports.length > 0"
           class="history-executions"
-          data-test-id="report-rows-item"
+          data-testid="report-rows-item"
         >
           <tr
             v-for="rpt in reports"
@@ -409,7 +411,7 @@
                 adhoc: !rpt.jobId,
               },
             ]"
-            data-test-id="report-row-item"
+            data-testid="report-row-item"
             @click="autoBulkEdit(rpt)"
             @click.middle="middleClickRow(rpt)"
           >
@@ -560,8 +562,8 @@
     >
       <span
         v-if="!loading && !loadError"
+        data-testid="no-data-message"
         class="loading-text"
-        data-test="no-data-message"
       >
         {{ $t("results.empty.text") }}
       </span>
@@ -569,7 +571,7 @@
         <i class="fas fa-spinner fa-pulse"></i>
         {{ $t("Loading...") }}
       </div>
-      <div v-if="loadError" class="text-warning">
+      <div v-if="loadError" class="text-warning" data-testid="error-message">
         <i class="fas fa-error"></i>
         {{ $t("error.message.0", [loadError]) }}
       </div>
@@ -1052,18 +1054,20 @@ export default defineComponent({
           ),
           withCredentials: true,
         });
-
+        console.log("Response Data", response.data);
         if (
           this.lastDate > 0 &&
           response.data.since &&
           response.data.since.count
         ) {
           this.sincecount = response.data.since.count;
+          console.log("Updated since count", this.sincecount);
         }
       } catch (error) {
         //@ts-ignore
         this.disableRefresh = !this.disableRefresh;
         this.loadError = error.message;
+        console.log("Error", error.message);
       }
     },
     async loadRunning() {
