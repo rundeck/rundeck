@@ -35,7 +35,7 @@
         }
     }
 
-    &--warning {
+    &-warn {
         background: var(--colors-orange-100);
         border-color: var(--colors-orange-600);
 
@@ -44,7 +44,7 @@
         }
     }
 
-    &--danger {
+    &-error {
         background: var(--colors-red-100);
         border-color: var(--colors-red-600);
 
