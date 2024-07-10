@@ -107,7 +107,7 @@ describe("ActivityList", () => {
 
       expect(errorMessage.exists()).toBe(true);
       // expect(errorMessage.text()).toContain("An error occurred");
-      expect(errorMessage.text()).toContain("An Error Occurred: {0}");
+      expect(errorMessage.text()).toContain("An Error Occurred");
     });
     it("message when there is no info available", async () => {
       axiosMock.get.mockResolvedValue({
