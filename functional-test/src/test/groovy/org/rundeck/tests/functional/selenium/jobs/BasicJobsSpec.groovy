@@ -206,6 +206,22 @@ class BasicJobsSpec extends SeleniumBase {
             jobShowPage.optionValidationWarningText.getText().contains 'Option \'reqOpt1\' is required'
     }
 
+    def "run job modal should show node filter editable input"(){
+        when:
+            def jobShowPage = go JobShowPage, SELENIUM_BASIC_PROJECT
+        then:
+            jobShowPage.validatePage()
+            jobShowPage.runJobLink '7a0d71b2-e096-4fbd-9efb-21bcbe826c0e' click()
+            jobShowPage.waitForElementToBeClickable jobShowPage.runFormButton
+            jobShowPage.runFormButton.click()
+            jobShowPage.waitForElementVisible jobShowPage.nodeFilterInput
+            jobShowPage.nodeFilterInput.click()
+            jobShowPage.waitForElementVisible jobShowPage.nodeFilterOverride
+            jobShowPage.nodeFilterOverride.click()
+        expect:
+            jobShowPage.schedJobNodeFilter.isDisplayed()
+    }
+
     def "job filter by name results"() {
         when:
             def jobShowPage = go JobShowPage, SELENIUM_BASIC_PROJECT
