@@ -53,6 +53,7 @@ export const i18nMocks = {
           ? `${count} New Results. Click to load.`
           : "1 New Result. Click to load.",
       "In the last Day": "In the last Day",
+      "error.message": "An Error Occurred",
     };
     return translations[msg] || msg;
   },
