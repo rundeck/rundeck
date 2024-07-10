@@ -3,6 +3,7 @@ import { getRundeckContext } from "../../../library";
 import { NodeFilterStore } from "../../../library/stores/NodeFilterLocalstore";
 import NodeFilterInput from "../../components/job/resources/NodeFilterInput.vue";
 import NodeCard from "../../components/job/resources/NodeCard.vue";
+import { observer } from "../../utilities/uiSocketObserver";
 
 const rundeckContext = getRundeckContext();
 const FilterInputComp = defineComponent({
@@ -214,10 +215,11 @@ function init() {
           data() {
             return {
               project: rundeckContext.projectName,
+              nodeFilterStore: new NodeFilterStore(),
             };
           },
           template: `
-                      <filter-input-comp :project="project" :item-data="itemData"/>
+                      <filter-input-comp :project="project" :item-data="itemData" :extra-attrs="{'nodeFilterStore': nodeFilterStore}"/>
                     `,
         }),
       ),
@@ -244,3 +246,10 @@ function init() {
   ]);
 }
 window.addEventListener("DOMContentLoaded", init);
+
+window.addEventListener("DOMContentLoaded", (event) => {
+  const elem = document.querySelector("#execDiv");
+  if (elem) {
+    observer.observe(elem, { subtree: true, childList: true });
+  }
+});
