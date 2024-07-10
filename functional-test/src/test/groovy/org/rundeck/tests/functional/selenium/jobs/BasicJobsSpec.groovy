@@ -212,11 +212,9 @@ class BasicJobsSpec extends SeleniumBase {
         then:
             jobShowPage.validatePage()
             jobShowPage.runJobLink '7a0d71b2-e096-4fbd-9efb-21bcbe826c0e' click()
-            jobShowPage.waitForElementToBeClickable jobShowPage.runFormButton
-            jobShowPage.runFormButton.click()
-            jobShowPage.waitForElementVisible jobShowPage.nodeFilterInput
+            jobShowPage.waitForElementToBeClickable jobShowPage.nodeFilterInput
             jobShowPage.nodeFilterInput.click()
-            jobShowPage.waitForElementVisible jobShowPage.nodeFilterOverride
+            jobShowPage.waitForElementToBeClickable jobShowPage.nodeFilterOverride
             jobShowPage.nodeFilterOverride.click()
         expect:
             jobShowPage.schedJobNodeFilter.isDisplayed()
