@@ -189,14 +189,14 @@
             <!-- BEGIN UI plugin scripts for ${pluginname} -->
             <g:each in="${uiplugins[pluginname].scripts}" var="scriptPath">
                 <g:if test="${scriptPath.startsWith('asset:')}">
-                    <asset:javascript src="${scriptPath.substring('asset:'.length())}"/>
+                    <asset:javascript src="${scriptPath.substring('asset:'.length())}" asset-defer="true"/>
                 </g:if>
                 <g:else>
                     <script src="${createLink(
                             controller: 'plugin',
                             action: 'pluginFile',
                             params: [service: 'UI', name: pluginname, path: scriptPath]
-                    )}" type="text/javascript"></script>
+                    )}" type="text/javascript" defer></script>
                 </g:else>
             </g:each>
             <!-- END UI Plugin scripts for ${pluginname} -->
