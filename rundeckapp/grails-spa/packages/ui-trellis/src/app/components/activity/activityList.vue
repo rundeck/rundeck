@@ -75,7 +75,7 @@
               type="danger"
               class="btn-fill"
               :disabled="bulkSelectedIds.length < 1"
-              data-test-id="activity-list-delete-selected-executions"
+              data-test-id="delete-selected-executions"
               @click="showBulkEditConfirm = true"
             >
               {{ $t("delete.selected.executions") }}
@@ -250,6 +250,7 @@
                   exec.status === 'queued'
                 "
                 class="_defaultInput"
+                data-testid="bulk-delete-checkbox"
               />
             </td>
             <td class="eventicon" :title="executionState(exec.status)">

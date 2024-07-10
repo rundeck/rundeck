@@ -210,50 +210,36 @@ describe("ActivityList", () => {
     });
   });
   it("navigates to the execution page", async () => {
-    // Mock data
-    const mockReports = [
-      {
-        execution: {
-          id: "1",
-        },
-        permalink: "http://localhost:4440/project/test/execution/show/1",
-        status: "succeeded",
-        dateCompleted: "2024-05-22T14:33:52Z",
-        node: { total: 1, succeeded: 1, failed: 0 },
+    axiosMock.get.mockResolvedValueOnce({
+      data: {
+        executions: mockRunningExecutions,
       },
-    ];
-
-    axiosMock.get
-      .mockResolvedValueOnce({
-        data: {
-          reports: mockReports,
-        },
-      })
-      .mockResolvedValueOnce({
-        data: {
-          executions: mockRunningExecutions,
-        },
-      });
+    });
     const wrapper = await shallowMountActivityList();
     await wrapper.vm.$nextTick();
-    // Explicitly set the reports data
-    wrapper.setData({
-      reports: mockReports,
+    // Mock window.location
+    delete window.location;
+    window.location = { href: "" } as any;
+    // Set the reports data explicitly
+    await wrapper.setData({
+      reports: [
+        {
+          execution: { id: "1" },
+          permalink: "http://localhost:4440/project/test/execution/show/1",
+          status: "succeed",
+          dateCompleted: "2024-05-22T14:33:52Z",
+          node: { total: 1, succeeded: 1, failed: 0 },
+        },
+      ],
     });
     await wrapper.vm.$nextTick();
+    // Find the report row item and simulate click
+    const reportRowItem = wrapper.find('[data-testid="report-row-item"]');
+    await reportRowItem.trigger("click");
 
-    const executionLink = wrapper.find('[data-testid="execution-link"]');
-    expect(executionLink.exists()).toBe(true);
-    // Simulate click on the execution link
-    await executionLink.trigger("click");
-    // Verify the permalink value
-    expect(wrapper.vm.reports[0].permalink).toBe(
+    expect(window.location).toBe(
       "http://localhost:4440/project/test/execution/show/1",
     );
-    console.log("window.location: ", window.location);
-    // expect(window.location).toBe(
-    //   "http://localhost:4440/project/test/execution/show/1",
-    // );
   });
 
   it("fetches data automatically when auto-refresh is true", async () => {
