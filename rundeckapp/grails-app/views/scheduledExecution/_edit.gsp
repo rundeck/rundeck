@@ -334,17 +334,14 @@
 </div><!-- end#tab_schedule -->
 <feature:enabled name="executionLifecyclePlugin">
     <g:if test="${executionLifecyclePlugins}">
-        <g:set var="test" value="${executionLifecyclePlugins.collect{ [it.value.name.toString()] }}" />
         <g:set var="executionLifecyclePluginConfigMap" value="${scheduledExecution?.pluginConfigMap?.get('ExecutionLifecycle')?:[:]}"/>
         <div class="tab-pane" id="tab_execution_plugins">
             <div class="job-editor-execution-vue" id="job-editor-execution-vue">
-              <%
-                println(executionLifecyclePlugins.getClass())
-                println(executionLifecyclePlugins.collect{ [it.value.name.toString()] })
-              %>
-              <execution-editor-section :plugin="${}" />
-%{--              (executionLifecyclePlugins?.collect{it.value.description.name}.toString())--}%
-%{--              enc(attr:executionLifecyclePlugins?.collect{[(it.value.description.title)]})--}%
+%{--              <%--}%
+%{--                println(executionLifecyclePlugins.get("result-data-json-template"))--}%
+%{--              %>--}%
+
+              <execution-editor-section  />
             </div>
             <div class="help-block">
                 <g:message code="scheduledExecution.property.executionLifecyclePluginConfig.help.text" />
