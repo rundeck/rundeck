@@ -182,8 +182,8 @@ export default defineComponent({
       },
     },
   },
-  mounted() {
-    this.onMounted();
+  async mounted() {
+    this.internalData = Object.assign({}, this.modelValue);
   },
   methods: {
     onBlur(inputName: string) {
@@ -211,9 +211,6 @@ export default defineComponent({
       window.markdeep.format(massagedData + "\n", true, (t) => {
         this.preview = t;
       });
-    },
-    async onMounted() {
-      this.internalData = Object.assign({}, this.modelValue);
     },
   },
 });
