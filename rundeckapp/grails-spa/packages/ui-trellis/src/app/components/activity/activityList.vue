@@ -44,7 +44,12 @@
 
       <div class="pull-right">
         <span v-if="runningOpts.allowAutoRefresh" class="pr-2">
-          <input id="auto-refresh" v-model="autorefresh" type="checkbox" />
+          <input
+            id="auto-refresh"
+            v-model="autorefresh"
+            type="checkbox"
+            data-testid="auto-refresh-checkbox"
+          />
 
           <label for="auto-refresh" class="pr-2">{{
             $t("Auto refresh")
@@ -65,7 +70,7 @@
             </span>
             <span
               class="btn btn-default btn-xs"
-              data-testid="activity-list-delete-selected-executions"
+              data-testid="activity-list-deselect-all"
               @click="showBulkEditCleanSelections = true"
             >
               {{ $t("select.none") }}
@@ -76,7 +81,7 @@
               type="danger"
               class="btn-fill"
               :disabled="bulkSelectedIds.length < 1"
-              data-test-id="delete-selected-executions"
+              data-testid="delete-selected-executions"
               @click="showBulkEditConfirm = true"
             >
               {{ $t("delete.selected.executions") }}
