@@ -80,32 +80,12 @@ export default defineComponent({
       type: String,
       default: "",
     },
-    service: {
-      type: String,
-      default: "",
-    },
-    name: {
-      type: String,
-      default: "",
-    },
     moreText: {
       type: String,
       default: "",
     },
   },
   computed: {
-    pluginBaseUrl() {
-      if (this.service.length && this.name.length) {
-        return `/plugin/pluginFile?service=${this.service}&name=${this.name}`;
-      }
-      return "";
-    },
-    replTokens() {
-      // not relevant at the moment
-      return this.pluginBaseUrl.length > 0
-        ? { "plugin.url": this.pluginBaseUrl }
-        : null;
-    },
     splitText() {
       const tempArray = this.description.split(/(\r\n?|\n)/, 2);
       tempArray[1] = this.description.substring(tempArray[0].length);
