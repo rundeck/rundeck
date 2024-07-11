@@ -45,6 +45,7 @@
       <div class="pull-right">
         <span v-if="runningOpts.allowAutoRefresh" class="pr-2">
           <input id="auto-refresh" v-model="autorefresh" type="checkbox" />
+
           <label for="auto-refresh" class="pr-2">{{
             $t("Auto refresh")
           }}</label>
