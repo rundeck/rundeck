@@ -89,6 +89,7 @@ describe("ActivityList", () => {
     afterEach(() => {
       jest.clearAllMocks();
     });
+
     it("information about the page being shown and total number of results", async () => {
       axiosMock.get.mockResolvedValue({
         data: {
@@ -103,6 +104,7 @@ describe("ActivityList", () => {
       expect(pageInfoSpan.text()).toBe("1 - 2 of");
       expect(summaryCount.text()).toBe("20 executions");
     });
+
     it("information about the current executions and finished jobs", async () => {
       axiosMock.get.mockImplementation((url) => {
         if (url.includes("execution")) {
@@ -130,6 +132,7 @@ describe("ActivityList", () => {
       expect(executionItems.length).toBe(mockRunningExecutions.length);
       expect(reportItems.length).toBe(mockReports.length);
     });
+
     it("error message when loading(apis) fails", async () => {
       axiosMock.get.mockRejectedValue(new Error("An error occurred"));
       const wrapper = await shallowMountActivityList();
@@ -140,6 +143,7 @@ describe("ActivityList", () => {
       // expect(errorMessage.text()).toContain("An error occurred");
       expect(errorMessage.text()).toContain("An Error Occurred");
     });
+
     it("message when there is no info available", async () => {
       axiosMock.get.mockImplementation((url) => {
         if (url.includes("eventsAjax")) {
@@ -167,6 +171,7 @@ describe("ActivityList", () => {
       expect(noInfoMessage.exists()).toBe(true);
       expect(noInfoMessage.text()).toBe("No results for the query");
     });
+
     it("renders message when there are no executions since timestamp", async () => {
       axiosMock.get.mockImplementation((url) => {
         if (url.includes("eventsAjax")) {
@@ -224,27 +229,41 @@ describe("ActivityList", () => {
           reports: mockReports,
         },
       });
-
+      axiosMock.get.mockResolvedValue({
+        data: {
+          executions: mockRunningExecutions,
+        },
+      });
       const wrapper = await shallowMountActivityList();
-
-      await wrapper.vm.$nextTick(); // Wait for DOM updates
-
+      await wrapper.vm.$nextTick();
       const bulkDeleteButton = wrapper.find(
         '[data-testid="activity-list-bulk-delete"]',
       );
-
       expect(bulkDeleteButton.exists()).toBe(true);
-
-      await wrapper.vm.$nextTick(); // Wait for any state changes
-
+      await wrapper.vm.$nextTick();
       await bulkDeleteButton.trigger("click");
-
-      expect(wrapper.vm.bulkEditMode).toBe(true);
+      await wrapper.vm.$nextTick();
+      const bulkDeleteCheckboxes = wrapper.findAll(
+        '[data-testid="bulk-delete-checkbox"]',
+      );
+      expect(bulkDeleteCheckboxes.length).toBeGreaterThan(0);
+      const confirmDeleteButton = wrapper.find(
+        '[data-testid="delete-selected-executions"]',
+      );
+      await wrapper.vm.$nextTick();
+      expect(confirmDeleteButton.exists()).toBe(true);
+      await confirmDeleteButton.trigger("click");
+      await wrapper.vm.$nextTick();
+      const executionItems = wrapper.findAll('[data-testid="execution-link"]');
+      await wrapper.vm.$nextTick();
+      // Is this a right expect
+      expect(executionItems.length).toBe(mockRunningExecutions.length - 1);
     });
-    it("Search", async () => {
+
+    it("search", async () => {
       axiosMock.get.mockResolvedValue({
         data: {
-          reports: mockReports, // Your mock data here
+          reports: mockReports,
         },
       });
       const wrapper = await shallowMountActivityList();
@@ -253,19 +272,24 @@ describe("ActivityList", () => {
       );
       await filterButton.trigger("click");
       expect(wrapper.vm.showFilters).toBe(true);
-      // Simulate search action by updating the query directly
-      wrapper.vm.query.jobFilter = "testJob";
+      const activityFilter = wrapper.findComponent(ActivityFilter);
+      activityFilter.vm.$emit("input", {
+        ...wrapper.vm.query,
+        jobIdFilter: "testJob",
+      });
       await wrapper.vm.$nextTick();
-      // Trigger the reload method or any action that should follow the search input change
-      await wrapper.vm.reload();
+      // Check the API call
       expect(axiosMock.get).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
           params: expect.objectContaining({
-            jobFilter: "testJob",
+            jobIdFilter: "testJob",
           }),
         }),
       );
+
+      const reportItems = wrapper.findAll('[data-testid="report-row-item"]');
+      // TODO: use expect
     });
   });
 
@@ -298,5 +322,21 @@ describe("ActivityList", () => {
     // Check if the navigation occurred correctly
     const report = mockReports[0]; // Use the first report for simplicity
     expect(window.location).toBe(report.executionHref);
+  });
+
+  it("fetches data automatically when auto-refresh is true", async () => {
+    axiosMock.get.mockResolvedValue({
+      data: {
+        reports: mockReports,
+      },
+    });
+    const wrapper = await shallowMountActivityList();
+    const autoRefreshCheckbox = wrapper.find(
+      '[data-testid="auto-refresh-checkbox"]',
+    );
+    await autoRefreshCheckbox.trigger("click");
+    jest.advanceTimersByTime(5000);
+    await wrapper.vm.$nextTick();
+    expect(axiosMock.get).toHaveBeenCalledTimes(2);
   });
 });
