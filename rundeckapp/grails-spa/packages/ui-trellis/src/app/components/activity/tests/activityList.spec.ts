@@ -95,7 +95,7 @@ describe("ActivityList", () => {
         data: {
           total: 20,
           offset: 0,
-          reports: mockReports,
+          reports: reports,
         },
       });
       const wrapper = await shallowMountActivityList();
@@ -218,6 +218,9 @@ describe("ActivityList", () => {
       jest.clearAllMocks();
     });
     it("trigger bulk actions - delete", async () => {
+      // to do: change how axiosMock is mocked, so that upon the first fetch of reports you can return the whole array of reports,
+      // but on the second time (which happens after delete), the mock will return the array of reports - the N reports deleted
+
       axiosMock.get.mockResolvedValueOnce({
         data: {
           total: 2,
@@ -247,6 +250,7 @@ describe("ActivityList", () => {
         '[data-testid="bulk-delete-checkbox"]',
       );
       expect(bulkDeleteCheckboxes.length).toBeGreaterThan(0);
+      // to do: need to select N rows for deletion, by doing a setValue for a N checkboxes
       const confirmDeleteButton = wrapper.find(
         '[data-testid="delete-selected-executions"]',
       );
@@ -257,10 +261,14 @@ describe("ActivityList", () => {
       const executionItems = wrapper.findAll('[data-testid="execution-link"]');
       await wrapper.vm.$nextTick();
       // Is this a right expect
+      // to do: use reports instead of executions and make sure that the expected number matches the number of checkboxes selected and the number of reports returned
       expect(executionItems.length).toBe(mockRunningExecutions.length - 1);
     });
 
     it("search", async () => {
+      // to do: change how axiosMock is mocked, so that upon the first fetch of reports you can return the whole array of reports,
+      // but on the second time (which happens after search), the mock will return the array of reports that match the search term (ie 2);
+
       axiosMock.get.mockResolvedValue({
         data: {
           reports: mockReports,
@@ -294,7 +302,7 @@ describe("ActivityList", () => {
   });
 
   it("navigates to the execution page", async () => {
-    axiosMock.get.mockImplementation((url) => {
+    axiosMock.get.mockImplementation((url, data) => {
       if (url.includes("execution")) {
         return Promise.resolve({
           data: {
@@ -307,7 +315,7 @@ describe("ActivityList", () => {
           data: {
             total: 20,
             offset: 0,
-            reports: mockReports,
+            reports: reports,
           },
         });
       }
@@ -325,6 +333,7 @@ describe("ActivityList", () => {
   });
 
   it("fetches data automatically when auto-refresh is true", async () => {
+    // to do: add all 3 mocks for axiosMock (since, reports, execution), to ensure that loadSince will pass;
     axiosMock.get.mockResolvedValue({
       data: {
         reports: mockReports,
@@ -334,9 +343,12 @@ describe("ActivityList", () => {
     const autoRefreshCheckbox = wrapper.find(
       '[data-testid="auto-refresh-checkbox"]',
     );
-    await autoRefreshCheckbox.trigger("click");
-    jest.advanceTimersByTime(5000);
+    await autoRefreshCheckbox.setValue(true);
     await wrapper.vm.$nextTick();
-    expect(axiosMock.get).toHaveBeenCalledTimes(2);
+    // its fine to advance timers, but need to make sure that it has passed enough time to trigger the setTimeout
+    // or can trigger runAllTimers, which will advance the timers until all setTimeouts/setIntervals run
+    jest.runAllTimers();
+    await wrapper.vm.$nextTick();
+    expect(axiosMock.get).toHaveBeenCalledTimes(2); // this number will be bigger
   });
 });
