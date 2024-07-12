@@ -23,7 +23,7 @@
 */
 package com.dtolabs.utils;
 
-import org.apache.tools.ant.types.FilterSet;
+import lombok.Getter;
 
 import java.io.*;
 
@@ -102,11 +102,18 @@ public class Streams {
     public static class StreamCopyThread extends Thread {
         final InputStream in;
         final OutputStream out;
-        private IOException exception;
+        @Getter private IOException exception;
+        private Runnable finalizer;
 
         public StreamCopyThread(final InputStream in, final OutputStream out) {
             this.in = in;
             this.out = out;
+        }
+
+        public StreamCopyThread(final InputStream in, final OutputStream out, final Runnable finalizer) {
+            this.in = in;
+            this.out = out;
+            this.finalizer = finalizer;
         }
 
         @Override
@@ -116,11 +123,11 @@ public class Streams {
                 out.flush();
             } catch (IOException e) {
                 exception = e;
+            } finally {
+                if (null != finalizer) {
+                    finalizer.run();
+                }
             }
-        }
-
-        public IOException getException() {
-            return exception;
         }
     }
 
@@ -133,29 +140,24 @@ public class Streams {
      * @return an unstarted {@link StreamCopyThread}
      */
     public static StreamCopyThread copyStreamThread(final InputStream in, final OutputStream out) {
-        return new StreamCopyThread(in, out);
+        return copyStreamThread(in, out, null);
     }
 
     /**
-     * Read the data from the input stream and write to the outputstream, filtering with an Ant FilterSet.
+     * Return a new thread that will copy an inputstream to an output stream.  You must start the thread.
      *
      * @param in  inputstream
      * @param out outputstream
-     * @param set FilterSet to use
+     * @param finalizer runnable to execute after the stream is copied or an exception occurred
      *
-     * @throws java.io.IOException if thrown by underlying io operations
+     * @return an unstarted {@link StreamCopyThread}
      */
-    public static void copyStreamWithFilterSet(final InputStream in, final OutputStream out, final FilterSet set)
-        throws IOException {
-        final BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-        final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out));
-        String lSep = System.getProperty("line.separator");
-        String line = reader.readLine();
-        while (null != line) {
-            writer.write(set.replaceTokens(line));
-            writer.write(lSep);
-            line = reader.readLine();
-        }
-        writer.flush();
+    public static StreamCopyThread copyStreamThread(
+            final InputStream in,
+            final OutputStream out,
+            final Runnable finalizer
+    )
+    {
+        return new StreamCopyThread(in, out, finalizer);
     }
 }
