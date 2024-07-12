@@ -160,7 +160,12 @@
           <btn @click="showBulkEditConfirm = false">
             {{ $t("cancel") }}
           </btn>
-          <btn type="danger" data-dismiss="modal" @click="performBulkDelete">
+          <btn
+            type="danger"
+            data-dismiss="modal"
+            data-testid="confirm-delete"
+            @click="performBulkDelete"
+          >
             {{ $t("Delete Selected") }}
           </btn>
         </div>
@@ -429,6 +434,7 @@
                 name="bulk_edit"
                 :value="rpt.executionId"
                 class="_defaultInput"
+                data-testid="bulk-delete-checkbox"
               />
             </td>
             <td class="eventicon" :title="reportState(rpt)">

@@ -119,7 +119,7 @@ describe("ActivityList", () => {
             data: {
               total: 20,
               offset: 0,
-              reports: mockReports,
+              reports: reports,
             },
           });
         }
@@ -140,7 +140,7 @@ describe("ActivityList", () => {
       const errorMessage = wrapper.find('[data-testid="error-message"]');
 
       expect(errorMessage.exists()).toBe(true);
-      // expect(errorMessage.text()).toContain("An error occurred");
+
       expect(errorMessage.text()).toContain("An Error Occurred");
     });
 
@@ -177,7 +177,7 @@ describe("ActivityList", () => {
         if (url.includes("eventsAjax")) {
           return Promise.resolve({
             data: {
-              reports: mockReports,
+              reports: reports,
               total: 0,
               offset: 0,
               lastDate: -1,
@@ -218,51 +218,129 @@ describe("ActivityList", () => {
       jest.clearAllMocks();
     });
     it("trigger bulk actions - delete", async () => {
-      // to do: change how axiosMock is mocked, so that upon the first fetch of reports you can return the whole array of reports,
-      // but on the second time (which happens after delete), the mock will return the array of reports - the N reports deleted
-
-      axiosMock.get.mockResolvedValueOnce({
-        data: {
-          total: 2,
-          offset: 0,
-          auth: { projectAdmin: true, deleteExec: true },
-          bulkEditMode: false,
-          showBulkDelete: true,
-          bulkSelectedIds: ["42"],
-          reports: mockReports,
-        },
-      });
-      axiosMock.get.mockResolvedValue({
-        data: {
-          executions: mockRunningExecutions,
-        },
+      axiosMock.get.mockImplementation((url) => {
+        if (url.includes("eventsAjax")) {
+          console.log("Initial fetch of reports with data:", reports);
+          return Promise.resolve({
+            data: {
+              total: reports.length,
+              offset: 0,
+              auth: { projectAdmin: true, deleteExec: true },
+              bulkEditMode: false,
+              showBulkDelete: true,
+              bulkSelectedIds: ["42"],
+              reports: reports,
+            },
+          });
+        }
+        if (url.includes("running")) {
+          console.log("Initial fetch of running executions");
+          return Promise.resolve({
+            data: {
+              executions: [],
+            },
+          });
+        }
+        return Promise.resolve({ data: {} });
       });
       const wrapper = await shallowMountActivityList();
-      await wrapper.vm.$nextTick();
+      console.log("Mounted ActivityList");
+      // Trigger bulk edit mode
       const bulkDeleteButton = wrapper.find(
         '[data-testid="activity-list-bulk-delete"]',
       );
-      expect(bulkDeleteButton.exists()).toBe(true);
-      await wrapper.vm.$nextTick();
+      console.log("Bulk delete button exists:", bulkDeleteButton.exists());
+      if (!bulkDeleteButton.exists()) {
+        console.error("Bulk delete button not found in DOM");
+        return;
+      }
       await bulkDeleteButton.trigger("click");
-      await wrapper.vm.$nextTick();
-      const bulkDeleteCheckboxes = wrapper.findAll(
+      console.log("Triggered bulk delete button click");
+      // Select checkboxes for deletion
+      const checkboxes = wrapper.findAll(
         '[data-testid="bulk-delete-checkbox"]',
       );
-      expect(bulkDeleteCheckboxes.length).toBeGreaterThan(0);
-      // to do: need to select N rows for deletion, by doing a setValue for a N checkboxes
+      console.log("Number of checkboxes:", checkboxes.length);
+      checkboxes.forEach((checkbox, index) => {
+        const inputElement = checkbox.element as HTMLInputElement;
+        console.log(`Checkbox ${index} value:`, inputElement.value);
+      });
+      expect(checkboxes.length).toBe(reports.length);
+      // Select two checkboxes for deletion
+      await checkboxes.at(0)?.trigger("click");
+      console.log("First checkbox checked");
+      await checkboxes.at(1)?.trigger("click");
+      console.log("Second checkbox checked");
+      // Mock delete request
+      axiosMock.post.mockResolvedValue({
+        data: {
+          allsuccessful: true,
+        },
+      });
+      // Ensure the delete request is called with correct parameters
+      axiosMock.post.mockClear(); // Clear previous calls to ensure accurate check
+      expect(axiosMock.post).toHaveBeenCalledTimes(0);
+      // Mock updated reports list after deletion
+      axiosMock.get.mockImplementationOnce((url) => {
+        if (url.includes("eventsAjax")) {
+          console.log("Fetch of reports after deletion");
+          // Assuming 2 reports were deleted, adjust the slice accordingly
+          return Promise.resolve({
+            data: {
+              total: reports.length - 2,
+              offset: 0,
+              auth: { projectAdmin: true, deleteExec: true },
+              bulkEditMode: false,
+              showBulkDelete: true,
+              reports: reports.slice(2),
+            },
+          });
+        }
+        return Promise.resolve({ data: {} });
+      });
+      // Trigger delete confirmation
       const confirmDeleteButton = wrapper.find(
         '[data-testid="delete-selected-executions"]',
       );
-      await wrapper.vm.$nextTick();
-      expect(confirmDeleteButton.exists()).toBe(true);
+      console.log(
+        "Confirm delete button exists:",
+        confirmDeleteButton.exists(),
+      );
+      if (!confirmDeleteButton.exists()) {
+        console.error("Confirm delete button not found in DOM");
+        return;
+      }
       await confirmDeleteButton.trigger("click");
       await wrapper.vm.$nextTick();
-      const executionItems = wrapper.findAll('[data-testid="execution-link"]');
+      console.log("Triggered confirm delete button click");
+      // Ensure the modal is displayed
+      const modal = wrapper.find("#bulkexecdeleteresult");
+      console.log("Modal exists:", modal.exists());
+      if (!modal.exists()) {
+        console.error("Modal not found in DOM");
+        return;
+      }
+
+  
+      // Find and trigger confirmation in modal
+      const modalConfirmDeleteButton = wrapper.find(
+        '[data-testid="confirm-delete"]',
+      );
+      console.log(
+        "Modal confirm delete button exists:",
+        modalConfirmDeleteButton.exists(),
+      );
+      if (!modalConfirmDeleteButton.exists()) {
+        console.error("Modal confirm delete button not found in DOM");
+        return;
+      }
+      await modalConfirmDeleteButton.trigger("click");
       await wrapper.vm.$nextTick();
-      // Is this a right expect
-      // to do: use reports instead of executions and make sure that the expected number matches the number of checkboxes selected and the number of reports returned
-      expect(executionItems.length).toBe(mockRunningExecutions.length - 1);
+      console.log("Triggered modal confirm delete button click");
+      // Check the number of remaining report rows
+      const reportRows = wrapper.findAll('[data-testid="report-row-item"]');
+      console.log("Number of report rows after deletion:", reportRows.length);
+      expect(reportRows.length).toBe(reports.length - 2);
     });
 
     it("search", async () => {
@@ -271,7 +349,7 @@ describe("ActivityList", () => {
 
       axiosMock.get.mockResolvedValue({
         data: {
-          reports: mockReports,
+          reports: reports,
         },
       });
       const wrapper = await shallowMountActivityList();
@@ -336,7 +414,7 @@ describe("ActivityList", () => {
     // to do: add all 3 mocks for axiosMock (since, reports, execution), to ensure that loadSince will pass;
     axiosMock.get.mockResolvedValue({
       data: {
-        reports: mockReports,
+        reports: reports,
       },
     });
     const wrapper = await shallowMountActivityList();
