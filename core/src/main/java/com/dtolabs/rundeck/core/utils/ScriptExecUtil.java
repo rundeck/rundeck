@@ -258,6 +258,42 @@ public class ScriptExecUtil {
             boolean clearEnv,
             Consumer<ProcessHandle> killHandler
     )
+            throws IOException, InterruptedException
+    {
+        return runLocalCommand(
+                command,
+                envMap,
+                workingdir,
+                outputStream,
+                errorStream,
+                clearEnv,
+                killHandler,
+                null
+        );
+    }
+
+    /**
+     * Run a command with environment variables in a working dir, and copy the streams
+     *
+     * @param command      the command array to run
+     * @param envMap       the environment variables to pass in
+     * @param workingdir   optional working dir location (or null)
+     * @param outputStream stream for stdout
+     * @param errorStream  stream for stderr
+     * @return the exit code of the command
+     * @throws IOException          if any IO exception occurs
+     * @throws InterruptedException if interrupted while waiting for the command to finish
+     */
+    public static int runLocalCommand(
+            final String[] command,
+            final Map<String, String> envMap,
+            final File workingdir,
+            final OutputStream outputStream,
+            final OutputStream errorStream,
+            boolean clearEnv,
+            Consumer<ProcessHandle> killHandler,
+            InputStream inputStream
+    )
             throws IOException, InterruptedException {
         final ProcessBuilder processBuilder = new ProcessBuilder().command(command);
 
@@ -266,21 +302,49 @@ public class ScriptExecUtil {
             environment.clear();
         }
         environment.putAll(envMap);
+        if (null != workingdir) {
+            processBuilder.directory(workingdir);
+        }
 
         final Process exec = processBuilder.start();
-        exec.getOutputStream().close();
+        final Streams.StreamCopyThread inthread;
+        final OutputStream outputStream1 = exec.getOutputStream();
+        if (inputStream != null) {
+            inthread = Streams.copyStreamThread(inputStream, outputStream1, () -> {
+                try {
+                    outputStream1.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+        } else {
+            inthread = null;
+            outputStream1.close();
+        }
+
         final Streams.StreamCopyThread errthread = Streams.copyStreamThread(exec.getErrorStream(), errorStream);
         final Streams.StreamCopyThread outthread = Streams.copyStreamThread(exec.getInputStream(), outputStream);
+        if (null != inthread) {
+            inthread.start();
+        }
         errthread.start();
         outthread.start();
         try {
             final int result = exec.waitFor();
             outputStream.flush();
             errorStream.flush();
+            if (inthread != null) {
+                inthread.join();
+                outputStream1.close();
+            }
+
             errthread.join();
             outthread.join();
             exec.getInputStream().close();
             exec.getErrorStream().close();
+            if (null != inthread && null != inthread.getException()) {
+                throw inthread.getException();
+            }
             if (null != outthread.getException()) {
                 throw outthread.getException();
             }
