@@ -14,16 +14,13 @@ interface DateTimePickerInstance extends ComponentPublicInstance {
   setFromValue: () => void;
   recalcDate: () => void;
 }
+const newTime = new Date("2024-07-01");
 const mountDateTimePicker = async (
-  props: Partial<DateTimePickerProps> = {}
+  props: Partial<DateTimePickerProps> = {},
 ) => {
-  const modelValue =
-    typeof props.modelValue === "string"
-      ? moment(props.modelValue).format()
-      : props.modelValue || moment().format();
   return mount(DateTimePicker, {
     props: {
-      modelValue,
+      modelValue: newTime,
       dateClass: "date-class",
       timeClass: "time-class",
       ...props,
@@ -42,7 +39,7 @@ describe("DateTimePicker.vue", () => {
   });
   it("emits update:modelValue when time changes", async () => {
     const wrapper = await mountDateTimePicker();
-    const newTime = new Date();
+
     const newTimeFormatted = moment(newTime).format();
     const timePicker = wrapper.findComponent({ name: "time-picker" });
     timePicker.vm.$emit("update:modelValue", newTime);
@@ -54,7 +51,7 @@ describe("DateTimePicker.vue", () => {
     const newModelValue = moment().add(1, "days").format();
     await wrapper.setProps({ modelValue: newModelValue });
     expect(wrapper.vm.dateString).toBe(
-      moment(newModelValue).format("YYYY-MM-DD")
+      moment(newModelValue).format("YYYY-MM-DD"),
     );
     expect(wrapper.vm.time).toEqual(moment(newModelValue).toDate());
   });
@@ -72,7 +69,7 @@ describe("DateTimePicker.vue", () => {
     expect(datePicker.attributes("class")).toContain("date-class");
     expect(datePicker.attributes("clear-btn")).toBe("false");
     const receivedTime = new Date(
-      timePicker.attributes("modelvalue")
+      timePicker.attributes("modelvalue"),
     ).toISOString();
     const expectedTime = new Date(wrapper.vm.time).toISOString();
     expect(receivedTime).toBe(expectedTime);
