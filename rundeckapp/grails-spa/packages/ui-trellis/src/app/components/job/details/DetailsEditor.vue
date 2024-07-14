@@ -14,7 +14,6 @@
             id="schedJobName"
             v-model="internalData.jobName"
             type="text"
-            name="jobName"
             class="form-control"
             @blur="onBlur('jobName')"
           />
@@ -29,7 +28,6 @@
               id="schedJobGroup"
               v-model="internalData.groupPath"
               type="text"
-              name="groupPath"
               class="form-control"
               :placeholder="$t('scheduledExecution.groupPath.description')"
             />
@@ -45,12 +43,12 @@
             </span>
           </div>
         </div>
-        <DetailsGroupModal
+        <common-modal
           modal-id="groupChooseModal"
           title-code="job.edit.groupPath.choose.text"
         >
           <div id="groupChooseModalContent" />
-        </DetailsGroupModal>
+        </common-modal>
       </div>
       <div
         class="form-group"
@@ -134,16 +132,17 @@
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
 import UiSocket from "@/library/components/utils/UiSocket.vue";
-import DetailsGroupModal from "./DetailsGroupModal.vue";
+
 import ScheduledExecutionDetails from "@/app/components/common/ScheduledExecutionDetails.vue";
 import AceEditor from "@/library/components/utils/AceEditor.vue";
-import { JobDetailsData } from "./types/detailsTypes";
+import { JobDetailsData } from "./types/detailsType";
+import CommonModal from "../../common/CommonModal.vue";
 
 export default defineComponent({
   name: "DetailsEditor",
   components: {
+    CommonModal,
     ScheduledExecutionDetails,
-    DetailsGroupModal,
     UiSocket,
     AceEditor,
   },
@@ -183,7 +182,15 @@ export default defineComponent({
     },
   },
   async mounted() {
-    this.internalData = Object.assign({}, this.modelValue);
+    console.log(this.modelValue);
+    // this.internalData = Object.assign(
+    //   {
+    //     jobName: "",
+    //     description: "",
+    //     groupPath: "",
+    //   },
+    //   this.modelValue,
+    // );
   },
   methods: {
     onBlur(inputName: string) {
@@ -191,7 +198,6 @@ export default defineComponent({
         this.internalData[inputName].length === 0 &&
         !this.errors.includes[inputName]
       ) {
-        console.log("eerrooo");
         this.errors.push(inputName);
       } else {
         this.errors = this.errors.filter((name) => name !== inputName);

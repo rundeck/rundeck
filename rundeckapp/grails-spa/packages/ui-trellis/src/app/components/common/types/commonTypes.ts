@@ -15,10 +15,4 @@ type ModalButtons = {
   messageCode?: string;
 };
 
-interface JobDetailsData {
-  jobName: string;
-  description?: string;
-  groupPath?: string;
-}
-
-export { ModalLinks, ModalButtons, JobDetailsData };
+export { ModalLinks, ModalButtons };
