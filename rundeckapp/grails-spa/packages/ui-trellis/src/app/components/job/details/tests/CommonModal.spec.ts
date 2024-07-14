@@ -1,11 +1,11 @@
 import { mount, VueWrapper } from "@vue/test-utils";
-import DetailsGroupModal from "../DetailsGroupModal.vue";
+import CommonModal from "../CommonModal.vue";
 
 const createWrapper = async (
   propsData = {},
   extraOptions = {},
 ): Promise<VueWrapper<any>> => {
-  return mount(DetailsGroupModal, {
+  return mount(CommonModal, {
     props: {
       modalId: "testModal",
       ...propsData,
@@ -19,7 +19,7 @@ const createWrapper = async (
   });
 };
 
-describe("DetailsGroupModal", () => {
+describe("CommonModal", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
