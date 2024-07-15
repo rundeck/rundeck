@@ -193,6 +193,11 @@ class ZipReader {
 
         debug("begin process next entry")
         def ZipEntry entry = input.getNextEntry()
+        // If first getNextEntry() is null, then it's an invalid or empty file.
+        if (entry == null) {
+            throw new IOException("Empty or corrupted archive file")
+        }
+
         while(entry!=null){
             if (!entry.isDirectory()) {
                 //file
