@@ -294,9 +294,7 @@ export default defineComponent({
     },
   },
   watch: {
-    nodeSet(newVal) {
-      console.log("nodeSet updated..........", newVal);
-    },
+    nodeSet(newVal) {},
     nodeFilterStore: {
       async handler(newValue) {
         if (newValue.selectedFilter === "" && this.hideAll) {
@@ -311,7 +309,7 @@ export default defineComponent({
     },
   },
   async mounted() {
-    console.log('NodeTable mounted with nodeSet:', this.nodeSet);
+    console.log("NodeTable mounted with nodeSet:", this.nodeSet);
     await this.fetchNodeSummary();
     await this.fetchExecutionMode();
     await this.fetchNodes();
@@ -397,7 +395,6 @@ export default defineComponent({
         this.truncated = data.truncated;
         this.colKeys = data.colkeys;
         this.maxShown = data.max;
-        console.log("Node set:", this.nodeSet);
       } catch (e) {
         this.error = e.message;
       } finally {
