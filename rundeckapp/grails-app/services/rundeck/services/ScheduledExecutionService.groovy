@@ -3277,15 +3277,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      */
     public void jobDefinitionBasic(ScheduledExecution scheduledExecution, ScheduledExecution input, Map params, UserAndRoles userAndRoles) {
         Map basicProps
-        if (params.jobDetailsJson) {
-            def detailsData = JSON.parse(params.jobDetailsJson.toString())
-
-            if(detailsData instanceof JSONObject) {
-                detailsData.keySet().forEach(detailKey -> {
-                    scheduledExecution[detailKey as String] = detailsData.get(detailKey)
-                })
-            }
-        }
         if(!input) {
             basicProps = params.findAll {
                 !it.key.startsWith("option.") &&
@@ -3321,6 +3312,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (scheduledExecution.serverNodeUUID) {
             //don't modify serverNodeUUID, it will be set if needed after validation
             basicProps.serverNodeUUID = scheduledExecution.serverNodeUUID
+        }
+        if (params.jobDetailsJson) {
+            def detailsData = JSON.parse(params.jobDetailsJson.toString())
+
+            if(detailsData instanceof JSONObject) {
+                detailsData.keySet().forEach(detailKey -> {
+                    basicProps."$detailKey" = detailsData.get(detailKey)
+                })
+            }
         }
 
         //clean up values that should be cleared
