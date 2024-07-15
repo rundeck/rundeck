@@ -2619,7 +2619,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
   <dateStarted>1970-01-01T00:00:00Z</dateStarted>
   <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
   <executionId>123</executionId>
-  <jobId>test-job-uuid</jobId>
+  <jobId>1</jobId>
   <adhocExecution />
   <adhocScript />
   <abortedByUser />
@@ -2813,6 +2813,56 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             message: 'Report message',
         ].keySet()
         assertPropertiesEquals exec.properties.subMap(keys), result
+    }
+
+    def testReportNotUpdatedAfterExport() {
+        def newJobId = 'test-job-uuid'
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
+                uuid: newJobId,
+                adhocFilepath: '/this/is/a/path', groupPath: 'some/where', description: 'a job', argString: '-a b -c d',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+        )
+        assertNotNull se.save()
+        def oldJobId=se.id
+
+        def outfilename = "reportout.xml"
+
+        def zipmock = new MockFor(ZipBuilder)
+        def outwriter = new StringWriter()
+        zipmock.demand.file(1..1) {name, Closure withwriter ->
+            assertEquals(outfilename, name.toString())
+            withwriter.call(outwriter)
+            outwriter.flush()
+        }
+        def zip = zipmock.proxyInstance()
+
+        ExecReport exec = new ExecReport(
+                executionId:123L,
+                jobId: oldJobId.toString(),
+                node:'1/0/0',
+                title: 'blah',
+                status: 'succeed',
+                actionType: 'succeed',
+                project: 'testproj1',
+                reportId: 'test/job',
+                tags: 'a,b,c',
+                author: 'admin',
+                dateStarted: new Date(0),
+                dateCompleted: new Date(3600000),
+                message: 'Report message',
+                jobUuid: se.uuid,
+                executionUuid: 'uuid'
+        )
+        assertNotNull exec.save(flush: true)
+        when:
+        service.exportHistoryReport(zip, exec, outfilename)
+        then:
+        def report = ExecReport.get(exec.id)
+        assertNotNull report
+        assertEquals report.jobUuid, exec.jobUuid
+        assertEquals report.executionUuid, exec.executionUuid
+        assertEquals report.jobId, exec.jobId
+
     }
 
     /**
