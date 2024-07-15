@@ -1,6 +1,6 @@
 <template>
   <div id="tab_details" class="tab-pane active">
-    <section v-if="internalData" class="section-space-lg">
+    <section v-if="internalData && loaded" class="section-space-lg">
       <div
         id="schedJobNameLabel"
         class="form-group"
@@ -166,6 +166,7 @@ export default defineComponent({
       },
       errors: [],
       preview: null,
+      loaded: false,
     };
   },
   computed: {
@@ -182,15 +183,20 @@ export default defineComponent({
     },
   },
   async mounted() {
-    console.log(this.modelValue);
-    // this.internalData = Object.assign(
-    //   {
-    //     jobName: "",
-    //     description: "",
-    //     groupPath: "",
-    //   },
-    //   this.modelValue,
-    // );
+    try {
+      this.internalData = Object.assign(
+        {
+          jobName: "",
+          description: "",
+          groupPath: "",
+        },
+        this.modelValue,
+      );
+    } catch (e) {
+      console.log(e);
+    } finally {
+      this.loaded = true;
+    }
   },
   methods: {
     onBlur(inputName: string) {
