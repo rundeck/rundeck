@@ -13,8 +13,11 @@ jest.mock("../services/nodeServices", () => ({
 }));
 jest.mock("../../../../utilities/nodeUi", () => ({
   ...jest.requireActual("../../../../utilities/nodeUi"),
-  glyphiconForName: jest.fn().mockReturnValue("fas fa-hdd"),
-  glyphiconBadges: jest.fn().mockReturnValue(["badge1", "badge2"]),
+  glyphiconForName: jest.fn((iconName) => {
+    if (iconName === "fa-server") return "fas fa-server";
+    return "fas fa-hdd";
+  }),
+  glyphiconBadges: jest.fn().mockReturnValue(["fa-badge1", "fab-badge2"]),
 }));
 const mockNodeSet = {
   nodes: [
@@ -30,8 +33,9 @@ const mockNodeSet = {
         osVersion: "14.5",
         tags: "tag1,tag2",
         "ui:status:text": "Healthy",
-        "ui:badges": "badge1,badge2",
+        "ui:badges": "fa-badge1, fab-badge2",
         "ui:color": "red",
+        "ui:icon:name": "fa-server",
       },
     },
     {
@@ -46,8 +50,9 @@ const mockNodeSet = {
         osVersion: "20.04",
         tags: "tag3,tag4",
         "ui:status:text": "Unhealthy",
-        "ui:badges": "badge3,badge4",
+        "ui:badges": "fa-badge3, fab-badge4",
         "ui:color": "blue",
+        "ui:icon:name": "fa-hdd",
       },
     },
   ],
@@ -78,6 +83,7 @@ const mountNodeTable = (propsData = {}): any => {
     },
   });
 };
+
 describe("NodeTable Component", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -93,23 +99,21 @@ describe("NodeTable Component", () => {
     const wrapper = await mountNodeTable();
     // Check node icons
     const nodeIcons = wrapper.findAll('[data-test-id="node-icon"] i');
-    nodeIcons.forEach((iconWrapper) => {
-      expect(iconWrapper.classes()).toContain("fas");
-      expect(iconWrapper.classes()).toContain("fa-hdd");
-    });
+    expect(nodeIcons.at(0).classes()).toContain("fas");
+    expect(nodeIcons.at(0).classes()).toContain("fa-server");
+    expect(nodeIcons.at(1).classes()).toContain("fas");
+    expect(nodeIcons.at(1).classes()).toContain("fa-hdd");
     // Check node colors
     const nodeColors = wrapper.findAll('[data-test-id="node-icon"]');
-    console.log("Node colors count:", nodeColors.length);
     nodeColors.forEach((colorWrapper) => {
       const styleAttribute = colorWrapper.attributes("style");
-      console.log("Style attribute:", styleAttribute);
       // Check for color set by styleForIcon method
       expect(styleAttribute).toMatch(/color:\s*(red|blue);?/);
     });
+    expect(nodeColors.length).toBe(2);
     // Check node badges
     const nodeBadges = wrapper.findAll('[data-test-id="node-badge-icon"]');
-    console.log("Node badges count:", nodeBadges.length);
-    expect(nodeBadges.length).toBeGreaterThan(0);
+    expect(nodeBadges.length).toBe(4);
   });
   it("filters nodes by attribute when an attribute is clicked", async () => {
     const wrapper = mountNodeTable();
