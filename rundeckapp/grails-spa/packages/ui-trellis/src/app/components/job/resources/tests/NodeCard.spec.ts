@@ -2,16 +2,13 @@ import { mount } from "@vue/test-utils";
 import NodeCard from "../NodeCard.vue";
 import NodeTable from "../NodeTable.vue";
 import NodeFilterLink from "../NodeFilterLink.vue";
-
 import * as nodeServices from "../services/nodeServices";
-
 const mockedGetNodeSummary = nodeServices.getNodeSummary as jest.MockedFunction<
   typeof nodeServices.getNodeSummary
 >;
 const mockedGetNodes = nodeServices.getNodes as jest.MockedFunction<
   typeof nodeServices.getNodes
 >;
-
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({
     rdBase: "mockRdBase",
@@ -59,26 +56,22 @@ const mockNodeSet = {
   ],
 };
 const mountNodeCard = async (propsData = {}) => {
-  mockedGetNodeSummary.mockResolvedValue(mockNodeSummary);
-  mockedGetNodes.mockResolvedValue({
-    allnodes: mockNodeSet.nodes,
-    tagsummary: mockNodeSummary.tags,
-    allcount: 2,
-    total: 2,
-    truncated: false,
-    colkeys: ["name", "attributes"],
-    max: 20,
-  });
   const wrapper = mount(NodeCard, {
     props: {
       project: "test-project",
       runAuthorized: true,
       jobCreateAuthorized: true,
       nodeFilterStore: {
-        filter: "",
-        selectedFilter: "",
+        filter: "hostname:node1",
+        selectedFilter: "hostname:node1",
       },
       ...propsData,
+    },
+    data() {
+      return {
+        allCount: 2,
+        nodeSet: mockNodeSet,
+      };
     },
     global: {
       mocks: {
@@ -95,6 +88,16 @@ const mountNodeCard = async (propsData = {}) => {
   return wrapper;
 };
 describe("NodeCard Component", () => {
+  mockedGetNodeSummary.mockResolvedValue(mockNodeSummary);
+  mockedGetNodes.mockResolvedValue({
+    allnodes: mockNodeSet.nodes,
+    tagsummary: mockNodeSummary.tags,
+    allcount: 2,
+    total: 2,
+    truncated: false,
+    colkeys: ["name", "attributes"],
+    max: 20,
+  });
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -112,18 +115,17 @@ describe("NodeCard Component", () => {
       await tagLink.trigger("click");
       expect(wrapper.emitted().filter).toBeTruthy();
     });
-    it("displays the node list results", async () => {
+    it("displays the node list results and verifies active tab", async () => {
       const wrapper = await mountNodeCard();
       await wrapper.vm.$nextTick();
+      const nodeTableTab = wrapper.find('[data-testid="node-table-tab"]');
+      expect(nodeTableTab.classes()).toContain("active");
+      const summaryTab = wrapper.find('[data-testid="summary-tab"]');
+      expect(summaryTab.classes()).not.toContain("active");
       const nodeTable = wrapper.findComponent(NodeTable);
       expect(nodeTable.exists()).toBe(true);
-      const nodeSet = nodeTable.props().nodeSet;
-      expect(nodeSet).toBeDefined();
-      expect(mockNodeSet.nodes).toBeDefined();
-      expect(mockNodeSet.nodes[0].attributes["ui:status:text"]).toBe("Healthy");
-      expect(mockNodeSet.nodes[1].attributes["ui:status:text"]).toBe(
-        "Unhealthy",
-      );
+      const rows = nodeTable.findAll("tr.node_entry");
+      expect(rows.length).toBe(2);
     });
   });
 });

@@ -9,6 +9,7 @@
               id="tab_link_summary"
               :key="`${nodeFilterStore.filter}tab-result`"
               :class="{ active: !nodeFilterStore.filter }"
+              data-testid="summary-tab"
               @click="fetchNodeSummary"
             >
               <a href="#summary1" data-toggle="tab">
@@ -20,6 +21,7 @@
               id="tab_link_result"
               :key="`${nodeFilterStore.filter}tab-summary`"
               :class="{ active: nodeFilterStore.filter }"
+              data-testid="node-table-tab"
             >
               <a v-if="filterIsSet" href="#result1" data-toggle="tab">
                 {{ $t("result") }}
@@ -289,9 +291,7 @@ export default defineComponent({
     },
   },
   watch: {
-    nodeSet(newVal) {
-      console.log("nodeSet updated..........", newVal);
-    },
+    nodeSet(newVal) {},
     nodeFilterStore: {
       async handler(newValue) {
         if (newValue.selectedFilter === "" && this.hideAll) {
@@ -306,7 +306,7 @@ export default defineComponent({
     },
   },
   async mounted() {
-    console.log('NodeTable mounted with nodeSet:', this.nodeSet);
+    console.log("NodeTable mounted with nodeSet:", this.nodeSet);
     await this.fetchNodeSummary();
     await this.fetchExecutionMode();
     await this.fetchNodes();
@@ -392,7 +392,6 @@ export default defineComponent({
         this.truncated = data.truncated;
         this.colKeys = data.colkeys;
         this.maxShown = data.max;
-        console.log("Node set:", this.nodeSet);
       } catch (e) {
         this.error = e.message;
       } finally {
