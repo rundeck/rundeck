@@ -50,6 +50,9 @@ class AuditEventsServiceSpec extends Specification implements ServiceUnitTest<Au
 
     def "Test event builder data cloning"() {
         given:
+        defineBeans {
+            metricService(InstanceFactoryBean, Mock(MetricService))
+        }
         def user = "MockUsername"
         def roleList = ["admin", "user", "test"]
         def uuid = "11111111-1111-0000-0000-111111111111"
@@ -87,6 +90,9 @@ class AuditEventsServiceSpec extends Specification implements ServiceUnitTest<Au
         def invocations = 0
 
         given:
+        defineBeans {
+            metricService(InstanceFactoryBean, Mock(MetricService))
+        }
         def user = "MockUsername"
         def roleList = ["admin", "user", "test"]
         def uuid = "11111111-1111-0000-0000-111111111111"
