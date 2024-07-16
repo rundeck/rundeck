@@ -137,7 +137,7 @@ import ScheduledExecutionDetails from "@/app/components/common/ScheduledExecutio
 import AceEditor from "@/library/components/utils/AceEditor.vue";
 import { JobDetailsData } from "./types/detailsType";
 import CommonModal from "../../common/CommonModal.vue";
-import { getRundeckContext } from "../../../../library";
+import { getRundeckContext } from "@/library";
 
 export default defineComponent({
   name: "DetailsEditor",

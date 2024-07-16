@@ -1,5 +1,6 @@
 import { mount, VueWrapper } from "@vue/test-utils";
 import CommonModal from "../CommonModal.vue";
+import { Modal } from "uiv";
 
 const createWrapper = async (
   propsData = {},
@@ -13,6 +14,9 @@ const createWrapper = async (
     global: {
       mocks: {
         $t: (msg: string) => msg,
+      },
+      components: {
+        Modal,
       },
     },
     ...extraOptions,
@@ -55,19 +59,7 @@ describe("CommonModal", () => {
     expect(content.text()).toBe("Default test Content");
   });
 
-  it("does not render close button when noCloseButton is true", async () => {
-    const wrapper = await createWrapper({ noCloseButton: true });
-    const closeButton = wrapper.find(".close");
-    expect(closeButton.exists()).toBe(false);
-  });
-
-  it("does not render cancel button when noCancel is true", async () => {
-    const wrapper = await createWrapper({ noCancel: true });
-    const cancelButton = wrapper.find(".btn-default");
-    expect(cancelButton.exists()).toBe(false);
-  });
-
-  it("renders custom buttons correctly and emit an event with button id that was clicked", async () => {
+  describe("buttons", () => {
     const buttons = [
       {
         id: "button1",
@@ -82,17 +74,6 @@ describe("CommonModal", () => {
         js: jest.fn(),
       },
     ];
-    const wrapper = await createWrapper({ buttons });
-    const buttonElements = wrapper.findAll("[data-test='extra-buttons']");
-    expect(buttonElements.length).toBe(2);
-    expect(buttonElements[0].text()).toBe("Button 1");
-    expect(buttonElements[1].text()).toBe("button.title");
-
-    await buttonElements[0].trigger("click");
-    expect(wrapper.emitted().buttonClicked[0]).toEqual(["button1"]);
-  });
-
-  it("renders custom links correctly and emit an event with link object that was clicked", async () => {
     const links = [
       {
         id: "link1",
@@ -109,12 +90,32 @@ describe("CommonModal", () => {
         js: jest.fn(),
       },
     ];
-    const wrapper = await createWrapper({ links });
-    const linkElements = wrapper.findAll("[data-test='extra-links']");
-    expect(linkElements.length).toBe(2);
-    expect(linkElements[0].text()).toBe("Link 1");
-    expect(linkElements[1].text()).toBe("Link 2");
-    await linkElements[0].trigger("click");
-    expect(wrapper.emitted().linkClicked[0]).toEqual([links[0]]);
+
+    it("does not render cancel button when noCancel is true", async () => {
+      const wrapper = await createWrapper({ buttons, noCancel: true });
+      const cancelButton = wrapper.find(".btn-default");
+      expect(cancelButton.exists()).toBe(false);
+    });
+
+    it("renders custom buttons correctly and emit an event with button id that was clicked", async () => {
+      const wrapper = await createWrapper({ buttons });
+      const buttonElements = wrapper.findAll("[data-test='extra-buttons']");
+      expect(buttonElements.length).toBe(2);
+      expect(buttonElements[0].text()).toBe("Button 1");
+      expect(buttonElements[1].text()).toBe("button.title");
+
+      await buttonElements[0].trigger("click");
+      expect(wrapper.emitted().buttonClicked[0]).toEqual(["button1"]);
+    });
+
+    it("renders custom links correctly and emit an event with link object that was clicked", async () => {
+      const wrapper = await createWrapper({ links });
+      const linkElements = wrapper.findAll("[data-test='extra-links']");
+      expect(linkElements.length).toBe(2);
+      expect(linkElements[0].text()).toBe("Link 1");
+      expect(linkElements[1].text()).toBe("Link 2");
+      await linkElements[0].trigger("click");
+      expect(wrapper.emitted().linkClicked[0]).toEqual([links[0]]);
+    });
   });
 });

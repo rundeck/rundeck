@@ -1,9 +1,14 @@
 import { shallowMount, VueWrapper } from "@vue/test-utils";
 import DetailsEditor from "../DetailsEditor.vue";
-import DetailsGroupModal from "../../../common/DetailsGroupModal.vue";
-import ScheduledExecutionDetails from "../../../common/ScheduledExecutionDetails.vue";
 import AceEditor from "@/library/components/utils/AceEditor.vue";
 import UiSocket from "@/library/components/utils/UiSocket.vue";
+import mitt, { Emitter, EventType } from "mitt";
+
+jest.mock("@/library", () => ({
+  getRundeckContext: jest.fn().mockImplementation(() => ({
+    eventBus: mitt(),
+  })),
+}));
 
 const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
   const wrapper = shallowMount(DetailsEditor, {
@@ -18,8 +23,6 @@ const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
     },
     global: {
       components: {
-        DetailsGroupModal,
-        ScheduledExecutionDetails,
         AceEditor,
         UiSocket,
       },
@@ -53,8 +56,7 @@ describe("DetailsEditor.vue", () => {
     const input = wrapper.find("#schedJobName");
     await input.setValue("newJobName");
 
-    const groupInput = wrapper.find("#schedJobGroup");
-    await groupInput.setValue("testGroup/newGroup");
+    wrapper.vm.eventBus.emit("group-selected", "testGroup/newGroup");
 
     const editor = wrapper.findComponent(AceEditor);
     editor.vm.$emit("update:modelValue", "newDescription");
