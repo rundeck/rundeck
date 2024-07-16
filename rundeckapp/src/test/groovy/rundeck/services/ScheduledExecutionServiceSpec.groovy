@@ -5011,6 +5011,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
     def "job definition basic should retain uuid"() {
         given:
+            mockCodec(JSONCodec)
             def uuid = UUID.randomUUID().toString()
             def job = new ScheduledExecution(createJobParams(uuid: uuid))
             def jobInput = input ? new ScheduledExecution(createJobParams(input)) : null
@@ -5025,6 +5026,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             input                 | params
             null                  | [:]
             [jobName: 'zocaster'] | null
+            null | baseJobParams()+[jobDetailsJson: '''[{"jobName": "zocaster"}]''']
     }
 
     @Unroll
@@ -5037,16 +5039,18 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def auth = Mock(UserAndRolesAuthContext)
 
         when:
-            service.jobDefinitionBasic(job, jobInput, null, auth)
+            service.jobDefinitionBasic(job, jobInput, params, auth)
         then:
             job."$propName" == expect
 
         where:
-            propName    | value | expect
-            'jobName'   | ''    | ''
-            'jobName'   | null  | ''
-            'groupPath' | ''    | null
-            'groupPath' | null  | null
+            propName    | value | params | expect
+            'jobName'   | ''    | null   | ''
+            'jobName'   | null  | null   | ''
+            'jobName'   | null  | [jobDetailsJson: '''[{"jobName": ""}]''']  | ''
+            'groupPath' | ''    | null   | null
+            'groupPath' | null  | null   | null
+            'groupPath' | null  | [jobDetailsJson: '''[{"groupPath": ""}]''']  | null
     }
 
     @Unroll
