@@ -339,7 +339,6 @@ export default defineComponent({
   methods: {
     toggleNs(ns: string) {
       const val = this.uiNs[ns];
-      console.log(`toggle ${ns} ${val} = ${!val}`);
       this.uiNs[ns] = !val;
     },
 
