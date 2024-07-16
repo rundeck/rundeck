@@ -398,6 +398,29 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         }
     }
 
+    /**
+     * Updates the provided key values of a project configuration.
+     *
+     * An API call is executed for each KVP.
+     * Pre-existing config values are not affected unless overriden in the supplied map.
+     * Unsuccessful execution may result in a partial update of the config.
+     *
+     * @param projectName The name of the project whose configuration is to be updated. Must not be null.
+     * @param kvps A map containing the key-value pairs to be appended to the project configuration.
+     * @throws RuntimeException if updating at least one config value has fails.
+     */
+    void updateProjectConfigurationKeys(String projectName, Map<String, String> kvps) {
+        kvps.forEach { key, value ->
+            def body = [
+                    value: value
+            ]
+            def resp = client.doPutWithJsonBody("/project/${projectName}/config/${key}", body)
+            if (!resp.successful) {
+                throw new RuntimeException("Failed to set config key: ${key} to value: {$value} with resp: ${resp}" )
+            }
+        }
+    }
+
     def setupSpec() {
         startEnvironment()
     }
