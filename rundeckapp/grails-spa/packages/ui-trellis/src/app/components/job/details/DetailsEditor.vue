@@ -1,22 +1,20 @@
 <template>
   <div id="tab_details" class="tab-pane active">
     <section v-if="internalData && loaded" class="section-space-lg">
-      <div
-        id="schedJobNameLabel"
-        class="form-group"
-        :class="{ 'has-error': hasErrors('jobName') }"
-      >
-        <label for="schedJobName" class="required col-sm-2 control-label">
-          {{ $t("scheduledExecution.jobName.label") }}
-        </label>
-        <div class="col-sm-5">
-          <input
-            id="schedJobName"
-            v-model="internalData.jobName"
-            type="text"
-            class="form-control"
-            @blur="onBlur('jobName')"
-          />
+      <div id="schedJobNameLabel" class="form-group">
+        <div :class="{ 'has-error': hasErrors('jobName') }">
+          <label for="schedJobName" class="required col-sm-2 control-label">
+            {{ $t("scheduledExecution.jobName.label") }}
+          </label>
+          <div class="col-sm-5">
+            <input
+              id="schedJobName"
+              v-model="internalData.jobName"
+              type="text"
+              class="form-control"
+              @blur="onBlur('jobName')"
+            />
+          </div>
         </div>
         <div class="col-sm-5">
           <div class="input-group">
