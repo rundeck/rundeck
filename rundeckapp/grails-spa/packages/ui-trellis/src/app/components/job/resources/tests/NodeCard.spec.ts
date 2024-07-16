@@ -88,15 +88,17 @@ const mountNodeCard = async (propsData = {}) => {
   return wrapper;
 };
 describe("NodeCard Component", () => {
-  mockedGetNodeSummary.mockResolvedValue(mockNodeSummary);
-  mockedGetNodes.mockResolvedValue({
-    allnodes: mockNodeSet.nodes,
-    tagsummary: mockNodeSummary.tags,
-    allcount: 2,
-    total: 2,
-    truncated: false,
-    colkeys: ["name", "attributes"],
-    max: 20,
+  beforeEach(() => {
+    mockedGetNodeSummary.mockResolvedValue(mockNodeSummary);
+    mockedGetNodes.mockResolvedValue({
+      allnodes: mockNodeSet.nodes,
+      tagsummary: mockNodeSummary.tags,
+      allcount: 2,
+      total: 2,
+      truncated: false,
+      colkeys: ["name", "attributes"],
+      max: 20,
+    });
   });
   afterEach(() => {
     jest.clearAllMocks();
