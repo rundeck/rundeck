@@ -137,6 +137,7 @@ import ScheduledExecutionDetails from "@/app/components/common/ScheduledExecutio
 import AceEditor from "@/library/components/utils/AceEditor.vue";
 import { JobDetailsData } from "./types/detailsType";
 import CommonModal from "../../common/CommonModal.vue";
+import { getRundeckContext } from "../../../../library";
 
 export default defineComponent({
   name: "DetailsEditor",
@@ -167,6 +168,7 @@ export default defineComponent({
       errors: [],
       preview: null,
       loaded: false,
+      eventBus: getRundeckContext().eventBus,
     };
   },
   computed: {
@@ -197,8 +199,12 @@ export default defineComponent({
     } finally {
       this.loaded = true;
     }
+    this.eventBus.on("group-selected", this.updateGroup);
   },
   methods: {
+    updateGroup(path: string) {
+      this.internalData.groupPath = path;
+    },
     onBlur(inputName: string) {
       if (
         this.internalData[inputName].length === 0 &&
