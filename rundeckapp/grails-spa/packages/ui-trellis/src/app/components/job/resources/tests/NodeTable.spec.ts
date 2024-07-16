@@ -11,14 +11,7 @@ jest.mock("@/library/rundeckService", () => ({
 jest.mock("../services/nodeServices", () => ({
   getNodes: jest.fn(),
 }));
-jest.mock("../../../../utilities/nodeUi", () => ({
-  ...jest.requireActual("../../../../utilities/nodeUi"),
-  glyphiconForName: jest.fn((iconName) => {
-    if (iconName === "fa-server") return "fas fa-server";
-    return "fas fa-hdd";
-  }),
-  glyphiconBadges: jest.fn().mockReturnValue(["fa-badge1", "fab-badge2"]),
-}));
+
 const mockNodeSet = {
   nodes: [
     {
@@ -83,7 +76,6 @@ const mountNodeTable = (propsData = {}): any => {
     },
   });
 };
-
 describe("NodeTable Component", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -142,7 +134,6 @@ describe("NodeTable Component", () => {
     const collapseLink = wrapper.find('[data-test-id="node-collapse-link"]');
     await collapseLink.trigger("click");
     const nestedAttributes = wrapper.findComponent(NodeDetailsSimple);
-
     expect(nestedAttributes.text()).toMatch(/status:text: Healthy/);
   });
 });

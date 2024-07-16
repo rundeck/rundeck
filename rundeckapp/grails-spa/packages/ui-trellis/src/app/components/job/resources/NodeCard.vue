@@ -306,7 +306,6 @@ export default defineComponent({
     },
   },
   async mounted() {
-    console.log("NodeTable mounted with nodeSet:", this.nodeSet);
     await this.fetchNodeSummary();
     await this.fetchExecutionMode();
     await this.fetchNodes();
@@ -382,7 +381,7 @@ export default defineComponent({
           params,
           getAppLinks().frameworkNodesQueryAjax,
         );
-        console.log("Fetched nodes:", data);
+
         this.nodeSet = {
           nodes: data.allnodes,
           tagsummary: data.tagsummary,
