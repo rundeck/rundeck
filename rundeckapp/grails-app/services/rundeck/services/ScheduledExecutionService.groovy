@@ -3313,7 +3313,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             //don't modify serverNodeUUID, it will be set if needed after validation
             basicProps.serverNodeUUID = scheduledExecution.serverNodeUUID
         }
-        if (params.jobDetailsJson) {
+        if (params?.jobDetailsJson) {
             def detailsData = JSON.parse(params.jobDetailsJson.toString())
 
             if(detailsData instanceof JSONObject) {
