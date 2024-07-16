@@ -62,7 +62,6 @@ describe("NodeDetailsSimple Component", () => {
     await wrapper.vm.$nextTick();
     // Adjust the selector if necessary based on the actual HTML structure
     const expandedAttributes = wrapper.findAll(".hover-action-holder");
-    console.log("Expandable attributes count:", expandedAttributes.length);
-    expect(expandedAttributes.length).toBeGreaterThan(0);
+    expect(expandedAttributes.length).toBe(11);
   });
 });
