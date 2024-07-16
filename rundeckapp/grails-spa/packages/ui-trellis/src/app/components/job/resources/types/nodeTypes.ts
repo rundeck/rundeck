@@ -10,4 +10,12 @@ interface NodeSummary extends ProjectFilters {
   totalCount?: number;
 }
 
-export { NodeSummary, Tag };
+interface Node {
+  attributes: { [key: string]: string };
+  isLocal?: boolean;
+  authrun?: boolean;
+  nodename: string;
+  tags: Tag[];
+}
+
+export { Node, NodeSummary, Tag };
