@@ -862,6 +862,21 @@ const messages = {
       filterPlaceholder: "Search...",
     },
   },
+  "scheduledExecution.jobName.label": "Job Name",
+  "scheduledExecution.property.description.label": "Description",
+  "job.editor.preview.runbook": "Preview Readme",
+  "choose.action.label": "Choose",
+  "scheduledExecution.property.description.plain.description":
+    "The description will be shown in plain text",
+  "scheduledExecution.property.description.description":
+    "The first line of the description will be shown in plain text, the rest will be rendered with Markdown.\n\n" +
+    "See [Markdown](http://en.wikipedia.org/wiki/Markdown).\n\n" +
+    "Within the extended description you can link to the job using {'`{{job.permalink}}`'} as the URL to the job, e.g. `[run job]({'{{job.permalink}}#runjob'})`\n\n" +
+    "You can add a Readme by using a HR separater `---` by itself on a line, and everything following that will be rendered in a separate tab using [Markdeep](https://casual-effects.com/markdeep).",
+  "scheduledExecution.groupPath.description": "Group is a / separated path",
+  more: "More\u2026",
+  less: "Less\u2026",
+  "job.edit.groupPath.choose.text": "Click on the name of the group to use",
 };
 
 export default messages;

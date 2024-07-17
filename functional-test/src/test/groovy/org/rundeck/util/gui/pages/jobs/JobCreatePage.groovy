@@ -51,6 +51,8 @@ class JobCreatePage extends BasePage {
     By nodeStepSectionActiveBy = By.cssSelector(".node_step_section.tab-pane.active")
 
     static class NextUi {
+        static By jobNameInputBy = By.cssSelector("form input[id=\"schedJobName\"]")
+        static By groupPathInputBy = By.cssSelector("form input[id=\"schedJobGroup\"]")
         static By optionBy = By.cssSelector("#optnewbutton > button")
         static By separatorOptionBy = By.cssSelector("#option_preview")
         static By optionCloseKeyStorageBy = By.cssSelector("#storage-file.modal .modal-footer > button.btn-default")
@@ -299,11 +301,11 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getJobNameInput() {
-        el jobNameInputBy
+        el nextUi ? NextUi.jobNameInputBy : jobNameInputBy
     }
 
     WebElement getGroupPathInput() {
-        el groupPathInputBy
+        el nextUi ? NextUi.groupPathInputBy :groupPathInputBy
     }
 
     WebElement getDescriptionTextarea() {

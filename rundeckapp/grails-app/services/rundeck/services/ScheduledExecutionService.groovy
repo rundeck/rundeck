@@ -650,7 +650,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     childPath=path+'/'+parts[0]
                 }else{
                     def parts = item.groupPath.split('/')
-                    childPath=parts[0]
+                    childPath=parts.length ? parts[0]: ''
                 }
             }
             if(!childPath){
@@ -3301,11 +3301,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 ) || !input.properties[it]
             }
             basicProps = foundprops ? input.properties.subMap(foundprops) : [:]
-
         }
 
         if (scheduledExecution.uuid) {
-            basicProps.uuid = scheduledExecution.uuid//don't modify uuid if it exists
+            basicProps.uuid = scheduledExecution.uuid //don't modify uuid if it exists
         }else if(!basicProps.uuid){
             //set UUID if not submitted
             basicProps.uuid = UUID.randomUUID().toString()
@@ -3313,6 +3312,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (scheduledExecution.serverNodeUUID) {
             //don't modify serverNodeUUID, it will be set if needed after validation
             basicProps.serverNodeUUID = scheduledExecution.serverNodeUUID
+        }
+        if (params?.jobDetailsJson) {
+            def detailsData = JSON.parse(params.jobDetailsJson.toString())
+
+            if(detailsData instanceof JSONObject) {
+                detailsData.keySet().forEach(detailKey -> {
+                    basicProps."$detailKey" = detailsData.get(detailKey)
+                })
+            }
         }
 
         //clean up values that should be cleared
