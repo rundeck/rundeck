@@ -234,7 +234,7 @@
   </modal>
 </template>
 <script lang="ts">
-import { getRundeckContext } from "@/library";
+import { getRundeckContext } from "../../../../library";
 import {
   NodeFilterStore,
   ProjectFilters,
@@ -387,7 +387,9 @@ export default defineComponent({
   },
   watch: {
     modelValue() {
-      this.outputValue = this.modelValue;
+      if (this.modelValue) {
+        this.outputValue = this.modelValue;
+      }
       if (
         this.selectedFilterName &&
         this.selectedFilterName !== this.matchedFilter
@@ -481,7 +483,9 @@ export default defineComponent({
       this.setDefaultFilterValue(".*");
     },
     async onMount() {
-      this.outputValue = this.modelValue;
+      if (this.modelValue) {
+        this.outputValue = this.modelValue;
+      }
       if (
         this.selectedFilterName &&
         this.selectedFilterName !== this.matchedFilter
