@@ -1,6 +1,5 @@
 package org.rundeck.web
 
-
 import javax.servlet.http.HttpServletRequest
 
 /**
