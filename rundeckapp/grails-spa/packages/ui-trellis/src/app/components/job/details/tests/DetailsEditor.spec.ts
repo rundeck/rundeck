@@ -124,7 +124,7 @@ Preview Content
     await input.trigger("blur");
     await wrapper.vm.$nextTick();
 
-    const schedJobNameLabel = wrapper.find("#schedJobNameLabel");
+    const schedJobNameLabel = wrapper.find("#schedJobNameLabel > div");
     expect(schedJobNameLabel.classes("has-error")).toBeTruthy();
   });
 });
