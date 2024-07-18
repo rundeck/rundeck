@@ -72,7 +72,7 @@
         </div>
         <template v-if="plugin?.properties">
           <plugin-config
-            mode="edit"
+            :mode="currentMode"
             service-name="ExecutionLifecycle"
             :provider="plugin.name"
             :model-value="test"
@@ -145,6 +145,9 @@ export default defineComponent({
     },
     prefix() {
       return `executionLifecyclePlugins.${this.pluginKey}.configMap.`;
+    },
+    currentMode() {
+      return "create";
     },
   },
   methods: {
