@@ -50,6 +50,7 @@ const mockNodeSet = {
     },
   ],
 };
+
 const mountNodeTable = (propsData = {}): any => {
   return mount(NodeTable, {
     props: {
@@ -76,6 +77,7 @@ const mountNodeTable = (propsData = {}): any => {
     },
   });
 };
+
 describe("NodeTable Component", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -99,14 +101,15 @@ describe("NodeTable Component", () => {
     const nodeColors = wrapper.findAll('[data-test-id="node-icon"]');
     nodeColors.forEach((colorWrapper) => {
       const styleAttribute = colorWrapper.attributes("style");
-      // Check for color set by styleForIcon method
       expect(styleAttribute).toMatch(/color:\s*(red|blue);?/);
     });
     expect(nodeColors.length).toBe(2);
     // Check node badges
     const nodeBadges = wrapper.findAll('[data-test-id="node-badge-icon"]');
+
     expect(nodeBadges.length).toBe(4);
   });
+
   it("filters nodes by attribute when an attribute is clicked", async () => {
     const wrapper = mountNodeTable();
     const attributeLink = wrapper.find(
