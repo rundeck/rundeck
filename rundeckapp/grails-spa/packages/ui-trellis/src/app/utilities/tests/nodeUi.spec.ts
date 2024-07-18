@@ -1,4 +1,4 @@
-import { glyphiconBadges } from "./nodeUi";
+import { glyphiconBadges } from "../nodeUi";
 
 describe("glyphiconBadges", () => {
   test("parses well-formed input string correctly", () => {
