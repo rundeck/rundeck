@@ -258,7 +258,7 @@ describe("ActivityList", () => {
         return Promise.resolve({ data: {} });
       });
       const wrapper = await shallowMountActivityList();
-      // Trigger bulk edit mode (Component line: <button @click="triggerBulkEditMode">)
+      // Trigger bulk edit mode LineNo: 94 -99
       const bulkDeleteButton = wrapper.find(
         '[data-testid="activity-list-bulk-delete"]',
       );
@@ -270,7 +270,7 @@ describe("ActivityList", () => {
       await bulkDeleteButton.trigger("click");
       console.log("Triggered bulk delete button click");
 
-      // Select and click checkboxes for deletion (Component line: <input type="checkbox" ...>)
+      // Select and click checkboxes for deletion (Component line: Line No: 253 - 266 )
       const checkboxes = wrapper.findAll(
         '[data-testid="bulk-delete-checkbox"]',
       );
@@ -284,13 +284,6 @@ describe("ActivityList", () => {
       await checkboxes.at(1)?.trigger("click");
       console.log("Second checkbox checked");
 
-      // Mock delete request and simulate UI state update
-      axiosMock.post.mockResolvedValueOnce({
-        data: { allsuccessful: true },
-      });
-      // Ensure the delete request is called with correct parameters
-      axiosMock.post.mockClear(); // Clear previous calls to ensure accurate check
-      expect(axiosMock.post).toHaveBeenCalledTimes(0);
       // Mock updated reports list after deletion
       axiosMock.get.mockImplementationOnce((url) => {
         if (url.includes("eventsAjax")) {
@@ -310,7 +303,7 @@ describe("ActivityList", () => {
 
         return Promise.resolve({ data: {} });
       });
-      // Trigger delete confirmation (Component line: <button @click="confirmBulkDelete">)
+      // Trigger delete confirmation (Component line:79-85)
       const confirmDeleteButton = wrapper.find(
         '[data-testid="delete-selected-executions"]',
       );
@@ -324,7 +317,7 @@ describe("ActivityList", () => {
       await confirmDeleteButton.trigger("click");
       await wrapper.vm.$nextTick();
       console.log("Triggered confirm delete button click");
-      // Ensure modal is rendered
+      // Ensure modal is rendered Line 146-152
       const modal = wrapper.findComponent({ ref: "bulkexecdeleteresult" });
       expect(modal.exists()).toBe(true);
       if (modal.exists()) {
@@ -332,7 +325,7 @@ describe("ActivityList", () => {
       } else {
         console.error("Modal not found in the DOM.");
       }
-      // Check if modal contains the confirm delete button
+      // Check if modal contains the confirm delete button Line 164 -168
       const modalConfirmDeleteButton = wrapper.find(
         '[data-testid="confirm-delete"]',
       );
@@ -354,9 +347,11 @@ describe("ActivityList", () => {
       await wrapper.vm.$nextTick(); // Ensure all updates are applied
       // Check the number of remaining report rows
 
+      // Check the number of remaining report rows
+      // component line:147>
       const reportRows = wrapper.findAll('[data-testid="report-row-item"]');
       console.log("Number of report rows after deletion:", reportRows.length);
-      expect(reportRows.length).toBe(reports.length - 2); // Update expected length based on deletion
+      expect(reportRows.length).toBe(reports.length - 2); // Update expected length based on deletion // Update expected length based on deletion
     });
 
     it("search", async () => {
