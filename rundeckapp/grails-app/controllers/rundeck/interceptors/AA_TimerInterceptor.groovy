@@ -2,7 +2,8 @@ package rundeck.interceptors
 
 import com.codahale.metrics.MetricRegistry
 import org.grails.web.util.WebUtils
-import org.rundeck.web.RequestIdProvider
+import org.rundeck.app.web.RequestIdProvider
+
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC

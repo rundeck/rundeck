@@ -1,8 +1,7 @@
 package rundeck.interceptors
 
 import groovy.transform.CompileStatic
-
-import org.rundeck.web.RequestIdProvider
+import org.rundeck.app.web.RequestIdProvider
 import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
 
