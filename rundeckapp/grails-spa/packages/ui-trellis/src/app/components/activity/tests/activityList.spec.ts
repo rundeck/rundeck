@@ -11,6 +11,8 @@ import ActivityList from "../activityList.vue";
 import ActivityFilter from "../activityFilter.vue";
 import OffsetPagination from "../../../../library/components/utils/OffsetPagination.vue";
 import { cloneDeep } from "lodash";
+import Modal from "uiv";
+import Btn from "uiv";
 // import { setupRundeckContext } from "../mocks/setupRundeckContext";
 jest.mock("../../../../library/rundeckService", () => rundeckServiceMock);
 jest.mock("@rundeck/client", () => rundeckClientMock);
@@ -31,20 +33,23 @@ const shallowMountActivityList = async (
       components: {
         OffsetPagination,
         ActivityFilter,
+        Modal,
+        Btn,
       },
       stubs: {
-        modal: {
-          template: `
-            <div>
-              <slot></slot>
-              <div id="bulkexecdeleteresult">
-                <button type="button" data-testid="confirm-delete">Confirm Delete</button>
-              </div>
-            </div>
-          `,
-        },
+        modal: false,
+        // modal: {
+        //   template: `
+        //     <div>
+        //       <slot></slot>
+        //       <div id="bulkexecdeleteresult">
+        //         <button type="button" data-testid="confirm-delete">Confirm Delete</button>
+        //       </div>
+        //     </div>
+        //   `,
+        // },
         "i18n-t": true,
-        btn: true,
+        btn: false,
         ProgressBar: true,
       },
       mocks: {
@@ -253,8 +258,7 @@ describe("ActivityList", () => {
         return Promise.resolve({ data: {} });
       });
       const wrapper = await shallowMountActivityList();
-      console.log("Mounted ActivityList");
-      // Trigger bulk edit mode
+      // Trigger bulk edit mode (Component line: <button @click="triggerBulkEditMode">)
       const bulkDeleteButton = wrapper.find(
         '[data-testid="activity-list-bulk-delete"]',
       );
@@ -266,11 +270,15 @@ describe("ActivityList", () => {
       await bulkDeleteButton.trigger("click");
       console.log("Triggered bulk delete button click");
 
-      // Select and click checkboxes for deletion
+      // Select and click checkboxes for deletion (Component line: <input type="checkbox" ...>)
       const checkboxes = wrapper.findAll(
         '[data-testid="bulk-delete-checkbox"]',
       );
       console.log("Number of checkboxes:", checkboxes.length);
+      checkboxes.forEach((checkbox, index) => {
+        const inputElement = checkbox.element as HTMLInputElement;
+        console.log(`Checkbox ${index} value:`, inputElement.value);
+      });
       await checkboxes.at(0)?.trigger("click");
       console.log("First checkbox checked");
       await checkboxes.at(1)?.trigger("click");
@@ -302,7 +310,7 @@ describe("ActivityList", () => {
 
         return Promise.resolve({ data: {} });
       });
-      // Trigger delete confirmation
+      // Trigger delete confirmation (Component line: <button @click="confirmBulkDelete">)
       const confirmDeleteButton = wrapper.find(
         '[data-testid="delete-selected-executions"]',
       );
@@ -317,7 +325,7 @@ describe("ActivityList", () => {
       await wrapper.vm.$nextTick();
       console.log("Triggered confirm delete button click");
       // Ensure modal is rendered
-      const modal = wrapper.find("#bulkexecdeleteresult");
+      const modal = wrapper.findComponent({ ref: "bulkexecdeleteresult" });
       expect(modal.exists()).toBe(true);
       if (modal.exists()) {
         console.log("Modal HTML:", modal.html());
@@ -348,7 +356,7 @@ describe("ActivityList", () => {
 
       const reportRows = wrapper.findAll('[data-testid="report-row-item"]');
       console.log("Number of report rows after deletion:", reportRows.length);
-      expect(reportRows.length).toBe(0); // Update expected length based on deletion
+      expect(reportRows.length).toBe(reports.length - 2); // Update expected length based on deletion
     });
 
     it("search", async () => {
