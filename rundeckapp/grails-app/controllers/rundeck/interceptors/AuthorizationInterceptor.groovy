@@ -24,10 +24,7 @@ class AuthorizationInterceptor implements InitializingBean {
     }
 
     boolean before() {
-        if(interceptorHelper.matchesAllowedAsset(controllerName, request)) {
-            apiAuthorizationSuccess.inc()
-            return true
-        }
+        if(interceptorHelper.matchesAllowedAsset(controllerName, request)) return true
         if(request.apiVersionStatusNotReady){
             response.status = HttpServletResponse.SC_SERVICE_UNAVAILABLE
             return false
