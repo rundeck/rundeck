@@ -145,6 +145,7 @@
 
     <modal
       id="bulkexecdelete"
+      ref="bulkexecdeleteresult"
       v-model="showBulkEditConfirm"
       :title="$t('Bulk Delete Executions')"
       append-to-body
