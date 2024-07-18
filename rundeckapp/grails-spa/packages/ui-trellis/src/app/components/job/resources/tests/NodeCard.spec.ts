@@ -125,7 +125,6 @@ describe("NodeCard Component", () => {
       const summaryTab = wrapper.find('[data-testid="summary-tab"]');
       expect(summaryTab.classes()).not.toContain("active");
       const nodeTable = wrapper.findComponent(NodeTable);
-      expect(nodeTable.exists()).toBe(true);
       const rows = nodeTable.findAll("tr.node_entry");
       expect(rows.length).toBe(2);
     });

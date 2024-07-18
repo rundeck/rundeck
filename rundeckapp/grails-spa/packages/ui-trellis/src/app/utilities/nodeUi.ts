@@ -181,13 +181,13 @@ export function glyphiconForName(name: string) {
 export function glyphiconBadges(attributes: any): Array<string> {
   const badges = [];
   if (attributes["ui:badges"]) {
-    const found = attributes["ui:badges"]().split(/,\s*/g);
+    const found = attributes["ui:badges"].split(/,\s*/g);
     for (let i = 0; i < found.length; i++) {
-      if (found[i].match(/^glyphicon-[a-z-]+$/)) {
+      if (found[i].match(/^glyphicon-[a-z0-9-]+$/)) {
         badges.push(found[i]);
-      } else if (found[i].match(/^fa-[a-z-]+$/)) {
+      } else if (found[i].match(/^fa-[a-z0-9-]+$/)) {
         badges.push(found[i]);
-      } else if (found[i].match(/^fab-[a-z-]+$/)) {
+      } else if (found[i].match(/^fab-[a-z0-9-]+$/)) {
         badges.push(found[i]);
       }
     }
