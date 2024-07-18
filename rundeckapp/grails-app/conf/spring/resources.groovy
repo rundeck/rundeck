@@ -137,6 +137,7 @@ import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.security.*
+import org.rundeck.web.DefaultRequestIdProvider
 import org.rundeck.web.ExceptionHandler
 import org.rundeck.web.WebUtil
 import org.rundeck.web.infosec.ContainerPrincipalRoleSource
@@ -936,6 +937,8 @@ beans={
         workflowService = ref('workflowService')
     }
     quartzJobSpecifier(ExecutionJobQuartzJobSpecifier)
+
+    requestIdProvider(DefaultRequestIdProvider)
 
     //provider implementations
     tokenDataProvider(GormTokenDataProvider)
