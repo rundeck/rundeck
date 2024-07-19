@@ -18,10 +18,14 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl
 
 
 import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.common.IFrameworkServices
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils
+import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.execution.ExecArgList
+import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.ExecutionLogger
 import com.dtolabs.rundeck.core.execution.ExecutionService
 import com.dtolabs.rundeck.core.execution.impl.common.FileCopierUtil
@@ -180,7 +184,7 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
             isSuccess() >> true
         }
 
-        1 * executionService.executeCommand(context, {
+        1 * executionService.executeCommand(_, {
             (((ExecArgList) it).asFlatStringList()) == ['rm', '-f', testRemotePath]
         }, node
         ) >> Mock(NodeExecutorResult) {
@@ -270,11 +274,89 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
             }
 
             1 * executionService.executeCommand(
-                context, {
+                _, {
                 (((ExecArgList) it).asFlatStringList()) == ['rm', '-f', testRemotePath]
             }, node
             ) >> Mock(NodeExecutorResult) {
                 isSuccess() >> true
+            }
+    }
+
+    def "script file failure sets correct exitCode"() {
+        given:
+            def utils = new DefaultScriptFileNodeStepUtils()
+            utils.fileCopierUtil = Mock(FileCopierUtil)
+
+            File scriptFile = File.createTempFile("test", ".script");
+            scriptFile.deleteOnExit()
+            def fwkProps = ['rundeck.feature.quoting.backwardCompatible': 'false']
+            ExecutionService executionService = Mock(ExecutionService)
+            StepExecutionContext context = mockContext(fwkProps, executionService)
+            def outcontext= SharedDataContextUtils.outputContext(ContextView.nodeStep(1,"node"))
+            _*context.getOutputContext() >> outcontext
+            def node = new NodeEntryImpl('node')
+            node.setOsFamily('unix')
+            String filepath = scriptFile.absolutePath
+            String[] args = ['someargs'].toArray()
+            String testRemotePath = '/tmp/some-path-to-script'
+        when:
+            def result = utils.executeScriptFile(
+                context,
+                node,
+                null,
+                filepath,
+                null,
+                null,
+                args,
+                null,
+                false,
+                executionService,
+                true
+            )
+        then:
+            result != null
+            outcontext.getSharedContext().getData(ContextView.nodeStep(1,"node")).get("exec").get("exitCode") == '1'
+            1 * utils.fileCopierUtil.generateRemoteFilepathForNode(
+                node,
+                !null,
+                _,
+                scriptFile.getName(),
+                null,
+                null
+
+            ) >> testRemotePath
+
+            1 * executionService.fileCopyFile(context, _, node, testRemotePath) >> testRemotePath
+
+            1 * executionService.executeCommand(context, {
+                (((ExecArgList) it).asFlatStringList()) == ['chmod', '+x', testRemotePath]
+            }, node
+            ) >> Mock(NodeExecutorResult) {
+                isSuccess() >> true
+            }
+
+            1 * executionService.executeCommand(context, {
+                (((ExecArgList) it).asFlatStringList()) == [testRemotePath, 'someargs']
+            }, _, node
+            ) >> { ExecutionContext ctx, argList,stream, nd->
+                ctx.getOutputContext().addOutput(
+                    "exec","exitCode","1"
+                )
+                return Mock(NodeExecutorResult) {
+                    isSuccess() >> false
+                }
+            }
+
+            1 * executionService.executeCommand(_, {
+                (((ExecArgList) it).asFlatStringList()) == ['rm', '-f', testRemotePath]
+            }, node
+            ) >> { ExecutionContext ctx, argList, nd->
+                ctx.getOutputContext().addOutput(
+                    "exec","exitCode","0"
+                )
+                return Mock(NodeExecutorResult) {
+                    isSuccess() >> true
+                }
             }
     }
 
@@ -338,7 +420,7 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
             isSuccess() >> true
         }
 
-        1 * executionService.executeCommand(context, {
+        1 * executionService.executeCommand(_, {
             (((ExecArgList) it).asFlatStringList()) == ['rm', '-f', testRemotePath]
         }, node
         ) >> Mock(NodeExecutorResult) {
@@ -417,7 +499,7 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
             isSuccess() >> true
         }
 
-        1 * executionService.executeCommand(context, {
+        1 * executionService.executeCommand(_, {
             (((ExecArgList) it).asFlatStringList()) == ['rm', '-f', testRemotePath]
         }, node
         ) >> Mock(NodeExecutorResult) {
@@ -494,7 +576,7 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
             isSuccess() >> true
         }
 
-        1 * executionService.executeCommand(context, {
+        1 * executionService.executeCommand(_, {
             (((ExecArgList) it).asFlatStringList()) == ['rm', '-f', testRemotePath]
         }, node
         ) >> Mock(NodeExecutorResult) {
@@ -561,7 +643,7 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
             isSuccess() >> true
         }
 
-        1 * executionService.executeCommand(context, {
+        1 * executionService.executeCommand(_, {
             (((ExecArgList) it).asFlatStringList()) == ['rm', '-f', testRemotePath]
         }, node
         ) >> Mock(NodeExecutorResult) {
