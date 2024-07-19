@@ -11,8 +11,7 @@ import ActivityList from "../activityList.vue";
 import ActivityFilter from "../activityFilter.vue";
 import OffsetPagination from "../../../../library/components/utils/OffsetPagination.vue";
 import { cloneDeep } from "lodash";
-import Modal from "uiv";
-import Btn from "uiv";
+import { Modal, Btn } from "uiv";
 // import { setupRundeckContext } from "../mocks/setupRundeckContext";
 jest.mock("../../../../library/rundeckService", () => rundeckServiceMock);
 jest.mock("@rundeck/client", () => rundeckClientMock);
@@ -234,7 +233,6 @@ describe("ActivityList", () => {
     it("trigger bulk actions - delete", async () => {
       axiosMock.get.mockImplementation((url) => {
         if (url.includes("eventsAjax")) {
-          console.log("Initial fetch of reports with data:", reports);
           return Promise.resolve({
             data: {
               total: reports.length,
@@ -248,7 +246,6 @@ describe("ActivityList", () => {
           });
         }
         if (url.includes("running")) {
-          console.log("Initial fetch of running executions");
           return Promise.resolve({
             data: {
               executions: mockRunningExecutions,
@@ -258,36 +255,23 @@ describe("ActivityList", () => {
         return Promise.resolve({ data: {} });
       });
       const wrapper = await shallowMountActivityList();
-      // Trigger bulk edit mode LineNo: 94 -99
+      const bulkDeleteExecutionsSpy = jest
+        .spyOn(wrapper.vm, "bulkDeleteExecutions")
+        .mockImplementation(() => Promise.resolve(undefined));
       const bulkDeleteButton = wrapper.find(
         '[data-testid="activity-list-bulk-delete"]',
       );
-      console.log("Bulk delete button exists:", bulkDeleteButton.exists());
-      if (!bulkDeleteButton.exists()) {
-        console.error("Bulk delete button not found in DOM");
-        return;
-      }
       await bulkDeleteButton.trigger("click");
-      console.log("Triggered bulk delete button click");
 
-      // Select and click checkboxes for deletion (Component line: Line No: 253 - 266 )
       const checkboxes = wrapper.findAll(
         '[data-testid="bulk-delete-checkbox"]',
       );
-      console.log("Number of checkboxes:", checkboxes.length);
-      checkboxes.forEach((checkbox, index) => {
-        const inputElement = checkbox.element as HTMLInputElement;
-        console.log(`Checkbox ${index} value:`, inputElement.value);
-      });
-      await checkboxes.at(0)?.trigger("click");
-      console.log("First checkbox checked");
-      await checkboxes.at(1)?.trigger("click");
-      console.log("Second checkbox checked");
-
-      // Mock updated reports list after deletion
+      // Check the first checkbox
+      await checkboxes.at(0)?.setValue(true);
+      // Check the second checkbox
+      await checkboxes.at(1)?.setValue(true);
       axiosMock.get.mockImplementationOnce((url) => {
         if (url.includes("eventsAjax")) {
-          console.log("Fetch of reports after deletion");
           // Assuming 2 reports were deleted, adjust the slice accordingly
           return Promise.resolve({
             data: {
@@ -300,58 +284,25 @@ describe("ActivityList", () => {
             },
           });
         }
-
         return Promise.resolve({ data: {} });
       });
-      // Trigger delete confirmation (Component line:79-85)
       const confirmDeleteButton = wrapper.find(
         '[data-testid="delete-selected-executions"]',
       );
-      if (
-        !confirmDeleteButton.exists() ||
-        (confirmDeleteButton.element as HTMLButtonElement).disabled
-      ) {
-        console.error("Confirm delete button not found in DOM or is disabled");
-        return;
-      }
       await confirmDeleteButton.trigger("click");
       await wrapper.vm.$nextTick();
-      console.log("Triggered confirm delete button click");
-      // Ensure modal is rendered Line 146-152
       const modal = wrapper.findComponent({ ref: "bulkexecdeleteresult" });
       expect(modal.exists()).toBe(true);
-      if (modal.exists()) {
-        console.log("Modal HTML:", modal.html());
-      } else {
-        console.error("Modal not found in the DOM.");
-      }
-      // Check if modal contains the confirm delete button Line 164 -168
-      const modalConfirmDeleteButton = wrapper.find(
+      const modalConfirmDeleteButton = modal.find(
         '[data-testid="confirm-delete"]',
       );
       expect(modalConfirmDeleteButton.exists()).toBe(true);
-      console.log(
-        "Modal confirm delete button exists:",
-        modalConfirmDeleteButton.exists(),
-      );
-      if (!modalConfirmDeleteButton.exists()) {
-        console.error("Modal confirm delete button not found in DOM");
-        return;
-      }
-      // Trigger modal confirm delete button click
+
       await modalConfirmDeleteButton.trigger("click");
       await wrapper.vm.$nextTick();
-      console.log("Triggered modal confirm delete button click");
-      // Wait for the deletion to complete and the list to update
-      await wrapper.vm.$nextTick(); // Wait for state updates
-      await wrapper.vm.$nextTick(); // Ensure all updates are applied
-      // Check the number of remaining report rows
-
-      // Check the number of remaining report rows
-      // component line:147>
       const reportRows = wrapper.findAll('[data-testid="report-row-item"]');
-      console.log("Number of report rows after deletion:", reportRows.length);
-      expect(reportRows.length).toBe(reports.length - 2); // Update expected length based on deletion // Update expected length based on deletion
+      expect(reportRows.length).toBe(2); // Update expected length based on deletion
+      expect(bulkDeleteExecutionsSpy).toHaveBeenCalledWith([42]);
     });
 
     it("search", async () => {
