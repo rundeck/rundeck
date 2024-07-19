@@ -417,4 +417,18 @@ abstract class BaseContainer extends Specification implements ClientProvider {
             log.error("Interrupted", e)
         }
     }
+
+    /**
+     * Adds additional configuration options to a project.
+     * @param project The name of the project to add configuration
+     * @param configure configuration map
+     */
+    def addExtraProjectConfig(String project, Map<String, String> configure){
+        configure.forEach {key, value ->
+            client.doPutWithJsonBody("/project/$project/config/$key",
+                    [ "key":key, "value":value ]
+            )
+        }
+    }
+
 }
