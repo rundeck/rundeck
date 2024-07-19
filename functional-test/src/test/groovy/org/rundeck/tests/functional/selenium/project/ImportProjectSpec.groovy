@@ -93,7 +93,7 @@ class ImportProjectSpec extends SeleniumBase {
         importPage.getImportButton().click()
 
         then:
-        importPage.getImportAlertMessage().getText().contains("There was some errors in the import process")
+        importPage.getImportAlertMessage().getText().contains("There were errors in the import process")
         importPage.getImportAlertMessage().getText().contains(alertMessage)
 
         cleanup:
