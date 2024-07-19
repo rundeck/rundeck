@@ -425,9 +425,12 @@ abstract class BaseContainer extends Specification implements ClientProvider {
      */
     def addExtraProjectConfig(String project, Map<String, String> configure){
         configure.forEach {key, value ->
-            client.doPutWithJsonBody("/project/$project/config/$key",
+            Response response = client.doPutWithJsonBody("/project/$project/config/$key",
                     [ "key":key, "value":value ]
             )
+            if (!response.successful) {
+                throw new RuntimeException("Failed to add configuration options to a project: ${response.body().string()}")
+            }
         }
     }
 
