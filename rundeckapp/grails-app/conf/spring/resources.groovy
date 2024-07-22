@@ -55,6 +55,7 @@ import com.dtolabs.rundeck.core.plugins.JarPluginScanner
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.plugins.ScriptPluginScanner
 import com.dtolabs.rundeck.core.plugins.WatchingPluginDirProvider
+import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterImpl
 import com.dtolabs.rundeck.core.resources.format.ResourceFormats
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.storage.KeyStorageContextProvider
@@ -496,6 +497,8 @@ beans={
                 ref('scriptPluginScanner')
         ]
     }
+
+    rundeckPluginAdapter(PluginAdapterImpl)
 
     rundeckFrameworkExecutionProviderServices(FrameworkExecutionProviderServices){
          frameworkExecutionServices = ref('rundeckBaseFrameworkExecutionServices')
