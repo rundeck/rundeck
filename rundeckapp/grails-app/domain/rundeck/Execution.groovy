@@ -426,6 +426,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         Execution exec= new Execution()
         if(job){
             exec.scheduledExecution=job
+            exec.jobUuid=job.uuid
         }
         exec.dateStarted=data.dateStarted
         exec.dateCompleted=data.dateCompleted
