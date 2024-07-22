@@ -295,7 +295,14 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
                                 if(!isOracleDatasource())
                                     ne(val,'')
                             }
-                        } else if (query["${key}Filter"]) {
+                        } else if (key == "jobId" && query["${key}Filter"]) {
+                            or {
+                                eq(val, query["${key}Filter"])
+                                if(seId) {
+                                    eq('jobUuid', seId)
+                                }
+                            }
+                        }else if (query["${key}Filter"]) {
                             eq(val, query["${key}Filter"])
                         }
                     }
