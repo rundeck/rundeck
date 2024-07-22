@@ -740,7 +740,7 @@ public class PluginAdapterImpl
     private void setFieldValue(final Field field, final Object value, final Object object)
             throws IllegalAccessException
     {
-        if (!field.isAccessible()) {
+        if (!field.canAccess(object)) {
             field.setAccessible(true);
         }
         field.set(object, value);
