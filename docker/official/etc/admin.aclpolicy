@@ -11,7 +11,7 @@ for:
   node:
     - allow: '*' # allow read/run for all nodes
   runner:
-    - allow: '*' # allow read/run for all nodes
+    - allow: '*' # allow read/run for all runners
 by:
   group: admin
 
