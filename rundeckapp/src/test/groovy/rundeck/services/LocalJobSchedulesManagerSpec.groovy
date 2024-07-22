@@ -52,7 +52,8 @@ class LocalJobSchedulesManagerSpec extends Specification implements DataTest {
                         executionEnabled: executionEnabled,
                         userRoleList: 'a,b',
                         serverNodeUUID: TEST_UUID2,
-                        year: year
+                        year: year,
+                        uuid: "a1"
                 )
         ).save()
 
@@ -95,7 +96,8 @@ class LocalJobSchedulesManagerSpec extends Specification implements DataTest {
                         scheduleEnabled: true,
                         executionEnabled: true,
                         userRoleList: 'a,b',
-                        serverNodeUUID: TEST_UUID2
+                        serverNodeUUID: TEST_UUID2,
+                        uuid: "a1"
                 )
         ).save()
 

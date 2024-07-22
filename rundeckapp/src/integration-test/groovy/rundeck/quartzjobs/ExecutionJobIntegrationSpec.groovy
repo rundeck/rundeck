@@ -418,7 +418,7 @@ class ExecutionJobIntegrationSpec extends Specification {
 
     def testInitializeNotFoundJob() {
         given:
-            def contextMock = new JobDataMap([scheduledExecutionId: '1'])
+            def contextMock = new JobDataMap([scheduledExecutionId: '1', project: "myProject"])
             def quartzScheduler = Mock(Scheduler){
                 1 * deleteJob(_) >> void
             }
@@ -486,6 +486,7 @@ class ExecutionJobIntegrationSpec extends Specification {
 
             def contextMock = new JobDataMap(
                 scheduledExecutionId: se.uuid,
+                project: se.project,
                 frameworkService: mockfs,
                 executionService: mockes,
                 executionUtilService: mockeus,
@@ -518,7 +519,8 @@ class ExecutionJobIntegrationSpec extends Specification {
             def contextMock = new JobDataMap(
                     frameworkService: fs,
                     scheduledExecutionId: se.uuid,
-                    executionService: mockes
+                    executionService: mockes,
+                    project: se.project
             )
 
         when:
@@ -537,7 +539,8 @@ class ExecutionJobIntegrationSpec extends Specification {
 
             def contextMock = new JobDataMap(
                     frameworkService: fs,
-                    scheduledExecutionId: se.uuid
+                    scheduledExecutionId: se.uuid,
+                    project: se.project
             )
 
         when:
@@ -590,6 +593,7 @@ class ExecutionJobIntegrationSpec extends Specification {
                 authContextProvider: authProvider,
                 secureOpts: [:],
                 secureOptsExposed: [:],
+                project: se.project,
                 )
         when:
             def result = job.initialize(null, contextMock)
@@ -677,6 +681,7 @@ class ExecutionJobIntegrationSpec extends Specification {
                 jobSchedulesService: jobSchedulesServiceMock,
                 jobSchedulerService: jobSchedulerServiceMock,
                 authContextProvider: authProvider,
+                project: se.project,
             )
             def qjobContext = Mock(JobExecutionContext){
                 getJobDetail()>>Mock(JobDetail){
@@ -743,6 +748,7 @@ class ExecutionJobIntegrationSpec extends Specification {
                 jobSchedulesService: jobSchedulesServiceMock,
                 jobSchedulerService: jobSchedulerServiceMock,
                 authContextProvider: authProvider,
+                project: se.project
         )
         when:
         def contextMap = job.initialize(null, contextMock)
@@ -810,6 +816,7 @@ class ExecutionJobIntegrationSpec extends Specification {
                 jobSchedulesService: jobSchedulesServiceMock,
                 jobSchedulerService: jobSchedulerServiceMock,
                 authContextProvider: authProvider,
+                project: se.project
             )
             def qjobContext = Mock(JobExecutionContext){
                 getJobDetail()>>Mock(JobDetail){

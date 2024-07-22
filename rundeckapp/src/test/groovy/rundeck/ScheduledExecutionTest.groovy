@@ -481,12 +481,12 @@ class ScheduledExecutionTest  {
 
     @Test void testGenerateJobGroupName() {
         def ScheduledExecution se = new ScheduledExecution()
-        se.properties = [jobName: 'TestName', project: "AFrameworkProject"]
-        assertEquals "incorrect group name: ${se.generateJobGroupName()}", "AFrameworkProject:TestName:", se.generateJobGroupName()
+        se.properties = [uuid: "a1", jobName: 'TestName', project: "AFrameworkProject"]
+        assertEquals "incorrect group name: ${se.generateJobGroupName()}", "AFrameworkProject", se.generateJobGroupName()
 
         se = new ScheduledExecution()
-        se.properties = [jobName: 'TestName', project: "AFrameworkProject", groupPath: 'The Group']
-        assertEquals "incorrect group name: ${se.generateJobGroupName()}", "AFrameworkProject:TestName:The Group", se.generateJobGroupName()
+        se.properties = [uuid: "a1", jobName: 'TestName', project: "AFrameworkProject", groupPath: 'The Group']
+        assertEquals "incorrect group name: ${se.generateJobGroupName()}", "AFrameworkProject", se.generateJobGroupName()
     }
 
     @Test void testGenerateCrontabExpression() {
