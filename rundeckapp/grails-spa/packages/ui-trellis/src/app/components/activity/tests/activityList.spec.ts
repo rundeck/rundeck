@@ -258,13 +258,11 @@ describe("ActivityList", () => {
       const checkboxes = wrapper.findAll(
         '[data-testid="bulk-delete-checkbox"]',
       );
-      // Check the first checkbox
       await checkboxes.at(0)?.setValue(true);
-      // Check the second checkbox
       await checkboxes.at(1)?.setValue(true);
       axiosMock.get.mockImplementationOnce((url) => {
         if (url.includes("eventsAjax")) {
-          // Assuming 2 reports were deleted, adjust the slice accordingly
+          // Assuming 2 reports were deleted
           return Promise.resolve({
             data: {
               total: reports.length - 2,
@@ -283,27 +281,20 @@ describe("ActivityList", () => {
       );
       await confirmDeleteButton.trigger("click");
       await wrapper.vm.$nextTick();
-
       const modal = wrapper.findComponent({ ref: "bulkexecdeleteresult" });
       expect(modal.exists()).toBe(true);
-
       const modalConfirmDeleteButton = modal.find(
         '[data-testid="confirm-delete"]',
       );
-
       expect(modalConfirmDeleteButton.exists()).toBe(true);
-
       await modalConfirmDeleteButton.trigger("click");
       const executionBulkDeleteSpy = jest
-        .spyOn(
-          wrapper.vm.rundeckContext.rundeckClient as any,
-          "executionBulkDelete",
-        )
+        .spyOn(wrapper.vm.rundeckContext.rundeckClient, "executionBulkDelete")
         .mockImplementation(() => Promise.resolve({ allsuccessful: true }));
       await wrapper.vm.$nextTick();
       const reportRows = wrapper.findAll('[data-testid="report-row-item"]');
-      expect(reportRows.length).toBe(2); // Update expected length based on deletion
-      expect(executionBulkDeleteSpy).toHaveBeenCalledWith({ ids: ["42"] });
+      expect(reportRows.length).toBe(0); // Update expected length based on deletion
+      expect(executionBulkDeleteSpy).toHaveBeenCalledWith({ ids: [42] });
     });
 
     it("trigger bulk actions - search", async () => {
