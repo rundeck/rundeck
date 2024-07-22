@@ -69,6 +69,8 @@ export const rundeckClientMock = {
     executionBulkDelete: jest.fn().mockResolvedValue({ allsuccessful: true }),
     executionListRunning: jest.fn().mockResolvedValue({ executions: [] }),
   })),
+  executionBulkDelete: jest.fn().mockResolvedValue({ allsuccessful: true }),
+  executionListRunning: jest.fn().mockResolvedValue({ executions: [] }),
 };
 
 export const rundeckServiceMock = {
@@ -84,7 +86,7 @@ export const rundeckServiceMock = {
     token: { TOKEN: "mocked-token", URI: "mocked-uri" },
     tokens: { default: { TOKEN: "mocked-token", URI: "mocked-uri" } },
     // rundeckClient: new RundeckBrowser("mocked-token", "mocked-uri"),
-    rundeckClient: {},
+    rundeckClient: rundeckClientMock,
     data: {
       jobslistDateFormatMoment: "MM/DD/YYYY",
       projectAdminAuth: true,
