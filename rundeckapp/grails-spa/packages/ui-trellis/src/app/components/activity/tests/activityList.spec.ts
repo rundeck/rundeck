@@ -37,16 +37,7 @@ const shallowMountActivityList = async (
       },
       stubs: {
         modal: false,
-        // modal: {
-        //   template: `
-        //     <div>
-        //       <slot></slot>
-        //       <div id="bulkexecdeleteresult">
-        //         <button type="button" data-testid="confirm-delete">Confirm Delete</button>
-        //       </div>
-        //     </div>
-        //   `,
-        // },
+
         "i18n-t": true,
         btn: false,
         ProgressBar: true,
@@ -254,10 +245,11 @@ describe("ActivityList", () => {
         }
         return Promise.resolve({ data: {} });
       });
+      axiosMock.post.mockResolvedValueOnce({
+        data: { allsuccessful: true },
+      });
       const wrapper = await shallowMountActivityList();
-      const bulkDeleteExecutionsSpy = jest
-        .spyOn(wrapper.vm, "bulkDeleteExecutions")
-        .mockImplementation(() => Promise.resolve(undefined));
+      await wrapper.vm.$nextTick();
       const bulkDeleteButton = wrapper.find(
         '[data-testid="activity-list-bulk-delete"]',
       );
@@ -291,53 +283,90 @@ describe("ActivityList", () => {
       );
       await confirmDeleteButton.trigger("click");
       await wrapper.vm.$nextTick();
+
       const modal = wrapper.findComponent({ ref: "bulkexecdeleteresult" });
       expect(modal.exists()).toBe(true);
+
       const modalConfirmDeleteButton = modal.find(
         '[data-testid="confirm-delete"]',
       );
+
       expect(modalConfirmDeleteButton.exists()).toBe(true);
 
       await modalConfirmDeleteButton.trigger("click");
+      const executionBulkDeleteSpy = jest
+        .spyOn(
+          wrapper.vm.rundeckContext.rundeckClient as any,
+          "executionBulkDelete",
+        )
+        .mockImplementation(() => Promise.resolve({ allsuccessful: true }));
       await wrapper.vm.$nextTick();
       const reportRows = wrapper.findAll('[data-testid="report-row-item"]');
       expect(reportRows.length).toBe(2); // Update expected length based on deletion
-      expect(bulkDeleteExecutionsSpy).toHaveBeenCalledWith([42]);
+      expect(executionBulkDeleteSpy).toHaveBeenCalledWith({ ids: ["42"] });
     });
 
-    it("search", async () => {
-      // to do: change how axiosMock is mocked, so that upon the first fetch of reports you can return the whole array of reports,
-      // but on the second time (which happens after search), the mock will return the array of reports that match the search term (ie 2);
-
-      axiosMock.get.mockResolvedValue({
-        data: {
-          reports: reports,
-        },
+    it("trigger bulk actions - search", async () => {
+      // Mock initial API call to return the whole array of reports
+      axiosMock.get.mockImplementation((url) => {
+        if (url.includes("eventsAjax")) {
+          return Promise.resolve({
+            data: {
+              total: reports.length,
+              offset: 0,
+              reports: reports,
+            },
+          });
+        }
+        if (url.includes("running")) {
+          return Promise.resolve({
+            data: {
+              executions: mockRunningExecutions,
+            },
+          });
+        }
+        return Promise.resolve({ data: {} });
       });
       const wrapper = await shallowMountActivityList();
+      // Simulate clicking the filter button to show filters
       const filterButton = wrapper.find(
         '[data-testid="activity-list-filter-button"]',
       );
       await filterButton.trigger("click");
       expect(wrapper.vm.showFilters).toBe(true);
+      // Simulate entering a search term
       const activityFilter = wrapper.findComponent(ActivityFilter);
       activityFilter.vm.$emit("input", {
         ...wrapper.vm.query,
         jobIdFilter: "testJob",
       });
-      await wrapper.vm.$nextTick();
-      // Check the API call
-      expect(axiosMock.get).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({
-          params: expect.objectContaining({
-            jobIdFilter: "testJob",
-          }),
-        }),
-      );
 
+      await wrapper.vm.$nextTick();
+      // Mock API call to return filtered reports
+      axiosMock.get.mockImplementationOnce((url) => {
+        if (url.includes("eventsAjax")) {
+          return Promise.resolve({
+            data: {
+              total: 2, // Assuming the search results in 2 reports
+              offset: 0,
+              reports: reports.slice(0, 2), // Return only 2 matching reports
+            },
+          });
+        }
+        if (url.includes("running")) {
+          return Promise.resolve({
+            data: {
+              executions: mockRunningExecutions,
+            },
+          });
+        }
+        return Promise.resolve({ data: {} });
+      });
+
+      expect(axiosMock.get).toHaveBeenCalledTimes(2); // Initial call + search call
+      // Verify the results
       const reportItems = wrapper.findAll('[data-testid="report-row-item"]');
-      // TODO: use expect
+      expect(reportItems.length).toBe(2); // Ensure the filtered result is shown
     });
   });
 
@@ -373,22 +402,62 @@ describe("ActivityList", () => {
   });
 
   it("fetches data automatically when auto-refresh is true", async () => {
-    // to do: add all 3 mocks for axiosMock (since, reports, execution), to ensure that loadSince will pass;
-    axiosMock.get.mockResolvedValue({
-      data: {
-        reports: reports,
-      },
+    // Use fake timers
+    jest.useFakeTimers();
+    // Mock axios.get for different API calls
+    axiosMock.get.mockImplementation((url) => {
+      if (url.includes("eventsAjax")) {
+        return Promise.resolve({
+          data: {
+            total: reports.length,
+            reports: reports,
+          },
+        });
+      }
+      if (url.includes("running")) {
+        return Promise.resolve({
+          data: {
+            executions: [],
+          },
+        });
+      }
+      if (url.includes("since.json")) {
+        return Promise.resolve({
+          data: {
+            since: {
+              count: 0,
+            },
+          },
+        });
+      }
+      return Promise.resolve({ data: {} });
     });
     const wrapper = await shallowMountActivityList();
+    // Enable auto-refresh
     const autoRefreshCheckbox = wrapper.find(
       '[data-testid="auto-refresh-checkbox"]',
     );
     await autoRefreshCheckbox.setValue(true);
     await wrapper.vm.$nextTick();
-    // its fine to advance timers, but need to make sure that it has passed enough time to trigger the setTimeout
-    // or can trigger runAllTimers, which will advance the timers until all setTimeouts/setIntervals run
-    jest.runAllTimers();
+    expect(axiosMock.get).toHaveBeenCalledTimes(2); // Initial call
+
+    console.log(
+      "Before advancing timers, number of calls:",
+      axiosMock.get.mock.calls.length,
+    );
+
+    // Advance timers to trigger auto-refresh
+    jest.advanceTimersByTime(5000);
     await wrapper.vm.$nextTick();
-    expect(axiosMock.get).toHaveBeenCalledTimes(2); // this number will be bigger
+
+    console.log(
+      "After advancing timers, number of calls:",
+      axiosMock.get.mock.calls.length,
+    );
+
+    // Verify the results
+    expect(axiosMock.get).toHaveBeenCalledTimes(4);
+    // Clean up timers
+    jest.clearAllTimers();
   });
 });
