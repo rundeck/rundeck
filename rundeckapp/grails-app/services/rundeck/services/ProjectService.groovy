@@ -144,18 +144,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             sdf.format(it)
         }
         BuilderUtil builder = new BuilderUtil(converters: [(Date): dateConvert, (java.sql.Timestamp): dateConvert])
-        if (report.jobId) {
-            //convert internal job ID to extid
-            def se
-            try {
-                se = ScheduledExecution.get(Long.parseLong(report.jobId))
-                if (se) {
-                    report.jobId = se.extid
-                }
-            } catch (NumberFormatException e) {
-
-            }
-        }
         //convert map to xml
         zip.file("$name") { Writer writer ->
             def xml = new MarkupBuilder(writer)
@@ -269,6 +257,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 saveReportRequest.executionId = execIdMap[object.jcExecId]
             } else if (object.executionId && execIdMap && execIdMap[object.executionId]) {
                 saveReportRequest.executionId = execIdMap[object.executionId]
+                def executionUuid = Execution.get(saveReportRequest.executionId)?.uuid
+                if (executionUuid) {
+                    saveReportRequest.executionUuid = executionUuid
+                }
             } else {
                 //skip report for exec id that cannot be found
                 return null
