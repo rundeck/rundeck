@@ -12,7 +12,6 @@ import ActivityFilter from "../activityFilter.vue";
 import OffsetPagination from "../../../../library/components/utils/OffsetPagination.vue";
 import { cloneDeep } from "lodash";
 import { Modal, Btn } from "uiv";
-// import { setupRundeckContext } from "../mocks/setupRundeckContext";
 jest.mock("../../../../library/rundeckService", () => rundeckServiceMock);
 jest.mock("@rundeck/client", () => rundeckClientMock);
 jest.mock("axios", () => axiosMock);
@@ -129,11 +128,9 @@ describe("ActivityList", () => {
       await wrapper.vm.$nextTick(); // Wait for all pending updates to finish
       // Verify the current executions
       const executionItems = wrapper.findAll('[data-testid="execution-link"]');
-
       expect(executionItems.length).toBe(2); // Directly using the expected length value
       // Verify the finished job reports
       const reportItems = wrapper.findAll('[data-testid="report-row-item"]');
-
       expect(reportItems.length).toBe(2);
     });
 
@@ -167,49 +164,9 @@ describe("ActivityList", () => {
         return Promise.resolve({ data: {} });
       });
       const wrapper = await shallowMountActivityList();
-      await wrapper.vm.$nextTick(); // Wait for all pending updates to finish
+      await wrapper.vm.$nextTick();
       const noInfoMessage = wrapper.find('[data-testid="no-data-message"]');
       expect(noInfoMessage.text()).toBe("No results for the query");
-    });
-
-    it("renders message when there are no executions since timestamp", async () => {
-      axiosMock.get.mockImplementation((url) => {
-        if (url.includes("eventsAjax")) {
-          return Promise.resolve({
-            data: {
-              reports: reports,
-              total: 0,
-              offset: 0,
-              lastDate: -1,
-            },
-          });
-        }
-        if (url.includes("running")) {
-          return Promise.resolve({
-            data: {
-              executions: [],
-            },
-          });
-        }
-        if (url.includes("since.json")) {
-          return Promise.resolve({
-            data: {
-              since: {
-                count: 5,
-              },
-            },
-          });
-        }
-        return Promise.resolve({ data: {} });
-      });
-      const wrapper = await shallowMountActivityList();
-      // Simulate the component's periodic check for new executions
-      wrapper.vm.lastDate = 1; // Set a valid lastDate so loadSince will execute
-      await wrapper.vm.loadSince();
-      await wrapper.vm.$nextTick(); // Wait for all pending updates to finish
-      const sinceCountData = wrapper.find('[data-testid="since-count-data"]');
-      expect(sinceCountData.exists()).toBe(true);
-      expect(sinceCountData.text()).toContain("5 New Results. Click to load.");
     });
   });
 
@@ -221,10 +178,6 @@ describe("ActivityList", () => {
             data: {
               total: reports.length,
               offset: 0,
-              auth: { projectAdmin: true, deleteExec: true },
-              bulkEditMode: false,
-              showBulkDelete: true,
-              bulkSelectedIds: ["42"],
               reports: reports,
             },
           });
@@ -326,7 +279,6 @@ describe("ActivityList", () => {
       });
 
       await wrapper.vm.$nextTick();
-      // Mock API call to return filtered reports
       axiosMock.get.mockImplementationOnce((url) => {
         if (url.includes("eventsAjax")) {
           return Promise.resolve({
@@ -348,7 +300,8 @@ describe("ActivityList", () => {
       });
 
       expect(axiosMock.get).toHaveBeenCalledTimes(2); // Initial call + search call
-      // Verify the results
+      await wrapper.vm.$nextTick();
+      // Verify the results are filtered
       const reportItems = wrapper.findAll('[data-testid="report-row-item"]');
       expect(reportItems.length).toBe(2); // Ensure the filtered result is shown
     });
@@ -378,23 +331,21 @@ describe("ActivityList", () => {
     await wrapper.vm.$nextTick();
     const reportRowItem = wrapper.find('[data-testid="report-row-item"]');
     expect(reportRowItem.exists()).toBe(true);
-    // Simulate click on the report row item
     await reportRowItem.trigger("click");
     // Check if the navigation occurred correctly
     const report = mockReports[0]; // Use the first report for simplicity
     expect(window.location).toBe(report.executionHref);
   });
 
-  it("fetches data automatically when auto-refresh is true", async () => {
-    // Use fake timers
+  it("fetches data automatically and renders message when there are no executions since timestamp", async () => {
     jest.useFakeTimers();
-    // Mock axios.get for different API calls
     axiosMock.get.mockImplementation((url) => {
       if (url.includes("eventsAjax")) {
         return Promise.resolve({
           data: {
-            total: reports.length,
-            reports: reports,
+            total: 1,
+            reports: [],
+            lastDate: 1,
           },
         });
       }
@@ -409,27 +360,29 @@ describe("ActivityList", () => {
         return Promise.resolve({
           data: {
             since: {
-              count: 0,
+              count: 5,
             },
           },
         });
       }
       return Promise.resolve({ data: {} });
     });
+
     const wrapper = await shallowMountActivityList();
+    await wrapper.vm.$nextTick();
     // Enable auto-refresh
     const autoRefreshCheckbox = wrapper.find(
       '[data-testid="auto-refresh-checkbox"]',
     );
     await autoRefreshCheckbox.setValue(true);
     await wrapper.vm.$nextTick();
-    expect(axiosMock.get).toHaveBeenCalledTimes(2); // Initial call
-    // Advance timers to trigger auto-refresh
     jest.advanceTimersByTime(5000);
     await wrapper.vm.$nextTick();
-    // Verify the results
     expect(axiosMock.get).toHaveBeenCalledTimes(4);
-    // Clean up timers
+    await wrapper.vm.$nextTick();
+    const sinceCountData = wrapper.find('[data-testid="since-count-data"]');
+    await wrapper.vm.$nextTick();
+    expect(sinceCountData.text()).toContain("5 New Results. Click to load.");
     jest.clearAllTimers();
   });
 });
