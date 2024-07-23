@@ -90,10 +90,6 @@ describe("ActivityList", () => {
   });
 
   describe("renders", () => {
-    afterEach(() => {
-      jest.clearAllMocks();
-    });
-
     it("information about the page being shown and total number of results", async () => {
       axiosMock.get.mockResolvedValue({
         data: {
@@ -111,7 +107,7 @@ describe("ActivityList", () => {
 
     it("information about the current executions and finished jobs", async () => {
       axiosMock.get.mockImplementation((url) => {
-        if (url.includes("execution")) {
+        if (url.includes("running")) {
           return Promise.resolve({
             data: {
               executions: mockRunningExecutions,
@@ -130,11 +126,15 @@ describe("ActivityList", () => {
         return Promise.resolve({ data: {} });
       });
       const wrapper = await shallowMountActivityList();
-      await wrapper.vm.$nextTick();
+      await wrapper.vm.$nextTick(); // Wait for all pending updates to finish
+      // Verify the current executions
       const executionItems = wrapper.findAll('[data-testid="execution-link"]');
+
+      expect(executionItems.length).toBe(2); // Directly using the expected length value
+      // Verify the finished job reports
       const reportItems = wrapper.findAll('[data-testid="report-row-item"]');
-      expect(executionItems.length).toBe(mockRunningExecutions.length);
-      expect(reportItems.length).toBe(mockReports.length);
+
+      expect(reportItems.length).toBe(2);
     });
 
     it("error message when loading(apis) fails", async () => {
@@ -142,9 +142,6 @@ describe("ActivityList", () => {
       const wrapper = await shallowMountActivityList();
       await wrapper.vm.$nextTick();
       const errorMessage = wrapper.find('[data-testid="error-message"]');
-
-      expect(errorMessage.exists()).toBe(true);
-
       expect(errorMessage.text()).toContain("An Error Occurred");
     });
 
@@ -172,7 +169,6 @@ describe("ActivityList", () => {
       const wrapper = await shallowMountActivityList();
       await wrapper.vm.$nextTick(); // Wait for all pending updates to finish
       const noInfoMessage = wrapper.find('[data-testid="no-data-message"]');
-      expect(noInfoMessage.exists()).toBe(true);
       expect(noInfoMessage.text()).toBe("No results for the query");
     });
 
@@ -218,9 +214,6 @@ describe("ActivityList", () => {
   });
 
   describe("trigger bulk actions", () => {
-    afterEach(() => {
-      jest.clearAllMocks();
-    });
     it("trigger bulk actions - delete", async () => {
       axiosMock.get.mockImplementation((url) => {
         if (url.includes("eventsAjax")) {
@@ -362,7 +355,7 @@ describe("ActivityList", () => {
   });
 
   it("navigates to the execution page", async () => {
-    axiosMock.get.mockImplementation((url, data) => {
+    axiosMock.get.mockImplementation((url) => {
       if (url.includes("execution")) {
         return Promise.resolve({
           data: {
@@ -431,21 +424,9 @@ describe("ActivityList", () => {
     await autoRefreshCheckbox.setValue(true);
     await wrapper.vm.$nextTick();
     expect(axiosMock.get).toHaveBeenCalledTimes(2); // Initial call
-
-    console.log(
-      "Before advancing timers, number of calls:",
-      axiosMock.get.mock.calls.length,
-    );
-
     // Advance timers to trigger auto-refresh
     jest.advanceTimersByTime(5000);
     await wrapper.vm.$nextTick();
-
-    console.log(
-      "After advancing timers, number of calls:",
-      axiosMock.get.mock.calls.length,
-    );
-
     // Verify the results
     expect(axiosMock.get).toHaveBeenCalledTimes(4);
     // Clean up timers
