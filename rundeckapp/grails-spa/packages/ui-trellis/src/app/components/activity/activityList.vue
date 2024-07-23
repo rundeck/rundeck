@@ -1068,20 +1068,18 @@ export default defineComponent({
           ),
           withCredentials: true,
         });
-        console.log("Response Data", response.data);
+
         if (
           this.lastDate > 0 &&
           response.data.since &&
           response.data.since.count
         ) {
           this.sincecount = response.data.since.count;
-          console.log("Updated since count", this.sincecount);
         }
       } catch (error) {
         //@ts-ignore
         this.disableRefresh = !this.disableRefresh;
         this.loadError = error.message;
-        console.log("Error", error.message);
       }
     },
     async loadRunning() {
