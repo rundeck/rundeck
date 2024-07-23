@@ -265,20 +265,33 @@ describe("ActivityList", () => {
         return Promise.resolve({ data: {} });
       });
       const wrapper = await shallowMountActivityList();
+      await wrapper.vm.$nextTick();
       // Simulate clicking the filter button to show filters
       const filterButton = wrapper.find(
         '[data-testid="activity-list-filter-button"]',
       );
+      console.log("Filter button found:", filterButton.exists());
       await filterButton.trigger("click");
+      await wrapper.vm.$nextTick();
       expect(wrapper.vm.showFilters).toBe(true);
       // Simulate entering a search term
       const activityFilter = wrapper.findComponent(ActivityFilter);
-      activityFilter.vm.$emit("input", {
-        ...wrapper.vm.query,
-        jobIdFilter: "testJob",
-      });
+      expect(activityFilter.exists()).toBe(true);
+      const jobIdFilterInput = activityFilter.find(
+        '[data-test-id="job-id-filter"]',
+      );
+      console.log("Job ID filter input found:", jobIdFilterInput.exists());
 
+      await jobIdFilterInput.setValue("testJobId");
       await wrapper.vm.$nextTick();
+
+      const searchButton = activityFilter.find('[data-testid="searchfilter"]');
+      console.log("Search button found:", searchButton.exists());
+
+      await searchButton.trigger("click");
+      await wrapper.vm.$nextTick();
+
+      // Mock API response for the search
       axiosMock.get.mockImplementationOnce((url) => {
         if (url.includes("eventsAjax")) {
           return Promise.resolve({
@@ -298,7 +311,6 @@ describe("ActivityList", () => {
         }
         return Promise.resolve({ data: {} });
       });
-
       expect(axiosMock.get).toHaveBeenCalledTimes(2); // Initial call + search call
       await wrapper.vm.$nextTick();
       // Verify the results are filtered

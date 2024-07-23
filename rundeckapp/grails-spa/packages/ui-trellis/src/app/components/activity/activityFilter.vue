@@ -20,8 +20,8 @@
         >
           <a
             role="button"
-            @click="changePeriod(perobj)"
             data-test-id="period-option"
+            @click="changePeriod(perobj)"
           >
             {{ $t(`period.label.${perobj.name}`) }}
             <span v-if="period.name === perobj.name">√</span>
@@ -34,8 +34,8 @@
       v-tooltip="hasQuery ? $t('Click to edit Search Query') : ''"
       size="xs"
       :class="hasQuery ? 'btn-queried btn-info' : 'btn-default'"
-      @click="filterOpen = true"
       data-test-id="filter-button"
+      @click="filterOpen = true"
     >
       <span v-if="hasQuery" class="query-params-summary">
         <ul class="list-inline">
@@ -56,17 +56,18 @@
       :query="modelValue"
       :has-query="hasQuery"
       :event-bus="eventBus"
-      @select_filter="selectFilter($event)"
       data-test-id="saved-filters"
+      @select_filter="selectFilter($event)"
     ></saved-filters>
     <modal
       id="activityFilter"
+      ref="filterModal"
       v-model="filterOpen"
       :title="$t('Search Activity')"
       size="lg"
       append-to-body
-      @hide="closing"
       data-test-id="modal"
+      @hide="closing"
     >
       <div>
         <div class="base-filters">
@@ -91,6 +92,7 @@
                   {{ $t("jobquery.title.jobIdFilter") }}
                 </label>
                 <input
+                  ref="jobIdFilter"
                   v-model="query.jobIdFilter"
                   type="text"
                   name="jobIdFilter"
@@ -216,9 +218,14 @@
       </div>
       <template #footer>
         <btn @click="filterOpen = false">{{ $t("cancel") }}</btn>
-        <btn type="primary" class="btn btn-primary" @click="search">{{
-          $t("search")
-        }}</btn>
+        <btn
+          ref="searchButton"
+          type="primary"
+          class="btn btn-primary"
+          data-testid="searchfilter"
+          @click="search"
+          >{{ $t("search") }}</btn
+        >
         <btn type="default" class="btn-default pull-right" @click="saveFilter">
           <i class="glyphicon glyphicon-plus"></i>
           {{ $t("Save as a Filter...") }}
@@ -452,7 +459,7 @@ export default defineComponent({
         this.query.recentFilter !== this.period.params.recentFilter
       ) {
         const p = this.periods.find(
-          (v) => v.params.recentFilter === this.query.recentFilter
+          (v) => v.params.recentFilter === this.query.recentFilter,
         );
         if (p && p !== this.period) {
           this.period = p;
