@@ -336,68 +336,73 @@
     <g:if test="${executionLifecyclePlugins}">
         <g:set var="executionLifecyclePluginConfigMap" value="${scheduledExecution?.pluginConfigMap?.get('ExecutionLifecycle')?:[:]}"/>
         <div class="tab-pane" id="tab_execution_plugins">
+          <g:if test="${uiType=='next'}">
             <div class="job-editor-execution-vue" id="job-editor-execution-vue">
               <execution-editor-section  />
             </div>
+          </g:if>
+          <g:else>
             <div class="help-block">
-                <g:message code="scheduledExecution.property.executionLifecyclePluginConfig.help.text" />
+              <g:message code="scheduledExecution.property.executionLifecyclePluginConfig.help.text" />
             </div>
             <div class="list-group">
-                <g:each in="${executionLifecyclePlugins}" var="plugin">
-                    <g:set var="pluginKey" value="${params.executionLifecyclePlugin?.type?.get(pluginType)?:g.rkey()}"/>
-                    <g:set var="pluginType" value="${plugin.key}"/>
-                    <g:hiddenField name="executionLifecyclePlugins.keys" value="${pluginKey}"/>
-                    <g:hiddenField name="executionLifecyclePlugins.type.${pluginKey}" value="${pluginType}"/>
-                    <g:set var="pluginDescription" value="${plugin.value.description}"/>
-                    <g:set var="pluginConfig" value="${params.executionLifecyclePlugins?.get(pluginKey)?.configMap ?: executionLifecyclePluginConfigMap[pluginType]}"/>
+              <g:each in="${executionLifecyclePlugins}" var="plugin">
+                <g:set var="pluginKey" value="${params.executionLifecyclePlugin?.type?.get(pluginType)?:g.rkey()}"/>
+                <g:set var="pluginType" value="${plugin.key}"/>
+                <g:hiddenField name="executionLifecyclePlugins.keys" value="${pluginKey}"/>
+                <g:hiddenField name="executionLifecyclePlugins.type.${pluginKey}" value="${pluginType}"/>
+                <g:set var="pluginDescription" value="${plugin.value.description}"/>
+                <g:set var="pluginConfig" value="${params.executionLifecyclePlugins?.get(pluginKey)?.configMap ?: executionLifecyclePluginConfigMap[pluginType]}"/>
 
-                    <div class="list-group-item">
-                        <g:if test="${pluginDescription}">
-                            <div class="form-group">
+                <div class="list-group-item">
+                  <g:if test="${pluginDescription}">
+                    <div class="form-group">
 
-                                <div class="col-sm-12">
-                                    <div class="checkbox ">
-                                        <g:set var="prkey" value="${rkey()}"/>
-                                        <g:checkBox name="executionLifecyclePlugins.enabled.${pluginKey}" value="true"
-                                                    class="form-control"
-                                                    id="executionLifecyclePluginEnabled_${prkey}"
-                                                    checked="${pluginConfig != null}"/>
+                      <div class="col-sm-12">
+                        <div class="checkbox ">
+                          <g:set var="prkey" value="${rkey()}"/>
+                          <g:checkBox name="executionLifecyclePlugins.enabled.${pluginKey}" value="true"
+                                      class="form-control"
+                                      id="executionLifecyclePluginEnabled_${prkey}"
+                                      checked="${pluginConfig != null}"/>
 
-                                        <label for="executionLifecyclePluginEnabled_${prkey}">
-                                            <g:render template="/framework/renderPluginDesc" model="${[
-                                                    serviceName    : ServiceNameConstants.ExecutionLifecycle,
-                                                    description    : pluginDescription,
-                                                    showPluginIcon : true,
-                                                    showNodeIcon   : false,
-                                                    hideTitle      : false,
-                                                    hideDescription: false,
-                                                    fullDescription: false
-                                            ]}"/>
-                                        </label>
-                                    </div>
+                          <label for="executionLifecyclePluginEnabled_${prkey}">
+                            <g:render template="/framework/renderPluginDesc" model="${[
+                                    serviceName    : ServiceNameConstants.ExecutionLifecycle,
+                                    description    : pluginDescription,
+                                    showPluginIcon : true,
+                                    showNodeIcon   : false,
+                                    hideTitle      : false,
+                                    hideDescription: false,
+                                    fullDescription: false
+                            ]}"/>
+                          </label>
+                        </div>
 
-                                </div>
-                            </div>
-
-
-                            <g:if test="${pluginDescription?.properties}">
-                                <g:set var="prefix" value="executionLifecyclePlugins.${pluginKey}.configMap."/>
-                                <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                                        service:ServiceNameConstants.ExecutionLifecycle,
-                                        provider:pluginDescription.name,
-                                        properties:pluginDescription?.properties,
-                                        report: params.executionLifecyclePluginValidation?.get(pluginType),
-                                        prefix:prefix,
-                                        values:pluginConfig?:[:],
-                                        fieldnamePrefix:prefix,
-                                        origfieldnamePrefix:'orig.' + prefix,
-                                        allowedScope:com.dtolabs.rundeck.core.plugins.configuration.PropertyScope.Instance
-                                ]}"/>
-                            </g:if>
-                        </g:if>
+                      </div>
                     </div>
-                </g:each>
+
+
+                    <g:if test="${pluginDescription?.properties}">
+                      <g:set var="prefix" value="executionLifecyclePlugins.${pluginKey}.configMap."/>
+                      <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                              service:ServiceNameConstants.ExecutionLifecycle,
+                              provider:pluginDescription.name,
+                              properties:pluginDescription?.properties,
+                              report: params.executionLifecyclePluginValidation?.get(pluginType),
+                              prefix:prefix,
+                              values:pluginConfig?:[:],
+                              fieldnamePrefix:prefix,
+                              origfieldnamePrefix:'orig.' + prefix,
+                              allowedScope:com.dtolabs.rundeck.core.plugins.configuration.PropertyScope.Instance
+                      ]}"/>
+                    </g:if>
+                  </g:if>
+                </div>
+              </g:each>
             </div>
+          </g:else>
+
         </div>
     </g:if>
 </feature:enabled>
