@@ -4,14 +4,10 @@
       $t("scheduledExecution.property.executionLifecyclePluginConfig.help.text")
     }}
   </div>
-  <div class="list-group">
-    <template
-      v-for="(plugin, index) in executionLifecyclePlugins"
-      :key="`plugin_${index}`"
-    >
+  <div v-if="executionLifecyclePlugins" class="list-group">
+    <template v-for="plugin in executionLifecyclePlugins">
       <div class="list-group-item">
         <plugin-config
-          v-if="plugin?.properties"
           v-model="plugin.extra"
           :config="plugin.extra.config"
           :mode="currentMode"
@@ -32,18 +28,19 @@
               />
               <label :for="`executionLifecyclePluginEnabled_${plugin.name}`">
                 <pluginInfo
+                  v-if="header.detail.desc"
                   :show-title="header.inputShowTitle"
-                  :show-icon="header.inputShowIcon"
-                  :show-description="header.inputShowDescription"
+                  :show-icon="header.inputShowIcon || false"
+                  :show-description="header.inputShowDescription || false"
                   :show-extended="true"
-                  :detail="header.detail || plugin"
+                  :detail="header.detail"
                 >
                   <template #description>
                     <scheduled-execution-details
                       :allow-html="true"
-                      :description="header.detail.desc || plugin.desc"
+                      :description="header.detail!.desc"
                       mode="collapsed"
-                      :more-text="`More...`"
+                      more-text="More..."
                     />
                   </template>
                 </pluginInfo>
@@ -51,34 +48,17 @@
             </div>
           </template>
         </plugin-config>
-        <!--            <g:set-->
-        <!--              var="prefix"-->
-        <!--              value="executionLifecyclePlugins.${pluginKey}.configMap."-->
-        <!--            />-->
-        <!--            <g:render-->
-        <!--              template="/framework/pluginConfigPropertiesInputs"-->
-        <!--              model="${[-->
-        <!--                                              service:ServiceNameConstants.ExecutionLifecycle,-->
-        <!--                                              provider:pluginDescription.name,-->
-        <!--                                              properties:pluginDescription?.properties,-->
-        <!--                                              report: params.executionLifecyclePluginValidation?.get(pluginType),-->
-        <!--                                              prefix:prefix,-->
-        <!--                                              values:pluginConfig?:[:],-->
-        <!--                                              fieldnamePrefix:prefix,-->
-        <!--                                              origfieldnamePrefix:'orig.' + prefix,-->
-        <!--                                              allowedScope:com.dtolabs.rundeck.core.plugins.configuration.PropertyScope.Instance-->
-        <!--                                      ]}"-->
-        <!--            />-->
       </div>
     </template>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, PropType, ref } from "vue";
 import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
 import PluginConfig from "@/library/components/plugins/pluginConfig.vue";
 import ScheduledExecutionDetails from "@/app/components/common/ScheduleExecutionDetails.vue";
+import { isEqual } from "lodash";
 
 interface PluginConf {
   readonly type: string;
@@ -98,56 +78,72 @@ interface ProjectPluginConfigEntry {
 export default defineComponent({
   name: "ExecutionEditor",
   components: { ScheduledExecutionDetails, PluginConfig, PluginInfo },
-  props: ["modelValue"],
+  props: ["modelValue", "initialData"],
+  emits: ["update:modelValue"],
   data() {
     return {
+      internalData: null,
       checkedData: [],
       executionLifecyclePlugins: [] as ProjectPluginConfigEntry[],
+      loaded: false,
     };
   },
   computed: {
-    // executionLifecyclePlugins() {
-    //   // return this.modelValue?.executionLifecyclePlugins || [];
-    //   if (this.modelValue?.executionLifecyclePlugins) {
-    //     return this.modelValue?.executionLifecyclePlugins.map((e) =>
-    //       this.massagePluginInfo(e),
-    //     );
-    //   }
-    //   return [];
-    // },
-    prefix() {
-      return `executionLifecyclePlugins.${this.pluginKey}.configMap.`;
-    },
     currentMode() {
       return "create";
     },
+    formattedData() {
+      if (this.initialData) {
+        const temp = {
+          ExecutionLifecycle: {},
+        };
+
+        this.executionLifecyclePlugins.forEach((plugin) => {
+          if (this.checkedData.includes(plugin.name)) {
+            temp["ExecutionLifecycle"][plugin.name] = plugin.extra.config;
+          }
+        });
+        return temp;
+      }
+      return {};
+    },
   },
   watch: {
-    modelValue: {
+    initialData: {
       deep: true,
       handler(newVal) {
-        if (newVal && newVal?.executionLifecyclePluginConfigMap) {
-          this.checkedData = Object.keys(
-            newVal?.executionLifecyclePluginConfigMap,
-          );
+        this.checkedData = Object.keys(newVal.ExecutionLifecycle);
 
-          this.executionLifecyclePlugins =
-            newVal?.executionLifecyclePlugins.map((e) =>
-              this.massagePluginInfo(e),
-            );
+        this.executionLifecyclePlugins = newVal?.pluginsInitialData.map((e) =>
+          this.massagePluginInfo(e),
+        );
+      },
+    },
+    formattedData: {
+      deep: true,
+      handler(newVal, oldVal) {
+        if (!isEqual(newVal, oldVal)) {
+          this.$emit("update:modelValue", newVal);
         }
       },
     },
   },
   methods: {
     massagePluginInfo(plugin: object) {
+      let config = {};
+      const retrievedValue = this.initialData.ExecutionLifecycle[plugin.name];
+
+      if (retrievedValue) {
+        config = { ...retrievedValue };
+      }
+
       return {
         ...plugin,
         type: plugin.name,
         providerMetadata: plugin.metadata,
-        desc: plugin.description,
         extra: {
-          config: {},
+          config,
+          type: undefined,
         },
       };
     },
