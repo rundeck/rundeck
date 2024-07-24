@@ -2422,7 +2422,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     static PluginConfigSet parseExecutionLifecyclePluginsJSON (JSONObject executionLifecyclePluginsParams) {
-        List<String> keys = executionLifecyclePluginsParams.keys() as List<String>
+        List<String> keys = executionLifecyclePluginsParams.keys().collect{it.toString()}
 
         List<PluginProviderConfiguration> configs = []
 
