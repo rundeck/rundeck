@@ -337,10 +337,6 @@
         <g:set var="executionLifecyclePluginConfigMap" value="${scheduledExecution?.pluginConfigMap?.get('ExecutionLifecycle')?:[:]}"/>
         <div class="tab-pane" id="tab_execution_plugins">
             <div class="job-editor-execution-vue" id="job-editor-execution-vue">
-%{--              <%--}%
-%{--                println(executionLifecyclePlugins.get("result-data-json-template"))--}%
-%{--              %>--}%
-
               <execution-editor-section  />
             </div>
             <div class="help-block">
