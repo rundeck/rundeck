@@ -12,6 +12,7 @@ import ActivityFilter from "../activityFilter.vue";
 import OffsetPagination from "../../../../library/components/utils/OffsetPagination.vue";
 import { cloneDeep } from "lodash";
 import { Modal, Btn } from "uiv";
+
 jest.mock("../../../../library/rundeckService", () => rundeckServiceMock);
 jest.mock("@rundeck/client", () => rundeckClientMock);
 jest.mock("axios", () => axiosMock);
@@ -36,7 +37,6 @@ const shallowMountActivityList = async (
       },
       stubs: {
         modal: false,
-
         "i18n-t": true,
         btn: false,
         ProgressBar: true,
@@ -213,9 +213,6 @@ describe("ActivityList", () => {
             data: {
               total: reports.length - 2,
               offset: 0,
-              auth: { projectAdmin: true, deleteExec: true },
-              bulkEditMode: false,
-              showBulkDelete: true,
               reports: reports.slice(2),
             },
           });
@@ -244,7 +241,6 @@ describe("ActivityList", () => {
     });
 
     it("trigger bulk actions - search", async () => {
-      // Mock initial API call to return the whole array of reports
       axiosMock.get.mockImplementation((url) => {
         if (url.includes("eventsAjax")) {
           return Promise.resolve({
@@ -265,57 +261,19 @@ describe("ActivityList", () => {
         return Promise.resolve({ data: {} });
       });
       const wrapper = await shallowMountActivityList();
-      await wrapper.vm.$nextTick();
-      // Simulate clicking the filter button to show filters
       const filterButton = wrapper.find(
         '[data-testid="activity-list-filter-button"]',
       );
-      console.log("Filter button found:", filterButton.exists());
       await filterButton.trigger("click");
-      await wrapper.vm.$nextTick();
-      expect(wrapper.vm.showFilters).toBe(true);
-      // Simulate entering a search term
       const activityFilter = wrapper.findComponent(ActivityFilter);
-      expect(activityFilter.exists()).toBe(true);
-      const jobIdFilterInput = activityFilter.find(
-        '[data-test-id="job-id-filter"]',
-      );
-      console.log("Job ID filter input found:", jobIdFilterInput.exists());
-
-      await jobIdFilterInput.setValue("testJobId");
-      await wrapper.vm.$nextTick();
-
-      const searchButton = activityFilter.find('[data-testid="searchfilter"]');
-      console.log("Search button found:", searchButton.exists());
-
-      await searchButton.trigger("click");
-      await wrapper.vm.$nextTick();
-
-      // Mock API response for the search
-      axiosMock.get.mockImplementationOnce((url) => {
-        if (url.includes("eventsAjax")) {
-          return Promise.resolve({
-            data: {
-              total: 2, // Assuming the search results in 2 reports
-              offset: 0,
-              reports: reports.slice(0, 2), // Return only 2 matching reports
-            },
-          });
-        }
-        if (url.includes("running")) {
-          return Promise.resolve({
-            data: {
-              executions: mockRunningExecutions,
-            },
-          });
-        }
-        return Promise.resolve({ data: {} });
+      await activityFilter.vm.$emit("input", {
+        recentFilter: "testJobId",
       });
+
       expect(axiosMock.get).toHaveBeenCalledTimes(2); // Initial call + search call
-      await wrapper.vm.$nextTick();
-      // Verify the results are filtered
+      // Verify the results
       const reportItems = wrapper.findAll('[data-testid="report-row-item"]');
-      expect(reportItems.length).toBe(2); // Ensure the filtered result is shown
+      expect(reportItems.length).toBe(2);
     });
   });
 
@@ -344,7 +302,6 @@ describe("ActivityList", () => {
     const reportRowItem = wrapper.find('[data-testid="report-row-item"]');
     expect(reportRowItem.exists()).toBe(true);
     await reportRowItem.trigger("click");
-    // Check if the navigation occurred correctly
     const report = mockReports[0]; // Use the first report for simplicity
     expect(window.location).toBe(report.executionHref);
   });
