@@ -57,7 +57,7 @@
 import { defineComponent, PropType, ref } from "vue";
 import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
 import PluginConfig from "@/library/components/plugins/pluginConfig.vue";
-import ScheduledExecutionDetails from "@/app/components/common/ScheduleExecutionDetails.vue";
+import ScheduledExecutionDetails from "@/app/components/common/ScheduledExecutionDetails.vue";
 import { isEqual } from "lodash";
 
 interface PluginConf {
