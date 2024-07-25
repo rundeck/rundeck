@@ -53,21 +53,23 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
 
 
     def cleanup() {
-        specificationContext.currentSpec.listeners
-                .findAll { it instanceof TestResultExtension.ErrorListener }
-                .each {
-                    def errorInfo = (it as TestResultExtension.ErrorListener).errorInfo
-                    if(errorInfo){
-                        File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE)
-                        File testResourcesDir = new File("build/test-results/images")
-                        if (!testResourcesDir.exists()) {
-                            testResourcesDir.mkdirs()
+        if(_driver){
+            specificationContext.currentSpec.listeners
+                    .findAll { it instanceof TestResultExtension.ErrorListener }
+                    .each {
+                        def errorInfo = (it as TestResultExtension.ErrorListener).errorInfo
+                        if(errorInfo){
+                            File screenshot = ((TakesScreenshot) _driver).getScreenshotAs(OutputType.FILE)
+                            File testResourcesDir = new File("build/test-results/images")
+                            if (!testResourcesDir.exists()) {
+                                testResourcesDir.mkdirs()
+                            }
+                            File destination = new File(testResourcesDir, "${specificationContext.currentSpec.filename}-${specificationContext.currentIteration.name}" + ".png")
+                            screenshot.renameTo(destination)
                         }
-                        File destination = new File(testResourcesDir, "${specificationContext.currentSpec.filename}-${specificationContext.currentIteration.name}" + ".png")
-                        screenshot.renameTo(destination)
                     }
-                }
-        driver?.quit()
+            _driver?.quit()
+        }
     }
 
     /**
