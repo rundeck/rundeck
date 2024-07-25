@@ -26,6 +26,8 @@ package com.dtolabs.rundeck.core.execution.service;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 
+import java.io.InputStream;
+
 
 /**
  * NodeExecutor executes a command on a node.
@@ -43,6 +45,30 @@ public interface NodeExecutor {
      * @return a result
      */
     public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, INodeEntry node);
+
+    /**
+     * Execute a command on a node and return the result, with an inputstream to provide input to the command.
+     *
+     * @param context the execution context
+     * @param command the array of strings for the command line, with any necessary data context references replaced.
+     * @param inputStream an inputstream to provide input to the command
+     * @param node    the node to execute on
+     * @return a result
+     */
+    default NodeExecutorResult executeCommand(
+            ExecutionContext context,
+            String[] command,
+            InputStream inputStream,
+            INodeEntry node
+    )
+    {
+        if (inputStream != null) {
+            context
+                    .getExecutionLogger()
+                    .log(1, "Cannot send some data to the input stream, it is not supported by this NodeExecutor implementation");
+        }
+        return executeCommand(context, command, node);
+    }
 
     /**
      * To indicate if the command execution suppports rd_variable injection

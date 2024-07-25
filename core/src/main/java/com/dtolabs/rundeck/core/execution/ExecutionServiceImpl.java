@@ -393,6 +393,11 @@ public class ExecutionServiceImpl implements ExecutionService {
 
     public NodeExecutorResult executeCommand(final ExecutionContext context, final ExecArgList command,
                                              final INodeEntry node) {
+        return executeCommand(context, command, null, node);
+    }
+    public NodeExecutorResult executeCommand(final ExecutionContext context, final ExecArgList command,
+                                             InputStream inputStream,
+                                             final INodeEntry node) {
 
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginNodeExecution(context, command.asFlatStringArray(), node);
@@ -424,7 +429,7 @@ public class ExecutionServiceImpl implements ExecutionService {
         }
 
         try {
-            result = nodeExecutor.executeCommand(nodeContext, commandArray, node);
+            result = nodeExecutor.executeCommand(nodeContext, commandArray, inputStream, node);
         } finally {
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishNodeExecution(result, context, commandArray, node);
