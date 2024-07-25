@@ -6,7 +6,7 @@ import {
   mockEventBus,
   mockReports,
 } from "../mocks/mock";
-import { shallowMount, VueWrapper } from "@vue/test-utils";
+import { flushPromises, shallowMount, VueWrapper } from "@vue/test-utils";
 import ActivityList from "../activityList.vue";
 import ActivityFilter from "../activityFilter.vue";
 import OffsetPagination from "../../../../library/components/utils/OffsetPagination.vue";
@@ -240,8 +240,17 @@ describe("ActivityList", () => {
     });
 
     it("trigger bulk actions - search", async () => {
-      axiosMock.get.mockImplementation((url) => {
+      axiosMock.get.mockImplementation((url, data) => {
         if (url.includes("eventsAjax")) {
+          if (data?.params.recentFilter.length > 0) {
+            return Promise.resolve({
+              data: {
+                total: 0,
+                offset: 0,
+                reports: [{ ...reports[0], node: "1/0/1" }],
+              },
+            });
+          }
           return Promise.resolve({
             data: {
               total: reports.length,
@@ -267,25 +276,14 @@ describe("ActivityList", () => {
       await filterButton.trigger("click");
       await wrapper.vm.$nextTick();
       const activityFilter = wrapper.findComponent(ActivityFilter);
-      await activityFilter.vm.$emit("input", {
+      await activityFilter.vm.$emit("update:modelValue", {
         recentFilter: "testJobId",
       });
-      axiosMock.get.mockImplementationOnce((url) => {
-        if (url.includes("eventsAjax")) {
-          return Promise.resolve({
-            data: {
-              total: 0,
-              offset: 0,
-              reports: reports,
-            },
-          });
-        }
-        return Promise.resolve({ data: {} });
-      });
-      expect(axiosMock.get).toHaveBeenCalledTimes(2);
+
+      await flushPromises();
       // Verify the results
       const reportItems = wrapper.findAll('[data-testid="report-row-item"]');
-      expect(reportItems.length).toBe(2);
+      expect(reportItems.length).toBe(1);
     });
   });
 
