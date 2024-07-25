@@ -44,11 +44,14 @@ if(options.buildType == 'development'){
 
 def debug=Boolean.getBoolean('debug')?:("-debug" in args)
 
+def gprops=new Properties()
+new File('gradle.properties').withReader(gprops.&load)
+
 //versions of dependency we want to verify
 def versions=[
-        jetty:'9.4.53.v20231009',
+        jetty: gprops['jetty.version'],
         servlet:'api-3.1.0',
-        log4j:'2.17.1'
+        log4j: gprops['log4j2.version']
 ]
 
 def warFile= "rundeckapp/${target}/rundeck-${version}.war"
