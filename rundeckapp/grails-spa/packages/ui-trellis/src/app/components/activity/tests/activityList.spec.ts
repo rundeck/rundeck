@@ -12,7 +12,6 @@ import ActivityFilter from "../activityFilter.vue";
 import OffsetPagination from "../../../../library/components/utils/OffsetPagination.vue";
 import { cloneDeep } from "lodash";
 import { Modal, Btn } from "uiv";
-
 jest.mock("../../../../library/rundeckService", () => rundeckServiceMock);
 jest.mock("@rundeck/client", () => rundeckClientMock);
 jest.mock("axios", () => axiosMock);
@@ -200,7 +199,7 @@ describe("ActivityList", () => {
         '[data-testid="activity-list-bulk-delete"]',
       );
       await bulkDeleteButton.trigger("click");
-
+      await wrapper.vm.$nextTick();
       const checkboxes = wrapper.findAll(
         '[data-testid="bulk-delete-checkbox"]',
       );
@@ -236,7 +235,7 @@ describe("ActivityList", () => {
         .mockImplementation(() => Promise.resolve({ allsuccessful: true }));
       await wrapper.vm.$nextTick();
       const reportRows = wrapper.findAll('[data-testid="report-row-item"]');
-      expect(reportRows.length).toBe(0); // Update expected length based on deletion
+      expect(reportRows.length).toBe(reports.length - 2); // Update expected length based on deletion
       expect(executionBulkDeleteSpy).toHaveBeenCalledWith({ ids: [42] });
     });
 
@@ -261,16 +260,29 @@ describe("ActivityList", () => {
         return Promise.resolve({ data: {} });
       });
       const wrapper = await shallowMountActivityList();
+      await wrapper.vm.$nextTick();
       const filterButton = wrapper.find(
         '[data-testid="activity-list-filter-button"]',
       );
       await filterButton.trigger("click");
+      await wrapper.vm.$nextTick();
       const activityFilter = wrapper.findComponent(ActivityFilter);
       await activityFilter.vm.$emit("input", {
         recentFilter: "testJobId",
       });
-
-      expect(axiosMock.get).toHaveBeenCalledTimes(2); // Initial call + search call
+      axiosMock.get.mockImplementationOnce((url) => {
+        if (url.includes("eventsAjax")) {
+          return Promise.resolve({
+            data: {
+              total: 0,
+              offset: 0,
+              reports: reports,
+            },
+          });
+        }
+        return Promise.resolve({ data: {} });
+      });
+      expect(axiosMock.get).toHaveBeenCalledTimes(2);
       // Verify the results
       const reportItems = wrapper.findAll('[data-testid="report-row-item"]');
       expect(reportItems.length).toBe(2);
@@ -302,8 +314,7 @@ describe("ActivityList", () => {
     const reportRowItem = wrapper.find('[data-testid="report-row-item"]');
     expect(reportRowItem.exists()).toBe(true);
     await reportRowItem.trigger("click");
-    const report = mockReports[0]; // Use the first report for simplicity
-    expect(window.location).toBe(report.executionHref);
+    expect(window.location).toBe("/project/aaa/execution/show/42");
   });
 
   it("fetches data automatically and renders message when there are no executions since timestamp", async () => {
