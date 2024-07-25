@@ -37,6 +37,7 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 import static com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor.getDisableLocalExecutorEnv;
@@ -77,7 +78,19 @@ public class NewLocalNodeExecutor
 
     @Override
     public NodeExecutorResult executeCommand(
-            final ExecutionContext context, final String[] command, final INodeEntry node
+            final ExecutionContext context,
+            final String[] command,
+            final INodeEntry node
+    )
+    {
+        return executeCommand(context, command, null, node);
+    }
+
+    @Override
+    public NodeExecutorResult executeCommand(
+            final ExecutionContext context, final String[] command,
+            final InputStream inputStream,
+            final INodeEntry node
     )
     {
         if (disableLocalExecutor) {
@@ -112,7 +125,6 @@ public class NewLocalNodeExecutor
                 "NewLocalNodeExecutor, running command (" + commandList.size() + "): " + preview
         );
         Map<String, String> env = DataContextUtils.generateEnvVarsFromContext(context.getDataContext());
-
         final int result;
         try {
             result =
@@ -123,7 +135,8 @@ public class NewLocalNodeExecutor
                             System.out,
                             System.err,
                             !mergeEnv,
-                            ScriptExecUtil::killProcessHandleDescend
+                            ScriptExecUtil::killProcessHandleDescend,
+                            inputStream
                     );
         } catch (IOException e) {
             return NodeExecutorResultImpl.createFailure(
