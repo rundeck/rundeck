@@ -50,7 +50,12 @@ public enum PropertyScope {
     /**
      * No specific scope specified
      */
-    Unspecified;
+    Unspecified,
+    /**
+     * Value should be resolved as a feature flag
+     */
+    FeatureFlag,
+    ;
 
     /**
      * @return true if this scope is {@link #Unspecified}

@@ -1,12 +1,15 @@
 package com.dtolabs.rundeck.core.plugins.configuration;
 
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
+import com.dtolabs.rundeck.core.config.FeatureInfoService;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.plugins.config.Group;
 import com.dtolabs.rundeck.plugins.config.PluginGroup;
 import com.dtolabs.rundeck.plugins.descriptions.*;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -19,6 +22,7 @@ public class PluginAdapterImpl
         implements PluginAdapter
 {
 
+    @Getter @Setter FeatureInfoService featureInfoService;
     /**
      * @param object potential plugin object annotated with {@link com.dtolabs.rundeck.core.plugins.Plugin}
      * @return true if the object has a valid Plugin annotation
@@ -547,16 +551,43 @@ public class PluginAdapterImpl
             final List<Property> properties, final PropertyScope defaultPropertyScope
     )
     {
+        PropertyResolver inputResolver = resolver;
+        if (null != featureInfoService) {
+            inputResolver = featureFlagScopeResolver(resolver, properties);
+        }
         final PropertyResolver defaulted =
                 PropertyResolverFactory.withDefaultValues(
                         PropertyResolverFactory.withDefaultScope(
-                                null != defaultPropertyScope ? defaultPropertyScope
-                                                             : PropertyScope.InstanceOnly, resolver
+                                null != defaultPropertyScope ? defaultPropertyScope : PropertyScope.InstanceOnly,
+                                inputResolver
                         ),
                         new PluginAdapterImpl.PropertyDefaultValues(properties)
                 );
 
         return PropertyResolverFactory.mapPropertyValues(properties, defaulted);
+    }
+
+    private PropertyResolver featureFlagScopeResolver(final PropertyResolver resolver, final List<Property> properties) {
+        return (name, scope) -> {
+            if (scope != PropertyScope.FeatureFlag) {
+                return resolver.resolvePropertyValue(name, scope);
+            }
+
+            //flag name can be defined in rendering options, otherwise use property name
+            String flagName = properties.stream()
+                                        .filter(p -> p.getName().equals(name))
+                                        .filter(p -> p.getRenderingOptions() != null
+                                                     && p.getRenderingOptions()
+                                                         .get(StringRenderingConstants.FEATURE_FLAG_NAME)
+                                                        != null)
+                                        .findFirst()
+                                        .map(p -> p
+                                                .getRenderingOptions()
+                                                .get(StringRenderingConstants.FEATURE_FLAG_NAME)
+                                                .toString())
+                                        .orElse(name);
+            return featureInfoService.featurePresent(flagName);
+        };
     }
 
     /**
