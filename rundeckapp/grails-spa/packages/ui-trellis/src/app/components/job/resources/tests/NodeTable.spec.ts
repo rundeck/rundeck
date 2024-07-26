@@ -8,9 +8,6 @@ jest.mock("@/library/rundeckService", () => ({
   }),
   url: jest.fn().mockReturnValue({ href: "mockHref" }),
 }));
-jest.mock("../services/nodeServices", () => ({
-  getNodes: jest.fn(),
-}));
 
 const mockNodeSet = {
   nodes: [
@@ -106,7 +103,6 @@ describe("NodeTable Component", () => {
     expect(nodeColors.length).toBe(2);
     // Check node badges
     const nodeBadges = wrapper.findAll('[data-test-id="node-badge-icon"]');
-
     expect(nodeBadges.length).toBe(4);
   });
 
