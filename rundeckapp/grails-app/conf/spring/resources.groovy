@@ -142,6 +142,7 @@ import org.rundeck.app.data.workflow.WorkflowDataWorkflowExecutionItemFactory
 import org.rundeck.app.quartz.ExecutionJobQuartzJobSpecifier
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
+import org.rundeck.app.spi.features.FeatureInfo
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.security.*
 import org.rundeck.web.DefaultRequestIdProvider
@@ -376,13 +377,15 @@ beans={
         clusterInfoServiceDelegate = ref('frameworkService')
     }
     rundeckApiInfoService(ApiInfo)
+    rundeckFeatureInfoService(FeatureInfo)
 
     rundeckSpiBaseServicesProvider(RundeckSpiBaseServicesProvider) {
         services = [
             (ClusterInfoService)         : ref('clusterInfoService'),
             (ApiInfo)                    : ref('rundeckApiInfoService'),
             (ExecutionFileManagerService): ref('logFileStorageService'),
-            (ResourceFormats)            : ref('pluginService')
+            (ResourceFormats)            : ref('pluginService'),
+            (FeatureInfo)                : ref('rundeckFeatureInfoService'),
         ]
     }
 
@@ -798,6 +801,7 @@ beans={
         pluginDirectory=pluginDir
         pluginCacheDirectory=cacheDir
         rundeckPluginBlocklist=ref("rundeckPluginBlocklist")
+        rundeckPluginAdapter = ref('rundeckPluginAdapter')
     }
     hMacSynchronizerTokensManager(HMacSynchronizerTokensManager){
 
