@@ -33,11 +33,9 @@ import grails.util.Environment
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
-import org.springframework.context.ConfigurableApplicationContext
 import rundeck.data.util.OptionsParserUtil
 import rundeck.interceptors.FormTokenInterceptor
 import rundeck.services.FrameworkService
-import rundeckapp.Application
 
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
@@ -75,6 +73,7 @@ class UtilityTagLib{
             'jobComponentSectionProperties',
             'jobComponentFieldPrefix',
             'jobComponentMessagesType',
+            'filterPluginPropertiesByFeature',
             'groupPluginProperties',
     ]
 
@@ -887,6 +886,23 @@ class UtilityTagLib{
     def pluginPropertyFrameworkScopeKey={attrs,body->
         out << PropertyResolverFactory.frameworkPropertyPrefix(PropertyResolverFactory.pluginPropertyPrefix(attrs.service, attrs.provider))+(attrs.property?:'')
     }
+
+    /**
+     * Filter a list of Properties to return only properties where any required FeatureFlag is enabled
+     * @attr properties REQUIRED properties list
+     */
+    def filterPluginPropertiesByFeature = { attrs, body ->
+        List<Property> props=attrs.properties
+        def filtered=[]
+        for (Property prop : props) {
+            def featureTest = prop.renderingOptions?.get(StringRenderingConstants.FEATURE_FLAG_REQUIRED)
+            if (!featureTest || feature.isEnabled(name: prop.renderingOptions?.get(StringRenderingConstants.FEATURE_FLAG_REQUIRED))) {
+                filtered << prop
+            }
+        }
+        return filtered
+    }
+
     /**
      * Group properties based on Grouping rendering options, returns a groupSet, ungrouped, secondary
      * @attr properties REQUIRED properties list

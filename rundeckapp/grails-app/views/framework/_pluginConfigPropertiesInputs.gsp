@@ -17,7 +17,7 @@
 <%@ page import="com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope" %>
 
 <g:set var="dynamicProperties" value="${dynamicProperties}"/>
-<g:set var="groupMap" value="${g.groupPluginProperties([properties: properties, allowedScope: allowedScope])}"/>
+<g:set var="groupMap" value="${g.groupPluginProperties([properties: g.filterPluginPropertiesByFeature(properties:properties), allowedScope: allowedScope])}"/>
 <g:set var="groupSet" value="${groupMap.groupSet?:[:]}"/>
 <g:set var="secondary" value="${groupMap.secondary?:[]}"/>
 <g:set var="ungrouped" value="${groupMap.ungrouped?:[]}"/>
