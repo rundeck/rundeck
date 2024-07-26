@@ -20,7 +20,11 @@
    Created: 7/28/11 12:03 PM
 --%>
 <%@ page import="com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants" contentType="text/html;charset=UTF-8" %>
-
+<g:set var="skipped" value="${false}"/>
+<g:if test="${prop.renderingOptions?.(StringRenderingConstants.FEATURE_FLAG_REQUIRED)}">
+    <g:set var="featureTest" value="${prop.renderingOptions[StringRenderingConstants.FEATURE_FLAG_REQUIRED]}"/>
+    <g:set var="skipped" value="${feature.isDisabled(name:featureTest)}"/>
+</g:if>
 <g:set var="propDescription" value="${stepplugin.messageText(
         service: service,
         name: provider,
@@ -28,7 +32,11 @@
         default: prop.description
 )}"/>
 <g:set var="propdesc" value="${g.textFirstLine(text: propDescription)}"/>
-<g:if test="${prop.type.toString()=='Boolean'}">
+
+<g:if test="${skipped}">
+    <%-- skipped --%>
+</g:if>
+<g:elseif test="${prop.type.toString()=='Boolean'}">
     <g:if test="${values[prop.name]=='true'}">
         <span class="configpair">
             <span title="${enc(attr: propdesc)}"><stepplugin:message
@@ -43,7 +51,7 @@
             <span class="${textclass}"><g:message code="yes"/></span>
         </span>
     </g:if>
-</g:if>
+</g:elseif>
 <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.PASSWORD, 'PASSWORD']}">
     <g:if test="${values[prop.name]}">
     <span class="configpair">
