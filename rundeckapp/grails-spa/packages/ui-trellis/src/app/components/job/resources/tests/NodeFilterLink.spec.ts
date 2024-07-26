@@ -28,7 +28,6 @@ describe("NodeFilterLink Component", () => {
     delete window._rundeck;
   });
   const mountNodeFilterLink = async (propsData = {}) => {
-    // Dynamically import the component after setting up window._rundeck
     const NodeFilterLink = (await import("../NodeFilterLink.vue")).default;
     const wrapper = mount(NodeFilterLink, {
       props: {
