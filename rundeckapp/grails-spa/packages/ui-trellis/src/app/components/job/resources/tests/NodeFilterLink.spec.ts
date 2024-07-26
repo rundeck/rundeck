@@ -2,6 +2,7 @@ import { mount } from "@vue/test-utils";
 import { EventBus } from "../../../../../library";
 import { RootStore } from "../../../../../library/stores/RootStore";
 import { RundeckToken } from "../../../../../library/interfaces/rundeckWindow";
+import NodeFilterLink from "../NodeFilterLink.vue";
 describe("NodeFilterLink Component", () => {
   beforeAll(() => {
     window._rundeck = {
@@ -28,7 +29,7 @@ describe("NodeFilterLink Component", () => {
     delete window._rundeck;
   });
   const mountNodeFilterLink = async (propsData = {}) => {
-    const NodeFilterLink = (await import("../NodeFilterLink.vue")).default;
+    // const NodeFilterLink = (await import("../NodeFilterLink.vue")).default;
     const wrapper = mount(NodeFilterLink, {
       props: {
         filterKey: "tags",
