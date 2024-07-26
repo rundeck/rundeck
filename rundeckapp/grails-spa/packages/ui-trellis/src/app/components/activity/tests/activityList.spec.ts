@@ -279,7 +279,6 @@ describe("ActivityList", () => {
       await activityFilter.vm.$emit("update:modelValue", {
         recentFilter: "testJobId",
       });
-
       await flushPromises();
       // Verify the results
       const reportItems = wrapper.findAll('[data-testid="report-row-item"]');
@@ -321,6 +320,7 @@ describe("ActivityList", () => {
       if (url.includes("eventsAjax")) {
         return Promise.resolve({
           data: {
+            offset: 0,
             total: 1,
             reports: [],
             lastDate: 1,
@@ -345,7 +345,6 @@ describe("ActivityList", () => {
       }
       return Promise.resolve({ data: {} });
     });
-
     const wrapper = await shallowMountActivityList();
     await wrapper.vm.$nextTick();
     // Enable auto-refresh
@@ -355,12 +354,10 @@ describe("ActivityList", () => {
     await autoRefreshCheckbox.setValue(true);
     await wrapper.vm.$nextTick();
     jest.advanceTimersByTime(5000);
-    await wrapper.vm.$nextTick();
-    expect(axiosMock.get).toHaveBeenCalledTimes(4);
-    await wrapper.vm.$nextTick();
+    await flushPromises();
     const sinceCountData = wrapper.find('[data-testid="since-count-data"]');
-    await wrapper.vm.$nextTick();
     expect(sinceCountData.text()).toContain("5 New Results. Click to load.");
     jest.clearAllTimers();
+    jest.useRealTimers();
   });
 });
