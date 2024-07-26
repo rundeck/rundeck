@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.plugins.PluginUtils
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.audit.AuditEventListenerPlugin
@@ -303,8 +304,25 @@ class PluginApiService {
         tersePluginList
     }
 
+    /**
+     *
+     * @param property property
+     * @return true if the property has a feature flag requirement and the feature is present, or no requirement is specified
+     */
+    boolean hasRequiredFeatures(Property property){
+        if (property.renderingOptions.containsKey(StringRenderingConstants.FEATURE_FLAG_REQUIRED)) {
+            def featureFlag = property.renderingOptions[StringRenderingConstants.FEATURE_FLAG_REQUIRED]?.toString()
+            if (featureFlag && !featureService.featurePresent(featureFlag)) {
+                return false
+            }
+        }
+        return true
+    }
+
     List<Map> pluginPropertiesAsMap(String service, String pluginName, List<Property> properties) {
-        properties.collect { Property prop ->
+        properties.findAll {
+            hasRequiredFeatures(it)
+        }.collect { Property prop ->
             pluginPropertyMap(service, pluginName, prop)
         }
     }
