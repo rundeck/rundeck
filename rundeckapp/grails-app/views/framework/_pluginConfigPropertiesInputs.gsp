@@ -15,56 +15,13 @@
   --}%
 
 <%@ page import="com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope" %>
-<g:set var="groupSet" value="${[:]}"/>
-<g:set var="secondary" value="${[]}"/>
-<g:set var="ungrouped" value="${[]}"/>
-<g:set var="dynamicProperties" value="${dynamicProperties}"/>
-<g:each in="${properties}" var="prop">
-    <g:set var="scopeUnset" value="${!prop.scope || prop.scope.isUnspecified()}"/>
-    <g:set var="scopeProject" value="${prop.scope && prop.scope.isProjectLevel()}"/>
-    <g:set var="scopeInstance" value="${prop.scope && prop.scope.isInstanceLevel()}"/>
-    <g:set var="scopeFramework" value="${prop.scope && prop.scope.isFrameworkLevel()}"/>
 
-    <g:set var="scopeTest" value="${scopeUnset ||
-            (allowedScope == PropertyScope.Instance && scopeInstance) ||
-            (allowedScope == PropertyScope.Project && scopeProject) ||
-            (allowedScope == PropertyScope.Framework && scopeFramework)
-    }"/>
-    <g:if test="${scopeTest}">
-    %{--determine grouping--}%
-        <g:if test="${prop.renderingOptions?.get(StringRenderingConstants.GROUPING)?.toString() == 'secondary'}">
-            %{--secondary grouping--}%
-            <g:set var="groupName" value="${prop.renderingOptions?.get(StringRenderingConstants.GROUP_NAME)?.toString()?:'-'}"/>
-            %{
-                secondary<<groupName
-            }%
-            %{
-                if(!groupSet[groupName]){
-                    groupSet[groupName]=[prop]
-                }else{
-                    groupSet[groupName]<<prop
-                }
-            }%
-        </g:if>
-        <g:elseif test="${prop.renderingOptions?.get(StringRenderingConstants.GROUP_NAME)}">
-            %{--primary grouping--}%
-            <g:set var="groupName" value="${prop.renderingOptions?.get(StringRenderingConstants.GROUP_NAME)?.toString()}"/>
-            %{
-                if(!groupSet[groupName]){
-                    groupSet[groupName]=[prop]
-                }else{
-                    groupSet[groupName]<<prop
-                }
-            }%
-        </g:elseif>
-        <g:else>
-            %{--no grouping--}%
-            %{
-            ungrouped<<prop
-            }%
-        </g:else>
-    </g:if>
-</g:each>
+<g:set var="dynamicProperties" value="${dynamicProperties}"/>
+<g:set var="groupMap" value="${g.groupPluginProperties([properties: properties, allowedScope: allowedScope])}"/>
+<g:set var="groupSet" value="${groupMap.groupSet?:[:]}"/>
+<g:set var="secondary" value="${groupMap.secondary?:[]}"/>
+<g:set var="ungrouped" value="${groupMap.ungrouped?:[]}"/>
+
 %{--Render ungrouped--}%
 <g:each in="${ungrouped}" var="prop">
     <g:render
