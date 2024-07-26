@@ -501,7 +501,9 @@ beans={
         ]
     }
 
-    rundeckPluginAdapter(PluginAdapterImpl)
+    rundeckPluginAdapter(PluginAdapterImpl){
+        featureInfoService = ref('rundeckFeatureInfoService')
+    }
 
     rundeckFrameworkExecutionProviderServices(FrameworkExecutionProviderServices){
          frameworkExecutionServices = ref('rundeckBaseFrameworkExecutionServices')
