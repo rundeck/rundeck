@@ -44,6 +44,7 @@ public class StringRenderingConstants {
     public static final String CODE_SYNTAX_MODES_ALLOWED = "codeSyntaxModesAllowed";
     public static final String SCRIPT_TOKEN_AUTOCOMPLETE = "scriptTokenAutocomplete";
     public static final String FEATURE_FLAG_REQUIRED = "featureFlagRequired";
+    public static final String FEATURE_FLAG_NAME = "featureFlagName";
 
     /**
      * Values that can be specified for a key of {@link #DISPLAY_TYPE_KEY}
