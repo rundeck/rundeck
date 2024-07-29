@@ -444,6 +444,7 @@ public class RundeckConfigBase {
         Enabled apiProjectConfigValidation = new Enabled();
         Enabled caseInsensitiveUsername = new Enabled();
         Enabled newLocalNodeExecutor = new Enabled();
+        Enabled nodeExecutorSecureInput = new Enabled();
         Enabled alphaUi = new Enabled();
         Enabled enhancedJobTakeoverQuery = new Enabled();
 

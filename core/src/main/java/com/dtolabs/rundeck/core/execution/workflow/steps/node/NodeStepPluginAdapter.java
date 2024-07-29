@@ -157,13 +157,22 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
 
         final String providerName = item.getNodeStepType();
         final PluginStepContext pluginContext = PluginStepContextImpl.from(context);
-        final Map<String, Object> instanceConfiguration = createConfig(context, item, node);
-
-        final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(context,
-                instanceConfiguration,
-                getServiceName(),
-                providerName);
-        Map<String, Object>  config =  PluginAdapterUtility.configureProperties(resolver, getDescription(), plugin, PropertyScope.InstanceOnly);
+        Map<String, Object> config = null;
+        if (plugin instanceof Describable) {
+            final Map<String, Object> instanceConfiguration = createConfig(context, item, node);
+            final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(
+                    context,
+                    instanceConfiguration,
+                    getServiceName(),
+                    providerName
+            );
+            config = PluginAdapterUtility.configureProperties(
+                    resolver,
+                    getDescription(),
+                    plugin,
+                    PropertyScope.InstanceOnly
+            );
+        }
 
         try {
             plugin.executeNodeStep(pluginContext, config, node);
