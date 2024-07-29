@@ -8,11 +8,7 @@
 <script lang="ts">
 import { _genUrl } from "../../../utilities/genUrl";
 import { defineComponent } from "vue";
-
 import { getRundeckContext, url } from "../../../../library";
-
-const rdBase = getRundeckContext().rdBase;
-const project = getRundeckContext().projectName;
 
 export default defineComponent({
   name: "NodeFilterLink",
@@ -49,6 +45,12 @@ export default defineComponent({
     },
   },
   emits: ["nodefilterclick"],
+  data() {
+    return {
+      project: getRundeckContext().projectName,
+    };
+  },
+
   computed: {
     filterParam() {
       return this.exclude ? "filterExclude" : "filter";
@@ -64,7 +66,7 @@ export default defineComponent({
     href() {
       return url(
         _genUrl(
-          "/project/" + project + "/nodes",
+          "/project/" + this.project + "/nodes",
           Object.assign({}, this.filterParamValues),
         ),
       ).href;

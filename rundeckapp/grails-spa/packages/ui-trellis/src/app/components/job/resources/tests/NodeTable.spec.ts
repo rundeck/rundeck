@@ -79,8 +79,8 @@ describe("NodeTable Component", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
-  it("renders health status from attributes", () => {
-    const wrapper = mountNodeTable();
+  it("renders health status from attributes", async () => {
+    const wrapper = await mountNodeTable();
     const statusTexts = wrapper.findAll(".node-status-text");
     expect(statusTexts.length).toBe(mockNodeSet.nodes.length);
     expect(statusTexts.at(0).text()).toContain("Healthy");
@@ -107,7 +107,7 @@ describe("NodeTable Component", () => {
   });
 
   it("filters nodes by attribute when an attribute is clicked", async () => {
-    const wrapper = mountNodeTable();
+    const wrapper = await mountNodeTable();
     const attributeLink = wrapper.find(
       '[data-test-id="node-attribute-link-description"]',
     );
@@ -118,7 +118,7 @@ describe("NodeTable Component", () => {
     });
   });
   it("filters nodes by name when the hostname is clicked", async () => {
-    const wrapper = mountNodeTable();
+    const wrapper = await mountNodeTable();
     const hostnameFilter = wrapper.find(
       '[data-test-id="node-attribute-link-hostname"]',
     );
@@ -129,7 +129,7 @@ describe("NodeTable Component", () => {
     });
   });
   it("renders expandable nested attributes", async () => {
-    const wrapper = mountNodeTable();
+    const wrapper = await mountNodeTable();
     const collapseLink = wrapper.find('[data-test-id="node-collapse-link"]');
     await collapseLink.trigger("click");
     const nestedAttributes = wrapper.findComponent(NodeDetailsSimple);
