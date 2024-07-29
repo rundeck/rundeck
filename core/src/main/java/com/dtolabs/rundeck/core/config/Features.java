@@ -43,6 +43,7 @@ public enum Features implements FeaturesDefinition{
     CASE_INSENSITIVE_USERNAME("caseInsensitiveUsername"),
     API_PROJECT_CONFIG_VALIDATION("apiProjectConfigValidation"),
     NEW_LOCAL_NODE_EXECUTOR("newLocalNodeExecutor"),
+    NODE_EXECUTOR_SECURE_INPUT("nodeExecutorSecureInput"),
     ;
 
     private final String propertyName;
