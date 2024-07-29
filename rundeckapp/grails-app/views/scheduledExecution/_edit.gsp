@@ -118,7 +118,9 @@
                       <span class="btn btn-default"
                             data-toggle="modal"
                             data-target="#groupChooseModal"
-                            title="${message(code:"job.edit.groupPath.choose.text")}">
+                            title="${message(code:"job.edit.groupPath.choose.text")}"
+                            id="groupChooseModalBtn"
+                      >
                           <g:message code="choose.action.label" />
                       </span>
                   </span>

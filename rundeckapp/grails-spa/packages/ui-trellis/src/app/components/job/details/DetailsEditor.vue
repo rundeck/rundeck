@@ -31,6 +31,7 @@
             />
             <span class="input-group-btn">
               <span
+                id="groupChooseModalBtn"
                 class="btn btn-default"
                 data-toggle="modal"
                 data-target="#groupChooseModal"

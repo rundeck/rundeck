@@ -30,6 +30,8 @@ class JobCreatePage extends BasePage {
     By updateJob = By.id("jobUpdateSaveButton")
     By jobNameInputBy = By.cssSelector("form input[name=\"jobName\"]")
     By groupPathInputBy = By.cssSelector("form input[name=\"groupPath\"]")
+    By groupChooseButton = By.id("groupChooseModalBtn")
+    By groupNameOption = By.cssSelector("span.groupname.jobgroupexpand")
     By descriptionTextareaBy = By.cssSelector("form textarea[name='description']")
     By jobGroupBy = By.cssSelector("input#schedJobGroup")
     By scheduleRunYesBy = By.cssSelector('input#scheduledTrue')
