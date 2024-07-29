@@ -29,7 +29,6 @@ describe("NodeFilterLink Component", () => {
     delete window._rundeck;
   });
   const mountNodeFilterLink = async (propsData = {}) => {
-    // const NodeFilterLink = (await import("../NodeFilterLink.vue")).default;
     const wrapper = mount(NodeFilterLink, {
       props: {
         filterKey: "tags",
