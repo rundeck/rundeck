@@ -140,6 +140,7 @@ class BasicJobsSpec extends SeleniumBase {
             jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
             jobCreatePage.go()
             jobCreatePage.groupChooseButton.click()
+            jobCreatePage.waitForElementToBeClickable jobCreatePage.groupNameOption
             jobCreatePage.groupNameOption.click()
         where:
         nextUi<<[false,true]
