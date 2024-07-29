@@ -3,6 +3,10 @@ package org.rundeck.plugin.scriptnodestep
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.plugins.PluginException
 import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.plugins.descriptions.SelectLabels
+import com.dtolabs.rundeck.plugins.descriptions.SelectValues
+import org.rundeck.app.spi.Services
 import org.rundeck.core.execution.ScriptCommand
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.plugins.Plugin
@@ -17,7 +21,7 @@ import com.dtolabs.rundeck.plugins.step.PluginStepContext
 
 @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = SCRIPT_COMMAND_TYPE)
 @PluginDescription(title = "Script", description = "Execute an inline script", isHighlighted = true, order = 1)
-class ScriptNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin, ScriptCommand, PluginResourceLoader  {
+class ScriptNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin, ScriptCommand, PluginResourceLoader {
     public static final String PROVIDER_NAME = "script-node-step-plugin";
 
     @PluginProperty(
@@ -70,8 +74,57 @@ E.g.: `.ps1`, or `abc`.
             required = false)
     String fileExtension;
 
+    @PluginProperty(
+        title = 'Pass Secure Input',
+        description = 'If enabled, secure option data will be sent via the standard input stream to the script.',
+        required = false
+    )
+    @RenderingOptions(
+        [
+            @RenderingOption(key = StringRenderingConstants.FEATURE_FLAG_REQUIRED, value = 'nodeExecutorSecureInput'),
+            @RenderingOption(
+                key = StringRenderingConstants.GROUPING,
+                value = "secondary"
+            ),
+            @RenderingOption(
+                key = StringRenderingConstants.GROUP_NAME,
+                value = "Advanced"
+            ),
+        ]
+    )
+    Boolean passSecureInput
+
+
+    @PluginProperty(
+        title = 'Secure Input Format',
+        description = 'The format of the secure input data. If not specified, the default format will be used.',
+        required = false
+    )
+    @SelectValues(values = ['shell'])
+    @SelectLabels(values = ['Shell Command'])
+    @RenderingOptions(
+        [
+            @RenderingOption(key = StringRenderingConstants.FEATURE_FLAG_REQUIRED, value = 'nodeExecutorSecureInput'),
+            @RenderingOption(
+                key = StringRenderingConstants.GROUPING,
+                value = "secondary"
+            ),
+            @RenderingOption(
+                key = StringRenderingConstants.GROUP_NAME,
+                value = "Advanced"
+            ),
+        ]
+    )
+    String secureFormat
+
+    @PluginProperty(scope = PropertyScope.FeatureFlag)
+    Boolean nodeExecutorSecureInput
+
+
     @Override
-    void executeNodeStep(PluginStepContext context, Map<String, Object> configuration, INodeEntry entry) throws NodeStepException {
+    void executeNodeStep(PluginStepContext context, Map<String, Object> configuration, INodeEntry entry) throws NodeStepException
+    {
+        //todo: based on feature flag, create secure input stream
         ScriptFileNodeStepExecutor scriptFileNodeStepExecutor = new ScriptFileNodeStepExecutor(
                 scriptInterpreter,
                 interpreterArgsQuoted,
