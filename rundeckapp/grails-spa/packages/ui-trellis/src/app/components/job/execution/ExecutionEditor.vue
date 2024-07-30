@@ -54,45 +54,42 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType, ref } from "vue";
+import { defineComponent, PropType } from "vue";
 import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
 import PluginConfig from "@/library/components/plugins/pluginConfig.vue";
 import ScheduledExecutionDetails from "@/app/components/common/ScheduledExecutionDetails.vue";
 import { isEqual } from "lodash";
-
-interface PluginConf {
-  readonly type: string;
-  extra: any;
-  config: any;
-}
-interface ProjectPluginConfigEntry {
-  entry: PluginConf;
-  extra: PluginConf;
-  create?: boolean;
-  originIndex?: number;
-  index?: number;
-  modified: boolean;
-  readOnly: boolean;
-}
+import {
+  PluginInitialData,
+  Plugin,
+  JobPlugins,
+  PluginDataFromApi,
+} from "./types/executionTypes";
 
 export default defineComponent({
   name: "ExecutionEditor",
   components: { ScheduledExecutionDetails, PluginConfig, PluginInfo },
-  props: ["modelValue", "initialData"],
+  props: {
+    modelValue: {
+      type: Object as PropType<JobPlugins>,
+      default: () => {},
+    },
+    initialData: {
+      type: Object as PropType<PluginDataFromApi>,
+      default: () => {},
+    },
+  },
   emits: ["update:modelValue"],
   data() {
     return {
       internalData: null,
-      checkedData: [],
-      executionLifecyclePlugins: [] as ProjectPluginConfigEntry[],
-      loaded: false,
+      checkedData: [] as string[],
+      executionLifecyclePlugins: [] as Plugin[],
+      currentMode: "create",
     };
   },
   computed: {
-    currentMode() {
-      return "create";
-    },
-    formattedData() {
+    formattedData(): JobPlugins {
       if (this.initialData) {
         const temp = {
           ExecutionLifecycle: {},
@@ -112,11 +109,15 @@ export default defineComponent({
     initialData: {
       deep: true,
       handler(newVal) {
-        this.checkedData = Object.keys(newVal.ExecutionLifecycle);
+        this.checkedData = Object.keys(newVal?.ExecutionLifecycle);
 
         this.executionLifecyclePlugins = newVal?.pluginsInitialData.map((e) =>
           this.massagePluginInfo(e),
         );
+
+        if (this.checkedData.length > 0) {
+          this.currentMode = "edit";
+        }
       },
     },
     formattedData: {
@@ -129,7 +130,7 @@ export default defineComponent({
     },
   },
   methods: {
-    massagePluginInfo(plugin: object) {
+    massagePluginInfo(plugin: PluginInitialData): Plugin {
       let config = {};
       const retrievedValue = this.initialData.ExecutionLifecycle[plugin.name];
 
