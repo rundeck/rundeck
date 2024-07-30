@@ -47,15 +47,26 @@ export const Playground: Story = {
 };
 
 const generateTemplate = (args: Record<string, any>) => {
-  return `<div>
-    <InputSwitch v-bind="args" />
-  </div>`;
+  return '<div><InputSwitch :disabled="args.disabled" v-model="args.modelValue" /></div>';
 };
 
-export const Default: Story = {
+export const Active: Story = {
   render: (args) => ({
     components: { InputSwitch },
     setup: () => ({ args }),
     template: generateTemplate(args),
   }),
+};
+
+export const Disabled: Story = {
+  render: (args) => ({
+    components: { InputSwitch },
+    setup: () => ({ args }),
+    template:
+      '<div style="gap: 10px; display: flex;"><InputSwitch :disabled="args.disabled" v-model="args.modelValue" /><InputSwitch :disabled="args.disabled" /></div>',
+  }),
+  args: {
+    disabled: true,
+    modelValue: true,
+  },
 };

@@ -1,4 +1,4 @@
-import { Meta, Subtitle, Title, Canvas, Controls, Description, Stories } from "@storybook/blocks";
+import { Meta, Subtitle, Title, Canvas, Controls, Description, Stories, Markdown } from "@storybook/blocks";
 import * as InputSwitchStories from './InputSwitch.stories'
 
 <Meta of={InputSwitchStories} />
@@ -33,4 +33,20 @@ import InputSwitch from "primevue/inputswitch";
 
 ## Accessibility
 
-{/* Bring in accessibility notes from primeVue here and\/or add aspects important for accessibility */}
+### Screen Reader
+InputSwitch component uses a hidden native checkbox element with `switch` role internally that is only visible to screen readers. Value to describe the component can either be provided via `label` tag combined with `id` prop or using `aria-labelledby`, `aria-label` props.
+
+### Keyboard Support
+
+Key	Function
+tab	Moves focus to the switch.
+space	Toggles the checked state.
+
+<Markdown>
+    {`
+| Key         | Function                   |
+| ----------- | -------------------------- |
+| tab         | Moves focus to the switch. |
+| space       | Toggles the checked state. |
+`}
+</Markdown>
