@@ -66,9 +66,15 @@ class JobShowPage extends BasePage{
     By jobOptionValuesBy = By.cssSelector(".optionvalues")
     By jobOptionValueInputBy = By.cssSelector(".optionvalues > option:nth-child(6)")
 
+    static class NextUi {
+        static By descriptionText = By
+                .xpath("//*[@class=\"markdown-body\"]")
+    }
+
     static final String PAGE_PATH = "/job/show"
     String loadPath = "/job/show"
     private String project
+    boolean nextUi = false
 
     JobShowPage(final SeleniumContext context) {
         super(context)
@@ -129,7 +135,7 @@ class JobShowPage extends BasePage{
     }
 
     WebElement getDescriptionTextLabel() {
-        el descriptionText
+        el nextUi ? NextUi.descriptionText : descriptionText
     }
 
     List<WebElement> getCronLabel() {

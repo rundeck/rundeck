@@ -105,10 +105,10 @@ class BasicJobsSpec extends SeleniumBase {
             jobCreatePage.nextUi=nextUi
             jobCreatePage.go()
             def jobShowPage = page JobShowPage
+            jobShowPage.nextUi=nextUi
         then:
             jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
             jobCreatePage.go()
-            jobCreatePage.descriptionTextarea.clear()
             jobCreatePage.descriptionTextarea.sendKeys 'a new job description'
             jobCreatePage.updateJobButton.click()
         expect:
@@ -142,8 +142,10 @@ class BasicJobsSpec extends SeleniumBase {
             jobCreatePage.groupChooseButton.click()
             jobCreatePage.waitForElementToBeClickable jobCreatePage.groupNameOption
             jobCreatePage.groupNameOption.click()
+        expect:
+            'test' == jobCreatePage.jobGroupField.getAttribute("value")
         where:
-        nextUi<<[false,true]
+            nextUi<<[false, true]
     }
 
     def "edit job and set schedules tab"() {
