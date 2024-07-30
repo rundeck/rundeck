@@ -1644,7 +1644,7 @@ function loadJobChooserModal(elem, uuid, nameid, groupid, projectid, modalid, mo
 function groupChosen(path) {
   jobWasEdited();
   let isNextUi = jQuery('.ui-type-next');
-  if(isNextUi) {
+  if(isNextUi.length > 0) {
     window._rundeck.eventBus.emit("group-selected", path);
   } else {
     jobeditor.groupPath(path)
