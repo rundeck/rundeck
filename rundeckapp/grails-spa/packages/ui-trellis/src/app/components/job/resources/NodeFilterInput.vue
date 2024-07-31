@@ -3,9 +3,12 @@
     class="input-group nodefilters multiple-control-input-group"
     v-bind="$attrs"
   >
-    <span v-if="showTitle" class="input-group-addon input-group-addon-title">{{
-      $t("nodes")
-    }}</span>
+    <span
+      v-if="showTitle"
+      class="input-group-addon input-group-addon-title"
+      data-testid="input-group-title"
+      >{{ $t("nodes") }}</span
+    >
     <div class="input-group-btn input-btn-toggle">
       <button
         type="button"
@@ -15,6 +18,7 @@
           'btn-default': !selectedFilterName,
         }"
         data-toggle="dropdown"
+        data-testid="filter-dropdown-button"
       >
         <span>{{ filterNameDisplay }}</span> <span class="caret"></span>
       </button>
@@ -40,26 +44,41 @@
           {{ $t("filter") }} <span>{{ filterNameDisplay }}</span>
         </li>
         <li v-if="canSaveFilter">
-          <a href="#" @click="saveFilterModal = true">
+          <a
+            href="#"
+            data-testid="save-filter-link"
+            @click="saveFilterModal = true"
+          >
             <i class="glyphicon glyphicon-plus"></i>
             {{ $t("save.filter.ellipsis") }}
           </a>
         </li>
         <li v-if="canDeleteFilter">
-          <a href="#" @click="deleteFilterModal = true">
+          <a
+            href="#"
+            data-testid="delete-filter-link"
+            @click="deleteFilterModal = true"
+          >
             <i class="glyphicon glyphicon-remove"></i>
             {{ $t("delete.this.filter") }}
           </a>
         </li>
         <li v-if="canSetDefaultFilter">
-          <a href="#" @click="setDefaultFilter">
+          <a
+            href="#"
+            data-testid="set-default-filter-link"
+            @click="setDefaultFilter"
+          >
             <i class="glyphicon glyphicon-filter"></i>
             {{ $t("set.as.default.filter") }}
           </a>
         </li>
         <li v-if="canRemoveDefaultFilter">
           <a href="#" @click="removeDefaultFilter">
-            <i class="glyphicon glyphicon-ban-circle"></i>
+            <i
+              class="glyphicon glyphicon-ban-circle"
+              data-testid="remove-default-filter-link"
+            ></i>
             {{ $t("remove.default.filter") }}
           </a>
         </li>
@@ -75,6 +94,7 @@
             <node-filter-link
               :node-filter-name="filter.filterName"
               :node-filter="filter.filter"
+              data-testid="saved-filter"
               @nodefilterclick="handleNodefilter"
             >
               <template v-if="selectedFilterName === filter.filterName" #suffix>
@@ -96,12 +116,18 @@
       class="schedJobNodeFilter form-control"
       :autofocus="autofocus"
       :placeholder="queryFieldPlaceholderText || $t('enter.a.node.filter')"
+      data-testid="filter-input"
       @keydown.enter.prevent="doSearch"
       @blur="doSearch"
     />
 
     <div v-if="helpButton" class="input-group-btn input-btn-toggle">
-      <btn id="filterSearchHelpBtn" tabindex="0" class="dropdown-toggle">
+      <btn
+        id="filterSearchHelpBtn"
+        tabindex="0"
+        class="dropdown-toggle"
+        data-testid="filter-search-help-btn"
+      >
         <i class="glyphicon glyphicon-question-sign"></i>
       </btn>
     </div>
@@ -110,6 +136,7 @@
         :type="`${searchBtnType} btn-fill`"
         :disabled="!outputValue"
         class="node_filter__dosearch"
+        data-testid="search-button"
         @click="doSearch"
       >
         {{ $t("Search") }}
@@ -170,6 +197,7 @@
             v-model="newFilterName"
             type="text"
             class="form-control input-sm"
+            data-testid="new-filter-name-input"
           />
         </div>
       </div>
@@ -192,9 +220,12 @@
         <btn @click="saveFilterModal = false">{{
           $t("button.action.Cancel")
         }}</btn>
-        <btn type="primary" @click="saveFilter">{{
-          $t("save.filter.ellipsis")
-        }}</btn>
+        <btn
+          type="primary"
+          data-testid="save-filter-button"
+          @click="saveFilter"
+          >{{ $t("save.filter.ellipsis") }}</btn
+        >
       </div>
     </template>
   </modal>
@@ -228,7 +259,9 @@
     <template #footer>
       <div>
         <btn @click="deleteFilterModal = false">{{ $t("no") }}</btn>
-        <btn type="danger" @click="deleteFilter">{{ $t("yes") }}</btn>
+        <btn type="danger" data-testid="delete-filter" @click="deleteFilter">{{
+          $t("yes")
+        }}</btn>
       </div>
     </template>
   </modal>

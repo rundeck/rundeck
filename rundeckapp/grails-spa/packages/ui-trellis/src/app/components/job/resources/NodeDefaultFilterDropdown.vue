@@ -4,16 +4,26 @@
       <dropdown>
         <a
           class="nodefilterlink btn btn-default btn-xs"
+          data-testid="filter-link-all-nodes"
           @click.prevent="saveFilter({ filter: '.*' })"
         >
           {{ $t("all.nodes") }} {{ nodeSummary ? nodeSummary.totalCount! : 0 }}
         </a>
-        <btn size="xs" title="Filter Actions" class="dropdown-toggle">
+        <btn
+          size="xs"
+          title="Filter Actions"
+          class="dropdown-toggle"
+          data-testid="dropdown-toggle"
+        >
           <span class="caret"></span>
         </btn>
         <template #dropdown>
           <li>
-            <a role="button" @click.prevent="toggleDefaultFilter">
+            <a
+              role="button"
+              data-testid="toggle-default-filter"
+              @click.prevent="toggleDefaultFilter"
+            >
               <i
                 class="glyphicon"
                 :class="[
@@ -38,28 +48,46 @@
           :data-node-filter="i.filter"
           :title="i.filter"
           :href="linkForFilterName(i)"
+          data-testid="saved-filter"
           @click.prevent="saveFilter(i)"
         >
           {{ i.filterName }}
         </a>
-        <btn size="xs" title="Filter Actions" class="dropdown-toggle">
+        <btn
+          size="xs"
+          title="Filter Actions"
+          class="dropdown-toggle"
+          data-testid="dropdown-toggle"
+        >
           <span class="caret"></span>
         </btn>
         <template #dropdown>
           <li>
-            <a role="button" @click="deleteFilterConfirm(i)">
+            <a
+              role="button"
+              data-testid="delete-filter-link"
+              @click="deleteFilterConfirm(i)"
+            >
               <i class="glyphicon glyphicon-remove"></i>
               {{ $t("delete.this.filter.ellipsis") }}
             </a>
           </li>
           <li v-if="i.filterName !== nodeSummary.defaultFilter">
-            <a role="button" @click="setDefault(i)">
+            <a
+              role="button"
+              data-testid="set-default-filter-link"
+              @click="setDefault(i)"
+            >
               <i class="glyphicon glyphicon-filter"></i>
               {{ $t("set.as.default.filter") }}
             </a>
           </li>
           <li v-else>
-            <a role="button" @click="removeDefault()">
+            <a
+              role="button"
+              data-testid="remove-default-filter-link"
+              @click="removeDefault()"
+            >
               <i class="glyphicon glyphicon-ban-circle"></i>
               {{ $t("remove.default.filter") }}
             </a>
