@@ -360,7 +360,7 @@ class JobCreatePage extends BasePage {
     WebElement getKillHandlerPluginCheckbox() {
         if(nextUi){
             new WebDriverWait(driver,  Duration.ofSeconds(50)).until(
-                    ExpectedConditions.visibilityOfElementLocated(By.xpath('//input[@value="killhandler"]'))
+                    ExpectedConditions.presenceOfElementLocated(By.xpath('//input[@value="killhandler"]'))
             )
             el By.xpath('//input[@value="killhandler"]')
         } else {
