@@ -163,6 +163,23 @@ class BasicJobsSpec extends SeleniumBase {
             jobCreatePage.updateJobButton.click()
     }
 
+    def "edit job and set executions tab"() {
+        when:
+            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+        then:
+            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", true
+            jobCreatePage.go()
+            jobCreatePage.tab JobTab.EXECUTION_PLUGINS click()
+            jobCreatePage.killHandlerPluginCheckbox.click()
+            jobCreatePage.killHandlerPluginCheckbox.isSelected()
+            jobCreatePage.killHandlerPluginKillSpawnedCheckbox.click()
+            jobCreatePage.killHandlerPluginKillSpawnedCheckbox.isSelected()
+            jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.updateJobButton
+            jobCreatePage.updateJobButton.click()
+        where:
+            nextUi<<[true]
+    }
+
     def "edit job and set other tab"() {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
