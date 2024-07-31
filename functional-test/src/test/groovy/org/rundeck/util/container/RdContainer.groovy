@@ -3,10 +3,8 @@ package org.rundeck.util.container
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.testcontainers.containers.DockerComposeContainer
-import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.output.Slf4jLogConsumer
 import org.testcontainers.containers.wait.strategy.Wait
-import org.testcontainers.utility.MountableFile
 
 import java.time.Duration
 
@@ -23,10 +21,11 @@ class RdContainer extends DockerComposeContainer<RdContainer> implements ClientP
     public static final String LICENSE_LOCATION = System.getenv("LICENSE_LOCATION")
     public static final String TEST_RUNDECK_GRAILS_URL = System.getenv("TEST_RUNDECK_GRAILS_URL") ?: "http://localhost:4440"
 
+    private final Map<String, Integer> clientConfig
 
-    RdContainer(URI composeFilePath) {
-
+    RdContainer(URI composeFilePath, Map<String, Integer> clientConfig = Collections.emptyMap()) {
         super(new File(composeFilePath))
+        this.clientConfig = clientConfig
         if (CONTEXT_PATH && !CONTEXT_PATH.startsWith('/')) {
             throw new IllegalArgumentException("Context path must start with /")
         }
@@ -49,7 +48,7 @@ class RdContainer extends DockerComposeContainer<RdContainer> implements ClientP
     }
 
     RdClient clientWithToken(String token) {
-        RdClient.create("http://${getServiceHost(DEFAULT_SERVICE_TO_EXPOSE,DEFAULT_PORT)}:${getServicePort(DEFAULT_SERVICE_TO_EXPOSE,DEFAULT_PORT)}${CONTEXT_PATH}", token)
+        RdClient.create("http://${getServiceHost(DEFAULT_SERVICE_TO_EXPOSE,DEFAULT_PORT)}:${getServicePort(DEFAULT_SERVICE_TO_EXPOSE,DEFAULT_PORT)}${CONTEXT_PATH}", token, clientConfig)
     }
 
     @Override
