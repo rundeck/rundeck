@@ -38,6 +38,8 @@ class JobCreatePage extends BasePage {
     By scheduleRunYesBy = By.cssSelector('input#scheduledTrue')
     By scheduleEveryDayCheckboxBy = By.cssSelector('input#everyDay')
     By scheduleDaysCheckboxDivBy = By.cssSelector('div#DayOfWeekDialog')
+    By killHandlerPluginCheckbox = By.xpath('//*[@value="killhandler"]//following-sibling::div[1]//input[@type="checkbox"]')
+    By killHandlerPluginKillSpawnedCheckbox = By.xpath('//*[@value="killhandler"]//following-sibling::div[1]//div[2]//input[@type="checkbox"]')
     By multiExecFalseBy = By.cssSelector('input#multipleFalse')
     By multiExecTrueBy = By.cssSelector('input#multipleTrue')
     By workFlowStrategyBy = By.xpath('//*[@id="workflow.strategy"]')
@@ -57,6 +59,8 @@ class JobCreatePage extends BasePage {
         static By jobNameInputBy = By.cssSelector("form input[id=\"schedJobName\"]")
         static By groupPathInputBy = By.cssSelector("form input[id=\"schedJobGroup\"]")
         static By descriptionTextareaBy = By.cssSelector("form textarea.ace_text-input")
+        static By killHandlerPluginCheckbox = By.cssSelector('input#executionLifecyclePluginEnabled_killhandler')
+        static By killHandlerPluginKillSpawnedCheckbox = By.xpath('//*[@data-prop-name="killChilds"]//input[@type="checkbox"]')
         static By optionBy = By.cssSelector("#optnewbutton > button")
         static By separatorOptionBy = By.cssSelector("#option_preview")
         static By optionCloseKeyStorageBy = By.cssSelector("#storage-file.modal .modal-footer > button.btn-default")
@@ -164,10 +168,11 @@ class JobCreatePage extends BasePage {
         loadCreatePath(projectName)
     }
 
-    void loadEditPath(String projectName, String jobId) {
+    void loadEditPath(String projectName, String jobId, Boolean nextUi = false) {
         this.edit=true
         this.projectName=projectName
         this.jobId=jobId
+        this.nextUi=nextUi
     }
 
     void loadCreatePath(String projectName) {
@@ -350,6 +355,19 @@ class JobCreatePage extends BasePage {
 
     WebElement getScheduleDaysCheckboxDivField() {
         el scheduleDaysCheckboxDivBy
+    }
+
+    WebElement getKillHandlerPluginCheckbox() {
+        if(nextUi){
+            waitForElementVisible NextUi.killHandlerPluginCheckbox
+            el NextUi.killHandlerPluginCheckbox
+        } else {
+            el killHandlerPluginCheckbox
+        }
+    }
+
+    WebElement getKillHandlerPluginKillSpawnedCheckbox() {
+        el nextUi ? NextUi.killHandlerPluginKillSpawnedCheckbox : killHandlerPluginKillSpawnedCheckbox
     }
 
     WebElement getMultiExecFalseField() {
