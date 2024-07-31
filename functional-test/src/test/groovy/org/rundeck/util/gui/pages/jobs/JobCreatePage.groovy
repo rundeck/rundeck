@@ -59,7 +59,7 @@ class JobCreatePage extends BasePage {
         static By jobNameInputBy = By.cssSelector("form input[id=\"schedJobName\"]")
         static By groupPathInputBy = By.cssSelector("form input[id=\"schedJobGroup\"]")
         static By descriptionTextareaBy = By.cssSelector("form textarea.ace_text-input")
-        static By killHandlerPluginCheckbox = By.cssSelector('input#executionLifecyclePluginEnabled_killhandler')
+        static By killHandlerPluginCheckbox = By.xpath('//input[@value="killhandler"]')
         static By killHandlerPluginKillSpawnedCheckbox = By.xpath('//*[@data-prop-name="killChilds"]//input[@type="checkbox"]')
         static By optionBy = By.cssSelector("#optnewbutton > button")
         static By separatorOptionBy = By.cssSelector("#option_preview")

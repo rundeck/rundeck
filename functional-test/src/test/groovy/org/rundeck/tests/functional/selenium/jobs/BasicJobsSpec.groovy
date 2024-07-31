@@ -177,7 +177,7 @@ class BasicJobsSpec extends SeleniumBase {
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.updateJobButton
             jobCreatePage.updateJobButton.click()
         where:
-            nextUi<<[true]
+            nextUi<<[false, true]
     }
 
     def "edit job and set other tab"() {
