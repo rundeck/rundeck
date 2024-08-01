@@ -9,12 +9,6 @@ const messages = {
     "Dispatch to Nodes": "Dispatch to Nodes",
     Nodes: "Nodes",
   },
-  uiv: {
-    modal: {
-      cancel: "Cancel",
-      ok: "OK",
-    },
-  },
   cron: {
     section: {
       0: "Seconds",
@@ -829,7 +823,64 @@ const messages = {
   "option.view.action.moveUp.title": "Move Up",
   "option.view.action.moveDown.title": "Move Down",
   "option.view.action.drag.title": "Drag to reorder",
+
   "pagination.of": "of",
+
+  uiv: {
+    datePicker: {
+      clear: "Clear",
+      today: "Today",
+      month: "Month",
+      month1: "January",
+      month2: "February",
+      month3: "March",
+      month4: "April",
+      month5: "May",
+      month6: "June",
+      month7: "July",
+      month8: "August",
+      month9: "September",
+      month10: "October",
+      month11: "November",
+      month12: "December",
+      year: "Year",
+      week1: "Mon",
+      week2: "Tue",
+      week3: "Wed",
+      week4: "Thu",
+      week5: "Fri",
+      week6: "Sat",
+      week7: "Sun",
+    },
+    timePicker: {
+      am: "AM",
+      pm: "PM",
+    },
+    modal: {
+      cancel: "Cancel",
+      ok: "OK",
+    },
+    multiSelect: {
+      placeholder: "Select...",
+      filterPlaceholder: "Search...",
+    },
+  },
+  "scheduledExecution.jobName.label": "Job Name",
+  "scheduledExecution.property.description.label": "Description",
+  "job.editor.preview.runbook": "Preview Readme",
+  "choose.action.label": "Choose",
+  "scheduledExecution.property.description.plain.description":
+    "The description will be shown in plain text",
+  "scheduledExecution.property.description.description":
+    "The first line of the description will be shown in plain text, the rest will be rendered with Markdown.\n\n" +
+    "See [Markdown](http://en.wikipedia.org/wiki/Markdown).\n\n" +
+    "Within the extended description you can link to the job using {'`{{job.permalink}}`'} as the URL to the job, e.g. `[run job]({'{{job.permalink}}#runjob'})`\n\n" +
+    "You can add a Readme by using a HR separater `---` by itself on a line, and everything following that will be rendered in a separate tab using [Markdeep](https://casual-effects.com/markdeep).",
+  "scheduledExecution.groupPath.description": "Group is a / separated path",
+  more: "More\u2026",
+  less: "Less\u2026",
+  "job.edit.groupPath.choose.text": "Click on the name of the group to use",
+
 };
 
 export default messages;

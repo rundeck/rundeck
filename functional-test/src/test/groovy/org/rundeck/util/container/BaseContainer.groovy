@@ -13,7 +13,6 @@ import spock.lang.Specification
 import java.text.SimpleDateFormat
 import java.time.Duration
 import java.util.function.Consumer
-import java.util.function.Function
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
@@ -55,11 +54,16 @@ abstract class BaseContainer extends Specification implements ClientProvider {
             }
         } else if (RUNDECK == null && DEFAULT_DOCKERFILE_LOCATION == null) {
             synchronized (LOCK) {
+                // Override default timeout values to accommodate slow container startups
+                Map<String, Integer> clientConfig = Map.of(
+                        "readTimeout", 60,
+                )
+
                 log.info("Starting testcontainer: ${getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI()}")
                 log.info("Starting testcontainer: RUNDECK_IMAGE: ${RdContainer.RUNDECK_IMAGE}")
                 log.info("Starting testcontainer: LICENSE_LOCATION: ${RdContainer.LICENSE_LOCATION}")
                 log.info("Starting testcontainer: TEST_RUNDECK_GRAILS_URL: ${RdContainer.TEST_RUNDECK_GRAILS_URL}")
-                RUNDECK = new RdContainer(getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI())
+                RUNDECK = new RdContainer(getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI(), clientConfig)
                 RUNDECK.start()
                 CLIENT_PROVIDER = RUNDECK
             }
@@ -351,6 +355,12 @@ abstract class BaseContainer extends Specification implements ClientProvider {
                 'timedout',
                 'other'
         ]
+
+        // Handle a response that did not trigger a job execution
+        if (response.get("errorCode") != null) {
+            throw new RuntimeException("Failed to run job: ${response}")
+        }
+
         while(true) {
             def exec = client.get("/execution/${response.id}/output", Map)
             if (finalStatus.contains(exec.execState)) {
@@ -417,4 +427,21 @@ abstract class BaseContainer extends Specification implements ClientProvider {
             log.error("Interrupted", e)
         }
     }
+
+    /**
+     * Adds additional configuration options to a project.
+     * @param project The name of the project to add configuration
+     * @param configure configuration map
+     */
+    def addExtraProjectConfig(String project, Map<String, String> configure){
+        configure.forEach {key, value ->
+            Response response = client.doPutWithJsonBody("/project/$project/config/$key",
+                    [ "key":key, "value":value ]
+            )
+            if (!response.successful) {
+                throw new RuntimeException("Failed to add configuration options to a project: ${response.body().string()}")
+            }
+        }
+    }
+
 }

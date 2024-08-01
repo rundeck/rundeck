@@ -355,10 +355,10 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import { _genUrl } from "@/app/utilities/genUrl";
-import { getAppLinks } from "@/library";
-import NodeDetailsSimple from "@/app/components/job/resources/NodeDetailsSimple.vue";
-import NodeRemoteEdit from "@/app/components/job/resources/NodeRemoteEdit.vue";
+import { _genUrl } from "../../../utilities/genUrl";
+import { getAppLinks } from "../../../../library";
+import NodeDetailsSimple from "./NodeDetailsSimple.vue";
+import NodeRemoteEdit from "./NodeRemoteEdit.vue";
 import {
   cssForIcon,
   expandNodeAttributes,
@@ -370,8 +370,9 @@ import {
   statusIconStyle,
   styleForIcon,
   styleForNode,
-} from "@/app/utilities/nodeUi";
-import NodeFilterLink from "@/app/components/job/resources/NodeFilterLink.vue";
+} from "../../../utilities/nodeUi";
+import NodeFilterLink from "./NodeFilterLink.vue";
+import { Node } from "./types/nodeTypes";
 
 export default defineComponent({
   name: "NodeTable",
@@ -418,8 +419,8 @@ export default defineComponent({
   data() {
     return {
       shouldRefresh: false,
-      remoteUrl: null,
-      remoteEditNodename: null,
+      remoteUrl: null as null | string,
+      remoteEditNodename: null as null | string,
     };
   },
   computed: {
@@ -434,24 +435,27 @@ export default defineComponent({
       return this.useDefaultColumns ? 5 : filterColumnsLength + 2;
     },
     remoteEditStarted(): boolean {
-      return this.remoteUrl && this.remoteEditNodename;
+      return !!(this.remoteUrl && this.remoteEditNodename) || false;
     },
     pageNumbersSkipped(): string[] {
       const arr = [];
       const cur = this.page;
       const maxPages = this.maxPages;
       const buffer = 3;
-      for (let i = 0; i < maxPages; i++) {
-        if (
-          (i >= cur - buffer && i <= cur + buffer) ||
-          i < buffer ||
-          i >= maxPages - buffer
-        ) {
-          arr.push(i);
-        } else if (i == cur - buffer - 1 || i == cur + buffer + 1) {
-          arr.push("..");
+      if (maxPages) {
+        for (let i = 0; i < maxPages; i++) {
+          if (
+            (i >= cur - buffer && i <= cur + buffer) ||
+            i < buffer ||
+            i >= maxPages - buffer
+          ) {
+            arr.push(`${i}`);
+          } else if (i == cur - buffer - 1 || i == cur + buffer + 1) {
+            arr.push("..");
+          }
         }
       }
+
       return arr;
     },
     browseNodesPageNextUrl(): string {
@@ -470,7 +474,7 @@ export default defineComponent({
     statusIconCss,
     styleForNode,
     expandNodeAttributes,
-    nodeCss(attrs) {
+    nodeCss(attrs: { [key: string]: string }) {
       const classnames = [];
       const uiColor = nodeFgCss(attrs);
       if (uiColor) {
@@ -480,9 +484,8 @@ export default defineComponent({
       if (uiBgcolor) {
         classnames.push(uiBgcolor);
       }
-      const cnames = classnames.join(" ");
 
-      return cnames;
+      return classnames.join(" ");
     },
     filterClick(filter: any) {
       this.$emit("filter", filter);
@@ -491,7 +494,7 @@ export default defineComponent({
       this.$emit("changePagingMax", Number(event.target.value));
     },
     browseNodesPageNext() {
-      if (this.page + 1 < this.maxPages) {
+      if (this.maxPages && this.page + 1 < this.maxPages) {
         this.browseNodesPage(this.page + 1);
       }
     },
@@ -500,7 +503,7 @@ export default defineComponent({
         this.browseNodesPage(this.page - 1);
       }
     },
-    browseNodesPage(newPage) {
+    browseNodesPage(newPage: number | string) {
       if (this.page === newPage) {
         return;
       } else {
@@ -515,7 +518,7 @@ export default defineComponent({
         max: this.pagingMax,
       };
       const castPage = parseInt(page as string);
-      if (castPage >= 0 && castPage < this.maxPages) {
+      if (castPage >= 0 && this.maxPages && castPage < this.maxPages) {
         pageParams.page = castPage;
       } else {
         pageParams.page = 0;
@@ -523,7 +526,7 @@ export default defineComponent({
       return _genUrl(getAppLinks().frameworkNodes, pageParams);
     },
 
-    triggerNodeRemoteEdit(node) {
+    triggerNodeRemoteEdit(node: Node) {
       if (node.attributes["remoteUrl"]) {
         this.remoteUrl = node.attributes["remoteUrl"];
         this.remoteEditNodename = node.nodename;

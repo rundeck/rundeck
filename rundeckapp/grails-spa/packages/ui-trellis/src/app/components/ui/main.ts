@@ -68,7 +68,7 @@ function initUiComponents(elmElement: any) {
   vue.use(i18n);
   vue.use(uiv);
   vue.use(PrimeVue);
-  
+
   vue.provide("registerComponent", (name, comp) => {
     vue.component(name, comp);
   });
@@ -82,6 +82,10 @@ function initUiComponents(elmElement: any) {
     const lang = window._rundeck.language || "en";
     return updateLocaleMessages(i18n, locale, lang, newMessages);
   });
-  vue.mount(elmElement);
+  try {
+    vue.mount(elmElement);
+  } catch (e) {
+    console.error("Error mounting vue app", e.message, e);
+  }
   rootStore.ui.registerComponent = vue.component;
 }

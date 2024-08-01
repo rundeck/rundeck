@@ -76,6 +76,7 @@ import spock.lang.Unroll
 import retrofit2.mock.MockRetrofit
 import retrofit2.converter.jackson.JacksonConverterFactory
 
+import java.nio.charset.StandardCharsets
 import java.util.jar.JarOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -1148,6 +1149,11 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                 builder.file('webhooks.yaml') { Writer writer ->
                     writer << 'test-content'
                 }
+                builder.dir('files/') {
+                    builder.file('readme.md') { Writer writer ->
+                        writer << '#Test Readme content'
+                    }
+                }
             }
             jarStream.close()
             component.getImportFilePatterns() >> ['webhooks.yaml']
@@ -1158,7 +1164,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
         then:
             result
-
+            1 * project.storeFileResource('readme.md', _) >> 1234L
             0 * component.doImport(_, _, { it.containsKey('webhooks.yaml') }, [some: 'thing']) >> []
 
         cleanup:
@@ -1207,6 +1213,11 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                 builder.file('webhooks.yaml') { Writer writer ->
                     writer << 'test-content'
                 }
+                builder.dir('files/') {
+                    builder.file('readme.md') { Writer writer ->
+                        writer << '#Test Readme content'
+                    }
+                }
             }
             jarStream.close()
             component.getImportFilePatterns() >> ['webhooks.yaml']
@@ -1217,7 +1228,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
         then:
             result
-
+            1 * project.storeFileResource('readme.md', _) >> 1234L
             0 * component.doImport(_, _, { it.containsKey('webhooks.yaml') }, [some: 'thing']) >> []
 
         cleanup:
@@ -1295,6 +1306,138 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             '*/.*.blah'              | _
             '*/*.*'                    | _
     }
+
+    def "import project archive throws error when empty or non-zip content"() {
+        setup:
+        ProjectComponent component = Mock(ProjectComponent){
+            isComponentEnabled() >> true
+        }
+        service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
+            Map<String, ProjectComponent> beans = [test1: component]
+        }
+
+        def project = Mock(IRundeckProject) {
+            getName() >> 'importtest'
+        }
+        def framework = Mock(Framework) {
+            getFrameworkProjectsBaseDir() >> { File.createTempDir() }
+        }
+        def authCtx = Mock(UserAndRolesAuthContext) {
+            getUsername() >> { "user" }
+            getRoles() >> { ["admin"] as Set }
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+            getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
+        }
+        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+
+        }
+        ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
+            getProject() >> 'importtest'
+            getImportConfig() >> true
+            getImportACL() >> true
+            getImportScm() >> true
+            getImportComponents() >> [webhooks: true]
+            getImportOpts() >> [webhooks: [some: 'thing']]
+        }
+
+        def tempfile2 = File.createTempFile("test-archive", ".jar")
+        tempfile2.deleteOnExit()
+
+        if(jarContent) {
+            def writer = new PrintWriter(tempfile2.newOutputStream())
+            writer.println(jarContent)
+            writer.close()
+        }
+
+        component.getImportFilePatterns() >> ['webhooks.yaml']
+        component.getName() >> 'webhooks'
+
+        when:
+        def result = tempfile2.withInputStream { service.importToProject(project, framework, authCtx, it, rq) }
+
+        then:
+        def e = thrown(IOException)
+        e.message == errmsg
+        0 * project.storeFileResource('readme.md', _) >> 1234L
+        0 * component.doImport(_, _, { it.containsKey('webhooks.yaml') }, [some: 'thing']) >> []
+
+        cleanup:
+        tempfile2.delete()
+
+        where:
+        jarContent                                                                      | errmsg
+        null                                                                            | "Empty or corrupted archive file"
+        "###!!!!!?????Some invalid content to write to a zip file.00010100100101!!!!!!" | "Empty or corrupted archive file"
+    }
+
+    def "import project archive throws error when zip file is valid but nothing is imported"() {
+        setup:
+        ProjectComponent component = Mock(ProjectComponent){
+            isComponentEnabled() >> true
+        }
+        service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
+            Map<String, ProjectComponent> beans = [test1: component]
+        }
+
+        def project = Mock(IRundeckProject) {
+            getName() >> 'importtest'
+        }
+        def framework = Mock(Framework) {
+            getFrameworkProjectsBaseDir() >> { File.createTempDir() }
+        }
+        def authCtx = Mock(UserAndRolesAuthContext) {
+            getUsername() >> { "user" }
+            getRoles() >> { ["admin"] as Set }
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+            getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
+        }
+        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+
+        }
+        ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
+            getProject() >> 'importtest'
+            getImportConfig() >> true
+            getImportACL() >> true
+            getImportScm() >> true
+            getImportComponents() >> [webhooks: true]
+            getImportOpts() >> [webhooks: [some: 'thing']]
+        }
+
+        def tempfile2 = File.createTempFile("test-archive", ".jar")
+        tempfile2.deleteOnExit()
+        def jarStream = new JarOutputStream(tempfile2.newOutputStream())
+        ZipBuilder builder = new ZipBuilder(jarStream)
+        builder.dir('unrelated-dir/') {
+            builder.file('virus.exe') { Writer writer ->
+                writer << 'test-bin-content-very-malicious-and-evil-ñacañacañññáááááááééééé'.getBytes(StandardCharsets.US_ASCII)
+            }
+        }
+        builder.file('malicious_image.png') { Writer writer ->
+            writer << 'test-bin-content-very-malicious-and-evil-ñacañacañññáááááááééééé'.getBytes(StandardCharsets.US_ASCII)
+        }
+        builder.file('malicious_text.txt') { Writer writer ->
+            writer << 'test-content-very-malicious-and-evil-ñacañacañññáááááááééééé'
+        }
+        jarStream.close()
+        component.getImportFilePatterns() >> ['webhooks.yaml']
+        component.getName() >> 'webhooks'
+
+        when:
+        def result = tempfile2.withInputStream { service.importToProject(project, framework, authCtx, it, rq) }
+
+        then:
+        def e = thrown(ProjectServiceException)
+        e.message == "Nothing to import found in archive"
+        0 * project.storeFileResource('readme.md', _) >> 1234L
+        0 * component.doImport(_, _, { it.containsKey('webhooks.yaml') }, [some: 'thing']) >> []
+
+        cleanup:
+        tempfile2.delete()
+
+    }
+
 
     def "basic export project to stream"() {
         given:
@@ -2619,7 +2762,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
   <dateStarted>1970-01-01T00:00:00Z</dateStarted>
   <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
   <executionId>123</executionId>
-  <jobId>test-job-uuid</jobId>
+  <jobId>1</jobId>
   <adhocExecution />
   <adhocScript />
   <abortedByUser />
@@ -2813,6 +2956,56 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             message: 'Report message',
         ].keySet()
         assertPropertiesEquals exec.properties.subMap(keys), result
+    }
+
+    def testReportNotUpdatedAfterExport() {
+        def newJobId = 'test-job-uuid'
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
+                uuid: newJobId,
+                adhocFilepath: '/this/is/a/path', groupPath: 'some/where', description: 'a job', argString: '-a b -c d',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+        )
+        assertNotNull se.save()
+        def oldJobId=se.id
+
+        def outfilename = "reportout.xml"
+
+        def zipmock = new MockFor(ZipBuilder)
+        def outwriter = new StringWriter()
+        zipmock.demand.file(1..1) {name, Closure withwriter ->
+            assertEquals(outfilename, name.toString())
+            withwriter.call(outwriter)
+            outwriter.flush()
+        }
+        def zip = zipmock.proxyInstance()
+
+        ExecReport exec = new ExecReport(
+                executionId:123L,
+                jobId: oldJobId.toString(),
+                node:'1/0/0',
+                title: 'blah',
+                status: 'succeed',
+                actionType: 'succeed',
+                project: 'testproj1',
+                reportId: 'test/job',
+                tags: 'a,b,c',
+                author: 'admin',
+                dateStarted: new Date(0),
+                dateCompleted: new Date(3600000),
+                message: 'Report message',
+                jobUuid: se.uuid,
+                executionUuid: 'uuid'
+        )
+        assertNotNull exec.save(flush: true)
+        when:
+        service.exportHistoryReport(zip, exec, outfilename)
+        then:
+        def report = ExecReport.get(exec.id)
+        assertNotNull report
+        assertEquals report.jobUuid, exec.jobUuid
+        assertEquals report.executionUuid, exec.executionUuid
+        assertEquals report.jobId, exec.jobId
+
     }
 
     /**
