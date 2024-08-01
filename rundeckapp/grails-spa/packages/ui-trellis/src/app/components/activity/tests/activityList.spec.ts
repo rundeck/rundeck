@@ -35,9 +35,9 @@ const shallowMountActivityList = async (
         Btn,
       },
       stubs: {
-        modal: false,
-        "i18n-t": true,
+        // modal: false,
         btn: false,
+        "i18n-t": true,
         ProgressBar: true,
       },
       mocks: {
@@ -89,13 +89,6 @@ describe("ActivityList", () => {
 
   describe("renders", () => {
     it("information about the page being shown and total number of results", async () => {
-      axiosMock.get.mockResolvedValue({
-        data: {
-          total: 20,
-          offset: 0,
-          reports: reports,
-        },
-      });
       const wrapper = await shallowMountActivityList();
       const pageInfoSpan = wrapper.find('[data-testid="page-info"]');
       const summaryCount = wrapper.find('[data-testid="summary-count"]');
@@ -190,9 +183,7 @@ describe("ActivityList", () => {
         }
         return Promise.resolve({ data: {} });
       });
-      axiosMock.post.mockResolvedValueOnce({
-        data: { allsuccessful: true },
-      });
+
       const wrapper = await shallowMountActivityList();
       await wrapper.vm.$nextTick();
       const bulkDeleteButton = wrapper.find(
@@ -203,8 +194,8 @@ describe("ActivityList", () => {
       const checkboxes = wrapper.findAll(
         '[data-testid="bulk-delete-checkbox"]',
       );
-      await checkboxes.at(0)?.setValue(true);
-      await checkboxes.at(1)?.setValue(true);
+      await checkboxes[0]!.setValue(true);
+      await checkboxes[1]!.setValue(true);
       axiosMock.get.mockImplementationOnce((url) => {
         if (url.includes("eventsAjax")) {
           // Assuming 2 reports were deleted
@@ -221,22 +212,34 @@ describe("ActivityList", () => {
       const confirmDeleteButton = wrapper.find(
         '[data-testid="delete-selected-executions"]',
       );
+
       await confirmDeleteButton.trigger("click");
-      await wrapper.vm.$nextTick();
-      const modal = wrapper.findComponent({ ref: "bulkexecdeleteresult" });
+      await flushPromises();
+      const modal = wrapper.find('[data-testid="modal-bulk-delete"]');
       expect(modal.exists()).toBe(true);
+      console.log("Modal HTML output:", modal.html());
+      await flushPromises();
+      await wrapper.vm.$nextTick();
+      // console.log(wrapper.html());
+      // const modalConfirmDeleteButton = modal.find(".confirm-delete");
       const modalConfirmDeleteButton = modal.find(
         '[data-testid="confirm-delete"]',
       );
+      console.log(
+        "Confirm Delete Button Exists:",
+        modalConfirmDeleteButton.exists(),
+      );
+
       expect(modalConfirmDeleteButton.exists()).toBe(true);
+
       await modalConfirmDeleteButton.trigger("click");
       const executionBulkDeleteSpy = jest
         .spyOn(wrapper.vm.rundeckContext.rundeckClient, "executionBulkDelete")
         .mockImplementation(() => Promise.resolve({ allsuccessful: true }));
       await wrapper.vm.$nextTick();
+      expect(executionBulkDeleteSpy).toHaveBeenCalledWith({ ids: [42] });
       const reportRows = wrapper.findAll('[data-testid="report-row-item"]');
       expect(reportRows.length).toBe(reports.length - 2); // Update expected length based on deletion
-      expect(executionBulkDeleteSpy).toHaveBeenCalledWith({ ids: [42] });
     });
 
     it("trigger bulk actions - search", async () => {
@@ -314,7 +317,7 @@ describe("ActivityList", () => {
     expect(window.location).toBe("/project/aaa/execution/show/42");
   });
 
-  it("fetches data automatically and renders message when there are no executions since timestamp", async () => {
+  it("fetches data automatically and renders message when there are  executions since timestamp", async () => {
     jest.useFakeTimers();
     axiosMock.get.mockImplementation((url) => {
       if (url.includes("eventsAjax")) {

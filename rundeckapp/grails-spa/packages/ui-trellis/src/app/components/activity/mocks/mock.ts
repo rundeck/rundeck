@@ -36,7 +36,6 @@ export const rundeckClientMock = {
 
 export const rundeckServiceMock = {
   getRundeckContext: jest.fn().mockReturnValue({
-    // eventBus: mockEventBus as unknown as typeof EventBus,
     rdBase: "mocked-rdBase",
     apiVersion: "47",
     projectName: "test",
@@ -46,7 +45,6 @@ export const rundeckServiceMock = {
     appMeta: {},
     token: { TOKEN: "mocked-token", URI: "mocked-uri" },
     tokens: { default: { TOKEN: "mocked-token", URI: "mocked-uri" } },
-    // rundeckClient: new RundeckBrowser("mocked-token", "mocked-uri"),
     rundeckClient: rundeckClientMock,
     data: {
       jobslistDateFormatMoment: "MM/DD/YYYY",

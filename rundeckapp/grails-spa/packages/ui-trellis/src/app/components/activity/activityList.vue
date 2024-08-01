@@ -70,7 +70,6 @@
             </span>
             <span
               class="btn btn-default btn-xs"
-              data-testid="activity-list-deselect-all"
               @click="showBulkEditCleanSelections = true"
             >
               {{ $t("select.none") }}
@@ -110,7 +109,6 @@
       v-model="showBulkEditCleanSelections"
       :title="$t('Clear bulk selection')"
       append-to-body
-      data-test-id="modal-clean-selections"
     >
       <i18n-t keypath="clearselected.confirm.text" tag="p">
         <strong>{{ bulkSelectedIds.length }}</strong>
@@ -127,7 +125,6 @@
             type="submit"
             class="btn btn-default"
             data-dismiss="modal"
-            data-test-id="activity-list-deselect-all"
             @click="bulkEditDeselectAll"
           >
             {{ $t("Only shown executions") }}
@@ -145,11 +142,10 @@
 
     <modal
       id="bulkexecdelete"
-      ref="bulkexecdeleteresult"
       v-model="showBulkEditConfirm"
       :title="$t('Bulk Delete Executions')"
       append-to-body
-      data-test-id="modal-bulk-delete"
+      data-testid="modal-bulk-delete"
     >
       <i18n-t keypath="delete.confirm.text" tag="p">
         <strong>{{ bulkSelectedIds.length }}</strong>
@@ -178,7 +174,6 @@
       v-model="showBulkEditResults"
       :title="$t('Bulk Delete Executions: Results')"
       append-to-body
-      data-test-id="modal-bulk-delete-results"
     >
       <div v-if="bulkEditProgress">
         <em>
@@ -244,7 +239,6 @@
             :key="exec.id"
             class="execution link activity_row autoclickable"
             :class="{ nowrunning: !exec.dateCompleted, [exec.status]: true }"
-            data-testid="execution-item"
             @click="autoBulkEdit(exec)"
             @click.middle="middleClickRow(exec)"
           >
@@ -404,11 +398,7 @@
             </td>
           </tr>
         </tbody>
-        <tbody
-          v-if="reports.length > 0"
-          class="history-executions"
-          data-testid="report-rows-item"
-        >
+        <tbody v-if="reports.length > 0" class="history-executions">
           <tr
             v-for="rpt in reports"
             :key="rpt.execution.id"
@@ -569,11 +559,7 @@
       </table>
     </div>
 
-    <div
-      v-if="reports.length < 1"
-      class="loading-area"
-      data-test-id="loading-area"
-    >
+    <div v-if="reports.length < 1" class="loading-area">
       <span
         v-if="!loading && !loadError"
         data-testid="no-data-message"
@@ -1033,11 +1019,13 @@ export default defineComponent({
       this.loadActivity(0);
     },
     async bulkDeleteExecutions(ids: string[]) {
+      console.log("Starting bulk delete operation with IDs:", ids);
       this.bulkEditProgress = true;
       this.showBulkEditResults = true;
       try {
         this.bulkEditResults =
           await this.rundeckContext.rundeckClient.executionBulkDelete({ ids });
+        console.log("Bulk delete results:", this.bulkEditResults);
         this.bulkEditProgress = false;
         this.bulkSelectedIds = [];
         if (this.bulkEditResults.allsuccessful) {
@@ -1045,6 +1033,7 @@ export default defineComponent({
         }
         this.loadActivity(this.pagination.offset);
       } catch (error) {
+        console.error("Bulk delete error:", error);
         this.bulkEditProgress = false;
         //@ts-ignore
         this.bulkEditError = error;
