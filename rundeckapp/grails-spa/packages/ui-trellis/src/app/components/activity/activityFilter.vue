@@ -61,7 +61,6 @@
     ></saved-filters>
     <modal
       id="activityFilter"
-      ref="filterModal"
       v-model="filterOpen"
       :title="$t('Search Activity')"
       size="lg"
@@ -92,7 +91,6 @@
                   {{ $t("jobquery.title.jobIdFilter") }}
                 </label>
                 <input
-                  ref="jobIdFilter"
                   v-model="query.jobIdFilter"
                   type="text"
                   name="jobIdFilter"
@@ -219,12 +217,14 @@
       <template #footer>
         <btn @click="filterOpen = false">{{ $t("cancel") }}</btn>
         <btn
-          ref="searchButton"
           type="primary"
           class="btn btn-primary"
           data-testid="searchfilter"
           @click="search"
-          >{{ $t("search") }}</btn
+        >
+          {{ $t("search") }}
+        </btn>
+
         >
         <btn type="default" class="btn-default pull-right" @click="saveFilter">
           <i class="glyphicon glyphicon-plus"></i>
