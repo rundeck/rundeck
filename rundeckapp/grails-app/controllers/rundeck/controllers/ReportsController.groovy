@@ -298,27 +298,26 @@ class ReportsController extends ControllerBase{
         results.reports=results?.reports.collect{
             def map=it.toMap()
             map.duration= (it.dateCompleted ?: new Date()).time - it.dateStarted.time
-            def execution=null
-            if(map.executionUuid) {
-                execution = Execution.findByUuid(map.executionUuid)
-            }else if(map.executionId) {
-                execution = Execution.findById(map.executionId)
-            }
-            if(execution){
                 //nb:response data type expects string
-                try {
-                    map.execution = execution?.toMap()
-                    map.executionId= map.execution.id.toString()
-                    map.executionHref = createLink(controller: 'execution', action: 'show', absolute: false, id: map.execution.id, params: [project: (map?.project != null)? map.project : params.project])
-
-                } catch (Exception e) {
-                    log.debug("Error getting Execution: " + e.message)
+            def execution = null
+            try {
+                if (map.executionUuid) {
+                    execution = Execution.findByUuid(map.executionUuid)
+                } else if (map.executionId) {
+                    execution = Execution.findById(map.executionId)
                 }
-           }
+            } catch (Exception e) {
+                log.debug("Error getting Execution: " + e.message)
+            }
+            if (execution) {
+                map.execution = execution?.toMap()
+                map.executionId = map.execution.id.toString()
+                map.executionHref = createLink(controller: 'execution', action: 'show', absolute: false, id: map.execution.id, params: [project: (map?.project != null) ? map.project : params.project])
+                map.jobName= map.remove('reportId')
+                map.user= map.remove('author')
+                map.executionString= map.remove('title')
+            }
 
-            map.jobName= map.remove('reportId')
-            map.user= map.remove('author')
-            map.executionString= map.remove('title')
             return map.execution?map:null
         }.findAll{it}
 //        results.params=params
