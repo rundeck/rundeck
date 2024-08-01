@@ -35,7 +35,7 @@ const shallowMountActivityList = async (
         Btn,
       },
       stubs: {
-        // modal: false,
+        modal: false,
         btn: false,
         "i18n-t": true,
         ProgressBar: true,
@@ -97,31 +97,10 @@ describe("ActivityList", () => {
     });
 
     it("information about the current executions and finished jobs", async () => {
-      axiosMock.get.mockImplementation((url) => {
-        if (url.includes("running")) {
-          return Promise.resolve({
-            data: {
-              executions: mockRunningExecutions,
-            },
-          });
-        }
-        if (url.includes("eventsAjax")) {
-          return Promise.resolve({
-            data: {
-              total: 20,
-              offset: 0,
-              reports: reports,
-            },
-          });
-        }
-        return Promise.resolve({ data: {} });
-      });
       const wrapper = await shallowMountActivityList();
-      await wrapper.vm.$nextTick(); // Wait for all pending updates to finish
-      // Verify the current executions
+      await wrapper.vm.$nextTick();
       const executionItems = wrapper.findAll('[data-testid="execution-link"]');
       expect(executionItems.length).toBe(2); // Directly using the expected length value
-      // Verify the finished job reports
       const reportItems = wrapper.findAll('[data-testid="report-row-item"]');
       expect(reportItems.length).toBe(2);
     });
@@ -164,26 +143,6 @@ describe("ActivityList", () => {
 
   describe("trigger bulk actions", () => {
     it("trigger bulk actions - delete", async () => {
-      axiosMock.get.mockImplementation((url) => {
-        if (url.includes("eventsAjax")) {
-          return Promise.resolve({
-            data: {
-              total: reports.length,
-              offset: 0,
-              reports: reports,
-            },
-          });
-        }
-        if (url.includes("running")) {
-          return Promise.resolve({
-            data: {
-              executions: mockRunningExecutions,
-            },
-          });
-        }
-        return Promise.resolve({ data: {} });
-      });
-
       const wrapper = await shallowMountActivityList();
       await wrapper.vm.$nextTick();
       const bulkDeleteButton = wrapper.find(
@@ -212,26 +171,13 @@ describe("ActivityList", () => {
       const confirmDeleteButton = wrapper.find(
         '[data-testid="delete-selected-executions"]',
       );
-
       await confirmDeleteButton.trigger("click");
       await flushPromises();
-      const modal = wrapper.find('[data-testid="modal-bulk-delete"]');
-      expect(modal.exists()).toBe(true);
-      console.log("Modal HTML output:", modal.html());
-      await flushPromises();
+      const modal = wrapper.findComponent({ ref: "bulkexecdeleteresult" });
       await wrapper.vm.$nextTick();
-      // console.log(wrapper.html());
-      // const modalConfirmDeleteButton = modal.find(".confirm-delete");
       const modalConfirmDeleteButton = modal.find(
         '[data-testid="confirm-delete"]',
       );
-      console.log(
-        "Confirm Delete Button Exists:",
-        modalConfirmDeleteButton.exists(),
-      );
-
-      expect(modalConfirmDeleteButton.exists()).toBe(true);
-
       await modalConfirmDeleteButton.trigger("click");
       const executionBulkDeleteSpy = jest
         .spyOn(wrapper.vm.rundeckContext.rundeckClient, "executionBulkDelete")
@@ -262,13 +208,6 @@ describe("ActivityList", () => {
             },
           });
         }
-        if (url.includes("running")) {
-          return Promise.resolve({
-            data: {
-              executions: mockRunningExecutions,
-            },
-          });
-        }
         return Promise.resolve({ data: {} });
       });
       const wrapper = await shallowMountActivityList();
@@ -290,25 +229,6 @@ describe("ActivityList", () => {
   });
 
   it("navigates to the execution page", async () => {
-    axiosMock.get.mockImplementation((url) => {
-      if (url.includes("execution")) {
-        return Promise.resolve({
-          data: {
-            executions: mockRunningExecutions,
-          },
-        });
-      }
-      if (url.includes("eventsAjax")) {
-        return Promise.resolve({
-          data: {
-            total: 20,
-            offset: 0,
-            reports: reports,
-          },
-        });
-      }
-      return Promise.resolve({ data: {} });
-    });
     const wrapper = await shallowMountActivityList();
     await wrapper.vm.$nextTick();
     const reportRowItem = wrapper.find('[data-testid="report-row-item"]');
@@ -318,7 +238,6 @@ describe("ActivityList", () => {
   });
 
   it("fetches data automatically and renders message when there are  executions since timestamp", async () => {
-    jest.useFakeTimers();
     axiosMock.get.mockImplementation((url) => {
       if (url.includes("eventsAjax")) {
         return Promise.resolve({
@@ -361,6 +280,5 @@ describe("ActivityList", () => {
     const sinceCountData = wrapper.find('[data-testid="since-count-data"]');
     expect(sinceCountData.text()).toContain("5 New Results. Click to load.");
     jest.clearAllTimers();
-    jest.useRealTimers();
   });
 });

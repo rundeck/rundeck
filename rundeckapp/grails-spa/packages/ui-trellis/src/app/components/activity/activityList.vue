@@ -142,10 +142,10 @@
 
     <modal
       id="bulkexecdelete"
+      ref="bulkexecdeleteresult"
       v-model="showBulkEditConfirm"
       :title="$t('Bulk Delete Executions')"
       append-to-body
-      data-testid="modal-bulk-delete"
     >
       <i18n-t keypath="delete.confirm.text" tag="p">
         <strong>{{ bulkSelectedIds.length }}</strong>
@@ -1019,13 +1019,12 @@ export default defineComponent({
       this.loadActivity(0);
     },
     async bulkDeleteExecutions(ids: string[]) {
-      console.log("Starting bulk delete operation with IDs:", ids);
       this.bulkEditProgress = true;
       this.showBulkEditResults = true;
       try {
         this.bulkEditResults =
           await this.rundeckContext.rundeckClient.executionBulkDelete({ ids });
-        console.log("Bulk delete results:", this.bulkEditResults);
+
         this.bulkEditProgress = false;
         this.bulkSelectedIds = [];
         if (this.bulkEditResults.allsuccessful) {
@@ -1033,7 +1032,6 @@ export default defineComponent({
         }
         this.loadActivity(this.pagination.offset);
       } catch (error) {
-        console.error("Bulk delete error:", error);
         this.bulkEditProgress = false;
         //@ts-ignore
         this.bulkEditError = error;
