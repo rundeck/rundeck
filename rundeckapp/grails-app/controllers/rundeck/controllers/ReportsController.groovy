@@ -298,10 +298,16 @@ class ReportsController extends ControllerBase{
         results.reports=results?.reports.collect{
             def map=it.toMap()
             map.duration= (it.dateCompleted ?: new Date()).time - it.dateStarted.time
-            if(map.executionUuid){
+            def execution=null
+            if(map.executionUuid) {
+                execution = Execution.findByUuid(map.executionUuid)
+            }else if(map.executionId) {
+                execution = Execution.findById(map.executionId)
+            }
+            if(execution){
                 //nb:response data type expects string
                 try {
-                    map.execution = Execution.findByUuid(map.executionUuid)?.toMap()
+                    map.execution = execution?.toMap()
                     map.executionId= map.execution.id.toString()
                     map.executionHref = createLink(controller: 'execution', action: 'show', absolute: false, id: map.execution.id, params: [project: (map?.project != null)? map.project : params.project])
 
