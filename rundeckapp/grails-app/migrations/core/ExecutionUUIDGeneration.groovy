@@ -19,7 +19,7 @@ databaseChangeLog = {
 
         update(tableName: "execution") {
             column(name: "uuid", valueComputed: '${uuid_function}')
-            column(name: "job_uuid", valueComputed: "SELECT s.uuid FROM scheduled_execution s WHERE s.id = scheduled_execution_id")
+            column(name: "job_uuid", valueComputed: "(SELECT s.uuid FROM scheduled_execution s WHERE s.id = scheduled_execution_id)")
             where("uuid IS NULL")
         }
     }
@@ -32,7 +32,7 @@ databaseChangeLog = {
         }
 
         update(tableName: "base_report") {
-            column(name: "execution_uuid", valueComputed: 'SELECT e.uuid FROM execution e WHERE execution_id = e.id')
+            column(name: "execution_uuid", valueComputed: '(SELECT e.uuid FROM execution e WHERE execution_id = e.id)')
             where("execution_uuid IS NULL")
         }
     }
