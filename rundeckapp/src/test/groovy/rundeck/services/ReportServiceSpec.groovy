@@ -26,6 +26,9 @@ import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import org.grails.datastore.mapping.query.Query
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.data.model.v1.execution.ExecutionData
+import org.rundeck.app.data.providers.DBExecReportSupport
+import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
 import org.springframework.context.ApplicationContext
 import rundeck.CommandExec
 import rundeck.ExecReport
@@ -200,6 +203,49 @@ class ReportServiceSpec extends Specification implements ServiceUnitTest<ReportS
         isOracle| criteriaQuery
         true    | Query.In
         false   | Query.In
+    }
+
+    def "delete by execution with uuid"() {
+        given:
+            service.execReportDataProvider = Mock(ExecReportDataProvider)
+            def exec = Mock(ExecutionData) {
+                getUuid() >> "uuid"
+            }
+        when:
+            service.deleteByExecution(exec)
+        then:
+            1 * service.execReportDataProvider.deleteAllByExecutionUuid('uuid')
+    }
+
+    interface DbReportDataProvider extends ExecReportDataProvider, DBExecReportSupport{
+
+    }
+
+    def "delete by execution without uuid, db support"() {
+        given:
+            def dbDataProvider = Mock(DbReportDataProvider)
+            service.execReportDataProvider = dbDataProvider
+            def exec = Mock(ExecutionData) {
+                getUuid() >> null
+                getInternalId() >> 123L
+            }
+        when:
+            service.deleteByExecution(exec)
+        then:
+            1 * dbDataProvider.deleteAllByExecutionId(123L)
+    }
+
+    def "delete by execution without uuid, without db support"() {
+        given:
+            service.execReportDataProvider = Mock(ExecReportDataProvider)
+            def exec = Mock(ExecutionData) {
+                getUuid() >> null
+                getInternalId() >> 123L
+            }
+        when:
+            service.deleteByExecution(exec)
+        then:
+            IllegalStateException e = thrown()
     }
 
     private Decision newDecisionInstance(

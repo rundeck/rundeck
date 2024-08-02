@@ -112,6 +112,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         provider.featureService = Mock(FeatureService){
             featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> false
         }
+        service.reportService = Mock(ReportService)
     }
 
     private Map createJobParams(Map overrides = [:]) {
@@ -1266,9 +1267,6 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         execution.dateCompleted = new Date()
         execution.status = 'succeeded'
         assert execution.save()
-        ExecReport execReport = ExecReport.fromExec(execution)
-        assert execReport!=null
-        def erptid=execReport.id
         def eauth = Mock(AuthorizingExecution){
             getResource()>>execution
         }
@@ -1283,8 +1281,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             getUsername()>>'auser'
         }
         1 * service.logFileStorageService.getExecutionFiles(execution,_,_)>>[:]
+        1 * service.reportService.deleteByExecution(execution)
         result.success
-        ExecReport.get(erptid)==null
     }
 
     def "delete execution running"() {
@@ -1367,6 +1365,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
         ) >> true
 
+        1 * service.reportService.deleteByExecution(execution)
+
         result.success
 
         !file1.exists()
@@ -1430,6 +1430,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
         ) >> true
 
+        1 * service.reportService.deleteByExecution(execution)
+
         result.success
     }
 
@@ -1470,6 +1472,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
         ) >> true
         1 * service.fileUploadService.deleteRecordsForExecution(execution)
+        1 * service.reportService.deleteByExecution(execution)
 
         result.success
 
