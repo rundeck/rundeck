@@ -69,4 +69,19 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
         deleted == null
 
     }
+    def "deleteAllByExecutionId should delete exec reports by execution id"() {
+        given:
+        Execution e = TestDomainFactory.createExecution(uuid: null, status: 'succeeded', dateCompleted: new Date())
+        def report = provider.saveReport(ExecReportUtil.buildSaveReportRequest(e))
+
+        when:
+        def created = provider.get(report.report.id)
+        provider.deleteAllByExecutionId(report.report.executionId)
+        def deleted = provider.get(report.report.id)
+
+        then:
+        created
+        deleted == null
+
+    }
 }
