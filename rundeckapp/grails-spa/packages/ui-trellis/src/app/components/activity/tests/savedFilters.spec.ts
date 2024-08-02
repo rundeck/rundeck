@@ -21,7 +21,7 @@ const originalFilters = [
 
 jest.mock("../../../../library/stores/ActivityFilterStore", () => {
   const originalModule = jest.requireActual(
-    "../../../../library/stores/ActivityFilterStore"
+    "../../../../library/stores/ActivityFilterStore",
   );
   return {
     __esModule: true,
@@ -36,7 +36,7 @@ jest.mock("../../../../library/stores/ActivityFilterStore", () => {
           .fn()
           .mockImplementation((projectName: string, filterName: string) => {
             const index = originalFilters.findIndex(
-              (filter) => filter.filterName === filterName
+              (filter) => filter.filterName === filterName,
             );
             if (index !== -1) {
               originalFilters.splice(index, 1);
@@ -51,7 +51,7 @@ jest.mock("../../../../library/stores/ActivityFilterStore", () => {
 
 const mountSavedFilters = (
   props = {},
-  filterStoreOverrides = {}
+  filterStoreOverrides = {},
 ): VueWrapper<any> => {
   const filterStore = {
     ...new ActivityFilterStore(),
@@ -101,14 +101,14 @@ describe("SavedFilters", () => {
       const wrapper = mountSavedFilters();
       expect(wrapper.props().eventBus.on).toHaveBeenCalledWith(
         "invoke-save-filter",
-        expect.any(Function)
+        expect.any(Function),
       );
     });
     it("unregisters event listeners on unmount", () => {
       const wrapper = mountSavedFilters();
       wrapper.unmount();
       expect(wrapper.props().eventBus.off).toHaveBeenCalledWith(
-        "invoke-save-filter"
+        "invoke-save-filter",
       );
     });
   });
@@ -116,13 +116,13 @@ describe("SavedFilters", () => {
     it("renders save button when hasQuery is true and query is empty", () => {
       const wrapper = mountSavedFilters();
       expect(wrapper.find('[data-test-id="save-filter-button"]').exists()).toBe(
-        true
+        true,
       );
     });
     it("does not render delete filter button when query has no filterName", () => {
       const wrapper = mountSavedFilters();
       expect(wrapper.find('[data-test-id="delete-filter-btn"]').exists()).toBe(
-        false
+        false,
       );
     });
     it("emits 'select_filter' when a filter is selected", async () => {
@@ -138,7 +138,7 @@ describe("SavedFilters", () => {
     it("calls MessageBox.prompt when saveFilterPrompt is triggered", async () => {
       const wrapper = mountSavedFilters();
       const saveFilterButton = wrapper.find(
-        '[data-test-id="save-filter-button"]'
+        '[data-test-id="save-filter-button"]',
       );
       await saveFilterButton.trigger("click");
       expect(MessageBox.prompt).toHaveBeenCalled();
@@ -151,7 +151,7 @@ describe("SavedFilters", () => {
       });
       const removeFilterSpy = jest.spyOn(
         wrapper.vm.filterStore,
-        "removeFilter"
+        "removeFilter",
       );
       await wrapper.vm.$nextTick();
       const initialCount = wrapper.findAll('[data-test="filter-item"]').length;
@@ -172,7 +172,7 @@ describe("SavedFilters", () => {
         query: { filterName: "Updated Filter" },
       });
       expect(wrapper.find('[data-test-id="filter-name"]').text()).toBe(
-        "Updated Filter"
+        "Updated Filter",
       );
     });
     it("updates filters after successful deletion", async () => {
