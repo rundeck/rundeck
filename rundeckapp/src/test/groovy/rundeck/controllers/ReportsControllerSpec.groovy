@@ -162,14 +162,14 @@ class ReportsControllerSpec extends RundeckHibernateSpec implements ControllerUn
                     _*getDateCompleted()>>e1.dateCompleted
                     _*getExecutionUuid() >> null
                     _*getExecutionId() >> e1.id
-                    _*toMap()>>[executionId:e1.id,executionUuid:e1.uuid]
+                    _*toMap()>>[executionId:e1.id,executionUuid:e1.uuid, project:project]
                 },
                 Mock(ExtRdExecReport) {
                     _*getDateStarted()>>e2.dateStarted
                     _*getDateCompleted()>>e2.dateCompleted
                     _*getExecutionUuid() >> e2.uuid
                     _*getExecutionId() >> e2.uuid
-                    _*toMap()>>[executionId:e2.id,executionUuid:e2.uuid]
+                    _*toMap()>>[executionId:e2.id,executionUuid:e2.uuid, project:project]
                 }
             ]
 
