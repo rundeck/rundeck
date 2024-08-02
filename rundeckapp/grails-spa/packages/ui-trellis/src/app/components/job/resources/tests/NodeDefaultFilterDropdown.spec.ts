@@ -1,6 +1,7 @@
 import { mount, VueWrapper } from "@vue/test-utils";
 import NodeDefaultFilterDropdown from "../NodeDefaultFilterDropdown.vue";
 import mitt, { Emitter, EventType } from "mitt";
+
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({
     rdBase: "mockRdBase",
@@ -61,7 +62,6 @@ describe("NodeDefaultFilterDropdown Component", () => {
   it("triggers filter event when a saved filter is selected", async () => {
     const wrapper = await mountNodeDefaultFilterDropdown();
     const filterLink = wrapper.find('a[data-testid="saved-filter"]');
-    expect(filterLink.exists()).toBe(true);
     await filterLink.trigger("click");
     expect(wrapper.emitted().filter[0]).toEqual([
       { filterName: "filter1", filter: "filter1" },

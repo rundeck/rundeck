@@ -4,26 +4,16 @@
       <dropdown>
         <a
           class="nodefilterlink btn btn-default btn-xs"
-          data-testid="filter-link-all-nodes"
           @click.prevent="saveFilter({ filter: '.*' })"
         >
           {{ $t("all.nodes") }} {{ nodeSummary ? nodeSummary.totalCount! : 0 }}
         </a>
-        <btn
-          size="xs"
-          title="Filter Actions"
-          class="dropdown-toggle"
-          data-testid="dropdown-toggle"
-        >
+        <btn size="xs" title="Filter Actions" class="dropdown-toggle">
           <span class="caret"></span>
         </btn>
         <template #dropdown>
           <li>
-            <a
-              role="button"
-              data-testid="toggle-default-filter"
-              @click.prevent="toggleDefaultFilter"
-            >
+            <a role="button" @click.prevent="toggleDefaultFilter">
               <i
                 class="glyphicon"
                 :class="[
@@ -53,21 +43,12 @@
         >
           {{ i.filterName }}
         </a>
-        <btn
-          size="xs"
-          title="Filter Actions"
-          class="dropdown-toggle"
-          data-testid="dropdown-toggle"
-        >
+        <btn size="xs" title="Filter Actions" class="dropdown-toggle">
           <span class="caret"></span>
         </btn>
         <template #dropdown>
           <li>
-            <a
-              role="button"
-              data-testid="delete-filter-link"
-              @click="deleteFilterConfirm(i)"
-            >
+            <a role="button" @click="deleteFilterConfirm(i)">
               <i class="glyphicon glyphicon-remove"></i>
               {{ $t("delete.this.filter.ellipsis") }}
             </a>
@@ -83,11 +64,7 @@
             </a>
           </li>
           <li v-else>
-            <a
-              role="button"
-              data-testid="remove-default-filter-link"
-              @click="removeDefault()"
-            >
+            <a role="button" @click="removeDefault()">
               <i class="glyphicon glyphicon-ban-circle"></i>
               {{ $t("remove.default.filter") }}
             </a>
