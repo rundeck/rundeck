@@ -10,6 +10,13 @@ describe("glyphiconBadges", () => {
       "glyphicon-lock-1",
     ]);
   });
+  it("parses input string with badges that do not end with a number", () => {
+    const input = "fa-house-user, glyphicon-download-alt";
+    expect(glyphiconBadges({ "ui:badges": input })).toEqual([
+      "fa-house-user",
+      "glyphicon-download-alt",
+    ]);
+  });
 
   it("filters out invalid badge names", () => {
     const input = "glyphicon-user, invalid-badge, fa2-car, fab_badge";
