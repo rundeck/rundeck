@@ -57,7 +57,7 @@ describe("ActivityRunningIndicator.vue", () => {
     const wrapper = await mountActivityRunningIndicator();
     expect(wrapper.vm.eventBus.on).toHaveBeenCalledWith(
       "activity-nowrunning-count",
-      expect.any(Function)
+      expect.any(Function),
     );
   });
   it("unregisters 'activity-nowrunning-count' event on unmount", async () => {
@@ -65,7 +65,7 @@ describe("ActivityRunningIndicator.vue", () => {
     wrapper.unmount();
     expect(wrapper.vm.eventBus.off).toHaveBeenCalledWith(
       "activity-nowrunning-count",
-      expect.any(Function)
+      expect.any(Function),
     );
   });
 });

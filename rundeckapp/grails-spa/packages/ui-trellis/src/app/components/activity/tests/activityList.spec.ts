@@ -12,6 +12,7 @@ import ActivityFilter from "../activityFilter.vue";
 import OffsetPagination from "../../../../library/components/utils/OffsetPagination.vue";
 import { cloneDeep } from "lodash";
 import { Modal, Btn } from "uiv";
+
 jest.mock("../../../../library/rundeckService", () => rundeckServiceMock);
 jest.mock("@rundeck/client", () => rundeckClientMock);
 jest.mock("axios", () => axiosMock);
@@ -237,7 +238,7 @@ describe("ActivityList", () => {
     expect(window.location).toBe("/project/aaa/execution/show/42");
   });
 
-  it("fetches data automatically and renders message when there are  executions since timestamp", async () => {
+  it("automatically fetches data and displays a message when there are new executions since the last timestamp", async () => {
     axiosMock.get.mockImplementation((url) => {
       if (url.includes("eventsAjax")) {
         return Promise.resolve({

@@ -239,6 +239,7 @@ import { defineComponent } from "vue";
 import DateTimePicker from "./dateTimePicker.vue";
 import DateFilter from "./dateFilter.vue";
 import SavedFilters from "./savedFilters.vue";
+
 export default defineComponent({
   name: "ActivityFilter",
   components: {
@@ -476,12 +477,15 @@ export default defineComponent({
     margin: 0;
   }
 }
+
 .btn-queried {
   border-style: dotted;
 }
+
 .btn-primary {
   color: var(--font-fill-color);
   background-color: var(--primary-color);
+
   &:hover {
     color: var(--font-fill-color);
     background-color: var(--primary-states-color);

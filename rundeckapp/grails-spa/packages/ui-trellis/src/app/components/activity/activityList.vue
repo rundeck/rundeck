@@ -116,11 +116,9 @@
 
       <template #footer>
         <div>
-          <btn
-            data-dismiss="modal"
-            @click="showBulkEditCleanSelections = false"
-            >{{ $t("cancel") }}</btn
-          >
+          <btn data-dismiss="modal" @click="showBulkEditCleanSelections = false"
+            >{{ $t("cancel") }}
+          </btn>
           <button
             type="submit"
             class="btn btn-default"
@@ -1202,20 +1200,24 @@ export default defineComponent({
   background: var(--background-color-accent-lvl2);
   font-size: 14px;
   text-align: center;
+
   .loading-text {
     font-style: italic;
     color: var(--font-color);
   }
 }
+
 td.eventtitle.adhoc {
   font-style: italic;
 }
+
 .table.activity-list-table {
   > tbody > tr {
     > td.eventicon {
       width: 24px;
       padding: 0 0 0 10px;
     }
+
     > td.node-stats {
       white-space: nowrap;
       text-align: right;
@@ -1223,17 +1225,21 @@ td.eventtitle.adhoc {
     }
   }
 }
+
 $since-bg: #ccf;
 .table tbody.since-count-data {
   background: $since-bg;
   color: white;
+
   > tr > td {
     padding: 2px;
   }
+
   > tr:hover {
     background: var(--background-color-accent-lvl2);
   }
 }
+
 .running-executions + .history-executions,
 .running-executions + .since-count-data,
 .since-count-data + .history-executions {
@@ -1241,20 +1247,24 @@ $since-bg: #ccf;
     border-top: 2px solid $since-bg;
   }
 }
+
 .progress {
   height: 20px;
   margin: 0;
 }
+
 .missed {
   background-color: var(--warning-bg-color);
   --text-muted-color: var(--font-color);
   --text-secondary-color: var(--font-color);
 }
+
 .spacing-x {
   * + * {
     margin-left: var(--spacing-1);
   }
 }
+
 .spacing-x-2 {
   * + * {
     margin-left: var(--spacing-2);
