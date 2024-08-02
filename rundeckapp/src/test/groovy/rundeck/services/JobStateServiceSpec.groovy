@@ -33,6 +33,7 @@ import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
+import rundeck.data.job.reference.JobReferenceImpl
 import spock.lang.Specification
 
 import static org.junit.Assert.assertNotNull

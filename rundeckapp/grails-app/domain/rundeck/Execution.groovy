@@ -31,7 +31,6 @@ import rundeck.data.execution.RdExecutionDataSummary
 import rundeck.data.job.RdNodeConfig
 import rundeck.data.validation.shared.SharedExecutionConstraints
 import rundeck.data.validation.shared.SharedNodeConfigConstraints
-import rundeck.data.validation.shared.SharedProjectNameConstraints
 import rundeck.data.validation.shared.SharedServerNodeUuidConstraints
 import rundeck.services.ExecutionService
 import rundeck.services.execution.ExecutionReferenceImpl
@@ -371,6 +370,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
             map.timeout = timeout
         }
         map.id= this.id
+        map.uuid= this.uuid
         map.doNodedispatch= this.doNodedispatch
         if(this.executionType) {
             map.executionType=executionType
@@ -426,6 +426,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         Execution exec= new Execution()
         if(job){
             exec.scheduledExecution=job
+            exec.jobUuid=job.uuid
         }
         exec.dateStarted=data.dateStarted
         exec.dateCompleted=data.dateCompleted
@@ -565,5 +566,6 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
                 serverNodeUUID: this.serverNodeUUID
         )
     }
+
 }
 

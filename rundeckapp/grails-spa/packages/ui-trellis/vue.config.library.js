@@ -39,7 +39,6 @@ walk.walkSync("./src/library/components", {
 
 module.exports = {
   pages,
-
   outputDir: "./lib",
   publicPath: "./",
   filenameHashing: false,
@@ -62,21 +61,27 @@ module.exports = {
   },
   configureWebpack: (config) => {
     config.devtool = "cheap-module-source-map";
+    config.output.assetModuleFilename = "[name][ext]";
+    config.output.chunkFilename = "[name][ext]";
 
     /** Put vue in extension so files match typescript decleration files */
     config.output.filename = (asset) => {
-      if (asset.chunk.entryModule._identifier.endsWith("vue"))
-        return "[name].vue.js";
-      else return "[name].js";
+      // assets at this point are either test files or vue components
+      // previously webpack was including the extension in the name
+      // now it doesn't do so for the vue files, so asset.chunk.name will
+      // either be the component name, or component name.test
+      if (asset.chunk.name.endsWith("test")) return "[name].js";
+      else return "[name].vue.js";
     };
-    config.output.library = "rundeckUiTrellis";
+
     config.output.libraryTarget = "commonjs2";
+    config.output.libraryExport = "default";
 
     config.externals = [
       /** Externalize everything under node_modules: Use peer deps */
       nodeExternals(),
       /** Externalize local project imports: ie require('../util/Foo') */
-      function (context, request, callback) {
+      function ({ context, request }, callback) {
         if (/^\..*\.vue$/.test(request))
           // Components requiring other components
           return callback(null, request);

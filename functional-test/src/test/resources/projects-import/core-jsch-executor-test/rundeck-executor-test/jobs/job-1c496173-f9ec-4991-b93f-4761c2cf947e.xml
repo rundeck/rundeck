@@ -1,0 +1,21 @@
+<joblist>
+  <job>
+    <defaultTab>nodes</defaultTab>
+    <description></description>
+    <executionEnabled>true</executionEnabled>
+    <id>1c496173-f9ec-4991-b93f-4761c2cf947e</id>
+    <loglevel>INFO</loglevel>
+    <name>Run script from URL</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <schedules />
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <scriptargs />
+        <scripturl>http://mock-server/helloWorld.sh</scripturl>
+      </command>
+    </sequence>
+    <uuid>1c496173-f9ec-4991-b93f-4761c2cf947e</uuid>
+  </job>
+</joblist>

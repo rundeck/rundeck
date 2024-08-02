@@ -43,10 +43,16 @@ Time: 12:54 PM
       <div class="col-xs-12">
         <div class="card">
           <div class="card-header">
-            <h2 class="card-title">
-              <g:message code="app.firstRun.title"
-              args="${[g.appTitle(), grailsApplication.metadata['build.ident']]}"/>
-            </h2>
+            <div class="vue-ui-socket">
+              <ui-socket section="menu-welcome"
+                         location="menu-welcome-header"
+                         socket-data="${g.enc(attr:[appTitle: g.appTitle()].encodeAsJSON())}">
+                <h2 class="card-title">
+                  <g:message code="app.firstRun.title"
+                             args="${[g.appTitle(), grailsApplication.metadata['build.ident']]}"/>
+                </h2>
+              </ui-socket>
+            </div>
           </div>
           <div class="card-content">
             <div class="ui-common-platform enterprise-hide" style="margin:0 0 2em;">
@@ -62,8 +68,14 @@ Time: 12:54 PM
           </div>
         </div>
         <div class="card-footer" style="margin-top:1em;">
-            <g:basicData data="${buildData}" fields="${buildDataKeys.sort()}"/>
-            <g:render template="/common/versionDisplay"/>
+            <div class="vue-ui-socket">
+              <ui-socket section="menu-welcome-footer"
+                         location="menu-welcome-footer-build-info"
+                >
+                <g:basicData data="${buildData}" fields="${buildDataKeys.sort()}"/>
+                <g:render template="/common/versionDisplay"/>
+              </ui-socket>
+            </div>
           </div>
         </div>
       </div>

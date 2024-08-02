@@ -1,10 +1,14 @@
 <template>
-  <span :title="title">
-    <span :style="{ color }">
+  <span :title="title" data-test-id="server-title">
+    <span :style="{ color }" data-test-id="server-color">
       <i class="glyphicon" :class="[`glyphicon-${glyphicon}`]" />
-      <span v-if="showId">{{ uuidShort }}</span>
+      <span v-if="showId" data-test-id="server-uuid-short">{{
+        uuidShort
+      }}</span>
     </span>
-    <span style="margin-left: 0.5em" :class="css">{{ name }}</span>
+    <span style="margin-left: 0.5em" :class="css" data-test-id="server-name">{{
+      name
+    }}</span>
     <ui-socket
       section="server-info-display"
       location="badges"

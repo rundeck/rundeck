@@ -16,10 +16,6 @@ build_rdtest_docker(){
 		mv rd.deb dockers/rundeck/data/
 	fi
 
-	# setup test dirs
-	cp -r ../src dockers/rundeck/api_test/
-	cp -r ../api dockers/rundeck/api_test/
-
 	# tickle installer for it to rebuild
 	#date > dockers/rundeck/data/build_control
 

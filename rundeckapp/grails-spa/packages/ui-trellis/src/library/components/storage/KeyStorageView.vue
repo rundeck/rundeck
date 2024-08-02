@@ -414,7 +414,7 @@ export default defineComponent({
       return value;
     },
     isRunner(): boolean {
-      return this.rootPath.startsWith("runner:");
+      return this.rootPath ? this.rootPath.startsWith("runner:") : false;
     },
   },
   watch: {

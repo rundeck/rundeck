@@ -1,6 +1,0 @@
-Manifest-Version: 1.0
-Rundeck-Archive-Project-Name: test
-Rundeck-Archive-Format-Version: 1.0
-Rundeck-Application-Version: 3.2.1-SNAPSHOT
-Rundeck-Archive-Export-Date: 2020-04-22T22:44:20Z
-

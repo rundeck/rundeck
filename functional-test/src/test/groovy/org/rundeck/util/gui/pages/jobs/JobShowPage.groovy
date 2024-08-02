@@ -41,6 +41,9 @@ class JobShowPage extends BasePage{
     By closeDefinitionModalBy = By.cssSelector("div[id='job-definition-modal_footer'] button[data-dismiss='modal']")
     By jobActionBy = By.xpath("//div[contains(@class, 'job-action-button')]")
     By jobActionEditBy = By.xpath("//a[@title='Edit this Job']")
+    By nodeFilterInputBy = By.cssSelector("#doReplaceFilters")
+    By nodeFilterOverrideBy = By.cssSelector("#filterradio")
+    By schedJobNodeFilterBy = By.cssSelector("div[class='input-group nodefilters multiple-control-input-group']")
     By jobLinkTitleBy = By.xpath("//a[contains(@class, 'job-header-link')]")
     By autocompleteJobStepDefinitionBy = By.cssSelector("#wfitem_0 > span > div > div > span > span > span.text-success")
     By runFormBy = By.cssSelector("#execDiv #exec_options_form #formbuttons #execFormRunButton")
@@ -63,9 +66,15 @@ class JobShowPage extends BasePage{
     By jobOptionValuesBy = By.cssSelector(".optionvalues")
     By jobOptionValueInputBy = By.cssSelector(".optionvalues > option:nth-child(6)")
 
+    static class NextUi {
+        static By descriptionText = By
+                .xpath("//*[@class=\"markdown-body\"]")
+    }
+
     static final String PAGE_PATH = "/job/show"
     String loadPath = "/job/show"
     private String project
+    boolean nextUi = false
 
     JobShowPage(final SeleniumContext context) {
         super(context)
@@ -126,7 +135,7 @@ class JobShowPage extends BasePage{
     }
 
     WebElement getDescriptionTextLabel() {
-        el descriptionText
+        el nextUi ? NextUi.descriptionText : descriptionText
     }
 
     List<WebElement> getCronLabel() {
@@ -207,6 +216,18 @@ class JobShowPage extends BasePage{
 
     WebElement getOptionValidationWarningText() {
         el optionValidationWarningBy
+    }
+
+    WebElement getNodeFilterInput() {
+        el nodeFilterInputBy
+    }
+
+    WebElement getNodeFilterOverride() {
+        el nodeFilterOverrideBy
+    }
+
+    WebElement getSchedJobNodeFilter() {
+        el schedJobNodeFilterBy
     }
 
     List<WebElement> getJobRowLink() {

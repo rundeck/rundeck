@@ -69,6 +69,13 @@ task apiTest(type: Test){
     systemProperty('spock.configuration','spock-configs/IncludeAPITestsConfig.groovy')
     description = "Run API tests"
 }
+task pluginBlocklistTest(type: Test){
+    useJUnitPlatform()
+    systemProperty('TEST_IMAGE', "rundeck/rundeck:SNAPSHOT")
+    systemProperty("COMPOSE_PATH", "docker/compose/oss/docker-compose-blocklist.yml")
+    systemProperty('spock.configuration','spock-configs/IncludeBlocklistTestsConfig.groovy')
+    description = "Run Plugin Blocklist tests"
+}
 
 task seleniumCoreTest(type: Test){
     useJUnitPlatform()
@@ -78,12 +85,10 @@ task seleniumCoreTest(type: Test){
     description = "Run Rundeck OSS Selenium Tests"
 }
 
-task tomcatTest(type: Test){
+task ldapTest(type: Test){
     useJUnitPlatform()
-    systemProperty("DEFAULT_DOCKERFILE_LOCATION", "docker/file/tomcat/Dockerfile")
-    systemProperty('spock.configuration', 'spock-configs/IncludeAPITestsConfig.groovy')
-    description = "Run Rundeck OSS API Tests on a tomcat environment"
-    doFirst{
-        checkWarFile("${buildDir}/resources/test/docker/file/tomcat/data/", "rundeck-launcher.war")
-    }
+    systemProperty("TEST_IMAGE", "rundeck/rundeck:SNAPSHOT")
+    systemProperty("COMPOSE_PATH", "docker/ldap/docker-compose.yml")
+    systemProperty('spock.configuration', 'spock-configs/IncludeLdapTestsConfig.groovy')
+    description = "Run Rundeck OSS LDAP Tests"
 }

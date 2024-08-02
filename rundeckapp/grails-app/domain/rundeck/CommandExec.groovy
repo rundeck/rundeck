@@ -16,6 +16,7 @@
 
 package rundeck
 
+import org.rundeck.app.data.job.converters.WorkflowToRdWorkflowConverter
 import org.rundeck.core.execution.BaseCommandExec
 import rundeck.data.constants.WorkflowStepConstants
 
@@ -102,7 +103,9 @@ public class CommandExec extends WorkflowStep implements BaseCommandExec {
         return ce
     }
 
-    public Map getConfiguration() { null }
+    public Map getConfiguration() {
+        return WorkflowToRdWorkflowConverter.convertConfiguration(this.toMap())
+    }
 
     public String getPluginType() {
         if(adhocRemoteString) {

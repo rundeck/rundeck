@@ -887,4 +887,26 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             null              | 'invalid.username.and.password'
             'some.other.code' | 'some.other.code'
     }
+
+    def "should register user"() {
+        given:
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authorizeApplicationResourceAny(
+                    _,
+                    AuthConstants.RESOURCE_TYPE_SYSTEM,
+                    [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
+            ) >> true
+
+            1 * getAuthContextForSubject(_) >> Mock(UserAndRolesAuthContext) {
+                getUserName() >> 'userA'
+            }
+        }
+        params.login = 'userA'
+        when:
+        def register = controller.register()
+        then:
+        response.status == 200
+        register.newRegistration
+        register.user.login == 'userA'
+    }
 }

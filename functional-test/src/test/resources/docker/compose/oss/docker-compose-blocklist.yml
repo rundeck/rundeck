@@ -1,0 +1,17 @@
+version: "3"
+services:
+  rundeck:
+    image: ${TEST_IMAGE}
+    environment:
+      RUNDECK_GRAILS_URL: ${TEST_RUNDECK_GRAILS_URL}
+      RUNDECK_SERVER_FORWARDED: 'true'
+      RUNDECK_TOKENS_FILE: /home/rundeck/server/config/tokens.properties
+      RUNDECK_MULTIURL_ENABLED: "true"
+      RUNDECK_METRICS_ENABLED: "true"
+      RUNDECK_PLUGINS_PROVIDERBLOCKLISTFILE: /home/rundeck/blocklist.yaml
+    volumes:
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/etc/timezone:/etc/timezone:ro"
+      - "../../../tokens.properties:/home/rundeck/server/config/tokens.properties"
+      - "../../../realm.properties:/home/rundeck/server/config/realm.properties"
+      - "../../../blocklist-test/blocklist.yaml:/home/rundeck/blocklist.yaml"

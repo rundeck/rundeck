@@ -16,7 +16,9 @@
 package rundeckapp.init.servlet
 
 import com.dtolabs.rundeck.core.init.CustomWebAppInitializer
+import org.eclipse.jetty.jmx.MBeanContainer
 import org.eclipse.jetty.server.Handler
+import org.eclipse.jetty.server.HostHeaderCustomizer
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.server.handler.ContextHandler
 import org.eclipse.jetty.webapp.AbstractConfiguration
@@ -26,6 +28,9 @@ import org.slf4j.LoggerFactory
 import org.springframework.boot.web.embedded.jetty.JettyServerCustomizer
 import org.springframework.boot.web.embedded.jetty.JettyServletWebServerFactory
 import org.springframework.boot.web.server.WebServerFactoryCustomizer
+import rundeck.services.feature.FeatureService
+
+import java.lang.management.ManagementFactory
 
 /**
  * Customize embedded jetty
@@ -36,12 +41,17 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
      */
     Map<String, String> initParams = [:]
     Boolean useForwardHeaders
+    String serverUrl
+    FeatureService featureService
 
     @Override
     void customize(final JettyServletWebServerFactory factory) {
         factory.addServerCustomizers(new JettyServerCustomizer() {
             @Override
             void customize(Server server) {
+                MBeanContainer mbContainer=new MBeanContainer(ManagementFactory.getPlatformMBeanServer());
+                server.addEventListener(mbContainer);
+                server.addBean(mbContainer);
                 for (Handler handler : server.getHandlers()) {
                     if (handler instanceof ContextHandler) {
                         ((ContextHandler) handler).setMaxFormKeys(2000)
@@ -50,6 +60,9 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
             }
         })
         factory.addServerCustomizers(new BanHttpMethodCustomizer())
+        if(serverUrl && featureService.featurePresent("setServerUrlOnNoHostHeader", false)) {
+            factory.addServerCustomizers(new RundeckHostHeaderCustomizer(serverUrl: serverUrl))
+        }
         factory.addConfigurations(new JettyConfigPropsInitParameterConfiguration(initParams))
         factory.useForwardHeaders=useForwardHeaders
     }

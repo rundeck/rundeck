@@ -24,7 +24,6 @@ class JobReferenceImpl implements JobReference {
                 ", project='" + project + '\'' +
                 ", jobName='" + jobName + '\'' +
                 ", groupPath='" + groupPath + '\'' +
-                ", version='" + version + '\'' +
                 '}';
     }
 }

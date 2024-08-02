@@ -157,6 +157,7 @@ dependencies {
     implementation 'org.grails.plugins:external-config:2.0.0'
     implementation 'commons-fileupload:commons-fileupload:1.5'
     implementation 'commons-beanutils:commons-beanutils:1.9.4'
+    implementation "commons-codec:commons-codec:${commonsCodecVersion}"
 
     implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
 
@@ -198,8 +199,8 @@ dependencies {
     implementation "org.grails.plugins:scaffolding"
     implementation "org.grails.plugins:events"
     implementation "org.grails.plugins:gsp"
-    implementation 'org.grails:grails-plugin-codecs:4.0.1'
-    implementation "org.grails.plugins:cache:5.0.1"
+    implementation "org.grails:grails-codecs"
+    implementation "org.grails.plugins:cache"
     implementation "io.micronaut:micronaut-inject-groovy"
     implementation "com.google.code.gson:gson:${gsonVersion}"
     implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
@@ -207,6 +208,7 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-annotations"
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonDataformatCBORVersion}"
     implementation "org.eclipse.jetty:jetty-jaas"
+    implementation "org.eclipse.jetty:jetty-jmx"
     implementation "org.eclipse.jetty:jetty-util"
     implementation "org.eclipse.jetty:jetty-security"
     implementation ("org.grails.plugins:spring-security-core:${grailsSpringSecurityVersion}"){
@@ -253,9 +255,9 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql:42.7.2'
     runtimeOnly 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
 
+    runtimeOnly "org.apache.tomcat:tomcat-jdbc:9.0.89"
     runtimeOnly "org.springframework:spring-jcl:${springVersion}"
     runtimeOnly "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
-    runtimeOnly "org.apache.tomcat:tomcat-jdbc:9.0.44"
     api ("com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion")
     runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
 
@@ -263,7 +265,6 @@ dependencies {
     testImplementation "org.grails:grails-gorm-testing-support"
     testImplementation "org.mockito:mockito-core"
     testImplementation "org.grails:grails-web-testing-support"
-    testImplementation "org.grails.plugins:geb"
     testImplementation "org.grails:grails-test-mixins:3.3.0.RC1"
     testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"
     testImplementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
@@ -375,9 +376,6 @@ tasks.withType(GroovyCompile).configureEach {
 
 tasks.withType(Test) {
     useJUnitPlatform()
-    systemProperty "geb.env", System.getProperty('geb.env')
-    systemProperty "webdriver.chrome.driver", System.getProperty('webdriver.chrome.driver')
-    systemProperty "webdriver.gecko.driver", System.getProperty('webdriver.gecko.driver')
 }
 
 tasks.withType(Test).configureEach {
@@ -395,30 +393,32 @@ assets {
     excludes = ['gulpfile.js','**/*~','*.json','bootstrap/**/*.less', '_package-manager/**/*']
 }
 
-buildProperties.doLast {
-    File grailsBuildInfoFile = it.outputs.files.files.find { it.name == 'grails.build.info' }
-    if (!grailsBuildInfoFile) return
-    Properties properties = new Properties()
+project.gradle.projectsEvaluated {
+    buildProperties.doLast {
+        File grailsBuildInfoFile = it.outputs.files.files.find { it.name == 'grails.build.info' }
+        if (!grailsBuildInfoFile) return
+        Properties properties = new Properties()
 
-    grailsBuildInfoFile.withInputStream {
-        properties.load(it)
-    }
+        grailsBuildInfoFile.withInputStream {
+            properties.load(it)
+        }
 
-    properties.setProperty("build.ident",properties.getProperty("info.app.version"))
-    properties.setProperty("core.version",properties.getProperty("info.app.version"))
+        properties.setProperty("build.ident", properties.getProperty("info.app.version"))
+        properties.setProperty("core.version", properties.getProperty("info.app.version"))
 
-    if (project.gitDescribeInfo) {
-        properties.setProperty("build.core.git.description", project.gitDescribeInfo)
-    }
-    if (project.gitCommit) {
-        properties.setProperty("build.core.git.commit", project.gitCommit)
-    }
-    if (project.gitBranch) {
-        properties.setProperty("build.core.git.branch", project.gitBranch)
-    }
+        if (project.gitDescribeInfo) {
+            properties.setProperty("build.core.git.description", project.gitDescribeInfo)
+        }
+        if (project.gitCommit) {
+            properties.setProperty("build.core.git.commit", project.gitCommit)
+        }
+        if (project.gitBranch) {
+            properties.setProperty("build.core.git.branch", project.gitBranch)
+        }
 
-    grailsBuildInfoFile.withOutputStream {
-        properties.store(it,null)
+        grailsBuildInfoFile.withOutputStream {
+            properties.store(it, null)
+        }
     }
 }
 

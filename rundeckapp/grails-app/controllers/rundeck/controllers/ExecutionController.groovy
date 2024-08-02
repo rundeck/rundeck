@@ -266,7 +266,9 @@ class ExecutionController extends ControllerBase{
         def inputFilesMap = inputFiles.collectEntries { [it.uuid, it] }
 
         String max = getGrailsApplication().config.getProperty("rundeck.logviewer.trimOutput", String)
+        String maxLogSizeConfig = getGrailsApplication().config.getProperty("rundeck.logviewer.maxLogSize", String)
         Long trimOutput = Sizes.parseFileSize(max)
+        Long maxLogSize = Sizes.parseFileSize(maxLogSizeConfig)
 
         return loadExecutionViewPlugins() + [
                 scheduledExecution    : e.scheduledExecution ?: null,
@@ -281,7 +283,8 @@ class ExecutionController extends ControllerBase{
                 eprev                 : eprev,
                 inputFilesMap         : inputFilesMap,
                 clusterModeEnabled    : frameworkService.isClusterModeEnabled(),
-                trimOutput            : trimOutput
+                trimOutput            : trimOutput,
+                maxLogSize            : maxLogSize
         ]
     }
 
