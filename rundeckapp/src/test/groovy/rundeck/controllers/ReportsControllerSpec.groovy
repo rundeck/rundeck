@@ -23,6 +23,7 @@ import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import rundeck.*
 import rundeck.services.FrameworkService
@@ -36,7 +37,7 @@ import testhelper.RundeckHibernateSpec
  */
 class ReportsControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<ReportsController> {
 
-    List<Class> getDomainClasses() { [ScheduledExecution, ReferencedExecution, CommandExec] }
+    List<Class> getDomainClasses() { [Execution, ScheduledExecution, ReferencedExecution, CommandExec] }
 
     Closure doWithConfig() {{ config ->
         config.grails.databinding.dateFormats = [
@@ -105,6 +106,91 @@ class ReportsControllerSpec extends RundeckHibernateSpec implements ControllerUn
         '1999-01-01T13:23:45.123-08:00' | _
     }
 
+    interface ExtRdExecReport extends RdExecReport {
+        Map toMap()
+    }
+
+    @Unroll
+    def "events query should look up by id if report is missing execution uuid"() {
+        given:
+
+            controller.frameworkService = Mock(FrameworkService)
+
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+                _ * getAuthContextForSubjectAndProject(*_) >> null
+                _ * authorizeProjectResource(*_) >> true
+            }
+            controller.userService = Mock(UserService) {
+                findOrCreateUser(*_) >> new User()
+            }
+
+            Map<String, List> authorizations = [:]
+            authorizations.put(ReportService.DENIED_VIEW_HISTORY_JOBS, [])
+            controller.reportService = Mock(ReportService) {
+                jobHistoryAuthorizations(_, _) >> authorizations
+            }
+            def project = 'test'
+            def wf = new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")])
+
+            Execution e1 = new Execution(
+                project: project,
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful',
+                uuid:null,
+                workflow: wf
+            )
+            e1.save(flush:true)
+            def wf2 = new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")])
+
+
+            def uuid1 = UUID.randomUUID().toString()
+            Execution e2 = new Execution(
+                project: project,
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful',
+                uuid: uuid1,
+                workflow:wf2
+            )
+            e2.save(flush:true)
+            def reports = [
+                Mock(ExtRdExecReport) {
+                    _*getDateStarted()>>e1.dateStarted
+                    _*getDateCompleted()>>e1.dateCompleted
+                    _*getExecutionUuid() >> null
+                    _*getExecutionId() >> e1.id
+                    _*toMap()>>[executionId:e1.id,executionUuid:e1.uuid, project:project]
+                },
+                Mock(ExtRdExecReport) {
+                    _*getDateStarted()>>e2.dateStarted
+                    _*getDateCompleted()>>e2.dateCompleted
+                    _*getExecutionUuid() >> e2.uuid
+                    _*getExecutionId() >> e2.uuid
+                    _*toMap()>>[executionId:e2.id,executionUuid:e2.uuid, project:project]
+                }
+            ]
+
+
+        when:
+            params.projFilter = project
+            def result = controller.eventsAjax()
+
+
+        then:
+            response.status == 200
+            response.json.reports.size() == 2
+            response.json.reports[0].executionId=='1'
+            response.json.reports[0].executionUuid==null
+            response.json.reports[1].executionId=='2'
+            response.json.reports[1].executionUuid==uuid1
+
+            _ * controller.reportService.getExecutionReports(_, _) >> [reports: reports]
+            _ * controller.reportService.finishquery(_, _, _) >> { args -> args[2] }
+
+    }
     @Unroll
     def "add job ref on index"() {
         given:
