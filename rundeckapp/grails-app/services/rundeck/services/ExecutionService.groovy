@@ -2038,8 +2038,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 return [error: 'running', message: "Failed to delete execution {{Execution ${e.id}}}: The execution is currently running", success: false]
             }
             referencedExecutionDataProvider.deleteByExecutionId(e.id)
-                //delete all reports
-            execReportDataProvider.deleteAllByExecutionUuid(e.uuid)
+            //delete all reports
+            reportService.deleteByExecution(e)
 
             List<File> files = []
             def execs = []
