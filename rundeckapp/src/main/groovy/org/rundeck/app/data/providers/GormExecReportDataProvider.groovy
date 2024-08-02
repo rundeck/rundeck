@@ -1,7 +1,6 @@
 package org.rundeck.app.data.providers
 
 import com.google.common.collect.Lists
-import grails.gorm.DetachedCriteria
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.rundeck.app.data.model.v1.query.RdExecQuery
@@ -20,7 +19,7 @@ import rundeck.services.ConfigurationService
 import javax.sql.DataSource
 
 @CompileStatic(TypeCheckingMode.SKIP)
-class GormExecReportDataProvider implements ExecReportDataProvider {
+class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReportSupport {
     @Autowired
     ConfigurationService configurationService
     @Autowired
@@ -178,6 +177,13 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
     @Override
     void deleteAllByExecutionUuid(String executionUuid) {
         ExecReport.findAllByExecutionUuid(executionUuid).each { rpt ->
+            rpt.delete()
+        }
+    }
+
+    @Override
+    void deleteAllByExecutionId(Long id) {
+        ExecReport.findAllByExecutionId(id).each { rpt ->
             rpt.delete()
         }
     }
