@@ -1,5 +1,6 @@
 import { mount } from "@vue/test-utils";
 import NodeDetailsSimple from "../NodeDetailsSimple.vue";
+
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({
     rdBase: "mockRdBase",

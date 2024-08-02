@@ -3,6 +3,7 @@ import NodeCard from "../NodeCard.vue";
 import NodeTable from "../NodeTable.vue";
 import NodeFilterLink from "../NodeFilterLink.vue";
 import * as nodeServices from "../services/nodeServices";
+
 const mockedGetNodeSummary = nodeServices.getNodeSummary as jest.MockedFunction<
   typeof nodeServices.getNodeSummary
 >;

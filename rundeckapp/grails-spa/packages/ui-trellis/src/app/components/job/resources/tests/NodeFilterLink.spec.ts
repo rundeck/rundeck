@@ -3,6 +3,7 @@ import { EventBus } from "../../../../../library";
 import { RootStore } from "../../../../../library/stores/RootStore";
 import { RundeckToken } from "../../../../../library/interfaces/rundeckWindow";
 import NodeFilterLink from "../NodeFilterLink.vue";
+
 describe("NodeFilterLink Component", () => {
   beforeAll(() => {
     window._rundeck = {

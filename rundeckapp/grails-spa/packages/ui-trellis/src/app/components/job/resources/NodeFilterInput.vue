@@ -189,12 +189,12 @@
     </div>
     <template #footer>
       <div>
-        <btn @click="saveFilterModal = false">{{
-          $t("button.action.Cancel")
-        }}</btn>
-        <btn type="primary" @click="saveFilter">{{
-          $t("save.filter.ellipsis")
-        }}</btn>
+        <btn @click="saveFilterModal = false"
+          >{{ $t("button.action.Cancel") }}
+        </btn>
+        <btn type="primary" @click="saveFilter"
+          >{{ $t("save.filter.ellipsis") }}
+        </btn>
       </div>
     </template>
   </modal>

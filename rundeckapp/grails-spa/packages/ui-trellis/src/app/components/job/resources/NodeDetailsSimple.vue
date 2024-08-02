@@ -156,7 +156,6 @@
                 role="button"
                 :class="{ active: uiNs[namespace.ns] }"
                 class="textbtn textbtn-muted textbtn-saturated"
-                data-test-id="namespace-toggle"
                 @click="toggleNs(namespace.ns)"
               >
                 {{ namespace.ns }}

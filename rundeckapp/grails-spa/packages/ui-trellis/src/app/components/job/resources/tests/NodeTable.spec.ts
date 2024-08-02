@@ -102,7 +102,7 @@ describe("NodeTable Component", () => {
     });
     expect(nodeColors.length).toBe(2);
     // Check node badges
-    const nodeBadges = wrapper.findAll('[data-test-id="node-badge-icon"]');
+    const nodeBadges = wrapper.findAll('[data-testid="node-badge-icon"]');
     expect(nodeBadges.length).toBe(4);
   });
 
@@ -130,7 +130,7 @@ describe("NodeTable Component", () => {
   });
   it("renders expandable nested attributes", async () => {
     const wrapper = await mountNodeTable();
-    const collapseLink = wrapper.find('[data-test-id="node-collapse-link"]');
+    const collapseLink = wrapper.find('[data-testid="node-collapse-link"]');
     await collapseLink.trigger("click");
     const nestedAttributes = wrapper.findComponent(NodeDetailsSimple);
     expect(nestedAttributes.text()).toMatch(/status:text: Healthy/);
