@@ -1,17 +1,17 @@
 import {
-  rundeckServiceMock,
-  rundeckClientMock,
   axiosMock,
   i18nMocks,
   mockEventBus,
   mockReports,
+  rundeckClientMock,
+  rundeckServiceMock,
 } from "../mocks/mock";
 import { flushPromises, shallowMount, VueWrapper } from "@vue/test-utils";
 import ActivityList from "../activityList.vue";
 import ActivityFilter from "../activityFilter.vue";
 import OffsetPagination from "../../../../library/components/utils/OffsetPagination.vue";
 import { cloneDeep } from "lodash";
-import { Modal, Btn } from "uiv";
+import { Btn, Modal } from "uiv";
 
 jest.mock("../../../../library/rundeckService", () => rundeckServiceMock);
 jest.mock("@rundeck/client", () => rundeckClientMock);
