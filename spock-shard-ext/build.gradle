@@ -1,0 +1,20 @@
+plugins {
+    id 'groovy'
+//    id "com.adarshr.test-logger" version "3.2.0"
+}
+
+apply from: "${rootDir}/rundeck/gradle/java-version.gradle"
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+
+dependencies {
+    implementation("org.apache.groovy:groovy-all:${testGroovyVersion}")
+    implementation "org.spockframework:spock-core:${functionalSpockVersion}"
+    implementation "org.slf4j:slf4j-api:${slf4jVersion}"
+    testImplementation "org.spockframework:spock-core:${functionalSpockVersion}"
+    testImplementation "org.slf4j:slf4j-simple:${slf4jVersion}"
+}
