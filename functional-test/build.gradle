@@ -17,6 +17,7 @@ testlogger {
 project.evaluationDependsOn(":rundeckapp")
 
 dependencies {
+    testImplementation project(":spock-shard-ext")
     testImplementation "org.spockframework:spock-core:${spockVersion}"
     testImplementation "org.testcontainers:testcontainers:${testContainersVersion}"
     testImplementation "org.testcontainers:spock:${testContainersVersion}"
