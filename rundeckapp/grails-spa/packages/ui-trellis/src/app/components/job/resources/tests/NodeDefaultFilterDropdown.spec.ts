@@ -2,17 +2,19 @@ import { mount, VueWrapper } from "@vue/test-utils";
 import NodeDefaultFilterDropdown from "../NodeDefaultFilterDropdown.vue";
 import mitt, { Emitter, EventType } from "mitt";
 
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockReturnValue({
-    rdBase: "mockRdBase",
-    projectName: "test-project",
-    eventBus: {
-      on: jest.fn(),
-      emit: jest.fn(),
-      off: jest.fn(),
-    },
-  }),
-}));
+jest.mock("@/library/rundeckService", () => {
+  return {
+    getRundeckContext: jest.fn().mockReturnValue({
+      rdBase: "mockRdBase",
+      projectName: "test-project",
+      eventBus: {
+        on: jest.fn(),
+        emit: jest.fn(),
+        off: jest.fn(),
+      },
+    }),
+  };
+});
 
 const mockNodeSummary = {
   filters: [
@@ -20,7 +22,6 @@ const mockNodeSummary = {
     { filterName: "filter2", filter: "filter2" },
   ],
   totalCount: 2,
-  defaultFilter: "someOtherFilter",
 };
 
 const mountNodeDefaultFilterDropdown = async (
@@ -34,7 +35,6 @@ const mountNodeDefaultFilterDropdown = async (
       ...props,
     },
     global: {
-      components: {},
       stubs: {
         dropdown: {
           template: '<div><slot></slot><slot name="dropdown"></slot></div>',
@@ -43,10 +43,8 @@ const mountNodeDefaultFilterDropdown = async (
       },
       mocks: {
         $t: (msg) => msg,
-        ...options.mocks,
       },
     },
-    ...options,
   });
   await wrapper.vm.$nextTick();
   return wrapper as VueWrapper<InstanceType<typeof NodeDefaultFilterDropdown>>;
