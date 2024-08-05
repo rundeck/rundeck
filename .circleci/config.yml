@@ -503,7 +503,7 @@ jobs:
           command: << parameters.command >>
 
 
-  test-gradle-functional:
+  test-gradle-functional: &test-gradle-functional
     <<: *job-defaults
     executor:
       name: machine-builder
@@ -533,12 +533,16 @@ jobs:
           command: |
             TEST_IMAGE=<< parameters.test-image >>
             GRADLE_TASK=<< parameters.gradle-task >>
+            export SPOCK_SHARD_COUNT=${CIRCLE_NODE_TOTAL}
+            export SPOCK_SHARD_INDEX=${CIRCLE_NODE_INDEX}
             rundeck_gradle_functional_tests
       - collect-gradle-tests
       - store_artifacts:
           path: ~/workspace/functional-test/build/test-results/images
 
-
+  test-gradle-functional-parallel:
+    <<: *test-gradle-functional
+    parallelism: 2
 
 #### WORKFLOWS ####
 
@@ -609,7 +613,7 @@ workflows:
           name: Build
           <<: *slack-defaults
       - test-gradle:
-          name: Gradle Test
+          name: T Unit Gradle
           <<: *slack-defaults
       - trigger-enterprise:
           name: Enterprise Snapshot
@@ -621,7 +625,7 @@ workflows:
           <<: *require-build
           <<: *slack-defaults
       - packaging-test:
-          name: Test Packaging
+          name: T Packaging
           <<: *require-build
           <<: *slack-defaults
       - wizcli-scan:
@@ -643,47 +647,47 @@ workflows:
           <<: *require-build
           <<: *slack-fail-post-step
       - test-docker:
-          name: Docker Test
+          name: T Docker
           command: bash test/run-docker-tests.sh
           <<: *require-build
           <<: *slack-defaults
       - test-docker:
-          name: SSL Test
+          name: T Integration SSL
           command: bash test/run-docker-ssl-tests.sh
           <<: *require-build
           <<: *slack-defaults
       - test-docker:
-          name: Ansible Test
+          name: T Integration Ansible
           command: bash test/run-docker-ansible-tests.sh
           <<: *require-build
           <<: *slack-defaults
       - test-machine:
-          name: LDAP Test
+          name: T Integration LDAP
           command: bash test/run-docker-ldap-tests.sh
           <<: *require-build
           <<: *slack-defaults
       - test-machine:
-          name: LDAP Bind Test
+          name: T Integration LDAP Bind
           command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
           <<: *require-build
           <<: *slack-defaults
       - test-docker:
-          name: PAM Test
+          name: T Integration PAM
           command: bash test/run-docker-pam-tests.sh
           <<: *require-build
           <<: *slack-defaults
-      - test-gradle-functional:
-          name: New Selenium Test
+      - test-gradle-functional-parallel:
+          name: T Selenium
           gradle-task: seleniumCoreTest
           <<: *require-build
           <<: *slack-defaults
       - test-gradle-functional:
-          name: New API Test
+          name: T Functional API
           gradle-task: apiTest
           <<: *require-build
           <<: *slack-defaults
       - test-gradle-functional:
-          name: New Plugin Blocklist Test
+          name: T Functional Plugin Blocklist
           gradle-task: pluginBlocklistTest
           <<: *require-build
           <<: *slack-defaults
