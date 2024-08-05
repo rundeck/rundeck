@@ -1,9 +1,8 @@
 plugins {
     id 'groovy'
-//    id "com.adarshr.test-logger" version "3.2.0"
 }
 
-apply from: "${rootDir}/rundeck/gradle/java-version.gradle"
+apply from: "../gradle/java-version.gradle"
 
 repositories {
     mavenLocal()
