@@ -49,11 +49,10 @@ const mountNodeFilterInput = async (
       nodeSummary: mockNodeSummary,
       modelValue: "",
       project: "test-project",
-      eventBus, // Provide the eventBus here
+      eventBus,
       ...props,
     },
     global: {
-      components: {},
       stubs: {
         btn: {
           template: "<button><slot></slot></button>",
@@ -65,13 +64,8 @@ const mountNodeFilterInput = async (
       },
       mocks: {
         $t: (msg) => msg,
-        ...options.mocks,
-      },
-      provide: {
-        nodeFilterStore: mockNodeFilterStore,
       },
     },
-    ...options,
   });
   await wrapper.vm.$nextTick();
   return wrapper as VueWrapper<InstanceType<typeof NodeFilterInput>>;
