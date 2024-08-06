@@ -41,6 +41,7 @@ public enum Features implements FeaturesDefinition{
     LEGACY_UI("legacyUi"),
     LEGACY_XML("legacyXml"),
     CASE_INSENSITIVE_USERNAME("caseInsensitiveUsername"),
+    WORKFLOW_TAB_VUE_UI("workflowTabVueUi"),
 
     API_PROJECT_CONFIG_VALIDATION("apiProjectConfigValidation");
 

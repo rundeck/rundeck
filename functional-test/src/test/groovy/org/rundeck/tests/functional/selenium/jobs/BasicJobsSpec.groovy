@@ -67,6 +67,7 @@ class BasicJobsSpec extends SeleniumBase {
     def "create valid job basic workflow"() {
         when:
             def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
+            jobCreatePage.nextUi = nextUi
             def jobShowPage = page JobShowPage
         then:
             jobCreatePage.fillBasicJob 'a valid job with basic workflow'
@@ -74,6 +75,8 @@ class BasicJobsSpec extends SeleniumBase {
         expect:
             jobShowPage.validatePage()
             jobShowPage.jobLinkTitleLabel.getText() == 'a valid job with basic workflow'
+        where:
+            nextUi<<[false,true]
     }
 
     def "create valid job basic options"() {
