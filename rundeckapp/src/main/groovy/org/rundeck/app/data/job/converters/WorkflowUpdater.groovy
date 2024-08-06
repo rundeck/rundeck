@@ -1,18 +1,17 @@
 package org.rundeck.app.data.job.converters
 
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.PluginStep
-import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.WorkflowStep
 import rundeck.data.constants.WorkflowStepConstants
-import rundeck.data.job.RdWorkflow
-import rundeck.data.job.RdWorkflowStep
 
 class WorkflowUpdater {
 
-    static void updateWorkflow(Workflow wkf, RdWorkflow rdw) {
+    static void updateWorkflow(Workflow wkf, WorkflowData rdw) {
         if(!wkf || !rdw) return
         wkf.threadcount = rdw.threadcount
         wkf.keepgoing = rdw.keepgoing
@@ -34,13 +33,13 @@ class WorkflowUpdater {
 
     }
 
-    static WorkflowStep createWorkflowStep(RdWorkflowStep step) {
+    static WorkflowStep createWorkflowStep(WorkflowStepData step) {
         if(step.pluginType == WorkflowStepConstants.TYPE_JOB_REF) return new JobExec()
         else if(step.pluginType.startsWith("builtin-")) return new CommandExec()
         return new PluginStep()
     }
 
-    static void updateWorkflowStep(WorkflowStep step, RdWorkflowStep rdstep) {
+    static void updateWorkflowStep(WorkflowStep step, WorkflowStepData rdstep) {
         if(step instanceof JobExec) {
             def jstep = (JobExec)step
             JobExec.updateFromMap(jstep, rdstep.configuration)

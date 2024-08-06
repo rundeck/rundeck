@@ -1,5 +1,6 @@
 package rundeck
 
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 
 /*
@@ -74,6 +75,7 @@ import org.springframework.context.MessageSource
 import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
 import rundeck.services.data.UserDataService
+import com.dtolabs.rundeck.core.config.FeatureService
 import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -107,6 +109,10 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.execReportDataProvider = providerExec
         service.referencedExecutionDataProvider = referencedExecutionDataProvider
         service.jobStatsDataProvider = new GormJobStatsDataProvider()
+        provider.featureService = Mock(FeatureService){
+            featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> false
+        }
+        service.reportService = Mock(ReportService)
     }
 
     private Map createJobParams(Map overrides = [:]) {
@@ -1261,9 +1267,6 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         execution.dateCompleted = new Date()
         execution.status = 'succeeded'
         assert execution.save()
-        ExecReport execReport = ExecReport.fromExec(execution)
-        assert execReport!=null
-        def erptid=execReport.id
         def eauth = Mock(AuthorizingExecution){
             getResource()>>execution
         }
@@ -1278,8 +1281,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             getUsername()>>'auser'
         }
         1 * service.logFileStorageService.getExecutionFiles(execution,_,_)>>[:]
+        1 * service.reportService.deleteByExecution(execution)
         result.success
-        ExecReport.get(erptid)==null
     }
 
     def "delete execution running"() {
@@ -1362,6 +1365,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
         ) >> true
 
+        1 * service.reportService.deleteByExecution(execution)
+
         result.success
 
         !file1.exists()
@@ -1425,6 +1430,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
         ) >> true
 
+        1 * service.reportService.deleteByExecution(execution)
+
         result.success
     }
 
@@ -1465,6 +1472,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
         ) >> true
         1 * service.fileUploadService.deleteRecordsForExecution(execution)
+        1 * service.reportService.deleteByExecution(execution)
 
         result.success
 
@@ -6019,7 +6027,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         when:
         service.createMissedExecution(job,"201365e7-2222-433d-a4d9-0d7712df0f84",scheduledTime)
         Execution execution = Execution.findByScheduledExecution(job)
-        ExecReport execReport = ExecReport.findByJobId(job.id.toString())
+        ExecReport execReport = ExecReport.findByJobUuid(job.uuid.toString())
 
         then:
         triggerNotificationCalled * service.notificationService.triggerJobNotification(_,_,_)

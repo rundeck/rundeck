@@ -64,8 +64,10 @@ public class DefaultLogEvent implements LogEvent{
         this.datetime = event.getDatetime();
         this.message = event.getMessage();
         this.eventType = event.getEventType();
-        defaultMetadata.putAll(event.getMetadata() != null ? event.getMetadata() : new HashMap<String,String>());
-        this.metadata=defaultMetadata;
+        this.metadata = new HashMap<>(defaultMetadata);
+        if (event.getMetadata() != null) {
+            this.metadata.putAll(event.getMetadata());
+        }
     }
 
     static DefaultLogEvent with(LogEvent event, Map<String,String> metadata) {

@@ -9,6 +9,7 @@ public class AuthResources {
                     AuthConstants.TYPE_ADHOC,
                     AuthConstants.TYPE_JOB,
                     AuthConstants.TYPE_NODE,
+                    AuthConstants.TYPE_RUNNER,
                     AuthConstants.TYPE_STORAGE
             )
     );
@@ -17,6 +18,7 @@ public class AuthResources {
                     AuthConstants.TYPE_JOB,
                     AuthConstants.TYPE_NODE,
                     AuthConstants.TYPE_EVENT,
+                    AuthConstants.TYPE_RUNNER,
                     AuthConstants.TYPE_WEBHOOK
             )
     );
@@ -186,6 +188,20 @@ public class AuthResources {
         appKindActionsByType.put(AuthConstants.TYPE_WEBHOOK, appWebhookKindActions);
     }
 
+    public static final List<String> projectRunnerActions = Arrays.asList(
+            AuthConstants.ACTION_READ,
+            AuthConstants.ACTION_CREATE,
+            AuthConstants.ACTION_UPDATE,
+            AuthConstants.ACTION_DELETE,
+            AuthConstants.ACTION_RUNNER_PING,
+            AuthConstants.ACTION_RUNNER_REGENERATE_CREDENTIALS
+    );
+
+    public static final List<String> projectRunnerKindActions = Arrays.asList(
+            AuthConstants.ACTION_READ,
+            AuthConstants.ACTION_ADMIN
+    );
+
 
     public static final List<String> projectJobActions =
             Arrays.asList(
@@ -232,6 +248,7 @@ public class AuthResources {
         projResActionsByType.put(AuthConstants.TYPE_JOB, projectJobActions);
         projResActionsByType.put(AuthConstants.TYPE_ADHOC, projectAdhocActions);
         projResActionsByType.put(AuthConstants.TYPE_NODE, projectNodeActions);
+        projResActionsByType.put(AuthConstants.TYPE_RUNNER, projectRunnerActions);
         projResActionsByType.put(AuthConstants.TYPE_STORAGE, storageActions);
     }
 
@@ -251,6 +268,7 @@ public class AuthResources {
         );
         projResAttrsByType.put(AuthConstants.TYPE_NODE, nodeAttributeNames);
         projResAttrsByType.put(AuthConstants.TYPE_STORAGE, Arrays.asList("path", "name"));
+        projResAttrsByType.put(AuthConstants.TYPE_RUNNER, Arrays.asList("tags", "name", "id"));
     }
 
     public static final List<String> projectNodeKindActions =
@@ -281,6 +299,7 @@ public class AuthResources {
         projKindActionsByType.put(AuthConstants.TYPE_NODE, projectNodeKindActions);
         projKindActionsByType.put(AuthConstants.TYPE_EVENT, projectEventKindActions);
         projKindActionsByType.put(AuthConstants.TYPE_WEBHOOK, projectWebhookKindActions);
+        projKindActionsByType.put(AuthConstants.TYPE_RUNNER, projectRunnerKindActions);
         projKindActionsByType.put(AuthConstants.TYPE_STORAGE, storageActions);
     }
 }

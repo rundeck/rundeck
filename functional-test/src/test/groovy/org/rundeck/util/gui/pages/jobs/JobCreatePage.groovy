@@ -30,6 +30,9 @@ class JobCreatePage extends BasePage {
     By updateJob = By.id("jobUpdateSaveButton")
     By jobNameInputBy = By.cssSelector("form input[name=\"jobName\"]")
     By groupPathInputBy = By.cssSelector("form input[name=\"groupPath\"]")
+    By groupChooseButton = By.id("groupChooseModalBtn")
+    By groupChooseModal = By.cssSelector('#groupChooseModal')
+    By groupNameOption = By.cssSelector("span.groupname.jobgroupexpand")
     By descriptionTextareaBy = By.cssSelector("form textarea[name='description']")
     By jobGroupBy = By.cssSelector("input#schedJobGroup")
     By scheduleRunYesBy = By.cssSelector('input#scheduledTrue')
@@ -48,8 +51,12 @@ class JobCreatePage extends BasePage {
     By createJobBy = By.id("Create")
     By cancelBy = By.id('createFormCancelButton')
     By optionBy = By.cssSelector("#optnewbutton > span")
+    By nodeStepSectionActiveBy = By.cssSelector(".node_step_section.tab-pane.active")
 
     static class NextUi {
+        static By jobNameInputBy = By.cssSelector("form input[id=\"schedJobName\"]")
+        static By groupPathInputBy = By.cssSelector("form input[id=\"schedJobGroup\"]")
+        static By descriptionTextareaBy = By.cssSelector("form textarea.ace_text-input")
         static By optionBy = By.cssSelector("#optnewbutton > button")
         static By separatorOptionBy = By.cssSelector("#option_preview")
         static By optionCloseKeyStorageBy = By.cssSelector("#storage-file.modal .modal-footer > button.btn-default")
@@ -129,6 +136,8 @@ class JobCreatePage extends BasePage {
     By wfItemEditFormBy = By.className("wfitemEditForm")
     By optDetailBy = By.cssSelector(".optdetail.autohilite.autoedit")
     By optionsBy = By.cssSelector(".opt.item")
+    By timeZoneBy = By.id("timeZone")
+    By optEditFormBy = By.className("optEditForm")
 
     private String loadPath = "/job/create"
     String projectName
@@ -172,14 +181,20 @@ class JobCreatePage extends BasePage {
         addSimpleCommandStep 'echo selenium test', 0
     }
 
-    JobCreatePage addSimpleCommandStep(String command, int number) {
+    /**
+     * It adds a command with the given string and it verifies that the stepIndexNumber is added
+     * @param command
+     * @param stepIndexNumber it starts from 0
+     * @return
+     */
+    JobCreatePage addSimpleCommandStep(String command, int stepIndexNumber) {
         executeScript "window.location.hash = '#addnodestep'"
         stepLink 'exec-command', StepType.NODE click()
         byAndWaitClickable adhocRemoteStringBy
         adhocRemoteStringField.click()
         waitForNumberOfElementsToBeOne floatBy
         adhocRemoteStringField.sendKeys command
-        saveStep number
+        saveStep stepIndexNumber
 
         return this
     }
@@ -289,20 +304,36 @@ class JobCreatePage extends BasePage {
         waitForNumberOfElementsToBe notificationModalBy, totalNotificationModals
     }
 
+    void waitGroupModal(Integer totalGroupModals) {
+        waitForNumberOfElementsToBe groupChooseModal, totalGroupModals
+    }
+
     WebElement getJobNameInput() {
-        el jobNameInputBy
+        el nextUi ? NextUi.jobNameInputBy : jobNameInputBy
     }
 
     WebElement getGroupPathInput() {
-        el groupPathInputBy
+        el nextUi ? NextUi.groupPathInputBy :groupPathInputBy
+    }
+
+    WebElement getGroupChooseButton() {
+        el groupChooseButton
+    }
+
+    WebElement getGroupNameOption() {
+        el groupNameOption
     }
 
     WebElement getDescriptionTextarea() {
-        def element = el descriptionTextareaBy
-        String js = 'jQuery(\'form textarea[name="description"]\').show()'
-        ((JavascriptExecutor) driver).executeScript(js, element)
-        waitForElementVisible element
-        element
+        if(nextUi) {
+            el NextUi.descriptionTextareaBy
+        } else {
+            def element = el descriptionTextareaBy
+            String js = 'jQuery(\'form textarea[name="description"]\').show()'
+            ((JavascriptExecutor) driver).executeScript(js, element)
+            waitForElementVisible element
+            element
+        }
     }
 
     WebElement getRefreshNodesButton(){
@@ -353,6 +384,10 @@ class JobCreatePage extends BasePage {
 
     WebElement getCreateJobButton() {
         el createJobBy
+    }
+
+    void clickTimeZone(){
+        (el timeZoneBy).click()
     }
 
     WebElement getCancelButton() {
@@ -737,6 +772,10 @@ class JobCreatePage extends BasePage {
         els optDetailBy
     }
 
+    def getTotalFoundPlugins(String pluginName){
+        return (el nodeStepSectionActiveBy).findElements(By.name(pluginName)).size()
+    }
+
 }
 
 
@@ -861,4 +900,5 @@ enum JobTab {
     String getTabName() {
         return tabName
     }
+
 }

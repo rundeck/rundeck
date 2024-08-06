@@ -212,7 +212,7 @@ class UserController extends ControllerBase{
         if(userExists){
            return redirect(action:'edit')
         }
-        def u = userDataProvider.buildUser(login: user)
+        def u = userDataProvider.buildUser(user)
 
         def model=[user: u,newRegistration:true]
         return model
@@ -445,7 +445,7 @@ Since: v21''',
             if(!updateResponse.isSaved){
                 def errorMsg= updateResponse.errors.allErrors.collect { g.message(error:it) }.join(";")
                 return apiService.renderErrorFormat(response,[
-                        status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        status: HttpServletResponse.SC_BAD_REQUEST,
                         message:errorMsg,
                         format:respFormat
                 ])

@@ -7,6 +7,7 @@ import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.httpbody.ScmJobStatusResponse
 import org.rundeck.util.container.RdClient
 
+import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 
 class JobUtils {
@@ -61,13 +62,14 @@ class JobUtils {
         return client.doPostWithRawText(CREATE_JOB_ENDPOINT, "application/xml", jobDefinitionXml)
     }
 
-    static def generateExecForEnabledXmlTest(String jobName){
+    static def generateScheduledExecutionXml(String jobName){
         return  "<joblist>\n" +
                 "   <job>\n" +
                 "      <name>${jobName}</name>\n" +
                 "      <group>api-test</group>\n" +
                 "      <description></description>\n" +
                 "      <loglevel>INFO</loglevel>\n" +
+                "      <multipleExecutions>true</multipleExecutions>\n" +
                 "      <dispatch>\n" +
                 "        <threadcount>1</threadcount>\n" +
                 "        <keepgoing>true</keepgoing>\n" +
@@ -81,19 +83,20 @@ class JobUtils {
                 "</joblist>"
     }
 
-    static def generateScheduledJobsXml(String jobname){
+    static def generateScheduledJobsXml(String jobname, String schedule = "<time hour='*' seconds='*' minute='0/20' />", ZoneId tz = ZoneId.systemDefault()){
         return "<joblist>\n" +
                 "   <job>\n" +
                 "      <name>${jobname}</name>\n" +
                 "      <group>api-test</group>\n" +
                 "      <description></description>\n" +
                 "      <loglevel>INFO</loglevel>\n" +
+                "      <multipleExecutions>true</multipleExecutions>\n" +
                 "      <dispatch>\n" +
                 "        <threadcount>1</threadcount>\n" +
                 "        <keepgoing>true</keepgoing>\n" +
                 "      </dispatch>\n" +
                 "      <schedule>\n" +
-                "        <time hour='*' seconds='*' minute='0/20' />\n" +
+                "        ${schedule}\n" +
                 "        <month month='*' />\n" +
                 "        <year year='*' />\n" +
                 "      </schedule>\n" +
@@ -102,6 +105,7 @@ class JobUtils {
                 "        <exec>echo hello there</exec>\n" +
                 "        </command>\n" +
                 "      </sequence>\n" +
+                "      <timeZone>${tz.toString()}</timeZone>\n" +
                 "   </job>\n" +
                 "</joblist>"
     }

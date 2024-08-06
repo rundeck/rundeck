@@ -40,6 +40,7 @@ public enum Features implements FeaturesDefinition{
     VUE_KEY_STORAGE("vueKeyStorage"),
     LEGACY_UI("legacyUi"),
     LEGACY_XML("legacyXml"),
+    CASE_INSENSITIVE_USERNAME("caseInsensitiveUsername"),
 
     API_PROJECT_CONFIG_VALIDATION("apiProjectConfigValidation");
 

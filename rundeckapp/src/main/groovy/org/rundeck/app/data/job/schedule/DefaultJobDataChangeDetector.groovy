@@ -1,7 +1,7 @@
 package org.rundeck.app.data.job.schedule
 
 import org.rundeck.app.data.model.v1.job.JobData
-import rundeck.services.JobRevReferenceImpl
+import rundeck.data.job.reference.JobRevReferenceImpl
 
 class DefaultJobDataChangeDetector implements JobDataChangeDetector {
 

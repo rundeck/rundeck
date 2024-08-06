@@ -137,6 +137,7 @@ import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.security.*
+import org.rundeck.web.DefaultRequestIdProvider
 import org.rundeck.web.ExceptionHandler
 import org.rundeck.web.WebUtil
 import org.rundeck.web.infosec.ContainerPrincipalRoleSource
@@ -592,6 +593,7 @@ beans={
 
     auditEventsService(AuditEventsService) {
         frameworkService = ref('frameworkService')
+        metricService = ref('metricService')
     }
 
     scmJobImporter(ScmJobImporter)
@@ -880,6 +882,7 @@ beans={
     }
 
     jettyServletCustomizer(JettyServletContainerCustomizer) {
+        featureService = ref('featureService')
         def configParams = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.initParams", String.class)
         def useForwardHeadersConfig = grailsApplication.config.getProperty("server.useForwardHeaders",Boolean.class)
 
@@ -887,6 +890,7 @@ beans={
             [it.key.toString(), it.value.toString()]
         }
         useForwardHeaders = useForwardHeadersConfig ?: Boolean.getBoolean('rundeck.jetty.connector.forwarded')
+        serverUrl = grailsApplication.config.getProperty('grails.serverURL', String.class)
     }
 
     def stsMaxAgeSeconds = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.stsMaxAgeSeconds",Integer.class,-1)
@@ -933,6 +937,8 @@ beans={
         workflowService = ref('workflowService')
     }
     quartzJobSpecifier(ExecutionJobQuartzJobSpecifier)
+
+    requestIdProvider(DefaultRequestIdProvider)
 
     //provider implementations
     tokenDataProvider(GormTokenDataProvider)

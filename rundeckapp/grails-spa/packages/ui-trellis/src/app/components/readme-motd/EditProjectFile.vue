@@ -2,7 +2,7 @@
   <div class="content">
     <div id="layoutBody">
       <div class="title">
-        <span class="text-h3">
+        <span class="text-h3" data-test-id="title">
           <template v-if="filename === 'readme.md'">
             <i class="fas fa-file-alt"></i>
             {{ $t("edit.readme.label") }}
@@ -45,18 +45,21 @@
                   </details>
                 </div>
                 <ace-editor
+                  ref="aceEditor"
                   v-model="fileText"
                   :soft-wrap-control="true"
                   height="250"
                   width="100%"
                   lang="markdown"
                   :read-only="false"
+                  data-test-id="ace-editor"
                 />
               </div>
               <div class="card-footer">
                 <button
                   type="button"
                   class="btn btn-default reset_page_confirm"
+                  data-test-id="cancel"
                   @click="createProjectHomeLink"
                 >
                   Cancel
@@ -64,12 +67,16 @@
                 <button
                   type="submit"
                   class="btn btn-cta reset_page_confirm"
+                  data-test-id="save"
                   @click="saveProjectFile"
                 >
                   Save
                 </button>
                 <template v-if="displayConfig.includes('none')">
-                  <span class="text-warning text-right">
+                  <span
+                    class="text-warning text-right"
+                    data-test-id="nonadmin-warning-message"
+                  >
                     <template v-if="authAdmin">
                       {{ $t("file.warning.not.displayed.admin.message") }}
                       <a :href="createProjectConfigureLink">
@@ -127,6 +134,7 @@ export default defineComponent({
   data() {
     return {
       fileText: "",
+
       markdownSectionOpen: false,
       errorMsg: "",
     };
@@ -155,7 +163,7 @@ export default defineComponent({
       }
     },
     createProjectHomeLink() {
-      document.location = url("project/" + this.project + "/home").href;
+      window.location = url("project/" + this.project + "/home").href;
     },
     notifyError(msg) {
       Notification.notify({
@@ -185,6 +193,7 @@ export default defineComponent({
     async getFileText() {
       try {
         const response = await getFileText(this.project, this.filename);
+
         if (response.success) {
           this.fileText = response.contents;
         }

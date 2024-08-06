@@ -102,6 +102,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
     RemoteJsonOptionRetriever remoteJsonOptionRetriever
     WorkflowExecutionItemFactory workflowExecutionItemFactory
     ReferencedExecutionDataProvider referencedExecutionDataProvider
+    ProjectService projectService
 
     String getRundeckBase(){
         return rundeckFramework.baseDir.absolutePath
@@ -500,6 +501,15 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
             log.error(e.message,e)
             errors << e.getMessage()
         }
+
+        //initialize project components after  project creation
+        try{
+            projectService?.afterCreationProjectComponents(project)
+        }catch (Exception e){
+            log.error("Error initializing project components: ${e.message}",e)
+            errors << "Error initializing project components: ${e.message}"
+        }
+
         [proj,errors]
     }
     /**

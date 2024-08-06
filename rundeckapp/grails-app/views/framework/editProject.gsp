@@ -90,7 +90,6 @@
     <asset:javascript src="leavePageConfirm.js"/>
     <asset:javascript src="framework/editProject.js"/>
     <asset:javascript src="static/pages/project-config.js" defer="defer" />
-    <asset:stylesheet href="static/css/pages/project-config.css" />
     <g:jsMessages code="page.unsaved.changes"/>
     <g:javascript>
 

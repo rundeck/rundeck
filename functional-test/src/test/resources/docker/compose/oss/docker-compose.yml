@@ -25,9 +25,14 @@ services:
       - "../../../test-files/saved_searches-B.json:/home/option2/saved_searches.json"
       - "../../../test-files/saved_searches-C.json:/home/option3/saved_searches.json"
       - "../../../test-files/saved_searches-D.json:/home/option4/saved_searches.json"
+      - "${PWD}/executor:/home/rundeck/executor:rw"
+      - "${PWD}/mock-scripts:/home/rundeck/mock-scripts:rw"
+    networks:
+      - rundeck-network
+
   gitea:
     build:
-      context: "gitea"
+      context: gitea
       args:
         IMAGE: gitea/gitea
     environment:
@@ -42,3 +47,31 @@ services:
       - "./gitea/gitea-cfg.ini:/data/gitea/conf/app.ini"
     ports:
       - "3000:3000"
+    networks:
+      - rundeck-network
+
+  ssh-node:
+    build:
+      context: node
+    platform: linux/amd64
+    environment:
+      NODE_USER_PASSWORD: testpassword123
+    networks:
+      - rundeck-network
+    ports:
+      - "22"
+    volumes:
+      - ${PWD}/keys:/configuration:rw
+      - ${PWD}/mock-scripts:/mock-scripts:rw
+
+  mock-server:
+    image: nginx:latest
+    volumes:
+      - ${PWD}/mock-scripts:/usr/share/nginx/html:ro
+    ports:
+      - "8080:80"
+    networks:
+      - rundeck-network
+
+networks:
+  rundeck-network:

@@ -64,6 +64,11 @@ public class RundeckConfigBase {
     RundeckHealthIndicatorConfig health;
     RundeckJobsConfig jobs;
     JobsImport jobsImport;
+    Startup startup;
+
+    @Data public static class Startup {
+        Boolean detectFirstRun;
+    }
 
     @Data public static class JobsImport{
         XmlValueListDelimiter xmlValueListDelimiter;
@@ -437,6 +442,7 @@ public class RundeckConfigBase {
         Enabled legacyUi = new Enabled();
         Enabled legacyXml = new Enabled();
         Enabled apiProjectConfigValidation = new Enabled();
+        Enabled caseInsensitiveUsername = new Enabled();
 
 
         @Data

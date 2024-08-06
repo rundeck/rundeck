@@ -19,7 +19,9 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
-import com.dtolabs.rundeck.app.support.BaseNodeFilters
+import rundeck.data.util.ExecReportUtil
+import rundeck.services.workflow.WorkflowMetricsWriterImpl
+import rundeck.support.filters.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.QueueQuery
@@ -251,7 +253,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     execution: e,
                     href: apiService.apiHrefForExecution(e),
                     status: getExecutionState(e),
-                    summary: summarizeJob(e.scheduledExecution, e),
+                    summary: ExecReportUtil.summarizeJob(e),
                     permalink: apiService.guiHrefForExecution(e)
             ]
 
@@ -276,7 +278,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         permalink: apiService.guiHrefForExecution(e),
                         href: apiService.apiHrefForExecution(e),
                         status: getExecutionState(e),
-                        summary: summarizeJob(e.scheduledExecution, e)
+                        summary: ExecReportUtil.summarizeJob(e)
                 ]
             if(e.customStatusString){
                 data.customStatus=e.customStatusString
@@ -918,7 +920,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     public logExecution(uri,project,user,issuccess,statusString,execId,Date startDate=null, jobExecId=null, jobName=null,
                         jobSummary=null,iscancelled=false,istimedout=false,willretry=false, nodesummary=null,
-                        abortedby=null, succeededNodeList=null, failedNodeList=null, filter=null){
+                        abortedby=null, succeededNodeList=null, failedNodeList=null, filter=null, executionUuid=null, jobUuid=null){
 
         SaveReportRequestImpl saveReportRequest = new SaveReportRequestImpl()
         def internalLog = LoggerFactory.getLogger("ExecutionService")
@@ -930,6 +932,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         if(execId){
             saveReportRequest.executionId=execId
+        }
+        if(executionUuid){
+            saveReportRequest.executionUuid=executionUuid
         }
         if(startDate){
             saveReportRequest.dateStarted=startDate
@@ -961,6 +966,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }else if(iscancelled){
             saveReportRequest.abortedByUser=user
         }
+        if(jobUuid){
+            saveReportRequest.jobUuid = jobUuid
+        }
         saveReportRequest.author=user
         saveReportRequest.title= jobSummary?jobSummary:"Rundeck Job Execution"
 
@@ -981,7 +989,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         saveReportRequest.dateCompleted=new Date()
         def result=reportService.reportExecutionResult(saveReportRequest)
         if(result.error){
-            log.error("Failed to create report: "+result.report.errors.allErrors.collect{it.toString()}).join("; ")
+            log.error("Failed to create report: "+result.errors)
         }
     }
 
@@ -1164,10 +1172,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     extraParamsExposed
             )
             Consumer<Long> checkpoint = logFileStorageService.createPeriodicCheckpoint(execution)
-
             def wfEventListener = new WorkflowEventLoggerListener(executionListener)
             def logOutFlusher = new LogFlusher()
             def logErrFlusher = new LogFlusher()
+            def wfStepMetricsListener = new WorkflowExecutionListenerStepMetrics(new WorkflowMetricsWriterImpl(metricService))
             def listenersList = [
                     contextmanager,
                     executionListener, //manages context for logging
@@ -1175,6 +1183,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     execStateListener, //updates WF execution state model
                     logOutFlusher, //flushes stdout output after node steps
                     logErrFlusher, //flush stderr output after node steps
+                    wfStepMetricsListener, //collects step metrics
                     /*new EchoExecListener() */
             ]
             def multiListener = MultiWorkflowExecutionListener.create(
@@ -2029,8 +2038,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 return [error: 'running', message: "Failed to delete execution {{Execution ${e.id}}}: The execution is currently running", success: false]
             }
             referencedExecutionDataProvider.deleteByExecutionId(e.id)
-                //delete all reports
-            execReportDataProvider.deleteAllByExecutionId(e.id)
+            //delete all reports
+            reportService.deleteByExecution(e)
 
             List<File> files = []
             def execs = []
@@ -3186,10 +3195,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         def jobname="adhoc"
         def jobid=null
-        def summary= summarizeJob(scheduledExecution, execution)
+        def jobUuid=null
+        def summary= ExecReportUtil.summarizeJob(execution)
         if (scheduledExecution) {
             jobname = scheduledExecution.groupPath ? scheduledExecution.generateFullName() : scheduledExecution.jobName
             jobid = scheduledExecution.id
+            jobUuid = scheduledExecution.uuid
         }
         if(execSaved) {
             //summarize node success
@@ -3226,7 +3237,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 execution.abortedby,
                 execution.succeededNodeList,
                 execution.failedNodeList,
-                execution.filter
+                execution.filter,
+                execution.uuid,
+                jobUuid
             )
             logExecutionLog4j(execution, "finish", execution.user)
 
@@ -3255,25 +3268,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
-    public String summarizeJob(ScheduledExecution job=null,Execution exec){
-//        if(job){
-//            return job.groupPath?job.generateFullName():job.jobName
-//        }else{
-            //summarize execution
-            StringBuffer sb = new StringBuffer()
-            final def wfsize = exec?.workflow?.commands?.size() ?: 0
-
-            if(wfsize>0){
-                sb<<exec.workflow.commands[0].summarize()
-            }else{
-                sb<< "[Empty workflow]"
-            }
-            if(wfsize>1){
-                sb << " [... ${wfsize} steps]"
-            }
-            return sb.toString()
-//        }
-    }
     /**
      * Update a scheduledExecution statistics with a successful execution duration
      * @param schedId
@@ -4450,7 +4444,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         missed.status = 'missed'
         missed.save()
 
-        execReportDataProvider.createReportFromExecution(missed.id)
+        execReportDataProvider.saveReport(ExecReportUtil.buildSaveReportRequest(missed, scheduledExecution))
 
         if(scheduledExecution.notifications) {
             AuthContext authContext = rundeckAuthContextProcessor.
