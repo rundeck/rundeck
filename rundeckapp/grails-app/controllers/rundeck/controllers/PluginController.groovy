@@ -1,14 +1,21 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.api.plugins.ApiPluginListProvider
+import com.dtolabs.rundeck.app.api.plugins.ApiPluginProviderDetail
+import com.dtolabs.rundeck.app.api.plugins.ApiProviderProp
 import com.dtolabs.rundeck.app.support.PluginResourceReq
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.ParameterIn
 import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
@@ -20,6 +27,7 @@ import com.dtolabs.rundeck.core.plugins.PluginValidator
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
 import grails.converters.JSON
 import groovy.transform.CompileStatic
+import org.rundeck.core.auth.access.NotFound
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import org.springframework.web.servlet.support.RequestContextUtils
@@ -225,101 +233,158 @@ Since: v33
         render(services as JSON)
     }
 
+    @Get(uri='/plugin/detail/{service}/{provider}')
     /**
      *  detail about a plugin artifact, provider, and properties
      * @return
      */
-    def pluginDetail() {
-        String pluginName = params.name
-        String service = params.service
+    @Operation(
+        method = 'GET',
+        summary = 'Get details about a plugin',
+        description = '''Get detailed information about a plugin provide.
+
+Since: v48''',
+        tags = ['plugins'],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'Plugin Provider detail',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = ApiPluginProviderDetail)
+            )
+        )
+    )
+    def apiPluginDetail(
+        @Parameter(in = ParameterIn.PATH, required = true) String service,
+        @Parameter(in = ParameterIn.PATH, required = true) String provider
+    ) {
+        if (!apiService.requireApi(request, response, ApiVersions.V47)) {
+            return
+        }
+        UserAndRolesAuthContext auth = null
+        if (params.project) {
+            auth = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(request.subject, params.project)
+        }
+        ApiPluginProviderDetail detail = getPluginDetail(service, provider, auth, params.project, true)
+        respond(detail)
+    }
+
+    def pluginDetail(String service, String provider) {
+        UserAndRolesAuthContext auth = null
+        if (params.project) {
+            auth = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(request.subject, params.project)
+        }
+        ApiPluginProviderDetail detail = getPluginDetail(service, provider, auth, params.project, false)
+        respond(detail)
+    }
+
+    /**
+     * Load detail for a plugin provider
+     * @param service
+     * @param provider
+     * @param auth
+     * @param project
+     * @param apiRequest
+     * @return
+     */
+    @CompileStatic
+    protected ApiPluginProviderDetail getPluginDetail(
+        String service,
+        String provider,
+        UserAndRolesAuthContext auth,
+        String project,
+        boolean apiRequest
+    ) {
         String appVer = servletContext.getAttribute('version.number')
 
         def desc = null
         def instance = null
-        if(service== "UI") {
-            desc = pluginService.getPluginDescriptor(pluginName, uiPluginService.uiPluginProviderService)?.description
+        if (service == ServiceNameConstants.UI) {
+            desc = pluginService.getPluginDescriptor(provider, uiPluginService.uiPluginProviderService)?.description
         } else {
-            def pDescriptor = pluginService.getPluginDescriptor(pluginName, service)
+            def pDescriptor = pluginService.getPluginDescriptor(provider, service)
             instance = pDescriptor?.instance
             desc = pDescriptor?.description
         }
-
-        if(!desc) {
-            def psvc = frameworkService.rundeckFramework.getService(service)
-            desc = psvc?.listDescriptions()?.find { it.name == pluginName }
-        }
         if (!desc) {
-            response.status = 404
-            renderErrorView('Not found')
-            return
+            throw new NotFound("Plugin", "$service:$provider")
         }
-        def meta = frameworkService.getRundeckFramework().getPluginManager().getPluginMetadata(service,pluginName)
-        def terseDesc = [:]
-        terseDesc.id = meta?.pluginId ?: desc.name.encodeAsSHA256().substring(0,12)
-        terseDesc.name = desc.name
-        terseDesc.title = uiPluginService.getPluginMessage(
+        def meta = frameworkService.getRundeckFramework().getPluginManager().getPluginMetadata(service,provider)
+        def detail = new ApiPluginProviderDetail()
+        detail.id = meta?.pluginId ?: desc.name.encodeAsSHA256().toString().substring(0,12)
+        detail.name = desc.name
+        detail.title = uiPluginService.getPluginMessage(
             service,
-            pluginName,
+            provider,
             "plugin.title",
             desc.title,
             RequestContextUtils.getLocale(request)
         )
-        terseDesc.desc = uiPluginService.getPluginMessage(
+        detail.description = uiPluginService.getPluginMessage(
             service,
-            pluginName,
+            provider,
             'plugin.description',
             desc.description,
             RequestContextUtils.getLocale(request)
         )
+        if(!apiRequest){
+            detail.desc = detail.description
+            detail.description=null
+        }
         if(service != "UI") {
-            def profile = uiPluginService.getProfileFor(service, pluginName)
+            def profile = uiPluginService.getProfileFor(service, provider)
             if (profile.icon) {
-                terseDesc.iconUrl = createLink(
+                detail.iconUrl = grailsLinkGenerator.link(
                         controller: 'plugin',
                         action: 'pluginIcon',
-                        params: [service: service, name: pluginName]
+                        params: [service: service, name: provider]
                 )
             }
-            if (profile.providerMetadata) {
-                terseDesc.providerMetadata = profile.providerMetadata
+            if (profile.providerMetadata instanceof Map) {
+                detail.providerMetadata = (Map)profile.providerMetadata
             }
         }
-        terseDesc.ver = meta?.pluginFileVersion ?: appVer
-        terseDesc.rundeckCompatibilityVersion = meta?.rundeckCompatibilityVersion ?: 'unspecified'
-        terseDesc.targetHostCompatibility = meta?.targetHostCompatibility ?: 'all'
-        terseDesc.license = meta?.pluginLicense ?: 'unspecified'
-        terseDesc.sourceLink = meta?.pluginSourceLink
-        terseDesc.thirdPartyDependencies = meta?.pluginThirdPartyDependencies
+        detail.pluginVersion = meta?.pluginFileVersion ?: appVer
+        if(!apiRequest){
+            detail.ver = detail.pluginVersion
+            detail.pluginVersion=null
+        }
+        detail.rundeckCompatibilityVersion = meta?.rundeckCompatibilityVersion ?: 'unspecified'
+        detail.targetHostCompatibility = meta?.targetHostCompatibility ?: 'all'
+        detail.license = meta?.pluginLicense ?: 'unspecified'
+        detail.sourceLink = meta?.pluginSourceLink
+        detail.thirdPartyDependencies = meta?.pluginThirdPartyDependencies
 
-        terseDesc.props = pluginApiService.pluginPropertiesAsMap(
+
+        List<ApiProviderProp> propsList = pluginApiService.pluginPropertiesAsMap(
             service,
-            pluginName,
+            provider,
             desc.properties
-        )
-        terseDesc.projectMapping = desc.propertiesMapping
-        terseDesc.fwkMapping = desc.fwkPropertiesMapping
+        ).collect { ApiProviderProp.from(it) }
+        detail.props = propsList
+        detail.projectMapping = desc.propertiesMapping
+        detail.fwkMapping = desc.fwkPropertiesMapping
         if(instance) {
             //Check for custom config vue component
             def customConfigProp = PluginAdapterUtility.getCustomConfigAnnotation(instance)
-            if(customConfigProp) terseDesc.vueConfigComponent = customConfigProp.vueConfigurationComponent()
+            if(customConfigProp) detail.vueConfigComponent = customConfigProp.vueConfigurationComponent()
         }
-        if(params.project) {
-            AuthContext auth = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(request.subject, params.project)
+        if(project) {
             def services = rundeckAuthorizedServicesProvider.getServicesWith(auth)
             def dynamicProps = pluginService.
-                getDynamicProperties(frameworkService.rundeckFramework, service, pluginName, params.project, services)
+                getDynamicProperties(frameworkService.rundeckFramework, service, provider, project, services)
             if (dynamicProps) {
-                terseDesc.dynamicProps = dynamicProps
+                detail.dynamicProps = dynamicProps
             }
 
             def dynamicDefaults = pluginService.
-                    getDynamicDefaults(frameworkService.rundeckFramework, service, pluginName, params.project, services)
+                    getDynamicDefaults(frameworkService.rundeckFramework, service, provider, project, services)
             if (dynamicDefaults) {
-                terseDesc.dynamicDefaults = dynamicDefaults
+                detail.dynamicDefaults = dynamicDefaults
             }
         }
 
-        render(terseDesc as JSON)
+        return detail
     }
 
 

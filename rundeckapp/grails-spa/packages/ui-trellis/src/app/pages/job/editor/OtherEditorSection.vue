@@ -9,7 +9,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { defineComponent } from "vue";
 import * as _ from "lodash";
 import OtherEditor from "../../../components/job/other/OtherEditor.vue";
@@ -36,7 +36,7 @@ export default defineComponent({
       handler() {
         if (this.watching) {
           if (!_.isEqual(this.otherData, this.updatedData)) {
-            window.jobWasEdited();
+            this.eventBus.emit("jobedit.page.confirm", true);
           }
         }
       },

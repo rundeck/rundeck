@@ -270,9 +270,18 @@
             prop.staticTextDefaultValue
           }}</span>
           <span
-            v-if="prop.options['staticTextContentType'] === 'text/markdown'"
+            v-else-if="
+              prop.options['staticTextContentType'] === 'text/markdown'
+            "
             >{{ prop.staticTextDefaultValue }}</span
           >
+          <span
+            v-else-if="
+              prop.options['staticTextContentType'] ===
+              'application/x-text-html-sanitized'
+            "
+            v-html="prop.staticTextDefaultValue"
+          ></span>
           <span v-else>{{ prop.staticTextDefaultValue }}</span>
         </template>
         <template
@@ -379,7 +388,6 @@
               v-model="currentValue"
               :storage-filter="prop.options['storage-file-meta-filter']"
               :allow-upload="true"
-              :value="keyPath"
               :read-only="renderReadOnly"
             />
           </ui-socket>
@@ -389,7 +397,6 @@
             v-model="currentValue"
             :storage-filter="prop.options['storage-file-meta-filter']"
             :allow-upload="true"
-            :value="keyPath"
             :read-only="renderReadOnly"
           />
         </div>

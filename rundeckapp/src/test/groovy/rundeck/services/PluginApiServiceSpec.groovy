@@ -27,12 +27,15 @@ import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import grails.testing.services.ServiceUnitTest
+import grails.testing.web.GrailsWebUnitTest
 import grails.web.mapping.LinkGenerator
+import rundeck.codecs.MarkdownCodec
+import rundeck.codecs.SanitizedHTMLCodec
 import spock.lang.Specification
 
 import java.text.SimpleDateFormat
 
-class PluginApiServiceSpec extends Specification implements ServiceUnitTest<PluginApiService> {
+class PluginApiServiceSpec extends Specification implements ServiceUnitTest<PluginApiService>, GrailsWebUnitTest {
     String fakePluginId = "Fake Plugin".encodeAsSHA256().substring(0,12)
 
     void "list plugins"() {
@@ -166,12 +169,19 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
             1 * service.uiPluginService.getPluginMessage(
                 'svc',
                 'provider',
+                "property.prop1.description",
+                _,
+                _
+            ) >> 'description.message'
+            1 * service.uiPluginService.getPluginMessage(
+                'svc',
+                'provider',
                 "property.prop1.defaultValue",
                 _,
                 _
             ) >> 'defaultValue.message'
             result.name == 'prop1'
-            result.desc == 'A fake property for the fake plugin'
+            result.desc == 'description.message'
             result.title == 'title.message'
             result.defaultValue == 'alpha'
             result.staticTextDefaultValue == 'defaultValue.message'
@@ -182,6 +192,68 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
             result.scope == null
             result.options == ['displayType':'CODE']
 
+    }
+    def "plugin Property Map sanitizes static html or markdown content"() {
+        given:
+            mockCodec(SanitizedHTMLCodec)
+            mockCodec(MarkdownCodec)
+            service.uiPluginService = Mock(UiPluginService)
+            def prop = PropertyBuilder.builder()
+                                      .name("prop1")
+                                      .title("Property 1")
+                                      .description("A fake property for the fake plugin")
+                                      .required(true)
+                                      .defaultValue(defaultValue)
+                                      .values("alpha", "beta", "gamma")
+                                      .type(Property.Type.Select)
+            .renderingOptions([
+                (StringRenderingConstants.DISPLAY_TYPE_KEY):StringRenderingConstants.DisplayType.STATIC_TEXT,
+                (StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY):contentType,
+
+            ])
+                                      .build()
+
+            service.metaClass.getLocale = { -> Locale.ENGLISH }
+        when:
+            def result = service.pluginPropertyMap('svc', 'provider', prop)
+        then:
+            result != null
+            1 * service.uiPluginService.getPluginMessage(
+                'svc',
+                'provider',
+                "property.prop1.title",
+                _,
+                _
+            ) >> 'title.message'
+            1 * service.uiPluginService.getPluginMessage(
+                'svc',
+                'provider',
+                "property.prop1.description",
+                _,
+                _
+            ) >> 'description.message'
+            1 * service.uiPluginService.getPluginMessage(
+                'svc',
+                'provider',
+                "property.prop1.defaultValue",
+                _,
+                _
+            ) >> 'defaultValue.message'
+            result.name == 'prop1'
+            result.desc == 'description.message'
+            result.title == 'title.message'
+            result.defaultValue == 'aval'
+            result.staticTextDefaultValue == expected
+            result.required == true
+            result.type == 'Select'
+            result.allowed == ['alpha', 'beta', 'gamma']
+            result.selectLabels == null
+            result.scope == null
+            result.options == ['displayType':'STATIC_TEXT', staticTextContentType:'application/x-text-html-sanitized']
+        where:
+            defaultValue | contentType     | expected
+            'aval'       | 'text/html'     | 'defaultValue.message'
+            'aval'       | 'text/markdown' | '<article class="markdown-body"><p>defaultValue.message</p>\n</article>'
     }
 
     class FakeUIDescribedPlugin extends DescribedPlugin<UIPlugin> {

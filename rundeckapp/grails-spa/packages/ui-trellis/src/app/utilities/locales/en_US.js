@@ -877,6 +877,25 @@ const messages = {
   more: "More\u2026",
   less: "Less\u2026",
   "job.edit.groupPath.choose.text": "Click on the name of the group to use",
+  Workflow: {
+    label: "Workflow",
+    property: {
+      keepgoing: {
+        true: { description: "Run remaining steps before failing." },
+        false: { description: "Stop at the failed step." },
+        prompt: "If a step fails:",
+      },
+      strategy: {
+        label: "Strategy",
+      },
+    },
+  },
+  "plugin.choose.title": "Choose a Plugin",
+  "plugin.type.WorkflowStep.title.plural": "Workflow Steps",
+  "plugin.type.WorkflowStep.title": "Workflow Step",
+  "plugin.type.WorkflowNodeStep.title.plural": "Node Steps",
+  "plugin.type.WorkflowNodeStep.title": "Node Step",
+  "JobExec.nodeStep.true.label": "Node Step",
 };
 
 export default messages;
