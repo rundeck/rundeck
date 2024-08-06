@@ -40,6 +40,11 @@ class GormReferencedExecutionDataProvider implements ReferencedExecutionDataProv
     }
 
     @Override
+    List<String> getExecutionUuidsByJobUuid(String jobUuid) {
+        return ReferencedExecution.findAllByJobUuid(jobUuid).collect{ it.execution.scheduledExecution.uuid }
+    }
+
+    @Override
     void deleteByExecutionId(Long id) {
         def execution = Execution.findById(id)
         ReferencedExecution.findAllByExecution(execution).each{ re ->

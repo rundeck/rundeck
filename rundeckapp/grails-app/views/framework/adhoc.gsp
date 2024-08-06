@@ -34,7 +34,7 @@
           kind: AuthConstants.TYPE_EVENT
   )}"/>
 
-    <asset:javascript src="static/css/pages/command.css"/>
+    <asset:stylesheet src="static/css/pages/command.css"/>
     <asset:javascript src="static/pages/command.js"/>
     <asset:javascript src="executionState.js"/>
     <asset:javascript src="executionControl.js"/>

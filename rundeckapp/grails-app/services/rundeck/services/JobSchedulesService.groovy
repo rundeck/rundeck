@@ -40,7 +40,7 @@ class JobSchedulesService implements SchedulesManager {
     }
 
     @Override
-    List getAllScheduled(String serverUUID = null, String project = null) {
+    List getAllScheduled(String serverUUID, String project) {
         return rundeckJobSchedulesManager.getAllScheduled(serverUUID, project)
     }
 

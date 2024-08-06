@@ -1,6 +1,6 @@
 <template>
   <div class="form-group">
-    <span class="checkbox col-sm-2">
+    <span class="checkbox col-sm-2" data-testid="checkbox-span">
       <input :id="uid" v-model="enabled" type="checkbox" class="checkbox" />
       <label :for="uid"><slot>Enabled</slot></label>
     </span>
@@ -30,16 +30,25 @@
     </div>
   </div>
 </template>
-<script>
+<script lang="ts">
 import { defineComponent } from "vue";
 import _ from "lodash";
 import DateTimePicker from "./dateTimePicker.vue";
+import type { DateFilterProps } from "./types/activityTypes";
+import type { PropType } from "vue";
 
 export default defineComponent({
   components: {
     DateTimePicker,
   },
-  props: ["modelValue"],
+
+  props: {
+    modelValue: {
+      type: Object as PropType<DateFilterProps>,
+      required: true,
+    },
+  },
+
   emits: ["update:modelValue"],
   data() {
     return {

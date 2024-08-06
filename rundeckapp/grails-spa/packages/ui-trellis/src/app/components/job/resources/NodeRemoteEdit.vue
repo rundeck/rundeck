@@ -41,11 +41,16 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { getRundeckContext } from "@/library";
-import { getAppLinks } from "@/library";
+import { getRundeckContext } from "../../../../library";
+import { getAppLinks } from "../../../../library";
 const rundeckContext = getRundeckContext();
 
 const PROTOCOL = "rundeck:node:edit";
+
+interface Message {
+  origin?: string;
+  data: any;
+}
 
 export default defineComponent({
   name: "NodeRemoteEdit",
@@ -59,15 +64,16 @@ export default defineComponent({
       required: false,
     },
   },
+  emits: ["remoteEditStop"],
   data() {
     return {
       remoteEditStarted: false,
       shouldRefresh: false,
       finished: false,
       success: false,
-      error: null,
+      error: null as string | null,
       remoteEditExpect: false,
-      remoteSite: null,
+      remoteSite: null as string | null,
       project: rundeckContext.projectName,
     };
   },
@@ -85,7 +91,7 @@ export default defineComponent({
     },
     fnRemoteEditExpect() {
       this.remoteEditExpect = true;
-      this.remoteSite = this.remoteUrl;
+      this.remoteSite = this.remoteUrl as string;
       this.remoteEditStarted = false;
       //@ts-ignore
       Event.observe(window, "message", this._rdeckNodeEditOnmessage);
@@ -108,7 +114,7 @@ export default defineComponent({
 
       this.$emit("remoteEditStop");
     },
-    _rdeckNodeEditOnmessage(msg) {
+    _rdeckNodeEditOnmessage(msg: Message) {
       if (
         !this.remoteEditExpect ||
         !this.remoteSite ||
@@ -127,7 +133,7 @@ export default defineComponent({
         if (err.startsWith(":")) {
           err = err.substring(1);
         }
-        this._rdeckNodeEditError(msg.origin, err ? err : "(No message)");
+        this._rdeckNodeEditError(msg.origin || "", err ? err : "(No message)");
       } else if (this.remoteEditStarted) {
         if (PROTOCOL + ":finished:true" == data) {
           this._rdeckNodeEditFinished(true);
@@ -141,10 +147,10 @@ export default defineComponent({
         }
       }
     },
-    _rdeckNodeEditError(origin, msg) {
+    _rdeckNodeEditError(origin: string | null, msg: string) {
       this.error = origin ? origin + " reported an error: " + msg : msg;
     },
-    _rdeckNodeEditFinished(changed) {
+    _rdeckNodeEditFinished(changed: boolean) {
       this.success = changed;
     },
   },

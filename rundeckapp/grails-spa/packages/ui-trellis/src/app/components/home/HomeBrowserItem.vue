@@ -13,7 +13,7 @@
         />
         <a
           :id="`project${index}`"
-          :href="createLink(`/?project=${project.name}`)"
+          :href="createLink(`?project=${project.name}`)"
           class="link-hover text-inverse project_list_item_link link-quiet"
         >
           <span class="h5" :class="{ 'display-block': project.label }">
@@ -63,7 +63,7 @@
       <!--      TODO: ADJUST THIS SECTION ONCE ACTIVITY IS REFACTORED -->
       <div class="col-sm-6 col-md-2 text-center">
         <a
-          :href="createLink(`/project/${project.name}/activity`)"
+          :href="createLink(`project/${project.name}/activity`)"
           class="as-block link-hover link-block-padded text-inverse"
           :class="{ 'text-secondary': project.execCount < 1 }"
           data-toggle="popover"
@@ -116,9 +116,7 @@
         <a
           v-if="project.failedCount > 0"
           class="text-warning"
-          :href="
-            createLink(`/project/${project.name}/activity?statFilter=fail`)
-          "
+          :href="createLink(`project/${project.name}/activity?statFilter=fail`)"
         >
           <span>
             {{ project.failedCount

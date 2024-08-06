@@ -38,6 +38,7 @@
 <g:set var="fieldColHalfSize" value="col-sm-5"/>
 <g:set var="fieldColShortSize" value="col-sm-4"/>
 <g:set var="offsetColSize" value="col-sm-10 col-sm-offset-2"/>
+<g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
 
 <g:set var="editSchedExecId" value="${scheduledExecution?.id? scheduledExecution.extid:null}"/>
 
@@ -59,7 +60,22 @@
   </div>
 
   <div class="tab-pane active" id="tab_details" data-ko-bind="jobeditor">
-  <section class="section-space-lg">
+  <g:if test="${uiType=='next'}">
+    <g:set var="allowHTML"
+           value="${!(cfg.getString(config: "gui.job.description.disableHTML") in [true,'true'])}"/>
+    <section class="job-editor-details-vue" id="job-editor-details-vue">
+      <details-editor-section :allow-html="${enc(attr:allowHTML)}" />
+    </section>
+    <g:render template="jobComponentProperties"
+              model="[
+                      jobComponents:jobComponents,
+                      sectionName:'details',
+                      jobComponentValues:jobComponentValues
+              ]"
+    />
+  </g:if>
+  <g:else>
+    <section class="section-space-lg">
           %{--name--}%
       <div class="form-group ${g.hasErrors(bean:scheduledExecution,field:'jobName','has-error')}" id="schedJobNameLabel">
           <label for="schedJobName"
@@ -102,7 +118,9 @@
                       <span class="btn btn-default"
                             data-toggle="modal"
                             data-target="#groupChooseModal"
-                            title="${message(code:"job.edit.groupPath.choose.text")}">
+                            title="${message(code:"job.edit.groupPath.choose.text")}"
+                            id="groupChooseModalBtn"
+                      >
                           <g:message code="choose.action.label" />
                       </span>
                   </span>
@@ -194,6 +212,7 @@
                 ]"
       />
   </section><!--/.nput-group-item -->
+  </g:else>
   </div><!-- end #tab_details -->
 
       <g:set var="projectName" value="${scheduledExecution.project?scheduledExecution.project.toString():params.project ?: request.project?: projects?.size() == 1 ? projects[0].name : ''}" />
@@ -202,8 +221,6 @@
       %{--Options--}%
     <div class="tab-pane" id="tab_workflow">
       <section id="optionsContent" class=" section-space-lg" >
-          <g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
-
           <div class="form-group">
               <div class="${labelColSize} control-label text-form-label"><span id="optsload"></span><g:message code="options.label" /></div>
               <div class="${fieldColSize}">

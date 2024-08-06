@@ -10,6 +10,8 @@ for:
     - allow: '*' # allow read/write/delete/run/kill of all jobs
   node:
     - allow: '*' # allow read/run for all nodes
+  runner:
+    - allow: '*' # allow read/run for all runners
 by:
   group: admin
 

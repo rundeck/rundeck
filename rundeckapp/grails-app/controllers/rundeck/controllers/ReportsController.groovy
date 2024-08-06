@@ -296,43 +296,30 @@ class ReportsController extends ControllerBase{
         }
         def results = index_old(query)
         results.reports=results?.reports.collect{
-            def map=it.toMap()
-            map.duration= (it.dateCompleted ?: new Date()).time - it.dateStarted.time
-            if(map.executionId){
-                //nb:response data type expects string
-                map.executionId= map.executionId.toString()
-                try {
-                    map.execution = Execution.get(map.executionId).toMap()
-                    map.executionHref = createLink(controller: 'execution', action: 'show', absolute: false, id: map.executionId, params: [project: (map?.project != null)? map.project : params.project])
-                } catch (Exception e) {
+            try {
+                def map=it.toMap()
+                map.duration= (it.dateCompleted ?: new Date()).time - it.dateStarted.time
+                def execution = null
+                if (map.executionUuid) {
+                    execution = Execution.findByUuid(map.executionUuid)
+                } else if (map.executionId) {
+                    execution = Execution.findById(map.executionId)
+                }
+                if (execution) {
+                    //nb:response data type expects string
+                    map.execution = execution?.toMap()
+                    map.executionId = map.execution.id.toString()
+                    map.executionHref = createLink(controller: 'execution', action: 'show', absolute: false, id: map.execution.id, params: [project: (map?.project != null) ? map.project : params.project])
+                    map.jobName= map.remove('reportId')
+                    map.user= map.remove('author')
+                    map.executionString= map.remove('title')
+                    return map
+                }
+            } catch (Exception e) {
+                log.debug("Error getting Execution: " + e.message)
+            }
 
-                }
-            }
-            map.jobName= map.remove('reportId')
-            if(map.jcJobId){
-                map.jobId= map.remove('jcJobId')
-                try {
-                    def job = ScheduledExecution.get(Long.parseLong(map.jobId))
-                    map.jobId=job?.extid
-                    map.jobDeleted = job==null
-                    map['jobPermalink']= createLink(
-                            controller: 'scheduledExecution',
-                            action: 'show',
-                            absolute: true,
-                            id: job?.extid,
-                            params:[project:job?.project]
-                    )
-                    map.jobName=job?.jobName
-                    map.jobGroup=job?.groupPath
-                }catch(Exception e){
-                }
-                if(map.execution?.argString){
-                    map.execution.jobArguments= OptionsParserUtil.parseOptsFromString(map.execution.argString)
-                }
-            }
-            map.user= map.remove('author')
-            map.executionString= map.remove('title')
-            return map.execution?map:null
+            return null
         }.findAll{it}
 //        results.params=params
         results.query=null

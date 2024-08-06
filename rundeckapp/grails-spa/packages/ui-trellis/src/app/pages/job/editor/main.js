@@ -15,6 +15,7 @@ import OptionsEditorSection from "./OptionsEditorSection.vue";
 import { getRundeckContext } from "@/library";
 import { loadJsonData } from "@/app/utilities/loadJsonData";
 import NextUiToggle from "@/app/pages/job/browse/NextUiToggle.vue";
+import DetailsEditorSection from "@/app/pages/job/editor/DetailsEditorSection.vue";
 import WorkflowEditorSection from "@/app/pages/job/editor/WorkflowEditorSection.vue";
 
 const locale = window._rundeck.locale || "en_US";
@@ -84,6 +85,30 @@ if (uiType === "next") {
     const rapp = createApp({
       name: "JobEditOptionsApp",
       components: { OptionsEditorSection },
+    });
+    rapp.use(uiv);
+    rapp.use(i18n);
+    rapp.provide("addUiMessages", async (messages) => {
+      const newMessages = messages.reduce(
+        (acc, message) => (message ? { ...acc, ...message } : acc),
+        {},
+      );
+      const locale = window._rundeck.locale || "en_US";
+      const lang = window._rundeck.language || "en";
+      return updateLocaleMessages(i18n, locale, lang, newMessages);
+    });
+    rapp.mount(e);
+  }
+
+  const detailselms = document.body.getElementsByClassName(
+    "job-editor-details-vue",
+  );
+
+  for (let i = 0; i < detailselms.length; i++) {
+    const e = detailselms[i];
+    const rapp = createApp({
+      name: "JobEditDetailsApp",
+      components: { DetailsEditorSection },
     });
     rapp.use(uiv);
     rapp.use(i18n);

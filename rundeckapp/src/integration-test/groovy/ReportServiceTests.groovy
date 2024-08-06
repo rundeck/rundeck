@@ -47,15 +47,15 @@ class ReportServiceTests extends GroovyTestCase {
     void testGetExecReportsReportIdFilter(){
         def r1, r2, r3
 
-        r1 = proto(reportId: 'blah', executionId: '123')
+        r1 = proto(reportId: 'blah', executionId: '123', executionUuid: 'uuid1')
         assert r1.validate()
         assert null != r1.save(flush: true)
         assert 'blah' == r1.reportId
         assertNotNull(r1.id)
-        r2 = proto(reportId: 'blah2', executionId: '124')
+        r2 = proto(reportId: 'blah2', executionId: '124', executionUuid: 'uuid2')
         assert r2.validate()
         assert null != r2.save(flush: true)
-        r3 = proto(reportId: 'blah3', executionId: '125')
+        r3 = proto(reportId: 'blah3', executionId: '125', executionUuid: 'uuid3')
         assert r3.validate()
         println r3.save(flush: true)
 
@@ -79,18 +79,18 @@ class ReportServiceTests extends GroovyTestCase {
     void testGetExecNodeFilterReportIdFilter(){
         def r1,r2,r3, r4
 
-            r1=proto(reportId:'blah', executionId: '123', succeededNodeList:'test')
+            r1=proto(reportId:'blah', executionId: '123', succeededNodeList:'test', executionUuid: 'uuid1')
             assert r1.validate()
             assert null!=r1.save(flush: true)
             assert 'blah'==r1.reportId
             assertNotNull(r1.id)
-            r2 = proto(reportId: 'blah2', executionId: '124', failedNodeList:'test')
+            r2 = proto(reportId: 'blah2', executionId: '124', failedNodeList:'test', executionUuid: 'uuid2')
             assert r2.validate()
             assert null != r2.save(flush: true)
-            r3 = proto(reportId: 'blah3', executionId: '125', filterApplied:'tags: monkey')
+            r3 = proto(reportId: 'blah3', executionId: '125', filterApplied:'tags: monkey', executionUuid: 'uuid3')
             assert r3.validate()
             println r3.save(flush: true)
-            r4 = proto(reportId: 'blah4', executionId: '126', filterApplied:'.*',succeededNodeList:'test')
+            r4 = proto(reportId: 'blah4', executionId: '126', filterApplied:'.*',succeededNodeList:'test', executionUuid: 'uuid4')
             assert r4.validate()
             println r4.save(flush: true)
 
@@ -121,15 +121,15 @@ class ReportServiceTests extends GroovyTestCase {
     void testGetExecReportsProjFilterIsExact(){
         def r1,r2,r3
 
-        r1=proto(reportId:'blah', executionId: '123', project:'abc')
+        r1=proto(reportId:'blah', executionId: '123', project:'abc', executionUuid: 'uuid1')
         assert r1.validate()
         assert null!=r1.save(flush: true)
         assert 'blah'==r1.reportId
         assertNotNull(r1.id)
-        r2 = proto(reportId: 'blah2', executionId: '124', project: 'abc')
+        r2 = proto(reportId: 'blah2', executionId: '124', project: 'abc', executionUuid: 'uuid2')
         assert r2.validate()
         assert null != r2.save(flush: true)
-        r3 = proto(reportId: 'blah3', executionId: '125', project: 'abcdef')
+        r3 = proto(reportId: 'blah3', executionId: '125', project: 'abcdef', executionUuid: 'uuid3')
         assert r3.validate()
         println r3.save(flush: true)
 
@@ -152,13 +152,13 @@ class ReportServiceTests extends GroovyTestCase {
     }
     @Test
     void testGetExecReportsJobListFilter(){
-        def r1 = proto(reportId: 'group/name', executionId: '1')
+        def r1 = proto(reportId: 'group/name', executionId: '1', executionUuid: 'uuid1')
         assert null != r1.save(flush: true)
-        def r2 = proto(reportId: 'group/name2', executionId: '2')
+        def r2 = proto(reportId: 'group/name2', executionId: '2', executionUuid: 'uuid2')
         assert null != r2.save(flush: true)
-        def r3 = proto(reportId: 'group/name3', executionId: '3')
+        def r3 = proto(reportId: 'group/name3', executionId: '3', executionUuid: 'uuid3')
         assert null != r3.save(flush: true)
-        def r4 = proto(reportId: 'group/monkey', executionId: '4')
+        def r4 = proto(reportId: 'group/monkey', executionId: '4', executionUuid: 'uuid4')
         assert null != r4.save(flush: true)
 
         assertQueryResult([jobListFilter: ['group/name']], [r1])
@@ -169,14 +169,14 @@ class ReportServiceTests extends GroovyTestCase {
     }
     @Test
     void testGetExecReportsStatusStringVariations(){
-        def r1 = proto(reportId: 'group/name', executionId: '1', status: 'failed', actionType: 'failed')
+        def r1 = proto(reportId: 'group/name', executionId: '1', status: 'failed', actionType: 'failed', executionUuid: 'uuid1')
         assert null != r1.save(flush: true)
-        def r2 = proto(reportId: 'group/name2', executionId: '2', status: 'fail', actionType: 'fail')
+        def r2 = proto(reportId: 'group/name2', executionId: '2', status: 'fail', actionType: 'fail', executionUuid: 'uuid2')
         assert null != r2.save(flush: true)
 
-        def r3 = proto(reportId: 'group/name2', executionId: '3', status: 'succeed', actionType: 'succeed')
+        def r3 = proto(reportId: 'group/name2', executionId: '3', status: 'succeed', actionType: 'succeed', executionUuid: 'uuid3')
         assert null != r3.save(flush: true)
-        def r4 = proto(reportId: 'group/name2', executionId: '4', status: 'succeeded', actionType: 'succeeded')
+        def r4 = proto(reportId: 'group/name2', executionId: '4', status: 'succeeded', actionType: 'succeeded', executionUuid: 'uuid4')
         assert null != r4.save(flush: true)
 
         assertQueryResult([statFilter: 'fail'], [r1, r2])
@@ -185,11 +185,11 @@ class ReportServiceTests extends GroovyTestCase {
     }
     @Test
     void testGetCombinedReportsExcludeJobListFilter(){
-        def r1 = proto(reportId: 'group/name', executionId: '1')
+        def r1 = proto(reportId: 'group/name', executionId: '1', executionUuid: 'uuid1')
         assert null != r1.save(flush: true)
-        def r2 = proto(reportId: 'group/name2', executionId: '2')
+        def r2 = proto(reportId: 'group/name2', executionId: '2', executionUuid: 'uuid2')
         assert null != r2.save(flush: true)
-        def r3 = proto(reportId: 'group/name3', executionId: '3')
+        def r3 = proto(reportId: 'group/name3', executionId: '3', executionUuid: 'uuid3')
         assert null != r3.save(flush: true)
 
         assertQueryResult([excludeJobListFilter: ['group/name']], [r2, r3])
@@ -209,9 +209,9 @@ class ReportServiceTests extends GroovyTestCase {
         assert null != se.save(flush: true)
         assert null != se2.save(flush: true)
 
-        def r1 = proto(reportId: 'group/name', jobId: se.id,project: 'one')
+        def r1 = proto(reportId: 'group/name', jobId: se.id,project: 'one', executionUuid: 'uuid1')
         assert null != r1.save(flush: true)
-        def r2 = proto(reportId: 'group/name2', jobId: se2.id,project: 'one')
+        def r2 = proto(reportId: 'group/name2', jobId: se2.id,project: 'one', executionUuid: 'uuid2')
         assert null != r2.save(flush: true)
         sessionFactory.currentSession.flush()
 
@@ -238,15 +238,15 @@ class ReportServiceTests extends GroovyTestCase {
     void testGetExecReportsFailedStat(){
         def r1,r2,r3
 
-        r1 = proto(reportId: 'blah', executionId: '123', status: 'fail')
+        r1 = proto(reportId: 'blah', executionId: '123', status: 'fail', executionUuid: 'uuid1')
         assert r1.validate()
         assert null != r1.save(flush: true)
         assert 'blah' == r1.reportId
         assertNotNull(r1.id)
-        r2 = proto(reportId: 'blah2', executionId: '124', status: 'fail')
+        r2 = proto(reportId: 'blah2', executionId: '124', status: 'fail', executionUuid: 'uuid2')
         assert r2.validate()
         assert null != r2.save(flush: true)
-        r3 = proto(reportId: 'blah3', executionId: '125', status: 'succes')
+        r3 = proto(reportId: 'blah3', executionId: '125', status: 'succes', executionUuid: 'uuid3')
         assert r3.validate()
         println r3.save(flush: true)
 
@@ -271,15 +271,15 @@ class ReportServiceTests extends GroovyTestCase {
     void testGetExecReportsKilledStat(){
         def r1,r2,r3
 
-        r1=proto(reportId:'blah', executionId: '123', status: 'fail', abortedByUser: 'admin')
+        r1=proto(reportId:'blah', executionId: '123', status: 'fail', abortedByUser: 'admin', executionUuid: 'uuid1')
         assert r1.validate()
         assert null!=r1.save(flush: true)
         assert 'blah'==r1.reportId
         assertNotNull(r1.id)
-        r2 = proto(reportId: 'blah2', executionId: '124',status: 'fail')
+        r2 = proto(reportId: 'blah2', executionId: '124',status: 'fail', executionUuid: 'uuid2')
         assert r2.validate()
         assert null != r2.save(flush: true)
-        r3 = proto(reportId: 'blah3', executionId: '125',status: 'succes')
+        r3 = proto(reportId: 'blah3', executionId: '125',status: 'succes', executionUuid: 'uuid3')
         assert r3.validate()
         println r3.save(flush: true)
 

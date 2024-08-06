@@ -26,20 +26,23 @@ class RdClient {
     final ObjectMapper mapper = new ObjectMapper()
     String baseUrl
     OkHttpClient httpClient
-    int apiVersion = 47
-    static final finalApiVersion = 47
+    int apiVersion = 48
+    static final finalApiVersion = 48
 
     RdClient(String baseUrl, OkHttpClient httpClient) {
         this.baseUrl = baseUrl
         this.httpClient = httpClient
     }
 
-    static RdClient create(final String baseUrl, final String apiToken) {
+    static RdClient create(final String baseUrl, final String apiToken, Map<String, Integer> config = Collections.emptyMap() ) {
         new RdClient(
                 baseUrl,
                 new OkHttpClient.Builder().
                         addInterceptor(new HeaderInterceptor("X-Rundeck-Auth-token", apiToken)).
-                        connectionPool(new ConnectionPool(2, 10, TimeUnit.SECONDS)).
+                        connectTimeout(config.getOrDefault("connectTimeout", 25), TimeUnit.SECONDS).
+                        readTimeout(config.getOrDefault("readTimeout", 25), TimeUnit.SECONDS).
+                        writeTimeout(config.getOrDefault("writeTimeout", 25), TimeUnit.SECONDS).
+                        connectionPool(new ConnectionPool(2, 25, TimeUnit.SECONDS)).
                         build()
         )
     }

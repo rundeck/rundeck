@@ -26,6 +26,10 @@ class GitScmApiClient {
         this.client = clientProvider.client
     }
 
+    GitScmApiClient(RdClient client){
+        this.client = client
+    }
+
     GitScmApiClient forIntegration(ScmIntegration integration){
         this.integration = integration.name
         this.pluginName = "git-${integration.name}"

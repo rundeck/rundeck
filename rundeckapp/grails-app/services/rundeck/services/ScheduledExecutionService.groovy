@@ -17,7 +17,9 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
-import com.dtolabs.rundeck.app.support.BaseNodeFilters
+import rundeck.data.job.reference.JobReferenceImpl
+import rundeck.data.job.reference.JobRevReferenceImpl
+import rundeck.support.filters.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.audit.ActionTypes
 import com.dtolabs.rundeck.core.audit.ResourceTypes
@@ -215,6 +217,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     UserDataProvider userDataProvider
     JobDataProvider jobDataProvider
     UserService userService
+    RdJobService rdJobService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -235,7 +238,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     Map<String, String> getPropertiesMapping() { ConfigPropertiesMapping }
 
     JobData saveJob(JobData job) {
-        jobDataProvider.save(job)
+        rdJobService.saveJob(job)
     }
     /**
      * Return project config for node cache delay
@@ -647,7 +650,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     childPath=path+'/'+parts[0]
                 }else{
                     def parts = item.groupPath.split('/')
-                    childPath=parts[0]
+                    childPath=parts.length ? parts[0]: ''
                 }
             }
             if(!childPath){
@@ -808,7 +811,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param serverUUID
      */
     def unscheduleJobs(String serverUUID=null){
-        def schedJobs = serverUUID ? jobSchedulesService.getAllScheduled(serverUUID) : jobSchedulesService.getAllScheduled()
+        def schedJobs = jobSchedulesService.getAllScheduled(serverUUID, null)
         schedJobs.each { ScheduledExecution se ->
             def jobname = se.generateJobScheduledName()
             def groupname = se.generateJobGroupName()
@@ -1661,7 +1664,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         data.put("scheduledExecutionId", se.uuid)
         data.put("rdeck.base", frameworkService.getRundeckBase())
 
-        if(se.scheduled){
+        if(se.scheduled ||jobSchedulesService.shouldScheduleExecution(se.uuid)){
             data.put("userRoles", se.userRoleList)
             if(frameworkService.isClusterModeEnabled()){
                 data.put("serverUUID", frameworkService.getServerUUID())
@@ -3298,11 +3301,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 ) || !input.properties[it]
             }
             basicProps = foundprops ? input.properties.subMap(foundprops) : [:]
-
         }
 
         if (scheduledExecution.uuid) {
-            basicProps.uuid = scheduledExecution.uuid//don't modify uuid if it exists
+            basicProps.uuid = scheduledExecution.uuid //don't modify uuid if it exists
         }else if(!basicProps.uuid){
             //set UUID if not submitted
             basicProps.uuid = UUID.randomUUID().toString()
@@ -3310,6 +3312,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (scheduledExecution.serverNodeUUID) {
             //don't modify serverNodeUUID, it will be set if needed after validation
             basicProps.serverNodeUUID = scheduledExecution.serverNodeUUID
+        }
+        if (params?.jobDetailsJson) {
+            def detailsData = JSON.parse(params.jobDetailsJson.toString())
+
+            if(detailsData instanceof JSONObject) {
+                detailsData.keySet().forEach(detailKey -> {
+                    basicProps."$detailKey" = detailsData.get(detailKey)
+                })
+            }
         }
 
         //clean up values that should be cleared
@@ -3333,6 +3344,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         ].each {
             scheduledExecution."$it" = null
         }
+        basicProps.remove("id") //id is a uuid and should not attempt to set the id field of the scheduled execution domain class
         scheduledExecution.properties = basicProps
         if (scheduledExecution.groupPath) {
             def re = /^\/*(.+?)\/*$/
