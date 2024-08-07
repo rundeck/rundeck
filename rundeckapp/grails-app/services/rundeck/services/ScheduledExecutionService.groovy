@@ -2421,6 +2421,26 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         PluginConfigSet.with ServiceNameConstants.ExecutionLifecycle, configs
     }
 
+    static PluginConfigSet parseExecutionLifecyclePluginsJSON (JSONObject executionLifecyclePluginsParams) {
+        List<String> keys = executionLifecyclePluginsParams.keys().collect{it.toString()}
+
+        List<PluginProviderConfiguration> configs = []
+
+        keys.each { key ->
+            def pluginType = key
+            Map config = [:]
+            def confprops = executionLifecyclePluginsParams[key] ?: [:]
+            confprops.each { k, v ->
+                if (v != '' && v != null && !k.startsWith('_')) {
+                    config[k] = v
+                }
+            }
+
+            configs << SimplePluginConfiguration.builder().provider(pluginType).configuration(config).build()
+        }
+        PluginConfigSet.with ServiceNameConstants.ExecutionLifecycle, configs
+    }
+
     private Map validateExecutionLifecyclePlugin(
             String type,
             Map config,
@@ -2952,6 +2972,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             //define execution life cycle plugins config
             configSet = parseExecutionLifecyclePluginsParams(plugins)
         }
+        if (params?.jobExecutionPluginsJSON) {
+            def pluginsData = JSON.parse(params.jobExecutionPluginsJSON.toString())
+
+            if(pluginsData instanceof JSONObject) {
+                def executionLifecyclePlugins = pluginsData.getJSONObject("ExecutionLifecycle");
+                if(executionLifecyclePlugins && executionLifecyclePlugins instanceof JSONObject) {
+                    configSet = parseExecutionLifecyclePluginsJSON(executionLifecyclePlugins)
+                }
+
+            }
+        }
+
         executionLifecycleComponentService.setExecutionLifecyclePluginConfigSetForJob(scheduledExecution, configSet)
     }
 
