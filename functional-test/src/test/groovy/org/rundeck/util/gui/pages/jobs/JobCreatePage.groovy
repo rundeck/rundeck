@@ -38,7 +38,7 @@ class JobCreatePage extends BasePage {
     By scheduleRunYesBy = By.cssSelector('input#scheduledTrue')
     By scheduleEveryDayCheckboxBy = By.cssSelector('input#everyDay')
     By scheduleDaysCheckboxDivBy = By.cssSelector('div#DayOfWeekDialog')
-    By executionPluginsRows = By.xpath('//*[@class="list-group-item"]')
+    By executionPluginsRows = By.xpath('//*[@id="tab_execution_plugins"]//*[@class="list-group-item"]')
     By killHandlerPluginPreviousRow = By.xpath('//input[@value="killhandler"]/preceding-sibling::div[1]')
     By killHandlerPluginCheckbox = By.xpath('//*[@value="killhandler"]//following-sibling::div[1]//input[@type="checkbox"]')
     By killHandlerPluginKillSpawnedCheckbox = By.xpath('//*[@value="killhandler"]//following-sibling::div[1]//div[2]//input[@type="checkbox"]')
