@@ -4,7 +4,8 @@ enum WaitingTime {
 
     LOW("A Second", 1000),
     MODERATE("Five Seconds", 5000),
-    EXCESSIVE("Sixty seconds", 60000)
+    EXCESSIVE("Sixty seconds", 60000),
+    XTRA_EXCESSIVE("One-hundred twenty seconds", 120000)
 
     public final String label
     public final int milliSeconds
