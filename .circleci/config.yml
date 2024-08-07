@@ -521,6 +521,7 @@ jobs:
         default: medium
     steps:
       - checkout
+      - restore-build-cache
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
