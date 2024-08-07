@@ -527,6 +527,7 @@ jobs:
         type: string
     steps:
       - checkout
+      - restore-build-cache
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
