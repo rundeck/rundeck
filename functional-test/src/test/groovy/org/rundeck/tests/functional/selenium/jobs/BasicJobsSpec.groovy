@@ -170,7 +170,7 @@ class BasicJobsSpec extends SeleniumBase {
             jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
             jobCreatePage.go()
             jobCreatePage.tab JobTab.EXECUTION_PLUGINS click()
-            if(!jobCreatePage.killHandlerPluginCheckbox.isDisplayed() && jobCreatePage.executionPluginsRows.size() > 1){
+            if(jobCreatePage.executionPluginsRows.size() > 1){
                 jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.killHandlerPluginPreviousRow
             }
             if (jobCreatePage.killHandlerPluginCheckbox.isSelected()) {
