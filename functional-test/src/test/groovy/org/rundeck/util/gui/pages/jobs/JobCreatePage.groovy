@@ -38,6 +38,7 @@ class JobCreatePage extends BasePage {
     By scheduleRunYesBy = By.cssSelector('input#scheduledTrue')
     By scheduleEveryDayCheckboxBy = By.cssSelector('input#everyDay')
     By scheduleDaysCheckboxDivBy = By.cssSelector('div#DayOfWeekDialog')
+    By killHandlerPluginPreviousRow = By.xpath('//input[@value="killhandler"]/preceding-sibling::div[1]')
     By killHandlerPluginCheckbox = By.xpath('//*[@value="killhandler"]//following-sibling::div[1]//input[@type="checkbox"]')
     By killHandlerPluginKillSpawnedCheckbox = By.xpath('//*[@value="killhandler"]//following-sibling::div[1]//div[2]//input[@type="checkbox"]')
     By multiExecFalseBy = By.cssSelector('input#multipleFalse')
@@ -59,6 +60,7 @@ class JobCreatePage extends BasePage {
         static By jobNameInputBy = By.cssSelector("form input[id=\"schedJobName\"]")
         static By groupPathInputBy = By.cssSelector("form input[id=\"schedJobGroup\"]")
         static By descriptionTextareaBy = By.cssSelector("form textarea.ace_text-input")
+        static By killHandlerPluginPreviousRow = By.xpath('//input[@value="killhandler"]/ancestor::div[@class="list-group-item"]/preceding-sibling::div[@class="list-group-item"][1]')
         static By killHandlerPluginCheckbox = By.xpath('//input[@value="killhandler"]')
         static By killHandlerPluginKillSpawnedCheckbox = By.xpath('//*[@data-prop-name="killChilds"]//input[@type="checkbox"]')
         static By optionBy = By.cssSelector("#optnewbutton > button")
@@ -357,12 +359,23 @@ class JobCreatePage extends BasePage {
         el scheduleDaysCheckboxDivBy
     }
 
+    WebElement getKillHandlerPluginPreviousRow() {
+        if(nextUi){
+            new WebDriverWait(driver,  Duration.ofSeconds(50)).until(
+                    ExpectedConditions.presenceOfElementLocated(NextUi.killHandlerPluginPreviousRow)
+            )
+            el NextUi.killHandlerPluginPreviousRow
+        } else {
+            el killHandlerPluginPreviousRow
+        }
+    }
+
     WebElement getKillHandlerPluginCheckbox() {
         if(nextUi){
             new WebDriverWait(driver,  Duration.ofSeconds(50)).until(
-                    ExpectedConditions.presenceOfElementLocated(By.xpath('//input[@value="killhandler"]'))
+                    ExpectedConditions.presenceOfElementLocated(NextUi.killHandlerPluginCheckbox)
             )
-            el By.xpath('//input[@value="killhandler"]')
+            el NextUi.killHandlerPluginCheckbox
         } else {
             el killHandlerPluginCheckbox
         }
