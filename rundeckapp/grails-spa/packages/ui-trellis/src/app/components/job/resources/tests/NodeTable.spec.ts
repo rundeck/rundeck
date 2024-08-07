@@ -27,6 +27,7 @@ const mountNodeTable = (propsData = {}): any => {
         "tags",
       ],
       pagingMax: 5,
+      page: 0,
       hasPaging: true,
       ...propsData,
     },
@@ -105,7 +106,6 @@ describe("NodeTable Component", () => {
 
   it("renders pagination component when the number of results is bigger than the maximum entries per page", async () => {
     const wrapper = await mountNodeTable({
-      hasPaging: true,
       pagingMax: 2,
       maxPages: 3,
     });
@@ -125,7 +125,6 @@ describe("NodeTable Component", () => {
 
   it("renders pagination component and skip pages if the number of pages is bigger than the max", async () => {
     const wrapper = await mountNodeTable({
-      hasPaging: true,
       page: 1,
       pagingMax: 3,
       maxPages: 11,
