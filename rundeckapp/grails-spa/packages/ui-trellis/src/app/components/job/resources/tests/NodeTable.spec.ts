@@ -1,52 +1,17 @@
 import { mount } from "@vue/test-utils";
 import NodeTable from "../NodeTable.vue";
 import NodeDetailsSimple from "../NodeDetailsSimple.vue";
+import { mockNodeSet } from "./mocks/apiData";
 
-jest.mock("@/library/rundeckService", () => ({
+jest.mock("@/library", () => ({
+  getAppLinks: jest
+    .fn()
+    .mockReturnValue({ frameworkNodes: "/resources/nodes" }),
   getRundeckContext: jest.fn().mockReturnValue({
     rdBase: "mockRdBase",
   }),
   url: jest.fn().mockReturnValue({ href: "mockHref" }),
 }));
-
-const mockNodeSet = {
-  nodes: [
-    {
-      name: "node1",
-      nodename: "localhost",
-      attributes: {
-        description: "Rundeck server node",
-        hostname: "node2",
-        osArch: "aarch64",
-        osFamily: "Unix",
-        osName: "agent",
-        osVersion: "14.5",
-        tags: "tag1,tag2",
-        "ui:status:text": "Healthy",
-        "ui:badges": "fa-badge1, fab-badge2",
-        "ui:color": "red",
-        "ui:icon:name": "fa-server",
-      },
-    },
-    {
-      name: "node2",
-      nodename: "node2",
-      attributes: {
-        description: "local node",
-        hostname: "node3",
-        osArch: "x86_64",
-        osFamily: "linux",
-        osName: "Ubuntu",
-        osVersion: "20.04",
-        tags: "tag3,tag4",
-        "ui:status:text": "Unhealthy",
-        "ui:badges": "fa-badge3, fab-badge4",
-        "ui:color": "blue",
-        "ui:icon:name": "fa-hdd",
-      },
-    },
-  ],
-};
 
 const mountNodeTable = (propsData = {}): any => {
   return mount(NodeTable, {
@@ -61,6 +26,8 @@ const mountNodeTable = (propsData = {}): any => {
         "osVersion",
         "tags",
       ],
+      pagingMax: 5,
+      hasPaging: true,
       ...propsData,
     },
     global: {
@@ -100,10 +67,10 @@ describe("NodeTable Component", () => {
       const styleAttribute = colorWrapper.attributes("style");
       expect(styleAttribute).toMatch(/color:\s*(red|blue);?/);
     });
-    expect(nodeColors.length).toBe(2);
+    expect(nodeColors.length).toBe(6);
     // Check node badges
     const nodeBadges = wrapper.findAll('[data-testid="node-badge-icon"]');
-    expect(nodeBadges.length).toBe(4);
+    expect(nodeBadges.length).toBe(12);
   });
 
   it("filters nodes by attribute when an attribute is clicked", async () => {
@@ -134,5 +101,51 @@ describe("NodeTable Component", () => {
     await collapseLink.trigger("click");
     const nestedAttributes = wrapper.findComponent(NodeDetailsSimple);
     expect(nestedAttributes.text()).toMatch(/status:text: Healthy/);
+  });
+
+  it("renders pagination component when the number of results is bigger than the maximum entries per page", async () => {
+    const wrapper = await mountNodeTable({
+      hasPaging: true,
+      pagingMax: 2,
+      maxPages: 3,
+    });
+    await wrapper.vm.$nextTick();
+    const pages = wrapper.findAll("#nodesPaging li");
+    expect(pages.length).toBe(5);
+
+    const arrayOfPageTexts = pages.map((page) => page.text());
+    expect(arrayOfPageTexts).toEqual([
+      "default.paginate.prev",
+      "1",
+      "2",
+      "3",
+      "default.paginate.next",
+    ]);
+  });
+
+  it("renders pagination component and skip pages if the number of pages is bigger than the max", async () => {
+    const wrapper = await mountNodeTable({
+      hasPaging: true,
+      page: 1,
+      pagingMax: 3,
+      maxPages: 11,
+    });
+    await wrapper.vm.$nextTick();
+    const pages = wrapper.findAll("#nodesPaging li");
+
+    const arrayOfPageTexts = pages.map((page) => page.text());
+    expect(arrayOfPageTexts).toEqual([
+      "default.paginate.prev",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "…",
+      "9",
+      "10",
+      "11",
+      "default.paginate.next",
+    ]);
   });
 });
