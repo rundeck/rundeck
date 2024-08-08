@@ -27,7 +27,7 @@
                 class="form-control"
               />
               <label :for="`executionLifecyclePluginEnabled_${plugin.name}`">
-                <pluginInfo
+                <plugin-info
                   v-if="header.detail.desc"
                   :show-title="header.inputShowTitle"
                   :show-icon="header.inputShowIcon || false"
@@ -36,14 +36,14 @@
                   :detail="header.detail"
                 >
                   <template #description>
-                    <scheduled-execution-details
-                      :allow-html="true"
+                    <plugin-details
                       :description="header.detail!.desc"
-                      mode="collapsed"
-                      more-text="More..."
+                      extended-css=""
+                      allow-html
+                      inline-description
                     />
                   </template>
-                </pluginInfo>
+                </plugin-info>
               </label>
             </div>
           </template>
@@ -57,7 +57,6 @@
 import { defineComponent, PropType } from "vue";
 import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
 import PluginConfig from "@/library/components/plugins/pluginConfig.vue";
-import ScheduledExecutionDetails from "@/app/components/common/ScheduledExecutionDetails.vue";
 import { isEqual } from "lodash";
 import {
   PluginInitialData,
@@ -65,10 +64,15 @@ import {
   JobPlugins,
   PluginDataFromApi,
 } from "./types/executionTypes";
+import PluginDetails from "@/library/components/plugins/PluginDetails.vue";
 
 export default defineComponent({
   name: "ExecutionEditor",
-  components: { ScheduledExecutionDetails, PluginConfig, PluginInfo },
+  components: {
+    PluginDetails,
+    PluginConfig,
+    PluginInfo,
+  },
   props: {
     modelValue: {
       type: Object as PropType<JobPlugins>,
