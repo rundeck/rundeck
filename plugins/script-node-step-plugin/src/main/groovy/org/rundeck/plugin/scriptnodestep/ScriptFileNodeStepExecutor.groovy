@@ -44,7 +44,7 @@ class ScriptFileNodeStepExecutor {
         this.expandTokenInScriptFile = expandTokenInScriptFile;
     }
 
-    void executeScriptFile(PluginStepContext context, Map<String, Object> configuration, INodeEntry entry) {
+    void executeScriptFile(PluginStepContext context, INodeEntry entry, InputStream input) {
         boolean expandTokens = true;
         if (context.getFramework().hasProperty("execution.script.tokenexpansion.enabled")) {
             expandTokens = "true".equals(context.getFramework().getProperty("execution.script.tokenexpansion.enabled"));
@@ -91,6 +91,7 @@ class ScriptFileNodeStepExecutor {
                 fileExtension,
                 args,
                 scriptInterpreter,
+                input,
                 argsQuoted,
                 executionService,
                 expandTokens
