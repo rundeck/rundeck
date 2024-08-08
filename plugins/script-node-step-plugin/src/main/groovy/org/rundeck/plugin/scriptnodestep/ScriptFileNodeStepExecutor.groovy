@@ -10,8 +10,9 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.DefaultScriptFileNodeStepUtils;
 import com.dtolabs.rundeck.core.utils.OptsUtil;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+
+import java.util.function.BiFunction
 
 @CompileStatic
 class ScriptFileNodeStepExecutor {
@@ -43,7 +44,6 @@ class ScriptFileNodeStepExecutor {
         this.expandTokenInScriptFile = expandTokenInScriptFile;
     }
 
-    @CompileDynamic
     void executeScriptFile(PluginStepContext context, Map<String, Object> configuration, INodeEntry entry) {
         boolean expandTokens = true;
         if (context.getFramework().hasProperty("execution.script.tokenexpansion.enabled")) {
@@ -58,7 +58,7 @@ class ScriptFileNodeStepExecutor {
                 context.getExecutionContext().getSharedDataContext(),
                 //add node name to qualifier to read node-data first
                 ContextView.node(entry.getNodename()),
-                ContextView::nodeStep,
+                ContextView::nodeStep as BiFunction,
                 DataContextUtils.replaceMissingOptionsWithBlank,
                 false,
                 false
