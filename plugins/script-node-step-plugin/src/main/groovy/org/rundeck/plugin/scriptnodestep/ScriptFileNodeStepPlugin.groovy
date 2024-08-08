@@ -108,7 +108,7 @@ E.g.: `.ps1`, or `abc`.
                     expandTokenInScriptFile
             );
 
-            scriptFileNodeStepExecutor.executeScriptFile(context, configuration, entry);
+            scriptFileNodeStepExecutor.executeScriptFile(context, entry, null);
         }
     }
 
