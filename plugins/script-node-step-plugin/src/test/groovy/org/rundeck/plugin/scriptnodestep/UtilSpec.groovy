@@ -154,7 +154,7 @@ class UtilSpec extends Specification {
 
         when:
 
-        plugin.executeScriptFile(context, config, nodeEntry)
+        plugin.executeScriptFile(context, nodeEntry, null)
 
         then:
         def ex = thrown(NodeStepException)
