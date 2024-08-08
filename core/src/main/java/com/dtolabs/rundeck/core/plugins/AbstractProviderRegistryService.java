@@ -105,20 +105,28 @@ public abstract class AbstractProviderRegistryService<T>
 
 
     private T createProviderInstanceOfType(final String providerName) throws ExecutionServiceException {
-        if (null == registry.get(providerName)) {
+        if (null == getRegistryMap().get(providerName)) {
             throw new MissingProviderException("Not found", getName(),
                                                providerName
             );
         }
-        final Class<? extends T> execClass = registry.get(providerName);
+        final Class<? extends T> execClass = getRegistryMap().get(providerName);
         return createProviderInstanceFromType(execClass, providerName);
+    }
+
+    /**
+     * Return the map of registered classes
+     * @return the internal map
+     */
+    protected Map<String, Class<? extends T>> getRegistryMap() {
+        return registry;
     }
 
     public List<ProviderIdent> listProviders() {
 
         final HashSet<ProviderIdent> providers = new HashSet<>();
 
-        for (final String s : registry.keySet()) {
+        for (final String s : getRegistryMap().keySet()) {
             providers.add(new ProviderIdent(getName(), s));
         }
         for (final String s : instanceregistry.keySet()) {

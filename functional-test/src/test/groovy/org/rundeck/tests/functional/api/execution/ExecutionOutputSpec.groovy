@@ -1,5 +1,6 @@
 package org.rundeck.tests.functional.api.execution
 
+import org.rundeck.util.annotations.APIExecOutputTest
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.container.BaseContainer
@@ -7,6 +8,7 @@ import org.rundeck.util.container.BaseContainer
 import java.util.function.Function
 
 @APITest
+@APIExecOutputTest
 class ExecutionOutputSpec extends BaseContainer {
 
     def setupSpec() {
@@ -15,7 +17,7 @@ class ExecutionOutputSpec extends BaseContainer {
     }
 
     def "execution output using lastmod param"() {
-        def params = "exec=echo+testing+execution+output+api1+line+1;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;" +
+        def params = "exec=echo+testing+execution+output+api1+line+1;sleep+1;echo+line+2;sleep+1;echo+line+3;sleep+1;" +
                 "echo+line+4+final"
         when:
         def adhoc = post("/project/${PROJECT_NAME}/run/command?${params}", Map)
@@ -36,8 +38,39 @@ class ExecutionOutputSpec extends BaseContainer {
         ]
     }
 
+    def "execution script output using lastmod param"() {
+        def body=[
+            script:'''#!/bin/bash
+echo testing execution output api1 line 1
+sleep 1
+echo line 2
+echo line 3
+sleep 1
+echo line 4 final
+''',
+            project: PROJECT_NAME
+        ]
+        when:
+        def adhoc = post("/project/${PROJECT_NAME}/run/script?", body, Map)
+        then:
+        adhoc.execution != null
+        adhoc.execution.id != null
+        when:
+        def execid = adhoc.execution.id
+        def logs = getAllLogs(execid) {
+            "offset=${it.offset}&lastmod=${it.lastmod}"
+        }
+        then:
+        logs == [
+                "testing execution output api1 line 1",
+                "line 2",
+                "line 3",
+                "line 4 final"
+        ]
+    }
+
     def "execution output using maxlines param"() {
-        def params = "exec=echo+testing+execution+output+api1+line+1;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;" +
+        def params = "exec=echo+testing+execution+output+api1+line+1;sleep+1;echo+line+2;sleep+1;echo+line+3;sleep+1;" +
                 "echo+line+4+final"
         when:
         def adhoc = post("/project/${PROJECT_NAME}/run/command?${params}", Map)
@@ -59,7 +92,7 @@ class ExecutionOutputSpec extends BaseContainer {
     }
 
     def "execution output greedy"() {
-        def params = "exec=echo+testing+execution+output+api1+line+1;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;" +
+        def params = "exec=echo+testing+execution+output+api1+line+1;sleep+1;echo+line+2;sleep+1;echo+line+3;sleep+1;" +
                 "echo+line+4+final"
         when:
         def adhoc = post("/project/${PROJECT_NAME}/run/command?${params}", Map)
@@ -81,7 +114,7 @@ class ExecutionOutputSpec extends BaseContainer {
     }
 
     def "execution output plain text"() {
-        def params = "exec=echo+testing+execution+output+api1+line+1;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;" +
+        def params = "exec=echo+testing+execution+output+api1+line+1;sleep+1;echo+line+2;sleep+1;echo+line+3;sleep+1;" +
                 "echo+line+4+final"
         when:
         def adhoc = post("/project/${PROJECT_NAME}/run/command?${params}", Map)
@@ -104,7 +137,7 @@ class ExecutionOutputSpec extends BaseContainer {
 
     @ExcludePro
     def "execution output plain text unicode"() {
-        def params="exec=echo+%22%27testing+execution+%3Coutput%3E+api-unicode+line+1%27%22+;sleep+2;echo+line+%F0%9F%98%84;sleep+2;echo+%E4%BD%A0%E5%A5%BD;sleep+2;echo+line+4+final"
+        def params="exec=echo+%22%27testing+execution+%3Coutput%3E+api-unicode+line+1%27%22+;sleep+1;echo+line+%F0%9F%98%84;sleep+1;echo+%E4%BD%A0%E5%A5%BD;sleep+1;echo+line+4+final"
         when:
         def adhoc = post("/project/${PROJECT_NAME}/run/command?${params}", Map)
         then:
@@ -123,7 +156,7 @@ line 4 final'''
     }
 
     def "execution output plain text using lastlines"() {
-        def params = "exec=echo+testing+execution+output+api1+line+1;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;" +
+        def params = "exec=echo+testing+execution+output+api1+line+1;sleep+1;echo+line+2;sleep+1;echo+line+3;sleep+1;" +
                 "echo+line+4+final"
         when:
         def adhoc = post("/project/${PROJECT_NAME}/run/command?${params}", Map)

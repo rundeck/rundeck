@@ -193,10 +193,12 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
         return DescribableServiceUtil.listDescribableProviders(this);
     }
 
+    @Deprecated
     public void registerClass(String name, Class<? extends WorkflowStrategy> clazz) {
         builtinService.registerClass(name, clazz);
     }
 
+    @Deprecated
     public void registerInstance(String name, WorkflowStrategy object) {
         builtinService.registerInstance(name, object);
     }

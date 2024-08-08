@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.ExecutionListener
+import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import org.rundeck.plugins.jsch.util.JschTestUtil
 import spock.lang.Specification
 
@@ -76,10 +77,11 @@ class JschNodeExecutorSpec extends Specification {
         def frameworkProject = Mock(IRundeckProject)
         def context = Mock(ExecutionContext) {
             getFrameworkProject() >> PROJECT_NAME
-            getFramework() >> Mock(Framework){
+            getIFramework() >> Mock(Framework){
                 getFrameworkProjectMgr()>> Mock(ProjectManager){
                     getFrameworkProject(PROJECT_NAME) >> frameworkProject
                 }
+                getPropertyLookup()>>Mock(IPropertyLookup)
             }
             getExecutionListener() >> Mock(ExecutionListener)
         }
@@ -101,15 +103,16 @@ class JschNodeExecutorSpec extends Specification {
         given:
         def exec = new JschNodeExecutor(framework)
         def frameworkProject = Mock(IRundeckProject)
+        def lookup = Mock(IPropertyLookup)
         def framework = Mock(Framework){
             getFrameworkProjectMgr()>> Mock(ProjectManager){
                 getFrameworkProject(PROJECT_NAME) >> frameworkProject
             }
-
+            getPropertyLookup()>>lookup
         }
         def context = Mock(ExecutionContext) {
             getFrameworkProject() >> PROJECT_NAME
-            getFramework() >> framework
+            getIFramework() >> framework
             getExecutionListener() >> Mock(ExecutionListener)
         }
         def command = ['echo', 'hi'].toArray(new String[2])
@@ -122,8 +125,8 @@ class JschNodeExecutorSpec extends Specification {
 
         then:
         1 * frameworkProject.hasProperty(JschNodeExecutor.PROJ_PROP_PREFIX + JschNodeExecutor.CONFIG_PASS_ENV) >> false
-        1 * framework.hasProperty(JschNodeExecutor.FWK_PROP_PREFIX + JschNodeExecutor.CONFIG_PASS_ENV) >> true
-        1 * framework.getProperty(JschNodeExecutor.FWK_PROP_PREFIX + JschNodeExecutor.CONFIG_PASS_ENV) >> 'true'
+        1 * lookup.hasProperty(JschNodeExecutor.FWK_PROP_PREFIX + JschNodeExecutor.CONFIG_PASS_ENV) >> true
+        1 * lookup.getProperty(JschNodeExecutor.FWK_PROP_PREFIX + JschNodeExecutor.CONFIG_PASS_ENV) >> 'true'
 
     }
 }

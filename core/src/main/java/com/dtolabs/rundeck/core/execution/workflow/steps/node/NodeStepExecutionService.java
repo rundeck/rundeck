@@ -209,15 +209,6 @@ public class NodeStepExecutionService
         return serviceList;
     }
 
-    public void registerInstance(final String name, final NodeStepExecutor object) {
-        primaryService.registerInstance(name, object);
-    }
-
-    public void registerClass(final String name, final Class<? extends NodeStepExecutor> clazz) {
-        primaryService.registerClass(name, clazz);
-    }
-
-
     public NodeStepExecutor getExecutorForExecutionItem(final NodeStepExecutionItem item) throws
                                                                                           ExecutionServiceException {
         return providerOfType(item.getNodeStepType());
