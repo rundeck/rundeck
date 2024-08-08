@@ -11,8 +11,8 @@ services:
       RUNDECK_TOKENS_FILE: /home/rundeck/server/config/tokens.properties
       RUNDECK_MULTIURL_ENABLED: "true"
       RUNDECK_METRICS_ENABLED: "true"
-      RUNDECK_FEATURE_XYZ_ENABLED: "true"
-      RUNDECK_FEATURE_XYZ_NAME: ${TEST_RUNDECK_FEATURE_NAME}
+      RUNDECK_FEATURE_FEATURETOTEST_ENABLED: "true"
+      RUNDECK_FEATURE_FEATURETOTEST_NAME: ${TEST_RUNDECK_FEATURE_NAME}
     volumes:
       - "/etc/localtime:/etc/localtime:ro"
       - "/etc/timezone:/etc/timezone:ro"
