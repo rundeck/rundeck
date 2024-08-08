@@ -692,7 +692,7 @@ class ExecutionController extends ControllerBase{
         dateFormater.timeZone = reqTimezone
 
         def dateStamp= dateFormater.format(e.dateStarted);
-        response.setContentType("text/plain")
+        response.setContentType("text/plain;charset=UTF-8")
         if("inline"!=params.view){
             response.setHeader("Content-Disposition","attachment; filename=\"${e.scheduledExecution?e.scheduledExecution.jobName:'adhoc'}-${dateStamp}.txt\"")
         }
@@ -744,7 +744,7 @@ class ExecutionController extends ControllerBase{
             return
         }else if(reader.state == ExecutionFileState.WAITING){
             if(params.reload=='true') {
-                response.setContentType("text/html")
+                response.setContentType("text/html;charset=UTF-8")
                 appendOutput(response, '''<html>
                 <head>
                 <title></title>
@@ -785,7 +785,7 @@ class ExecutionController extends ControllerBase{
         def iterator = reader.reader
         iterator.openStream(0)
         def lineSep=System.getProperty("line.separator")
-        response.setContentType("text/html")
+        response.setContentType("text/html;charset=UTF-8")
         appendOutput(response, """<html>
 <head>
 <title></title>
@@ -1508,7 +1508,7 @@ JSON response requires API v14.
                     if (status > 0) {
                         response.setStatus(status)
                     }
-                    render(contentType: "text/plain", text: message)
+                    render(contentType: "text/plain;charset=UTF-8", text: message)
                 }
                 if(controller.isAllowXml()) {
                     xml {
@@ -1932,7 +1932,7 @@ JSON response requires API v14.
                 response.addHeader('X-Rundeck-ExecOutput-LastLinesSupported', lastlinesSupported.toString())
                 response.addHeader('X-Rundeck-ExecOutput-RetryBackoff', reader.retryBackoff.toString())
                 def lineSep = System.getProperty("line.separator")
-                response.setHeader("Content-Type","text/plain")
+                response.setHeader("Content-Type","text/plain;charset=UTF-8")
 
 
                 entry.each{
