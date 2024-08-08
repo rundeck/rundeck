@@ -72,7 +72,7 @@ export const Playground: Story = {
 
 const generateTemplate = (severity, args) => {
   return `
-      <Tag value="${args.value}" severity="${severity}" ico="${args.icon}" />
+      <Tag value="${args.value}" severity="${severity}" icon="${args.icon}" />
 `;
 };
 

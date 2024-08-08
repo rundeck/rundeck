@@ -1,0 +1,19 @@
+.p-inputswitch {
+    .p-inputswitch-slider {
+        background: var(--colors-gray-300);
+    }
+    &.p-disabled .p-inputswitch-slider {
+        background: var(--colors-gray-200);
+    }
+
+    &.p-highlight {
+        &.p-disabled .p-inputswitch-slider {
+            background: var(--colors-blue-200);
+        }
+
+        .p-inputswitch-slider {
+            background: var(--colors-blue-500);
+        }
+    }
+
+}

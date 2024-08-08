@@ -1,8 +1,10 @@
 .p-tabview {
     .p-tabview-nav {
+        border-color: var(--colors-gray-300);
         li {
             .p-tabview-nav-link:not(.p-disabled) {
                 color: var(--colors-gray-500);
+                border-color: var(--colors-gray-300);
 
                 &:focus-visible {
                     box-shadow: inset 0 0 0 0.1rem var(--colors-gray-800);
