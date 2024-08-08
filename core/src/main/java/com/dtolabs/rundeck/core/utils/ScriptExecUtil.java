@@ -300,7 +300,7 @@ public class ScriptExecUtil {
     }
 
     public static void killProcessHandleDescend(ProcessHandle handle) {
-        handle.descendants().forEach(ScriptExecUtil::killProcessHandleDescend);
+        handle.descendants().forEach(ScriptExecUtil::killProcessHandle);
         handle.destroy();
     }
     public static void killProcessHandle(ProcessHandle handle) {
