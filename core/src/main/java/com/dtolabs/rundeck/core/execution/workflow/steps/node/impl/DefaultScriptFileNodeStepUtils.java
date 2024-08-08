@@ -16,7 +16,7 @@
 
 package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
-import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.impl.common.DefaultFileCopierUtil;
@@ -100,8 +100,8 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                        : null;
         String filepath = fileCopierUtil.generateRemoteFilepathForNode(
                 node,
-                context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
-                context.getFramework(),
+                context.getIFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
+                context.getIFramework(),
                 filename,
                 fileExtension,
                 ident
@@ -144,7 +144,7 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
 
         return executeRemoteScript(
                 context,
-                context.getFramework(),
+                context.getIFramework(),
                 node,
                 args,
                 filepath,
@@ -248,7 +248,7 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
     @Override
     public NodeStepResult executeRemoteScript(
             final ExecutionContext context,
-            final Framework framework,
+            final IFramework framework,
             final INodeEntry node,
             final String[] args,
             final String filepath
@@ -275,7 +275,7 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
     @Override
     public NodeStepResult executeRemoteScript(
             final ExecutionContext context,
-            final Framework framework,
+            final IFramework framework,
             final INodeEntry node,
             final String[] args,
             final String filepath,
@@ -311,7 +311,7 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
     @Override
     public NodeStepResult executeRemoteScript(
             final ExecutionContext context,
-            final Framework framework,
+            final IFramework framework,
             final INodeEntry node,
             final String[] args,
             final String filepath,
@@ -373,11 +373,19 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
         return nodeExecutorResult;
     }
 
-    private NodeExecutorResult executeCommand(final Framework framework, final ExecutionContext context, final ExecArgList scriptArgList, final INodeEntry node, boolean retryAttempt, int timeToWait){
 
         NodeExecutorResult nodeExecutorResult = framework.getExecutionService().executeCommand(context,
                 scriptArgList, node
         );
+    private NodeExecutorResult executeCommand(
+            final IFramework framework,
+            final ExecutionContext context,
+            final ExecArgList scriptArgList,
+            final INodeEntry node,
+            boolean retryAttempt,
+            int timeToWait
+    )
+    {
 
         boolean isFileBusy = checkIfFileBusy(nodeExecutorResult);
         if(retryAttempt && isFileBusy){
@@ -397,7 +405,14 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
         }
     }
 
-    private NodeExecutorResult attemptExecuteCommand(final Framework framework, final ExecutionContext context, final ExecArgList scriptArgList, final INodeEntry node, int timeToWait){
+    private NodeExecutorResult attemptExecuteCommand(
+            final IFramework framework,
+            final ExecutionContext context,
+            final ExecArgList scriptArgList,
+            final INodeEntry node,
+            int timeToWait
+    )
+    {
         timeToWait = timeToWait + 500; //ms
         boolean retryAttempt = timeToWait < MAX_TIME_TO_WAIT_BEFORE_TRY_AGAIN;
         context.getExecutionLogger().log(
