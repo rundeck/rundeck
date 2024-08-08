@@ -98,11 +98,21 @@ E.g.: `.ps1`, or `abc`.
 
     @PluginProperty(
         title = 'Secure Input Format',
-        description = 'The format of the secure input data. If not specified, the default format will be used.',
+        description = '''The format of the secure input data. See instructions for consuming this data in your script.
+
+# Shell Script
+
+The secure input data will be formatted as local variable definitions, this should be consumed by your
+shell script by adding this snippet: 
+
+    eval $(</dev/stdin)
+
+If "Automatic Secure Input" is set, then the script will be modified to consume the secure input data automatically.
+''',
         required = false
     )
     @SelectValues(values = ['shell'])
-    @SelectLabels(values = ['Shell Command'])
+    @SelectLabels(values = ['Shell Script'])
     @RenderingOptions(
         [
             @RenderingOption(key = StringRenderingConstants.FEATURE_FLAG_REQUIRED, value = 'nodeExecutorSecureInput'),
@@ -118,25 +128,73 @@ E.g.: `.ps1`, or `abc`.
     )
     String secureFormat
 
+    @PluginProperty(
+        title = 'Automatic Secure Input',
+        description = '''If enabled, the script will be modified to consume the secure input data automatically.
+
+# Shell Script
+
+If the script is a shell script, the script will be modified by adding the following snippet to the beginning of the 
+script, after any shebang line:
+
+    eval $(</dev/stdin)
+
+''',
+        required = false
+    )
+    @RenderingOptions(
+        [
+            @RenderingOption(key = StringRenderingConstants.FEATURE_FLAG_REQUIRED, value = 'nodeExecutorSecureInput'),
+            @RenderingOption(
+                key = StringRenderingConstants.GROUPING,
+                value = "secondary"
+            ),
+            @RenderingOption(
+                key = StringRenderingConstants.GROUP_NAME,
+                value = "Advanced"
+            ),
+        ]
+    )
+    Boolean autoSecureInput
+
+
     @PluginProperty(scope = PropertyScope.FeatureFlag)
     Boolean nodeExecutorSecureInput
 
 
     @Override
-    void executeNodeStep(PluginStepContext context, Map<String, Object> configuration, INodeEntry entry) throws NodeStepException
+    void executeNodeStep(PluginStepContext context, Map<String, Object> configuration, INodeEntry entry) throws
+        NodeStepException
     {
-        //todo: based on feature flag, create secure input stream
-        ScriptFileNodeStepExecutor scriptFileNodeStepExecutor = new ScriptFileNodeStepExecutor(
-                scriptInterpreter,
-                interpreterArgsQuoted,
-                fileExtension,
-                argString,
-                null,
-                adhocLocalString,
-                true
-        );
+        InputStream input = null
+        String script = adhocLocalString
 
-        scriptFileNodeStepExecutor.executeScriptFile(context, configuration, entry)
+        if (nodeExecutorSecureInput && passSecureInput) {
+            input = createInput(context)
+        }
+        if (nodeExecutorSecureInput && passSecureInput && autoSecureInput) {
+            script = new ShellScriptModifier().modifyScriptForSecureInput(adhocLocalString)
+        }
+
+        ScriptFileNodeStepExecutor scriptFileNodeStepExecutor = new ScriptFileNodeStepExecutor(
+            scriptInterpreter,
+            interpreterArgsQuoted,
+            fileExtension,
+            argString,
+            null,
+            script,
+            true
+        )
+
+        scriptFileNodeStepExecutor.executeScriptFile(context, entry, input)
+    }
+
+    private InputStream createInput(PluginStepContext context) {
+        if (secureFormat != 'shell') {
+            throw new IllegalArgumentException("Unsupported secure input format: " + secureFormat)
+        }
+
+        new SecureInputCreator(new BashShellUtil()).createInputForProcess(context.executionContext)
     }
 
     @Override
