@@ -96,6 +96,7 @@
       class="schedJobNodeFilter form-control"
       :autofocus="autofocus"
       :placeholder="queryFieldPlaceholderText || $t('enter.a.node.filter')"
+      data-testid="filter-input"
       @keydown.enter.prevent="doSearch"
       @blur="doSearch"
     />
@@ -170,6 +171,7 @@
             v-model="newFilterName"
             type="text"
             class="form-control input-sm"
+            data-testid="new-filter-name-input"
           />
         </div>
       </div>
@@ -192,9 +194,12 @@
         <btn @click="saveFilterModal = false">{{
           $t("button.action.Cancel")
         }}</btn>
-        <btn type="primary" @click="saveFilter">{{
-          $t("save.filter.ellipsis")
-        }}</btn>
+        <btn
+          type="primary"
+          data-testid="save-filter-button"
+          @click="saveFilter"
+          >{{ $t("save.filter.ellipsis") }}</btn
+        >
       </div>
     </template>
   </modal>

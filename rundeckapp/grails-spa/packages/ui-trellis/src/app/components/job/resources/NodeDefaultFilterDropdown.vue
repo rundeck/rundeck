@@ -38,6 +38,7 @@
           :data-node-filter="i.filter"
           :title="i.filter"
           :href="linkForFilterName(i)"
+          data-testid="saved-filter"
           @click.prevent="saveFilter(i)"
         >
           {{ i.filterName }}
@@ -53,7 +54,11 @@
             </a>
           </li>
           <li v-if="i.filterName !== nodeSummary.defaultFilter">
-            <a role="button" @click="setDefault(i)">
+            <a
+              role="button"
+              data-testid="set-default-filter-link"
+              @click="setDefault(i)"
+            >
               <i class="glyphicon glyphicon-filter"></i>
               {{ $t("set.as.default.filter") }}
             </a>

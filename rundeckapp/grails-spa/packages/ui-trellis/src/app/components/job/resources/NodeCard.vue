@@ -9,6 +9,7 @@
               id="tab_link_summary"
               :key="`${nodeFilterStore.filter}tab-result`"
               :class="{ active: !nodeFilterStore.filter }"
+              data-testid="summary-tab"
               @click="fetchNodeSummary"
             >
               <a href="#summary1" data-toggle="tab">
@@ -20,6 +21,7 @@
               id="tab_link_result"
               :key="`${nodeFilterStore.filter}tab-summary`"
               :class="{ active: nodeFilterStore.filter }"
+              data-testid="node-table-tab"
             >
               <a v-if="filterIsSet" href="#result1" data-toggle="tab">
                 {{ $t("result") }}
@@ -289,6 +291,7 @@ export default defineComponent({
     },
   },
   watch: {
+    nodeSet(newVal) {},
     nodeFilterStore: {
       async handler(newValue) {
         if (newValue.selectedFilter === "" && this.hideAll) {
