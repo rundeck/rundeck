@@ -134,19 +134,17 @@
                   <g:if test="${jobQueryComponents}">
                     <g:each in="${jobQueryComponents}" var="component">
                       <g:if test="${component.value.queryProperties}">
-                        <g:each in="${component.value.queryProperties}" var="properties">
-                          <g:render template="/framework/pluginConfigPropertiesInputs"
-                            model="${[
-                              properties         : properties,
-                              report             : null,
-                              prefix             : '',
-                              values             : params,
-                              fieldnamePrefix    : '',
-                              origfieldnamePrefix: 'orig.' ,
-                              messagePrefix       :'',
-                              messagesType       : 'job.query'
-                            ]}"/>
-                        </g:each>
+                        <g:render template="/framework/pluginConfigPropertiesInputs"
+                          model="${[
+                            properties         : component.value.queryProperties,
+                            report             : null,
+                            prefix             : '',
+                            values             : params,
+                            fieldnamePrefix    : '',
+                            origfieldnamePrefix: 'orig.' ,
+                            messagePrefix       :'',
+                            messagesType       : 'job.query'
+                          ]}"/>
                       </g:if>
                     </g:each>
                   </g:if>
