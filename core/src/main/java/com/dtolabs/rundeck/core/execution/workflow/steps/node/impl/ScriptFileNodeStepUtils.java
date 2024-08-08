@@ -16,7 +16,7 @@
 
 package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
-import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
@@ -105,7 +105,7 @@ public interface ScriptFileNodeStepUtils {
      */
     NodeStepResult executeRemoteScript(
             ExecutionContext context,
-            Framework framework,
+            IFramework framework,
             INodeEntry node,
             String[] args,
             String filepath
@@ -128,7 +128,7 @@ public interface ScriptFileNodeStepUtils {
      */
     NodeStepResult executeRemoteScript(
             ExecutionContext context,
-            Framework framework,
+            IFramework framework,
             INodeEntry node,
             String[] args,
             String filepath,
@@ -154,7 +154,7 @@ public interface ScriptFileNodeStepUtils {
      */
     NodeStepResult executeRemoteScript(
             ExecutionContext context,
-            Framework framework,
+            IFramework framework,
             INodeEntry node,
             String[] args,
             String filepath,
