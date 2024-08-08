@@ -527,10 +527,12 @@ jobs:
         type: string
     steps:
       - checkout
-      - install-build-dependencies
       - restore-build-cache
       - attach_workspace:
           at: ~/workspace
+      - run-build-step:
+          step-name: Install Build Dependencies
+          command: dependencies_build_setup
       - run-build-step:
           step-name: Pull images
           command: rundeck_pull_image
