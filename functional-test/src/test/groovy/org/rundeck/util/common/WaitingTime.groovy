@@ -9,8 +9,8 @@ enum WaitingTime {
     public final String label
     public final int milliSeconds
 
-    WaitingTime(String label, int seconds) {
+    WaitingTime(String label, int milliseconds) {
         this.label = label
-        this.milliSeconds = seconds
+        this.milliSeconds = milliseconds
     }
 }

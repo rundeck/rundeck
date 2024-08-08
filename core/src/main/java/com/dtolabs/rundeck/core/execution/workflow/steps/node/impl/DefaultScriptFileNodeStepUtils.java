@@ -18,6 +18,8 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.impl.common.DefaultFileCopierUtil;
 import com.dtolabs.rundeck.core.execution.impl.common.FileCopierUtil;
@@ -361,9 +363,18 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                 scriptArgList, node, retryExecuteCommand, 500);
 
         if (removeFile) {
+            //replace output context so that below executeCommand does not modify output data from previous script execution
+            final ExecutionContextImpl ctx1 = ExecutionContextImpl
+                    .builder(context)
+                    .outputContext(SharedDataContextUtils.outputContext(ContextView.global()))
+                    .build();
+
             //remove file
             final NodeExecutorResult nodeExecutorResult2 = framework.getExecutionService().executeCommand(
-                    context, removeArgsForOsFamily(filepath, node.getOsFamily()), node);
+                    ctx1,
+                    removeArgsForOsFamily(filepath, node.getOsFamily()),
+                    node
+            );
             if (!nodeExecutorResult2.isSuccess()) {
                 if (null != context.getExecutionListener()) {
                     context.getExecutionListener().log(1, "Failed to remove remote file: " + filepath);
