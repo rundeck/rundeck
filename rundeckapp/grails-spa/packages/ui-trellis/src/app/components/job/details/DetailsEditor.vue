@@ -107,13 +107,14 @@
             <i class="glyphicon glyphicon-warning-sign text-warning"></i>
           </div>
           <div class="help-block">
-            <ScheduledExecutionDetails
+            <plugin-details
               v-if="allowHtml"
               :description="
                 $t('scheduledExecution.property.description.description')
               "
-              mode="collapsed"
               :allow-html="allowHtml"
+              extended-css=""
+              inline-description
             />
             <template v-else>
               {{
@@ -132,17 +133,17 @@
 import { defineComponent, PropType } from "vue";
 import UiSocket from "@/library/components/utils/UiSocket.vue";
 
-import ScheduledExecutionDetails from "@/app/components/common/ScheduledExecutionDetails.vue";
 import AceEditor from "@/library/components/utils/AceEditor.vue";
 import { JobDetailsData } from "./types/detailsType";
 import CommonModal from "../../common/CommonModal.vue";
 import { getRundeckContext } from "@/library";
+import PluginDetails from "@/library/components/plugins/PluginDetails.vue";
 
 export default defineComponent({
   name: "DetailsEditor",
   components: {
+    PluginDetails,
     CommonModal,
-    ScheduledExecutionDetails,
     UiSocket,
     AceEditor,
   },
