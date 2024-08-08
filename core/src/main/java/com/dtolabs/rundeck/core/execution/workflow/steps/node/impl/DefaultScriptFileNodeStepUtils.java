@@ -86,6 +86,54 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
             final boolean expandTokens
     ) throws NodeStepException
     {
+        return executeScriptFile(
+                context,
+                node,
+                scriptString,
+                serverScriptFilePath,
+                scriptAsStream,
+                fileExtension,
+                args,
+                scriptInterpreter,
+                null,
+                quoted,
+                executionService,
+                expandTokens
+        );
+    }
+
+    /**
+     * Execute a script on a remote node
+     *
+     * @param context              context
+     * @param node                 node
+     * @param scriptString         string
+     * @param serverScriptFilePath file
+     * @param scriptAsStream       stream
+     * @param fileExtension        file extension
+     * @param args                 script args
+     * @param scriptInterpreter    invoker string
+     * @param quoted               true if args are quoted
+     * @param executionService     service
+     * @return execution result
+     * @throws NodeStepException on error
+     */
+    @Override
+    public NodeStepResult executeScriptFile(
+            StepExecutionContext context,
+            INodeEntry node,
+            String scriptString,
+            String serverScriptFilePath,
+            InputStream scriptAsStream,
+            String fileExtension,
+            String[] args,
+            String scriptInterpreter,
+            InputStream input,
+            boolean quoted,
+            final NodeExecutionService executionService,
+            final boolean expandTokens
+    ) throws NodeStepException
+    {
         final String filename;
 
         if (null != scriptString) {
@@ -149,7 +197,8 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                 args,
                 filepath,
                 scriptInterpreter,
-                quoted
+                quoted,
+                input
         );
     }
 
@@ -283,12 +332,60 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
             final boolean interpreterargsquoted
     ) throws NodeStepException
     {
+
+        return executeRemoteScript(
+                context,
+                framework,
+                node,
+                args,
+                filepath,
+                scriptInterpreter,
+                interpreterargsquoted,
+                null
+        );
+    }
+
+    /**
+     * Execute a scriptfile already copied to a remote node with the given args
+     *
+     * @param context               context
+     * @param framework             framework
+     * @param node                  the node
+     * @param args                  arguments to script
+     * @param filepath              the remote path for the script
+     * @param scriptInterpreter     interpreter used to invoke the script
+     * @param interpreterargsquoted if true, pass the file and script args as a single argument to the interpreter
+     *
+     * @return result
+     *
+     * @throws NodeStepException on error
+     */
+    @Override
+    public NodeStepResult executeRemoteScript(
+            final ExecutionContext context,
+            final IFramework framework,
+            final INodeEntry node,
+            final String[] args,
+            final String filepath,
+            final String scriptInterpreter,
+            final boolean interpreterargsquoted,
+            final InputStream inputStream
+    ) throws NodeStepException
+    {
         boolean removeFile = true;
         if (null != node.getAttributes() && null != node.getAttributes().get(SCRIPT_FILE_REMOVE_TMP)) {
             removeFile = Boolean.parseBoolean(node.getAttributes().get(SCRIPT_FILE_REMOVE_TMP));
         }
-        return executeRemoteScript(context, framework, node, args, filepath, scriptInterpreter,
-                                   interpreterargsquoted, removeFile
+        return executeRemoteScript(
+                context,
+                framework,
+                node,
+                args,
+                filepath,
+                scriptInterpreter,
+                interpreterargsquoted,
+                removeFile,
+                inputStream
         );
     }
 
@@ -320,9 +417,45 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
             final boolean removeFile
     ) throws NodeStepException
     {
-        /**
-         * TODO: Avoid this horrific hack. Discover how to get SCP task to preserve the execute bit.
-         */
+        return executeRemoteScript(
+                context,
+                framework,
+                node,
+                args,
+                filepath,
+                scriptInterpreter,
+                interpreterargsquoted,
+                removeFile,
+                null
+        );
+    }
+
+    /**
+     * Execute a scriptfile already copied to a remote node with the given args
+     *
+     * @param context               context
+     * @param framework             framework
+     * @param node                  the node
+     * @param args                  arguments to script
+     * @param filepath              the remote path for the script
+     * @param scriptInterpreter     interpreter used to invoke the script
+     * @param interpreterargsquoted if true, pass the file and script args as a single argument to the interpreter
+     * @param removeFile            if true, remove the file after execution
+     * @return result
+     */
+    @Override
+    public NodeStepResult executeRemoteScript(
+            final ExecutionContext context,
+            final IFramework framework,
+            final INodeEntry node,
+            final String[] args,
+            final String filepath,
+            final String scriptInterpreter,
+            final boolean interpreterargsquoted,
+            final boolean removeFile,
+            final InputStream input
+    )
+    {
         boolean retryExecuteCommand = false; //retry if chmod command continues to lock the file the moment it is executed
         if (!"windows".equalsIgnoreCase(node.getOsFamily())) {
             //perform chmod+x for the file
@@ -357,8 +490,9 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                 interpreterargsquoted
         );
 
-       NodeExecutorResult nodeExecutorResult = executeCommand(framework, context,
-                scriptArgList, node, retryExecuteCommand, 500);
+        NodeExecutorResult
+                nodeExecutorResult =
+                executeCommand(framework, context, scriptArgList, node, input, retryExecuteCommand, 500);
 
         if (removeFile) {
             //remove file
@@ -373,19 +507,19 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
         return nodeExecutorResult;
     }
 
-
-        NodeExecutorResult nodeExecutorResult = framework.getExecutionService().executeCommand(context,
-                scriptArgList, node
-        );
     private NodeExecutorResult executeCommand(
             final IFramework framework,
             final ExecutionContext context,
             final ExecArgList scriptArgList,
             final INodeEntry node,
+            InputStream inputStream,
             boolean retryAttempt,
             int timeToWait
     )
     {
+        NodeExecutorResult
+                nodeExecutorResult =
+                framework.getExecutionService().executeCommand(context, scriptArgList, inputStream, node);
 
         boolean isFileBusy = checkIfFileBusy(nodeExecutorResult);
         if(retryAttempt && isFileBusy){
@@ -393,8 +527,8 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                     5,
                     "File is busy. Retrying..."
             );
-            return attemptExecuteCommand(framework, context, scriptArgList, node, timeToWait);
-        } else if(isFileBusy) {
+            return attemptExecuteCommand(framework, context, scriptArgList, node, inputStream, timeToWait);
+        } else if (isFileBusy) {
             return NodeExecutorResultImpl.createFailure(
                     nodeExecutorResult.getFailureReason(),
                     nodeExecutorResult.getFailureMessage() + " Set node attribute 'file-busy-err-retry=true' to enable retrying",
@@ -410,6 +544,7 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
             final ExecutionContext context,
             final ExecArgList scriptArgList,
             final INodeEntry node,
+            final InputStream inputStream,
             int timeToWait
     )
     {
@@ -424,7 +559,7 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
         } catch (InterruptedException e) {
             logger.error("InterruptedException: " + e);
         }
-        return executeCommand(framework, context, scriptArgList, node, retryAttempt, timeToWait);
+        return executeCommand(framework, context, scriptArgList, node,  inputStream, retryAttempt, timeToWait);
     }
 
     private boolean checkIfFileBusy(NodeExecutorResult nodeExecutorResult){
