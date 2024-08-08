@@ -707,5 +707,6 @@ workflows:
       - test-gradle-functional:
           name: Test Feature NewLocalExec
           gradle-task: apiTestNewLocal
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/execution/ExecutionOutputSpec.groovy"
           <<: *require-build
           <<: *slack-defaults
