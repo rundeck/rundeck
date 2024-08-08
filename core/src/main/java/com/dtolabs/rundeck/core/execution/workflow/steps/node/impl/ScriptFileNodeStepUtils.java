@@ -67,6 +67,38 @@ public interface ScriptFileNodeStepUtils {
     ) throws NodeStepException;
 
     /**
+     * Execute a script on a remote node
+     *
+     * @param context              context
+     * @param node                 node
+     * @param scriptString         string
+     * @param serverScriptFilePath file
+     * @param scriptAsStream       stream
+     * @param fileExtension        file extension
+     * @param args                 script args
+     * @param scriptInterpreter    invoker string
+     * @param inputStream          inputstream to send to the script
+     * @param quoted               true if args are quoted
+     * @param executionService     service
+     * @return execution result
+     * @throws NodeStepException on error
+     */
+    NodeStepResult executeScriptFile(
+            StepExecutionContext context,
+            INodeEntry node,
+            String scriptString,
+            String serverScriptFilePath,
+            InputStream scriptAsStream,
+            String fileExtension,
+            String[] args,
+            String scriptInterpreter,
+            InputStream inputStream,
+            boolean quoted,
+            NodeExecutionService executionService,
+            boolean expandTokens
+    ) throws NodeStepException;
+
+    /**
      * Copy the script input to a temp file and expand embedded tokens,
      * if it is a string or inputstream.  If it is a local file,
      * use the original without modification
@@ -146,6 +178,31 @@ public interface ScriptFileNodeStepUtils {
      * @param filepath              the remote path for the script
      * @param scriptInterpreter     interpreter used to invoke the script
      * @param interpreterargsquoted if true, pass the file and script args as a single argument to the interpreter
+     * @param inputStream           input to send to the script
+     * @return result
+     * @throws NodeStepException on error
+     */
+    NodeStepResult executeRemoteScript(
+            ExecutionContext context,
+            IFramework framework,
+            INodeEntry node,
+            String[] args,
+            String filepath,
+            String scriptInterpreter,
+            boolean interpreterargsquoted,
+            InputStream inputStream
+    ) throws NodeStepException;
+
+    /**
+     * Execute a scriptfile already copied to a remote node with the given args
+     *
+     * @param context               context
+     * @param framework             framework
+     * @param node                  the node
+     * @param args                  arguments to script
+     * @param filepath              the remote path for the script
+     * @param scriptInterpreter     interpreter used to invoke the script
+     * @param interpreterargsquoted if true, pass the file and script args as a single argument to the interpreter
      * @param removeFile            if true, remove the file after execution
      *
      * @return result
@@ -161,6 +218,33 @@ public interface ScriptFileNodeStepUtils {
             String scriptInterpreter,
             boolean interpreterargsquoted,
             boolean removeFile
+    ) throws NodeStepException;
+
+    /**
+     * Execute a scriptfile already copied to a remote node with the given args
+     *
+     * @param context               context
+     * @param framework             framework
+     * @param node                  the node
+     * @param args                  arguments to script
+     * @param filepath              the remote path for the script
+     * @param scriptInterpreter     interpreter used to invoke the script
+     * @param interpreterargsquoted if true, pass the file and script args as a single argument to the interpreter
+     * @param removeFile            if true, remove the file after execution
+     * @param inputStream           input to send to the script
+     * @return result
+     * @throws NodeStepException on error
+     */
+    NodeStepResult executeRemoteScript(
+            ExecutionContext context,
+            IFramework framework,
+            INodeEntry node,
+            String[] args,
+            String filepath,
+            String scriptInterpreter,
+            boolean interpreterargsquoted,
+            boolean removeFile,
+            InputStream inputStream
     ) throws NodeStepException;
 
     /**
