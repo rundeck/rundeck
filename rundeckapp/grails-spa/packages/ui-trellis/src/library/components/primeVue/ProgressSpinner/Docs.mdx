@@ -1,0 +1,36 @@
+import { Meta, Subtitle, Title, Canvas, Controls, Description, Stories } from "@storybook/blocks";
+import * as ProgressSpinnerStories from './ProgressSpinner.stories'
+
+<Meta of={ProgressSpinnerStories} />
+
+<Title />
+
+<Subtitle />
+[Component reference on primevue](https://primevue.org/progressspinner/)
+
+## Import
+
+```ts
+import ProgressSpinner from "primevue/progressspinner";
+```
+
+## Playground
+
+{/* Make sure your stories file has an export for playground, otherwise storybook will break */}
+
+<Canvas of={ProgressSpinnerStories.Playground} sourceState="shown" />
+<Controls of={ProgressSpinnerStories.Playground} />
+
+## How to use
+
+{/* Add a note here about the relevant props to change appearance of component */}
+
+
+<Description of={ProgressSpinnerStories} />
+
+<Stories title='' includePrimary={false} />
+
+
+## Accessibility
+
+{/* Bring in accessibility notes from primeVue here and\/or add aspects important for accessibility */}

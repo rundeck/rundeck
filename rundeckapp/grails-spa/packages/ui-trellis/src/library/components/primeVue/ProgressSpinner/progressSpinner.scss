@@ -1,0 +1,21 @@
+.p-progress-spinner {
+    .p-progress-spinner-circle {
+        stroke: var(--colors-blue-500);
+        animation: p-progress-spinner-dash 1.5s ease-in-out infinite !important;
+    }
+    &.success {
+        .p-progress-spinner-circle{
+            stroke: var(--colors-green-500);
+        }
+    }
+    &.warning {
+        .p-progress-spinner-circle{
+            stroke: var(--colors-orange-500);
+        }
+    }
+    &.danger {
+        .p-progress-spinner-circle{
+            stroke: var(--colors-red-500);
+        }
+    }
+}
