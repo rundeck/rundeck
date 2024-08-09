@@ -169,7 +169,6 @@
           <tbody
             class="subattrs collapse collapse-expandable"
             :class="{ in: uiNs[namespace.ns] }"
-            data-test-id="namespace-attributes"
           >
             <template v-for="nsattr in namespace.values">
               <tr class="hover-action-holder">
