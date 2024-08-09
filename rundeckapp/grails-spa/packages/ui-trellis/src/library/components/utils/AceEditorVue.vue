@@ -153,10 +153,19 @@ export default defineComponent({
      */
     resolveValue(val: string) {
       const LANG_JSON: string = "json";
-      if (this.lang == LANG_JSON) {
-        return JSON.stringify(JSON.parse(val), null, this.jsonSpaces);
+      try {
+        if (this.lang == LANG_JSON) {
+          return JSON.stringify(JSON.parse(val), null, this.jsonSpaces);
+        }
+        return val;
+      } catch (e) {
+        console.log(e);
+        if (String(this.editor!.getSession().getMode()) !== "text") {
+          this.editor!.getSession().setMode(this.resolveLang("text"));
+        }
+
+        return val;
       }
-      return val;
     },
     /**
      * Attach change event to ace editor
