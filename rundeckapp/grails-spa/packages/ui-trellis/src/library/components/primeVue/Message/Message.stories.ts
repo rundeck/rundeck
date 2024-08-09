@@ -4,7 +4,7 @@ import Message from "primevue/message";
 import PtButton from "../PtButton/PtButton.vue";
 
 const meta: Meta<typeof Message> = {
-  title: "Message",
+  title: "Messages/Message",
   parameters: {
     docs: {
       componentSubtitle:

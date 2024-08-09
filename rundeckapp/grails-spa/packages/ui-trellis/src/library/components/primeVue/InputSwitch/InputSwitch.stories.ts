@@ -3,7 +3,7 @@ import "./inputswitch.scss";
 import InputSwitch from "primevue/inputswitch";
 
 const meta: Meta<typeof InputSwitch> = {
-  title: "InputSwitch",
+  title: "Form/InputSwitch",
   parameters: {
     docs: {
       componentSubtitle: "InputSwitch is used to select a boolean value.",

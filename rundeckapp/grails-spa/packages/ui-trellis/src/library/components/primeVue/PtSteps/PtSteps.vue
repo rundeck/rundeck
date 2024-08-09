@@ -44,6 +44,9 @@ export default defineComponent({
 
 <style lang="scss">
 .p-steps {
+  .p-menuitem-link:hover {
+    cursor: pointer;
+  }
   .p-steps-item {
     // timeline bar
     &:before {
@@ -64,9 +67,9 @@ export default defineComponent({
       opacity: 1;
 
       .p-steps-number {
-        background: var(--colors-blue-500);
         border-color: var(--colors-blue-500);
-        color: var(--colors-white);
+        background: var(--colors-gray-200);
+        color: var(--colors-blue-500);
       }
 
       .p-steps-title {
@@ -78,9 +81,9 @@ export default defineComponent({
     // active step
     &.p-highlight {
       .p-steps-number {
-        background: var(--colors-gray-200);
+        background: var(--colors-blue-500);
         border-color: var(--colors-blue-500);
-        color: var(--colors-blue-500);
+        color: var(--colors-white);
       }
 
       .p-steps-title {

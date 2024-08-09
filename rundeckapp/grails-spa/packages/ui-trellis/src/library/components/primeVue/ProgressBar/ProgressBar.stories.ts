@@ -4,6 +4,7 @@ import "./progressBar.scss";
 import ProgressBar from "primevue/progressbar";
 
 const meta: Meta<typeof ProgressBar> = {
+  title: "Misc/ProgressBar",
   parameters: {
     docs: {
       componentSubtitle: "ProgressBar is a process status indicator.",

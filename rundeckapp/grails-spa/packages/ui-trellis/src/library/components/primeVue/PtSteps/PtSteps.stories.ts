@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/vue3";
 import PtSteps from "./PtSteps.vue";
 
 const meta: Meta<typeof PtSteps> = {
-  title: "PtSteps",
+  title: "Panel/PtSteps",
   component: PtSteps,
   parameters: {
     docs: {

@@ -6,7 +6,7 @@ import { TooltipDirectiveBinding } from "primevue/tooltip";
 import Tag from "primevue/tag";
 
 const meta: Meta<TooltipDirectiveBinding> = {
-  title: "Tooltip",
+  title: "Overlay/Tooltip",
   parameters: {
     docs: {
       componentSubtitle:

@@ -4,7 +4,7 @@ import TabView from "primevue/tabview";
 import TabPanel from "primevue/tabpanel";
 
 const meta: Meta<typeof TabView> = {
-  title: "TabView",
+  title: "Panel/TabView",
   parameters: {
     docs: {
       componentSubtitle:

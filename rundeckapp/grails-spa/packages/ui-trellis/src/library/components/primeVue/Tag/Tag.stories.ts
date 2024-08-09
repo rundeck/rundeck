@@ -4,7 +4,7 @@ import Tag from "primevue/tag";
 import Badge from "primevue/badge";
 
 const meta: Meta<typeof Tag> = {
-  title: "Tag",
+  title: "Misc/Tag",
   parameters: {
     docs: {
       componentSubtitle: "Tag component is used to categorize content.",

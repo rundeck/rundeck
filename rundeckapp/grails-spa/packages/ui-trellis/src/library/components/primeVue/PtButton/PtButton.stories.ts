@@ -3,6 +3,7 @@ import PtButton from "./PtButton.vue";
 import SplitButton from "primevue/splitbutton";
 
 const meta: Meta<typeof PtButton> = {
+  title: "Button/PtButton",
   component: PtButton,
   argTypes: {
     severity: {

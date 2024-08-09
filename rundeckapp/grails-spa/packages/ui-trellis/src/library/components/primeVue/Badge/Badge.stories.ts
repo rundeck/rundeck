@@ -3,7 +3,7 @@ import "./badge.scss";
 import Badge from "primevue/badge";
 
 const meta: Meta<typeof Badge> = {
-  title: "Badge",
+  title: "Misc/Badge",
   parameters: {
     docs: {
       componentSubtitle:
