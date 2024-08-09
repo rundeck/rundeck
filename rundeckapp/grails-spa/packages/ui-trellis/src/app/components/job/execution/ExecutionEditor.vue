@@ -15,6 +15,7 @@
           :provider="plugin.name"
           scope="Unspecified"
           default-scope="Unspecified"
+          :validation="plugin.validation"
           :show-icon="true"
         >
           <template #header="{ header }">
@@ -137,6 +138,17 @@ export default defineComponent({
     massagePluginInfo(plugin: PluginInitialData): Plugin {
       let config = {};
       const retrievedValue = this.initialData.ExecutionLifecycle[plugin.name];
+      let validationData = {
+        errors: {},
+        valid: true,
+      };
+
+      if (
+        this.initialData.validationErrors &&
+        Object.keys(this.initialData.validationErrors).includes(plugin.name)
+      ) {
+        validationData = this.initialData.validationErrors[plugin.name];
+      }
 
       if (retrievedValue) {
         config = { ...retrievedValue };
@@ -150,6 +162,7 @@ export default defineComponent({
           config,
           type: undefined,
         },
+        validation: validationData,
       };
     },
   },

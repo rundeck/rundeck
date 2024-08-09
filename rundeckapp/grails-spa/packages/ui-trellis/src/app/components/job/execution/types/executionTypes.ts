@@ -21,6 +21,12 @@ type Plugin = PluginInitialData & {
     config?: any;
     type?: string;
   };
+  validation?: {
+    valid?: boolean;
+    errors?: {
+      [key: string]: any;
+    };
+  };
 };
 
 interface JobPlugins {
@@ -30,6 +36,7 @@ interface JobPlugins {
 interface PluginDataFromApi {
   pluginsInitialData: PluginInitialData[];
   ExecutionLifecycle: JobPlugins;
+  validationErrors?: any;
 }
 
 export { PluginInitialData, Plugin, JobPlugins, PluginDataFromApi };
