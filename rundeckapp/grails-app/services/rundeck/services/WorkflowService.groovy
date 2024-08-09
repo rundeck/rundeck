@@ -135,15 +135,11 @@ class WorkflowService implements ApplicationContextAware{
             if (step instanceof JobExec) {
 
                 JobExec jexec = (JobExec) step
-                def searchProject = jexec.jobProject? jexec.jobProject: project
-                def schedlist = ScheduledExecution.findAllScheduledExecutions(jexec.jobGroup, jexec.jobName, searchProject)
-                if (!schedlist || 1 != schedlist.size()) {
+                ScheduledExecution se = jexec.findJob(project)
+                if (!se) {
                     //skip
                     return
                 }
-                def id = schedlist[0].id
-
-                ScheduledExecution se = ScheduledExecution.get(id)
 
                 //generate a workflow context
                 StepExecutionContext newContext=null
