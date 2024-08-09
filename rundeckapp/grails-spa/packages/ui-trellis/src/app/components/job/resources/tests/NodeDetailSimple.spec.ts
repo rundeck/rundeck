@@ -38,15 +38,29 @@ const mountNodeDetailsSimple = async (propsData = {}) => {
   return wrapper;
 };
 describe("NodeDetailsSimple Component", () => {
-  it("renders node attributes and checks for 'Test Node 1'", async () => {
+  it("renders node attributes", async () => {
     const wrapper = await mountNodeDetailsSimple();
     const attributes = wrapper.findAll(".setting");
     const attributeTexts = attributes.map((attr) => attr.text());
-    // This checks if any attribute text includes "Test Node 1"
-    const descriptionFound = attributeTexts.some((text) =>
-      text.includes("Test Node 1"),
-    );
-    expect(descriptionFound).toBe(true);
+    const expectedAttributes = {
+      osFamily: "Linux",
+      osName: "Ubuntu",
+      osVersion: "20.04",
+      osArch: "x86_64",
+      description: "Test Node 1",
+      "ui:status:text": "Healthy",
+      "ui:status:icon": "fa-check",
+      "ns1:attr1": "value1",
+      "ns1:attr2": "value2",
+      "ns1:attr3": "value3",
+      "ns1:attr4": "value4",
+    };
+    Object.entries(expectedAttributes).forEach(([key, value]) => {
+      const attributeFound = attributeTexts.some((text) =>
+        text.includes(value),
+      );
+      expect(attributeFound).toBe(true);
+    });
   });
   it("renders tags", async () => {
     const wrapper = await mountNodeDetailsSimple();
@@ -58,7 +72,6 @@ describe("NodeDetailsSimple Component", () => {
   it("renders expandable attributes using class", async () => {
     const wrapper = await mountNodeDetailsSimple();
     const toggleButton = wrapper.find(".textbtn");
-    expect(toggleButton.exists()).toBe(true);
     await toggleButton.trigger("click");
     await wrapper.vm.$nextTick();
     // Adjust the selector if necessary based on the actual HTML structure

@@ -43,7 +43,7 @@
             <tbody>
               <template v-for="(node, index) in nodeSet.nodes">
                 <tr
-                  :data-test-id="'node-entry-' + index"
+                  :data-testid="'node-entry-' + index"
                   class="node_entry hover-action-holder ansicolor-on"
                   :class="{ server: node.islocal || false }"
                 >
@@ -72,7 +72,7 @@
                             styleForIcon(node.attributes),
                             'margin-right: 4px',
                           ]"
-                          data-test-id="node-icon"
+                          data-testid="node-icon"
                         >
                           <i
                             v-if="node.attributes['ui:icon:name']"
@@ -143,14 +143,14 @@
                         </span>
                       </span>
                       <span v-else>
-                        <span :data-test-id="'node-attribute-' + filter">
+                        <span :data-testid="'node-attribute-' + filter">
                           {{ node.attributes[filter] }}
                         </span>
                         <node-filter-link
                           class="textbtn textbtn-info"
                           :filter-key="filter"
                           :filter-val="node.attributes[filter]"
-                          :data-test-id="'node-attribute-link-' + filter"
+                          :data-testid="'node-attribute-link-' + filter"
                           @nodefilterclick="filterClick"
                         >
                           <i

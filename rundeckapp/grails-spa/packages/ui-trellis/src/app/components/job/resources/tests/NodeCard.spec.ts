@@ -116,7 +116,10 @@ describe("NodeCard Component", () => {
       const wrapper = await mountNodeCard();
       const tagLink = wrapper.findAllComponents(NodeFilterLink).at(0);
       await tagLink.trigger("click");
-      expect(wrapper.emitted().filter).toBeTruthy();
+      const emittedEvent = wrapper.emitted().filter;
+      expect(emittedEvent).toBeTruthy();
+      expect(emittedEvent.length).toBe(1);
+      expect(emittedEvent[0]).toEqual([{ filter: 'tags: "Tag1"' }]);
     });
     it("displays the node list results and verifies active tab", async () => {
       const wrapper = await mountNodeCard();

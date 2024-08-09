@@ -89,13 +89,13 @@ describe("NodeTable Component", () => {
   it("renders node icon, color, and badge correctly", async () => {
     const wrapper = await mountNodeTable();
     // Check node icons
-    const nodeIcons = wrapper.findAll('[data-test-id="node-icon"] i');
+    const nodeIcons = wrapper.findAll('[data-testid="node-icon"] i');
     expect(nodeIcons.at(0).classes()).toContain("fas");
     expect(nodeIcons.at(0).classes()).toContain("fa-server");
     expect(nodeIcons.at(1).classes()).toContain("fas");
     expect(nodeIcons.at(1).classes()).toContain("fa-hdd");
     // Check node colors
-    const nodeColors = wrapper.findAll('[data-test-id="node-icon"]');
+    const nodeColors = wrapper.findAll('[data-testid="node-icon"]');
     nodeColors.forEach((colorWrapper) => {
       const styleAttribute = colorWrapper.attributes("style");
       expect(styleAttribute).toMatch(/color:\s*(red|blue);?/);
@@ -109,7 +109,7 @@ describe("NodeTable Component", () => {
   it("filters nodes by attribute when an attribute is clicked", async () => {
     const wrapper = await mountNodeTable();
     const attributeLink = wrapper.find(
-      '[data-test-id="node-attribute-link-description"]',
+      '[data-testid="node-attribute-link-description"]',
     );
     await attributeLink.trigger("click");
     expect(wrapper.emitted().filter).toBeTruthy();
@@ -120,7 +120,7 @@ describe("NodeTable Component", () => {
   it("filters nodes by name when the hostname is clicked", async () => {
     const wrapper = await mountNodeTable();
     const hostnameFilter = wrapper.find(
-      '[data-test-id="node-attribute-link-hostname"]',
+      '[data-testid="node-attribute-link-hostname"]',
     );
     await hostnameFilter.trigger("click");
     expect(wrapper.emitted().filter).toBeTruthy();
