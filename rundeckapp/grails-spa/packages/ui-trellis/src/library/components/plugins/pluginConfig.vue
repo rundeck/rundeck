@@ -627,6 +627,10 @@ export default defineComponent({
 .configprop + .configprop:before {
   content: " ";
 }
+
+.has-error .ace_editor {
+  border: 1px solid var(--danger-color);
+}
 </style>
 <style lang="scss" scoped>
 .header-reset {

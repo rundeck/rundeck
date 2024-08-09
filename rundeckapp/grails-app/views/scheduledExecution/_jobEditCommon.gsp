@@ -190,7 +190,8 @@
 <g:embedJSON id="jobExecutionPluginsJSON"
              data="${ [
                      pluginsInitialData: executionLifecyclePlugins.values()?.collect{it.description}?.flatten(),
-                     ExecutionLifecycle: scheduledExecution?.pluginConfigMap?.get('ExecutionLifecycle')?:[:]
+                     ExecutionLifecycle: scheduledExecution?.pluginConfigMap?.get('ExecutionLifecycle')?:[:],
+                     validationErrors:  params.executionLifecyclePluginValidation,
              ]}"/>
 <g:embedJSON id="jobOtherJSON"
              data="${ [
