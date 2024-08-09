@@ -51,7 +51,7 @@ dependencies {
     if (findProject(":core")) {
         implementation project(":core")
     }else{
-        implementation "org.rundeck:rundeck-core:${rundeckVersion}"
+        implementation "org.rundeck:rundeck-core:${version}"
     }
 
     implementation 'org.quartz-scheduler:quartz:2.3.1'
