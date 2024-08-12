@@ -19,7 +19,7 @@ class RdContainer extends DockerComposeContainer<RdContainer> implements ClientP
     public static final String STATIC_TOKEN = System.getenv("TEST_RUNDECK_CONTAINER_TOKEN") ?: 'admintoken'
     public static final String RUNDECK_IMAGE = System.getenv("TEST_IMAGE") ?: System.getProperty("TEST_IMAGE")
     public static final String LICENSE_LOCATION = System.getenv("LICENSE_LOCATION")
-    public static final String TEST_RUNDECK_GRAILS_URL = System.getenv("TEST_RUNDECK_GRAILS_URL") ?: "http://rundeck:4440"
+    public static final String TEST_RUNDECK_GRAILS_URL = System.getenv("TEST_RUNDECK_GRAILS_URL") ?: "http://localhost:4440"
     public static final String TEST_TARGET_PLATFORM = System.getenv("TEST_TARGET_PLATFORM") ?: "linux/amd64"
 
     private final Map<String, Integer> clientConfig
