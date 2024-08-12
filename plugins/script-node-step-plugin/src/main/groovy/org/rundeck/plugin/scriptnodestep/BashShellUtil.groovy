@@ -12,16 +12,19 @@ import java.util.regex.Pattern
 class BashShellUtil implements ShellUtil {
     static final String Q = '\''
     static final String BS = '\\'
+
     /**
      * Special chars except single quote
      */
     static final Pattern ESCAPED_CHARS = Pattern.compile(
-        '[;"`!~$' + Pattern.quote(BS) + ']'
-    )/**
-     * Special chars except single quote
+        '[ #^&*()\\[\\]{}?<>;"`!~$' + Pattern.quote(BS) + ']'
+    )
+
+    /**
+     * white space chars to use ANSI escape sequences
      */
     static final Pattern WS_CHARS = Pattern.compile(
-        '[ \t\n\r\b]+'
+        '[\t\n\r\b]'
     )
 
     static final Map<String, String> ANSI = [
@@ -29,7 +32,6 @@ class BashShellUtil implements ShellUtil {
         '\n': '\\n',
         '\r': '\\r',
         '\b': '\\b',
-
     ]
     /**
      * Quote a string for use in a bash variable value
@@ -37,10 +39,10 @@ class BashShellUtil implements ShellUtil {
      * @return the encoded value
      */
     String quote(final String value) {
-        //split on single quote, escape special chars, quote spaces, join with escaped single quote
+        //split on single quote, escape special chars, escape whitespace, join with escaped single quote
         value.split(Pattern.quote(Q)).
             collect { escapeChars(it) }.
-            collect { quoteSpaces(it) }.
+            collect { escapeWs(it) }.
             join(BS + Q)
     }
 
@@ -48,8 +50,10 @@ class BashShellUtil implements ShellUtil {
         it.replaceAll(ESCAPED_CHARS, '\\\\$0')
     }
 
-    static String quoteSpaces(String it) {
-        it.replaceAll(WS_CHARS, Q + '$0' + Q)
+    static String escapeWs(String it) {
+        it.replaceAll(WS_CHARS) { String[] args ->
+            '$' + Q + ANSI[args[0]] + Q
+        }
     }
 
     void appendEnvLine(
