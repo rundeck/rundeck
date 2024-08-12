@@ -16,12 +16,14 @@
 
 package com.dtolabs.rundeck.core.execution.utils;
 
+import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
 
 /**
  * Created by greg on 3/19/15.
+ * TODO: refactor to not use static methods
  */
 public class ResolverUtil {
     /**
@@ -31,6 +33,32 @@ public class ResolverUtil {
      */
     public static final String PROJ_PROP_PREFIX = "project.";
     public static final String FWK_PROP_PREFIX = "framework.";
+
+    /**
+     * @param nodeAttribute
+     * @param defaultValue
+     * @param node
+     * @param frameworkProject
+     * @param framework
+     * @deprecated use {@link #resolveProperty(String, String, INodeEntry, IRundeckProject, IFramework)}
+     */
+    @Deprecated
+    public static String resolveProperty(
+            final String nodeAttribute,
+            final String defaultValue,
+            final INodeEntry node,
+            final IRundeckProject frameworkProject,
+            final Framework framework
+    )
+    {
+        return resolveProperty(
+                nodeAttribute,
+                defaultValue,
+                node,
+                frameworkProject,
+                (IFramework) framework
+        );
+    }
 
     public static String resolveProperty(
             final String nodeAttribute,
@@ -50,6 +78,28 @@ public class ResolverUtil {
         } else {
             return defaultValue;
         }
+    }
+
+    /**
+     * Resolve a property as an integer, or return the default value
+     *
+     * @param attribute
+     * @param defaultValue
+     * @param iNodeEntry
+     * @param frameworkProject
+     * @param framework
+     * @deprecated use {@link #resolveIntProperty(String, int, INodeEntry, IRundeckProject, IFramework)}
+     */
+    @Deprecated
+    public static int resolveIntProperty(
+            final String attribute,
+            final int defaultValue,
+            final INodeEntry iNodeEntry,
+            final IRundeckProject frameworkProject,
+            final Framework framework
+    )
+    {
+        return resolveIntProperty(attribute, defaultValue, iNodeEntry, frameworkProject, (IFramework) framework);
     }
 
     public static int resolveIntProperty(
@@ -72,6 +122,34 @@ public class ResolverUtil {
         return value;
     }
 
+    /**
+     *
+     * @param attribute
+     * @param defaultValue
+     * @param iNodeEntry
+     * @param frameworkProject
+     * @param framework
+     * @return
+     * @deprecated use {@link #resolveLongProperty(String, long, INodeEntry, IRundeckProject, IFramework)}
+     */
+    @Deprecated
+    public static long resolveLongProperty(
+            final String attribute,
+            final long defaultValue,
+            final INodeEntry iNodeEntry,
+            final IRundeckProject frameworkProject,
+            final Framework framework
+    )
+    {
+        return resolveLongProperty(
+                attribute,
+                defaultValue,
+                iNodeEntry,
+                frameworkProject,
+                (IFramework) framework
+        );
+    }
+
     public static long resolveLongProperty(
             final String attribute,
             final long defaultValue,
@@ -90,6 +168,34 @@ public class ResolverUtil {
             }
         }
         return value;
+    }
+
+    /**
+     *
+     * @param attribute
+     * @param defaultValue
+     * @param iNodeEntry
+     * @param frameworkProject
+     * @param framework
+     * @return
+     * @deprecated use {@link #resolveBooleanProperty(String, boolean, INodeEntry, IRundeckProject, IFramework)}
+     */
+    @Deprecated
+    public static boolean resolveBooleanProperty(
+            final String attribute,
+            final boolean defaultValue,
+            final INodeEntry iNodeEntry,
+            final IRundeckProject frameworkProject,
+            final Framework framework
+    )
+    {
+        return resolveBooleanProperty(
+                attribute,
+                defaultValue,
+                iNodeEntry,
+                frameworkProject,
+                (IFramework) framework
+        );
     }
 
     public static boolean resolveBooleanProperty(
