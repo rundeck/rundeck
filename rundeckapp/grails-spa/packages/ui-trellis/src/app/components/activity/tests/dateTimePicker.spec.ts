@@ -2,11 +2,13 @@ import { mount, VueWrapper } from "@vue/test-utils";
 import DateTimePicker from "../dateTimePicker.vue";
 import moment from "moment";
 import { ComponentPublicInstance } from "vue";
+
 interface DateTimePickerProps {
   modelValue: string | Date;
   dateClass?: string;
   timeClass?: string;
 }
+
 interface DateTimePickerInstance extends ComponentPublicInstance {
   dateString: string;
   time: Date;
@@ -14,6 +16,7 @@ interface DateTimePickerInstance extends ComponentPublicInstance {
   setFromValue: () => void;
   recalcDate: () => void;
 }
+
 const initialTime = new Date("2024-06-30T13:00:00");
 const newTime = new Date("2024-07-01T07:00:00");
 const mountDateTimePicker = async (

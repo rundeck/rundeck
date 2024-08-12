@@ -823,6 +823,7 @@ const messages = {
   "option.view.action.moveUp.title": "Move Up",
   "option.view.action.moveDown.title": "Move Down",
   "option.view.action.drag.title": "Drag to reorder",
+  "pagination.of": "of",
   uiv: {
     datePicker: {
       clear: "Clear",
