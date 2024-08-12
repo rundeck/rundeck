@@ -109,7 +109,7 @@ def runNpmVersion = tasks.register('runNpmVersion', NpmTask) {t ->
         if (project.vTag == 'GA') {
             args.add("${project.vNum}".toString())
         }
-        else if(project.vTag == 'RBA'){
+        else if(project.vNum ==~ /^\d+\.\d+$/){
             args.add("${project.vNum}.0-${project.vTag}.${new Date().getTime()}".toString())
         }
         else {
