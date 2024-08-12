@@ -243,7 +243,7 @@ Since: v33
         summary = 'Get details about a plugin',
         description = '''Get detailed information about a plugin provide.
 
-Since: v48''',
+Since: v49''',
         tags = ['plugins'],
         responses = @ApiResponse(
             responseCode = '200',
@@ -258,7 +258,7 @@ Since: v48''',
         @Parameter(in = ParameterIn.PATH, required = true) String service,
         @Parameter(in = ParameterIn.PATH, required = true) String provider
     ) {
-        if (!apiService.requireApi(request, response, ApiVersions.V47)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V49)) {
             return
         }
         UserAndRolesAuthContext auth = null
@@ -331,7 +331,7 @@ Since: v48''',
             detail.desc = detail.description
             detail.description=null
         }
-        if(service != "UI") {
+        if(service != ServiceNameConstants.UI) {
             def profile = uiPluginService.getProfileFor(service, provider)
             if (profile.icon) {
                 detail.iconUrl = grailsLinkGenerator.link(
