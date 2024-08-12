@@ -17,11 +17,13 @@
 package com.dtolabs.rundeck.core.execution.utils;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
 
 /**
  * Created by greg on 3/19/15.
+ * TODO: refactor to not use static methods
  */
 public class ResolverUtil {
     /**
@@ -32,6 +34,15 @@ public class ResolverUtil {
     public static final String PROJ_PROP_PREFIX = "project.";
     public static final String FWK_PROP_PREFIX = "framework.";
 
+    /**
+     * @param nodeAttribute
+     * @param defaultValue
+     * @param node
+     * @param frameworkProject
+     * @param framework
+     * @deprecated use {@link #resolveProperty(String, String, INodeEntry, IRundeckProject, IFramework)}
+     */
+    @Deprecated
     public static String resolveProperty(
             final String nodeAttribute,
             final String defaultValue,
@@ -40,16 +51,55 @@ public class ResolverUtil {
             final Framework framework
     )
     {
+        return resolveProperty(
+                nodeAttribute,
+                defaultValue,
+                node,
+                frameworkProject,
+                (IFramework) framework
+        );
+    }
+
+    public static String resolveProperty(
+            final String nodeAttribute,
+            final String defaultValue,
+            final INodeEntry node,
+            final IRundeckProject frameworkProject,
+            final IFramework framework
+    )
+    {
         if (null != node.getAttributes().get(nodeAttribute)) {
             return node.getAttributes().get(nodeAttribute);
         } else if (frameworkProject.hasProperty(PROJ_PROP_PREFIX + nodeAttribute)
                    && !"".equals(frameworkProject.getProperty(PROJ_PROP_PREFIX + nodeAttribute))) {
             return frameworkProject.getProperty(PROJ_PROP_PREFIX + nodeAttribute);
-        } else if (framework.hasProperty(FWK_PROP_PREFIX + nodeAttribute)) {
-            return framework.getProperty(FWK_PROP_PREFIX + nodeAttribute);
+        } else if (framework.getPropertyLookup().hasProperty(FWK_PROP_PREFIX + nodeAttribute)) {
+            return framework.getPropertyLookup().getProperty(FWK_PROP_PREFIX + nodeAttribute);
         } else {
             return defaultValue;
         }
+    }
+
+    /**
+     * Resolve a property as an integer, or return the default value
+     *
+     * @param attribute
+     * @param defaultValue
+     * @param iNodeEntry
+     * @param frameworkProject
+     * @param framework
+     * @deprecated use {@link #resolveIntProperty(String, int, INodeEntry, IRundeckProject, IFramework)}
+     */
+    @Deprecated
+    public static int resolveIntProperty(
+            final String attribute,
+            final int defaultValue,
+            final INodeEntry iNodeEntry,
+            final IRundeckProject frameworkProject,
+            final Framework framework
+    )
+    {
+        return resolveIntProperty(attribute, defaultValue, iNodeEntry, frameworkProject, (IFramework) framework);
     }
 
     public static int resolveIntProperty(
@@ -57,7 +107,7 @@ public class ResolverUtil {
             final int defaultValue,
             final INodeEntry iNodeEntry,
             final IRundeckProject frameworkProject,
-            final Framework framework
+            final IFramework framework
     )
     {
 
@@ -72,12 +122,40 @@ public class ResolverUtil {
         return value;
     }
 
+    /**
+     *
+     * @param attribute
+     * @param defaultValue
+     * @param iNodeEntry
+     * @param frameworkProject
+     * @param framework
+     * @return
+     * @deprecated use {@link #resolveLongProperty(String, long, INodeEntry, IRundeckProject, IFramework)}
+     */
+    @Deprecated
     public static long resolveLongProperty(
             final String attribute,
             final long defaultValue,
             final INodeEntry iNodeEntry,
             final IRundeckProject frameworkProject,
             final Framework framework
+    )
+    {
+        return resolveLongProperty(
+                attribute,
+                defaultValue,
+                iNodeEntry,
+                frameworkProject,
+                (IFramework) framework
+        );
+    }
+
+    public static long resolveLongProperty(
+            final String attribute,
+            final long defaultValue,
+            final INodeEntry iNodeEntry,
+            final IRundeckProject frameworkProject,
+            final IFramework framework
     )
     {
 
@@ -92,12 +170,40 @@ public class ResolverUtil {
         return value;
     }
 
+    /**
+     *
+     * @param attribute
+     * @param defaultValue
+     * @param iNodeEntry
+     * @param frameworkProject
+     * @param framework
+     * @return
+     * @deprecated use {@link #resolveBooleanProperty(String, boolean, INodeEntry, IRundeckProject, IFramework)}
+     */
+    @Deprecated
     public static boolean resolveBooleanProperty(
             final String attribute,
             final boolean defaultValue,
             final INodeEntry iNodeEntry,
             final IRundeckProject frameworkProject,
             final Framework framework
+    )
+    {
+        return resolveBooleanProperty(
+                attribute,
+                defaultValue,
+                iNodeEntry,
+                frameworkProject,
+                (IFramework) framework
+        );
+    }
+
+    public static boolean resolveBooleanProperty(
+            final String attribute,
+            final boolean defaultValue,
+            final INodeEntry iNodeEntry,
+            final IRundeckProject frameworkProject,
+            final IFramework framework
     )
     {
 
