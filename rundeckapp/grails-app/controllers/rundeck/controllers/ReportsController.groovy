@@ -296,24 +296,30 @@ class ReportsController extends ControllerBase{
         }
         def results = index_old(query)
         results.reports=results?.reports.collect{
-            def map=it.toMap()
-            map.duration= (it.dateCompleted ?: new Date()).time - it.dateStarted.time
-            if(map.executionUuid){
-                //nb:response data type expects string
-                try {
-                    map.execution = Execution.findByUuid(map.executionUuid)?.toMap()
-                    map.executionId= map.execution.id.toString()
-                    map.executionHref = createLink(controller: 'execution', action: 'show', absolute: false, id: map.execution.id, params: [project: (map?.project != null)? map.project : params.project])
-
-                } catch (Exception e) {
-                    log.debug("Error getting Execution: " + e.message)
+            try {
+                def map=it.toMap()
+                map.duration= (it.dateCompleted ?: new Date()).time - it.dateStarted.time
+                def execution = null
+                if (map.executionUuid) {
+                    execution = Execution.findByUuid(map.executionUuid)
+                } else if (map.executionId) {
+                    execution = Execution.findById(map.executionId)
                 }
-           }
+                if (execution) {
+                    //nb:response data type expects string
+                    map.execution = execution?.toMap()
+                    map.executionId = map.execution.id.toString()
+                    map.executionHref = createLink(controller: 'execution', action: 'show', absolute: false, id: map.execution.id, params: [project: (map?.project != null) ? map.project : params.project])
+                    map.jobName= map.remove('reportId')
+                    map.user= map.remove('author')
+                    map.executionString= map.remove('title')
+                    return map
+                }
+            } catch (Exception e) {
+                log.debug("Error getting Execution: " + e.message)
+            }
 
-            map.jobName= map.remove('reportId')
-            map.user= map.remove('author')
-            map.executionString= map.remove('title')
-            return map.execution?map:null
+            return null
         }.findAll{it}
 //        results.params=params
         results.query=null
