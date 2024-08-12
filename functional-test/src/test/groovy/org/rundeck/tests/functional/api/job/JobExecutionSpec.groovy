@@ -1876,6 +1876,114 @@ class JobExecutionSpec extends BaseContainer {
                 "</joblist>"
     }
 
+    def "test-renamed-child-job"() {
+        given:
+        def projectName = "test-renamed-child-job"
+        def client = getClient()
+        ObjectMapper mapper = new ObjectMapper()
+        Object projectJsonMap = [
+                "name": projectName.toString(),
+                "description": "test-renamed-child-job",
+                "config": [
+                        "test.property": "test value",
+                        "project.execution.history.cleanup.enabled": "true",
+                        "project.execution.history.cleanup.retention.days": "1",
+                        "project.execution.history.cleanup.batch": "500",
+                        "project.execution.history.cleanup.retention.minimum": "0",
+                        "project.execution.history.cleanup.schedule": "0 0/1 * 1/1 * ? *"
+                ]
+        ]
+
+        def responseProject = createSampleProject(projectJsonMap)
+        assert responseProject.successful
+
+        // Note how the name of the child job iin the ref s Child-2.
+        // This simulates the renaming of the child job.
+        def testXml = """
+            <joblist>
+               <job>
+                  <name>Child</name>
+                  <group>api-test/job-run</group>
+                  <uuid>b51275b4-71a1-4127-80c0-366fa1f76d1d</uuid>
+                  <description></description>
+                  <loglevel>INFO</loglevel>
+                  <context>
+                      <project>${projectName}</project>
+                  </context>
+                  <dispatch>
+                    <threadcount>1</threadcount>
+                    <keepgoing>true</keepgoing>
+                  </dispatch>
+                  <sequence>
+                    <command>
+                    <exec>echo 1</exec>
+                    </command>
+                  </sequence>
+               </job>
+               <job>
+                  <name>Parent</name>
+                  <group>api-test/job-run</group>
+                  <uuid>c7b28a32-b32c-459c-ab94-1e253f50fd47</uuid>
+                  <description/>
+                  <executionEnabled>true</executionEnabled>
+                  <loglevel>INFO</loglevel>
+                   <context>
+                      <project>${projectName}</project>
+                  </context>
+                  <nodeFilterEditable>false</nodeFilterEditable>
+                  <sequence keepgoing=\"false\" strategy=\"parallel\">
+                     <command>
+                         <jobref name=\"Child-2\">
+                           <uuid>b51275b4-71a1-4127-80c0-366fa1f76d1d</uuid>
+                         </jobref>
+                     </command>
+                     <command>
+                         <jobref name=\"Child-2\" nodeStep=\"true\">
+                           <uuid>b51275b4-71a1-4127-80c0-366fa1f76d1d</uuid>
+                         </jobref>
+                     </command>
+                  </sequence>
+               </job>
+            </joblist>
+            """
+
+        def created = JobUtils.createJob(projectName, testXml, client)
+        assert created.successful
+
+        when: "Job and referenced job created"
+        CreateJobResponse jobCreatedResponse = mapper.readValue(
+                created.body().string(),
+                CreateJobResponse.class
+        )
+        def childJob = jobCreatedResponse.succeeded[0]?.id
+        def parentJob = jobCreatedResponse.succeeded[1]?.id
+
+        then:
+        childJob != null
+        parentJob != null
+
+        when: "run job"
+        def jobRun = JobUtils.executeJob(parentJob, client)
+        assert jobRun.successful
+
+        Execution exec = mapper.readValue(jobRun.body().string(), Execution.class)
+
+        Execution jobExecutionStatus = JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                exec.id as String,
+                mapper,
+                client,
+                WaitingTime.MODERATE.milliSeconds,
+                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+        )
+
+        then:
+        then:
+        jobExecutionStatus.status == ExecutionStatus.SUCCEEDED.state
+        // Verify that all steps on the first (and the only) node are in the SUCCEEDED state
+        client.jsonValue(client.doGetAcceptAll("/execution/$jobExecutionStatus.id/state").body(), Map).nodes.values()[0].every({val -> val.executionState == "SUCCEEDED"} )
+    }
+
     def generateRuntime(int secondsInFuture){
         TimeZone timeZone = TimeZone.getDefault()
         Calendar cal = Calendar.getInstance(timeZone)
