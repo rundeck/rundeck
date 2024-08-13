@@ -105,52 +105,11 @@ public class ScriptfileUtils {
         }
     }
 
-    /**
-     * Write an inputstream to a FileWriter
-     * @param input input stream
-     * @param writer writer
-     * @throws IOException if an error occurs
-     */
-    private static void writeStream(final InputStream input, final FileWriter writer)
-            throws IOException
-    {
-        writeStream(input, writer, LineEndingStyle.LOCAL, false);
-    }
-
-    /**
-     * Write an inputstream to a FileWriter
-     * @param input input stream
-     * @param writer writer
-     * @throws IOException if an error occurs
-     */
-    private static void writeStream(
-            final InputStream input,
-            final FileWriter writer,
-            final LineEndingStyle style,
-            final boolean addBom
-    ) throws IOException
-    {
-        try (InputStreamReader inStream = new InputStreamReader(input)) {
-            writeReader(inStream, writer, style, addBom);
-        }
-    }
 
     /**
      * Copy from a Reader to a FileWriter
      * @param reader reader
      * @param writer writer
-     * @throws IOException if an error occurs
-     */
-    private static void writeReader(final Reader reader, final FileWriter writer) throws IOException {
-        writeReader(reader, writer, LineEndingStyle.LOCAL, false);
-    }
-
-    /**
-     * Copy from a Reader to a FileWriter
-     *
-     * @param reader reader
-     * @param writer writer
-     *
      * @throws IOException if an error occurs
      */
     private static void writeReader(
@@ -257,7 +216,9 @@ public class ScriptfileUtils {
             } else if (null != reader) {
                 ScriptfileUtils.writeReader(reader, writer, style, addBom);
             } else if (null != stream) {
-                ScriptfileUtils.writeStream(stream, writer, style, addBom);
+                try (InputStreamReader inStream = new InputStreamReader(stream)) {
+                    writeReader(inStream, writer, style, addBom);
+                }
             } else {
                 throw new IllegalArgumentException("no script source argument");
             }
