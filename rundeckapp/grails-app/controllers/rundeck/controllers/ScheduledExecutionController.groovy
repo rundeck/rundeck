@@ -5953,7 +5953,17 @@ Since: v14''',
                     code: 'api.error.invalid.request', args: ['Expected server.uuid or server.all or job.id in request.']])
         }
 
-        def reclaimMap=scheduledExecutionService.reclaimAndScheduleJobs(serverUUID,serverAll,project,jobIds?:null)
+        String toServerUuid = data?.server?.toUuid?:null
+        def reclaimMap
+        if(toServerUuid) {
+            def claimed = scheduledExecutionService.claimScheduledJobs(toServerUuid, serverUUID, serverAll, project, jobIds?:null)
+            if (claimed.find { it.value.success }) {
+                scheduledExecutionService.rescheduleJobs(toServerUuid)
+            }
+            reclaimMap=claimed
+        } else {
+            reclaimMap=scheduledExecutionService.reclaimAndScheduleJobs(serverUUID,serverAll,project,jobIds?:null)
+        }
         def successCount=reclaimMap.findAll {it.value.success}.size()
         def failedCount = reclaimMap.size() - successCount
         //TODO: retry for failed reclaims?
