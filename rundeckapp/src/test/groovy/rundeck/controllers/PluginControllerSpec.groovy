@@ -652,7 +652,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
             def description = DescriptionBuilder.builder().name('test1').build()
             def pluginMeta = Mock(PluginMetadata)
             controller.featureService = Mock(FeatureService)
-            1 * controller.featureService.featurePresent("legacyXml") >> false
+            1 * controller.featureService.featurePresent(_) >> false
         when:
             controller.pluginDetail('UI', 'test1')
         then:
