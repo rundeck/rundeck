@@ -50,6 +50,7 @@ public interface LogFilterPlugin {
      * @param context the context for the plugin
      * @deprecated use {@link #complete(PluginLoggingContext, StatusResult)}
      */
+    @Deprecated
     default void complete(PluginLoggingContext context) {
 
     }

@@ -19,6 +19,7 @@ public class ServiceFactory {
      * @return
      * @deprecated
      */
+    @Deprecated
     public static <T> BaseProviderRegistryService<T> builtinService(
             final Framework framework,
             final String serviceName,

@@ -61,6 +61,7 @@ public interface PluginStepContext {
      *
      * @deprecated use {@link #getDataContextObject()}
      */
+    @Deprecated
     public Map<String, Map<String, String>> getDataContext();
 
     /**

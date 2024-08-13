@@ -60,6 +60,7 @@ import java.util.*;
  * @version $Revision$
  * @deprecated
  */
+@Deprecated
 public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
     static final Logger logger = LoggerFactory.getLogger(NodeFirstWorkflowExecutor.class.getName());
 

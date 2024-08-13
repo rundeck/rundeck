@@ -164,6 +164,7 @@ public class BaseFileCopier {
      * @return a filepath specifying destination of the file to copy that should be unique
      * @deprecated use {@link #generateRemoteFilepathForNode(com.dtolabs.rundeck.core.common.INodeEntry, com.dtolabs.rundeck.core.common.IRundeckProject, com.dtolabs.rundeck.core.common.IFramework, String, String, String)}
      */
+    @Deprecated
     public static String generateRemoteFilepathForNode(
             final INodeEntry node,
             final String scriptfileName,

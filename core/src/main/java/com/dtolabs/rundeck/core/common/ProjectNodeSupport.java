@@ -83,6 +83,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * @param resourceFormatGeneratorService
      * @deprecated use {@link #ProjectNodeSupport(IRundeckProjectConfig, ResourceFormatGeneratorService, ResourceModelSourceService, Function)}
      */
+    @Deprecated
     public ProjectNodeSupport(
         final IRundeckProjectConfig projectConfig,
         final ResourceFormatGeneratorService resourceFormatGeneratorService,

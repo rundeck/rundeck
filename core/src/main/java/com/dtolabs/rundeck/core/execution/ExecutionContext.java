@@ -61,6 +61,7 @@ public interface ExecutionContext {
      * @return the framework
      * @deprecated use {@link #getIFramework()}
      */
+    @Deprecated
     public Framework getFramework();
 
     /**
@@ -73,6 +74,7 @@ public interface ExecutionContext {
      * @return the authorization context
      * @deprecated use {@link #getUserAndRolesAuthContext()}
      */
+    @Deprecated
     public AuthContext getAuthContext();
 
     public UserAndRolesAuthContext getUserAndRolesAuthContext();

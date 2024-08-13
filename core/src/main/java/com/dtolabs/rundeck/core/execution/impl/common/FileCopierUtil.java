@@ -171,6 +171,7 @@ public interface FileCopierUtil {
      * @return a filepath specifying destination of the file to copy that should be unique
      * @deprecated use {@link #generateRemoteFilepathForNode(INodeEntry, IRundeckProject, IFramework, String, String, String)}
      */
+    @Deprecated
     String generateRemoteFilepathForNode(
             INodeEntry node,
             String scriptfileName,
