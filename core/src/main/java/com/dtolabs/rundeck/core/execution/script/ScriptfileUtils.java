@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.core.execution.script;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 
 import java.io.*;
@@ -291,15 +292,31 @@ public class ScriptfileUtils {
      * @return Create a temp file in the framework
      * @param framework  fwk
      * @throws IOException on io error
-     *
+     * @deprecated
      */
+    @Deprecated
     public static File createTempFile(final Framework framework) throws IOException {
+        return createTempFile((IFramework) framework);
+    }
+
+    /**
+     * Creates a temp file and marks it for deleteOnExit, to clean up proactively call
+     * {@link #releaseTempFile(java.io.File)} with the result when complete
+     *
+     * @param framework fwk
+     * @return Create a temp file in the framework
+     * @throws IOException on io error
+     */
+    public static File createTempFile(final IFramework framework) throws IOException {
         String fileExt = ".tmp";
         if ("windows".equalsIgnoreCase(framework.createFrameworkNode().getOsFamily())) {
             fileExt = ".tmp.bat";
         }
-        final File dispatch = File.createTempFile("dispatch", fileExt, new File(framework.getProperty(
-                "framework.tmp.dir")));
+        final File dispatch = File.createTempFile(
+                "dispatch",
+                fileExt,
+                new File(framework.getPropertyLookup().getProperty("framework.tmp.dir"))
+        );
         registerTempFile(dispatch);
         return dispatch;
     }
