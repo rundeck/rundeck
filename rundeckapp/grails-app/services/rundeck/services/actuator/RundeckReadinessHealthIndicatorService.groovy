@@ -12,6 +12,7 @@ class RundeckReadinessHealthIndicatorService implements EventBusAware {
 
     @Subscriber("rundeck.bootstrap")
     void rundeckReady() {
+        Thread.sleep(30000)
         AvailabilityChangeEvent.publish(grailsApplication.mainContext, ReadinessState.ACCEPTING_TRAFFIC);
     }
 }
