@@ -159,17 +159,6 @@ export default defineComponent({
         }
         return val;
       } catch (e) {
-        // if lang value was originally json, and there was an error parsing val
-        // (either syntax, which comes from JSON.parse or type, which comes from JSON.stringify)
-        // fallback to text mode, so that the malformed json can be shown
-        if (
-          this.lang === LANG_JSON &&
-          (e instanceof SyntaxError || e instanceof TypeError) &&
-          String(this.editor!.getSession().getMode()) !== "text"
-        ) {
-          this.editor!.getSession().setMode(this.resolveLang("text"));
-        }
-
         return val;
       }
     },
