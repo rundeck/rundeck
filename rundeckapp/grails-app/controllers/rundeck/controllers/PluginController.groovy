@@ -13,6 +13,7 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
+import io.swagger.v3.oas.annotations.Hidden
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.enums.ParameterIn
@@ -233,6 +234,7 @@ Since: v33
         render(services as JSON)
     }
 
+    @Hidden
     @Get(uri='/plugin/detail/{service}/{provider}')
     /**
      *  detail about a plugin artifact, provider, and properties
