@@ -38,6 +38,7 @@ import org.grails.plugins.metricsweb.CallableGauge
 import org.quartz.Scheduler
 import rundeck.services.LogFileStorageService
 import rundeck.services.feature.FeatureService
+import rundeckapp.cli.CommandLineSetup
 import webhooks.Webhook
 
 import javax.servlet.ServletContext
@@ -492,7 +493,11 @@ class BootStrap {
             }
 
         }
-        grailsEventBus.notify('rundeck.bootstrap')
+        if(System.getProperty(CommandLineSetup.SYS_PROP_MIGRATE_ONLY) != "true") {
+            grailsEventBus.notify('rundeck.bootstrap')
+        } else {
+            log.info("Migrate only detected. Skipping bootstrap event.")
+        }
         log.info("Rundeck startup finished in ${System.currentTimeMillis()-bstart}ms")
     }
 

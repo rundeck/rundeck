@@ -35,6 +35,7 @@ class CommandLineSetup {
     //system props for launcher config
     private static final String SYS_PROP_RUNDECK_LAUNCHER_DEBUG     = "rundeck.launcher.debug";
     private static final String SYS_PROP_RUNDECK_LAUNCHER_REWRITE   = "rundeck.launcher.rewrite";
+    public static final String SYS_PROP_MIGRATE_ONLY               = "migrate.only";
 
     public static final String FLAG_INSTALLONLY = "installonly";
     public static final String FLAG_SKIPINSTALL = "skipinstall";
@@ -197,6 +198,9 @@ class CommandLineSetup {
         if(!StringUtil.isEmpty(cliOptions.tag))
             cliOptions.rollback = true
         cliOptions.migrate = cl.hasOption('m')
+        if(cliOptions.migrate) {
+            System.setProperty(SYS_PROP_MIGRATE_ONLY, "true")
+        }
         return cliOptions
 
     }
