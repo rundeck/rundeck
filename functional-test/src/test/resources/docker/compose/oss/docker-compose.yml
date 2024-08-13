@@ -5,6 +5,7 @@ services:
       context: ""
       args:
         IMAGE: ${TEST_IMAGE}
+    platform: ${TEST_TARGET_PLATFORM:-linux/amd64}
     environment:
       RUNDECK_GRAILS_URL: ${TEST_RUNDECK_GRAILS_URL}
       RUNDECK_SERVER_FORWARDED: 'true'
