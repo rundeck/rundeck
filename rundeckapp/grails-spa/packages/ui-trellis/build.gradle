@@ -105,11 +105,16 @@ def runNpmVersion = tasks.register('runNpmVersion', NpmTask) {t ->
 
     args = [ 'version' ]
 
-    if (findProperty('environment')?:'development' == 'release') {
-        if (project.vTag == 'GA')
+    if (findProperty('environment')?:'development' == 'release' || project.buildType == 'release') {
+        if (project.vTag == 'GA') {
             args.add("${project.vNum}".toString())
-        else
+        }
+        else if(project.vNum ==~ /^\d+\.\d+$/){
+            args.add("${project.vNum}.0-${project.vTag}.${new Date().getTime()}".toString())
+        }
+        else {
             args.add("${project.vNum}-${project.vTag}.${new Date().getTime()}".toString())
+        }
     }
     else {
         args.add("${project.vNum}-snapshot.${new Date().getTime()}".toString())
