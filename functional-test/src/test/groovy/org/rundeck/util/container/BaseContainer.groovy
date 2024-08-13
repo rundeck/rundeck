@@ -8,6 +8,7 @@ import okhttp3.Response
 import okhttp3.ResponseBody
 import org.rundeck.util.api.responses.execution.ExecutionOutput
 import org.rundeck.util.api.storage.KeyStorageApiClient
+import org.rundeck.util.common.WaitingTime
 import spock.lang.Specification
 
 import java.text.SimpleDateFormat
@@ -440,6 +441,27 @@ abstract class BaseContainer extends Specification implements ClientProvider {
             )
             if (!response.successful) {
                 throw new RuntimeException("Failed to add configuration options to a project: ${response.body().string()}")
+            }
+        }
+    }
+
+    def enableFeatureFlag(Object config) {
+        client.post("/config/save",config, Map)
+        Thread.sleep(WaitingTime.MODERATE.milliSeconds)
+    }
+
+    def waitFeatureFlag(String key){
+        boolean featureEnabled = false
+        def mapper = new ObjectMapper()
+
+        while(!featureEnabled){
+            Thread.sleep(WaitingTime.MODERATE.milliSeconds)
+            def response = client.doGet("/config/get?key=${key}&strata=default")
+            if(response?.body()!=null){
+                def parsedBody = mapper.readValue(response?.body()?.string(), Map.class)
+                if(parsedBody?.value == "true"){
+                    featureEnabled = true
+                }
             }
         }
     }

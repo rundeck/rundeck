@@ -413,6 +413,34 @@ class JobsSpec extends SeleniumBase {
             nextUi << [false, true]
     }
 
+    def "job workflow alphaUi"() {
+        when:
+            def config = [
+                    [
+                            "key": "rundeck.feature.alphaUi.enabled",
+                            "value": true
+                    ],
+            ]
+            enableFeatureFlag(config)
+            waitFeatureFlag("rundeck.feature.alphaUi.enabled")
+            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+            jobCreatePage.nextUi=true
+            jobCreatePage.go()
+        then:
+            jobCreatePage.tab JobTab.WORKFLOW click()
+            jobCreatePage.waitForTextToBePresentBySelector(By.xpath("//section[@id='workflowContent2']//div[contains(@class, 'control-label')]"), "Workflow",60)
+        expect:
+            jobCreatePage.workflowAlphaUiContainer.isDisplayed()
+        cleanup:
+            def cleanUpConfig = [
+                    [
+                            "key": "rundeck.feature.alphaUi.enabled",
+                            "value": false
+                    ],
+            ]
+            enableFeatureFlag(cleanUpConfig)
+    }
+
     def "job workflow step context variables autocomplete"() {
         when:
             def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
