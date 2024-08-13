@@ -16,7 +16,6 @@
 
 package com.dtolabs.rundeck.core.execution.impl.common;
 
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
@@ -111,7 +110,7 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
             final boolean expandTokens
     ) throws FileCopierException
     {
-        final Framework framework = context.getFramework();
+        final IFramework framework = context.getIFramework();
 
         //create new dataContext with the node data, and write the script (file,
         // content or strea) to a temp file
