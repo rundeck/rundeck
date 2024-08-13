@@ -5902,6 +5902,7 @@ Since: v14''',
         }
 
         String serverUUID=null
+        String toServerUuid=null
         boolean serverAll=false
         String project=null
         def jobIds=[]
@@ -5932,6 +5933,7 @@ Since: v14''',
         } else if(request.format=='json'  || !request.format){
             def data= request.JSON
             serverUUID = data?.server?.uuid?:null
+            toServerUuid = data?.server?.toUuid?:null
             serverAll = data?.server?.all?true:false
             project = data?.project?:null
             jobid = data?.job?.id?:null
@@ -5953,15 +5955,17 @@ Since: v14''',
                     code: 'api.error.invalid.request', args: ['Expected server.uuid or server.all or job.id in request.']])
         }
 
-        String toServerUuid = data?.server?.toUuid?:null
+
         def reclaimMap
         if(toServerUuid) {
+            log.info("Transfering scheduled jobs from server $serverUUID to server $toServerUuid")
             def claimed = scheduledExecutionService.claimScheduledJobs(toServerUuid, serverUUID, serverAll, project, jobIds?:null)
             if (claimed.find { it.value.success }) {
                 scheduledExecutionService.rescheduleJobs(toServerUuid)
             }
             reclaimMap=claimed
         } else {
+            log.info("Claiming scheduled jobs from server $serverUUID to server $toServerUuid")
             reclaimMap=scheduledExecutionService.reclaimAndScheduleJobs(serverUUID,serverAll,project,jobIds?:null)
         }
         def successCount=reclaimMap.findAll {it.value.success}.size()
