@@ -76,10 +76,11 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
             final InputStream input,
             final String script,
             final INodeEntry node,
-            final boolean expandTokens
+            final boolean expandTokens,
+            ContentModifier modifier
     ) throws FileCopierException
     {
-        return writeScriptTempFile(context, original, input, script, node, null, expandTokens);
+        return writeScriptTempFile(context, original, input, script, node, null, expandTokens, modifier);
     }
     /**
      * Copy a script file, script source stream, or script string into a temp file, and replace \
@@ -100,14 +101,15 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
      *          if an IO problem occurs
      */
     @Override
-    public  File writeScriptTempFile(
+    public File writeScriptTempFile(
             final ExecutionContext context,
             final File original,
             final InputStream input,
             final String script,
             final INodeEntry node,
             final File destination,
-            final boolean expandTokens
+            final boolean expandTokens,
+            ContentModifier modifier
     ) throws FileCopierException
     {
         final IFramework framework = context.getIFramework();
