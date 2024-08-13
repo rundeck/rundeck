@@ -19,9 +19,9 @@ package com.dtolabs.rundeck.core.execution.script;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.impl.common.FileCopierUtil;
 
 import java.io.*;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
@@ -116,23 +116,32 @@ public class ScriptfileUtils {
             final Reader reader,
             final FileWriter writer,
             final LineEndingStyle style,
-            final boolean addBom
+            final boolean addBom,
+            final FileCopierUtil.ContentModifier modifier
     ) throws IOException
     {
         final BufferedReader inbuff = new BufferedReader(reader);
         String inData;
         final String linesep =
                 null == style ?
-                        LineEndingStyle.LOCAL.getLineSeparator() :
-                        style.getLineSeparator();
+                LineEndingStyle.LOCAL.getLineSeparator() :
+                style.getLineSeparator();
 
         if(addBom && StandardCharsets.UTF_8.aliases().contains(writer.getEncoding())
-                && style == LineEndingStyle.WINDOWS) {
+           && style == LineEndingStyle.WINDOWS) {
             writer.write('\ufeff');
         }
+        boolean useModifier = true;
         while ((inData = inbuff.readLine()) != null) {
-            writer.write(inData);
-            writer.write(linesep);
+            if (null != modifier && useModifier) {
+                useModifier = modifier.process(inData, (data) -> {
+                    writer.write(data);
+                    writer.write(linesep);
+                });
+            } else {
+                writer.write(inData);
+                writer.write(linesep);
+            }
         }
         inbuff.close();
     }
@@ -210,14 +219,37 @@ public class ScriptfileUtils {
             boolean addBom
     ) throws IOException
     {
+        writeScriptFile(stream, scriptString, reader, style, scriptfile, addBom, null);
+    }
+
+    /**
+     * Write script content to a destination file from one of the sources
+     *
+     * @param stream       stream source
+     * @param scriptString script content
+     * @param reader       reader source
+     * @param style        line ending style
+     * @param scriptfile   destination file
+     * @throws IOException on io error
+     */
+    public static void writeScriptFile(
+            InputStream stream,
+            String scriptString,
+            Reader reader,
+            LineEndingStyle style,
+            File scriptfile,
+            boolean addBom,
+            FileCopierUtil.ContentModifier modifier
+    ) throws IOException
+    {
         try (FileWriter writer = new FileWriter(scriptfile)) {
             if (null != scriptString) {
-                ScriptfileUtils.writeReader(new StringReader(scriptString), writer, style, addBom);
+                writeReader(new StringReader(scriptString), writer, style, addBom, modifier);
             } else if (null != reader) {
-                ScriptfileUtils.writeReader(reader, writer, style, addBom);
+                writeReader(reader, writer, style, addBom, modifier);
             } else if (null != stream) {
                 try (InputStreamReader inStream = new InputStreamReader(stream)) {
-                    writeReader(inStream, writer, style, addBom);
+                    writeReader(inStream, writer, style, addBom, modifier);
                 }
             } else {
                 throw new IllegalArgumentException("no script source argument");
