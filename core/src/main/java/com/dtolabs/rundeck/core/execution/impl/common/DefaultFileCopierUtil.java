@@ -138,36 +138,44 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
             }
             if (null != original) {
                 //don't replace tokens
-                try (FileInputStream in = new FileInputStream(original)) {
-                    try (FileOutputStream out = new FileOutputStream(tempfile)) {
-                        Streams.copyStream(in, out);
-                    }
-                }
+                ScriptfileUtils.writeScriptFile(
+                        null,
+                        null,
+                        new FileReader(original),
+                        style,
+                        tempfile,
+                        addBom,
+                        modifier
+                );
             } else if (null != script) {
                 if (expandTokens) {
-                    SharedDataContextUtils.replaceTokensInScript(
-                            script,
+                    SharedDataContextUtils.replaceTokensInReader(
+                            new StringReader(script),
                             sharedContext,
                             style,
                             tempfile,
                             node.getNodename(),
-                            addBom
+                            true,
+                            addBom,
+                            modifier
                     );
                 } else {
-                    ScriptfileUtils.writeScriptFile(null, script, null, style, tempfile, addBom);
+                    ScriptfileUtils.writeScriptFile(null, script, null, style, tempfile, addBom, modifier);
                 }
             } else if (null != input) {
                 if (expandTokens) {
-                    SharedDataContextUtils.replaceTokensInStream(
-                            input,
+                    SharedDataContextUtils.replaceTokensInReader(
+                            new InputStreamReader(input),
                             sharedContext,
                             style,
                             tempfile,
                             node.getNodename(),
-                            addBom
+                            true,
+                            addBom,
+                            modifier
                     );
                 } else {
-                    ScriptfileUtils.writeScriptFile(input, null, null, style, tempfile, addBom);
+                    ScriptfileUtils.writeScriptFile(input, null, null, style, tempfile, addBom, modifier);
                 }
             } else {
                 return null;
