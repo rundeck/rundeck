@@ -505,6 +505,7 @@ jobs:
 
   test-gradle-functional:
     <<: *job-defaults
+    parallelism: << parameters.parallelism >>
     executor:
       name: machine-builder
       docker_layer_caching: true
@@ -516,27 +517,38 @@ jobs:
         type: string
       gradle-task:
         type: string
+      parallelism:
+        type: integer
+        default: 1
       resource_class:
         type: string
         default: medium
+      test_file_pattern:
+        type: string
     steps:
       - checkout
-      - install-build-dependencies
       - restore-build-cache
       - attach_workspace:
           at: ~/workspace
+      - run-build-step:
+          step-name: Install Build Dependencies
+          command: dependencies_build_setup
       - run-build-step:
           step-name: Pull images
           command: rundeck_pull_image
       - run-build-step:
           step-name: Runs gradle test task << parameters.gradle-task >>
           command: |
+            TEST_FILES=$(circleci tests glob "<< parameters.test_file_pattern >>" | circleci tests split)
+            echo $TEST_FILES | tee test_file_listing.txt
             TEST_IMAGE=<< parameters.test-image >>
             GRADLE_TASK=<< parameters.gradle-task >>
             rundeck_gradle_functional_tests
       - collect-gradle-tests
       - store_artifacts:
           path: ~/workspace/functional-test/build/test-results/images
+      - store_artifacts:
+          path: test_file_listing.txt
 
 
 
@@ -675,15 +687,26 @@ workflows:
       - test-gradle-functional:
           name: New Selenium Test
           gradle-task: seleniumCoreTest
+          parallelism: 3
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/**/*{.groovy,.java}"
           <<: *require-build
           <<: *slack-defaults
       - test-gradle-functional:
           name: New API Test
           gradle-task: apiTest
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/**/*{.groovy,.java}"
+          parallelism: 3
           <<: *require-build
           <<: *slack-defaults
       - test-gradle-functional:
           name: New Plugin Blocklist Test
           gradle-task: pluginBlocklistTest
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/integration/**/*{.groovy,.java}"
+          <<: *require-build
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: Test Feature NewLocalExec
+          gradle-task: apiTestNewLocal
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/execution/ExecutionOutputSpec.groovy"
           <<: *require-build
           <<: *slack-defaults

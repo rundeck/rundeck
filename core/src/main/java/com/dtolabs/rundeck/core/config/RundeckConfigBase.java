@@ -443,6 +443,8 @@ public class RundeckConfigBase {
         Enabled legacyXml = new Enabled();
         Enabled apiProjectConfigValidation = new Enabled();
         Enabled caseInsensitiveUsername = new Enabled();
+        Enabled newLocalNodeExecutor = new Enabled();
+        Enabled alphaUi = new Enabled();
 
 
         @Data

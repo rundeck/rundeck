@@ -62,13 +62,47 @@ def checkWarFile(destination, fileName) {
     println "File copied from ${warFile} to ${destination + fileName}"
 }
 
+/** 
+ * Returns a function that includes only the test files specified in the `testFiles` parameter.
+ * The `testFiles` parameter is a string of paths to the source code of the tests to be run.
+ */
+def explicitTestIncluder(String testFiles) {
+    // Convert test file source code paths to compiled class paths.
+    // Example: `functional-test/src/test/groovy/org/rundeck/tests/functional/api/basic/BasicSpec.groovy`
+    // needs to become `org/rundeck/tests/functional/api/basic/BasicSpec.class`.
+    def compiledFilesToTest = testFiles
+        .split(System.lineSeparator())
+        .collect { testFilePath -> 
+            testFilePath
+            .trim()
+            .replaceFirst(".*\\/src\\/test\\/(groovy\\/|java\\/)", "")
+            .replaceFirst("(.groovy|.java)\$", ".class")
+        }
+
+    logger.info("Compiled files to test: {}", compiledFilesToTest)
+
+    return {
+        FileTreeElement e ->
+            if (e.isDirectory()) {
+                return true
+            }
+
+            compiledFilesToTest.contains(e.path)
+    }
+}
+
 task apiTest(type: Test){
     useJUnitPlatform()
     systemProperty('TEST_IMAGE', "rundeck/rundeck:SNAPSHOT")
     systemProperty("COMPOSE_PATH", "docker/compose/oss/docker-compose.yml")
     systemProperty('spock.configuration','spock-configs/IncludeAPITestsConfig.groovy')
     description = "Run API tests"
+
+    if (project.hasProperty("testFiles")) {
+        include(explicitTestIncluder(project.properties["testFiles"]))
+    }
 }
+
 task pluginBlocklistTest(type: Test){
     useJUnitPlatform()
     systemProperty('TEST_IMAGE', "rundeck/rundeck:SNAPSHOT")
@@ -77,12 +111,26 @@ task pluginBlocklistTest(type: Test){
     description = "Run Plugin Blocklist tests"
 }
 
+task apiTestNewLocal(type: Test){
+    useJUnitPlatform()
+    def featureName='newLocalNodeExecutor'
+    systemProperty("TEST_FEATURE_ENABLED_NAME", featureName)
+    systemProperty('TEST_IMAGE', "rundeck/rundeck:SNAPSHOT")
+    systemProperty("COMPOSE_PATH", "docker/compose/oss/docker-compose.yml")
+    systemProperty('spock.configuration','spock-configs/IncludeAPIExecOutputTestsConfig.groovy')
+    description = "Run Execution Output Tests (test ${featureName} feature)"
+}
+
 task seleniumCoreTest(type: Test){
     useJUnitPlatform()
     systemProperty('TEST_IMAGE', "rundeck/rundeck:SNAPSHOT")
     systemProperty("COMPOSE_PATH", "docker/compose/oss/docker-compose.yml")
     systemProperty('spock.configuration', 'spock-configs/IncludeSeleniumCoreTestsConfig.groovy')
     description = "Run Rundeck OSS Selenium Tests"
+
+    if (project.hasProperty("testFiles")) {
+        include(explicitTestIncluder(project.properties["testFiles"]))
+    }
 }
 
 task ldapTest(type: Test){

@@ -5,6 +5,7 @@ services:
       context: ""
       args:
         IMAGE: ${TEST_IMAGE}
+    platform: ${TEST_TARGET_PLATFORM:-linux/amd64}
     links:
       - ldap
     environment:
