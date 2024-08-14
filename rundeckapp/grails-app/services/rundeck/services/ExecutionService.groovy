@@ -3107,7 +3107,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             result = saveExecutionState_currentTransaction(schedId, exId, props, execmap, retryContext)
         }
         Execution.withNewTransaction {
-            executeSendNotification(execmap as AsyncStarted, result.execution as Execution, schedId as String)
+            executeSendNotification(execmap as AsyncStarted, exId as String, schedId as String)
         }
     }
 
