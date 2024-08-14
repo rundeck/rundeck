@@ -4,6 +4,7 @@
       <span
         v-if="pagination.total > 0 && pagination.total > pagination.max"
         class="text-muted"
+        data-testid="page-info"
       >
         {{ pagination.offset + 1 }}
         -
@@ -13,10 +14,10 @@
         <span v-else class="text-muted">
           <i class="fas fa-spinner fa-pulse"></i>
         </span>
-        of
+        {{ $t("pagination.of") }}
       </span>
 
-      <a :href="activityHref" class="link-quiet">
+      <a :href="activityHref" class="link-quiet" data-testid="summary-count">
         <span
           v-if="pagination.total >= 0"
           class="summary-count"
@@ -38,11 +39,18 @@
         v-model="query"
         :event-bus="eventBus"
         :opts="filterOpts"
+        data-testid="activity-list-filter-button"
       ></activity-filter>
 
       <div class="pull-right">
         <span v-if="runningOpts.allowAutoRefresh" class="pr-2">
-          <input id="auto-refresh" v-model="autorefresh" type="checkbox" />
+          <input
+            id="auto-refresh"
+            v-model="autorefresh"
+            type="checkbox"
+            data-testid="auto-refresh-checkbox"
+          />
+
           <label for="auto-refresh" class="pr-2">{{
             $t("Auto refresh")
           }}</label>
@@ -71,8 +79,8 @@
               size="xs"
               type="danger"
               class="btn-fill"
-              data-test-id="activity-list-delete-selected-executions"
               :disabled="bulkSelectedIds.length < 1"
+              data-testid="delete-selected-executions"
               @click="showBulkEditConfirm = true"
             >
               {{ $t("delete.selected.executions") }}
@@ -86,7 +94,7 @@
             v-if="auth.deleteExec && !bulkEditMode"
             size="xs"
             type="default"
-            data-test-id="activity-list-bulk-delete"
+            data-testid="activity-list-bulk-delete"
             @click="bulkEditMode = true"
           >
             {{ $t("bulk.delete") }}
@@ -108,11 +116,9 @@
 
       <template #footer>
         <div>
-          <btn
-            data-dismiss="modal"
-            @click="showBulkEditCleanSelections = false"
-            >{{ $t("cancel") }}</btn
-          >
+          <btn data-dismiss="modal" @click="showBulkEditCleanSelections = false"
+            >{{ $t("cancel") }}
+          </btn>
           <button
             type="submit"
             class="btn btn-default"
@@ -134,6 +140,7 @@
 
     <modal
       id="bulkexecdelete"
+      ref="bulkexecdeleteresult"
       v-model="showBulkEditConfirm"
       :title="$t('Bulk Delete Executions')"
       append-to-body
@@ -148,7 +155,12 @@
           <btn @click="showBulkEditConfirm = false">
             {{ $t("cancel") }}
           </btn>
-          <btn type="danger" data-dismiss="modal" @click="performBulkDelete">
+          <btn
+            type="danger"
+            data-dismiss="modal"
+            data-testid="confirm-delete"
+            @click="performBulkDelete"
+          >
             {{ $t("Delete Selected") }}
           </btn>
         </div>
@@ -242,6 +254,7 @@
                   exec.status === 'queued'
                 "
                 class="_defaultInput"
+                data-testid="bulk-delete-checkbox"
               />
             </td>
             <td class="eventicon" :title="executionState(exec.status)">
@@ -290,7 +303,7 @@
             >
               <progress-bar
                 v-if="exec.status === 'scheduled'"
-                :modelValue="100"
+                :model-value="100"
                 striped
                 type="default"
                 label
@@ -302,7 +315,7 @@
               ></progress-bar>
               <progress-bar
                 v-else-if="exec.status === 'queued'"
-                :modelValue="100"
+                :model-value="100"
                 striped
                 type="default"
                 label
@@ -310,7 +323,7 @@
               ></progress-bar>
               <progress-bar
                 v-else-if="exec.job && exec.job.averageDuration"
-                :modelValue="jobDurationPercentage(exec)"
+                :model-value="jobDurationPercentage(exec)"
                 striped
                 active
                 type="info"
@@ -319,7 +332,7 @@
               ></progress-bar>
               <progress-bar
                 v-else-if="exec.dateStarted.date"
-                :modelValue="100"
+                :model-value="100"
                 striped
                 active
                 type="info"
@@ -365,6 +378,7 @@
                 class="link-quiet"
                 title="View execution output"
                 :href="exec.permalink"
+                data-testid="execution-link"
                 >#{{ exec.id }}</a
               >
             </td>
@@ -373,6 +387,7 @@
         <tbody
           v-if="sincecount > 0"
           class="since-count-data autoclickable"
+          data-testid="since-count-data"
           @click="reload"
         >
           <tr>
@@ -397,6 +412,7 @@
                 adhoc: !rpt.jobId,
               },
             ]"
+            data-testid="report-row-item"
             @click="autoBulkEdit(rpt)"
             @click.middle="middleClickRow(rpt)"
           >
@@ -407,6 +423,7 @@
                 name="bulk_edit"
                 :value="rpt.executionId"
                 class="_defaultInput"
+                data-testid="bulk-delete-checkbox"
               />
             </td>
             <td class="eventicon" :title="reportState(rpt)">
@@ -541,14 +558,18 @@
     </div>
 
     <div v-if="reports.length < 1" class="loading-area">
-      <span v-if="!loading && !loadError" class="loading-text">
+      <span
+        v-if="!loading && !loadError"
+        data-testid="no-data-message"
+        class="loading-text"
+      >
         {{ $t("results.empty.text") }}
       </span>
       <div v-if="loading && lastDate < 0" class="loading-text">
         <i class="fas fa-spinner fa-pulse"></i>
         {{ $t("Loading...") }}
       </div>
-      <div v-if="loadError" class="text-warning">
+      <div v-if="loadError" class="text-warning" data-testid="error-message">
         <i class="fas fa-error"></i>
         {{ $t("error.message.0", [loadError]) }}
       </div>
@@ -566,7 +587,7 @@
 
 <script lang="ts">
 import axios from "axios";
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
 import moment, { MomentInput } from "moment";
 import OffsetPagination from "../../../library/components/utils/OffsetPagination.vue";
 import ActivityFilter from "./activityFilter.vue";
@@ -578,6 +599,7 @@ import {
 } from "@rundeck/client/dist/lib/models";
 import * as DOMPurify from "dompurify";
 import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
+import { EventBus } from "../../../library";
 
 /**
  * Generate a URL
@@ -642,7 +664,17 @@ export default defineComponent({
     OffsetPagination,
     ActivityFilter,
   },
-  props: ["eventBus", "displayMode"],
+  props: {
+    eventBus: {
+      type: Object as PropType<typeof EventBus>,
+      required: false,
+    },
+    displayMode: {
+      type: String as PropType<string>,
+      required: false,
+    },
+  },
+
   data() {
     return {
       projectName: "",
@@ -669,7 +701,7 @@ export default defineComponent({
       sincecount: 0,
       loading: false,
       loadingRunning: false,
-      loadError: null,
+      loadError: null as null | string,
       momentJobFormat: "M/DD/YY h:mm a",
       momentRunFormat: "h:mm a",
       bulkEditMode: false,
@@ -700,6 +732,7 @@ export default defineComponent({
       } as { [key: string]: string },
       currentFilter: "",
       disableRefresh: false,
+      rundeckContext: getRundeckContext(),
     };
   },
   computed: {
@@ -727,46 +760,46 @@ export default defineComponent({
     },
   },
   mounted() {
-    if (window._rundeck.data.jobslistDateFormatMoment) {
-      this.momentJobFormat = window._rundeck.data.jobslistDateFormatMoment;
+    if (this.rundeckContext.data.jobslistDateFormatMoment) {
+      this.momentJobFormat = this.rundeckContext.data.jobslistDateFormatMoment;
     }
 
-    this.projectName = window._rundeck.projectName;
-    if (window._rundeck && window._rundeck.data) {
-      this.auth.projectAdmin = window._rundeck.data["projectAdminAuth"];
-      this.auth.deleteExec = window._rundeck.data["deleteExecAuth"];
-      this.activityUrl = window._rundeck.data["activityUrl"];
-      this.nowrunningUrl = window._rundeck.data["nowrunningUrl"];
-      this.bulkDeleteUrl = window._rundeck.data["bulkDeleteUrl"];
-      this.activityPageHref = window._rundeck.data["activityPageHref"];
-      this.sinceUpdatedUrl = window._rundeck.data["sinceUpdatedUrl"];
-      this.autorefreshms = window._rundeck.data["autorefreshms"] || 5000;
+    this.projectName = this.rundeckContext.projectName;
+    if (this.rundeckContext && this.rundeckContext.data) {
+      this.auth.projectAdmin = this.rundeckContext.data["projectAdminAuth"];
+      this.auth.deleteExec = this.rundeckContext.data["deleteExecAuth"];
+      this.activityUrl = this.rundeckContext.data["activityUrl"];
+      this.nowrunningUrl = this.rundeckContext.data["nowrunningUrl"];
+      this.bulkDeleteUrl = this.rundeckContext.data["bulkDeleteUrl"];
+      this.activityPageHref = this.rundeckContext.data["activityPageHref"];
+      this.sinceUpdatedUrl = this.rundeckContext.data["sinceUpdatedUrl"];
+      this.autorefreshms = this.rundeckContext.data["autorefreshms"] || 5000;
 
       if (
-        window._rundeck.data["pagination"] &&
-        window._rundeck.data["pagination"].max
+        this.rundeckContext.data["pagination"] &&
+        this.rundeckContext.data["pagination"].max
       ) {
-        this.pagination.max = window._rundeck.data["pagination"].max;
+        this.pagination.max = this.rundeckContext.data["pagination"].max;
       }
-      if (window._rundeck.data["filterOpts"]) {
-        this.filterOpts = window._rundeck.data.filterOpts;
+      if (this.rundeckContext.data["filterOpts"]) {
+        this.filterOpts = this.rundeckContext.data.filterOpts;
       }
       this.showFilters = true;
-      if (window._rundeck.data["query"]) {
+      if (this.rundeckContext.data["query"]) {
         this.query = Object.assign(
           {},
           this.query,
-          window._rundeck.data["query"],
+          this.rundeckContext.data["query"],
         );
       } else {
         this.loadActivity(0);
       }
-      if (window._rundeck.data["runningOpts"]) {
-        this.runningOpts = window._rundeck.data.runningOpts;
+      if (this.rundeckContext.data["runningOpts"]) {
+        this.runningOpts = this.rundeckContext.data.runningOpts;
       }
 
-      if (window._rundeck.data["viewOpts"]) {
-        this.showBulkDelete = window._rundeck.data.viewOpts.showBulkDelete;
+      if (this.rundeckContext.data["viewOpts"]) {
+        this.showBulkDelete = this.rundeckContext.data.viewOpts.showBulkDelete;
       }
       if (this.runningOpts["autorefresh"]) {
         this.autorefresh = true;
@@ -984,12 +1017,12 @@ export default defineComponent({
       this.loadActivity(0);
     },
     async bulkDeleteExecutions(ids: string[]) {
-      const rundeckContext = getRundeckContext();
       this.bulkEditProgress = true;
       this.showBulkEditResults = true;
       try {
         this.bulkEditResults =
-          await rundeckContext.rundeckClient.executionBulkDelete({ ids });
+          await this.rundeckContext.rundeckClient.executionBulkDelete({ ids });
+
         this.bulkEditProgress = false;
         this.bulkSelectedIds = [];
         if (this.bulkEditResults.allsuccessful) {
@@ -1007,7 +1040,6 @@ export default defineComponent({
       this.bulkDeleteExecutions(this.bulkSelectedIds);
     },
     async loadSince() {
-      const rundeckContext = getRundeckContext();
       if (this.lastDate < 0) {
         return;
       }
@@ -1036,7 +1068,6 @@ export default defineComponent({
       }
     },
     async loadRunning() {
-      // const rundeckContext = getRundeckContext()
       this.loadingRunning = true;
       const qparams: { [key: string]: string } = {};
 
@@ -1169,20 +1200,24 @@ export default defineComponent({
   background: var(--background-color-accent-lvl2);
   font-size: 14px;
   text-align: center;
+
   .loading-text {
     font-style: italic;
     color: var(--font-color);
   }
 }
+
 td.eventtitle.adhoc {
   font-style: italic;
 }
+
 .table.activity-list-table {
   > tbody > tr {
     > td.eventicon {
       width: 24px;
       padding: 0 0 0 10px;
     }
+
     > td.node-stats {
       white-space: nowrap;
       text-align: right;
@@ -1190,17 +1225,21 @@ td.eventtitle.adhoc {
     }
   }
 }
+
 $since-bg: #ccf;
 .table tbody.since-count-data {
   background: $since-bg;
   color: white;
+
   > tr > td {
     padding: 2px;
   }
+
   > tr:hover {
     background: var(--background-color-accent-lvl2);
   }
 }
+
 .running-executions + .history-executions,
 .running-executions + .since-count-data,
 .since-count-data + .history-executions {
@@ -1208,20 +1247,24 @@ $since-bg: #ccf;
     border-top: 2px solid $since-bg;
   }
 }
+
 .progress {
   height: 20px;
   margin: 0;
 }
+
 .missed {
   background-color: var(--warning-bg-color);
   --text-muted-color: var(--font-color);
   --text-secondary-color: var(--font-color);
 }
+
 .spacing-x {
   * + * {
     margin-left: var(--spacing-1);
   }
 }
+
 .spacing-x-2 {
   * + * {
     margin-left: var(--spacing-2);

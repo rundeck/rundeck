@@ -41,8 +41,9 @@ public enum Features implements FeaturesDefinition{
     LEGACY_UI("legacyUi"),
     LEGACY_XML("legacyXml"),
     CASE_INSENSITIVE_USERNAME("caseInsensitiveUsername"),
-
-    API_PROJECT_CONFIG_VALIDATION("apiProjectConfigValidation");
+    ALPHA_UI("alphaUi"),
+    API_PROJECT_CONFIG_VALIDATION("apiProjectConfigValidation"),
+    NEW_LOCAL_NODE_EXECUTOR("newLocalNodeExecutor");
 
     private final String propertyName;
 

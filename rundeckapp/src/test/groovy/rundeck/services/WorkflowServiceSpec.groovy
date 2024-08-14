@@ -16,13 +16,14 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileLoader
+
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowStateDataLoader
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import rundeck.CommandExec
 import rundeck.Execution
+import rundeck.JobExec
 import rundeck.Workflow
 import rundeck.services.workflow.StateMapping
 import rundeck.services.logging.WorkflowStateFileLoader
@@ -56,6 +57,19 @@ class WorkflowServiceSpec extends Specification implements ServiceUnitTest<Workf
         actual.workflowState == ['state':'statehere']
         actual.state == ExecutionFileState.AVAILABLE
         !actual.file
+    }
+
+    def "scheduled execution for the exec job is retrieved from the exec job"() {
+        setup:
+        final jobProject = 'proj1'
+        def jobExecMock = Mock(JobExec)
+        Workflow workflow = new Workflow(keepgoing: true, commands: [jobExecMock])
+
+        when:
+        service.createStateForWorkflow(workflow, jobProject, "dummyFrameworkNodeName", null, null)
+
+        then:
+        1 * jobExecMock.findJob(jobProject)
     }
 
     def "state mapping"(){

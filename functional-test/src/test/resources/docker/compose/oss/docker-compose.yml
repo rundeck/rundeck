@@ -5,12 +5,15 @@ services:
       context: ""
       args:
         IMAGE: ${TEST_IMAGE}
+    platform: ${TEST_TARGET_PLATFORM:-linux/amd64}
     environment:
       RUNDECK_GRAILS_URL: ${TEST_RUNDECK_GRAILS_URL}
       RUNDECK_SERVER_FORWARDED: 'true'
       RUNDECK_TOKENS_FILE: /home/rundeck/server/config/tokens.properties
       RUNDECK_MULTIURL_ENABLED: "true"
       RUNDECK_METRICS_ENABLED: "true"
+      RUNDECK_FEATURE_FEATURETOTEST_ENABLED: "true"
+      RUNDECK_FEATURE_FEATURETOTEST_NAME: ${TEST_RUNDECK_FEATURE_NAME}
     volumes:
       - "/etc/localtime:/etc/localtime:ro"
       - "/etc/timezone:/etc/timezone:ro"

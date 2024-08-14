@@ -823,6 +823,9 @@ const messages = {
   "option.view.action.moveUp.title": "Move Up",
   "option.view.action.moveDown.title": "Move Down",
   "option.view.action.drag.title": "Drag to reorder",
+
+  "pagination.of": "of",
+
   uiv: {
     datePicker: {
       clear: "Clear",
@@ -877,6 +880,7 @@ const messages = {
   more: "More\u2026",
   less: "Less\u2026",
   "job.edit.groupPath.choose.text": "Click on the name of the group to use",
+
 };
 
 export default messages;
