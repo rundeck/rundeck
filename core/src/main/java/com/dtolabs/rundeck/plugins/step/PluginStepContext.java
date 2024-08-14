@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.plugins.step;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.data.DataContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
@@ -80,8 +81,14 @@ public interface PluginStepContext {
 
     /**
      * @return the Framework object
+     * @deprecated use {@link #getIFramework()}
      */
     public Framework getFramework();
+
+    /**
+     * @return the IFramework object
+     */
+    public IFramework getIFramework();
 
     /**
      * @return the the current execution context
