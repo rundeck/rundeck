@@ -44,6 +44,6 @@ class JobReferenceStep implements JobStep {
             jobCreatePage.driver.findElement(By.className("_wfiedit")).findElement(By.name("uuid")).sendKeys(childJobUuid)
         }
 
-        Thread.sleep(WaitingTime.LOW.milliSeconds)
+        Thread.sleep(WaitingTime.LOW.duration.toMillis())
     }
 }

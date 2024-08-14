@@ -21,6 +21,7 @@ import spock.lang.Shared
 import spock.lang.Stepwise
 
 import java.nio.file.Files
+import java.time.Duration
 import java.util.stream.Collectors
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
@@ -275,7 +276,7 @@ class JobExecutionSpec extends BaseContainer {
         assert enabledJobsResponse.successful
 
         // Necessary since the api needs to breathe after enable execs
-        Thread.sleep(WaitingTime.LOW.milliSeconds)
+        Thread.sleep(WaitingTime.LOW.duration.toMillis())
 
         def jobExecResponseFor1AfterEnable = JobUtils.executeJob(job1Id, client)
         assert jobExecResponseFor1AfterEnable.successful
@@ -384,7 +385,7 @@ class JobExecutionSpec extends BaseContainer {
         assert enabledJobsResponse.successful
 
         // Necessary since the api needs to breathe after enable execs
-        Thread.sleep(WaitingTime.LOW.milliSeconds)
+        Thread.sleep(WaitingTime.LOW.duration.toMillis())
 
         def jobExecResponseFor1AfterEnable = JobUtils.executeJob(job1Id, client)
         assert jobExecResponseFor1AfterEnable.successful
@@ -452,7 +453,7 @@ class JobExecutionSpec extends BaseContainer {
         then:
         job2Detail?.executionEnabled
 
-        Thread.sleep(WaitingTime.LOW.milliSeconds) // As the original test says
+        Thread.sleep(WaitingTime.LOW.duration.toMillis()) // As the original test says
 
         when: "TEST: bulk job schedule disable"
         Object idList = [
@@ -634,8 +635,8 @@ class JobExecutionSpec extends BaseContainer {
                 exec.id as String,
                 mapper,
                 client,
-                WaitingTime.MODERATE.milliSeconds,
-                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+                WaitingTime.MODERATE,
+                WaitingTime.EXCESSIVE
         )
 
         then:
@@ -652,8 +653,8 @@ class JobExecutionSpec extends BaseContainer {
                 refExec.id as String,
                 mapper,
                 client,
-                WaitingTime.MODERATE.milliSeconds,
-                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+                WaitingTime.MODERATE,
+                WaitingTime.EXCESSIVE
         )
 
         then:
@@ -734,8 +735,8 @@ class JobExecutionSpec extends BaseContainer {
                 execId as String,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds / 1000 as int,
-                WaitingTime.MODERATE.milliSeconds
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         )
         def retryId1 = execDetails.retriedExecution.id
 
@@ -748,8 +749,8 @@ class JobExecutionSpec extends BaseContainer {
                 retryId1 as String,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds / 1000 as int,
-                WaitingTime.MODERATE.milliSeconds
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         )
         def retryId2 = execDetails2.retriedExecution.id
 
@@ -762,8 +763,8 @@ class JobExecutionSpec extends BaseContainer {
                 retryId2 as String,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds / 1000 as int,
-                WaitingTime.MODERATE.milliSeconds
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         )
 
         then:
@@ -904,8 +905,8 @@ class JobExecutionSpec extends BaseContainer {
                 execId,
                 mapper,
                 client,
-                WaitingTime.MODERATE.milliSeconds,
-                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+                WaitingTime.MODERATE,
+                WaitingTime.EXCESSIVE
         )
 
         then: "OK"
@@ -1031,8 +1032,8 @@ class JobExecutionSpec extends BaseContainer {
                 execId,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         )
 
         then:
@@ -1049,8 +1050,8 @@ class JobExecutionSpec extends BaseContainer {
                 execId2,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         )
 
         then:
@@ -1070,8 +1071,8 @@ class JobExecutionSpec extends BaseContainer {
                 execId3,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         )
 
         then:
@@ -1094,8 +1095,8 @@ class JobExecutionSpec extends BaseContainer {
                 execId4,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         )
 
         then:
@@ -1147,8 +1148,8 @@ class JobExecutionSpec extends BaseContainer {
                 openNcJobResponse.id as String,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.EXCESSIVE
         ).status == ExecutionStatus.SUCCEEDED.state
 
         when: "We run the job with notification"
@@ -1162,12 +1163,12 @@ class JobExecutionSpec extends BaseContainer {
                 parsedExecutionsResponse.id as String,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.EXCESSIVE
         ).status == ExecutionStatus.SUCCEEDED.state
 
         when: "We wait 10 seconds for netcat to deliver response"
-        Thread.sleep(WaitingTime.MODERATE.milliSeconds * 2)
+        Thread.sleep(Duration.ofSeconds(10).toMillis())
 
         // Then run the job that reads the output of request
         def readJobRun = JobUtils.executeJob(readNcOutputJobId, client)
@@ -1178,8 +1179,8 @@ class JobExecutionSpec extends BaseContainer {
                 readJobRunResponse.id as String,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         )
         assert readJobSucceeded.status == ExecutionStatus.SUCCEEDED.state
         def execOutputResponse = client.doGetAcceptAll("/execution/$readJobRunResponse.id/output")
@@ -1349,8 +1350,8 @@ class JobExecutionSpec extends BaseContainer {
                 execId1,
                 mapper,
                 client,
-                WaitingTime.MODERATE.milliSeconds,
-                WaitingTime.EXCESSIVE.milliSeconds / 1000 * 2 as int
+                WaitingTime.MODERATE,
+                WaitingTime.EXCESSIVE
         )
 
         Execution execStatus2 = JobUtils.waitForExecutionToBe(
@@ -1358,8 +1359,8 @@ class JobExecutionSpec extends BaseContainer {
                 execId2,
                 mapper,
                 client,
-                WaitingTime.MODERATE.milliSeconds,
-                WaitingTime.EXCESSIVE.milliSeconds / 1000 * 2 as int
+                WaitingTime.MODERATE,
+                WaitingTime.EXCESSIVE
         )
 
         Execution execStatus3 = JobUtils.waitForExecutionToBe(
@@ -1367,8 +1368,8 @@ class JobExecutionSpec extends BaseContainer {
                 execId3,
                 mapper,
                 client,
-                WaitingTime.MODERATE.milliSeconds,
-                WaitingTime.EXCESSIVE.milliSeconds / 1000 * 2 as int
+                WaitingTime.MODERATE,
+                WaitingTime.EXCESSIVE
         )
 
         then:
@@ -1482,8 +1483,8 @@ class JobExecutionSpec extends BaseContainer {
                 execId.id as String,
                 mapper,
                 client,
-                WaitingTime.MODERATE.milliSeconds,
-                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+                WaitingTime.MODERATE,
+                WaitingTime.EXCESSIVE
         )
 
         then:
@@ -1556,8 +1557,8 @@ class JobExecutionSpec extends BaseContainer {
                 execId.id as String,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         ).status == ExecutionStatus.SUCCEEDED.state
 
         // We read the output file
@@ -1572,8 +1573,8 @@ class JobExecutionSpec extends BaseContainer {
                 readExecId,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         ).status == ExecutionStatus.SUCCEEDED.state
 
         def entries = getExecutionOutput(readExecId)
@@ -1616,8 +1617,8 @@ class JobExecutionSpec extends BaseContainer {
                 execId2.id as String,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         ).status == ExecutionStatus.FAILED.state
 
         // So we read the output file
@@ -1632,8 +1633,8 @@ class JobExecutionSpec extends BaseContainer {
                 readExecId2,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         ).status == ExecutionStatus.SUCCEEDED.state
 
         def entries2 = getExecutionOutput(readExecId2)
@@ -1676,8 +1677,8 @@ class JobExecutionSpec extends BaseContainer {
                 execId3.id as String,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         ).status == ExecutionStatus.FAILED.state
 
         // So we read the output file
@@ -1692,8 +1693,8 @@ class JobExecutionSpec extends BaseContainer {
                 readExecId3,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         ).status == ExecutionStatus.SUCCEEDED.state
 
         def entries3 = getExecutionOutput(readExecId3)
@@ -1735,8 +1736,8 @@ class JobExecutionSpec extends BaseContainer {
                 execId4.id as String,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         ).status == ExecutionStatus.FAILED.state
 
         // So we read the output file
@@ -1751,8 +1752,8 @@ class JobExecutionSpec extends BaseContainer {
                 readExecId4,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         ).status == ExecutionStatus.SUCCEEDED.state
 
         def entries4 = getExecutionOutput(readExecId4)
@@ -1794,8 +1795,8 @@ class JobExecutionSpec extends BaseContainer {
                 execId5.id as String,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         ).status == ExecutionStatus.SUCCEEDED.state
 
         // So we read the output file
@@ -1810,8 +1811,8 @@ class JobExecutionSpec extends BaseContainer {
                 readExecId5,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         ).status == ExecutionStatus.SUCCEEDED.state
 
         def entries5 = getExecutionOutput(readExecId5)
@@ -1973,8 +1974,8 @@ class JobExecutionSpec extends BaseContainer {
                 exec.id as String,
                 mapper,
                 client,
-                WaitingTime.MODERATE.milliSeconds,
-                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+                WaitingTime.MODERATE,
+                WaitingTime.EXCESSIVE
         )
 
         then:

@@ -193,8 +193,8 @@ class ExecutionSpec extends BaseContainer {
                     execId as String,
                     mapper,
                     client,
-                    WaitingTime.LOW.milliSeconds / 1000 as int,
-                    WaitingTime.LOW.milliSeconds
+                    WaitingTime.LOW,
+                    WaitingTime.LOW
             )
             def state = client.get("/execution/${response.id}/state", Map)
         then:
@@ -244,8 +244,8 @@ class ExecutionSpec extends BaseContainer {
                     execId1 as String,
                     mapper,
                     client,
-                    WaitingTime.LOW.milliSeconds / 1000 as int,
-                    WaitingTime.LOW.milliSeconds
+                    WaitingTime.LOW,
+                    WaitingTime.LOW
             )
             responseExecId1.status == 'succeeded'
             def responseExecId2 = JobUtils.waitForExecutionToBe(
@@ -253,8 +253,8 @@ class ExecutionSpec extends BaseContainer {
                     execId2 as String,
                     mapper,
                     client,
-                    WaitingTime.LOW.milliSeconds / 1000 as int,
-                    WaitingTime.LOW.milliSeconds
+                    WaitingTime.LOW,
+                    WaitingTime.LOW
             )
             responseExecId2.status == 'failed'
             def responseExecId3 = JobUtils.waitForExecutionToBe(
@@ -262,8 +262,8 @@ class ExecutionSpec extends BaseContainer {
                     execId3 as String,
                     mapper,
                     client,
-                    WaitingTime.LOW.milliSeconds / 1000 as int,
-                    WaitingTime.LOW.milliSeconds
+                    WaitingTime.LOW,
+                    WaitingTime.LOW
             )
             responseExecId3.status == 'succeeded'
             def responseExecId4 = JobUtils.waitForExecutionToBe(
@@ -271,8 +271,8 @@ class ExecutionSpec extends BaseContainer {
                     execId4 as String,
                     mapper,
                     client,
-                    WaitingTime.LOW.milliSeconds / 1000 as int,
-                    WaitingTime.LOW.milliSeconds
+                    WaitingTime.LOW,
+                    WaitingTime.LOW
             )
             responseExecId4.status == 'succeeded'
         when: "executions"
