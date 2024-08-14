@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.execution.ExecutionContext
+import com.dtolabs.rundeck.core.execution.impl.common.FileCopierUtil
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepUtils
@@ -62,6 +63,100 @@ class ScriptFileNodeStepExecutorSpec extends Specification {
             null             | true
             true             | true
             false            | false
+    }
+    def "execute with input stream"() {
+        given:
+            def scriptFileNodeStepExecutor = new ScriptFileNodeStepExecutor(
+                "scriptInterpreter",
+                true,
+                "fileExtension",
+                "argString",
+                null,
+                "adhocLocalString",
+                true,
+                null
+            )
+            scriptFileNodeStepExecutor.scriptUtils = Mock(ScriptFileNodeStepUtils)
+            def context = Mock(PluginStepContext) {
+                _ * getIFramework() >> Mock(com.dtolabs.rundeck.core.common.IFramework) {
+                    _ * getPropertyLookup() >> Mock(PropertyLookup) {
+
+                    }
+                }
+                _ * getExecutionContext() >> Mock(ExecutionContext)
+            }
+            def node = Mock(INodeEntry)
+
+        when:
+            scriptFileNodeStepExecutor.executeScriptFile(context, node, new ByteArrayInputStream(input.bytes))
+
+        then:
+            1 * scriptFileNodeStepExecutor.scriptUtils.executeScriptFile(
+                _,
+                node,
+                'adhocLocalString',
+                null,
+                null,
+                'fileExtension',
+                ['argString'].toArray(),
+                'scriptInterpreter',
+                { it.text == input },
+                true,
+                _,
+                true,
+                null
+            ) >> Mock(NodeStepResult) {
+                isSuccess() >> true
+            }
+            0 * scriptFileNodeStepExecutor.scriptUtils.executeScriptFile(*_)
+        where:
+            input ='some data'
+    }
+    def "execute with modifier"() {
+        given:
+            def scriptFileNodeStepExecutor = new ScriptFileNodeStepExecutor(
+                "scriptInterpreter",
+                true,
+                "fileExtension",
+                "argString",
+                null,
+                "adhocLocalString",
+                true,
+                Mock(FileCopierUtil.ContentModifier)
+            )
+            scriptFileNodeStepExecutor.scriptUtils = Mock(ScriptFileNodeStepUtils)
+            def context = Mock(PluginStepContext) {
+                _ * getIFramework() >> Mock(com.dtolabs.rundeck.core.common.IFramework) {
+                    _ * getPropertyLookup() >> Mock(PropertyLookup) {
+
+                    }
+                }
+                _ * getExecutionContext() >> Mock(ExecutionContext)
+            }
+            def node = Mock(INodeEntry)
+
+        when:
+            scriptFileNodeStepExecutor.executeScriptFile(context, node, null)
+
+        then:
+            1 * scriptFileNodeStepExecutor.scriptUtils.executeScriptFile(
+                _,
+                node,
+                'adhocLocalString',
+                null,
+                null,
+                'fileExtension',
+                ['argString'].toArray(),
+                'scriptInterpreter',
+                null,
+                true,
+                _,
+                true,
+                !null
+            ) >> Mock(NodeStepResult) {
+                isSuccess() >> true
+            }
+            0 * scriptFileNodeStepExecutor.scriptUtils.executeScriptFile(*_)
     }
 
     def "file path"() {
