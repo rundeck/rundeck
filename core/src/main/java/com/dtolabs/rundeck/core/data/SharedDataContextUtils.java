@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.data;
 
 import com.dtolabs.rundeck.core.dispatcher.*;
+import com.dtolabs.rundeck.core.execution.impl.common.FileCopierUtil;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.workflow.*;
 import com.dtolabs.rundeck.core.execution.workflow.DataOutput;
@@ -356,6 +357,40 @@ public class SharedDataContextUtils {
     )
             throws IOException
     {
+        replaceTokensInReader(
+                reader,
+                dataContext,
+                style,
+                destination,
+                nodeName,
+                blankIfMissing,
+                addBom,
+                null
+        );
+    }
+
+    /**
+     * Copies the source stream to a temp file or specific destination, replacing the @key.X@ tokens with the values
+     * from the data context
+     *
+     * @param reader      reader
+     * @param dataContext input data context
+     * @param style       script file line ending style to use
+     * @param destination destination file
+     * @throws java.io.IOException on io error
+     */
+    public static void replaceTokensInReader(
+            final Reader reader,
+            final MultiDataContext<ContextView, DataContext> dataContext,
+            final ScriptfileUtils.LineEndingStyle style,
+            final File destination,
+            final String nodeName,
+            final boolean blankIfMissing,
+            final boolean addBom,
+            final FileCopierUtil.ContentModifier modifier
+    )
+            throws IOException
+    {
 
         //use ReplaceTokens to replace tokens within the stream
         ScriptVarExpander scriptVarExpander = new ScriptVarExpander();
@@ -371,7 +406,7 @@ public class SharedDataContextUtils {
                 '@',
                 '@'
         );
-        ScriptfileUtils.writeScriptFile(null, null, replaceTokens, style, destination, addBom);
+        ScriptfileUtils.writeScriptFile(null, null, replaceTokens, style, destination, addBom, modifier);
     }
 
     /**
