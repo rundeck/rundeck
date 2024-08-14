@@ -13,6 +13,7 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.DefaultScriptFileNodeStepUtils
+import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
 import spock.lang.Specification
 
@@ -117,12 +118,13 @@ class UtilSpec extends Specification {
         given:
         ScriptFileNodeStepExecutor plugin = new ScriptFileNodeStepExecutor(
                 null,
+                false,
                 null,
                 null,
                 null,
                 null,
-                null,
-                false)
+                false,
+                null)
         plugin.scriptUtils = Mock(DefaultScriptFileNodeStepUtils) {
             executeScriptFile(*_) >> Mock(NodeExecutorResult) {
                 isSuccess() >> false
@@ -140,9 +142,11 @@ class UtilSpec extends Specification {
                 getSharedDataContext() >> Mock(MultiDataContext)
             }
 
-            getFramework() >> Mock(Framework) {
-                hasProperty(_) >> false
+            getIFramework() >> Mock(com.dtolabs.rundeck.core.common.IFramework) {
 
+                getPropertyLookup()>>Mock(IPropertyLookup){
+                   _* hasProperty(_)>>false
+                }
                 getExecutionService() >> Mock(ExecutionService) {
                 }
             }
