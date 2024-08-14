@@ -20,23 +20,25 @@
       >
         {{ shortDescription }}
       </span>
-      {{ $t("more") }}
       <span class="more-indicator-verbiage more-info-icon">
+        {{ $t("more") }}
         <i class="glyphicon glyphicon-chevron-right" />
       </span>
       <span class="less-indicator-verbiage more-info-icon">
+        {{ $t("less") }}
         <i class="glyphicon glyphicon-chevron-down" />
       </span>
     </summary>
     <div
       v-if="allowHtml"
       class="more-info-content"
+      :class="markdownContainerCss"
       data-testid="markdown-container"
     >
       <VMarkdownView mode="" :content="extraDescription" />
     </div>
 
-    <template v-else> {{ extraDescription }}</template>
+    <slot v-else name="extraDescriptionText"> {{ extraDescription }}</slot>
   </details>
 </template>
 
@@ -71,6 +73,11 @@ export default defineComponent({
     extendedCss: {
       type: String,
       default: "text-muted details-reset",
+      required: false,
+    },
+    markdownContainerCss: {
+      type: String,
+      default: "",
       required: false,
     },
     inlineDescription: {
@@ -123,3 +130,14 @@ export default defineComponent({
   },
 });
 </script>
+<style scoped>
+.m-0 {
+  margin: 0 !important;
+}
+.p-0 {
+  padding: 0 !important;
+}
+.more-info-icon {
+  margin-left: 5px;
+}
+</style>
