@@ -8,6 +8,7 @@ import okhttp3.Response
 import okhttp3.ResponseBody
 import org.rundeck.util.api.responses.execution.ExecutionOutput
 import org.rundeck.util.api.storage.KeyStorageApiClient
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectReader
 import spock.lang.Specification
 
 import java.text.SimpleDateFormat
@@ -30,6 +31,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     private static final String DEFAULT_DOCKERFILE_LOCATION = System.getenv("DEFAULT_DOCKERFILE_LOCATION") ?: System.getProperty("DEFAULT_DOCKERFILE_LOCATION")
     protected static final String TEST_RUNDECK_URL = System.getenv("TEST_RUNDECK_URL") ?: System.getProperty("TEST_RUNDECK_URL")
     protected static final String TEST_RUNDECK_TOKEN = System.getenv("TEST_RUNDECK_TOKEN") ?: System.getProperty("TEST_RUNDECK_TOKEN", "admintoken")
+    private static final ObjectMapper MAPPER = new ObjectMapper()
 
     ClientProvider getClientProvider() {
         synchronized (CLIENT_PROVIDER_LOCK) {
@@ -187,9 +189,8 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     }
 
     List getExecutionOutput(String execId) {
-        def mapper = new ObjectMapper()
         def execOutputResponse = client.doGetAcceptAll("/execution/${execId}/output")
-        ExecutionOutput execOutput = mapper.readValue(execOutputResponse.body().string(), ExecutionOutput.class)
+        ExecutionOutput execOutput = safelyMap(execOutputResponse, ExecutionOutput.class)
         def entries = execOutput.entries.stream().map { it.log }.collect(Collectors.toList())
         return entries
     }
@@ -273,8 +274,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     def waitingResourceEnabled(String project, String nodename) {
         def client = clientProvider.client
         def response = client.doGet("/project/$project/resources")
-        def mapper = new ObjectMapper()
-        Map<String, Map> nodeList = mapper.readValue(response.body().string(), Map.class)
+        Map<String, Map> nodeList = safelyMap(response, Map.class, { [:] })
         println(nodeList)
         def count = 0
 
@@ -284,7 +284,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
             client.doPutWithJsonBody("/project/$project/config/time", ["time": System.currentTimeMillis()])
 
             response = client.doGet("/project/$project/resources")
-            nodeList = mapper.readValue(response.body().string(), Map.class)
+            nodeList = safelyMap(response, Map.class, { [:] })
             count++
         }
     }
@@ -453,6 +453,19 @@ abstract class BaseContainer extends Specification implements ClientProvider {
                 throw new RuntimeException("Failed to add configuration options to a project: ${response.body().string()}")
             }
         }
+    }
+
+    /**
+     * Maps successful  responses to the specified type.
+     * Successful responses are the ones that fall into the [200..300) range.
+     *  Unsuccessful responses are passed to the unsuccessfulResponseHandler.
+     * @param response
+     * @param valueType
+     * @param unsuccessfulResponseHandler a closure that receives a response object to handle. If omitted, returns a null.
+     * @return
+     */
+    static <T> T safelyMap(Response response, Class<T> valueType, Closure<T> unsuccessfulResponseHandler = { null }) {
+        response.successful ? MAPPER.readValue(response.body().string(), valueType) :  unsuccessfulResponseHandler(response)
     }
 
 }
