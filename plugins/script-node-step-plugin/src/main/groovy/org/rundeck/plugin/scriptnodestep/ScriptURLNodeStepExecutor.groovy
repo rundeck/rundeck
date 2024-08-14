@@ -12,6 +12,7 @@ import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionService
+import com.dtolabs.rundeck.core.execution.impl.common.FileCopierUtil
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
@@ -19,6 +20,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.DefaultScriptFileNodeStepUtils
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepUtils
 import com.dtolabs.rundeck.core.utils.Converter
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
@@ -37,22 +39,33 @@ class ScriptURLNodeStepExecutor {
     static Logger logger = LoggerFactory.getLogger(ScriptURLNodeStepExecutor.class);
 
     private final String scriptInterpreter;
-    private final Boolean interpreterArgsQuoted;
+    private final boolean interpreterArgsQuoted;
     private final String fileExtension;
     private final String argString;
     private final String adhocFilepath;
     private final boolean expandTokenInScriptFile;
 
 
-    private DefaultScriptFileNodeStepUtils scriptUtils = new DefaultScriptFileNodeStepUtils();
+    ScriptFileNodeStepUtils scriptUtils = new DefaultScriptFileNodeStepUtils();
 
     PluginStepContext context
+    FileCopierUtil.ContentModifier modifier
     private File cacheDir;
     private static final int DEFAULT_TIMEOUT = 30;
     private static final boolean USE_CACHE = true;
     public static final String UTF_8 = "UTF-8";
+    URLDownloader downloader = new Downloader();
 
-    ScriptURLNodeStepExecutor(PluginStepContext context, String scriptInterpreter, Boolean interpreterArgsQuoted, String fileExtension, String argString, String adhocFilepath, Boolean expandTokenInScriptFile) {
+    ScriptURLNodeStepExecutor(
+        PluginStepContext context,
+        String scriptInterpreter,
+        boolean interpreterArgsQuoted,
+        String fileExtension,
+        String argString,
+        String adhocFilepath,
+        boolean expandTokenInScriptFile,
+        FileCopierUtil.ContentModifier modifier
+    ) {
         this.scriptInterpreter = scriptInterpreter
         this.interpreterArgsQuoted = interpreterArgsQuoted
         this.fileExtension = fileExtension
@@ -60,19 +73,25 @@ class ScriptURLNodeStepExecutor {
         this.adhocFilepath = adhocFilepath
         this.expandTokenInScriptFile = expandTokenInScriptFile
         this.context = context
+        this.modifier = modifier
 
-        cacheDir = new File(Constants.getBaseVar(context.getFramework().getBaseDir().getAbsolutePath())
+        cacheDir = new File(
+            Constants.getBaseVar(context.getFramework().getFilesystemFramework().getBaseDir().getAbsolutePath())
                 + "/cache/ScriptURLNodeStepExecutor");
     }
 
-    void executeScriptURL(Map<String, Object> configuration, INodeEntry entry) {
-        File destinationTempFile = downloadURLToTempFile(context, entry);
+    void executeScriptURL(INodeEntry entry, InputStream inputStream) {
+        File destinationTempFile = downloader.downloadURLToTempFile(adhocFilepath, cacheDir, context, entry);
         if (!USE_CACHE) {
             destinationTempFile.deleteOnExit();
         }
         boolean expandTokens = true;
-        if (context.getFramework().hasProperty("execution.script.tokenexpansion.enabled")) {
-            expandTokens = "true".equals(context.getFramework().getProperty("execution.script.tokenexpansion.enabled"));
+        if (context.getIFramework().getPropertyLookup().hasProperty("execution.script.tokenexpansion.enabled")) {
+            expandTokens = "true".equals(
+                context.getIFramework().getPropertyLookup().getProperty(
+                    "execution.script.tokenexpansion.enabled"
+                )
+            );
         }
 
         final String[] args;
@@ -87,9 +106,7 @@ class ScriptURLNodeStepExecutor {
         }
 
         StepExecutionContext stepExecutionContext = context.getExecutionContext() as StepExecutionContext
-        final ExecutionService executionService = context.getFramework().getExecutionService();
-
-        boolean argsQuoted = interpreterArgsQuoted != null ? interpreterArgsQuoted : false;
+        final ExecutionService executionService = context.getIFramework().getExecutionService();
 
         NodeStepResult nodeExecutorResult = scriptUtils.executeScriptFile(
                 stepExecutionContext,
@@ -100,9 +117,11 @@ class ScriptURLNodeStepExecutor {
                 fileExtension,
                 args,
                 scriptInterpreter,
-                argsQuoted,
+                inputStream,
+                interpreterArgsQuoted,
                 executionService,
-                expandTokens
+                expandTokens,
+                modifier
         );
 
         Util.handleFailureResult(nodeExecutorResult, entry)
@@ -127,78 +146,86 @@ class ScriptURLNodeStepExecutor {
         URLDownloadFailure
     }
 
-    private File downloadURLToTempFile(
+    interface URLDownloader {
+        File downloadURLToTempFile(
+            final String urlString,
+            final File cacheDir,
             final PluginStepContext context,
             final INodeEntry node
-    ) throws NodeStepException
-    {
-        if (!cacheDir.isDirectory() && !cacheDir.mkdirs()) {
-            throw new RuntimeException("Unable to create cachedir: " + cacheDir.getAbsolutePath());
-        }
-        //create node context for node and substitute data references in command
-        WFSharedContext sharedContext = new WFSharedContext(context.getExecutionContext().getSharedDataContext());
-        sharedContext.merge(ContextView.global(), context.getDataContextObject());
-        sharedContext.merge(
+        ) throws NodeStepException;
+    }
+
+    static class Downloader implements URLDownloader {
+
+        File downloadURLToTempFile(
+            final String urlString,
+            final File cacheDir,
+            final PluginStepContext context,
+            final INodeEntry node
+        ) throws NodeStepException {
+            if (!cacheDir.isDirectory() && !cacheDir.mkdirs()) {
+                throw new RuntimeException("Unable to create cachedir: " + cacheDir.getAbsolutePath());
+            }
+            //create node context for node and substitute data references in command
+            WFSharedContext sharedContext = new WFSharedContext(context.getExecutionContext().getSharedDataContext());
+            sharedContext.merge(ContextView.global(), context.getDataContextObject());
+            sharedContext.merge(
                 ContextView.node(node.getNodename()),
                 new BaseDataContext("node", DataContextUtils.nodeData(node))
-        );
+            );
 
 
-        final String finalUrl = expandUrlString(adhocFilepath, sharedContext, node.getNodename());
-        final URL url;
-        try {
-            url = new URL(finalUrl);
-        } catch (MalformedURLException e) {
-            throw new NodeStepException(e, StepFailureReason.ConfigurationFailure, node.getNodename());
-        }
-        if(null!=context.getExecutionContext().getExecutionListener()){
-            context.getExecutionContext().getExecutionListener().log(4, "Requesting URL: " + url.toExternalForm());
-        }
+            final String finalUrl = expandUrlString(urlString, sharedContext, node.getNodename());
+            final URL url;
+            try {
+                url = new URL(finalUrl);
+            } catch (MalformedURLException e) {
+                throw new NodeStepException(e, StepFailureReason.ConfigurationFailure, node.getNodename());
+            }
+            if (null != context.getExecutionContext().getExecutionListener()) {
+                context.getExecutionContext().getExecutionListener().log(4, "Requesting URL: " + url.toExternalForm());
+            }
 
-        String cleanUrl = url.toExternalForm().replaceAll("^(https?://)([^:@/]+):[^@/]*@", "\$1\$2:****@");
-        String tempFileName = hashURL(url.toExternalForm()) + ".temp";
-        File destinationTempFile = new File(cacheDir, tempFileName);
-        File destinationCacheData = new File(cacheDir, tempFileName + ".cache.properties");
+            String cleanUrl = url.toExternalForm().replaceAll("^(https?://)([^:@/]+):[^@/]*@", "\$1\$2:****@");
+            String tempFileName = hashURL(url.toExternalForm()) + ".temp";
+            File destinationTempFile = new File(cacheDir, tempFileName);
+            File destinationCacheData = new File(cacheDir, tempFileName + ".cache.properties");
 
-        //update from URL if necessary
-        final URLFileUpdaterBuilder urlFileUpdaterBuilder = new URLFileUpdaterBuilder()
+            //update from URL if necessary
+            final URLFileUpdaterBuilder urlFileUpdaterBuilder = new URLFileUpdaterBuilder()
                 .setUrl(url)
                 .setAcceptHeader("*/*")
                 .setTimeout(DEFAULT_TIMEOUT);
-        if (USE_CACHE) {
-            urlFileUpdaterBuilder
+            if (USE_CACHE) {
+                urlFileUpdaterBuilder
                     .setCacheMetadataFile(destinationCacheData)
                     .setCachedContent(destinationTempFile)
                     .setUseCaching(true);
-        }
-        final URLFileUpdater updater = urlFileUpdaterBuilder.createURLFileUpdater();
-        try {
-            UpdateUtils.update(updater, destinationTempFile);
+            }
+            final URLFileUpdater updater = urlFileUpdaterBuilder.createURLFileUpdater();
+            try {
+                UpdateUtils.update(updater, destinationTempFile);
 
-            logger.debug("Updated nodes resources file: " + destinationTempFile);
-        } catch (UpdateUtils.UpdateException e) {
-            if (!destinationTempFile.isFile() || destinationTempFile.length() < 1) {
-                throw new NodeStepException(
+                logger.debug("Updated nodes resources file: " + destinationTempFile);
+            } catch (UpdateUtils.UpdateException e) {
+                if (!destinationTempFile.isFile() || destinationTempFile.length() < 1) {
+                    throw new NodeStepException(
                         "Error requesting URL Script: " + cleanUrl + ": " + e.getMessage(),
                         e,
                         Reason.URLDownloadFailure,
-                        node.getNodename());
-            } else {
-                logger.error(
-                        "Error requesting URL script: " + cleanUrl + ": " + e.getMessage(), e);
+                        node.getNodename()
+                    )
+                } else {
+                    logger.error(
+                        "Error requesting URL script: " + cleanUrl + ": " + e.getMessage(), e
+                    )
+                }
             }
+            return destinationTempFile;
         }
-        return destinationTempFile;
     }
 
-    public static final Converter<String, String> urlPathEncoder = s -> {
-        try {
-            return URLEncoder.encode(s.toString(),UTF_8).replace("+","%20");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            return s;
-        }
-    };
+
     public static final Converter<String, String> urlQueryEncoder = s -> {
         try {
             return URLEncoder.encode(s.toString(),UTF_8).replace("+","%20");
