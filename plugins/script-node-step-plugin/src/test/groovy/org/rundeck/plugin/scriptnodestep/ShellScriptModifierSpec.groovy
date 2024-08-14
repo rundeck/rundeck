@@ -1,20 +1,23 @@
 package org.rundeck.plugin.scriptnodestep
 
+import com.dtolabs.rundeck.core.execution.impl.common.FileCopierUtil
 import spock.lang.Specification
 
 class ShellScriptModifierSpec extends Specification {
-    def "append eval line"() {
+    def "process input"() {
         given:
             def modifier = new ShellScriptModifier()
+            def list = []
+            def sink = { input -> list << input } as FileCopierUtil.ContentModifier.Sink
         when:
-            def result = modifier.modifyScriptForSecureInput(script)
+            def result = modifier.process(line, sink)
         then:
-            result == expect
+            !result
+            list == expect
         where:
-            script                      | expect
-            '#!/bin/bash\necho hello'   | '#!/bin/bash\n' + ShellScriptModifier.EVAL_STRING + 'echo hello'
-            '#!/bin/zsh\n\nsome script' | '#!/bin/zsh\n' + ShellScriptModifier.EVAL_STRING + '\nsome script'
-            'some script'               | ShellScriptModifier.EVAL_STRING + 'some script'
+            line          | expect
+            '#!/bin/bash' | ['#!/bin/bash', ShellScriptModifier.EVAL_STRING]
+            'some script' | [ShellScriptModifier.EVAL_STRING, 'some script']
 
     }
 }
