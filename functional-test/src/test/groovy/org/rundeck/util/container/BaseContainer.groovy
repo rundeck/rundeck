@@ -453,17 +453,21 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     def waitFeatureFlag(String key){
         boolean featureEnabled = false
         def mapper = new ObjectMapper()
+        def counter = 0
 
-        while(!featureEnabled){
+        while(!featureEnabled && counter < 10){
             Thread.sleep(WaitingTime.MODERATE.milliSeconds)
             def response = client.doGet("/config/get?key=${key}&strata=default")
             try {
                 if(response?.body()!=null){
                     def parsedBody = mapper.readValue(response?.body()?.string(), Map.class)
+                    println(parsedBody)
                     if(parsedBody?.value == true || parsedBody?.value == "true"){
                         featureEnabled = true
                     }
                 }
+                println(response?.body())
+                counter++
             } catch (e) {
                 throw new RuntimeException("Failed to fetch enabled feature: ${e}")
             }
