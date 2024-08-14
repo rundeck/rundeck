@@ -17,6 +17,7 @@
 package org.rundeck.plugin.scriptnodestep
 
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.execution.impl.common.FileCopierUtil
 import com.dtolabs.rundeck.core.plugins.PluginException
 import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
 import org.rundeck.core.execution.ScriptFileCommand
@@ -32,7 +33,8 @@ import com.dtolabs.rundeck.plugins.step.PluginStepContext
 
 @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = SCRIPT_FILE_COMMAND_TYPE)
 @PluginDescription(title = "Script file or URL", description = "Execute a local script file or a script from a URL", isHighlighted = true, order = 2)
-class ScriptFileNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin, ScriptFileCommand, PluginResourceLoader, ProxyRunnerPlugin {
+class ScriptFileNodeStepPlugin extends ScriptProxyRunner
+    implements NodeStepPlugin, ScriptFileCommand, PluginResourceLoader, ProxyRunnerPlugin, SecureInputProps {
 
     @PluginProperty(title = "File Path or URL",
             description = "Enter the path to a script file on the server or a URL",
@@ -82,8 +84,20 @@ E.g.: `.ps1`, or `abc`.
     String fileExtension;
 
     @Override
-    void executeNodeStep(PluginStepContext context, Map<String, Object> configuration, INodeEntry entry) throws NodeStepException {
+    void executeNodeStep(PluginStepContext context, Map<String, Object> configuration, INodeEntry entry)
+        throws NodeStepException {
+        InputStream input = null
+        FileCopierUtil.ContentModifier modifier = null
 
+        if (nodeExecutorSecureInput && passSecureInput) {
+            if (secureFormat != 'shell') {
+                throw new IllegalArgumentException("Unsupported secure input format: " + secureFormat)
+            }
+            input = new SecureInputCreator(new BashShellUtil()).createInputForProcess(context.executionContext)
+        }
+        if (nodeExecutorSecureInput && passSecureInput && autoSecureInput) {
+            modifier = new ShellScriptModifier()
+        }
         if(adhocFilepath ==~ /^(?i:https?|file):.*$/) {
             ScriptURLNodeStepExecutor scriptURLNodeStepExecutor = new ScriptURLNodeStepExecutor(
                     context,
@@ -92,10 +106,11 @@ E.g.: `.ps1`, or `abc`.
                     fileExtension,
                     argString,
                     adhocFilepath,
-                    expandTokenInScriptFile
+                    expandTokenInScriptFile,
+                    modifier
             );
 
-            scriptURLNodeStepExecutor.executeScriptURL(configuration, entry);
+            scriptURLNodeStepExecutor.executeScriptURL(entry, input);
 
         } else {
             ScriptFileNodeStepExecutor scriptFileNodeStepExecutor = new ScriptFileNodeStepExecutor(
@@ -105,10 +120,11 @@ E.g.: `.ps1`, or `abc`.
                     argString,
                     adhocFilepath,
                     null,
-                    expandTokenInScriptFile
+                    expandTokenInScriptFile,
+                    modifier
             );
 
-            scriptFileNodeStepExecutor.executeScriptFile(context, entry, null);
+            scriptFileNodeStepExecutor.executeScriptFile(context, entry, input);
         }
     }
 

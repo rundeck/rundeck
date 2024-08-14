@@ -1,11 +1,9 @@
 package org.rundeck.plugin.scriptnodestep
 
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.execution.impl.common.FileCopierUtil
 import com.dtolabs.rundeck.core.plugins.PluginException
 import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.plugins.descriptions.SelectLabels
-import com.dtolabs.rundeck.plugins.descriptions.SelectValues
 import groovy.transform.CompileStatic
 import org.rundeck.core.execution.ScriptCommand
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
@@ -22,7 +20,7 @@ import com.dtolabs.rundeck.plugins.step.PluginStepContext
 @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = SCRIPT_COMMAND_TYPE)
 @PluginDescription(title = "Script", description = "Execute an inline script", isHighlighted = true, order = 1)
 @CompileStatic
-class ScriptNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin, ScriptCommand, PluginResourceLoader {
+class ScriptNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin, ScriptCommand, PluginResourceLoader, SecureInputProps {
     public static final String PROVIDER_NAME = "script-node-step-plugin";
 
     @PluginProperty(
@@ -75,91 +73,6 @@ E.g.: `.ps1`, or `abc`.
             required = false)
     String fileExtension;
 
-    @PluginProperty(
-        title = 'Pass Secure Input',
-        description = 'If enabled, secure option data will be sent via the standard input stream to the script.',
-        required = false
-    )
-    @RenderingOptions(
-        [
-            @RenderingOption(key = StringRenderingConstants.FEATURE_FLAG_REQUIRED, value = 'nodeExecutorSecureInput'),
-            @RenderingOption(
-                key = StringRenderingConstants.GROUPING,
-                value = "secondary"
-            ),
-            @RenderingOption(
-                key = StringRenderingConstants.GROUP_NAME,
-                value = "Advanced"
-            ),
-        ]
-    )
-    Boolean passSecureInput
-
-
-    @PluginProperty(
-        title = 'Secure Input Format',
-        description = '''The format of the secure input data. See instructions for consuming this data in your script.
-
-# Shell Script
-
-The secure input data will be formatted as local variable definitions, this should be consumed by your
-shell script by adding this snippet: 
-
-    eval $(</dev/stdin)
-
-If "Automatic Secure Input" is set, then the script will be modified to consume the secure input data automatically.
-''',
-        required = false
-    )
-    @SelectValues(values = ['shell'])
-    @SelectLabels(values = ['Shell Script'])
-    @RenderingOptions(
-        [
-            @RenderingOption(key = StringRenderingConstants.FEATURE_FLAG_REQUIRED, value = 'nodeExecutorSecureInput'),
-            @RenderingOption(
-                key = StringRenderingConstants.GROUPING,
-                value = "secondary"
-            ),
-            @RenderingOption(
-                key = StringRenderingConstants.GROUP_NAME,
-                value = "Advanced"
-            ),
-        ]
-    )
-    String secureFormat
-
-    @PluginProperty(
-        title = 'Automatic Secure Input',
-        description = '''If enabled, the script will be modified to consume the secure input data automatically.
-
-# Shell Script
-
-If the script is a shell script, the script will be modified by adding the following snippet to the beginning of the 
-script, after any shebang line:
-
-    eval $(</dev/stdin)
-
-''',
-        required = false
-    )
-    @RenderingOptions(
-        [
-            @RenderingOption(key = StringRenderingConstants.FEATURE_FLAG_REQUIRED, value = 'nodeExecutorSecureInput'),
-            @RenderingOption(
-                key = StringRenderingConstants.GROUPING,
-                value = "secondary"
-            ),
-            @RenderingOption(
-                key = StringRenderingConstants.GROUP_NAME,
-                value = "Advanced"
-            ),
-        ]
-    )
-    Boolean autoSecureInput
-
-
-    @PluginProperty(scope = PropertyScope.FeatureFlag)
-    Boolean nodeExecutorSecureInput
 
 
     @Override
@@ -167,13 +80,16 @@ script, after any shebang line:
         NodeStepException
     {
         InputStream input = null
-        String script = adhocLocalString
+        FileCopierUtil.ContentModifier modifier = null
 
         if (nodeExecutorSecureInput && passSecureInput) {
-            input = createInput(context)
+            if (secureFormat != 'shell') {
+                throw new IllegalArgumentException("Unsupported secure input format: " + secureFormat)
+            }
+            input = new SecureInputCreator(new BashShellUtil()).createInputForProcess(context.executionContext)
         }
         if (nodeExecutorSecureInput && passSecureInput && autoSecureInput) {
-            script = new ShellScriptModifier().modifyScriptForSecureInput(adhocLocalString)
+            modifier = new ShellScriptModifier()
         }
 
         ScriptFileNodeStepExecutor scriptFileNodeStepExecutor = new ScriptFileNodeStepExecutor(
@@ -182,20 +98,14 @@ script, after any shebang line:
             fileExtension,
             argString,
             null,
-            script,
-            true
+            adhocLocalString,
+            true,
+            modifier
         )
 
         scriptFileNodeStepExecutor.executeScriptFile(context, entry, input)
     }
 
-    private InputStream createInput(PluginStepContext context) {
-        if (secureFormat != 'shell') {
-            throw new IllegalArgumentException("Unsupported secure input format: " + secureFormat)
-        }
-
-        new SecureInputCreator(new BashShellUtil()).createInputForProcess(context.executionContext)
-    }
 
     @Override
     List<String> listResources() throws PluginException, IOException {
