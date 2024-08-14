@@ -98,7 +98,8 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                 null,
                 quoted,
                 executionService,
-                expandTokens
+                expandTokens,
+                null
         );
     }
 
@@ -131,7 +132,8 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
             InputStream input,
             boolean quoted,
             final NodeExecutionService executionService,
-            final boolean expandTokens
+            final boolean expandTokens,
+            FileCopierUtil.ContentModifier modifier
     ) throws NodeStepException
     {
         final String filename;
@@ -161,7 +163,8 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                     scriptString,
                     serverScriptFilePath,
                     scriptAsStream,
-                    expandTokens
+                    expandTokens,
+                    modifier
             );
             try {
                 filepath = executionService.fileCopyFile(
@@ -227,6 +230,40 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
             boolean expandTokens
     ) throws FileCopierException
     {
+        return writeScriptToTempFile(
+                context,
+                node,
+                scriptString,
+                serverScriptFilePath,
+                scriptAsStream,
+                expandTokens,
+                null
+        );
+    }
+
+    /**
+     * Copy the script input to a temp file and expand embedded tokens, if it is a string or inputstream.  If it is a
+     * local file, use the original without modification
+     *
+     * @param context              context
+     * @param node                 node
+     * @param scriptString         string
+     * @param serverScriptFilePath file
+     * @param scriptAsStream       stream
+     * @return temp file
+     * @throws FileCopierException on error
+     */
+    @Override
+    public File writeScriptToTempFile(
+            StepExecutionContext context,
+            INodeEntry node,
+            String scriptString,
+            String serverScriptFilePath,
+            InputStream scriptAsStream,
+            boolean expandTokens,
+            FileCopierUtil.ContentModifier scriptModifierUtil
+    ) throws FileCopierException
+    {
         File temp;
         if (null != scriptString) {
             //expand tokens in the script
@@ -236,7 +273,8 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                     null,
                     scriptString,
                     node,
-                    expandTokens
+                    expandTokens,
+                    scriptModifierUtil
             );
         } else if (null != serverScriptFilePath) {
             // if the filepath has option tokens, they will be expanded.
@@ -249,15 +287,16 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
             }else{
                 serverScriptFile = new File(serverScriptFilePath);
             }
-            if(expandTokens){
-                try(InputStream inputStream = new FileInputStream(serverScriptFile)) {
+            if (expandTokens || scriptModifierUtil != null) {
+                try (InputStream inputStream = new FileInputStream(serverScriptFile)) {
                     serverScriptFile = fileCopierUtil.writeScriptTempFile(
                             context,
                             null,
                             inputStream,
                             null,
                             node,
-                            expandTokens
+                            expandTokens,
+                            scriptModifierUtil
                     );
                 } catch (IOException e) {
                     throw new FileCopierException(
@@ -275,7 +314,8 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                     scriptAsStream,
                     null,
                     node,
-                    expandTokens
+                    expandTokens,
+                    scriptModifierUtil
             );
         }
         return temp;

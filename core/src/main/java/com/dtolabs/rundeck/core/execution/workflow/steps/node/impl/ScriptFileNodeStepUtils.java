@@ -20,8 +20,8 @@ import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.NodeExecutionService;
+import com.dtolabs.rundeck.core.execution.impl.common.FileCopierUtil;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
@@ -95,7 +95,8 @@ public interface ScriptFileNodeStepUtils {
             InputStream inputStream,
             boolean quoted,
             NodeExecutionService executionService,
-            boolean expandTokens
+            boolean expandTokens,
+            FileCopierUtil.ContentModifier modifier
     ) throws NodeStepException;
 
     /**
@@ -120,6 +121,28 @@ public interface ScriptFileNodeStepUtils {
             String serverScriptFilePath,
             InputStream scriptAsStream,
             boolean expandTokens
+    ) throws FileCopierException;
+
+    /**
+     * Copy the script input to a temp file and expand embedded tokens, if it is a string or inputstream.  If it is a
+     * local file, use the original without modification
+     *
+     * @param context              context
+     * @param node                 node
+     * @param scriptString         string
+     * @param serverScriptFilePath file
+     * @param scriptAsStream       stream
+     * @return temp file
+     * @throws FileCopierException on error
+     */
+    File writeScriptToTempFile(
+            StepExecutionContext context,
+            INodeEntry node,
+            String scriptString,
+            String serverScriptFilePath,
+            InputStream scriptAsStream,
+            boolean expandTokens,
+            FileCopierUtil.ContentModifier scriptModifierUtil
     ) throws FileCopierException;
 
     /**
