@@ -16,22 +16,19 @@
 
 package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl
 
-import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.FrameworkProject
+
 import com.dtolabs.rundeck.core.common.IFramework
-import com.dtolabs.rundeck.core.common.IFrameworkServices
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.execution.ExecArgList
 import com.dtolabs.rundeck.core.execution.ExecutionLogger
 import com.dtolabs.rundeck.core.execution.ExecutionService
 import com.dtolabs.rundeck.core.execution.impl.common.FileCopierUtil
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.FileBasedGeneratedScript
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
-import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import spock.lang.Specification
-
 /**
  * Created by greg on 7/15/16.
  */
@@ -39,16 +36,86 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
 
 
     public static final String PROJECT_NAME = 'DefaultScriptFileNodeStepUtilsSpec'
-    Framework framework
-    FrameworkProject testProject
 
     def setup() {
-        framework = AbstractBaseTest.createTestFramework()
-        testProject = framework.getFrameworkProjectMgr().createFrameworkProject(PROJECT_NAME)
     }
 
     def cleanup() {
-        framework.getFrameworkProjectMgr().removeFrameworkProject(PROJECT_NAME)
+    }
+
+    def "write script string to temp file"() {
+        given:
+            File tempFile = File.createTempFile("test", ".script");
+            def utils = new DefaultScriptFileNodeStepUtils()
+            utils.fileCopierUtil = Mock(FileCopierUtil)
+            StepExecutionContext context = mockContext(null, null)
+            def node = new NodeEntryImpl('node')
+            node.setOsFamily('unix')
+            String script = 'echo "hello"\n'
+            def modifier = Mock(FileCopierUtil.ContentModifier)
+        when:
+            def result = utils.writeScriptToTempFile(context, node, script, null, null, true, modifier)
+        then:
+            result == tempFile
+            1 * utils.fileCopierUtil.writeScriptTempFile(
+                context,
+                null,
+                null,
+                script,
+                node,
+                true,
+                modifier
+            ) >> tempFile
+    }
+
+    def "write script file to temp file"() {
+        given:
+            File srcFile = File.createTempFile("test", ".script");
+            File tempFile = File.createTempFile("test", ".script");
+            def utils = new DefaultScriptFileNodeStepUtils()
+            utils.fileCopierUtil = Mock(FileCopierUtil)
+            StepExecutionContext context = mockContext(null, null)
+            def node = new NodeEntryImpl('node')
+            node.setOsFamily('unix')
+            def modifier = Mock(FileCopierUtil.ContentModifier)
+        when:
+            def result = utils.writeScriptToTempFile(context, node, null, srcFile.absolutePath, null, true, modifier)
+        then:
+            result == tempFile
+            1 * utils.fileCopierUtil.writeScriptTempFile(
+                context,
+                null,
+                !null,
+                null,
+                node,
+                true,
+                modifier
+            ) >> tempFile
+    }
+    def "write script stream to temp file"() {
+        given:
+
+            File tempFile = File.createTempFile("test", ".script")
+            def utils = new DefaultScriptFileNodeStepUtils()
+            utils.fileCopierUtil = Mock(FileCopierUtil)
+            StepExecutionContext context = mockContext(null, null)
+            def node = new NodeEntryImpl('node')
+            node.setOsFamily('unix')
+            ByteArrayInputStream scriptStream = new ByteArrayInputStream('echo "hello"\n'.bytes)
+            def modifier = Mock(FileCopierUtil.ContentModifier)
+        when:
+            def result = utils.writeScriptToTempFile(context, node, null, null, scriptStream, true, modifier)
+        then:
+            result == tempFile
+            1 * utils.fileCopierUtil.writeScriptTempFile(
+                context,
+                null,
+                scriptStream,
+                null,
+                node,
+                true,
+                modifier
+            ) >> tempFile
     }
 
     def "basic execute script file"() {
@@ -59,18 +126,8 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
         File scriptFile = File.createTempFile("test", ".script");
         scriptFile.deleteOnExit()
         def fwkProps = ['rundeck.feature.quoting.backwardCompatible': 'false']
-        def iFrameworkMock = Mock(IFramework){
-            getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
-        }
-        StepExecutionContext context = Mock(StepExecutionContext) {
-            getFramework() >> framework
-            getFrameworkProject() >> PROJECT_NAME
-            getIFramework() >> iFrameworkMock
-        }
         ExecutionService executionService = Mock(ExecutionService)
-        framework.frameworkServices = Mock(IFrameworkServices) {
-            getExecutionService() >> executionService
-        }
+        StepExecutionContext context = mockContext(fwkProps, executionService)
         def node = new NodeEntryImpl('node')
         node.setOsFamily('unix')
         String filepath = scriptFile.absolutePath
@@ -94,14 +151,15 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
         result != null
         1 * utils.fileCopierUtil.generateRemoteFilepathForNode(
                 node,
-                testProject,
-                framework,
+                !null,
+                _,
                 scriptFile.getName(),
                 null,
                 null
 
         ) >> testRemotePath
 
+            1 * utils.fileCopierUtil.writeScriptTempFile(context, null, _, null, node, true, null) >> scriptFile
         1 * executionService.fileCopyFile(context, _, node, testRemotePath) >> testRemotePath
 
         1 * executionService.executeCommand(context, {
@@ -111,9 +169,13 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
             isSuccess() >> true
         }
 
-        1 * executionService.executeCommand(context, {
-            (((ExecArgList) it).asFlatStringList()) == [testRemotePath, 'someargs']
-        }, node
+            1 * executionService.executeCommand(
+                context,
+                {
+                    (((ExecArgList) it).asFlatStringList()) == [testRemotePath, 'someargs']
+                },
+                _,
+                node
         ) >> Mock(NodeExecutorResult) {
             isSuccess() >> true
         }
@@ -126,6 +188,96 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
         }
     }
 
+    private StepExecutionContext mockContext(fwkProps, ExecutionService svc) {
+        Mock(StepExecutionContext) {
+            _ * getFrameworkProject() >> PROJECT_NAME
+            _ * getIFramework() >> Mock(IFramework) {
+                _ * getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+                _ * getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                    _ * getFrameworkProject(PROJECT_NAME) >> Mock(IRundeckProject)
+                }
+                _ * getExecutionService() >> svc
+            }
+        }
+    }
+
+    def "execute script file with content modifier"() {
+        given:
+            def utils = new DefaultScriptFileNodeStepUtils()
+            utils.fileCopierUtil = Mock(FileCopierUtil)
+
+            File scriptFile = File.createTempFile("test", ".script");
+            scriptFile.deleteOnExit()
+            def fwkProps = ['rundeck.feature.quoting.backwardCompatible': 'false']
+            ExecutionService executionService = Mock(ExecutionService)
+            StepExecutionContext context = mockContext(fwkProps, executionService)
+
+            def node = new NodeEntryImpl('node')
+            node.setOsFamily('unix')
+            String filepath = scriptFile.absolutePath
+            String[] args = ['someargs'].toArray()
+            String testRemotePath = '/tmp/some-path-to-script'
+            scriptFile.text = 'echo "hello"\n'
+            def modifier = Mock(FileCopierUtil.ContentModifier)
+        when:
+            def result = utils.executeScriptFile(
+                context,
+                node,
+                null,
+                filepath,
+                null,
+                null,
+                args,
+                null,
+                null,
+                false,
+                executionService,
+                true,
+                modifier
+            )
+        then:
+            result != null
+
+            1 * utils.fileCopierUtil.writeScriptTempFile(context, null, _, null, node, true, modifier) >> scriptFile
+            1 * utils.fileCopierUtil.generateRemoteFilepathForNode(
+                node,
+                !null,
+                _,
+                scriptFile.getName(),
+                null,
+                null
+
+            ) >> testRemotePath
+
+            1 * executionService.fileCopyFile(context, scriptFile, node, testRemotePath) >> testRemotePath
+
+            1 * executionService.executeCommand(
+                context, {
+                (((ExecArgList) it).asFlatStringList()) == ['chmod', '+x', testRemotePath]
+            }, node
+            ) >> Mock(NodeExecutorResult) {
+                isSuccess() >> true
+            }
+
+            1 * executionService.executeCommand(
+                context, {
+                (((ExecArgList) it).asFlatStringList()) == [testRemotePath, 'someargs']
+            },
+                _,
+                node
+            ) >> Mock(NodeExecutorResult) {
+                isSuccess() >> true
+            }
+
+            1 * executionService.executeCommand(
+                context, {
+                (((ExecArgList) it).asFlatStringList()) == ['rm', '-f', testRemotePath]
+            }, node
+            ) >> Mock(NodeExecutorResult) {
+                isSuccess() >> true
+            }
+    }
+
     def "basic execute script file disabling sync command"() {
         given:
         def utils = new DefaultScriptFileNodeStepUtils()
@@ -134,18 +286,8 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
         File scriptFile = File.createTempFile("test", ".script");
         scriptFile.deleteOnExit()
         def fwkProps = ['rundeck.feature.quoting.backwardCompatible': 'false']
-        def iFrameworkMock = Mock(IFramework){
-            getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
-        }
-        StepExecutionContext context = Mock(StepExecutionContext) {
-            getFramework() >> framework
-            getFrameworkProject() >> PROJECT_NAME
-            getIFramework() >> iFrameworkMock
-        }
         ExecutionService executionService = Mock(ExecutionService)
-        framework.frameworkServices = Mock(IFrameworkServices) {
-            getExecutionService() >> executionService
-        }
+            StepExecutionContext context = mockContext(fwkProps, executionService)
         def node = new NodeEntryImpl('node')
         node.setOsFamily('unix')
         node.setAttribute('enable-sync', 'false')
@@ -170,8 +312,8 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
         result != null
         1 * utils.fileCopierUtil.generateRemoteFilepathForNode(
                 node,
-                testProject,
-                framework,
+                !null,
+                _,
                 scriptFile.getName(),
                 null,
                 null
@@ -189,7 +331,9 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
 
         1 * executionService.executeCommand(context, {
             (((ExecArgList) it).asFlatStringList()) == [testRemotePath, 'someargs']
-        }, node
+        },
+                                            _,
+                                            node
         ) >> Mock(NodeExecutorResult) {
             isSuccess() >> true
         }
@@ -211,19 +355,9 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
         scriptFile.deleteOnExit()
         ExecutionLogger executionLogger = Mock(ExecutionLogger)
         def fwkProps = ['rundeck.feature.quoting.backwardCompatible': 'false']
-        def iFrameworkMock = Mock(IFramework){
-            getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
-        }
-        StepExecutionContext context = Mock(StepExecutionContext) {
-            getFramework() >> framework
-            getFrameworkProject() >> PROJECT_NAME
-            getExecutionLogger() >> executionLogger
-            getIFramework() >> iFrameworkMock
-        }
         ExecutionService executionService = Mock(ExecutionService)
-        framework.frameworkServices = Mock(IFrameworkServices) {
-            getExecutionService() >> executionService
-        }
+            StepExecutionContext context = mockContext(fwkProps, executionService)
+            _ * context.getExecutionLogger() >> executionLogger
         def node = new NodeEntryImpl('node')
         node.setOsFamily('unix')
         node.setAttribute('file-busy-err-retry', 'true')
@@ -248,8 +382,8 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
         result != null
         1 * utils.fileCopierUtil.generateRemoteFilepathForNode(
                 node,
-                testProject,
-                framework,
+                !null,
+                _,
                 scriptFile.getName(),
                 null,
                 null
@@ -267,7 +401,8 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
 
         1 * executionService.executeCommand(context, {
             (((ExecArgList) it).asFlatStringList()) == [testRemotePath, 'someargs']
-        }, node
+        }, _,
+                                            node
         ) >> Mock(NodeExecutorResult) {
             isSuccess() >> false
             getFailureMessage() >> "Cannot run program \"/tmp/2048-42562-carlos-cgl-ho-dispatch-script.tmp.sh\": error=26, File busy error"
@@ -275,7 +410,9 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
 
         1 * executionService.executeCommand(context, {
             (((ExecArgList) it).asFlatStringList()) == [testRemotePath, 'someargs']
-        }, node
+        },
+                                            _,
+                                            node
         ) >> Mock(NodeExecutorResult) {
             isSuccess() >> true
         }
@@ -298,19 +435,8 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
         ExecutionLogger executionLogger = Mock(ExecutionLogger)
 
         def fwkProps = ['rundeck.feature.quoting.backwardCompatible': 'false']
-        def iFrameworkMock = Mock(IFramework){
-            getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
-        }
-        StepExecutionContext context = Mock(StepExecutionContext) {
-            getFramework() >> framework
-            getFrameworkProject() >> PROJECT_NAME
-            getExecutionLogger() >> executionLogger
-            getIFramework() >> iFrameworkMock
-        }
         ExecutionService executionService = Mock(ExecutionService)
-        framework.frameworkServices = Mock(IFrameworkServices) {
-            getExecutionService() >> executionService
-        }
+            StepExecutionContext context = mockContext(fwkProps, executionService)
         def node = new NodeEntryImpl('node')
         node.setOsFamily('unix')
         node.setAttribute('enable-sync', 'true')
@@ -335,8 +461,8 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
         result != null
         1 * utils.fileCopierUtil.generateRemoteFilepathForNode(
                 node,
-                testProject,
-                framework,
+                !null,
+                _,
                 scriptFile.getName(),
                 null,
                 null
@@ -361,7 +487,9 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
 
         1 * executionService.executeCommand(context, {
             (((ExecArgList) it).asFlatStringList()) == [testRemotePath, 'someargs']
-        }, node
+        },
+                                            _,
+                                            node
         ) >> Mock(NodeExecutorResult) {
             isSuccess() >> true
         }
@@ -382,18 +510,8 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
         File scriptFile = File.createTempFile("test", ".script");
         scriptFile.deleteOnExit()
         def fwkProps = ['rundeck.feature.quoting.backwardCompatible': 'false']
-        def iFrameworkMock = Mock(IFramework){
-            getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
-        }
-        StepExecutionContext context = Mock(StepExecutionContext) {
-            getFramework() >> framework
-            getFrameworkProject() >> PROJECT_NAME
-            getIFramework() >> iFrameworkMock
-        }
         ExecutionService executionService = Mock(ExecutionService)
-        framework.frameworkServices = Mock(IFrameworkServices) {
-            getExecutionService() >> executionService
-        }
+            StepExecutionContext context = mockContext(fwkProps, executionService)
         def node = new NodeEntryImpl('node')
         node.setOsFamily('unix')
         String filepath = scriptFile.absolutePath
@@ -417,8 +535,8 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
         result != null
         1 * utils.fileCopierUtil.generateRemoteFilepathForNode(
                 node,
-                testProject,
-                framework,
+                !null,
+                _,
                 scriptFile.getName(),
                 null,
                 null
@@ -436,7 +554,9 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
 
         1 * executionService.executeCommand(context, {
             (((ExecArgList) it).asFlatStringList()) == ['sudo', '-blah', testRemotePath, 'someargs']
-        }, node
+        },
+                                            _,
+                                            node
         ) >> Mock(NodeExecutorResult) {
             isSuccess() >> true
         }
