@@ -96,8 +96,8 @@ class ExecExportSpec extends BaseContainer{
                 exec1.id as String,
                 mapper,
                 client,
-                WaitingTime.MODERATE.milliSeconds,
-                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+                WaitingTime.MODERATE,
+                WaitingTime.EXCESSIVE
         )
 
         then:
@@ -114,8 +114,8 @@ class ExecExportSpec extends BaseContainer{
                 exec2.id as String,
                 mapper,
                 client,
-                WaitingTime.MODERATE.milliSeconds,
-                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+                WaitingTime.MODERATE,
+                WaitingTime.EXCESSIVE
         )
 
         then:

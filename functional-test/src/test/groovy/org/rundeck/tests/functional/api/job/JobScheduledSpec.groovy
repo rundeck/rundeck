@@ -123,8 +123,8 @@ class JobScheduledSpec extends BaseContainer {
                     execId as String,
                     new ObjectMapper(),
                     client,
-                    WaitingTime.LOW.milliSeconds / 1000 as int,
-                    WaitingTime.LOW.milliSeconds
+                    WaitingTime.LOW,
+                    WaitingTime.LOW
             )
         then:
             verifyAll {
@@ -165,8 +165,8 @@ class JobScheduledSpec extends BaseContainer {
                     execId as String,
                     new ObjectMapper(),
                     client,
-                    WaitingTime.LOW.milliSeconds / 1000 as int,
-                    WaitingTime.LOW.milliSeconds
+                    WaitingTime.LOW,
+                    WaitingTime.LOW
             )
         then:
             verifyAll {
@@ -179,8 +179,8 @@ class JobScheduledSpec extends BaseContainer {
                     response.retriedExecution.id as String,
                     new ObjectMapper(),
                     client,
-                    WaitingTime.LOW.milliSeconds / 1000 as int,
-                    WaitingTime.LOW.milliSeconds
+                    WaitingTime.LOW,
+                    WaitingTime.LOW
             )
         then:
             verifyAll {

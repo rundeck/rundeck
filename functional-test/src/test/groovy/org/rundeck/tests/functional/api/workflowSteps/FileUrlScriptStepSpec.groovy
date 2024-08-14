@@ -65,8 +65,8 @@ class FileUrlScriptStepSpec extends BaseContainer{
                 json.id as String,
                 new ObjectMapper(),
                 client,
-                WaitingTime.MODERATE.milliSeconds,
-                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+                WaitingTime.MODERATE,
+                WaitingTime.EXCESSIVE
         )
         String execId = json.id
         def entries = getExecutionOutput(execId)
@@ -98,8 +98,8 @@ class FileUrlScriptStepSpec extends BaseContainer{
                 json.id as String,
                 new ObjectMapper(),
                 client,
-                WaitingTime.MODERATE.milliSeconds,
-                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+                WaitingTime.MODERATE,
+                WaitingTime.EXCESSIVE
         )
         String execId = json.id
         def entries = getExecutionOutput(execId)

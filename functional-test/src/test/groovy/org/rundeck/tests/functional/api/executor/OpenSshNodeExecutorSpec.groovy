@@ -57,8 +57,8 @@ class OpenSshNodeExecutorSpec extends BaseContainer{
                 json.id as String,
                 new ObjectMapper(),
                 client,
-                WaitingTime.MODERATE.milliSeconds,
-                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+                WaitingTime.MODERATE,
+                WaitingTime.EXCESSIVE
         )
         then:
         exec.status==ExecutionStatus.SUCCEEDED.state
@@ -87,8 +87,8 @@ class OpenSshNodeExecutorSpec extends BaseContainer{
                 json.id as String,
                 new ObjectMapper(),
                 client,
-                WaitingTime.MODERATE.milliSeconds,
-                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+                WaitingTime.MODERATE,
+                WaitingTime.EXCESSIVE
         )
         then:
         exec.status==ExecutionStatus.SUCCEEDED.state

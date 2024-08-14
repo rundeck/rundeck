@@ -38,7 +38,7 @@ class PerformScmActionPage extends BasePage {
         String resultText = waitForResultMessageBox().getText()
 
         if(shouldWaitAfterCommit)
-            Thread.sleep(WaitingTime.MODERATE.milliSeconds)
+            Thread.sleep(WaitingTime.MODERATE.duration.toMillis())
 
         return resultText
     }

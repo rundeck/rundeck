@@ -22,7 +22,7 @@ class KeyStorageSpec extends SeleniumBase {
         then:
             keyStoragePage.waitForModal 1
             keyStoragePage.addPasswordType 'root', 'git', 'git.pass'
-            sleep WaitingTime.MODERATE.milliSeconds
+            sleep WaitingTime.MODERATE.duration.toMillis()
             keyStoragePage.waitForModal 0
             keyStoragePage.checkKeyExists 'git.pass', 'git'
     }

@@ -5,8 +5,10 @@ import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.api.responses.jobs.Job
 import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.httpbody.ScmJobStatusResponse
+import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.container.RdClient
 
+import java.time.Duration
 import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 
@@ -116,26 +118,38 @@ class JobUtils {
         return jobs[0]
     }
 
+
     static Execution waitForExecutionToBe(
             String state,
             String executionId,
             ObjectMapper mapper,
             RdClient client,
-            int iterationGap,
-            int timeout
+            WaitingTime iterationGap,
+            WaitingTime timeout
+    ) {
+        return waitForExecutionToBe(state, executionId, mapper, client, iterationGap.duration, timeout.duration)
+    }
+
+    static Execution waitForExecutionToBe(
+            String state,
+            String executionId,
+            ObjectMapper mapper,
+            RdClient client,
+            Duration iterationGap,
+            Duration timeout
     ){
         Execution executionStatus
         def execDetail = client.doGet("/execution/${executionId}")
         executionStatus = mapper.readValue(execDetail.body().string(), Execution.class)
         long initTime = System.currentTimeMillis()
         while(executionStatus.status != state){
-            if ((System.currentTimeMillis() - initTime) >= TimeUnit.SECONDS.toMillis(timeout)) {
-                throw new InterruptedException("Timeout reached (${timeout} seconds), the execution had \"${executionStatus.status}\" state.")
+            if ((System.currentTimeMillis() - initTime) >= timeout.toMillis()) {
+                throw new InterruptedException("Timeout reached (${timeout.toSeconds()} seconds), the execution had \"${executionStatus.status}\" state.")
             }
             def transientExecutionResponse = client.doGet("/execution/${executionId}")
             executionStatus = mapper.readValue(transientExecutionResponse.body().string(), Execution.class)
             if( executionStatus.status == state ) break
-            Thread.sleep(iterationGap)
+            Thread.sleep(iterationGap.toMillis())
         }
         return executionStatus
     }

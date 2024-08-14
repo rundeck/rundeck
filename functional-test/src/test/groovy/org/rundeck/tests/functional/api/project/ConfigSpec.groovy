@@ -11,6 +11,8 @@ import org.rundeck.util.container.BaseContainer
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper
 import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml
 
+import java.time.Duration
+
 @APITest
 class ConfigSpec extends BaseContainer{
 
@@ -594,7 +596,7 @@ class ConfigSpec extends BaseContainer{
         def localNode = systemInfo.system?.rundeck?.node
 
         when: "Obtain all the nodes wait a bit"
-        Thread.sleep(WaitingTime.MODERATE.milliSeconds * 2)
+        Thread.sleep(Duration.ofSeconds(10).toMillis())
         def allNodesResponse = client.doGetAcceptAll("/project/$projectName/resources")
         assert allNodesResponse.successful
         def allNodesResponseString = allNodesResponse.body().string()
