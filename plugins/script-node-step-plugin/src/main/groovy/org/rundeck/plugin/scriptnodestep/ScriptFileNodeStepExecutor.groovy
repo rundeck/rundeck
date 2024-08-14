@@ -74,12 +74,6 @@ class ScriptFileNodeStepExecutor {
                 false,
                 false
             )
-
-            if (DataContextUtils.hasOptionsInString(expandedVarsInURL)) {
-                Map<String, Map<String, String>> optionsContext = new HashMap()
-                optionsContext.put("option", context.getDataContext().get("option"))
-                expandedVarsInURL = DataContextUtils.replaceDataReferencesInString(expandedVarsInURL, optionsContext)
-            }
         }
 
         final String[] args;
