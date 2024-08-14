@@ -427,7 +427,6 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
-import { VMarkdownView } from "vue3-markdown";
 
 import JobConfigPicker from "./JobConfigPicker.vue";
 import KeyStorageSelector from "./KeyStorageSelector.vue";
@@ -460,7 +459,6 @@ export default defineComponent({
     DynamicFormPluginProp,
     AceEditor,
     JobConfigPicker,
-    VMarkdownView,
     PluginPropVal,
     KeyStorageSelector,
     TextAutocomplete,
@@ -542,20 +540,6 @@ export default defineComponent({
     };
   },
   computed: {
-    shortDescription(): string {
-      const desc = this.prop.desc;
-      if (desc && desc.indexOf("\n") > 0) {
-        return desc.substring(0, desc.indexOf("\n"));
-      }
-      return desc;
-    },
-    extraDescription(): string | null {
-      const desc = this.prop.desc;
-      if (desc && desc.indexOf("\n") > 0) {
-        return desc.substring(desc.indexOf("\n") + 1);
-      }
-      return null;
-    },
     selectorDataForName(): any[] {
       return this.selectorData[this.prop.name];
     },
