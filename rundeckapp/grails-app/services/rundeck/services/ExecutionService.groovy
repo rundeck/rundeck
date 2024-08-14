@@ -3103,8 +3103,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     @CompileStatic
     def saveExecutionState( schedId, exId, Map props, AsyncStarted execmap, Map retryContext){
+        Map result;
         Execution.withNewTransaction {
-            saveExecutionState_currentTransaction(schedId, exId, props, execmap, retryContext)
+            result = saveExecutionState_currentTransaction(schedId, exId, props, execmap, retryContext)
+        }
+        Execution.withNewTransaction {
+            executeSendNotification(result.execmap as AsyncStarted, result.execution as Execution, result.schedId as String)
         }
     }
 
@@ -3117,7 +3121,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param retryContext
      * @return
      */
-    def saveExecutionState_currentTransaction( schedId, exId, Map props, AsyncStarted execmap, Map retryContext){
+    Map saveExecutionState_currentTransaction(schedId, exId, Map props, AsyncStarted execmap, Map retryContext){
         def ScheduledExecution scheduledExecution
         def boolean execSaved = false
         def Execution execution = Execution.get(exId)
@@ -3204,20 +3208,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         if(execSaved) {
             //summarize node success
+            def execInfo
             String node=null
             int sucCount=-1;
             int failedCount=-1;
             int totalCount=0;
             if (execmap?.noderecorder) {
-                NodeRecorder rec =  execmap.noderecorder
-                final HashSet<String> success = rec.getSuccessfulNodes()
-                final Map<String,Object> failedMap = rec.getFailedNodes()
-                final HashSet<String> failed = new HashSet<String>(failedMap.keySet())
-                final HashSet<String> matched = rec.getMatchedNodes()
-                node = [success.size(),failed.size(),matched.size()].join("/")
-                sucCount=success.size()
-                failedCount=failed.size()
-                totalCount=matched.size()
+                execInfo = getPropsFromExecMap(execmap)
             }
             logExecution(
                 null,
@@ -3233,7 +3230,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 props.cancelled,
                 props.timedOut,
                 execution.willRetry,
-                node,
+                    execInfo.node ?: null,
                 execution.abortedby,
                 execution.succeededNodeList,
                 execution.failedNodeList,
@@ -3242,32 +3239,49 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 jobUuid
             )
             logExecutionLog4j(execution, "finish", execution.user)
-
             def context = execmap?.thread?.context
-            def export = execmap?.thread?.resultObject?.getSharedContext()?.consolidate()?.getData(ContextView.global())
-            notificationService.asyncTriggerJobNotification(
-                execution.statusSucceeded() ? 'success' : execution.willRetry ? 'retryablefailure' : 'failure',
-                schedId,
-                [
-                    execution: execution,
-                    nodestatus: [succeeded: sucCount,failed:failedCount,total:totalCount],
-                    context: context,
-                    export:  export
-                ]
-            )
             notify('executionComplete',
                    new ExecutionCompleteEvent(
                        state: execution.executionState,
                        execution:execution,
                        job:scheduledExecution,
-                       nodeStatus: [succeeded: sucCount,failed:failedCount,total:totalCount],
+                       nodeStatus: [succeeded: execInfo.sucCount ?: sucCount,failed:execInfo.failedCount ?: failedCount,total:execInfo.totalCount ?: totalCount],
                        context: context?.dataContext
 
                    )
             )
+            return [execMap : execmap as AsyncStarted, execution: execution as Execution, schedId: schedId as String]
         }
     }
 
+    def getPropsFromExecMap(def execmap){
+        NodeRecorder rec =  execmap.noderecorder
+        final HashSet<String> success = rec.getSuccessfulNodes()
+        final Map<String,Object> failedMap = rec.getFailedNodes()
+        final HashSet<String> failed = new HashSet<String>(failedMap.keySet())
+        final HashSet<String> matched = rec.getMatchedNodes()
+        Map execInfo = [ node : [success.size(),failed.size(),matched.size()].join("/"), sucCount: success.size(), failedCount: failed.size(), totalCount: matched.size()]
+        return execInfo
+    }
+
+    def executeSendNotification(AsyncStarted execmap, Execution execution, String schedId){
+        int sucCount=-1;
+        int failedCount=-1;
+        int totalCount=0;
+        def execInfo = getPropsFromExecMap(execmap)
+        def context = execmap?.thread?.context
+        def export = execmap?.thread?.resultObject?.getSharedContext()?.consolidate()?.getData(ContextView.global())
+        notificationService.asyncTriggerJobNotification(
+                execution.statusSucceeded() ? 'success' : execution.willRetry ? 'retryablefailure' : 'failure',
+                schedId,
+                [
+                        execution: execution,
+                        nodestatus: [succeeded: execInfo.sucCount ?: sucCount,failed:execInfo.failedCount ?: failedCount,total:execInfo.totalCount ?: totalCount],
+                        context: context,
+                        export:  export
+                ]
+        )
+    }
     /**
      * Update a scheduledExecution statistics with a successful execution duration
      * @param schedId
