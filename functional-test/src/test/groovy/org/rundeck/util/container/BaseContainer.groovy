@@ -8,7 +8,6 @@ import okhttp3.Response
 import okhttp3.ResponseBody
 import org.rundeck.util.api.responses.execution.ExecutionOutput
 import org.rundeck.util.api.storage.KeyStorageApiClient
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectReader
 import spock.lang.Specification
 
 import java.text.SimpleDateFormat
@@ -359,25 +358,39 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     Map runJobAndWait(String jobId, Object body = null) {
         def path = "/job/${jobId}/run"
         def response = client.post(path, body, Map)
-        def finalStatus = [
-            'aborted',
-            'failed',
-            'succeeded',
-            'timedout',
-            'other'
-        ]
 
         // Handle a response that did not trigger a job execution
         if (response.get("errorCode") != null) {
             throw new RuntimeException("Failed to run job: ${response}")
         }
 
-        while (true) {
-            def exec = client.get("/execution/${response.id}/output", Map)
-            if (finalStatus.contains(exec.execState)) {
+        return waitForExecutionStatus(response.id as int)
+    }
+
+    /**
+     * Waits for the execution with the specified ID to reach one of the specified statuses.
+     * @param executionId The identifier of the execution to monitor.
+     * @param maxWaitTimeInMs The maximum time to wait for the execution to reach one of the specified statuses.
+     * @param statusesToWaitFor The list of statuses to wait for. Default is ['aborted', 'failed', 'succeeded', 'timedout', 'other'].
+     * @return A Map containing the final execution details.
+     */
+    Map waitForExecutionStatus(int executionId, int maxWaitTimeInMs = Integer.MAX_VALUE, List<String> statusesToWaitFor = [
+            'aborted',
+            'failed',
+            'succeeded',
+            'timedout',
+            'other']) {
+
+        final DEFAULT_WAIT_BETWEEN_CYCLES_IN_MS = 10_000
+        final def waitTimeBetweenCyclesInMs = Math.min(maxWaitTimeInMs, DEFAULT_WAIT_BETWEEN_CYCLES_IN_MS)
+        int totalWaitTimeInMs = 0
+        while (totalWaitTimeInMs < maxWaitTimeInMs) {
+            def exec = client.get("/execution/${executionId}/output", Map)
+            if (statusesToWaitFor.contains(exec.execState)) {
                 return exec
             } else {
-                sleep 10000
+                sleep waitTimeBetweenCyclesInMs
+                totalWaitTimeInMs += waitTimeBetweenCyclesInMs
             }
         }
     }
