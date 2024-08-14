@@ -847,7 +847,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param status
      */
     private void cleanupExecution_currentTransaction(Execution e, String status = null) {
-        saveExecutionState_currentTransaction(
+        def result = saveExecutionState_currentTransaction(
                 e.scheduledExecution?.uuid,
                 e.id,
                 [
@@ -858,7 +858,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 null,
                 null
         )
-
     }
 
     /**
@@ -3108,7 +3107,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             result = saveExecutionState_currentTransaction(schedId, exId, props, execmap, retryContext)
         }
         Execution.withNewTransaction {
-            executeSendNotification(result.execmap as AsyncStarted, result.execution as Execution, result.schedId as String)
+            executeSendNotification(execmap as AsyncStarted, result.execution as Execution, schedId as String)
         }
     }
 
@@ -3264,11 +3263,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return execInfo
     }
 
-    def executeSendNotification(AsyncStarted execmap, Execution execution, String schedId){
+    def executeSendNotification(AsyncStarted execmap, String exId, String schedId){
         int sucCount=-1;
         int failedCount=-1;
         int totalCount=0;
         def execInfo = getPropsFromExecMap(execmap)
+        def Execution execution = Execution.get(exId)
         def context = execmap?.thread?.context
         def export = execmap?.thread?.resultObject?.getSharedContext()?.consolidate()?.getData(ContextView.global())
         notificationService.asyncTriggerJobNotification(
