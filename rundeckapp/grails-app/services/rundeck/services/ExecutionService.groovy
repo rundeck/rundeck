@@ -847,7 +847,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param status
      */
     private void cleanupExecution_currentTransaction(Execution e, String status = null) {
-        def result = saveExecutionState_currentTransaction(
+        saveExecutionState_currentTransaction(
                 e.scheduledExecution?.uuid,
                 e.id,
                 [
@@ -3102,9 +3102,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     @CompileStatic
     def saveExecutionState( schedId, exId, Map props, AsyncStarted execmap, Map retryContext){
-        Map result;
         Execution.withNewTransaction {
-            result = saveExecutionState_currentTransaction(schedId, exId, props, execmap, retryContext)
+            saveExecutionState_currentTransaction(schedId, exId, props, execmap, retryContext)
         }
         Execution.withNewTransaction {
             executeSendNotification(execmap as AsyncStarted, exId as String, schedId as String)
@@ -3120,7 +3119,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param retryContext
      * @return
      */
-    Map saveExecutionState_currentTransaction(schedId, exId, Map props, AsyncStarted execmap, Map retryContext){
+    def saveExecutionState_currentTransaction(schedId, exId, Map props, AsyncStarted execmap, Map retryContext){
         def ScheduledExecution scheduledExecution
         def boolean execSaved = false
         def Execution execution = Execution.get(exId)
@@ -3249,7 +3248,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
                    )
             )
-            return [execMap : execmap as AsyncStarted, execution: execution as Execution, schedId: schedId as String]
         }
     }
 
