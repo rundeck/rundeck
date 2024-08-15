@@ -799,6 +799,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * Set the result status to FAIL for any Executions that are not complete, does not create a new transaction
      * @param serverUUID if not null, only match executions assigned to the given serverUUID
      */
+    // TODO: Delete?
     def cleanupRunningJobs_currentTransaction(String serverUUID = null, String status = null, Date before = new Date()) {
         cleanupRunningJobs_currentTransaction(findRunningExecutions(serverUUID, before), status)
     }
@@ -3103,9 +3104,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     @CompileStatic
     def saveExecutionState( schedId, exId, Map props, AsyncStarted execmap, Map retryContext){
-        Execution.withNewTransaction {
+        def event = Execution.withNewTransaction {
             saveExecutionState_currentTransaction(schedId, exId, props, execmap, retryContext)
         }
+
+        sendJobNotifications(execmap, event)
     }
 
     /**
@@ -3117,7 +3120,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param retryContext
      * @return
      */
-    def saveExecutionState_currentTransaction( schedId, exId, Map props, AsyncStarted execmap, Map retryContext){
+    private ExecutionCompleteEvent saveExecutionState_currentTransaction( schedId, exId, Map props, AsyncStarted execmap, Map retryContext){
         def ScheduledExecution scheduledExecution
         def boolean execSaved = false
         def Execution execution = Execution.get(exId)
@@ -3244,28 +3247,37 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             logExecutionLog4j(execution, "finish", execution.user)
 
             def context = execmap?.thread?.context
-            def export = execmap?.thread?.resultObject?.getSharedContext()?.consolidate()?.getData(ContextView.global())
-            notificationService.asyncTriggerJobNotification(
-                execution.statusSucceeded() ? 'success' : execution.willRetry ? 'retryablefailure' : 'failure',
-                schedId,
-                [
-                    execution: execution,
-                    nodestatus: [succeeded: sucCount,failed:failedCount,total:totalCount],
-                    context: context,
-                    export:  export
-                ]
-            )
-            notify('executionComplete',
-                   new ExecutionCompleteEvent(
-                       state: execution.executionState,
-                       execution:execution,
-                       job:scheduledExecution,
-                       nodeStatus: [succeeded: sucCount,failed:failedCount,total:totalCount],
-                       context: context?.dataContext
 
-                   )
+            def executionCompleteEvent = new ExecutionCompleteEvent(
+                    state: execution.executionState,
+                    execution: execution,
+                    job: scheduledExecution,
+                    nodeStatus: [succeeded: sucCount, failed: failedCount, total: totalCount],
+                    context: context?.dataContext
             )
+
+            notify('executionComplete', executionCompleteEvent)
+
+            return executionCompleteEvent
         }
+    }
+
+    private def sendJobNotifications(AsyncStarted execmap, ExecutionCompleteEvent event) {
+        // TODO: can we make event.context work?
+        def context = execmap?.thread?.context
+        def execution = event.execution
+        def export = execmap?.thread?.resultObject?.getSharedContext()?.consolidate()?.getData(ContextView.global())
+
+        notificationService.asyncTriggerJobNotification(
+            execution.statusSucceeded() ? 'success' : execution.willRetry ? 'retryablefailure' : 'failure',
+            event.job?.getUuid(),
+            [
+                execution : execution,
+                nodestatus: event.nodeStatus,
+                context   : context,
+                export    : export
+            ]
+        )
     }
 
     /**
