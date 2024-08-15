@@ -96,8 +96,9 @@ describe("PluginDetails", () => {
     );
     const detailsTag = wrapper.find("details");
     expect(markdownContainer.exists()).toBeFalsy();
+    // text for more and less are both rendered, as in the UI they get hidden by css.
     expect(detailsTag.text()).toBe(
-      "more Remaining lines with some more content.",
+      "more less Remaining lines with some more content.",
     );
   });
 });
