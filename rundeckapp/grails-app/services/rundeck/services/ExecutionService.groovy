@@ -3205,7 +3205,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         if(execSaved) {
             //summarize node success
-            def execInfo
             String node=null
             int sucCount=-1;
             int failedCount=-1;
