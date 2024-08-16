@@ -1253,12 +1253,12 @@ class JobExecutionSpec extends BaseContainer {
                     "    <sequence keepgoing='false' strategy='parallel'>\n" +
                     "      <command>\n" +
                     "        <jobref name='job_c' nodeStep='true'>\n" +
-                    "          <arg line='-maxWaitTimeSecs 20 -oldmaxWaitTimeSecs 2100' />\n" +
+                    "          <arg line='-maxWaitTimeSecs 10 -oldmaxWaitTimeSecs 2100' />\n" +
                     "        </jobref>\n" +
                     "      </command>\n" +
                     "      <command>\n" +
                     "        <jobref name='job_c' nodeStep='true'>\n" +
-                    "          <arg line='-maxWaitTimeSecs 60 -oldmaxWaitTimeSecs 2400' />\n" +
+                    "          <arg line='-maxWaitTimeSecs 30 -oldmaxWaitTimeSecs 2400' />\n" +
                     "        </jobref>\n" +
                     "      </command>\n" +
                     "    </sequence>\n" +

@@ -124,7 +124,7 @@ class JobScheduledSpec extends BaseContainer {
                     new ObjectMapper(),
                     client,
                     WaitingTime.LOW,
-                    WaitingTime.LOW
+                    WaitingTime.MODERATE
             )
         then:
             verifyAll {
@@ -166,7 +166,7 @@ class JobScheduledSpec extends BaseContainer {
                     new ObjectMapper(),
                     client,
                     WaitingTime.LOW,
-                    WaitingTime.LOW
+                    WaitingTime.MODERATE
             )
         then:
             verifyAll {
@@ -180,7 +180,7 @@ class JobScheduledSpec extends BaseContainer {
                     new ObjectMapper(),
                     client,
                     WaitingTime.LOW,
-                    WaitingTime.LOW
+                    WaitingTime.MODERATE
             )
         then:
             verifyAll {
