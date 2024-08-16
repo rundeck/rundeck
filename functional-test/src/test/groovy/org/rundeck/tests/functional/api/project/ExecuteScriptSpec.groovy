@@ -58,8 +58,8 @@ class ExecuteScriptSpec extends BaseContainer{
                 runScript1Id as String,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         ).status == ExecutionStatus.SUCCEEDED.state
 
         when: "the job succeeds, we read the output of the file with a rundeck job"
@@ -103,8 +103,8 @@ class ExecuteScriptSpec extends BaseContainer{
                 readJobRunResponse.id as String,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         )
         assert readJobSucceeded.status == ExecutionStatus.SUCCEEDED.state
         String execId = readJobRunResponse.id
@@ -131,8 +131,8 @@ class ExecuteScriptSpec extends BaseContainer{
                 newExecId as String,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         )
 
         then: "the job will succeed"
@@ -154,8 +154,8 @@ class ExecuteScriptSpec extends BaseContainer{
                 unquotedRunScript1Id as String,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         )
 
         // Then run the job that reads the output of request
@@ -168,8 +168,8 @@ class ExecuteScriptSpec extends BaseContainer{
                 readJobRunEmptyResponse.id as String,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         )
         assert readJobRunEmptySucceeded.status == ExecutionStatus.SUCCEEDED.state
         def execOutputEmptyResponse = client.doGetAcceptAll("/execution/$readJobRunEmptyResponse.id/output")
