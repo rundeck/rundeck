@@ -20,7 +20,8 @@ Env vars to control docker image usage:
 - `TEST_RUNDECK_CONTAINER_CONTEXT`: The context path to use for the container (e.g. `/rundeck`). Must start with `/`. (
   default: blank)
 - `TEST_RUNDECK_CONTAINER_TOKEN`: The API token to use for authentication. (default: `admintoken`)
-- `TEST_RUNDECK_GRAILS_URL`: This value is used as `RUNDECK_GRAILS_URL` (default: `http://localhost:4440`)
+- `TEST_RUNDECK_GRAILS_URL`: This value is used as `RUNDECK_GRAILS_URL` (default: `http://rundeck:4440`)
+- `TEST_TARGET_PLATFORM`: The target platform for the rundeck container  (default: `linux/amd64`)
 - `TEST_WAR_FILE_LOCATION`: (optional for tomcatTest task) If set, it will use this path to get the war file and run the tomcatTest
   task, if not it will try to get the war from the build process
 
