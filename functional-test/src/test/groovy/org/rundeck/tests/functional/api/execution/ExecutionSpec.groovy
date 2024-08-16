@@ -194,7 +194,7 @@ class ExecutionSpec extends BaseContainer {
                     mapper,
                     client,
                     WaitingTime.LOW,
-                    WaitingTime.LOW
+                    WaitingTime.MODERATE
             )
             def state = client.get("/execution/${response.id}/state", Map)
         then:
@@ -245,7 +245,7 @@ class ExecutionSpec extends BaseContainer {
                     mapper,
                     client,
                     WaitingTime.LOW,
-                    WaitingTime.LOW
+                    WaitingTime.MODERATE
             )
             responseExecId1.status == 'succeeded'
             def responseExecId2 = JobUtils.waitForExecutionToBe(
@@ -254,7 +254,7 @@ class ExecutionSpec extends BaseContainer {
                     mapper,
                     client,
                     WaitingTime.LOW,
-                    WaitingTime.LOW
+                    WaitingTime.MODERATE
             )
             responseExecId2.status == 'failed'
             def responseExecId3 = JobUtils.waitForExecutionToBe(
@@ -263,7 +263,7 @@ class ExecutionSpec extends BaseContainer {
                     mapper,
                     client,
                     WaitingTime.LOW,
-                    WaitingTime.LOW
+                    WaitingTime.MODERATE
             )
             responseExecId3.status == 'succeeded'
             def responseExecId4 = JobUtils.waitForExecutionToBe(
@@ -272,7 +272,7 @@ class ExecutionSpec extends BaseContainer {
                     mapper,
                     client,
                     WaitingTime.LOW,
-                    WaitingTime.LOW
+                    WaitingTime.MODERATE
             )
             responseExecId4.status == 'succeeded'
         when: "executions"
