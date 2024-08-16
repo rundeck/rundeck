@@ -404,22 +404,18 @@
     </template>
 
     <div v-if="prop.desc" class="col-sm-10 col-sm-offset-2 help-block">
-      <details v-if="extraDescription" class="more-info" :class="extendedCss">
-        <summary>
-          <span :class="descriptionCss">{{ shortDescription }}</span>
-          <span class="more-indicator-verbiage btn-link btn-xs"
-            >More &hellip;
-          </span>
-          <span class="less-indicator-verbiage btn-link btn-xs">Less </span>
-        </summary>
-
-        <VMarkdownView
-          class="markdown-body"
-          :content="extraDescription"
-          mode=""
-        />
-      </details>
-      <div v-else class="help-block">{{ prop.desc }}</div>
+      <plugin-details
+        :description="prop.desc"
+        :extended-css="extendedCss"
+        description-css="more-info"
+        markdown-container-css="m-0 p-0"
+        inline-description
+        allow-html
+      >
+        <template #extraDescriptionText>
+          <div class="help-block">{{ prop.desc }}</div>
+        </template>
+      </plugin-details>
     </div>
     <div
       v-if="validation && !validation.valid && validation.errors[prop.name]"
@@ -431,7 +427,6 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
-import { VMarkdownView } from "vue3-markdown";
 
 import JobConfigPicker from "./JobConfigPicker.vue";
 import KeyStorageSelector from "./KeyStorageSelector.vue";
@@ -445,6 +440,7 @@ import type { PropType } from "vue";
 import { getRundeckContext } from "../../rundeckService";
 import { EventBus } from "@/library";
 import UiSocket from "../utils/UiSocket.vue";
+import PluginDetails from "@/library/components/plugins/PluginDetails.vue";
 interface Prop {
   type: string;
   defaultValue: any;
@@ -459,10 +455,10 @@ interface Prop {
 
 export default defineComponent({
   components: {
+    PluginDetails,
     DynamicFormPluginProp,
     AceEditor,
     JobConfigPicker,
-    VMarkdownView,
     PluginPropVal,
     KeyStorageSelector,
     TextAutocomplete,
@@ -544,20 +540,6 @@ export default defineComponent({
     };
   },
   computed: {
-    shortDescription(): string {
-      const desc = this.prop.desc;
-      if (desc && desc.indexOf("\n") > 0) {
-        return desc.substring(0, desc.indexOf("\n"));
-      }
-      return desc;
-    },
-    extraDescription(): string | null {
-      const desc = this.prop.desc;
-      if (desc && desc.indexOf("\n") > 0) {
-        return desc.substring(desc.indexOf("\n") + 1);
-      }
-      return null;
-    },
     selectorDataForName(): any[] {
       return this.selectorData[this.prop.name];
     },

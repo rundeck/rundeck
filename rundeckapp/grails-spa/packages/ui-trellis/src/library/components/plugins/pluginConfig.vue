@@ -37,14 +37,24 @@
         v-if="inputShowIcon || inputShowTitle || inputShowDescription"
         class="col-xs-12 col-sm-12"
       >
-        <p>
-          <pluginInfo
-            :show-title="inputShowTitle"
-            :show-icon="inputShowIcon"
-            :show-description="inputShowDescription"
-            :detail="detail"
-          />
-        </p>
+        <slot
+          name="header"
+          :header="{
+            inputShowTitle,
+            inputShowIcon,
+            inputShowDescription,
+            detail,
+          }"
+        >
+          <p>
+            <pluginInfo
+              :show-title="inputShowTitle"
+              :show-icon="inputShowIcon"
+              :show-description="inputShowDescription"
+              :detail="detail"
+            />
+          </p>
+        </slot>
       </div>
       <div v-if="isShowMode && config" class="col-xs-12 col-sm-12">
         <span v-if="validation && !validation.valid" class="text-warning">
@@ -616,6 +626,10 @@ export default defineComponent({
 <style lang="scss">
 .configprop + .configprop:before {
   content: " ";
+}
+
+.has-error .ace_editor {
+  border: 1px solid var(--danger-color);
 }
 </style>
 <style lang="scss" scoped>

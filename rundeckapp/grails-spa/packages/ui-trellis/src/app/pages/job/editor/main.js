@@ -17,6 +17,7 @@ import { getRundeckContext } from "@/library";
 import { loadJsonData } from "@/app/utilities/loadJsonData";
 import NextUiToggle from "@/app/pages/job/browse/NextUiToggle.vue";
 import DetailsEditorSection from "@/app/pages/job/editor/DetailsEditorSection.vue";
+import ExecutionEditorSection from "./ExecutionEditorSection.vue";
 
 const locale = window._rundeck.locale || "en_US";
 moment.locale(locale);
@@ -123,7 +124,32 @@ if (uiType === "next") {
     });
     rapp.mount(e);
   }
+
+  const execsels = document.body.getElementsByClassName(
+    "job-editor-execution-vue",
+  );
+
+  for (let i = 0; i < execsels.length; i++) {
+    const e = execsels[i];
+    const rapp = createApp({
+      name: "JobEditExecutionApp",
+      components: { ExecutionEditorSection },
+    });
+    rapp.use(uiv);
+    rapp.use(i18n);
+    rapp.provide("addUiMessages", async (messages) => {
+      const newMessages = messages.reduce(
+        (acc, message) => (message ? { ...acc, ...message } : acc),
+        {},
+      );
+      const locale = window._rundeck.locale || "en_US";
+      const lang = window._rundeck.language || "en";
+      return updateLocaleMessages(i18n, locale, lang, newMessages);
+    });
+    rapp.mount(e);
+  }
 }
+
 const scsels = document.body.getElementsByClassName("job-editor-schedules-vue");
 
 for (let i = 0; i < scsels.length; i++) {

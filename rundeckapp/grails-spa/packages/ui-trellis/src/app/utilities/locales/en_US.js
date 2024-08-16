@@ -880,7 +880,8 @@ const messages = {
   more: "More\u2026",
   less: "Less\u2026",
   "job.edit.groupPath.choose.text": "Click on the name of the group to use",
-
+  "scheduledExecution.property.executionLifecyclePluginConfig.help.text":
+    "Selected Plugins will be enabled for this Job.",
 };
 
 export default messages;
