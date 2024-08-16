@@ -15,7 +15,7 @@
     <!-- Default cache template -->
     <cache-template name="default">
         <expiry>
-            <ttl unit="seconds">120</ttl>
+            <ttl unit="seconds">3</ttl>
         </expiry>
 
         <resources>
