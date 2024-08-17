@@ -39,6 +39,7 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
+import lombok.Getter;
 import org.rundeck.app.spi.Services;
 import org.rundeck.core.execution.ExecCommand;
 import org.rundeck.core.execution.ScriptCommand;
@@ -61,8 +62,9 @@ import java.util.Map;
  */
 public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicProperties {
     protected static Logger  log = LoggerFactory.getLogger(NodeStepPluginAdapter.class.getName());
-    private          String  serviceName;
-    private          boolean blankIfUnexpanded;
+    @Getter private String serviceName;
+    private boolean blankIfUnexpanded;
+    @Getter private NodeStepPlugin plugin;
 
     @Override
     public Description getDescription() {
@@ -92,8 +94,6 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
         return null;
     }
 
-    private NodeStepPlugin plugin;
-
     public NodeStepPluginAdapter(final NodeStepPlugin plugin) {
         this(ServiceNameConstants.WorkflowNodeStep, plugin, true);
     }
@@ -112,15 +112,6 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
     public static boolean canAdaptType(Class<?> testType){
         return NodeStepPlugin.class.isAssignableFrom(testType);
     }
-
-    public String getServiceName() {
-        return serviceName;
-    }
-
-    public void setServiceName(String serviceName) {
-        this.serviceName = serviceName;
-    }
-
 
     public static class ConvertToNodeStepExecutor
             implements Converter<NodeStepPlugin, NodeStepExecutor>
@@ -236,10 +227,6 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
         } else {
             return null;
         }
-    }
-
-    public NodeStepPlugin getPlugin(){
-        return this.plugin;
     }
 
 }
