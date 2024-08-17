@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.execution.impl.common.FileCopierUtil
 import com.dtolabs.rundeck.core.plugins.PluginException
 import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
+import com.dtolabs.rundeck.plugins.descriptions.PluginMetadata
 import groovy.transform.CompileStatic
 import org.rundeck.core.execution.ScriptCommand
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
@@ -20,6 +21,7 @@ import com.dtolabs.rundeck.plugins.step.PluginStepContext
 @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = SCRIPT_COMMAND_TYPE)
 @PluginDescription(title = "Script", description = "Execute an inline script", isHighlighted = true, order = 1)
 @CompileStatic
+@PluginMetadata(key = "NodeStepPluginAdapter.DeprecatedConfigurationMode", value = "skip")
 class ScriptNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin, ScriptCommand, PluginResourceLoader, SecureInputProps {
     public static final String PROVIDER_NAME = "script-node-step-plugin";
 

@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.execution.impl.common.FileCopierUtil
 import com.dtolabs.rundeck.core.plugins.PluginException
 import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
+import com.dtolabs.rundeck.plugins.descriptions.PluginMetadata
 import org.rundeck.core.execution.ScriptFileCommand
 import com.dtolabs.rundeck.core.execution.proxy.ProxyRunnerPlugin
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
@@ -33,6 +34,7 @@ import com.dtolabs.rundeck.plugins.step.PluginStepContext
 
 @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = SCRIPT_FILE_COMMAND_TYPE)
 @PluginDescription(title = "Script file or URL", description = "Execute a local script file or a script from a URL", isHighlighted = true, order = 2)
+@PluginMetadata(key = "NodeStepPluginAdapter.DeprecatedConfigurationMode", value = "skip")
 class ScriptFileNodeStepPlugin extends ScriptProxyRunner
     implements NodeStepPlugin, ScriptFileCommand, PluginResourceLoader, ProxyRunnerPlugin, SecureInputProps {
 
