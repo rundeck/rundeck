@@ -61,6 +61,8 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicProperties {
+    public static final String DEPRECATED_CONFIGURATION_MODE = "NodeStepPluginAdapter.DeprecatedConfigurationMode";
+    public static final String SKIP = "skip";
     protected static Logger  log = LoggerFactory.getLogger(NodeStepPluginAdapter.class.getName());
     @Getter private String serviceName;
     private boolean blankIfUnexpanded;
@@ -148,9 +150,18 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
 
         final String providerName = item.getNodeStepType();
         final PluginStepContext pluginContext = PluginStepContextImpl.from(context);
-        Map<String, Object> config = null;
-        if (plugin instanceof Describable) {
-            final Map<String, Object> instanceConfiguration = createConfig(context, item, node);
+        Map<String, Object> config;
+        final Map<String, Object> instanceConfiguration = createConfig(context, item, node);
+        final Description description = getDescription();
+
+        if (skipDeprecatedConfiguration(description)) {
+            //configuration mode that does not supply config map, and relies on preconfigured plugin instance or
+            // Configurable behavior.
+            config = null;
+        } else {
+            //deprecated configuration mode:
+            // the plugin may already be configured, however the configuration data is reloaded/applied
+            // in order to define the configuration Map that is passed as parameter to the plugin.
             final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(
                     context,
                     instanceConfiguration,
@@ -187,6 +198,11 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
                                           node);
         }
         return new NodeStepResultImpl(node);
+    }
+
+    private static boolean skipDeprecatedConfiguration(final Description description) {
+        return description.getMetadata() != null &&
+               SKIP.equals(description.getMetadata().get(DEPRECATED_CONFIGURATION_MODE));
     }
 
     public Map<String, Object> createConfig( StepExecutionContext context,
