@@ -710,3 +710,9 @@ workflows:
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/execution/ExecutionOutputSpec.groovy"
           <<: *require-build
           <<: *slack-defaults
+      - test-gradle-functional:
+          name: Alpha UI Selenium Core Test
+          gradle-task: alphaUiSeleniumCoreTest
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/alphaUi/*{.groovy,.java}"
+          <<: *require-build
+          <<: *slack-defaults
