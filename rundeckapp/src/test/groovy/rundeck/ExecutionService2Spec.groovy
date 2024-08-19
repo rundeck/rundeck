@@ -1729,7 +1729,6 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         assertNull(exec2.status)
         assertEquals(2,Execution.findAll().size())
         assertEquals(1,Execution.findAllByDateCompletedAndServerNodeUUID(null, null).size())
-        testService.cleanupRunningJobs_currentTransaction((String)null)
 
         Execution.withSession { session ->
             session.flush()
@@ -1774,8 +1773,6 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
 
         assertNull(exec2.dateCompleted)
         assertNull(exec2.status)
-
-        testService.cleanupRunningJobs_currentTransaction(uuid)
 
         exec1.refresh()
         exec2.refresh()
