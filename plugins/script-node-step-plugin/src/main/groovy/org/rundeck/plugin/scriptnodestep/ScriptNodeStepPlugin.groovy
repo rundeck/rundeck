@@ -96,7 +96,7 @@ E.g.: `.ps1`, or `abc`.
 
         ScriptFileNodeStepExecutor scriptFileNodeStepExecutor = new ScriptFileNodeStepExecutor(
             scriptInterpreter,
-            interpreterArgsQuoted,
+            !!interpreterArgsQuoted,
             fileExtension,
             argString,
             null,
