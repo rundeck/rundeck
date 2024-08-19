@@ -90,7 +90,7 @@ public class PluginStepContextImpl implements PluginStepContext {
         context1.stepNumber = context.getStepNumber();
         context1.stepContext = context.getStepContext();
         context1.framework = context.getFramework();
-        context1.iFramework = context1.getIFramework();
+        context1.iFramework = context.getIFramework();
         context1.executionContext = context;
         context1.flowControl = context.getFlowControl();
         context1.outputContext = context.getOutputContext();
