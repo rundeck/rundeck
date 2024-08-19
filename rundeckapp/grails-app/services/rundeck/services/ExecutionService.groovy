@@ -809,7 +809,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     private void cleanupExecution(Execution e, String status = null) {
-        saveCompletedExecution_currentTransaction(
+        saveExecutionState(
                 e.scheduledExecution?.uuid,
                 e.id,
                 [
@@ -1892,7 +1892,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             result.jobstate = EXECUTION_RUNNING
         } else if (null == dateCompleted) {
             scheduledExecutionService.interruptJob(null, ident.jobname, ident.groupname, isadhocschedule)
-            saveCompletedExecution_currentTransaction(
+            saveExecutionState(
                 se ? se.uuid : null,
                 eid,
                     [
@@ -3064,9 +3064,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     @CompileStatic
-    def saveCompletedExecution_currentTransaction( schedId, exId, Map props, AsyncStarted execmap, Map retryContext){
+    def saveExecutionState( schedId, exId, Map props, AsyncStarted execmap, Map retryContext){
         def event = Execution.withNewTransaction {
-            saveExecutionState_currentTransaction(schedId, exId, props, execmap, retryContext)
+            saveCompletedExecution_currentTransaction(schedId, exId, props, execmap, retryContext)
         }
 
         sendJobNotifications_currentTransaction(execmap, event)
@@ -3081,7 +3081,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param retryContext
      * @return
      */
-    private ExecutionCompleteEvent saveExecutionState_currentTransaction(schedId, exId, Map props, AsyncStarted execmap, Map retryContext){
+    private ExecutionCompleteEvent saveCompletedExecution_currentTransaction(schedId, exId, Map props, AsyncStarted execmap, Map retryContext) {
         def ScheduledExecution scheduledExecution
         def boolean execSaved = false
         def Execution execution = Execution.get(exId)
@@ -3210,8 +3210,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             def executionCompleteEvent = new ExecutionCompleteEvent(
                     state: execution.executionState,
-                    execution:execution,
-                    job:scheduledExecution,
+                    execution: execution,
+                    job: scheduledExecution,
                     nodeStatus: [succeeded: sucCount,failed: failedCount,total: totalCount],
                     context: context?.dataContext
             )
@@ -3237,6 +3237,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 ]
         )
     }
+    
     /**
      * Update a scheduledExecution statistics with a successful execution duration
      * @param schedId

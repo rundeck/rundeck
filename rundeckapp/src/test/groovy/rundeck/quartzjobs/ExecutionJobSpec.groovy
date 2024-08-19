@@ -141,7 +141,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
         then:
             1 * jobSchedulerService.beforeExecution(_, _, _) >> JobScheduleManager.BeforeExecutionBehavior.proceed
             1 * jobSchedulerService.afterExecution(_, _, _)
-            1 * es.saveCompletedExecution_currentTransaction(se.uuid, e.id, { it.status == 'failed' }, null, !null)
+            1 * es.saveExecutionState(se.uuid, e.id, { it.status == 'failed' }, null, !null)
             job.executionId == e.id
     }
 
