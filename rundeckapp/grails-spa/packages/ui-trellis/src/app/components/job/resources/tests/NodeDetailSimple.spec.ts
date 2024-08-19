@@ -20,10 +20,20 @@ const mockAttributes = {
   "ns1:attr2": "value2",
   "ns1:attr3": "value3",
   "ns1:attr4": "value4",
+  "namespace:key1": "value1",
+  "namespace:key2": "value2",
+  key3: "value3",
+  key4: "value4",
+  key5: "value5",
+  key6: "value6",
+  username: "user",
+  hostname: "host",
 };
 const mountNodeDetailsSimple = async (propsData = {}) => {
   const wrapper = mount(NodeDetailsSimple, {
     props: {
+      useNamespace: true,
+      nodeColumns: true,
       attributes: mockAttributes,
       tags: ["Tag1", "Tag2"],
       ...propsData,
@@ -40,7 +50,7 @@ const mountNodeDetailsSimple = async (propsData = {}) => {
 describe("NodeDetailsSimple Component", () => {
   it("renders node attributes", async () => {
     const wrapper = await mountNodeDetailsSimple();
-    const attributes = wrapper.findAll(".setting");
+    const attributes = wrapper.findAll("td.value, td.key, .setting");
     const attributeTexts = attributes.map((attr) => attr.text());
     const expectedAttributes = {
       osFamily: "Linux",
@@ -76,6 +86,28 @@ describe("NodeDetailsSimple Component", () => {
     await wrapper.vm.$nextTick();
     // Adjust the selector if necessary based on the actual HTML structure
     const expandedAttributes = wrapper.findAll(".hover-action-holder");
-    expect(expandedAttributes.length).toBe(11);
+    expect(expandedAttributes.length).toBe(12);
+  });
+
+  it("renders correctly with useNamespace and nodeColumns set to true", async () => {
+    const wrapper = await mountNodeDetailsSimple();
+    const usernameLink = wrapper.find(
+      "[data-testid='node-attribute-link-username']",
+    );
+    const hostnameLink = wrapper.find(
+      "[data-testid='node-attribute-link-hostname']",
+    );
+    await wrapper.vm.$nextTick();
+    await usernameLink.trigger("click");
+    expect(wrapper.emitted().filter).toBeTruthy();
+    expect(wrapper.emitted().filter[0][0]).toEqual({
+      filter: 'username: "user"',
+    });
+    await hostnameLink.trigger("click");
+    expect(wrapper.emitted().filter).toBeTruthy();
+    expect(wrapper.emitted().filter.length).toBe(2);
+    expect(wrapper.emitted().filter[1][0]).toEqual({
+      filter: 'hostname: "host"',
+    });
   });
 });
