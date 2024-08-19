@@ -75,16 +75,10 @@ class PluginStep extends WorkflowStep{
     }
 
     public Map toMap() {
-        def map=[type: type, nodeStep:nodeStep]
-
         if(isOldBuiltInType(this.type)){//keep job defs compatibility with old Rundeck versions prior to 5.x
-            CommandExec commandExec = new CommandExec(this.configuration)
-            commandExec.description = this.description
-            commandExec.errorHandler = this.errorHandler
-            commandExec.keepgoingOnSuccess = this.keepgoingOnSuccess
-            commandExec.pluginConfigData = this.pluginConfigData
-            return commandExec.toMap()
+            return toLegacyCommandMap()
         }
+        def map=[type: type, nodeStep:nodeStep]
 
         if(this.configuration){
             map.put('configuration',this.configuration)
@@ -102,6 +96,35 @@ class PluginStep extends WorkflowStep{
             map.plugins = config
         }
         map
+    }
+    static final Set<String> LEGACY_KEYS = [
+        'argString',
+        'adhocRemoteString',
+        'adhocLocalString',
+        'adhocFilepath',
+        'scriptInterpreter',
+        'fileExtension',
+        'interpreterArgsQuoted',
+        'expandTokenInScriptFile',
+    ]
+    private LinkedHashMap<Object, Object> toLegacyCommandMap() {
+        def legacyData = this.configuration.subMap(LEGACY_KEYS)
+        CommandExec commandExec = new CommandExec(legacyData)
+        commandExec.description = this.description
+        commandExec.errorHandler = this.errorHandler
+        commandExec.keepgoingOnSuccess = this.keepgoingOnSuccess
+        commandExec.pluginConfigData = this.pluginConfigData
+        def legacyMap = commandExec.toMap()
+        //additional data
+        def configuration = new HashMap(this.configuration)
+        def keySet = new HashSet(configuration.keySet())
+        keySet.removeAll(LEGACY_KEYS)
+
+        if (keySet.size() > 0) {
+            def additionalData = configuration.subMap(keySet)
+            legacyMap.putAll(additionalData)
+        }
+        return legacyMap
     }
 
     /**

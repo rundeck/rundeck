@@ -152,4 +152,61 @@ class PluginStepTests  extends Specification implements DataTest{
             ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scriptfile: 'a file']            | [adhocFilepath: 'a file',expandTokenInScriptFile:false]
             ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scripturl: 'http://example.com'] | [adhocFilepath: 'http://example.com',expandTokenInScriptFile:false]
     }
+
+    def "test toMap for legacy steps with extra configuration"() {
+        when:
+            PluginStep t = new PluginStep(
+                type: type,
+                configuration: pluginConfig + extraConfig,
+                nodeStep: true,
+                keepgoingOnSuccess: true,
+                pluginConfigData: '{"key1": "value1"}'
+            )
+            Map configMap = t.toMap()
+        then:
+            !!configMap.keepgoingOnSuccess
+            configMap.errorHandler==null
+            configMap.plugins == ['key1': 'value1']
+            if (type == ExecCommand.EXEC_COMMAND_TYPE) {
+                configMap.exec == 'adhocRemoteString'
+                configMap.argString == 'asdf'
+                configMap.other == 'value1'
+                configMap.otherB == 'value2'
+            } else if (type == ScriptCommand.SCRIPT_COMMAND_TYPE) {
+                configMap.script == 'adhocLocalString'
+                configMap.argString == 'asdf'
+                configMap.other == 'value1'
+                configMap.otherB == 'value2'
+            } else if (type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE) {
+                configMap.scriptfile == 'adhocFilepath'
+                configMap.argString == 'asdf'
+                configMap.other == 'value1'
+                configMap.otherB == 'value2'
+            } else {
+                configMap.configuration == pluginConfig + extraConfig
+                configMap.script == null
+                configMap.exec == null
+                configMap.scriptfile = null
+            }
+
+        where:
+            extraConfig = [other: 'value1', otherB: 'value2']
+            type | pluginConfig
+            "blah" | ["argString": "argString", "adhocRemoteString": "adhocRemoteString", "adhocLocalString":
+                "adhocLocalString", "adhocFilepath": "adhocFilepath", "scriptInterpreter": "bash", "fileExtension":
+                "sh", "interpreterArgsQuoted": true, "expandTokenInScriptFile": true]
+            ExecCommand
+                .EXEC_COMMAND_TYPE | ["argString": "argString", "adhocRemoteString": "adhocRemoteString", "adhocLocalString":
+                "adhocLocalString", "adhocFilepath": "", "scriptInterpreter": "bash", "fileExtension": "sh",
+                                      "interpreterArgsQuoted": true, "expandTokenInScriptFile": true]
+            ScriptCommand
+                .SCRIPT_COMMAND_TYPE | ["argString": "argString", "adhocRemoteString": "", "adhocLocalString":
+                "adhocLocalString", "adhocFilepath": "", "scriptInterpreter": "bash", "fileExtension": "sh",
+                                        "interpreterArgsQuoted": true, "expandTokenInScriptFile": true]
+            ScriptFileCommand
+                .SCRIPT_FILE_COMMAND_TYPE | ["argString": "argString", "adhocRemoteString": "", "adhocLocalString": "",
+                                             "adhocFilepath": "adhocFilepath", "scriptInterpreter": "bash",
+                                             "fileExtension": "sh", "interpreterArgsQuoted": true,
+                                             "expandTokenInScriptFile": true]
+    }
 }
