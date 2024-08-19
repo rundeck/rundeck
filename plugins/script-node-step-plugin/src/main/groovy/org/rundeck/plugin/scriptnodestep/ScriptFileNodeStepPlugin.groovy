@@ -104,11 +104,11 @@ E.g.: `.ps1`, or `abc`.
             ScriptURLNodeStepExecutor scriptURLNodeStepExecutor = new ScriptURLNodeStepExecutor(
                     context,
                     scriptInterpreter,
-                    interpreterArgsQuoted,
+                    !!interpreterArgsQuoted,
                     fileExtension,
                     argString,
                     adhocFilepath,
-                    expandTokenInScriptFile,
+                    !!expandTokenInScriptFile,
                     modifier
             );
 
@@ -117,12 +117,12 @@ E.g.: `.ps1`, or `abc`.
         } else {
             ScriptFileNodeStepExecutor scriptFileNodeStepExecutor = new ScriptFileNodeStepExecutor(
                     scriptInterpreter,
-                    interpreterArgsQuoted,
+                    !!interpreterArgsQuoted,
                     fileExtension,
                     argString,
                     adhocFilepath,
                     null,
-                    expandTokenInScriptFile,
+                    !!expandTokenInScriptFile,
                     modifier
             );
 
