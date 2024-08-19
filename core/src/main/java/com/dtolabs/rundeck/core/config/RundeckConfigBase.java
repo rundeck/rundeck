@@ -445,6 +445,7 @@ public class RundeckConfigBase {
         Enabled caseInsensitiveUsername = new Enabled();
         Enabled newLocalNodeExecutor = new Enabled();
         Enabled alphaUi = new Enabled();
+        Enabled enhancedJobTakeoverQuery = new Enabled();
 
 
         @Data
