@@ -3,6 +3,7 @@ package org.rundeck.app.components
 import grails.testing.gorm.DataTest
 import org.rundeck.app.components.jobs.ImportedJob
 import rundeck.CommandExec
+import rundeck.PluginStep
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import spock.lang.Specification
@@ -11,7 +12,7 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
     RundeckJobDefinitionManager rundeckJobDefinitionManager = new RundeckJobDefinitionManager()
 
     void setupSpec() {
-        mockDomains Workflow, ScheduledExecution, CommandExec
+        mockDomains Workflow, ScheduledExecution, CommandExec, PluginStep
     }
 
 
@@ -24,7 +25,7 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
         ScheduledExecution se = jobList.first().getJob()
         se
         se.workflow.commands.size() == 1
-        se.workflow.commands.first().expandTokenInScriptFile == expandTokenInScriptFile
+        se.workflow.commands.first().configuration.expandTokenInScriptFile == expandTokenInScriptFile
 
         where:
         format | input             | expandTokenInScriptFile
