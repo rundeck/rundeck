@@ -18,6 +18,9 @@ package rundeck
 
 import org.rundeck.app.data.job.converters.WorkflowToRdWorkflowConverter
 import org.rundeck.core.execution.BaseCommandExec
+import org.rundeck.core.execution.ExecCommand
+import org.rundeck.core.execution.ScriptCommand
+import org.rundeck.core.execution.ScriptFileCommand
 import rundeck.data.constants.WorkflowStepConstants
 
 /*
@@ -193,6 +196,13 @@ public class CommandExec extends WorkflowStep implements BaseCommandExec {
         return map
     }
 
+    /**
+     *
+     * @param data
+     * @return
+     * @deprecated
+     */
+    @Deprecated
     static CommandExec fromMap(Map data) {
         CommandExec ce = new CommandExec()
         updateFromMap(ce, data)
@@ -200,36 +210,74 @@ public class CommandExec extends WorkflowStep implements BaseCommandExec {
     }
 
     static void updateFromMap(CommandExec ce, Map data) {
-        if(data.exec != null){
-            ce.adhocExecution = true
-            ce.adhocRemoteString=data.exec.toString()
-        }else if(data.script != null){
-            ce.adhocExecution = true
-            ce.adhocLocalString=data.script.toString()
-        }else if(data.scriptfile != null){
-            ce.adhocExecution = true
-            ce.adhocFilepath=data.scriptfile.toString()
-            ce.expandTokenInScriptFile = !!data.expandTokenInScriptFile
-        }else if(data.scripturl != null){
-            ce.adhocExecution = true
-            ce.adhocFilepath=data.scripturl.toString()
-            ce.expandTokenInScriptFile = !!data.expandTokenInScriptFile
-        }
-        if(data.scriptInterpreter != null && !ce.adhocRemoteString){
-            ce.scriptInterpreter=data.scriptInterpreter
-            ce.interpreterArgsQuoted = !!data.interpreterArgsQuoted
-        }
-        if(data.fileExtension != null && !ce.adhocRemoteString){
-            ce.fileExtension=data.fileExtension
-        }
-        if(data.args != null && !ce.adhocRemoteString){
-            ce.argString=data.args.toString()
-        }
-        ce.keepgoingOnSuccess=!!data.keepgoingOnSuccess
-        ce.description=data.description?.toString()
+        setConfigurationFromMap(ce, data)
+        ce.keepgoingOnSuccess = !!data.keepgoingOnSuccess
+        ce.description = data.description?.toString()
         //nb: error handler is created inside Workflow.fromMap
         if (data.plugins) {
             ce.pluginConfig = data.plugins
+        }
+    }
+    static Map createMapFromMap(Map data) {
+        def ce = [:]
+        setConfigurationFromMap(ce, data)
+        return ce
+    }
+    /**
+     *
+     * @param data
+     * @return true if the data represents a legacy imported command/script step
+     */
+    static boolean isLegacyBuiltinCommandData(Map data){
+        return !data.type && (data.exec!=null || data.script!=null || data.scriptfile!=null || data.scripturl!=null)
+    }
+
+    /**
+     *
+     * @param data
+     * @return new plugin type for legacy step configuration
+     */
+    static String getLegacyBuiltinCommandType(Map data){
+        if (data.exec != null) {
+            return ExecCommand.EXEC_COMMAND_TYPE
+        } else if (data.script != null) {
+            return ScriptCommand.SCRIPT_COMMAND_TYPE
+        } else if (data.scriptfile != null || data.scripturl!=null) {
+            return ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
+        }
+    }
+
+    /**
+     * Set configuration properties on the object from the
+     * imported data map
+     * @param obj new object
+     * @param data
+     */
+    private static void setConfigurationFromMap(Object obj, Map data) {
+        if (data.exec != null) {
+            obj.adhocExecution = true
+            obj.adhocRemoteString = data.exec.toString()
+        } else if (data.script != null) {
+            obj.adhocExecution = true
+            obj.adhocLocalString = data.script.toString()
+        } else if (data.scriptfile != null) {
+            obj.adhocExecution = true
+            obj.adhocFilepath = data.scriptfile.toString()
+            obj.expandTokenInScriptFile = !!data.expandTokenInScriptFile
+        } else if (data.scripturl != null) {
+            obj.adhocExecution = true
+            obj.adhocFilepath = data.scripturl.toString()
+            obj.expandTokenInScriptFile = !!data.expandTokenInScriptFile
+        }
+        if (data.scriptInterpreter != null && !obj.adhocRemoteString) {
+            obj.scriptInterpreter = data.scriptInterpreter
+            obj.interpreterArgsQuoted = !!data.interpreterArgsQuoted
+        }
+        if (data.fileExtension != null && !obj.adhocRemoteString) {
+            obj.fileExtension = data.fileExtension
+        }
+        if (data.args != null && !obj.adhocRemoteString) {
+            obj.argString = data.args.toString()
         }
     }
 
