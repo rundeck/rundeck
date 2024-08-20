@@ -1176,7 +1176,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         boolean success = false
         Execution.withTransaction {
             //find any currently running executions for this job, and if so, throw exception
-            def found = Execution.createCriteria().get {
+            def found = Execution.createCriteria().list {
                 delegate.'scheduledExecution' {
                     eq('id', scheduledExecution.id)
                 }
