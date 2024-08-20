@@ -155,7 +155,7 @@ describe("NodeDetailsSimple Component", () => {
     await toggleButton.trigger("click");
     await wrapper.vm.$nextTick();
     const expandedAttributes = wrapper.findAll(".hover-action-holder");
-    expect(expandedAttributes.length).toBe(12); // Adjust based on your expected output
+    expect(expandedAttributes.length).toBe(12); // expected output
   });
 
   it("renders node filter links when useDefaultColumns is true", async () => {
@@ -168,8 +168,6 @@ describe("NodeDetailsSimple Component", () => {
     const hostnameLink = wrapper.find(
       "[data-testid='node-attribute-link-hostname']",
     );
-    expect(usernameLink.exists()).toBe(true);
-    expect(hostnameLink.exists()).toBe(true);
     await usernameLink.trigger("click");
     expect(wrapper.emitted().filter).toBeTruthy();
     expect(wrapper.emitted().filter[0][0]).toEqual({
@@ -177,10 +175,7 @@ describe("NodeDetailsSimple Component", () => {
     });
     await hostnameLink.trigger("click");
     expect(wrapper.emitted().filter).toBeTruthy();
-    expect;
-    await hostnameLink.trigger("click");
-    expect(wrapper.emitted().filter).toBeTruthy();
-    expect(wrapper.emitted().filter.length).toBe(3);
+    expect(wrapper.emitted().filter.length).toBe(2);
     expect(wrapper.emitted().filter[1][0]).toEqual({
       filter: 'hostname: "host"',
     });
