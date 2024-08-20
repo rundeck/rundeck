@@ -69,9 +69,7 @@ public class LocalFileCopier extends BaseFileCopier implements FileCopier {
     ) throws FileCopierException
     {
 
-        if(disableLocalExecutor){
-            throw new FileCopierException("Local Executor is disabled", StepFailureReason.ConfigurationFailure);
-        }
+        validateDisableLocalExecutor();
 
         return BaseFileCopier.writeLocalFile(
                 scriptfile,
@@ -91,5 +89,11 @@ public class LocalFileCopier extends BaseFileCopier implements FileCopier {
 
     public String copyScriptContent(ExecutionContext context, String script, INodeEntry node, String destination) throws FileCopierException {
         return copyFile(context, null, null, script, node, destination);
+    }
+
+    protected void validateDisableLocalExecutor() throws FileCopierException {
+        if(disableLocalExecutor){
+            throw new FileCopierException("Local Executor is disabled", StepFailureReason.ConfigurationFailure);
+        }
     }
 }
