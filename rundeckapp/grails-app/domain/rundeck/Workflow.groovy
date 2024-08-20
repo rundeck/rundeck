@@ -229,13 +229,10 @@ public class Workflow implements WorkflowData {
         }
         if(data.commands){
             ArrayList commands = new ArrayList()
-            Set handlers = new HashSet()
             def createStep={Map map->
                 WorkflowStep exec
                 if (map.jobref!=null) {
                     exec = JobExec.jobExecFromMap(map)
-                } else if (map.exec != null || map.script != null || map.scriptfile != null || map.scripturl != null) {
-                    exec = CommandExec.fromMap(map)
                 } else {
                     exec = PluginStep.fromMap(map)
                 }
