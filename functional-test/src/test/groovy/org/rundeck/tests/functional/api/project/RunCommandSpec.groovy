@@ -26,7 +26,7 @@ class RunCommandSpec extends BaseContainer {
         def runResponseBody = runResponse.body().string()
         def parsedResponseBody = mapper.readValue(runResponseBody, RunCommand.class)
         def newExecId = parsedResponseBody.execution.id
-        waitForExecutionStatus(newExecId, 100)
+        waitForExecutionStatus(newExecId)
 
         then:
         noExceptionThrown()
@@ -39,7 +39,7 @@ class RunCommandSpec extends BaseContainer {
         runResponseBody = runResponse.body().string()
         parsedResponseBody = mapper.readValue(runResponseBody, RunCommand.class)
         newExecId = parsedResponseBody.execution.id
-        waitForExecutionStatus(newExecId, 100)
+        waitForExecutionStatus(newExecId)
 
         then:
         noExceptionThrown()
@@ -52,7 +52,7 @@ class RunCommandSpec extends BaseContainer {
         runResponseBody = runResponse.body().string()
         parsedResponseBody = mapper.readValue(runResponseBody, RunCommand.class)
         newExecId = parsedResponseBody.execution.id
-        waitForExecutionStatus(newExecId, 100)
+        waitForExecutionStatus(newExecId)
 
         then:
         noExceptionThrown()
