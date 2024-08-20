@@ -204,6 +204,16 @@ class JobUtils {
         return executionStatus
     }
 
+    static String getExecutionOutput(int executionId,  RdClient client, int lastLinesCount = 100) {
+        def resp = client.doGetAcceptAll("/execution/${executionId}/output?lastlines=${lastLinesCount}")
+
+       if (!resp.successful) {
+           throw new IllegalArgumentException("Unsuccessful API call:  " + resp);
+       }
+
+        resp.body().string()
+    }
+
     static ScmJobStatusResponse waitForJobStatusToBe(
             String jobId,
             GitScmApiClient gitScmApiClient,

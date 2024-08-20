@@ -1,13 +1,15 @@
 package org.rundeck.util.container
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
+import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.api.responses.execution.ExecutionOutput
 import org.rundeck.util.api.storage.KeyStorageApiClient
+import org.rundeck.util.common.WaitingTime
+import org.rundeck.util.common.jobs.JobUtils
 import spock.lang.Specification
 
 import java.text.SimpleDateFormat
@@ -21,7 +23,6 @@ import java.util.stream.Collectors
 /**
  * Base class for tests, starts a shared static container for all tests
  */
-@CompileStatic
 @Slf4j
 abstract class BaseContainer extends Specification implements ClientProvider {
     public static final String PROJECT_NAME = 'test'
@@ -349,50 +350,40 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     }
 
     /**
-     * Executes a job identified by jobId and waits until the job execution is completed.
-     *
-     * @param jobId The identifier of the job to run.
-     * @param body Additional parameters for the job execution. Default is null.
-     * @return A Map containing the final execution details.
+     *  Use the similar method in JobUtils
+     * @param jobId
+     * @param body
+     * @return
      */
+    @Deprecated
     Map runJobAndWait(String jobId, Object body = null) {
-        def path = "/job/${jobId}/run"
-        def response = client.post(path, body, Map)
-
-        // Handle a response that did not trigger a job execution
-        if (response.get("errorCode") != null) {
-            throw new RuntimeException("Failed to run job: ${response}")
+        def r = JobUtils.executeJobWithOptions(jobId, client, body)
+        if (!r.successful) {
+            throw new RuntimeException("Failed to run job: ${r}")
         }
 
-        return waitForExecutionStatus(response.id as int)
+        Execution execution = MAPPER.readValue(r.body().string(), Execution.class)
+        waitForExecutionStatus(execution.id)
+
+        // Maintains the data contract for the Map return type
+        client.get("/execution/${execution.id}/output", Map)
     }
 
     /**
-     * Waits for the execution with the specified ID to reach one of the specified statuses.
+     * Waits for the execution with the specified ID to reach one of the common terminal statuses.
      * @param executionId The identifier of the execution to monitor.
-     * @param maxWaitTimeInMs The maximum time to wait for the execution to reach one of the specified statuses.
-     * @param statusesToWaitFor The list of statuses to wait for. Default is ['aborted', 'failed', 'succeeded', 'timedout', 'other'].
-     * @return A Map containing the final execution details.
+     * @param timeout wait timeout
+     * @return
      */
-    Map waitForExecutionStatus(int executionId, int maxWaitTimeInMs = Integer.MAX_VALUE, List<String> statusesToWaitFor = [
-            'aborted',
-            'failed',
-            'succeeded',
-            'timedout',
-            'other']) {
+    Execution waitForExecutionStatus(int executionId, WaitingTime timeout = WaitingTime.MODERATE) {
+        final List<String> statusesToWaitFor = [
+                'aborted',
+                'failed',
+                'succeeded',
+                'timedout',
+                'other']
 
-        final DEFAULT_WAIT_BETWEEN_CYCLES_IN_MS = 10_000
-        final def waitTimeBetweenCyclesInMs = Math.min(maxWaitTimeInMs, DEFAULT_WAIT_BETWEEN_CYCLES_IN_MS)
-        int totalWaitTimeInMs = 0
-        while (totalWaitTimeInMs < maxWaitTimeInMs) {
-            def exec = client.get("/execution/${executionId}/output", Map)
-            if (statusesToWaitFor.contains(exec.execState)) {
-                return exec
-            } else {
-                sleep waitTimeBetweenCyclesInMs
-                totalWaitTimeInMs += waitTimeBetweenCyclesInMs
-            }
-        }
+        JobUtils.waitForExecutionToBe(statusesToWaitFor, "$executionId", MAPPER, client, WaitingTime.LOW, timeout)
     }
 
     /**
