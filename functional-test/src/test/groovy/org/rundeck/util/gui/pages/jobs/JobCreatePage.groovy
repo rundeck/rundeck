@@ -56,7 +56,6 @@ class JobCreatePage extends BasePage {
     By cancelBy = By.id('createFormCancelButton')
     By optionBy = By.cssSelector("#optnewbutton > span")
     By nodeStepSectionActiveBy = By.cssSelector(".node_step_section.tab-pane.active")
-    By workflowAlphaUiContainer = By.id('workflowContent2') // TODO: delete once out of Alpha
 
     static class NextUi {
         static By jobNameInputBy = By.cssSelector("form input[id=\"schedJobName\"]")
@@ -815,9 +814,6 @@ class JobCreatePage extends BasePage {
         return (el nodeStepSectionActiveBy).findElements(By.name(pluginName)).size()
     }
 
-    WebElement getWorkflowAlphaUiContainer() {
-        el workflowAlphaUiContainer
-    }
 }
 
 
