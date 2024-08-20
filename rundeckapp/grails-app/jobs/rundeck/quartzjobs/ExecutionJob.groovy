@@ -669,7 +669,7 @@ class ExecutionJob implements InterruptableJob {
         }
         else if(!projectName.equals(se.project)){
             context.getScheduler().deleteJob(context.jobDetail.key)
-            throw new RuntimeException("ScheduledExecution found but it does not match the original project name to schedule. Project name orinally scheduled : ${projectName} , Project name from scheduled execution : ${se.project}")
+            throw new RuntimeException("ScheduledExecution found but it does not match the original project name to schedule. Project name was : ${projectName} , Project name now : ${se.project}")
         }
 
         if (! se instanceof ScheduledExecution) {
