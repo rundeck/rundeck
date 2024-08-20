@@ -5,8 +5,10 @@ import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.api.responses.jobs.Job
 import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.httpbody.ScmJobStatusResponse
+import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.container.RdClient
 
+import java.time.Duration
 import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 
@@ -116,26 +118,88 @@ class JobUtils {
         return jobs[0]
     }
 
+
+    /**
+     * Waits for the execution to be in the expected state.
+     *
+     * @param expectedStates The expected state.
+     * @param executionId The execution ID to query.
+     * @param mapper The ObjectMapper instance to parse the response.
+     * @param client The RdClient instance to perform the HTTP request.
+     * @param iterationGap The duration to wait between each check.
+     * @param timeout The maximum duration to wait for the execution to reach the expected state.
+     * @return The Execution object representing the execution status.
+     * @throws InterruptedException if the timeout is reached before the execution reaches the expected state.
+     */
     static Execution waitForExecutionToBe(
             String state,
             String executionId,
             ObjectMapper mapper,
             RdClient client,
-            int iterationGap,
-            int timeout
-    ){
+            WaitingTime iterationGap,
+            WaitingTime timeout
+    ) {
+        return waitForExecutionToBe([state], executionId, mapper, client, iterationGap.duration, timeout.duration)
+    }
+
+    /**
+     * Waits for the execution to be in one of the expected states.
+     *
+     * @param expectedStates A list of expected states.
+     * @param executionId The execution ID to query.
+     * @param mapper The ObjectMapper instance to parse the response.
+     * @param client The RdClient instance to perform the HTTP request.
+     * @param iterationGap The duration to wait between each check.
+     * @param timeout The maximum duration to wait for the execution to reach the expected state.
+     * @return The Execution object representing the execution status.
+     * @throws InterruptedException if the timeout is reached before the execution reaches the expected state.
+     */
+    static Execution waitForExecutionToBe(
+            Collection<String> expectedStates,
+            String executionId,
+            ObjectMapper mapper,
+            RdClient client,
+            WaitingTime iterationGap,
+            WaitingTime timeout
+    ) {
+        return waitForExecutionToBe(expectedStates, executionId, mapper, client, iterationGap.duration, timeout.duration)
+    }
+
+
+    /**
+     * Waits for the execution to be in one of the expected states.
+     *
+     * @param expectedStates A list of expected states.
+     * @param executionId The execution ID to query.
+     * @param mapper The ObjectMapper instance to parse the response.
+     * @param client The RdClient instance to perform the HTTP request.
+     * @param iterationGap The duration to wait between each check.
+     * @param timeout The maximum duration to wait for the execution to reach the expected state.
+     * @return The Execution object representing the execution status.
+     * @throws InterruptedException if the timeout is reached before the execution reaches the expected state.
+     */
+    static Execution waitForExecutionToBe(
+            Collection<String> expectedStates,
+            String executionId,
+            ObjectMapper mapper,
+            RdClient client,
+            Duration iterationGap,
+            Duration timeout
+    ) {
         Execution executionStatus
         def execDetail = client.doGet("/execution/${executionId}")
         executionStatus = mapper.readValue(execDetail.body().string(), Execution.class)
         long initTime = System.currentTimeMillis()
-        while(executionStatus.status != state){
-            if ((System.currentTimeMillis() - initTime) >= TimeUnit.SECONDS.toMillis(timeout)) {
-                throw new InterruptedException("Timeout reached (${timeout} seconds), the execution had \"${executionStatus.status}\" state.")
+        while (!expectedStates.contains(executionStatus.status)) {
+            if ((System.currentTimeMillis() - initTime) >= timeout.toMillis()) {
+                throw new InterruptedException("Timeout reached (${timeout.toSeconds()} seconds), the execution had \"${executionStatus.status}\" state.")
             }
             def transientExecutionResponse = client.doGet("/execution/${executionId}")
             executionStatus = mapper.readValue(transientExecutionResponse.body().string(), Execution.class)
-            if( executionStatus.status == state ) break
-            Thread.sleep(iterationGap)
+            if (expectedStates.contains(executionStatus.status)) {
+                break
+            }
+            Thread.sleep(Math.min(iterationGap.toMillis(), timeout.toMillis()))
         }
         return executionStatus
     }

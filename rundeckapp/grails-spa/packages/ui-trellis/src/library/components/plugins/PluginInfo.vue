@@ -13,13 +13,15 @@
       {{ title }}
     </span>
     <slot name="descriptionprefix"> </slot>
-    <PluginDetails
-      :show-description="showDescription"
-      :show-extended="showExtended"
-      :description="description"
-      :description-css="descriptionCss"
-      :extended-css="extendedCss"
-    />
+    <slot name="description">
+      <PluginDetails
+        :show-description="showDescription"
+        :show-extended="showExtended"
+        :description="description"
+        :description-css="descriptionCss"
+        :extended-css="extendedCss"
+      />
+    </slot>
 
     <slot name="suffix"></slot>
   </span>

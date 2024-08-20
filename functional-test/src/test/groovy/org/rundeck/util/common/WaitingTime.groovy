@@ -1,16 +1,20 @@
 package org.rundeck.util.common
 
+import java.time.Duration
+
 enum WaitingTime {
 
-    LOW("A Second", 1000),
-    MODERATE("Five Seconds", 5000),
-    EXCESSIVE("Sixty seconds", 60000)
+    LOW("A Second", Duration.ofSeconds(1)),
+    MODERATE("Five Seconds", Duration.ofSeconds(5)),
+    EXCESSIVE("Sixty seconds", Duration.ofSeconds(60)),
+    XTRA_EXCESSIVE("One-hundred twenty seconds", Duration.ofSeconds(120))
+
 
     public final String label
-    public final int milliSeconds
+    public final Duration duration
 
-    WaitingTime(String label, int seconds) {
+    WaitingTime(String label, Duration duration) {
         this.label = label
-        this.milliSeconds = seconds
+        this.duration = duration
     }
 }

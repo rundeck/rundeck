@@ -26,19 +26,24 @@ import java.util.stream.Collectors
 @Slf4j
 abstract class BaseContainer extends Specification implements ClientProvider {
     public static final String PROJECT_NAME = 'test'
-    private static RdContainer RUNDECK
-    private static final Object LOCK = new Object()
+    private static final Object CLIENT_PROVIDER_LOCK = new Object()
     private static ClientProvider CLIENT_PROVIDER
     private static final String DEFAULT_DOCKERFILE_LOCATION = System.getenv("DEFAULT_DOCKERFILE_LOCATION") ?: System.getProperty("DEFAULT_DOCKERFILE_LOCATION")
-    private static final String TEST_RUNDECK_URL = System.getenv("TEST_RUNDECK_URL")?: System.getProperty("TEST_RUNDECK_URL")
+    protected static final String TEST_RUNDECK_URL = System.getenv("TEST_RUNDECK_URL") ?: System.getProperty("TEST_RUNDECK_URL")
+    protected static final String TEST_RUNDECK_TOKEN = System.getenv("TEST_RUNDECK_TOKEN") ?: System.getProperty("TEST_RUNDECK_TOKEN", "admintoken")
 
     ClientProvider getClientProvider() {
-        if (TEST_RUNDECK_URL != null) {
-            if (CLIENT_PROVIDER == null) {
+        synchronized (CLIENT_PROVIDER_LOCK) {
+
+            if (CLIENT_PROVIDER != null) {
+                return CLIENT_PROVIDER
+            }
+
+            if (TEST_RUNDECK_URL != null) {
                 CLIENT_PROVIDER = new ClientProvider() {
                     @Override
                     RdClient getClient() {
-                        return RdClient.create(TEST_RUNDECK_URL, System.getenv("TEST_RUNDECK_TOKEN"))
+                        return RdClient.create(TEST_RUNDECK_URL, TEST_RUNDECK_TOKEN)
                     }
 
                     @Override
@@ -46,30 +51,35 @@ abstract class BaseContainer extends Specification implements ClientProvider {
                         return RdClient.create(TEST_RUNDECK_URL, token)
                     }
                 }
-            }
-        } else if (DEFAULT_DOCKERFILE_LOCATION != null && !DEFAULT_DOCKERFILE_LOCATION.isEmpty() && CLIENT_PROVIDER == null){
-            synchronized (LOCK) {
+
+            } else if (DEFAULT_DOCKERFILE_LOCATION != null && !DEFAULT_DOCKERFILE_LOCATION.isBlank()) {
                 RdDockerContainer rdDockerContainer = new RdDockerContainer(getClass().getClassLoader().getResource(DEFAULT_DOCKERFILE_LOCATION).toURI())
                 rdDockerContainer.start()
                 CLIENT_PROVIDER = rdDockerContainer
-            }
-        } else if (RUNDECK == null && DEFAULT_DOCKERFILE_LOCATION == null) {
-            synchronized (LOCK) {
+
+
+            } else {
                 // Override default timeout values to accommodate slow container startups
                 Map<String, Integer> clientConfig = Map.of(
-                        "readTimeout", 60,
+                    "readTimeout", 60,
                 )
 
+                String featureName = System.getProperty("TEST_FEATURE_ENABLED_NAME")
                 log.info("Starting testcontainer: ${getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI()}")
                 log.info("Starting testcontainer: RUNDECK_IMAGE: ${RdContainer.RUNDECK_IMAGE}")
                 log.info("Starting testcontainer: LICENSE_LOCATION: ${RdContainer.LICENSE_LOCATION}")
                 log.info("Starting testcontainer: TEST_RUNDECK_GRAILS_URL: ${RdContainer.TEST_RUNDECK_GRAILS_URL}")
-                RUNDECK = new RdContainer(getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI(), clientConfig)
-                RUNDECK.start()
-                CLIENT_PROVIDER = RUNDECK
+                var rundeckContainer = new RdContainer(
+                    getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI(),
+                    featureName,
+                    clientConfig
+                )
+                rundeckContainer.start()
+                CLIENT_PROVIDER = rundeckContainer
             }
+
+            return CLIENT_PROVIDER
         }
-        return CLIENT_PROVIDER
     }
 
     void setupProject() {
@@ -91,8 +101,8 @@ abstract class BaseContainer extends Specification implements ClientProvider {
      * @param params
      * @return
      */
-    static String buildUrlParams(Map params){
-        return params.collect{
+    static String buildUrlParams(Map params) {
+        return params.collect {
             "${it.key}=${it.value}"
         }.join("&")
     }
@@ -106,10 +116,10 @@ abstract class BaseContainer extends Specification implements ClientProvider {
             name,
             archiveFileResourcePath,
             [
-                importConfig: true,
-                importACL: true,
+                importConfig      : true,
+                importACL         : true,
                 importNodesSources: true,
-                importScm: true
+                importScm         : true
             ]
         )
     }
@@ -120,19 +130,19 @@ abstract class BaseContainer extends Specification implements ClientProvider {
      * @param params URL parameters for the import request
      */
     void setupProject(String name, String archiveFileResourcePath, Map params) {
-        setupProjectArchiveFile(name,new File(getClass().getResource(archiveFileResourcePath).getPath()), params)
+        setupProjectArchiveFile(name, new File(getClass().getResource(archiveFileResourcePath).getPath()), params)
     }
 
-    def loadKeysForNodes(String baseKeyPath, String project, String nodeKeyPassPhrase, String nodeUserPassword, String userVaultPassword){
+    def loadKeysForNodes(String baseKeyPath, String project, String nodeKeyPassPhrase, String nodeUserPassword, String userVaultPassword) {
         client.doPost("/storage/keys/project/$project/ssh-node.key", new File("${baseKeyPath}/id_rsa"), "application/octet-stream")
         client.doPost("/storage/keys/project/$project/ssh-node-passphrase.key", new File("${baseKeyPath}/id_rsa_passphrase"), "application/octet-stream")
-        if(nodeKeyPassPhrase) loadKey("project/$project/ssh-node-passphrase.pass", nodeKeyPassPhrase, "password")
-        if(nodeUserPassword) loadKey("project/$project/ssh-node.pass", nodeUserPassword, "password")
-        if(userVaultPassword) loadKey("project/$project/vault-user.pass", userVaultPassword, "password")
+        if (nodeKeyPassPhrase) loadKey("project/$project/ssh-node-passphrase.pass", nodeKeyPassPhrase, "password")
+        if (nodeUserPassword) loadKey("project/$project/ssh-node.pass", nodeUserPassword, "password")
+        if (userVaultPassword) loadKey("project/$project/vault-user.pass", userVaultPassword, "password")
 
     }
 
-    def loadKey(String path, String dbPass, String keyType){
+    def loadKey(String path, String dbPass, String keyType) {
         KeyStorageApiClient keyStorageApiClient = new KeyStorageApiClient(clientProvider)
         keyStorageApiClient.callUploadKey(path, keyType, dbPass)
     }
@@ -161,7 +171,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
                 importConfig      : true,
                 importACL         : true,
                 importNodesSources: true,
-                importScm: true
+                importScm         : true
             ]
         )
     }
@@ -177,12 +187,12 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         tempFile.delete()
     }
 
-    List getExecutionOutput(String execId){
+    List getExecutionOutput(String execId) {
         def mapper = new ObjectMapper()
         def execOutputResponse = client.doGetAcceptAll("/execution/${execId}/output")
         ExecutionOutput execOutput = mapper.readValue(execOutputResponse.body().string(), ExecutionOutput.class)
-        def entries = execOutput.entries.stream().map {it.log}.collect(Collectors.toList())
-         return entries
+        def entries = execOutput.entries.stream().map { it.log }.collect(Collectors.toList())
+        return entries
     }
 
     /**
@@ -192,7 +202,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
      * @return
      */
     File createArchiveJarFile(String name, File projectArchiveDirectory) {
-        if(!projectArchiveDirectory.isDirectory()){
+        if (!projectArchiveDirectory.isDirectory()) {
             throw new IllegalArgumentException("Must be a directory")
         }
         //create a project archive from the contents of the directory
@@ -235,12 +245,12 @@ abstract class BaseContainer extends Specification implements ClientProvider {
      * @param params URL parameters for the import request
      */
     void setupProjectArchiveFile(String name, File projectArchive, Map params) {
-        if(!projectArchive.isFile()){
+        if (!projectArchive.isFile()) {
             throw new IllegalArgumentException("Must be a file")
         }
         try (Response getProject = client.doGet("/project/${name}")) {
             if (getProject.code() == 404) {
-                try(def post = client.doPost("/projects", [name: name])) {
+                try (def post = client.doPost("/projects", [name: name])) {
                     if (!post.successful) {
                         throw new RuntimeException("Failed to create project: ${post.body().string()}")
                     }
@@ -261,15 +271,15 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         }
     }
 
-    def waitingResourceEnabled(String project, String nodename){
+    def waitingResourceEnabled(String project, String nodename) {
         def client = clientProvider.client
         def response = client.doGet("/project/$project/resources")
         def mapper = new ObjectMapper()
         Map<String, Map> nodeList = mapper.readValue(response.body().string(), Map.class)
         println(nodeList)
-        def count =0
+        def count = 0
 
-        while(nodeList.get(nodename)==null && count<5){
+        while (nodeList.get(nodename) == null && count < 5) {
             sleep(5000)
             //force refresh project
             client.doPutWithJsonBody("/project/$project/config/time", ["time": System.currentTimeMillis()])
@@ -281,6 +291,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     }
 
     RdClient _client
+
     @Override
     RdClient getClient() {
         if (null == _client) {
@@ -350,11 +361,11 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         def path = "/job/${jobId}/run"
         def response = client.post(path, body, Map)
         def finalStatus = [
-                'aborted',
-                'failed',
-                'succeeded',
-                'timedout',
-                'other'
+            'aborted',
+            'failed',
+            'succeeded',
+            'timedout',
+            'other'
         ]
 
         // Handle a response that did not trigger a job execution
@@ -362,7 +373,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
             throw new RuntimeException("Failed to run job: ${response}")
         }
 
-        while(true) {
+        while (true) {
             def exec = client.get("/execution/${response.id}/output", Map)
             if (finalStatus.contains(exec.execState)) {
                 return exec
@@ -434,10 +445,10 @@ abstract class BaseContainer extends Specification implements ClientProvider {
      * @param project The name of the project to add configuration
      * @param configure configuration map
      */
-    def addExtraProjectConfig(String project, Map<String, String> configure){
-        configure.forEach {key, value ->
+    def addExtraProjectConfig(String project, Map<String, String> configure) {
+        configure.forEach { key, value ->
             Response response = client.doPutWithJsonBody("/project/$project/config/$key",
-                    [ "key":key, "value":value ]
+                ["key": key, "value": value]
             )
             if (!response.successful) {
                 throw new RuntimeException("Failed to add configuration options to a project: ${response.body().string()}")
