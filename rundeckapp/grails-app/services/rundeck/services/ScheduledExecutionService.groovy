@@ -779,7 +779,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         long start = System.currentTimeMillis()
         def result = closure()
         long end = System.currentTimeMillis()
-        println("Timer ${name} took ${end-start}ms")
+        log.info("Timer ${name} took ${end-start}ms")
         return result
     }
     /**
@@ -4477,7 +4477,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             String qry = JobTakeoverQueryBuilder.buildTakeoverQuery(toServerUUID, fromServerUUID, selectAll, projectFilter, jobids, ignoreInnerScheduled)
             var sql = new Sql(dataSource)
             List<ScheduledExecution> jobList = []
-            sql.rows(qry.toString()).each {
+            Map qryParams = ["toServerUUID":toServerUUID]
+            if(fromServerUUID){
+                qryParams["fromServerUUID"] = fromServerUUID
+            }
+            if(projectFilter){
+                qryParams["projectFilter"] = projectFilter
+            }
+
+            sql.rows(qry, qryParams).each {
                 jobList.add(ScheduledExecution.read(it.id as Serializable))
             }
             return jobList
