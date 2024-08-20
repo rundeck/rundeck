@@ -3135,47 +3135,53 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         result.jobs.size() == 1
         result.jobs[0].properties.subMap(expect.keySet()) == expect
         1 * service.rundeckAuthContextProcessor.authorizeProjectJobAny(_,_,_,_) >> true
+
         where:
-        origprops | inparams                   | expect
+        origprops | inparams | expect
         //basic fields updated
-        [:]  | [description: 'milk duds'] | [description: 'milk duds']
+        [:] | [description: 'milk duds'] | [description: 'milk duds']
         //remove node filters
-//        [doNodedispatch: true, filter: 'something',]|
-//                [:]|
-//                [doNodedispatch: false, filter: null,]
-//        //override filters
-//        [doNodedispatch: true, nodeInclude: "monkey.*", nodeExcludeOsFamily: 'windows', nodeIncludeTags: 'something',]|[doNodedispatch: true,
-//                                                                                                                        nodeThreadcount: 1,
-//                                                                                                                        nodeKeepgoing: true,
-//                                                                                                                        nodeExcludePrecedence: true,
-//                                                                                                                        nodeInclude: 'asuka',
-//                                                                                                                        nodeIncludeName: 'test',
-//                                                                                                                        nodeExclude: 'testo',
-//                                                                                                                        nodeExcludeTags: 'dev']|[doNodedispatch: true,
-//                                                                                                                                                 nodeThreadcount: 1,
-//                                                                                                                                                 nodeKeepgoing: true,
-//                                                                                                                                                 nodeExcludePrecedence: true,
-//                                                                                                                                                 nodeInclude: null,
-//                                                                                                                                                 nodeIncludeName: null,
-//                                                                                                                                                 nodeExclude: null,
-//                                                                                                                                                 nodeExcludeTags: null]
-//        //
-//        [doNodedispatch: true,nodeInclude: 'test',nodeThreadcount: 1] |
-//                [nodeThreadcount: 4,
-//                 nodeKeepgoing: true,
-//                 nodeExcludePrecedence: true,
-//                 nodeInclude: 'asuka',
-//                 nodeIncludeName: 'test',
-//                 nodeExclude: 'testo',
-//                 nodeExcludeTags: 'dev']|
-//                [
-//                        nodeThreadcount: 4,
-//                        nodeKeepgoing: true,
-//                        nodeExcludePrecedence: true,
-//                        nodeInclude: null,
-//                        nodeIncludeName: null,
-//                        nodeExclude: null,
-//                        nodeExcludeTags: null]
+        [doNodedispatch: true, filter: 'something',] |
+            [:] |
+            [doNodedispatch: false, filter: null,]
+        //override filters
+        [doNodedispatch: true, nodeInclude: "monkey.*", nodeExcludeOsFamily: 'windows', nodeIncludeTags: 'something',] |
+
+            [doNodedispatch       : true,
+             nodeThreadcount      : 1,
+             nodeKeepgoing        : true,
+             nodeExcludePrecedence: true,
+             nodeInclude          : 'asuka',
+             nodeIncludeName      : 'test',
+             nodeExclude          : 'testo',
+             nodeExcludeTags      : 'dev'] |
+
+            [doNodedispatch       : true,
+             nodeThreadcount      : 1,
+             nodeKeepgoing        : true,
+             nodeExcludePrecedence: true,
+             nodeInclude          : null,
+             nodeIncludeName      : null,
+             nodeExclude          : null,
+             nodeExcludeTags      : null]
+        //
+        [doNodedispatch: true, nodeInclude: 'test', nodeThreadcount: 1] |
+            [nodeThreadcount      : 4,
+             nodeKeepgoing        : true,
+             nodeExcludePrecedence: true,
+             nodeInclude          : 'asuka',
+             nodeIncludeName      : 'test',
+             nodeExclude          : 'testo',
+             nodeExcludeTags      : 'dev'] |
+
+            [
+                nodeThreadcount      : 4,
+                nodeKeepgoing        : true,
+                nodeExcludePrecedence: true,
+                nodeInclude          : null,
+                nodeIncludeName      : null,
+                nodeExclude          : null,
+                nodeExcludeTags      : null]
     }
 
     def "load jobs cluster mode should set server UUID"(){
