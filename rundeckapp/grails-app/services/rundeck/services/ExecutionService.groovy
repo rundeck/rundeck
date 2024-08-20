@@ -3064,12 +3064,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     @CompileStatic
-    def saveExecutionState( schedId, exId, Map props, AsyncStarted execmap, Map retryContext){
+    def saveExecutionState(schedId, exId, Map props, AsyncStarted execmap, Map retryContext) {
         def event = Execution.withNewTransaction {
             saveCompletedExecution_currentTransaction(schedId, exId, props, execmap, retryContext)
         }
 
-        sendJobNotifications_currentTransaction(execmap, event)
+        triggerJobCompleteNotifications(execmap, event)
     }
 
     /**
@@ -3221,10 +3221,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
-    private def sendJobNotifications_currentTransaction(AsyncStarted execmap, ExecutionCompleteEvent event) {
-        def context = execmap?.thread?.context
+    private def triggerJobCompleteNotifications(AsyncStarted execRun, ExecutionCompleteEvent event) {
+        def context = execRun?.thread?.context
         def execution = event.execution
-        def export = execmap?.thread?.resultObject?.getSharedContext()?.consolidate()?.getData(ContextView.global())
+        def export = execRun?.thread?.resultObject?.getSharedContext()?.consolidate()?.getData(ContextView.global())
 
         notificationService.asyncTriggerJobNotification(
                 execution.statusSucceeded() ? 'success' : execution.willRetry ? 'retryablefailure' : 'failure',
