@@ -112,8 +112,8 @@ class JobReferenceSpec extends SeleniumBase {
                     executionId as String,
                     new ObjectMapper(),
                     client,
-                    WaitingTime.MODERATE.milliSeconds,
-                    WaitingTime.MODERATE.milliSeconds / 1000 as int
+                    WaitingTime.MODERATE,
+                    WaitingTime.MODERATE
             )
             executionPage.waitForElementAttributeToChange executionPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED'
             executionPage.getLogOutput().first().getText() == 'this is my jobref'

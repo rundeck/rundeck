@@ -11,13 +11,15 @@
     <span v-if="showTitle" :class="titleCss" style="margin-left: 5px">
       {{ title }}
     </span>
-    <PluginDetails
-      :show-description="showDescription"
-      :show-extended="showExtended"
-      :description="description"
-      :description-css="descriptionCss"
-      :extended-css="extendedCss"
-    />
+    <slot name="description">
+      <PluginDetails
+        :show-description="showDescription"
+        :show-extended="showExtended"
+        :description="description"
+        :description-css="descriptionCss"
+        :extended-css="extendedCss"
+      />
+    </slot>
 
     <slot name="suffix"></slot>
   </span>
