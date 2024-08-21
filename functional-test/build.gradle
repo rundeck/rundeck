@@ -133,6 +133,20 @@ task seleniumCoreTest(type: Test){
     }
 }
 
+task alphaUiSeleniumCoreTest(type: Test){
+    useJUnitPlatform()
+    def featureName='alphaUi'
+    systemProperty("TEST_FEATURE_ENABLED_NAME", featureName)
+    systemProperty('TEST_IMAGE', "rundeck/rundeck:SNAPSHOT")
+    systemProperty("COMPOSE_PATH", "docker/compose/oss/docker-compose.yml")
+    systemProperty('spock.configuration', 'spock-configs/IncludeAlphaUiSeleniumCoreTestsConfig.groovy')
+    description = "Run Rundeck OSS Selenium Tests with Alpha UI feature flag enabled"
+
+    if (project.hasProperty("testFiles")) {
+        include(explicitTestIncluder(project.properties["testFiles"]))
+    }
+}
+
 task ldapTest(type: Test){
     useJUnitPlatform()
     systemProperty("TEST_IMAGE", "rundeck/rundeck:SNAPSHOT")
