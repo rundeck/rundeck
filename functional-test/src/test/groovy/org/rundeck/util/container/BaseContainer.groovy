@@ -6,7 +6,6 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
 import org.rundeck.util.api.responses.execution.Execution
-import org.rundeck.util.api.responses.execution.ExecutionOutput
 import org.rundeck.util.api.storage.KeyStorageApiClient
 import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.jobs.JobUtils
@@ -18,7 +17,6 @@ import java.util.function.Consumer
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
-import java.util.stream.Collectors
 
 /**
  * Base class for tests, starts a shared static container for all tests
@@ -188,11 +186,14 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         tempFile.delete()
     }
 
-    List getExecutionOutput(String execId) {
-        def execOutputResponse = client.doGetAcceptAll("/execution/${execId}/output")
-        ExecutionOutput execOutput = safelyMap(execOutputResponse, ExecutionOutput.class)
-        def entries = execOutput.entries.stream().map { it.log }.collect(Collectors.toList())
-        return entries
+    /**
+     * Retrieves the execution output for the specified execution ID as a list of strings. One line per element.
+     * @param execId The identifier of the execution to retrieve the output from.
+     * @return A list of strings, each representing a line of the execution output.
+     */
+    List<String> getExecutionOutputLines(String execId) {
+        def execOutput = JobUtils.getExecutionOutput(execId, client)
+        return execOutput.entries.collect { it.log }
     }
 
     /**
@@ -363,7 +364,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         }
 
         Execution execution = MAPPER.readValue(r.body().string(), Execution.class)
-        waitForExecutionStatus(execution.id)
+        waitForExecutionStatus(execution.id as String)
 
         // Maintains the data contract for the Map return type
         client.get("/execution/${execution.id}/output", Map)
@@ -375,7 +376,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
      * @param timeout wait timeout
      * @return
      */
-    Execution waitForExecutionStatus(int executionId, WaitingTime timeout = WaitingTime.MODERATE) {
+    Execution waitForExecutionStatus(String executionId, WaitingTime timeout = WaitingTime.MODERATE) {
         final List<String> statusesToWaitFor = [
                 'aborted',
                 'failed',
@@ -383,7 +384,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
                 'timedout',
                 'other']
 
-        JobUtils.waitForExecutionToBe(statusesToWaitFor, "$executionId", MAPPER, client, WaitingTime.LOW, timeout)
+        JobUtils.waitForExecutionToBe(statusesToWaitFor, executionId, MAPPER, client, WaitingTime.LOW, timeout)
     }
 
     /**
