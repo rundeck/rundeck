@@ -126,12 +126,13 @@ class PluginStep extends WorkflowStep{
     }
 
     static void updateFromMap(PluginStep ce, Map data) {
-        ce.nodeStep=data.nodeStep
         if (CommandExec.isLegacyBuiltinCommandData(data)) {
             //keep job def import compatibility with old Rundeck versions prior to 5.x
+            ce.nodeStep = true
             ce.type = CommandExec.getLegacyBuiltinCommandType(data)
             ce.configuration = CommandExec.createMapFromMap(data)
         } else {
+            ce.nodeStep = data.nodeStep
             ce.type = data.type
             ce.configuration = data.configuration
         }
