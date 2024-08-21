@@ -17,8 +17,11 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
+import groovy.sql.Sql
 import rundeck.data.job.reference.JobReferenceImpl
 import rundeck.data.job.reference.JobRevReferenceImpl
+import rundeck.data.util.JobTakeoverQueryBuilder
+import rundeck.services.feature.FeatureService
 import rundeck.support.filters.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.audit.ActionTypes
@@ -152,6 +155,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     ReferencedExecutionDataProvider referencedExecutionDataProvider
     JobStatsDataProvider jobStatsDataProvider
     QuartzJobSpecifier quartzJobSpecifier
+    def dataSource
 
     public final String REMOTE_OPTION_DISABLE_JSON_CHECK = 'project.jobs.disableRemoteOptionJsonCheck'
 
@@ -218,6 +222,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     JobDataProvider jobDataProvider
     UserService userService
     RdJobService rdJobService
+    FeatureService featureService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -770,6 +775,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return [claimed: !retry, executions: claimedExecs]
     }
 
+    def timer(String name, Closure closure) {
+        long start = System.currentTimeMillis()
+        def result = closure()
+        long end = System.currentTimeMillis()
+        log.info("Timer ${name} took ${end-start}ms")
+        return result
+    }
     /**
      * Claim scheduling for any jobs assigned to fromServerUUID, or not assigned if it is null
      * @param toServerUUID uuid to assign to scheduled jobs
@@ -789,7 +801,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def queryFromServerUUID = fromServerUUID
         def queryProject = projectFilter
         ScheduledExecution.withSession { session ->
-            def scheduledExecutions = jobSchedulesService.getSchedulesJobToClaim(toServerUUID, queryFromServerUUID, selectAll, queryProject, jobids)
+            def scheduledExecutions = timer("takeover query ") {
+                jobSchedulesService.getSchedulesJobToClaim(toServerUUID, queryFromServerUUID, selectAll, queryProject, jobids)
+            }
             scheduledExecutions.each { ScheduledExecution se ->
                 def orig = se.serverNodeUUID
                 if (!claimed[se.extid]) {
@@ -4458,7 +4472,25 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return
      */
     List<ScheduledExecution> getSchedulesJobToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids, ignoreInnerScheduled = false) {
+        if(featureService.featurePresent("enhancedJobTakeoverQuery")) {
+            log.info("Using enhanced job takeover query")
+            String qry = JobTakeoverQueryBuilder.buildTakeoverQuery(toServerUUID, fromServerUUID, selectAll, projectFilter, jobids, ignoreInnerScheduled)
+            var sql = new Sql(dataSource)
+            List<ScheduledExecution> jobList = []
+            Map qryParams = ["toServerUUID":toServerUUID]
+            if(fromServerUUID){
+                qryParams["fromServerUUID"] = fromServerUUID
+            }
+            if(projectFilter){
+                qryParams["projectFilter"] = projectFilter
+            }
 
+            sql.rows(qry, qryParams).each {
+                jobList.add(ScheduledExecution.read(it.id as Serializable))
+            }
+            return jobList
+        }
+        log.info("Using legacy job takeover query")
         return ScheduledExecution.createCriteria().listDistinct {
             or {
                 applyAdhocScheduledExecutionsCriteria(delegate, selectAll, fromServerUUID, toServerUUID, projectFilter)
