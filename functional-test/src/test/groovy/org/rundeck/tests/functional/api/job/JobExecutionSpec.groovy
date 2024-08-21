@@ -1979,7 +1979,6 @@ class JobExecutionSpec extends BaseContainer {
         )
 
         then:
-        then:
         jobExecutionStatus.status == ExecutionStatus.SUCCEEDED.state
         // Verify that all steps on the first (and the only) node are in the SUCCEEDED state
         client.jsonValue(client.doGetAcceptAll("/execution/$jobExecutionStatus.id/state").body(), Map).nodes.values()[0].every({val -> val.executionState == "SUCCEEDED"} )

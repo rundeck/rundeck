@@ -22,8 +22,8 @@ class JobSpec extends BaseContainer {
             assert r.successful
             Execution execution = MAPPER.readValue(r.body().string(), Execution.class)
 
-            waitForExecutionStatus(execution.id)
-            String fullLog = JobUtils.getExecutionOutput(execution.id, client)
+            waitForExecutionStatus(execution.id as String)
+            String fullLog = JobUtils.getExecutionOutputText(execution.id as String, client)
         expect:
             [
                     'hello there',

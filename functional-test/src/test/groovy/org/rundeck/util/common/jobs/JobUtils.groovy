@@ -229,10 +229,11 @@ class JobUtils {
      * Retrieves the execution output for the specified execution ID.
      * @param execId The execution ID to query.
      * @param client The RdClient instance to perform the HTTP request.
+     * @param lastLinesCount The number of last lines to retrieve. Defaults to 0 (unlimited).
      * @return The ExecutionOutput object representing the execution output.
      */
-    static ExecutionOutput getExecutionOutput(String execId, RdClient client) {
-        def execOutputResponse = client.doGetAcceptAll("/execution/${execId}/output")
+    static ExecutionOutput getExecutionOutput(String execId, RdClient client, int lastLinesCount = 0) {
+        def execOutputResponse = client.doGetAcceptAll("/execution/${execId}/output?lastlines=${lastLinesCount}")
         ExecutionOutput execOutput = OBJECT_MAPPER.readValue(execOutputResponse.body().string(), ExecutionOutput.class)
         return execOutput
     }
@@ -241,23 +242,15 @@ class JobUtils {
      * Retrieves the execution output the specified execution ID as plain a text string.
      * @param execId The execution ID to query.
      * @param client The RdClient instance to perform the HTTP request.
+     * @param lastLinesCount The number of last lines to retrieve. Defaults to 0 (unlimited).
      * @return The execution output as a plain text string.
      */
-    static String getExecutionOutputText(String execId, RdClient client) {
-        def execOutputResponse = client.doGetAddHeaders("/execution/${execId}/output",
+    static String getExecutionOutputText(String execId, RdClient client, int lastLinesCount = 0) {
+        def execOutputResponse = client.doGetAddHeaders("/execution/${execId}/output?lastlines=${lastLinesCount}",
             Headers.of("Accept", "text/plain"))
         return execOutputResponse.body().string()
     }
 
-    static String getExecutionOutput(int executionId,  RdClient client, int lastLinesCount = 100) {
-        def resp = client.doGetAcceptAll("/execution/${executionId}/output?lastlines=${lastLinesCount}")
-
-       if (!resp.successful) {
-           throw new IllegalArgumentException("Unsuccessful API call:  " + resp);
-       }
-
-        resp.body().string()
-    }
 
     static ScmJobStatusResponse waitForJobStatusToBe(
             String jobId,
