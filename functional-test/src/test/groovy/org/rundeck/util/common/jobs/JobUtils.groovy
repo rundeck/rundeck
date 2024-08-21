@@ -1,6 +1,8 @@
 package org.rundeck.util.common.jobs
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import groovy.util.logging.Slf4j
+import okhttp3.Headers
 import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.api.responses.jobs.Job
 import org.rundeck.util.api.scm.GitScmApiClient
@@ -12,7 +14,10 @@ import java.time.Duration
 import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 
+@Slf4j
 class JobUtils {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
 
     static final String DUPE_OPTION_SKIP = "skip"
 
@@ -179,12 +184,12 @@ class JobUtils {
      * @throws InterruptedException if the timeout is reached before the execution reaches the expected state.
      */
     static Execution waitForExecutionToBe(
-            Collection<String> expectedStates,
-            String executionId,
-            ObjectMapper mapper,
-            RdClient client,
-            Duration iterationGap,
-            Duration timeout
+        Collection<String> expectedStates,
+        String executionId,
+        ObjectMapper mapper,
+        RdClient client,
+        Duration iterationGap,
+        Duration timeout
     ) {
         Execution executionStatus
         def execDetail = client.doGet("/execution/${executionId}")
@@ -192,7 +197,8 @@ class JobUtils {
         long initTime = System.currentTimeMillis()
         while (!expectedStates.contains(executionStatus.status)) {
             if ((System.currentTimeMillis() - initTime) >= timeout.toMillis()) {
-                throw new InterruptedException("Timeout reached (${timeout.toSeconds()} seconds), the execution had \"${executionStatus.status}\" state.")
+                def execOutput = callSilently { getExecutionOutputText(executionId, client) }
+                throw new InterruptedException("Timeout reached (${timeout.toSeconds()} seconds), the execution had \"${executionStatus.status}\" state. Execution output was: \n${execOutput}\n")
             }
             def transientExecutionResponse = client.doGet("/execution/${executionId}")
             executionStatus = mapper.readValue(transientExecutionResponse.body().string(), Execution.class)
@@ -202,6 +208,26 @@ class JobUtils {
             Thread.sleep(Math.min(iterationGap.toMillis(), timeout.toMillis()))
         }
         return executionStatus
+    }
+
+    /**
+     * Calls the provided closure and returns its result, discarding any exception that may occur.
+     * @param closure The closure to call.
+     * @return The result of the closure, or null if an exception occurred.
+     */
+    private static <T> T callSilently(Closure<T> closure) {
+        try {
+            return closure.call()
+        } catch (Exception e) {
+            log.error("Error calling closure: ${e.message}", e)
+            return null
+        }
+    }
+
+    static String getExecutionOutputText(String execId, RdClient client) {
+        def execOutputResponse = client.doGetAddHeaders("/execution/${execId}/output",
+            Headers.of("Accept", "text/plain"))
+        return execOutputResponse.body().string()
     }
 
     static String getExecutionOutput(int executionId,  RdClient client, int lastLinesCount = 100) {
@@ -310,7 +336,7 @@ class JobUtils {
 
         // Check if the import was successful and return the response body as a Map
         if (responseImport.isSuccessful() && responseImport.code() == 200) {
-            return new ObjectMapper().readValue(responseImport.body().string(), Map.class);
+            return OBJECT_MAPPER.readValue(responseImport.body().string(), Map.class);
         } else {
             // Throw an exception if the import failed
             throw new IllegalArgumentException("Job import failed. HTTP Status Code: " + responseImport.code());
