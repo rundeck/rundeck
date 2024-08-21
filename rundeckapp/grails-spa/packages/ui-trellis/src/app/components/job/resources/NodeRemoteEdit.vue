@@ -43,6 +43,7 @@
 import { defineComponent } from "vue";
 import { getRundeckContext } from "../../../../library";
 import { getAppLinks } from "../../../../library";
+
 const rundeckContext = getRundeckContext();
 
 const PROTOCOL = "rundeck:node:edit";
