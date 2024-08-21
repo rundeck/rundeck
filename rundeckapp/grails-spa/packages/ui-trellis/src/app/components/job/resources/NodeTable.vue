@@ -290,7 +290,7 @@
                     :href="browseNodesPageUrl(num)"
                     @click.prevent="browseNodesPage(num)"
                   >
-                    {{ num + 1 }}
+                    {{ calculatePageNumber(num) }}
                   </a>
                 </li>
                 <li :class="{ disabled: page === maxPages || loading }">
@@ -541,6 +541,9 @@ export default defineComponent({
     stopNodeRemoteEdit() {
       this.remoteUrl = null;
       this.remoteEditNodename = null;
+    },
+    calculatePageNumber(page: string): number {
+      return parseInt(page) + 1;
     },
   },
 });
