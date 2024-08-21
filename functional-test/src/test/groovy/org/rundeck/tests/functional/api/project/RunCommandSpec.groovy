@@ -25,7 +25,7 @@ class RunCommandSpec extends BaseContainer {
         def runResponse = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs}")
         def runResponseBody = runResponse.body().string()
         def parsedResponseBody = mapper.readValue(runResponseBody, RunCommand.class)
-        def newExecId = parsedResponseBody.execution.id
+        String newExecId = parsedResponseBody.execution.id
         def completedExecution = waitForExecutionStatus(newExecId)
 
         then:
