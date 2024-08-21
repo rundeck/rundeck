@@ -52,6 +52,7 @@
                 v-if="attributes.username"
                 filter-key="username"
                 :filter-val="attributes.username"
+                data-testid="node-attribute-link-username"
                 @nodefilterclick="filterClick"
               ></node-filter-link>
               <span class="atsign">@</span>
@@ -59,6 +60,7 @@
                 v-if="attributes.hostname"
                 filter-key="hostname"
                 :filter-val="attributes.hostname"
+                data-testid="node-attribute-link-hostname"
                 @nodefilterclick="filterClick"
               ></node-filter-link>
             </td>
@@ -337,7 +339,6 @@ export default defineComponent({
   methods: {
     toggleNs(ns: string) {
       const val = this.uiNs[ns];
-      console.log(`toggle ${ns} ${val} = ${!val}`);
       this.uiNs[ns] = !val;
     },
 

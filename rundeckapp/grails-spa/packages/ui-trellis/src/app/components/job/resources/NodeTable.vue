@@ -43,6 +43,7 @@
             <tbody>
               <template v-for="(node, index) in nodeSet.nodes">
                 <tr
+                  :data-testid="'node-entry-' + index"
                   class="node_entry hover-action-holder ansicolor-on"
                   :class="{ server: node.islocal || false }"
                 >
@@ -51,6 +52,7 @@
                       class="link-quiet"
                       data-toggle="collapse"
                       :href="`#detail_${index}1`"
+                      data-testid="node-collapse-link"
                     >
                       <i class="auto-caret text-muted"></i>
                       <span
@@ -70,6 +72,7 @@
                             styleForIcon(node.attributes),
                             'margin-right: 4px',
                           ]"
+                          data-testid="node-icon"
                         >
                           <i
                             v-if="node.attributes['ui:icon:name']"
@@ -96,12 +99,14 @@
                     </node-filter-link>
 
                     <span class="nodedesc"></span>
+
                     <span class="text-strong">
                       <i
                         v-for="badge in glyphiconBadges(node.attributes)"
                         v-if="node.attributes['ui:badges']"
                         :key="badge"
                         :class="glyphiconForName(badge)"
+                        data-testid="node-badge-icon"
                       ></i>
                       <span>
                         {{ node.attributes.description }}
@@ -138,13 +143,14 @@
                         </span>
                       </span>
                       <span v-else>
-                        <span>
+                        <span :data-testid="'node-attribute-' + filter">
                           {{ node.attributes[filter] }}
                         </span>
                         <node-filter-link
                           class="textbtn textbtn-info"
                           :filter-key="filter"
                           :filter-val="node.attributes[filter]"
+                          :data-testid="'node-attribute-link-' + filter"
                           @nodefilterclick="filterClick"
                         >
                           <i
@@ -284,7 +290,7 @@
                     :href="browseNodesPageUrl(num)"
                     @click.prevent="browseNodesPage(num)"
                   >
-                    {{ num + 1 }}
+                    {{ calculatePageNumber(num) }}
                   </a>
                 </li>
                 <li :class="{ disabled: page === maxPages || loading }">
@@ -535,6 +541,9 @@ export default defineComponent({
     stopNodeRemoteEdit() {
       this.remoteUrl = null;
       this.remoteEditNodename = null;
+    },
+    calculatePageNumber(page: string): number {
+      return parseInt(page) + 1;
     },
   },
 });
