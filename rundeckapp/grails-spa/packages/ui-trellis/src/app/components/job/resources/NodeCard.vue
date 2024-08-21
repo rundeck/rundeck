@@ -9,6 +9,7 @@
               id="tab_link_summary"
               :key="`${nodeFilterStore.filter}tab-result`"
               :class="{ active: !nodeFilterStore.filter }"
+              data-testid="summary-tab"
               @click="fetchNodeSummary"
             >
               <a href="#summary1" data-toggle="tab">
@@ -20,6 +21,7 @@
               id="tab_link_result"
               :key="`${nodeFilterStore.filter}tab-summary`"
               :class="{ active: nodeFilterStore.filter }"
+              data-testid="node-table-tab"
             >
               <a v-if="filterIsSet" href="#result1" data-toggle="tab">
                 {{ $t("result") }}
@@ -311,7 +313,7 @@ export default defineComponent({
       let filterToEmit = this.nodeSummary.defaultFilter;
       if (filterToEmit !== ".*") {
         filterToEmit = this.nodeSummary.filters.filter(
-          (f) => f.filterName === this.nodeSummary.defaultFilter,
+          (f) => f.filterName === this.nodeSummary.defaultFilter
         )[0];
       }
       this.saveFilter(filterToEmit);
@@ -376,7 +378,7 @@ export default defineComponent({
         this.loading = true;
         const data = await getNodes(
           params,
-          getAppLinks().frameworkNodesQueryAjax,
+          getAppLinks().frameworkNodesQueryAjax
         );
 
         this.nodeSet = {
