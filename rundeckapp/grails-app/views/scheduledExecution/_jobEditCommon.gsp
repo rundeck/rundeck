@@ -208,6 +208,8 @@
                      uuid:scheduledExecution?.uuid
              ]}"/>
 
+<g:embedJSON id="jobWorkflowJSON" data="${ scheduledExecution?.workflow?.toMap()?:[:]}"/>
+
 <g:javascript>
     window._rundeck = Object.assign(window._rundeck || {}, {
         data: {
@@ -217,12 +219,21 @@
             resourcesData: loadJsonData('jobResourcesJSON'),
             schedulesData: loadJsonData('jobSchedulesJSON'),
             executionData: loadJsonData('jobExecutionPluginsJSON'),
-            otherData: loadJsonData('jobOtherJSON')
+            otherData: loadJsonData('jobOtherJSON'),
+            workflowData: loadJsonData('jobWorkflowJSON')
         }
     })
     var workflowEditor = new WorkflowEditor();
     var confirm = new PageConfirm(message('page.unsaved.changes'));
     _onJobEdit(confirm.setNeedsConfirm);
+    //enable page confirm handling via Vue event bus
+    _rundeck.eventBus.on('jobedit.page.confirm', function (needsConfirm) {
+        if(needsConfirm) {
+            confirm.setNeedsConfirm()
+        }else{
+            confirm.clearNeedConfirm()
+        }
+    });
     jQuery(function () {
         setupTabRouter('#job_edit_tabs', 'tab_');
         jQuery('input').not(".allowenter").on('keydown', noenter);

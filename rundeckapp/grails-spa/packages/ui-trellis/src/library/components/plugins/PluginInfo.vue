@@ -8,9 +8,11 @@
       <i v-else-if="fabicon" :class="'fab fa-' + fabicon"></i>
       <i v-else class="rdicon icon-small plugin"></i>
     </span>
+    <slot name="titleprefix"> </slot>
     <span v-if="showTitle" :class="titleCss" style="margin-left: 5px">
       {{ title }}
     </span>
+    <slot name="descriptionprefix"> </slot>
     <slot name="description">
       <PluginDetails
         :show-description="showDescription"

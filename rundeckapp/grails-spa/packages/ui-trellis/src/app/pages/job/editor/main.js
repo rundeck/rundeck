@@ -9,7 +9,6 @@ import NotificationsEditorSection from "./NotificationsEditorSection.vue";
 import ResourcesEditorSection from "./ResourcesEditorSection.vue";
 import SchedulesEditorSection from "./SchedulesEditorSection.vue";
 import OtherEditorSection from "./OtherEditorSection.vue";
-import { EventBus } from "../../../../library/utilities/vueEventBus";
 import { initI18n, updateLocaleMessages } from "../../../utilities/i18n";
 import { observer } from "../../../utilities/uiSocketObserver";
 import OptionsEditorSection from "./OptionsEditorSection.vue";
@@ -18,6 +17,7 @@ import { loadJsonData } from "@/app/utilities/loadJsonData";
 import NextUiToggle from "@/app/pages/job/browse/NextUiToggle.vue";
 import DetailsEditorSection from "@/app/pages/job/editor/DetailsEditorSection.vue";
 import ExecutionEditorSection from "./ExecutionEditorSection.vue";
+import WorkflowEditorSection from "@/app/pages/job/editor/WorkflowEditorSection.vue";
 
 const locale = window._rundeck.locale || "en_US";
 moment.locale(locale);
@@ -26,7 +26,7 @@ const i18n = initI18n();
 const els = document.body.getElementsByClassName(
   "job-editor-notifications-vue",
 );
-
+const EventBus = getRundeckContext().eventBus;
 for (let i = 0; i < els.length; i++) {
   const e = els[i];
   const app = createApp({
@@ -173,17 +173,32 @@ for (let i = 0; i < scsels.length; i++) {
     return updateLocaleMessages(i18n, locale, lang, newMessages);
   });
   sapp.mount(e);
+}
 
-  const othels = document.body.getElementsByClassName("job-editor-other-vue");
+const othels = document.body.getElementsByClassName("job-editor-other-vue");
 
-  for (let i = 0; i < othels.length; i++) {
-    const e = othels[i];
+for (let i = 0; i < othels.length; i++) {
+  const e = othels[i];
+  const oapp = createApp({
+    name: "JobEditOtherApp",
+    components: { OtherEditorSection },
+    data() {
+      return { EventBus };
+    },
+  });
+  oapp.use(uiv);
+  oapp.use(i18n);
+  oapp.mount(e);
+}
+
+if (uiType === "next") {
+  const wfels = document.body.getElementsByClassName("job-editor-workflow-vue");
+
+  for (let i = 0; i < wfels.length; i++) {
+    const e = wfels[i];
     const oapp = createApp({
-      name: "JobEditOtherApp",
-      components: { OtherEditorSection },
-      data() {
-        return { EventBus };
-      },
+      name: "JobEditWorkflowApp",
+      components: { WorkflowEditorSection },
     });
     oapp.use(uiv);
     oapp.use(i18n);
