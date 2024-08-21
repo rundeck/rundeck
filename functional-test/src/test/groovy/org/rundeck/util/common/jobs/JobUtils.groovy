@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.util.logging.Slf4j
 import okhttp3.Headers
 import org.rundeck.util.api.responses.execution.Execution
+import org.rundeck.util.api.responses.execution.ExecutionOutput
 import org.rundeck.util.api.responses.jobs.Job
 import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.httpbody.ScmJobStatusResponse
@@ -224,6 +225,24 @@ class JobUtils {
         }
     }
 
+    /**
+     * Retrieves the execution output for the specified execution ID.
+     * @param execId The execution ID to query.
+     * @param client The RdClient instance to perform the HTTP request.
+     * @return The ExecutionOutput object representing the execution output.
+     */
+    static ExecutionOutput getExecutionOutput(String execId, RdClient client) {
+        def execOutputResponse = client.doGetAcceptAll("/execution/${execId}/output")
+        ExecutionOutput execOutput = OBJECT_MAPPER.readValue(execOutputResponse.body().string(), ExecutionOutput.class)
+        return execOutput
+    }
+
+    /**
+     * Retrieves the execution output the specified execution ID as plain a text string.
+     * @param execId The execution ID to query.
+     * @param client The RdClient instance to perform the HTTP request.
+     * @return The execution output as a plain text string.
+     */
     static String getExecutionOutputText(String execId, RdClient client) {
         def execOutputResponse = client.doGetAddHeaders("/execution/${execId}/output",
             Headers.of("Accept", "text/plain"))

@@ -108,7 +108,7 @@ class ExecuteScriptSpec extends BaseContainer{
         )
         assert readJobSucceeded.status == ExecutionStatus.SUCCEEDED.state
         String execId = readJobRunResponse.id
-        def entries = getExecutionOutput(execId)
+        def entries = getExecutionOutputLines(execId)
 
         //Extract local nodename, this name have to be the only line in output file
         def systemInfoResponse = doGet("/system/info")
