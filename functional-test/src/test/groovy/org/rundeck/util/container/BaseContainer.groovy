@@ -350,7 +350,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     }
 
     /**
-     *  Use the similar method in JobUtils
+     *  Use JobUtils.executeJob() paired with JobUtils.waitForExecutionToBe() instead.
      * @param jobId
      * @param body
      * @return
