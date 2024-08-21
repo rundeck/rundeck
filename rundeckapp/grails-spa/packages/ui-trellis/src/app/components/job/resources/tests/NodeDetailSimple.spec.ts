@@ -53,35 +53,34 @@ describe("NodeDetailsSimple Component", () => {
   it.each([
     {
       description: "with useNamespace and nodeColumns set to false",
-      props: {
-        useNamespace: false,
-        nodeColumns: false,
-        showExcludeFilterLinks: true,
-      },
+      useNamespace: false,
+      nodeColumns: false,
       expectedPlusCount: 19,
       expectedMinusCount: 19,
       expectedChevronCount: 0,
     },
     {
       description: "with useNamespace and nodeColumns set to true",
-      props: {
-        useNamespace: true,
-        nodeColumns: true,
-        showExcludeFilterLinks: true,
-      },
+      useNamespace: true,
+      nodeColumns: true,
       expectedPlusCount: 4,
       expectedMinusCount: 4,
       expectedChevronCount: 3,
     },
   ])(
-    "renders node attributes correctly $description",
+    "renders node attributes correctly with useNamespace set to $useNamespace and nodeColumns set to $nodeColumns",
     async ({
-      props,
+      useNamespace,
+      nodeColumns,
       expectedPlusCount,
       expectedMinusCount,
       expectedChevronCount,
     }) => {
-      let wrapper = await mountNodeDetailsSimple(props);
+      const wrapper = await mountNodeDetailsSimple({
+        useNamespace,
+        nodeColumns,
+        showExcludeFilterLinks: true,
+      });
       // General attributes
       const generalAttributes = {
         description: "Test Node 1",
@@ -110,17 +109,11 @@ describe("NodeDetailsSimple Component", () => {
       // Check for .glyphicon-plus elements related to attributes without namespaces
       const plusLinks = wrapper.findAll(".setting .glyphicon-plus");
       expect(plusLinks.length).toBe(expectedPlusCount);
-      plusLinks.forEach((link) => {
-        expect(link.classes()).toContain("glyphicon-plus");
-      });
       // Check for .glyphicon-minus elements related to attributes without namespaces
       const minusLinks = wrapper.findAll(".setting .glyphicon-minus");
       expect(minusLinks.length).toBe(expectedMinusCount);
-      minusLinks.forEach((link) => {
-        expect(link.classes()).toContain("glyphicon-minus");
-      });
       // Attributes with namespaces (only when useNamespace is true)
-      if (props.useNamespace) {
+      if (useNamespace) {
         const attributesWithNamespaces = {
           "namespace:key1": "value1",
           "namespace:key2": "value2",
@@ -133,10 +126,7 @@ describe("NodeDetailsSimple Component", () => {
         });
         // Check for glyphicon-chevron to ensure proper rendering of namespaces
         const chevrons = wrapper.findAll(".namespace .auto-caret");
-        expect(chevrons.length).toBe(expectedChevronCount); // Adjusted based on prop combinations
-        chevrons.forEach((chevron) => {
-          expect(chevron.exists()).toBe(true);
-        });
+        expect(chevrons.length).toBe(expectedChevronCount);
       }
     },
   );
