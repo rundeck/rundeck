@@ -26,12 +26,11 @@ class RunCommandSpec extends BaseContainer {
         def runResponseBody = runResponse.body().string()
         def parsedResponseBody = mapper.readValue(runResponseBody, RunCommand.class)
         def newExecId = parsedResponseBody.execution.id
-        waitForExecutionStatus(newExecId)
+        def completedExecution = waitForExecutionStatus(newExecId)
 
         then:
         noExceptionThrown()
-        newExecId > 0
-        mapper.readValue(client.doGetAcceptAll("/execution/$newExecId").body().string(), Execution.class).status != "failed"
+        completedExecution.status != "failed"
 
         when:
         def nodeFilter = ".*"
@@ -39,12 +38,11 @@ class RunCommandSpec extends BaseContainer {
         runResponseBody = runResponse.body().string()
         parsedResponseBody = mapper.readValue(runResponseBody, RunCommand.class)
         newExecId = parsedResponseBody.execution.id
-        waitForExecutionStatus(newExecId)
+        completedExecution = waitForExecutionStatus(newExecId)
 
         then:
         noExceptionThrown()
-        newExecId > 0
-        mapper.readValue(client.doGetAcceptAll("/execution/$newExecId").body().string(), Execution.class).status != "failed"
+        completedExecution.status != "failed"
 
         when:
         nodeFilter = "not-matching-node-filter"
@@ -52,11 +50,10 @@ class RunCommandSpec extends BaseContainer {
         runResponseBody = runResponse.body().string()
         parsedResponseBody = mapper.readValue(runResponseBody, RunCommand.class)
         newExecId = parsedResponseBody.execution.id
-        waitForExecutionStatus(newExecId)
+        completedExecution = waitForExecutionStatus(newExecId)
 
         then:
         noExceptionThrown()
-        newExecId > 0
-        mapper.readValue(client.doGetAcceptAll("/execution/$newExecId").body().string(), Execution.class).status == "failed"
+        completedExecution.status == "failed"
     }
 }
