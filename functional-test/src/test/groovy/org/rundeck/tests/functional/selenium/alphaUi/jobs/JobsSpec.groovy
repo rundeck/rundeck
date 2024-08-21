@@ -20,15 +20,15 @@ class JobsSpec extends SeleniumBase {
     /**
      * Checks that new workflow tab is active
      */
-//    def "job workflow alphaUi"() {
-//        when:
-//        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-//        jobCreatePage.nextUi=true
-//        jobCreatePage.go()
-//        then:
-//        jobCreatePage.tab JobTab.WORKFLOW click()
-//        jobCreatePage.waitForTextToBePresentBySelector(By.xpath("//section[@id='workflowContent2']//div[contains(@class, 'control-label')]"), "Workflow",60)
-//        expect:
-//        jobCreatePage.workflowAlphaUiContainer.isDisplayed()
-//    }
+    def "job workflow alphaUi"() {
+        when:
+        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+        jobCreatePage.nextUi=true
+        jobCreatePage.go()
+        then:
+        jobCreatePage.tab JobTab.WORKFLOW click()
+        jobCreatePage.waitForTextToBePresentBySelector(By.xpath("//section[@id='workflowContent2']//div[contains(@class, 'control-label')]"), "Workflow",60)
+        expect:
+        jobCreatePage.workflowAlphaUiContainer.isDisplayed()
+    }
 }
