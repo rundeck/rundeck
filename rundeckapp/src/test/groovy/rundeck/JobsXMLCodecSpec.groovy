@@ -7,7 +7,6 @@ import org.rundeck.core.execution.ScriptFileCommand
 import rundeck.codecs.JobsXMLCodec
 import spock.lang.Specification
 
-import static org.junit.Assert.*
 
 class JobsXMLCodecSpec extends Specification {
 
@@ -80,33 +79,35 @@ class JobsXMLCodecSpec extends Specification {
         when:
             def jobs = JobsXMLCodec.decode(xml)
         then:
-            assertNotNull jobs
-            assertEquals '         dig it potato\n' +
-                         '\n' +
-                         '* list item\n' +
-                         '* list item2\n' +
-                         '\n' +
-                         '<b>inline html</b>' +
-                         '\n    ', jobs[0].description
-            assertEquals 8, jobs[0].workflow.commands.size()
-            assertEquals 'true', jobs[0].workflow.commands[0].configuration.adhocRemoteString
-            assertEquals 'false', jobs[0].workflow.commands[1].configuration.adhocRemoteString
-            assertEquals '0', jobs[0].workflow.commands[2].configuration.adhocRemoteString
-            assertEquals 'true', jobs[0].workflow.commands[3].configuration.adhocLocalString
-            assertEquals 'true', jobs[0].workflow.commands[3].configuration.argString
-            assertEquals 'false', jobs[0].workflow.commands[4].configuration.adhocLocalString
-            assertEquals 'false', jobs[0].workflow.commands[4].configuration.argString
-            assertEquals '0', jobs[0].workflow.commands[5].configuration.adhocLocalString
-            assertEquals '0', jobs[0].workflow.commands[5].configuration.argString
+            jobs != null
+            jobs[0].description == '''         dig it potato
 
-            assertEquals 'false', jobs[0].workflow.commands[6].configuration.adhocFilepath
-            assertEquals 'false', jobs[0].workflow.commands[6].configuration.argString
-            assertEquals 'false', jobs[0].workflow.commands[6].errorHandler.configuration.adhocFilepath
-            assertEquals '0', jobs[0].workflow.commands[6].errorHandler.configuration.argString
+* list item
+* list item2
 
-            assertEquals 'false', jobs[0].workflow.commands[7].jobName
-            assertEquals 'false', jobs[0].workflow.commands[7].jobGroup
-            assertEquals '123', jobs[0].workflow.commands[7].argString
+<b>inline html</b>
+    '''
+
+            def cmds = jobs[0].workflow.commands
+            cmds.size() == 8
+            cmds[0].configuration.adhocRemoteString == 'true'
+            cmds[1].configuration.adhocRemoteString == 'false'
+            cmds[2].configuration.adhocRemoteString == '0'
+            cmds[3].configuration.adhocLocalString == 'true'
+            cmds[3].configuration.argString == 'true'
+            cmds[4].configuration.adhocLocalString == 'false'
+            cmds[4].configuration.argString == 'false'
+            cmds[5].configuration.adhocLocalString == '0'
+            cmds[5].configuration.argString == '0'
+
+            cmds[6].configuration.adhocFilepath == 'false'
+            cmds[6].configuration.argString == 'false'
+            cmds[6].errorHandler.configuration.adhocFilepath == 'false'
+            cmds[6].errorHandler.configuration.argString == '0'
+
+            cmds[7].jobName == 'false'
+            cmds[7].jobGroup == 'false'
+            cmds[7].argString == '123'
     }
 
     def "testDecodeBasicScriptInterpreter"() {
@@ -164,35 +165,35 @@ class JobsXMLCodecSpec extends Specification {
         when:
             def jobs = JobsXMLCodec.decode(xml)
         then:
-            assertNotNull jobs
-            assertEquals 5, jobs[0].workflow.commands.size()
+            jobs != null
+            jobs[0].workflow.commands.size() == 5
 
-            assertEquals 'true', jobs[0].workflow.commands[0].configuration.adhocLocalString
-            assertEquals 'true', jobs[0].workflow.commands[0].configuration.argString
-            assertEquals null, jobs[0].workflow.commands[0].configuration.scriptInterpreter
-            assertEquals false, !!jobs[0].workflow.commands[0].configuration.interpreterArgsQuoted
+            jobs[0].workflow.commands[0].configuration.adhocLocalString == 'true'
+            jobs[0].workflow.commands[0].configuration.argString == 'true'
+            jobs[0].workflow.commands[0].configuration.scriptInterpreter == null
+            !jobs[0].workflow.commands[0].configuration.interpreterArgsQuoted
 
-            assertEquals 'true', jobs[0].workflow.commands[1].configuration.adhocLocalString
-            assertEquals 'true', jobs[0].workflow.commands[1].configuration.argString
-            assertEquals 'bash -c', jobs[0].workflow.commands[1].configuration.scriptInterpreter
-            assertEquals false, !!jobs[0].workflow.commands[1].configuration.interpreterArgsQuoted
+            jobs[0].workflow.commands[1].configuration.adhocLocalString == 'true'
+            jobs[0].workflow.commands[1].configuration.argString == 'true'
+            jobs[0].workflow.commands[1].configuration.scriptInterpreter == 'bash -c'
+            !jobs[0].workflow.commands[1].configuration.interpreterArgsQuoted
 
-            assertEquals 'false', jobs[0].workflow.commands[2].configuration.adhocLocalString
-            assertEquals 'false', jobs[0].workflow.commands[2].configuration.argString
-            assertEquals 'bash -c', jobs[0].workflow.commands[2].configuration.scriptInterpreter
-            assertEquals true, !!jobs[0].workflow.commands[2].configuration.interpreterArgsQuoted
+            jobs[0].workflow.commands[2].configuration.adhocLocalString == 'false'
+            jobs[0].workflow.commands[2].configuration.argString == 'false'
+            jobs[0].workflow.commands[2].configuration.scriptInterpreter == 'bash -c'
+            !!jobs[0].workflow.commands[2].configuration.interpreterArgsQuoted
 
-            assertEquals '0', jobs[0].workflow.commands[3].configuration.adhocLocalString
-            assertEquals '0', jobs[0].workflow.commands[3].configuration.argString
-            assertEquals 'bash -c', jobs[0].workflow.commands[3].configuration.scriptInterpreter
-            assertEquals false, !!jobs[0].workflow.commands[3].configuration.interpreterArgsQuoted
+            jobs[0].workflow.commands[3].configuration.adhocLocalString == '0'
+            jobs[0].workflow.commands[3].configuration.argString == '0'
+            jobs[0].workflow.commands[3].configuration.scriptInterpreter == 'bash -c'
+            !jobs[0].workflow.commands[3].configuration.interpreterArgsQuoted
 
-            assertEquals 'false', jobs[0].workflow.commands[4].configuration.adhocFilepath
-            assertEquals 'false', jobs[0].workflow.commands[4].configuration.argString
-            assertEquals 'false', jobs[0].workflow.commands[4].errorHandler.configuration.adhocFilepath
-            assertEquals 'bash -c', jobs[0].workflow.commands[4].configuration.scriptInterpreter
-            assertEquals false, !!jobs[0].workflow.commands[4].configuration.interpreterArgsQuoted
-            assertEquals '0', jobs[0].workflow.commands[4].errorHandler.configuration.argString
+            jobs[0].workflow.commands[4].configuration.adhocFilepath == 'false'
+            jobs[0].workflow.commands[4].configuration.argString == 'false'
+            jobs[0].workflow.commands[4].errorHandler.configuration.adhocFilepath == 'false'
+            jobs[0].workflow.commands[4].configuration.scriptInterpreter == 'bash -c'
+            !jobs[0].workflow.commands[4].configuration.interpreterArgsQuoted
+            jobs[0].workflow.commands[4].errorHandler.configuration.argString == '0'
 
     }
 
@@ -266,46 +267,47 @@ class JobsXMLCodecSpec extends Specification {
         when:
             def jobs = JobsXMLCodec.decode(basic7)
         then:
-            assertNotNull jobs
-            assertEquals 1, jobs.size()
+            jobs != null
+            jobs.size() == 1
             ScheduledExecution se = jobs[0]
-            assertEquals(5, jobs[0].workflow.commands.size())
-            jobs[0].workflow.commands.each {
-                assertNotNull(it.errorHandler)
+
+            def cmds = jobs[0].workflow.commands
+            cmds.size() == 5
+            cmds.every {
+                it.errorHandler != null
             }
-            jobs[0].workflow.commands[0].errorHandler.type == ExecCommand.EXEC_COMMAND_TYPE
-            jobs[0]
-                .workflow.commands[0].errorHandler.configuration == [adhocExecution: true, adhocRemoteString: 'testerr']
-            assertFalse(jobs[0].workflow.commands[0].errorHandler.keepgoingOnSuccess)
+            cmds[0].errorHandler.type == ExecCommand.EXEC_COMMAND_TYPE
+            cmds[0].errorHandler.configuration == [adhocExecution: true, adhocRemoteString: 'testerr']
+            !cmds[0].errorHandler.keepgoingOnSuccess
 
-            jobs[0].workflow.commands[1].errorHandler.type == ScriptCommand.SCRIPT_COMMAND_TYPE
-            jobs[0]
-                .workflow
-                .commands[1]
-                .errorHandler
-                .configuration == [adhocExecution: true, adhocLocalString: 'test2err', argString: 'blah blah err']
-            assertFalse(jobs[0].workflow.commands[1].errorHandler.keepgoingOnSuccess)
+            cmds[1].errorHandler.type == ScriptCommand.SCRIPT_COMMAND_TYPE
+            cmds[1].errorHandler.configuration == [
+                adhocExecution  : true,
+                adhocLocalString: 'test2err',
+                argString       : 'blah blah err'
+            ]
+            !cmds[1].errorHandler.keepgoingOnSuccess
 
-            jobs[0].workflow.commands[2].errorHandler.type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
-            jobs[0]
-                .workflow
-                .commands[2]
-                .errorHandler
-                .configuration == [adhocExecution: true, adhocFilepath: 'test3err', expandTokenInScriptFile: false,
-                                   argString: 'blah3 blah3 err']
-            assertFalse(jobs[0].workflow.commands[2].errorHandler.keepgoingOnSuccess)
+            cmds[2].errorHandler.type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
+            cmds[2].errorHandler.configuration == [
+                adhocExecution         : true,
+                adhocFilepath          : 'test3err',
+                expandTokenInScriptFile: false,
+                argString              : 'blah3 blah3 err'
+            ]
+            !cmds[2].errorHandler.keepgoingOnSuccess
 
-            assertEquals('testerr', jobs[0].workflow.commands[3].errorHandler.jobName)
-            assertEquals('grouperr', jobs[0].workflow.commands[3].errorHandler.jobGroup)
-            assertEquals('line err', jobs[0].workflow.commands[3].errorHandler.argString)
-            assertNotNull(jobs[0].workflow.commands[3].errorHandler.keepgoingOnSuccess)
-            assertTrue(jobs[0].workflow.commands[3].errorHandler.keepgoingOnSuccess)
+            cmds[3].errorHandler.jobName == 'testerr'
+            cmds[3].errorHandler.jobGroup == 'grouperr'
+            cmds[3].errorHandler.argString == 'line err'
+            cmds[3].errorHandler.keepgoingOnSuccess != null
+            cmds[3].errorHandler.keepgoingOnSuccess
 
-            assertTrue(jobs[0].workflow.commands[4].errorHandler.nodeStep)
-            assertEquals('blah2', jobs[0].workflow.commands[4].errorHandler.type)
-            assertEquals([rice: 'pilaf'], jobs[0].workflow.commands[4].errorHandler.configuration)
-            assertNotNull(jobs[0].workflow.commands[4].errorHandler.keepgoingOnSuccess)
-            assertTrue(jobs[0].workflow.commands[4].errorHandler.keepgoingOnSuccess)
+            cmds[4].errorHandler.nodeStep
+            cmds[4].errorHandler.type == 'blah2'
+            cmds[4].errorHandler.configuration == [rice: 'pilaf']
+            cmds[4].errorHandler.keepgoingOnSuccess != null
+            cmds[4].errorHandler.keepgoingOnSuccess
     }
 
 
@@ -355,29 +357,29 @@ class JobsXMLCodecSpec extends Specification {
         when:
             def jobs = JobsXMLCodec.decode(example1)
         then:
-            assertNotNull jobs
-            assertEquals "false", jobs[0].jobName
-            assertEquals "false", jobs[0].groupPath
-            assertEquals "false", jobs[0].description
-            assertEquals false, jobs[0].nodeExcludePrecedence
-            assertEquals false, jobs[0].nodeKeepgoing
-            assertEquals null, jobs[0].nodeInclude
-            assertEquals "hostname: false", jobs[0].filter
-            assertEquals 'proj1', jobs[0].project
-            assertEquals 1, jobs[0].workflow.commands.size()
-            assertEquals "false", jobs[0].workflow.commands[0].configuration.adhocRemoteString
-            assertEquals "false", jobs[0].workflow.commands[0].errorHandler.configuration.adhocLocalString
-            assertEquals "false", jobs[0].workflow.commands[0].errorHandler.configuration.argString
-            assertEquals false, jobs[0].workflow.commands[0].errorHandler.keepgoingOnSuccess
-            assertEquals 2, jobs[0].nodeThreadcount
-            assertEquals false, jobs[0].workflow.keepgoing
-            assertEquals 2, jobs[0].options.size()
+            jobs != null
+            jobs[0].jobName == "false"
+            jobs[0].groupPath == "false"
+            jobs[0].description == "false"
+            jobs[0].nodeExcludePrecedence == false
+            jobs[0].nodeKeepgoing == false
+            jobs[0].nodeInclude == null
+            jobs[0].filter == "hostname: false"
+            jobs[0].project == 'proj1'
+            jobs[0].workflow.commands.size() == 1
+            jobs[0].workflow.commands[0].configuration.adhocRemoteString == "false"
+            jobs[0].workflow.commands[0].errorHandler.configuration.adhocLocalString == "false"
+            jobs[0].workflow.commands[0].errorHandler.configuration.argString == "false"
+            jobs[0].workflow.commands[0].errorHandler.keepgoingOnSuccess == false
+            jobs[0].nodeThreadcount == 2
+            jobs[0].workflow.keepgoing == false
+            jobs[0].options.size() == 2
             def opts = new ArrayList(jobs[0].options)
-            assertEquals 'false', opts[0].name
-            assertEquals false, opts[0].enforced
-            assertEquals 'x', opts[1].name
-            assertEquals false, opts[1].required
-            assertEquals '9000636026', opts[1].defaultValue
+            opts[0].name == 'false'
+            opts[0].enforced == false
+            opts[1].name == 'x'
+            opts[1].required == false
+            opts[1].defaultValue == '9000636026'
     }
 
     def "testDecodeWorkflow"() {
@@ -413,14 +415,14 @@ class JobsXMLCodecSpec extends Specification {
         when:
             def jobs = JobsXMLCodec.decode(xml6)
         then:
-            assertNotNull jobs
-            assertEquals "incorrect size", 1, jobs.size()
-            assertNotNull "incorrect workflow", jobs[0].workflow
-            assertEquals "incorrect workflow strategy", "node-first", jobs[0].workflow.strategy
-            assertNotNull "incorrect workflow strategy", jobs[0].workflow.commands
-            assertEquals "incorrect workflow strategy", 1, jobs[0].workflow.commands.size()
+            jobs != null
+            jobs.size() == 1
+            jobs[0].workflow != null
+            jobs[0].workflow.strategy == "node-first"
+            jobs[0].workflow.commands != null
+            jobs[0].workflow.commands.size() == 1
             def cmd1 = jobs[0].workflow.commands[0]
-            assertNotNull "incorrect workflow", cmd1
+            cmd1 != null
             cmd1.configuration == [adhocExecution: true, adhocRemoteString: 'a script']
     }
 
@@ -457,14 +459,14 @@ class JobsXMLCodecSpec extends Specification {
         when:
             def jobs = JobsXMLCodec.decode(xml7)
         then:
-            assertNotNull jobs
-            assertEquals "incorrect size", 1, jobs.size()
-            assertNotNull "incorrect workflow", jobs[0].workflow
-            assertEquals "incorrect workflow strategy", "node-first", jobs[0].workflow.strategy
-            assertNotNull "incorrect workflow strategy", jobs[0].workflow.commands
-            assertEquals "incorrect workflow strategy", 1, jobs[0].workflow.commands.size()
+            jobs != null
+            jobs.size() == 1
+            jobs[0].workflow != null
+            jobs[0].workflow.strategy == "node-first"
+            jobs[0].workflow.commands != null
+            jobs[0].workflow.commands.size() == 1
             def cmd1 = jobs[0].workflow.commands[0]
-            assertNotNull "incorrect workflow", cmd1
+            cmd1 != null
             cmd1.configuration == [adhocExecution: true, adhocLocalString: 'a script 2']
     }
 
@@ -501,17 +503,20 @@ class JobsXMLCodecSpec extends Specification {
         when:
             def jobs = JobsXMLCodec.decode(xml8)
         then:
-            assertNotNull jobs
-            assertEquals "incorrect size", 1, jobs.size()
-            assertNotNull "incorrect workflow", jobs[0].workflow
-            assertEquals "incorrect workflow strategy", "node-first", jobs[0].workflow.strategy
-            assertNotNull "incorrect workflow strategy", jobs[0].workflow.commands
-            assertEquals "incorrect workflow strategy", 1, jobs[0].workflow.commands.size()
+            jobs != null
+            jobs.size() == 1
+            jobs[0].workflow != null
+            jobs[0].workflow.strategy == "node-first"
+            jobs[0].workflow.commands != null
+            jobs[0].workflow.commands.size() == 1
             def cmd1 = jobs[0].workflow.commands[0]
-            assertNotNull "incorrect workflow", cmd1
-            cmd1
-                .configuration == [adhocExecution: true, adhocFilepath: '/a/path/to/a/script',
-                                   expandTokenInScriptFile: false, argString: '-some args -to the -script']
+            cmd1 != null
+            cmd1.configuration == [
+                adhocExecution         : true,
+                adhocFilepath          : '/a/path/to/a/script',
+                expandTokenInScriptFile: false,
+                argString              : '-some args -to the -script'
+            ]
             cmd1.type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
             //
     }
@@ -547,20 +552,21 @@ class JobsXMLCodecSpec extends Specification {
 """
             )
         then:
-            assertNotNull jobs
-            assertEquals "incorrect size", 1, jobs.size()
-            assertNotNull "incorrect workflow", jobs[0].workflow
-            assertEquals "incorrect workflow strategy", "node-first", jobs[0].workflow.strategy
-            assertNotNull "incorrect workflow strategy", jobs[0].workflow.commands
-            assertEquals "incorrect workflow strategy", 1, jobs[0].workflow.commands.size()
+            jobs != null
+            jobs.size() == 1
+            jobs[0].workflow != null
+            jobs[0].workflow.strategy == "node-first"
+            jobs[0].workflow.commands != null
+            jobs[0].workflow.commands.size() == 1
             def cmd1 = jobs[0].workflow.commands[0]
-            assertNotNull "incorrect workflow", cmd1
-            assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof JobExec)
-            assertNull "incorrect argString", cmd1.argString
-            assertEquals "incorrect jobName", 'bob', cmd1.jobName
-            assertNull "incorrect jobGroup", cmd1.jobGroup
-            assertEquals "incorrect nodeStep", false, !!cmd1.nodeStep
+            cmd1 != null
+            (cmd1 instanceof JobExec)
+            cmd1.argString == null
+            cmd1.jobName == 'bob'
+            cmd1.jobGroup == null
+            !!cmd1.nodeStep == false
     }
+
     def "decode simple workflow with jobref"() {
         when:
             //
@@ -593,19 +599,19 @@ class JobsXMLCodecSpec extends Specification {
 """
             )
         then:
-            assertNotNull jobs
-            assertEquals "incorrect size", 1, jobs.size()
-            assertNotNull "incorrect workflow", jobs[0].workflow
-            assertEquals "incorrect workflow strategy", "node-first", jobs[0].workflow.strategy
-            assertNotNull "incorrect workflow strategy", jobs[0].workflow.commands
-            assertEquals "incorrect workflow strategy", 1, jobs[0].workflow.commands.size()
+            jobs != null
+            jobs.size() == 1
+            jobs[0].workflow != null
+            jobs[0].workflow.strategy == "node-first"
+            jobs[0].workflow.commands != null
+            jobs[0].workflow.commands.size() == 1
             def cmd1 = jobs[0].workflow.commands[0]
-            assertNotNull "incorrect workflow", cmd1
-            assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof JobExec)
-            assertNull "incorrect adhocRemoteString", cmd1.argString
-            assertEquals "incorrect jobName", 'bob', cmd1.jobName
-            assertEquals "incorrect jobGroup", '/some/path', cmd1.jobGroup
-            assertEquals "incorrect nodeStep", false, !!cmd1.nodeStep
+            cmd1 != null
+            (cmd1 instanceof JobExec)
+            cmd1.argString == null
+            cmd1.jobName == 'bob'
+            cmd1.jobGroup == '/some/path'
+            !!cmd1.nodeStep == false
     }
 
     def "decode simple workflow with step-first strategy"() {
@@ -640,19 +646,19 @@ class JobsXMLCodecSpec extends Specification {
 """
             )
         then:
-            assertNotNull jobs
-            assertEquals "incorrect size", 1, jobs.size()
-            assertNotNull "incorrect workflow", jobs[0].workflow
-            assertEquals "incorrect workflow strategy", "step-first", jobs[0].workflow.strategy
-            assertNotNull "incorrect workflow strategy", jobs[0].workflow.commands
-            assertEquals "incorrect workflow strategy", 1, jobs[0].workflow.commands.size()
+            jobs != null
+            jobs.size() == 1
+            jobs[0].workflow != null
+            jobs[0].workflow.strategy == "step-first"
+            jobs[0].workflow.commands != null
+            jobs[0].workflow.commands.size() == 1
             def cmd1 = jobs[0].workflow.commands[0]
-            assertNotNull "incorrect workflow", cmd1
-            assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof JobExec)
-            assertNull "incorrect adhocRemoteString", cmd1.argString
-            assertEquals "incorrect jobName", 'bob', cmd1.jobName
-            assertEquals "incorrect jobGroup", '/some/path', cmd1.jobGroup
-            assertEquals "incorrect nodeStep", false, !!cmd1.nodeStep
+            cmd1 != null
+            (cmd1 instanceof JobExec)
+            cmd1.argString == null
+            cmd1.jobName == 'bob'
+            cmd1.jobGroup == '/some/path'
+            !!cmd1.nodeStep == false
     }
 
     def "decode jobref item with args"() {
@@ -689,21 +695,22 @@ class JobsXMLCodecSpec extends Specification {
 """
             )
         then:
-            assertNotNull jobs
-            assertEquals "incorrect size", 1, jobs.size()
-            assertNotNull "incorrect workflow", jobs[0].workflow
-            assertEquals "incorrect workflow strategy", "node-first", jobs[0].workflow.strategy
-            assertNotNull "incorrect workflow strategy", jobs[0].workflow.commands
-            assertEquals "incorrect workflow strategy", 1, jobs[0].workflow.commands.size()
+            jobs != null
+            jobs.size() == 1
+            jobs[0].workflow != null
+            jobs[0].workflow.strategy == "node-first"
+            jobs[0].workflow.commands != null
+            jobs[0].workflow.commands.size() == 1
             def cmd1 = jobs[0].workflow.commands[0]
-            assertNotNull "incorrect workflow", cmd1
-            assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof JobExec)
-            assertNotNull "incorrect adhocRemoteString", cmd1.argString
-            assertEquals "incorrect adhocRemoteString", "-test1 1 -test2 2", cmd1.argString
-            assertEquals "incorrect jobName", 'bob', cmd1.jobName
-            assertEquals "incorrect jobGroup", '/some/path', cmd1.jobGroup
-            assertEquals "incorrect nodeStep", false, !!cmd1.nodeStep
+            cmd1 != null
+            (cmd1 instanceof JobExec)
+            cmd1.argString != null
+            cmd1.argString == "-test1 1 -test2 2"
+            cmd1.jobName == 'bob'
+            cmd1.jobGroup == '/some/path'
+            !!cmd1.nodeStep == false
     }
+
     def "decode jobref item nodeStep=true"() {
         when:
             //
@@ -738,20 +745,20 @@ class JobsXMLCodecSpec extends Specification {
 """
             )
         then:
-            assertNotNull jobs
-            assertEquals "incorrect size", 1, jobs.size()
-            assertNotNull "incorrect workflow", jobs[0].workflow
-            assertEquals "incorrect workflow strategy", "node-first", jobs[0].workflow.strategy
-            assertNotNull "incorrect workflow strategy", jobs[0].workflow.commands
-            assertEquals "incorrect workflow strategy", 1, jobs[0].workflow.commands.size()
+            jobs != null
+            jobs.size() == 1
+            jobs[0].workflow != null
+            jobs[0].workflow.strategy == "node-first"
+            jobs[0].workflow.commands != null
+            jobs[0].workflow.commands.size() == 1
             def cmd1 = jobs[0].workflow.commands[0]
-            assertNotNull "incorrect workflow", cmd1
-            assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof JobExec)
-            assertNotNull "incorrect adhocRemoteString", cmd1.argString
-            assertEquals "incorrect adhocRemoteString", "-test1 1 -test2 2", cmd1.argString
-            assertEquals "incorrect jobName", 'bob', cmd1.jobName
-            assertEquals "incorrect jobGroup", '/some/path', cmd1.jobGroup
-            assertEquals "incorrect nodeStep", true, !!cmd1.nodeStep
+            cmd1 != null
+            (cmd1 instanceof JobExec)
+            cmd1.argString != null
+            cmd1.argString == "-test1 1 -test2 2"
+            cmd1.jobName == 'bob'
+            cmd1.jobGroup == '/some/path'
+            !!cmd1.nodeStep
     }
 
     def "decode scripturl step with script args"() {
@@ -787,21 +794,24 @@ class JobsXMLCodecSpec extends Specification {
 """
             )
         then:
-            assertNotNull jobs
-            assertEquals "incorrect size", 1, jobs.size()
-            assertNotNull "incorrect workflow", jobs[0].workflow
-            assertEquals "incorrect workflow strategy", "node-first", jobs[0].workflow.strategy
-            assertNotNull "incorrect workflow strategy", jobs[0].workflow.commands
-            assertEquals "incorrect workflow strategy", 1, jobs[0].workflow.commands.size()
+            jobs != null
+            jobs.size() == 1
+            jobs[0].workflow != null
+            jobs[0].workflow.strategy == "node-first"
+            jobs[0].workflow.commands != null
+            jobs[0].workflow.commands.size() == 1
             def cmd1 = jobs[0].workflow.commands[0]
-            assertNotNull "incorrect workflow", cmd1
-            cmd1
-                .configuration == [adhocExecution: true, adhocFilepath: 'http://example.com/a/path/to/a/script',
-                                   expandTokenInScriptFile: false, argString: '-some args -to the -script']
+            cmd1 != null
+            cmd1.configuration == [
+                adhocExecution         : true,
+                adhocFilepath          : 'http://example.com/a/path/to/a/script',
+                expandTokenInScriptFile: false,
+                argString              : '-some args -to the -script'
+            ]
 
     }
 
-    def "test encode decode multiline script content"(){
+    def "test encode decode multiline script content"() {
         given:
             def jobs3 = [
                 new ScheduledExecution(
@@ -816,30 +826,45 @@ class JobsXMLCodecSpec extends Specification {
                             new CommandExec(
                                 argString: 'elf biscuits',
                                 adhocExecution: true,
-                                adhocLocalString: '#!/bin/bash\n\necho what is this monkey < test.out\n\necho this is a test\n\nexit 0',
-                            )
+                                adhocLocalString: '''#!/bin/bash
+
+echo what is this monkey < test.out
+
+echo this is a test
+
+exit 0''',
+                                )
                         ]
                     ),
                     nodeThreadcount: 1,
                     nodeKeepgoing: true,
-                )
+                    )
             ]
 
         when:
             def xmlstr = JobsXMLCodec.encode(jobs3)
-            assert xmlstr!=null
+            assert xmlstr != null
             assert xmlstr instanceof String
-            def jobs=JobsXMLCodec.decode(xmlstr)
+            def jobs = JobsXMLCodec.decode(xmlstr)
         then:
-            assertNotNull jobs
-            assertEquals "incorrect size",1,jobs.size()
-            def job1=jobs[0]
-            assertNotNull(job1.workflow)
-            assertNotNull(job1.workflow.commands)
-            assertEquals(1,job1.workflow.commands.size())
-            def wfi=job1.workflow.commands[0]
-            wfi.configuration==[adhocExecution:true, adhocLocalString: '#!/bin/bash\n\necho what is this monkey < test.out\n\necho this is a test\n\nexit 0', argString: 'elf biscuits']
-            wfi.type==ScriptCommand.SCRIPT_COMMAND_TYPE
+            jobs != null
+            jobs.size() == 1
+            def job1 = jobs[0]
+            job1.workflow != null
+            job1.workflow.commands != null
+            job1.workflow.commands.size() == 1
+            def wfi = job1.workflow.commands[0]
+            wfi.configuration == [
+                adhocExecution  : true,
+                adhocLocalString: '''#!/bin/bash
+
+echo what is this monkey < test.out
+
+echo this is a test
+
+exit 0''', argString: 'elf biscuits'
+            ]
+            wfi.type == ScriptCommand.SCRIPT_COMMAND_TYPE
 
     }
 }
