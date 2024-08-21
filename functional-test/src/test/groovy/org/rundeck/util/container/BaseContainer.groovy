@@ -10,6 +10,7 @@ import org.rundeck.util.api.responses.execution.ExecutionOutput
 import org.rundeck.util.api.storage.KeyStorageApiClient
 import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.jobs.JobUtils
+import org.rundeck.util.common.jobs.JobUtils
 import spock.lang.Specification
 
 import java.text.SimpleDateFormat
@@ -18,7 +19,6 @@ import java.util.function.Consumer
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
-import java.util.stream.Collectors
 
 /**
  * Base class for tests, starts a shared static container for all tests

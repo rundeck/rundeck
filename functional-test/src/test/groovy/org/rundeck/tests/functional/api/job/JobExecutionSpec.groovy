@@ -1577,7 +1577,7 @@ class JobExecutionSpec extends BaseContainer {
                 WaitingTime.MODERATE
         ).status == ExecutionStatus.SUCCEEDED.state
 
-        def entries = getExecutionOutput(readExecId)
+        def entries = getExecutionOutputLines(readExecId)
 
         then: "test that errorhandler output was correct"
         FileHelpers.assertLinesInsideEntries(
@@ -1637,7 +1637,7 @@ class JobExecutionSpec extends BaseContainer {
                 WaitingTime.MODERATE
         ).status == ExecutionStatus.SUCCEEDED.state
 
-        def entries2 = getExecutionOutput(readExecId2)
+        def entries2 = getExecutionOutputLines(readExecId2)
 
         then: "test that errorhandler output was correct"
         FileHelpers.assertLinesInsideEntries(
@@ -1697,7 +1697,7 @@ class JobExecutionSpec extends BaseContainer {
                 WaitingTime.MODERATE
         ).status == ExecutionStatus.SUCCEEDED.state
 
-        def entries3 = getExecutionOutput(readExecId3)
+        def entries3 = getExecutionOutputLines(readExecId3)
 
         then: "test that errorhandler output was correct"
         FileHelpers.assertLinesInsideEntries(
@@ -1756,7 +1756,7 @@ class JobExecutionSpec extends BaseContainer {
                 WaitingTime.MODERATE
         ).status == ExecutionStatus.SUCCEEDED.state
 
-        def entries4 = getExecutionOutput(readExecId4)
+        def entries4 = getExecutionOutputLines(readExecId4)
 
         then: "test that errorhandler output was correct"
         FileHelpers.assertLinesInsideEntries(
@@ -1815,7 +1815,7 @@ class JobExecutionSpec extends BaseContainer {
                 WaitingTime.MODERATE
         ).status == ExecutionStatus.SUCCEEDED.state
 
-        def entries5 = getExecutionOutput(readExecId5)
+        def entries5 = getExecutionOutputLines(readExecId5)
 
         then: "test that errorhandler output was correct"
         FileHelpers.assertLinesInsideEntries(
