@@ -795,6 +795,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def cleanupRunningJobs(String serverUUID = null, String status = null, Date before = new Date()) {
         cleanupRunningJobs(findRunningExecutions(serverUUID, before), status)
     }
+    /**
+     * Set the result status to FAIL for any Executions that are not complete, does not create a new transaction
+     * @param serverUUID if not null, only match executions assigned to the given serverUUID
+     */
+    def cleanupRunningJobs_currentTransaction(String serverUUID = null, String status = null, Date before = new Date()) {
+        cleanupRunningJobs_currentTransaction(findRunningExecutions(serverUUID, before), status)
+    }
 
     /**
      * Set the result status to FAIL for any Executions that are not complete (creates a new transaction)
@@ -803,6 +810,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def cleanupRunningJobs(List<Execution> found, String status = null) {
         found.each { Execution e ->
             cleanupExecution(e, status)
+            log.error("Stale Execution cleaned up: [${e.id}] in ${e.project}")
+            metricService.markMeter(this.class.name, 'executionCleanupMeter')
+        }
+    }
+    /**
+     * Set the result status to FAIL for any Executions that are not complete (does not create a new transaction)
+     * @param serverUUID if not null, only match executions assigned to the given serverUUID
+     */
+    def cleanupRunningJobs_currentTransaction(List<Execution> found, String status = null) {
+        found.each { Execution e ->
+            cleanupExecution_currentTransaction(e, status)
             log.error("Stale Execution cleaned up: [${e.id}] in ${e.project}")
             metricService.markMeter(this.class.name, 'executionCleanupMeter')
         }
@@ -821,6 +839,26 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 null
         )
 
+    }
+
+    /**
+     * calls {@link #saveCompletedExecution_currentTransaction(java.lang.Object, java.lang.Object, java.util.Map, rundeck.services.ExecutionService.AsyncStarted, java.util.Map)}
+     * @param e execution
+     * @param status
+     */
+    private void cleanupExecution_currentTransaction(Execution e, String status = null) {
+        def event = saveCompletedExecution_currentTransaction(
+                e.scheduledExecution?.uuid,
+                e.id,
+                [
+                        status       : status ?: String.valueOf(false),
+                        dateCompleted: new Date(),
+                        cancelled    : !status
+                ],
+                null,
+                null
+        )
+        triggerJobCompleteNotifications(null, event)
     }
 
     /**
