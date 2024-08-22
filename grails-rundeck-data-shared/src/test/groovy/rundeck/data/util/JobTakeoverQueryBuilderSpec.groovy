@@ -8,7 +8,7 @@ class JobTakeoverQueryBuilderSpec extends Specification {
         String toServerUUID = "toServerUUID"
         String fromServerUUID = "fromServerUUID"
         boolean selectAll = false
-        List<String> jobids = ["7a3e4b5d-7e03-4793-af2a-849408527cb6", "60e682d7-37e0-4fd5-b47b-4f470275dee3","';DELETE FROM rduser;"]
+        List<String> jobids = ["7a3e4b5d-7e03-4793-af2a-849408527cb6", "60e682d7-37e0-4fd5-b47b-4f470275dee3", "';DELETE FROM rduser;", "", null]
 
         when:
         String result = JobTakeoverQueryBuilder.buildTakeoverQuery(toServerUUID, fromServerUUID, selectAll, projectFilter, jobids, innerSchedFlag)
@@ -53,4 +53,5 @@ class JobTakeoverQueryBuilderSpec extends Specification {
         false     | "src-svr-uuid" | "dest-svr-uuid" | "se.server_nodeuuid = :fromServerUUID"
 
     }
+
 }
