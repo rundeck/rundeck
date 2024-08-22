@@ -29,7 +29,7 @@
               />
               <label :for="`executionLifecyclePluginEnabled_${plugin.name}`">
                 <plugin-info
-                  v-if="header.detail.desc"
+                  v-if="header.detail.description"
                   :show-title="header.inputShowTitle"
                   :show-icon="header.inputShowIcon || false"
                   :show-description="header.inputShowDescription || false"
@@ -38,7 +38,7 @@
                 >
                   <template #description>
                     <plugin-details
-                      :description="header.detail!.desc"
+                      :description="header.detail!.description"
                       extended-css=""
                       allow-html
                       inline-description
