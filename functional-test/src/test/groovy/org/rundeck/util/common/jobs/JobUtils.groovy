@@ -143,33 +143,10 @@ class JobUtils {
             String executionId,
             ObjectMapper mapper,
             RdClient client,
-            WaitingTime iterationGap,
-            WaitingTime timeout
+            Duration iterationGap = WaitingTime.LOW,
+            Duration timeout = WaitingTime.MODERATE
     ) {
-        return waitForExecutionToBe([state], executionId, mapper, client, iterationGap.duration, timeout.duration)
-    }
-
-    /**
-     * Waits for the execution to be in one of the expected states.
-     *
-     * @param expectedStates A list of expected states.
-     * @param executionId The execution ID to query.
-     * @param mapper The ObjectMapper instance to parse the response.
-     * @param client The RdClient instance to perform the HTTP request.
-     * @param iterationGap The duration to wait between each check.
-     * @param timeout The maximum duration to wait for the execution to reach the expected state.
-     * @return The Execution object representing the execution status.
-     * @throws InterruptedException if the timeout is reached before the execution reaches the expected state.
-     */
-    static Execution waitForExecutionToBe(
-            Collection<String> expectedStates,
-            String executionId,
-            ObjectMapper mapper,
-            RdClient client,
-            WaitingTime iterationGap,
-            WaitingTime timeout
-    ) {
-        return waitForExecutionToBe(expectedStates, executionId, mapper, client, iterationGap.duration, timeout.duration)
+        return waitForExecutionToBe([state], executionId, mapper, client, iterationGap, timeout)
     }
 
 
@@ -190,12 +167,11 @@ class JobUtils {
         String executionId,
         ObjectMapper mapper,
         RdClient client,
-        Duration iterationGap,
-        Duration timeout
+        Duration iterationGap = WaitingTime.LOW,
+        Duration timeout = WaitingTime.MODERATE
     ) {
-        Execution executionStatus
         def execDetail = client.doGet("/execution/${executionId}")
-        executionStatus = mapper.readValue(execDetail.body().string(), Execution.class)
+        Execution executionStatus = mapper.readValue(execDetail.body().string(), Execution.class)
         long initTime = System.currentTimeMillis()
         while (!expectedStates.contains(executionStatus.status)) {
             if ((System.currentTimeMillis() - initTime) >= timeout.toMillis()) {

@@ -284,7 +284,7 @@ class JobExecutionSpec extends BaseContainer {
         assert enabledJobsResponse.successful
 
         // Necessary since the api needs to breathe after enable execs
-        Thread.sleep(WaitingTime.LOW.duration.toMillis())
+        Thread.sleep(WaitingTime.LOW.toMillis())
 
         def jobExecResponseFor1AfterEnable = JobUtils.executeJob(job1Id, client)
         assert jobExecResponseFor1AfterEnable.successful
@@ -392,7 +392,7 @@ class JobExecutionSpec extends BaseContainer {
         assert enabledJobsResponse.successful
 
         // Necessary since the api needs to breathe after enable execs
-        Thread.sleep(WaitingTime.LOW.duration.toMillis())
+        Thread.sleep(WaitingTime.LOW.toMillis())
 
         def jobExecResponseFor1AfterEnable = JobUtils.executeJob(job1Id, client)
         assert jobExecResponseFor1AfterEnable.successful
@@ -459,7 +459,7 @@ class JobExecutionSpec extends BaseContainer {
         then:
         job2Detail?.executionEnabled
 
-        Thread.sleep(WaitingTime.LOW.duration.toMillis()) // As the original test says
+        Thread.sleep(WaitingTime.LOW.toMillis()) // As the original test says
 
         when: "TEST: bulk job schedule disable"
         Object idList = [
