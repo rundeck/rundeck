@@ -2,19 +2,23 @@ package org.rundeck.util.common
 
 import java.time.Duration
 
-enum WaitingTime {
+/**
+ * Collection of common time durations for waiting.
+ */
+final class WaitingTime {
 
-    LOW("A Second", Duration.ofSeconds(1)),
-    MODERATE("Five Seconds", Duration.ofSeconds(5)),
-    EXCESSIVE("Sixty seconds", Duration.ofSeconds(60)),
-    XTRA_EXCESSIVE("One-hundred twenty seconds", Duration.ofSeconds(120))
+    /** Waiting time of 1 second */
+    public static final Duration LOW = Duration.ofSeconds(1)
 
+    /** Waiting time of 5 seconds */
+    public static final Duration MODERATE = Duration.ofSeconds(5)
 
-    public final String label
-    public final Duration duration
+    /** Waiting time of 1 minute */
+    public static final Duration EXCESSIVE = Duration.ofSeconds(60)
 
-    WaitingTime(String label, Duration duration) {
-        this.label = label
-        this.duration = duration
-    }
+    /** Waiting time of 2 minutes */
+    public static final Duration XTRA_EXCESSIVE = Duration.ofSeconds(120)
+
+    // prevent instantiation.
+    private WaitingTime() {}
 }
