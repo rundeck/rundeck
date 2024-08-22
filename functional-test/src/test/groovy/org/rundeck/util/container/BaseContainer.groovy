@@ -29,7 +29,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     private static final String DEFAULT_DOCKERFILE_LOCATION = System.getenv("DEFAULT_DOCKERFILE_LOCATION") ?: System.getProperty("DEFAULT_DOCKERFILE_LOCATION")
     protected static final String TEST_RUNDECK_URL = System.getenv("TEST_RUNDECK_URL") ?: System.getProperty("TEST_RUNDECK_URL")
     protected static final String TEST_RUNDECK_TOKEN = System.getenv("TEST_RUNDECK_TOKEN") ?: System.getProperty("TEST_RUNDECK_TOKEN", "admintoken")
-    private static final ObjectMapper MAPPER = new ObjectMapper()
+    protected static final ObjectMapper MAPPER = new ObjectMapper()
 
     ClientProvider getClientProvider() {
         synchronized (CLIENT_PROVIDER_LOCK) {
