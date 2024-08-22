@@ -17,7 +17,9 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
-import groovy.sql.Sql
+import org.springframework.jdbc.core.RowCallbackHandler
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import rundeck.data.job.reference.JobReferenceImpl
 import rundeck.data.job.reference.JobRevReferenceImpl
 import rundeck.data.util.JobTakeoverQueryBuilder
@@ -132,6 +134,8 @@ import rundeck.utils.OptionsUtil
 import org.rundeck.app.spi.AuthorizedServicesProvider
 
 import javax.servlet.http.HttpSession
+import java.sql.ResultSet
+import java.sql.SQLException
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
@@ -4475,19 +4479,27 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(featureService.featurePresent("enhancedJobTakeoverQuery")) {
             log.info("Using enhanced job takeover query")
             String qry = JobTakeoverQueryBuilder.buildTakeoverQuery(toServerUUID, fromServerUUID, selectAll, projectFilter, jobids, ignoreInnerScheduled)
-            var sql = new Sql(dataSource)
+            println qry
             List<ScheduledExecution> jobList = []
-            Map qryParams = ["toServerUUID":toServerUUID]
+            var qryParams = new MapSqlParameterSource()
+            qryParams.addValue("toServerUUID", toServerUUID)
             if(fromServerUUID){
-                qryParams["fromServerUUID"] = fromServerUUID
+                qryParams.addValue("fromServerUUID", fromServerUUID)
             }
             if(projectFilter){
-                qryParams["projectFilter"] = projectFilter
+                qryParams.addValue("projectFilter", projectFilter)
             }
-
-            sql.rows(qry, qryParams).each {
-                jobList.add(ScheduledExecution.read(it.id as Serializable))
+            if(jobids){
+                qryParams.addValue("jobids", jobids)
             }
+            println qryParams.values
+            NamedParameterJdbcTemplate jdbcTemplate = new NamedParameterJdbcTemplate(dataSource)
+            jdbcTemplate.query(qry, qryParams, new RowCallbackHandler() {
+                @Override
+                void processRow(ResultSet rs) throws SQLException {
+                    jobList.add(ScheduledExecution.read(rs.getLong("id") as Serializable))
+                }
+            })
             return jobList
         }
         log.info("Using legacy job takeover query")
