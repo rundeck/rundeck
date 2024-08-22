@@ -16,7 +16,6 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
     public static final String USER_VAULT_PASSWORD = "vault123"
     private static final MAPPER = new ObjectMapper()
 
-
     def setupSpec() {
         String keyPath = getClass().getClassLoader().getResource("docker/compose/oss").getPath() + "/keys"
 
@@ -35,37 +34,25 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
     def "Create a job that executes on all nodes"() {
         given:
         def jobName = UUID.randomUUID().toString()
-        def jobXml = """
-        <joblist>
-           <job>
-              <name>${jobName}</name>
-              <group>api-test</group>
-              <description></description>
-              <loglevel>INFO</loglevel>
-              <multipleExecutions>true</multipleExecutions>
-              <dispatch>
-                <threadcount>1</threadcount>
-                <keepgoing>true</keepgoing>
-              </dispatch>
-              <nodefilters>
-                    <filter>.*</filter>
-               </nodefilters>
-              <executionEnabled>true</executionEnabled>
-              <sequence>
-                <command>
-                  <exec>echo 0</exec>
-                </command>
-              </sequence>
-           </job>
-        </joblist>"""
+        def path = JobUtils.updateJobFileToImport("job-template-common.xml",
+                TEST_PROJECT,
+                ["job-name"           : jobName,
+                 "args"               : "echo 0",
+                 "node-filter-include": ".*",
+                ])
 
         when:
-        def response = JobUtils.createJob(TEST_PROJECT, jobXml, client)
+        def response = JobUtils.createJob(TEST_PROJECT, new File(path).text, client)
 
         then:
         response.successful
+
+        when:
         def jobId = MAPPER.readValue(response.body().string(), CreateJobResponse.class).getSucceeded().get(0).id
-        def completedJob = runJobAndWait(jobId)
+        Object optionsJson = ["options": [opt1: "z", opt2: "a"]]
+        def completedJob = runJobAndWait(jobId, optionsJson)
+
+        then:
         // Ensure it was ran on the local node and two nodes added by the setup
         getOrderedNodesListExecutedOn(completedJob).size() == 3
     }
@@ -73,38 +60,25 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
     def "Create a job that executes on nodes that were not excluded"() {
         given:
         def jobName = UUID.randomUUID().toString()
-        def jobXml = """
-        <joblist>
-           <job>
-              <name>${jobName}</name>
-              <group>api-test</group>
-              <description></description>
-              <loglevel>INFO</loglevel>
-              <multipleExecutions>true</multipleExecutions>
-              <dispatch>
-                <threadcount>1</threadcount>
-                <keepgoing>true</keepgoing>
-              </dispatch>
-               <nodefilters>
-                   <filter>.*</filter>
-                   <filterExclude>tags: "executor-test"</filterExclude>
-               </nodefilters>
-              <executionEnabled>true</executionEnabled>
-              <sequence>
-                <command>
-                  <exec>echo 0</exec>
-                </command>
-              </sequence>
-           </job>
-        </joblist>"""
+        def path = JobUtils.updateJobFileToImport("job-template-common.xml",
+                TEST_PROJECT,
+                ["job-name"           : jobName,
+                 "args"               : "echo 0",
+                 "node-filter-exclude": "tags: \"executor-test\"",
+                ])
 
         when:
-        def response = JobUtils.createJob(TEST_PROJECT, jobXml, client)
+        def response = JobUtils.createJob(TEST_PROJECT, new File(path).text, client)
 
         then:
         response.successful
+
+        when:
         def jobId = MAPPER.readValue(response.body().string(), CreateJobResponse.class).getSucceeded().get(0).id
-        def completedJob = runJobAndWait(jobId)
+        Object optionsJson = ["options": [opt1: "z", opt2: "a"]]
+        def completedJob = runJobAndWait(jobId, optionsJson)
+
+        then:
         // Should run the local node only since the filter excluded the nodes added by the setup
         getOrderedNodesListExecutedOn(completedJob).size() == 1
     }
@@ -112,76 +86,53 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
     def "Create a job that executes on nodes in the descending order"() {
         given:
         def jobName = UUID.randomUUID().toString()
-        def jobXml = """
-        <joblist>
-           <job>
-              <name>${jobName}</name>
-              <group>api-test</group>
-              <description></description>
-              <loglevel>INFO</loglevel>
-              <multipleExecutions>true</multipleExecutions>
-              <dispatch>
-                <threadcount>1</threadcount>
-                <keepgoing>true</keepgoing>
-                <rankOrder>descending</rankOrder>
-              </dispatch>
-               <nodefilters>
-                   <filter>tags: "executor-test"</filter>
-               </nodefilters>
-              <executionEnabled>true</executionEnabled>
-              <sequence>
-                <command>
-                  <exec>echo 0</exec>
-                </command>
-              </sequence>
-           </job>
-        </joblist>"""
+        def path = JobUtils.updateJobFileToImport("job-template-common.xml",
+                TEST_PROJECT,
+                ["job-name"           : jobName,
+                 "args"               : "echo 0",
+                 "node-filter-include": "tags: \"executor-test\"",
+                 "dispatch-rank-order": "descending",
+                ])
 
         when:
-        def response = JobUtils.createJob(TEST_PROJECT, jobXml, client)
+        def response = JobUtils.createJob(TEST_PROJECT, new File(path).text, client)
 
         then:
         response.successful
+
+        when:
         def jobId = MAPPER.readValue(response.body().string(), CreateJobResponse.class).getSucceeded().get(0).id
-        def completedJob = runJobAndWait(jobId)
+        Object optionsJson = ["options": [opt1: "z", opt2: "a"]]
+        def completedJob = runJobAndWait(jobId, optionsJson)
+
+        then:
         getOrderedNodesListExecutedOn(completedJob) == ["ssh-node", "password-node"]
+
     }
 
     def "Create a job that executes on nodes in the ascending order"() {
         given:
         def jobName = UUID.randomUUID().toString()
-        def jobXml = """
-        <joblist>
-           <job>
-              <name>${jobName}</name>
-              <group>api-test</group>
-              <description></description>
-              <loglevel>INFO</loglevel>
-              <multipleExecutions>true</multipleExecutions>
-              <dispatch>
-                <threadcount>1</threadcount>
-                <keepgoing>true</keepgoing>
-                <rankOrder>ascending</rankOrder>
-              </dispatch>
-               <nodefilters>
-                   <filter>tags: "executor-test"</filter>
-               </nodefilters>
-              <executionEnabled>true</executionEnabled>
-              <sequence>
-                <command>
-                  <exec>echo 0</exec>
-                </command>
-              </sequence>
-           </job>
-        </joblist>"""
+        def path = JobUtils.updateJobFileToImport("job-template-common.xml",
+                TEST_PROJECT,
+                ["job-name"           : jobName,
+                 "args"               : "echo 0",
+                 "node-filter-include": "tags: \"executor-test\"",
+                 "dispatch-rank-order": "ascending",
+                ])
 
         when:
-        def response = JobUtils.createJob(TEST_PROJECT, jobXml, client)
+        def response = JobUtils.createJob(TEST_PROJECT, new File(path).text, client)
 
         then:
         response.successful
+
+        when:
         def jobId = MAPPER.readValue(response.body().string(), CreateJobResponse.class).getSucceeded().get(0).id
-        def completedJob = runJobAndWait(jobId)
+        Object optionsJson = ["options": [opt1: "z", opt2: "a"]]
+        def completedJob = runJobAndWait(jobId, optionsJson)
+
+        then:
         getOrderedNodesListExecutedOn(completedJob) == ["password-node", "ssh-node"]
     }
 

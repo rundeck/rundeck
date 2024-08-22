@@ -6,6 +6,7 @@ import okhttp3.Headers
 import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.api.responses.execution.ExecutionOutput
 import org.rundeck.util.api.responses.jobs.Job
+import org.rundeck.util.api.responses.jobs.JobDetails
 import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.httpbody.ScmJobStatusResponse
 import org.rundeck.util.common.WaitingTime
@@ -118,9 +119,9 @@ class JobUtils {
                 "</joblist>"
     }
 
-    static Job getJobDetailsById(final String jobId, final ObjectMapper mapper, RdClient client){
+    static JobDetails getJobDetailsById(final String jobId, final ObjectMapper mapper, RdClient client){
         def jobInfo = client.doGetAcceptAll("/job/${jobId}")
-        List<Job> jobs = mapper.readValue(jobInfo.body().string(), mapper.getTypeFactory().constructCollectionType(List.class, Job.class))
+        List<JobDetails> jobs = mapper.readValue(jobInfo.body().string(), mapper.getTypeFactory().constructCollectionType(List.class, JobDetails.class))
         return jobs[0]
     }
 
@@ -290,32 +291,46 @@ class JobUtils {
 
 
     /**
-     * Takes the job file and replaces all the words that start with 'xml-' using the provided args to upload it to the desired project.
+     * Takes the job template file and does textual replacement for the words that start with the 'xml-'  prefix.
+     * The default replacement arguments are used unless an overriden value is provided.
      *
-     * @param fileName The name of the file to import into test-files resources dir.
-     * @param args     Optional arguments as a Map. If not provided, default values will be used.
+     * @param fileName The name of the template file from the `test-files` resources dir.
+     * @param projectName project name to be used in the job file. Can be overriden in the argsOverrides.
+     * @param argsOverrides  argument keys-values that override the defaults.
      *                 Available keys:
-     *                 - "project-name": Name of the project (default: PROJECT_NAME)
+     *                 - "project-name": Name of the project (default: projectName parameter)
      *                 - "job-name": Name of the job (default: "job-test")
      *                 - "job-group-name": Name of the job group (default: "group-test")
      *                 - "job-description-name": Name of the job description (default: "description-test")
      *                 - "args": Arguments (default: "echo hello there")
      *                 - "2-args": Secondary arguments (default: "echo hello there 2")
      *                 - "uuid": UUID for the job (default: generated UUID)
+     *                 - "execution-enabled": Execution enabled flag (default: "true")
+     *                 - "schedule-enabled": Schedule enabled flag (default: "true")
+     *                 - "node-filter-include": Node filter include (default: ".*")
+     *                 - "node-filter-exclude": Node filter exclude (default: "")
+     *                 - "dispatch-rank-order": Dispatch rank order (default: "ascending")
      * @return The path of the updated temporary XML file.
      */
-    static def updateJobFileToImport = (String fileName, String projectName, Map args = [:]) -> {
-        if (args.isEmpty()) {
-            args = [
-                    "project-name": projectName,
-                    "job-name": "job-test",
-                    "job-group-name": "group-test",
-                    "job-description-name": "description-test",
-                    "args": "echo hello there",
-                    "2-args": "echo hello there 2",
-                    "uuid": UUID.randomUUID().toString()
-            ]
-        }
+    static def updateJobFileToImport = (String fileName, String projectName, Map argsOverrides = [:]) -> {
+        final DEFAULT_ARGS = [
+                "project-name": projectName,
+                "job-name": "job-test",
+                "job-group-name": "group-test",
+                "job-description-name": "description-test",
+                "args": "echo hello there",
+                "2-args": "echo hello there 2",
+                "uuid": UUID.randomUUID().toString(),
+                "execution-enabled": "true",
+                "schedule-enabled": "true",
+                "node-filter-include": ".*",
+                "ode-filter-exclude": "",
+                "dispatch-rank-order": "ascending"
+        ].asImmutable()
+
+        // Overrides defaults
+        def args = DEFAULT_ARGS + argsOverrides
+
         def pathXmlFile = getClass().getResource("/test-files/${fileName}").getPath()
         def xmlProjectContent = new File(pathXmlFile).text
         args.each { k, v ->
