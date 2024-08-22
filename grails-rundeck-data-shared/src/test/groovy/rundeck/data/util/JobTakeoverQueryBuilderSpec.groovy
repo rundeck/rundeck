@@ -8,7 +8,7 @@ class JobTakeoverQueryBuilderSpec extends Specification {
         String toServerUUID = "toServerUUID"
         String fromServerUUID = "fromServerUUID"
         boolean selectAll = false
-        List<String> jobids = ["7a3e4b5d-7e03-4793-af2a-849408527cb6", "60e682d7-37e0-4fd5-b47b-4f470275dee3","';DELETE FROM rduser;"]
+        List<String> jobids = ["7a3e4b5d-7e03-4793-af2a-849408527cb6", "60e682d7-37e0-4fd5-b47b-4f470275dee3"]
 
         when:
         String result = JobTakeoverQueryBuilder.buildTakeoverQuery(toServerUUID, fromServerUUID, selectAll, projectFilter, jobids, innerSchedFlag)
@@ -18,10 +18,10 @@ class JobTakeoverQueryBuilderSpec extends Specification {
 
         where:
         projectFilter | innerSchedFlag | expectedQry
-        null          | true           | "SELECT DISTINCT se.id FROM scheduled_execution se LEFT JOIN execution e ON se.id = e.scheduled_execution_id WHERE ((e.status = 'scheduled' AND e.date_completed IS NULL AND e.date_started > current_timestamp AND e.server_nodeuuid = :fromServerUUID) OR (se.uuid in ('7a3e4b5d-7e03-4793-af2a-849408527cb6','60e682d7-37e0-4fd5-b47b-4f470275dee3') AND se.server_nodeuuid = :fromServerUUID))"
-        null          | false          | "SELECT DISTINCT se.id FROM scheduled_execution se LEFT JOIN execution e ON se.id = e.scheduled_execution_id WHERE ((e.status = 'scheduled' AND e.date_completed IS NULL AND e.date_started > current_timestamp AND e.server_nodeuuid = :fromServerUUID) OR (se.scheduled = true AND se.uuid in ('7a3e4b5d-7e03-4793-af2a-849408527cb6','60e682d7-37e0-4fd5-b47b-4f470275dee3') AND se.server_nodeuuid = :fromServerUUID))"
-        "one"         | true           | "SELECT DISTINCT se.id FROM scheduled_execution se LEFT JOIN execution e ON se.id = e.scheduled_execution_id WHERE ((e.status = 'scheduled' AND e.date_completed IS NULL AND e.date_started > current_timestamp AND e.project = :projectFilter AND e.server_nodeuuid = :fromServerUUID) OR (se.uuid in ('7a3e4b5d-7e03-4793-af2a-849408527cb6','60e682d7-37e0-4fd5-b47b-4f470275dee3') AND se.project = :projectFilter AND se.server_nodeuuid = :fromServerUUID))"
-        "one"         | false          | "SELECT DISTINCT se.id FROM scheduled_execution se LEFT JOIN execution e ON se.id = e.scheduled_execution_id WHERE ((e.status = 'scheduled' AND e.date_completed IS NULL AND e.date_started > current_timestamp AND e.project = :projectFilter AND e.server_nodeuuid = :fromServerUUID) OR (se.scheduled = true AND se.uuid in ('7a3e4b5d-7e03-4793-af2a-849408527cb6','60e682d7-37e0-4fd5-b47b-4f470275dee3') AND se.project = :projectFilter AND se.server_nodeuuid = :fromServerUUID))"
+        null          | true           | "SELECT DISTINCT se.id FROM scheduled_execution se LEFT JOIN execution e ON se.id = e.scheduled_execution_id WHERE ((e.status = 'scheduled' AND e.date_completed IS NULL AND e.date_started > current_timestamp AND e.server_nodeuuid = :fromServerUUID) OR (se.uuid in (:jobids) AND se.server_nodeuuid = :fromServerUUID))"
+        null          | false          | "SELECT DISTINCT se.id FROM scheduled_execution se LEFT JOIN execution e ON se.id = e.scheduled_execution_id WHERE ((e.status = 'scheduled' AND e.date_completed IS NULL AND e.date_started > current_timestamp AND e.server_nodeuuid = :fromServerUUID) OR (se.scheduled = true AND se.uuid in (:jobids) AND se.server_nodeuuid = :fromServerUUID))"
+        "one"         | true           | "SELECT DISTINCT se.id FROM scheduled_execution se LEFT JOIN execution e ON se.id = e.scheduled_execution_id WHERE ((e.status = 'scheduled' AND e.date_completed IS NULL AND e.date_started > current_timestamp AND e.project = :projectFilter AND e.server_nodeuuid = :fromServerUUID) OR (se.uuid in (:jobids) AND se.project = :projectFilter AND se.server_nodeuuid = :fromServerUUID))"
+        "one"         | false          | "SELECT DISTINCT se.id FROM scheduled_execution se LEFT JOIN execution e ON se.id = e.scheduled_execution_id WHERE ((e.status = 'scheduled' AND e.date_completed IS NULL AND e.date_started > current_timestamp AND e.project = :projectFilter AND e.server_nodeuuid = :fromServerUUID) OR (se.scheduled = true AND se.uuid in (:jobids) AND se.project = :projectFilter AND se.server_nodeuuid = :fromServerUUID))"
     }
 
     def "CreateJobTakeoverExecutionQueryPart"() {
