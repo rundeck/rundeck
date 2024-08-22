@@ -7,7 +7,7 @@ import org.rundeck.util.api.responses.jobs.Job
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class Execution {
-    int id
+    String id
     String href
     String permalink
     String status
@@ -32,7 +32,7 @@ class Execution {
     }
 
     static class RetriedExecution {
-        long id
+        String id
         String permalink
         String href
         String status

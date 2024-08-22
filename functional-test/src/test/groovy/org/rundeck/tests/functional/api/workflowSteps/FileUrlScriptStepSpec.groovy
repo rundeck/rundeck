@@ -1,7 +1,6 @@
 package org.rundeck.tests.functional.api.workflowSteps
 
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.execution.ExecutionStatus
@@ -57,12 +56,10 @@ class FileUrlScriptStepSpec extends BaseContainer{
         def json = client.jsonValue(response.body(), Map)
 
         then:
-        def exec= JobUtils.waitForExecutionToBe(
+        def exec= JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 json.id as String,
-                new ObjectMapper(),
                 client,
-                WaitingTime.MODERATE,
                 WaitingTime.EXCESSIVE
         )
         String execId = json.id
@@ -90,12 +87,10 @@ class FileUrlScriptStepSpec extends BaseContainer{
         def json = client.jsonValue(response.body(), Map)
 
         then:
-        def exec= JobUtils.waitForExecutionToBe(
+        def exec= JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 json.id as String,
-                new ObjectMapper(),
                 client,
-                WaitingTime.MODERATE,
                 WaitingTime.EXCESSIVE
         )
         String execId = json.id

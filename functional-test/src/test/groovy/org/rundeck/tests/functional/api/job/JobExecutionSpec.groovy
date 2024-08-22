@@ -635,12 +635,10 @@ class JobExecutionSpec extends BaseContainer {
 
         Execution exec = MAPPER.readValue(jobRun.body().string(), Execution.class)
 
-        Execution JobExecutionStatus = JobUtils.waitForExecutionToBe(
+        Execution JobExecutionStatus = JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 exec.id as String,
-                MAPPER,
                 client,
-                WaitingTime.MODERATE,
                 WaitingTime.EXCESSIVE
         )
 
@@ -653,12 +651,10 @@ class JobExecutionSpec extends BaseContainer {
 
         Execution refExec = MAPPER.readValue(referencedJobRun.body().string(), Execution.class)
 
-        Execution refJobExecutionStatus = JobUtils.waitForExecutionToBe(
+        Execution refJobExecutionStatus = JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 refExec.id as String,
-                MAPPER,
                 client,
-                WaitingTime.MODERATE,
                 WaitingTime.EXCESSIVE
         )
 
@@ -734,42 +730,32 @@ class JobExecutionSpec extends BaseContainer {
         execId > 0
 
         when: "fail and retry 1"
-        def execDetails = JobUtils.waitForExecutionToBe(
+        def execDetails = JobUtils.waitForExecution(
                 ExecutionStatus.FAILED_WITH_RETRY.state,
                 execId as String,
-                MAPPER,
-                client,
-                WaitingTime.LOW,
-                WaitingTime.MODERATE
-        )
+                client)
+
         def retryId1 = execDetails.retriedExecution.id
 
         then:
         retryId1 > 0
 
         when: "fail and retry 2"
-        def execDetails2 = JobUtils.waitForExecutionToBe(
+        def execDetails2 = JobUtils.waitForExecution(
                 ExecutionStatus.FAILED_WITH_RETRY.state,
                 retryId1 as String,
-                MAPPER,
-                client,
-                WaitingTime.LOW,
-                WaitingTime.MODERATE
-        )
+                client)
+
         def retryId2 = execDetails2.retriedExecution.id
 
         then:
         retryId2 > 0
 
         when: "final retry"
-        def execDetailsFinal = JobUtils.waitForExecutionToBe(
+        def execDetailsFinal = JobUtils.waitForExecution(
                 ExecutionStatus.FAILED.state,
                 retryId2 as String,
-                MAPPER,
-                client,
-                WaitingTime.LOW,
-                WaitingTime.MODERATE
-        )
+                client)
 
         then:
         execDetailsFinal.retriedExecution == null
@@ -902,12 +888,10 @@ class JobExecutionSpec extends BaseContainer {
         dateS.toString() == runtime.date.toString()
 
         when: "Wait until execution succeeds"
-        def execAfterWait = JobUtils.waitForExecutionToBe(
+        def execAfterWait = JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 execId,
-                MAPPER,
                 client,
-                WaitingTime.MODERATE,
                 WaitingTime.EXCESSIVE
         )
 
@@ -1028,14 +1012,10 @@ class JobExecutionSpec extends BaseContainer {
         Execution execRes = MAPPER.readValue(response.body().string(), Execution.class)
         String execId = execRes.id
 
-        def execution = JobUtils.waitForExecutionToBe(
+        def execution = JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 execId,
-                MAPPER,
-                client,
-                WaitingTime.LOW,
-                WaitingTime.MODERATE
-        )
+                client)
 
         then:
         execution.status == ExecutionStatus.SUCCEEDED.state
@@ -1046,14 +1026,10 @@ class JobExecutionSpec extends BaseContainer {
 
         Execution execRes2 = MAPPER.readValue(response2.body().string(), Execution.class)
         String execId2 = execRes2.id
-        def execution2 = JobUtils.waitForExecutionToBe(
+        def execution2 = JobUtils.waitForExecution(
                 ExecutionStatus.FAILED.state,
                 execId2,
-                MAPPER,
-                client,
-                WaitingTime.LOW,
-                WaitingTime.MODERATE
-        )
+                client)
 
         then:
         execution2.status == ExecutionStatus.FAILED.state // should fail
@@ -1067,14 +1043,10 @@ class JobExecutionSpec extends BaseContainer {
 
         Execution execRes3 = MAPPER.readValue(response3.body().string(), Execution.class)
         String execId3 = execRes3.id
-        def execution3 = JobUtils.waitForExecutionToBe(
+        def execution3 = JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 execId3,
-                MAPPER,
-                client,
-                WaitingTime.LOW,
-                WaitingTime.MODERATE
-        )
+                client)
 
         then:
         execution3.status == ExecutionStatus.SUCCEEDED.state
@@ -1091,14 +1063,10 @@ class JobExecutionSpec extends BaseContainer {
 
         Execution execRes4 = MAPPER.readValue(response4.body().string(), Execution.class)
         String execId4 = execRes4.id
-        def execution4 = JobUtils.waitForExecutionToBe(
+        def execution4 = JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 execId4,
-                MAPPER,
-                client,
-                WaitingTime.LOW,
-                WaitingTime.MODERATE
-        )
+                client)
 
         then:
         execution4.status == ExecutionStatus.SUCCEEDED.state
@@ -1143,12 +1111,10 @@ class JobExecutionSpec extends BaseContainer {
         Execution openNcJobResponse = MAPPER.readValue(openNcJobRun.body().string(), Execution.class)
 
         then: "We wait for succeeded exec"
-        JobUtils.waitForExecutionToBe(
+        JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 openNcJobResponse.id as String,
-                MAPPER,
                 client,
-                WaitingTime.LOW,
                 WaitingTime.EXCESSIVE
         ).status == ExecutionStatus.SUCCEEDED.state
 
@@ -1158,12 +1124,10 @@ class JobExecutionSpec extends BaseContainer {
         Execution parsedExecutionsResponse = MAPPER.readValue(jobRun.body().string(), Execution.class)
 
         then: "Will succeed"
-        JobUtils.waitForExecutionToBe(
+        JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 parsedExecutionsResponse.id as String,
-                MAPPER,
                 client,
-                WaitingTime.LOW,
                 WaitingTime.EXCESSIVE
         ).status == ExecutionStatus.SUCCEEDED.state
 
@@ -1174,14 +1138,11 @@ class JobExecutionSpec extends BaseContainer {
         def readJobRun = JobUtils.executeJob(readNcOutputJobId, client)
         assert readJobRun.successful
         Execution readJobRunResponse = MAPPER.readValue(readJobRun.body().string(), Execution.class)
-        def readJobSucceeded = JobUtils.waitForExecutionToBe(
+        def readJobSucceeded = JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 readJobRunResponse.id as String,
-                MAPPER,
-                client,
-                WaitingTime.LOW,
-                WaitingTime.MODERATE
-        )
+                client)
+
         assert readJobSucceeded.status == ExecutionStatus.SUCCEEDED.state
         def execOutputResponse = client.doGetAcceptAll("/execution/$readJobRunResponse.id/output")
         ExecutionOutput execOutput = MAPPER.readValue(execOutputResponse.body().string(), ExecutionOutput.class)
@@ -1344,30 +1305,24 @@ class JobExecutionSpec extends BaseContainer {
         Execution execRes3 = MAPPER.readValue(exec3.body().string(), Execution.class)
         String execId3 = execRes3.id
 
-        Execution execStatus1 = JobUtils.waitForExecutionToBe(
+        Execution execStatus1 = JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 execId1,
-                MAPPER,
                 client,
-                WaitingTime.MODERATE,
                 WaitingTime.EXCESSIVE
         )
 
-        Execution execStatus2 = JobUtils.waitForExecutionToBe(
+        Execution execStatus2 = JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 execId2,
-                MAPPER,
                 client,
-                WaitingTime.MODERATE,
                 WaitingTime.EXCESSIVE
         )
 
-        Execution execStatus3 = JobUtils.waitForExecutionToBe(
+        Execution execStatus3 = JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 execId3,
-                MAPPER,
                 client,
-                WaitingTime.MODERATE,
                 WaitingTime.EXCESSIVE
         )
 
@@ -1476,12 +1431,10 @@ class JobExecutionSpec extends BaseContainer {
 
         Execution execId = MAPPER.readValue(runResponse.body().string(), Execution.class)
 
-        Execution jobExecStatusAfterSuccess = JobUtils.waitForExecutionToBe(
+        Execution jobExecStatusAfterSuccess = JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 execId.id as String,
-                MAPPER,
                 client,
-                WaitingTime.MODERATE,
                 WaitingTime.EXCESSIVE
         )
 
@@ -1549,14 +1502,11 @@ class JobExecutionSpec extends BaseContainer {
 
         Execution execId = MAPPER.readValue(runResponse.body().string(), Execution.class)
 
-        assert JobUtils.waitForExecutionToBe(
+        assert JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 execId.id as String,
-                MAPPER,
-                client,
-                WaitingTime.LOW,
-                WaitingTime.MODERATE
-        ).status == ExecutionStatus.SUCCEEDED.state
+                client)
+            .status == ExecutionStatus.SUCCEEDED.state
 
         // We read the output file
         def execArgs = "cat $stepOutfile"
@@ -1565,13 +1515,10 @@ class JobExecutionSpec extends BaseContainer {
         def parsedReadBody = MAPPER.readValue(readResponseBody, RunCommand.class)
         String readExecId = parsedReadBody.execution.id
 
-        assert JobUtils.waitForExecutionToBe(
+        assert JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 readExecId,
-                MAPPER,
-                client,
-                WaitingTime.LOW,
-                WaitingTime.MODERATE
+                client
         ).status == ExecutionStatus.SUCCEEDED.state
 
         def entries = getExecutionOutputLines(readExecId)
@@ -1609,13 +1556,10 @@ class JobExecutionSpec extends BaseContainer {
         Execution execId2 = MAPPER.readValue(runResponse2.body().string(), Execution.class)
 
         // But the execution will fail
-        assert JobUtils.waitForExecutionToBe(
+        assert JobUtils.waitForExecution(
                 ExecutionStatus.FAILED.state,
                 execId2.id as String,
-                MAPPER,
-                client,
-                WaitingTime.LOW,
-                WaitingTime.MODERATE
+                client
         ).status == ExecutionStatus.FAILED.state
 
         // So we read the output file
@@ -1625,13 +1569,10 @@ class JobExecutionSpec extends BaseContainer {
         def parsedReadBody2 = MAPPER.readValue(readResponseBody2, RunCommand.class)
         String readExecId2 = parsedReadBody2.execution.id
 
-        assert JobUtils.waitForExecutionToBe(
+        assert JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 readExecId2,
-                MAPPER,
-                client,
-                WaitingTime.LOW,
-                WaitingTime.MODERATE
+                client
         ).status == ExecutionStatus.SUCCEEDED.state
 
         def entries2 = getExecutionOutputLines(readExecId2)
@@ -1669,13 +1610,10 @@ class JobExecutionSpec extends BaseContainer {
         Execution execId3 = MAPPER.readValue(runResponse3.body().string(), Execution.class)
 
         // But the execution will fail
-        assert JobUtils.waitForExecutionToBe(
+        assert JobUtils.waitForExecution(
                 ExecutionStatus.FAILED.state,
                 execId3.id as String,
-                MAPPER,
-                client,
-                WaitingTime.LOW,
-                WaitingTime.MODERATE
+                client
         ).status == ExecutionStatus.FAILED.state
 
         // So we read the output file
@@ -1685,13 +1623,10 @@ class JobExecutionSpec extends BaseContainer {
         def parsedReadBody3 = MAPPER.readValue(readResponseBody3, RunCommand.class)
         String readExecId3 = parsedReadBody3.execution.id
 
-        assert JobUtils.waitForExecutionToBe(
+        assert JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 readExecId3,
-                MAPPER,
-                client,
-                WaitingTime.LOW,
-                WaitingTime.MODERATE
+                client
         ).status == ExecutionStatus.SUCCEEDED.state
 
         def entries3 = getExecutionOutputLines(readExecId3)
@@ -1728,13 +1663,10 @@ class JobExecutionSpec extends BaseContainer {
         Execution execId4 = MAPPER.readValue(runResponse4.body().string(), Execution.class)
 
         // But the execution will fail
-        assert JobUtils.waitForExecutionToBe(
+        assert JobUtils.waitForExecution(
                 ExecutionStatus.FAILED.state,
                 execId4.id as String,
-                MAPPER,
-                client,
-                WaitingTime.LOW,
-                WaitingTime.MODERATE
+                client
         ).status == ExecutionStatus.FAILED.state
 
         // So we read the output file
@@ -1744,13 +1676,10 @@ class JobExecutionSpec extends BaseContainer {
         def parsedReadBody4 = MAPPER.readValue(readResponseBody4, RunCommand.class)
         String readExecId4 = parsedReadBody4.execution.id
 
-        assert JobUtils.waitForExecutionToBe(
+        assert JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 readExecId4,
-                MAPPER,
-                client,
-                WaitingTime.LOW,
-                WaitingTime.MODERATE
+                client
         ).status == ExecutionStatus.SUCCEEDED.state
 
         def entries4 = getExecutionOutputLines(readExecId4)
@@ -1787,13 +1716,10 @@ class JobExecutionSpec extends BaseContainer {
         Execution execId5 = MAPPER.readValue(runResponse5.body().string(), Execution.class)
 
         // But the execution will fail
-        assert JobUtils.waitForExecutionToBe(
+        assert JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 execId5.id as String,
-                MAPPER,
-                client,
-                WaitingTime.LOW,
-                WaitingTime.MODERATE
+                client
         ).status == ExecutionStatus.SUCCEEDED.state
 
         // So we read the output file
@@ -1803,13 +1729,10 @@ class JobExecutionSpec extends BaseContainer {
         def parsedReadBody5 = MAPPER.readValue(readResponseBody5, RunCommand.class)
         String readExecId5 = parsedReadBody5.execution.id
 
-        assert JobUtils.waitForExecutionToBe(
+        assert JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 readExecId5,
-                MAPPER,
-                client,
-                WaitingTime.LOW,
-                WaitingTime.MODERATE
+                client
         ).status == ExecutionStatus.SUCCEEDED.state
 
         def entries5 = getExecutionOutputLines(readExecId5)
@@ -1965,14 +1888,11 @@ class JobExecutionSpec extends BaseContainer {
 
         Execution exec = MAPPER.readValue(jobRun.body().string(), Execution.class)
 
-        Execution jobExecutionStatus = JobUtils.waitForExecutionToBe(
+        Execution jobExecutionStatus = JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 exec.id as String,
-                MAPPER,
                 client,
-                WaitingTime.MODERATE,
-                WaitingTime.EXCESSIVE
-        )
+                WaitingTime.EXCESSIVE)
 
         then:
         jobExecutionStatus.status == ExecutionStatus.SUCCEEDED.state

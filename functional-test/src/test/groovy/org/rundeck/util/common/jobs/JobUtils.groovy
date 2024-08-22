@@ -5,7 +5,6 @@ import groovy.util.logging.Slf4j
 import okhttp3.Headers
 import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.api.responses.execution.ExecutionOutput
-import org.rundeck.util.api.responses.jobs.Job
 import org.rundeck.util.api.responses.jobs.JobDetails
 import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.httpbody.ScmJobStatusResponse
@@ -131,22 +130,20 @@ class JobUtils {
      *
      * @param expectedStates The expected state.
      * @param executionId The execution ID to query.
-     * @param mapper The ObjectMapper instance to parse the response.
      * @param client The RdClient instance to perform the HTTP request.
-     * @param iterationGap The duration to wait between each check.
      * @param timeout The maximum duration to wait for the execution to reach the expected state.
+     * @param checkPeriod The time to wait between each check.
      * @return The Execution object representing the execution status.
      * @throws InterruptedException if the timeout is reached before the execution reaches the expected state.
      */
-    static Execution waitForExecutionToBe(
-            String state,
-            String executionId,
-            ObjectMapper mapper,
-            RdClient client,
-            Duration iterationGap = WaitingTime.LOW,
-            Duration timeout = WaitingTime.MODERATE
+    static Execution waitForExecution(
+        String state,
+        String executionId,
+        RdClient client,
+        Duration timeout = WaitingTime.MODERATE,
+        Duration checkPeriod = WaitingTime.LOW
     ) {
-        return waitForExecutionToBe([state], executionId, mapper, client, iterationGap, timeout)
+        return waitForExecution([state], executionId, client, timeout, checkPeriod)
     }
 
 
@@ -155,23 +152,21 @@ class JobUtils {
      *
      * @param expectedStates A list of expected states.
      * @param executionId The execution ID to query.
-     * @param mapper The ObjectMapper instance to parse the response.
      * @param client The RdClient instance to perform the HTTP request.
-     * @param iterationGap The duration to wait between each check.
      * @param timeout The maximum duration to wait for the execution to reach the expected state.
+     * @param checkPeriod The time to wait between each check.
      * @return The Execution object representing the execution status.
      * @throws InterruptedException if the timeout is reached before the execution reaches the expected state.
      */
-    static Execution waitForExecutionToBe(
+    static Execution waitForExecution(
         Collection<String> expectedStates,
         String executionId,
-        ObjectMapper mapper,
         RdClient client,
-        Duration iterationGap = WaitingTime.LOW,
-        Duration timeout = WaitingTime.MODERATE
+        Duration timeout = WaitingTime.MODERATE,
+        Duration checkPeriod = WaitingTime.LOW
     ) {
         def execDetail = client.doGet("/execution/${executionId}")
-        Execution executionStatus = mapper.readValue(execDetail.body().string(), Execution.class)
+        Execution executionStatus = OBJECT_MAPPER.readValue(execDetail.body().string(), Execution.class)
         long initTime = System.currentTimeMillis()
         while (!expectedStates.contains(executionStatus.status)) {
             if ((System.currentTimeMillis() - initTime) >= timeout.toMillis()) {
@@ -179,11 +174,11 @@ class JobUtils {
                 throw new InterruptedException("Timeout reached (${timeout.toSeconds()} seconds), the execution had \"${executionStatus.status}\" state. Execution output was: \n${execOutput}\n")
             }
             def transientExecutionResponse = client.doGet("/execution/${executionId}")
-            executionStatus = mapper.readValue(transientExecutionResponse.body().string(), Execution.class)
+            executionStatus = OBJECT_MAPPER.readValue(transientExecutionResponse.body().string(), Execution.class)
             if (expectedStates.contains(executionStatus.status)) {
                 break
             }
-            Thread.sleep(Math.min(iterationGap.toMillis(), timeout.toMillis()))
+            Thread.sleep(Math.min(checkPeriod.toMillis(), timeout.toMillis()))
         }
         return executionStatus
     }
