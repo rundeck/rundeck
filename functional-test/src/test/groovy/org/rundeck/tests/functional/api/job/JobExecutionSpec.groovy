@@ -3,6 +3,7 @@ package org.rundeck.tests.functional.api.job
 import com.fasterxml.jackson.databind.ObjectMapper
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
+import org.rundeck.util.api.responses.execution.ExecutionInfo
 import org.rundeck.util.api.responses.jobs.CreateJobResponse
 import org.rundeck.util.api.responses.common.ErrorResponse
 import org.rundeck.util.api.responses.execution.Execution
@@ -1161,6 +1162,77 @@ class JobExecutionSpec extends BaseContainer {
         then: "The output of the job must have basic info about the webhook"
         execOutput != null
         FileHelpers.assertLinesInsideEntries(webhookData, entries)
+
+        cleanup:
+        deleteProject(projectName)
+        Files.deleteIfExists(Paths.get("/tmp/netcat-out.txt"))
+    }
+
+    @ExcludePro
+    def "test-job-run-webhook-execution-completed"(){
+        given:
+        def projectName = "test-send-notification-webhook"
+        def client = getClient()
+        ObjectMapper mapper = new ObjectMapper()
+
+        setupProjectArchiveDirectoryResource(projectName, '/projects-import/webhook-notification-project')
+
+        // We have the jobs id, since they are already imported
+        def openNcJobId = "c81aa8af-1e0e-4fce-a7bd-102b87922ef2"
+        def notificationJobId = "a20106e4-37e6-489b-a783-2beb04a367c1"
+        def readNcOutputJobId = "ccda2e41-277a-4c62-ba01-8f930663561e"
+
+        when: "We first open NC connection"
+        def openNcJobRun = JobUtils.executeJob(openNcJobId, client)
+        assert openNcJobRun.successful
+        Execution openNcJobResponse = mapper.readValue(openNcJobRun.body().string(), Execution.class)
+
+        then: "We wait for succeeded exec"
+        JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                openNcJobResponse.id as String,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+        ).status == ExecutionStatus.SUCCEEDED.state
+
+        when: "We run the job with notification"
+        def jobRun = JobUtils.executeJob(notificationJobId, client)
+        assert jobRun.successful
+        Execution parsedExecutionsResponse = mapper.readValue(jobRun.body().string(), Execution.class)
+
+        then: "Will succeed"
+        JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                parsedExecutionsResponse.id as String,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+        ).status == ExecutionStatus.SUCCEEDED.state
+
+        when: "We wait 10 seconds for netcat to deliver response"
+        Thread.sleep(WaitingTime.MODERATE.milliSeconds * 2)
+
+        // Then run the job that reads the output of request
+        def readJobRun = JobUtils.executeJob(readNcOutputJobId, client)
+        assert readJobRun.successful
+        Execution readJobRunResponse = mapper.readValue(readJobRun.body().string(), Execution.class)
+        def readJobSucceeded = JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                readJobRunResponse.id as String,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        )
+        assert readJobSucceeded.status == ExecutionStatus.SUCCEEDED.state
+        def execOutputResponse = client.doGetAcceptAll("/execution/$readJobRunResponse.id")
+        ExecutionInfo execOutput = mapper.readValue(execOutputResponse.body().string(), ExecutionInfo.class)
+
+        then: "The output of the job must have basic info about the webhook"
+        execOutput.dateEnded != null
 
         cleanup:
         deleteProject(projectName)

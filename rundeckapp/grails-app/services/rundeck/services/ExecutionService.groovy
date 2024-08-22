@@ -847,17 +847,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param status
      */
     private void cleanupExecution_currentTransaction(Execution e, String status = null) {
-        def event = saveCompletedExecution_currentTransaction(
-                e.scheduledExecution?.uuid,
-                e.id,
-                [
-                        status       : status ?: String.valueOf(false),
-                        dateCompleted: new Date(),
-                        cancelled    : !status
-                ],
-                null,
-                null
-        )
+        def event = Execution.withNewTransaction {
+            saveCompletedExecution_currentTransaction(
+                    e.scheduledExecution?.uuid,
+                    e.id,
+                    [
+                            status       : status ?: String.valueOf(false),
+                            dateCompleted: new Date(),
+                            cancelled    : !status
+                    ],
+                    null,
+                    null
+            )
+        }
         triggerJobCompleteNotifications(null, event)
     }
 
