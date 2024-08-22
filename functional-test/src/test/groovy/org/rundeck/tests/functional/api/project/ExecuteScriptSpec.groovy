@@ -221,7 +221,7 @@ class ExecuteScriptSpec extends BaseContainer{
         def runScriptId = validRunScript.execution.id
 
         then:
-        runScriptId > 0
+        !runScriptId?.blank
     }
 
 }

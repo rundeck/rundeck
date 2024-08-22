@@ -41,7 +41,7 @@ class RunUrlSpec extends BaseContainer{
 
         then:
         scriptExecArgsResponse.code() == 200
-        scriptExecId > 0
+        !scriptExecId?.blank
         mapper.readValue(client.doGetAcceptAll("/execution/$scriptExecId").body().string(), Execution.class) != null
 
         when: "We check the execution status"

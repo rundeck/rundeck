@@ -727,7 +727,7 @@ class JobExecutionSpec extends BaseContainer {
         def execId = parsedExecutionsResponse.id
 
         then:
-        execId > 0
+        !execId?.isBlank()
 
         when: "fail and retry 1"
         def execDetails = JobUtils.waitForExecution(
@@ -738,7 +738,7 @@ class JobExecutionSpec extends BaseContainer {
         def retryId1 = execDetails.retriedExecution.id
 
         then:
-        retryId1 > 0
+        !retryId1?.isBlank()
 
         when: "fail and retry 2"
         def execDetails2 = JobUtils.waitForExecution(
@@ -749,7 +749,7 @@ class JobExecutionSpec extends BaseContainer {
         def retryId2 = execDetails2.retriedExecution.id
 
         then:
-        retryId2 > 0
+        !retryId2?.isBlank()
 
         when: "final retry"
         def execDetailsFinal = JobUtils.waitForExecution(
