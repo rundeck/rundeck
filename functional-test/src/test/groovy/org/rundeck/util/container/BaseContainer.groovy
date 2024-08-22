@@ -364,10 +364,10 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         }
 
         Execution execution = MAPPER.readValue(r.body().string(), Execution.class)
-        waitForExecutionStatus(execution.id as String)
+        waitForExecutionStatus(execution.id as String, WaitingTime.EXCESSIVE)
 
         // Maintains the data contract for the Map return type
-        client.get("/execution/${execution.id}/output", Map)
+        return client.get("/execution/${execution.id}/output", Map)
     }
 
     /**
@@ -376,7 +376,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
      * @param timeout wait timeout
      * @return
      */
-    Execution waitForExecutionStatus(String executionId, WaitingTime timeout = WaitingTime.MODERATE) {
+    Execution waitForExecutionStatus(String executionId, Duration timeout = WaitingTime.MODERATE) {
         final List<String> statusesToWaitFor = [
                 'aborted',
                 'failed',
@@ -384,7 +384,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
                 'timedout',
                 'other']
 
-        JobUtils.waitForExecutionToBe(statusesToWaitFor, executionId, MAPPER, client, WaitingTime.LOW, timeout)
+        return JobUtils.waitForExecutionToBe(statusesToWaitFor, executionId, MAPPER, client, WaitingTime.LOW, timeout)
     }
 
     /**
