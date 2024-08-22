@@ -4479,7 +4479,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(featureService.featurePresent("enhancedJobTakeoverQuery")) {
             log.info("Using enhanced job takeover query")
             String qry = JobTakeoverQueryBuilder.buildTakeoverQuery(toServerUUID, fromServerUUID, selectAll, projectFilter, jobids, ignoreInnerScheduled)
-            println qry
             List<ScheduledExecution> jobList = []
             var qryParams = new MapSqlParameterSource()
             qryParams.addValue("toServerUUID", toServerUUID)
@@ -4492,7 +4491,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             if(jobids){
                 qryParams.addValue("jobids", jobids)
             }
-            println qryParams.values
             NamedParameterJdbcTemplate jdbcTemplate = new NamedParameterJdbcTemplate(dataSource)
             jdbcTemplate.query(qry, qryParams, new RowCallbackHandler() {
                 @Override
