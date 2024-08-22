@@ -5,7 +5,7 @@ import org.rundeck.util.container.BaseContainer
 import org.rundeck.util.api.responses.jobs.CreateJobResponse
 import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.common.jobs.JobUtils
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.ObjectMapper
 
 @APITest
 class JobSpec extends BaseContainer {
@@ -41,31 +41,15 @@ class JobSpec extends BaseContainer {
     def "Create a job with multiple steps"() {
         given:
         def jobName = UUID.randomUUID().toString()
-        def jobXml = """
-        <joblist>
-           <job>
-              <name>${jobName}</name>
-              <group>api-test</group>
-              <description></description>
-              <loglevel>INFO</loglevel>
-              <multipleExecutions>true</multipleExecutions>
-              <dispatch>
-                <threadcount>1</threadcount>
-                <keepgoing>true</keepgoing>
-              </dispatch>
-              <sequence>
-                <command>
-                  <exec>echo 0</exec>
-                </command>
-                <command>
-                  <exec>echo 1</exec>
-                </command>
-              </sequence>
-           </job>
-        </joblist>"""
+
+        def path = JobUtils.updateJobFileToImport("job-template-common-2.xml",
+                PROJECT_NAME,
+                ["job-name": jobName,
+                 "args": "echo 0",
+                 "2-args": "echo 1"])
 
         when:
-        def response = JobUtils.createJob(PROJECT_NAME, jobXml, client)
+        def response = JobUtils.createJob(PROJECT_NAME, new File(path).text, client)
 
         then:
         response.successful
@@ -75,66 +59,17 @@ class JobSpec extends BaseContainer {
         jobDetails.sequence.commands[1].exec == "echo 1"
     }
 
-    def "Create a job with a job schedule enabled"() {
-        given:
-        def jobName = UUID.randomUUID().toString()
-        def jobXml = """
-        <joblist>
-           <job>
-              <name>${jobName}</name>
-              <group>api-test</group>
-              <description></description>
-              <loglevel>INFO</loglevel>
-              <multipleExecutions>true</multipleExecutions>
-              <dispatch>
-                <threadcount>1</threadcount>
-                <keepgoing>true</keepgoing>
-              </dispatch>
-              <scheduleEnabled>true</scheduleEnabled>
-              <sequence>
-                <command>
-                  <exec>echo 0</exec>
-                </command>
-              </sequence>
-           </job>
-        </joblist>"""
-
-        when:
-        def response = JobUtils.createJob(PROJECT_NAME, jobXml, client)
-
-        then:
-        response.successful
-        def jr = MAPPER.readValue(response.body().string(), CreateJobResponse.class)
-        def jobDetails = JobUtils.getJobDetailsById(jr.getSucceeded().get(0).id, MAPPER, client)
-        jobDetails.scheduleEnabled == true
-    }
-
     def "Create a job with a job schedule disabled"() {
         given:
         def jobName = UUID.randomUUID().toString()
-        def jobXml = """
-        <joblist>
-           <job>
-              <name>${jobName}</name>
-              <group>api-test</group>
-              <description></description>
-              <loglevel>INFO</loglevel>
-              <multipleExecutions>true</multipleExecutions>
-              <dispatch>
-                <threadcount>1</threadcount>
-                <keepgoing>true</keepgoing>
-              </dispatch>
-              <scheduleEnabled>false</scheduleEnabled>
-              <sequence>
-                <command>
-                  <exec>echo 0</exec>
-                </command>
-              </sequence>
-           </job>
-        </joblist>"""
+
+        def path = JobUtils.updateJobFileToImport("job-template-common.xml",
+                PROJECT_NAME,
+                ["job-name": jobName,
+                 "schedule-enabled": "false"])
 
         when:
-        def response = JobUtils.createJob(PROJECT_NAME, jobXml, client)
+        def response = JobUtils.createJob(PROJECT_NAME, new File(path).text, client)
 
         then:
         response.successful
@@ -143,66 +78,17 @@ class JobSpec extends BaseContainer {
         !jobDetails.scheduleEnabled
     }
 
-    def "Create a job with a job execution enabled"() {
-        given:
-        def jobName = UUID.randomUUID().toString()
-        def jobXml = """
-        <joblist>
-           <job>
-              <name>${jobName}</name>
-              <group>api-test</group>
-              <description></description>
-              <loglevel>INFO</loglevel>
-              <multipleExecutions>true</multipleExecutions>
-              <dispatch>
-                <threadcount>1</threadcount>
-                <keepgoing>true</keepgoing>
-              </dispatch>
-              <executionEnabled>true</executionEnabled>
-              <sequence>
-                <command>
-                  <exec>echo 0</exec>
-                </command>
-              </sequence>
-           </job>
-        </joblist>"""
-
-        when:
-        def response = JobUtils.createJob(PROJECT_NAME, jobXml, client)
-
-        then:
-        response.successful
-        def jr = MAPPER.readValue(response.body().string(), CreateJobResponse.class)
-        def jobDetails = JobUtils.getJobDetailsById(jr.getSucceeded().get(0).id, MAPPER, client)
-        jobDetails.executionEnabled
-    }
-
     def "Create a job with a job execution disabled"() {
         given:
         def jobName = UUID.randomUUID().toString()
-        def jobXml = """
-        <joblist>
-           <job>
-              <name>${jobName}</name>
-              <group>api-test</group>
-              <description></description>
-              <loglevel>INFO</loglevel>
-              <multipleExecutions>true</multipleExecutions>
-              <dispatch>
-                <threadcount>1</threadcount>
-                <keepgoing>true</keepgoing>
-              </dispatch>
-              <executionEnabled>false</executionEnabled>
-              <sequence>
-                <command>
-                  <exec>echo 0</exec>
-                </command>
-              </sequence>
-           </job>
-        </joblist>"""
+
+        def path = JobUtils.updateJobFileToImport("job-template-common.xml",
+                PROJECT_NAME,
+                ["job-name": jobName,
+                 "execution-enabled": "false"])
 
         when:
-        def response = JobUtils.createJob(PROJECT_NAME, jobXml, client)
+        def response = JobUtils.createJob(PROJECT_NAME, new File(path).text, client)
 
         then:
         response.successful

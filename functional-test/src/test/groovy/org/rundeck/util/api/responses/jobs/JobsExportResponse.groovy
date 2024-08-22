@@ -20,13 +20,13 @@ class JobsExportResponse {
     @JsonProperty("nodeFilterEditable")
     boolean nodeFilterEditable
     @JsonProperty("plugins")
-    Job.Plugins plugins
+    JobBase.Plugins plugins
     @JsonProperty("schedule")
-    Job.Schedule schedule
+    JobBase.Schedule schedule
     @JsonProperty("scheduleEnabled")
     String scheduleEnabled
     @JsonProperty("sequence")
-    Job.Sequence sequence
+    JobBase.Sequence sequence
     @JsonProperty("uuid")
     String uuid
 }
