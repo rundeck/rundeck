@@ -15,7 +15,14 @@
         <dispatch>
             <threadcount>1</threadcount>
             <keepgoing>true</keepgoing>
+            <rankOrder>xml-dispatch-rank-order</rankOrder>
         </dispatch>
+        <nodefilters>
+            <filter>xml-node-filter-include</filter>
+            <filterExclude>xml-node-filter-exclude</filterExclude>
+        </nodefilters>
+        <executionEnabled>xml-execution-enabled</executionEnabled>
+        <scheduleEnabled>xml-schedule-enabled</scheduleEnabled>
         <sequence>
             <command>
                 <exec>xml-args</exec>

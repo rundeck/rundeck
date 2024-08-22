@@ -30,6 +30,8 @@ import java.text.SimpleDateFormat
 @Stepwise
 class JobExecutionSpec extends BaseContainer {
 
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+
     @Shared String jobId
     @Shared String jobId2
     @Shared String jobId3
@@ -219,7 +221,6 @@ class JobExecutionSpec extends BaseContainer {
         given:
         def projectName = "test-job-flip-executionEnabled"
         def client = getClient()
-        ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
                 "name": projectName.toString(),
                 "description": "test1",
@@ -242,11 +243,18 @@ class JobExecutionSpec extends BaseContainer {
         def job1CreatedResponse = JobUtils.createJob(projectName, jobXml1, client)
         assert job1CreatedResponse.successful
 
+        CreateJobResponse job1CreatedParsedResponse = MAPPER.readValue(job1CreatedResponse.body().string(), CreateJobResponse.class)
+
+        when: "TEST: created job has the executionEnabled property set to true"
+        def jobDetails = JobUtils.getJobDetailsById(job1CreatedParsedResponse.succeeded[0]?.id, MAPPER, client)
+
+        then:
+        jobDetails.executionEnabled
+
         when: "TEST: when execution is on, job does execute"
-        CreateJobResponse job1CreatedParsedResponse = mapper.readValue(job1CreatedResponse.body().string(), CreateJobResponse.class)
         def job1Id = job1CreatedParsedResponse.succeeded[0]?.id
         def executions1 = doGet("/job/${job1Id}/executions")
-        JobExecutionsResponse parsedExecutionsResponseForExecution1 = mapper.readValue(executions1.body().string(), JobExecutionsResponse.class)
+        JobExecutionsResponse parsedExecutionsResponseForExecution1 = MAPPER.readValue(executions1.body().string(), JobExecutionsResponse.class)
         then:
         parsedExecutionsResponseForExecution1.executions.size() == 0
 
@@ -254,7 +262,7 @@ class JobExecutionSpec extends BaseContainer {
         def jobExecResponseFor1 = JobUtils.executeJob(job1Id, client)
         assert jobExecResponseFor1.successful
         def executions1AfterExecResponse = doGet("/job/${job1Id}/executions")
-        JobExecutionsResponse parsedExecutionsResponseForExecution1AfterExec = mapper.readValue(executions1AfterExecResponse.body().string(), JobExecutionsResponse.class)
+        JobExecutionsResponse parsedExecutionsResponseForExecution1AfterExec = MAPPER.readValue(executions1AfterExecResponse.body().string(), JobExecutionsResponse.class)
         then: "assert_job_execution_count job1"
         parsedExecutionsResponseForExecution1AfterExec.executions.size() == 1
 
@@ -266,7 +274,7 @@ class JobExecutionSpec extends BaseContainer {
         assert jobExecResponseFor1AfterDisable.code() == 400 // bc execs are disabled
 
         def executionsForJob1AfterDisable = doGet("/job/${job1Id}/executions")
-        JobExecutionsResponse parsedExecutionsResponseForExecution1AfterDisable = mapper.readValue(executionsForJob1AfterDisable.body().string(), JobExecutionsResponse.class)
+        JobExecutionsResponse parsedExecutionsResponseForExecution1AfterDisable = MAPPER.readValue(executionsForJob1AfterDisable.body().string(), JobExecutionsResponse.class)
 
         then:
         parsedExecutionsResponseForExecution1AfterDisable.executions.size() == 1
@@ -283,7 +291,7 @@ class JobExecutionSpec extends BaseContainer {
 
 
         def executionsForJob1AfterEnable = doGet("/job/${job1Id}/executions")
-        JobExecutionsResponse parsedExecutionsResponseForExecution1AfterEnable = mapper.readValue(executionsForJob1AfterEnable.body().string(), JobExecutionsResponse.class)
+        JobExecutionsResponse parsedExecutionsResponseForExecution1AfterEnable = MAPPER.readValue(executionsForJob1AfterEnable.body().string(), JobExecutionsResponse.class)
 
         then:
         parsedExecutionsResponseForExecution1AfterEnable.executions.size() == 2
@@ -293,7 +301,6 @@ class JobExecutionSpec extends BaseContainer {
         given:
         def projectName = "test-job-flip-executionEnabled-bulk"
         def client = getClient()
-        ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
                 "name": projectName.toString(),
                 "description": "test1",
@@ -323,18 +330,18 @@ class JobExecutionSpec extends BaseContainer {
         assert job2CreatedResponse.successful
 
         when: "assert_job_execution_count with job 1"
-        CreateJobResponse job1CreatedParsedResponse = mapper.readValue(job1CreatedResponse.body().string(), CreateJobResponse.class)
+        CreateJobResponse job1CreatedParsedResponse = MAPPER.readValue(job1CreatedResponse.body().string(), CreateJobResponse.class)
         def job1Id = job1CreatedParsedResponse.succeeded[0]?.id
         def executions1 = doGet("/job/${job1Id}/executions")
-        JobExecutionsResponse parsedExecutionsResponseForExecution1 = mapper.readValue(executions1.body().string(), JobExecutionsResponse.class)
+        JobExecutionsResponse parsedExecutionsResponseForExecution1 = MAPPER.readValue(executions1.body().string(), JobExecutionsResponse.class)
         then:
         parsedExecutionsResponseForExecution1.executions.size() == 0
 
         when: "assert_job_execution_count with job 2"
-        CreateJobResponse job2CreatedParsedResponse = mapper.readValue(job2CreatedResponse.body().string(), CreateJobResponse.class)
+        CreateJobResponse job2CreatedParsedResponse = MAPPER.readValue(job2CreatedResponse.body().string(), CreateJobResponse.class)
         def job2Id = job2CreatedParsedResponse.succeeded[0]?.id
         def executions2 = doGet("/job/${job2Id}/executions")
-        JobExecutionsResponse parsedExecutionsResponseForExecution2 = mapper.readValue(executions2.body().string(), JobExecutionsResponse.class)
+        JobExecutionsResponse parsedExecutionsResponseForExecution2 = MAPPER.readValue(executions2.body().string(), JobExecutionsResponse.class)
         then:
         parsedExecutionsResponseForExecution2.executions.size() == 0
 
@@ -342,7 +349,7 @@ class JobExecutionSpec extends BaseContainer {
         def jobExecResponseFor1 = JobUtils.executeJob(job1Id, client)
         assert jobExecResponseFor1.successful
         def executions1AfterExecResponse = doGet("/job/${job1Id}/executions")
-        JobExecutionsResponse parsedExecutionsResponseForExecution1AfterExec = mapper.readValue(executions1AfterExecResponse.body().string(), JobExecutionsResponse.class)
+        JobExecutionsResponse parsedExecutionsResponseForExecution1AfterExec = MAPPER.readValue(executions1AfterExecResponse.body().string(), JobExecutionsResponse.class)
         then: "assert_job_execution_count job1"
         parsedExecutionsResponseForExecution1AfterExec.executions.size() == 1
 
@@ -350,7 +357,7 @@ class JobExecutionSpec extends BaseContainer {
         def jobExecResponseFor2 = JobUtils.executeJob(job2Id, client)
         assert jobExecResponseFor2.successful
         def executions2AfterExecResponse = doGet("/job/${job2Id}/executions")
-        JobExecutionsResponse parsedExecutionsResponseForExecution2AfterExec = mapper.readValue(executions2AfterExecResponse.body().string(), JobExecutionsResponse.class)
+        JobExecutionsResponse parsedExecutionsResponseForExecution2AfterExec = MAPPER.readValue(executions2AfterExecResponse.body().string(), JobExecutionsResponse.class)
         then: "assert_job_execution_count job1"
         parsedExecutionsResponseForExecution2AfterExec.executions.size() == 1
 
@@ -371,10 +378,10 @@ class JobExecutionSpec extends BaseContainer {
         assert jobExecResponseFor2AfterDisable.code() == 400  // bc execs are disabled
 
         def executionsForJob1AfterDisable = doGet("/job/${job1Id}/executions")
-        JobExecutionsResponse parsedExecutionsResponseForExecution1AfterDisable = mapper.readValue(executionsForJob1AfterDisable.body().string(), JobExecutionsResponse.class)
+        JobExecutionsResponse parsedExecutionsResponseForExecution1AfterDisable = MAPPER.readValue(executionsForJob1AfterDisable.body().string(), JobExecutionsResponse.class)
 
         def executionsForJob2AfterDisable = doGet("/job/${job2Id}/executions")
-        JobExecutionsResponse parsedExecutionsResponseForExecution2AfterDisable = mapper.readValue(executionsForJob2AfterDisable.body().string(), JobExecutionsResponse.class)
+        JobExecutionsResponse parsedExecutionsResponseForExecution2AfterDisable = MAPPER.readValue(executionsForJob2AfterDisable.body().string(), JobExecutionsResponse.class)
 
         then:
         parsedExecutionsResponseForExecution1AfterDisable.executions.size() == 1
@@ -394,10 +401,10 @@ class JobExecutionSpec extends BaseContainer {
         assert jobExecResponseFor2AfterEnable.successful
 
         def executionsForJob1AfterEnable = doGet("/job/${job1Id}/executions")
-        JobExecutionsResponse parsedExecutionsResponseForExecution1AfterEnable = mapper.readValue(executionsForJob1AfterEnable.body().string(), JobExecutionsResponse.class)
+        JobExecutionsResponse parsedExecutionsResponseForExecution1AfterEnable = MAPPER.readValue(executionsForJob1AfterEnable.body().string(), JobExecutionsResponse.class)
 
         def executionsForJob2AfterEnable = doGet("/job/${job2Id}/executions")
-        JobExecutionsResponse parsedExecutionsResponseForExecution2AfterEnable = mapper.readValue(executionsForJob2AfterEnable.body().string(), JobExecutionsResponse.class)
+        JobExecutionsResponse parsedExecutionsResponseForExecution2AfterEnable = MAPPER.readValue(executionsForJob2AfterEnable.body().string(), JobExecutionsResponse.class)
 
         then:
         parsedExecutionsResponseForExecution1AfterEnable.executions.size() == 2
@@ -408,7 +415,6 @@ class JobExecutionSpec extends BaseContainer {
         given:
         def projectName = "test-job-flip-scheduleEnabled-bulk"
         def client = getClient()
-        ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
                 "name": projectName.toString(),
                 "description": "test-job-flip-scheduleEnabled-bulk",
@@ -437,19 +443,19 @@ class JobExecutionSpec extends BaseContainer {
         def job2CreatedResponse = JobUtils.createJob(projectName, jobXml2, client)
         assert job2CreatedResponse.successful
 
-        CreateJobResponse job1CreatedParsedResponse = mapper.readValue(job1CreatedResponse.body().string(), CreateJobResponse.class)
+        CreateJobResponse job1CreatedParsedResponse = MAPPER.readValue(job1CreatedResponse.body().string(), CreateJobResponse.class)
         def job1Id = job1CreatedParsedResponse.succeeded[0]?.id
 
-        CreateJobResponse job2CreatedParsedResponse = mapper.readValue(job2CreatedResponse.body().string(), CreateJobResponse.class)
+        CreateJobResponse job2CreatedParsedResponse = MAPPER.readValue(job2CreatedResponse.body().string(), CreateJobResponse.class)
         def job2Id = job2CreatedParsedResponse.succeeded[0]?.id
 
         when: "assert_job_schedule_enabled for job1"
-        def job1Detail = JobUtils.getJobDetailsById(job1Id as String, mapper, client)
+        def job1Detail = JobUtils.getJobDetailsById(job1Id as String, MAPPER, client)
         then:
         job1Detail?.executionEnabled
 
         when: "assert_job_schedule_enabled for job2"
-        def job2Detail = JobUtils.getJobDetailsById(job2Id as String, mapper, client)
+        def job2Detail = JobUtils.getJobDetailsById(job2Id as String, MAPPER, client)
         then:
         job2Detail?.executionEnabled
 
@@ -464,8 +470,8 @@ class JobExecutionSpec extends BaseContainer {
         ]
         def disableSchedulesResponse = doPost("/jobs/schedule/disable", idList)
         assert disableSchedulesResponse.successful
-        def job1DetailAfterDisable = JobUtils.getJobDetailsById(job1Id as String, mapper, client)
-        def job2DetailAfterDisable = JobUtils.getJobDetailsById(job2Id as String, mapper, client)
+        def job1DetailAfterDisable = JobUtils.getJobDetailsById(job1Id as String, MAPPER, client)
+        def job2DetailAfterDisable = JobUtils.getJobDetailsById(job2Id as String, MAPPER, client)
 
         then:
         !job1DetailAfterDisable?.scheduleEnabled
@@ -474,8 +480,8 @@ class JobExecutionSpec extends BaseContainer {
         when: "TEST: bulk job schedule enable"
         def enableSchedulesResponse = doPost("/jobs/schedule/enable", idList)
         assert enableSchedulesResponse.successful
-        def job1DetailAfterEnable = JobUtils.getJobDetailsById(job1Id as String, mapper, client)
-        def job2DetailAfterEnable = JobUtils.getJobDetailsById(job2Id as String, mapper, client)
+        def job1DetailAfterEnable = JobUtils.getJobDetailsById(job1Id as String, MAPPER, client)
+        def job2DetailAfterEnable = JobUtils.getJobDetailsById(job2Id as String, MAPPER, client)
 
         then:
         job1DetailAfterEnable?.scheduleEnabled
@@ -487,7 +493,6 @@ class JobExecutionSpec extends BaseContainer {
         given:
         def projectName = "test-job-flip-scheduleEnabled"
         def client = getClient()
-        ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
                 "name": projectName.toString(),
                 "description": "test-job-flip-scheduleEnabled",
@@ -511,19 +516,20 @@ class JobExecutionSpec extends BaseContainer {
         assert job1CreatedResponse.successful
 
 
-        CreateJobResponse job1CreatedParsedResponse = mapper.readValue(job1CreatedResponse.body().string(), CreateJobResponse.class)
+        CreateJobResponse job1CreatedParsedResponse = MAPPER.readValue(job1CreatedResponse.body().string(), CreateJobResponse.class)
         def job1Id = job1CreatedParsedResponse.succeeded[0]?.id
 
 
         when: "assert_job_schedule_enabled for job1"
-        def job1Detail = JobUtils.getJobDetailsById(job1Id as String, mapper, client)
+        def job1Detail = JobUtils.getJobDetailsById(job1Id as String, MAPPER, client)
         then:
         job1Detail?.executionEnabled
+        job1Detail?.scheduleEnabled
 
         when: "TEST: when schedule is on, job does execute"
         def disableSchedulesResponse = client.doPostWithoutBody("/job/${job1Id}/schedule/disable")
         assert disableSchedulesResponse.successful
-        def job1DetailAfterDisable = JobUtils.getJobDetailsById(job1Id as String, mapper, client)
+        def job1DetailAfterDisable = JobUtils.getJobDetailsById(job1Id as String, MAPPER, client)
 
         then:
         !job1DetailAfterDisable?.scheduleEnabled
@@ -531,7 +537,7 @@ class JobExecutionSpec extends BaseContainer {
         when: "TEST: bulk job schedule enable"
         def enableSchedulesResponse = client.doPostWithoutBody("/job/${job1Id}/schedule/enable")
         assert enableSchedulesResponse.successful
-        def job1DetailAfterEnable = JobUtils.getJobDetailsById(job1Id as String, mapper, client)
+        def job1DetailAfterEnable = JobUtils.getJobDetailsById(job1Id as String, MAPPER, client)
 
         then:
         job1DetailAfterEnable?.scheduleEnabled
@@ -542,7 +548,6 @@ class JobExecutionSpec extends BaseContainer {
         given:
         def projectName = "test-job-long-run"
         def client = getClient()
-        ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
                 "name": projectName.toString(),
                 "description": "test-job-long-run",
@@ -613,7 +618,7 @@ class JobExecutionSpec extends BaseContainer {
         assert created.successful
 
         when: "Job and referenced job created"
-        CreateJobResponse jobCreatedResponse = mapper.readValue(
+        CreateJobResponse jobCreatedResponse = MAPPER.readValue(
                 created.body().string(),
                 CreateJobResponse.class
         )
@@ -628,12 +633,12 @@ class JobExecutionSpec extends BaseContainer {
         def jobRun = JobUtils.executeJob(jobId, client)
         assert jobRun.successful
 
-        Execution exec = mapper.readValue(jobRun.body().string(), Execution.class)
+        Execution exec = MAPPER.readValue(jobRun.body().string(), Execution.class)
 
         Execution JobExecutionStatus = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 exec.id as String,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.MODERATE,
                 WaitingTime.EXCESSIVE
@@ -646,12 +651,12 @@ class JobExecutionSpec extends BaseContainer {
         def referencedJobRun = JobUtils.executeJob(refJobId, client)
         assert referencedJobRun.successful
 
-        Execution refExec = mapper.readValue(referencedJobRun.body().string(), Execution.class)
+        Execution refExec = MAPPER.readValue(referencedJobRun.body().string(), Execution.class)
 
         Execution refJobExecutionStatus = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 refExec.id as String,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.MODERATE,
                 WaitingTime.EXCESSIVE
@@ -666,7 +671,6 @@ class JobExecutionSpec extends BaseContainer {
         given:
         def projectName = "test-job-retry"
         def client = getClient()
-        ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
                 "name": projectName.toString(),
                 "description": "test-job-retry",
@@ -710,7 +714,7 @@ class JobExecutionSpec extends BaseContainer {
         assert created.successful
 
         when: "Job and referenced job created"
-        CreateJobResponse jobCreatedResponse = mapper.readValue(
+        CreateJobResponse jobCreatedResponse = MAPPER.readValue(
                 created.body().string(),
                 CreateJobResponse.class
         )
@@ -723,7 +727,7 @@ class JobExecutionSpec extends BaseContainer {
         def execArgs = "-opt2 a"
         def jobRun = JobUtils.executeJobWithArgs(jobId, client, execArgs)
         assert jobRun.successful
-        Execution parsedExecutionsResponse = mapper.readValue(jobRun.body().string(), Execution.class)
+        Execution parsedExecutionsResponse = MAPPER.readValue(jobRun.body().string(), Execution.class)
         def execId = parsedExecutionsResponse.id
 
         then:
@@ -733,7 +737,7 @@ class JobExecutionSpec extends BaseContainer {
         def execDetails = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.FAILED_WITH_RETRY.state,
                 execId as String,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.LOW,
                 WaitingTime.MODERATE
@@ -747,7 +751,7 @@ class JobExecutionSpec extends BaseContainer {
         def execDetails2 = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.FAILED_WITH_RETRY.state,
                 retryId1 as String,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.LOW,
                 WaitingTime.MODERATE
@@ -761,7 +765,7 @@ class JobExecutionSpec extends BaseContainer {
         def execDetailsFinal = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.FAILED.state,
                 retryId2 as String,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.LOW,
                 WaitingTime.MODERATE
@@ -778,7 +782,6 @@ class JobExecutionSpec extends BaseContainer {
         given:
         def projectName = "test-job-run-GET-405"
         def client = getClient()
-        ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
                 "name": projectName.toString(),
                 "description": "test-job-run-GET-405",
@@ -825,7 +828,7 @@ class JobExecutionSpec extends BaseContainer {
         def job1CreatedResponse = JobUtils.createJob(projectName, jobXml1, client)
         assert job1CreatedResponse.successful
 
-        CreateJobResponse job1CreatedParsedResponse = mapper.readValue(job1CreatedResponse.body().string(), CreateJobResponse.class)
+        CreateJobResponse job1CreatedParsedResponse = MAPPER.readValue(job1CreatedResponse.body().string(), CreateJobResponse.class)
         def job1Id = job1CreatedParsedResponse.succeeded[0]?.id
         def argString = "-opt2+a"
 
@@ -842,7 +845,6 @@ class JobExecutionSpec extends BaseContainer {
         setup:
         def projectName = PROJECT_NAME
         def client = getClient()
-        ObjectMapper mapper = new ObjectMapper()
 
         def xmlJob = (String stepArgs) -> {
             return "<joblist>\n" +
@@ -876,7 +878,7 @@ class JobExecutionSpec extends BaseContainer {
         def created = JobUtils.createJob(projectName, testXml, client)
         assert created.successful
 
-        CreateJobResponse jobCreatedResponse = mapper.readValue(
+        CreateJobResponse jobCreatedResponse = MAPPER.readValue(
                 created.body().string(),
                 CreateJobResponse.class
         )
@@ -891,7 +893,7 @@ class JobExecutionSpec extends BaseContainer {
                 runtime.string
         )
         assert runLaterExecResponse.successful
-        Execution parsedExec = mapper.readValue(runLaterExecResponse.body().string(), Execution.class)
+        Execution parsedExec = MAPPER.readValue(runLaterExecResponse.body().string(), Execution.class)
         String execId = parsedExec.id
         def dateS = parsedExec.dateStarted.date
 
@@ -903,7 +905,7 @@ class JobExecutionSpec extends BaseContainer {
         def execAfterWait = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 execId,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.MODERATE,
                 WaitingTime.EXCESSIVE
@@ -955,7 +957,6 @@ class JobExecutionSpec extends BaseContainer {
         setup:
         def projectName = PROJECT_NAME
         def client = getClient()
-        ObjectMapper mapper = new ObjectMapper()
 
         def xmlJob = (String stepArgs) -> {
             return "<joblist>\n" +
@@ -1007,7 +1008,7 @@ class JobExecutionSpec extends BaseContainer {
         def testXml = xmlJob(jobArgs)
         def created = JobUtils.createJob(projectName, testXml, client)
         assert created.successful
-        CreateJobResponse jobCreatedResponse = mapper.readValue(
+        CreateJobResponse jobCreatedResponse = MAPPER.readValue(
                 created.body().string(),
                 CreateJobResponse.class
         )
@@ -1024,13 +1025,13 @@ class JobExecutionSpec extends BaseContainer {
         def response = JobUtils.executeJobWithOptions(jobId1, client, optionsToMap)
         assert response.successful
 
-        Execution execRes = mapper.readValue(response.body().string(), Execution.class)
+        Execution execRes = MAPPER.readValue(response.body().string(), Execution.class)
         String execId = execRes.id
 
         def execution = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 execId,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.LOW,
                 WaitingTime.MODERATE
@@ -1043,12 +1044,12 @@ class JobExecutionSpec extends BaseContainer {
         def response2 = JobUtils.executeJob(jobId2, client)
         assert response2.successful
 
-        Execution execRes2 = mapper.readValue(response2.body().string(), Execution.class)
+        Execution execRes2 = MAPPER.readValue(response2.body().string(), Execution.class)
         String execId2 = execRes2.id
         def execution2 = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.FAILED.state,
                 execId2,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.LOW,
                 WaitingTime.MODERATE
@@ -1064,12 +1065,12 @@ class JobExecutionSpec extends BaseContainer {
         def response3 = JobUtils.executeJobWithOptions(jobId2, client, filter)
         assert response3.successful
 
-        Execution execRes3 = mapper.readValue(response3.body().string(), Execution.class)
+        Execution execRes3 = MAPPER.readValue(response3.body().string(), Execution.class)
         String execId3 = execRes3.id
         def execution3 = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 execId3,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.LOW,
                 WaitingTime.MODERATE
@@ -1088,12 +1089,12 @@ class JobExecutionSpec extends BaseContainer {
         def response4 = JobUtils.executeJobWithOptions(jobId1, client, optionsJson)
         assert response4.successful
 
-        Execution execRes4 = mapper.readValue(response4.body().string(), Execution.class)
+        Execution execRes4 = MAPPER.readValue(response4.body().string(), Execution.class)
         String execId4 = execRes4.id
         def execution4 = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 execId4,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.LOW,
                 WaitingTime.MODERATE
@@ -1128,7 +1129,6 @@ class JobExecutionSpec extends BaseContainer {
         given:
         def projectName = "test-send-notification-webhook"
         def client = getClient()
-        ObjectMapper mapper = new ObjectMapper()
 
         setupProjectArchiveDirectoryResource(projectName, '/projects-import/webhook-notification-project')
 
@@ -1140,13 +1140,13 @@ class JobExecutionSpec extends BaseContainer {
         when: "We first open NC connection"
         def openNcJobRun = JobUtils.executeJob(openNcJobId, client)
         assert openNcJobRun.successful
-        Execution openNcJobResponse = mapper.readValue(openNcJobRun.body().string(), Execution.class)
+        Execution openNcJobResponse = MAPPER.readValue(openNcJobRun.body().string(), Execution.class)
 
         then: "We wait for succeeded exec"
         JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 openNcJobResponse.id as String,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.LOW,
                 WaitingTime.EXCESSIVE
@@ -1155,13 +1155,13 @@ class JobExecutionSpec extends BaseContainer {
         when: "We run the job with notification"
         def jobRun = JobUtils.executeJob(notificationJobId, client)
         assert jobRun.successful
-        Execution parsedExecutionsResponse = mapper.readValue(jobRun.body().string(), Execution.class)
+        Execution parsedExecutionsResponse = MAPPER.readValue(jobRun.body().string(), Execution.class)
 
         then: "Will succeed"
         JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 parsedExecutionsResponse.id as String,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.LOW,
                 WaitingTime.EXCESSIVE
@@ -1173,18 +1173,18 @@ class JobExecutionSpec extends BaseContainer {
         // Then run the job that reads the output of request
         def readJobRun = JobUtils.executeJob(readNcOutputJobId, client)
         assert readJobRun.successful
-        Execution readJobRunResponse = mapper.readValue(readJobRun.body().string(), Execution.class)
+        Execution readJobRunResponse = MAPPER.readValue(readJobRun.body().string(), Execution.class)
         def readJobSucceeded = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 readJobRunResponse.id as String,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.LOW,
                 WaitingTime.MODERATE
         )
         assert readJobSucceeded.status == ExecutionStatus.SUCCEEDED.state
         def execOutputResponse = client.doGetAcceptAll("/execution/$readJobRunResponse.id/output")
-        ExecutionOutput execOutput = mapper.readValue(execOutputResponse.body().string(), ExecutionOutput.class)
+        ExecutionOutput execOutput = MAPPER.readValue(execOutputResponse.body().string(), ExecutionOutput.class)
 
         def webhookData = [
             "POST /test?id=$parsedExecutionsResponse.id&status=succeeded HTTP/1.1".toString(),
@@ -1211,7 +1211,6 @@ class JobExecutionSpec extends BaseContainer {
         setup:
         def projectName = PROJECT_NAME
         def client = getClient()
-        ObjectMapper mapper = new ObjectMapper()
 
         def xmlJob = "<joblist>\n" +
                     "  <job>\n" +
@@ -1308,7 +1307,7 @@ class JobExecutionSpec extends BaseContainer {
 
         def created = JobUtils.createJob(projectName, xmlJob, client)
         assert created.successful
-        CreateJobResponse jobCreatedResponse = mapper.readValue(
+        CreateJobResponse jobCreatedResponse = MAPPER.readValue(
                 created.body().string(),
                 CreateJobResponse.class
         )
@@ -1338,17 +1337,17 @@ class JobExecutionSpec extends BaseContainer {
                 optionsToMap
         )
 
-        Execution execRes1 = mapper.readValue(exec1.body().string(), Execution.class)
+        Execution execRes1 = MAPPER.readValue(exec1.body().string(), Execution.class)
         String execId1 = execRes1.id
-        Execution execRes2 = mapper.readValue(exec2.body().string(), Execution.class)
+        Execution execRes2 = MAPPER.readValue(exec2.body().string(), Execution.class)
         String execId2 = execRes2.id
-        Execution execRes3 = mapper.readValue(exec3.body().string(), Execution.class)
+        Execution execRes3 = MAPPER.readValue(exec3.body().string(), Execution.class)
         String execId3 = execRes3.id
 
         Execution execStatus1 = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 execId1,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.MODERATE,
                 WaitingTime.EXCESSIVE
@@ -1357,7 +1356,7 @@ class JobExecutionSpec extends BaseContainer {
         Execution execStatus2 = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 execId2,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.MODERATE,
                 WaitingTime.EXCESSIVE
@@ -1366,7 +1365,7 @@ class JobExecutionSpec extends BaseContainer {
         Execution execStatus3 = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 execId3,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.MODERATE,
                 WaitingTime.EXCESSIVE
@@ -1384,7 +1383,6 @@ class JobExecutionSpec extends BaseContainer {
         setup:
         def projectName = PROJECT_NAME
         def client = getClient()
-        ObjectMapper mapper = new ObjectMapper()
 
         def xmlJob = "<joblist>\n" +
                     "   <job>\n" +
@@ -1459,7 +1457,7 @@ class JobExecutionSpec extends BaseContainer {
         assert created.successful
 
         when: "TEST: job/id/run should succeed"
-        CreateJobResponse jobCreatedResponse = mapper.readValue(
+        CreateJobResponse jobCreatedResponse = MAPPER.readValue(
                 created.body().string(),
                 CreateJobResponse.class
         )
@@ -1476,12 +1474,12 @@ class JobExecutionSpec extends BaseContainer {
         def runResponse = JobUtils.executeJobWithOptions(jobId, client, optionsToMap)
         assert runResponse.successful
 
-        Execution execId = mapper.readValue(runResponse.body().string(), Execution.class)
+        Execution execId = MAPPER.readValue(runResponse.body().string(), Execution.class)
 
         Execution jobExecStatusAfterSuccess = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 execId.id as String,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.MODERATE,
                 WaitingTime.EXCESSIVE
@@ -1492,7 +1490,7 @@ class JobExecutionSpec extends BaseContainer {
 
         when: "TEST: execution output"
         def system = doGet("/system/info")
-        SystemInfo systemInfo = mapper.readValue(system.body().string(), SystemInfo.class)
+        SystemInfo systemInfo = MAPPER.readValue(system.body().string(), SystemInfo.class)
 
         def expectedOutputContent = "asd\n" +
                 "option opt1: testvalue\n" +
@@ -1520,7 +1518,6 @@ class JobExecutionSpec extends BaseContainer {
 
     def "test-workflow-errorhandler"(){
         def client = getClient()
-        def mapper = new ObjectMapper()
         def projectName = "test-error-handler" // delete me
         Object projectJsonMap = [
                 "name": projectName
@@ -1541,7 +1538,7 @@ class JobExecutionSpec extends BaseContainer {
         def created1 = JobUtils.createJob(projectName, job1Xml, client)
         assert created1.successful
 
-        CreateJobResponse jobCreatedResponse1 = mapper.readValue(
+        CreateJobResponse jobCreatedResponse1 = MAPPER.readValue(
                 created1.body().string(),
                 CreateJobResponse.class
         )
@@ -1550,12 +1547,12 @@ class JobExecutionSpec extends BaseContainer {
         def runResponse = JobUtils.executeJob(jobId, client)
         assert runResponse.successful
 
-        Execution execId = mapper.readValue(runResponse.body().string(), Execution.class)
+        Execution execId = MAPPER.readValue(runResponse.body().string(), Execution.class)
 
         assert JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 execId.id as String,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.LOW,
                 WaitingTime.MODERATE
@@ -1565,13 +1562,13 @@ class JobExecutionSpec extends BaseContainer {
         def execArgs = "cat $stepOutfile"
         def readResponse = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs}")
         def readResponseBody = readResponse.body().string()
-        def parsedReadBody = mapper.readValue(readResponseBody, RunCommand.class)
+        def parsedReadBody = MAPPER.readValue(readResponseBody, RunCommand.class)
         String readExecId = parsedReadBody.execution.id
 
         assert JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 readExecId,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.LOW,
                 WaitingTime.MODERATE
@@ -1599,7 +1596,7 @@ class JobExecutionSpec extends BaseContainer {
         def created2 = JobUtils.createJob(projectName, job2Xml, client)
         assert created2.successful
 
-        CreateJobResponse jobCreatedResponse2 = mapper.readValue(
+        CreateJobResponse jobCreatedResponse2 = MAPPER.readValue(
                 created2.body().string(),
                 CreateJobResponse.class
         )
@@ -1609,13 +1606,13 @@ class JobExecutionSpec extends BaseContainer {
         // The job will execute, so the response will be successful
         assert runResponse2.successful
 
-        Execution execId2 = mapper.readValue(runResponse2.body().string(), Execution.class)
+        Execution execId2 = MAPPER.readValue(runResponse2.body().string(), Execution.class)
 
         // But the execution will fail
         assert JobUtils.waitForExecutionToBe(
                 ExecutionStatus.FAILED.state,
                 execId2.id as String,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.LOW,
                 WaitingTime.MODERATE
@@ -1625,13 +1622,13 @@ class JobExecutionSpec extends BaseContainer {
         def execArgs2 = "cat $stepOutfile2"
         def readResponse2 = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs2}")
         def readResponseBody2 = readResponse2.body().string()
-        def parsedReadBody2 = mapper.readValue(readResponseBody2, RunCommand.class)
+        def parsedReadBody2 = MAPPER.readValue(readResponseBody2, RunCommand.class)
         String readExecId2 = parsedReadBody2.execution.id
 
         assert JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 readExecId2,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.LOW,
                 WaitingTime.MODERATE
@@ -1659,7 +1656,7 @@ class JobExecutionSpec extends BaseContainer {
         def created3 = JobUtils.createJob(projectName, job3Xml, client)
         assert created3.successful
 
-        CreateJobResponse jobCreatedResponse3 = mapper.readValue(
+        CreateJobResponse jobCreatedResponse3 = MAPPER.readValue(
                 created3.body().string(),
                 CreateJobResponse.class
         )
@@ -1669,13 +1666,13 @@ class JobExecutionSpec extends BaseContainer {
         // The job will execute, so the response will be successful
         assert runResponse3.successful
 
-        Execution execId3 = mapper.readValue(runResponse3.body().string(), Execution.class)
+        Execution execId3 = MAPPER.readValue(runResponse3.body().string(), Execution.class)
 
         // But the execution will fail
         assert JobUtils.waitForExecutionToBe(
                 ExecutionStatus.FAILED.state,
                 execId3.id as String,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.LOW,
                 WaitingTime.MODERATE
@@ -1685,13 +1682,13 @@ class JobExecutionSpec extends BaseContainer {
         def execArgs3 = "cat $stepOutfile3"
         def readResponse3 = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs3}")
         def readResponseBody3 = readResponse3.body().string()
-        def parsedReadBody3 = mapper.readValue(readResponseBody3, RunCommand.class)
+        def parsedReadBody3 = MAPPER.readValue(readResponseBody3, RunCommand.class)
         String readExecId3 = parsedReadBody3.execution.id
 
         assert JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 readExecId3,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.LOW,
                 WaitingTime.MODERATE
@@ -1718,7 +1715,7 @@ class JobExecutionSpec extends BaseContainer {
         def created4 = JobUtils.createJob(projectName, job4Xml, client)
         assert created4.successful
 
-        CreateJobResponse jobCreatedResponse4 = mapper.readValue(
+        CreateJobResponse jobCreatedResponse4 = MAPPER.readValue(
                 created4.body().string(),
                 CreateJobResponse.class
         )
@@ -1728,13 +1725,13 @@ class JobExecutionSpec extends BaseContainer {
         // The job will execute, so the response will be successful
         assert runResponse4.successful
 
-        Execution execId4 = mapper.readValue(runResponse4.body().string(), Execution.class)
+        Execution execId4 = MAPPER.readValue(runResponse4.body().string(), Execution.class)
 
         // But the execution will fail
         assert JobUtils.waitForExecutionToBe(
                 ExecutionStatus.FAILED.state,
                 execId4.id as String,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.LOW,
                 WaitingTime.MODERATE
@@ -1744,13 +1741,13 @@ class JobExecutionSpec extends BaseContainer {
         def execArgs4 = "cat $stepOutfile4"
         def readResponse4 = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs4}")
         def readResponseBody4 = readResponse4.body().string()
-        def parsedReadBody4 = mapper.readValue(readResponseBody4, RunCommand.class)
+        def parsedReadBody4 = MAPPER.readValue(readResponseBody4, RunCommand.class)
         String readExecId4 = parsedReadBody4.execution.id
 
         assert JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 readExecId4,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.LOW,
                 WaitingTime.MODERATE
@@ -1777,7 +1774,7 @@ class JobExecutionSpec extends BaseContainer {
         def created5 = JobUtils.createJob(projectName, job5Xml, client)
         assert created5.successful
 
-        CreateJobResponse jobCreatedResponse5 = mapper.readValue(
+        CreateJobResponse jobCreatedResponse5 = MAPPER.readValue(
                 created5.body().string(),
                 CreateJobResponse.class
         )
@@ -1787,13 +1784,13 @@ class JobExecutionSpec extends BaseContainer {
         // The job will execute, so the response will be successful
         assert runResponse5.successful
 
-        Execution execId5 = mapper.readValue(runResponse5.body().string(), Execution.class)
+        Execution execId5 = MAPPER.readValue(runResponse5.body().string(), Execution.class)
 
         // But the execution will fail
         assert JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 execId5.id as String,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.LOW,
                 WaitingTime.MODERATE
@@ -1803,13 +1800,13 @@ class JobExecutionSpec extends BaseContainer {
         def execArgs5 = "cat $stepOutfile5"
         def readResponse5 = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs5}")
         def readResponseBody5 = readResponse5.body().string()
-        def parsedReadBody5 = mapper.readValue(readResponseBody5, RunCommand.class)
+        def parsedReadBody5 = MAPPER.readValue(readResponseBody5, RunCommand.class)
         String readExecId5 = parsedReadBody5.execution.id
 
         assert JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 readExecId5,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.LOW,
                 WaitingTime.MODERATE
@@ -1881,7 +1878,6 @@ class JobExecutionSpec extends BaseContainer {
         given:
         def projectName = "test-renamed-child-job"
         def client = getClient()
-        ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
                 "name": projectName.toString(),
                 "description": "test-renamed-child-job",
@@ -1952,7 +1948,7 @@ class JobExecutionSpec extends BaseContainer {
         assert created.successful
 
         when: "Job and referenced job created"
-        CreateJobResponse jobCreatedResponse = mapper.readValue(
+        CreateJobResponse jobCreatedResponse = MAPPER.readValue(
                 created.body().string(),
                 CreateJobResponse.class
         )
@@ -1967,12 +1963,12 @@ class JobExecutionSpec extends BaseContainer {
         def jobRun = JobUtils.executeJob(parentJob, client)
         assert jobRun.successful
 
-        Execution exec = mapper.readValue(jobRun.body().string(), Execution.class)
+        Execution exec = MAPPER.readValue(jobRun.body().string(), Execution.class)
 
         Execution jobExecutionStatus = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 exec.id as String,
-                mapper,
+                MAPPER,
                 client,
                 WaitingTime.MODERATE,
                 WaitingTime.EXCESSIVE
