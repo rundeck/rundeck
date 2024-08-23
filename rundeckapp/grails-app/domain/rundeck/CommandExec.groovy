@@ -244,6 +244,8 @@ public class CommandExec extends WorkflowStep implements BaseCommandExec {
             return ScriptCommand.SCRIPT_COMMAND_TYPE
         } else if (data.scriptfile != null || data.scripturl!=null) {
             return ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
+        }else{
+            throw new IllegalArgumentException("Invalid data: ${data}")
         }
     }
 
