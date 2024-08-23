@@ -1,6 +1,9 @@
 package rundeck
 
 import grails.testing.gorm.DataTest
+import org.rundeck.core.execution.ExecCommand
+import org.rundeck.core.execution.ScriptCommand
+import org.rundeck.core.execution.ScriptFileCommand
 import rundeck.CommandExec
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
@@ -246,5 +249,28 @@ class CommandExecTests extends Specification implements DataTest {
         assertEquals('testerr', t1.adhocRemoteString)
         assertEquals(true, !t1.keepgoingOnSuccess)
         assertNull(t1.errorHandler)
+    }
+
+    def "getLegacyBuiltinCommandType for valid data"() {
+        when:
+            def result = CommandExec.getLegacyBuiltinCommandType(data)
+        then:
+            result == expected
+        where:
+            data                      | expected
+            [exec: 'something']       | ExecCommand.EXEC_COMMAND_TYPE
+            [script: 'something']     | ScriptCommand.SCRIPT_COMMAND_TYPE
+            [scriptfile: 'something'] | ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
+            [scripturl: 'something']  | ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
+    }
+    def "getLegacyBuiltinCommandType for invalid data"() {
+        when:
+            def result = CommandExec.getLegacyBuiltinCommandType(data)
+        then:
+            IllegalArgumentException e = thrown()
+        where:
+            data                                              | _
+            [other: 'data']                                   | _
+            [type: 'other', configuration: [other: 'plugin']] | _
     }
 }
