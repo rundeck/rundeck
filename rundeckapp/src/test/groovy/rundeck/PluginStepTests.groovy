@@ -86,6 +86,26 @@ class PluginStepTests  extends Specification implements DataTest{
         ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | ["argString": "", "adhocRemoteString": "","adhocLocalString": "","adhocFilepath": "adhocFilepath","scriptInterpreter": "bash","fileExtension": "sh", "interpreterArgsQuoted": true,"expandTokenInScriptFile": true]
     }
 
+    def "update from map plugin type"() {
+        when:
+            PluginStep t = new PluginStep()
+            PluginStep.updateFromMap(t, pluginConfig)
+        then:
+            t.type == type
+            t.configuration == expect
+            t.nodeStep == nodeStep
+            t.keepgoingOnSuccess == keep
+            t.description == desc
+            t.pluginConfig == plugins
+            t.errorHandler == null
+        where:
+            type    | pluginConfig                                                                            | expect         | nodeStep | keep  | desc | plugins
+            'atype' | [type: 'atype', configuration: [some: 'data'], nodeStep: true]                          | [some: 'data'] | true     | false | null | null
+            'atype' | [type: 'atype', configuration: [some: 'data'], nodeStep: true, keepgoingOnSuccess:true] | [some: 'data'] | true     | true  | null | null
+            'atype' | [type: 'atype', configuration: [some: 'data'], nodeStep: true, keepgoingOnSuccess:true,description:'desc'] | [some: 'data'] | true     | true  | 'desc' | null
+            'atype' | [type: 'atype', configuration: [some: 'data'], nodeStep: true, keepgoingOnSuccess:true,plugins:[some:'data']] | [some: 'data'] | true     | true  | null | [some:'data']
+    }
+
     def "update from map legacy type"() {
         when:
             PluginStep t = new PluginStep()
