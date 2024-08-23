@@ -1,7 +1,7 @@
 services:
   rundeck:
     build:
-      context: ""
+      context: "."
       args:
         IMAGE: ${TEST_IMAGE}
     platform: ${TEST_TARGET_PLATFORM:-linux/amd64}
@@ -9,7 +9,7 @@ services:
       RUNDECK_DATABASE_DRIVER: org.mariadb.jdbc.Driver
       RUNDECK_DATABASE_USERNAME: rundeck
       RUNDECK_DATABASE_PASSWORD: rundeck
-      RUNDECK_DATABASE_URL: jdbc:mysql://rundeck-db/rundeck?autoReconnect=true&useSSL=false
+      RUNDECK_DATABASE_URL: jdbc:mysql://rundeck-db/rundeck?autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true
       RUNDECK_GRAILS_URL: ${TEST_RUNDECK_GRAILS_URL}
       RUNDECK_SERVER_FORWARDED: 'true'
       RUNDECK_TOKENS_FILE: /home/rundeck/server/config/tokens.properties
