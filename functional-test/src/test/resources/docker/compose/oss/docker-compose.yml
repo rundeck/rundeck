@@ -1,4 +1,3 @@
-version: "3"
 services:
   rundeck:
     build:
@@ -7,6 +6,10 @@ services:
         IMAGE: ${TEST_IMAGE}
     platform: ${TEST_TARGET_PLATFORM:-linux/amd64}
     environment:
+      RUNDECK_DATABASE_DRIVER: org.mariadb.jdbc.Driver
+      RUNDECK_DATABASE_USERNAME: rundeck
+      RUNDECK_DATABASE_PASSWORD: rundeck
+      RUNDECK_DATABASE_URL: jdbc:mysql://rundeck-db/rundeck?autoReconnect=true&useSSL=false
       RUNDECK_GRAILS_URL: ${TEST_RUNDECK_GRAILS_URL}
       RUNDECK_SERVER_FORWARDED: 'true'
       RUNDECK_TOKENS_FILE: /home/rundeck/server/config/tokens.properties
@@ -28,8 +31,22 @@ services:
       - "../../../test-files/saved_searches-B.json:/home/option2/saved_searches.json"
       - "../../../test-files/saved_searches-C.json:/home/option3/saved_searches.json"
       - "../../../test-files/saved_searches-D.json:/home/option4/saved_searches.json"
-      - "${PWD}/executor:/home/rundeck/executor:rw"
-      - "${PWD}/mock-scripts:/home/rundeck/mock-scripts:rw"
+      - "./executor:/home/rundeck/executor:rw"
+      - "./mock-scripts:/home/rundeck/mock-scripts:rw"
+    networks:
+      - rundeck-network
+
+  rundeck-db:
+    image: mysql:8
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=rundeck
+      - MYSQL_USER=rundeck
+      - MYSQL_PASSWORD=rundeck
+    ports:
+      - "3306:3306"
+    volumes:
+      - rundeck_db_data:/var/lib/mysql
     networks:
       - rundeck-network
 
@@ -64,17 +81,20 @@ services:
     ports:
       - "22"
     volumes:
-      - ${PWD}/keys:/configuration:rw
-      - ${PWD}/mock-scripts:/mock-scripts:rw
+      - ./keys:/configuration:rw
+      - ./mock-scripts:/mock-scripts:rw
 
   mock-server:
     image: nginx:latest
     volumes:
-      - ${PWD}/mock-scripts:/usr/share/nginx/html:ro
+      - ./mock-scripts:/usr/share/nginx/html:ro
     ports:
       - "8080:80"
     networks:
       - rundeck-network
+
+volumes:
+  rundeck_db_data:
 
 networks:
   rundeck-network:
