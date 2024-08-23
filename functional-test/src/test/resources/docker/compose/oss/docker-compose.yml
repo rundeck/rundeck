@@ -33,6 +33,8 @@ services:
       - "../../../test-files/saved_searches-D.json:/home/option4/saved_searches.json"
       - "./executor:/home/rundeck/executor:rw"
       - "./mock-scripts:/home/rundeck/mock-scripts:rw"
+    ports:
+      - "4440:4440"
     networks:
       - rundeck-network
 
