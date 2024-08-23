@@ -265,21 +265,29 @@ public class CommandExec extends WorkflowStep implements BaseCommandExec {
         } else if (data.scriptfile != null) {
             obj.adhocExecution = true
             obj.adhocFilepath = data.scriptfile.toString()
-            obj.expandTokenInScriptFile = !!data.expandTokenInScriptFile
+            obj.expandTokenInScriptFile = booleanVal(data.expandTokenInScriptFile)
         } else if (data.scripturl != null) {
             obj.adhocExecution = true
             obj.adhocFilepath = data.scripturl.toString()
-            obj.expandTokenInScriptFile = !!data.expandTokenInScriptFile
+            obj.expandTokenInScriptFile = booleanVal(data.expandTokenInScriptFile)
         }
         if (data.scriptInterpreter != null && !obj.adhocRemoteString) {
-            obj.scriptInterpreter = data.scriptInterpreter
-            obj.interpreterArgsQuoted = !!data.interpreterArgsQuoted
+            obj.scriptInterpreter = data.scriptInterpreter.toString()
+            obj.interpreterArgsQuoted = booleanVal(data.interpreterArgsQuoted)
         }
         if (data.fileExtension != null && !obj.adhocRemoteString) {
-            obj.fileExtension = data.fileExtension
+            obj.fileExtension = data.fileExtension.toString()
         }
         if (data.args != null && !obj.adhocRemoteString) {
             obj.argString = data.args.toString()
+        }
+    }
+
+    private static boolean booleanVal(Object val) {
+        if (val instanceof Boolean) {
+            return val
+        } else {
+            return Boolean.parseBoolean(val.toString())
         }
     }
 
