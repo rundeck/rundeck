@@ -6,17 +6,12 @@ class JobTakeoverQueryBuilder {
     static String buildTakeoverQuery(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids, ignoreInnerScheduled = false) {
         String executionQueryPart = createJobTakeoverExecutionQueryPart(selectAll,fromServerUUID, toServerUUID, projectFilter)
         String useScheduledFlagQueryPart = !ignoreInnerScheduled ? "se.scheduled = true" : null
-        String jobUuidQueryPart = jobids ? "se.uuid in (${safeConvertJobIds(jobids)})" : null
+        String jobUuidQueryPart = jobids ? "se.uuid in (:jobids)" : null
         String projectPart = projectFilter ? "se.project = :projectFilter" : null
         String serverNodePart = createServerNodeQueryPart(selectAll, fromServerUUID, toServerUUID)
         String sePart = [useScheduledFlagQueryPart,jobUuidQueryPart,projectPart, serverNodePart].findAll{it}.join(" AND ")
         //return an id so that we can use ScheduledExecution.read(id) for efficiency
         return "SELECT DISTINCT se.id FROM scheduled_execution se LEFT JOIN execution e ON se.id = e.scheduled_execution_id WHERE ((${executionQueryPart}) OR (${sePart}))"
-    }
-
-    static String safeConvertJobIds(List<String> jobids) {
-        //remove invalid characters in jobids and make sure they are 36 characters long
-        return jobids.findAll{jobid -> jobid?.replace("'","")?.replace(";","")?.length() == 36}.collect{"'${it}'"}.join(",")
     }
 
     static String createJobTakeoverExecutionQueryPart(boolean selectAll,String fromServerUUID, String toServerUUID, String projectFilter) {
