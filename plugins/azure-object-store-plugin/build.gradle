@@ -34,7 +34,7 @@ dependencies {
     // Use the awesome Spock testing and specification framework
     testImplementation "org.spockframework:spock-core:${spockVersion}"
     testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"
-    testImplementation "org.testcontainers:testcontainers:1.15.0"
+    testImplementation "org.testcontainers:testcontainers:${testContainersVersion}"
     testImplementation "cglib:cglib-nodep:3.2.5"
     testImplementation 'org.objenesis:objenesis:1.4'
     testImplementation "org.slf4j:slf4j-simple:1.6.1"

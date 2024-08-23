@@ -1,4 +1,3 @@
-version: "3"
 services:
   rundeck:
     image: ${TEST_IMAGE}
