@@ -23,6 +23,9 @@ services:
     volumes:
       - "/etc/localtime:/etc/localtime:ro"
       - "/etc/timezone:/etc/timezone:ro"
+    ports:
+      - "4440:4440"
+
   ldap:
     hostname: ldap
     image: osixia/openldap:1.5.0
