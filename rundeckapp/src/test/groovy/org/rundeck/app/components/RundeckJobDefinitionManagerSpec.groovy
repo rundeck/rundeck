@@ -2,6 +2,7 @@ package org.rundeck.app.components
 
 import grails.testing.gorm.DataTest
 import org.rundeck.app.components.jobs.ImportedJob
+import org.rundeck.core.execution.ScriptFileCommand
 import rundeck.CommandExec
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
@@ -25,14 +26,26 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
         ScheduledExecution se = jobList.first().getJob()
         se
         se.workflow.commands.size() == 1
-        se.workflow.commands.first().configuration.expandTokenInScriptFile == expandTokenInScriptFile
+        se.workflow.commands.first() instanceOf PluginStep
+        se.workflow.commands.first().type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
+
+        se.workflow.commands.first().configuration == [
+            adhocFilepath          : 'path/to/file.sh',
+            adhocExecution         : true,
+            expandTokenInScriptFile: expandTokenInScriptFile
+        ] + (emptyargs ? [argString: ''] : [:])
 
         where:
-        format | input             | expandTokenInScriptFile
-        "xml"  | getJobXml(true)   | true
-        "xml"  | getJobXml(false)  | false
-        "yaml" | getJobYaml(true)  | true
-        "yaml" | getJobYaml(false) | false
+        format | input             | expandTokenInScriptFile | emptyargs
+        "xml"  | getJobXml(true)   | true                    | true
+        "xml"  | getJobXml(false)  | false                   | true
+        "xml"  | getJobXml(null)   | false                   | true
+        "yaml" | getJobYaml(true)  | true                    | false
+        "yaml" | getJobYaml(false) | false                   | false
+        "yaml" | getJobYaml(null)  | false                   | false
+        "json" | getJobJson(true)  | true                    | false
+        "json" | getJobJson(false) | false                   | false
+        "json" | getJobJson(null)  | false                   | false
     }
 
     def "export job to a format with expandTokenInScriptFile"(){
@@ -65,7 +78,7 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
         "yaml" | getJobYaml(true)
     }
 
-    private static String getJobXml(boolean expandTokenInScriptFile){
+    private static String getJobXml(Boolean expandTokenInScriptFile){
         return """<joblist>
   <job>
     <description>a job</description>
@@ -84,7 +97,7 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
     <scheduleEnabled>true</scheduleEnabled>
     <sequence keepgoing='true' strategy='node-first'>
       <command>
-        ${expandTokenInScriptFile ? "<expandTokenInScriptFile>true</expandTokenInScriptFile>" : ""}
+        ${expandTokenInScriptFile!=null ? "<expandTokenInScriptFile>${expandTokenInScriptFile}</expandTokenInScriptFile>" : ""}
         <scriptargs />
         <scriptfile>path/to/file.sh</scriptfile>
       </command>
@@ -93,7 +106,7 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
 </joblist>"""
     }
 
-    private static String getJobYaml(boolean expandTokenInScriptFile){
+    private static String getJobYaml(Boolean expandTokenInScriptFile){
         return """- description: a job
   executionEnabled: true
   group: some/where
@@ -113,10 +126,45 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
   scheduleEnabled: true
   sequence:
     commands:
-    ${expandTokenInScriptFile ? """- expandTokenInScriptFile: true
+    ${expandTokenInScriptFile!=null ? """- expandTokenInScriptFile: ${expandTokenInScriptFile}
       scriptfile: path/to/file.sh""" : "- scriptfile: path/to/file.sh"}
     keepgoing: true
     strategy: node-first
+"""
+    }
+    private static String getJobJson(Boolean expandTokenInScriptFile){
+        return """[
+  {
+    "description": "a job",
+    "executionEnabled": true,
+    "group": "some/where",
+    "id": "IDSUB",
+    "loglevel": "WARN",
+    "name": "blue",
+    "nodeFilterEditable": false,
+    "schedule": {
+      "month": "*",
+      "time": {
+        "hour": "0",
+        "minute": "0",
+        "seconds": "0"
+      },
+      "weekday": {
+        "day": "*"
+      },
+      "year": "*"
+    },
+    "scheduleEnabled": true,
+    "sequence": {
+      "commands": [{
+      """+(expandTokenInScriptFile!=null?"""\"expandTokenInScriptFile\": ${expandTokenInScriptFile},""":"")+"""
+        "scriptfile": "path/to/file.sh"
+      }],
+      "keepgoing": true,
+      "strategy": "node-first"
+    }
+  }
+]
 """
     }
 }
