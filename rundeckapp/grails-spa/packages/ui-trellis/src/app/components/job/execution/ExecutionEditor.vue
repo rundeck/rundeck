@@ -39,6 +39,7 @@
                   <template #description>
                     <plugin-details
                       :description="header.detail!.description"
+                      description-css="ml-5"
                       extended-css=""
                       allow-html
                       inline-description
