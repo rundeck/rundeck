@@ -69,7 +69,7 @@ export default defineComponent({
     },
     descriptionCss: {
       type: String,
-      default: "m",
+      default: "",
       required: false,
     },
     extendedCss: {
