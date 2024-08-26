@@ -46,6 +46,7 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
             options.addArguments("--disable-default-apps")
             options.addArguments("--disable-blink-features=AutomationControlled")
             options.addArguments("--disable-features=Chrome,DownloadPromptForDownload")
+            options.addArguments("--headless=new")
             _driver = new ChromeDriver(options)
         }
         return _driver
