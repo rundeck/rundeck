@@ -35,6 +35,14 @@ You can run the tests against an external Rundeck instance by setting these env 
 * `RUNDECK_TEST_USER`: The username to use for authentication (default: `admin`)
 * `RUNDECK_TEST_PASS`: The password to use for authentication (default: `admin123`)
 
+## Test using local docker compose
+
+By default the testdeck framework will attempt to use the local docker engine and docker compose applications
+to start the docker-compose files. If you want to revert to using containerized docker-compose, you can set the
+following environment variable. Note that this may require to manually pull some images before running the tests.
+
+* `USE_LOCAL_DOCKER_COMPOSE`: Set to `false` to use containerized docker-compose
+
 ## Adding a new test task
 
 Create a new gradle test task where you must specify the docker compose file to use and the spock configuration

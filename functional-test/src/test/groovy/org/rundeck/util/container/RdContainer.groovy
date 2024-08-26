@@ -23,6 +23,7 @@ class RdContainer extends ComposeContainer implements ClientProvider {
     public static final String LICENSE_LOCATION = System.getenv("LICENSE_LOCATION")
     public static final String TEST_RUNDECK_GRAILS_URL = System.getenv("TEST_RUNDECK_GRAILS_URL") ?: "http://localhost:4440"
     public static final String TEST_TARGET_PLATFORM = System.getenv("TEST_TARGET_PLATFORM") ?: "linux/amd64"
+    public static final boolean USE_LOCAL_DOCKER_COMPOSE = System.getenv("USE_LOCAL_DOCKER_COMPOSE")?.toBoolean() ?: true
 
     private final Map<String, Integer> clientConfig
 
@@ -37,7 +38,7 @@ class RdContainer extends ComposeContainer implements ClientProvider {
         if (CONTEXT_PATH && !CONTEXT_PATH.startsWith('/')) {
             throw new IllegalArgumentException("Context path must start with /")
         }
-        withLocalCompose(true)
+        withLocalCompose(USE_LOCAL_DOCKER_COMPOSE)
         withExposedService(DEFAULT_SERVICE_TO_EXPOSE, DEFAULT_PORT, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(600)))
         withEnv("TEST_IMAGE", RUNDECK_IMAGE)
         withEnv("LICENSE_LOCATION", LICENSE_LOCATION)
@@ -46,10 +47,10 @@ class RdContainer extends ComposeContainer implements ClientProvider {
         withEnv("TEST_RUNDECK_FEATURE_NAME", featureName ?: 'placeholderFeatureName')
         withLogConsumer(DEFAULT_SERVICE_TO_EXPOSE, new Slf4jLogConsumer(log))
         waitingFor(DEFAULT_SERVICE_TO_EXPOSE,
-                Wait.forHttp("${CONTEXT_PATH}/api/14/system/info")
-                        .forPort(DEFAULT_PORT)
-                        .forStatusCodeMatching(it -> it >= 200 && it < 500 && it != 404)
-                        .withStartupTimeout(Duration.ofMinutes(10))
+            Wait.forHttp("${CONTEXT_PATH}/api/14/system/info")
+                .forPort(DEFAULT_PORT)
+                .forStatusCodeMatching(it -> it >= 200 && it < 500 && it != 404)
+                .withStartupTimeout(Duration.ofMinutes(10))
         )
 
     }
