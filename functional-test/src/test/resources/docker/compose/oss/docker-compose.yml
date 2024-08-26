@@ -35,8 +35,6 @@ services:
       - "./mock-scripts:/home/rundeck/mock-scripts:rw"
     ports:
       - "4440:4440"
-    networks:
-      - rundeck-network
 
   rundeck-db:
     image: mysql:8
@@ -49,8 +47,6 @@ services:
       - "3306:3306"
     volumes:
       - rundeck_db_data:/var/lib/mysql
-    networks:
-      - rundeck-network
 
   gitea:
     build:
@@ -69,8 +65,6 @@ services:
       - "./gitea/gitea-cfg.ini:/data/gitea/conf/app.ini"
     ports:
       - "3000:3000"
-    networks:
-      - rundeck-network
 
   ssh-node:
     build:
@@ -78,8 +72,6 @@ services:
     platform: linux/amd64
     environment:
       NODE_USER_PASSWORD: testpassword123
-    networks:
-      - rundeck-network
     ports:
       - "22"
     volumes:
@@ -92,11 +84,10 @@ services:
       - ./mock-scripts:/usr/share/nginx/html:ro
     ports:
       - "8080:80"
-    networks:
-      - rundeck-network
 
 volumes:
   rundeck_db_data:
 
 networks:
-  rundeck-network:
+  default:
+    name: rundeck-network
