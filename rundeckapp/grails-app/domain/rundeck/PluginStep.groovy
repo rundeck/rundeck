@@ -22,6 +22,13 @@ import org.rundeck.core.execution.ScriptCommand
 import org.rundeck.core.execution.ScriptFileCommand
 
 class PluginStep extends WorkflowStep{
+    public static final List<String> LEGACY_BUILTIN_TYPES = Collections.unmodifiableList(
+        [
+            ExecCommand.EXEC_COMMAND_TYPE,
+            ScriptCommand.SCRIPT_COMMAND_TYPE,
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
+        ]
+    )
     Boolean nodeStep = false
     String type
     String jsonData
@@ -64,7 +71,7 @@ class PluginStep extends WorkflowStep{
     }
 
     static isOldBuiltInType(String type) {
-        return [ExecCommand.EXEC_COMMAND_TYPE, ScriptCommand.SCRIPT_COMMAND_TYPE, ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE].contains(type)
+        return LEGACY_BUILTIN_TYPES.contains(type)
     }
 
     public Map toMap() {
@@ -119,9 +126,16 @@ class PluginStep extends WorkflowStep{
     }
 
     static void updateFromMap(PluginStep ce, Map data) {
-        ce.nodeStep=data.nodeStep
-        ce.type=data.type
-        ce.setConfiguration(data.configuration)
+        if (CommandExec.isLegacyBuiltinCommandData(data)) {
+            //keep job def import compatibility with old Rundeck versions prior to 5.x
+            ce.nodeStep = true
+            ce.type = CommandExec.getLegacyBuiltinCommandType(data)
+            ce.configuration = CommandExec.createMapFromMap(data)
+        } else {
+            ce.nodeStep = data.nodeStep
+            ce.type = data.type
+            ce.configuration = data.configuration
+        }
 
         ce.keepgoingOnSuccess = !!data.keepgoingOnSuccess
         ce.description=data.description?.toString()

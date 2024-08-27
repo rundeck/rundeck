@@ -2530,7 +2530,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         assertNotNull e.workflow
         assertNotNull e.workflow.commands
         assertEquals 1,e.workflow.commands.size()
-        assertPropertiesEquals( [adhocRemoteString: 'exec command'],e.workflow.commands[0])
+        assertPropertiesEquals( [adhocRemoteString: 'exec command'],e.workflow.commands[0].configuration)
     }
     def testLoadExecutionsWorkflow(){
         when:
@@ -2631,7 +2631,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         assertNotNull e.workflow
         assertNotNull e.workflow.commands
         assertEquals 1,e.workflow.commands.size()
-        assertPropertiesEquals( [adhocRemoteString: 'exec command'],e.workflow.commands[0])
+        assertPropertiesEquals( [adhocRemoteString: 'exec command'],e.workflow.commands[0].configuration)
     }
     /**
      * using job id that already exists will attach to that job
@@ -2695,7 +2695,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         assertNotNull e.workflow
         assertNotNull e.workflow.commands
         assertEquals 1,e.workflow.commands.size()
-        assertPropertiesEquals( [adhocRemoteString: 'exec command'],e.workflow.commands[0])
+        assertPropertiesEquals( [adhocRemoteString: 'exec command'],e.workflow.commands[0].configuration)
     }
     def testloadExecutionsRetryExecId(){
         def remapExecId='12'

@@ -85,4 +85,71 @@ class PluginStepTests  extends Specification implements DataTest{
         ScriptCommand.SCRIPT_COMMAND_TYPE          | ["argString": "", "adhocRemoteString": "","adhocLocalString": "adhocLocalString","adhocFilepath": "","scriptInterpreter": "bash","fileExtension": "sh", "interpreterArgsQuoted": true,"expandTokenInScriptFile": true]
         ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | ["argString": "", "adhocRemoteString": "","adhocLocalString": "","adhocFilepath": "adhocFilepath","scriptInterpreter": "bash","fileExtension": "sh", "interpreterArgsQuoted": true,"expandTokenInScriptFile": true]
     }
+
+    def "update from map plugin type"() {
+        when:
+            PluginStep t = new PluginStep()
+            PluginStep.updateFromMap(t, pluginConfig)
+        then:
+            t.type == type
+            t.configuration == expect
+            t.nodeStep == nodeStep
+            t.keepgoingOnSuccess == keep
+            t.description == desc
+            t.pluginConfig == plugins
+            t.errorHandler == null
+        where:
+            type    | pluginConfig                                                                            | expect         | nodeStep | keep  | desc | plugins
+            'atype' | [type: 'atype', configuration: [some: 'data'], nodeStep: true]                          | [some: 'data'] | true     | false | null | null
+            'atype' | [type: 'atype', configuration: [some: 'data'], nodeStep: true, keepgoingOnSuccess:true] | [some: 'data'] | true     | true  | null | null
+            'atype' | [type: 'atype', configuration: [some: 'data'], nodeStep: true, keepgoingOnSuccess:true,description:'desc'] | [some: 'data'] | true     | true  | 'desc' | null
+            'atype' | [type: 'atype', configuration: [some: 'data'], nodeStep: true, keepgoingOnSuccess:true,plugins:[some:'data']] | [some: 'data'] | true     | true  | null | [some:'data']
+    }
+
+    def "update from map legacy type"() {
+        when:
+            PluginStep t = new PluginStep()
+            PluginStep.updateFromMap(t, pluginConfig)
+        then:
+            t.type == type
+            t.configuration == expect
+            t.nodeStep
+            !t.keepgoingOnSuccess
+            t.errorHandler == null
+        where:
+            type                                       | pluginConfig | expect
+            ExecCommand.EXEC_COMMAND_TYPE              | [exec:'a command']|[adhocRemoteString: 'a command',adhocExecution: true]
+            ScriptCommand.SCRIPT_COMMAND_TYPE          | [script:'a script']|[adhocLocalString: 'a script',adhocExecution: true]
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scriptfile:'a file']|[adhocFilepath: 'a file',adhocExecution: true,expandTokenInScriptFile:false]
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scripturl:'http://example.com']|[adhocFilepath: 'http://example.com',adhocExecution: true,expandTokenInScriptFile:false]
+    }
+    def "update from map legacy type script props"() {
+        when:
+            PluginStep t = new PluginStep()
+            PluginStep.updateFromMap(t, pluginConfig+ extraScriptConfig)
+        then:
+            t.type == type
+            t.configuration == expect + expectExtraProps
+            t.nodeStep
+            !t.keepgoingOnSuccess
+            t.errorHandler == null
+        where:
+            extraScriptConfig = [
+                fileExtension        : 'sh',
+                args                 : 'asdf',
+                scriptInterpreter    : 'bash',
+                interpreterArgsQuoted: true
+            ]
+            expectExtraProps = [
+                adhocExecution         : true,
+                argString              : 'asdf',
+                fileExtension          : 'sh',
+                scriptInterpreter      : 'bash',
+                interpreterArgsQuoted  : true
+            ]
+            type                                       | pluginConfig                      | expect
+            ScriptCommand.SCRIPT_COMMAND_TYPE          | [script: 'a script']              | [adhocLocalString: 'a script']
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scriptfile: 'a file']            | [adhocFilepath: 'a file',expandTokenInScriptFile:false]
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scripturl: 'http://example.com'] | [adhocFilepath: 'http://example.com',expandTokenInScriptFile:false]
+    }
 }
