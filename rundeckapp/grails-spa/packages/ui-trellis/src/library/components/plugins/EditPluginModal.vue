@@ -10,7 +10,7 @@
       </p>
       <plugin-config
         v-model="editModel"
-        :mode="'edit'"
+        :mode="pluginConfigMode"
         :plugin-config="provider"
         :show-title="false"
         :show-description="false"
@@ -45,7 +45,6 @@ import { defineComponent } from "vue";
 export default defineComponent({
   name: "EditPluginModal",
   components: { pluginInfo, pluginConfig },
-  emits: ["cancel", "save", "update:modelValue", "update:modalActive"],
   props: {
     title: {
       type: String,
@@ -71,12 +70,14 @@ export default defineComponent({
       default: () => ({}),
     },
   },
+  emits: ["cancel", "save", "update:modelValue", "update:modalActive"],
   data() {
     return {
       showModalVal: this.modalActive,
       editModel: {} as PluginConfig,
       provider: null,
       loading: false,
+      pluginConfigMode: "edit",
     };
   },
   computed: {
@@ -89,6 +90,22 @@ export default defineComponent({
         this.$emit("update:modalActive", val);
       },
     },
+  },
+  watch: {
+    modalActive(val) {
+      this.showModalVal = val;
+    },
+    async modelValue(val) {
+      this.editModel = cloneDeep(val);
+      await this.loadProvider();
+    },
+  },
+  async mounted() {
+    this.editModel = cloneDeep(this.modelValue);
+    if (Object.keys(this.modelValue.config).length === 0) {
+      this.pluginConfigMode = "create";
+    }
+    await this.loadProvider();
   },
   methods: {
     async saveChanges() {
@@ -108,19 +125,6 @@ export default defineComponent({
         this.provider = null;
       }
     },
-  },
-  watch: {
-    modalActive(val) {
-      this.showModalVal = val;
-    },
-    async modelValue(val) {
-      this.editModel = cloneDeep(val);
-      await this.loadProvider();
-    },
-  },
-  async mounted() {
-    this.editModel = cloneDeep(this.modelValue);
-    await this.loadProvider();
   },
 });
 </script>
