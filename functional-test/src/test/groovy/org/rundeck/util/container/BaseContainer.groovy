@@ -351,10 +351,13 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     }
 
     /**
-     *  Use JobUtils.executeJob() paired with JobUtils.waitForExecutionToBe() instead.
-     * @param jobId
-     * @param body
-     * @return
+     * Runs a job and wait for it to finish. Returning the output of the execution.
+     *
+     * @param jobId The job UUID to run.
+     * @param body An object representing the job run request options. Must be serializable to JSON.
+     * @return The output of the execution.
+     * @deprecated Use JobUtils.executeJobWithOptions(),
+     * JobUtils.waitForExecutionFinish() instead, and JobUtils.getExecutionOutput() instead.
      */
     @Deprecated
     Map runJobAndWait(String jobId, Object body = null) {
@@ -364,7 +367,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         }
 
         Execution execution = MAPPER.readValue(r.body().string(), Execution.class)
-        waitForExecutionStatus(execution.id as String, WaitingTime.EXCESSIVE)
+        waitForExecutionFinish(execution.id as String, WaitingTime.EXCESSIVE)
 
         // Maintains the data contract for the Map return type
         return client.get("/execution/${execution.id}/output", Map)
@@ -376,7 +379,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
      * @param timeout wait timeout
      * @return
      */
-    Execution waitForExecutionStatus(String executionId, Duration timeout = WaitingTime.MODERATE) {
+    Execution waitForExecutionFinish(String executionId, Duration timeout = WaitingTime.MODERATE) {
         final List<String> statusesToWaitFor = [
                 'aborted',
                 'failed',
@@ -384,7 +387,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
                 'timedout',
                 'other']
 
-        return JobUtils.waitForExecutionToBe(statusesToWaitFor, executionId, MAPPER, client, WaitingTime.LOW, timeout)
+        return JobUtils.waitForExecution(statusesToWaitFor, executionId, client, timeout)
     }
 
     /**

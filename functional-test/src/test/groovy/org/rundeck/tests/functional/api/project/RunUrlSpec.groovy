@@ -6,7 +6,6 @@ import org.rundeck.util.api.responses.execution.RunCommand
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.common.execution.ExecutionStatus
 import org.rundeck.util.common.jobs.JobUtils
-import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.container.BaseContainer
 
 @APITest
@@ -42,18 +41,14 @@ class RunUrlSpec extends BaseContainer{
 
         then:
         scriptExecArgsResponse.code() == 200
-        scriptExecId > 0
+        !scriptExecId?.blank
         mapper.readValue(client.doGetAcceptAll("/execution/$scriptExecId").body().string(), Execution.class) != null
 
         when: "We check the execution status"
-        def succeededExec = JobUtils.waitForExecutionToBe(
+        def succeededExec = JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 scriptExecId as String,
-                mapper,
-                client,
-                WaitingTime.LOW,
-                WaitingTime.MODERATE
-        )
+                client)
 
         then:
         succeededExec.status == ExecutionStatus.SUCCEEDED.state
