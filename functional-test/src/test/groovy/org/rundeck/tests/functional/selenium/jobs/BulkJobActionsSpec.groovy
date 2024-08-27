@@ -6,6 +6,10 @@ import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.rundeck.util.gui.pages.jobs.JobListPage
 import org.rundeck.util.gui.pages.login.LoginPage
+import spock.lang.FailsWith
+
+import java.time.Duration
+import org.openqa.selenium.TimeoutException
 
 @SeleniumCoreTest
 class BulkJobActionsSpec extends SeleniumBase {
@@ -168,9 +172,6 @@ class BulkJobActionsSpec extends SeleniumBase {
 
         JobListPage jobsListPage = page JobListPage
 
-        // TODO: Determine why the run button fails to open a modal in NextUI
-        //        jobsListPage.loadPathToNextUI SELENIUM_BASIC_PROJECT
-
         jobsListPage.loadJobListForProject SELENIUM_BASIC_PROJECT
         jobsListPage.go()
 
@@ -179,6 +180,32 @@ class BulkJobActionsSpec extends SeleniumBase {
         job1RunButton.click()
 
         def runJobNowButton = jobsListPage.waitIgnoringForElementToBeClickable(jobsListPage.getExecuteJobModalRunJobNowButton())
+        runJobNowButton.click()
+        jobsListPage.waitForUrlToContain('/execution/show/')
+
+        then:
+        ExecutionShowPage executionShowPage = page ExecutionShowPage
+        executionShowPage.validatePage()
+    }
+
+    /**
+     * Once the UI is fixed, removing the @FailWith annotation will result in a green test run
+     */
+    @FailsWith(value = TimeoutException, reason = "The filed defect in nextUI that prevents opening the Job Run Modal that is to be fixed in RUN-2810 ")
+    def "job can be executed from the Job List Page modal with nextUI"() {
+        given:
+        String jobToExecute = generateJob(["opt1-required": "false", "opt2-required": "false"])
+
+        JobListPage jobsListPage = page JobListPage
+
+        jobsListPage.loadPathToNextUI SELENIUM_BASIC_PROJECT
+        jobsListPage.go()
+
+        when:
+        def job1RunButton = jobsListPage.waitIgnoringForElementToBeClickable(jobsListPage.getExecuteJobInModalButton(jobToExecute))
+        job1RunButton.click()
+
+        def runJobNowButton = jobsListPage.waitIgnoringForElementToBeClickable(jobsListPage.getExecuteJobModalRunJobNowButton(), Duration.ofSeconds(2))
         runJobNowButton.click()
         jobsListPage.waitForUrlToContain('/execution/show/')
 
