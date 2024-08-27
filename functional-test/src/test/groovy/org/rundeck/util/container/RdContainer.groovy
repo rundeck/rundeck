@@ -21,7 +21,7 @@ class RdContainer extends ComposeContainer implements ClientProvider {
     public static final String LICENSE_LOCATION = System.getenv("LICENSE_LOCATION")
     public static final String TEST_RUNDECK_GRAILS_URL = System.getenv("TEST_RUNDECK_GRAILS_URL") ?: "http://localhost:4440"
     public static final String TEST_TARGET_PLATFORM = System.getenv("TEST_TARGET_PLATFORM") ?: "linux/amd64"
-    public static final boolean USE_LOCAL_DOCKER_COMPOSE = System.getenv("USE_LOCAL_DOCKER_COMPOSE")?.toBoolean() ?: true
+    public static final boolean USE_LOCAL_DOCKER_COMPOSE = (System.getenv("USE_LOCAL_DOCKER_COMPOSE") ?: "true").toBoolean()
 
     private final Map<String, Integer> clientConfig
 

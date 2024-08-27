@@ -21,7 +21,7 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
     public static final String TEST_PASS = System.getenv("RUNDECK_TEST_PASS") ?: "admin123"
     public static final String SELENIUM_BASIC_PROJECT = "SeleniumBasic"
     public static final String downloadFolder = System.getProperty("user.dir") + "/src/test/resources" + getSeparator() +"downloads";
-    public static final boolean TEST_SELENIUM_HEADLESS_MODE = System.getenv("TEST_SELENIUM_HEADLESS_MODE")?.toBoolean() ?: true
+    public static final boolean TEST_SELENIUM_HEADLESS_MODE = (System.getenv("TEST_SELENIUM_HEADLESS_MODE") ?: "true").toBoolean()
 
     /**
      * Create a driver
