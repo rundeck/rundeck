@@ -78,7 +78,7 @@ class BulkJobActionsSpec extends SeleniumBase {
         jobsListPage.waitIgnoringForElementToBeClickable(jobsListPage.bulkConfirmActionYesButton).click()
 
         then:
-        jobRespondsTrueTo(jobId1) { it.executionEnabled }
+        [jobId1, jobId2].stream().parallel().forEach { String jobId -> assert jobRespondsTrueTo(jobId) { it.executionEnabled } }
     }
 
     def "bulk disable executions action disables execution"() {
@@ -105,7 +105,7 @@ class BulkJobActionsSpec extends SeleniumBase {
         jobsListPage.waitIgnoringForElementToBeClickable(jobsListPage.bulkConfirmActionYesButton).click()
 
         then:
-        jobRespondsTrueTo(jobId1) { !it.executionEnabled }
+        [jobId1, jobId2].stream().parallel().forEach { String jobId -> assert jobRespondsTrueTo(jobId) { !it.executionEnabled } }
     }
 
     def "bulk enable schedule action enables the schedule"() {
@@ -132,7 +132,7 @@ class BulkJobActionsSpec extends SeleniumBase {
         jobsListPage.waitIgnoringForElementToBeClickable(jobsListPage.bulkConfirmActionYesButton).click()
 
         then:
-        jobRespondsTrueTo(jobId1.toString()) { it.scheduleEnabled }
+        [jobId1, jobId2].stream().parallel().forEach { String jobId -> assert jobRespondsTrueTo(jobId) { it.scheduleEnabled } }
     }
 
     def "bulk disable schedule action disables the schedule"() {
@@ -159,7 +159,7 @@ class BulkJobActionsSpec extends SeleniumBase {
         jobsListPage.waitIgnoringForElementToBeClickable(jobsListPage.bulkConfirmActionYesButton).click()
 
         then:
-        jobRespondsTrueTo(jobId1.toString()) { !it.scheduleEnabled }
+        [jobId1, jobId2].stream().parallel().forEach { String jobId -> assert jobRespondsTrueTo(jobId) { !it.scheduleEnabled } }
     }
 
     def "job can be executed from the Job List Page modal"() {

@@ -355,7 +355,7 @@ class JobUtils {
             return OBJECT_MAPPER.readValue(responseImport.body().string(), Map.class);
         } else {
             // Throw an exception if the import failed
-            throw new IllegalArgumentException("Job import failed: " + responseImport);
+            throw new IllegalArgumentException("Job import failed: ${responseImport} with body: ${responseImport?.body()?.string()}");
         }
     }
 
