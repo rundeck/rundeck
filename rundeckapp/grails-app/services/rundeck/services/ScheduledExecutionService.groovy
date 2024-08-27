@@ -3204,7 +3204,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     ServiceNameConstants.LogFilter,
                     input.workflow.getPluginConfigDataList(ServiceNameConstants.LogFilter)
             )
-        }else if (params.workflow instanceof Map && params.workflow.globalLogFilters) {
+        } else if (params.jobWorkflowJson) {
+            def jobWorkflowData = JSON.parse(params.jobWorkflowJson.toString())
+
+            if(jobWorkflowData instanceof JSONObject && jobWorkflowData.get("pluginConfig")) {
+                scheduledExecution.workflow.setPluginConfigData(ServiceNameConstants.LogFilter, jobWorkflowData.get("pluginConfig").get("LogFilter"))
+            }
+        } else if (params.workflow instanceof Map && params.workflow.globalLogFilters) {
             //filter configs
             def i = 0;
             def configs = []
@@ -3275,6 +3281,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 final Workflow workflow = new Workflow(wf)
                 scheduledExecution.workflow = workflow
                 wf.discard()
+            }
+        } else if (params.jobWorkflowJson) {
+            def jobWorkflowData = JSON.parse(params.jobWorkflowJson.toString())
+
+            if(jobWorkflowData instanceof JSONObject) {
+                scheduledExecution.workflow = Workflow.fromMap(jobWorkflowData)
             }
         } else if (params.workflow && params.workflow instanceof Workflow) {
             scheduledExecution.workflow = new Workflow(params.workflow)

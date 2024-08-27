@@ -25,7 +25,7 @@ export default defineComponent({
   },
   watch: {
     nextUi(newVal: any) {
-      console.log(`toggle: ${newVal})`);
+      console.log(`toggle: ${newVal}`);
       if (newVal) {
         this.$cookies.set(COOKIE_NAME, "true", "1y", "/", "", false, "Strict");
       } else {
