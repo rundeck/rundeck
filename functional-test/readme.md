@@ -43,6 +43,14 @@ following environment variable. Note that this may require to manually pull some
 
 * `USE_LOCAL_DOCKER_COMPOSE`: Set to `false` to use containerized docker-compose
 
+## Selenium Tests headless mode
+
+By default, testdeck will run selenium tests in headless mode, preventing the automated browser to pop up and steal
+focus. If you want to see the browser running the tests, you can set the following environment variable:
+
+* `TEST_SELENIUM_HEADLESS_MODE`: Set to `false` to run the tests in a visible browser.
+
+
 ## Adding a new test task
 
 Create a new gradle test task where you must specify the docker compose file to use and the spock configuration
