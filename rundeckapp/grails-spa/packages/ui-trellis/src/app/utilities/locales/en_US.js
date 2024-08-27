@@ -9,12 +9,6 @@ const messages = {
     "Dispatch to Nodes": "Dispatch to Nodes",
     Nodes: "Nodes",
   },
-  uiv: {
-    modal: {
-      cancel: "Cancel",
-      ok: "OK",
-    },
-  },
   cron: {
     section: {
       0: "Seconds",
@@ -685,7 +679,7 @@ const messages = {
   "form.option.inputType.label": "Input Type",
   "form.option.defaultStoragePath.present.description":
     "A default value will be loaded from Key Storage",
-  "form.option.secureInput.false.label": "Plain text",
+  "form.option.secureInput.false.label": "Plain Text",
   "form.option.name.label": "Option Name",
   "form.option.valuesType.url.filter.label": "Json Path Filter",
   "form.option.valuesType.url.authType.label": "Authentication Type",
@@ -722,7 +716,7 @@ const messages = {
     "The Remote URL Json Path Filter has an invalid syntax",
   "form.option.valuesType.url.authType.apiKey.label": "API Key",
   "form.option.optionType.text.label": "Text",
-  "form.option.secureExposed.true.label": "Secure",
+  "form.option.secureExposed.true.label": "Plain Text with Password Input",
   "form.option.valuesType.url.filter.description":
     'Filter JSON results using a key path, for example "$.key.path"',
   "form.option.valuesType.url.authentication.tokenInformer.header.label":
@@ -751,7 +745,7 @@ const messages = {
   "form.option.valuesType.url.authentication.tokenInformer.label":
     "Inject key ",
   "form.option.secureExposed.true.description":
-    "Password input, value exposed in scripts and commands.",
+    "Plain text with a Password input, value exposed in scripts and commands.",
   "form.option.dateFormat.title": "Date Format",
   "form.option.label.label": "Option Label",
   "form.option.valuesUrl.description": "A URL to a Remote JSON service.",
@@ -829,6 +823,82 @@ const messages = {
   "option.view.action.moveUp.title": "Move Up",
   "option.view.action.moveDown.title": "Move Down",
   "option.view.action.drag.title": "Drag to reorder",
+  "pagination.of": "of",
+  uiv: {
+    datePicker: {
+      clear: "Clear",
+      today: "Today",
+      month: "Month",
+      month1: "January",
+      month2: "February",
+      month3: "March",
+      month4: "April",
+      month5: "May",
+      month6: "June",
+      month7: "July",
+      month8: "August",
+      month9: "September",
+      month10: "October",
+      month11: "November",
+      month12: "December",
+      year: "Year",
+      week1: "Mon",
+      week2: "Tue",
+      week3: "Wed",
+      week4: "Thu",
+      week5: "Fri",
+      week6: "Sat",
+      week7: "Sun",
+    },
+    timePicker: {
+      am: "AM",
+      pm: "PM",
+    },
+    modal: {
+      cancel: "Cancel",
+      ok: "OK",
+    },
+    multiSelect: {
+      placeholder: "Select...",
+      filterPlaceholder: "Search...",
+    },
+  },
+  "scheduledExecution.jobName.label": "Job Name",
+  "scheduledExecution.property.description.label": "Description",
+  "job.editor.preview.runbook": "Preview Readme",
+  "choose.action.label": "Choose",
+  "scheduledExecution.property.description.plain.description":
+    "The description will be shown in plain text",
+  "scheduledExecution.property.description.description":
+    "The first line of the description will be shown in plain text, the rest will be rendered with Markdown.\n\n" +
+    "See [Markdown](http://en.wikipedia.org/wiki/Markdown).\n\n" +
+    "Within the extended description you can link to the job using {'`{{job.permalink}}`'} as the URL to the job, e.g. `[run job]({'{{job.permalink}}#runjob'})`\n\n" +
+    "You can add a Readme by using a HR separater `---` by itself on a line, and everything following that will be rendered in a separate tab using [Markdeep](https://casual-effects.com/markdeep).",
+  "scheduledExecution.groupPath.description": "Group is a / separated path",
+  more: "More\u2026",
+  less: "Less\u2026",
+  "job.edit.groupPath.choose.text": "Click on the name of the group to use",
+  "scheduledExecution.property.executionLifecyclePluginConfig.help.text":
+    "Selected Plugins will be enabled for this Job.",
+  Workflow: {
+    label: "Workflow",
+    property: {
+      keepgoing: {
+        true: { description: "Run remaining steps before failing." },
+        false: { description: "Stop at the failed step." },
+        prompt: "If a step fails:",
+      },
+      strategy: {
+        label: "Strategy",
+      },
+    },
+  },
+  "plugin.choose.title": "Choose a Plugin",
+  "plugin.type.WorkflowStep.title.plural": "Workflow Steps",
+  "plugin.type.WorkflowStep.title": "Workflow Step",
+  "plugin.type.WorkflowNodeStep.title.plural": "Node Steps",
+  "plugin.type.WorkflowNodeStep.title": "Node Step",
+  "JobExec.nodeStep.true.label": "Node Step",
 };
 
 export default messages;

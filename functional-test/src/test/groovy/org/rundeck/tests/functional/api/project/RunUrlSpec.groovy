@@ -51,8 +51,8 @@ class RunUrlSpec extends BaseContainer{
                 scriptExecId as String,
                 mapper,
                 client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                WaitingTime.LOW,
+                WaitingTime.MODERATE
         )
 
         then:

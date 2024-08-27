@@ -253,6 +253,7 @@ class UrlMappings {
         "/api/$api_version/metrics/$name**?"(controller: 'api', action: 'apiMetrics')
 
         "/api/$api_version/plugin/list"(controller: 'plugin', action: 'listPlugins')
+        "/api/$api_version/plugin/detail/$service/$provider"(controller: 'plugin', action: 'apiPluginDetail')
 
         "/api/$api_version"(controller: 'api', action: 'info')
         //catchall
@@ -323,7 +324,7 @@ class UrlMappings {
         "/plugin/list"(controller: 'plugin', action: 'listPlugins')
         "/plugin/listByService"(controller: 'plugin', action: 'listPluginsByService')
         "/plugin/providers/$service"(controller: 'plugin', action: 'pluginServiceDescriptions')
-        "/plugin/detail/$service/$name"(controller: 'plugin', action: 'pluginDetail')
+        "/plugin/detail/$service/$provider"(controller: 'plugin', action: 'pluginDetail')
         "/plugin/validate/$service/$name"(controller: 'plugin', action: 'pluginPropertiesValidateAjax')
 
         "/tour/listAll"(controller:'tour',action:'listAllTourManifests')

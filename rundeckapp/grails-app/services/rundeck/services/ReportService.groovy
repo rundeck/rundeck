@@ -24,7 +24,11 @@ import com.google.common.collect.Lists
 import grails.gorm.DetachedCriteria
 import grails.gorm.transactions.Transactional
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.data.model.v1.execution.ExecutionData
 import org.rundeck.app.data.model.v1.query.RdExecQuery
+import org.rundeck.app.data.model.v1.report.dto.SaveReportResponse
+import org.rundeck.app.data.providers.DBExecReportSupport
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import rundeck.data.report.SaveReportRequestImpl
 import rundeck.data.report.SaveReportResponseImpl
 import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
@@ -41,6 +45,7 @@ class ReportService  {
     AppAuthContextEvaluator rundeckAuthContextEvaluator
     ConfigurationService configurationService
     ExecReportDataProvider execReportDataProvider
+    ReferencedExecutionDataProvider referencedExecutionDataProvider
 
     static final String GRANTED_VIEW_HISTORY_JOBS = "granted_view_history_jobs"
     static final String DENIED_VIEW_HISTORY_JOBS = "rejected_view_history_jobs"
@@ -55,7 +60,7 @@ class ReportService  {
         if(!saveReportRequest.message){
             saveReportRequest.message="[no message]"
         }
-        SaveReportResponseImpl saveReportResponse = execReportDataProvider.saveReport(saveReportRequest)
+        SaveReportResponse saveReportResponse = execReportDataProvider.saveReport(saveReportRequest)
 
         //TODO: authorize event creation?
 
@@ -64,13 +69,13 @@ class ReportService  {
 //            rep.errors.allErrors.each {
 //                System.err.println(it)
 //            }
-            return [error:true,report:saveReportResponse.report]
+            return [error:true,report:saveReportResponse.report,errors:saveReportResponse.errors]
         }else{
             return [success:true]
         }
     }
 
-     def public finishquery(ExecQuery query,def params, Map model){
+    def public finishquery(ExecQuery query,def params, Map model){
 
         if(!params.max){
             params.max=grailsApplication.config.getProperty("reportservice.pagination.default",Integer.class, 20)
@@ -159,41 +164,41 @@ class ReportService  {
             paginateParams.remove(it)
         }
 
-         Integer defaultMax = grailsApplication.config.getProperty("reportservice.pagination.default",Integer.class, 20)
+        Integer defaultMax = grailsApplication.config.getProperty("reportservice.pagination.default",Integer.class, 20)
 
-         def tmod=[max: query?.max?query.max:defaultMax,
-            offset:query?.offset?query.offset:0,
-            paginateParams:paginateParams,
-            displayParams:displayParams]
+        def tmod=[max: query?.max?query.max:defaultMax,
+                  offset:query?.offset?query.offset:0,
+                  paginateParams:paginateParams,
+                  displayParams:displayParams]
         model.putAll(tmod)
         return model
     }
 
     private def getStartsWithFilters() {
         return [
-            //job filter repurposed for reportId
-            job: 'reportId',
+                //job filter repurposed for reportId
+                job: 'reportId',
         ]
     }
     private def getTxtFilters() {
         def txtfilters = [
-            obj: 'ctxName',
-            user: 'author',
-            abortedBy: 'abortedByUser',
-            node: 'node',
-            message: 'message',
-            title: 'title',
-            tags: 'tags',
+                obj: 'ctxName',
+                user: 'author',
+                abortedBy: 'abortedByUser',
+                node: 'node',
+                message: 'message',
+                title: 'title',
+                tags: 'tags',
         ]
         return txtfilters
     }
 
     private def getEqFilters() {
         def eqfilters = [
-            stat: 'status',
-            reportId: 'reportId',
-            jobId:'jobId',
-            proj: 'project',
+                stat: 'status',
+                reportId: 'reportId',
+                jobId:'jobId',
+                proj: 'project',
         ]
         return eqfilters
     }
@@ -433,8 +438,16 @@ class ReportService  {
         filters.putAll(txtfilters)
         filters.putAll(eqfilters)
 
-        def seId = se?.id?: null
-        def runlist = execReportDataProvider.getExecutionReports(query, isJobs, seId)
+        def seUuid = se?.uuid?: null
+
+        //TO DO: Move to execution provider when possible
+        def execUuids = []
+        if (query.execProjects && seUuid) {
+            execUuids = referencedExecutionDataProvider.getExecutionUuidsByJobUuid(seUuid)
+        }
+
+
+        def runlist = execReportDataProvider.getExecutionReports(query, isJobs, seUuid, execUuids)
 
         def executions=[]
         def lastDate = -1
@@ -444,18 +457,18 @@ class ReportService  {
                 lastDate = it.dateCompleted.time
             }
         }
-        def total = execReportDataProvider.countExecutionReportsWithTransaction(query, isJobs, seId)
+        def total = execReportDataProvider.countExecutionReportsWithTransaction(query, isJobs, seUuid)
 
         filters.putAll(specialfilters)
 
         return [
-            query:query,
-            reports:executions,
-            total: total,
-            lastDate: lastDate,
-            _filters:filters
-            ]
-	}
+                query:query,
+                reports:executions,
+                total: total,
+                lastDate: lastDate,
+                _filters:filters
+        ]
+    }
 
     /**
      * Sorts jobs according to user permission
@@ -517,9 +530,18 @@ class ReportService  {
         return rundeckAuthContextEvaluator.authorizeProjectResources(authContext,resHS, constraints, project)
     }
 
-    def deleteByExecutionId(Long id){
-        execReportDataProvider.deleteAllByExecutionId(id)
+    def deleteByExecution(ExecutionData e) {
+        if (e.uuid) {
+            execReportDataProvider.deleteAllByExecutionUuid(e.uuid)
+        } else if (execReportDataProvider instanceof DBExecReportSupport) {
+            execReportDataProvider.deleteAllByExecutionId(e.internalId as Long)
+        } else {
+            throw new IllegalStateException(
+                "The execution data does not specify a UUID, however the data provider requires one."
+            )
+        }
     }
+
     private boolean isOracleDatasource(){
         def dataSource = applicationContext.getBean('dataSource', DataSource)
         def databaseProductName = dataSource?.getConnection()?.metaData?.databaseProductName

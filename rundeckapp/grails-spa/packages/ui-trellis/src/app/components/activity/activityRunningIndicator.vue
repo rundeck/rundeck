@@ -15,18 +15,28 @@
 -->
 
 <template>
-  <span v-if="count > 0" @click="clickAction">
+  <span v-if="count > 0" data-test-id="activity-indicator" @click="clickAction">
     <slot :count="count">{{ count }}</slot>
   </span>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { PropType, defineComponent } from "vue";
+import { EventBus } from "../../../library/utilities/vueEventBus";
 
 export default defineComponent({
   name: "ActivityRunningIndicator",
   components: {},
-  props: ["eventBus", "displayMode"],
+  props: {
+    eventBus: {
+      type: Object as PropType<typeof EventBus>,
+      required: true,
+    },
+    displayMode: {
+      type: String,
+      default: "default",
+    },
+  },
   data() {
     return {
       count: 0,
@@ -34,6 +44,12 @@ export default defineComponent({
   },
   mounted(): void {
     this.eventBus.on("activity-nowrunning-count", this.updateNowrunning);
+  },
+  beforeUnmount(): void {
+    // Unregister the 'activity-nowrunning-count' event when the component is unmounted
+    // This is to prevent memory leaks and unnecessary executions of the updateNowrunning function
+    // when the component is no longer in use.
+    this.eventBus.off("activity-nowrunning-count", this.updateNowrunning);
   },
   methods: {
     updateNowrunning(count: number) {

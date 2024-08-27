@@ -128,6 +128,11 @@ abstract class BasePage {
                 .until(ExpectedConditions.numberOfElementsToBe(locator, number))
     }
 
+    void waitForNumberOfElementsToBeMoreThan(By locator, Integer number) {
+        new WebDriverWait(context.driver, Duration.ofSeconds(30))
+                .until(ExpectedConditions.numberOfElementsToBeMoreThan(locator, number))
+    }
+
     WebElement waitIgnoringForElementVisible(WebElement locator) {
         new WebDriverWait(context.driver, Duration.ofSeconds(30))
                 .ignoring(StaleElementReferenceException.class)
@@ -221,5 +226,9 @@ abstract class BasePage {
         new WebDriverWait(driver, Duration.ofSeconds(30)).until { WebDriver d ->
             ExpectedConditions.invisibilityOf(element)
         }
+    }
+
+    List<WebElement> findElementsByXpath(String xpath){
+        return driver.findElements(By.xpath(xpath))
     }
 }

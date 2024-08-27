@@ -38,6 +38,7 @@
 <g:set var="fieldColHalfSize" value="col-sm-5"/>
 <g:set var="fieldColShortSize" value="col-sm-4"/>
 <g:set var="offsetColSize" value="col-sm-10 col-sm-offset-2"/>
+<g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
 
 <g:set var="editSchedExecId" value="${scheduledExecution?.id? scheduledExecution.extid:null}"/>
 
@@ -59,7 +60,22 @@
   </div>
 
   <div class="tab-pane active" id="tab_details" data-ko-bind="jobeditor">
-  <section class="section-space-lg">
+  <g:if test="${uiType=='next'}">
+    <g:set var="allowHTML"
+           value="${!(cfg.getString(config: "gui.job.description.disableHTML") in [true,'true'])}"/>
+    <section class="job-editor-details-vue" id="job-editor-details-vue">
+      <details-editor-section :allow-html="${enc(attr:allowHTML)}" />
+    </section>
+    <g:render template="jobComponentProperties"
+              model="[
+                      jobComponents:jobComponents,
+                      sectionName:'details',
+                      jobComponentValues:jobComponentValues
+              ]"
+    />
+  </g:if>
+  <g:else>
+    <section class="section-space-lg">
           %{--name--}%
       <div class="form-group ${g.hasErrors(bean:scheduledExecution,field:'jobName','has-error')}" id="schedJobNameLabel">
           <label for="schedJobName"
@@ -102,7 +118,9 @@
                       <span class="btn btn-default"
                             data-toggle="modal"
                             data-target="#groupChooseModal"
-                            title="${message(code:"job.edit.groupPath.choose.text")}">
+                            title="${message(code:"job.edit.groupPath.choose.text")}"
+                            id="groupChooseModalBtn"
+                      >
                           <g:message code="choose.action.label" />
                       </span>
                   </span>
@@ -194,6 +212,7 @@
                 ]"
       />
   </section><!--/.nput-group-item -->
+  </g:else>
   </div><!-- end #tab_details -->
 
       <g:set var="projectName" value="${scheduledExecution.project?scheduledExecution.project.toString():params.project ?: request.project?: projects?.size() == 1 ? projects[0].name : ''}" />
@@ -202,8 +221,6 @@
       %{--Options--}%
     <div class="tab-pane" id="tab_workflow">
       <section id="optionsContent" class=" section-space-lg" >
-          <g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
-
           <div class="form-group">
               <div class="${labelColSize} control-label text-form-label"><span id="optsload"></span><g:message code="options.label" /></div>
               <div class="${fieldColSize}">
@@ -232,35 +249,40 @@
               </div>
           </div>
       </section>%{--//Options--}%
-
-      %{--Workflow--}%
-      <section id="workflowContent" class="section-separator section-space-lg" >
+      <feature:enabled name="alphaUi">
+        <div class="job-editor-workflow-vue">
+          <workflow-editor-section />
+        </div>
+      </feature:enabled>
+      <feature:disabled name="alphaUi">
+        <section id="workflowContent" class="section-separator section-space-lg" >
           <div class="form-group">
-              <div class="${labelColSize}  control-label text-form-label"><g:message code="Workflow.label" /></div>
-              <div class="${fieldColSize}" style="padding-top:1em;">
-                  <g:set var="editwf" value="${session.editWF && session.editWF[scheduledExecution.id.toString()]?session.editWF[scheduledExecution.id.toString()]:scheduledExecution.workflow}"/>
-                  <g:render template="/execution/execDetailsWorkflow" model="${[workflow:editwf,context:scheduledExecution,edit:true,error:scheduledExecution?.errors?.hasFieldErrors('workflow'),project:scheduledExecution?.project?:(params.project ?: request.project)?: projects?.size() == 1 ? projects[0].name :'',
-                                                                                strategyPlugins:strategyPlugins]}"/>
-                  <g:hiddenField name="_sessionwf" value="true"/>
-                  <g:if test="${null==editwf || null==editwf.commands || 0==editwf.commands.size()}">
-                      <g:javascript>
-                          fireWhenReady('workflowContent',function(){
-                              jQuery('#wfnewtypes').show();
-                              jQuery('#wfnewbutton').hide();
-                          });
-                      </g:javascript>
-                  </g:if>
-              </div>
+            <div class="${labelColSize}  control-label text-form-label"><g:message code="Workflow.label" /></div>
+            <div class="${fieldColSize}" style="padding-top:1em;">
+              <g:set var="editwf" value="${session.editWF && session.editWF[scheduledExecution.id.toString()]?session.editWF[scheduledExecution.id.toString()]:scheduledExecution.workflow}"/>
+              <g:render template="/execution/execDetailsWorkflow" model="${[workflow:editwf,context:scheduledExecution,edit:true,error:scheduledExecution?.errors?.hasFieldErrors('workflow'),project:scheduledExecution?.project?:(params.project ?: request.project)?: projects?.size() == 1 ? projects[0].name :'',
+                                                                            strategyPlugins:strategyPlugins]}"/>
+              <g:hiddenField name="_sessionwf" value="true"/>
+              <g:if test="${null==editwf || null==editwf.commands || 0==editwf.commands.size()}">
+                <g:javascript>
+                  fireWhenReady('workflowContent',function(){
+                    jQuery('#wfnewtypes').show();
+                    jQuery('#wfnewbutton').hide();
+                  });
+                </g:javascript>
+              </g:if>
+            </div>
           </div>
-      </section>%{--//Workflow--}%
-
-    <g:render template="jobComponentProperties"
-              model="[
-                      jobComponents:jobComponents,
-                      sectionName:'workflow',
-                      jobComponentValues:jobComponentValues
-              ]"
-    />
+        </section>%{--//Workflow--}%
+        <g:render template="jobComponentProperties"
+                  model="[
+                          jobComponents:jobComponents,
+                          sectionName:'workflow',
+                          jobComponentValues:jobComponentValues
+                  ]"
+        />
+      </feature:disabled>
+      %{--Workflow--}%
 </div><!-- end#tab_workflow -->
 
   %{--Node Dispatch--}%
@@ -319,65 +341,73 @@
     <g:if test="${executionLifecyclePlugins}">
         <g:set var="executionLifecyclePluginConfigMap" value="${scheduledExecution?.pluginConfigMap?.get('ExecutionLifecycle')?:[:]}"/>
         <div class="tab-pane" id="tab_execution_plugins">
+          <g:if test="${uiType=='next'}">
+            <div class="job-editor-execution-vue" id="job-editor-execution-vue">
+              <execution-editor-section  />
+            </div>
+          </g:if>
+          <g:else>
             <div class="help-block">
-                <g:message code="scheduledExecution.property.executionLifecyclePluginConfig.help.text" />
+              <g:message code="scheduledExecution.property.executionLifecyclePluginConfig.help.text" />
             </div>
             <div class="list-group">
-                <g:each in="${executionLifecyclePlugins}" var="plugin">
-                    <g:set var="pluginKey" value="${params.executionLifecyclePlugin?.type?.get(pluginType)?:g.rkey()}"/>
-                    <g:set var="pluginType" value="${plugin.key}"/>
-                    <g:hiddenField name="executionLifecyclePlugins.keys" value="${pluginKey}"/>
-                    <g:hiddenField name="executionLifecyclePlugins.type.${pluginKey}" value="${pluginType}"/>
-                    <g:set var="pluginDescription" value="${plugin.value.description}"/>
-                    <g:set var="pluginConfig" value="${params.executionLifecyclePlugins?.get(pluginKey)?.configMap ?: executionLifecyclePluginConfigMap[pluginType]}"/>
+              <g:each in="${executionLifecyclePlugins}" var="plugin">
+                <g:set var="pluginKey" value="${params.executionLifecyclePlugin?.type?.get(pluginType)?:g.rkey()}"/>
+                <g:set var="pluginType" value="${plugin.key}"/>
+                <g:hiddenField name="executionLifecyclePlugins.keys" value="${pluginKey}"/>
+                <g:hiddenField name="executionLifecyclePlugins.type.${pluginKey}" value="${pluginType}"/>
+                <g:set var="pluginDescription" value="${plugin.value.description}"/>
+                <g:set var="pluginConfig" value="${params.executionLifecyclePlugins?.get(pluginKey)?.configMap ?: executionLifecyclePluginConfigMap[pluginType]}"/>
 
-                    <div class="list-group-item">
-                        <g:if test="${pluginDescription}">
-                            <div class="form-group">
+                <div class="list-group-item">
+                  <g:if test="${pluginDescription}">
+                    <div class="form-group">
 
-                                <div class="col-sm-12">
-                                    <div class="checkbox ">
-                                        <g:set var="prkey" value="${rkey()}"/>
-                                        <g:checkBox name="executionLifecyclePlugins.enabled.${pluginKey}" value="true"
-                                                    class="form-control"
-                                                    id="executionLifecyclePluginEnabled_${prkey}"
-                                                    checked="${pluginConfig != null}"/>
+                      <div class="col-sm-12">
+                        <div class="checkbox ">
+                          <g:set var="prkey" value="${rkey()}"/>
+                          <g:checkBox name="executionLifecyclePlugins.enabled.${pluginKey}" value="true"
+                                      class="form-control"
+                                      id="executionLifecyclePluginEnabled_${prkey}"
+                                      checked="${pluginConfig != null}"/>
 
-                                        <label for="executionLifecyclePluginEnabled_${prkey}">
-                                            <g:render template="/framework/renderPluginDesc" model="${[
-                                                    serviceName    : ServiceNameConstants.ExecutionLifecycle,
-                                                    description    : pluginDescription,
-                                                    showPluginIcon : true,
-                                                    showNodeIcon   : false,
-                                                    hideTitle      : false,
-                                                    hideDescription: false,
-                                                    fullDescription: false
-                                            ]}"/>
-                                        </label>
-                                    </div>
+                          <label for="executionLifecyclePluginEnabled_${prkey}">
+                            <g:render template="/framework/renderPluginDesc" model="${[
+                                    serviceName    : ServiceNameConstants.ExecutionLifecycle,
+                                    description    : pluginDescription,
+                                    showPluginIcon : true,
+                                    showNodeIcon   : false,
+                                    hideTitle      : false,
+                                    hideDescription: false,
+                                    fullDescription: false
+                            ]}"/>
+                          </label>
+                        </div>
 
-                                </div>
-                            </div>
-
-
-                            <g:if test="${pluginDescription?.properties}">
-                                <g:set var="prefix" value="executionLifecyclePlugins.${pluginKey}.configMap."/>
-                                <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                                        service:ServiceNameConstants.ExecutionLifecycle,
-                                        provider:pluginDescription.name,
-                                        properties:pluginDescription?.properties,
-                                        report: params.executionLifecyclePluginValidation?.get(pluginType),
-                                        prefix:prefix,
-                                        values:pluginConfig?:[:],
-                                        fieldnamePrefix:prefix,
-                                        origfieldnamePrefix:'orig.' + prefix,
-                                        allowedScope:com.dtolabs.rundeck.core.plugins.configuration.PropertyScope.Instance
-                                ]}"/>
-                            </g:if>
-                        </g:if>
+                      </div>
                     </div>
-                </g:each>
+
+
+                    <g:if test="${pluginDescription?.properties}">
+                      <g:set var="prefix" value="executionLifecyclePlugins.${pluginKey}.configMap."/>
+                      <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                              service:ServiceNameConstants.ExecutionLifecycle,
+                              provider:pluginDescription.name,
+                              properties:pluginDescription?.properties,
+                              report: params.executionLifecyclePluginValidation?.get(pluginType),
+                              prefix:prefix,
+                              values:pluginConfig?:[:],
+                              fieldnamePrefix:prefix,
+                              origfieldnamePrefix:'orig.' + prefix,
+                              allowedScope:com.dtolabs.rundeck.core.plugins.configuration.PropertyScope.Instance
+                      ]}"/>
+                    </g:if>
+                  </g:if>
+                </div>
+              </g:each>
             </div>
+          </g:else>
+
         </div>
     </g:if>
 </feature:enabled>

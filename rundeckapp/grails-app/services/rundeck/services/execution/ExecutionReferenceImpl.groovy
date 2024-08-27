@@ -2,7 +2,6 @@ package rundeck.services.execution
 
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.jobs.JobReference
-import rundeck.services.JobReferenceImpl
 
 
 class ExecutionReferenceImpl implements ExecutionReference {

@@ -57,12 +57,15 @@ module.exports = {
     "pages/nodes": { entry: "./src/app/pages/nodes/main.ts" },
     "pages/job/browse": { entry: "./src/app/pages/job/browse/main.ts" },
     "pages/home": { entry: "./src/app/pages/home/main.ts" },
-    "pages/job/head/scm-action-buttons": { entry: './src/app/pages/job/head/scm/scm-action-buttons.ts'},
-    "pages/job/head/scm-status-badge": { entry: './src/app/pages/job/head/scm/scm-status-badge.ts'}
+    "pages/job/head/scm-action-buttons": {
+      entry: "./src/app/pages/job/head/scm/scm-action-buttons.ts",
+    },
+    "pages/job/head/scm-status-badge": {
+      entry: "./src/app/pages/job/head/scm/scm-status-badge.ts",
+    },
   },
-
-  outputDir: process.env.VUE_APP_OUTPUT_DIR,
   publicPath: "/assets/static/",
+  outputDir: process.env.VUE_APP_OUTPUT_DIR,
   filenameHashing: false,
   parallel: true,
   css: {
@@ -73,8 +76,8 @@ module.exports = {
     extract:
       process.env.VUE_APP_CSS_EXTRACT === "true"
         ? {
-            filename: "/css/[name].css",
-            chunkFilename: "/css/[name].css",
+            filename: "./css/[name].css",
+            chunkFilename: "./css/[name].css",
           }
         : false,
   },
@@ -96,6 +99,49 @@ module.exports = {
       .use("source-map-loader")
       .loader("source-map-loader")
       .end();
+
+    /** adjust mini css extract loader to use a relative publicPath **/
+    config.module
+      .rule("css")
+      .oneOf("vue-modules")
+      .use("extract-css-loader")
+      .set("options", {
+        publicPath: "../../",
+      })
+      .end()
+      .oneOf("vue")
+      .use("extract-css-loader")
+      .set("options", {
+        publicPath: "../../",
+      })
+      .end()
+      .oneOf("normal-modules")
+      .use("extract-css-loader")
+      .set("options", {
+        publicPath: "../../",
+      })
+      .end()
+      .oneOf("normal")
+      .use("extract-css-loader")
+      .set("options", {
+        publicPath: "../../",
+      });
+
+    config.module
+      .rule("scss")
+      .oneOf("vue")
+      .use("extract-css-loader")
+      .set("options", {
+        publicPath: "../../",
+      });
+
+    config.module
+      .rule("scss")
+      .oneOf("normal")
+      .use("extract-css-loader")
+      .set("options", {
+        publicPath: "../../",
+      });
   },
   configureWebpack: {
     devtool: process.env.VUE_APP_DEVTOOL,
@@ -105,7 +151,12 @@ module.exports = {
       },
     },
     output: {
-      filename: "[name].js",
+      filename: (asset) => {
+        if (asset.chunk.name.includes("chunk")) {
+          return "js/[name].js";
+        }
+        return "[name].js";
+      },
       library: "rundeckCore",
     },
     devServer: {

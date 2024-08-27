@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.resources.ResourceModelSource;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory;
+import com.dtolabs.rundeck.plugins.ExecutionEnvironmentConstants;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
@@ -77,6 +78,7 @@ public class StubResourceModelSourceFactory implements ResourceModelSourceFactor
         builder.mapping("attrs", "plugin.ResourceModelSource.stub.attrs");
         builder.mapping("delay", "plugin.ResourceModelSource.stub.delay");
         builder.metadata("faicon", "vial");
+        builder.metadata(ExecutionEnvironmentConstants.ENVIRONMENT_TYPE_KEY,ExecutionEnvironmentConstants.LOCAL_RUNNER);
 
         DESC = builder.build();
     }

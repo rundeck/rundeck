@@ -122,9 +122,6 @@ class AppExecutionPluginLoader implements IExecutionProviders, ApplicationContex
         throws ExecutionServiceException {
         String provider = nodeProviderName.getProviderNameForNodeAndProject(node, context.getFrameworkProject(), NodeExecutor)
 
-        if (NodeExecutorService.isRegistered(provider)) {
-            return frameworkProviders.getNodeExecutorForNodeAndProject(node,context);
-        }
 
         def configured = pluginService.configurePlugin(provider, [:], context.getFrameworkProject(), framework, NodeExecutor)
         if (null == configured) {

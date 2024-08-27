@@ -1875,25 +1875,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     def home() {
         //first-run html info
-        def isFirstRun=false
-
-        if (configurationService.getBoolean('startup.alwaysFirstRun', false)) {
-            isFirstRun=true
-        }else{
-            if(configurationService.getBoolean("startup.detectFirstRun",true) &&
-                    frameworkService.rundeckFramework.hasProperty('framework.var.dir')) {
-                def vardir = frameworkService.rundeckFramework.getProperty('framework.var.dir')
-                String buildIdent = grailsApplication.metadata.getProperty('build.ident', String).get()
-                def vers = buildIdent.replaceAll('\\s+\\(.+\\)$','')
-                def file = new File(vardir, ".first-run-${vers}")
-                if(!file.exists()){
-                    isFirstRun=true
-                    file.withWriter("UTF-8"){out->
-                        out.write('#'+(new Date().toString()))
-                    }
-                }
-            }
-        }
+        def isFirstRun = menuService.shouldShowFirstRunInfo()
 
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
@@ -2820,6 +2802,7 @@ Since: V18''',
         method = "GET",
         summary = "Get Job Forecast",
         description = '''Get Metadata for the job including a schedule forecast for a specific amount of time of the job by ID.
+(**API v48** or later): forecast includes information about one time scheduled execution, and information if the project related to the job allows executions and scheduling
 
 Authorization required: `read` or `view` for the Job
 
@@ -2932,6 +2915,31 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                     && extra.futureScheduledExecutions
                     && extra.futureScheduledExecutions.size() > max) {
                 extra.futureScheduledExecutions = extra.futureScheduledExecutions[0..<max]
+            }
+        }
+
+        if(request.api_version >= ApiVersions.V48) {
+            def map = scheduledExecutionService.nextOneTimeScheduledExecutions([scheduledExecution] as List<ScheduledExecution>)
+
+            if(extra.futureScheduledExecutions && map) {
+                extra.futureScheduledExecutions += map.values().toList()
+            } else {
+                extra.futureScheduledExecutions = map ? map.values().toList() : extra.futureScheduledExecutions
+            }
+
+            IRundeckProject rundeckProject =  frameworkService.getFrameworkProject(scheduledExecution.project)
+            Map properties = rundeckProject.getProjectProperties()
+
+            def isExecutionDisabledNow = properties[ScheduledExecutionService.CONF_PROJECT_DISABLE_EXECUTION] == 'true'
+            def isScheduleDisabledNow = properties[ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE] == 'true'
+
+            extra.projectDisableExecutions = isExecutionDisabledNow
+            extra.projectDisableSchedule = isScheduleDisabledNow
+
+
+            def averageDuration = executionService.getAverageDuration(scheduledExecution.uuid)
+            if (averageDuration > 0) {
+                extra.averageDuration = averageDuration
             }
         }
 
@@ -3142,7 +3150,7 @@ Since: v17''',
         }
 
 
-        def list = jobSchedulesService.getAllScheduled(uuid)
+        def list = jobSchedulesService.getAllScheduled(uuid, null)
         //filter authorized jobs
         Map<String, UserAndRolesAuthContext> projectAuths = [:]
         def authForProject = { String project ->

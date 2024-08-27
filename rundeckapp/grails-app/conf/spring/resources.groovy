@@ -24,7 +24,10 @@ import com.dtolabs.rundeck.app.gui.UserSummaryMenuItem
 import com.dtolabs.rundeck.app.internal.framework.ConfigFrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
+import com.dtolabs.rundeck.app.internal.framework.NodeExecutorServiceFactory
+import com.dtolabs.rundeck.app.internal.framework.FeatureToggleNodeExecutorProfile
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
+import com.dtolabs.rundeck.app.internal.framework.RundeckNodeExecutorProfile
 import com.dtolabs.rundeck.app.tree.DelegateStorageTree
 import com.dtolabs.rundeck.app.tree.RundeckBootstrapStorageTreeUpdater
 import com.dtolabs.rundeck.app.tree.JasyptEncryptionEnforcerUpdaterConfig
@@ -41,6 +44,9 @@ import com.dtolabs.rundeck.core.common.FrameworkExecutionProviderServices
 import com.dtolabs.rundeck.core.common.FrameworkFactory
 import com.dtolabs.rundeck.core.common.NodeSupport
 import com.dtolabs.rundeck.core.common.ServiceSupport
+import com.dtolabs.rundeck.core.config.Features
+import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor
+import com.dtolabs.rundeck.core.execution.impl.local.NewLocalNodeExecutor
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileManagerService
 import com.dtolabs.rundeck.core.execution.ExecutionServiceImpl
 import com.dtolabs.rundeck.core.execution.service.NodeSpecifiedPlugins
@@ -137,6 +143,7 @@ import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.security.*
+import org.rundeck.web.DefaultRequestIdProvider
 import org.rundeck.web.ExceptionHandler
 import org.rundeck.web.WebUtil
 import org.rundeck.web.infosec.ContainerPrincipalRoleSource
@@ -301,9 +308,34 @@ beans={
     rundeckNodeSpecifiedProviderNames(NodeSpecifiedPlugins){
         projectManager = ref('projectManagerService')
         frameworkNodes = ref('rundeckNodeSupport')
+        nodeExecutorService = ref('rundeckNodeExecutorService')
     }
+    rundeckBaseNodeExecutorProfile(RundeckNodeExecutorProfile){
+        defaultLocalProvider = LocalNodeExecutor.SERVICE_PROVIDER_TYPE
+        defaultRemoteProvider = "sshj-ssh"
+        localRegistry = [
+                (LocalNodeExecutor.SERVICE_PROVIDER_TYPE): LocalNodeExecutor,
+                (NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE): NewLocalNodeExecutor,
+        ]
+    }
+    rundeckNewLocalNodeExecutorProfile(RundeckNodeExecutorProfile){
+        defaultLocalProvider = NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE
+        defaultRemoteProvider = "sshj-ssh"
+        localRegistry = [
+            (LocalNodeExecutor.SERVICE_PROVIDER_TYPE): LocalNodeExecutor,
+            (NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE): NewLocalNodeExecutor,
+        ]
+    }
+    rundeckNodeExecutorProfile(FeatureToggleNodeExecutorProfile){
+        baseProfile = ref('rundeckBaseNodeExecutorProfile')
+        toggleProfile = ref('rundeckNewLocalNodeExecutorProfile')
+        featureService = ref('featureService')
+        feature = Features.NEW_LOCAL_NODE_EXECUTOR
+    }
+    rundeckNodeExecutorService(NodeExecutorServiceFactory)
     rundeckBaseFrameworkExecutionServices(BaseFrameworkExecutionServices){
         framework = ref('rundeckFramework')
+        nodeExecutorService = ref('rundeckNodeExecutorService')
     }
     rundeckBaseFrameworkExecutionProviders(BaseFrameworkExecutionProviders){
         executionServices = ref('rundeckBaseFrameworkExecutionServices')
@@ -592,6 +624,7 @@ beans={
 
     auditEventsService(AuditEventsService) {
         frameworkService = ref('frameworkService')
+        metricService = ref('metricService')
     }
 
     scmJobImporter(ScmJobImporter)
@@ -880,6 +913,7 @@ beans={
     }
 
     jettyServletCustomizer(JettyServletContainerCustomizer) {
+        featureService = ref('featureService')
         def configParams = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.initParams", String.class)
         def useForwardHeadersConfig = grailsApplication.config.getProperty("server.useForwardHeaders",Boolean.class)
 
@@ -887,6 +921,7 @@ beans={
             [it.key.toString(), it.value.toString()]
         }
         useForwardHeaders = useForwardHeadersConfig ?: Boolean.getBoolean('rundeck.jetty.connector.forwarded')
+        serverUrl = grailsApplication.config.getProperty('grails.serverURL', String.class)
     }
 
     def stsMaxAgeSeconds = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.stsMaxAgeSeconds",Integer.class,-1)
@@ -933,6 +968,8 @@ beans={
         workflowService = ref('workflowService')
     }
     quartzJobSpecifier(ExecutionJobQuartzJobSpecifier)
+
+    requestIdProvider(DefaultRequestIdProvider)
 
     //provider implementations
     tokenDataProvider(GormTokenDataProvider)

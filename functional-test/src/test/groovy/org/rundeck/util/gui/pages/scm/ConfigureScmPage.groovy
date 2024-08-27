@@ -59,16 +59,10 @@ class ConfigureScmPage extends BasePage{
                             ExpectedConditions.elementToBeClickable(oppositeDataTargetValueBy)
                     ))
 
-        WebElement toggleButton = null
-        try{
-            toggleButton = driver.findElement(dataTargetValueBy)
-        } catch (NoSuchElementException ignored){}
-
-
-        if(toggleButton){
-            toggleButton.click()
-            waitForModal(1)
-            byAndWait(modalField).findElement(By.xpath(".//input[@type='submit'][@value='Yes']")).click()
-        }
+        waitForNumberOfElementsToBe(dataTargetValueBy, 1)
+        WebElement toggleButton = driver.findElement(dataTargetValueBy)
+        toggleButton.click()
+        waitForModal(1)
+        byAndWait(modalField).findElement(By.xpath(".//input[@type='submit'][@value='Yes']")).click()
     }
 }

@@ -14,6 +14,7 @@ import rundeck.Execution
 import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.Workflow
+import rundeck.services.feature.FeatureService
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -221,6 +222,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
         def projectMock = Mock(IRundeckProject) {
             getProjectProperties() >> [:]
         }
+        service.featureService = Mock(FeatureService)
         service.executionServiceBean    = Mock(ExecutionService)
         service.fileUploadService = Mock(FileUploadService)
         service.quartzScheduler         = Mock(Scheduler)

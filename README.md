@@ -26,7 +26,7 @@ How To Build:
 
 Primary build is supported with gradle. More info in the [wiki](https://github.com/rundeck/rundeck/wiki/Building-and-Testing).
 
-Requirements: Java 1.8, NodeJs 16
+Requirements: Java 11, NodeJs 18
 
 Build with Gradle
 ---
@@ -63,7 +63,7 @@ Do you have changes to contribute? Please see the [Development](https://github.c
 License
 ======
 
-Copyright 2023 Rundeck, Inc.
+Copyright 2024 PagerDuty, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

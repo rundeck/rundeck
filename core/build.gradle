@@ -56,7 +56,7 @@ dependencies {
     api project(":rundeck-authz:rundeck-authz-api")
     api project(":rundeck-authz:rundeck-authz-core")
     api project(":rundeck-authz:rundeck-authz-yaml")
-    api "org.rundeck:rundeck-data-models:1.0.5"
+    api "org.rundeck:rundeck-data-models:1.0.6"
 
     api ('com.google.guava:guava:32.0.1-jre') {
         exclude group:'org.codehaus.mojo', module: 'animal-sniffer-annotations'
@@ -74,7 +74,7 @@ dependencies {
 
     api 'org.apache.ant:ant:1.10.14',
         'org.slf4j:slf4j-api:1.7.32',
-        'commons-codec:commons-codec:1.15',
+        "commons-codec:commons-codec:${commonsCodecVersion}",
         'commons-beanutils:commons-beanutils:1.9.4',
         'commons-collections:commons-collections:3.2.2',
         'commons-lang:commons-lang:2.6',

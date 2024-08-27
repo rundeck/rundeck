@@ -12,7 +12,7 @@ const dropdownStub = {
 jest.mock("@/library", () => ({
   getRundeckContext: jest
     .fn()
-    .mockReturnValue({ rdBase: "http://localhost:4440" }),
+    .mockReturnValue({ rdBase: "http://localhost:4440/" }),
 }));
 
 const projectData = {

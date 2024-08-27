@@ -37,7 +37,7 @@ import java.util.*;
  */
 @Plugin (name = "script", service = "ResourceModelSource")
 public class ScriptResourceModelSourceFactory implements ResourceModelSourceFactory, Describable {
-    static final String SERVICE_PROVIDER_TYPE = "script";
+    public static final String SERVICE_PROVIDER_TYPE = "script";
 
     final Framework framework;
 
