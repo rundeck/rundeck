@@ -2,6 +2,7 @@ import { flushPromises, shallowMount, VueWrapper } from "@vue/test-utils";
 import ExecutionEditor from "../ExecutionEditor.vue";
 import { executionLifecycle, pluginsInitialData } from "./mocks";
 import PluginConfig from "../../../../../library/components/plugins/pluginConfig.vue";
+import PluginDetails from "../../../../../library/components/plugins/PluginDetails.vue";
 
 jest.mock("@/library/modules/rundeckClient", () => ({
   client: {},
@@ -22,7 +23,13 @@ const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
       },
       stubs: {
         pluginConfig: {
-          props: ["showIcon", "showTitle", "showDescription", "provider"],
+          props: [
+            "showIcon",
+            "showTitle",
+            "showDescription",
+            "provider",
+            "modelValue",
+          ],
           data() {
             return {
               inputShowTitle: this.showTitle !== null ? this.showTitle : true,
@@ -30,7 +37,10 @@ const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
               inputShowDescription:
                 this.showDescription !== null ? this.showDescription : true,
               detail: {
-                desc: this.provider || "", // bypassing to avoid mocking up all api calls
+                description:
+                  pluginsInitialData.filter(
+                    (plugin) => plugin.name === this.provider,
+                  )[0].description || "", // bypassing to avoid mocking up all api calls
               },
             };
           },
@@ -41,6 +51,8 @@ const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
             detail,
           }"></slot></div>`,
         },
+        pluginInfo: false,
+        pluginDetails: false,
       },
     },
   });
@@ -96,5 +108,28 @@ describe("ExecutionEditor", () => {
         ExecutionLifecycle: executionLifecycle,
       }),
     ]);
+  });
+
+  it("renders plugin descriptions", async () => {
+    const wrapper = await createWrapper();
+
+    // as the initial data is coming from gsp, the component is initially mounted without the initialData
+    // therefore using setProps to simulate this behaviour
+    await wrapper.setProps({
+      initialData: {
+        pluginsInitialData,
+        ExecutionLifecycle: {},
+      },
+    });
+    await wrapper.vm.$nextTick();
+    const inlineDescriptions = wrapper.findAll(
+      "[data-testid='inline-description']",
+    );
+    expect(inlineDescriptions.length).toEqual(5);
+
+    const blockDescriptions = wrapper.findAll(
+      "[data-testid='block-description']",
+    );
+    expect(blockDescriptions.length).toEqual(3);
   });
 });

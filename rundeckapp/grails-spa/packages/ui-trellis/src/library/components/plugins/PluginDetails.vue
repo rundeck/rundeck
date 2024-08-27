@@ -1,12 +1,14 @@
 <template>
-  <span
-    v-if="showDescription && !inlineDescription"
-    :class="descriptionCss"
-    style="margin-left: 5px"
-    data-testid="block-description"
+  <slot
+    v-if="
+      (showDescription && !inlineDescription) ||
+      (showDescription && inlineDescription && extraDescription.length === 0)
+    "
   >
-    {{ shortDescription }}
-  </span>
+    <span :class="descriptionCss" data-testid="block-description">
+      {{ shortDescription }}
+    </span>
+  </slot>
   <details
     v-if="showDescription && showExtended && extraDescription"
     class="more-info"
@@ -133,6 +135,9 @@ export default defineComponent({
 <style scoped>
 .m-0 {
   margin: 0 !important;
+}
+.ml-5 {
+  margin-left: 5px;
 }
 .p-0 {
   padding: 0 !important;
