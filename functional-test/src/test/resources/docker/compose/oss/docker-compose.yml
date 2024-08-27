@@ -45,8 +45,6 @@ services:
       - MYSQL_PASSWORD=rundeck
     ports:
       - "3306:3306"
-    volumes:
-      - rundeck_db_data:/var/lib/mysql
 
   gitea:
     build:
@@ -84,9 +82,6 @@ services:
       - ./mock-scripts:/usr/share/nginx/html:ro
     ports:
       - "8080:80"
-
-volumes:
-  rundeck_db_data:
 
 networks:
   default:
