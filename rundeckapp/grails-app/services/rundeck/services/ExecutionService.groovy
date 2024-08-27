@@ -824,28 +824,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     * calls {@link #saveCompletedExecution_currentTransaction(java.lang.Object, java.lang.Object, java.util.Map, rundeck.services.ExecutionService.AsyncStarted, java.util.Map)}
-     * @param e execution
-     * @param status
-     */
-    private void cleanupExecution_currentTransaction(Execution e, String status = null) {
-        def event = Execution.withNewTransaction {
-            saveCompletedExecution_currentTransaction(
-                    e.scheduledExecution?.uuid,
-                    e.id,
-                    [
-                            status       : status ?: String.valueOf(false),
-                            dateCompleted: new Date(),
-                            cancelled    : !status
-                    ],
-                    null,
-                    null
-            )
-        }
-        triggerJobCompleteNotifications(null, event)
-    }
-
-    /**
      * Log details about execution start and finish to a log4j listener named org.rundeck.execution.status
      * @param e
      * @param event @return @param user
@@ -3091,6 +3069,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             saveCompletedExecution_currentTransaction(schedId, exId, props, execmap, retryContext)
         }
 
+        // To avoid the possibility of "stuck" executions, it is important that notifications are not processed
+        // until the transaction that updates the execution to "completed" status has committed.
         triggerJobCompleteNotifications(execmap, event)
     }
 
