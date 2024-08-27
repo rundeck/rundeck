@@ -92,6 +92,8 @@ abstract class BaseContainer extends Specification implements ClientProvider {
             if (!post.successful) {
                 throw new RuntimeException("Failed to create project: ${post.body().string()}")
             }
+        } else if (!getProject.successful) {
+            throw new RuntimeException("Failed to access project: ${getProject.body().string()}")
         }
     }
 
@@ -268,6 +270,8 @@ abstract class BaseContainer extends Specification implements ClientProvider {
                         throw new RuntimeException("Failed to upload archive: ${put.body().string()}")
                     }
                 }
+            } else if(!getProject.successful){
+                throw new RuntimeException("Failed to access project: ${getProject.body().string()}")
             }
         }
     }
