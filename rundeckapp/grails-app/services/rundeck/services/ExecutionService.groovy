@@ -3083,7 +3083,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param retryContext
      * @return
      */
-    private ExecutionCompleteEvent saveCompletedExecution_currentTransaction(schedId, exId, Map props, AsyncStarted execmap, Map retryContext) {
+    private ExecutionCompleteEvent saveCompletedExecution_currentTransaction(
+            schedId, exId, Map props, AsyncStarted execmap, Map retryContext)
+    {
         def ScheduledExecution scheduledExecution
         def boolean execSaved = false
         def Execution execution = Execution.get(exId)
@@ -3210,16 +3212,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             logExecutionLog4j(execution, "finish", execution.user)
             def context = execmap?.thread?.context
 
-            def executionCompleteEvent = new ExecutionCompleteEvent(
+            def completedEvent = new ExecutionCompleteEvent(
                     state: execution.executionState,
                     execution: execution,
                     job: scheduledExecution,
-                    nodeStatus: [succeeded: sucCount,failed: failedCount,total: totalCount],
+                    nodeStatus: [succeeded: sucCount, failed: failedCount, total: totalCount],
                     context: context?.dataContext
             )
 
-            notify('executionComplete', executionCompleteEvent)
-            return executionCompleteEvent
+            notify('executionComplete', completedEvent)
+            return completedEvent
         }
     }
 
