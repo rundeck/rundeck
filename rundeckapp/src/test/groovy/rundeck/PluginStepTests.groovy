@@ -168,25 +168,25 @@ class PluginStepTests  extends Specification implements DataTest{
             configMap.errorHandler==null
             configMap.plugins == ['key1': 'value1']
             if (type == ExecCommand.EXEC_COMMAND_TYPE) {
-                configMap.exec == 'adhocRemoteString'
-                configMap.argString == 'asdf'
-                configMap.other == 'value1'
-                configMap.otherB == 'value2'
+                assert configMap.exec == 'adhocRemoteString'
+                assert configMap.argString == null
+                assert configMap.other == 'value1'
+                assert configMap.otherB == 'value2'
             } else if (type == ScriptCommand.SCRIPT_COMMAND_TYPE) {
-                configMap.script == 'adhocLocalString'
-                configMap.argString == 'asdf'
-                configMap.other == 'value1'
-                configMap.otherB == 'value2'
+                assert configMap.script == 'adhocLocalString'
+                assert configMap.args == 'argString'
+                assert configMap.other == 'value1'
+                assert configMap.otherB == 'value2'
             } else if (type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE) {
-                configMap.scriptfile == 'adhocFilepath'
-                configMap.argString == 'asdf'
-                configMap.other == 'value1'
-                configMap.otherB == 'value2'
+                assert configMap.scriptfile == 'adhocFilepath'
+                assert configMap.args == 'argString'
+                assert configMap.other == 'value1'
+                assert configMap.otherB == 'value2'
             } else {
-                configMap.configuration == pluginConfig + extraConfig
-                configMap.script == null
-                configMap.exec == null
-                configMap.scriptfile = null
+                assert configMap.configuration == pluginConfig + extraConfig
+                assert configMap.script == null
+                assert configMap.exec == null
+                assert configMap.scriptfile == null
             }
 
         where:
