@@ -139,8 +139,8 @@ abstract class BasePage {
                 .until(ExpectedConditions.visibilityOf(locator))
     }
 
-    WebElement waitIgnoringForElementToBeClickable(WebElement locator) {
-        new WebDriverWait(context.driver, Duration.ofSeconds(30))
+    WebElement waitIgnoringForElementToBeClickable(WebElement locator, Duration duration = Duration.ofSeconds(30)) {
+        new WebDriverWait(context.driver, duration)
                 .ignoring(StaleElementReferenceException.class)
                 .until(ExpectedConditions.elementToBeClickable(locator))
     }
