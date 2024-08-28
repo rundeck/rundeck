@@ -104,6 +104,7 @@ class PluginStepTests  extends Specification implements DataTest{
             'atype' | [type: 'atype', configuration: [some: 'data'], nodeStep: true, keepgoingOnSuccess:true] | [some: 'data'] | true     | true  | null | null
             'atype' | [type: 'atype', configuration: [some: 'data'], nodeStep: true, keepgoingOnSuccess:true,description:'desc'] | [some: 'data'] | true     | true  | 'desc' | null
             'atype' | [type: 'atype', configuration: [some: 'data'], nodeStep: true, keepgoingOnSuccess:true,plugins:[some:'data']] | [some: 'data'] | true     | true  | null | [some:'data']
+            'atype' | [type: 'atype', configuration: [some: 'data'], nodeStep: true, keepgoingOnSuccess:true,plugins:[some:'data'], errorhandler:[type:'x']] | [some: 'data'] | true     | true  | null | [some:'data']
     }
 
     def "update from map legacy type"() {
@@ -119,9 +120,13 @@ class PluginStepTests  extends Specification implements DataTest{
         where:
             type                                       | pluginConfig | expect
             ExecCommand.EXEC_COMMAND_TYPE              | [exec:'a command']|[adhocRemoteString: 'a command',adhocExecution: true]
+            ExecCommand.EXEC_COMMAND_TYPE              | [exec:'a command', errorhandler:[type:'x']]|[adhocRemoteString: 'a command',adhocExecution: true]
             ScriptCommand.SCRIPT_COMMAND_TYPE          | [script:'a script']|[adhocLocalString: 'a script',adhocExecution: true]
+            ScriptCommand.SCRIPT_COMMAND_TYPE          | [script:'a script', errorhandler:[type:'x']]|[adhocLocalString: 'a script',adhocExecution: true]
             ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scriptfile:'a file']|[adhocFilepath: 'a file',adhocExecution: true,expandTokenInScriptFile:false]
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scriptfile:'a file', errorhandler:[type:'x']]|[adhocFilepath: 'a file',adhocExecution: true,expandTokenInScriptFile:false]
             ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scripturl:'http://example.com']|[adhocFilepath: 'http://example.com',adhocExecution: true,expandTokenInScriptFile:false]
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scripturl:'http://example.com', errorhandler:[type:'x']]|[adhocFilepath: 'http://example.com',adhocExecution: true,expandTokenInScriptFile:false]
     }
     def "update from map legacy type script props"() {
         when:

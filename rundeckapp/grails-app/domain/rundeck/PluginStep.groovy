@@ -223,6 +223,7 @@ class PluginStep extends WorkflowStep{
         'keepgoingOnSuccess',
         'description',
         'plugins',
+        'errorhandler'
     ]
     static void updateFromMap(PluginStep ce, Map data) {
         if (isLegacyBuiltinCommandData(data)) {
