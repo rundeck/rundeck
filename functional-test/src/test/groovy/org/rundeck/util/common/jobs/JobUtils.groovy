@@ -63,11 +63,12 @@ class JobUtils {
 
     static def createJob(
             final String project,
-            final String jobDefinitionXml,
-            RdClient client
+            final String jobDefinitionString,
+            RdClient client,
+            String contentType = 'application/xml'
     ) {
         final String CREATE_JOB_ENDPOINT = "/project/${project}/jobs/import"
-        return client.doPostWithRawText(CREATE_JOB_ENDPOINT, "application/xml", jobDefinitionXml)
+        return client.doPostWithRawText(CREATE_JOB_ENDPOINT, contentType, jobDefinitionString)
     }
 
     static def generateScheduledExecutionXml(String jobName){
