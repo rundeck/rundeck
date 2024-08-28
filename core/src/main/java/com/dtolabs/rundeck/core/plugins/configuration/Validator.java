@@ -191,8 +191,7 @@ public class Validator {
     private static void validate(Map<String,Object> props, Report report, List<Property> properties, PropertyScope ignoredScope) {
         if(null!=properties){
             for (final Property property : properties) {
-                if (null != ignoredScope && property.getScope() != null
-                        && property.getScope().compareTo(ignoredScope) <= 0) {
+                if (isPropertyScopeIgnored(ignoredScope, property.getScope())) {
                     continue;
                 }
                 final String key = property.getName();
@@ -225,6 +224,17 @@ public class Validator {
                 }
             }
         }
+    }
+
+    /**
+     * Check if the property scope should be ignored
+     * @param ignoredScope ignored scope, or null if no specific ignored scope
+     * @param propScope property scope, or null if not set
+     * @return true if the property scope is present and should be ignored
+     */
+    public static boolean isPropertyScopeIgnored(final PropertyScope ignoredScope, final PropertyScope propScope) {
+        return null != ignoredScope && propScope != null && propScope.compareTo(ignoredScope) <= 0
+               || propScope != null && propScope.isDefaultValidationIgnored();
     }
 
     /**

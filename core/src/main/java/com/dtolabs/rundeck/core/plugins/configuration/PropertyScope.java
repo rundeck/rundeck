@@ -84,4 +84,11 @@ public enum PropertyScope {
     public boolean isFrameworkLevel() {
         return this == Framework || this == Project || this == Instance;
     }
+
+    /**
+     * @return true if this scope is ignored for validation
+     */
+    public boolean isDefaultValidationIgnored() {
+        return this == FeatureFlag;
+    }
 }
