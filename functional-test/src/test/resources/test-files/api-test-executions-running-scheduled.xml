@@ -8,8 +8,8 @@
     <name>Simple Scheduled job</name>
     <nodeFilterEditable>false</nodeFilterEditable>
     <plugins />
-    <schedule crontab="*/4 * * ? * * *"/>
-    <scheduleEnabled>true</scheduleEnabled>
+    <schedule crontab="xml-schedule-crontab"/>
+    <scheduleEnabled>xml-schedule-enabled</scheduleEnabled>
     <multipleExecutions>true</multipleExecutions>
     <sequence keepgoing='false'>
       <command>
