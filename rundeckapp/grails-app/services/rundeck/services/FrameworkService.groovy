@@ -858,7 +858,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
         Map props = [:]
         if (desc) {
             desc.properties.each {prop ->
-                if (Validator.isPropertyScopeIgnored(ignoredScope, prop.scope ?: defaultScope)) {
+                if (Validator.isPropertyScopeIgnored(prop.scope ?: defaultScope, ignoredScope)) {
                     return
                 }
                 def v = params ? params[prefix + prop.name] : null
