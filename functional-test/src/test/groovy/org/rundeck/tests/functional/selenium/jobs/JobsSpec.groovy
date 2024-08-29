@@ -751,4 +751,45 @@ class JobsSpec extends SeleniumBase {
 
     }
 
+    /**
+     * This test creates a job disables the executions and then enables it
+     * It only validates via UI that the run button shows up when enabled
+     */
+    def "job execution disable/enable"(){
+        given:
+        String projectName = "enableDisableJobSchedule"
+        setupProject(projectName)
+        String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/test.xml', client).succeeded.first().id
+        JobShowPage jobShowPage = page(JobShowPage, projectName).forJob(jobUuid)
+        JobListPage jobListPage = page(JobListPage)
+        jobListPage.loadJobListForProject(projectName)
+        JobCreatePage jobCreatePage = page JobCreatePage
+        when:
+        jobShowPage.go()
+        then:
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.jobExecutionDisabledIconBy, 0)
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.runJobBtnBy, 1)
+        when:
+        jobShowPage.getJobActionDropdownButton().click()
+        jobShowPage.getEditJobLink().click()
+        jobCreatePage.tab(JobTab.SCHEDULE).click()
+        jobCreatePage.getExecutionEnabledFalse().click()
+        jobCreatePage.getUpdateJobButton().click()
+        then:
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.jobExecutionDisabledIconBy, 1)
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.runJobBtnBy, 0)
+        when:
+        jobShowPage.getJobActionDropdownButton().click()
+        jobShowPage.getEditJobLink().click()
+        jobCreatePage.tab(JobTab.SCHEDULE).click()
+        jobCreatePage.getExecutionEnabledTrue().click()
+        jobCreatePage.getUpdateJobButton().click()
+        then:
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.jobExecutionDisabledIconBy, 0)
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.runJobBtnBy, 1)
+
+        cleanup:
+        deleteProject(projectName)
+    }
+
 }

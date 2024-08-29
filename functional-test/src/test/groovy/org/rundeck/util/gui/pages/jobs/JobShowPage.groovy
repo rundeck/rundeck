@@ -53,7 +53,7 @@ class JobShowPage extends BasePage{
     By jobSearchNameBy = By.cssSelector('#jobs_filters form input[name="jobFilter"]')
     By jobSearchGroupBy = By.cssSelector('#jobs_filters form input[name="groupPath"]')
     By jobSearchSubmitBy = By.cssSelector('#jobs_filters form #jobs_filters_footer input[type="submit"][name="_action_jobs"]')
-    By runJobBtn = By.id("execFormRunButton")
+    By runJobBtnBy = By.id("execFormRunButton")
     By logOutputBtn = By.id('btn_view_output')
     By jobActionsListButtonBy = By.linkText("Action")
     By jobDeleteButtonBy = By.linkText("Delete this Job")
@@ -63,6 +63,13 @@ class JobShowPage extends BasePage{
     By runJobLaterMinuteArrowUpBy = By.cssSelector("td:nth-child(3) .glyphicon-chevron-up")
     By runJobLaterScheduleCreateButtonBy = By.id("scheduler_buttons")
     By jobStatusBarBy = By.className("job-stats-value")
+    By jobOptionValuesBy = By.cssSelector(".optionvalues")
+    By jobOptionValueInputBy = By.cssSelector(".optionvalues > option:nth-child(6)")
+    By jobDisableScheduleButtonBy = By.linkText("Disable Schedule")
+    By jobEnableScheduleButtonBy = By.linkText("Enable Schedule")
+    By jobInfoSectionBy = By.id("jobInfo_")
+    By jobDisableScheduleModalButtonBy = By.cssSelector("[value='Disable Schedule']")
+    By jobExecutionDisabledIconBy = By.cssSelector(".glyphicon.glyphicon-ban-circle")
     By jobOptionsDropdownBy = By.cssSelector(".optionvalues")
 
     static class NextUi {
@@ -250,11 +257,24 @@ class JobShowPage extends BasePage{
     }
 
     WebElement getRunJobBtn(){
-        el runJobBtn
+        el runJobBtnBy
     }
 
     WebElement getLogOutputBtn(){
         el logOutputBtn
+    }
+
+    WebElement getJobOptionsValuesDropdown(){
+        el jobOptionValuesBy
+    }
+
+    WebElement getJobOptionValueListItem(String name){
+        waitForNumberOfElementsToBeOne(By.xpath("//option[. = '${name}']"))
+        driver.findElement(By.xpath("//option[. = '${name}']"))
+    }
+
+    WebElement getJobOptionValueInput(){
+        el jobOptionValueInputBy
     }
 
     WebElement getJobOptionsDropdown(){
@@ -331,6 +351,14 @@ class JobShowPage extends BasePage{
 
     def getJobDeleteButtons(){
         (el jobDeleteButtonBy)
+    }
+
+    def getJobDisableScheduleButtonBy(){
+        (el jobDisableScheduleButtonBy)
+    }
+
+    def getJobEnableScheduleButtonBy(){
+        (el jobEnableScheduleButtonBy)
     }
 
     def getJobDeleteConfirmBy(){
