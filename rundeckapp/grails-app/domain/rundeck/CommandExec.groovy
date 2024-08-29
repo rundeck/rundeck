@@ -36,7 +36,10 @@ public class CommandExec extends WorkflowStep implements BaseCommandExec {
     String adhocRemoteString
     String adhocLocalString
     String adhocFilepath
-    Boolean adhocExecution = false
+    /**
+     * UNUSED
+     */
+    Boolean adhocExecution = true
     String scriptInterpreter
     String fileExtension
     Boolean interpreterArgsQuoted
@@ -229,17 +232,13 @@ public class CommandExec extends WorkflowStep implements BaseCommandExec {
      */
     static void setConfigurationFromMap(Object obj, Map data) {
         if (data.exec != null) {
-            obj.adhocExecution = true
             obj.adhocRemoteString = data.exec.toString()
         } else if (data.script != null) {
-            obj.adhocExecution = true
             obj.adhocLocalString = data.script.toString()
         } else if (data.scriptfile != null) {
-            obj.adhocExecution = true
             obj.adhocFilepath = data.scriptfile.toString()
             obj.expandTokenInScriptFile = booleanVal(data.expandTokenInScriptFile)
         } else if (data.scripturl != null) {
-            obj.adhocExecution = true
             obj.adhocFilepath = data.scripturl.toString()
             obj.expandTokenInScriptFile = booleanVal(data.expandTokenInScriptFile)
         }
