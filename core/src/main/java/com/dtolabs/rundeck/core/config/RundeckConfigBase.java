@@ -430,7 +430,7 @@ public class RundeckConfigBase {
         Enabled userSessionProjectsCache = new Enabled(true);
         Enabled authorizationServiceBootstrapWarmupCache = new Enabled();
         Enabled projectManagerServiceBootstrapWarmupCache = new Enabled();
-        Enabled notificationsOwnThread = new Enabled();
+        Enabled notificationsOwnThread = new Enabled(true);
         Enabled workflowDesigner = new Enabled(true);
         Enabled eventStore = new Enabled(true);
         Enabled projectKeyStorage = new Enabled(true);

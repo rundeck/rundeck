@@ -317,7 +317,7 @@ rundeck:
         projectKeyStorage:
             enabled: true
         notificationsOwnThread:
-            enabled: false #FYI FALSE
+            enabled: true
         fileUploadPlugin:
             enabled: true
     health:
