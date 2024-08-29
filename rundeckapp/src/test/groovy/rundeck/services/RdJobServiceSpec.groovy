@@ -166,8 +166,8 @@ class RdJobServiceSpec extends Specification implements DataTest {
 
     def "DetectJobChanges"() {
         given:
-        RdJob job = new RdJob(uuid: uuid, jobName: newjob, project:"one")
-        ScheduledExecution se = new ScheduledExecution( uuid: uuid, jobName: oldjob, project:"one")
+        RdJob job = new RdJob(uuid: uuid, jobName: newjob, project: "one")
+        ScheduledExecution se = new ScheduledExecution(uuid: uuid, jobName: oldjob, project: "one")
         se.id = 1L
         LogJobChangeEvent event = new LogJobChangeEvent()
         service.jobSchedulesService = Mock(JobSchedulesService) {
@@ -184,12 +184,12 @@ class RdJobServiceSpec extends Specification implements DataTest {
         actual.scheduledJobName == uuid
         actual.renamed == renamed
         event.changeinfo.origName == uuid
-        if(renamed) event.changeinfo.rename
+        !renamed || event.changeinfo.rename
 
         where:
-        uuid        | renamed  | oldjob      | newjob
-        "uuid"      | true     | "oldjob"    | "newjob"
-        null        | false    | "job1"      | "job1"
+        uuid   | renamed | oldjob   | newjob
+        "uuid" | true    | "oldjob" | "newjob"
+        null   | false   | "job1"   | "job1"
 
     }
 

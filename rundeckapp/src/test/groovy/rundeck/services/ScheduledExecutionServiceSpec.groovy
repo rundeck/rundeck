@@ -3409,50 +3409,46 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
     def 'getJobIdent'() {
         given:
         def job = isJob ? new ScheduledExecution(createJobParams(jobName: 'ajobname',
-                                                                 project: 'AProject',
-                                                                 groupPath: 'some/path',
-                                                                 scheduled: jobScheduled,
-                                                                 uuid: "a1"
+            project: 'AProject',
+            groupPath: 'some/path',
+            scheduled: jobScheduled,
+            uuid: "a1"
         )
         ).save() : null
         def exec = new Execution(
-                scheduledExecution: job,
-                status: executionType,
-                dateStarted: new Date(),
-                dateCompleted: null,
-                project: job?.project ?: 'testproject',
-                user: 'bob',
-                executionType: etype,
-                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")]),
-                retryAttempt: retry
+            scheduledExecution: job,
+            status: executionStatus,
+            dateStarted: new Date(),
+            dateCompleted: null,
+            project: job?.project ?: 'testproject',
+            user: 'bob',
+            executionType: executionType,
+            workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")]),
+            retryAttempt: retry
         ).save(flush: true)
         def id = exec.id
         when:
         def result = service.getJobIdent(job, exec)
+        def finalJobName = jobname.replaceAll('%ID%', "$id").replaceAll('%JID%', "${job?.id}")
+        def finalGroupName = groupname.replaceAll('%ID%', "$id").replaceAll('%JID%', "${job?.id}")
 
         then:
-        if(!isJob && !jobScheduled && !executionType.equals("scheduled")){
-            result.jobname == jobname.replaceAll('_ID_', "$id").replaceAll('_JID_', "${job?.id}")
-            result.groupname == groupname.replaceAll('_ID_', "$id").replaceAll('_JID_', "${job?.id}")
-        }else{
-            result.jobname == jobname
-            result.groupname == groupname
-        }
-
+        assert result.jobname == finalJobName
+        assert result.groupname == finalGroupName
 
         where:
-        isJob | executionType | jobScheduled | etype |retry | jobname | groupname
-        false | null        | null         | 'user'           |0| 'TEMP:bob:_ID_'       | 'bob:run'
-        true  | null        | false        | 'user'           |0| 'TEMP:bob:_JID_:_ID_' | 'bob:run:_JID_'
-        true  | null        | true         | 'user'           |0| 'TEMP:bob:_JID_:_ID_' | 'bob:run:_JID_'
-        true  | 'scheduled' | true         | 'user'           |0| 'TEMP:bob:_JID_:_ID_' | 'bob:run:_JID_'
-        true  | 'running'   | true         | 'user'           |0| 'TEMP:bob:_JID_:_ID_' | 'bob:run:_JID_'
-        true  | null        | true         | 'scheduled'      |0| 'a1'                  | 'AProject'
-        true  | 'scheduled' | true         | 'scheduled'      |0| 'a1'                  | 'AProject'
-        true  | 'running'   | true         | 'scheduled'      |0| '_JID_:ajobname'      | 'AProject:ajobname:some/path'
-        true  | 'running'   | true         | 'scheduled'      |1| 'TEMP:bob:_JID_:_ID_' | 'bob:run:_JID_'
-        true  | 'scheduled' | true         | 'user-scheduled' |0| 'a1'                  | 'AProject'
-        true  | 'running'   | true         | 'user-scheduled' |0| 'TEMP:bob:_JID_:_ID_' | 'bob:run:_JID_'
+        isJob | executionStatus | jobScheduled | executionType    | retry | jobname               | groupname
+        false | null            | null         | 'user'           | 0     | 'TEMP:bob:%ID%'       | 'bob:run'
+        true  | null            | false        | 'user'           | 0     | 'TEMP:bob:%JID%:%ID%' | 'bob:run:%JID%'
+        true  | null            | true         | 'user'           | 0     | 'TEMP:bob:%JID%:%ID%' | 'bob:run:%JID%'
+        true  | 'scheduled'     | true         | 'user'           | 0     | 'TEMP:bob:%JID%:%ID%' | 'bob:run:%JID%'
+        true  | 'running'       | true         | 'user'           | 0     | 'TEMP:bob:%JID%:%ID%' | 'bob:run:%JID%'
+        true  | null            | true         | 'scheduled'      | 0     | 'a1'                  | 'AProject'
+        true  | 'scheduled'     | true         | 'scheduled'      | 0     | 'a1'                  | 'AProject'
+        true  | 'running'       | true         | 'scheduled'      | 0     | 'a1'                  | 'AProject'
+        true  | 'running'       | true         | 'scheduled'      | 1     | 'TEMP:bob:%JID%:%ID%' | 'bob:run:%JID%'
+        true  | 'scheduled'     | true         | 'user-scheduled' | 0     | 'TEMP:bob:%JID%:%ID%' | 'bob:run:%JID%'
+        true  | 'running'       | true         | 'user-scheduled' | 0     | 'TEMP:bob:%JID%:%ID%' | 'bob:run:%JID%'
 
     }
 
