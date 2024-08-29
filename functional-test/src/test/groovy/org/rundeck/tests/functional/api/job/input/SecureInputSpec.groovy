@@ -1,14 +1,12 @@
 package org.rundeck.tests.functional.api.job.input
 
 import org.rundeck.util.annotations.APISecureInputTest
-import org.rundeck.util.annotations.APITest
 import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.BaseContainer
 import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml
 
-@APITest
 @APISecureInputTest
 class SecureInputSpec extends BaseContainer {
 
