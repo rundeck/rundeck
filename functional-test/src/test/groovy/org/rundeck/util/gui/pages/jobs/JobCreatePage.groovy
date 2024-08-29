@@ -23,7 +23,7 @@ class JobCreatePage extends BasePage {
     By selectNode = By.cssSelector(".glyphicon-circle-arrow-right")
     By lastNodeInList = By.cssSelector(".col-xs-6:nth-child(3) span:nth-child(2)")
     By refreshNodesBy = By.cssSelector(".refresh_nodes")
-    By numberOfStepsBy = By.cssSelector(".autohilite.autoedit.wfitem")
+    By numberOfStepsBy = By.cssSelector(".autohilite.autoedit.wfitem.exectype")
     By notificationModalBy = By.cssSelector('#job-notifications-edit-modal')
     By notificationDropDownBy = By.cssSelector('#notification-edit-type-dropdown > button')
     By notificationSaveBy = By.id("job-notifications-edit-modal-btn-save")
@@ -35,7 +35,7 @@ class JobCreatePage extends BasePage {
     By groupNameOption = By.cssSelector("span.groupname.jobgroupexpand")
     By descriptionTextareaBy = By.cssSelector("form textarea[name='description']")
     By jobGroupBy = By.cssSelector("input#schedJobGroup")
-    By scheduleRunYesBy = By.cssSelector('input#scheduledTrue')
+    By scheduleRunYesBy = By.id('scheduledTrue')
     By scheduleEveryDayCheckboxBy = By.cssSelector('input#everyDay')
     By scheduleDaysCheckboxDivBy = By.cssSelector('div#DayOfWeekDialog')
     By executionPluginsRows = By.xpath('//*[@id="tab_execution_plugins"]//*[@class="list-group-item"]')
@@ -56,6 +56,10 @@ class JobCreatePage extends BasePage {
     By cancelBy = By.id('createFormCancelButton')
     By optionBy = By.cssSelector("#optnewbutton > span")
     By nodeStepSectionActiveBy = By.cssSelector(".node_step_section.tab-pane.active")
+    By executionEnabledFalseBy = By.id("executionEnabledFalse")
+    By executionEnabledTrueBy = By.id("executionEnabledTrue")
+    By scheduleEnabledFalseBy = By.id("scheduleEnabledFalse")
+    By scheduleEnabledTrueBy = By.id("scheduleEnabledTrue")
     By workflowAlphaUiContainer = By.id('workflowContent2') // TODO: delete once out of Alpha
 
     static class NextUi {
@@ -248,6 +252,22 @@ class JobCreatePage extends BasePage {
             updateJobButton.click()
 
         return new JobShowPage(context)
+    }
+
+    WebElement getExecutionEnabledFalse(){
+        el executionEnabledFalseBy
+    }
+
+    WebElement getExecutionEnabledTrue(){
+        el executionEnabledTrueBy
+    }
+
+    WebElement getScheduleEnabledFalse(){
+        el scheduleEnabledFalseBy
+    }
+
+    WebElement getScheduleEnabledTrue(){
+        el scheduleEnabledTrueBy
     }
 
     boolean commandStepVisible(){
