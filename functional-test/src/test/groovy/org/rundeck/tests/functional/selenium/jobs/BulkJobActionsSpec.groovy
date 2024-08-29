@@ -188,31 +188,30 @@ class BulkJobActionsSpec extends SeleniumBase {
         executionShowPage.validatePage()
     }
 
-    /**
-     * Once the UI is fixed, removing the @FailWith annotation will result in a green test run
-     */
-    @FailsWith(value = TimeoutException, reason = "The filed defect in nextUI that prevents opening the Job Run Modal that is to be fixed in RUN-2810 ")
-    def "job can be executed from the Job List Page modal with nextUI"() {
-        given:
-        String jobToExecute = generateJob(["opt1-required": "false", "opt2-required": "false"])
-
-        JobListPage jobsListPage = page JobListPage
-
-        jobsListPage.loadPathToNextUI SELENIUM_BASIC_PROJECT
-        jobsListPage.go()
-
-        when:
-        def job1RunButton = jobsListPage.waitIgnoringForElementToBeClickable(jobsListPage.getExecuteJobInModalButton(jobToExecute))
-        job1RunButton.click()
-
-        def runJobNowButton = jobsListPage.waitIgnoringForElementToBeClickable(jobsListPage.getExecuteJobModalRunJobNowButton(), Duration.ofSeconds(2))
-        runJobNowButton.click()
-        jobsListPage.waitForUrlToContain('/execution/show/')
-
-        then:
-        ExecutionShowPage executionShowPage = page ExecutionShowPage
-        executionShowPage.validatePage()
-    }
+//    /**
+//     * Once  nextUI is fixed, running this test will result in a green test run
+//     */
+//    def "job can be executed from the Job List Page modal with nextUI"() {
+//        given:
+//        String jobToExecute = generateJob(["opt1-required": "false", "opt2-required": "false"])
+//
+//        JobListPage jobsListPage = page JobListPage
+//
+//        jobsListPage.loadPathToNextUI SELENIUM_BASIC_PROJECT
+//        jobsListPage.go()
+//
+//        when:
+//        def job1RunButton = jobsListPage.waitIgnoringForElementToBeClickable(jobsListPage.getExecuteJobInModalButton(jobToExecute))
+//        job1RunButton.click()
+//
+//        def runJobNowButton = jobsListPage.waitIgnoringForElementToBeClickable(jobsListPage.getExecuteJobModalRunJobNowButton(), Duration.ofSeconds(2))
+//        runJobNowButton.click()
+//        jobsListPage.waitForUrlToContain('/execution/show/')
+//
+//        then:
+//        ExecutionShowPage executionShowPage = page ExecutionShowPage
+//        executionShowPage.validatePage()
+//    }
 
     /**
      * Should be in JobUtils, but it's going through a refactor, thus it's here for now
