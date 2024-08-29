@@ -18,7 +18,25 @@ class JobListPage extends BasePage {
 
     String loadPath = "/jobs"
     By createJobLink = By.partialLinkText('New Job')
-    By jobsActionsButton = By.cssSelector('#project_job_actions')
+    By jobsActionsButtonBy = By.cssSelector('#project_job_actions')
+
+    // Bulk modal elements
+    By bulkPerformActionButtonBy = By.cssSelector('#bulk_perform_action_button')
+    By bulkEditButtonBy = By.cssSelector('#project_job_actions_bulk_edit')
+    By bulkSelectAllButtonBy = By.cssSelector('#bulk_select_all_button')
+    By bulkSelectNoneButtonBy = By.cssSelector('#bulk_select_none_button')
+    By bulkDeleteJobsActionBy = By.cssSelector('#bulk_delete_jobs_action')
+    By bulkEnableSchedulesActionBy = By.cssSelector('#bulk_enable_schedules_action')
+    By bulkDisableSchedulesActionBy = By.cssSelector('#bulk_disable_schedules_action')
+    By bulkEnableExecutionActionBy = By.cssSelector('#bulk_enable_execution_action')
+    By bulkDisableExecutionActionBy = By.cssSelector('#bulk_disable_execution_action')
+    By bulkConfirmActionYesButtonBy = By.cssSelector('#bulk_confirm_action_yes_button')
+    By bulkConfirmActionNoButtonBy = By.cssSelector('#bulk_confirm_action_no_button')
+
+    By bulkJobRowItemsBy = By.className("job-list-row-item")
+    By executeJobModalRunJobNowButtonBy = By.cssSelector('[name="_action_runJobNow"][id="execFormRunButton"]')
+    Closure<By> executeJobInModalButtonBy = { By.cssSelector(".act_execute_job[data-job-id=\"$it\"]") }
+
     By jobsHeader = By.partialLinkText('All Jobs')
     By activitySectionLink = By.partialLinkText('Executions')
     By activityHeader = By.cssSelector('h3.card-title')
@@ -83,10 +101,10 @@ class JobListPage extends BasePage {
     }
 
     WebElement getJobsActionsButton(){
-        waitPresent(jobsActionsButton, 5)
+        waitPresent(jobsActionsButtonBy)
     }
 
-    private WebElement waitPresent(By selector, Integer seconds) {
+    private WebElement waitPresent(By selector, Integer seconds = 5) {
         new WebDriverWait(driver, Duration.ofSeconds(seconds)).until(
                 ExpectedConditions.presenceOfElementLocated(selector)
         )
@@ -136,6 +154,62 @@ class JobListPage extends BasePage {
 
     WebElement getAlertInfo(){
         el alertInfoBy
+    }
+
+    WebElement getBulkEditButton(){
+        waitPresent(bulkEditButtonBy)
+    }
+
+    WebElement getBulkPerformActionButton(){
+        waitPresent(bulkPerformActionButtonBy)
+    }
+
+    WebElement getBulkPerformActionButtonOnceClickable(){
+        byAndWaitClickable(bulkPerformActionButtonBy)
+    }
+
+    WebElement getBulkSelectAllButton() {
+        waitPresent(bulkSelectAllButtonBy)
+    }
+
+    WebElement getBulkSelectNoneButton() {
+        waitPresent(bulkSelectNoneButtonBy)
+    }
+
+    WebElement getBulkDeleteJobsAction() {
+        waitPresent(bulkDeleteJobsActionBy)
+    }
+
+    WebElement getBulkEnableSchedulesAction() {
+        waitPresent(bulkEnableSchedulesActionBy)
+    }
+
+    WebElement getBulkDisableSchedulesAction() {
+        waitPresent(bulkDisableSchedulesActionBy)
+    }
+
+    WebElement getBulkDisableExecutionAction() {
+        waitPresent(bulkDisableExecutionActionBy)
+    }
+
+    WebElement getBulkEnableExecutionAction() {
+        waitPresent(bulkEnableExecutionActionBy)
+    }
+
+    WebElement getBulkConfirmActionYesButton() {
+        waitPresent(bulkConfirmActionYesButtonBy)
+    }
+
+    WebElement getBulkConfirmActionNoButton() {
+        waitPresent(bulkConfirmActionNoButtonBy)
+    }
+
+    WebElement getExecuteJobInModalButton(String jobId) {
+        waitPresent(executeJobInModalButtonBy(jobId))
+    }
+
+    WebElement getExecuteJobModalRunJobNowButton() {
+        waitPresent(executeJobModalRunJobNowButtonBy)
     }
 
 }

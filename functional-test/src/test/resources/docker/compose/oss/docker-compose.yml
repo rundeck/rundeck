@@ -44,7 +44,7 @@ services:
       - MYSQL_USER=rundeck
       - MYSQL_PASSWORD=rundeck
     ports:
-      - "3306:3306"
+      - "3307:3306"
 
   gitea:
     build:

@@ -248,6 +248,18 @@ class JobUtils {
     }
 
     /**
+     *  Deletes the job or throws on failure
+     * @param jobId
+     * @param client
+     */
+    static void deleteJob(String jobId, RdClient client) {
+        def response = client.doDelete("/job/$jobId")
+        if (!response.isSuccessful()) {
+            throw new IllegalArgumentException("API call was unsuccessful: ${response}  with body: ${response.body().string()}")
+        }
+    }
+
+    /**
      * Generates a temporary file containing the provided job definition and returns its path.
      *
      * @param jobDefinition The job definition content to be written to the temporary file.
@@ -279,9 +291,12 @@ class JobUtils {
      *                 - "uuid": UUID for the job (default: generated UUID)
      *                 - "execution-enabled": Execution enabled flag (default: "true")
      *                 - "schedule-enabled": Schedule enabled flag (default: "true")
+     *                 -  "schedule-crontab": Quartz schedule crontab (default: every 4 seconds )
      *                 - "node-filter-include": Node filter include (default: ".*")
      *                 - "node-filter-exclude": Node filter exclude (default: "")
      *                 - "dispatch-rank-order": Dispatch rank order (default: "ascending")
+     *                 - "opt1-required": Is job option 1 required (default: "true")
+     *                 - "opt2-required": Is job option 2 required (default: "true")
      * @return The path of the updated temporary XML file.
      */
     static def updateJobFileToImport = (String fileName, String projectName, Map argsOverrides = [:]) -> {
@@ -295,9 +310,12 @@ class JobUtils {
                 "uuid": UUID.randomUUID().toString(),
                 "execution-enabled": "true",
                 "schedule-enabled": "true",
+                "schedule-crontab": "*/4 * * ? * * *",
                 "node-filter-include": ".*",
                 "ode-filter-exclude": "",
-                "dispatch-rank-order": "ascending"
+                "dispatch-rank-order": "ascending",
+                "opt1-required": "true",
+                "opt2-required": "true"
         ].asImmutable()
 
         // Overrides defaults
@@ -338,8 +356,9 @@ class JobUtils {
             return OBJECT_MAPPER.readValue(responseImport.body().string(), Map.class);
         } else {
             // Throw an exception if the import failed
-            throw new IllegalArgumentException("Job import failed. HTTP Status Code: " + responseImport.code());
+            throw new IllegalArgumentException("Job import failed: ${responseImport} with body: ${responseImport?.body()?.string()}");
         }
     }
+
 
 }

@@ -407,7 +407,7 @@ jobs:
           step-name: Sign Packages
           command: packaging_sign
       - run-build-step:
-          step-name: Test Packages
+          step-name: T Packages
           command: packaging_test_packages
       - run-build-step:
           step-name: Publish Packages
@@ -443,7 +443,7 @@ jobs:
           step-name: Sign Packages
           command: packaging_sign
       - run-build-step:
-          step-name: Test Packages
+          step-name: T Packages
           command: packaging_test_packages
       - save-build-cache
       - store_artifacts:
@@ -621,7 +621,7 @@ workflows:
           name: Build
           <<: *slack-defaults
       - test-gradle:
-          name: Gradle Test
+          name: T Unit Gradle
           <<: *slack-defaults
       - trigger-enterprise:
           name: Enterprise Snapshot
@@ -633,7 +633,7 @@ workflows:
           <<: *require-build
           <<: *slack-defaults
       - packaging-test:
-          name: Test Packaging
+          name: T Packaging
           <<: *require-build
           <<: *slack-defaults
       - wizcli-scan:
@@ -655,69 +655,69 @@ workflows:
           <<: *require-build
           <<: *slack-fail-post-step
       - test-docker:
-          name: Docker Test
+          name: T Docker
           command: bash test/run-docker-tests.sh
           <<: *require-build
           <<: *slack-defaults
       - test-docker:
-          name: SSL Test
+          name: T Integration SSL
           command: bash test/run-docker-ssl-tests.sh
           <<: *require-build
           <<: *slack-defaults
       - test-docker:
-          name: Ansible Test
+          name: T Integration Ansible
           command: bash test/run-docker-ansible-tests.sh
           <<: *require-build
           <<: *slack-defaults
       - test-machine:
-          name: LDAP Test
+          name: T Integration LDAP
           command: bash test/run-docker-ldap-tests.sh
           <<: *require-build
           <<: *slack-defaults
       - test-machine:
-          name: LDAP Bind Test
+          name: T Integration LDAP Bind
           command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
           <<: *require-build
           <<: *slack-defaults
       - test-docker:
-          name: PAM Test
+          name: T Integration PAM
           command: bash test/run-docker-pam-tests.sh
           <<: *require-build
           <<: *slack-defaults
       - test-gradle-functional:
-          name: New Selenium Test
+          name: T Selenium
           gradle-task: seleniumCoreTest
           parallelism: 3
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/**/*{.groovy,.java}"
           <<: *require-build
           <<: *slack-defaults
       - test-gradle-functional:
-          name: New API Test
+          name: T Functional API
           gradle-task: apiTest
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/**/*{.groovy,.java}"
           parallelism: 3
           <<: *require-build
           <<: *slack-defaults
       - test-gradle-functional:
-          name: New Plugin Blocklist Test
+          name: T Functional Plugin Blocklist
           gradle-task: pluginBlocklistTest
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/integration/**/*{.groovy,.java}"
           <<: *require-build
           <<: *slack-defaults
       - test-gradle-functional:
-          name: Test Feature NewLocalExec
+          name: T Feature NewLocalExec
           gradle-task: apiTestNewLocal
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/execution/ExecutionOutputSpec.groovy"
           <<: *require-build
           <<: *slack-defaults
       - test-gradle-functional:
-          name: Test Feature NodeExecutorSecureInput
+          name: T Feature NodeExecutorSecureInput
           gradle-task: apiTestNodeExecutorSecureInput
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/job/input/*.groovy"
           <<: *require-build
           <<: *slack-defaults
       - test-gradle-functional:
-          name: Alpha UI Selenium Core Test
+          name: T Selenium Alpha UI
           gradle-task: alphaUiSeleniumCoreTest
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/alphaUi/**/*{.groovy,.java}"
           <<: *require-build

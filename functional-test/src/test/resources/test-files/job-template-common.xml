@@ -8,8 +8,8 @@
         <context>
             <project>xml-project-name</project>
             <options>
-                <option name="opt1" value="testvalue" required="true"/>
-                <option name="opt2" values="a,b,c" required="true"/>
+                <option name="opt1" value="testvalue" required="xml-opt1-required"/>
+                <option name="opt2" values="a,b,c" required="xml-opt2-required"/>
             </options>
         </context>
         <dispatch>
