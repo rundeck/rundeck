@@ -482,8 +482,8 @@ class JobsYAMLCodecSpec extends Specification {
             se.workflow.strategy == "node-first"
             se.workflow.commands.size() == 2
 
-            se.workflow.commands[0].configuration == [adhocExecution:true, adhocRemoteString: 'test script']
-            se.workflow.commands[1].configuration == [adhocExecution:true, adhocLocalString: 'A Monkey returns']
+            se.workflow.commands[0].configuration == [adhocRemoteString: 'test script']
+            se.workflow.commands[1].configuration == [adhocLocalString: 'A Monkey returns']
 
             //options
             se.options != null
@@ -556,31 +556,31 @@ class JobsYAMLCodecSpec extends Specification {
 
             def cmd0 = se.workflow.commands[0]
             cmd0.class == PluginStep.class
-            cmd0.configuration == [adhocExecution:true, adhocRemoteString: 'test script']
+            cmd0.configuration == [adhocRemoteString: 'test script']
 
             cmd0.errorHandler
             cmd0.errorHandler.class == PluginStep.class
-            cmd0.errorHandler.configuration == [adhocExecution:true, adhocRemoteString: 'test err']
+            cmd0.errorHandler.configuration == [ adhocRemoteString: 'test err']
             !cmd0.errorHandler.keepgoingOnSuccess
 
 
             def cmd1 = se.workflow.commands[1]
             cmd1.class == PluginStep.class
-            cmd1.configuration == [adhocExecution:true, adhocLocalString: 'script string', argString: 'script args']
+            cmd1.configuration == [adhocLocalString: 'script string', argString: 'script args']
 
             cmd1.errorHandler
             cmd1.errorHandler.class == PluginStep.class
-            cmd1.errorHandler.configuration == [adhocExecution:true, adhocLocalString: 'err script', argString: 'err script args']
+            cmd1.errorHandler.configuration == [adhocLocalString: 'err script', argString: 'err script args']
             !cmd1.errorHandler.keepgoingOnSuccess
 
 
             def cmd2 = se.workflow.commands[2]
             cmd2.class == PluginStep.class
-            cmd2.configuration == [adhocExecution:true, adhocFilepath: 'file path', expandTokenInScriptFile:false, argString: 'file args']
+            cmd2.configuration == [adhocFilepath: 'file path', expandTokenInScriptFile:false, argString: 'file args']
 
             cmd2.errorHandler
             cmd2.errorHandler.class == PluginStep.class
-            cmd2.errorHandler.configuration == [adhocExecution:true, adhocFilepath: 'err file', expandTokenInScriptFile:false, argString: 'err file args']
+            cmd2.errorHandler.configuration == [adhocFilepath: 'err file', expandTokenInScriptFile:false, argString: 'err file args']
             !cmd2.errorHandler.keepgoingOnSuccess
 
 
