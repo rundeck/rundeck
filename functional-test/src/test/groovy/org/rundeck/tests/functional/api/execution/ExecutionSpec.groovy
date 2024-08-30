@@ -2,7 +2,9 @@ package org.rundeck.tests.functional.api.execution
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.util.annotations.APITest
+import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.execution.ExecutionStatus
+import org.rundeck.util.common.execution.ExecutionUtils
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.common.projects.ProjectUtils
 import org.rundeck.util.container.BaseContainer
@@ -128,17 +130,11 @@ class ExecutionSpec extends BaseContainer {
                 def json2 = client.jsonValue(response.body(), Map)
                 json2.executions.size() == 6
             }
-            // wait for executions to finish
-            sleep 60000
-            // get executions
-            def responseClean = client.doGet("/project/${projectName}/executions")
-            // verify if executions were cleaned
-            verifyAll {
-                responseClean.successful
-                responseClean.code() == 200
-                def json3 = jsonValue(responseClean.body())
-                json3.executions.size() == 0
-            }
+
+            // Waits for all executions to get cleaned
+            assert waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
+                    {it.isEmpty()},
+            WaitingTime.EXCESSIVE).isEmpty()
             deleteProject(projectName)
         cleanup:
             tmpjar.delete()
@@ -164,8 +160,9 @@ class ExecutionSpec extends BaseContainer {
     def "execution state OK"() {
         when:
             def runCommand = post("/project/${PROJECT_NAME}/run/command?exec=echo+testing+execution+api", null, Map)
-            def idExec = runCommand.execution.id
-            sleep 5000
+            def idExec = runCommand.execution.id as String
+            // Waits for all executions to finish
+            waitFor(ExecutionUtils.Retrievers.executionById(client, idExec), ExecutionUtils.Verifiers.executionFinished())
             def response = doGet("/execution/${idExec}/state")
         then:
             verifyAll {
@@ -351,13 +348,19 @@ class ExecutionSpec extends BaseContainer {
             }
         cleanup:
             (2..4).each {
-                updateConfigurationProject("${projectNameSuffix}-${it}", [
+                def projectName = "${projectNameSuffix}-${it}"
+                updateConfigurationProject(projectName, [
                     "project.disable.schedule": "true",
                     "project.later.schedule.enable": "false",
                     "project.disable.executions": "true"
                 ])
-                hold 10 //Wait until the executions stop
-                deleteProject("${projectNameSuffix}-${it}")
+
+                // Waits for all executions to finish
+                waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
+                        verifyForAll(ExecutionUtils.Verifiers.executionFinished()),
+                        WaitingTime.EXCESSIVE )
+
+                deleteProject(projectName)
             }
     }
 

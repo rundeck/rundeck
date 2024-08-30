@@ -7,6 +7,7 @@ import okhttp3.Response
 import okhttp3.ResponseBody
 import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.api.storage.KeyStorageApiClient
+import org.rundeck.util.common.WaitBehaviour
 import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.jobs.JobUtils
 import spock.lang.Specification
@@ -22,7 +23,7 @@ import java.util.jar.Manifest
  * Base class for tests, starts a shared static container for all tests
  */
 @Slf4j
-abstract class BaseContainer extends Specification implements ClientProvider {
+abstract class BaseContainer extends Specification implements ClientProvider, WaitBehaviour {
     public static final String PROJECT_NAME = 'test'
     private static final Object CLIENT_PROVIDER_LOCK = new Object()
     private static ClientProvider CLIENT_PROVIDER
@@ -279,15 +280,16 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         println(nodeList)
         def count = 0
 
-        while (nodeList.get(nodename) == null && count < 5) {
-            sleep(5000)
-            //force refresh project
-            client.doPutWithJsonBody("/project/$project/config/time", ["time": System.currentTimeMillis()])
-
-            response = client.doGet("/project/$project/resources")
-            nodeList = safelyMap(response, Map.class, { [:] })
-            count++
-        }
+        waitFor(
+                {
+                    //force refresh project
+                    client.doPutWithJsonBody("/project/$project/config/time", ["time": System.currentTimeMillis()])
+                    response = client.doGet("/project/$project/resources")
+                    safelyMap(response, Map.class, { [:] })
+                },
+                { it.get(nodename) != null },
+                WaitingTime.EXCESSIVE
+        )
     }
 
     RdClient _client
@@ -436,8 +438,11 @@ abstract class BaseContainer extends Specification implements ClientProvider {
      * This method utilizes the sleep function to pause the current thread for the given duration.
      * If the thread is interrupted while sleeping, it catches the InterruptedException and logs the error.
      *
+     *  Usage note: Waiting unconditionally is considered to be an anti-pattern in tests. Avoid using unless necessary. See the deprecation notice for more information.
+     *
      * @param seconds the number of seconds to pause the execution. This value should be positive.
      * @throws IllegalArgumentException if the `seconds` parameter is negative, as `Duration.ofSeconds` cannot process negative values.
+     * @deprecated in favor of WaitBehaviour.waitFor())
      */
     void hold(int seconds) {
         try {

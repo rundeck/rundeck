@@ -3,6 +3,9 @@ package org.rundeck.tests.functional.selenium.project
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import org.rundeck.util.annotations.SeleniumCoreTest
+import org.rundeck.util.api.responses.execution.Execution
+import org.rundeck.util.common.WaitingTime
+import org.rundeck.util.common.execution.ExecutionUtils
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.common.navigation.NavLinkTypes
@@ -163,7 +166,7 @@ class ExecutionModeSpec extends SeleniumBase{
                             time:
                               hour: '*'
                               minute: '*'
-                              seconds: '*/5'
+                              seconds: '*/2'
                             weekday:
                               day: '*'
                             year: '*'
@@ -190,7 +193,9 @@ class ExecutionModeSpec extends SeleniumBase{
         then:
         jobListPage.expectScheduleDisabled()
         when:
-        hold 10 //This is to allow executions to finish
+        // Waits for all executions to finish
+        waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
+                verifyForAll(ExecutionUtils.Verifiers.executionFinished()))
         sideBarPage.goTo NavLinkTypes.ACTIVITY
         def executions = activityPage.getActivityRowsByJobName(jobName).size()
         projectEditPage.go("/project/${projectName}/configure")
@@ -198,7 +203,14 @@ class ExecutionModeSpec extends SeleniumBase{
         projectEditPage.replaceConfiguration("project.disable.schedule=true", "project.disable.schedule=false")
         projectEditPage.save()
         projectEditPage.validateConfigFileSave()
-        hold 10 //This is to allow at least one execution to finish
+        //This is to allow at least one execution to finish
+        waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
+                { List<Execution> execs ->  execs.any(ExecutionUtils.Verifiers.executionRunning()) },
+                WaitingTime.EXCESSIVE)
+        // Waits for at least one execution to start running
+        waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
+                { List<Execution> execs ->  execs.any(ExecutionUtils.Verifiers.executionFinished()) },
+                WaitingTime.EXCESSIVE)
         sideBarPage.goTo NavLinkTypes.ACTIVITY
         then:
         executions < activityPage.getActivityRowsByJobName(jobName).size()
@@ -208,7 +220,9 @@ class ExecutionModeSpec extends SeleniumBase{
                 "project.later.schedule.enable": "false",
                 "project.disable.executions": "true"
         ])
-        hold 10
+        // Waits for all executions to finish
+        waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
+                verifyForAll(ExecutionUtils.Verifiers.executionFinished()))
         deleteProject(projectName)
     }
 
@@ -244,7 +258,7 @@ class ExecutionModeSpec extends SeleniumBase{
                             time:
                               hour: '*'
                               minute: '*'
-                              seconds: '*/5'
+                              seconds: '*/2'
                             weekday:
                               day: '*'
                             year: '*'
@@ -268,14 +282,22 @@ class ExecutionModeSpec extends SeleniumBase{
         then:
         jobListPage.expectScheduleDisabled()
         when:
-        hold 10 //This is to allow executions to finish
+        // Waits for all executions to finish
+        waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
+                verifyForAll(ExecutionUtils.Verifiers.executionFinished()))
         sideBarPage.goTo NavLinkTypes.ACTIVITY
         def executions = activityPage.getActivityRowsByJobName(jobName).size()
         projectEditPage.go("/project/${projectName}/configure")
         projectEditPage.clickNavLink(NavProjectSettings.EXEC_MODE)
         projectEditPage.clickScheduleMode()
         projectEditPage.save()
-        hold 10 //This is to allow executions to run and finish
+        // Waits for at least one execution to start running
+        waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
+                { List<Execution> execs ->  execs.any(ExecutionUtils.Verifiers.executionRunning()) },
+                WaitingTime.EXCESSIVE)
+        // Waits for all executions to finish
+        waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
+                verifyForAll(ExecutionUtils.Verifiers.executionFinished()))
         sideBarPage.goTo NavLinkTypes.ACTIVITY
         then:
         executions < activityPage.getActivityRowsByJobName(jobName).size()
@@ -285,7 +307,9 @@ class ExecutionModeSpec extends SeleniumBase{
                 "project.later.schedule.enable": "false",
                 "project.disable.executions": "true"
         ])
-        hold 10
+        // Waits for all executions to finish
+        waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
+                verifyForAll(ExecutionUtils.Verifiers.executionFinished()))
         deleteProject(projectName)
     }
 }
