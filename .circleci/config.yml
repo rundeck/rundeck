@@ -342,6 +342,7 @@ jobs:
     executor:
       name: docker-builder
     steps:
+      - run: echo "Trigger enterprise pipeline is << pipeline.parameters.trigger-enterprise >>"
       - when:
           condition: << pipeline.parameters.trigger-enterprise >>
           steps:
