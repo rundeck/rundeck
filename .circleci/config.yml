@@ -7,6 +7,9 @@ parameters:
   disable-wizcli-scan:
     type: boolean
     default: true
+  trigger-enterprise:
+    type: boolean
+    default: true
 
 orbs:
   aws-cli: circleci/aws-cli@1.0.0
@@ -339,12 +342,15 @@ jobs:
     executor:
       name: docker-builder
     steps:
-      - trigger/trigger:
-          debug: true
-          branch: ${CIRCLE_BRANCH}
-          token: '${CIRCLECI_API_TOKEN}'
-          project-slug: 'gh/rundeckpro/rundeckpro'
-          pipeline-number: '<<pipeline.number>>'
+      - when:
+          condition: << pipeline.parameters.trigger-enterprise >>
+          steps:
+            - trigger/trigger:
+                debug: true
+                branch: ${CIRCLE_BRANCH}
+                token: '${CIRCLECI_API_TOKEN}'
+                project-slug: 'gh/rundeckpro/rundeckpro'
+                pipeline-number: '<<pipeline.number>>'
 
   # Publish Docker Images
   docker-publish:
