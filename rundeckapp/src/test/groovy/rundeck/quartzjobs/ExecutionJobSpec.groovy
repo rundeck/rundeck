@@ -47,7 +47,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
 
     def "execute missing job"() {
         given:
-        def datamap = new JobDataMap([scheduledExecutionId: '123'])
+        def datamap = new JobDataMap([scheduledExecutionId: '123', project: "projectName"])
         ExecutionJob job = new ExecutionJob()
         def quartzScheduler = Mock(Scheduler){
             1 * deleteJob(_) >> void
