@@ -157,9 +157,9 @@ abstract class BasePage {
 
     def waitForModal(int expected) {
         try {
-            new WebDriverWait(driver, Duration.ofSeconds(30)).until {
+            new WebDriverWait(driver, Duration.ofSeconds(30)).until (
                 ExpectedConditions.numberOfElementsToBe(modalField, expected)
-            }
+            )
         } catch (TimeoutException e) {
             throw new RuntimeException("Timed out waiting for the modal to have ${expected} elements.", e)
         }
