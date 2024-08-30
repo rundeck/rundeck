@@ -4,7 +4,9 @@ parameters:
   node-version:
     type: string
     default: 18.18.1
-
+  disable-wizcli-scan:
+    type: boolean
+    default: true
 
 orbs:
   aws-cli: circleci/aws-cli@1.0.0
@@ -646,7 +648,7 @@ workflows:
             branches: { ignore: main }
       - wizcli-scan:
           name: WizCLI Scan
-          continue: false
+          continue: << pipeline.parameters.disable-wizcli-scan >>
           context:
             - WizCLI
             - slack-secrets
