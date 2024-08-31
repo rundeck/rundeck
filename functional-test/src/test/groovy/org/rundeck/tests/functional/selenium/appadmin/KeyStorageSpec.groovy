@@ -1,5 +1,6 @@
 package org.rundeck.tests.functional.selenium.appadmin
 
+import org.openqa.selenium.By
 import org.rundeck.util.gui.pages.appadmin.KeyStoragePage
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.annotations.SeleniumCoreTest
@@ -20,10 +21,10 @@ class KeyStorageSpec extends SeleniumBase {
             keyStoragePage.waitForElementVisible keyStoragePage.addUploadKeyField
             keyStoragePage.addUploadKeyField.click()
         then:
-            keyStoragePage.waitForModal 1
+            keyStoragePage.waitForModal 1, By.cssSelector(".modal.in")
             keyStoragePage.addPasswordType 'root', 'git', 'git.pass'
             sleep WaitingTime.MODERATE.toMillis()
-            keyStoragePage.waitForModal 0
+            keyStoragePage.waitForModal 0, By.cssSelector(".modal.in")
             keyStoragePage.checkKeyExists 'git.pass', 'git'
     }
 
@@ -35,7 +36,7 @@ class KeyStorageSpec extends SeleniumBase {
         when:
             keyStoragePage.refresh()
             keyStoragePage.clickOverwriteKey 'git', 'git.pass'
-            keyStoragePage.waitForModal 1
+            keyStoragePage.waitForModal 1 , By.cssSelector(".modal.in")
         then:
             keyStoragePage.overwriteKey 'new-root'
     }

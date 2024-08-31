@@ -1,5 +1,6 @@
 package org.rundeck.tests.functional.selenium.appadmin
 
+import org.openqa.selenium.By
 import org.rundeck.util.gui.pages.appadmin.AccessControlPage
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.annotations.SeleniumCoreTest
@@ -20,7 +21,7 @@ class AccessControlSpec extends SeleniumBase {
             def aclPage = go AccessControlPage
         when:
             aclPage.uploadButton.click()
-            aclPage.waitForModal 1
+            aclPage.waitForModal 1, By.cssSelector(".modal.in")
             aclPage.uploadSubmitButton.click()
         then:
             aclPage.alertsFields.size() == 3
@@ -36,7 +37,7 @@ class AccessControlSpec extends SeleniumBase {
             def aclPage = go AccessControlPage
         when:
             aclPage.uploadButton.click()
-            aclPage.waitForModal 1
+            aclPage.waitForModal 1, By.cssSelector(".modal.in")
             aclPage.uploadSubmitButton.click()
             aclPage.uploadNameField.sendKeys 'some-file-name'
             aclPage.uploadFileField.sendKeys createTempYamlFile('invalid acl content test data')
@@ -54,7 +55,7 @@ class AccessControlSpec extends SeleniumBase {
             def aclPage = go AccessControlPage
         when:
             aclPage.uploadButton.click()
-            aclPage.waitForModal 1
+            aclPage.waitForModal 1, By.cssSelector(".modal.in")
             aclPage.uploadSubmitButton.click()
             aclPage.uploadFileField.sendKeys createTempYamlFile(validPolicyData)
             aclPage.uploadNameField.clear()
@@ -73,7 +74,7 @@ class AccessControlSpec extends SeleniumBase {
             def aclPage = go AccessControlPage
         when:
             aclPage.uploadButton.click()
-            aclPage.waitForModal 1
+            aclPage.waitForModal 1, By.cssSelector(".modal.in")
             aclPage.uploadSubmitButton.click()
             aclPage.uploadFileField.sendKeys createTempYamlFile(validPolicyData)
             aclPage.uploadNameField.clear()
