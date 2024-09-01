@@ -104,6 +104,7 @@ class PluginStepTests  extends Specification implements DataTest{
             'atype' | [type: 'atype', configuration: [some: 'data'], nodeStep: true, keepgoingOnSuccess:true] | [some: 'data'] | true     | true  | null | null
             'atype' | [type: 'atype', configuration: [some: 'data'], nodeStep: true, keepgoingOnSuccess:true,description:'desc'] | [some: 'data'] | true     | true  | 'desc' | null
             'atype' | [type: 'atype', configuration: [some: 'data'], nodeStep: true, keepgoingOnSuccess:true,plugins:[some:'data']] | [some: 'data'] | true     | true  | null | [some:'data']
+            'atype' | [type: 'atype', configuration: [some: 'data'], nodeStep: true, keepgoingOnSuccess:true,plugins:[some:'data'], errorhandler:[type:'x']] | [some: 'data'] | true     | true  | null | [some:'data']
     }
 
     def "update from map legacy type"() {
@@ -118,10 +119,14 @@ class PluginStepTests  extends Specification implements DataTest{
             t.errorHandler == null
         where:
             type                                       | pluginConfig | expect
-            ExecCommand.EXEC_COMMAND_TYPE              | [exec:'a command']|[adhocRemoteString: 'a command',adhocExecution: true]
-            ScriptCommand.SCRIPT_COMMAND_TYPE          | [script:'a script']|[adhocLocalString: 'a script',adhocExecution: true]
-            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scriptfile:'a file']|[adhocFilepath: 'a file',adhocExecution: true,expandTokenInScriptFile:false]
-            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scripturl:'http://example.com']|[adhocFilepath: 'http://example.com',adhocExecution: true,expandTokenInScriptFile:false]
+            ExecCommand.EXEC_COMMAND_TYPE              | [exec:'a command']|[adhocRemoteString: 'a command']
+            ExecCommand.EXEC_COMMAND_TYPE              | [exec:'a command', errorhandler:[type:'x']]|[adhocRemoteString: 'a command']
+            ScriptCommand.SCRIPT_COMMAND_TYPE          | [script:'a script']|[adhocLocalString: 'a script']
+            ScriptCommand.SCRIPT_COMMAND_TYPE          | [script:'a script', errorhandler:[type:'x']]|[adhocLocalString: 'a script']
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scriptfile:'a file']|[adhocFilepath: 'a file',expandTokenInScriptFile:false]
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scriptfile:'a file', errorhandler:[type:'x']]|[adhocFilepath: 'a file',expandTokenInScriptFile:false]
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scripturl:'http://example.com']|[adhocFilepath: 'http://example.com',expandTokenInScriptFile:false]
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scripturl:'http://example.com', errorhandler:[type:'x']]|[adhocFilepath: 'http://example.com',expandTokenInScriptFile:false]
     }
     def "update from map legacy type script props"() {
         when:
@@ -141,7 +146,6 @@ class PluginStepTests  extends Specification implements DataTest{
                 interpreterArgsQuoted: true
             ]
             expectExtraProps = [
-                adhocExecution         : true,
                 argString              : 'asdf',
                 fileExtension          : 'sh',
                 scriptInterpreter      : 'bash',
@@ -151,5 +155,153 @@ class PluginStepTests  extends Specification implements DataTest{
             ScriptCommand.SCRIPT_COMMAND_TYPE          | [script: 'a script']              | [adhocLocalString: 'a script']
             ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scriptfile: 'a file']            | [adhocFilepath: 'a file',expandTokenInScriptFile:false]
             ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scripturl: 'http://example.com'] | [adhocFilepath: 'http://example.com',expandTokenInScriptFile:false]
+    }
+
+    def "update from map legacy type script props with extra configuration"() {
+        when:
+            PluginStep t = new PluginStep()
+            PluginStep.updateFromMap(t, pluginConfig + extraScriptConfig)
+        then:
+            t.type == type
+            t.configuration == expect + expectExtraProps
+            t.nodeStep
+            !t.keepgoingOnSuccess
+            t.errorHandler == null
+        where:
+            extraScriptConfig = [
+                fileExtension        : 'sh',
+                args                 : 'asdf',
+                scriptInterpreter    : 'bash',
+                interpreterArgsQuoted: true
+            ]
+            expectExtraProps = [
+                argString            : 'asdf',
+                fileExtension        : 'sh',
+                scriptInterpreter    : 'bash',
+                interpreterArgsQuoted: true
+            ]
+            type | pluginConfig | expect
+            ScriptCommand.SCRIPT_COMMAND_TYPE | [script: 'a script', extraprop1: 'a value'] |
+            [adhocLocalString: 'a script', extraprop1: 'a value']
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scriptfile: 'a file', extraprop2: 'b value'] |
+            [adhocFilepath: 'a file', expandTokenInScriptFile: false, extraprop2: 'b value']
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scripturl: 'http://example.com', extraprop3: 'c value'] |
+            [adhocFilepath: 'http://example.com', expandTokenInScriptFile: false, extraprop3: 'c value']
+    }
+
+    def "test toMap for legacy steps with extra configuration"() {
+        when:
+            PluginStep t = new PluginStep(
+                type: type,
+                configuration: pluginConfig + extraConfig,
+                nodeStep: true,
+                keepgoingOnSuccess: true,
+                pluginConfigData: '{"key1": "value1"}'
+            )
+            Map configMap = t.toMap()
+        then:
+            !!configMap.keepgoingOnSuccess
+            configMap.errorHandler==null
+            configMap.plugins == ['key1': 'value1']
+            if (type == ExecCommand.EXEC_COMMAND_TYPE) {
+                assert configMap.exec == 'adhocRemoteString'
+                assert configMap.argString == null
+                assert configMap.other == 'value1'
+                assert configMap.otherB == 'value2'
+            } else if (type == ScriptCommand.SCRIPT_COMMAND_TYPE) {
+                assert configMap.script == 'adhocLocalString'
+                assert configMap.args == 'argString'
+                assert configMap.other == 'value1'
+                assert configMap.otherB == 'value2'
+            } else if (type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE) {
+                assert configMap.scriptfile == 'adhocFilepath'
+                assert configMap.args == 'argString'
+                assert configMap.other == 'value1'
+                assert configMap.otherB == 'value2'
+            } else {
+                assert configMap.configuration == pluginConfig + extraConfig
+                assert configMap.script == null
+                assert configMap.exec == null
+                assert configMap.scriptfile == null
+            }
+
+        where:
+            extraConfig = [other: 'value1', otherB: 'value2']
+            type | pluginConfig
+            "blah" | ["argString": "argString", "adhocRemoteString": "adhocRemoteString", "adhocLocalString":
+                "adhocLocalString", "adhocFilepath": "adhocFilepath", "scriptInterpreter": "bash", "fileExtension":
+                "sh", "interpreterArgsQuoted": true, "expandTokenInScriptFile": true]
+            ExecCommand
+                .EXEC_COMMAND_TYPE | ["argString": "argString", "adhocRemoteString": "adhocRemoteString", "adhocLocalString":
+                "adhocLocalString", "adhocFilepath": "", "scriptInterpreter": "bash", "fileExtension": "sh",
+                                      "interpreterArgsQuoted": true, "expandTokenInScriptFile": true]
+            ScriptCommand
+                .SCRIPT_COMMAND_TYPE | ["argString": "argString", "adhocRemoteString": "", "adhocLocalString":
+                "adhocLocalString", "adhocFilepath": "", "scriptInterpreter": "bash", "fileExtension": "sh",
+                                        "interpreterArgsQuoted": true, "expandTokenInScriptFile": true]
+            ScriptFileCommand
+                .SCRIPT_FILE_COMMAND_TYPE | ["argString": "argString", "adhocRemoteString": "", "adhocLocalString": "",
+                                             "adhocFilepath": "adhocFilepath", "scriptInterpreter": "bash",
+                                             "fileExtension": "sh", "interpreterArgsQuoted": true,
+                                             "expandTokenInScriptFile": true]
+    }
+
+    def "isLegacyBuiltinCommandData"() {
+        when:
+            def result = PluginStep.isLegacyBuiltinCommandData(data)
+        then:
+            result == expected
+        where:
+            data                               | expected
+            [exec: 'something']                | true
+            [script: 'something']              | true
+            [scriptfile: 'something']          | true
+            [scripturl: 'something']           | true
+            [type: 'something']                | false
+            [type: 'something', script: 'xyz'] | false
+            [blah: 'something']                | false
+    }
+
+    def "getLegacyBuiltinCommandType for valid data"() {
+        when:
+            def result = PluginStep.getLegacyBuiltinCommandType(data)
+        then:
+            result == expected
+        where:
+            data                      | expected
+            [exec: 'something']       | ExecCommand.EXEC_COMMAND_TYPE
+            [script: 'something']     | ScriptCommand.SCRIPT_COMMAND_TYPE
+            [scriptfile: 'something'] | ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
+            [scripturl: 'something']  | ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
+    }
+
+    def "getLegacyBuiltinCommandType for invalid data"() {
+        when:
+            def result = PluginStep.getLegacyBuiltinCommandType(data)
+        then:
+            IllegalArgumentException e = thrown()
+        where:
+            data                                              | _
+            [other: 'data']                                   | _
+            [type: 'other', configuration: [other: 'plugin']] | _
+    }
+
+    def "createLegacyConfigurationFromDefinitionMap for valid data"() {
+        when:
+            def result = PluginStep.createLegacyConfigurationFromDefinitionMap(data)
+        then:
+            result == expected
+        where:
+            data                      | expected
+            [exec: 'something']       | [adhocRemoteString: 'something']
+            [script: 'something']     | [adhocLocalString: 'something']
+            [script: 'something',args:'asdf']     | [adhocLocalString: 'something',argString: 'asdf']
+            [script: 'something',scriptInterpreter: 'bash',interpreterArgsQuoted: true,fileExtension: 'sh',args:'asdf']     | [adhocLocalString: 'something',scriptInterpreter: 'bash',interpreterArgsQuoted: true,fileExtension: 'sh',argString:'asdf']
+            [scriptfile: 'something'] | [adhocFilepath: 'something',expandTokenInScriptFile: false]
+            [scriptfile: 'something',args:'asdf'] | [adhocFilepath: 'something',expandTokenInScriptFile: false,argString:'asdf']
+            [scriptfile: 'something',scriptInterpreter: 'bash',interpreterArgsQuoted: true,expandTokenInScriptFile: true,fileExtension: 'sh',args:'asdf'] | [adhocFilepath: 'something',scriptInterpreter: 'bash',interpreterArgsQuoted: true,expandTokenInScriptFile: true,fileExtension: 'sh',argString:'asdf']
+            [scripturl: 'something']  | [adhocFilepath: 'something',expandTokenInScriptFile: false]
+            [scripturl: 'something',args:'asdf']  | [adhocFilepath: 'something',expandTokenInScriptFile: false,argString: 'asdf']
+            [scripturl: 'something',scriptInterpreter: 'bash',interpreterArgsQuoted: true,expandTokenInScriptFile: true,fileExtension: 'sh',args:'asdf']  | [adhocFilepath: 'something',scriptInterpreter: 'bash',interpreterArgsQuoted: true,expandTokenInScriptFile: true,fileExtension: 'sh',argString:'asdf']
     }
 }

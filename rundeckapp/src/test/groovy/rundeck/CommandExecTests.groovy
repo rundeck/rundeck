@@ -251,26 +251,4 @@ class CommandExecTests extends Specification implements DataTest {
         assertNull(t1.errorHandler)
     }
 
-    def "getLegacyBuiltinCommandType for valid data"() {
-        when:
-            def result = CommandExec.getLegacyBuiltinCommandType(data)
-        then:
-            result == expected
-        where:
-            data                      | expected
-            [exec: 'something']       | ExecCommand.EXEC_COMMAND_TYPE
-            [script: 'something']     | ScriptCommand.SCRIPT_COMMAND_TYPE
-            [scriptfile: 'something'] | ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
-            [scripturl: 'something']  | ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
-    }
-    def "getLegacyBuiltinCommandType for invalid data"() {
-        when:
-            def result = CommandExec.getLegacyBuiltinCommandType(data)
-        then:
-            IllegalArgumentException e = thrown()
-        where:
-            data                                              | _
-            [other: 'data']                                   | _
-            [type: 'other', configuration: [other: 'plugin']] | _
-    }
 }

@@ -16,7 +16,7 @@
 
 package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
-import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.impl.common.DefaultFileCopierUtil;
@@ -86,6 +86,56 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
             final boolean expandTokens
     ) throws NodeStepException
     {
+        return executeScriptFile(
+                context,
+                node,
+                scriptString,
+                serverScriptFilePath,
+                scriptAsStream,
+                fileExtension,
+                args,
+                scriptInterpreter,
+                null,
+                quoted,
+                executionService,
+                expandTokens,
+                null
+        );
+    }
+
+    /**
+     * Execute a script on a remote node
+     *
+     * @param context              context
+     * @param node                 node
+     * @param scriptString         string
+     * @param serverScriptFilePath file
+     * @param scriptAsStream       stream
+     * @param fileExtension        file extension
+     * @param args                 script args
+     * @param scriptInterpreter    invoker string
+     * @param quoted               true if args are quoted
+     * @param executionService     service
+     * @return execution result
+     * @throws NodeStepException on error
+     */
+    @Override
+    public NodeStepResult executeScriptFile(
+            StepExecutionContext context,
+            INodeEntry node,
+            String scriptString,
+            String serverScriptFilePath,
+            InputStream scriptAsStream,
+            String fileExtension,
+            String[] args,
+            String scriptInterpreter,
+            InputStream input,
+            boolean quoted,
+            final NodeExecutionService executionService,
+            final boolean expandTokens,
+            FileCopierUtil.ContentModifier modifier
+    ) throws NodeStepException
+    {
         final String filename;
 
         if (null != scriptString) {
@@ -100,8 +150,8 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                        : null;
         String filepath = fileCopierUtil.generateRemoteFilepathForNode(
                 node,
-                context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
-                context.getFramework(),
+                context.getIFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
+                context.getIFramework(),
                 filename,
                 fileExtension,
                 ident
@@ -113,7 +163,8 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                     scriptString,
                     serverScriptFilePath,
                     scriptAsStream,
-                    expandTokens
+                    expandTokens,
+                    modifier
             );
             try {
                 filepath = executionService.fileCopyFile(
@@ -144,12 +195,13 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
 
         return executeRemoteScript(
                 context,
-                context.getFramework(),
+                context.getIFramework(),
                 node,
                 args,
                 filepath,
                 scriptInterpreter,
-                quoted
+                quoted,
+                input
         );
     }
 
@@ -178,6 +230,40 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
             boolean expandTokens
     ) throws FileCopierException
     {
+        return writeScriptToTempFile(
+                context,
+                node,
+                scriptString,
+                serverScriptFilePath,
+                scriptAsStream,
+                expandTokens,
+                null
+        );
+    }
+
+    /**
+     * Copy the script input to a temp file and expand embedded tokens, if it is a string or inputstream.  If it is a
+     * local file, use the original without modification
+     *
+     * @param context              context
+     * @param node                 node
+     * @param scriptString         string
+     * @param serverScriptFilePath file
+     * @param scriptAsStream       stream
+     * @return temp file
+     * @throws FileCopierException on error
+     */
+    @Override
+    public File writeScriptToTempFile(
+            StepExecutionContext context,
+            INodeEntry node,
+            String scriptString,
+            String serverScriptFilePath,
+            InputStream scriptAsStream,
+            boolean expandTokens,
+            FileCopierUtil.ContentModifier scriptModifierUtil
+    ) throws FileCopierException
+    {
         File temp;
         if (null != scriptString) {
             //expand tokens in the script
@@ -187,7 +273,8 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                     null,
                     scriptString,
                     node,
-                    expandTokens
+                    expandTokens,
+                    scriptModifierUtil
             );
         } else if (null != serverScriptFilePath) {
             // if the filepath has option tokens, they will be expanded.
@@ -200,15 +287,16 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
             }else{
                 serverScriptFile = new File(serverScriptFilePath);
             }
-            if(expandTokens){
-                try(InputStream inputStream = new FileInputStream(serverScriptFile)) {
+            if (expandTokens || scriptModifierUtil != null) {
+                try (InputStream inputStream = new FileInputStream(serverScriptFile)) {
                     serverScriptFile = fileCopierUtil.writeScriptTempFile(
                             context,
                             null,
                             inputStream,
                             null,
                             node,
-                            expandTokens
+                            expandTokens,
+                            scriptModifierUtil
                     );
                 } catch (IOException e) {
                     throw new FileCopierException(
@@ -226,7 +314,8 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                     scriptAsStream,
                     null,
                     node,
-                    expandTokens
+                    expandTokens,
+                    scriptModifierUtil
             );
         }
         return temp;
@@ -248,7 +337,7 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
     @Override
     public NodeStepResult executeRemoteScript(
             final ExecutionContext context,
-            final Framework framework,
+            final IFramework framework,
             final INodeEntry node,
             final String[] args,
             final String filepath
@@ -275,7 +364,7 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
     @Override
     public NodeStepResult executeRemoteScript(
             final ExecutionContext context,
-            final Framework framework,
+            final IFramework framework,
             final INodeEntry node,
             final String[] args,
             final String filepath,
@@ -283,12 +372,60 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
             final boolean interpreterargsquoted
     ) throws NodeStepException
     {
+
+        return executeRemoteScript(
+                context,
+                framework,
+                node,
+                args,
+                filepath,
+                scriptInterpreter,
+                interpreterargsquoted,
+                null
+        );
+    }
+
+    /**
+     * Execute a scriptfile already copied to a remote node with the given args
+     *
+     * @param context               context
+     * @param framework             framework
+     * @param node                  the node
+     * @param args                  arguments to script
+     * @param filepath              the remote path for the script
+     * @param scriptInterpreter     interpreter used to invoke the script
+     * @param interpreterargsquoted if true, pass the file and script args as a single argument to the interpreter
+     *
+     * @return result
+     *
+     * @throws NodeStepException on error
+     */
+    @Override
+    public NodeStepResult executeRemoteScript(
+            final ExecutionContext context,
+            final IFramework framework,
+            final INodeEntry node,
+            final String[] args,
+            final String filepath,
+            final String scriptInterpreter,
+            final boolean interpreterargsquoted,
+            final InputStream inputStream
+    ) throws NodeStepException
+    {
         boolean removeFile = true;
         if (null != node.getAttributes() && null != node.getAttributes().get(SCRIPT_FILE_REMOVE_TMP)) {
             removeFile = Boolean.parseBoolean(node.getAttributes().get(SCRIPT_FILE_REMOVE_TMP));
         }
-        return executeRemoteScript(context, framework, node, args, filepath, scriptInterpreter,
-                                   interpreterargsquoted, removeFile
+        return executeRemoteScript(
+                context,
+                framework,
+                node,
+                args,
+                filepath,
+                scriptInterpreter,
+                interpreterargsquoted,
+                removeFile,
+                inputStream
         );
     }
 
@@ -311,7 +448,7 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
     @Override
     public NodeStepResult executeRemoteScript(
             final ExecutionContext context,
-            final Framework framework,
+            final IFramework framework,
             final INodeEntry node,
             final String[] args,
             final String filepath,
@@ -320,9 +457,45 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
             final boolean removeFile
     ) throws NodeStepException
     {
-        /**
-         * TODO: Avoid this horrific hack. Discover how to get SCP task to preserve the execute bit.
-         */
+        return executeRemoteScript(
+                context,
+                framework,
+                node,
+                args,
+                filepath,
+                scriptInterpreter,
+                interpreterargsquoted,
+                removeFile,
+                null
+        );
+    }
+
+    /**
+     * Execute a scriptfile already copied to a remote node with the given args
+     *
+     * @param context               context
+     * @param framework             framework
+     * @param node                  the node
+     * @param args                  arguments to script
+     * @param filepath              the remote path for the script
+     * @param scriptInterpreter     interpreter used to invoke the script
+     * @param interpreterargsquoted if true, pass the file and script args as a single argument to the interpreter
+     * @param removeFile            if true, remove the file after execution
+     * @return result
+     */
+    @Override
+    public NodeStepResult executeRemoteScript(
+            final ExecutionContext context,
+            final IFramework framework,
+            final INodeEntry node,
+            final String[] args,
+            final String filepath,
+            final String scriptInterpreter,
+            final boolean interpreterargsquoted,
+            final boolean removeFile,
+            final InputStream input
+    )
+    {
         boolean retryExecuteCommand = false; //retry if chmod command continues to lock the file the moment it is executed
         if (!"windows".equalsIgnoreCase(node.getOsFamily())) {
             //perform chmod+x for the file
@@ -357,8 +530,9 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                 interpreterargsquoted
         );
 
-       NodeExecutorResult nodeExecutorResult = executeCommand(framework, context,
-                scriptArgList, node, retryExecuteCommand, 500);
+        NodeExecutorResult
+                nodeExecutorResult =
+                executeCommand(framework, context, scriptArgList, node, input, retryExecuteCommand, 500);
 
         if (removeFile) {
             //remove file
@@ -373,11 +547,19 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
         return nodeExecutorResult;
     }
 
-    private NodeExecutorResult executeCommand(final Framework framework, final ExecutionContext context, final ExecArgList scriptArgList, final INodeEntry node, boolean retryAttempt, int timeToWait){
-
-        NodeExecutorResult nodeExecutorResult = framework.getExecutionService().executeCommand(context,
-                scriptArgList, node
-        );
+    private NodeExecutorResult executeCommand(
+            final IFramework framework,
+            final ExecutionContext context,
+            final ExecArgList scriptArgList,
+            final INodeEntry node,
+            InputStream inputStream,
+            boolean retryAttempt,
+            int timeToWait
+    )
+    {
+        NodeExecutorResult
+                nodeExecutorResult =
+                framework.getExecutionService().executeCommand(context, scriptArgList, inputStream, node);
 
         boolean isFileBusy = checkIfFileBusy(nodeExecutorResult);
         if(retryAttempt && isFileBusy){
@@ -385,8 +567,8 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                     5,
                     "File is busy. Retrying..."
             );
-            return attemptExecuteCommand(framework, context, scriptArgList, node, timeToWait);
-        } else if(isFileBusy) {
+            return attemptExecuteCommand(framework, context, scriptArgList, node, inputStream, timeToWait);
+        } else if (isFileBusy) {
             return NodeExecutorResultImpl.createFailure(
                     nodeExecutorResult.getFailureReason(),
                     nodeExecutorResult.getFailureMessage() + " Set node attribute 'file-busy-err-retry=true' to enable retrying",
@@ -397,7 +579,15 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
         }
     }
 
-    private NodeExecutorResult attemptExecuteCommand(final Framework framework, final ExecutionContext context, final ExecArgList scriptArgList, final INodeEntry node, int timeToWait){
+    private NodeExecutorResult attemptExecuteCommand(
+            final IFramework framework,
+            final ExecutionContext context,
+            final ExecArgList scriptArgList,
+            final INodeEntry node,
+            final InputStream inputStream,
+            int timeToWait
+    )
+    {
         timeToWait = timeToWait + 500; //ms
         boolean retryAttempt = timeToWait < MAX_TIME_TO_WAIT_BEFORE_TRY_AGAIN;
         context.getExecutionLogger().log(
@@ -409,7 +599,7 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
         } catch (InterruptedException e) {
             logger.error("InterruptedException: " + e);
         }
-        return executeCommand(framework, context, scriptArgList, node, retryAttempt, timeToWait);
+        return executeCommand(framework, context, scriptArgList, node,  inputStream, retryAttempt, timeToWait);
     }
 
     private boolean checkIfFileBusy(NodeExecutorResult nodeExecutorResult){

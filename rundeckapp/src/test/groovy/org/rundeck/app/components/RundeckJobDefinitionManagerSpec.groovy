@@ -33,7 +33,6 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
 
         se.workflow.commands.first().configuration == [
             adhocFilepath          : 'path/to/file.sh',
-            adhocExecution         : true,
             expandTokenInScriptFile: expandTokenInScriptFile
         ] + (emptyargs ? [argString: ''] : [:])
 
@@ -63,7 +62,6 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
 
         se.workflow.commands.first().configuration == [
             adhocFilepath          : 'http://example.com',
-            adhocExecution         : true,
             expandTokenInScriptFile: expandTokenInScriptFile
         ] + (emptyargs ? [argString: ''] : [:])
 
@@ -95,7 +93,6 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
 
             se.workflow.commands.first().configuration == [
                 adhocRemoteString: 'some command',
-                adhocExecution   : true,
             ]
 
         where:
@@ -120,7 +117,6 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
 
             se.workflow.commands.first().configuration == [
                 adhocLocalString: 'some script',
-                adhocExecution  : true,
             ] + (emptyargs ? [argString: ''] : [:])
 
         where:
@@ -145,7 +141,6 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
 
             se.workflow.commands.first().configuration == [
                 adhocLocalString: script,
-                adhocExecution  : true,
             ] + (emptyargs ? [argString: ''] : [:])
 
         where:
@@ -188,7 +183,6 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
 
             se.workflow.commands.first().configuration == [
                 adhocLocalString: script,
-                adhocExecution  : true,
             ]
 
         where:

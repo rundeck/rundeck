@@ -22,8 +22,7 @@ import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 
-import java.io.File;
-import java.io.InputStream;
+import java.io.*;
 
 /**
  * Created by greg on 7/15/16.
@@ -55,37 +54,39 @@ public interface FileCopierUtil {
             InputStream input,
             String script,
             INodeEntry node,
-            boolean expandTokens
+            boolean expandTokens,
+            ContentModifier modifier
+    ) throws FileCopierException;
+
+    File writeScriptTempFile(
+            final ExecutionContext context,
+            final File original,
+            final InputStream input,
+            final String script,
+            final INodeEntry node,
+            final File destination,
+            final boolean expandTokens,
+            ContentModifier modifier
     ) throws FileCopierException;
 
     /**
-     * Copy a script file, script source stream, or script string into a temp file, and replace \
-     * embedded tokens with values from the dataContext for the latter two. Marks the file as
-     * executable and delete-on-exit. This will not rewrite any content if the input is originally a
-     * file.
-     *
-     * @param context  execution context
-     * @param original local system file, or null
-     * @param input    input stream to write, or null
-     * @param script   file content string, or null
-     * @param node     destination node entry, to provide node data context
-     * @param destination destination file, or null to generate a new temp file
-     *                    @param expandTokens if true, expand tokens in the stream or string
-     *
-     * @return file where the script was stored
-     *
-     * @throws FileCopierException
-     *          if an IO problem occurs
+     * Allows content lines to be modified, or additional content to be written
      */
-    File writeScriptTempFile(
-            ExecutionContext context,
-            File original,
-            InputStream input,
-            String script,
-            INodeEntry node,
-            File destination,
-            boolean expandTokens
-    ) throws FileCopierException;
+    interface ContentModifier {
+        interface Sink {
+            void writeLine(String line) throws IOException;
+        }
+
+        /**
+         * Process the reader into the writer
+         *
+         * @param input a line of input
+         * @param sink  destination for output
+         * @return true if the modifier should accept another input line, false to finish processing
+         * @throws IOException
+         */
+        boolean process(String input, Sink sink) throws IOException;
+    }
 
     /**
      * @return the default file extension for a temp file based on the type of node

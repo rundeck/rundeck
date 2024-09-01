@@ -277,12 +277,11 @@ class JobsXMLCodecSpec extends Specification {
                 it.errorHandler != null
             }
             cmds[0].errorHandler.type == ExecCommand.EXEC_COMMAND_TYPE
-            cmds[0].errorHandler.configuration == [adhocExecution: true, adhocRemoteString: 'testerr']
+            cmds[0].errorHandler.configuration == [adhocRemoteString: 'testerr']
             !cmds[0].errorHandler.keepgoingOnSuccess
 
             cmds[1].errorHandler.type == ScriptCommand.SCRIPT_COMMAND_TYPE
             cmds[1].errorHandler.configuration == [
-                adhocExecution  : true,
                 adhocLocalString: 'test2err',
                 argString       : 'blah blah err'
             ]
@@ -290,7 +289,6 @@ class JobsXMLCodecSpec extends Specification {
 
             cmds[2].errorHandler.type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
             cmds[2].errorHandler.configuration == [
-                adhocExecution         : true,
                 adhocFilepath          : 'test3err',
                 expandTokenInScriptFile: false,
                 argString              : 'blah3 blah3 err'
@@ -423,7 +421,7 @@ class JobsXMLCodecSpec extends Specification {
             jobs[0].workflow.commands.size() == 1
             def cmd1 = jobs[0].workflow.commands[0]
             cmd1 != null
-            cmd1.configuration == [adhocExecution: true, adhocRemoteString: 'a script']
+            cmd1.configuration == [adhocRemoteString: 'a script']
     }
 
     def "decode simple workflow with script content"() {
@@ -467,7 +465,7 @@ class JobsXMLCodecSpec extends Specification {
             jobs[0].workflow.commands.size() == 1
             def cmd1 = jobs[0].workflow.commands[0]
             cmd1 != null
-            cmd1.configuration == [adhocExecution: true, adhocLocalString: 'a script 2']
+            cmd1.configuration == [adhocLocalString: 'a script 2']
     }
 
     def "decode  script with args"() {
@@ -512,7 +510,6 @@ class JobsXMLCodecSpec extends Specification {
             def cmd1 = jobs[0].workflow.commands[0]
             cmd1 != null
             cmd1.configuration == [
-                adhocExecution         : true,
                 adhocFilepath          : '/a/path/to/a/script',
                 expandTokenInScriptFile: false,
                 argString              : '-some args -to the -script'
@@ -803,7 +800,6 @@ class JobsXMLCodecSpec extends Specification {
             def cmd1 = jobs[0].workflow.commands[0]
             cmd1 != null
             cmd1.configuration == [
-                adhocExecution         : true,
                 adhocFilepath          : 'http://example.com/a/path/to/a/script',
                 expandTokenInScriptFile: false,
                 argString              : '-some args -to the -script'
@@ -825,7 +821,6 @@ class JobsXMLCodecSpec extends Specification {
                         commands: [
                             new CommandExec(
                                 argString: 'elf biscuits',
-                                adhocExecution: true,
                                 adhocLocalString: '''#!/bin/bash
 
 echo what is this monkey < test.out
@@ -855,7 +850,6 @@ exit 0''',
             job1.workflow.commands.size() == 1
             def wfi = job1.workflow.commands[0]
             wfi.configuration == [
-                adhocExecution  : true,
                 adhocLocalString: '''#!/bin/bash
 
 echo what is this monkey < test.out

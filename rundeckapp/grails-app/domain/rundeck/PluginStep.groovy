@@ -75,16 +75,10 @@ class PluginStep extends WorkflowStep{
     }
 
     public Map toMap() {
-        def map=[type: type, nodeStep:nodeStep]
-
         if(isOldBuiltInType(this.type)){//keep job defs compatibility with old Rundeck versions prior to 5.x
-            CommandExec commandExec = new CommandExec(this.configuration)
-            commandExec.description = this.description
-            commandExec.errorHandler = this.errorHandler
-            commandExec.keepgoingOnSuccess = this.keepgoingOnSuccess
-            commandExec.pluginConfigData = this.pluginConfigData
-            return commandExec.toMap()
+            return toLegacyCommandMap()
         }
+        def map=[type: type, nodeStep:nodeStep]
 
         if(this.configuration){
             map.put('configuration',this.configuration)
@@ -102,6 +96,100 @@ class PluginStep extends WorkflowStep{
             map.plugins = config
         }
         map
+    }
+    
+    /**
+     * Mapping from Job Definition data keys to CommandExec/step plugin properties keys
+     */
+    static final Map<String, String> LEGACY_BUILTIN_STEP_KEYS_MAP = Collections.unmodifiableMap([
+        args                   : 'argString',
+        exec                   : 'adhocRemoteString',
+        script                 : 'adhocLocalString',
+        scriptfile             : 'adhocFilepath',
+        scripturl              : 'adhocFilepath',
+        scriptInterpreter      : 'scriptInterpreter',
+        fileExtension          : 'fileExtension',
+        interpreterArgsQuoted  : 'interpreterArgsQuoted',
+        expandTokenInScriptFile: 'expandTokenInScriptFile',
+    ])
+
+    /**
+     * Legacy job definition canonical map key names for command/script steps
+     */
+    static final Set<String> LEGACY_BUILTIN_STEP_JOB_DEFINITION_MAP_KEYS = Collections.unmodifiableSet(LEGACY_BUILTIN_STEP_KEYS_MAP.keySet())
+
+    /**
+     * Configuration key names for command/script steps
+     */
+    static final Set<String> LEGACY_BUILTIN_STEP_CONFIGURATION_KEYS = Collections.unmodifiableSet(LEGACY_BUILTIN_STEP_KEYS_MAP.values().toSet())
+
+
+    /**
+     * Create a legacy command map from the current configuration
+     * @return
+     */
+    private Map<String, Object> toLegacyCommandMap() {
+        def legacyData = this.configuration.subMap(LEGACY_BUILTIN_STEP_CONFIGURATION_KEYS)
+        CommandExec commandExec = new CommandExec(legacyData)
+        commandExec.description = this.description
+        commandExec.errorHandler = this.errorHandler
+        commandExec.keepgoingOnSuccess = this.keepgoingOnSuccess
+        commandExec.pluginConfigData = this.pluginConfigData
+        def legacyMap = commandExec.toMap()
+        //additional data
+        def configuration = new HashMap(this.configuration)
+        def keySet = new HashSet(configuration.keySet())
+        keySet.removeAll(LEGACY_BUILTIN_STEP_CONFIGURATION_KEYS)
+
+        if (keySet.size() > 0) {
+            def additionalData = configuration.subMap(keySet)
+            legacyMap.putAll(additionalData)
+        }
+        return legacyMap
+    }
+
+    /**
+     * Create step configuration map from the job definition data map
+     * @param data job definition step data
+     * @return
+     */
+    static Map createLegacyConfigurationFromDefinitionMap(Map data) {
+        def ce = [:]
+        def legacyDefinitionData = data.subMap(LEGACY_BUILTIN_STEP_JOB_DEFINITION_MAP_KEYS)
+        CommandExec.setConfigurationFromMap(ce, legacyDefinitionData)
+        def additionalData = new HashMap(data)
+        additionalData.keySet().removeAll(LEGACY_BUILTIN_STEP_JOB_DEFINITION_MAP_KEYS)
+        ce.putAll(additionalData)
+        return ce
+    }
+    /**
+     *
+     * @param data
+     * @return new plugin type for legacy step configuration
+     */
+    static String getLegacyBuiltinCommandType(Map data) {
+        if (data.exec != null) {
+            return ExecCommand.EXEC_COMMAND_TYPE
+        } else if (data.script != null) {
+            return ScriptCommand.SCRIPT_COMMAND_TYPE
+        } else if (data.scriptfile != null || data.scripturl != null) {
+            return ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
+        } else {
+            throw new IllegalArgumentException("Invalid data: ${data}")
+        }
+    }
+    /**
+     *
+     * @param data
+     * @return true if the data represents a legacy imported command/script step
+     */
+    static boolean isLegacyBuiltinCommandData(Map data) {
+        return !data.type && (
+            data.exec != null ||
+            data.script != null ||
+            data.scriptfile != null ||
+            data.scripturl != null
+        )
     }
 
     /**
@@ -124,13 +212,28 @@ class PluginStep extends WorkflowStep{
         updateFromMap(ce, data)
         return ce
     }
-
+    /**
+     * config keys that are separate from legacy step keys
+     */
+    static final Set<String> LOCAL_CONFIG_KEYS = [
+        'nodeStep',
+        'type',
+        'configuration',
+        'keepgoingOnSuccess',
+        'description',
+        'plugins',
+        'errorhandler'
+    ]
     static void updateFromMap(PluginStep ce, Map data) {
-        if (CommandExec.isLegacyBuiltinCommandData(data)) {
+        if (isLegacyBuiltinCommandData(data)) {
             //keep job def import compatibility with old Rundeck versions prior to 5.x
+            //remove local data
+            Map newmap = new HashMap(data)
+            LOCAL_CONFIG_KEYS.each { newmap.remove(it) }
+
             ce.nodeStep = true
-            ce.type = CommandExec.getLegacyBuiltinCommandType(data)
-            ce.configuration = CommandExec.createMapFromMap(data)
+            ce.type = getLegacyBuiltinCommandType(newmap)
+            ce.configuration = createLegacyConfigurationFromDefinitionMap(newmap)
         } else {
             ce.nodeStep = data.nodeStep
             ce.type = data.type

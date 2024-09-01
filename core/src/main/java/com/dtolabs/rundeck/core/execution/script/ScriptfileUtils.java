@@ -17,10 +17,11 @@
 package com.dtolabs.rundeck.core.execution.script;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.impl.common.FileCopierUtil;
 
 import java.io.*;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
@@ -104,75 +105,43 @@ public class ScriptfileUtils {
         }
     }
 
-    /**
-     * Write an inputstream to a FileWriter
-     * @param input input stream
-     * @param writer writer
-     * @throws IOException if an error occurs
-     */
-    private static void writeStream(final InputStream input, final FileWriter writer)
-            throws IOException
-    {
-        writeStream(input, writer, LineEndingStyle.LOCAL, false);
-    }
-
-    /**
-     * Write an inputstream to a FileWriter
-     * @param input input stream
-     * @param writer writer
-     * @throws IOException if an error occurs
-     */
-    private static void writeStream(
-            final InputStream input,
-            final FileWriter writer,
-            final LineEndingStyle style,
-            final boolean addBom
-    ) throws IOException
-    {
-        try (InputStreamReader inStream = new InputStreamReader(input)) {
-            writeReader(inStream, writer, style, addBom);
-        }
-    }
 
     /**
      * Copy from a Reader to a FileWriter
      * @param reader reader
      * @param writer writer
-     * @throws IOException if an error occurs
-     */
-    private static void writeReader(final Reader reader, final FileWriter writer) throws IOException {
-        writeReader(reader, writer, LineEndingStyle.LOCAL, false);
-    }
-
-    /**
-     * Copy from a Reader to a FileWriter
-     *
-     * @param reader reader
-     * @param writer writer
-     *
      * @throws IOException if an error occurs
      */
     private static void writeReader(
             final Reader reader,
             final FileWriter writer,
             final LineEndingStyle style,
-            final boolean addBom
+            final boolean addBom,
+            final FileCopierUtil.ContentModifier modifier
     ) throws IOException
     {
         final BufferedReader inbuff = new BufferedReader(reader);
         String inData;
         final String linesep =
                 null == style ?
-                        LineEndingStyle.LOCAL.getLineSeparator() :
-                        style.getLineSeparator();
+                LineEndingStyle.LOCAL.getLineSeparator() :
+                style.getLineSeparator();
 
         if(addBom && StandardCharsets.UTF_8.aliases().contains(writer.getEncoding())
-                && style == LineEndingStyle.WINDOWS) {
+           && style == LineEndingStyle.WINDOWS) {
             writer.write('\ufeff');
         }
+        boolean useModifier = true;
         while ((inData = inbuff.readLine()) != null) {
-            writer.write(inData);
-            writer.write(linesep);
+            if (null != modifier && useModifier) {
+                useModifier = modifier.process(inData, (data) -> {
+                    writer.write(data);
+                    writer.write(linesep);
+                });
+            } else {
+                writer.write(inData);
+                writer.write(linesep);
+            }
         }
         inbuff.close();
     }
@@ -250,13 +219,38 @@ public class ScriptfileUtils {
             boolean addBom
     ) throws IOException
     {
+        writeScriptFile(stream, scriptString, reader, style, scriptfile, addBom, null);
+    }
+
+    /**
+     * Write script content to a destination file from one of the sources
+     *
+     * @param stream       stream source
+     * @param scriptString script content
+     * @param reader       reader source
+     * @param style        line ending style
+     * @param scriptfile   destination file
+     * @throws IOException on io error
+     */
+    public static void writeScriptFile(
+            InputStream stream,
+            String scriptString,
+            Reader reader,
+            LineEndingStyle style,
+            File scriptfile,
+            boolean addBom,
+            FileCopierUtil.ContentModifier modifier
+    ) throws IOException
+    {
         try (FileWriter writer = new FileWriter(scriptfile)) {
             if (null != scriptString) {
-                ScriptfileUtils.writeReader(new StringReader(scriptString), writer, style, addBom);
+                writeReader(new StringReader(scriptString), writer, style, addBom, modifier);
             } else if (null != reader) {
-                ScriptfileUtils.writeReader(reader, writer, style, addBom);
+                writeReader(reader, writer, style, addBom, modifier);
             } else if (null != stream) {
-                ScriptfileUtils.writeStream(stream, writer, style, addBom);
+                try (InputStreamReader inStream = new InputStreamReader(stream)) {
+                    writeReader(inStream, writer, style, addBom, modifier);
+                }
             } else {
                 throw new IllegalArgumentException("no script source argument");
             }
@@ -291,15 +285,31 @@ public class ScriptfileUtils {
      * @return Create a temp file in the framework
      * @param framework  fwk
      * @throws IOException on io error
-     *
+     * @deprecated
      */
+    @Deprecated
     public static File createTempFile(final Framework framework) throws IOException {
+        return createTempFile((IFramework) framework);
+    }
+
+    /**
+     * Creates a temp file and marks it for deleteOnExit, to clean up proactively call
+     * {@link #releaseTempFile(java.io.File)} with the result when complete
+     *
+     * @param framework fwk
+     * @return Create a temp file in the framework
+     * @throws IOException on io error
+     */
+    public static File createTempFile(final IFramework framework) throws IOException {
         String fileExt = ".tmp";
         if ("windows".equalsIgnoreCase(framework.createFrameworkNode().getOsFamily())) {
             fileExt = ".tmp.bat";
         }
-        final File dispatch = File.createTempFile("dispatch", fileExt, new File(framework.getProperty(
-                "framework.tmp.dir")));
+        final File dispatch = File.createTempFile(
+                "dispatch",
+                fileExt,
+                new File(framework.getPropertyLookup().getProperty("framework.tmp.dir"))
+        );
         registerTempFile(dispatch);
         return dispatch;
     }

@@ -12,6 +12,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Configurable
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterImpl
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
@@ -105,6 +106,7 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
             def svc = Mock(PluggableProviderService) {
                 getName() >> 'TestSvc'
             }
+            sut.rundeckPluginAdapter = new PluginAdapterImpl()
         when:
             def result = sut.configurePluginByName('aplugin', svc, fwk, 'AProject', [:])
         then:
@@ -168,6 +170,7 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
                 createPluginService(PluginGroup, 'PluginGroup') >> grpSvc
             }
             sut.rundeckPluginBlocklist=Mock(RundeckPluginBlocklist)
+            sut.rundeckPluginAdapter = new PluginAdapterImpl()
         when:
             def result = sut.configurePluginByName('testprov1', svc, fwk, project, [:])
         then:
@@ -472,6 +475,7 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         sut.pluginRegistryMap = [(pluginname):'SomeBean']
         sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
 
+        sut.rundeckPluginAdapter = new PluginAdapterImpl()
 
         when:
         def result = sut.loadBeanDescriptor(pluginname, servicename)

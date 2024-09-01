@@ -36,7 +36,10 @@ public class CommandExec extends WorkflowStep implements BaseCommandExec {
     String adhocRemoteString
     String adhocLocalString
     String adhocFilepath
-    Boolean adhocExecution = false
+    /**
+     * UNUSED
+     */
+    Boolean adhocExecution = true
     String scriptInterpreter
     String fileExtension
     Boolean interpreterArgsQuoted
@@ -218,56 +221,24 @@ public class CommandExec extends WorkflowStep implements BaseCommandExec {
             ce.pluginConfig = data.plugins
         }
     }
-    static Map createMapFromMap(Map data) {
-        def ce = [:]
-        setConfigurationFromMap(ce, data)
-        return ce
-    }
-    /**
-     *
-     * @param data
-     * @return true if the data represents a legacy imported command/script step
-     */
-    static boolean isLegacyBuiltinCommandData(Map data){
-        return !data.type && (data.exec!=null || data.script!=null || data.scriptfile!=null || data.scripturl!=null)
-    }
 
-    /**
-     *
-     * @param data
-     * @return new plugin type for legacy step configuration
-     */
-    static String getLegacyBuiltinCommandType(Map data){
-        if (data.exec != null) {
-            return ExecCommand.EXEC_COMMAND_TYPE
-        } else if (data.script != null) {
-            return ScriptCommand.SCRIPT_COMMAND_TYPE
-        } else if (data.scriptfile != null || data.scripturl!=null) {
-            return ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
-        }else{
-            throw new IllegalArgumentException("Invalid data: ${data}")
-        }
-    }
+
 
     /**
      * Set configuration properties on the object from the
-     * imported data map
-     * @param obj new object
-     * @param data
+     * job definition data map
+     * @param obj new object, intentially not typed to allow for CommandExec or Map
+     * @param data job definition map data
      */
-    private static void setConfigurationFromMap(Object obj, Map data) {
+    static void setConfigurationFromMap(Object obj, Map data) {
         if (data.exec != null) {
-            obj.adhocExecution = true
             obj.adhocRemoteString = data.exec.toString()
         } else if (data.script != null) {
-            obj.adhocExecution = true
             obj.adhocLocalString = data.script.toString()
         } else if (data.scriptfile != null) {
-            obj.adhocExecution = true
             obj.adhocFilepath = data.scriptfile.toString()
             obj.expandTokenInScriptFile = booleanVal(data.expandTokenInScriptFile)
         } else if (data.scripturl != null) {
-            obj.adhocExecution = true
             obj.adhocFilepath = data.scripturl.toString()
             obj.expandTokenInScriptFile = booleanVal(data.expandTokenInScriptFile)
         }

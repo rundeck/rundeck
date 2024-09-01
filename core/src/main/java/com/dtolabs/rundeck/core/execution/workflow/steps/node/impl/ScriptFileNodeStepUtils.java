@@ -16,12 +16,12 @@
 
 package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
-import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.NodeExecutionService;
+import com.dtolabs.rundeck.core.execution.impl.common.FileCopierUtil;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
@@ -67,6 +67,39 @@ public interface ScriptFileNodeStepUtils {
     ) throws NodeStepException;
 
     /**
+     * Execute a script on a remote node
+     *
+     * @param context              context
+     * @param node                 node
+     * @param scriptString         string
+     * @param serverScriptFilePath file
+     * @param scriptAsStream       stream
+     * @param fileExtension        file extension
+     * @param args                 script args
+     * @param scriptInterpreter    invoker string
+     * @param inputStream          inputstream to send to the script
+     * @param quoted               true if args are quoted
+     * @param executionService     service
+     * @return execution result
+     * @throws NodeStepException on error
+     */
+    NodeStepResult executeScriptFile(
+            StepExecutionContext context,
+            INodeEntry node,
+            String scriptString,
+            String serverScriptFilePath,
+            InputStream scriptAsStream,
+            String fileExtension,
+            String[] args,
+            String scriptInterpreter,
+            InputStream inputStream,
+            boolean quoted,
+            NodeExecutionService executionService,
+            boolean expandTokens,
+            FileCopierUtil.ContentModifier modifier
+    ) throws NodeStepException;
+
+    /**
      * Copy the script input to a temp file and expand embedded tokens,
      * if it is a string or inputstream.  If it is a local file,
      * use the original without modification
@@ -91,6 +124,28 @@ public interface ScriptFileNodeStepUtils {
     ) throws FileCopierException;
 
     /**
+     * Copy the script input to a temp file and expand embedded tokens, if it is a string or inputstream.  If it is a
+     * local file, use the original without modification
+     *
+     * @param context              context
+     * @param node                 node
+     * @param scriptString         string
+     * @param serverScriptFilePath file
+     * @param scriptAsStream       stream
+     * @return temp file
+     * @throws FileCopierException on error
+     */
+    File writeScriptToTempFile(
+            StepExecutionContext context,
+            INodeEntry node,
+            String scriptString,
+            String serverScriptFilePath,
+            InputStream scriptAsStream,
+            boolean expandTokens,
+            FileCopierUtil.ContentModifier scriptModifierUtil
+    ) throws FileCopierException;
+
+    /**
      * Execute a scriptfile already copied to a remote node with the given args
      *
      * @param context   context
@@ -105,7 +160,7 @@ public interface ScriptFileNodeStepUtils {
      */
     NodeStepResult executeRemoteScript(
             ExecutionContext context,
-            Framework framework,
+            IFramework framework,
             INodeEntry node,
             String[] args,
             String filepath
@@ -128,12 +183,37 @@ public interface ScriptFileNodeStepUtils {
      */
     NodeStepResult executeRemoteScript(
             ExecutionContext context,
-            Framework framework,
+            IFramework framework,
             INodeEntry node,
             String[] args,
             String filepath,
             String scriptInterpreter,
             boolean interpreterargsquoted
+    ) throws NodeStepException;
+
+    /**
+     * Execute a scriptfile already copied to a remote node with the given args
+     *
+     * @param context               context
+     * @param framework             framework
+     * @param node                  the node
+     * @param args                  arguments to script
+     * @param filepath              the remote path for the script
+     * @param scriptInterpreter     interpreter used to invoke the script
+     * @param interpreterargsquoted if true, pass the file and script args as a single argument to the interpreter
+     * @param inputStream           input to send to the script
+     * @return result
+     * @throws NodeStepException on error
+     */
+    NodeStepResult executeRemoteScript(
+            ExecutionContext context,
+            IFramework framework,
+            INodeEntry node,
+            String[] args,
+            String filepath,
+            String scriptInterpreter,
+            boolean interpreterargsquoted,
+            InputStream inputStream
     ) throws NodeStepException;
 
     /**
@@ -154,13 +234,40 @@ public interface ScriptFileNodeStepUtils {
      */
     NodeStepResult executeRemoteScript(
             ExecutionContext context,
-            Framework framework,
+            IFramework framework,
             INodeEntry node,
             String[] args,
             String filepath,
             String scriptInterpreter,
             boolean interpreterargsquoted,
             boolean removeFile
+    ) throws NodeStepException;
+
+    /**
+     * Execute a scriptfile already copied to a remote node with the given args
+     *
+     * @param context               context
+     * @param framework             framework
+     * @param node                  the node
+     * @param args                  arguments to script
+     * @param filepath              the remote path for the script
+     * @param scriptInterpreter     interpreter used to invoke the script
+     * @param interpreterargsquoted if true, pass the file and script args as a single argument to the interpreter
+     * @param removeFile            if true, remove the file after execution
+     * @param inputStream           input to send to the script
+     * @return result
+     * @throws NodeStepException on error
+     */
+    NodeStepResult executeRemoteScript(
+            ExecutionContext context,
+            IFramework framework,
+            INodeEntry node,
+            String[] args,
+            String filepath,
+            String scriptInterpreter,
+            boolean interpreterargsquoted,
+            boolean removeFile,
+            InputStream inputStream
     ) throws NodeStepException;
 
     /**
