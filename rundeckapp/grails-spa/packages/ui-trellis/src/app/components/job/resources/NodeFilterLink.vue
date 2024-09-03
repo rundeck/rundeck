@@ -1,5 +1,10 @@
 <template>
-  <a :href="href" :data-testid="dataTestId" class="xnodefilterlink" @click.prevent="handleClick">
+  <a
+    :href="href"
+    :data-testid="dataTestId"
+    class="xnodefilterlink"
+    @click.prevent="handleClick"
+  >
     <slot name="prefix"></slot>
     <slot>{{ getText() }}</slot>
     <slot name="suffix"></slot>
@@ -79,10 +84,10 @@ export default defineComponent({
     handleClick() {
       this.$emit("nodefilterclick", this.filterParamValues);
     },
-    sanitizeText(text) {
+    sanitizeText(text: string | undefined): string {
       // replace non-alphanumeric characters with underscores to ensure the text is safe
       // to use as a property value
-      return text.replace(/[^a-zA-Z0-9-_]/g, '_');
+      return text ? text.replace(/[^a-zA-Z0-9-_]/g, "_") : "";
     },
     getText() {
       if (this.text) {
