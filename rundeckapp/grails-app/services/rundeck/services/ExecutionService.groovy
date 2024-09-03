@@ -3998,12 +3998,40 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param max paging max
      * @return result map from {@link #queryExecutions(com.dtolabs.rundeck.app.support.ExecutionQuery, int, int)}
      */
-    def queryJobExecutions(ScheduledExecution scheduledExecution,String state,int offset=0,int max=-1){
+    def queryJobExecutions(ScheduledExecution scheduledExecution,String state,int offset=0,int max=-1,boolean includeJobRef = false){
         def query=new ExecutionQuery()
-        query.jobIdListFilter=[scheduledExecution.id.toString()]
+        String jobProject = scheduledExecution.project
+        query.jobIdListFilter=[scheduledExecution.uuid]
+        query.includeJobRef = includeJobRef
         query.statusFilter=state
-        query.projFilter=scheduledExecution.project
+        query.projFilter=jobProject
+        if(includeJobRef){
+            query.execProjects = getAllowedProjects(jobProject, scheduledExecution.uuid)
+        }
         return queryExecutions(query,offset,max)
+    }
+
+    private List getAllowedProjects(String project, String jobUuid){
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
+        def list = []
+        if(project != null) {
+            list = referencedExecutionDataProvider.executionProjectList(jobUuid)
+        }
+        def allowedProjects = []
+        list.each { proj ->
+            if(proj != project){
+                if(!rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_EVENT, AuthConstants.ACTION_READ,
+                        proj)){
+                    log.debug('Cant read executions on project ' + proj)
+                }else{
+                    allowedProjects << proj
+                }
+            }else{
+                allowedProjects << proj
+            }
+        }
+        return allowedProjects
+
     }
 
     /**
