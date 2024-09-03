@@ -1,6 +1,5 @@
 package org.rundeck.tests.functional.selenium.jobs
 
-import org.openqa.selenium.By
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.execution.ExecutionUtils
@@ -53,7 +52,7 @@ class ScheduledJobSpec extends SeleniumBase{
      * This test creates a job, schedules it, disables the schedule and then enables it
      * It doesnt validate for the schedule to actually run
      */
-    def "disable/enable job schedule"(){
+    def "disable-enable job schedule"(){
         given:
         String projectName = "enableDisableJobSchedule"
         setupProject(projectName)
@@ -73,10 +72,8 @@ class ScheduledJobSpec extends SeleniumBase{
         jobShowPage.el(jobShowPage.jobInfoSectionBy).text.contains("DISABLED")
         when:
         jobShowPage.getJobActionDropdownButton().click()
-        jobShowPage.getEditJobLink().click()
-        jobCreatePage.tab(JobTab.SCHEDULE).click()
-        jobCreatePage.getScheduleEnabledTrue().click()
-        jobCreatePage.getUpdateJobButton().click()
+        jobShowPage.getJobEnableScheduleButtonBy().click()
+        jobShowPage.el(jobShowPage.jobScheduleToggleModalBy).findElement(jobShowPage.buttonDangerBy).click()
         then:
         jobShowPage.els(jobShowPage.scheduleTimeBy).size() == 1
         jobShowPage.el(jobShowPage.scheduleTimeBy).getText().contains("in")

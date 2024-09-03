@@ -11,9 +11,16 @@ import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.activity.ActivityPage
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
-import org.rundeck.util.gui.pages.jobs.*
+import org.rundeck.util.gui.pages.jobs.JobCreatePage
+import org.rundeck.util.gui.pages.jobs.JobListPage
+import org.rundeck.util.gui.pages.jobs.JobShowPage
+import org.rundeck.util.gui.pages.jobs.JobTab
+import org.rundeck.util.gui.pages.jobs.StepType
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.profile.UserProfilePage
+import org.rundeck.util.annotations.SeleniumCoreTest
+import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.gui.pages.activity.ActivityPage
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper
 import spock.lang.Stepwise
 
@@ -755,7 +762,7 @@ class JobsSpec extends SeleniumBase {
      * This test creates a job disables the executions and then enables it
      * It only validates via UI that the run button shows up when enabled
      */
-    def "job execution disable/enable"(){
+    def "job execution disable-enable"(){
         given:
         String projectName = "enableDisableJobSchedule"
         setupProject(projectName)
@@ -763,7 +770,6 @@ class JobsSpec extends SeleniumBase {
         JobShowPage jobShowPage = page(JobShowPage, projectName).forJob(jobUuid)
         JobListPage jobListPage = page(JobListPage)
         jobListPage.loadJobListForProject(projectName)
-        JobCreatePage jobCreatePage = page JobCreatePage
         when:
         jobShowPage.go()
         then:
@@ -771,19 +777,15 @@ class JobsSpec extends SeleniumBase {
         jobShowPage.waitForNumberOfElementsToBe(jobShowPage.runJobBtnBy, 1)
         when:
         jobShowPage.getJobActionDropdownButton().click()
-        jobShowPage.getEditJobLink().click()
-        jobCreatePage.tab(JobTab.SCHEDULE).click()
-        jobCreatePage.getExecutionEnabledFalse().click()
-        jobCreatePage.getUpdateJobButton().click()
+        jobShowPage.getJobDisableExecutionButton().click()
+        jobShowPage.el(jobShowPage.jobExecToggleModalBy).findElement(jobShowPage.buttonDangerBy).click()
         then:
         jobShowPage.waitForNumberOfElementsToBe(jobShowPage.jobExecutionDisabledIconBy, 1)
         jobShowPage.waitForNumberOfElementsToBe(jobShowPage.runJobBtnBy, 0)
         when:
         jobShowPage.getJobActionDropdownButton().click()
-        jobShowPage.getEditJobLink().click()
-        jobCreatePage.tab(JobTab.SCHEDULE).click()
-        jobCreatePage.getExecutionEnabledTrue().click()
-        jobCreatePage.getUpdateJobButton().click()
+        jobShowPage.getJobEnableExecutionButton().click()
+        jobShowPage.el(jobShowPage.jobExecToggleModalBy).findElement(jobShowPage.buttonDangerBy).click()
         then:
         jobShowPage.waitForNumberOfElementsToBe(jobShowPage.jobExecutionDisabledIconBy, 0)
         jobShowPage.waitForNumberOfElementsToBe(jobShowPage.runJobBtnBy, 1)

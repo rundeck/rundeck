@@ -70,6 +70,11 @@ class JobShowPage extends BasePage{
     By jobInfoSectionBy = By.id("jobInfo_")
     By jobDisableScheduleModalButtonBy = By.cssSelector("[value='Disable Schedule']")
     By jobExecutionDisabledIconBy = By.cssSelector(".glyphicon.glyphicon-ban-circle")
+    By jobExecToggleModalBy = By.id("jobexectoggle")
+    By jobScheduleToggleModalBy = By.id("jobdschedtoggle")
+    By buttonDangerBy = By.cssSelector(".btn.btn-danger.btn-sm")
+    By jobDisableExecutionButtonBy = By.linkText("Disable Execution")
+    By jobEnableExecutionButtonBy = By.linkText("Enable Execution")
     By jobOptionsDropdownBy = By.cssSelector(".optionvalues")
 
     static class NextUi {
@@ -121,6 +126,10 @@ class JobShowPage extends BasePage{
         if (!driver.currentUrl.contains(loadPath)) {
             throw new IllegalStateException("Not on job show selected page: " + driver.currentUrl)
         }
+    }
+
+    WebElement getJobExecutionDisabledIcon(){
+        el jobExecutionDisabledIconBy
     }
 
     WebElement getJobDefinitionModal(){
@@ -359,6 +368,14 @@ class JobShowPage extends BasePage{
 
     def getJobEnableScheduleButtonBy(){
         (el jobEnableScheduleButtonBy)
+    }
+
+    def getJobDisableExecutionButton(){
+        (el jobDisableExecutionButtonBy)
+    }
+
+    def getJobEnableExecutionButton(){
+        (el jobEnableExecutionButtonBy)
     }
 
     def getJobDeleteConfirmBy(){
