@@ -39,7 +39,8 @@
            value="${auth.resourceAllowedTest(
                    type: AuthConstants.TYPE_PROJECT,
                    name: (projectName),
-                   action: [AuthConstants.ACTION_CONFIGURE,
+                   action: [AuthConstants.ACTION_READ,
+                            AuthConstants.ACTION_CONFIGURE,
                             AuthConstants.ACTION_ADMIN,
                             AuthConstants.ACTION_APP_ADMIN,
                             AuthConstants.ACTION_IMPORT,
@@ -106,7 +107,8 @@
                 </g:if>
 
 
-                <auth:resourceAllowed project="${projectName}" action="${[AuthConstants.ACTION_READ]}" kind="${AuthConstants.TYPE_EVENT}">
+                <auth:resourceAllowed project="${projectName}" action="${[AuthConstants.ACTION_READ]}"
+                          kind="${AuthConstants.TYPE_EVENT}">
                 {
                     type: 'link',
                     id: 'nav-activity-link',
@@ -119,27 +121,25 @@
                 </auth:resourceAllowed>
 
 
-                    <g:if test="${params.project ?: request.project}">
-                        <g:ifMenuItems type="PROJECT" project="${projectName}">
-                            <g:forMenuItems type="PROJECT" var="item" project="${projectName}">
-                {
-                    type: 'link',
-                    id: 'nav-${item.title.toLowerCase().replace(' ', '-')}-link',
-                    group: 'main',
-                    priority: '${enc(attr: item.priority)}',
-                    class: '${enc(attr: item.iconCSS ?: 'fas fa-plug')}',
-                    link: '${enc(attr: item.getProjectHref(projectName))}',
-                    label: '${g.message(code: item.titleCode, default: item.title)}',
-                    <g:ifPageProperty name='meta.tabpage'>
-                    <g:ifPageProperty name='meta.tabpage' equals='${item.title}'>
-                    active: true
-                    </g:ifPageProperty>
-                    </g:ifPageProperty>
-                },
-                            </g:forMenuItems>
-                        </g:ifMenuItems>
-                    </g:if>
-                <g:if test="${projConfigAuth||projACLAuth}">
+                <g:ifMenuItems type="PROJECT" project="${projectName}">
+                    <g:forMenuItems type="PROJECT" var="item" project="${projectName}">
+                    {
+                        type: 'link',
+                        id: 'nav-${item.title.toLowerCase().replace(' ', '-')}-link',
+                        group: 'main',
+                        priority: '${enc(attr: item.priority)}',
+                        class: '${enc(attr: item.iconCSS ?: 'fas fa-plug')}',
+                        link: '${enc(attr: item.getProjectHref(projectName))}',
+                        label: '${g.message(code: item.titleCode, default: item.title)}',
+                        <g:ifPageProperty name='meta.tabpage'>
+                        <g:ifPageProperty name='meta.tabpage' equals='${item.title}'>
+                        active: true
+                        </g:ifPageProperty>
+                        </g:ifPageProperty>
+                    },
+                    </g:forMenuItems>
+                </g:ifMenuItems>
+                <g:if test="${projConfigAuth || projACLAuth}">
                 {
                     id: 'nav-project-settings',
                     type: 'container',
