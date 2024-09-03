@@ -5673,8 +5673,8 @@ return.''',
                 scheduledExecution,
                 params['status'],
                 params.offset ? params.int('offset') : 0,
-                params.max  ? params.int('max') : -1
-
+                params.max  ? params.int('max') : -1,
+                params.includeJobRef ? params.boolean('includeJobRef') : apiRequest
         )
         def resOffset = params.offset ? params.int('offset') : 0
         def resMax = params.max ?
