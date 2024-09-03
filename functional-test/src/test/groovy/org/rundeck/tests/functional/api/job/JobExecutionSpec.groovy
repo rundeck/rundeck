@@ -1995,7 +1995,6 @@ class JobExecutionSpec extends BaseContainer {
         jobExecutionStatus.status == ExecutionStatus.SUCCEEDED.state
 
         when: "get executions"
-        sleep 5000
         def response = doGet("/job/${childJobId}/executions")
         then:
         verifyAll {
@@ -2013,6 +2012,147 @@ class JobExecutionSpec extends BaseContainer {
             response2.code() == 200
             def json = jsonValue(response2.body())
             json.executions.size() == 0
+        }
+    }
+
+    def "test /api/job/id/executions returns referenced executions with child and grandchild jobs"() {
+        given:
+        def projectName = "test-referenced-executions-grand-child"
+        def client = getClient()
+        Object projectJsonMap = [
+                "name": projectName.toString(),
+                "description": "test-referenced-executions",
+                "config": [
+                        "test.property": "test value 1",
+                        "project.execution.history.cleanup.enabled": "true",
+                        "project.execution.history.cleanup.retention.days": "1",
+                        "project.execution.history.cleanup.batch": "500",
+                        "project.execution.history.cleanup.retention.minimum": "0",
+                        "project.execution.history.cleanup.schedule": "0 0/1 * 1/1 * ? *"
+                ]
+        ]
+
+        def responseProject = createSampleProject(projectJsonMap)
+        assert responseProject.successful
+
+        String childJobId = "bd4f1bb3-67d0-45ba-b12f-6d2efac55bc6"
+        String grandChildJobId = "59f0156b-a584-4a4e-9004-24d8605361bc"
+        def testXml = """
+            <joblist>
+               <job>
+                  <name>GrandChild</name>
+                  <group>api-test/job-run</group>
+                  <uuid>${grandChildJobId}</uuid>
+                  <description></description>
+                  <loglevel>INFO</loglevel>
+                  <context>
+                      <project>${projectName}</project>
+                  </context>
+                  <dispatch>
+                    <threadcount>1</threadcount>
+                    <keepgoing>true</keepgoing>
+                  </dispatch>
+                  <sequence>
+                    <command>
+                    <exec>echo 1</exec>
+                    </command>
+                  </sequence>
+               </job> 
+               <job>
+                  <name>Child</name>
+                  <group>api-test/job-run</group>
+                  <uuid>${childJobId}</uuid>
+                  <description></description>
+                  <loglevel>INFO</loglevel>
+                  <context>
+                      <project>${projectName}</project>
+                  </context>
+                  <dispatch>
+                    <threadcount>1</threadcount>
+                    <keepgoing>true</keepgoing>
+                  </dispatch>
+                  <sequence>
+                    <command>
+                         <jobref name=\"GrandChild\">
+                           <uuid>${grandChildJobId}</uuid>
+                         </jobref>
+                     </command>   
+                  </sequence>
+               </job>
+               <job>
+                  <name>Parent</name>
+                  <group>api-test/job-run</group>
+                  <uuid>be502211-014a-4937-8dee-18293c56b7f7</uuid>
+                  <description/>
+                  <executionEnabled>true</executionEnabled>
+                  <loglevel>INFO</loglevel>
+                   <context>
+                      <project>${projectName}</project>
+                  </context>
+                  <nodeFilterEditable>false</nodeFilterEditable>
+                  <sequence keepgoing=\"false\" strategy=\"parallel\">
+                     <command>
+                         <jobref name=\"Child\">
+                           <uuid>${childJobId}</uuid>
+                         </jobref>
+                     </command>                     
+                  </sequence>
+               </job>
+            </joblist>
+            """
+
+        def created = JobUtils.createJob(projectName, testXml, client)
+        assert created.successful
+
+        when: "Job and referenced job created"
+        CreateJobResponse jobCreatedResponse = MAPPER.readValue(
+                created.body().string(),
+                CreateJobResponse.class
+        )
+        jobCreatedResponse.succeeded
+        def grandChildJob = jobCreatedResponse.succeeded[0]?.id
+        def childJob = jobCreatedResponse.succeeded[1]?.id
+        def parentJob = jobCreatedResponse.succeeded[2]?.id
+
+        then:
+        grandChildJob != null
+        childJob != null
+        parentJob != null
+
+        when: "run job"
+        def jobRun = JobUtils.executeJob(parentJob, client)
+        assert jobRun.successful
+
+        Execution exec = MAPPER.readValue(jobRun.body().string(), Execution.class)
+
+        Execution jobExecutionStatus = JobUtils.waitForExecution(
+                ExecutionStatus.SUCCEEDED.state,
+                exec.id as String,
+                client,
+                WaitingTime.EXCESSIVE)
+
+        then:
+        jobExecutionStatus.status == ExecutionStatus.SUCCEEDED.state
+
+        when: "get child executions"
+        def response = doGet("/job/${childJobId}/executions")
+        then:
+        verifyAll {
+            response.successful
+            response.code() == 200
+            def json = jsonValue(response.body())
+            json.executions.size() == 1
+            json.executions[0].id?.toString() == exec.id
+        }
+        when: "get grand child executions"
+        def response1 = doGet("/job/${grandChildJobId}/executions")
+        then:
+        verifyAll {
+            response1.successful
+            response1.code() == 200
+            def json = jsonValue(response1.body())
+            json.executions.size() == 1
+            json.executions[0].id?.toString() == exec.id
         }
     }
 
