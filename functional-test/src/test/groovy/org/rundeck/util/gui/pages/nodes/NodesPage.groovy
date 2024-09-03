@@ -81,24 +81,6 @@ class NodesPage extends BasePage {
         els(By.partialLinkText(linkPartialText))?.isEmpty() == false
     }
 
-    /**
-     * Verifies that a link <a href="...">${exactLinkText}</a> is present
-     * @param exactLinkText the text to search for
-     * @return
-     */
-    boolean linkTextIsPresent(String exactLinkText) {
-        els(By.linkText(exactLinkText))?.isEmpty() == false
-    }
-
-    /**
-     * Verifies that the partial text is present in the page
-     * @param partialText the text to search for
-     * @return
-     */
-    boolean partialTextIsPresent(String partialText) {
-        els(By.xpath("//*[contains(text(), '${partialText}')]"))?.isEmpty() == false
-    }
-
     def setSaveNodeFilterModalNameFieldValue(String text){
         def element = el(saveNodeFilterModalNameFieldBy)
         element.clear()

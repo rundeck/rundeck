@@ -3,6 +3,7 @@ package org.rundeck.tests.functional.selenium.nodes
 import org.openqa.selenium.By
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.gui.pages.execution.CommandPage
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.nodes.NodesPage
@@ -64,7 +65,7 @@ class NodesSpec extends SeleniumBase {
         then:
         nodesPage.waitForNumberOfElementsToBeOne(nodesPage.nodeListTrBy)
         nodesPage.getDisplayedNodesCount() == 1
-        nodesPage.linkTextIsPresent("password-node")
+        nodesPage.expectLinkTextToExist("password-node")
     }
 
     def "matching nodes shown when filtering by the tag name attribute"() {
@@ -76,7 +77,7 @@ class NodesSpec extends SeleniumBase {
         then:
         nodesPage.waitForNumberOfElementsToBeOne(nodesPage.nodeListTrBy)
         nodesPage.getDisplayedNodesCount() == 1
-        nodesPage.linkTextIsPresent("password-node")
+        nodesPage.expectLinkTextToExist("password-node")
     }
 
     def "nodes list displays appropriate node attributes"() {
@@ -85,11 +86,11 @@ class NodesSpec extends SeleniumBase {
         nodesPage.clickSearchNodes()
         nodesPage.waitForNumberOfElementsToBeOne(nodesPage.nodeListTrBy)
         then: "node name link is shown"
-        nodesPage.linkTextIsPresent("password-node")
+        nodesPage.expectLinkTextToExist("password-node")
         then: "tag links are shown"
-        nodesPage.linkTextIsPresent("auth-method-password")
+        nodesPage.expectLinkTextToExist("auth-method-password")
         nodesPage.partialLinkTextIsPresent("rundeck")
-        nodesPage.linkTextIsPresent("ssh-node")
+        nodesPage.expectLinkTextToExist("ssh-node")
     }
 
     def "appropriate node attributes displayed when a node is expanded"() {
@@ -100,14 +101,14 @@ class NodesSpec extends SeleniumBase {
         when:
         nodesPage.byAndWaitClickable(By.linkText("password-node")).click()
         then: "Expected links are shown"
-        nodesPage.linkTextIsPresent("password-node")
+        nodesPage.expectLinkTextToExist("password-node")
         nodesPage.partialLinkTextIsPresent("rundeck")
         nodesPage.partialLinkTextIsPresent("unix")
         then: "Expected text fields are shown"
-        nodesPage.partialTextIsPresent("keys/project/core-jsch-executor-test/ssh-node.pass")
-        nodesPage.partialTextIsPresent("jsch-ssh")
-        nodesPage.partialTextIsPresent("jsch-scp")
-        nodesPage.partialTextIsPresent("password")
+        nodesPage.expectPartialTextToExist("keys/project/core-jsch-executor-test/ssh-node.pass")
+        nodesPage.expectPartialTextToExist("jsch-ssh")
+        nodesPage.expectPartialTextToExist("jsch-scp")
+        nodesPage.expectPartialTextToExist("password")
     }
 
     def "a nodes filter can be saved and used"() {
@@ -126,7 +127,7 @@ class NodesSpec extends SeleniumBase {
         nodesPage.byAndWaitClickable(nodesPage.saveNodeFilterModalSaveButtonBy).click()
 
         then: "filter is saved and used right away"
-        nodesPage.partialTextIsPresent(testFilterName)
+        nodesPage.expectPartialTextToExist(testFilterName)
         nodesPage.waitForNumberOfElementsToBe(nodesPage.nodeListTrBy, 1)
 
         when:
@@ -140,7 +141,7 @@ class NodesSpec extends SeleniumBase {
         nodesPage.byAndWaitClickable(By.partialLinkText(testFilterName)).click()
 
         then:
-        nodesPage.partialTextIsPresent(testFilterName)
+        nodesPage.expectPartialTextToExist(testFilterName)
         nodesPage.waitForNumberOfElementsToBe(nodesPage.nodeListTrBy, 1)
     }
 
@@ -154,11 +155,13 @@ class NodesSpec extends SeleniumBase {
         nodesPage.byAndWaitClickable(nodesPage.actionsDropdownToggleBy).click()
         nodesPage.byAndWaitClickable(nodesPage.actionsDropdownRunCommandBy).click()
 
+        CommandPage commandPage = page CommandPage
+
         then: "Ensure the filtered nodes appear on the page"
-        nodesPage.waitForUrlToContain("command/run")
-        nodesPage.partialTextIsPresent("2 Nodes Matched")
-        nodesPage.linkTextIsPresent("ssh-node")
-        nodesPage.linkTextIsPresent("password-node")
+        commandPage.waitForUrlToContain("command/run")
+        commandPage.expectPartialTextToExist("2 Nodes Matched")
+        commandPage.expectLinkTextToExist("ssh-node")
+        commandPage.expectLinkTextToExist("password-node")
     }
 
     def "a  job can be created from the nodes filter"() {
@@ -174,8 +177,9 @@ class NodesSpec extends SeleniumBase {
         jobCreatePage.byAndWaitClickable(By.partialLinkText("Nodes")).click()
 
         then: "Ensure the filtered nodes appear on the page"
-        nodesPage.partialTextIsPresent("2 Nodes Matched")
-        nodesPage.linkTextIsPresent("ssh-node")
-        nodesPage.linkTextIsPresent("password-node")
+        jobCreatePage.waitForUrlToContain("job/create")
+        jobCreatePage.expectPartialTextToExist("2 Nodes Matched")
+        jobCreatePage.expectLinkTextToExist("ssh-node")
+        jobCreatePage.expectLinkTextToExist("password-node")
     }
 }

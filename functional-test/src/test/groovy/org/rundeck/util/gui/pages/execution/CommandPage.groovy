@@ -28,6 +28,10 @@ class CommandPage extends BasePage {
     By runningExecStateBy = By.cssSelector(".execstate.execstatedisplay.overall")
     By activityRowAdhocBy = By.cssSelector(".link.activity_row.autoclickable.succeed.adhoc")
 
+    CommandPage(final SeleniumContext context) {
+        super(context)
+    }
+
     CommandPage(final SeleniumContext context, String project) {
         super(context)
         this.loadPath = "/project/${project}/command/run"
