@@ -1900,6 +1900,127 @@ class JobExecutionSpec extends BaseContainer {
         client.jsonValue(client.doGetAcceptAll("/execution/$jobExecutionStatus.id/state").body(), Map).nodes.values()[0].every({val -> val.executionState == "SUCCEEDED"} )
     }
 
+    def "test /api/job/id/executions returns referenced executions"() {
+        given:
+        def projectName = "test-referenced-executions"
+        def client = getClient()
+        Object projectJsonMap = [
+                "name": projectName.toString(),
+                "description": "test-referenced-executions",
+                "config": [
+                        "test.property": "test value",
+                        "project.execution.history.cleanup.enabled": "true",
+                        "project.execution.history.cleanup.retention.days": "1",
+                        "project.execution.history.cleanup.batch": "500",
+                        "project.execution.history.cleanup.retention.minimum": "0",
+                        "project.execution.history.cleanup.schedule": "0 0/1 * 1/1 * ? *"
+                ]
+        ]
+
+        def responseProject = createSampleProject(projectJsonMap)
+        assert responseProject.successful
+
+        String childJobId = "a472767a-6575-46f1-8ab4-6cd2b289f1f3"
+        def testXml = """
+            <joblist>
+               <job>
+                  <name>Child</name>
+                  <group>api-test/job-run</group>
+                  <uuid>${childJobId}</uuid>
+                  <description></description>
+                  <loglevel>INFO</loglevel>
+                  <context>
+                      <project>${projectName}</project>
+                  </context>
+                  <dispatch>
+                    <threadcount>1</threadcount>
+                    <keepgoing>true</keepgoing>
+                  </dispatch>
+                  <sequence>
+                    <command>
+                    <exec>echo 1</exec>
+                    </command>
+                  </sequence>
+               </job>
+               <job>
+                  <name>Parent</name>
+                  <group>api-test/job-run</group>
+                  <uuid>14e09b60-436c-42b0-b9dc-6308f1fbd5cc</uuid>
+                  <description/>
+                  <executionEnabled>true</executionEnabled>
+                  <loglevel>INFO</loglevel>
+                   <context>
+                      <project>${projectName}</project>
+                  </context>
+                  <nodeFilterEditable>false</nodeFilterEditable>
+                  <sequence keepgoing=\"false\" strategy=\"parallel\">
+                     <command>
+                         <jobref name=\"Child\">
+                           <uuid>b51275b4-71a1-4127-80c0-366fa1f76d1d</uuid>
+                         </jobref>
+                     </command>
+                     <command>
+                         <jobref name=\"Child\" nodeStep=\"true\">
+                           <uuid>b51275b4-71a1-4127-80c0-366fa1f76d1d</uuid>
+                         </jobref>
+                     </command>
+                  </sequence>
+               </job>
+            </joblist>
+            """
+
+        def created = JobUtils.createJob(projectName, testXml, client)
+        assert created.successful
+
+        when: "Job and referenced job created"
+        CreateJobResponse jobCreatedResponse = MAPPER.readValue(
+                created.body().string(),
+                CreateJobResponse.class
+        )
+        def childJob = jobCreatedResponse.succeeded[0]?.id
+        def parentJob = jobCreatedResponse.succeeded[1]?.id
+
+        then:
+        childJob != null
+        parentJob != null
+
+        when: "run job"
+        def jobRun = JobUtils.executeJob(parentJob, client)
+        assert jobRun.successful
+
+        Execution exec = MAPPER.readValue(jobRun.body().string(), Execution.class)
+
+        Execution jobExecutionStatus = JobUtils.waitForExecution(
+                ExecutionStatus.SUCCEEDED.state,
+                exec.id as String,
+                client,
+                WaitingTime.EXCESSIVE)
+
+        then:
+        jobExecutionStatus.status == ExecutionStatus.SUCCEEDED.state
+
+        when: "get executions"
+        sleep 5000
+        def response = doGet("/job/${childJobId}/executions")
+        then:
+        verifyAll {
+            response.successful
+            response.code() == 200
+            def json = jsonValue(response.body())
+            json.executions.size() == 1
+            json.executions[0].id == exec.id
+        }
+        when: "get executions with includeJobRef false"
+        def response2 = doGet("/job/${childJobId}/executions?includeJobRef=false")
+        then:
+        verifyAll {
+            response2.successful
+            response2.code() == 200
+            def json = jsonValue(response2.body())
+            json.executions.size() == 0
+        }
+    }
+
     def generateRuntime(int secondsInFuture){
         TimeZone timeZone = TimeZone.getDefault()
         Calendar cal = Calendar.getInstance(timeZone)
