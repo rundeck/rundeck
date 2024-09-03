@@ -1956,14 +1956,9 @@ class JobExecutionSpec extends BaseContainer {
                   <sequence keepgoing=\"false\" strategy=\"parallel\">
                      <command>
                          <jobref name=\"Child\">
-                           <uuid>b51275b4-71a1-4127-80c0-366fa1f76d1d</uuid>
+                           <uuid>${childJobId}</uuid>
                          </jobref>
-                     </command>
-                     <command>
-                         <jobref name=\"Child\" nodeStep=\"true\">
-                           <uuid>b51275b4-71a1-4127-80c0-366fa1f76d1d</uuid>
-                         </jobref>
-                     </command>
+                     </command>                     
                   </sequence>
                </job>
             </joblist>
@@ -2008,7 +2003,7 @@ class JobExecutionSpec extends BaseContainer {
             response.code() == 200
             def json = jsonValue(response.body())
             json.executions.size() == 1
-            json.executions[0].id == exec.id
+            json.executions[0].id?.toString() == exec.id
         }
         when: "get executions with includeJobRef false"
         def response2 = doGet("/job/${childJobId}/executions?includeJobRef=false")
