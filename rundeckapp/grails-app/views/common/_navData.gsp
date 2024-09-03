@@ -39,7 +39,7 @@
            value="${auth.resourceAllowedTest(
                    type: AuthConstants.TYPE_PROJECT,
                    name: (projectName),
-                   action: [AuthConstants.ACTION_READ,
+                   action: [
                             AuthConstants.ACTION_CONFIGURE,
                             AuthConstants.ACTION_ADMIN,
                             AuthConstants.ACTION_APP_ADMIN,
@@ -138,6 +138,22 @@
                         </g:ifPageProperty>
                     },
                     </g:forMenuItems>
+                </g:ifMenuItems>
+                <g:ifMenuItems type="PROJECT_CONFIG" project="${projectName}">
+                    <g:set var="projConfigAuth"
+                       value="${auth.resourceAllowedTest(
+                               type: AuthConstants.TYPE_PROJECT,
+                               name: (projectName),
+                               action: [AuthConstants.ACTION_READ,
+                                        AuthConstants.ACTION_CONFIGURE,
+                                        AuthConstants.ACTION_ADMIN,
+                                        AuthConstants.ACTION_APP_ADMIN,
+                                        AuthConstants.ACTION_IMPORT,
+                                        AuthConstants.ACTION_EXPORT,
+                                        AuthConstants.ACTION_DELETE],
+                               any: true,
+                               context: AuthConstants.CTX_APPLICATION
+                       )}"/>
                 </g:ifMenuItems>
                 <g:if test="${projConfigAuth || projACLAuth}">
                 {
