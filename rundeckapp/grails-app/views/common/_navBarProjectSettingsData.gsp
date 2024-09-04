@@ -179,6 +179,7 @@
             class: '${enc(attr: item.iconCSS ?: 'fas fa-plug')}',
             link: '${enc(attr: item.getProjectHref(projectName))}',
             label: '${g.message(code: item.titleCode, default: item.title)}',
+            enabled: ${item.isEnabled(params.project)},
             <g:ifPageProperty name='meta.tabpage'>
             <g:ifPageProperty name='meta.tabpage' equals='${item.title}'>
             active: true
