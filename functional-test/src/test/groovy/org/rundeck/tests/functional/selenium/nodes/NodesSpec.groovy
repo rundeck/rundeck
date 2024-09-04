@@ -159,6 +159,8 @@ class NodesSpec extends SeleniumBase {
 
         then: "Ensure the filtered nodes appear on the page"
         commandPage.waitForUrlToContain("command/run")
+        commandPage.byAndWaitClickable(By.partialLinkText("ssh-node"))
+
         commandPage.expectPartialTextToExist("2 Nodes Matched")
         commandPage.expectLinkTextToExist("ssh-node")
         commandPage.expectLinkTextToExist("password-node")
@@ -178,6 +180,8 @@ class NodesSpec extends SeleniumBase {
 
         then: "Ensure the filtered nodes appear on the page"
         jobCreatePage.waitForUrlToContain("job/create")
+        jobCreatePage.byAndWaitClickable(By.partialLinkText("ssh-node"))
+
         jobCreatePage.expectPartialTextToExist("2 Nodes Matched")
         jobCreatePage.expectLinkTextToExist("ssh-node")
         jobCreatePage.expectLinkTextToExist("password-node")
