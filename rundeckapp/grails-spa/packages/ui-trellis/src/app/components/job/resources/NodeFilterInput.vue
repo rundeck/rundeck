@@ -15,6 +15,7 @@
           'btn-default': !selectedFilterName,
         }"
         data-toggle="dropdown"
+        data-testid="nfi-toggle"
       >
         <span>{{ filterNameDisplay }}</span> <span class="caret"></span>
       </button>
@@ -189,10 +190,10 @@
     </div>
     <template #footer>
       <div>
-        <btn @click="saveFilterModal = false">
+        <btn @click="saveFilterModal = false" data-testid="sfm-button-cancel">
           {{ $t("button.action.Cancel") }}
         </btn>
-        <btn type="primary" @click="saveFilter">
+        <btn type="primary" @click="saveFilter" data-testid="sfm-button-save">
           {{ $t("save.filter.ellipsis") }}
         </btn>
       </div>
