@@ -1994,13 +1994,22 @@ class JobExecutionSpec extends BaseContainer {
         then:
         jobExecutionStatus.status == ExecutionStatus.SUCCEEDED.state
 
-        when: "get executions"
+        when: "get executions default behavior"
         def response = doGet("/job/${childJobId}/executions")
         then:
         verifyAll {
             response.successful
             response.code() == 200
             def json = jsonValue(response.body())
+            json.executions.size() == 0
+        }
+        when: "get executions with includeJobRef true"
+        def response1 = doGet("/job/${childJobId}/executions?includeJobRef=true")
+        then:
+        verifyAll {
+            response1.successful
+            response1.code() == 200
+            def json = jsonValue(response1.body())
             json.executions.size() == 1
             json.executions[0].id?.toString() == exec.id
         }
@@ -2011,6 +2020,16 @@ class JobExecutionSpec extends BaseContainer {
             response2.successful
             response2.code() == 200
             def json = jsonValue(response2.body())
+            json.executions.size() == 0
+        }
+        when: "get executions with api version before 50 should keep previous behavior"
+        client.apiVersion = 49
+        def response3 = doGet("/job/${childJobId}/executions?includeJobRef=true")
+        then:
+        verifyAll {
+            response3.successful
+            response3.code() == 200
+            def json = jsonValue(response3.body())
             json.executions.size() == 0
         }
     }
@@ -2135,7 +2154,7 @@ class JobExecutionSpec extends BaseContainer {
         jobExecutionStatus.status == ExecutionStatus.SUCCEEDED.state
 
         when: "get child executions"
-        def response = doGet("/job/${childJobId}/executions")
+        def response = doGet("/job/${childJobId}/executions?includeJobRef=true")
         then:
         verifyAll {
             response.successful
@@ -2145,7 +2164,7 @@ class JobExecutionSpec extends BaseContainer {
             json.executions[0].id?.toString() == exec.id
         }
         when: "get grand child executions"
-        def response1 = doGet("/job/${grandChildJobId}/executions")
+        def response1 = doGet("/job/${grandChildJobId}/executions?includeJobRef=true")
         then:
         verifyAll {
             response1.successful

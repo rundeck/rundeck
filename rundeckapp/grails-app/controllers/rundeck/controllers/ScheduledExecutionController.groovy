@@ -5668,13 +5668,20 @@ return.''',
             )
         }
 
+        boolean includeExecutionsFromJobRef = false;
+
+        if (request.api_version >= ApiVersions.V50) {
+            if (params.includeJobRef && apiRequest) {
+                includeExecutionsFromJobRef = params.boolean('includeJobRef');
+            }
+        }
 
         def result = executionService.queryJobExecutions(
                 scheduledExecution,
                 params['status'],
                 params.offset ? params.int('offset') : 0,
                 params.max  ? params.int('max') : -1,
-                params.includeJobRef ? params.boolean('includeJobRef') : apiRequest
+                includeExecutionsFromJobRef
         )
         def resOffset = params.offset ? params.int('offset') : 0
         def resMax = params.max ?
