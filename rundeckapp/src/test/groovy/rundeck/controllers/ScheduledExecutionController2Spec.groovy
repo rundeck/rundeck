@@ -930,7 +930,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         }
 
         sec.executionService = Mock(ExecutionService) {
-            _*queryJobExecutions(se,testStatus,testOffset,testMax,true)>>
+            _*queryJobExecutions(se,testStatus,testOffset,testMax,false)>>
                 [total: 0, result: testResultList]
 
             _*respondExecutionsJson(_,_, {it.size()==testResultSize},_)>>[result:true]
