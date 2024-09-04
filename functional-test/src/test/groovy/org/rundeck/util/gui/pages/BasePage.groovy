@@ -207,6 +207,24 @@ abstract class BasePage {
                 .until(ExpectedConditions.numberOfElementsToBe(By.partialLinkText(linkText), times))
     }
 
+    /**
+     * Verifies that the partial text is present in the page
+     * @param partialText the text to search for
+     * @return
+     */
+    boolean expectPartialTextToExist(String partialText) {
+        els(By.xpath("//*[contains(text(), '${partialText}')]"))?.isEmpty() == false
+    }
+
+    /**
+     * Verifies that a link <a href="...">${exactLinkText}</a> is present
+     * @param exactLinkText the text to search for
+     * @return
+     */
+    boolean expectLinkTextToExist(String exactLinkText) {
+        els(By.linkText(exactLinkText))?.isEmpty() == false
+    }
+
     WebElement getElementByCss(String css){
         el By.cssSelector(css)
     }
