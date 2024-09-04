@@ -155,14 +155,11 @@ abstract class BasePage {
                 .until(ExpectedConditions.attributeContains(locator, attribute, value))
     }
 
-    def waitForModal(int expected) {
-        try {
-            new WebDriverWait(driver, Duration.ofSeconds(30)).until {
-                ExpectedConditions.numberOfElementsToBe(modalField, expected)
-            }
-        } catch (TimeoutException e) {
-            throw new RuntimeException("Timed out waiting for the modal to have ${expected} elements.", e)
-        }
+    def waitForModal(int expected, By modalFieldCssSelector = modalField) {
+        new WebDriverWait(driver, Duration.ofSeconds(30)).until (
+                ExpectedConditions.numberOfElementsToBe(
+                        modalFieldCssSelector, expected )
+        )
     }
 
     WebElement byAndWait(By locator) {

@@ -1,5 +1,6 @@
 package org.rundeck.tests.functional.selenium.jobs
 
+import org.openqa.selenium.By
 import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobListPage
@@ -276,7 +277,7 @@ class BasicJobsSpec extends SeleniumBase {
         then:
             jobShowPage.validatePage()
             jobShowPage.jobSearchButton.click()
-            jobShowPage.waitForModal 1
+            jobShowPage.waitForModal 1, By.cssSelector(".modal.in")
             jobShowPage.jobSearchNameField.sendKeys 'option'
             jobShowPage.jobSearchSubmitButton.click()
             jobShowPage.waitForNumberOfElementsToBe jobShowPage.jobRowBy, expected.size()
@@ -299,7 +300,7 @@ class BasicJobsSpec extends SeleniumBase {
         then:
             jobShowPage.validatePage()
             jobShowPage.jobSearchButton.click()
-            jobShowPage.waitForModal 1
+            jobShowPage.waitForModal 1, By.cssSelector(".modal.in")
             jobShowPage.jobSearchNameField.sendKeys 'option'
             jobShowPage.jobSearchGroupField.sendKeys 'test'
             jobShowPage.jobSearchSubmitButton.click()
@@ -314,7 +315,7 @@ class BasicJobsSpec extends SeleniumBase {
         when:
             jobShowPage.validatePage()
             jobShowPage.jobSearchButton.click()
-            jobShowPage.waitForModal 1
+            jobShowPage.waitForModal 1, By.cssSelector(".modal.in")
             jobShowPage.jobSearchNameField.sendKeys 'option'
             jobShowPage.jobSearchGroupField.sendKeys '-'
             jobShowPage.jobSearchSubmitButton.click()
