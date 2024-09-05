@@ -1,6 +1,5 @@
 package org.rundeck.util.container
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.util.logging.Slf4j
 import okhttp3.Request
 import okhttp3.Response
@@ -9,6 +8,7 @@ import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.api.storage.KeyStorageApiClient
 import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.jobs.JobUtils
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper
 import spock.lang.Specification
 
 import java.text.SimpleDateFormat
