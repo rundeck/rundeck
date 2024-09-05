@@ -81,13 +81,14 @@ configurations {
         extendsFrom developmentOnly
     }
 
-    implementation.exclude module: "spring-boot-starter-tomcat"
-    implementation.exclude module: "spring-boot-cli"
-
-    //avoid error request.XML
-    implementation.exclude group: 'pull-parser'
 
     implementation {
+        exclude module: "spring-boot-starter-tomcat"
+        exclude module: "spring-boot-cli"
+
+        //avoid error request.XML
+        exclude group: 'pull-parser'
+
         //exclude unnecessary dependency, see https://github.com/grails/grails-core/pull/12390
         exclude group: 'junit'
         exclude group: 'org.codehaus.groovy', module: 'groovy-ant'
