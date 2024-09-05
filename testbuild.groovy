@@ -18,7 +18,7 @@
 //Test the result of the build to verify expected artifacts are created
 
 cli = new CliBuilder(usage: 'slide')
-cli._(longOpt: 'buildType', args: 1, 'Build type [development | release]')
+cli._(longOpt: 'buildType', args: 1, '-buildType [development | release]')
 def options = cli.parse(args)
 
 def target="build/libs"
@@ -130,7 +130,8 @@ def manifest=[
         "WEB-INF/lib/log4j-core-${versions.log4j}.jar",
         "WEB-INF/lib/log4j-slf4j-impl-${versions.log4j}.jar",
         "WEB-INF/lib/slf4j-api-1.7.36.jar",
-        "WEB-INF/lib/libpam4j-1.11.jar"
+        "WEB-INF/lib/libpam4j-1.11.jar",
+        "WEB-INF/lib/junit-4.13.2.jar#!", //assert junit jar is not included
     ],
     "plugins/script-node-step-plugin/${target}/rundeck-script-node-step-plugin-${version}.jar":[:],
     "plugins/script-plugin/${target}/rundeck-script-plugin-${version}.jar":[:],
@@ -254,6 +255,8 @@ def testZip={ totest ->
                     counts[dname]=[atleast:1]
                 }else if(n=='?'){
                     counts[dname]=[maybe:1]
+                }else if(n=='!'){
+                    fverify&=require("[${f.basename}] \"${dname}\" MUST NOT exist. Result: (${found?:false})", !found)
                 }else if(n.startsWith('#')){
                     n=n.substring(1)
                     def sum=getSha256(z.getInputStream(found))
