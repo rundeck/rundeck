@@ -87,6 +87,13 @@ configurations {
     //avoid error request.XML
     implementation.exclude group: 'pull-parser'
 
+    implementation {
+        //exclude unnecessary dependency, see https://github.com/grails/grails-core/pull/12390
+        exclude group: 'junit'
+        exclude group: 'org.codehaus.groovy', module: 'groovy-ant'
+        //exclude unnecessary dependency, specifically the database-migration->grails-shell->junit
+        exclude group: 'org.grails', module: 'grails-shell'
+    }
 }
 
 repositories {
