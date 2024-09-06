@@ -63,8 +63,7 @@ class JobShowPage extends BasePage{
     By runJobLaterMinuteArrowUpBy = By.cssSelector("td:nth-child(3) .glyphicon-chevron-up")
     By runJobLaterScheduleCreateButtonBy = By.id("scheduler_buttons")
     By jobStatusBarBy = By.className("job-stats-value")
-    By jobOptionValuesBy = By.cssSelector(".optionvalues")
-    By jobOptionValueInputBy = By.cssSelector(".optionvalues > option:nth-child(6)")
+    By jobOptionsDropdownBy = By.cssSelector(".optionvalues")
 
     static class NextUi {
         static By descriptionText = By
@@ -258,17 +257,8 @@ class JobShowPage extends BasePage{
         el logOutputBtn
     }
 
-    WebElement getJobOptionsValuesDropdown(){
-        el jobOptionValuesBy
-    }
-
-    WebElement getJobOptionValueListItem(String name){
-        waitForNumberOfElementsToBeOne(By.xpath("//option[. = '${name}']"))
-        driver.findElement(By.xpath("//option[. = '${name}']"))
-    }
-
-    WebElement getJobOptionValueInput(){
-        el jobOptionValueInputBy
+    WebElement getJobOptionsDropdown(){
+        el jobOptionsDropdownBy
     }
 
     /**
