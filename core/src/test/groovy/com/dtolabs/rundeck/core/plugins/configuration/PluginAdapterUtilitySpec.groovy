@@ -131,6 +131,50 @@ class PluginAdapterUtilitySpec extends Specification {
         'a,b'   | _
         'a,b,c' | _
     }
+    def "configure options field boxed Boolean"() {
+        given:
+        Configuretest1 test = new Configuretest1();
+        when:
+
+        HashMap<String, Object> configuration = new HashMap<String, Object>();
+        configuration.put("testbool1", value);
+        PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+
+        then:
+        test.testbool1 == expected
+
+        where:
+            value   | expected
+            null    | null
+            ''      | false
+            'true'  | true
+            'false' | false
+            'other' | false
+            true    | true
+            false   | false
+    }
+    def "configure options field boolean"() {
+        given:
+        Configuretest1 test = new Configuretest1();
+        when:
+
+        HashMap<String, Object> configuration = new HashMap<String, Object>();
+        configuration.put("testbool2", value);
+        PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+
+        then:
+        test.testbool2 == expected
+
+        where:
+            value   | expected
+            null    | false
+            ''      | false
+            'true'  | true
+            'false' | false
+            'other' | false
+            true    | true
+            false   | false
+    }
 
     def "configure options field set"() {
         given:
