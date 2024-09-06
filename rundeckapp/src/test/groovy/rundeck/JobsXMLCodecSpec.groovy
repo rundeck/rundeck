@@ -168,32 +168,12 @@ class JobsXMLCodecSpec extends Specification {
             jobs != null
             jobs[0].workflow.commands.size() == 5
 
-            jobs[0].workflow.commands[0].configuration.adhocLocalString == 'true'
-            jobs[0].workflow.commands[0].configuration.argString == 'true'
-            jobs[0].workflow.commands[0].configuration.scriptInterpreter == null
-            !jobs[0].workflow.commands[0].configuration.interpreterArgsQuoted
-
-            jobs[0].workflow.commands[1].configuration.adhocLocalString == 'true'
-            jobs[0].workflow.commands[1].configuration.argString == 'true'
-            jobs[0].workflow.commands[1].configuration.scriptInterpreter == 'bash -c'
-            !jobs[0].workflow.commands[1].configuration.interpreterArgsQuoted
-
-            jobs[0].workflow.commands[2].configuration.adhocLocalString == 'false'
-            jobs[0].workflow.commands[2].configuration.argString == 'false'
-            jobs[0].workflow.commands[2].configuration.scriptInterpreter == 'bash -c'
-            !!jobs[0].workflow.commands[2].configuration.interpreterArgsQuoted
-
-            jobs[0].workflow.commands[3].configuration.adhocLocalString == '0'
-            jobs[0].workflow.commands[3].configuration.argString == '0'
-            jobs[0].workflow.commands[3].configuration.scriptInterpreter == 'bash -c'
-            !jobs[0].workflow.commands[3].configuration.interpreterArgsQuoted
-
-            jobs[0].workflow.commands[4].configuration.adhocFilepath == 'false'
-            jobs[0].workflow.commands[4].configuration.argString == 'false'
-            jobs[0].workflow.commands[4].errorHandler.configuration.adhocFilepath == 'false'
-            jobs[0].workflow.commands[4].configuration.scriptInterpreter == 'bash -c'
-            !jobs[0].workflow.commands[4].configuration.interpreterArgsQuoted
-            jobs[0].workflow.commands[4].errorHandler.configuration.argString == '0'
+            jobs[0].workflow.commands[0].configuration==[adhocLocalString: 'true', argString: 'true']
+            jobs[0].workflow.commands[1].configuration==[adhocLocalString: 'true', argString: 'true',scriptInterpreter: 'bash -c']
+            jobs[0].workflow.commands[2].configuration==[adhocLocalString: 'false', argString: 'false',scriptInterpreter: 'bash -c',interpreterArgsQuoted: 'true']
+            jobs[0].workflow.commands[3].configuration==[adhocLocalString: '0', argString: '0',scriptInterpreter: 'bash -c',interpreterArgsQuoted: 'false']
+            jobs[0].workflow.commands[4].configuration==[adhocFilepath: 'false', argString: 'false',scriptInterpreter: 'bash -c',interpreterArgsQuoted: 'false']
+            jobs[0].workflow.commands[4].errorHandler.configuration==[adhocFilepath: 'false', argString: '0']
 
     }
 
@@ -290,7 +270,6 @@ class JobsXMLCodecSpec extends Specification {
             cmds[2].errorHandler.type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
             cmds[2].errorHandler.configuration == [
                 adhocFilepath          : 'test3err',
-                expandTokenInScriptFile: false,
                 argString              : 'blah3 blah3 err'
             ]
             !cmds[2].errorHandler.keepgoingOnSuccess
@@ -511,7 +490,6 @@ class JobsXMLCodecSpec extends Specification {
             cmd1 != null
             cmd1.configuration == [
                 adhocFilepath          : '/a/path/to/a/script',
-                expandTokenInScriptFile: false,
                 argString              : '-some args -to the -script'
             ]
             cmd1.type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
@@ -801,7 +779,6 @@ class JobsXMLCodecSpec extends Specification {
             cmd1 != null
             cmd1.configuration == [
                 adhocFilepath          : 'http://example.com/a/path/to/a/script',
-                expandTokenInScriptFile: false,
                 argString              : '-some args -to the -script'
             ]
 

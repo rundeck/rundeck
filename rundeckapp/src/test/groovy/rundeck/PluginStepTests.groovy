@@ -123,10 +123,10 @@ class PluginStepTests  extends Specification implements DataTest{
             ExecCommand.EXEC_COMMAND_TYPE              | [exec:'a command', errorhandler:[type:'x']]|[adhocRemoteString: 'a command']
             ScriptCommand.SCRIPT_COMMAND_TYPE          | [script:'a script']|[adhocLocalString: 'a script']
             ScriptCommand.SCRIPT_COMMAND_TYPE          | [script:'a script', errorhandler:[type:'x']]|[adhocLocalString: 'a script']
-            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scriptfile:'a file']|[adhocFilepath: 'a file',expandTokenInScriptFile:false]
-            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scriptfile:'a file', errorhandler:[type:'x']]|[adhocFilepath: 'a file',expandTokenInScriptFile:false]
-            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scripturl:'http://example.com']|[adhocFilepath: 'http://example.com',expandTokenInScriptFile:false]
-            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scripturl:'http://example.com', errorhandler:[type:'x']]|[adhocFilepath: 'http://example.com',expandTokenInScriptFile:false]
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scriptfile:'a file']|[adhocFilepath: 'a file']
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scriptfile:'a file', errorhandler:[type:'x']]|[adhocFilepath: 'a file']
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scripturl:'http://example.com']|[adhocFilepath: 'http://example.com']
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scripturl:'http://example.com', errorhandler:[type:'x']]|[adhocFilepath: 'http://example.com']
     }
     def "update from map legacy type script props"() {
         when:
@@ -149,12 +149,12 @@ class PluginStepTests  extends Specification implements DataTest{
                 argString              : 'asdf',
                 fileExtension          : 'sh',
                 scriptInterpreter      : 'bash',
-                interpreterArgsQuoted  : true
+                interpreterArgsQuoted  : 'true'
             ]
             type                                       | pluginConfig                      | expect
             ScriptCommand.SCRIPT_COMMAND_TYPE          | [script: 'a script']              | [adhocLocalString: 'a script']
-            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scriptfile: 'a file']            | [adhocFilepath: 'a file',expandTokenInScriptFile:false]
-            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scripturl: 'http://example.com'] | [adhocFilepath: 'http://example.com',expandTokenInScriptFile:false]
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scriptfile: 'a file']            | [adhocFilepath: 'a file']
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scripturl: 'http://example.com'] | [adhocFilepath: 'http://example.com']
     }
 
     def "update from map legacy type script props with extra configuration"() {
@@ -178,15 +178,15 @@ class PluginStepTests  extends Specification implements DataTest{
                 argString            : 'asdf',
                 fileExtension        : 'sh',
                 scriptInterpreter    : 'bash',
-                interpreterArgsQuoted: true
+                interpreterArgsQuoted: 'true'
             ]
             type | pluginConfig | expect
             ScriptCommand.SCRIPT_COMMAND_TYPE | [script: 'a script', extraprop1: 'a value'] |
             [adhocLocalString: 'a script', extraprop1: 'a value']
             ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scriptfile: 'a file', extraprop2: 'b value'] |
-            [adhocFilepath: 'a file', expandTokenInScriptFile: false, extraprop2: 'b value']
+            [adhocFilepath: 'a file',  extraprop2: 'b value']
             ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scripturl: 'http://example.com', extraprop3: 'c value'] |
-            [adhocFilepath: 'http://example.com', expandTokenInScriptFile: false, extraprop3: 'c value']
+            [adhocFilepath: 'http://example.com',  extraprop3: 'c value']
     }
 
     def "test toMap for legacy steps with extra configuration"() {
@@ -296,12 +296,12 @@ class PluginStepTests  extends Specification implements DataTest{
             [exec: 'something']       | [adhocRemoteString: 'something']
             [script: 'something']     | [adhocLocalString: 'something']
             [script: 'something',args:'asdf']     | [adhocLocalString: 'something',argString: 'asdf']
-            [script: 'something',scriptInterpreter: 'bash',interpreterArgsQuoted: true,fileExtension: 'sh',args:'asdf']     | [adhocLocalString: 'something',scriptInterpreter: 'bash',interpreterArgsQuoted: true,fileExtension: 'sh',argString:'asdf']
-            [scriptfile: 'something'] | [adhocFilepath: 'something',expandTokenInScriptFile: false]
-            [scriptfile: 'something',args:'asdf'] | [adhocFilepath: 'something',expandTokenInScriptFile: false,argString:'asdf']
-            [scriptfile: 'something',scriptInterpreter: 'bash',interpreterArgsQuoted: true,expandTokenInScriptFile: true,fileExtension: 'sh',args:'asdf'] | [adhocFilepath: 'something',scriptInterpreter: 'bash',interpreterArgsQuoted: true,expandTokenInScriptFile: true,fileExtension: 'sh',argString:'asdf']
-            [scripturl: 'something']  | [adhocFilepath: 'something',expandTokenInScriptFile: false]
-            [scripturl: 'something',args:'asdf']  | [adhocFilepath: 'something',expandTokenInScriptFile: false,argString: 'asdf']
-            [scripturl: 'something',scriptInterpreter: 'bash',interpreterArgsQuoted: true,expandTokenInScriptFile: true,fileExtension: 'sh',args:'asdf']  | [adhocFilepath: 'something',scriptInterpreter: 'bash',interpreterArgsQuoted: true,expandTokenInScriptFile: true,fileExtension: 'sh',argString:'asdf']
+            [script: 'something',scriptInterpreter: 'bash',interpreterArgsQuoted: true,fileExtension: 'sh',args:'asdf']     | [adhocLocalString: 'something',scriptInterpreter: 'bash',interpreterArgsQuoted: 'true',fileExtension: 'sh',argString:'asdf']
+            [scriptfile: 'something'] | [adhocFilepath: 'something']
+            [scriptfile: 'something',args:'asdf'] | [adhocFilepath: 'something',argString:'asdf']
+            [scriptfile: 'something',scriptInterpreter: 'bash',interpreterArgsQuoted: true,expandTokenInScriptFile: true,fileExtension: 'sh',args:'asdf'] | [adhocFilepath: 'something',scriptInterpreter: 'bash',interpreterArgsQuoted: 'true',expandTokenInScriptFile: 'true',fileExtension: 'sh',argString:'asdf']
+            [scripturl: 'something']  | [adhocFilepath: 'something']
+            [scripturl: 'something',args:'asdf']  | [adhocFilepath: 'something',argString: 'asdf']
+            [scripturl: 'something',scriptInterpreter: 'bash',interpreterArgsQuoted: true,expandTokenInScriptFile: true,fileExtension: 'sh',args:'asdf']  | [adhocFilepath: 'something',scriptInterpreter: 'bash',interpreterArgsQuoted: 'true',expandTokenInScriptFile: 'true',fileExtension: 'sh',argString:'asdf']
     }
 }

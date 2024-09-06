@@ -1,5 +1,7 @@
 package rundeck
 
+import org.rundeck.core.execution.ScriptCommand
+import org.rundeck.core.execution.ScriptFileCommand
 import rundeck.codecs.JobsYAMLCodec
 import spock.lang.Specification
 
@@ -118,6 +120,77 @@ class JobsYAMLCodecSpec extends Specification {
             valuesList[0] == 'a'
             valuesList[1] == 'b'
 
+    }
+
+    def "test decode script steps"() {
+        given:
+            def ymlstr1 = """- id: null
+  project: test1
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - script: A Monkey returns
+      description: test1
+      args: oi
+      fileExtension: sh
+      interpreterArgsQuoted: true
+      scriptInterpreter: sh
+    - scriptfile: /some/file
+      description: test1
+      args: oi
+      fileExtension: sh
+      interpreterArgsQuoted: true
+      expandTokenInScriptFile: true
+      scriptInterpreter: sh
+  description: ''
+  name: test job 1
+  group: my group
+"""
+        when:
+            def list = JobsYAMLCodec.decode(ymlstr1)
+        then:
+            list
+            list.size() == 1
+            def obj = list[0]
+            obj instanceof ScheduledExecution
+            ScheduledExecution se = (ScheduledExecution) list[0]
+            se.jobName == "test job 1"
+            se.description == ""
+            se.groupPath == "my group"
+            se.project == 'test1'
+            se.loglevel == "INFO"
+
+            se.scheduleEnabled == true
+            se.executionEnabled == true
+
+            //workflow
+            se.workflow
+            se.workflow.commands
+            !se.workflow.keepgoing
+            se.workflow.strategy == "node-first"
+            se.workflow.commands.size() == 2
+            se.workflow.commands.eachWithIndex { def entry, int i ->
+                entry.description == "test${i + 1}".toString()
+            }
+            se.workflow.commands[0].pluginType == ScriptCommand.SCRIPT_COMMAND_TYPE
+            se.workflow.commands[0].configuration == [
+                adhocLocalString     : "A Monkey returns",
+                scriptInterpreter    : 'sh',
+                fileExtension        : 'sh',
+                interpreterArgsQuoted: 'true',
+                argString            : 'oi'
+            ]
+            se.workflow.commands[1].pluginType == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
+            se.workflow.commands[1].configuration == [
+                adhocFilepath          : "/some/file",
+                scriptInterpreter      : 'sh',
+                fileExtension          : 'sh',
+                interpreterArgsQuoted  : 'true',
+                expandTokenInScriptFile: 'true',
+                argString              : 'oi'
+            ]
     }
 
     def "testDecodeBasic2"() {
@@ -576,11 +649,11 @@ class JobsYAMLCodecSpec extends Specification {
 
             def cmd2 = se.workflow.commands[2]
             cmd2.class == PluginStep.class
-            cmd2.configuration == [adhocFilepath: 'file path', expandTokenInScriptFile:false, argString: 'file args']
+            cmd2.configuration == [adhocFilepath: 'file path',  argString: 'file args']
 
             cmd2.errorHandler
             cmd2.errorHandler.class == PluginStep.class
-            cmd2.errorHandler.configuration == [adhocFilepath: 'err file', expandTokenInScriptFile:false, argString: 'err file args']
+            cmd2.errorHandler.configuration == [adhocFilepath: 'err file',  argString: 'err file args']
             !cmd2.errorHandler.keepgoingOnSuccess
 
 
