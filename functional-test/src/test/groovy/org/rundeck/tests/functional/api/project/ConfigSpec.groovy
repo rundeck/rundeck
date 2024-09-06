@@ -7,7 +7,7 @@ import org.rundeck.util.api.responses.project.ProjectCreateResponse
 import org.rundeck.util.api.responses.project.ProjectSource
 import org.rundeck.util.api.responses.system.SystemInfo
 import org.rundeck.util.container.BaseContainer
-import org.testcontainers.shaded.com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.core.type.TypeReference
 import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml
 
 @APITest
