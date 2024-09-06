@@ -154,7 +154,15 @@ class PluginStepTests  extends Specification implements DataTest{
             type                                       | pluginConfig                      | expect
             ScriptCommand.SCRIPT_COMMAND_TYPE          | [script: 'a script']              | [adhocLocalString: 'a script']
             ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scriptfile: 'a file']            | [adhocFilepath: 'a file']
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scriptfile: 'a file',expandTokenInScriptFile:true]            | [adhocFilepath: 'a file',expandTokenInScriptFile:'true']
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scriptfile: 'a file',expandTokenInScriptFile:'true']            | [adhocFilepath: 'a file',expandTokenInScriptFile:'true']
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scriptfile: 'a file',expandTokenInScriptFile:false]            | [adhocFilepath: 'a file',expandTokenInScriptFile:'false']
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scriptfile: 'a file',expandTokenInScriptFile:'false']            | [adhocFilepath: 'a file',expandTokenInScriptFile:'false']
             ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scripturl: 'http://example.com'] | [adhocFilepath: 'http://example.com']
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scripturl: 'http://example.com',expandTokenInScriptFile:true] | [adhocFilepath: 'http://example.com',expandTokenInScriptFile:'true']
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scripturl: 'http://example.com',expandTokenInScriptFile:'true'] | [adhocFilepath: 'http://example.com',expandTokenInScriptFile:'true']
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scripturl: 'http://example.com',expandTokenInScriptFile:false] | [adhocFilepath: 'http://example.com',expandTokenInScriptFile:'false']
+            ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | [scripturl: 'http://example.com',expandTokenInScriptFile:'false'] | [adhocFilepath: 'http://example.com',expandTokenInScriptFile:'false']
     }
 
     def "update from map legacy type script props with extra configuration"() {
