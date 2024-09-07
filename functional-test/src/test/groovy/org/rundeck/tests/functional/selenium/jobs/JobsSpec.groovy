@@ -4,20 +4,16 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import org.openqa.selenium.By
 import org.openqa.selenium.Keys
-import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.Select
+import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.api.responses.jobs.CreateJobResponse
 import org.rundeck.util.common.jobs.JobUtils
-import org.rundeck.util.gui.pages.execution.ExecutionShowPage
-import org.rundeck.util.gui.pages.jobs.JobCreatePage
-import org.rundeck.util.gui.pages.jobs.JobListPage
-import org.rundeck.util.gui.pages.jobs.JobShowPage
-import org.rundeck.util.gui.pages.jobs.JobTab
-import org.rundeck.util.gui.pages.jobs.StepType
-import org.rundeck.util.gui.pages.login.LoginPage
-import org.rundeck.util.gui.pages.profile.UserProfilePage
-import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.activity.ActivityPage
+import org.rundeck.util.gui.pages.execution.ExecutionShowPage
+import org.rundeck.util.gui.pages.jobs.*
+import org.rundeck.util.gui.pages.login.LoginPage
+import org.rundeck.util.gui.pages.profile.UserProfilePage
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper
 import spock.lang.Stepwise
 
@@ -714,6 +710,8 @@ class JobsSpec extends SeleniumBase {
     def "Url job options"(){
         given:
         def projectName = "url-job-options-test"
+        def labelToSelect = "Y Label"
+        def expectedValue = "y value"
         JobCreatePage jobCreatePage = page JobCreatePage
         JobShowPage jobShowPage = page JobShowPage
         ExecutionShowPage executionShowPage = page ExecutionShowPage
@@ -727,7 +725,7 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.optionName(0).sendKeys("remote")
         jobCreatePage.scrollToElement(jobCreatePage.jobOptionAllowedValuesRemoteUrlInput)
         jobCreatePage.jobOptionAllowedValuesRemoteUrlInput.click()
-        jobCreatePage.jobOptionAllowedValuesRemoteUrlValueTextInput.sendKeys("https://httpbin.org/stream/4")
+        jobCreatePage.jobOptionAllowedValuesRemoteUrlValueTextInput.sendKeys("http://mock-server/remoteOptions.json")
         jobCreatePage.waitForElementVisible(jobCreatePage.saveOptionButton)
         jobCreatePage.scrollToElement(jobCreatePage.saveOptionButton)
         jobCreatePage.saveOptionButton.click()
@@ -735,14 +733,18 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.createJobButton.click()
         jobShowPage.waitForElementVisible(jobShowPage.jobUuid)
         jobShowPage.goToJob(jobShowPage.jobUuid.text)
-        jobShowPage.waitForElementVisible(jobShowPage.getJobOptionValueListItem("url"))
-        jobShowPage.getJobOptionValueListItem("url").click()
-        def optionValueSelected = jobShowPage.jobOptionValueInput.getAttribute("value")
+        jobShowPage.waitForElementToBeClickable(jobShowPage.jobOptionsDropdown)
+        def optionsDropdown = new Select(jobShowPage.jobOptionsDropdown)
+        optionsDropdown.selectByVisibleText(labelToSelect)
+        def selectedElement = optionsDropdown.getFirstSelectedOption()
+        def optionValueSelected = selectedElement.getAttribute("value")
         jobShowPage.runJob(true)
         def optionValueExecuted = executionShowPage.optionValueSelected.text
 
         then:
         optionValueExecuted == optionValueSelected
+        optionValueSelected == expectedValue
+        optionValueExecuted == expectedValue
 
         cleanup:
         deleteProject(projectName)

@@ -3,14 +3,14 @@ services:
     build:
       context: "."
       args:
-        IMAGE: ${TEST_IMAGE}
+        IMAGE: ${TEST_IMAGE:-rundeck/rundeck:SNAPSHOT}
     platform: ${TEST_TARGET_PLATFORM:-linux/amd64}
     environment:
       RUNDECK_DATABASE_DRIVER: org.mariadb.jdbc.Driver
       RUNDECK_DATABASE_USERNAME: rundeck
       RUNDECK_DATABASE_PASSWORD: rundeck
       RUNDECK_DATABASE_URL: jdbc:mysql://rundeck-db/rundeck?autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true
-      RUNDECK_GRAILS_URL: ${TEST_RUNDECK_GRAILS_URL}
+      RUNDECK_GRAILS_URL: ${TEST_RUNDECK_GRAILS_URL:-http://localhost:4440}
       RUNDECK_SERVER_FORWARDED: 'true'
       RUNDECK_TOKENS_FILE: /home/rundeck/server/config/tokens.properties
       RUNDECK_MULTIURL_ENABLED: "true"
@@ -78,7 +78,9 @@ services:
   mock-server:
     image: nginx:latest
     volumes:
-      - ./mock-scripts:/usr/share/nginx/html:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/html:/usr/share/nginx/html:ro
+
     ports:
       - "8080:80"
 
