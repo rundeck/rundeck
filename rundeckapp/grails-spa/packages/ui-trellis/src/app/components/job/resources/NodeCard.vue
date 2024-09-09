@@ -294,7 +294,6 @@ export default defineComponent({
     },
   },
   watch: {
-    nodeSet(newVal) {},
     nodeFilterStore: {
       async handler(newValue) {
         if (newValue.selectedFilter === "" && this.hideAll) {
