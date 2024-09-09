@@ -32,21 +32,20 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
         se.workflow.commands.first().type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
 
         se.workflow.commands.first().configuration == [
-            adhocFilepath          : 'path/to/file.sh',
-            expandTokenInScriptFile: expandTokenInScriptFile
-        ] + (emptyargs ? [argString: ''] : [:])
+            adhocFilepath          : 'path/to/file.sh'
+        ] + additional
 
         where:
-        format | input                       | expandTokenInScriptFile | emptyargs
-        "xml"  | getJobXmlScriptfile(true)   | true                    | true
-        "xml"  | getJobXmlScriptfile(false)  | false                   | true
-        "xml"  | getJobXmlScriptfile(null)   | false                   | true
-        "yaml" | getJobYamlScriptfile(true)  | true                    | false
-        "yaml" | getJobYamlScriptfile(false) | false                   | false
-        "yaml" | getJobYamlScriptfile(null)  | false                   | false
-        "json" | getJobJsonScriptfile(true)  | true                    | false
-        "json" | getJobJsonScriptfile(false) | false                   | false
-        "json" | getJobJsonScriptfile(null)  | false                   | false
+        format | input                       | additional
+        "xml"  | getJobXmlScriptfile(true)   | [expandTokenInScriptFile: 'true', argString: '']
+        "xml"  | getJobXmlScriptfile(false)  | [expandTokenInScriptFile: 'false', argString: '']
+        "xml"  | getJobXmlScriptfile(null)   | [argString: '']
+        "yaml" | getJobYamlScriptfile(true)  | [expandTokenInScriptFile: 'true']
+        "yaml" | getJobYamlScriptfile(false) | [expandTokenInScriptFile: 'false']
+        "yaml" | getJobYamlScriptfile(null)  | [:]
+        "json" | getJobJsonScriptfile(true)  | [expandTokenInScriptFile: 'true']
+        "json" | getJobJsonScriptfile(false) | [expandTokenInScriptFile: 'false']
+        "json" | getJobJsonScriptfile(null)  | [:]
     }
     def "test decode script URL step with/without expandTokenInScriptFile field"() {
         when:
@@ -61,21 +60,20 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
         se.workflow.commands.first().type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
 
         se.workflow.commands.first().configuration == [
-            adhocFilepath          : 'http://example.com',
-            expandTokenInScriptFile: expandTokenInScriptFile
-        ] + (emptyargs ? [argString: ''] : [:])
+            adhocFilepath          : 'http://example.com'
+        ] + additional
 
         where:
-        format | input                                            | expandTokenInScriptFile | emptyargs
-        "xml"  | getJobXmlScriptURL('http://example.com', true)   | true                    | true
-        "xml"  | getJobXmlScriptURL('http://example.com', false)  | false                   | true
-        "xml"  | getJobXmlScriptURL('http://example.com', null)   | false                   | true
-        "yaml" | getJobYamlScriptURL('http://example.com', true)  | true                    | false
-        "yaml" | getJobYamlScriptURL('http://example.com', false) | false                   | false
-        "yaml" | getJobYamlScriptURL('http://example.com', null)  | false                   | false
-        "json" | getJobJsonScriptURL('http://example.com', true)  | true                    | false
-        "json" | getJobJsonScriptURL('http://example.com', false) | false                   | false
-        "json" | getJobJsonScriptURL('http://example.com', null)  | false                   | false
+        format | input                                            | additional
+        "xml"  | getJobXmlScriptURL('http://example.com', true)   | [expandTokenInScriptFile: 'true', argString: '']
+        "xml"  | getJobXmlScriptURL('http://example.com', false)  | [expandTokenInScriptFile: 'false', argString: '']
+        "xml"  | getJobXmlScriptURL('http://example.com', null)   | [argString: '']
+        "yaml" | getJobYamlScriptURL('http://example.com', true)  | [expandTokenInScriptFile: 'true']
+        "yaml" | getJobYamlScriptURL('http://example.com', false) | [expandTokenInScriptFile: 'false']
+        "yaml" | getJobYamlScriptURL('http://example.com', null)  | [:]
+        "json" | getJobJsonScriptURL('http://example.com', true)  | [expandTokenInScriptFile: 'true']
+        "json" | getJobJsonScriptURL('http://example.com', false) | [expandTokenInScriptFile: 'false']
+        "json" | getJobJsonScriptURL('http://example.com', null)  | [:]
     }
 
     def "test decode command step"() {
@@ -124,6 +122,33 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
             "xml"  | getJobXmlScript()  | true
             "yaml" | getJobYamlScript() | false
             "json" | getJobJsonScript() | false
+    }
+    def "test decode script step with options"() {
+        when:
+            List<ImportedJob<ScheduledExecution>> jobList = rundeckJobDefinitionManager
+                .decodeFormat(format, new ByteArrayInputStream(input.getBytes()))
+
+        then:
+            jobList.size() == 1
+            ScheduledExecution se = jobList.first().getJob()
+            se
+            se.workflow.commands.size() == 1
+            se.workflow.commands.first() instanceOf PluginStep
+            se.workflow.commands.first().type == ScriptCommand.SCRIPT_COMMAND_TYPE
+
+            se.workflow.commands.first().configuration == [
+                adhocLocalString: 'some script',
+                argString: "oi",
+                fileExtension: "sh",
+                interpreterArgsQuoted: 'true',
+                scriptInterpreter: "sh",
+            ]
+
+        where:
+            format | input
+            "xml"  | getJobXmlScriptOptions()
+            "yaml" | getJobYamlScriptOptions()
+            "json" | getJobJsonScriptOptions()
     }
 
     def "test decode script step multiline"() {
@@ -280,6 +305,16 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
       </command>${XML_SUFFIX}"""
     }
 
+    private static String getJobXmlScriptOptions() {
+        return """${XML_PREFIX}
+      <command>
+        <scriptargs>oi</scriptargs>
+        <fileExtension>sh</fileExtension>
+        <script>some script</script>
+        <scriptinterpreter argsquoted='true'>sh</scriptinterpreter>
+      </command>${XML_SUFFIX}"""
+    }
+
     private static String getJobXmlScriptMultiline(String data) {
         return """${XML_PREFIX}
       <command>
@@ -336,6 +371,17 @@ ${YAML_SUFFIX}
     private static String getJobYamlScript() {
         return """${YAML_PREFIX}
       - script: some script
+${YAML_SUFFIX}
+"""
+    }
+
+    private static String getJobYamlScriptOptions() {
+        return """${YAML_PREFIX}
+      - script: some script
+        args: oi
+        fileExtension: sh
+        interpreterArgsQuoted: 'true'
+        scriptInterpreter: sh
 ${YAML_SUFFIX}
 """
     }
@@ -420,6 +466,16 @@ ${YAML_SUFFIX}
     private static String getJobJsonScript() {
         return """${JSON_PREFIX}[{
         "script": "some script"
+      }]${JSON_SUFFIX}
+"""
+    }
+    private static String getJobJsonScriptOptions() {
+        return """${JSON_PREFIX}[{
+        "script": "some script",
+        "args": "oi",
+        "fileExtension": "sh",
+        "interpreterArgsQuoted": true,
+        "scriptInterpreter": "sh"
       }]${JSON_SUFFIX}
 """
     }
