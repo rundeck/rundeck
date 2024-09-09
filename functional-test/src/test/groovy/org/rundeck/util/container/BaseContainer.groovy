@@ -8,6 +8,7 @@ import okhttp3.ResponseBody
 import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.api.storage.KeyStorageApiClient
 import org.rundeck.util.common.WaitBehaviour
+import org.rundeck.util.common.WaitUtils
 import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.jobs.JobUtils
 import spock.lang.Specification
@@ -280,16 +281,29 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         println(nodeList)
         def count = 0
 
-        waitFor(
-                {
-                    //force refresh project
-                    client.doPutWithJsonBody("/project/$project/config/time", ["time": System.currentTimeMillis()])
-                    response = client.doGet("/project/$project/resources")
-                    safelyMap(response, Map.class, { [:] })
-                },
-                { it.get(nodename) != null },
-                WaitingTime.EXCESSIVE
-        )
+//        waitFor(
+//                {
+//                    //force refresh project
+//                    client.doPutWithJsonBody("/project/$project/config/time", ["time": System.currentTimeMillis()])
+//                    response = client.doGet("/project/$project/resources")
+//                    safelyMap(response, Map.class, { [:] })
+//                },
+//                { it.get(nodename) != null },
+//                WaitingTime.EXCESSIVE
+//        )
+
+        // Builder Example
+        WaitUtils.buildFor {
+            //force refresh project
+            client.doPutWithJsonBody("/project/$project/config/time", ["time": System.currentTimeMillis()])
+            response = client.doGet("/project/$project/resources")
+            safelyMap(response, Map.class, { [:] })
+        }
+        .withResourceAcceptanceEvaluator { it.get(nodename) != null }
+        .withTimeout(WaitingTime.EXCESSIVE)
+        .doWait()
+
+
     }
 
     RdClient _client
