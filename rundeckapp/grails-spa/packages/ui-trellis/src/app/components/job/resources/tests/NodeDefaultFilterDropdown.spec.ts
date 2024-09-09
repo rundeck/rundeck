@@ -1,21 +1,17 @@
+const mockEventBus = {
+  emit: jest.fn(),
+  on: jest.fn(),
+  off: jest.fn(),
+};
 import { mount, VueWrapper } from "@vue/test-utils";
 import NodeDefaultFilterDropdown from "../NodeDefaultFilterDropdown.vue";
-import mitt, { Emitter, EventType } from "mitt";
 
-jest.mock("@/library/rundeckService", () => {
-  return {
-    getRundeckContext: jest.fn().mockReturnValue({
-      rdBase: "mockRdBase",
-      projectName: "test-project",
-      eventBus: {
-        on: jest.fn(),
-        emit: jest.fn(),
-        off: jest.fn(),
-      },
-    }),
-  };
-});
-
+jest.mock("@/library/rundeckService", () => ({
+  getRundeckContext: jest.fn().mockReturnValue({
+    rdBase: "mockRdBase",
+    eventBus: mockEventBus,
+  }),
+}));
 const mockNodeSummary = {
   filters: [
     { filterName: "filter1", filter: "filter1" },
@@ -24,10 +20,7 @@ const mockNodeSummary = {
   totalCount: 2,
 };
 
-const mountNodeDefaultFilterDropdown = async (
-  props = {},
-  options: Record<string, any> = {},
-) => {
+const mountNodeDefaultFilterDropdown = async (props = {}) => {
   const wrapper = mount(NodeDefaultFilterDropdown, {
     props: {
       isDefaultFilter: false,
@@ -50,14 +43,10 @@ const mountNodeDefaultFilterDropdown = async (
   return wrapper as VueWrapper<InstanceType<typeof NodeDefaultFilterDropdown>>;
 };
 describe("NodeDefaultFilterDropdown Component", () => {
-  let eventBus: Emitter<Record<EventType, any>>;
-  beforeAll(() => {
-    eventBus = mitt();
+  beforeEach(() => {
+    jest.clearAllMocks(); // Clear mocks to ensure isolated tests
   });
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-  it("triggers filter event when a saved filter is selected", async () => {
+  it("emits filter event when a saved filter is selected", async () => {
     const wrapper = await mountNodeDefaultFilterDropdown();
     const filterLink = wrapper.find('a[data-testid="saved-filter"]');
     await filterLink.trigger("click");
@@ -65,18 +54,34 @@ describe("NodeDefaultFilterDropdown Component", () => {
       { filterName: "filter1", filter: "filter1" },
     ]);
   });
-  it("sets a filter as default", async () => {
-    const emitSpy = jest.spyOn(eventBus, "emit");
-    const wrapper = await mountNodeDefaultFilterDropdown();
-    eventBus.emit("nodefilter:action:setDefault", "filter1");
-    const setDefaultLink = wrapper.find(
-      'a[data-testid="set-default-filter-link"]',
-    );
-    expect(setDefaultLink.exists()).toBe(true);
-    await setDefaultLink.trigger("click");
-    expect(emitSpy).toHaveBeenCalledWith(
-      "nodefilter:action:setDefault",
-      "filter1",
-    );
+  describe("sets a filter as default", () => {
+    it("when starting without a default filter", async () => {
+      const wrapper = await mountNodeDefaultFilterDropdown();
+      const setDefaultLink = wrapper.find(
+        'a[data-testid="set-default-filter-link"]',
+      );
+      await setDefaultLink.trigger("click");
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        "nodefilter:action:setDefault",
+        "filter1",
+      );
+    });
+    it("when starting with a default filter", async () => {
+      const wrapper = await mountNodeDefaultFilterDropdown({
+        isDefaultFilter: true,
+        nodeSummary: {
+          ...mockNodeSummary,
+          defaultFilter: "filter1",
+        },
+      });
+
+      const removeDefaultLink = wrapper.find(
+        'a[data-testid="remove-default-filter-link"]',
+      );
+      await removeDefaultLink.trigger("click");
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        "nodefilter:action:removeDefault",
+      );
+    });
   });
 });

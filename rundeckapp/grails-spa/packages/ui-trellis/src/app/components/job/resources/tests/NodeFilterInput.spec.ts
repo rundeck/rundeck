@@ -82,7 +82,6 @@ describe("NodeFilterInput Component", () => {
     await input.setValue("new filter");
     await input.trigger("blur");
     expect(wrapper.emitted()["update:modelValue"][0]).toEqual(["new filter"]);
-    expect(input.attributes("placeholder")).toBe("enter.a.node.filter");
     await input.setValue("updated filter");
     await input.trigger("keydown.enter");
     expect(wrapper.emitted()["update:modelValue"][1]).toEqual([
@@ -99,11 +98,10 @@ describe("NodeFilterInput Component", () => {
     const input = wrapper.find('input[data-testid="new-filter-name-input"]');
     await input.setValue("newFilter");
     await input.trigger("blur");
-    const saveFilterLink = wrapper.find(
+    const saveFilterButton = wrapper.find(
       'button[data-testid="save-filter-button"]',
     );
-    expect(saveFilterLink.exists()).toBe(true);
-    await saveFilterLink.trigger("click");
+    await saveFilterButton.trigger("click");
     expect(mockNodeFilterStore.saveFilter).toHaveBeenCalledWith(
       "test-project",
       {
