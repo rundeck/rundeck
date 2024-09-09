@@ -16,7 +16,6 @@
 
 package com.dtolabs.rundeck.core.execution.impl.common;
 
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
@@ -77,10 +76,11 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
             final InputStream input,
             final String script,
             final INodeEntry node,
-            final boolean expandTokens
+            final boolean expandTokens,
+            ContentModifier modifier
     ) throws FileCopierException
     {
-        return writeScriptTempFile(context, original, input, script, node, null, expandTokens);
+        return writeScriptTempFile(context, original, input, script, node, null, expandTokens, modifier);
     }
     /**
      * Copy a script file, script source stream, or script string into a temp file, and replace \
@@ -101,17 +101,18 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
      *          if an IO problem occurs
      */
     @Override
-    public  File writeScriptTempFile(
+    public File writeScriptTempFile(
             final ExecutionContext context,
             final File original,
             final InputStream input,
             final String script,
             final INodeEntry node,
             final File destination,
-            final boolean expandTokens
+            final boolean expandTokens,
+            ContentModifier modifier
     ) throws FileCopierException
     {
-        final Framework framework = context.getFramework();
+        final IFramework framework = context.getIFramework();
 
         //create new dataContext with the node data, and write the script (file,
         // content or strea) to a temp file
@@ -137,36 +138,44 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
             }
             if (null != original) {
                 //don't replace tokens
-                try (FileInputStream in = new FileInputStream(original)) {
-                    try (FileOutputStream out = new FileOutputStream(tempfile)) {
-                        Streams.copyStream(in, out);
-                    }
-                }
+                ScriptfileUtils.writeScriptFile(
+                        null,
+                        null,
+                        new FileReader(original),
+                        style,
+                        tempfile,
+                        addBom,
+                        modifier
+                );
             } else if (null != script) {
                 if (expandTokens) {
-                    SharedDataContextUtils.replaceTokensInScript(
-                            script,
+                    SharedDataContextUtils.replaceTokensInReader(
+                            new StringReader(script),
                             sharedContext,
                             style,
                             tempfile,
                             node.getNodename(),
-                            addBom
+                            true,
+                            addBom,
+                            modifier
                     );
                 } else {
-                    ScriptfileUtils.writeScriptFile(null, script, null, style, tempfile, addBom);
+                    ScriptfileUtils.writeScriptFile(null, script, null, style, tempfile, addBom, modifier);
                 }
             } else if (null != input) {
                 if (expandTokens) {
-                    SharedDataContextUtils.replaceTokensInStream(
-                            input,
+                    SharedDataContextUtils.replaceTokensInReader(
+                            new InputStreamReader(input),
                             sharedContext,
                             style,
                             tempfile,
                             node.getNodename(),
-                            addBom
+                            true,
+                            addBom,
+                            modifier
                     );
                 } else {
-                    ScriptfileUtils.writeScriptFile(input, null, null, style, tempfile, addBom);
+                    ScriptfileUtils.writeScriptFile(input, null, null, style, tempfile, addBom, modifier);
                 }
             } else {
                 return null;

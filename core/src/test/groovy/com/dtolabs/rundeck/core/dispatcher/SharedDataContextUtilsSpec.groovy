@@ -407,4 +407,66 @@ class SharedDataContextUtilsSpec extends Specification {
         'echo \'@option.domain@\'' | [option: [domain: 'peabody']] | [option: [domain: 'olive']] | 'echo \'olive\'\n'
         'echo \'@option.domain@\'' | [:]                           | [option: [domain: 'olive']] | 'echo \'olive\'\n'
     }
+
+    def "replaceTokensInReader without modifier"() {
+        given:
+            File dest = File.createTempFile('test', 'tmp')
+            def node = 'mynode'
+            def reader = new StringReader(input)
+            def sharedContext = WFSharedContext
+                .with(ContextView.global(), DataContextUtils.context([option: [test: 'value']]))
+        when:
+            SharedDataContextUtils.replaceTokensInReader(
+                reader,
+                sharedContext,
+                ScriptfileUtils.LineEndingStyle.UNIX,
+                dest,
+                node,
+                false,
+                false,
+                null
+            )
+        then:
+            dest.text == expected
+        where:
+            eachLine | input                              | expected
+            false    | 'echo @option.test@'               | 'echo value\n'
+            true     | 'echo @option.test@'               | 'echo value\n'
+            false    | 'echo @option.test@\nanother line' | 'echo value\nanother line\n'
+            true     | 'echo @option.test@\nanother line' | 'echo value\nanother line\n'
+    }
+
+    def "replaceTokensInReader with modifier"() {
+        given:
+            File dest = File.createTempFile('test', 'tmp')
+            def node = 'mynode'
+            def reader = new StringReader(input)
+            def sharedContext = WFSharedContext
+                .with(ContextView.global(), DataContextUtils.context([option: [test: 'value']]))
+            def modifier = { line, sink ->
+                sink.writeLine('before')
+                sink.writeLine(line)
+                sink.writeLine('after')
+                eachLine
+            }
+        when:
+            SharedDataContextUtils.replaceTokensInReader(
+                reader,
+                sharedContext,
+                ScriptfileUtils.LineEndingStyle.UNIX,
+                dest,
+                node,
+                false,
+                false,
+                modifier
+            )
+        then:
+            dest.text == expected
+        where:
+            eachLine | input                              | expected
+            false    | 'echo @option.test@'               | 'before\necho value\nafter\n'
+            true     | 'echo @option.test@'               | 'before\necho value\nafter\n'
+            false    | 'echo @option.test@\nanother line' | 'before\necho value\nafter\nanother line\n'
+            true     | 'echo @option.test@\nanother line' | 'before\necho value\nafter\nbefore\nanother line\nafter\n'
+    }
 }

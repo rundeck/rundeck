@@ -91,13 +91,11 @@ class ExecExportSpec extends BaseContainer{
 
         Execution exec1 = mapper.readValue(jobRun1.body().string(), Execution.class)
 
-        Execution JobExecutionStatus1 = JobUtils.waitForExecutionToBe(
+        Execution JobExecutionStatus1 = JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
-                exec1.id as String,
-                mapper,
+                exec1.id,
                 client,
-                WaitingTime.MODERATE.milliSeconds,
-                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+                WaitingTime.EXCESSIVE
         )
 
         then:
@@ -109,13 +107,11 @@ class ExecExportSpec extends BaseContainer{
 
         Execution exec2 = mapper.readValue(jobRun2.body().string(), Execution.class)
 
-        Execution JobExecutionStatus2 = JobUtils.waitForExecutionToBe(
+        Execution JobExecutionStatus2 = JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
-                exec2.id as String,
-                mapper,
+                exec2.id,
                 client,
-                WaitingTime.MODERATE.milliSeconds,
-                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+                WaitingTime.EXCESSIVE
         )
 
         then:

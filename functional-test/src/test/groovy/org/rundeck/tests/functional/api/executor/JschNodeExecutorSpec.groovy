@@ -1,6 +1,6 @@
 package org.rundeck.tests.functional.api.executor
 
-import com.fasterxml.jackson.databind.ObjectMapper
+
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.execution.ExecutionStatus
@@ -52,13 +52,11 @@ class JschNodeExecutorSpec extends BaseContainer{
         when:
 
         def json = client.jsonValue(response.body(), Map)
-        def exec= JobUtils.waitForExecutionToBe(
+        def exec= JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 json.id as String,
-                new ObjectMapper(),
                 client,
-                WaitingTime.MODERATE.milliSeconds,
-                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+                WaitingTime.EXCESSIVE
         )
         then:
         exec.status==ExecutionStatus.SUCCEEDED.state
@@ -82,13 +80,11 @@ class JschNodeExecutorSpec extends BaseContainer{
         when:
 
         def json = client.jsonValue(response.body(), Map)
-        def exec= JobUtils.waitForExecutionToBe(
+        def exec= JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 json.id as String,
-                new ObjectMapper(),
                 client,
-                WaitingTime.MODERATE.milliSeconds,
-                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+                WaitingTime.EXCESSIVE
         )
         then:
         exec.status==ExecutionStatus.SUCCEEDED.state

@@ -1,10 +1,9 @@
 package org.rundeck.tests.functional.api.job
 
-import com.fasterxml.jackson.databind.ObjectMapper
+
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.common.execution.ExecutionStatus
 import org.rundeck.util.common.jobs.JobUtils
-import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.container.BaseContainer
 
 import java.time.LocalDateTime
@@ -118,14 +117,11 @@ class JobScheduledSpec extends BaseContainer {
         when:
             def jobRun = JobUtils.executeJobWithArgs(jobId, client, "-opt2 a")
             def execId = jsonValue(jobRun.body()).id
-            def responseExec = JobUtils.waitForExecutionToBe(
+            def responseExec = JobUtils.waitForExecution(
                     ExecutionStatus.TIMEDOUT.state,
                     execId as String,
-                    new ObjectMapper(),
-                    client,
-                    WaitingTime.LOW.milliSeconds / 1000 as int,
-                    WaitingTime.LOW.milliSeconds
-            )
+                    client)
+
         then:
             verifyAll {
                 responseExec.status == 'timedout'
@@ -160,28 +156,22 @@ class JobScheduledSpec extends BaseContainer {
         when:
             def jobRun = JobUtils.executeJobWithArgs(jobId, client, "-opt2 a")
             def execId = jsonValue(jobRun.body()).id
-            def response = JobUtils.waitForExecutionToBe(
+            def response = JobUtils.waitForExecution(
                     ExecutionStatus.FAILED_WITH_RETRY.state,
                     execId as String,
-                    new ObjectMapper(),
-                    client,
-                    WaitingTime.LOW.milliSeconds / 1000 as int,
-                    WaitingTime.LOW.milliSeconds
-            )
+                    client)
+
         then:
             verifyAll {
                 response.status == 'failed-with-retry'
                 response.retriedExecution.id != null
             }
         when:
-            def responseExec1 = JobUtils.waitForExecutionToBe(
+            def responseExec1 = JobUtils.waitForExecution(
                     ExecutionStatus.TIMEDOUT.state,
                     response.retriedExecution.id as String,
-                    new ObjectMapper(),
-                    client,
-                    WaitingTime.LOW.milliSeconds / 1000 as int,
-                    WaitingTime.LOW.milliSeconds
-            )
+                    client)
+
         then:
             verifyAll {
                 responseExec1.status == 'timedout'

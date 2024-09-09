@@ -30,7 +30,7 @@ import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil
-import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
+import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapter
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
@@ -80,6 +80,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
     def File pluginCacheDirectory
     def RundeckEmbeddedPluginExtractor rundeckEmbeddedPluginExtractor
     RundeckPluginBlocklist rundeckPluginBlocklist
+    PluginAdapter rundeckPluginAdapter
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -200,7 +201,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         def description = pluginDesc.description
         Map<String, Object> config=null
         if (description) {
-            config = PluginAdapterUtility.configureProperties(resolverFactory.create(service.name,description), description, plugin, defaultScope);
+            config = rundeckPluginAdapter.configureProperties(resolverFactory.create(service.name,description), description, plugin, defaultScope);
         }
         if(plugin instanceof ConfiguredBy && pluginDesc.groupDescribedPlugin && service.name != ServiceNameConstants.PluginGroup) {
             def grouped = configurePluginByName(
@@ -261,7 +262,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         def description = pluginDesc.description
         Map<String, Object> config = null
         if (description) {
-            config = PluginAdapterUtility.configureProperties(resolverFactory.create(service.name,description), description, plugin, defaultScope);
+            config = rundeckPluginAdapter.configureProperties(resolverFactory.create(service.name,description), description, plugin, defaultScope);
         }
         if(plugin instanceof ConfiguredBy && pluginDesc.groupDescribedPlugin) {
             def grouped = configurePluginByName(
@@ -291,7 +292,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         def description = pluginDesc.description
         Map<String, Object> config=[:]
         if (description && description instanceof Description) {
-            config = PluginAdapterUtility.mapDescribedProperties(factory.create(service.name,description), description, defaultScope)
+            config = rundeckPluginAdapter.mapDescribedProperties(factory.create(service.name,description), description, defaultScope)
         }
         return config
     }
@@ -544,7 +545,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
             && serviceName != ServiceNameConstants.PluginGroup
         ) {
             //load group instance
-            Description groupTypeDesc = PluginAdapterUtility.buildDescription(d.pluginGroupType,DescriptionBuilder.builder())
+            Description groupTypeDesc = rundeckPluginAdapter.buildDescription(d.pluginGroupType,DescriptionBuilder.builder())
             String groupTypeName = groupTypeDesc.name
             groupInstance = loadPluginDescriptorByName(groupTypeName, createPluggableService(PluginGroup))
         }
@@ -578,8 +579,8 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                 Description desc = null
                 if (bean instanceof Describable) {
                     desc = ((Describable) bean).description
-                } else if (PluginAdapterUtility.canBuildDescription(bean)) {
-                    desc = PluginAdapterUtility.buildDescription(bean, DescriptionBuilder.builder())
+                } else if (rundeckPluginAdapter.canBuildDescription(bean)) {
+                    desc = rundeckPluginAdapter.buildDescription(bean, DescriptionBuilder.builder())
                 }
                 if(!desc){
                     return false
@@ -613,8 +614,8 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                 Description desc = null
                 if (bean instanceof Describable) {
                     desc = ((Describable) bean).description
-                } else if (PluginAdapterUtility.canBuildDescription(bean)) {
-                    desc = PluginAdapterUtility.buildDescription(bean, DescriptionBuilder.builder())
+                } else if (rundeckPluginAdapter.canBuildDescription(bean)) {
+                    desc = rundeckPluginAdapter.buildDescription(bean, DescriptionBuilder.builder())
                 }
                 if(!desc){
                     return null
@@ -686,8 +687,8 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                     Description desc=null
                     if (bean instanceof Describable) {
                         desc = ((Describable) bean).description
-                    } else if (PluginAdapterUtility.canBuildDescription(bean)) {
-                        desc = PluginAdapterUtility.buildDescription(bean, DescriptionBuilder.builder())
+                    } else if (rundeckPluginAdapter.canBuildDescription(bean)) {
+                        desc = rundeckPluginAdapter.buildDescription(bean, DescriptionBuilder.builder())
                     }
 
                     list[pluginName] = new DescribedPlugin(

@@ -2,6 +2,8 @@ package org.rundeck.tests.functional.selenium.execution
 
 import org.rundeck.util.gui.pages.execution.CommandPage
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
+import org.rundeck.util.gui.pages.jobs.JobCreatePage
+import org.rundeck.util.gui.pages.jobs.JobShowPage
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
@@ -150,6 +152,27 @@ class CommandSpec extends SeleniumBase {
             executionShowPage.viewContentOutput.isDisplayed()
             !executionShowPage.viewButtonOutput.isDisplayed()
             executionShowPage.viewButtonNodes.isDisplayed()
+    }
+
+    def "save as job button saves the command as a job"() {
+        when:
+        def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
+        def jobCreatePage = page JobCreatePage
+        def jobShowPage = page  JobShowPage
+        then:
+        commandPage.nodeFilterTextField.click()
+        commandPage.nodeFilterTextField.sendKeys".*"
+        commandPage.filterNodeButton.click()
+        commandPage.waitForElementToBeClickable commandPage.commandTextField
+        commandPage.commandTextField.click()
+        commandPage.waitForElementAttributeToChange commandPage.commandTextField, 'disabled', null
+        commandPage.commandTextField.sendKeys "echo running test '" + this.class.name.toString() + "'"
+        commandPage.runButton.click()
+        commandPage.saveAsJobButton.click()
+        jobCreatePage.getJobNameInput().sendKeys("From Command")
+        jobCreatePage.saveJob()
+        expect:
+        jobShowPage.validatePage()
     }
 
 }

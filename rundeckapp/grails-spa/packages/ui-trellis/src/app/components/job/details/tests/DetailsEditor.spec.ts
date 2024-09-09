@@ -2,7 +2,7 @@ import { shallowMount, VueWrapper } from "@vue/test-utils";
 import DetailsEditor from "../DetailsEditor.vue";
 import AceEditor from "@/library/components/utils/AceEditor.vue";
 import UiSocket from "@/library/components/utils/UiSocket.vue";
-import mitt, { Emitter, EventType } from "mitt";
+import mitt from "mitt";
 
 jest.mock("@/library", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({

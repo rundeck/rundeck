@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.common.execution.ExecutionStatus
 import org.rundeck.util.common.jobs.JobUtils
-import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.projects.ProjectUtils
 import org.rundeck.util.container.BaseContainer
 
@@ -188,14 +187,11 @@ class ExecutionSpec extends BaseContainer {
             def jobId = responseImport.succeeded[2].id
             def jobRun = JobUtils.executeJobWithArgs(jobId, client, "-opt1 foobar")
             def execId = jsonValue(jobRun.body()).id
-            def response = JobUtils.waitForExecutionToBe(
+            def response = JobUtils.waitForExecution(
                     ExecutionStatus.SUCCEEDED.state,
                     execId as String,
-                    mapper,
-                    client,
-                    WaitingTime.LOW.milliSeconds / 1000 as int,
-                    WaitingTime.LOW.milliSeconds
-            )
+                    client)
+
             def state = client.get("/execution/${response.id}/state", Map)
         then:
             verifyAll {
@@ -239,40 +235,28 @@ class ExecutionSpec extends BaseContainer {
             def jobRun2 = JobUtils.executeJobWithArgs(jobId2, client, "-opt2 a")
             int execId4 = jsonValue(jobRun2.body()).id as Integer
         then: "wait for executions to finish"
-            def responseExecId1 = JobUtils.waitForExecutionToBe(
+            def responseExecId1 = JobUtils.waitForExecution(
                     ExecutionStatus.SUCCEEDED.state,
                     execId1 as String,
-                    mapper,
-                    client,
-                    WaitingTime.LOW.milliSeconds / 1000 as int,
-                    WaitingTime.LOW.milliSeconds
+                    client
             )
             responseExecId1.status == 'succeeded'
-            def responseExecId2 = JobUtils.waitForExecutionToBe(
+            def responseExecId2 = JobUtils.waitForExecution(
                     ExecutionStatus.FAILED.state,
                     execId2 as String,
-                    mapper,
-                    client,
-                    WaitingTime.LOW.milliSeconds / 1000 as int,
-                    WaitingTime.LOW.milliSeconds
+                    client
             )
             responseExecId2.status == 'failed'
-            def responseExecId3 = JobUtils.waitForExecutionToBe(
+            def responseExecId3 = JobUtils.waitForExecution(
                     ExecutionStatus.SUCCEEDED.state,
                     execId3 as String,
-                    mapper,
-                    client,
-                    WaitingTime.LOW.milliSeconds / 1000 as int,
-                    WaitingTime.LOW.milliSeconds
+                    client
             )
             responseExecId3.status == 'succeeded'
-            def responseExecId4 = JobUtils.waitForExecutionToBe(
+            def responseExecId4 = JobUtils.waitForExecution(
                     ExecutionStatus.SUCCEEDED.state,
                     execId4 as String,
-                    mapper,
-                    client,
-                    WaitingTime.LOW.milliSeconds / 1000 as int,
-                    WaitingTime.LOW.milliSeconds
+                    client
             )
             responseExecId4.status == 'succeeded'
         when: "executions"

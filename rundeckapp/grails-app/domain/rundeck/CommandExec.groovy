@@ -18,6 +18,9 @@ package rundeck
 
 import org.rundeck.app.data.job.converters.WorkflowToRdWorkflowConverter
 import org.rundeck.core.execution.BaseCommandExec
+import org.rundeck.core.execution.ExecCommand
+import org.rundeck.core.execution.ScriptCommand
+import org.rundeck.core.execution.ScriptFileCommand
 import rundeck.data.constants.WorkflowStepConstants
 
 /*
@@ -33,7 +36,10 @@ public class CommandExec extends WorkflowStep implements BaseCommandExec {
     String adhocRemoteString
     String adhocLocalString
     String adhocFilepath
-    Boolean adhocExecution = false
+    /**
+     * UNUSED
+     */
+    Boolean adhocExecution = true
     String scriptInterpreter
     String fileExtension
     Boolean interpreterArgsQuoted
@@ -193,6 +199,13 @@ public class CommandExec extends WorkflowStep implements BaseCommandExec {
         return map
     }
 
+    /**
+     *
+     * @param data
+     * @return
+     * @deprecated
+     */
+    @Deprecated
     static CommandExec fromMap(Map data) {
         CommandExec ce = new CommandExec()
         updateFromMap(ce, data)
@@ -200,36 +213,52 @@ public class CommandExec extends WorkflowStep implements BaseCommandExec {
     }
 
     static void updateFromMap(CommandExec ce, Map data) {
-        if(data.exec != null){
-            ce.adhocExecution = true
-            ce.adhocRemoteString=data.exec.toString()
-        }else if(data.script != null){
-            ce.adhocExecution = true
-            ce.adhocLocalString=data.script.toString()
-        }else if(data.scriptfile != null){
-            ce.adhocExecution = true
-            ce.adhocFilepath=data.scriptfile.toString()
-            ce.expandTokenInScriptFile = !!data.expandTokenInScriptFile
-        }else if(data.scripturl != null){
-            ce.adhocExecution = true
-            ce.adhocFilepath=data.scripturl.toString()
-            ce.expandTokenInScriptFile = !!data.expandTokenInScriptFile
-        }
-        if(data.scriptInterpreter != null && !ce.adhocRemoteString){
-            ce.scriptInterpreter=data.scriptInterpreter
-            ce.interpreterArgsQuoted = !!data.interpreterArgsQuoted
-        }
-        if(data.fileExtension != null && !ce.adhocRemoteString){
-            ce.fileExtension=data.fileExtension
-        }
-        if(data.args != null && !ce.adhocRemoteString){
-            ce.argString=data.args.toString()
-        }
-        ce.keepgoingOnSuccess=!!data.keepgoingOnSuccess
-        ce.description=data.description?.toString()
+        setConfigurationFromMap(ce, data)
+        ce.keepgoingOnSuccess = !!data.keepgoingOnSuccess
+        ce.description = data.description?.toString()
         //nb: error handler is created inside Workflow.fromMap
         if (data.plugins) {
             ce.pluginConfig = data.plugins
+        }
+    }
+
+
+
+    /**
+     * Set configuration properties on the object from the
+     * job definition data map
+     * @param obj new object, intentially not typed to allow for CommandExec or Map
+     * @param data job definition map data
+     */
+    static void setConfigurationFromMap(Object obj, Map data) {
+        if (data.exec != null) {
+            obj.adhocRemoteString = data.exec.toString()
+        } else if (data.script != null) {
+            obj.adhocLocalString = data.script.toString()
+        } else if (data.scriptfile != null) {
+            obj.adhocFilepath = data.scriptfile.toString()
+            obj.expandTokenInScriptFile = booleanVal(data.expandTokenInScriptFile)
+        } else if (data.scripturl != null) {
+            obj.adhocFilepath = data.scripturl.toString()
+            obj.expandTokenInScriptFile = booleanVal(data.expandTokenInScriptFile)
+        }
+        if (data.scriptInterpreter != null && !obj.adhocRemoteString) {
+            obj.scriptInterpreter = data.scriptInterpreter.toString()
+            obj.interpreterArgsQuoted = booleanVal(data.interpreterArgsQuoted)
+        }
+        if (data.fileExtension != null && !obj.adhocRemoteString) {
+            obj.fileExtension = data.fileExtension.toString()
+        }
+        if (data.args != null && !obj.adhocRemoteString) {
+            obj.argString = data.args.toString()
+        }
+    }
+
+    private static boolean booleanVal(Object val) {
+        if (val instanceof Boolean) {
+            return val
+        } else {
+            return Boolean.parseBoolean(val.toString())
         }
     }
 

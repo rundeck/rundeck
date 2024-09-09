@@ -1,14 +1,13 @@
 package org.rundeck.tests.functional.api.project
 
+import org.rundeck.util.annotations.APITest
 import org.rundeck.util.api.responses.common.ConfigProperty
 import org.rundeck.util.api.responses.nodes.Node
 import org.rundeck.util.api.responses.project.ProjectCreateResponse
 import org.rundeck.util.api.responses.project.ProjectSource
 import org.rundeck.util.api.responses.system.SystemInfo
-import org.rundeck.util.annotations.APITest
-import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.container.BaseContainer
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.core.type.TypeReference
 import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml
 
 @APITest
@@ -25,7 +24,6 @@ class ConfigSpec extends BaseContainer{
                         "test.property2": "test value2"
                 ]
         ]
-        def mapper = new ObjectMapper()
 
         when:
         def response = client.doPost(
@@ -33,7 +31,7 @@ class ConfigSpec extends BaseContainer{
                 testProperties
         )
         assert response.successful
-        ProjectCreateResponse parsedResponse = mapper.readValue(
+        ProjectCreateResponse parsedResponse = MAPPER.readValue(
                 response.body().string(),
                 ProjectCreateResponse.class
         )
@@ -49,11 +47,11 @@ class ConfigSpec extends BaseContainer{
         when: "TEST: GET config"
         def responseForProp1 = doGet("/project/${projectName}/config/test.property")
         assert responseForProp1.successful
-        ConfigProperty prop1 = mapper.readValue(responseForProp1.body().string(), ConfigProperty.class)
+        ConfigProperty prop1 = MAPPER.readValue(responseForProp1.body().string(), ConfigProperty.class)
 
         def responseForProp2 = doGet("/project/${projectName}/config/test.property2")
         assert responseForProp2.successful
-        ConfigProperty prop2 = mapper.readValue(responseForProp2.body().string(), ConfigProperty.class)
+        ConfigProperty prop2 = MAPPER.readValue(responseForProp2.body().string(), ConfigProperty.class)
 
         then:
         prop1.key == "test.property"
@@ -82,8 +80,8 @@ class ConfigSpec extends BaseContainer{
         assert responseForUpdatedProp1.successful
 
 
-        ConfigProperty updatedProp1 = mapper.readValue(responseForUpdatedProp1.body().string(), ConfigProperty.class)
-        ConfigProperty updatedProp2 = mapper.readValue(responseForUpdatedProp2.body().string(), ConfigProperty.class)
+        ConfigProperty updatedProp1 = MAPPER.readValue(responseForUpdatedProp1.body().string(), ConfigProperty.class)
+        ConfigProperty updatedProp2 = MAPPER.readValue(responseForUpdatedProp2.body().string(), ConfigProperty.class)
 
         then:
         updatedProp1.value != "test value"
@@ -102,7 +100,7 @@ class ConfigSpec extends BaseContainer{
         def responseForUpdatedProp3 = doGet("/project/${projectName}/config/test.property3")
         assert responseForUpdatedProp3.successful
 
-        ConfigProperty updatedProp3 = mapper.readValue(responseForUpdatedProp3.body().string(), ConfigProperty.class)
+        ConfigProperty updatedProp3 = MAPPER.readValue(responseForUpdatedProp3.body().string(), ConfigProperty.class)
 
         then:
         updatedProp3 != null
@@ -111,7 +109,7 @@ class ConfigSpec extends BaseContainer{
         when: "All config updated"
         def allConfigResponse = doGet("/project/${projectName}/config")
         assert allConfigResponse.successful
-        Map<String, Object> props = mapper.readValue(allConfigResponse.body().string(), HashMap<String, Object>.class)
+        Map<String, Object> props = MAPPER.readValue(allConfigResponse.body().string(), HashMap<String, Object>.class)
 
         then:
         props != null
@@ -134,7 +132,6 @@ class ConfigSpec extends BaseContainer{
                         "test.property2": "test value2"
                 ]
         ]
-        def mapper = new ObjectMapper()
 
         when:
         def response = client.doPost(
@@ -142,7 +139,7 @@ class ConfigSpec extends BaseContainer{
                 testProperties
         )
         assert response.successful
-        ProjectCreateResponse parsedResponse = mapper.readValue(
+        ProjectCreateResponse parsedResponse = MAPPER.readValue(
                 response.body().string(),
                 ProjectCreateResponse.class
         )
@@ -157,11 +154,11 @@ class ConfigSpec extends BaseContainer{
         when: "TEST: GET config"
         def responseForProp1 = doGet("/project/${projectName}/config/test.property")
         assert responseForProp1.successful
-        ConfigProperty prop1 = mapper.readValue(responseForProp1.body().string(), ConfigProperty.class)
+        ConfigProperty prop1 = MAPPER.readValue(responseForProp1.body().string(), ConfigProperty.class)
 
         def responseForProp2 = doGet("/project/${projectName}/config/test.property2")
         assert responseForProp2.successful
-        ConfigProperty prop2 = mapper.readValue(responseForProp2.body().string(), ConfigProperty.class)
+        ConfigProperty prop2 = MAPPER.readValue(responseForProp2.body().string(), ConfigProperty.class)
 
         then:
         prop1.key == "test.property"
@@ -176,7 +173,7 @@ class ConfigSpec extends BaseContainer{
                 "test.property3":"created value 3"
         ]
         def updatedResponse = client.doPutWithJsonBody("/project/${projectName}/config", updatedProps)
-        Map<String, Object> parsedUpdatedProps = mapper.readValue(updatedResponse.body().string(), HashMap<String, Object>.class)
+        Map<String, Object> parsedUpdatedProps = MAPPER.readValue(updatedResponse.body().string(), HashMap<String, Object>.class)
 
         then:
         parsedUpdatedProps."test.property" == "updated value 1"
@@ -199,7 +196,6 @@ class ConfigSpec extends BaseContainer{
                         "test.property2": "test value2"
                 ]
         ]
-        def mapper = new ObjectMapper()
 
         when:
         def response = client.doPost(
@@ -207,7 +203,7 @@ class ConfigSpec extends BaseContainer{
                 testProperties
         )
         assert response.successful
-        ProjectCreateResponse parsedResponse = mapper.readValue(
+        ProjectCreateResponse parsedResponse = MAPPER.readValue(
                 response.body().string(),
                 ProjectCreateResponse.class
         )
@@ -237,7 +233,6 @@ class ConfigSpec extends BaseContainer{
                         "test.property": "test value",
                 ]
         ]
-        def mapper = new ObjectMapper()
 
         when: "TEST: POST /api/14/projects"
         def response = client.doPost(
@@ -245,7 +240,7 @@ class ConfigSpec extends BaseContainer{
                 testProperties
         )
         assert response.successful
-        ProjectCreateResponse parsedResponse = mapper.readValue(
+        ProjectCreateResponse parsedResponse = MAPPER.readValue(
                 response.body().string(),
                 ProjectCreateResponse.class
         )
@@ -282,7 +277,6 @@ class ConfigSpec extends BaseContainer{
                         "test.property": "test value",
                 ]
         ]
-        def mapper = new ObjectMapper()
 
         when: "TEST: POST /api/14/projects"
         def response = client.doPost(
@@ -290,7 +284,7 @@ class ConfigSpec extends BaseContainer{
                 testProperties
         )
         assert response.successful
-        ProjectCreateResponse parsedResponse = mapper.readValue(
+        ProjectCreateResponse parsedResponse = MAPPER.readValue(
                 response.body().string(),
                 ProjectCreateResponse.class
         )
@@ -319,7 +313,6 @@ class ConfigSpec extends BaseContainer{
                         "test.property": "test value",
                 ]
         ]
-        def mapper = new ObjectMapper()
 
         when: "TEST: POST /api/14/projects"
         def response = client.doPost(
@@ -327,7 +320,7 @@ class ConfigSpec extends BaseContainer{
                 testProperties
         )
         assert response.successful
-        ProjectCreateResponse parsedResponse = mapper.readValue(
+        ProjectCreateResponse parsedResponse = MAPPER.readValue(
                 response.body().string(),
                 ProjectCreateResponse.class
         )
@@ -348,11 +341,10 @@ class ConfigSpec extends BaseContainer{
         given:
         def client = getClient()
         def projectName = "RhetoricalMiscalculationElephant"
-        def mapper = new ObjectMapper()
 
         when:
         def response = client.doGet("/project/$projectName")
-        def parsedBody = mapper.readValue(response.body().string(), Object.class)
+        def parsedBody = MAPPER.readValue(response.body().string(), Object.class)
 
         then:
         response.code() == 404
@@ -365,12 +357,11 @@ class ConfigSpec extends BaseContainer{
         given:
         def client = getClient()
         def projectName = "RhetoricalMiscalculationElephant"
-        def mapper = new ObjectMapper()
 
         when: "We check only the format of the response, regardless of the content"
         def jsonResponseBody = client.doGet("/project/$projectName")
         def responseString = jsonResponseBody.body().string()
-        def validJsonParse = mapper.readValue(responseString, Object.class)
+        def validJsonParse = MAPPER.readValue(responseString, Object.class)
 
         then:
         !isYamlValid(responseString)
@@ -396,11 +387,10 @@ class ConfigSpec extends BaseContainer{
     def "test-project-resources-404"(){
         given:
         def client = getClient()
-        def mapper = new ObjectMapper()
 
         when:
         def jsonResponseBody = client.doGet("/project/someProject/resources")
-        def validJsonParse = mapper.readValue(jsonResponseBody.body().string(), Object.class)
+        def validJsonParse = MAPPER.readValue(jsonResponseBody.body().string(), Object.class)
 
         then:
         !jsonResponseBody.successful
@@ -437,13 +427,12 @@ class ConfigSpec extends BaseContainer{
     def "test-project-resources"(){
         given:
         setupProject()
-        def mapper = new ObjectMapper()
         def client = getClient()
 
         when: "YAML"
         def yamlResponse = client.doGet("/project/$PROJECT_NAME/resources?format=yaml")
         def responseBody = yamlResponse.body().string()
-        mapper.readValue(responseBody, Object.class)
+        MAPPER.readValue(responseBody, Object.class)
 
         then: "Invalid JSON"
         thrown Exception
@@ -458,7 +447,7 @@ class ConfigSpec extends BaseContainer{
         when:
         def jsonResponse = client.doGet("/project/$PROJECT_NAME/resources?format=json")
         def responseJsonBody = jsonResponse.body().string()
-        def json = mapper.readValue(responseJsonBody, Object.class)
+        def json = MAPPER.readValue(responseJsonBody, Object.class)
 
         then: "JSON is invalid"
         !isYamlValid(responseJsonBody)
@@ -466,7 +455,7 @@ class ConfigSpec extends BaseContainer{
 
         when: "A unsupported format"
         def unsupportedResponse = client.doGetAcceptAll("/project/$PROJECT_NAME/resources?format=unsupported")
-        def unsupportedParsedResponse = mapper.readValue(unsupportedResponse.body().string(), Object.class)
+        def unsupportedParsedResponse = MAPPER.readValue(unsupportedResponse.body().string(), Object.class)
 
         then: "unsupported"
         unsupportedParsedResponse.errorCode == "api.error.resource.format.unsupported"
@@ -476,7 +465,7 @@ class ConfigSpec extends BaseContainer{
         when:
         client.apiVersion = 2 // as the original test states
         def unsupportedApiVersionResponse = client.doGetAcceptAll("/project/$PROJECT_NAME/resources")
-        def parsedUnsupportedApiVersionResponse = mapper.readValue(unsupportedApiVersionResponse.body().string(), Object.class)
+        def parsedUnsupportedApiVersionResponse = MAPPER.readValue(unsupportedApiVersionResponse.body().string(), Object.class)
 
         then:
         parsedUnsupportedApiVersionResponse.errorCode == "api.error.api-version.unsupported"
@@ -490,13 +479,12 @@ class ConfigSpec extends BaseContainer{
     def "test-require-versions"(){
         given:
         def client = getClient()
-        def mapper = new ObjectMapper()
         String apiVersion = testApiVersion
         client.apiVersion
 
         when: "Api version FAKE"
         def response = client.doGetCustomApiVersion("/projects", apiVersion)
-        Object parsedResponse = mapper.readValue(response.body().string(), Object.class)
+        Object parsedResponse = MAPPER.readValue(response.body().string(), Object.class)
 
         then:
         response.successful == successfulResponse
@@ -514,7 +502,6 @@ class ConfigSpec extends BaseContainer{
     def "test-resource"(){
         given:
         def client = getClient()
-        def mapper = new ObjectMapper()
         def testResourceNode = "test-node"
         def projectName = "test-resource" // delete me
         def projectMapJson = [
@@ -527,14 +514,14 @@ class ConfigSpec extends BaseContainer{
 
         //Extract local nodename
         def systemInfoResponse = doGet("/system/info")
-        SystemInfo systemInfo = mapper.readValue(systemInfoResponse.body().string(), SystemInfo.class)
+        SystemInfo systemInfo = MAPPER.readValue(systemInfoResponse.body().string(), SystemInfo.class)
         def localNode = systemInfo.system?.rundeck?.node
 
         when: "Obtain project's resources data in JSON"
         def localResourceNodeResponse = doGet("/project/$projectName/resource/$localNode")
         def localResourceString = localResourceNodeResponse.body().string()
-        def parsedLocalNode = mapper.readValue(localResourceString, Map<String, Map>.class)
-        def nodes = parsedLocalNode.collectEntries { nodeId, nodeData -> [nodeId, mapper.convertValue(nodeData, Node)] }
+        def parsedLocalNode = MAPPER.readValue(localResourceString, Map<String, Map>.class)
+        def nodes = parsedLocalNode.collectEntries { nodeId, nodeData -> [nodeId, MAPPER.convertValue(nodeData, Node)] }
         def localNodeProps = nodes[localNode]
 
         then:
@@ -554,7 +541,7 @@ class ConfigSpec extends BaseContainer{
         when: "If we attempt to use the response as JSON we'll get an exception"
         def localResourceNodeResponseYamlForJson = doGet("/project/$projectName/resource/$localNode?format=yaml")
         def localResourceYamlStringForJson = localResourceNodeResponseYamlForJson.body().string()
-        mapper.readValue(localResourceYamlStringForJson, Map<String, Map>.class)
+        MAPPER.readValue(localResourceYamlStringForJson, Map<String, Map>.class)
 
         then:
         thrown Exception
@@ -562,8 +549,8 @@ class ConfigSpec extends BaseContainer{
         when: "We try to get a specific node from project"
         def specificResourceResponse = doGet("/project/$projectName/resource/$testResourceNode")
         def specificResourceResponseString = specificResourceResponse.body().string()
-        def parsedSpecificResourceResponseString = mapper.readValue(specificResourceResponseString, Map<String, Map>.class)
-        def specificNodes = parsedSpecificResourceResponseString.collectEntries { nodeId, nodeData -> [nodeId, mapper.convertValue(nodeData, Node)] }
+        def parsedSpecificResourceResponseString = MAPPER.readValue(specificResourceResponseString, Map<String, Map>.class)
+        def specificNodes = parsedSpecificResourceResponseString.collectEntries { nodeId, nodeData -> [nodeId, MAPPER.convertValue(nodeData, Node)] }
         def specificNode = specificNodes[testResourceNode]
 
         then:
@@ -578,7 +565,6 @@ class ConfigSpec extends BaseContainer{
     def "test-resources"(){
         given:
         def client = getClient()
-        def mapper = new ObjectMapper()
         def projectName = "test-resources" // delete me
         def projectMapJson = [
                 "name":projectName
@@ -590,16 +576,15 @@ class ConfigSpec extends BaseContainer{
 
         //Extract local nodename
         def systemInfoResponse = doGet("/system/info")
-        SystemInfo systemInfo = mapper.readValue(systemInfoResponse.body().string(), SystemInfo.class)
+        SystemInfo systemInfo = MAPPER.readValue(systemInfoResponse.body().string(), SystemInfo.class)
         def localNode = systemInfo.system?.rundeck?.node
 
         when: "Obtain all the nodes wait a bit"
-        Thread.sleep(WaitingTime.MODERATE.milliSeconds * 2)
         def allNodesResponse = client.doGetAcceptAll("/project/$projectName/resources")
         assert allNodesResponse.successful
         def allNodesResponseString = allNodesResponse.body().string()
-        def parsedAllNodes = mapper.readValue(allNodesResponseString, Map<String, Map>.class)
-        def allNodes = parsedAllNodes.collectEntries { nodeId, nodeData -> [nodeId, mapper.convertValue(nodeData, Node)] }
+        def parsedAllNodes = MAPPER.readValue(allNodesResponseString, Map<String, Map>.class)
+        def allNodes = parsedAllNodes.collectEntries { nodeId, nodeData -> [nodeId, MAPPER.convertValue(nodeData, Node)] }
 
         then: "We check tha nodes qty and the format of the repsonse (must be json)"
         allNodes.size() > 1
@@ -617,14 +602,14 @@ class ConfigSpec extends BaseContainer{
         parsedAllNodesYaml != null
 
         when: "We try to parse yaml into JSON"
-        mapper.readValue(allNodesResponseYamlString, Object.class)
+        MAPPER.readValue(allNodesResponseYamlString, Object.class)
 
         then: "Exeception thrown"
         thrown Exception
 
         when: "We request resources with unsupported format"
         def allNodesResponseInvalidApi = client.doGetAcceptAll("/project/$projectName/resources?format=sandwich")
-        def parsedAllNodesResponseInvalidApi = mapper.readValue(allNodesResponseInvalidApi.body().string(), Object.class)
+        def parsedAllNodesResponseInvalidApi = MAPPER.readValue(allNodesResponseInvalidApi.body().string(), Object.class)
 
         then: "The api will return error code"
         parsedAllNodesResponseInvalidApi.errorCode == "api.error.resource.format.unsupported"
@@ -635,8 +620,8 @@ class ConfigSpec extends BaseContainer{
         def allNodesResponseFilteredByTag = client.doGetAcceptAll("/project/$projectName/resources?tags=testBoth")
         assert allNodesResponseFilteredByTag.successful
         def allNodesResponseFilteredByTagString = allNodesResponseFilteredByTag.body().string()
-        def parsedNodesResponseFilteredByTagString = mapper.readValue(allNodesResponseFilteredByTagString, Map<String, Map>.class)
-        def parsedNodesFilteredByTag = parsedNodesResponseFilteredByTagString.collectEntries { nodeId, nodeData -> [nodeId, mapper.convertValue(nodeData, Node)] }
+        def parsedNodesResponseFilteredByTagString = MAPPER.readValue(allNodesResponseFilteredByTagString, Map<String, Map>.class)
+        def parsedNodesFilteredByTag = parsedNodesResponseFilteredByTagString.collectEntries { nodeId, nodeData -> [nodeId, MAPPER.convertValue(nodeData, Node)] }
 
         then: "Must be 2 of the 3 in total"
         parsedNodesFilteredByTag.size() == 2
@@ -645,8 +630,8 @@ class ConfigSpec extends BaseContainer{
         def allNodesResponseExcludedByTag = client.doGetAcceptAll("/project/$projectName/resources?exclude-tags=testBoth")
         assert allNodesResponseExcludedByTag.successful
         def allNodesResponseExcludedByTagString = allNodesResponseExcludedByTag.body().string()
-        def parsedNodesResponseExcludedByTagString = mapper.readValue(allNodesResponseExcludedByTagString, Map<String, Map>.class)
-        def parsedNodesExcludedByTag = parsedNodesResponseExcludedByTagString.collectEntries { nodeId, nodeData -> [nodeId, mapper.convertValue(nodeData, Node)] }
+        def parsedNodesResponseExcludedByTagString = MAPPER.readValue(allNodesResponseExcludedByTagString, Map<String, Map>.class)
+        def parsedNodesExcludedByTag = parsedNodesResponseExcludedByTagString.collectEntries { nodeId, nodeData -> [nodeId, MAPPER.convertValue(nodeData, Node)] }
 
         then: "Must be 1 (localhost) of the 3 in total"
         parsedNodesExcludedByTag.size() == 1
@@ -656,8 +641,8 @@ class ConfigSpec extends BaseContainer{
         def mixedFilterResponse = client.doGetAcceptAll("/project/$projectName/resources?tags=testBoth&exclude-name=test-node")
         assert mixedFilterResponse.successful
         def mixedFilterResponseString = mixedFilterResponse.body().string()
-        def parsedMixedFilterResponseString = mapper.readValue(mixedFilterResponseString, Map<String, Map>.class)
-        def parsedMixedFilter = parsedMixedFilterResponseString.collectEntries { nodeId, nodeData -> [nodeId, mapper.convertValue(nodeData, Node)] }
+        def parsedMixedFilterResponseString = MAPPER.readValue(mixedFilterResponseString, Map<String, Map>.class)
+        def parsedMixedFilter = parsedMixedFilterResponseString.collectEntries { nodeId, nodeData -> [nodeId, MAPPER.convertValue(nodeData, Node)] }
 
         then: "Must be 1 (test-node2) of the 3 in total"
         parsedMixedFilter.size() == 1
@@ -667,8 +652,8 @@ class ConfigSpec extends BaseContainer{
         def mixedFilterWithPrecedenceResponse = client.doGetAcceptAll("/project/$projectName/resources?tags=test1&exclude-tags=testBoth&exclude-precedence=false")
         assert mixedFilterWithPrecedenceResponse.successful
         def mixedFilterWithPrecedenceResponseString = mixedFilterWithPrecedenceResponse.body().string()
-        def parsedMixedFilterWithPrecedenceResponseString = mapper.readValue(mixedFilterWithPrecedenceResponseString, Map<String, Map>.class)
-        def parsedMixedFilterWithPrecedence = parsedMixedFilterWithPrecedenceResponseString.collectEntries { nodeId, nodeData -> [nodeId, mapper.convertValue(nodeData, Node)] }
+        def parsedMixedFilterWithPrecedenceResponseString = MAPPER.readValue(mixedFilterWithPrecedenceResponseString, Map<String, Map>.class)
+        def parsedMixedFilterWithPrecedence = parsedMixedFilterWithPrecedenceResponseString.collectEntries { nodeId, nodeData -> [nodeId, MAPPER.convertValue(nodeData, Node)] }
 
         then: "Must be 1 (test-node2) of the 3 in total"
         parsedMixedFilterWithPrecedence.size() == 1
@@ -679,31 +664,30 @@ class ConfigSpec extends BaseContainer{
 
     }
 
-    def "test-v23-project-source-resources"(){
+    def "test-v23-project-source-resources"() {
         given:
         def client = getClient()
-        def mapper = new ObjectMapper()
         def projectName = "test-project-resources" // delete me
-        def resourceFile1 = "/home/rundeck/test-resources1.xml"
-        def resourceFile2 = "/home/rundeck/test-resources2.xml"
+        def resourceFile1 = "/home/rundeck/writable-resource-file.xml"
+        def resourceFile2 = "/home/rundeck/test-resources.xml"
         Object projectJsonMap = [
-                "name": projectName,
-                "config": [
-                    "resources.source.1.config.file":resourceFile1,
-                    "resources.source.1.config.format":"resourcexml",
-                    "resources.source.1.config.generateFileAutomatically":"false",
-                    "resources.source.1.config.includeServerNode":"false",
-                    "resources.source.1.config.requireFileExists":"false",
-                    "resources.source.1.config.writeable":"true",
-                    "resources.source.1.type":"file",
-                    "resources.source.2.config.file":resourceFile2,
-                    "resources.source.2.config.format":"resourcexml",
-                    "resources.source.2.config.generateFileAutomatically":"true",
-                    "resources.source.2.config.includeServerNode":"true",
-                    "resources.source.2.config.requireFileExists":"false",
-                    "resources.source.2.config.writeable":"false",
-                    "resources.source.2.type":"file"
-                ]
+            "name"  : projectName,
+            "config": [
+                "resources.source.1.config.file"                     : resourceFile1,
+                "resources.source.1.config.format"                   : "resourcexml",
+                "resources.source.1.config.generateFileAutomatically": "false",
+                "resources.source.1.config.includeServerNode"        : "false",
+                "resources.source.1.config.requireFileExists"        : "false",
+                "resources.source.1.config.writeable"                : "true",
+                "resources.source.1.type"                            : "file",
+                "resources.source.2.config.file"                     : resourceFile2,
+                "resources.source.2.config.format"                   : "resourcexml",
+                "resources.source.2.config.generateFileAutomatically": "true",
+                "resources.source.2.config.includeServerNode"        : "true",
+                "resources.source.2.config.requireFileExists"        : "false",
+                "resources.source.2.config.writeable"                : "false",
+                "resources.source.2.type"                            : "file"
+            ]
         ]
 
         def responseProject = createSampleProject(projectJsonMap)
@@ -711,68 +695,109 @@ class ConfigSpec extends BaseContainer{
 
         //Extract local nodename
         def systemInfoResponse = doGet("/system/info")
-        SystemInfo systemInfo = mapper.readValue(systemInfoResponse.body().string(), SystemInfo.class)
+        SystemInfo systemInfo = MAPPER.readValue(systemInfoResponse.body().string(), SystemInfo.class)
         def localNode = systemInfo.system?.rundeck?.node
 
         when: "we request all sources"
         def allSourcesResponse = client.doGetAcceptAll("/project/$projectName/sources")
         assert allSourcesResponse.successful
-        List<ProjectSource> sources = mapper.readValue(allSourcesResponse.body().string(), ArrayList<ProjectSource>.class)
+        List<ProjectSource> sources = MAPPER.readValue(allSourcesResponse.body().string(), ArrayList<ProjectSource>.class)
 
         then: "We can check them"
         sources.size() == 2
         sources[0].resources.writeable
-        !sources[0].resources.empty
+        sources[0].resources.empty
         !sources[1].resources.writeable
+        !sources[1].resources.empty
 
-        // and
 
-        when: "We request the first, only one will return"
+        when: "Request resources from the first source. Should be empty"
         def firstSourceResponse = client.doGetAcceptAll("/project/$projectName/source/1/resources")
         assert firstSourceResponse.successful
-        Node source1 = mapper.readValue(firstSourceResponse.body().string(), Node.class)
+        def firstSourceResponseString = firstSourceResponse.body().string()
+        Map<String, Node> source1Map = MAPPER.readValue(firstSourceResponseString, new TypeReference<Map<String, Node>>() {})
+        def source1 = source1Map.mynode1
 
-        then: "We can check it"
-        source1 != null
-        !source1.tags
-        !source1.hostname
 
-        // so
+        then: "Check we get no resources"
+        firstSourceResponseString == "{}"
+        source1Map.isEmpty()
+        source1 == null
 
-        when: "We request the second, only one will return"
+
+        when: "Request resources from the second source and check contents"
         def secondSourceResponse = client.doGetAcceptAll("/project/$projectName/source/2/resources")
         assert secondSourceResponse.successful
         def secondSourceResponseString = secondSourceResponse.body().string()
-        def parsedNodes = mapper.readValue(secondSourceResponseString, Map<String, Map>.class)
-        def nodes = parsedNodes.collectEntries { nodeId, nodeData -> [nodeId, mapper.convertValue(nodeData, Node)] }
-        def localNodeProps = nodes[localNode]
+        Map<String, Node> source2Map = MAPPER.readValue(secondSourceResponseString, new TypeReference<Map<String, Node>>() {})
+        def localNodeProps = source2Map[localNode]
+        def node1 = source2Map.node1
 
         then: "We can check the attributes"
-        localNodeProps.nodename != null
-        localNodeProps.hostname != null
-        localNodeProps.osFamily != null
+        localNodeProps.nodename == localNode
+        localNodeProps.hostname == localNode
+        !localNodeProps.osFamily.isEmpty()
+        !localNodeProps.osName.isEmpty()
+        !localNodeProps.osArch.isEmpty()
+        !localNodeProps.username.isEmpty()
+        localNodeProps.description == "Rundeck server node"
+        // check node1
+        node1.nodename == "node1"
+        node1.hostname == "hostname1"
+        node1.osName == "osName1"
+        node1.osFamily == "osFamily1"
+        node1.osArch == "osArch1"
+        node1.osVersion == "osVersion1"
+        node1.username == "username1"
+        node1.tags == "tag1, tag2"
+        node1.attributes.size() >= 5
+        node1.attributes.testattribute == "testvalue"
+        node1.attributes.testattribute2  == "test value2"
+        node1.attributes.testattribute3 == "test value3"
+        node1.attributes.editUrl == "EditURL"
+        node1.attributes.remoteUrl == "RemoteURL"
 
-        when: "We update the existing resource"
-        Object newAttributes = [
-                "mynode1":[
-                        "nodename":"mynode1",
-                        "hostname":"mynode1",
-                        "attr1":"testvalue",
-                        "tags":"api, test"
-                ]
-        ]
-        def nodeUpdatedResponse = client.doPost("/project/$projectName/source/1/resources", newAttributes)
-        assert nodeUpdatedResponse.successful
 
-        def nodeUpdatedResponseString = nodeUpdatedResponse.body().string()
-        def parsedNewAttribResponse = mapper.readValue(nodeUpdatedResponseString, LinkedHashMap.class)
+        when: "Update the first source with adding a new node"
+        def nodeUpdateResponse = client.doPost("/project/$projectName/source/1/resources", [
+            "mynode1": [
+                "nodename"   : "mynode1",
+                "description": "Updated node",
+                "tags"       : "api, test",
+                "hostname"   : "mynode1",
+                "osArch"     : "arm64",
+                "osFamily"   : "linux",
+                "osName"     : "Debian",
+                "osVersion"  : "1.0.0",
+                "username"   : "myusername",
+                "attr1"      : "testvalue",
+                "attr2"      : "testvalue2"
+            ]
+        ])
 
         then:
-        parsedNewAttribResponse != null
-        parsedNewAttribResponse["mynode1"].nodename == "mynode1"
-        parsedNewAttribResponse["mynode1"].hostname == "mynode1"
-        parsedNewAttribResponse["mynode1"].attr1 == "testvalue"
-        parsedNewAttribResponse["mynode1"].tags == "api, test"
+        assert nodeUpdateResponse.successful
+
+        when: "We request the updated node"
+        def updatedNodeResponse = client.doGetAcceptAll("/project/$projectName/source/1/resources")
+        def updatedNodeResponseString = updatedNodeResponse.body().string()
+        Map<String, Node> updatedNodeResponseMap = MAPPER.readValue(updatedNodeResponseString, new TypeReference<Map<String, Node>>() {})
+
+        then:
+        !updatedNodeResponseMap.isEmpty()
+        updatedNodeResponseMap.mynode1 != null
+        updatedNodeResponseMap.mynode1.nodename == "mynode1"
+        updatedNodeResponseMap.mynode1.description == "Updated node"
+        updatedNodeResponseMap.mynode1.tags == "api, test"
+        updatedNodeResponseMap.mynode1.hostname == "mynode1"
+        updatedNodeResponseMap.mynode1.osArch == "arm64"
+        updatedNodeResponseMap.mynode1.osFamily == "linux"
+        updatedNodeResponseMap.mynode1.osName == "Debian"
+        updatedNodeResponseMap.mynode1.osVersion == "1.0.0"
+        updatedNodeResponseMap.mynode1.username == "myusername"
+        updatedNodeResponseMap.mynode1.attributes.size() == 2
+        updatedNodeResponseMap.mynode1.attributes.attr1 == "testvalue"
+        updatedNodeResponseMap.mynode1.attributes.attr2 == "testvalue2"
 
         cleanup:
         deleteProject(projectName)
@@ -783,7 +808,6 @@ class ConfigSpec extends BaseContainer{
         given:
         def projectName = "test-project-sources-json"
         def client = getClient()
-        def mapper = new ObjectMapper()
         Object projectJsonMap = [
                 "name": projectName
         ]
@@ -795,7 +819,7 @@ class ConfigSpec extends BaseContainer{
         def allSourcesResponse = client.doGetAcceptAll("/project/$projectName/sources")
         assert allSourcesResponse.successful
         def allSourcesResponseString = allSourcesResponse.body().string()
-        List<ProjectSource> sources = mapper.readValue(allSourcesResponseString, ArrayList<ProjectSource>.class)
+        List<ProjectSource> sources = MAPPER.readValue(allSourcesResponseString, ArrayList<ProjectSource>.class)
 
         then: "The source will be in json format and will have properties"
         !isYamlValid(allSourcesResponseString)

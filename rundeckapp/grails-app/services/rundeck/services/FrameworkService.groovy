@@ -833,7 +833,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
         def result = [:]
         result.valid = false
         result.desc = description
-        Map props = parsePluginConfigInput(description, prefix, params)
+        Map props = parsePluginConfigInput(description, prefix, params, defaultScope, ignored)
         result.props=props
         PropertyResolver resolver = getFrameworkPropertyResolver(project, props)
         if (result.desc) {
@@ -854,10 +854,13 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
      * @return map of property name to value based on correct property types.
      */
     @CompileStatic(TypeCheckingMode.SKIP)
-    public Map parsePluginConfigInput(Description desc, String prefix, final Map params) {
+    public Map parsePluginConfigInput(Description desc, String prefix, final Map params,PropertyScope defaultScope=null, PropertyScope ignoredScope=null) {
         Map props = [:]
         if (desc) {
             desc.properties.each {prop ->
+                if (Validator.isPropertyScopeIgnored(prop.scope ?: defaultScope, ignoredScope)) {
+                    return
+                }
                 def v = params ? params[prefix + prop.name] : null
                 if (prop.type == Property.Type.Boolean) {
                     props.put(prop.name, (v == 'true' || v == 'on') ? 'true' : 'false')

@@ -55,6 +55,7 @@ import com.dtolabs.rundeck.core.plugins.JarPluginScanner
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.plugins.ScriptPluginScanner
 import com.dtolabs.rundeck.core.plugins.WatchingPluginDirProvider
+import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterImpl
 import com.dtolabs.rundeck.core.resources.format.ResourceFormats
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.storage.KeyStorageContextProvider
@@ -141,6 +142,7 @@ import org.rundeck.app.data.workflow.WorkflowDataWorkflowExecutionItemFactory
 import org.rundeck.app.quartz.ExecutionJobQuartzJobSpecifier
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
+import org.rundeck.app.spi.features.FeatureInfo
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.security.*
 import org.rundeck.web.DefaultRequestIdProvider
@@ -375,13 +377,15 @@ beans={
         clusterInfoServiceDelegate = ref('frameworkService')
     }
     rundeckApiInfoService(ApiInfo)
+    rundeckFeatureInfoService(FeatureInfo)
 
     rundeckSpiBaseServicesProvider(RundeckSpiBaseServicesProvider) {
         services = [
             (ClusterInfoService)         : ref('clusterInfoService'),
             (ApiInfo)                    : ref('rundeckApiInfoService'),
             (ExecutionFileManagerService): ref('logFileStorageService'),
-            (ResourceFormats)            : ref('pluginService')
+            (ResourceFormats)            : ref('pluginService'),
+            (FeatureInfo)                : ref('rundeckFeatureInfoService'),
         ]
     }
 
@@ -495,6 +499,10 @@ beans={
                 ref('jarPluginScanner'),
                 ref('scriptPluginScanner')
         ]
+    }
+
+    rundeckPluginAdapter(PluginAdapterImpl){
+        featureInfoService = ref('rundeckFeatureInfoService')
     }
 
     rundeckFrameworkExecutionProviderServices(FrameworkExecutionProviderServices){
@@ -795,6 +803,7 @@ beans={
         pluginDirectory=pluginDir
         pluginCacheDirectory=cacheDir
         rundeckPluginBlocklist=ref("rundeckPluginBlocklist")
+        rundeckPluginAdapter = ref('rundeckPluginAdapter')
     }
     hMacSynchronizerTokensManager(HMacSynchronizerTokensManager){
 

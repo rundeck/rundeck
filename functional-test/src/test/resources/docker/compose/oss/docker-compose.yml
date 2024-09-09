@@ -1,13 +1,16 @@
-version: "3"
 services:
   rundeck:
     build:
-      context: ""
+      context: "."
       args:
-        IMAGE: ${TEST_IMAGE}
+        IMAGE: ${TEST_IMAGE:-rundeck/rundeck:SNAPSHOT}
     platform: ${TEST_TARGET_PLATFORM:-linux/amd64}
     environment:
-      RUNDECK_GRAILS_URL: ${TEST_RUNDECK_GRAILS_URL}
+      RUNDECK_DATABASE_DRIVER: org.mariadb.jdbc.Driver
+      RUNDECK_DATABASE_USERNAME: rundeck
+      RUNDECK_DATABASE_PASSWORD: rundeck
+      RUNDECK_DATABASE_URL: jdbc:mysql://rundeck-db/rundeck?autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true
+      RUNDECK_GRAILS_URL: ${TEST_RUNDECK_GRAILS_URL:-http://localhost:4440}
       RUNDECK_SERVER_FORWARDED: 'true'
       RUNDECK_TOKENS_FILE: /home/rundeck/server/config/tokens.properties
       RUNDECK_MULTIURL_ENABLED: "true"
@@ -22,16 +25,25 @@ services:
       - "../../../resource-model:/home/resource-model"
       - "../../../test-files/job-run-steps-test-script1.txt:/home/rundeck/job-run-steps-test-script1.txt"
       - "../../../test-files/simpleScript.sh:/home/rundeck/simpleScript.sh"
-      - "../../../test-files/test-resources1.xml:/home/rundeck/test-resources1.xml"
-      - "../../../test-files/test-resources2.xml:/home/rundeck/test-resources2.xml"
+      - "../../../test-files/test-resources.xml:/home/rundeck/test-resources.xml"
       - "../../../test-files/saved_searches-A.json:/home/option1/saved_searches.json"
       - "../../../test-files/saved_searches-B.json:/home/option2/saved_searches.json"
       - "../../../test-files/saved_searches-C.json:/home/option3/saved_searches.json"
       - "../../../test-files/saved_searches-D.json:/home/option4/saved_searches.json"
-      - "${PWD}/executor:/home/rundeck/executor:rw"
-      - "${PWD}/mock-scripts:/home/rundeck/mock-scripts:rw"
-    networks:
-      - rundeck-network
+      - "./executor:/home/rundeck/executor:rw"
+      - "./mock-scripts:/home/rundeck/mock-scripts:rw"
+    ports:
+      - "4440:4440"
+
+  rundeck-db:
+    image: mysql:8
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=rundeck
+      - MYSQL_USER=rundeck
+      - MYSQL_PASSWORD=rundeck
+    ports:
+      - "3307:3306"
 
   gitea:
     build:
@@ -50,8 +62,6 @@ services:
       - "./gitea/gitea-cfg.ini:/data/gitea/conf/app.ini"
     ports:
       - "3000:3000"
-    networks:
-      - rundeck-network
 
   ssh-node:
     build:
@@ -59,22 +69,21 @@ services:
     platform: linux/amd64
     environment:
       NODE_USER_PASSWORD: testpassword123
-    networks:
-      - rundeck-network
     ports:
       - "22"
     volumes:
-      - ${PWD}/keys:/configuration:rw
-      - ${PWD}/mock-scripts:/mock-scripts:rw
+      - ./keys:/configuration:rw
+      - ./mock-scripts:/mock-scripts:rw
 
   mock-server:
     image: nginx:latest
     volumes:
-      - ${PWD}/mock-scripts:/usr/share/nginx/html:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/html:/usr/share/nginx/html:ro
+
     ports:
       - "8080:80"
-    networks:
-      - rundeck-network
 
 networks:
-  rundeck-network:
+  default:
+    name: rundeck-network

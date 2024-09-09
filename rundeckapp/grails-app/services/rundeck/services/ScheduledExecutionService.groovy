@@ -17,8 +17,13 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
+import org.springframework.jdbc.core.RowCallbackHandler
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import rundeck.data.job.reference.JobReferenceImpl
 import rundeck.data.job.reference.JobRevReferenceImpl
+import rundeck.data.util.JobTakeoverQueryBuilder
+import rundeck.services.feature.FeatureService
 import rundeck.support.filters.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.audit.ActionTypes
@@ -129,6 +134,8 @@ import rundeck.utils.OptionsUtil
 import org.rundeck.app.spi.AuthorizedServicesProvider
 
 import javax.servlet.http.HttpSession
+import java.sql.ResultSet
+import java.sql.SQLException
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
@@ -152,6 +159,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     ReferencedExecutionDataProvider referencedExecutionDataProvider
     JobStatsDataProvider jobStatsDataProvider
     QuartzJobSpecifier quartzJobSpecifier
+    def dataSource
 
     public final String REMOTE_OPTION_DISABLE_JSON_CHECK = 'project.jobs.disableRemoteOptionJsonCheck'
 
@@ -218,6 +226,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     JobDataProvider jobDataProvider
     UserService userService
     RdJobService rdJobService
+    FeatureService featureService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -770,6 +779,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return [claimed: !retry, executions: claimedExecs]
     }
 
+    def timer(String name, Closure closure) {
+        long start = System.currentTimeMillis()
+        def result = closure()
+        long end = System.currentTimeMillis()
+        log.info("Timer ${name} took ${end-start}ms")
+        return result
+    }
     /**
      * Claim scheduling for any jobs assigned to fromServerUUID, or not assigned if it is null
      * @param toServerUUID uuid to assign to scheduled jobs
@@ -789,7 +805,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def queryFromServerUUID = fromServerUUID
         def queryProject = projectFilter
         ScheduledExecution.withSession { session ->
-            def scheduledExecutions = jobSchedulesService.getSchedulesJobToClaim(toServerUUID, queryFromServerUUID, selectAll, queryProject, jobids)
+            def scheduledExecutions = timer("takeover query ") {
+                jobSchedulesService.getSchedulesJobToClaim(toServerUUID, queryFromServerUUID, selectAll, queryProject, jobids)
+            }
             scheduledExecutions.each { ScheduledExecution se ->
                 def orig = se.serverNodeUUID
                 if (!claimed[se.extid]) {
@@ -876,6 +894,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def rescheduleJob(ScheduledExecution scheduledExecution, wasScheduled, oldJobName, oldJobGroup, boolean forceLocal, boolean remoteAssigned = false) {
         if (jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid) && shouldScheduleInThisProject(scheduledExecution.project)) {
             try {
+                deleteJob(scheduledExecution.generateJobScheduledName(), scheduledExecution.generateJobGroupName())
                 return scheduleJob(scheduledExecution, oldJobName, oldJobGroup, forceLocal, remoteAssigned)
             } catch (SchedulerException e) {
                 log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
@@ -1157,7 +1176,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         boolean success = false
         Execution.withTransaction {
             //find any currently running executions for this job, and if so, throw exception
-            def found = Execution.createCriteria().get {
+            def found = Execution.createCriteria().list {
                 delegate.'scheduledExecution' {
                     eq('id', scheduledExecution.id)
                 }
@@ -2421,6 +2440,26 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         PluginConfigSet.with ServiceNameConstants.ExecutionLifecycle, configs
     }
 
+    static PluginConfigSet parseExecutionLifecyclePluginsJSON (JSONObject executionLifecyclePluginsParams) {
+        List<String> keys = executionLifecyclePluginsParams.keys().collect{it.toString()}
+
+        List<PluginProviderConfiguration> configs = []
+
+        keys.each { key ->
+            def pluginType = key
+            Map config = [:]
+            def confprops = executionLifecyclePluginsParams[key] ?: [:]
+            confprops.each { k, v ->
+                if (v != '' && v != null && !k.startsWith('_')) {
+                    config[k] = v
+                }
+            }
+
+            configs << SimplePluginConfiguration.builder().provider(pluginType).configuration(config).build()
+        }
+        PluginConfigSet.with ServiceNameConstants.ExecutionLifecycle, configs
+    }
+
     private Map validateExecutionLifecyclePlugin(
             String type,
             Map config,
@@ -2952,6 +2991,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             //define execution life cycle plugins config
             configSet = parseExecutionLifecyclePluginsParams(plugins)
         }
+        if (params?.jobExecutionPluginsJSON) {
+            def pluginsData = JSON.parse(params.jobExecutionPluginsJSON.toString())
+
+            if(pluginsData instanceof JSONObject) {
+                def executionLifecyclePlugins = pluginsData.getJSONObject("ExecutionLifecycle");
+                if(executionLifecyclePlugins && executionLifecyclePlugins instanceof JSONObject) {
+                    configSet = parseExecutionLifecyclePluginsJSON(executionLifecyclePlugins)
+                }
+
+            }
+        }
+
         executionLifecycleComponentService.setExecutionLifecyclePluginConfigSetForJob(scheduledExecution, configSet)
     }
 
@@ -4426,7 +4477,31 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return
      */
     List<ScheduledExecution> getSchedulesJobToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids, ignoreInnerScheduled = false) {
-
+        if(featureService.featurePresent("enhancedJobTakeoverQuery")) {
+            log.info("Using enhanced job takeover query")
+            String qry = JobTakeoverQueryBuilder.buildTakeoverQuery(toServerUUID, fromServerUUID, selectAll, projectFilter, jobids, ignoreInnerScheduled)
+            List<ScheduledExecution> jobList = []
+            var qryParams = new MapSqlParameterSource()
+            qryParams.addValue("toServerUUID", toServerUUID)
+            if(fromServerUUID){
+                qryParams.addValue("fromServerUUID", fromServerUUID)
+            }
+            if(projectFilter){
+                qryParams.addValue("projectFilter", projectFilter)
+            }
+            if(jobids){
+                qryParams.addValue("jobids", jobids)
+            }
+            NamedParameterJdbcTemplate jdbcTemplate = new NamedParameterJdbcTemplate(dataSource)
+            jdbcTemplate.query(qry, qryParams, new RowCallbackHandler() {
+                @Override
+                void processRow(ResultSet rs) throws SQLException {
+                    jobList.add(ScheduledExecution.read(rs.getLong("id") as Serializable))
+                }
+            })
+            return jobList
+        }
+        log.info("Using legacy job takeover query")
         return ScheduledExecution.createCriteria().listDistinct {
             or {
                 applyAdhocScheduledExecutionsCriteria(delegate, selectAll, fromServerUUID, toServerUUID, projectFilter)

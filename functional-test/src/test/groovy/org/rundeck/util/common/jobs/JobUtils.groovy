@@ -1,16 +1,24 @@
 package org.rundeck.util.common.jobs
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import groovy.util.logging.Slf4j
+import okhttp3.Headers
 import org.rundeck.util.api.responses.execution.Execution
-import org.rundeck.util.api.responses.jobs.Job
+import org.rundeck.util.api.responses.execution.ExecutionOutput
+import org.rundeck.util.api.responses.jobs.JobDetails
 import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.httpbody.ScmJobStatusResponse
+import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.container.RdClient
 
+import java.time.Duration
 import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 
+@Slf4j
 class JobUtils {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
 
     static final String DUPE_OPTION_SKIP = "skip"
 
@@ -55,11 +63,12 @@ class JobUtils {
 
     static def createJob(
             final String project,
-            final String jobDefinitionXml,
-            RdClient client
+            final String jobDefinitionString,
+            RdClient client,
+            String contentType = 'application/xml'
     ) {
         final String CREATE_JOB_ENDPOINT = "/project/${project}/jobs/import"
-        return client.doPostWithRawText(CREATE_JOB_ENDPOINT, "application/xml", jobDefinitionXml)
+        return client.doPostWithRawText(CREATE_JOB_ENDPOINT, contentType, jobDefinitionString)
     }
 
     static def generateScheduledExecutionXml(String jobName){
@@ -110,35 +119,111 @@ class JobUtils {
                 "</joblist>"
     }
 
-    static Job getJobDetailsById(final String jobId, final ObjectMapper mapper, RdClient client){
+    static JobDetails getJobDetailsById(final String jobId, final ObjectMapper mapper, RdClient client){
         def jobInfo = client.doGetAcceptAll("/job/${jobId}")
-        List<Job> jobs = mapper.readValue(jobInfo.body().string(), mapper.getTypeFactory().constructCollectionType(List.class, Job.class))
+        List<JobDetails> jobs = mapper.readValue(jobInfo.body().string(), mapper.getTypeFactory().constructCollectionType(List.class, JobDetails.class))
         return jobs[0]
     }
 
-    static Execution waitForExecutionToBe(
-            String state,
-            String executionId,
-            ObjectMapper mapper,
-            RdClient client,
-            int iterationGap,
-            int timeout
-    ){
-        Execution executionStatus
+
+    /**
+     * Waits for the execution to be in the expected state.
+     *
+     * @param expectedStates The expected state.
+     * @param executionId The execution ID to query.
+     * @param client The RdClient instance to perform the HTTP request.
+     * @param timeout The maximum duration to wait for the execution to reach the expected state.
+     * @param checkPeriod The time to wait between each check.
+     * @return The Execution object representing the execution status.
+     * @throws InterruptedException if the timeout is reached before the execution reaches the expected state.
+     */
+    static Execution waitForExecution(
+        String state,
+        String executionId,
+        RdClient client,
+        Duration timeout = WaitingTime.MODERATE,
+        Duration checkPeriod = WaitingTime.LOW
+    ) {
+        return waitForExecution([state], executionId, client, timeout, checkPeriod)
+    }
+
+
+    /**
+     * Waits for the execution to be in one of the expected states.
+     *
+     * @param expectedStates A list of expected states.
+     * @param executionId The execution ID to query.
+     * @param client The RdClient instance to perform the HTTP request.
+     * @param timeout The maximum duration to wait for the execution to reach the expected state.
+     * @param checkPeriod The time to wait between each check.
+     * @return The Execution object representing the execution status.
+     * @throws InterruptedException if the timeout is reached before the execution reaches the expected state.
+     */
+    static Execution waitForExecution(
+        Collection<String> expectedStates,
+        String executionId,
+        RdClient client,
+        Duration timeout = WaitingTime.MODERATE,
+        Duration checkPeriod = WaitingTime.LOW
+    ) {
         def execDetail = client.doGet("/execution/${executionId}")
-        executionStatus = mapper.readValue(execDetail.body().string(), Execution.class)
+        Execution executionStatus = OBJECT_MAPPER.readValue(execDetail.body().string(), Execution.class)
         long initTime = System.currentTimeMillis()
-        while(executionStatus.status != state){
-            if ((System.currentTimeMillis() - initTime) >= TimeUnit.SECONDS.toMillis(timeout)) {
-                throw new InterruptedException("Timeout reached (${timeout} seconds), the execution had \"${executionStatus.status}\" state.")
+        while (!expectedStates.contains(executionStatus.status)) {
+            if ((System.currentTimeMillis() - initTime) >= timeout.toMillis()) {
+                def execOutput = callSilently { getExecutionOutputText(executionId, client) }
+                throw new InterruptedException("Timeout reached (${timeout.toSeconds()} seconds), the execution had \"${executionStatus.status}\" state. Execution output was: \n${execOutput}\n")
             }
             def transientExecutionResponse = client.doGet("/execution/${executionId}")
-            executionStatus = mapper.readValue(transientExecutionResponse.body().string(), Execution.class)
-            if( executionStatus.status == state ) break
-            Thread.sleep(iterationGap)
+            executionStatus = OBJECT_MAPPER.readValue(transientExecutionResponse.body().string(), Execution.class)
+            if (expectedStates.contains(executionStatus.status)) {
+                break
+            }
+            Thread.sleep(Math.min(checkPeriod.toMillis(), timeout.toMillis()))
         }
         return executionStatus
     }
+
+    /**
+     * Calls the provided closure and returns its result, discarding any exception that may occur.
+     * @param closure The closure to call.
+     * @return The result of the closure, or null if an exception occurred.
+     */
+    private static <T> T callSilently(Closure<T> closure) {
+        try {
+            return closure.call()
+        } catch (Exception e) {
+            log.error("Error calling closure: ${e.message}", e)
+            return null
+        }
+    }
+
+    /**
+     * Retrieves the execution output for the specified execution ID.
+     * @param execId The execution ID to query.
+     * @param client The RdClient instance to perform the HTTP request.
+     * @param lastLinesCount The number of last lines to retrieve. Defaults to 0 (unlimited).
+     * @return The ExecutionOutput object representing the execution output.
+     */
+    static ExecutionOutput getExecutionOutput(String execId, RdClient client, int lastLinesCount = 0) {
+        def execOutputResponse = client.doGetAcceptAll("/execution/${execId}/output?lastlines=${lastLinesCount}")
+        ExecutionOutput execOutput = OBJECT_MAPPER.readValue(execOutputResponse.body().string(), ExecutionOutput.class)
+        return execOutput
+    }
+
+    /**
+     * Retrieves the execution output the specified execution ID as plain a text string.
+     * @param execId The execution ID to query.
+     * @param client The RdClient instance to perform the HTTP request.
+     * @param lastLinesCount The number of last lines to retrieve. Defaults to 0 (unlimited).
+     * @return The execution output as a plain text string.
+     */
+    static String getExecutionOutputText(String execId, RdClient client, int lastLinesCount = 0) {
+        def execOutputResponse = client.doGetAddHeaders("/execution/${execId}/output?lastlines=${lastLinesCount}",
+            Headers.of("Accept", "text/plain"))
+        return execOutputResponse.body().string()
+    }
+
 
     static ScmJobStatusResponse waitForJobStatusToBe(
             String jobId,
@@ -163,6 +248,18 @@ class JobUtils {
     }
 
     /**
+     *  Deletes the job or throws on failure
+     * @param jobId
+     * @param client
+     */
+    static void deleteJob(String jobId, RdClient client) {
+        def response = client.doDelete("/job/$jobId")
+        if (!response.isSuccessful()) {
+            throw new IllegalArgumentException("API call was unsuccessful: ${response}  with body: ${response.body().string()}")
+        }
+    }
+
+    /**
      * Generates a temporary file containing the provided job definition and returns its path.
      *
      * @param jobDefinition The job definition content to be written to the temporary file.
@@ -178,32 +275,52 @@ class JobUtils {
 
 
     /**
-     * Takes the job file and replaces all the words that start with 'xml-' using the provided args to upload it to the desired project.
+     * Takes the job template file and does textual replacement for the words that start with the 'xml-'  prefix.
+     * The default replacement arguments are used unless an overriden value is provided.
      *
-     * @param fileName The name of the file to import into test-files resources dir.
-     * @param args     Optional arguments as a Map. If not provided, default values will be used.
+     * @param fileName The name of the template file from the `test-files` resources dir.
+     * @param projectName project name to be used in the job file. Can be overriden in the argsOverrides.
+     * @param argsOverrides  argument keys-values that override the defaults.
      *                 Available keys:
-     *                 - "project-name": Name of the project (default: PROJECT_NAME)
+     *                 - "project-name": Name of the project (default: projectName parameter)
      *                 - "job-name": Name of the job (default: "job-test")
      *                 - "job-group-name": Name of the job group (default: "group-test")
      *                 - "job-description-name": Name of the job description (default: "description-test")
      *                 - "args": Arguments (default: "echo hello there")
      *                 - "2-args": Secondary arguments (default: "echo hello there 2")
      *                 - "uuid": UUID for the job (default: generated UUID)
+     *                 - "execution-enabled": Execution enabled flag (default: "true")
+     *                 - "schedule-enabled": Schedule enabled flag (default: "true")
+     *                 -  "schedule-crontab": Quartz schedule crontab (default: every 4 seconds )
+     *                 - "node-filter-include": Node filter include (default: ".*")
+     *                 - "node-filter-exclude": Node filter exclude (default: "")
+     *                 - "dispatch-rank-order": Dispatch rank order (default: "ascending")
+     *                 - "opt1-required": Is job option 1 required (default: "true")
+     *                 - "opt2-required": Is job option 2 required (default: "true")
      * @return The path of the updated temporary XML file.
      */
-    static def updateJobFileToImport = (String fileName, String projectName, Map args = [:]) -> {
-        if (args.isEmpty()) {
-            args = [
-                    "project-name": projectName,
-                    "job-name": "job-test",
-                    "job-group-name": "group-test",
-                    "job-description-name": "description-test",
-                    "args": "echo hello there",
-                    "2-args": "echo hello there 2",
-                    "uuid": UUID.randomUUID().toString()
-            ]
-        }
+    static def updateJobFileToImport = (String fileName, String projectName, Map argsOverrides = [:]) -> {
+        final DEFAULT_ARGS = [
+                "project-name": projectName,
+                "job-name": "job-test",
+                "job-group-name": "group-test",
+                "job-description-name": "description-test",
+                "args": "echo hello there",
+                "2-args": "echo hello there 2",
+                "uuid": UUID.randomUUID().toString(),
+                "execution-enabled": "true",
+                "schedule-enabled": "true",
+                "schedule-crontab": "*/4 * * ? * * *",
+                "node-filter-include": ".*",
+                "ode-filter-exclude": "",
+                "dispatch-rank-order": "ascending",
+                "opt1-required": "true",
+                "opt2-required": "true"
+        ].asImmutable()
+
+        // Overrides defaults
+        def args = DEFAULT_ARGS + argsOverrides
+
         def pathXmlFile = getClass().getResource("/test-files/${fileName}").getPath()
         def xmlProjectContent = new File(pathXmlFile).text
         args.each { k, v ->
@@ -236,11 +353,12 @@ class JobUtils {
 
         // Check if the import was successful and return the response body as a Map
         if (responseImport.isSuccessful() && responseImport.code() == 200) {
-            return new ObjectMapper().readValue(responseImport.body().string(), Map.class);
+            return OBJECT_MAPPER.readValue(responseImport.body().string(), Map.class);
         } else {
             // Throw an exception if the import failed
-            throw new IllegalArgumentException("Job import failed. HTTP Status Code: " + responseImport.code());
+            throw new IllegalArgumentException("Job import failed: ${responseImport} with body: ${responseImport?.body()?.string()}");
         }
     }
+
 
 }

@@ -1,5 +1,6 @@
 package org.rundeck.tests.functional.selenium.jobs
 
+import org.openqa.selenium.By
 import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobListPage
@@ -107,7 +108,7 @@ class BasicJobsSpec extends SeleniumBase {
             def jobShowPage = page JobShowPage
             jobShowPage.nextUi=nextUi
         then:
-            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
+            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
             jobCreatePage.go()
             jobCreatePage.descriptionTextarea.sendKeys 'a new job description'
             jobCreatePage.updateJobButton.click()
@@ -123,7 +124,7 @@ class BasicJobsSpec extends SeleniumBase {
             jobCreatePage.nextUi=nextUi
             jobCreatePage.go()
         then:
-            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
+            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
             jobCreatePage.go()
             jobCreatePage.jobGroupField.clear()
             jobCreatePage.jobGroupField.sendKeys 'testGroup'
@@ -137,7 +138,7 @@ class BasicJobsSpec extends SeleniumBase {
             jobCreatePage.nextUi=nextUi
             jobCreatePage.go()
         then:
-            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
+            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
             jobCreatePage.go()
             jobCreatePage.groupChooseButton.click()
             jobCreatePage.waitForElementToBeClickable jobCreatePage.groupNameOption
@@ -163,6 +164,31 @@ class BasicJobsSpec extends SeleniumBase {
             jobCreatePage.updateJobButton.click()
     }
 
+    def "edit job and set executions tab"() {
+        when:
+            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+        then:
+            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
+            jobCreatePage.go()
+            jobCreatePage.tab JobTab.EXECUTION_PLUGINS click()
+            if(jobCreatePage.executionPluginsRows.size() > 1){
+                jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.killHandlerPluginPreviousRow
+            }
+            if (jobCreatePage.killHandlerPluginCheckbox.isSelected()) {
+                jobCreatePage.killHandlerPluginCheckbox.click()
+                jobCreatePage.killHandlerPluginKillSpawnedCheckbox.click()
+            } else {
+                jobCreatePage.killHandlerPluginCheckbox.click()
+                jobCreatePage.killHandlerPluginCheckbox.isSelected()
+                jobCreatePage.killHandlerPluginKillSpawnedCheckbox.click()
+                jobCreatePage.killHandlerPluginKillSpawnedCheckbox.isSelected()
+            }
+            jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.updateJobButton
+            jobCreatePage.updateJobButton.click()
+        where:
+            nextUi<<[false,true]
+    }
+
     def "edit job and set other tab"() {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
@@ -185,7 +211,7 @@ class BasicJobsSpec extends SeleniumBase {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
         then:
-            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
+            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", false
             jobCreatePage.go()
             jobCreatePage.tab JobTab.NOTIFICATIONS click()
             jobCreatePage.addNotificationButtonByType NotificationEvent.START click()
@@ -251,7 +277,7 @@ class BasicJobsSpec extends SeleniumBase {
         then:
             jobShowPage.validatePage()
             jobShowPage.jobSearchButton.click()
-            jobShowPage.waitForModal 1
+            jobShowPage.waitForModal 1, By.cssSelector(".modal.in")
             jobShowPage.jobSearchNameField.sendKeys 'option'
             jobShowPage.jobSearchSubmitButton.click()
             jobShowPage.waitForNumberOfElementsToBe jobShowPage.jobRowBy, expected.size()
@@ -274,7 +300,7 @@ class BasicJobsSpec extends SeleniumBase {
         then:
             jobShowPage.validatePage()
             jobShowPage.jobSearchButton.click()
-            jobShowPage.waitForModal 1
+            jobShowPage.waitForModal 1, By.cssSelector(".modal.in")
             jobShowPage.jobSearchNameField.sendKeys 'option'
             jobShowPage.jobSearchGroupField.sendKeys 'test'
             jobShowPage.jobSearchSubmitButton.click()
@@ -289,7 +315,7 @@ class BasicJobsSpec extends SeleniumBase {
         when:
             jobShowPage.validatePage()
             jobShowPage.jobSearchButton.click()
-            jobShowPage.waitForModal 1
+            jobShowPage.waitForModal 1, By.cssSelector(".modal.in")
             jobShowPage.jobSearchNameField.sendKeys 'option'
             jobShowPage.jobSearchGroupField.sendKeys '-'
             jobShowPage.jobSearchSubmitButton.click()

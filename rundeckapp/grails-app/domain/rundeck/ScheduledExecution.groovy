@@ -662,11 +662,11 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
     }
 
     def String generateJobScheduledName(){
-        return [id,jobName].join(":")
+        return uuid
     }
      // generate a Quartz jobGroupName identification string suitable for use with the scheduler
     def String generateJobGroupName() {
-        return [project, jobName,groupPath?groupPath: ''].join(":")
+        return project
     }
 
     // various utility methods to the process crontab entry data

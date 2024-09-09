@@ -41,7 +41,7 @@ class GormReferencedExecutionDataProvider implements ReferencedExecutionDataProv
 
     @Override
     List<String> getExecutionUuidsByJobUuid(String jobUuid) {
-        return ReferencedExecution.findAllByJobUuid(jobUuid).collect{ it.execution.scheduledExecution.uuid }
+        return ReferencedExecution.findAllByJobUuid(jobUuid).collect{ it.execution.uuid }
     }
 
     @Override

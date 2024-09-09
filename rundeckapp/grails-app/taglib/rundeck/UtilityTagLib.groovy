@@ -18,6 +18,8 @@ package rundeck
 
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import grails.util.Holders
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobDefinitionComponent
@@ -31,11 +33,9 @@ import grails.util.Environment
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
-import org.springframework.context.ConfigurableApplicationContext
 import rundeck.data.util.OptionsParserUtil
 import rundeck.interceptors.FormTokenInterceptor
 import rundeck.services.FrameworkService
-import rundeckapp.Application
 
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
@@ -73,6 +73,8 @@ class UtilityTagLib{
             'jobComponentSectionProperties',
             'jobComponentFieldPrefix',
             'jobComponentMessagesType',
+            'filterPluginPropertiesByFeature',
+            'groupPluginProperties',
     ]
 
     private static Random rand=new java.util.Random()
@@ -883,6 +885,72 @@ class UtilityTagLib{
     }
     def pluginPropertyFrameworkScopeKey={attrs,body->
         out << PropertyResolverFactory.frameworkPropertyPrefix(PropertyResolverFactory.pluginPropertyPrefix(attrs.service, attrs.provider))+(attrs.property?:'')
+    }
+
+    /**
+     * Filter a list of Properties to return only properties where any required FeatureFlag is enabled
+     * @attr properties REQUIRED properties list
+     */
+    def filterPluginPropertiesByFeature = { attrs, body ->
+        List<Property> props=attrs.properties
+        def filtered=[]
+        for (Property prop : props) {
+            def featureTest = prop.renderingOptions?.get(StringRenderingConstants.FEATURE_FLAG_REQUIRED)
+            if (!featureTest || feature.isEnabled(name: prop.renderingOptions?.get(StringRenderingConstants.FEATURE_FLAG_REQUIRED))) {
+                filtered << prop
+            }
+        }
+        return filtered
+    }
+
+    /**
+     * Group properties based on Grouping rendering options, returns a groupSet, ungrouped, secondary
+     * @attr properties REQUIRED properties list
+     * @attr allowedScope REQUIRED allowed scope
+     */
+    def groupPluginProperties = { attrs,body ->
+        List<Property> properties=attrs.properties
+        PropertyScope allowedScope=attrs.allowedScope
+        def groupSet=[:]
+        def ungrouped=[]
+        def secondary=[]
+        for (Property prop : properties) {
+            def scopeUnset = !prop.scope || prop.scope.isUnspecified()
+            def scopeProject = prop.scope && prop.scope.isProjectLevel()
+            def scopeInstance = prop.scope && prop.scope.isInstanceLevel()
+            def scopeFramework = prop.scope && prop.scope.isFrameworkLevel()
+
+            if (scopeUnset ||
+                (allowedScope == PropertyScope.Instance && scopeInstance) ||
+                (allowedScope == PropertyScope.Project && scopeProject) ||
+                (allowedScope == PropertyScope.Framework && scopeFramework)) {
+
+                if (prop.renderingOptions?.get(StringRenderingConstants.GROUPING)?.toString() == 'secondary') {
+                    def groupName = prop.renderingOptions?.get(StringRenderingConstants.GROUP_NAME)?.toString() ?: '-'
+                    secondary << groupName
+
+                    if (!groupSet[groupName]) {
+                        groupSet[groupName] = [prop]
+                    } else {
+                        groupSet[groupName] << prop
+                    }
+
+                } else if (prop.renderingOptions?.get(StringRenderingConstants.GROUP_NAME)) {
+
+                    def groupName = prop.renderingOptions?.get(StringRenderingConstants.GROUP_NAME)?.toString()
+
+                    if (!groupSet[groupName]) {
+                        groupSet[groupName] = [prop]
+                    } else {
+                        groupSet[groupName] << prop
+                    }
+
+                } else {
+                    ungrouped << prop
+                }
+            }
+        }
+        return [groupSet: groupSet, ungrouped: ungrouped, secondary: secondary]
     }
 
     def markdown={ attrs, body ->

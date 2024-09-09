@@ -1,8 +1,11 @@
 package org.rundeck.plugin.scriptnodestep
 
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.execution.impl.common.FileCopierUtil
 import com.dtolabs.rundeck.core.plugins.PluginException
 import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
+import com.dtolabs.rundeck.plugins.descriptions.PluginMetadata
+import groovy.transform.CompileStatic
 import org.rundeck.core.execution.ScriptCommand
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.plugins.Plugin
@@ -17,7 +20,9 @@ import com.dtolabs.rundeck.plugins.step.PluginStepContext
 
 @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = SCRIPT_COMMAND_TYPE)
 @PluginDescription(title = "Script", description = "Execute an inline script", isHighlighted = true, order = 1)
-class ScriptNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin, ScriptCommand, PluginResourceLoader  {
+@CompileStatic
+@PluginMetadata(key = "NodeStepPluginAdapter.DeprecatedConfigurationMode", value = "skip")
+class ScriptNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin, ScriptCommand, PluginResourceLoader, SecureInputProps {
     public static final String PROVIDER_NAME = "script-node-step-plugin";
 
     @PluginProperty(
@@ -70,20 +75,39 @@ E.g.: `.ps1`, or `abc`.
             required = false)
     String fileExtension;
 
-    @Override
-    void executeNodeStep(PluginStepContext context, Map<String, Object> configuration, INodeEntry entry) throws NodeStepException {
-        ScriptFileNodeStepExecutor scriptFileNodeStepExecutor = new ScriptFileNodeStepExecutor(
-                scriptInterpreter,
-                interpreterArgsQuoted,
-                fileExtension,
-                argString,
-                null,
-                adhocLocalString,
-                true
-        );
 
-        scriptFileNodeStepExecutor.executeScriptFile(context, configuration, entry)
+
+    @Override
+    void executeNodeStep(PluginStepContext context, Map<String, Object> configuration, INodeEntry entry) throws
+        NodeStepException
+    {
+        InputStream input = null
+        FileCopierUtil.ContentModifier modifier = null
+
+        if (nodeExecutorSecureInput && passSecureInput) {
+            if (secureFormat != 'shell') {
+                throw new IllegalArgumentException("Unsupported secure input format: " + secureFormat)
+            }
+            input = new SecureInputCreator(new BashShellUtil()).createInputForProcess(context.executionContext)
+        }
+        if (nodeExecutorSecureInput && passSecureInput && autoSecureInput) {
+            modifier = new ShellScriptModifier()
+        }
+
+        ScriptFileNodeStepExecutor scriptFileNodeStepExecutor = new ScriptFileNodeStepExecutor(
+            scriptInterpreter,
+            !!interpreterArgsQuoted,
+            fileExtension,
+            argString,
+            null,
+            adhocLocalString,
+            true,
+            modifier
+        )
+
+        scriptFileNodeStepExecutor.executeScriptFile(context, entry, input)
     }
+
 
     @Override
     List<String> listResources() throws PluginException, IOException {

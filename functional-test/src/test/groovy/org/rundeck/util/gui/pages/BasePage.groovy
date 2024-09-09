@@ -139,8 +139,8 @@ abstract class BasePage {
                 .until(ExpectedConditions.visibilityOf(locator))
     }
 
-    WebElement waitIgnoringForElementToBeClickable(WebElement locator) {
-        new WebDriverWait(context.driver, Duration.ofSeconds(30))
+    WebElement waitIgnoringForElementToBeClickable(WebElement locator, Duration duration = Duration.ofSeconds(30)) {
+        new WebDriverWait(context.driver, duration)
                 .ignoring(StaleElementReferenceException.class)
                 .until(ExpectedConditions.elementToBeClickable(locator))
     }
@@ -155,14 +155,11 @@ abstract class BasePage {
                 .until(ExpectedConditions.attributeContains(locator, attribute, value))
     }
 
-    def waitForModal(int expected) {
-        try {
-            new WebDriverWait(driver, Duration.ofSeconds(30)).until {
-                ExpectedConditions.numberOfElementsToBe(modalField, expected)
-            }
-        } catch (TimeoutException e) {
-            throw new RuntimeException("Timed out waiting for the modal to have ${expected} elements.", e)
-        }
+    def waitForModal(int expected, By modalFieldCssSelector = modalField) {
+        new WebDriverWait(driver, Duration.ofSeconds(30)).until (
+                ExpectedConditions.numberOfElementsToBe(
+                        modalFieldCssSelector, expected )
+        )
     }
 
     WebElement byAndWait(By locator) {
@@ -208,6 +205,24 @@ abstract class BasePage {
     def expectPartialLinkToExist(String linkText, int times = 1){
         new WebDriverWait(driver, Duration.ofSeconds(20))
                 .until(ExpectedConditions.numberOfElementsToBe(By.partialLinkText(linkText), times))
+    }
+
+    /**
+     * Verifies that the partial text is present in the page
+     * @param partialText the text to search for
+     * @return
+     */
+    boolean expectPartialTextToExist(String partialText) {
+        els(By.xpath("//*[contains(text(), '${partialText}')]"))?.isEmpty() == false
+    }
+
+    /**
+     * Verifies that a link <a href="...">${exactLinkText}</a> is present
+     * @param exactLinkText the text to search for
+     * @return
+     */
+    boolean expectLinkTextToExist(String exactLinkText) {
+        els(By.linkText(exactLinkText))?.isEmpty() == false
     }
 
     WebElement getElementByCss(String css){

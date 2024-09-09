@@ -8,14 +8,21 @@
         <context>
             <project>xml-project-name</project>
             <options>
-                <option name="opt1" value="testvalue" required="true"/>
-                <option name="opt2" values="a,b,c" required="true"/>
+                <option name="opt1" value="testvalue" required="xml-opt1-required"/>
+                <option name="opt2" values="a,b,c" required="xml-opt2-required"/>
             </options>
         </context>
         <dispatch>
             <threadcount>1</threadcount>
             <keepgoing>true</keepgoing>
+            <rankOrder>xml-dispatch-rank-order</rankOrder>
         </dispatch>
+        <nodefilters>
+            <filter>xml-node-filter-include</filter>
+            <filterExclude>xml-node-filter-exclude</filterExclude>
+        </nodefilters>
+        <executionEnabled>xml-execution-enabled</executionEnabled>
+        <scheduleEnabled>xml-schedule-enabled</scheduleEnabled>
         <sequence>
             <command>
                 <exec>xml-args</exec>
