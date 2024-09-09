@@ -99,7 +99,7 @@ describe("NodeFilterInput Component", () => {
     await input.setValue("newFilter");
     await input.trigger("blur");
     const saveFilterButton = wrapper.find(
-      'button[data-testid="save-filter-button"]',
+      'button[data-testid="sfm-button-save"]',
     );
     await saveFilterButton.trigger("click");
     expect(mockNodeFilterStore.saveFilter).toHaveBeenCalledWith(

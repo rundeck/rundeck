@@ -97,6 +97,7 @@
       class="schedJobNodeFilter form-control"
       :autofocus="autofocus"
       :placeholder="queryFieldPlaceholderText || $t('enter.a.node.filter')"
+      data-testid="filter-input"
       @keydown.enter.prevent="doSearch"
       @blur="doSearch"
     />
@@ -171,6 +172,7 @@
             v-model="newFilterName"
             type="text"
             class="form-control input-sm"
+            data-testid="new-filter-name-input"
           />
         </div>
       </div>
@@ -363,7 +365,7 @@ export default defineComponent({
     matchedFilter() {
       if (this.outputValue && this.nodeSummary.filters) {
         const found = this.nodeSummary.filters.find(
-          (a: any) => a.filter === this.outputValue
+          (a: any) => a.filter === this.outputValue,
         );
         if (found) {
           return found.filterName;
@@ -377,7 +379,7 @@ export default defineComponent({
     selectedSavedFilter() {
       if (this.selectedFilterName && this.nodeSummary.filters) {
         const found = this.nodeSummary.filters.find(
-          (a: any) => a.filterName === this.selectedFilterName
+          (a: any) => a.filterName === this.selectedFilterName,
         );
         if (found) {
           return found;
@@ -473,7 +475,7 @@ export default defineComponent({
     },
     loadNodeFilters() {
       this.nodeSummary = this.nodeFilterStore.loadStoredProjectNodeFilters(
-        this.project
+        this.project,
       );
     },
     handleDeleteSavedFilter(filterName: string) {
@@ -497,19 +499,19 @@ export default defineComponent({
       this.loadNodeFilters();
       this.eventBus.on(
         "nodefilter:action:deleteSavedFilter",
-        this.handleDeleteSavedFilter
+        this.handleDeleteSavedFilter,
       );
       this.eventBus.on(
         "nodefilter:action:setDefault",
-        this.setDefaultFilterValue
+        this.setDefaultFilterValue,
       );
       this.eventBus.on(
         "nodefilter:action:setDefaultAll",
-        this.handleSetDefaultAllFilter
+        this.handleSetDefaultAllFilter,
       );
       this.eventBus.on(
         "nodefilter:action:removeDefault",
-        this.removeDefaultFilter
+        this.removeDefaultFilter,
       );
     },
   },
