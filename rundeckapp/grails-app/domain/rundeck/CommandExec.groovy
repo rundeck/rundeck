@@ -213,7 +213,7 @@ public class CommandExec extends WorkflowStep implements BaseCommandExec {
     }
 
     static void updateFromMap(CommandExec ce, Map data) {
-        setConfigurationFromMap(ce, data)
+        setConfigurationFromMap(ce, data, true)
         ce.keepgoingOnSuccess = !!data.keepgoingOnSuccess
         ce.description = data.description?.toString()
         //nb: error handler is created inside Workflow.fromMap
@@ -230,21 +230,30 @@ public class CommandExec extends WorkflowStep implements BaseCommandExec {
      * @param obj new object, intentially not typed to allow for CommandExec or Map
      * @param data job definition map data
      */
-    static void setConfigurationFromMap(Object obj, Map data) {
+    static void setConfigurationFromMap(Object obj, Map data, boolean parseBoolean=false) {
         if (data.exec != null) {
             obj.adhocRemoteString = data.exec.toString()
         } else if (data.script != null) {
             obj.adhocLocalString = data.script.toString()
         } else if (data.scriptfile != null) {
             obj.adhocFilepath = data.scriptfile.toString()
-            obj.expandTokenInScriptFile = booleanVal(data.expandTokenInScriptFile)
+            if(data.expandTokenInScriptFile!=null) {
+                obj.expandTokenInScriptFile = parseBoolean ? booleanVal(data.expandTokenInScriptFile) :
+                                              data.expandTokenInScriptFile.toString()
+            }
         } else if (data.scripturl != null) {
             obj.adhocFilepath = data.scripturl.toString()
-            obj.expandTokenInScriptFile = booleanVal(data.expandTokenInScriptFile)
+            if(data.expandTokenInScriptFile!=null) {
+                obj.expandTokenInScriptFile = parseBoolean ? booleanVal(data.expandTokenInScriptFile) :
+                                              data.expandTokenInScriptFile.toString()
+            }
         }
         if (data.scriptInterpreter != null && !obj.adhocRemoteString) {
             obj.scriptInterpreter = data.scriptInterpreter.toString()
-            obj.interpreterArgsQuoted = booleanVal(data.interpreterArgsQuoted)
+            if(data.interpreterArgsQuoted!=null) {
+                obj.interpreterArgsQuoted = parseBoolean ? booleanVal(data.interpreterArgsQuoted) :
+                                            data.interpreterArgsQuoted?.toString()
+            }
         }
         if (data.fileExtension != null && !obj.adhocRemoteString) {
             obj.fileExtension = data.fileExtension.toString()
