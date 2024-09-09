@@ -105,4 +105,48 @@ class WaitUtils  {
         )
         return result
     }
+
+
+    static <R> Builder<R> buildFor(Closure<R> retryableResourceRetriever) {
+        return new Builder<>(retryableResourceRetriever)
+    }
+
+    static class Builder<R> {
+
+        private Closure<R> retryableResourceRetriever = null
+        private Closure<Boolean> resourceAcceptanceEvaluator = null
+        private Duration timeout = null
+        private Duration checkPeriod = null
+
+        private Builder(Closure<R> retryableResourceRetriever) {
+            this.retryableResourceRetriever = retryableResourceRetriever
+        }
+
+
+        public Builder<R> withResourceRetriever(Closure<R> retryableResourceRetriever) {
+            this.retryableResourceRetriever = retryableResourceRetriever
+            return this
+        }
+
+        public Builder<R> withResourceAcceptanceEvaluator(Closure<Boolean> resourceAcceptanceEvaluator) {
+            this.resourceAcceptanceEvaluator = resourceAcceptanceEvaluator
+            return this
+        }
+
+        public Builder<R> withTimeout(Duration timeout) {
+            this.timeout = timeout
+            return this
+        }
+
+        public Builder<R> withCheckPeriod(Duration checkPeriod) {
+            this.checkPeriod = checkPeriod
+            return this
+        }
+
+        public R doWait() {
+            return waitFor(retryableResourceRetriever, resourceAcceptanceEvaluator, timeout, checkPeriod)
+        }
+
+    }
+
 }
