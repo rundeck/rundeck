@@ -78,10 +78,15 @@ describe("NodeDefaultFilterDropdown Component", () => {
       const removeDefaultLink = wrapper.find(
         'a[data-testid="remove-default-filter-link"]',
       );
+      expect(removeDefaultLink.text()).toBe("remove.default.filter");
       await removeDefaultLink.trigger("click");
       expect(mockEventBus.emit).toHaveBeenCalledWith(
         "nodefilter:action:removeDefault",
       );
+      const setDefaultLink = wrapper.find(
+        'a[data-testid="set-default-filter-link"]',
+      );
+      expect(setDefaultLink.text()).toBe("set.as.default.filter");
     });
   });
 });
