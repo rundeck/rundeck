@@ -130,13 +130,13 @@ class ExecutionSpec extends BaseContainer {
                 def json2 = client.jsonValue(response.body(), Map)
                 json2.executions.size() == 6
             }
-
-            // Waits for all executions to get cleaned
-            assert waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
-                    {it.isEmpty()},
-            WaitingTime.EXCESSIVE).isEmpty()
-            deleteProject(projectName)
         cleanup:
+            // Waits for all executions to get cleaned
+            waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
+                {it.isEmpty()},
+                WaitingTime.EXCESSIVE)
+            deleteProject(projectName)
+
             tmpjar.delete()
         where:
             version | projectName

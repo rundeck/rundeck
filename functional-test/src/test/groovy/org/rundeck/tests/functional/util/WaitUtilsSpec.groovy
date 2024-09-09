@@ -5,6 +5,8 @@ import org.rundeck.util.common.ResourceAcceptanceTimeoutException
 import org.rundeck.util.common.WaitUtils
 import spock.lang.Specification
 
+import java.time.Duration
+
 @APITest
 class WaitUtilsSpec extends Specification {
 
@@ -15,7 +17,11 @@ class WaitUtilsSpec extends Specification {
         Closure<String> retriever = { return TEST_VALUES[it] }
 
         when:
-        String result = WaitUtils.waitForResource("1", retriever)
+        String result = WaitUtils.waitForResource("1",
+                retriever,
+                {  true },
+                {""},
+                Duration.ofMillis(0) )
 
         then:
         result == "one"
