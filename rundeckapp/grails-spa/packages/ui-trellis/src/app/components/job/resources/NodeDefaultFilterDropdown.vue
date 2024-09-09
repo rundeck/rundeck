@@ -64,7 +64,11 @@
             </a>
           </li>
           <li v-else>
-            <a role="button" @click="removeDefault()">
+            <a
+              role="button"
+              data-testid="remove-default-filter-link"
+              @click="removeDefault()"
+            >
               <i class="glyphicon glyphicon-ban-circle"></i>
               {{ $t("remove.default.filter") }}
             </a>
