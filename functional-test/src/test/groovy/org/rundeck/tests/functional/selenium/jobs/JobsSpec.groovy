@@ -5,11 +5,8 @@ import okhttp3.RequestBody
 import org.openqa.selenium.By
 import org.openqa.selenium.Keys
 import org.openqa.selenium.support.ui.Select
-import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.api.responses.jobs.CreateJobResponse
 import org.rundeck.util.common.jobs.JobUtils
-import org.rundeck.util.container.SeleniumBase
-import org.rundeck.util.gui.pages.activity.ActivityPage
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobListPage
