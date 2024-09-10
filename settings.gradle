@@ -74,36 +74,37 @@ if (enableIncremental) {
     enableFeaturePreview('GROOVY_COMPILATION_AVOIDANCE')
 }
 
-@CacheableRule
-abstract class ExcludeCoords implements ComponentMetadataRule {
-    final String coords
-
-    @Inject ExcludeCoords(String coords) {
-        this.coords = coords
-    }
-
-    void execute(ComponentMetadataContext context) {
-        context.details.allVariants {
-            withDependencies {
-                removeAll { "${it.group}:${it.module.name}".toString() == coords }
-            }
-        }
-    }
-}
-
-dependencyResolutionManagement {
-    components {
-        withModule("org.grails:grails-plugin-url-mappings", ExcludeCoords) {
-            //exclude unnecessary dependency, see https://github.com/grails/grails-core/pull/12390
-            it.params("junit:junit")
-        }
-        withModule("org.grails:grails-plugin-i18n", ExcludeCoords) {
-            //exclude unnecessary dependency, see https://github.com/grails/grails-core/pull/12390
-            it.params("org.codehaus.groovy:groovy-ant")
-        }
-        withModule("org.grails.plugins:database-migration", ExcludeCoords) {
-            //exclude unnecessary dependency, specifically the database-migration->grails-shell->junit
-            it.params("org.grails:grails-shell")
-        }
-    }
-}
+//
+//@CacheableRule
+//abstract class ExcludeCoords implements ComponentMetadataRule {
+//    final String coords
+//
+//    @Inject ExcludeCoords(String coords) {
+//        this.coords = coords
+//    }
+//
+//    void execute(ComponentMetadataContext context) {
+//        context.details.allVariants {
+//            withDependencies {
+//                removeAll { "${it.group}:${it.module.name}".toString() == coords }
+//            }
+//        }
+//    }
+//}
+//
+//dependencyResolutionManagement {
+//    components {
+//        withModule("org.grails:grails-plugin-url-mappings", ExcludeCoords) {
+//            //exclude unnecessary dependency, see https://github.com/grails/grails-core/pull/12390
+//            it.params("junit:junit")
+//        }
+//        withModule("org.grails:grails-plugin-i18n", ExcludeCoords) {
+//            //exclude unnecessary dependency, see https://github.com/grails/grails-core/pull/12390
+//            it.params("org.codehaus.groovy:groovy-ant")
+//        }
+//        withModule("org.grails.plugins:database-migration", ExcludeCoords) {
+//            //exclude unnecessary dependency, specifically the database-migration->grails-shell->junit
+//            it.params("org.grails:grails-shell")
+//        }
+//    }
+//}
