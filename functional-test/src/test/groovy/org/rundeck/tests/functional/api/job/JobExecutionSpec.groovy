@@ -14,6 +14,7 @@ import org.rundeck.util.annotations.APITest
 import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.common.execution.ExecutionStatus
 import org.rundeck.util.common.FileHelpers
+import org.rundeck.util.common.execution.ExecutionUtils
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.container.BaseContainer
@@ -74,29 +75,18 @@ class JobExecutionSpec extends BaseContainer {
 
     def "job/id/executions should succeed with 1 results"() {
         when:
-            sleep 5000
-            def response = doGet("/job/${jobId}/executions")
+        List<Execution> execs =  waitFor(ExecutionUtils.Retrievers.executionsForJobId(client, jobId),
+                { it.size() == 1 })
         then:
-            verifyAll {
-                response.successful
-                response.code() == 200
-                def json = jsonValue(response.body())
-                json.executions.size() == 1
-                json.executions[0].id == execId
-            }
+        execs[0].id == execId
     }
 
     def "job/id/executions?status=succeeded should succeed with 1 results"() {
         when:
-            def response = doGet("/job/${jobId}/executions?status=succeeded")
+        List<Execution> execs =  waitFor(ExecutionUtils.Retrievers.executionsForJobId(client, jobId, "status=succeeded"),
+                {it.size() == 1 })
         then:
-        verifyAll {
-            response.successful
-            response.code() == 200
-            def json = jsonValue(response.body())
-            json.executions.size() == 1
-            json.executions[0].id == execId
-        }
+        execs[0].id == execId
     }
 
     def "run again job/id/run should succeed"() {
@@ -107,16 +97,10 @@ class JobExecutionSpec extends BaseContainer {
             verifyAll {
                 execId2 > 0
             }
-        when: "job/id/executions all results"
-            sleep 5000
-            def response = doGet("/job/${jobId}/executions")
         then:
-         verifyAll {
-             response.successful
-             response.code() == 200
-             def json = jsonValue(response.body())
-             json.executions.size() == 2
-         }
+        assert waitFor(ExecutionUtils.Retrievers.executionsForJobId(client, jobId),
+                    { it.size() == 2 })
+
     }
 
     def "job/id/executions max param"() {
@@ -175,16 +159,10 @@ class JobExecutionSpec extends BaseContainer {
                 execId2 > 0
             }
         when:
-            sleep 5000
-            def response = doGet("/job/${jobId2}/executions?status=failed")
+        List<Execution> execs =  waitFor(ExecutionUtils.Retrievers.executionsForJobId(client, jobId2, "status=failed"),
+                { it.size() == 1 })
         then:
-        verifyAll {
-            response.successful
-            response.code() == 200
-            def json = jsonValue(response.body())
-            json.executions.size() == 1
-            json.executions[0].id == execId2
-        }
+        execs[0].id == execId2
     }
 
     def "job/id/executions?status=running with 1 results"() {
@@ -205,16 +183,11 @@ class JobExecutionSpec extends BaseContainer {
     def "job/jobid/executions?status=aborted with 1 results"() {
         when:
             doPost("/execution/${execId3}/abort")
-            sleep 5000
+        List<Execution> execs =  waitFor(ExecutionUtils.Retrievers.executionsForJobId(client, jobId3, "status=aborted"),
+                { it.size() == 1 })
         then:
-            def response = doGet("/job/${jobId3}/executions?status=aborted")
-            verifyAll {
-                response.successful
-                response.code() == 200
-                def json = jsonValue(response.body())
-                json.executions.size() == 1
-                json.executions[0].id == execId3
-            }
+        execs[0].id == execId3
+
     }
 
     def "test-job-flip-executionEnabled"(){
@@ -871,7 +844,7 @@ class JobExecutionSpec extends BaseContainer {
         def jobId = jobCreatedResponse.succeeded[0]?.id
 
         when: "TEST: POST job/id/run should succeed with future time"
-        def runtime = generateRuntime(25)
+        def runtime = generateRuntime(6)
         def runLaterExecResponse = JobUtils.executeJobLaterWithArgsAndRuntime(
                 jobId,
                 client,
@@ -2221,7 +2194,10 @@ class JobExecutionSpec extends BaseContainer {
         assert jobExecResponseFor2.successful
         assert jobExecResponseFor3.successful
         cleanup:
-        hold 10 //This is to allow the executions to finish
+        // This is to allow the executions to finish
+        waitFor(ExecutionUtils.Retrievers.executionsForJobId(client, jobUuid),
+                verifyForAll(ExecutionUtils.Verifiers.executionFinished()),
+                WaitingTime.EXCESSIVE )
         deleteProject(projectName)
     }
 

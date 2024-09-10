@@ -1,6 +1,7 @@
 package org.rundeck.util.common.jobs
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import groovy.transform.TypeChecked
 import groovy.util.logging.Slf4j
 import okhttp3.Headers
 import org.rundeck.util.api.responses.execution.Execution
@@ -8,12 +9,15 @@ import org.rundeck.util.api.responses.execution.ExecutionOutput
 import org.rundeck.util.api.responses.jobs.JobDetails
 import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.httpbody.ScmJobStatusResponse
+import org.rundeck.util.common.WaitUtils
 import org.rundeck.util.common.WaitingTime
+import org.rundeck.util.common.execution.ExecutionUtils
 import org.rundeck.util.container.RdClient
 
 import java.time.Duration
 import java.time.ZoneId
 import java.util.concurrent.TimeUnit
+import java.util.function.Function
 
 @Slf4j
 class JobUtils {
@@ -27,7 +31,6 @@ class JobUtils {
     static final String DUPE_OPTION_DEFAULT = "create"
 
     static final String CONTENT_TYPE_DEFAULT = "application/xml"
-
 
     static def executeJobWithArgs = (String jobId, RdClient client, String args) -> {
         return client.doPostWithoutBody("/job/${jobId}/run?argString=${args}")
@@ -147,7 +150,6 @@ class JobUtils {
         return waitForExecution([state], executionId, client, timeout, checkPeriod)
     }
 
-
     /**
      * Waits for the execution to be in one of the expected states.
      *
@@ -159,6 +161,7 @@ class JobUtils {
      * @return The Execution object representing the execution status.
      * @throws InterruptedException if the timeout is reached before the execution reaches the expected state.
      */
+    @TypeChecked
     static Execution waitForExecution(
         Collection<String> expectedStates,
         String executionId,
@@ -166,22 +169,43 @@ class JobUtils {
         Duration timeout = WaitingTime.MODERATE,
         Duration checkPeriod = WaitingTime.LOW
     ) {
-        def execDetail = client.doGet("/execution/${executionId}")
-        Execution executionStatus = OBJECT_MAPPER.readValue(execDetail.body().string(), Execution.class)
-        long initTime = System.currentTimeMillis()
-        while (!expectedStates.contains(executionStatus.status)) {
-            if ((System.currentTimeMillis() - initTime) >= timeout.toMillis()) {
-                def execOutput = callSilently { getExecutionOutputText(executionId, client) }
-                throw new InterruptedException("Timeout reached (${timeout.toSeconds()} seconds), the execution had \"${executionStatus.status}\" state. Execution output was: \n${execOutput}\n")
-            }
-            def transientExecutionResponse = client.doGet("/execution/${executionId}")
-            executionStatus = OBJECT_MAPPER.readValue(transientExecutionResponse.body().string(), Execution.class)
-            if (expectedStates.contains(executionStatus.status)) {
-                break
-            }
-            Thread.sleep(Math.min(checkPeriod.toMillis(), timeout.toMillis()))
+        Function<Execution, Boolean> resourceAcceptanceEvaluator = { Execution e -> expectedStates.contains(e?.status) }
+
+        Closure<String> acceptanceFailureOutputProducer = { String id ->
+            def execOutput = callSilently { getExecutionOutputText(id, client) }
+            return "Execution output was: \n${execOutput}\n".toString()
         }
-        return executionStatus
+
+        return WaitUtils.waitForResource(executionId,
+                { String id -> ExecutionUtils.Retrievers.executionById(client, id).get() },
+                resourceAcceptanceEvaluator,
+                acceptanceFailureOutputProducer,
+                timeout,
+                checkPeriod)
+    }
+
+    /**
+     * Waits for the execution to be in one of the expected states.
+     *
+     * @param executionIds The execution IDs to wait for.
+     * @param expectedStates A list of expected states.
+     * @param client The RdClient instance to perform the HTTP request.
+     * @param timeout The maximum duration to wait for the execution to reach the expected state.
+     * @param checkPeriod The time to wait between each check.
+     * @return The Execution object representing the execution status.
+     * @throws InterruptedException if the timeout is reached before the execution reaches the expected state.
+     */
+    @TypeChecked
+    static Map<String, Execution> waitForManyExecutionToFinish(
+            Collection<String> executionIds,
+            RdClient client,
+            Duration timeout = WaitingTime.MODERATE,
+            Duration checkPeriod = WaitingTime.LOW) {
+        return WaitUtils.waitForAllResources(executionIds,
+                { String id -> ExecutionUtils.Retrievers.executionById(client, id).get() },
+                ExecutionUtils.Verifiers.executionFinished() as Function<Execution, Boolean>,
+                timeout,
+                checkPeriod)
     }
 
     /**
