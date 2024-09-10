@@ -17,6 +17,7 @@ import org.rundeck.util.container.RdClient
 import java.time.Duration
 import java.time.ZoneId
 import java.util.concurrent.TimeUnit
+import java.util.function.Function
 
 @Slf4j
 class JobUtils {
@@ -168,7 +169,7 @@ class JobUtils {
         Duration timeout = WaitingTime.MODERATE,
         Duration checkPeriod = WaitingTime.LOW
     ) {
-        Closure<Boolean> resourceAcceptanceEvaluator = { Execution e -> expectedStates.contains(e?.status) }
+        Function<Execution, Boolean> resourceAcceptanceEvaluator = { Execution e -> expectedStates.contains(e?.status) }
 
         Closure<String> acceptanceFailureOutputProducer = { String id ->
             def execOutput = callSilently { getExecutionOutputText(id, client) }
@@ -176,7 +177,7 @@ class JobUtils {
         }
 
         return WaitUtils.waitForResource(executionId,
-                { String id -> ExecutionUtils.Retrievers.executionById(client, id)() },
+                { String id -> ExecutionUtils.Retrievers.executionById(client, id).get() },
                 resourceAcceptanceEvaluator,
                 acceptanceFailureOutputProducer,
                 timeout,
@@ -201,8 +202,8 @@ class JobUtils {
             Duration timeout = WaitingTime.MODERATE,
             Duration checkPeriod = WaitingTime.LOW) {
         return WaitUtils.waitForAllResources(executionIds,
-                { String id -> ExecutionUtils.Retrievers.executionById(client, id)() },
-                ExecutionUtils.Verifiers.executionFinished(),
+                { String id -> ExecutionUtils.Retrievers.executionById(client, id).get() },
+                ExecutionUtils.Verifiers.executionFinished() as Function<Execution, Boolean>,
                 timeout,
                 checkPeriod)
     }

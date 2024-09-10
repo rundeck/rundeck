@@ -1,10 +1,10 @@
 package org.rundeck.util.common
 
 import groovy.transform.CompileStatic
-import groovy.transform.stc.ClosureParams
-import groovy.transform.stc.FromString
 
 import java.time.Duration
+import java.util.function.Function
+import java.util.function.Supplier
 
 @CompileStatic
 trait WaitBehaviour {
@@ -17,11 +17,12 @@ trait WaitBehaviour {
      * @return the resource that met the acceptance criteria.
      * @throws ResourceAcceptanceTimeoutException if the timeout is reached waiting for the resource to reach the expected state.
      *
-     * @see WaitUtils#waitFor(Closure, Closure, Duration, Duration) for the static version of this method.
+     * @see WaitUtils#waitFor(java.util.function.Supplier, java.util.function.Function, java.time.Duration, java.time.Duration)
+     *  for the static version of this method.
      */
     final  <R> R waitFor(
-            Closure<R> retryableResourceRetriever,
-            @ClosureParams(value = FromString, options = ["R"]) Closure<Boolean> resourceAcceptanceEvaluator = { !!it },
+            Supplier<R> retryableResourceRetriever,
+            Function<R, Boolean> resourceAcceptanceEvaluator = { it != null },
             Duration timeout = WaitingTime.MODERATE,
             Duration checkPeriod = WaitingTime.LOW) {
         WaitUtils.waitFor(retryableResourceRetriever, resourceAcceptanceEvaluator, timeout, checkPeriod)

@@ -5,6 +5,8 @@ import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.api.responses.jobs.JobExecutionsResponse
 import org.rundeck.util.container.RdClient
 
+import java.util.function.Supplier
+
 class ExecutionUtils {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
@@ -27,7 +29,6 @@ class ExecutionUtils {
             }
         }
 
-
         /**
          * Returns a closure that verifies if an execution passed into it is running.
          * @return
@@ -48,7 +49,7 @@ class ExecutionUtils {
          * @param executionId
          * @return
          */
-        static final Closure<Execution> executionById(RdClient client, String executionId) {
+        static final Supplier<Execution> executionById(RdClient client, String executionId) {
             { ->
                 def r = client.doGet("/execution/${executionId}")
                 r?.successful ? OBJECT_MAPPER.readValue(r.body()?.string(), Execution.class) : null
@@ -62,7 +63,7 @@ class ExecutionUtils {
          * @param queryString query string to append to the request
          * @return a closure that lists all executions for the project
          */
-        static final Closure<List<Execution>> executionsForProject(RdClient client, String projectName, String queryString = null) {
+        static final Supplier<List<Execution>> executionsForProject(RdClient client, String projectName, String queryString = null) {
             { ->
                 def execsResponse = client.doGetAcceptAll("/project/${projectName}/executions" + (queryString ? "?${queryString}" : ""))
                 JobExecutionsResponse parsedResponse = OBJECT_MAPPER.readValue(execsResponse.body().string(), JobExecutionsResponse.class)
@@ -77,7 +78,7 @@ class ExecutionUtils {
          * @param queryString query string to append to the request
          * @return a closure that lists all executions for the job
          */
-        static final Closure<List<Execution>> executionsForJobId(RdClient client, String jobId, String queryString = null) {
+        static final Supplier<List<Execution>> executionsForJobId(RdClient client, String jobId, String queryString = null) {
             { ->
                 def execsResponse = client.doGetAcceptAll("/job/${jobId}/executions" + (queryString ? "?${queryString}" : ""))
                 JobExecutionsResponse parsedResponse = OBJECT_MAPPER.readValue(execsResponse.body().string(), JobExecutionsResponse.class)
