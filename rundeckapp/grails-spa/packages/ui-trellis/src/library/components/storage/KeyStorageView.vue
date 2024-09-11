@@ -76,6 +76,7 @@
               <button
                 v-if="!readOnly || allowUpload === true"
                 class="btn btn-sm btn-cta"
+                data-testid="add-key-btn"
                 @click="actionUpload"
               >
                 <i class="glyphicon glyphicon-plus"></i>
@@ -88,6 +89,7 @@
                 "
                 class="btn btn-sm btn-warning"
                 @click="actionUploadModify"
+                data-testid="overwrite-key-btn"
               >
                 <i class="glyphicon glyphicon-pencil"></i>
                 Overwrite Key
@@ -97,6 +99,7 @@
                   selectedKey && selectedKey.path && isSelectedKey && !readOnly
                 "
                 class="btn btn-sm btn-danger"
+                data-testid="delete-key-btn"
                 @click="deleteKey"
               >
                 <i class="glyphicon glyphicon-trash"></i>
