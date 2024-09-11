@@ -57,6 +57,7 @@
 import { defineComponent } from "vue";
 import axios from "axios";
 import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
+import { getRundeckContext } from "@/library";
 
 export default defineComponent({
   name: "CommunityNewsFeed",
@@ -73,8 +74,11 @@ export default defineComponent({
     },
   },
   mounted() {
+    const appRundeckGatewayUrl =
+      getRundeckContext().appMeta.appRundeckGatewayUrl;
+
     axios
-      .get("https://api.rundeck.com/news/v1/blog/list", {
+      .get(appRundeckGatewayUrl + "/news/v1/blog/list", {
         params: {
           groupid: 7039074342,
         },
