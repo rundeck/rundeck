@@ -98,6 +98,7 @@ import axios from "axios";
 import Fuse from "fuse.js";
 import RepositoryRow from "../components/Repository.vue";
 import { mapState, mapActions } from "vuex";
+import { getRundeckContext } from "@/library";
 
 const FuseSearchOptions = {
   shouldSort: true,
@@ -175,9 +176,13 @@ export default defineComponent({
             results: mappedResults,
             rundeckVer: versionNumber,
           };
+          const appRundeckGatewayUrl =
+            getRundeckContext().appMeta.appRundeckGatewayUrl;
+          console.log("appRundeckGatewayUrl", appRundeckGatewayUrl);
+
           axios({
             method: "post",
-            url: `https://api.rundeck.com/repo/v1/oss/search/save`,
+            url: `${appRundeckGatewayUrl}/repo/v1/oss/search/save`,
             data: payload,
           });
         }
