@@ -165,6 +165,7 @@
               :disabled="uploadSetting.modifyMode === true"
               name="fileName"
               class="form-control"
+              data-testid="key-name-input"
               placeholder="Specify a name."
             />
             <div v-if="uploadSetting.inputType === 'file'" class="help-block">
@@ -212,6 +213,7 @@
         <button
           type="button"
           class="btn btn-default mr-3"
+          data-testid="cancel-btn"
           @click="handleCancel"
         >
           Cancel
@@ -219,6 +221,7 @@
         <button
           type="button"
           class="btn btn-cta"
+          data-testid="save-btn"
           :disabled="validInput() === false"
           @click="handleUploadKey"
         >
