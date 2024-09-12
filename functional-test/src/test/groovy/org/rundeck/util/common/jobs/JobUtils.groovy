@@ -6,6 +6,7 @@ import groovy.util.logging.Slf4j
 import okhttp3.Headers
 import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.api.responses.execution.ExecutionOutput
+import org.rundeck.util.api.responses.jobs.Job
 import org.rundeck.util.api.responses.jobs.JobDetails
 import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.httpbody.ScmJobStatusResponse
@@ -384,5 +385,22 @@ class JobUtils {
         }
     }
 
+    /**
+     * Returns Jobs in the project.
+     * @param client
+     * @param projectName name of the project
+     * @param queryString query string to append to the request
+     * @return jobs
+     * @throws IllegalArgumentException if the job listing API call fails
+     */
+    static final Collection<Job> getJobsForProject(RdClient client, String projectName, String queryString = null) {
+        def jobsResponse = client.doGetAcceptAll("/project/${projectName}/jobs"  + (queryString ? "?${queryString}" : ""))
+
+        if (!jobsResponse.isSuccessful()) {
+            throw new IllegalArgumentException("Job listing failed: ${jobsResponse} with body: ${jobsResponse?.body()?.string()}");
+        }
+
+        OBJECT_MAPPER.readValue(jobsResponse.body().string(), ArrayList<Job>.class)
+    }
 
 }

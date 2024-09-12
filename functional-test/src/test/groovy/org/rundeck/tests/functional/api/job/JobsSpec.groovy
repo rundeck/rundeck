@@ -6,28 +6,69 @@ import org.rundeck.util.annotations.APITest
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.BaseContainer
 
+/**
+ * Tests for the jobs API endpoint
+ */
 @APITest
 class JobsSpec extends BaseContainer {
 
+    static final def newProject = UUID.randomUUID().toString()
+    static List<String> createdJobIds
+
     def setupSpec() {
         startEnvironment()
-        setupProject()
+        setupProject(newProject)
+
+        createdJobIds = createJobs()
     }
 
-    def "Listing RunDeck Jobs for project test"() {
+    def cleanupSpec() {
+        deleteProject(newProject)
+    }
+
+    def "Listing jobs for a project that has no jobs"() {
         when:
-            def response = doGet("/project/${PROJECT_NAME}/jobs")
+        def aProject = UUID.randomUUID().toString()
+        setupProject(aProject)
+
         then:
-            verifyAll {
-                response.successful
-            }
+        JobUtils.getJobsForProject(getClient(), aProject).isEmpty()
     }
 
-    def "Test query with match filter and exact filter"() {
-        setup:
-            def newProject = "test-jobs-query"
-            setupProject(newProject)
-            def yaml = """
+    def "Listing jobs for a project"() {
+        expect:
+        JobUtils.getJobsForProject(getClient(), newProject).size() == 3
+    }
+
+    def "Test job query params"() {
+        expect:
+        JobUtils.getJobsForProject(getClient(), newProject, query).size() == expectedSize
+
+        where:
+        query                                                                         | expectedSize
+        null                                                                          | 3
+        "jobFilter=test-jobs&groupPath=api/test-jobs"                                 | 2
+        "jobFilter=test-jobs&groupPathExact=api/test-jobs"                            | 1
+        "jobExactFilter=test-jobs&groupPath=api/test-jobs"                            | 1
+        "groupPath=api/test-jobs"                                                     | 2
+        "jobExactFilter=test-jobs&groupPathExact=api/test-jobs"                       | 1
+        "jobExactFilter=test-jobs+another+job&groupPathExact=api/test-jobs/sub-group" | 1
+        "jobExactFilter=test-jobs+another&groupPathExact=api/test-jobs"               | 0
+        "jobExactFilter=test-jobs&groupPathExact=api/test-jobs/sub-group"             | 0
+        "jobFilter=test-jobs&groupPathExact=-"                                        | 1
+        "idlist=fakeId"                                                               | 0
+        "idlist=${createdJobIds.join(',')}"                                           | 3
+        "scheduledFilter=false"                                                       | 3
+        "max=2"                                                                       | 2
+        "offset=3&max=10"                                                             | 0
+    }
+
+    /***
+     * Creates jobs and returns the ids
+     */
+    def createJobs() {
+
+        def yaml = """
                     -
                       project: test
                       loglevel: INFO
@@ -40,7 +81,7 @@ class JobsSpec extends BaseContainer {
                       name: test-jobs
                       group: api/test-jobs
                     """
-            def yaml1 = """
+        def yaml1 = """
                     -
                       project: test
                       loglevel: INFO
@@ -53,7 +94,7 @@ class JobsSpec extends BaseContainer {
                       name: test-jobs another job
                       group: api/test-jobs/sub-group
                     """
-            def yaml2 = """
+        def yaml2 = """
                     -
                       project: test
                       loglevel: INFO
@@ -65,61 +106,25 @@ class JobsSpec extends BaseContainer {
                       description: 'test-jobs.sh script'
                       name: test-jobs top level
                     """
-            def path = JobUtils.generateFileToImport(yaml, "yaml")
-            def path1 = JobUtils.generateFileToImport(yaml1, "yaml")
-            def path2 = JobUtils.generateFileToImport(yaml2, "yaml")
-            def multipartBody = new MultipartBody.Builder()
-                    .setType(MultipartBody.FORM)
-                    .addFormDataPart("xmlBatch", new File(path).name, RequestBody.create(new File(path), MultipartBody.FORM))
-                    .build()
-            def multipartBody1 = new MultipartBody.Builder()
+        def path = JobUtils.generateFileToImport(yaml, "yaml")
+        def path1 = JobUtils.generateFileToImport(yaml1, "yaml")
+        def path2 = JobUtils.generateFileToImport(yaml2, "yaml")
+        def multipartBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("xmlBatch", new File(path).name, RequestBody.create(new File(path), MultipartBody.FORM))
+                .build()
+        def multipartBody1 = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(path1).name, RequestBody.create(new File(path1), MultipartBody.FORM))
                 .build()
-            def multipartBody2 = new MultipartBody.Builder()
+        def multipartBody2 = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(path2).name, RequestBody.create(new File(path2), MultipartBody.FORM))
                 .build()
-        when:
-            def responseImport = client.doPostWithMultipart("/project/${newProject}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
-            def responseImport1 = client.doPostWithMultipart("/project/${newProject}/jobs/import?format=yaml&dupeOption=skip", multipartBody1)
-            def responseImport2 = client.doPostWithMultipart("/project/${newProject}/jobs/import?format=yaml&dupeOption=skip", multipartBody2)
-        then:
-            verifyAll {
-                responseImport.successful
-                responseImport1.successful
-                responseImport2.successful
-            }
-            testJobQuery "project=${newProject}&jobFilter=test-jobs&groupPath=api/test-jobs", 2
-            testJobQuery "project=${newProject}&jobFilter=test-jobs&groupPathExact=api/test-jobs", -1
-            testJobQuery "project=${newProject}&jobExactFilter=test-jobs&groupPath=api/test-jobs", -1
-            testJobQuery "project=${newProject}&groupPath=api/test-jobs", 2
-            testJobQuery "project=${newProject}&jobExactFilter=test-jobs&groupPathExact=api/test-jobs", 2
-            testJobQuery "project=${newProject}&jobExactFilter=test-jobs+another+job&groupPathExact=api/test-jobs/sub-group", 2
-            testJobQuery "project=${newProject}&jobExactFilter=test-jobs&groupPathExact=api/test-jobs", -1
-            testJobQuery "project=${newProject}&jobExactFilter=test-jobs+another&groupPathExact=api/test-jobs", 0
-            testJobQuery "project=${newProject}&jobExactFilter=test-jobs&groupPathExact=api/test-jobs/sub-group", 0
-            testJobQuery "project=${newProject}&jobFilter=test-jobs&groupPathExact=-", -1
-        cleanup:
-            deleteProject(newProject)
-    }
-
-    /**
-     * Executes a test jobs query with optional parameters and verifies the response.
-     *
-     * @param xargs Optional query parameters in the form of a query string.
-     * @param expect Optional parameter to specify the expected number of test executions.
-     */
-    void testJobQuery(String xargs = null, Integer expect = null) {
-        def url = "/project/${PROJECT_NAME}/jobs"
-        def response = doGet(xargs ? "${url}?${xargs}" : url)
-        def itemCount = jsonValue(response.body(), List).size()
-        verifyAll {
-            response.successful
-            response.code() == 200
-            if (expect != null && itemCount != 0)
-                itemCount == expect
+        [client.doPostWithMultipart("/project/${newProject}/jobs/import?format=yaml&dupeOption=skip", multipartBody),
+        client.doPostWithMultipart("/project/${newProject}/jobs/import?format=yaml&dupeOption=skip", multipartBody1),
+        client.doPostWithMultipart("/project/${newProject}/jobs/import?format=yaml&dupeOption=skip", multipartBody2)].collect {
+             MAPPER.readValue(it.body().string(), Map).succeeded[0].id as String
         }
     }
-
 }
