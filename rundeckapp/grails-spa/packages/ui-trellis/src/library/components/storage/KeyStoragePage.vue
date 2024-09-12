@@ -46,6 +46,7 @@ export default defineComponent({
   name: "KeyStoragePage",
   components: { UiSocket, KeyStorageEdit, KeyStorageView },
   props: ["readOnly", "allowUpload", "modelValue", "storageFilter", "project"],
+
   data() {
     return {
       activeTab: "keys",
