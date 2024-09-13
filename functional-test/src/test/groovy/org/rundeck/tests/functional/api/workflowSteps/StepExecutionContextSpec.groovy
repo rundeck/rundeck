@@ -39,19 +39,12 @@ class StepExecutionContextSpec extends BaseContainer {
         then:
             json.id != null
         when:
-            def exec = JobUtils.waitForExecutionToBe(
-                ExecutionStatus.FAILED.state,
-                json.id as String,
-                new ObjectMapper(),
-                client,
-                WaitingTime.MODERATE,
-                WaitingTime.EXCESSIVE
-            )
+            def exec = waitForExecutionFinish(json.id as String)
         then:
             exec.status == 'failed'
         when:
             String execId = json.id
-            def entries = getExecutionOutput(execId)
+            def entries = getExecutionOutputLines(execId)
         then:
             entries.containsAll(
                 "STEP 1: will succeed",
@@ -74,19 +67,12 @@ class StepExecutionContextSpec extends BaseContainer {
         then:
             json.id != null
         when:
-            def exec = JobUtils.waitForExecutionToBe(
-                ExecutionStatus.FAILED.state,
-                json.id as String,
-                new ObjectMapper(),
-                client,
-                WaitingTime.MODERATE,
-                WaitingTime.EXCESSIVE
-            )
+            def exec = waitForExecutionFinish(json.id as String)
         then:
             exec.status == 'failed'
         when:
             String execId = json.id
-            def entries = getExecutionOutput(execId)
+            def entries = getExecutionOutputLines(execId)
         then:
             entries.containsAll(
                 "STEP 1: will succeed",
