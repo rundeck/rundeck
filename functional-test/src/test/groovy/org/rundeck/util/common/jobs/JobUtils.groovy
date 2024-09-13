@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.TypeChecked
 import groovy.util.logging.Slf4j
 import okhttp3.Headers
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.api.responses.execution.ExecutionOutput
 import org.rundeck.util.api.responses.jobs.Job
@@ -358,18 +360,16 @@ class JobUtils {
     }
 
     /**
-     * Imports a job file into a specified project.
-     * This method posts the XML job file to the server for the specified or default project name.
+     * Imports an XML job file into a specified project.
      *
      * @param projectName The name of the project into which the job file is to be imported.
-     *                    If null, a default project name (PROJECT_NAME) is used.
-     * @param pathXmlFile The file path of the XML job file to be imported.
+     * @param pathXmlFile The file path
      * @param client      The RdClient object used to perform the HTTP request.
      * @param dupeOption  (Optional) The duplicate option for handling existing jobs. Defaults to DUPE_OPTION_DEFAULT.
      * @param contentType (Optional) The content type of the request. Defaults to CONTENT_TYPE_DEFAULT.
      * @return A Map representation of the JSON response body if the import is successful.
      *         The method checks for a successful response and a 200 HTTP status code.
-     * @throws IllegalArgumentException if the pathXmlFile parameter is not provided.
+     * @throws IllegalArgumentException if the imports fails
      */
     static def jobImportFile = (String projectName, String pathXmlFile, RdClient client, String dupeOption = DUPE_OPTION_DEFAULT, String contentType = CONTENT_TYPE_DEFAULT) -> {
         URL resourceUrl = getClass().getResource(pathXmlFile);
@@ -383,6 +383,31 @@ class JobUtils {
             // Throw an exception if the import failed
             throw new IllegalArgumentException("Job import failed: ${responseImport} with body: ${responseImport?.body()?.string()}");
         }
+    }
+
+    /**
+     * Imports a YAML job file into a specified project.
+     *
+     * @param projectName The name of the project into which the job file is to be imported.
+     * @param pathXmlFile The file path
+     * @param client      The RdClient object used to perform the HTTP request.
+     * @param dupeOption  (Optional) The duplicate option for handling existing jobs. Defaults to DUPE_OPTION_DEFAULT.
+     * @return A Map representation of the JSON response body if the import is successful.
+     *         The method checks for a successful response and a 200 HTTP status code.
+     * @throws IllegalArgumentException if the imports fails
+     */
+    static def jobImportYamlFile(String projectName, String pathYamlFile, RdClient client, String dupeOption = DUPE_OPTION_DEFAULT) {
+        def multipartBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("xmlBatch", new File(pathYamlFile).name, RequestBody.create(new File(pathYamlFile), MultipartBody.FORM))
+                .build()
+        def responseImport = client.doPostWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=${dupeOption}", multipartBody)
+
+        if (!responseImport.isSuccessful()) {
+            throw new IllegalArgumentException("Job import failed: ${responseImport} with body: ${responseImport?.body()?.string()}");
+        }
+
+        return OBJECT_MAPPER.readValue(responseImport.body().string(), Map.class);
     }
 
     /**

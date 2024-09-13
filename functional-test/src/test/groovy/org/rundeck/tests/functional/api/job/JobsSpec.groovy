@@ -26,6 +26,8 @@ class JobsSpec extends BaseContainer {
         deleteProject(newProject)
     }
 
+
+
     def "Listing jobs for a project that has no jobs"() {
         when:
         def aProject = UUID.randomUUID().toString()
