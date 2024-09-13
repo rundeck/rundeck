@@ -28,38 +28,45 @@ describe("KeyStorageEdit", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
+
   it("emits cancelEditing when cancel button is clicked", async () => {
     const wrapper = await mountKeyStorageEdit();
     const cancelButton = wrapper.find('[data-testid="cancel-btn"]');
     await cancelButton.trigger("click");
     expect(wrapper.emitted("cancelEditing")).toHaveLength(1);
+    expect(Object.keys(wrapper.emitted())).toContain("cancelEditing");
   });
+
   it("emits finishEditing with correct data when Save button is clicked", async () => {
     const wrapper = await mountKeyStorageEdit();
-    const handleUploadKeySpy = jest
-      .spyOn(wrapper.vm as any, "handleUploadKey")
-      .mockImplementation(() => {
-        wrapper.vm.$emit("finishEditing", "result");
-      });
+    const result = {
+      success: true,
+      keyDetails: {
+        name: "exampleKey",
+        path: "/keys/exampleKey",
+        keyType: "privateKey",
+      },
+    };
+    jest.spyOn(wrapper.vm as any, "handleUploadKey").mockImplementation(() => {
+      wrapper.vm.$emit("finishEditing", result);
+    });
     const saveButton = wrapper.find('[data-testid="save-btn"]');
     await wrapper.vm.$nextTick();
     expect(wrapper.emitted().finishEditing).toBeFalsy();
+    expect(saveButton.isVisible()).toBe(true);
     await saveButton.trigger("click");
-    await wrapper.vm.$nextTick();
-    expect(handleUploadKeySpy).toHaveBeenCalled();
-    expect(wrapper.emitted().finishEditing).toBeTruthy();
-    expect(wrapper.emitted().finishEditing[0]).toEqual(["result"]);
+    expect(wrapper.emitted().finishEditing[0]).toEqual([result]);
   });
+
   it("enables and disables the Save button based on key name input", async () => {
     const wrapper = await mountKeyStorageEdit({
-      uploadSetting: {
-        textArea: "",
-      },
+      uploadSetting: { textArea: "" },
     });
     const keyNameInput = wrapper.find('[data-testid="key-name-input"]');
     const saveButton = wrapper.find('[data-testid="save-btn"]');
     // the input is empty so the Save button should be disabled
     expect(saveButton.attributes()).toHaveProperty("disabled");
+    expect(saveButton.attributes("disabled")).toBe("");
     // Setting a valid key name which should enable the Save button
     await keyNameInput.setValue("test-key");
     await wrapper.vm.$nextTick();

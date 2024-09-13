@@ -15,6 +15,7 @@
       <modal
         id="storageuploadkey"
         ref="modalEdit"
+        data-testid="modal-edit"
         v-model="modalEdit"
         title="Add or Upload a Key"
         auto-focus
