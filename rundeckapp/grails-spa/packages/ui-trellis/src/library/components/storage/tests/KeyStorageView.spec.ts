@@ -5,20 +5,8 @@ import { Modal } from "uiv";
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({
     rdBase: "mockRdBase",
-    projectName: "test-project",
-    eventBus: {
-      on: jest.fn(),
-      emit: jest.fn(),
-      off: jest.fn(),
-    },
     rundeckClient: {
-      storageKeyGetMetadata: jest.fn().mockResolvedValue({
-        _response: { status: 200 },
-        resources: [{ name: "key1", path: "/keys/key1", type: "publicKey" }],
-      }),
-      storageKeyDelete: jest.fn().mockResolvedValue({
-        _response: { status: 200 },
-      }),
+      storageKeyGetMetadata: jest.fn().mockResolvedValue({}),
       projectList: jest.fn().mockResolvedValue([]),
     },
   }),
@@ -62,7 +50,22 @@ describe("KeyStorageView", () => {
     const wrapper = await mountKeyStorageView();
     const addButton = wrapper.find('button[data-testid="add-key-btn"]');
     await addButton.trigger("click");
-    expect(wrapper.emitted().openEditor).toBeTruthy();
+    const emittedEvent = wrapper.emitted().openEditor;
+    expect(emittedEvent).toHaveLength(1);
+    const expectedPayload = {
+      errorMsg: null,
+      file: "",
+      fileContent: "",
+      fileName: null,
+      inputPath: "",
+      inputType: "text",
+      keyType: "privateKey",
+      modifyMode: false,
+      password: "",
+      status: "new",
+      textArea: "",
+    };
+    expect(emittedEvent[0]).toEqual([expectedPayload]);
   });
   it("emits openEditor when the Overwrite Key button is clicked", async () => {
     const wrapper = await mountKeyStorageView();
@@ -72,13 +75,34 @@ describe("KeyStorageView", () => {
     );
     expect(overwriteButton.exists()).toBe(true);
     await overwriteButton.trigger("click");
-    expect(wrapper.emitted().openEditor).toBeTruthy();
+    const emittedEvent = wrapper.emitted().openEditor;
+
+    expect(emittedEvent).toHaveLength(1);
+    const expectedPayload = {
+      modifyMode: true,
+      keyType: "privateKey",
+      inputPath: "",
+      inputType: "text",
+      fileName: "key1",
+      file: "",
+      fileContent: "",
+      textArea: "",
+      password: "",
+      status: "update",
+      errorMsg: null,
+    };
+    expect(emittedEvent[0]).toEqual([expectedPayload]);
   });
   it("opens the confirmation modal when the Delete button is clicked", async () => {
     const wrapper = await mountKeyStorageView();
     const deleteButton = wrapper.find('button[data-testid="delete-key-btn"]');
     await deleteButton.trigger("click");
     const modal = wrapper.findComponent(Modal);
-    expect(modal.exists()).toBe(true);
+    const modalTitle = modal.find(".modal-title");
+    expect(modalTitle.text()).toBe("Delete Selected Key");
+    const modalBody = modal.find(".modal-body");
+    expect(modalBody.text()).toContain(
+      "Really delete the selected key at this path?",
+    );
   });
 });

@@ -422,7 +422,6 @@ export default defineComponent({
   },
   watch: {
     createdKey: function (newValue) {
-      console.log("createdKey", newValue);
       if (newValue !== null) {
         this.selectKey(newValue);
       }
@@ -687,12 +686,11 @@ export default defineComponent({
       }
     },
     isPrivateKey(key: any) {
-      console.log("IsPrivate key", this.key);
       let keyType = key.meta["rundeckKeyType"];
       if (keyType == null) {
         keyType = key.meta["Rundeck-key-type"];
       }
-      console.log("IsPrivate keyType called for keys", keyType);
+
       return key && key.meta && keyType && keyType === "private";
     },
     isPublicKey(key: any) {
@@ -709,7 +707,6 @@ export default defineComponent({
       return false;
     },
     selectKey(key: any) {
-      console.log("Selectiong key before update", key);
       if (this.selectedKey.path === key.path && this.isSelectedKey == false) {
         this.isSelectedKey = true;
       } else if (this.selectedKey.path === key.path) {
@@ -719,7 +716,6 @@ export default defineComponent({
         this.selectedKey = key;
         this.isSelectedKey = true;
       }
-      console.log("Selectiong key after update", this.selectedKey);
 
       this.$emit(
         "update:modelValue",
