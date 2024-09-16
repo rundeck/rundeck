@@ -27,6 +27,7 @@ export class NavBar {
           ...i,
           visible: true,
           container: i.container || "root",
+          enabled: typeof i.enabled === "boolean" ? i.enabled : true,
         });
       });
     }
@@ -94,6 +95,7 @@ export interface NavItem {
   container?: string;
   group?: string;
   visible: boolean;
+  enabled?: boolean;
   type: string;
 }
 
