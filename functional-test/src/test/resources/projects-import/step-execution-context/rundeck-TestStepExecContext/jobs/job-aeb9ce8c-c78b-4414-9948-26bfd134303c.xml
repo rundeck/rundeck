@@ -1,0 +1,27 @@
+<joblist>
+  <job>
+    <defaultTab>summary</defaultTab>
+    <description>Test command failure correctly sets exit code context variable</description>
+    <executionEnabled>true</executionEnabled>
+    <id>aeb9ce8c-c78b-4414-9948-26bfd134303c</id>
+    <loglevel>INFO</loglevel>
+    <name>Command Fails with exitCode</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='true' strategy='node-first'>
+      <command>
+        <exec><![CDATA[ echo "STEP 1: will succeed"]]></exec>
+      </command>
+      <command>
+        <exec><![CDATA[ echo "STEP 2: will fail with code 77"; exit 77]]></exec>
+      </command>
+      <command>
+        <exec><![CDATA[echo "STEP 3: ExitCode from Step1: ${1:exec.exitCode*}"]]></exec>
+      </command>
+      <command>
+        <exec><![CDATA[echo "STEP 4: ExitCode from Step2: ${2:exec.exitCode*}"]]></exec>
+      </command>
+    </sequence>
+    <uuid>aeb9ce8c-c78b-4414-9948-26bfd134303c</uuid>
+  </job>
+</joblist>
