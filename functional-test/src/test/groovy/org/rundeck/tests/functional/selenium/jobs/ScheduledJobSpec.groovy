@@ -32,7 +32,7 @@ class ScheduledJobSpec extends SeleniumBase{
         loginPage.login(TEST_USER, TEST_PASS)
         jobListPage.go()
         jobListPage.validatePage()
-        waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),verifyForAll(ExecutionUtils.Verifiers.executionFinished()), WaitingTime.EXCESSIVE )
+        waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName), {it.size() >= 1}, WaitingTime.EXCESSIVE )
         activityPage.loadActivityPageForProject(projectName)
         activityPage.go()
 
