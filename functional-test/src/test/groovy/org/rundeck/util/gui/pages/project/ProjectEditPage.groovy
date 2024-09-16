@@ -216,7 +216,12 @@ class ProjectEditPage extends BasePage {
      * @param replacement
      */
     def replaceConfiguration(String original, String replacement){
-        ((JavascriptExecutor) context.driver).executeScript("ace.edit('_id0').session.replace(ace.edit('_id0').find('${original}',{wrap: true, wholeWord: true }), '${replacement}');")
+        try {
+            ((JavascriptExecutor) context.driver).executeScript("ace.edit('_id0').session.replace(ace.edit('_id0').find('${original}',{wrap: true, wholeWord: true }), '${replacement}');")
+        } catch (e) {
+            ((JavascriptExecutor) context.driver).executeScript("ace.edit('_id0').session.insert({row: ace.edit('_id0').session.getLength(), column: 0}, '\n' + '${replacement}'")
+        }
+
     }
 
     /**
