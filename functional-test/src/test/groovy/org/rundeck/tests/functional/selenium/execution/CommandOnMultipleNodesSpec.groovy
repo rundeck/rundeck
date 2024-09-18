@@ -52,7 +52,7 @@ class CommandOnMultipleNodesSpec extends SeleniumBase{
         commandPage.commandTextField.sendKeys "echo running test '" + this.class.name.toString() + "'"
         commandPage.runButton.click()
         def href = commandPage.runningButtonLink().getAttribute("href")
-        commandPage.driver.get href + "#output"
+        commandPage.driver.get href + "#outputL3"
         expect:
         executionShowPage.validatePage()
         executionShowPage.waitForElementAttributeToChange executionShowPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED'
