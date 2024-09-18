@@ -1,6 +1,10 @@
 <template>
   <div>
-    <div v-if="!!uploadSetting.errorMsg" class="alert alert-danger">
+    <div
+      v-if="!!uploadSetting.errorMsg"
+      class="alert alert-danger"
+      data-testid="error-msg"
+    >
       <span>{{ uploadSetting.errorMsg }}</span>
     </div>
 
@@ -380,7 +384,7 @@ export default defineComponent({
 
       if (exists) {
         if (this.uploadSetting.dontOverwrite) {
-          this.uploadSetting.errorMsg = "key aready exists";
+          this.uploadSetting.errorMsg = "key already exists";
           return;
         } else {
           rundeckContext.rundeckClient
