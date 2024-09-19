@@ -131,7 +131,7 @@ public class SSHTaskBuilder {
                 } catch (AgentProxyException e) {
                     throw new JSchException("Unable to add key to ssh-agent: " + e);
                 }
-            } catch (AgentProxyException e) {
+            } catch (IOException e) {
                 throw new JSchException("Unable to start ssh-agent: " + e);
             }
         }
