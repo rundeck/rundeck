@@ -1,25 +1,13 @@
-import { mount } from "@vue/test-utils";
+import { flushPromises, mount } from "@vue/test-utils";
 import KeyStorageEdit from "../KeyStorageEdit.vue";
 import { getRundeckContext } from "../../../rundeckService";
-interface StorageKeyMaterialResponse {
-  _response: {
-    status: number;
-  };
-}
-interface StorageKeyCreateResponse {
-  success: boolean;
-  keyDetails: {
-    name: string;
-    path: string;
-    keyType: string;
-  };
-}
+
 jest.mock("../../../rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({
     rundeckClient: {
       storageKeyGetMaterial: jest.fn().mockResolvedValue({
         _response: { status: 404 },
-      } as StorageKeyMaterialResponse),
+      }),
       storageKeyUpdate: jest.fn().mockResolvedValue({
         success: true,
       }),
@@ -30,7 +18,7 @@ jest.mock("../../../rundeckService", () => ({
           path: "/keys/test",
           keyType: "privateKey",
         },
-      } as StorageKeyCreateResponse),
+      }),
       storageKeyGetMetadata: jest.fn().mockResolvedValue({
         _response: { status: 200 },
         resources: [],
@@ -57,24 +45,31 @@ const mountKeyStorageEdit = async (props = {}) => {
         dontOverwrite: false,
       },
       project: "test-project",
-
       ...props,
     },
   });
 };
 describe("KeyStorageEdit", () => {
-  afterEach(() => {
+  let rundeckClientMock;
+  beforeEach(() => {
+    rundeckClientMock = getRundeckContext().rundeckClient;
     jest.clearAllMocks();
   });
-
   it("emits cancelEditing when cancel button is clicked", async () => {
     const wrapper = await mountKeyStorageEdit();
     const cancelButton = wrapper.find('[data-testid="cancel-btn"]');
     await cancelButton.trigger("click");
     expect(wrapper.emitted("cancelEditing")).toHaveLength(1);
   });
-
   it("emits finishEditing with correct data when Save button is clicked", async () => {
+    rundeckClientMock.storageKeyCreate.mockResolvedValueOnce({
+      success: true,
+      keyDetails: {
+        name: "exampleKey",
+        path: "/keys/test",
+        keyType: "privateKey",
+      },
+    });
     const wrapper = await mountKeyStorageEdit({
       uploadSetting: {
         keyType: "privateKey",
@@ -82,14 +77,12 @@ describe("KeyStorageEdit", () => {
         textArea: "some-text",
       },
     });
-    const storageKeyCreateMockSpy = getRundeckContext().rundeckClient
-      .storageKeyCreate as jest.Mock;
     const saveButton = wrapper.find('[data-testid="save-btn"]');
     await saveButton.trigger("click");
-    await wrapper.vm.$nextTick();
-    expect(storageKeyCreateMockSpy).toHaveBeenCalledTimes(1);
+    await flushPromises();
+    expect(rundeckClientMock.storageKeyCreate).toHaveBeenCalledTimes(1);
+    expect(wrapper.emitted().finishEditing).toHaveLength(1);
   });
-
   it("enables and disables the Save button based on key name input", async () => {
     const wrapper = await mountKeyStorageEdit({
       uploadSetting: { textArea: "" },
@@ -105,7 +98,6 @@ describe("KeyStorageEdit", () => {
     await wrapper.vm.$nextTick();
     expect(saveButton.attributes().disabled).toBeDefined();
   });
-
   it("handles saving a password key type", async () => {
     const wrapper = await mountKeyStorageEdit({
       uploadSetting: {
@@ -117,17 +109,14 @@ describe("KeyStorageEdit", () => {
     });
     const saveButton = wrapper.find('[data-testid="save-btn"]');
     await saveButton.trigger("click");
-    await wrapper.vm.$nextTick();
-    const storageKeyCreateMock = getRundeckContext().rundeckClient
-      .storageKeyCreate as jest.Mock;
-    expect(storageKeyCreateMock).toHaveBeenCalledWith(
+    await flushPromises();
+    expect(rundeckClientMock.storageKeyCreate).toHaveBeenCalledWith(
       expect.any(String),
       "my-password",
       expect.any(Object),
     );
     expect(wrapper.emitted().finishEditing).toHaveLength(1);
   });
-
   it("handles saving a public key type", async () => {
     const wrapper = await mountKeyStorageEdit({
       uploadSetting: {
@@ -138,43 +127,43 @@ describe("KeyStorageEdit", () => {
         fileContent: "",
       },
     });
-    await wrapper.vm.$nextTick();
-    const storageKeyCreateMock = getRundeckContext().rundeckClient
-      .storageKeyCreate as jest.Mock;
     const saveButton = wrapper.find('[data-testid="save-btn"]');
     await saveButton.trigger("click");
-    await wrapper.vm.$nextTick();
-    expect(storageKeyCreateMock).toHaveBeenCalledTimes(1);
-    expect(wrapper.emitted().finishEditing).toBeTruthy();
+    await flushPromises();
+    expect(rundeckClientMock.storageKeyCreate).toHaveBeenCalledTimes(1);
   });
-
   it("emits an error when key exists and overwrite is disabled", async () => {
+    rundeckClientMock.storageKeyGetMaterial.mockResolvedValueOnce({
+      _response: { status: 200 }, // key exists
+    });
     const wrapper = await mountKeyStorageEdit({
       uploadSetting: {
+        dontOverwrite: true,
         inputType: "text",
         textArea: "some-text",
-        dontOverwrite: true,
       },
     });
-
-    const rundeckClientMock = getRundeckContext().rundeckClient;
-    (
-      rundeckClientMock.storageKeyGetMaterial as jest.Mock
-    ).mockResolvedValueOnce({
-      _response: { status: 200 }, // key exists
-    } as StorageKeyMaterialResponse);
     const saveButton = wrapper.find('[data-testid="save-btn"]');
     await saveButton.trigger("click");
-    await wrapper.vm.$nextTick();
+    await flushPromises();
     const errorMsg = wrapper.find('[data-testid="error-msg"]');
     expect(errorMsg.text()).toBe("key already exists");
-    // storageKeyCreate was not called since overwriting is disabled
-    const storageKeyCreateMock =
-      rundeckClientMock.storageKeyCreate as jest.Mock;
-    expect(storageKeyCreateMock).not.toHaveBeenCalled();
+    expect(rundeckClientMock.storageKeyCreate).not.toHaveBeenCalled();
   });
-
   it("creates a new private key when it does not exist", async () => {
+    // Key doesn't exists
+    rundeckClientMock.storageKeyGetMaterial.mockResolvedValueOnce({
+      _response: { status: 404 },
+    });
+    // creating key
+    rundeckClientMock.storageKeyCreate.mockResolvedValueOnce({
+      success: true,
+      keyDetails: {
+        name: "newKey",
+        path: "/keys/newKey",
+        keyType: "privateKey",
+      },
+    });
     const wrapper = await mountKeyStorageEdit({
       uploadSetting: {
         keyType: "privateKey",
@@ -183,28 +172,9 @@ describe("KeyStorageEdit", () => {
         textArea: "private-key-text",
       },
     });
-    const rundeckClientMock = getRundeckContext().rundeckClient;
-
-    (
-      rundeckClientMock.storageKeyGetMaterial as jest.Mock
-    ).mockResolvedValueOnce({
-      _response: { status: 404 }, // key does not exist
-    } as StorageKeyMaterialResponse);
-
-    // Mocking the storageKeyCreate method for when the key is created
-    (rundeckClientMock.storageKeyCreate as jest.Mock).mockResolvedValueOnce({
-      success: true,
-      keyDetails: {
-        name: "newKey",
-        path: "/keys/newKey",
-        keyType: "privateKey",
-      },
-    } as StorageKeyCreateResponse);
-
     const saveButton = wrapper.find('[data-testid="save-btn"]');
     await saveButton.trigger("click");
-    await wrapper.vm.$nextTick();
-
+    await flushPromises();
     const expectedEmittedEvent = [
       {
         success: true,

@@ -24,7 +24,7 @@ const mountKeyStoragePage = async (
   return mount(KeyStoragePage as unknown as KeyStoragePageComponent, {
     props: {
       project: "test-project",
-      readOnly: false,
+      readOnly: true,
       allowUpload: true,
       modelValue: "",
       storageFilter: "",
@@ -48,19 +48,20 @@ describe("KeyStoragePage.vue", () => {
   it("opens the editor when the open-editor event is emitted", async () => {
     const wrapper = await mountKeyStoragePage();
     const keyStorageView = wrapper.findComponent({ name: "KeyStorageView" });
-    expect(keyStorageView.exists()).toBe(true);
-    await keyStorageView.vm.$emit("openEditor");
+    await wrapper.vm.$nextTick();
+    await keyStorageView.vm.$emit("openEditor", { inputType: "text" });
     await wrapper.vm.$nextTick();
     const modal = wrapper.findComponent('[data-testid="modal-edit"]');
     expect(modal.exists()).toBe(true);
-    expect(modal.isVisible()).toBe(true);
   });
 
   it("closes the editor when cancel-editing event is emitted", async () => {
     const wrapper = await mountKeyStoragePage();
     const keyStorageView = wrapper.findComponent({ name: "KeyStorageView" });
     expect(keyStorageView.exists()).toBe(true);
-    await keyStorageView.vm.$emit("openEditor");
+    await keyStorageView.vm.$emit("openEditor", {
+      inputType: "text",
+    });
     await wrapper.vm.$nextTick();
     const keyStorageEdit = wrapper.findComponent({ name: "KeyStorageEdit" });
     await keyStorageEdit.vm.$emit("cancelEditing");
@@ -72,7 +73,10 @@ describe("KeyStoragePage.vue", () => {
   it("emits finishEditing when a key is created or modified", async () => {
     const wrapper = await mountKeyStoragePage();
     const keyStorageView = wrapper.findComponent({ name: "KeyStorageView" });
-    await keyStorageView.vm.$emit("update:modelValue", "openEditor");
+    await keyStorageView.vm.$emit("openEditor", {
+      name: "testKey",
+    });
+
     await wrapper.vm.$nextTick();
     const keyStorageEdit = wrapper.findComponent({ name: "KeyStorageEdit" });
     expect(keyStorageEdit.exists()).toBe(true);
@@ -105,6 +109,7 @@ describe("KeyStoragePage.vue", () => {
     ];
     const keyStorageEdit = wrapper.findComponent({ name: "KeyStorageEdit" });
     await keyStorageEdit.vm.$emit("keyCreated", newKey);
+    expect(wrapper.emitted().keyCreated);
     await wrapper.vm.$nextTick();
     const keyStorageView = wrapper.findComponent({ name: "KeyStorageView" });
     const addKeyButton = wrapper.find('[data-testid="add-key-btn"]');

@@ -743,7 +743,6 @@ export default defineComponent({
       const inputPath = this.relativePath(
         this.parentDirString(this.selectedKey.path),
       );
-      console.log("Computed inputPath:", inputPath);
       const inputType = InputType.Text;
 
       const upload = {
@@ -759,7 +758,6 @@ export default defineComponent({
         status: "update",
         errorMsg: null as any,
       };
-      console.log("Emitting upload object:", upload); // Debugging statement
       this.$emit("openEditor", upload);
     },
     clean() {
