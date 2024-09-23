@@ -134,7 +134,7 @@ class ExecutionSpec extends BaseContainer {
             // Waits for all executions to get cleaned
             waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
                 {it.isEmpty()},
-                WaitingTime.EXCESSIVE)
+                WaitingTime.XTRA_EXCESSIVE)
             deleteProject(projectName)
 
             tmpjar.delete()
