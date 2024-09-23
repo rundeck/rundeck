@@ -34,6 +34,8 @@ class TimeoutTest extends Specification {
         plugin.objectStoreUrl = httpServer.url("/")
         plugin.bucket = configBucket
         plugin.connectionTimeout = 5
+        plugin.accessKey = "test-key"
+        plugin.secretKey = "test-secret"
         long start = System.currentTimeMillis()
         def tree = plugin.initTree()
 
@@ -58,7 +60,5 @@ class TimeoutTest extends Specification {
 
         then:
         thrown(Exception)
-
-
     }
 }

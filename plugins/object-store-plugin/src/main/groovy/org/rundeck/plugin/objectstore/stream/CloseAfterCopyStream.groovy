@@ -16,9 +16,10 @@
 package org.rundeck.plugin.objectstore.stream
 
 import com.dtolabs.utils.Streams
+import groovy.transform.CompileStatic
 import org.rundeck.storage.api.HasInputStream
 
-
+@CompileStatic
 class CloseAfterCopyStream implements HasInputStream {
     InputStream inputStream
 
