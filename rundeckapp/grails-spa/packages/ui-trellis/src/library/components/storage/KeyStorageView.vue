@@ -44,7 +44,12 @@
                   class="dropdown-menu dropdown-menu-right"
                 >
                   <li v-for="link in jumpLinks" :key="link.path">
-                    <a href="#" @click="loadDir(link.path)">{{ link.name }}</a>
+                    <a
+                      href="#"
+                      @click="loadDir(link.path)"
+                      data-testid="load-dir-link"
+                      >{{ link.name }}</a
+                    >
                   </li>
                 </ul>
               </div>
@@ -870,7 +875,9 @@ export default defineComponent({
       }
     },
     relativePath(path: any) {
+      console.log("relativePath", path);
       const root = this.rootPath;
+      console.log("Root Path", root);
       const statroot = this.staticRoot;
       if (!statroot) {
         return path;
@@ -878,7 +885,9 @@ export default defineComponent({
       let newpath = "";
       if (path != null && root != null) {
         path = this.cleanPath(path);
+        console.log("Cleaned Path:", path);
         newpath = this.cleanPath(path.substring(root.length));
+        console.log("New Path:", newpath);
       }
       return newpath;
     },
