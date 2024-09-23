@@ -2,6 +2,7 @@ package grails.securityheaders
 
 import grails.plugins.*
 import org.rundeck.grails.plugins.securityheaders.CSPSecurityHeaderProvider
+import org.rundeck.grails.plugins.securityheaders.CacheControlSecurityHeaderProvider
 import org.rundeck.grails.plugins.securityheaders.CustomSecurityHeaderProvider
 import org.rundeck.grails.plugins.securityheaders.RundeckSecurityHeadersFilter
 import org.rundeck.grails.plugins.securityheaders.SessionIdChangeFilter
@@ -72,6 +73,17 @@ Brief summary/description of the plugin.
                 name = 'xfo'
                 defaultEnabled = true
             }
+
+            /**
+             *  Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+             * Pragma: no-cache
+             * Expires: 0
+             */
+            cacheControlSecurityHeaderProvider(CacheControlSecurityHeaderProvider) {
+                name = 'cache-control'
+                defaultEnabled = true
+            }
+
             rundeckSecurityHeadersFilter(RundeckSecurityHeadersFilter) {
                 enabled = grailsApplication.config.getProperty("rundeck.security.httpHeaders.enabled",Boolean.class, false)
                 config = grailsApplication.config.getProperty("rundeck.security.httpHeaders.provider",HashMap.class,[:])
