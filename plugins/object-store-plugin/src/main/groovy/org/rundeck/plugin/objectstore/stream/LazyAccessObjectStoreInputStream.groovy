@@ -16,9 +16,12 @@
 package org.rundeck.plugin.objectstore.stream
 
 import com.dtolabs.utils.Streams
+import groovy.transform.CompileStatic
+import io.minio.GetObjectArgs
 import io.minio.MinioClient
 import org.rundeck.storage.api.HasInputStream
 
+@CompileStatic
 class LazyAccessObjectStoreInputStream implements HasInputStream {
 
     private final MinioClient mClient
@@ -33,7 +36,11 @@ class LazyAccessObjectStoreInputStream implements HasInputStream {
 
     @Override
     InputStream getInputStream() throws IOException {
-        return mClient.getObject(bucket,objectKey)
+        GetObjectArgs args = GetObjectArgs.builder()
+                .bucket(bucket)
+                .object(objectKey)
+                .build()
+        return mClient.getObject(args)
     }
 
     @Override
