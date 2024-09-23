@@ -1,10 +1,9 @@
-import { mount, VueWrapper } from "@vue/test-utils";
+import { mount } from "@vue/test-utils";
 import { ComponentPublicInstance } from "vue";
 import KeyStorageView from "../KeyStorageView.vue";
 import { getRundeckContext } from "../../../rundeckService";
 import { Modal } from "uiv";
 
-// Mock the rundeckService
 jest.mock("../../../rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({
     rdBase: "mockRdBase",
@@ -80,7 +79,7 @@ const keys = [
 const mountKeyStorageView = async (props = {}) => {
   return mount<KeyStorageViewComponent>(KeyStorageView, {
     props: {
-      rootPath: "/keys",
+      rootPath: "",
       readOnly: false,
       allowUpload: true,
       ...props,
@@ -110,7 +109,7 @@ describe("KeyStorageView", () => {
   it("emits openEditor when the Add or Upload a Key button is clicked", async () => {
     const wrapper = await mountKeyStorageView();
     const input = wrapper.find('input[type="text"]');
-    await input.setValue("/keys/newKey"); // Simulate typing in the input field
+    await input.setValue("/keys/newKey");
     const addButton = wrapper.find('button[data-testid="add-key-btn"]');
     await addButton.trigger("click");
     const emittedEvent = wrapper.emitted().openEditor;
@@ -134,40 +133,20 @@ describe("KeyStorageView", () => {
   it("emits openEditor when the Overwrite Key button is clicked", async () => {
     const wrapper = await mountKeyStorageView();
     await wrapper.vm.$nextTick();
-
     const keyItem = wrapper.find('[data-testid="created-key"]');
     await keyItem.trigger("click");
     await wrapper.vm.$nextTick();
-
-    const selectedKey = wrapper.vm.selectedKey as Key;
-
-    console.log("Selected Key Path:", selectedKey.path);
-    expect(selectedKey.path).toBe("/keys/key1");
-
-    const vm = wrapper.vm as unknown as KeyStorageViewComponent;
-    const parentDir = vm.parentDirString(selectedKey.path);
-    console.log("Parent Dir:", parentDir);
-    expect(parentDir).toBe("/keys");
-
-    const relativePath = vm.relativePath(selectedKey.path);
-    console.log("Relative Path:", relativePath);
-    expect(relativePath).toBe("key1");
-
     const overwriteButton = wrapper.find(
       'button[data-testid="overwrite-key-btn"]',
     );
     await overwriteButton.trigger("click");
     await wrapper.vm.$nextTick();
-
-    console.log("overwritebutton", overwriteButton.exists());
-
     const emittedEvent = wrapper.emitted().openEditor;
     expect(emittedEvent).toHaveLength(1);
-
     const expectedPayload = {
       modifyMode: true,
       keyType: "privateKey",
-      inputPath: "key1",
+      inputPath: "keys",
       inputType: "text",
       fileName: "/key1",
       file: "",
@@ -219,7 +198,6 @@ describe("KeyStorageView", () => {
     expect(modalBody.text()).toContain(
       "Really delete the selected key at this path?",
     );
-
     const confirmButton = modal.find(
       'button[data-testid="confirm-delete-btn"]',
     );

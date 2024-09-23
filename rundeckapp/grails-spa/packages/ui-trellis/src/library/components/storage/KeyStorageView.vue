@@ -434,6 +434,7 @@ export default defineComponent({
     },
     rootPath: function (newValue: string) {
       // Reset current path when rootPath changed.
+
       this.path = "";
       this.inputPath = "";
       this.selectedKey = {};
@@ -875,22 +876,21 @@ export default defineComponent({
       }
     },
     relativePath(path: any) {
-      console.log("relativePath", path);
       const root = this.rootPath;
-      console.log("Root Path", root);
       const statroot = this.staticRoot;
+
       if (!statroot) {
         return path;
       }
       let newpath = "";
       if (path != null && root != null) {
         path = this.cleanPath(path);
-        console.log("Cleaned Path:", path);
+
         newpath = this.cleanPath(path.substring(root.length));
-        console.log("New Path:", newpath);
       }
       return newpath;
     },
+
     cleanPath(path: any) {
       if (path != null) {
         while (path.indexOf("/") == 0) {
