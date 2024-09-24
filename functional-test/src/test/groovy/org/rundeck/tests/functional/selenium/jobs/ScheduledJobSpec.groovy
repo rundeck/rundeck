@@ -1,6 +1,8 @@
 package org.rundeck.tests.functional.selenium.jobs
 
 import org.rundeck.util.annotations.SeleniumCoreTest
+import org.rundeck.util.common.WaitingTime
+import org.rundeck.util.common.execution.ExecutionUtils
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.jobs.JobListPage
@@ -30,7 +32,7 @@ class ScheduledJobSpec extends SeleniumBase{
         loginPage.login(TEST_USER, TEST_PASS)
         jobListPage.go()
         jobListPage.validatePage()
-        hold(15)
+        waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName), {it.size() >= 1}, WaitingTime.EXCESSIVE )
         activityPage.loadActivityPageForProject(projectName)
         activityPage.go()
 
