@@ -20,9 +20,9 @@ import javax.servlet.http.HttpServletResponse
  */
 class CacheControlSecurityHeaderProvider implements SecurityHeaderProvider {
 
-    private static final String DEFAULT_EXPIRES_VALUE = "0"
-    private static final String DEFAULT_PRAGMA_VALUE = "no-cache"
-    private static final String DEFAULT_CACHE_CONTROL_VALUE = "no-cache, no-store, max-age=0, must-revalidate"
+    static final String DEFAULT_EXPIRES_VALUE = "0"
+    static final String DEFAULT_PRAGMA_VALUE = "no-cache"
+    static final String DEFAULT_CACHE_CONTROL_VALUE = "no-cache, no-store, max-age=0, must-revalidate"
 
     String name = 'cache-control'
     Boolean defaultEnabled = true
@@ -34,23 +34,18 @@ class CacheControlSecurityHeaderProvider implements SecurityHeaderProvider {
         final Map config
     ) {
 
-        def stat = response.getStatus()
-
+        // Avoid replacing the headers if they are already set
         if (response.getHeader(HttpHeaders.CACHE_CONTROL)
             || response.getHeader(HttpHeaders.EXPIRES)
             || response.getHeader(HttpHeaders.PRAGMA)
             || response.getStatus() == HttpStatus.NOT_MODIFIED.value()) {
-            return null
+            return []
         }
 
-        String value = config.get('value') ?: DEFAULT_CACHE_CONTROL_VALUE
-        String pragma = config.get('pragma') ?: DEFAULT_PRAGMA_VALUE
-        String expires = config.get('expires') ?: DEFAULT_EXPIRES_VALUE
-
         return [
-            header(HttpHeaders.CACHE_CONTROL, value),
-            header(HttpHeaders.PRAGMA, pragma),
-            header(HttpHeaders.EXPIRES, expires)
+            new SecurityHeaderImpl(name: HttpHeaders.CACHE_CONTROL, value: DEFAULT_CACHE_CONTROL_VALUE),
+            new SecurityHeaderImpl(name: HttpHeaders.PRAGMA, value: DEFAULT_PRAGMA_VALUE),
+            new SecurityHeaderImpl(name: HttpHeaders.EXPIRES, value: DEFAULT_EXPIRES_VALUE)
         ]
     }
 }
