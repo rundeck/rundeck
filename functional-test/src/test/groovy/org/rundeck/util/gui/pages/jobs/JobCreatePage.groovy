@@ -152,6 +152,7 @@ class JobCreatePage extends BasePage {
     By optEditFormBy = By.className("optEditForm")
 
     private String loadPath = "/job/create"
+    private final String copyPath = "/job/copy"
     String projectName
     String jobId
     boolean edit=false
@@ -277,6 +278,12 @@ class JobCreatePage extends BasePage {
     void validatePage() {
         if (!driver.currentUrl.endsWith(getLoadPath())) {
             throw new IllegalStateException("Not on job create page: " + driver.currentUrl)
+        }
+    }
+
+    void validateCopyPage() {
+        if (!driver.currentUrl.contains(copyPath)) {
+            throw new IllegalStateException("Not on job copy page: " + driver.currentUrl)
         }
     }
 
