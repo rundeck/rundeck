@@ -47,11 +47,4 @@ interface SecurityHeaderProvider {
      * @return list of headers to add to response
      */
     List<SecurityHeader> getSecurityHeaders(HttpServletRequest request, HttpServletResponse response, Map config)
-
-    /**
-     * Builds a header with the given name and value.
-     */
-    default SecurityHeader header(String name, String value) {
-        new SecurityHeaderImpl(name: name, value: value)
-    }
 }
