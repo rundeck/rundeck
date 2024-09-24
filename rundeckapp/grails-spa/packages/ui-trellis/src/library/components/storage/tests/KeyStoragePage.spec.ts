@@ -2,6 +2,7 @@ import { mount, VueWrapper } from "@vue/test-utils";
 import { ComponentPublicInstance } from "vue";
 import KeyStoragePage from "../KeyStoragePage.vue";
 import { Modal } from "uiv";
+
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({
     rdBase: "mockRdBase",
@@ -18,16 +19,12 @@ interface KeyStoragePageData {
   modalEdit: boolean;
 }
 type KeyStoragePageComponent = ComponentPublicInstance & KeyStoragePageData;
-const mountKeyStoragePage = async (
-  props = {},
-): Promise<VueWrapper<KeyStoragePageComponent>> => {
+let defaultProps: Record<string, any>;
+
+const mountKeyStoragePage = async (props = {}) => {
   return mount(KeyStoragePage as unknown as KeyStoragePageComponent, {
     props: {
-      project: "test-project",
-      readOnly: true,
-      allowUpload: true,
-      modelValue: "",
-      storageFilter: "",
+      ...defaultProps,
       ...props,
     },
     global: {
@@ -41,10 +38,16 @@ const mountKeyStoragePage = async (
   }) as unknown as VueWrapper<KeyStoragePageComponent>;
 };
 describe("KeyStoragePage.vue", () => {
-  afterEach(() => {
+  beforeEach(() => {
     jest.clearAllMocks();
+    defaultProps = {
+      project: "test-project",
+      readOnly: true,
+      allowUpload: true,
+      modelValue: "",
+      storageFilter: "",
+    };
   });
-
   it("opens the editor when the open-editor event is emitted", async () => {
     const wrapper = await mountKeyStoragePage();
     const keyStorageView = wrapper.findComponent({ name: "KeyStorageView" });
@@ -63,14 +66,12 @@ describe("KeyStoragePage.vue", () => {
       dontOverwrite: false,
     };
     await keyStorageView.vm.$emit("openEditor", upload);
-
     await wrapper.vm.$nextTick();
     const modal = wrapper.findComponent('[data-testid="modal-edit"]');
     expect(modal.exists()).toBe(true);
     const emittedEvents = keyStorageView.emitted().openEditor;
     expect(emittedEvents[0]).toEqual([upload]);
   });
-
   it("closes the editor when cancel-editing event is emitted", async () => {
     const wrapper = await mountKeyStoragePage();
     await wrapper.vm.$nextTick();
@@ -81,7 +82,6 @@ describe("KeyStoragePage.vue", () => {
     const emittedEvents = keyStorageEdit.emitted();
     expect(emittedEvents["cancelEditing"][0]).toEqual([]);
   });
-
   it("emits finishEditing when a key is created or modified", async () => {
     const wrapper = await mountKeyStoragePage();
     await wrapper.vm.$nextTick();
@@ -101,10 +101,9 @@ describe("KeyStoragePage.vue", () => {
     await wrapper.vm.$nextTick();
     const emittedEvents = keyStorageEdit.emitted().finishEditing;
     expect(emittedEvents[0]).toEqual([selectedKey]);
-    // verifying the modal is closed after finishEditing is handled
+    // Verify that the modal is closed after finishEditing is handled
     expect(wrapper.vm.modalEdit).toBe(false);
   });
-
   it("updates selectedKey when key-created event is emitted", async () => {
     const wrapper = await mountKeyStoragePage();
     const newKey = {
