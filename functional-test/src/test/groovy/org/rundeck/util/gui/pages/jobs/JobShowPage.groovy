@@ -76,6 +76,11 @@ class JobShowPage extends BasePage{
     By jobDisableExecutionButtonBy = By.linkText("Disable Execution")
     By jobEnableExecutionButtonBy = By.linkText("Enable Execution")
     By jobOptionsDropdownBy = By.cssSelector(".optionvalues")
+    By duplicateJobButtonBy = By.partialLinkText("Duplicate this Job")
+    By duplicateJobToProjectButtonBy = By.partialLinkText("Duplicate this Job to other Project")
+    By projectDropDownToDuplicateBy = By.id("jobProject")
+    By duplicateJobToProjectSubmitBy = By.id("submittbn")
+    By jobStatsBy = By.cssSelector(".col-xs-12.col-sm-4.job-stats-item")
 
     static class NextUi {
         static By descriptionText = By
@@ -399,6 +404,27 @@ class JobShowPage extends BasePage{
 
     List<WebElement> getExtraOptFirsts(String optionName){
         els By.name("extra.option.$optionName")
+    }
+
+    WebElement getDuplicateJobButton(){
+        el duplicateJobButtonBy
+    }
+
+    WebElement getDuplicateJobToProjectButtonBy(){
+        el duplicateJobToProjectButtonBy
+    }
+
+    void selectProjectToDuplicateJob(String projectName){
+        Select selector = new Select(el(projectDropDownToDuplicateBy))
+        selector.selectByValue(projectName)
+    }
+
+    WebElement getDuplicateJobToProjectSubmitButton(){
+        el duplicateJobToProjectSubmitBy
+    }
+
+    List<WebElement> getJobStatsElements(){
+        els jobStatsBy
     }
 
 }
