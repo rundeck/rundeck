@@ -68,7 +68,7 @@ dependencies {
         exclude(group:"javax.mail", module:"mailapi")
         exclude(group:"org.codehaus.groovy", module:"groovy-all")
         exclude(group: 'ch.qos.logback', module: 'logback-classic')
-        exclude(group: 'org.bouncycastle', module: 'bcpg-jdk15on')
+        exclude(group: 'org.bouncycastle', module: 'bcpg-jdk18on')
     }
 
     implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
