@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package org.rundeck.security
+package org.rundeck.grails.plugins.securityheaders
 
 
-import org.rundeck.grails.plugins.securityheaders.CSPSecurityHeaderProvider
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
 import spock.lang.Specification
