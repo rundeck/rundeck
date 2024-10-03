@@ -9,6 +9,8 @@ import org.rundeck.grails.plugins.securityheaders.SessionIdChangeFilter
 import org.rundeck.grails.plugins.securityheaders.XCTOSecurityHeaderProvider
 import org.rundeck.grails.plugins.securityheaders.XFOSecurityHeaderProvider
 import org.rundeck.grails.plugins.securityheaders.XXSSPSecurityHeaderProvider
+import org.rundeck.grails.plugins.securityheaders.StrictTransportSecurityHeaderProvider
+import org.rundeck.grails.plugins.securityheaders.ReferrerPolicySecurityHeaderProvider
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 
 class SecurityheadersGrailsPlugin extends Plugin {
@@ -80,6 +82,15 @@ Brief summary/description of the plugin.
              * Expires: 0
              */
             cacheControlSecurityHeaderProvider(CacheControlSecurityHeaderProvider) {
+                name = 'cache-control'
+                defaultEnabled = true
+            }
+            strictTransportSecurityHeaderProvider(StrictTransportSecurityHeaderProvider) {
+                name = 'cache-control'
+                defaultEnabled = true
+            }
+
+            referrerPolicySecurityHeaderProvider(ReferrerPolicySecurityHeaderProvider) {
                 name = 'cache-control'
                 defaultEnabled = true
             }
