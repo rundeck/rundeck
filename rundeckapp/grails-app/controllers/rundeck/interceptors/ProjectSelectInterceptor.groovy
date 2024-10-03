@@ -130,9 +130,8 @@ class ProjectSelectInterceptor {
                 }
             } catch (JDBCConnectionException e) {
                 response.setStatus(503)
-                request.errorCode = 'project.select.error'
-                request.errorArgs = [params.project]
-                request.title = 'Service Unavailable' + e.message
+                request.errorCode = 'request.error.jdbc.connection'
+                request.title = 'Service Unavailable: ' + e.message
                 params.project = null
                 render(view: '/common/error')
                 AA_TimerInterceptor.afterRequest(request, response, session)
