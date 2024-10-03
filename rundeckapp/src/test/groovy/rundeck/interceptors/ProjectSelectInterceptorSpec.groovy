@@ -25,6 +25,7 @@ import org.grails.gsp.GroovyPagesTemplateEngine
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.web.gsp.io.CachingGrailsConventionGroovyPageLocator
 import org.grails.web.servlet.view.GroovyPageViewResolver
+import org.hibernate.exception.JDBCConnectionException
 import org.rundeck.app.access.InterceptorHelper
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.springframework.beans.factory.config.MethodInvokingFactoryBean
@@ -36,6 +37,7 @@ import spock.lang.Specification
 
 import javax.security.auth.Subject
 import java.security.Principal
+import java.sql.SQLException
 
 /**
  * @author greg
@@ -324,6 +326,48 @@ class ProjectSelectInterceptorSpec extends Specification implements InterceptorU
         request.errorCode == null
         request.errorArgs == null
 //        response.redirectedUrl == '/menu/jobs' //TODO: The interceptor test dont get redirectedUrl, even the status is 302.
+
+    }
+
+    def "Interceptor should return error if jdbc lose connection with database"() {
+        given:
+        def controller = (ProjectController)mockController(ProjectController)
+        def featureMock = Mock(FeatureService){
+            featurePresent(Features.SIDEBAR_PROJECT_LISTING)>>false
+        }
+        def frameworkMock=Mock(FrameworkService) {
+            1 * existsFrameworkProject(_) >> { throw new JDBCConnectionException("test", new SQLException("error")) }
+            0 * refreshSessionProjects(_,_)
+            0 * loadSessionProjectLabel(_,'testProject')
+        }
+        defineBeans {
+//            rundeckAuthContextEvaluator(InstanceFactoryBean,Mock(AppAuthContextEvaluator){
+//                1 * authorizeApplicationResourceAny(*_) >> true
+//            })
+            frameworkService(InstanceFactoryBean,frameworkMock)
+            featureService(InstanceFactoryBean, featureMock)
+        }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
+        }
+        session.user = 'bob'
+        session.subject = new Subject()
+        request.remoteUser = 'bob'
+        request.userPrincipal = Mock(Principal) {
+            getName() >> 'bob'
+        }
+        params.project = 'testProject'
+
+        when:
+        withInterceptors(controller: 'project') {
+            controller.index()
+        }
+        then:
+        response.status == 503
+
+        flash.error == null
+        request.title.startsWith("Service Unavailable: ")
+        request.errorCode == 'request.error.jdbc.connection'
 
     }
 
