@@ -206,11 +206,6 @@ rundeck:
                         font-src: 'self data:'
                         img-src: '* data:'
                         form-action: 'self'
-                        X-Frame-Options: 'deny'
-                        Referrer-Policy: 'strict-origin-when-cross-origin'
-                        Cache-Control: 'private, max-age=0'
-                        Strict-Transport-Security: 'max-age=31536000; includeSubDomains'
-                        Content-Security-Policy: 'default-src self'
 
         interceptor:
             allowed:
