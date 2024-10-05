@@ -86,12 +86,12 @@ Brief summary/description of the plugin.
                 defaultEnabled = true
             }
             strictTransportSecurityHeaderProvider(StrictTransportSecurityHeaderProvider) {
-                name = 'cache-control'
+                name = 'strict-transport-security'
                 defaultEnabled = true
             }
 
             referrerPolicySecurityHeaderProvider(ReferrerPolicySecurityHeaderProvider) {
-                name = 'cache-control'
+                name = 'Referrer-Policy'
                 defaultEnabled = true
             }
 
