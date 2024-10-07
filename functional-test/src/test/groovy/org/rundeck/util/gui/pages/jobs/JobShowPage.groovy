@@ -81,6 +81,8 @@ class JobShowPage extends BasePage{
     By projectDropDownToDuplicateBy = By.id("jobProject")
     By duplicateJobToProjectSubmitBy = By.id("submittbn")
     By jobStatsBy = By.cssSelector(".col-xs-12.col-sm-4.job-stats-item")
+    By optionInputBy = By.cssSelector(".optionvaluesfield")
+    By jobOptionAlertBy = By.cssSelector(".alert.alert-danger")
 
     static class NextUi {
         static By descriptionText = By
@@ -425,6 +427,14 @@ class JobShowPage extends BasePage{
 
     List<WebElement> getJobStatsElements(){
         els jobStatsBy
+    }
+
+    List<WebElement> getOptionInputs(){
+        return (els optionInputBy)
+    }
+
+    WebElement getJobOptionAlertBy(){
+        el jobOptionAlertBy
     }
 
 }

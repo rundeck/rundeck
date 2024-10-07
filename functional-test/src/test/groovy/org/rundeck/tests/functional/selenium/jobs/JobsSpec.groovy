@@ -791,4 +791,23 @@ class JobsSpec extends SeleniumBase {
         deleteProject(projectName)
     }
 
+    /**
+     * Checks for a warning message to be shown when trying to run a job with invalid option values from job show page
+     *
+     */
+    def "job execution with invalid option value"(){
+        given:
+        String projectName = "invalidInputsProject"
+        setupProject(projectName)
+        String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/jobWithOptions.xml', client).succeeded.first().id
+        JobShowPage jobShowPage = page(JobShowPage, projectName).forJob(jobUuid)
+        when:
+        jobShowPage.go()
+        jobShowPage.getRunJobBtn().click()
+        then:
+        jobShowPage.currentUrl().contains("invalidInputsProject/job/index")
+        jobShowPage.getJobOptionAlertBy().getText().contains("Option 'myOption' is required")
+        cleanup:
+        deleteProject(projectName)
+    }
 }
