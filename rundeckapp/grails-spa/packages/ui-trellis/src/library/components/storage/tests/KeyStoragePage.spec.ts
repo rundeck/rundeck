@@ -32,7 +32,7 @@ const mountKeyStoragePage = async (props = {}) => {
         Modal,
       },
       mocks: {
-        $t: (msg) => msg,
+        $t: (msg: string) => msg,
       },
     },
   }) as unknown as VueWrapper<KeyStoragePageComponent>;
@@ -55,7 +55,7 @@ describe("KeyStoragePage.vue", () => {
     const upload = {
       modifyMode: false,
       keyType: "privateKey",
-      inputPath: "/keys/testKey",
+      inputPath: "testKey",
       fileName: "testKey",
       file: null,
       fileContent: "",
