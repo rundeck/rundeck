@@ -1,5 +1,6 @@
 package org.rundeck.tests.functional.selenium.jobs
 
+import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.common.jobs.JobUtils
@@ -14,6 +15,12 @@ class JobSummarySpec extends SeleniumBase{
         go(LoginPage).login(TEST_USER, TEST_PASS)
     }
 
+    @ExcludePro
+    /**
+     * Checks for job stats
+     * It's excluded from pro since the locators are different
+     *
+     */
     def "job show summary stats"(){
         given:
         String projectName = "summaryProject"
