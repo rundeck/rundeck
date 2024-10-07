@@ -3,7 +3,7 @@ version: 2.1
 parameters:
   node-version:
     type: string
-    default: 18.18.1
+    default: 18.20.4
   disable-wizcli-scan:
     type: boolean
     default: true
