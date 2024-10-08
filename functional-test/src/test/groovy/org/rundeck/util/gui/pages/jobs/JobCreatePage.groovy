@@ -23,7 +23,7 @@ class JobCreatePage extends BasePage {
     By selectNode = By.cssSelector(".glyphicon-circle-arrow-right")
     By lastNodeInList = By.cssSelector(".col-xs-6:nth-child(3) span:nth-child(2)")
     By refreshNodesBy = By.cssSelector(".refresh_nodes")
-    By numberOfStepsBy = By.cssSelector(".autohilite.autoedit.wfitem.exectype")
+    By numberOfStepsBy = By.cssSelector(".autohilite.autoedit.wfitem")
     By notificationModalBy = By.cssSelector('#job-notifications-edit-modal')
     By notificationDropDownBy = By.cssSelector('#notification-edit-type-dropdown > button')
     By notificationSaveBy = By.id("job-notifications-edit-modal-btn-save")
