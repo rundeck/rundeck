@@ -34,6 +34,7 @@ const initI18n = (options = {}) => {
   // Create VueI18n instance with options
   return createI18n({
     silentTranslationWarn: true,
+    fallbackLocale: "en_US",
     locale: locale, // set locale
     messages, // set locale messages
     ...options,
