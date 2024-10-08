@@ -84,6 +84,7 @@ export default defineComponent({
       this.modalEdit = false;
     },
     handleCancelEditing() {
+      console.log("handleCancelEditing called");
       this.modalEdit = false;
     },
     openEditor(uploadSetting: UploadSetting) {
