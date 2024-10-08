@@ -10,6 +10,11 @@ jest.mock("../../../rundeckService", () => ({
       }),
       storageKeyUpdate: jest.fn().mockResolvedValue({
         success: true,
+        keyDetails: {
+          name: "exampleKey",
+          path: "/keys/test",
+          keyType: "privateKey",
+        },
       }),
       storageKeyCreate: jest.fn(),
       storageKeyGetMetadata: jest.fn().mockResolvedValue({
@@ -39,8 +44,23 @@ type DefaultProps = {
   project: string;
 };
 
-let rundeckClientMock: RundeckClient;
-let defaultProps: DefaultProps;
+const defaultProps: DefaultProps = {
+  storageFilter: "",
+  uploadSetting: {
+    modifyMode: false,
+    keyType: "privateKey",
+    inputPath: "",
+    fileName: null,
+    file: null,
+    fileContent: "",
+    textArea: "some-text",
+    status: "new",
+    password: "",
+    errorMsg: null,
+    dontOverwrite: false,
+  },
+  project: "test-project",
+};
 
 const mountKeyStorageEdit = async (props = {}) => {
   return mount(KeyStorageEdit, {
@@ -52,6 +72,8 @@ const mountKeyStorageEdit = async (props = {}) => {
 };
 
 describe("KeyStorageEdit", () => {
+  let rundeckClientMock: RundeckClient;
+
   beforeEach(() => {
     rundeckClientMock = getRundeckContext().rundeckClient;
     jest.clearAllMocks();
@@ -63,24 +85,6 @@ describe("KeyStorageEdit", () => {
         keyType: "privateKey",
       },
     });
-
-    defaultProps = {
-      storageFilter: "",
-      uploadSetting: {
-        modifyMode: false,
-        keyType: "privateKey",
-        inputPath: "",
-        fileName: null,
-        file: null,
-        fileContent: "",
-        textArea: "some-text",
-        status: "new",
-        password: "",
-        errorMsg: null,
-        dontOverwrite: false,
-      },
-      project: "test-project",
-    };
   });
 
   it("emits cancelEditing when cancel button is clicked", async () => {
@@ -194,13 +198,8 @@ describe("KeyStorageEdit", () => {
         textArea: "private-key-text",
       },
     });
-    // Key doesn't exists
-    (
-      rundeckClientMock.storageKeyGetMaterial as jest.Mock
-    ).mockResolvedValueOnce({
-      _response: { status: 404 },
-    });
-    // creating key
+
+    // Mock the storageKeyCreate method to return success
     (rundeckClientMock.storageKeyCreate as jest.Mock).mockResolvedValueOnce({
       success: true,
       keyDetails: {
@@ -213,6 +212,7 @@ describe("KeyStorageEdit", () => {
     const saveButton = wrapper.find('[data-testid="save-btn"]');
     await saveButton.trigger("click");
     await flushPromises();
+
     const expectedEmittedEvent = [
       {
         success: true,
@@ -223,9 +223,13 @@ describe("KeyStorageEdit", () => {
         },
       },
     ];
+
+    // Verify that the storageKeyCreate method is called
     expect(
       rundeckClientMock.storageKeyCreate as jest.Mock,
     ).toHaveBeenCalledTimes(1);
+
+    // Verify that the finishEditing event is emitted with the correct data
     expect(wrapper.emitted().finishEditing[0]).toEqual(expectedEmittedEvent);
   });
 });

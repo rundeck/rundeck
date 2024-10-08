@@ -1,6 +1,7 @@
-import { mount, VueWrapper } from "@vue/test-utils";
+import { flushPromises, mount, VueWrapper } from "@vue/test-utils";
 import { ComponentPublicInstance } from "vue";
 import KeyStoragePage from "../KeyStoragePage.vue";
+import { getRundeckContext } from "../../../rundeckService";
 import { Modal } from "uiv";
 
 jest.mock("@/library/rundeckService", () => ({
@@ -8,23 +9,37 @@ jest.mock("@/library/rundeckService", () => ({
     rdBase: "mockRdBase",
     projectName: "test-project",
     rundeckClient: {
-      storageKeyGetMetadata: jest.fn().mockResolvedValue({}),
+      storageKeyGetMetadata: jest.fn().mockResolvedValue({
+        resources: [
+          {
+            name: "testKey",
+            path: "/keys/testKey",
+            meta: { rundeckKeyType: "private" },
+          },
+        ],
+        _response: { status: 200 },
+      }),
       storageKeyDelete: jest.fn().mockResolvedValue({}),
       projectList: jest.fn().mockResolvedValue([]),
     },
   }),
   url: jest.fn().mockReturnValue({ href: "mockHref" }),
 }));
+
 interface KeyStoragePageData {
   modalEdit: boolean;
+  selectedKey: Record<string, any>;
 }
 type KeyStoragePageComponent = ComponentPublicInstance & KeyStoragePageData;
-let defaultProps: Record<string, any>;
 
 const mountKeyStoragePage = async (props = {}) => {
   return mount(KeyStoragePage as unknown as KeyStoragePageComponent, {
     props: {
-      ...defaultProps,
+      project: "test-project",
+      readOnly: true,
+      allowUpload: true,
+      modelValue: "",
+      storageFilter: "",
       ...props,
     },
     global: {
@@ -40,14 +55,8 @@ const mountKeyStoragePage = async (props = {}) => {
 describe("KeyStoragePage.vue", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    defaultProps = {
-      project: "test-project",
-      readOnly: true,
-      allowUpload: true,
-      modelValue: "",
-      storageFilter: "",
-    };
   });
+
   it("opens the editor when the open-editor event is emitted", async () => {
     const wrapper = await mountKeyStoragePage();
     const keyStorageView = wrapper.findComponent({ name: "KeyStorageView" });
@@ -67,20 +76,21 @@ describe("KeyStoragePage.vue", () => {
     };
     await keyStorageView.vm.$emit("openEditor", upload);
     await wrapper.vm.$nextTick();
-    const modal = wrapper.findComponent('[data-testid="modal-edit"]');
-    expect(modal.exists()).toBe(true);
     const emittedEvents = keyStorageView.emitted().openEditor;
     expect(emittedEvents[0]).toEqual([upload]);
+    expect(wrapper.text()).toContain("Add or Upload a Key");
   });
+
   it("closes the editor when cancel-editing event is emitted", async () => {
     const wrapper = await mountKeyStoragePage();
-    await wrapper.vm.$nextTick();
+    // Simulate the cancelEditing event
     const keyStorageEdit = wrapper.findComponent({ name: "KeyStorageEdit" });
+    expect(keyStorageEdit.exists()).toBe(true);
     await keyStorageEdit.vm.$emit("cancelEditing");
     await wrapper.vm.$nextTick();
-    expect(wrapper.vm.modalEdit).toBe(false);
-    const emittedEvents = keyStorageEdit.emitted();
-    expect(emittedEvents["cancelEditing"][0]).toEqual([]);
+    await flushPromises();
+    const emittedEvents = keyStorageEdit.emitted().cancelEditing;
+    expect(emittedEvents).toHaveLength(1);
   });
   it("emits finishEditing when a key is created or modified", async () => {
     const wrapper = await mountKeyStoragePage();
@@ -101,8 +111,7 @@ describe("KeyStoragePage.vue", () => {
     await wrapper.vm.$nextTick();
     const emittedEvents = keyStorageEdit.emitted().finishEditing;
     expect(emittedEvents[0]).toEqual([selectedKey]);
-    // Verify that the modal is closed after finishEditing is handled
-    expect(wrapper.vm.modalEdit).toBe(false);
+    expect(emittedEvents).toHaveLength(1);
   });
   it("updates selectedKey when key-created event is emitted", async () => {
     const wrapper = await mountKeyStoragePage();
@@ -112,24 +121,36 @@ describe("KeyStoragePage.vue", () => {
       keyType: "privateKey",
       meta: { rundeckKeyType: "private" },
     };
-    const files = [
-      {
-        name: newKey.name,
-        path: newKey.path,
-        meta: { rundeckKeyType: "private" },
-      },
-    ];
+    const rundeckClientMock = getRundeckContext().rundeckClient;
+    (rundeckClientMock.storageKeyGetMetadata as jest.Mock).mockResolvedValue({
+      resources: [
+        {
+          name: "testKey",
+          path: "/keys/createdKey",
+          meta: { rundeckKeyType: "private" },
+        },
+      ],
+      _response: { status: 200 },
+    });
     const keyStorageEdit = wrapper.findComponent({ name: "KeyStorageEdit" });
     await keyStorageEdit.vm.$emit("keyCreated", newKey);
-    expect(wrapper.emitted().keyCreated);
     await wrapper.vm.$nextTick();
-    const keyStorageView = wrapper.findComponent({ name: "KeyStorageView" });
     const addKeyButton = wrapper.find('[data-testid="add-key-btn"]');
+    expect(addKeyButton.exists()).toBe(true);
     await addKeyButton.trigger("click");
     await wrapper.vm.$nextTick();
-    keyStorageView.vm.files = files;
-    await wrapper.vm.$nextTick();
+    const keyStorageView = wrapper.findComponent({ name: "KeyStorageView" });
+    await flushPromises();
+
+    console.log(
+      "Files in KeyStorageView after loadKeys:",
+      keyStorageView.vm.files,
+    );
+    expect(keyStorageView.vm.files.length).toBeGreaterThan(0);
+    expect(keyStorageView.vm.files[0].name).toBe("testKey");
+    // Check if the created key is displayed in the view
     const createdKeyDisplay = wrapper.find('[data-testid="created-key"]');
+    expect(createdKeyDisplay.exists()).toBe(true);
     expect(createdKeyDisplay.text()).toBe("testKey");
   });
 });

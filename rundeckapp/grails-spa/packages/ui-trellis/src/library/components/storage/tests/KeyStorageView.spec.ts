@@ -1,4 +1,4 @@
-import { mount } from "@vue/test-utils";
+import { flushPromises, mount } from "@vue/test-utils";
 import { ComponentPublicInstance } from "vue";
 import KeyStorageView from "../KeyStorageView.vue";
 import { getRundeckContext } from "../../../rundeckService";
@@ -7,30 +7,49 @@ jest.mock("../../../rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({
     rdBase: "mockRdBase",
     rundeckClient: {
-      storageKeyGetMetadata: jest.fn(),
-      storageKeyDelete: jest.fn(),
+      storageKeyGetMetadata: jest.fn().mockResolvedValue({
+        resources: [
+          {
+            name: "/myKey",
+            path: "/keys/myKey",
+            type: "file",
+            meta: { rundeckKeyType: "private" },
+          },
+          {
+            name: "/key2",
+            path: "/keys/key2",
+            type: "file",
+            meta: { rundeckKeyType: "private" },
+          },
+        ],
+        _response: { status: 200 },
+      }),
+      storageKeyDelete: jest.fn().mockResolvedValue({
+        _response: { status: 200 },
+      }),
       projectList: jest.fn().mockResolvedValue([]),
     },
   }),
   url: jest.fn().mockReturnValue({ href: "mockHref" }),
 }));
+
+// Define the necessary interfaces for the KeyStorageView component
 interface KeyStorageViewComponent extends ComponentPublicInstance {
   files: { name: string; path: string; meta: { rundeckKeyType: string } }[];
   isSelectedKey: boolean;
   selectedKey: { name: string; path: string; meta: { rundeckKeyType: string } };
-  parentDirString: (path: string) => string;
-  relativePath: (path: any) => any;
   confirmDeleteKey: () => Promise<void>;
+  loadKeys: () => Promise<void>;
 }
 
 let rundeckClientMock: any;
-let defaultProps: any;
-let keys: any[];
-
+let keys: any[]; // Store the keys for the tests
 const mountKeyStorageView = async (props = {}) => {
   return mount<KeyStorageViewComponent>(KeyStorageView, {
     props: {
-      ...defaultProps,
+      rootPath: "",
+      readOnly: false,
+      allowUpload: true,
       ...props,
     },
     global: {
@@ -38,31 +57,25 @@ const mountKeyStorageView = async (props = {}) => {
         Modal,
       },
       mocks: {
-        $t: (msg: string) => msg,
+        $t: (msg: string) => msg, // Mock translations
       },
     },
     data() {
       return {
-        files: keys,
+        files: keys, // Set the files to the `keys` array
         isSelectedKey: true,
-        selectedKey: keys[0],
+        selectedKey: keys[0], // Pre-select the first key
       };
     },
   });
 };
+
 describe("KeyStorageView", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    rundeckClientMock = getRundeckContext().rundeckClient;
-    defaultProps = {
-      rootPath: "",
-      readOnly: false,
-      allowUpload: true,
-    };
-    // Initialize keys for the tests
     keys = [
       {
-        name: "/key1",
+        name: "/myKey",
         path: "/keys/myKey",
         type: "file",
         meta: { rundeckKeyType: "private" },
@@ -74,15 +87,6 @@ describe("KeyStorageView", () => {
         meta: { rundeckKeyType: "private" },
       },
     ];
-    // Mocking storageKeyGetMetadata for all tests
-    rundeckClientMock.storageKeyGetMetadata.mockResolvedValue({
-      resources: keys,
-      _response: { status: 200 },
-    });
-    // Mocking storageKeyDelete for all tests
-    rundeckClientMock.storageKeyDelete.mockResolvedValue({
-      _response: { status: 200 },
-    });
   });
   it("emits openEditor when the Add or Upload a Key button is clicked", async () => {
     const wrapper = await mountKeyStorageView();
@@ -139,11 +143,17 @@ describe("KeyStorageView", () => {
     const wrapper = await mountKeyStorageView();
     const vm = wrapper.vm as unknown as KeyStorageViewComponent;
     await wrapper.vm.$nextTick();
-    // Check if we have 2 files before deletion: key1 and key2
+
+    // Log the initial number of files
+    console.log("Initial files:", vm.files);
     expect(vm.files).toHaveLength(2);
+
+    // Simulate the deletion button click
     const deleteButton = wrapper.find('button[data-testid="delete-key-btn"]');
     await deleteButton.trigger("click");
     await wrapper.vm.$nextTick();
+
+    // Assert that the modal opens
     const modal = wrapper.findComponent(Modal);
     const modalTitle = modal.find(".modal-title");
     expect(modalTitle.text()).toBe("Delete Selected Key");
@@ -157,13 +167,31 @@ describe("KeyStorageView", () => {
     expect(confirmButton.exists()).toBe(true);
     await confirmButton.trigger("click");
     await wrapper.vm.$nextTick();
-    // The deletion process in the test
-    const index = vm.files.findIndex((file) => file.name === "/key1");
-    if (index !== -1) {
-      vm.files.splice(index, 1);
-    }
+
+    expect(
+      getRundeckContext().rundeckClient.storageKeyDelete,
+    ).toHaveBeenCalledWith("/myKey");
+
+    (
+      getRundeckContext().rundeckClient.storageKeyGetMetadata as jest.Mock
+    ).mockResolvedValueOnce({
+      resources: [
+        {
+          name: "/key2",
+          path: "/keys/key2",
+          type: "file",
+          meta: { rundeckKeyType: "private" },
+        },
+      ],
+      _response: { status: 200 },
+    });
+
+    await flushPromises();
     await wrapper.vm.$nextTick();
-    // Check if we have 1 file after deletion: key2
+
+    // Log the number of files after deletion
+    console.log("Files after deletion:", vm.files);
     expect(vm.files).toHaveLength(1);
+    expect(vm.files[0].name).toBe("/key2");
   });
 });
