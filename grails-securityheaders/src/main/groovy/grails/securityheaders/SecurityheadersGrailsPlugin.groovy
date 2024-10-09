@@ -11,6 +11,7 @@ import org.rundeck.grails.plugins.securityheaders.XFOSecurityHeaderProvider
 import org.rundeck.grails.plugins.securityheaders.XXSSPSecurityHeaderProvider
 import org.rundeck.grails.plugins.securityheaders.StrictTransportSecurityHeaderProvider
 import org.rundeck.grails.plugins.securityheaders.ReferrerPolicySecurityHeaderProvider
+import org.rundeck.grails.plugins.securityheaders.PermissionsPolicySecurityHeaderProvider
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 
 class SecurityheadersGrailsPlugin extends Plugin {
