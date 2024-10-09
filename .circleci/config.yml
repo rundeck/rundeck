@@ -1,9 +1,6 @@
 version: 2.1
 
 parameters:
-  node-version:
-    type: string
-    default: 18.20.4
   disable-wizcli-scan:
     type: boolean
     default: true
@@ -192,8 +189,7 @@ commands:
   install-node:
     description: Install Node
     steps:
-      - node/install:
-          node-version: << pipeline.parameters.node-version >>
+      - node/install
 
   # Install dependencies required for gradle builds.
   install-build-dependencies:
