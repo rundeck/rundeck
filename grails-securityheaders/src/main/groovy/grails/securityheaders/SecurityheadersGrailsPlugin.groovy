@@ -90,6 +90,11 @@ Brief summary/description of the plugin.
                 defaultEnabled = true
             }
 
+            permissionsPolicySecurityHeaderProvider(PermissionsPolicySecurityHeaderProvider) {
+                name = 'Permissions-Policy'
+                defaultEnabled = true
+            }
+
             referrerPolicySecurityHeaderProvider(ReferrerPolicySecurityHeaderProvider) {
                 name = 'Referrer-Policy'
                 defaultEnabled = true
