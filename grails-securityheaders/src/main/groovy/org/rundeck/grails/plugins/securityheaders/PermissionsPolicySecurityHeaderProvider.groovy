@@ -7,7 +7,7 @@ import javax.servlet.http.HttpServletResponse
 class PermissionsPolicySecurityHeaderProvider implements SecurityHeaderProvider {
 
     static final String DEFAULT_REFERRER_POLICY = "Permissions-Policy"
-    static final String DEFAULT_REFERRER_POLICY_VALUE = "accelerometer=(), camera=(), geolocation=(*), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
+    static final String DEFAULT_REFERRER_POLICY_VALUE = "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
 
     String name = 'Permissions-Policy'
     Boolean defaultEnabled = true
