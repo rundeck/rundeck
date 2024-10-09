@@ -4333,7 +4333,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         then: "job should not have schedule owner changed"
             results.success
-            1 * service.jobSchedulerService.deleteJobSchedule(oldQuartzJob, oldQuartzGroup)
+            0 * service.jobSchedulerService.deleteJobSchedule(oldQuartzJob, oldQuartzGroup)
             0 * service.jobSchedulerService.updateScheduleOwner(_)
     }
     @Unroll
@@ -4391,7 +4391,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         }
         1 * service.rundeckAuthContextProcessor.authorizeProjectJobAny(_, _, ['update'], 'AProject') >> true
         2 * service.jobSchedulesService.shouldScheduleExecution(_) >> true
-        2 * service.jobSchedulerService.deleteJobSchedule(oldQuartzJob, oldQuartzGroup)
+        1 * service.jobSchedulerService.deleteJobSchedule(oldQuartzJob, oldQuartzGroup)
         1 * service.jobSchedulesService.isScheduled(_) >> false
         1 * service.quartzScheduler.checkExists(_)>>exists
 
