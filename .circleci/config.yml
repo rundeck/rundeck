@@ -192,7 +192,6 @@ commands:
       - run-build-step:
           step-name: Install Node
           command: dependencies_install_nodejs
-  #      - node/install
 
   # Install Java JDK
   install-java-jdk:
@@ -214,7 +213,6 @@ commands:
   install-build-dependencies:
     description: Install Build Dependencies
     steps:
-#      - aws-cli/install
       - install-node
       - install-java-jdk
       - install-groovy-sdk
@@ -223,8 +221,6 @@ commands:
   install-test-dependencies:
     description: Install Test Dependencies
     steps:
-#      - aws-cli/install
-#      - install-node
       - install-java-jdk
       - install-groovy-sdk
 
@@ -233,7 +229,6 @@ commands:
     description: Install Packaging Dependencies
     steps:
       - aws-cli/install
-#      - install-node
       - install-java-jdk
       - run-build-step:
           step-name: Install Packaging Dependencies
@@ -243,8 +238,6 @@ commands:
   install-testdeck-dependencies:
     description: Install TestDeck Dependencies
     steps:
-#      - aws-cli/install
-#      - install-node
       - install-java-jdk
       - run-build-step:
           step-name: Install TestDeck Dependencies
