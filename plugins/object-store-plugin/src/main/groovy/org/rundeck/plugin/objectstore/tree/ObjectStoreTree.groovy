@@ -17,8 +17,14 @@ package org.rundeck.plugin.objectstore.tree
 
 import com.dtolabs.rundeck.core.storage.BaseStreamResource
 import com.dtolabs.rundeck.core.storage.StorageUtil
+import groovy.transform.CompileStatic
+import io.minio.BucketExistsArgs
+import io.minio.GetObjectArgs
+import io.minio.MakeBucketArgs
 import io.minio.MinioClient
-import io.minio.PutObjectOptions
+import io.minio.PutObjectArgs
+import io.minio.RemoveObjectArgs
+import io.minio.StatObjectArgs
 import org.rundeck.plugin.objectstore.directorysource.ObjectStoreDirectorySource
 import org.rundeck.plugin.objectstore.directorysource.ObjectStoreMemoryDirectorySource
 import org.rundeck.plugin.objectstore.stream.CloseAfterCopyStream
@@ -28,7 +34,7 @@ import org.rundeck.storage.api.Tree
 
 import java.util.regex.Pattern
 
-
+@CompileStatic
 class ObjectStoreTree implements Tree<BaseStreamResource> {
     public static final String RUNDECK_CUSTOM_HEADER_PREFIX = "x-amz-meta-rdk-"
     private static final String DIR_MARKER = "/"
@@ -49,8 +55,14 @@ class ObjectStoreTree implements Tree<BaseStreamResource> {
     }
 
     private void init() {
-        if(!mClient.bucketExists(bucket)) {
-            mClient.makeBucket(bucket)
+        BucketExistsArgs args = BucketExistsArgs.builder()
+                .bucket(bucket)
+                .build();
+        if(!mClient.bucketExists(args)) {
+            MakeBucketArgs makeBucketArgs = MakeBucketArgs.builder()
+                    .bucket(bucket)
+                    .build()
+            mClient.makeBucket(makeBucketArgs)
         }
     }
 
@@ -102,7 +114,12 @@ class ObjectStoreTree implements Tree<BaseStreamResource> {
 
     @Override
     Resource<BaseStreamResource> getResource(final String path) {
-        BaseStreamResource content = new BaseStreamResource(directorySource.getEntryMetadata(path), new CloseAfterCopyStream(mClient.getObject(bucket, path)))
+        GetObjectArgs args = GetObjectArgs.builder()
+                .bucket(bucket)
+                .object(path)
+                .build()
+        BaseStreamResource content = new BaseStreamResource(directorySource.getEntryMetadata(path),
+                new CloseAfterCopyStream(mClient.getObject(args)))
         ObjectStoreResource resource = new ObjectStoreResource(path, content)
         return resource
     }
@@ -144,7 +161,11 @@ class ObjectStoreTree implements Tree<BaseStreamResource> {
 
     @Override
     boolean deleteResource(final String path) {
-        mClient.removeObject(bucket, path)
+        RemoveObjectArgs args = RemoveObjectArgs.builder()
+                .bucket(bucket)
+                .object(path)
+                .build()
+        mClient.removeObject(args)
         directorySource.deleteEntry(path)
         return true
     }
@@ -168,20 +189,28 @@ class ObjectStoreTree implements Tree<BaseStreamResource> {
     Resource<BaseStreamResource> updateResource(final String path, final BaseStreamResource content) {
         def customHeaders = createCustomHeadersFromRundeckMeta(content.meta)
 
-        if(content.contentLength > -1) {
-            PutObjectOptions putOpts = new PutObjectOptions(content.contentLength,-1)
-            putOpts.headers = customHeaders
-            mClient.putObject(bucket, path, content.inputStream, putOpts)
+        if (content.contentLength > -1) {
+            PutObjectArgs putObjectArgs = PutObjectArgs.builder()
+                    .bucket(bucket)
+                    .object(path)
+                    .stream(content.inputStream, content.contentLength, -1)
+                    .headers(customHeaders)
+                    .build()
+            mClient.putObject(putObjectArgs)
         } else {
-            File tmpFile = File.createTempFile("_obj_store_tmp_","_data_")
+            File tmpFile = File.createTempFile("_obj_store_tmp_", "_data_")
             tmpFile << content.inputStream
-            customHeaders[RUNDECK_CUSTOM_HEADER_PREFIX+ StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH] = tmpFile.size().toString()
-            PutObjectOptions putOpts = new PutObjectOptions(tmpFile.size(),-1)
-            putOpts.headers = customHeaders
-            mClient.putObject(bucket, path, tmpFile.newInputStream(), putOpts)
+            customHeaders[RUNDECK_CUSTOM_HEADER_PREFIX + StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH] = tmpFile.size().toString()
+            PutObjectArgs putObjectArgs = PutObjectArgs.builder()
+                    .bucket(bucket)
+                    .object(path)
+                    .stream(tmpFile.newInputStream(), tmpFile.size(), -1)
+                    .headers(customHeaders)
+                    .build()
+            mClient.putObject(putObjectArgs)
             tmpFile.delete()
         }
-        directorySource.updateEntry(path,content.meta)
+        directorySource.updateEntry(path, content.meta)
         return getResource(path)
     }
 

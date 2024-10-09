@@ -72,7 +72,12 @@ class ObjectStorePlugin extends DelegateTree<ResourceMeta> implements StoragePlu
             throw new IllegalArgumentException("objectStoreUrl property is required")
         }
 
-        MinioClient mClient = region ? new MinioClient(objectStoreUrl, accessKey, secretKey, region) : new MinioClient(objectStoreUrl, accessKey, secretKey)
+        MinioClient.Builder mClientBuilder = MinioClient.builder()
+                .endpoint(objectStoreUrl)
+                .credentials(accessKey, secretKey)
+        mClientBuilder = region ? mClientBuilder.region(region) : mClientBuilder
+
+        MinioClient mClient = mClientBuilder.build()
         if(!connectionTimeout) connectionTimeout = 180L
         mClient.setTimeout(TimeUnit.SECONDS.toMillis(connectionTimeout),TimeUnit.SECONDS.toMillis(connectionTimeout),TimeUnit.SECONDS.toMillis(connectionTimeout))
         if(uncachedObjectLookup) {

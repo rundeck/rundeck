@@ -44,7 +44,17 @@ class MinioContainer extends GenericContainer<MinioContainer> {
     }
 
     MinioClient client() {
-        new MinioClient("http://${containerIpAddress}:${firstMappedPort}", accessKey, secretKey)
+        MinioClient c = MinioClient.builder()
+                .endpoint("http://${containerIpAddress}:${firstMappedPort}")
+                .credentials(accessKey, secretKey)
+                .build()
+
+        // Waiting a little gives time for the container to start and become ready to accept requests.
+        // Invoking operations on the container that is not ready results in:
+        // 503's with ErrorResponse (code = XMinioServerNotInitialized, message = Server not initialized, please try again.)
+        MinioTestUtils.ensureMinioServerInitialized(c)
+
+        return c
     }
 
     @Override
