@@ -191,22 +191,47 @@ commands:
     steps:
       - node/install
 
+  # Install Java JDK
+  install-java-jdk:
+    description: Install JDK
+    steps:
+      - run-build-step:
+          step-name: Install Java JDK
+          command: dependencies_install_zulu11jdk
+
+  # Install Groovy SDK
+  install-groovy-sdk:
+      description: Install Groovy SDK
+      steps:
+      - run-build-step:
+          step-name: Install Groovy SDK
+          command: dependencies_install_groovy
+
   # Install dependencies required for gradle builds.
   install-build-dependencies:
     description: Install Build Dependencies
     steps:
-      - aws-cli/install
+#      - aws-cli/install
       - install-node
-      - run-build-step:
-          step-name: Install Build Dependencies
-          command: dependencies_build_setup
+      - install-java-jdk
+      - install-groovy-sdk
+
+  # Install dependencies required for gradle builds.
+  install-test-dependencies:
+    description: Install Test Dependencies
+    steps:
+#      - aws-cli/install
+#      - install-node
+      - install-java-jdk
+      - install-groovy-sdk
 
   # Install dependencies required for packaging
   install-packaging-dependencies:
     description: Install Packaging Dependencies
     steps:
       - aws-cli/install
-      - install-node
+#      - install-node
+      - install-java-jdk
       - run-build-step:
           step-name: Install Packaging Dependencies
           command: dependencies_packaging_setup
@@ -215,8 +240,9 @@ commands:
   install-testdeck-dependencies:
     description: Install TestDeck Dependencies
     steps:
-      - aws-cli/install
-      - install-node
+#      - aws-cli/install
+#      - install-node
+      - install-java-jdk
       - run-build-step:
           step-name: Install TestDeck Dependencies
           command: dependencies_testdeck_setup
@@ -285,7 +311,7 @@ jobs:
     steps:
       - setup_docker
       - checkout
-      - install-build-dependencies
+      - install-test-dependencies
       - restore-build-cache
       - attach_workspace:
           at: ~/workspace
@@ -358,7 +384,8 @@ jobs:
     steps:
       - setup_docker
       - checkout
-      - install-build-dependencies
+#      - install-build-dependencies
+      - install-java-jdk
       - restore-build-cache
       - attach_workspace:
           at: ~/workspace
@@ -378,7 +405,8 @@ jobs:
     steps:
       - setup_docker
       - checkout
-      - install-build-dependencies
+#      - install-build-dependencies
+      - install-java-jdk
       - restore-build-cache
       - attach_workspace:
           at: ~/workspace
@@ -535,9 +563,7 @@ jobs:
       - restore-build-cache
       - attach_workspace:
           at: ~/workspace
-      - run-build-step:
-          step-name: Install Build Dependencies
-          command: dependencies_build_setup
+      - install-test-dependencies
       - run-build-step:
           step-name: Pull images
           command: rundeck_pull_image
