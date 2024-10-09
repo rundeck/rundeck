@@ -20,11 +20,6 @@ class StrictTransportSecurityHeaderProvider implements SecurityHeaderProvider {
             final Map config
     ) {
 
-        // Avoid replacing the headers if they are already set
-        if (response.getHeader("Strict-Transport-Security") || response.getStatus() == HttpStatus.NOT_MODIFIED.value()) {
-            return []
-        }
-
         return [
                 new SecurityHeaderImpl(name: "Strict-Transport-Security", value: DEFAULT_STRICT_TRANSPORT_VALUE),
         ]

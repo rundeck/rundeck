@@ -19,11 +19,6 @@ class ReferrerPolicySecurityHeaderProvider implements SecurityHeaderProvider {
             final Map config
     ) {
 
-        // Avoid replacing the headers if they are already set
-        if (response.getHeader(DEFAULT_REFERRER_POLICY) || response.getStatus() == HttpStatus.NOT_MODIFIED.value()) {
-            return []
-        }
-
         return [
                 new SecurityHeaderImpl(name: DEFAULT_REFERRER_POLICY, value: DEFAULT_REFERRER_POLICY_VALUE),
         ]
