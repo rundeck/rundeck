@@ -74,7 +74,7 @@ executors:
   # Main docker executor
   docker-builder:
     docker:
-      - image: cimg/base:2023.10-22.04
+      - image: cimg/base:current-22.04
     parameters:
       # we set the resource class to small by default
       # however, any job that uses the setup_remote_docker step will be
