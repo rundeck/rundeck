@@ -44,7 +44,12 @@
                   class="dropdown-menu dropdown-menu-right"
                 >
                   <li v-for="link in jumpLinks" :key="link.path">
-                    <a href="#" @click="loadDir(link.path)">{{ link.name }}</a>
+                    <a
+                      href="#"
+                      @click="loadDir(link.path)"
+                      data-testid="load-dir-link"
+                      >{{ link.name }}</a
+                    >
                   </li>
                 </ul>
               </div>
@@ -76,6 +81,7 @@
               <button
                 v-if="!readOnly || allowUpload === true"
                 class="btn btn-sm btn-cta"
+                data-testid="add-key-btn"
                 @click="actionUpload"
               >
                 <i class="glyphicon glyphicon-plus"></i>
@@ -88,6 +94,7 @@
                 "
                 class="btn btn-sm btn-warning"
                 @click="actionUploadModify"
+                data-testid="overwrite-key-btn"
               >
                 <i class="glyphicon glyphicon-pencil"></i>
                 Overwrite Key
@@ -97,6 +104,7 @@
                   selectedKey && selectedKey.path && isSelectedKey && !readOnly
                 "
                 class="btn btn-sm btn-danger"
+                data-testid="delete-key-btn"
                 @click="deleteKey"
               >
                 <i class="glyphicon glyphicon-trash"></i>
@@ -170,7 +178,7 @@
                     >
                       <i class="glyphicon glyphicon-lock"></i>
                     </span>
-                    <span>{{ key.name }}</span
+                    <span data-testid="created-key">{{ key.name }}</span
                     ><span v-if="key.expired">{{ "[CACHE EXPIRED]" }}</span>
                   </td>
                   <td class="text-strong">
@@ -238,6 +246,7 @@
           <div class="modal-footer">
             <button
               type="button"
+              data-testid="confirm-delete-btn"
               class="btn btn-sm btn-danger obs-storagedelete-select"
               @click="confirmDeleteKey"
             >
@@ -425,6 +434,7 @@ export default defineComponent({
     },
     rootPath: function (newValue: string) {
       // Reset current path when rootPath changed.
+
       this.path = "";
       this.inputPath = "";
       this.selectedKey = {};
@@ -687,6 +697,7 @@ export default defineComponent({
       if (keyType == null) {
         keyType = key.meta["Rundeck-key-type"];
       }
+
       return key && key.meta && keyType && keyType === "private";
     },
     isPublicKey(key: any) {
@@ -738,7 +749,6 @@ export default defineComponent({
       const inputPath = this.relativePath(
         this.parentDirString(this.selectedKey.path),
       );
-
       const inputType = InputType.Text;
 
       const upload = {
@@ -754,7 +764,6 @@ export default defineComponent({
         status: "update",
         errorMsg: null as any,
       };
-
       this.$emit("openEditor", upload);
     },
     clean() {
@@ -869,16 +878,19 @@ export default defineComponent({
     relativePath(path: any) {
       const root = this.rootPath;
       const statroot = this.staticRoot;
+
       if (!statroot) {
         return path;
       }
       let newpath = "";
       if (path != null && root != null) {
         path = this.cleanPath(path);
+
         newpath = this.cleanPath(path.substring(root.length));
       }
       return newpath;
     },
+
     cleanPath(path: any) {
       if (path != null) {
         while (path.indexOf("/") == 0) {

@@ -1,6 +1,10 @@
 <template>
   <div>
-    <div v-if="!!uploadSetting.errorMsg" class="alert alert-danger">
+    <div
+      v-if="!!uploadSetting.errorMsg"
+      class="alert alert-danger"
+      data-testid="error-msg"
+    >
       <span>{{ uploadSetting.errorMsg }}</span>
     </div>
 
@@ -165,6 +169,7 @@
               :disabled="uploadSetting.modifyMode === true"
               name="fileName"
               class="form-control"
+              data-testid="key-name-input"
               placeholder="Specify a name."
             />
             <div v-if="uploadSetting.inputType === 'file'" class="help-block">
@@ -212,6 +217,7 @@
         <button
           type="button"
           class="btn btn-default mr-3"
+          data-testid="cancel-btn"
           @click="handleCancel"
         >
           Cancel
@@ -219,6 +225,7 @@
         <button
           type="button"
           class="btn btn-cta"
+          data-testid="save-btn"
           :disabled="validInput() === false"
           @click="handleUploadKey"
         >
@@ -377,7 +384,7 @@ export default defineComponent({
 
       if (exists) {
         if (this.uploadSetting.dontOverwrite) {
-          this.uploadSetting.errorMsg = "key aready exists";
+          this.uploadSetting.errorMsg = "key already exists";
           return;
         } else {
           rundeckContext.rundeckClient
