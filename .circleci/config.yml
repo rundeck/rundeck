@@ -311,7 +311,7 @@ jobs:
     steps:
       - setup_docker
       - checkout
-      - install-test-dependencies
+      - install-build-dependencies
       - restore-build-cache
       - attach_workspace:
           at: ~/workspace
