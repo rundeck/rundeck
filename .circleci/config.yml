@@ -189,7 +189,10 @@ commands:
   install-node:
     description: Install Node
     steps:
-      - node/install
+      - run-build-step:
+          step-name: Install Node
+          command: dependencies_install_nodejs
+  #      - node/install
 
   # Install Java JDK
   install-java-jdk:
@@ -352,7 +355,7 @@ jobs:
       name: docker-builder
     steps:
       - checkout
-      - install-build-dependencies
+      - install-node
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
