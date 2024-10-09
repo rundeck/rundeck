@@ -146,9 +146,10 @@ commands:
           when: << parameters.when >>
           command: |
             source scripts/circleci/setup.sh
-            echo "=== ENV ===" && env && echo "=== ENV END ==="
+            echo "=== ENV ===" && env && echo "=== ENV END $(date)==="
             set -x            
             <<parameters.command>>
+            echo "=== Finished $(date) ==="
 
   # Save gradle test results
   collect-gradle-tests:
@@ -357,6 +358,7 @@ jobs:
     steps:
       - checkout
       - install-node
+      - install-java-jdk
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
@@ -388,7 +390,6 @@ jobs:
     steps:
       - setup_docker
       - checkout
-#      - install-build-dependencies
       - install-java-jdk
       - restore-build-cache
       - attach_workspace:
