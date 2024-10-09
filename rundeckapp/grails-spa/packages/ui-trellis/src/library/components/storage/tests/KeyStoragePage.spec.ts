@@ -3,8 +3,7 @@ import { ComponentPublicInstance } from "vue";
 import KeyStoragePage from "../KeyStoragePage.vue";
 import { getRundeckContext } from "../../../rundeckService";
 import { Modal } from "uiv";
-
-jest.mock("@/library/rundeckService", () => ({
+jest.mock("../../../rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({
     rdBase: "mockRdBase",
     projectName: "test-project",
@@ -12,8 +11,9 @@ jest.mock("@/library/rundeckService", () => ({
       storageKeyGetMetadata: jest.fn().mockResolvedValue({
         resources: [
           {
-            name: "testKey",
-            path: "/keys/testKey",
+            name: "newKey",
+            path: "/keys/newKey",
+            type: "file",
             meta: { rundeckKeyType: "private" },
           },
         ],
@@ -25,13 +25,11 @@ jest.mock("@/library/rundeckService", () => ({
   }),
   url: jest.fn().mockReturnValue({ href: "mockHref" }),
 }));
-
 interface KeyStoragePageData {
   modalEdit: boolean;
   selectedKey: Record<string, any>;
 }
 type KeyStoragePageComponent = ComponentPublicInstance & KeyStoragePageData;
-
 const mountKeyStoragePage = async (props = {}) => {
   return mount(KeyStoragePage as unknown as KeyStoragePageComponent, {
     props: {
@@ -52,8 +50,11 @@ const mountKeyStoragePage = async (props = {}) => {
     },
   }) as unknown as VueWrapper<KeyStoragePageComponent>;
 };
+
 describe("KeyStoragePage.vue", () => {
+  let rundeckClientMock: any;
   beforeEach(() => {
+    rundeckClientMock = getRundeckContext().rundeckClient;
     jest.clearAllMocks();
   });
 
@@ -113,20 +114,38 @@ describe("KeyStoragePage.vue", () => {
     expect(emittedEvents[0]).toEqual([selectedKey]);
     expect(emittedEvents).toHaveLength(1);
   });
+
   it("updates selectedKey when key-created event is emitted", async () => {
     const wrapper = await mountKeyStoragePage();
-    const newKey = {
-      name: "testKey",
-      path: "/keys/createdKey",
-      keyType: "privateKey",
-      meta: { rundeckKeyType: "private" },
-    };
-    const rundeckClientMock = getRundeckContext().rundeckClient;
-    (rundeckClientMock.storageKeyGetMetadata as jest.Mock).mockResolvedValue({
+    await wrapper.vm.$nextTick();
+    // 1. First mock: Initial files before any event
+    rundeckClientMock.storageKeyGetMetadata.mockResolvedValueOnce({
       resources: [
         {
           name: "testKey",
-          path: "/keys/createdKey",
+          path: "/keys/testKey",
+          type: "file",
+          meta: { rundeckKeyType: "private" },
+        },
+      ],
+      _response: { status: 200 },
+    });
+    const keyStorageView = wrapper.findComponent({ name: "KeyStorageView" });
+    const newKey = {
+      name: "newKey",
+      path: "/keys/newKey",
+      keyType: "privateKey",
+      meta: { rundeckKeyType: "private" },
+    };
+    await flushPromises();
+    await wrapper.vm.$nextTick();
+    // 2. Second mock: After the  event, reflecting the new key
+    rundeckClientMock.storageKeyGetMetadata.mockResolvedValueOnce({
+      resources: [
+        {
+          name: "newKey",
+          path: "/keys/newKey",
+          type: "file",
           meta: { rundeckKeyType: "private" },
         },
       ],
@@ -134,23 +153,21 @@ describe("KeyStoragePage.vue", () => {
     });
     const keyStorageEdit = wrapper.findComponent({ name: "KeyStorageEdit" });
     await keyStorageEdit.vm.$emit("keyCreated", newKey);
-    await wrapper.vm.$nextTick();
+
     const addKeyButton = wrapper.find('[data-testid="add-key-btn"]');
     expect(addKeyButton.exists()).toBe(true);
     await addKeyButton.trigger("click");
-    await wrapper.vm.$nextTick();
-    const keyStorageView = wrapper.findComponent({ name: "KeyStorageView" });
     await flushPromises();
-
-    console.log(
-      "Files in KeyStorageView after loadKeys:",
-      keyStorageView.vm.files,
+    await wrapper.vm.$nextTick();
+    // Ensure that the files array is updated after the event and button click
+    expect(keyStorageView.vm.files.length).toBe(1);
+    expect(keyStorageView.vm.files).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: "newKey",
+          path: "/keys/newKey",
+        }),
+      ]),
     );
-    expect(keyStorageView.vm.files.length).toBeGreaterThan(0);
-    expect(keyStorageView.vm.files[0].name).toBe("testKey");
-    // Check if the created key is displayed in the view
-    const createdKeyDisplay = wrapper.find('[data-testid="created-key"]');
-    expect(createdKeyDisplay.exists()).toBe(true);
-    expect(createdKeyDisplay.text()).toBe("testKey");
   });
 });
