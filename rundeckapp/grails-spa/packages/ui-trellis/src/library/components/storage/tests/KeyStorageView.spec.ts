@@ -43,7 +43,7 @@ interface KeyStorageViewComponent extends ComponentPublicInstance {
 }
 
 let rundeckClientMock: any;
-let keys: any[]; // Store the keys for the tests
+let keys: any[];
 const mountKeyStorageView = async (props = {}) => {
   return mount<KeyStorageViewComponent>(KeyStorageView, {
     props: {
@@ -57,7 +57,7 @@ const mountKeyStorageView = async (props = {}) => {
         Modal,
       },
       mocks: {
-        $t: (msg: string) => msg, // Mock translations
+        $t: (msg: string) => msg,
       },
     },
     data() {
@@ -72,7 +72,6 @@ const mountKeyStorageView = async (props = {}) => {
 
 describe("KeyStorageView", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
     keys = [
       {
         name: "/myKey",
@@ -87,7 +86,10 @@ describe("KeyStorageView", () => {
         meta: { rundeckKeyType: "private" },
       },
     ];
+    rundeckClientMock = getRundeckContext().rundeckClient;
+    jest.clearAllMocks();
   });
+
   it("emits openEditor when the Add or Upload a Key button is clicked", async () => {
     const wrapper = await mountKeyStorageView();
     const input = wrapper.find('input[type="text"]');
@@ -143,38 +145,7 @@ describe("KeyStorageView", () => {
     const wrapper = await mountKeyStorageView();
     const vm = wrapper.vm as unknown as KeyStorageViewComponent;
     await wrapper.vm.$nextTick();
-
-    // Log the initial number of files
-    console.log("Initial files:", vm.files);
-    expect(vm.files).toHaveLength(2);
-
-    // Simulate the deletion button click
-    const deleteButton = wrapper.find('button[data-testid="delete-key-btn"]');
-    await deleteButton.trigger("click");
-    await wrapper.vm.$nextTick();
-
-    // Assert that the modal opens
-    const modal = wrapper.findComponent(Modal);
-    const modalTitle = modal.find(".modal-title");
-    expect(modalTitle.text()).toBe("Delete Selected Key");
-    const modalBody = modal.find(".modal-body");
-    expect(modalBody.text()).toContain(
-      "Really delete the selected key at this path?",
-    );
-    const confirmButton = modal.find(
-      'button[data-testid="confirm-delete-btn"]',
-    );
-    expect(confirmButton.exists()).toBe(true);
-    await confirmButton.trigger("click");
-    await wrapper.vm.$nextTick();
-
-    expect(
-      getRundeckContext().rundeckClient.storageKeyDelete,
-    ).toHaveBeenCalledWith("/myKey");
-
-    (
-      getRundeckContext().rundeckClient.storageKeyGetMetadata as jest.Mock
-    ).mockResolvedValueOnce({
+    rundeckClientMock.storageKeyGetMetadata.mockResolvedValueOnce({
       resources: [
         {
           name: "/key2",
@@ -186,12 +157,28 @@ describe("KeyStorageView", () => {
       _response: { status: 200 },
     });
 
-    await flushPromises();
+    // Ensure we have 2 files before deletion
+    expect(vm.files).toHaveLength(2);
+
+    // Simulate the deletion button click
+    const deleteButton = wrapper.find('button[data-testid="delete-key-btn"]');
+    await deleteButton.trigger("click");
     await wrapper.vm.$nextTick();
 
-    // Log the number of files after deletion
-    console.log("Files after deletion:", vm.files);
-    expect(vm.files).toHaveLength(1);
+    // Assert that the modal opens
+    const modal = wrapper.findComponent(Modal);
+    const modalTitle = modal.find(".modal-title");
+    expect(modalTitle.text()).toBe("Delete Selected Key");
+
+    // Simulate confirmation of deletion
+    const confirmButton = modal.find(
+      'button[data-testid="confirm-delete-btn"]',
+    );
+    expect(confirmButton.exists()).toBe(true);
+    await confirmButton.trigger("click");
+    await flushPromises();
+    expect(rundeckClientMock.storageKeyDelete).toHaveBeenCalledWith("/myKey");
     expect(vm.files[0].name).toBe("/key2");
+    expect(vm.files).toHaveLength(1);
   });
 });

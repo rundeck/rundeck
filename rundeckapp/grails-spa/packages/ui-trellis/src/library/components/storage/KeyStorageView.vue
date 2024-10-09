@@ -575,6 +575,10 @@ export default defineComponent({
               if (resource.type === "file") {
                 if (this.storageFilter != null && this.storageFilter !== "") {
                   if (this.allowedResource(resource.meta)) {
+                    console.log(
+                      "Allowed resource returned to true for",
+                      resource.meta,
+                    );
                     this.files.push(resource);
                   }
                 } else {

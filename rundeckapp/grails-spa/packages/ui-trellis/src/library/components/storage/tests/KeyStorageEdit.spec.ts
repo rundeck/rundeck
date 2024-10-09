@@ -8,14 +8,7 @@ jest.mock("../../../rundeckService", () => ({
       storageKeyGetMaterial: jest.fn().mockResolvedValue({
         _response: { status: 404 },
       }),
-      storageKeyUpdate: jest.fn().mockResolvedValue({
-        success: true,
-        keyDetails: {
-          name: "exampleKey",
-          path: "/keys/test",
-          keyType: "privateKey",
-        },
-      }),
+      storageKeyUpdate: jest.fn().mockResolvedValue({}),
       storageKeyCreate: jest.fn(),
       storageKeyGetMetadata: jest.fn().mockResolvedValue({
         _response: { status: 200 },
@@ -76,7 +69,6 @@ describe("KeyStorageEdit", () => {
 
   beforeEach(() => {
     rundeckClientMock = getRundeckContext().rundeckClient;
-    jest.clearAllMocks();
     (rundeckClientMock.storageKeyCreate as jest.Mock).mockResolvedValue({
       success: true,
       keyDetails: {
@@ -85,6 +77,7 @@ describe("KeyStorageEdit", () => {
         keyType: "privateKey",
       },
     });
+    jest.clearAllMocks();
   });
 
   it("emits cancelEditing when cancel button is clicked", async () => {
