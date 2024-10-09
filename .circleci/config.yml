@@ -356,7 +356,7 @@ jobs:
       name: docker-builder
     steps:
       - checkout
-      - install-build-dependencies
+      - install-node
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
