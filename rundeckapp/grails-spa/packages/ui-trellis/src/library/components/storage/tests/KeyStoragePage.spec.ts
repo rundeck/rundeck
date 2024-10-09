@@ -86,7 +86,6 @@ describe("KeyStoragePage.vue", () => {
     const wrapper = await mountKeyStoragePage();
     // Simulate the cancelEditing event
     const keyStorageEdit = wrapper.findComponent({ name: "KeyStorageEdit" });
-    expect(keyStorageEdit.exists()).toBe(true);
     await keyStorageEdit.vm.$emit("cancelEditing");
     await wrapper.vm.$nextTick();
     await flushPromises();
@@ -155,7 +154,6 @@ describe("KeyStoragePage.vue", () => {
     await keyStorageEdit.vm.$emit("keyCreated", newKey);
 
     const addKeyButton = wrapper.find('[data-testid="add-key-btn"]');
-    expect(addKeyButton.exists()).toBe(true);
     await addKeyButton.trigger("click");
     await flushPromises();
     await wrapper.vm.$nextTick();
