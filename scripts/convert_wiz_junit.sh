@@ -12,6 +12,7 @@ convert_wiz_junit() {
     local mediumCount=$(jq -r '.result.analytics.vulnerabilities.mediumCount // 0' < "$IN")
     local highCount=$(jq -r '.result.analytics.vulnerabilities.highCount // 0' < "$IN")
     local criticalCount=$(jq -r '.result.analytics.vulnerabilities.criticalCount // 0' < "$IN")
+    local failureCount=$((mediumCount + highCount + criticalCount))
 
     local time=$(jq -r '.createdAt' < "$IN" | cut -d'T' -f1)
 
@@ -19,12 +20,12 @@ convert_wiz_junit() {
 
     cat <<END
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites failures="$((highCount + criticalCount))" tests="$totalCount" timestamp="$time">
-  <testsuite name="Wiz Scan Vulnerabilities" tests="$totalCount" failures="$((highCount + criticalCount))">
+<testsuites failures="$failureCount" tests="$totalCount" timestamp="$time">
+  <testsuite name="Wiz Scan Vulnerabilities" tests="$totalCount" failures="$failureCount">
 END
 
     # Concatenate vulnerabilities from osPackages and libraries, then filter for high and critical
-    jq -c '.result.osPackages[]?, .result.libraries[]? | . as $pkg | ($pkg.vulnerabilities[]? | select(.severity == "HIGH" or .severity == "CRITICAL") | . + {packageName: $pkg.name, packageVersion: $pkg.version})' < "$IN" |
+    jq -c '.result.osPackages[]?, .result.libraries[]? | . as $pkg | ($pkg.vulnerabilities[]? | select(.severity == "CRITICAL" or .severity == "HIGH" or .severity == "MEDIUM") | . + {packageName: $pkg.name, packageVersion: $pkg.version, packagePath: $pkg.path})' < "$IN" |
     while IFS= read -r vuln; do
         local name=$(echo "$vuln" | jq -r '.name')
         local severity=$(echo "$vuln" | jq -r '.severity')
@@ -32,6 +33,7 @@ END
         local link=$(echo "$vuln" | jq -r '.source // "No source provided"')
         local packageName=$(echo "$vuln" | jq -r '.packageName')
         local packageVersion=$(echo "$vuln" | jq -r '.packageVersion')
+        local packagePath=$(echo "$vuln" | jq -r '.packagePath')
 
         cat <<END
     <testcase name="${packageName} ${packageVersion}: ${name}" severity="${severity}" link="${link}">
@@ -41,6 +43,7 @@ Package: ${packageName}
 Version: ${packageVersion}
 Description: ${description}
 Link: ${link}
+Path: ${packagePath}
 ]]>
       </failure>
     </testcase>

@@ -109,16 +109,18 @@ wizcli_scan() {
     # Aggregate high and critical vulnerabilities from osPackages and libraries
     local high_vulns=$(jq '[.result.osPackages[].vulnerabilities[]?, .result.libraries[].vulnerabilities[]? | select(.severity == "HIGH") | .name] | length' wizcli_scan_result.json)
     local crit_vulns=$(jq '[.result.osPackages[].vulnerabilities[]?, .result.libraries[].vulnerabilities[]? | select(.severity == "CRITICAL") | .name] | length' wizcli_scan_result.json)
+    local med_vulns=$(jq '[.result.osPackages[].vulnerabilities[]?, .result.libraries[].vulnerabilities[]? | select(.severity == "MEDIUM") | .name] | length' wizcli_scan_result.json)
 
-    echo "High Vulnerabilities: $high_vulns"
     echo "Critical Vulnerabilities: $crit_vulns"
+    echo "High Vulnerabilities: $high_vulns"
+    echo "Medium Vulnerabilities: $med_vulns"
 
     # Check if there are any high or critical vulnerabilities and return a non-zero exit code if found
-    if [[ $high_vulns -gt 0 || $crit_vulns -gt 0 ]]; then
-        echo "==> Security Alert: Found high or critical vulnerabilities."
+    if [[ $high_vulns -gt 0 || $crit_vulns -gt 0 || $med_vulns -gt 0 ]]; then
+        echo "==> Security Alert: Vulnerabilities found."
         return 1
     else
-        echo "==> No high or critical vulnerabilities found."
+        echo "==> No vulnerabilities found."
         return 0
     fi
 }
