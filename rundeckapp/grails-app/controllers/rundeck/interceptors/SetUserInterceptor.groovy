@@ -2,6 +2,7 @@ package rundeck.interceptors
 
 import com.dtolabs.rundeck.core.authentication.Group
 import grails.compiler.GrailsCompileStatic
+import org.rundeck.app.auth.RequiredRoleProvider
 import org.rundeck.app.authentication.Token
 import com.dtolabs.rundeck.core.authentication.Username
 import groovy.transform.CompileStatic
@@ -134,7 +135,7 @@ class SetUserInterceptor {
             }
         }
 
-        def requiredRoles = getRequiredRolesFromProps()
+        def requiredRoles = loadRequiredRoles()
         if( requiredRoles.size() && !isRunnerToken){
             def requestGroups = request?.subject?.principals?.findAll { it instanceof Group } as List<Group>
             List<String> requestRoles = requestGroups.stream()
@@ -284,6 +285,16 @@ class SetUserInterceptor {
         .setUuid(token)
         .setCreator(owner)
         .setOwnerName(owner)
+    }
+
+    List<String> loadRequiredRoles() {
+        var providers = applicationContext.getBeansOfType(RequiredRoleProvider).values()
+        List<String> roles = new ArrayList<>();
+        for (RequiredRoleProvider provider : providers) {
+            roles.addAll(provider.getRequiredRoles());
+        }
+        roles.addAll(getRequiredRolesFromProps())
+        return roles
     }
 
     /**
