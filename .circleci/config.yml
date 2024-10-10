@@ -210,21 +210,6 @@ commands:
           step-name: Install Groovy SDK
           command: dependencies_install_groovy
 
-  # Install dependencies required for gradle builds.
-  install-build-dependencies:
-    description: Install Build Dependencies
-    steps:
-      - install-node
-      - install-java-jdk
-      - install-groovy-sdk
-
-  # Install dependencies required for gradle builds.
-  install-test-dependencies:
-    description: Install Test Dependencies
-    steps:
-      - install-java-jdk
-      - install-groovy-sdk
-
   # Install dependencies required for packaging
   install-packaging-dependencies:
     description: Install Packaging Dependencies
@@ -269,8 +254,9 @@ jobs:
       - setup_docker:
           docker_layer_caching: true
       - checkout
-      - install-build-dependencies
       - restore-build-cache
+      - install-node
+      - install-java-jdk
       - run-build-step:
           step-name: Build War
           command: rundeck_war_build
@@ -279,6 +265,8 @@ jobs:
           command: |
             rundeck_docker_build
             rundeck_docker_push
+      # groovy sdk is needed for running verify build.
+      - install-groovy-sdk
       - run-build-step:
           step-name: Verify Build
           command: rundeck_verify_build
@@ -308,7 +296,8 @@ jobs:
     steps:
       - setup_docker
       - checkout
-      - install-build-dependencies
+      - install-node
+      - install-java-jdk
       - restore-build-cache
       - attach_workspace:
           at: ~/workspace
@@ -404,7 +393,7 @@ jobs:
     steps:
       - setup_docker
       - checkout
-#      - install-build-dependencies
+      - aws-cli/install
       - install-java-jdk
       - restore-build-cache
       - attach_workspace:
@@ -560,9 +549,9 @@ jobs:
     steps:
       - checkout
       - restore-build-cache
+      - install-java-jdk
       - attach_workspace:
           at: ~/workspace
-      - install-test-dependencies
       - run-build-step:
           step-name: Pull images
           command: rundeck_pull_image
