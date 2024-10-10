@@ -117,4 +117,6 @@ databaseChangeLog = {
         include file: 'core/DBChangelogPrimaryKey.groovy'
         include file: 'core/BaseReportSpi.groovy'
         include file: 'core/RemoveFilters-5.0.groovy'
+        include file: 'core/ExecutionUUIDGeneration.groovy'
+
 }
