@@ -256,6 +256,7 @@ jobs:
       - restore-build-cache
       - install-node
       - install-java-jdk
+      - install-groovy-sdk
       - run-build-step:
           step-name: Build War
           command: rundeck_war_build
@@ -264,8 +265,6 @@ jobs:
           command: |
             rundeck_docker_build
             rundeck_docker_push
-      # groovy sdk is needed for running verify build.
-      - install-groovy-sdk
       - run-build-step:
           step-name: Verify Build
           command: rundeck_verify_build
