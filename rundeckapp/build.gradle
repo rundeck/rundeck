@@ -217,8 +217,8 @@ dependencies {
     implementation 'org.kohsuke:libpam4j:1.11'
     implementation "javax.xml.bind:jaxb-api:2.3.1"
     implementation 'org.dom4j:dom4j:2.1.3'
-    implementation ("org.bouncycastle:bcprov-jdk15on:${bouncyCastleVersion}")
-    implementation ("org.bouncycastle:bcpg-jdk15on:${bouncyCastleVersion}")
+    implementation ("org.bouncycastle:bcprov-jdk18on:${bouncyCastleVersion}")
+    implementation ("org.bouncycastle:bcpg-jdk18on:${bouncyCastleVersion}")
     implementation ("org.grails:grails-console") {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
@@ -282,10 +282,10 @@ dependencies {
         implementation("com.mchange:c3p0:0.9.5.4") {
             because "version brought by quartz affected by CVE-2019-5427"
         }
-        implementation ("org.bouncycastle:bcprov-jdk15on:${bouncyCastleVersion}") {
+        implementation ("org.bouncycastle:bcprov-jdk18on:${bouncyCastleVersion}") {
             because "earlier versions affected by exploitable bugs"
         }
-        implementation ("org.bouncycastle:bcpg-jdk15on:${bouncyCastleVersion}") {
+        implementation ("org.bouncycastle:bcpg-jdk18on:${bouncyCastleVersion}") {
             because "earlier versions affected by exploitable bugs"
         }
         implementation ("org.yaml:snakeyaml:${snakeyamlVersion}") {
