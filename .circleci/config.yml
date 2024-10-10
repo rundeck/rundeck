@@ -10,7 +10,6 @@ parameters:
 
 orbs:
   aws-cli: circleci/aws-cli@1.0.0
-  node: circleci/node@6.1.0
   trigger: rundeck/trigger-pipeline@0.0.5
   slack: circleci/slack@4.4.0
   browser-tools: circleci/browser-tools@1.4.8
@@ -75,7 +74,7 @@ executors:
   # Main docker executor
   docker-builder:
     docker:
-      - image: cimg/base:2023.10-22.04
+      - image: cimg/base:current-22.04
     parameters:
       # we set the resource class to small by default
       # however, any job that uses the setup_remote_docker step will be
@@ -89,7 +88,7 @@ executors:
   # Machine executor
   machine-builder:
     machine:
-      image: default
+      image: ubuntu-2204:current
       docker_layer_caching: << parameters.docker_layer_caching >>
     parameters:
       resource_class:
@@ -146,9 +145,10 @@ commands:
           when: << parameters.when >>
           command: |
             source scripts/circleci/setup.sh
-            echo "=== ENV ===" && env && echo "=== ENV END ==="
+            echo "=== ENV ===" && env && echo "=== ENV END $(date)==="
             set -x            
             <<parameters.command>>
+            echo "=== Finished $(date) ==="
 
   # Save gradle test results
   collect-gradle-tests:
@@ -189,24 +189,32 @@ commands:
   install-node:
     description: Install Node
     steps:
-      - node/install
-
-  # Install dependencies required for gradle builds.
-  install-build-dependencies:
-    description: Install Build Dependencies
-    steps:
-      - aws-cli/install
-      - install-node
       - run-build-step:
-          step-name: Install Build Dependencies
-          command: dependencies_build_setup
+          step-name: Install Node
+          command: dependencies_install_nodejs
+
+  # Install Java JDK
+  install-java-jdk:
+    description: Install JDK
+    steps:
+      - run-build-step:
+          step-name: Install Java JDK
+          command: dependencies_install_zulu11jdk
+
+  # Install Groovy SDK
+  install-groovy-sdk:
+      description: Install Groovy SDK
+      steps:
+      - run-build-step:
+          step-name: Install Groovy SDK
+          command: dependencies_install_groovy
 
   # Install dependencies required for packaging
   install-packaging-dependencies:
     description: Install Packaging Dependencies
     steps:
       - aws-cli/install
-      - install-node
+      - install-java-jdk
       - run-build-step:
           step-name: Install Packaging Dependencies
           command: dependencies_packaging_setup
@@ -215,8 +223,7 @@ commands:
   install-testdeck-dependencies:
     description: Install TestDeck Dependencies
     steps:
-      - aws-cli/install
-      - install-node
+      - install-java-jdk
       - run-build-step:
           step-name: Install TestDeck Dependencies
           command: dependencies_testdeck_setup
@@ -246,8 +253,10 @@ jobs:
       - setup_docker:
           docker_layer_caching: true
       - checkout
-      - install-build-dependencies
       - restore-build-cache
+      - install-node
+      - install-java-jdk
+      - install-groovy-sdk
       - run-build-step:
           step-name: Build War
           command: rundeck_war_build
@@ -285,7 +294,8 @@ jobs:
     steps:
       - setup_docker
       - checkout
-      - install-build-dependencies
+      - install-node
+      - install-java-jdk
       - restore-build-cache
       - attach_workspace:
           at: ~/workspace
@@ -326,7 +336,8 @@ jobs:
       name: docker-builder
     steps:
       - checkout
-      - install-build-dependencies
+      - install-node
+      - install-java-jdk
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
@@ -358,7 +369,7 @@ jobs:
     steps:
       - setup_docker
       - checkout
-      - install-build-dependencies
+      - install-java-jdk
       - restore-build-cache
       - attach_workspace:
           at: ~/workspace
@@ -378,7 +389,8 @@ jobs:
     steps:
       - setup_docker
       - checkout
-      - install-build-dependencies
+      - aws-cli/install
+      - install-java-jdk
       - restore-build-cache
       - attach_workspace:
           at: ~/workspace
@@ -533,11 +545,9 @@ jobs:
     steps:
       - checkout
       - restore-build-cache
+      - install-java-jdk
       - attach_workspace:
           at: ~/workspace
-      - run-build-step:
-          step-name: Install Build Dependencies
-          command: dependencies_build_setup
       - run-build-step:
           step-name: Pull images
           command: rundeck_pull_image
