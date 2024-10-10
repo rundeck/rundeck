@@ -141,7 +141,8 @@
         appMeta: {
             title: '${g.appTitle()}',
             logo:'${g.appLogo()}',
-            logocss:'${g.appLogocss()}'
+            logocss:'${g.appLogocss()}',
+            appRundeckGatewayUrl: '${g.appRundeckGatewayUrl()}'
         },
         hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}',
         feature: {
