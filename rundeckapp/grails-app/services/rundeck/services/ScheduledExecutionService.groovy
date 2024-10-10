@@ -894,7 +894,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def rescheduleJob(ScheduledExecution scheduledExecution, wasScheduled, oldJobName, oldJobGroup, boolean forceLocal, boolean remoteAssigned = false) {
         if (jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid) && shouldScheduleInThisProject(scheduledExecution.project)) {
             try {
-                deleteJob(scheduledExecution.generateJobScheduledName(), scheduledExecution.generateJobGroupName())
                 return scheduleJob(scheduledExecution, oldJobName, oldJobGroup, forceLocal, remoteAssigned)
             } catch (SchedulerException e) {
                 log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
