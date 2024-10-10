@@ -44,7 +44,7 @@
     "@popperjs/core": "^2.8.4",
     "@rundeck/client": "^0.2.5",
     "ace-builds": "^1.23.4",
-    "axios": "^1.6.4",
+    "axios": "^1.7.7",
     "core-js": "^3.6.5",
     "deep-object-diff": "^1.1.9",
     "dompurify": "^3.0.3",
