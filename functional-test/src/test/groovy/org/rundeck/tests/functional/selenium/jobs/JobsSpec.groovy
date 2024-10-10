@@ -5,15 +5,19 @@ import okhttp3.RequestBody
 import org.openqa.selenium.By
 import org.openqa.selenium.Keys
 import org.openqa.selenium.support.ui.Select
-import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.api.responses.jobs.CreateJobResponse
 import org.rundeck.util.common.jobs.JobUtils
-import org.rundeck.util.container.SeleniumBase
-import org.rundeck.util.gui.pages.activity.ActivityPage
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
-import org.rundeck.util.gui.pages.jobs.*
+import org.rundeck.util.gui.pages.jobs.JobCreatePage
+import org.rundeck.util.gui.pages.jobs.JobListPage
+import org.rundeck.util.gui.pages.jobs.JobShowPage
+import org.rundeck.util.gui.pages.jobs.JobTab
+import org.rundeck.util.gui.pages.jobs.StepType
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.profile.UserProfilePage
+import org.rundeck.util.annotations.SeleniumCoreTest
+import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.gui.pages.activity.ActivityPage
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper
 import spock.lang.Stepwise
 
@@ -751,4 +755,59 @@ class JobsSpec extends SeleniumBase {
 
     }
 
+    /**
+     * This test creates a job disables the executions and then enables it
+     * It only validates via UI that the run button shows up when enabled
+     */
+    def "job execution disable-enable"(){
+        given:
+        String projectName = "enableDisableJobSchedule"
+        setupProject(projectName)
+        String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/test.xml', client).succeeded.first().id
+        JobShowPage jobShowPage = page(JobShowPage, projectName).forJob(jobUuid)
+        JobListPage jobListPage = page(JobListPage)
+        jobListPage.loadJobListForProject(projectName)
+        when:
+        jobShowPage.go()
+        then:
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.jobExecutionDisabledIconBy, 0)
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.runJobBtnBy, 1)
+        when:
+        jobShowPage.getJobActionDropdownButton().click()
+        jobShowPage.getJobDisableExecutionButton().click()
+        jobShowPage.el(jobShowPage.jobExecToggleModalBy).findElement(jobShowPage.buttonDangerBy).click()
+        then:
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.jobExecutionDisabledIconBy, 1)
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.runJobBtnBy, 0)
+        when:
+        jobShowPage.getJobActionDropdownButton().click()
+        jobShowPage.getJobEnableExecutionButton().click()
+        jobShowPage.el(jobShowPage.jobExecToggleModalBy).findElement(jobShowPage.buttonDangerBy).click()
+        then:
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.jobExecutionDisabledIconBy, 0)
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.runJobBtnBy, 1)
+
+        cleanup:
+        deleteProject(projectName)
+    }
+
+    /**
+     * Checks for a warning message to be shown when trying to run a job with invalid option values from job show page
+     *
+     */
+    def "job execution with invalid option value"(){
+        given:
+        String projectName = "invalidInputsProject"
+        setupProject(projectName)
+        String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/jobWithOptions.xml', client).succeeded.first().id
+        JobShowPage jobShowPage = page(JobShowPage, projectName).forJob(jobUuid)
+        when:
+        jobShowPage.go()
+        jobShowPage.getRunJobBtn().click()
+        then:
+        jobShowPage.currentUrl().contains("invalidInputsProject/job/index")
+        jobShowPage.getJobOptionAlertBy().getText().contains("Option 'myOption' is required")
+        cleanup:
+        deleteProject(projectName)
+    }
 }
