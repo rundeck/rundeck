@@ -25,10 +25,12 @@ import org.grails.gsp.GroovyPagesTemplateEngine
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.web.gsp.io.CachingGrailsConventionGroovyPageLocator
 import org.grails.web.servlet.view.GroovyPageViewResolver
+import org.grails.web.util.GrailsApplicationAttributes
 import org.hibernate.exception.JDBCConnectionException
 import org.rundeck.app.access.InterceptorHelper
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.springframework.beans.factory.config.MethodInvokingFactoryBean
+import rundeck.controllers.ErrorController
 import rundeck.controllers.MenuController
 import rundeck.controllers.ProjectController
 import rundeck.services.FrameworkService
@@ -331,43 +333,39 @@ class ProjectSelectInterceptorSpec extends Specification implements InterceptorU
 
     def "Interceptor should return error if jdbc lose connection with database"() {
         given:
-        def controller = (ProjectController)mockController(ProjectController)
-        def featureMock = Mock(FeatureService){
-            featurePresent(Features.SIDEBAR_PROJECT_LISTING)>>false
-        }
-        def frameworkMock=Mock(FrameworkService) {
-            1 * existsFrameworkProject(_) >> { throw new JDBCConnectionException("test", new SQLException("error")) }
-            0 * refreshSessionProjects(_,_)
-            0 * loadSessionProjectLabel(_,'testProject')
-        }
-        defineBeans {
-//            rundeckAuthContextEvaluator(InstanceFactoryBean,Mock(AppAuthContextEvaluator){
-//                1 * authorizeApplicationResourceAny(*_) >> true
-//            })
-            frameworkService(InstanceFactoryBean,frameworkMock)
-            featureService(InstanceFactoryBean, featureMock)
-        }
-        interceptor.interceptorHelper = Mock(InterceptorHelper) {
-            matchesAllowedAsset(_,_) >> false
-        }
-        session.user = 'bob'
-        session.subject = new Subject()
-        request.remoteUser = 'bob'
-        request.userPrincipal = Mock(Principal) {
-            getName() >> 'bob'
-        }
-        params.project = 'testProject'
+            session.api_access_allowed = null
+            withRequest(controller: 'error', action: 'fiveHundred')
+            request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'error')
+            request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, 'fiveHundred')
+            def frameworkMock=Mock(FrameworkService) {
+                0 * existsFrameworkProject(_)
+                0 * refreshSessionProjects(_,_)
+                0 * loadSessionProjectLabel(_,'testProject')
+            }
 
-        when:
-        withInterceptors(controller: 'project') {
-            controller.index()
-        }
-        then:
-        response.status == 503
+            defineBeans {
+                rundeckAuthContextEvaluator(InstanceFactoryBean,Mock(AppAuthContextEvaluator){
+                    0 * authorizeApplicationResourceAny(*_) >> true
+                })
+                frameworkService(InstanceFactoryBean,frameworkMock)
+            }
+            interceptor.interceptorHelper = Mock(InterceptorHelper) {
+                matchesAllowedAsset(_,_) >> false
+            }
+            session.user = 'bob'
+            session.subject = new Subject()
+            request.remoteUser = 'bob'
+            request.userPrincipal = Mock(Principal) {
+                getName() >> 'bob'
+            }
+            params.project = 'testProject'
+        when: "A request matches the interceptor"
 
-        flash.error == null
-        request.title.startsWith("Service Unavailable: ")
-        request.errorCode == 'request.error.jdbc.connection'
+            def result = interceptor.before()
+
+        then: "api_access_allowed unset and result is true"
+            session.api_access_allowed == null
+            result
 
     }
 
