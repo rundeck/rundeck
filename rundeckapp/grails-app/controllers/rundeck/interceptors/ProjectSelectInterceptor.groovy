@@ -71,71 +71,63 @@ class ProjectSelectInterceptor {
         if(controllerName=='menu' && ( actionName in ['home'] )){
             return true
         }
+        if(controllerName=='error' && ( actionName in ['fiveHundred'] )){
+            return true
+        }
         if (session && session.user && session.subject && params.project) {
-            try {
-                //get user authorizations
-                def AuthContext authContext = frameworkService.userAuthContext(session)
+            //get user authorizations
+            def AuthContext authContext = frameworkService.userAuthContext(session)
 
-
-                def selected = params.project
-                if (!(selected =~ FrameworkResource.VALID_RESOURCE_NAME_REGEX)) {
-                    response.setStatus(400)
-                    request.errorCode = 'project.name.invalid'
-                    params.project = null
-                    render(view: '/common/error')
-                    AA_TimerInterceptor.afterRequest(request, response, session)
-                    return false
-                }
-                if (!frameworkService.existsFrameworkProject(selected)) {
-                    response.setStatus(404)
-                    request.title = 'Not Found'
-                    request.errorCode = 'scheduledExecution.project.invalid.message'
-                    request.errorArgs = [params.project]
-                    params.project = null
-                    render(view: '/common/error')
-                    AA_TimerInterceptor.afterRequest(request, response, session)
-                    return false
-                }
-                if (frameworkService.isFrameworkProjectDisabled(selected)) {
-                    response.setStatus(409)
-                    request.title = 'Disabled'
-                    request.errorCode = 'project.disabled'
-                    request.errorArgs = [params.project]
-                    params.project = null
-                    render(view: '/common/error')
-                    AA_TimerInterceptor.afterRequest(request, response, session)
-                    return false
-                }
-                if (!rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
-                        authContext,
-                        rundeckAuthContextEvaluator.authResourceForProject(selected),
-                        [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
-                )) {
-                    response.setStatus(HttpServletResponse.SC_FORBIDDEN)
-                    request.errorCode = 'request.error.unauthorized.message'
-                    request.errorArgs = ['view', 'Project', selected]
-                    request.titleCode = 'request.error.unauthorized.title'
-                    params.project = null
-                    render(view: '/common/error')
-                    AA_TimerInterceptor.afterRequest(request, response, session)
-                    return false
-                }
-
-                if (featureService.featurePresent(Features.SIDEBAR_PROJECT_LISTING)) {
-                    if (!session.frameworkProjects) {
-                        frameworkService.refreshSessionProjects(authContext, session)
-                    }
-                } else {
-                    frameworkService.loadSessionProjectLabel(session, selected)
-                }
-            } catch (JDBCConnectionException e) {
-                response.setStatus(503)
-                request.errorCode = 'request.error.jdbc.connection'
-                request.title = 'Service Unavailable: ' + e.message
+            def selected = params.project
+            if (!(selected =~ FrameworkResource.VALID_RESOURCE_NAME_REGEX)) {
+                response.setStatus(400)
+                request.errorCode = 'project.name.invalid'
                 params.project = null
                 render(view: '/common/error')
                 AA_TimerInterceptor.afterRequest(request, response, session)
                 return false
+            }
+            if (!frameworkService.existsFrameworkProject(selected)) {
+                response.setStatus(404)
+                request.title = 'Not Found'
+                request.errorCode = 'scheduledExecution.project.invalid.message'
+                request.errorArgs = [params.project]
+                params.project = null
+                render(view: '/common/error')
+                AA_TimerInterceptor.afterRequest(request, response, session)
+                return false
+            }
+            if (frameworkService.isFrameworkProjectDisabled(selected)) {
+                response.setStatus(409)
+                request.title = 'Disabled'
+                request.errorCode = 'project.disabled'
+                request.errorArgs = [params.project]
+                params.project = null
+                render(view: '/common/error')
+                AA_TimerInterceptor.afterRequest(request, response, session)
+                return false
+            }
+            if (!rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
+                    authContext,
+                    rundeckAuthContextEvaluator.authResourceForProject(selected),
+                    [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
+            )) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN)
+                request.errorCode = 'request.error.unauthorized.message'
+                request.errorArgs = ['view', 'Project', selected]
+                request.titleCode = 'request.error.unauthorized.title'
+                params.project = null
+                render(view: '/common/error')
+                AA_TimerInterceptor.afterRequest(request, response, session)
+                return false
+            }
+
+            if (featureService.featurePresent(Features.SIDEBAR_PROJECT_LISTING)) {
+                if (!session.frameworkProjects) {
+                    frameworkService.refreshSessionProjects(authContext, session)
+                }
+            } else {
+                frameworkService.loadSessionProjectLabel(session, selected)
             }
         }
         return true
