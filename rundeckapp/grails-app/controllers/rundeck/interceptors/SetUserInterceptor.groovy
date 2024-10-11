@@ -136,14 +136,14 @@ class SetUserInterceptor {
         }
 
         def requiredRoles = loadRequiredRoles()
-        if( requiredRoles.size() && !isRunnerToken){
+        if( !requiredRoles.isEmpty() && !isRunnerToken){
             def requestGroups = request?.subject?.principals?.findAll { it instanceof Group } as List<Group>
             List<String> requestRoles = requestGroups.stream()
             .map{it.getName()}
             .collect(Collectors.toList())
             List<String> matchedRoles = new ArrayList<>(requiredRoles)
             matchedRoles.retainAll(requestRoles)
-            if( !matchedRoles.size() ){
+            if( matchedRoles.isEmpty()){
                 log.error("User ${request.remoteUser} must have an allowed role to log in.")
                 SecurityContextHolder.clearContext()
                 request.logout()
