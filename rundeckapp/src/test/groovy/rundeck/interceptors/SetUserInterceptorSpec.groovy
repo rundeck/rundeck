@@ -189,8 +189,8 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         "admin,user"            |["admin", "user"] | true        | []                | null
         ""                      |["extra", "user"] | true        | ["extra"]         | null
         ""                      |["admin", "user"] | false       | ["extra"]         | 'user.not.allowed'
-        "admin,user,other"      |["allowed"]       | false       | [""]              | 'user.not.allowed'
-        "admin,user"            |["anyOfThem"]     | false       | [""]              | 'user.not.allowed'
+        "admin,user,other"      |["allowed"]       | false       | []              | 'user.not.allowed'
+        "admin,user"            |["anyOfThem"]     | false       | []              | 'user.not.allowed'
 
     }
 
@@ -273,6 +273,12 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
 
     def "request without remote auth info will be invalid"(){
         given:
+            defineBeans {
+                rundeckConfig(RundeckConfig)
+                configurationService(ConfigurationService) {
+                    grailsApplication = grailsApplication
+                }
+            }
             request.api_version=12
             interceptor.interceptorHelper=Mock(InterceptorHelper)
         when:
