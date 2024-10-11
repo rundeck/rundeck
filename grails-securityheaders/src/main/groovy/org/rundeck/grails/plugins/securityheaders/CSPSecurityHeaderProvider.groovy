@@ -46,7 +46,7 @@ class CSPSecurityHeaderProvider implements SecurityHeaderProvider {
     public static final String CONFIG_POLICY = 'policy'
 
     String name = 'csp'
-    Boolean defaultEnabled = false
+    Boolean defaultEnabled = true
     Map<String, String> directives
 
     List<SecurityHeader> builtHeaders
