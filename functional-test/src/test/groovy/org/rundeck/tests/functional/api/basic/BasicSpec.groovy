@@ -35,11 +35,9 @@ class BasicSpec extends BaseContainer {
         data.system.rundeck.apiversion.toInteger() >= 14
     }
 
-    def testSystemInfoHeaders() {
+    def testSecurityHeaders() {
         when:
         def response = doGet("/system/info")
-        def test = response.headers().toMultimap()
-        def test1 = "hello"
         then:
         response.headers() != null
         response.headers().get("cache-control") != null
@@ -55,8 +53,6 @@ class BasicSpec extends BaseContainer {
         response.headers().get("permissions-policy").contains("accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()")
         response.headers().get("referrer-policy") != null
         response.headers().get("referrer-policy").contains("strict-origin-when-cross-origin")
-
-
 
 
     }
