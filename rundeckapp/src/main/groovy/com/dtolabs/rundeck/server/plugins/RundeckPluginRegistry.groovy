@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.Plugin
+import com.dtolabs.rundeck.core.plugins.PluginBlocklist
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
@@ -48,7 +49,6 @@ import com.dtolabs.rundeck.plugins.config.PluginGroup
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
 import groovy.transform.PackageScope
-import org.rundeck.security.RundeckPluginBlocklist
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.BeanNotOfRequiredTypeException
@@ -79,12 +79,11 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
     def File pluginDirectory
     def File pluginCacheDirectory
     def RundeckEmbeddedPluginExtractor rundeckEmbeddedPluginExtractor
-    RundeckPluginBlocklist rundeckPluginBlocklist
+    PluginBlocklist rundeckPluginBlocklist
     PluginAdapter rundeckPluginAdapter
 
     @Override
     void afterPropertiesSet() throws Exception {
-        rundeckEmbeddedPluginExtractor.rundeckPluginRegistry = this
         def result = rundeckEmbeddedPluginExtractor.extractEmbeddedPlugins()
         if (!result.success) {
             log.error("Failed extracting embedded plugins: " + result.message)
