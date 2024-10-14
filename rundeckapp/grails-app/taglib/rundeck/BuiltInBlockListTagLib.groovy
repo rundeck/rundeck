@@ -16,11 +16,11 @@
 
 package rundeck
 
-import org.rundeck.security.RundeckPluginBlocklist
+import com.dtolabs.rundeck.core.plugins.PluginBlocklist
 
 class BuiltInBlockListTagLib {
     def static namespace = "blocklist"
-    def RundeckPluginBlocklist rundeckPluginBlocklist
+    def PluginBlocklist rundeckPluginBlocklist
 
     static returnObjectForTags = ['isProviderPresent']
     /**
