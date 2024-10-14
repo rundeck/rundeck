@@ -334,7 +334,7 @@ class ProjectSelectInterceptorSpec extends Specification implements InterceptorU
     def "Skip Interceptor if requesting fiveHundred action on error page"() {
         given:
             withRequest(controller: 'error', action: 'fiveHundred')
-        when: "A request matches the interceptor"
+        when: "The interceptor check if request matches the interceptor"
 
             def result = interceptor.doesMatch()
 
