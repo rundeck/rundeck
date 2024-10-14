@@ -7,7 +7,7 @@ import org.rundeck.util.container.BaseContainer
 class BlocklistSpec extends BaseContainer {
 
 
-    public static final int EXPECTED_PLUGIN_LIST_SIZE = 65
+    public static final int EXPECTED_PLUGIN_LIST_SIZE = 63
     static List<String> BLOCKED_NAMES = [
         'cyberark',
         'openssh',
@@ -17,16 +17,42 @@ class BlocklistSpec extends BaseContainer {
         'rundeck-script'
     ]
 
+    static Map<String, List<String>> BLOCKED_PROVIDERS = [
+            "NodeExecutor": [
+                    "sshj-ssh"
+            ],
+            "FileCopier": [
+                    "sshj-scp",
+                    "script-copy"
+            ],
+            "ResourceModelSource": [
+                    "directory",
+                    "file",
+                    "local",
+                    "script"
+            ]
+    ]
+
     def "test blocklist does not contain blocked plugins"() {
+        given:
+        def isBlockedPlugin = { plugin ->
+            BLOCKED_PROVIDERS.containsKey(plugin["service"]) &&
+                    BLOCKED_PROVIDERS.getOrDefault(plugin["service"], List.of()).contains(plugin["name"])
+        }
+
         when:
             List<Map> response = get("/plugin/list", List)
             def artifactNames = response*.artifactName.collect { it.toString().toLowerCase() }
-        then:
+
+        then: "plugins blocked by jar file are not listed"
             verifyAll {
                 for (String name : BLOCKED_NAMES) {
                     artifactNames.find { it.contains(name) } == null
                 }
             }
+
+        and: "individual plugins blocked by name are not listed"
+        response.forEach { plugin -> assert !isBlockedPlugin(plugin) }
     }
 
     def "test expected plugin count"() {

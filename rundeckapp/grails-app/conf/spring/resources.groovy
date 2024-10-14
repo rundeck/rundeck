@@ -518,6 +518,7 @@ beans={
         cache = filePluginCache
         serviceAliases = [WorkflowNodeStep: 'RemoteScriptNodeStep']
         frameworkExecutionProviderServices = ref('rundeckFrameworkExecutionProviderServices')
+        pluginBlocklist = ref("rundeckPluginBlocklist")
     }
 
     /**

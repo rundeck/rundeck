@@ -40,6 +40,8 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * PluginManagerService is ...
@@ -55,6 +57,7 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
     @Getter @Setter private  PluginCache cache;
     @Getter @Setter private Map<String, String> serviceAliases;
     @Getter @Setter private PluginProviderServices frameworkExecutionProviderServices;
+    @Getter @Setter private PluginBlocklist pluginBlocklist;
 
     /**
      * Create a PluginManagerService
@@ -108,7 +111,6 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
         return new FileCache<ProviderLoader>();
     }
 
-
     public String getName() {
         return SERVICE_NAME;
     }
@@ -117,8 +119,19 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
         return (PluginManagerService) registration.getService(SERVICE_NAME);
     }
 
-    public synchronized List<ProviderIdent> listProviders() {
+    public List<ProviderIdent> listProviders() {
+        return getCachedProviders()
+                .stream()
+                .filter(Predicate.not(this::isPluginProviderBlocked))
+                .collect(Collectors.toList());
+    }
+
+    private synchronized List<ProviderIdent> getCachedProviders() {
         return getCache().listProviders();
+    }
+
+    private boolean isPluginProviderBlocked(ProviderIdent provider) {
+        return pluginBlocklist.isPluginProviderPresent(provider.getService(), provider.getProviderName());
     }
 
     @Override
