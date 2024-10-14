@@ -58,6 +58,7 @@ class AuditInterceptor {
     AuditInterceptor(ConfigurationService configurationService) {
         log.debug("Audit Interceptor Init")
         matchAll().excludes(controller: 'framework', action: '(createProject(Post)?|selectProject|projectSelect|noProjectAccess|(create|save|check|edit|view)ResourceModelConfig)')
+                  .excludes(controller: 'error', action: 'fiveHundred')
 
         this.configurationService = configurationService
         this.projectAccessTrackingMap = new ConcurrentHashMap<>(200, 0.5F)

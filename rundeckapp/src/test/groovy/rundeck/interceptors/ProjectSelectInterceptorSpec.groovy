@@ -25,9 +25,12 @@ import org.grails.gsp.GroovyPagesTemplateEngine
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.web.gsp.io.CachingGrailsConventionGroovyPageLocator
 import org.grails.web.servlet.view.GroovyPageViewResolver
+import org.grails.web.util.GrailsApplicationAttributes
+import org.hibernate.exception.JDBCConnectionException
 import org.rundeck.app.access.InterceptorHelper
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.springframework.beans.factory.config.MethodInvokingFactoryBean
+import rundeck.controllers.ErrorController
 import rundeck.controllers.MenuController
 import rundeck.controllers.ProjectController
 import rundeck.services.FrameworkService
@@ -36,6 +39,7 @@ import spock.lang.Specification
 
 import javax.security.auth.Subject
 import java.security.Principal
+import java.sql.SQLException
 
 /**
  * @author greg
@@ -324,6 +328,18 @@ class ProjectSelectInterceptorSpec extends Specification implements InterceptorU
         request.errorCode == null
         request.errorArgs == null
 //        response.redirectedUrl == '/menu/jobs' //TODO: The interceptor test dont get redirectedUrl, even the status is 302.
+
+    }
+
+    def "Skip Interceptor if requesting fiveHundred action on error page"() {
+        given:
+            withRequest(controller: 'error', action: 'fiveHundred')
+        when: "The interceptor check if request matches the interceptor"
+
+            def result = interceptor.doesMatch()
+
+        then: "Should not matches"
+            !result
 
     }
 
