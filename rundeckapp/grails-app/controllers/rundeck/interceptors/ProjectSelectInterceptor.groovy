@@ -53,6 +53,7 @@ class ProjectSelectInterceptor {
 
     ProjectSelectInterceptor() {
         matchAll().excludes(controller: 'framework', action:'(createProject(Post)?|selectProject|projectSelect|noProjectAccess|(create|save|check|edit|view)ResourceModelConfig)')
+                  .excludes(controller: 'error', action: 'fiveHundred')
     }
 
 
@@ -69,9 +70,6 @@ class ProjectSelectInterceptor {
             return true
         }
         if(controllerName=='menu' && ( actionName in ['home'] )){
-            return true
-        }
-        if(controllerName=='error' && ( actionName in ['fiveHundred'] )){
             return true
         }
         if (session && session.user && session.subject && params.project) {

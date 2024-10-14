@@ -331,41 +331,15 @@ class ProjectSelectInterceptorSpec extends Specification implements InterceptorU
 
     }
 
-    def "Interceptor should return error if jdbc lose connection with database"() {
+    def "Skip Interceptor if requesting fiveHundred action on error page"() {
         given:
-            session.api_access_allowed = null
             withRequest(controller: 'error', action: 'fiveHundred')
-            request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'error')
-            request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, 'fiveHundred')
-            def frameworkMock=Mock(FrameworkService) {
-                0 * existsFrameworkProject(_)
-                0 * refreshSessionProjects(_,_)
-                0 * loadSessionProjectLabel(_,'testProject')
-            }
-
-            defineBeans {
-                rundeckAuthContextEvaluator(InstanceFactoryBean,Mock(AppAuthContextEvaluator){
-                    0 * authorizeApplicationResourceAny(*_) >> true
-                })
-                frameworkService(InstanceFactoryBean,frameworkMock)
-            }
-            interceptor.interceptorHelper = Mock(InterceptorHelper) {
-                matchesAllowedAsset(_,_) >> false
-            }
-            session.user = 'bob'
-            session.subject = new Subject()
-            request.remoteUser = 'bob'
-            request.userPrincipal = Mock(Principal) {
-                getName() >> 'bob'
-            }
-            params.project = 'testProject'
         when: "A request matches the interceptor"
 
-            def result = interceptor.before()
+            def result = interceptor.doesMatch()
 
-        then: "api_access_allowed unset and result is true"
-            session.api_access_allowed == null
-            result
+        then: "Should not matches"
+            !result
 
     }
 
