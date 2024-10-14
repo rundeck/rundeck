@@ -21,11 +21,11 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionI
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepPluginAdapter
+import com.dtolabs.rundeck.core.plugins.PluginBlocklist
 import com.dtolabs.rundeck.core.plugins.PluginConfigureService
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
 import com.dtolabs.rundeck.plugins.step.StepPlugin
 import groovy.transform.CompileStatic
-import org.rundeck.security.RundeckPluginBlocklist
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -51,7 +51,7 @@ class AppExecutionPluginLoader implements IExecutionProviders, ApplicationContex
     @Autowired PluginConfigureService pluginService
     @Autowired IFrameworkNodes rundeckNodeSupport
     @Autowired NodeProviderName nodeProviderName
-    @Autowired RundeckPluginBlocklist rundeckPluginBlocklist
+    @Autowired PluginBlocklist rundeckPluginBlocklist
     private Framework rundeckFramework
     private IExecutionProviders rundeckBaseFrameworkExecutionProviders
     ApplicationContext applicationContext
