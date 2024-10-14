@@ -16,17 +16,14 @@
 
 package com.dtolabs.rundeck.server.plugins
 
+import com.dtolabs.rundeck.core.plugins.PluginBlocklist
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.loader.PluginFileManifest
 import com.dtolabs.rundeck.server.plugins.loader.PluginFileSource
 import com.dtolabs.utils.Streams
-import grails.spring.BeanBuilder
-import org.rundeck.security.RundeckPluginBlocklist
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
-import org.springframework.beans.factory.NoSuchBeanDefinitionException
-import org.springframework.beans.factory.annotation.Autowire
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -40,11 +37,11 @@ class RundeckEmbeddedPluginExtractor implements ApplicationContextAware, Initial
 
     ApplicationContext applicationContext
     File pluginTargetDir
-    RundeckPluginRegistry rundeckPluginRegistry
+
     @Autowired
     Collection<PluginFileSource> pluginFileSources = []
 
-    RundeckPluginBlocklist rundeckPluginBlocklist
+    PluginBlocklist rundeckPluginBlocklist
 
     RundeckEmbeddedPluginExtractor() {
     }
