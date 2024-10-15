@@ -12,16 +12,13 @@ import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.FileCopier
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.execution.service.NodeProviderName
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepPluginAdapter
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepPluginAdapter
-import com.dtolabs.rundeck.core.plugins.PluginBlocklist
 import com.dtolabs.rundeck.core.plugins.PluginConfigureService
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
 import com.dtolabs.rundeck.plugins.step.StepPlugin
@@ -51,7 +48,6 @@ class AppExecutionPluginLoader implements IExecutionProviders, ApplicationContex
     @Autowired PluginConfigureService pluginService
     @Autowired IFrameworkNodes rundeckNodeSupport
     @Autowired NodeProviderName nodeProviderName
-    @Autowired PluginBlocklist rundeckPluginBlocklist
     private Framework rundeckFramework
     private IExecutionProviders rundeckBaseFrameworkExecutionProviders
     ApplicationContext applicationContext
