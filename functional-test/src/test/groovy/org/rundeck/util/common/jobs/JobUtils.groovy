@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.TypeChecked
 import groovy.util.logging.Slf4j
 import okhttp3.Headers
-import okhttp3.MultipartBody
-import okhttp3.RequestBody
+import okhttp3.Response
 import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.api.responses.execution.ExecutionOutput
+import org.rundeck.util.api.responses.jobs.CreateJobResponse
 import org.rundeck.util.api.responses.jobs.Job
 import org.rundeck.util.api.responses.jobs.JobDetails
 import org.rundeck.util.api.scm.GitScmApiClient
@@ -20,6 +20,7 @@ import org.rundeck.util.container.RdClient
 import java.time.Duration
 import java.time.ZoneId
 import java.util.concurrent.TimeUnit
+import java.util.function.Consumer
 import java.util.function.Function
 
 @Slf4j
@@ -67,14 +68,32 @@ class JobUtils {
         return client.doPost("/job/${jobId}/run", "{}")
     }
 
-    static def createJob(
+    /**
+     * Creates a job from a job definition.
+     * @param project name of the project to create the job in.
+     * @param jobDefinition the definition of the job in the format defined by `contentType`.
+     * @param client rundeck client to use for the request.
+     * @param (Optional) contentType of the job definition. Defaults to 'application/xml'.
+     * @param (Optional) failedJobsHandler handles the scenario when the job creation has failed. Defaults to throwing an exception.
+     * @return
+     */
+    static CreateJobResponse createJob(
             final String project,
-            final String jobDefinitionString,
+            final String jobDefinition,
             RdClient client,
-            String contentType = 'application/xml'
-    ) {
+            String contentType = 'application/xml',
+            Consumer<CreateJobResponse> failedJobsHandler = { List<Object> failedJobs -> throw new Exception("Some jobs failed on import: " + failedJobs) } ) {
         final String CREATE_JOB_ENDPOINT = "/project/${project}/jobs/import"
-        return client.doPostWithRawText(CREATE_JOB_ENDPOINT, contentType, jobDefinitionString)
+        Response responseImport = client.doPostWithRawText(CREATE_JOB_ENDPOINT, contentType, jobDefinition)
+
+        // Throws an exception if the import failed
+        if (responseImport.code() != 200) {
+            throw new IllegalArgumentException("Job import failed: ${responseImport} with body: ${responseImport?.body()?.string()}");
+        }
+
+        def data = OBJECT_MAPPER.readValue(responseImport.body().string(), CreateJobResponse.class)
+        validateJobsImportAllSuccess(data, failedJobsHandler)
+        return data
     }
 
     static def generateScheduledExecutionXml(String jobName){
@@ -358,9 +377,16 @@ class JobUtils {
         tempFile.deleteOnExit()
         tempFile.path
     }
-    static void validateJobsImportAllSuccess(Map data){
-        if(data.failed && data.failed.size()>0){
-            throw new Exception("Some jobs failed on import: "+data.failed)
+
+    /**
+     * Executes the handler if at least one job import fails
+     * @param data
+     * @param failedJobsHandler
+     */
+    private static void validateJobsImportAllSuccess(data,
+                                                     Consumer<CreateJobResponse> failedJobsHandler = { List<Object> failedJobs -> throw new Exception("Some jobs failed on import: " + failedJobs) } ) {
+        if(data?.failed?.size()>0) {
+            failedJobsHandler.accept(data?.failed)
         }
     }
 
@@ -368,7 +394,7 @@ class JobUtils {
      * Imports an XML job file from a local resource into a specified project.
      *
      * @param projectName The name of the project into which the job file is to be imported.
-     * @param xmlResourcePath The resource path
+     * @param resourcePath The resource path
      * @param client      The RdClient object used to perform the HTTP request.
      * @param dupeOption  (Optional) The duplicate option for handling existing jobs. Defaults to DUPE_OPTION_DEFAULT.
      * @param contentType (Optional) The content type of the request. Defaults to CONTENT_TYPE_DEFAULT.
@@ -376,23 +402,17 @@ class JobUtils {
      *         The method checks for a successful response and a 200 HTTP status code.
      * @throws IllegalArgumentException if the imports fails
      */
-    static def jobImportFile(
-        String projectName,
-        String xmlResourcePath,
-        RdClient client,
-        String dupeOption = DUPE_OPTION_DEFAULT,
-        String contentType = CONTENT_TYPE_DEFAULT
-    ) {
-        URL resourceUrl = getClass().getResource(xmlResourcePath)
-        def pathXmlFile = resourceUrl != null ? resourceUrl.getPath() : xmlResourcePath
-        return jobImportFile(projectName, new File(pathXmlFile), client, dupeOption, contentType)
+    static def jobImportFile = (String projectName, String resourcePath, RdClient client, String dupeOption = DUPE_OPTION_DEFAULT, String contentType = CONTENT_TYPE_DEFAULT) -> {
+        URL resourceUrl = getClass().getResource(resourcePath)
+        def fileWithPath = resourceUrl != null ? resourceUrl.getPath() : resourcePath
+        return jobImportFromFile(projectName, new File(fileWithPath), client, dupeOption, contentType)
     }
 
     /**
-     * Imports an XML job file into a specified project.
+     * Imports a  job file into a specified project.
      *
      * @param projectName The name of the project into which the job file is to be imported.
-     * @param pathXmlFile The resource path
+     * @param resourceFileWithPath The resource path
      * @param client      The RdClient object used to perform the HTTP request.
      * @param dupeOption  (Optional) The duplicate option for handling existing jobs. Defaults to DUPE_OPTION_DEFAULT.
      * @param contentType (Optional) The content type of the request. Defaults to CONTENT_TYPE_DEFAULT.
@@ -400,17 +420,17 @@ class JobUtils {
      *         The method checks for a successful response and a 200 HTTP status code.
      * @throws IllegalArgumentException if the imports fails
      */
-    static def jobImportFile(
+    private static def jobImportFromFile(
         String projectName,
-        File pathXmlFile,
+        File resourceFileWithPath,
         RdClient client,
         String dupeOption = DUPE_OPTION_DEFAULT,
         String contentType = CONTENT_TYPE_DEFAULT
     ) {
-        def responseImport = client.doPost("/project/${projectName}/jobs/import?dupeOption=${dupeOption}", pathXmlFile, contentType);
+        def responseImport = client.doPost("/project/${projectName}/jobs/import?dupeOption=${dupeOption}", resourceFileWithPath, contentType);
 
         // Check if the import was successful and return the response body as a Map
-        if (!responseImport.isSuccessful() || responseImport.code() != 200) {
+        if (responseImport.code() != 200) {
             // Throw an exception if the import failed
             throw new IllegalArgumentException("Job import failed: ${responseImport} with body: ${responseImport?.body()?.string()}");
         }
@@ -431,7 +451,7 @@ class JobUtils {
      * @throws IllegalArgumentException if the imports fails
      */
     static def jobImportYamlFile(String projectName, String pathYamlFile, RdClient client, String dupeOption = DUPE_OPTION_DEFAULT) {
-        return jobImportFile(projectName, new File(pathYamlFile), client, dupeOption, 'application/yaml')
+        return jobImportFromFile(projectName, new File(pathYamlFile), client, dupeOption, 'application/yaml')
     }
 
     /**

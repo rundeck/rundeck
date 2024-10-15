@@ -63,9 +63,7 @@ class ScheduleSpec extends BaseContainer{
                 "   </job>\n" +
                 "</joblist>"
 
-        def job1CreatedResponse = JobUtils.createJob(projectName, jobXml, client)
-        assert job1CreatedResponse.successful
-        CreateJobResponse job1CreatedParsedResponse = mapper.readValue(job1CreatedResponse.body().string(), CreateJobResponse.class)
+        def job1CreatedParsedResponse = JobUtils.createJob(projectName, jobXml, client)
         def job1Id = job1CreatedParsedResponse.succeeded[0]?.id
 
         def getExportedData = () -> {

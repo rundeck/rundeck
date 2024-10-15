@@ -71,10 +71,7 @@ fi'''
             ]
             def yamlJob = new Yaml().dump([jobdef])
         when:
-            def result = JobUtils.createJob(TEST_PROJECT, yamlJob, client, 'application/yaml')
-        then:
-            result.successful
-        when:
+            JobUtils.createJob(TEST_PROJECT, yamlJob, client, 'application/yaml')
             def execResponse = JobUtils.executeJobWithOptions(
                 jobUuid,
                 client,
@@ -132,10 +129,7 @@ fi
             ]
             def yamlJob = new Yaml().dump([jobdef])
         when:
-            def result = JobUtils.createJob(TEST_PROJECT, yamlJob, client, 'application/yaml')
-        then:
-            result.successful
-        when:
+            JobUtils.createJob(TEST_PROJECT, yamlJob, client, 'application/yaml')
             def execResponse = JobUtils.executeJobWithOptions(
                 jobUuid,
                 client,

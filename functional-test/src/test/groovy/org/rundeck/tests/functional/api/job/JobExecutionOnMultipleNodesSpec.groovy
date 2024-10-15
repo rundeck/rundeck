@@ -43,12 +43,7 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
 
         when:
         def response = JobUtils.createJob(TEST_PROJECT, new File(path).text, client)
-
-        then:
-        response.successful
-
-        when:
-        def jobId = MAPPER.readValue(response.body().string(), CreateJobResponse.class).getSucceeded().get(0).id
+        def jobId = response.getSucceeded().get(0).id
         Object optionsJson = ["options": [opt1: "z", opt2: "a"]]
         def completedJob = runJobAndWait(jobId, optionsJson)
 
@@ -69,12 +64,7 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
 
         when:
         def response = JobUtils.createJob(TEST_PROJECT, new File(path).text, client)
-
-        then:
-        response.successful
-
-        when:
-        def jobId = MAPPER.readValue(response.body().string(), CreateJobResponse.class).getSucceeded().get(0).id
+        def jobId = response.getSucceeded().get(0).id
         Object optionsJson = ["options": [opt1: "z", opt2: "a"]]
         def completedJob = runJobAndWait(jobId, optionsJson)
 
@@ -96,12 +86,7 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
 
         when:
         def response = JobUtils.createJob(TEST_PROJECT, new File(path).text, client)
-
-        then:
-        response.successful
-
-        when:
-        def jobId = MAPPER.readValue(response.body().string(), CreateJobResponse.class).getSucceeded().get(0).id
+        def jobId = response.getSucceeded().get(0).id
         Object optionsJson = ["options": [opt1: "z", opt2: "a"]]
         def completedJob = runJobAndWait(jobId, optionsJson)
 
@@ -123,12 +108,7 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
 
         when:
         def response = JobUtils.createJob(TEST_PROJECT, new File(path).text, client)
-
-        then:
-        response.successful
-
-        when:
-        def jobId = MAPPER.readValue(response.body().string(), CreateJobResponse.class).getSucceeded().get(0).id
+        def jobId = response.getSucceeded().get(0).id
         Object optionsJson = ["options": [opt1: "z", opt2: "a"]]
         def completedJob = runJobAndWait(jobId, optionsJson)
 
