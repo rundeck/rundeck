@@ -1,0 +1,25 @@
+<joblist>
+  <job>
+    <context>
+      <options preserveOrder='true'>
+        <option name='myOption' regex='a1' required='true' />
+      </options>
+    </context>
+    <defaultTab>nodes</defaultTab>
+    <description>This job uses a regex validation for the option</description>
+    <executionEnabled>true</executionEnabled>
+    <id>5424ed27-9d9d-4136-adde-a967652508b2</id>
+    <loglevel>INFO</loglevel>
+    <name>jobWithOptions</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <schedules />
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>echo asd</exec>
+      </command>
+    </sequence>
+    <uuid>5424ed27-9d9d-4136-adde-a967652508b2</uuid>
+  </job>
+</joblist>
