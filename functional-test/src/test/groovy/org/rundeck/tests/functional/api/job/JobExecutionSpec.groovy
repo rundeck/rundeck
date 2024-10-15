@@ -213,10 +213,7 @@ class JobExecutionSpec extends BaseContainer {
         def jobName1 = "xmljob"
         def jobXml1 = JobUtils.generateScheduledExecutionXml(jobName1)
 
-        def job1CreatedResponse = JobUtils.createJob(projectName, jobXml1, client)
-        assert job1CreatedResponse.successful
-
-        CreateJobResponse job1CreatedParsedResponse = MAPPER.readValue(job1CreatedResponse.body().string(), CreateJobResponse.class)
+        def job1CreatedParsedResponse = JobUtils.createJob(projectName, jobXml1, client)
 
         when: "TEST: created job has the executionEnabled property set to true"
         def jobDetails = JobUtils.getJobDetailsById(job1CreatedParsedResponse.succeeded[0]?.id, MAPPER, client)
@@ -296,14 +293,10 @@ class JobExecutionSpec extends BaseContainer {
         def jobName2 = "xmljob2"
         def jobXml2 = JobUtils.generateScheduledExecutionXml(jobName2)
 
-        def job1CreatedResponse = JobUtils.createJob(projectName, jobXml1, client)
-        assert job1CreatedResponse.successful
-
-        def job2CreatedResponse = JobUtils.createJob(projectName, jobXml2, client)
-        assert job2CreatedResponse.successful
+        def job1CreatedParsedResponse = JobUtils.createJob(projectName, jobXml1, client)
+        def job2CreatedParsedResponse = JobUtils.createJob(projectName, jobXml2, client)
 
         when: "assert_job_execution_count with job 1"
-        CreateJobResponse job1CreatedParsedResponse = MAPPER.readValue(job1CreatedResponse.body().string(), CreateJobResponse.class)
         def job1Id = job1CreatedParsedResponse.succeeded[0]?.id
         def executions1 = doGet("/job/${job1Id}/executions")
         JobExecutionsResponse parsedExecutionsResponseForExecution1 = MAPPER.readValue(executions1.body().string(), JobExecutionsResponse.class)
@@ -311,7 +304,6 @@ class JobExecutionSpec extends BaseContainer {
         parsedExecutionsResponseForExecution1.executions.size() == 0
 
         when: "assert_job_execution_count with job 2"
-        CreateJobResponse job2CreatedParsedResponse = MAPPER.readValue(job2CreatedResponse.body().string(), CreateJobResponse.class)
         def job2Id = job2CreatedParsedResponse.succeeded[0]?.id
         def executions2 = doGet("/job/${job2Id}/executions")
         JobExecutionsResponse parsedExecutionsResponseForExecution2 = MAPPER.readValue(executions2.body().string(), JobExecutionsResponse.class)
@@ -410,16 +402,10 @@ class JobExecutionSpec extends BaseContainer {
         def jobName2 = "scheduledJob2"
         def jobXml2 = JobUtils.generateScheduledJobsXml(jobName2)
 
-        def job1CreatedResponse = JobUtils.createJob(projectName, jobXml1, client)
-        assert job1CreatedResponse.successful
+        def job1CreatedParsedResponse = JobUtils.createJob(projectName, jobXml1, client)
+        def job2CreatedParsedResponse = JobUtils.createJob(projectName, jobXml2, client)
 
-        def job2CreatedResponse = JobUtils.createJob(projectName, jobXml2, client)
-        assert job2CreatedResponse.successful
-
-        CreateJobResponse job1CreatedParsedResponse = MAPPER.readValue(job1CreatedResponse.body().string(), CreateJobResponse.class)
         def job1Id = job1CreatedParsedResponse.succeeded[0]?.id
-
-        CreateJobResponse job2CreatedParsedResponse = MAPPER.readValue(job2CreatedResponse.body().string(), CreateJobResponse.class)
         def job2Id = job2CreatedParsedResponse.succeeded[0]?.id
 
         when: "assert_job_schedule_enabled for job1"
@@ -485,13 +471,8 @@ class JobExecutionSpec extends BaseContainer {
         def jobName1 = "scheduledJob1"
         def jobXml1 = JobUtils.generateScheduledJobsXml(jobName1)
 
-        def job1CreatedResponse = JobUtils.createJob(projectName, jobXml1, client)
-        assert job1CreatedResponse.successful
-
-
-        CreateJobResponse job1CreatedParsedResponse = MAPPER.readValue(job1CreatedResponse.body().string(), CreateJobResponse.class)
+        def job1CreatedParsedResponse = JobUtils.createJob(projectName, jobXml1, client)
         def job1Id = job1CreatedParsedResponse.succeeded[0]?.id
-
 
         when: "assert_job_schedule_enabled for job1"
         def job1Detail = JobUtils.getJobDetailsById(job1Id as String, MAPPER, client)
@@ -587,14 +568,9 @@ class JobExecutionSpec extends BaseContainer {
 
         def longRunJobArgs = "sleep 12" // As the original test states
         def testXml = longRunXml(projectName, longRunJobArgs)
-        def created = JobUtils.createJob(projectName, testXml, client)
-        assert created.successful
+        def jobCreatedResponse = JobUtils.createJob(projectName, testXml, client)
 
         when: "Job and referenced job created"
-        CreateJobResponse jobCreatedResponse = MAPPER.readValue(
-                created.body().string(),
-                CreateJobResponse.class
-        )
         def jobId = jobCreatedResponse.succeeded[0]?.id
         def refJobId = jobCreatedResponse.succeeded[1]?.id
 
@@ -679,14 +655,9 @@ class JobExecutionSpec extends BaseContainer {
 
         def jobArgs = "echo hello there ; false" // As the original test states
         def testXml = jobRetry(jobArgs)
-        def created = JobUtils.createJob(projectName, testXml, client)
-        assert created.successful
+        def jobCreatedResponse = JobUtils.createJob(projectName, testXml, client)
 
         when: "Job and referenced job created"
-        CreateJobResponse jobCreatedResponse = MAPPER.readValue(
-                created.body().string(),
-                CreateJobResponse.class
-        )
         def jobId = jobCreatedResponse.succeeded[0]?.id
 
         then:
@@ -784,10 +755,7 @@ class JobExecutionSpec extends BaseContainer {
 
         def jobXml1 = jobXml(projectName, "echo hello there")
 
-        def job1CreatedResponse = JobUtils.createJob(projectName, jobXml1, client)
-        assert job1CreatedResponse.successful
-
-        CreateJobResponse job1CreatedParsedResponse = MAPPER.readValue(job1CreatedResponse.body().string(), CreateJobResponse.class)
+        def job1CreatedParsedResponse = JobUtils.createJob(projectName, jobXml1, client)
         def job1Id = job1CreatedParsedResponse.succeeded[0]?.id
         def argString = "-opt2+a"
 
@@ -834,13 +802,7 @@ class JobExecutionSpec extends BaseContainer {
 
         def jobArgs = "echo asd" // As the original test states
         def testXml = xmlJob(jobArgs)
-        def created = JobUtils.createJob(projectName, testXml, client)
-        assert created.successful
-
-        CreateJobResponse jobCreatedResponse = MAPPER.readValue(
-                created.body().string(),
-                CreateJobResponse.class
-        )
+        def jobCreatedResponse = JobUtils.createJob(projectName, testXml, client)
         def jobId = jobCreatedResponse.succeeded[0]?.id
 
         when: "TEST: POST job/id/run should succeed with future time"
@@ -963,12 +925,7 @@ class JobExecutionSpec extends BaseContainer {
 
         def jobArgs = "echo asd" // As the original test states
         def testXml = xmlJob(jobArgs)
-        def created = JobUtils.createJob(projectName, testXml, client)
-        assert created.successful
-        CreateJobResponse jobCreatedResponse = MAPPER.readValue(
-                created.body().string(),
-                CreateJobResponse.class
-        )
+        def jobCreatedResponse = JobUtils.createJob(projectName, testXml, client)
         def jobId1 = jobCreatedResponse.succeeded[0]?.id
         def jobId2 = jobCreatedResponse.succeeded[1]?.id
 
@@ -1239,12 +1196,7 @@ class JobExecutionSpec extends BaseContainer {
                     "  </job>\n" +
                     "</joblist>"
 
-        def created = JobUtils.createJob(projectName, xmlJob, client)
-        assert created.successful
-        CreateJobResponse jobCreatedResponse = MAPPER.readValue(
-                created.body().string(),
-                CreateJobResponse.class
-        )
+        def jobCreatedResponse = JobUtils.createJob(projectName, xmlJob, client)
         def jobId = jobCreatedResponse.succeeded[0]?.id
         def firstJobId = "06ba3dce-ba4f-4964-8ac2-349c3a2267bd"
 
@@ -1381,14 +1333,9 @@ class JobExecutionSpec extends BaseContainer {
                     "   </job>\n" +
                     "</joblist>"
 
-        def created = JobUtils.createJob(projectName, xmlJob, client)
-        assert created.successful
+        def jobCreatedResponse = JobUtils.createJob(projectName, xmlJob, client)
 
         when: "TEST: job/id/run should succeed"
-        CreateJobResponse jobCreatedResponse = MAPPER.readValue(
-                created.body().string(),
-                CreateJobResponse.class
-        )
 
         def jobId = jobCreatedResponse.succeeded[0]?.id
 
@@ -1461,13 +1408,7 @@ class JobExecutionSpec extends BaseContainer {
                 "echo handler executed successfully >> $stepOutfile",
                 "echo final workflow step >> $stepOutfile"
         )
-        def created1 = JobUtils.createJob(projectName, job1Xml, client)
-        assert created1.successful
-
-        CreateJobResponse jobCreatedResponse1 = MAPPER.readValue(
-                created1.body().string(),
-                CreateJobResponse.class
-        )
+        def jobCreatedResponse1 = JobUtils.createJob(projectName, job1Xml, client)
         def jobId = jobCreatedResponse1.succeeded[0]?.id
 
         def runResponse = JobUtils.executeJob(jobId, client)
@@ -1513,13 +1454,7 @@ class JobExecutionSpec extends BaseContainer {
                 "echo handler executed successfully >> $stepOutfile2 ; false",
                 "echo final workflow step >> $stepOutfile2"
         )
-        def created2 = JobUtils.createJob(projectName, job2Xml, client)
-        assert created2.successful
-
-        CreateJobResponse jobCreatedResponse2 = MAPPER.readValue(
-                created2.body().string(),
-                CreateJobResponse.class
-        )
+        def jobCreatedResponse2 = JobUtils.createJob(projectName, job2Xml, client)
         def jobId2 = jobCreatedResponse2.succeeded[0]?.id
 
         def runResponse2 = JobUtils.executeJob(jobId2, client)
@@ -1567,13 +1502,7 @@ class JobExecutionSpec extends BaseContainer {
                 "echo handler executed successfully >> $stepOutfile3 ; false",
                 "echo final workflow step >> $stepOutfile3"
         )
-        def created3 = JobUtils.createJob(projectName, job3Xml, client)
-        assert created3.successful
-
-        CreateJobResponse jobCreatedResponse3 = MAPPER.readValue(
-                created3.body().string(),
-                CreateJobResponse.class
-        )
+        def jobCreatedResponse3 = JobUtils.createJob(projectName, job3Xml, client)
         def jobId3 = jobCreatedResponse3.succeeded[0]?.id
 
         def runResponse3 = JobUtils.executeJob(jobId3, client)
@@ -1620,13 +1549,7 @@ class JobExecutionSpec extends BaseContainer {
                 "echo handler executed successfully >> $stepOutfile4",
                 "echo final workflow step >> $stepOutfile4"
         )
-        def created4 = JobUtils.createJob(projectName, job4Xml, client)
-        assert created4.successful
-
-        CreateJobResponse jobCreatedResponse4 = MAPPER.readValue(
-                created4.body().string(),
-                CreateJobResponse.class
-        )
+        def jobCreatedResponse4 = JobUtils.createJob(projectName, job4Xml, client)
         def jobId4 = jobCreatedResponse4.succeeded[0]?.id
 
         def runResponse4 = JobUtils.executeJob(jobId4, client)
@@ -1673,13 +1596,7 @@ class JobExecutionSpec extends BaseContainer {
                 "echo handler executed successfully >> $stepOutfile5",
                 "echo final workflow step >> $stepOutfile5"
         )
-        def created5 = JobUtils.createJob(projectName, job5Xml, client)
-        assert created5.successful
-
-        CreateJobResponse jobCreatedResponse5 = MAPPER.readValue(
-                created5.body().string(),
-                CreateJobResponse.class
-        )
+        def jobCreatedResponse5 = JobUtils.createJob(projectName, job5Xml, client)
         def jobId5 = jobCreatedResponse5.succeeded[0]?.id
 
         def runResponse5 = JobUtils.executeJob(jobId5, client)
@@ -1840,14 +1757,9 @@ class JobExecutionSpec extends BaseContainer {
             </joblist>
             """
 
-        def created = JobUtils.createJob(projectName, testXml, client)
-        assert created.successful
+        def jobCreatedResponse = JobUtils.createJob(projectName, testXml, client)
 
         when: "Job and referenced job created"
-        CreateJobResponse jobCreatedResponse = MAPPER.readValue(
-                created.body().string(),
-                CreateJobResponse.class
-        )
         def childJob = jobCreatedResponse.succeeded[0]?.id
         def parentJob = jobCreatedResponse.succeeded[1]?.id
 
@@ -1937,14 +1849,9 @@ class JobExecutionSpec extends BaseContainer {
             </joblist>
             """
 
-        def created = JobUtils.createJob(projectName, testXml, client)
-        assert created.successful
+        def jobCreatedResponse = JobUtils.createJob(projectName, testXml, client)
 
         when: "Job and referenced job created"
-        CreateJobResponse jobCreatedResponse = MAPPER.readValue(
-                created.body().string(),
-                CreateJobResponse.class
-        )
         def childJob = jobCreatedResponse.succeeded[0]?.id
         def parentJob = jobCreatedResponse.succeeded[1]?.id
 
@@ -2093,14 +2000,9 @@ class JobExecutionSpec extends BaseContainer {
             </joblist>
             """
 
-        def created = JobUtils.createJob(projectName, testXml, client)
-        assert created.successful
+        def jobCreatedResponse = JobUtils.createJob(projectName, testXml, client)
 
         when: "Job and referenced job created"
-        CreateJobResponse jobCreatedResponse = MAPPER.readValue(
-                created.body().string(),
-                CreateJobResponse.class
-        )
         jobCreatedResponse.succeeded
         def grandChildJob = jobCreatedResponse.succeeded[0]?.id
         def childJob = jobCreatedResponse.succeeded[1]?.id

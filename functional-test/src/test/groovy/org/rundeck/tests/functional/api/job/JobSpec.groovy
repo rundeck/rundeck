@@ -49,11 +49,9 @@ class JobSpec extends BaseContainer {
                  "2-args": "echo 1"])
 
         when:
-        def response = JobUtils.createJob(PROJECT_NAME, new File(path).text, client)
+        def jr = JobUtils.createJob(PROJECT_NAME, new File(path).text, client)
 
         then:
-        response.successful
-        def jr = MAPPER.readValue(response.body().string(), CreateJobResponse.class)
         def jobDetails = JobUtils.getJobDetailsById(jr.getSucceeded().get(0).id, MAPPER, client)
         jobDetails.sequence.commands[0].exec == "echo 0"
         jobDetails.sequence.commands[1].exec == "echo 1"
@@ -69,11 +67,9 @@ class JobSpec extends BaseContainer {
                  "schedule-enabled": "false"])
 
         when:
-        def response = JobUtils.createJob(PROJECT_NAME, new File(path).text, client)
+        def jr = JobUtils.createJob(PROJECT_NAME, new File(path).text, client)
 
         then:
-        response.successful
-        def jr = MAPPER.readValue(response.body().string(), CreateJobResponse.class)
         def jobDetails = JobUtils.getJobDetailsById(jr.getSucceeded().get(0).id, MAPPER, client)
         !jobDetails.scheduleEnabled
     }
@@ -88,11 +84,9 @@ class JobSpec extends BaseContainer {
                  "execution-enabled": "false"])
 
         when:
-        def response = JobUtils.createJob(PROJECT_NAME, new File(path).text, client)
+        def jr = JobUtils.createJob(PROJECT_NAME, new File(path).text, client)
 
         then:
-        response.successful
-        def jr = MAPPER.readValue(response.body().string(), CreateJobResponse.class)
         def jobDetails = JobUtils.getJobDetailsById(jr.getSucceeded().get(0).id, MAPPER, client)
         !jobDetails.executionEnabled
     }

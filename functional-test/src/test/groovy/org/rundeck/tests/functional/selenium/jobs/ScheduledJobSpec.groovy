@@ -31,8 +31,7 @@ class ScheduledJobSpec extends SeleniumBase{
         JobListPage jobListPage = page(JobListPage)
         jobListPage.loadJobListForProject(projectName)
         def jobXml = JobUtils.generateScheduledJobsXml("scheduledJob", "<time hour='*' seconds='*/5' minute='*' />")
-        def job1CreatedResponse = JobUtils.createJob(projectName, jobXml, client)
-        assert job1CreatedResponse.successful
+        JobUtils.createJob(projectName, jobXml, client)
         when:
         jobListPage.go()
         jobListPage.validatePage()

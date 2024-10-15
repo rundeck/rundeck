@@ -73,13 +73,7 @@ class ExecExportSpec extends BaseContainer{
                     "     </job>\n" +
                     "  </joblist>"
 
-        def created = JobUtils.createJob(projectName, jobXml, client)
-        assert created.successful
-
-        CreateJobResponse jobCreatedResponse = mapper.readValue(
-                created.body().string(),
-                CreateJobResponse.class
-        )
+        def jobCreatedResponse = JobUtils.createJob(projectName, jobXml, client)
         def jobId = jobCreatedResponse.succeeded[0]?.id
 
         then:
