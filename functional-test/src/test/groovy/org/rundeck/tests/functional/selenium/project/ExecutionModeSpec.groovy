@@ -207,7 +207,7 @@ class ExecutionModeSpec extends SeleniumBase{
         waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
                 { List<Execution> execs ->  execs.any(ExecutionUtils.Verifiers.executionRunning()) },
                 WaitingTime.EXCESSIVE)
-        // Waits for at least one execution to start running
+        // Waits for all executions to finish
         waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
                 verifyForAll(ExecutionUtils.Verifiers.executionFinished()),
                 WaitingTime.EXCESSIVE)
