@@ -358,12 +358,17 @@ class JobUtils {
         tempFile.deleteOnExit()
         tempFile.path
     }
+    static void validateJobsImportAllSuccess(Map data){
+        if(data.failed && data.failed.size()>0){
+            throw new Exception("Some jobs failed on import: "+data.failed)
+        }
+    }
 
     /**
-     * Imports an XML job file into a specified project.
+     * Imports an XML job file from a local resource into a specified project.
      *
      * @param projectName The name of the project into which the job file is to be imported.
-     * @param pathXmlFile The file path
+     * @param xmlResourcePath The resource path
      * @param client      The RdClient object used to perform the HTTP request.
      * @param dupeOption  (Optional) The duplicate option for handling existing jobs. Defaults to DUPE_OPTION_DEFAULT.
      * @param contentType (Optional) The content type of the request. Defaults to CONTENT_TYPE_DEFAULT.
@@ -371,18 +376,47 @@ class JobUtils {
      *         The method checks for a successful response and a 200 HTTP status code.
      * @throws IllegalArgumentException if the imports fails
      */
-    static def jobImportFile = (String projectName, String pathXmlFile, RdClient client, String dupeOption = DUPE_OPTION_DEFAULT, String contentType = CONTENT_TYPE_DEFAULT) -> {
-        URL resourceUrl = getClass().getResource(pathXmlFile);
-        pathXmlFile = resourceUrl != null ? resourceUrl.getPath() : pathXmlFile;
-        def responseImport = client.doPost("/project/${projectName}/jobs/import?dupeOption=${dupeOption}", new File(pathXmlFile), contentType);
+    static def jobImportFile(
+        String projectName,
+        String xmlResourcePath,
+        RdClient client,
+        String dupeOption = DUPE_OPTION_DEFAULT,
+        String contentType = CONTENT_TYPE_DEFAULT
+    ) {
+        URL resourceUrl = getClass().getResource(xmlResourcePath)
+        def pathXmlFile = resourceUrl != null ? resourceUrl.getPath() : xmlResourcePath
+        return jobImportFile(projectName, new File(pathXmlFile), client, dupeOption, contentType)
+    }
+
+    /**
+     * Imports an XML job file into a specified project.
+     *
+     * @param projectName The name of the project into which the job file is to be imported.
+     * @param pathXmlFile The resource path
+     * @param client      The RdClient object used to perform the HTTP request.
+     * @param dupeOption  (Optional) The duplicate option for handling existing jobs. Defaults to DUPE_OPTION_DEFAULT.
+     * @param contentType (Optional) The content type of the request. Defaults to CONTENT_TYPE_DEFAULT.
+     * @return A Map representation of the JSON response body if the import is successful.
+     *         The method checks for a successful response and a 200 HTTP status code.
+     * @throws IllegalArgumentException if the imports fails
+     */
+    static def jobImportFile(
+        String projectName,
+        File pathXmlFile,
+        RdClient client,
+        String dupeOption = DUPE_OPTION_DEFAULT,
+        String contentType = CONTENT_TYPE_DEFAULT
+    ) {
+        def responseImport = client.doPost("/project/${projectName}/jobs/import?dupeOption=${dupeOption}", pathXmlFile, contentType);
 
         // Check if the import was successful and return the response body as a Map
-        if (responseImport.isSuccessful() && responseImport.code() == 200) {
-            return OBJECT_MAPPER.readValue(responseImport.body().string(), Map.class);
-        } else {
+        if (!responseImport.isSuccessful() || responseImport.code() != 200) {
             // Throw an exception if the import failed
             throw new IllegalArgumentException("Job import failed: ${responseImport} with body: ${responseImport?.body()?.string()}");
         }
+        def data = OBJECT_MAPPER.readValue(responseImport.body().string(), Map.class)
+        validateJobsImportAllSuccess(data)
+        return data
     }
 
     /**
@@ -397,17 +431,7 @@ class JobUtils {
      * @throws IllegalArgumentException if the imports fails
      */
     static def jobImportYamlFile(String projectName, String pathYamlFile, RdClient client, String dupeOption = DUPE_OPTION_DEFAULT) {
-        def multipartBody = new MultipartBody.Builder()
-                .setType(MultipartBody.FORM)
-                .addFormDataPart("xmlBatch", new File(pathYamlFile).name, RequestBody.create(new File(pathYamlFile), MultipartBody.FORM))
-                .build()
-        def responseImport = client.doPostWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=${dupeOption}", multipartBody)
-
-        if (!responseImport.isSuccessful()) {
-            throw new IllegalArgumentException("Job import failed: ${responseImport} with body: ${responseImport?.body()?.string()}");
-        }
-
-        return OBJECT_MAPPER.readValue(responseImport.body().string(), Map.class);
+        return jobImportFile(projectName, new File(pathYamlFile), client, dupeOption, 'application/yaml')
     }
 
     /**
