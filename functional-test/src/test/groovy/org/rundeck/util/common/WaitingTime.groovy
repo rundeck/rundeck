@@ -19,6 +19,9 @@ final class WaitingTime {
     /** Waiting time of 2 minutes */
     public static final Duration XTRA_EXCESSIVE = Duration.ofSeconds(120)
 
+    /** Waiting time of 2 minutes */
+    public static final Duration XTRA_EXCESSIVE_LONG_JOBS = Duration.ofSeconds(1200)
+
     // prevent instantiation.
     private WaitingTime() {}
 }
