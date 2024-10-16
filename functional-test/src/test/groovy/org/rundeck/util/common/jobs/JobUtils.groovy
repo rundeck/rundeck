@@ -82,7 +82,7 @@ class JobUtils {
             final String jobDefinition,
             RdClient client,
             String contentType = 'application/xml',
-            Consumer<CreateJobResponse> failedJobsHandler = { List<Object> failedJobs -> throw new Exception("Some jobs failed on import: " + failedJobs) } ) {
+            Consumer<CreateJobResponse> failedJobsHandler = { List<Object> failedJobs -> throw new IllegalArgumentException("Some jobs failed on import: " + failedJobs) } ) {
         final String CREATE_JOB_ENDPOINT = "/project/${project}/jobs/import"
         Response responseImport = client.doPostWithRawText(CREATE_JOB_ENDPOINT, contentType, jobDefinition)
 
@@ -379,12 +379,12 @@ class JobUtils {
     }
 
     /**
-     * Executes the handler if at least one job import fails
+     * Validates that all jobs imported successfully.
      * @param data
-     * @param failedJobsHandler
+     * @param failedJobsHandler gets executed if at least one job import fails
      */
     private static void validateJobsImportAllSuccess(data,
-                                                     Consumer<CreateJobResponse> failedJobsHandler = { List<Object> failedJobs -> throw new Exception("Some jobs failed on import: " + failedJobs) } ) {
+                                                     Consumer<CreateJobResponse> failedJobsHandler = { List<Object> failedJobs -> throw new IllegalArgumentException("Some jobs failed on import: " + failedJobs) } ) {
         if(data?.failed?.size()>0) {
             failedJobsHandler.accept(data?.failed)
         }
