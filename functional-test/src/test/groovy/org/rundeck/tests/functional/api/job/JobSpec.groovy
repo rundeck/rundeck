@@ -38,6 +38,27 @@ class JobSpec extends BaseContainer {
         ].every({fullLog.contains(it)})
     }
 
+    def "Create the same job twice fails"() {
+        given:
+        def jobName = UUID.randomUUID().toString()
+
+        def path = JobUtils.updateJobFileToImport("job-template-common-2.xml",
+                PROJECT_NAME,
+                ["job-name": jobName,
+                "uuid": jobName])
+
+        // Create a job
+        JobUtils.createJob(PROJECT_NAME, new File(path).text, client)
+
+        when:
+        // Create the same job again
+        JobUtils.createJob(PROJECT_NAME, new File(path).text, client)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        assert e.message.contains("Some jobs failed on import")
+    }
+
     def "Create a job with multiple steps"() {
         given:
         def jobName = UUID.randomUUID().toString()
