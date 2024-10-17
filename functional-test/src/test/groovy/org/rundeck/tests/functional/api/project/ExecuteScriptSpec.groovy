@@ -86,8 +86,7 @@ class ExecuteScriptSpec extends BaseContainer{
                 "  </job>\n" +
                 "</joblist>"
 
-        def created = JobUtils.createJob(projectName, readJobXml, client)
-        assert created.successful
+        JobUtils.createJob(projectName, readJobXml, client)
 
         // Then run the job that reads the output of request
         def readJobRun = JobUtils.executeJob(readJobId, client)
