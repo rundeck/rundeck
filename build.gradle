@@ -149,6 +149,23 @@ subprojects {
     eclipse.project.name = "${project.getParent().eclipse.project.name}:${name}"
 }
 
+/*
+ Root project Configurations
+ */
+configurations{
+    // dependencies for running groovy scripts
+    groovyScript
+}
+
+dependencies{
+
+    // dependencies for running groovy scripts
+    groovyScript localGroovy()
+    groovyScript "org.codehaus.groovy:groovy-cli-commons:${GroovySystem.version}"
+    groovyScript "org.codehaus.groovy:groovy-yaml:${GroovySystem.version}"
+}
+
+
 /**
  * Enable incremental Groovy compile
  */
@@ -265,4 +282,12 @@ tasks.register('printBootWarPath') {
         def bootArchiveFile = rundeckapp.bootWar.archiveFile.get()
         println "${bootArchiveFile}"
     }
+}
+
+tasks.register('verifyBuild', JavaExec) {
+    classpath = configurations.groovyScript
+    mainClass = 'groovy.ui.GroovyMain'
+    args "testbuild.groovy",
+        "--buildType=${ext.environment}",
+        "--debug"
 }
