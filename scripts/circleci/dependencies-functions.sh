@@ -29,21 +29,6 @@ dependencies_install_groovy() {
 
 }
 
-# Install nodejs
-dependencies_install_nodejs() {
-  node_version=$(cat .nvmrc)
-  curl -sSl -o /tmp/node.tar.xz "https://nodejs.org/dist/${node_version}/node-${node_version}-linux-x64.tar.xz" && \
-  echo '592eb35c352c7c0c8c4b2ecf9c19d615e78de68c20b660eb74bd85f8c8395063 /tmp/node.tar.xz' | sha256sum --check && \
-  sudo mkdir -p /usr/local/nodejs && \
-  sudo tar --strip 1 -xvf /tmp/node.tar.xz --directory /usr/local/nodejs && \
-  sudo ln --symbolic /usr/local/nodejs/bin/node /usr/local/bin/node && \
-  sudo ln --symbolic /usr/local/nodejs/bin/npm /usr/local/bin/npm && \
-  sudo ln --symbolic /usr/local/nodejs/bin/npx /usr/local/bin/npx && \
-  sudo ln --symbolic /usr/local/nodejs/bin/corepack /usr/local/bin/corepack
-  rm -f /tmp/node.tar.xz
-}
-
-
 # Install dependencies needed for packaging
 dependencies_packaging_setup() {
 
