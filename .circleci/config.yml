@@ -10,6 +10,7 @@ parameters:
 
 orbs:
   aws-cli: circleci/aws-cli@1.0.0
+  node: circleci/node@6.1.0
   trigger: rundeck/trigger-pipeline@0.0.5
   slack: circleci/slack@4.4.0
   browser-tools: circleci/browser-tools@1.4.8
@@ -189,9 +190,7 @@ commands:
   install-node:
     description: Install Node
     steps:
-      - run-build-step:
-          step-name: Install Node
-          command: dependencies_install_nodejs
+      - node/install
 
   # Install Java JDK
   install-java-jdk:
