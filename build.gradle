@@ -152,6 +152,12 @@ subprojects {
 /*
  Root project Configurations
  */
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
 configurations{
     // dependencies for running groovy scripts
     groovyScript
@@ -288,6 +294,6 @@ tasks.register('verifyBuild', JavaExec) {
     classpath = configurations.groovyScript
     mainClass = 'groovy.ui.GroovyMain'
     args "testbuild.groovy",
-        "--buildType=${ext.environment}",
+        "--buildType=${project.ext.environment}",
         "--debug"
 }
