@@ -200,14 +200,6 @@ commands:
           step-name: Install Java JDK
           command: dependencies_install_zulu11jdk
 
-  # Install Groovy SDK
-  install-groovy-sdk:
-      description: Install Groovy SDK
-      steps:
-      - run-build-step:
-          step-name: Install Groovy SDK
-          command: dependencies_install_groovy
-
   ## Dependency groups
 
   # Install base dependencies
@@ -222,7 +214,6 @@ commands:
     steps:
       - install-base-dependencies
       - install-node
-#      - install-groovy-sdk
 
   # Install dependencies required for packaging
   install-packaging-dependencies:

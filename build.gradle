@@ -295,5 +295,5 @@ tasks.register('verifyBuild', JavaExec) {
     mainClass = 'groovy.ui.GroovyMain'
     args "testbuild.groovy",
         "--buildType=${project.ext.environment}",
-        "--debug"
+        "-debug"
 }
