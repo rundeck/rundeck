@@ -29,6 +29,7 @@ const initI18n = (options = {}) => {
         internationalization["en_US"] ||
         {},
     ),
+    ["en_US"]: internationalization["en_US"],
   };
 
   // Create VueI18n instance with options
