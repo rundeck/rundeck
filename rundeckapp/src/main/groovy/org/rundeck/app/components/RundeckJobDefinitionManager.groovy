@@ -92,7 +92,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager<ScheduledExecu
                 validations[jobImport.name] = report
             }
         }
-        return new Validator.ReportSet(true, validations)
+        return new Validator.ReportSet(valid, validations)
     }
 
 
