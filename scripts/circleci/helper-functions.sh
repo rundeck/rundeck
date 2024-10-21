@@ -96,25 +96,27 @@ wizcli_scan() {
 
     docker pull "${RUNDECK_IMAGE_TAG}"
 
-
     #login to wizcli
     wizcli auth --id="${WIZCLI_ID}" --secret="${WIZCLI_SECRET}"
-    wizcli docker scan --image "${RUNDECK_IMAGE_TAG}" -f json > wizcli_scan_result.json
 
-    sudo chown "${CURRENT_USER}" wizcli_scan_result.json
+    # Scan showing only results that make policy fail.
+    wizcli docker scan --image "${RUNDECK_IMAGE_TAG}" \
+      --policy-hits-only \
+      --format human \
+      --output "wizcli_scan_result.json,json,true"
+
+    wizexitcode=$?
+    echo "WizExitCode: $wizexitcode"
 
     mkdir -p test-results/junit
     bash "${RUNDECK_CORE_DIR}/scripts/convert_wiz_junit.sh" wizcli_scan_result.json > test-results/junit/wizcli-junit.xml
 
-    # Aggregate high and critical vulnerabilities from osPackages and libraries
-    local high_vulns=$(jq '[.result.osPackages[].vulnerabilities[]?, .result.libraries[].vulnerabilities[]? | select(.severity == "HIGH") | .name] | length' wizcli_scan_result.json)
-    local crit_vulns=$(jq '[.result.osPackages[].vulnerabilities[]?, .result.libraries[].vulnerabilities[]? | select(.severity == "CRITICAL") | .name] | length' wizcli_scan_result.json)
+    # Get total of reported vulnerabilities
+    local totalReportedVulnerabilities=$(jq '[.result.osPackages[]?.vulnerabilities[]?, .result.libraries[]?.vulnerabilities[]?] | length' < "$IN")
 
-    echo "High Vulnerabilities: $high_vulns"
-    echo "Critical Vulnerabilities: $crit_vulns"
 
     # Check if there are any high or critical vulnerabilities and return a non-zero exit code if found
-    if [[ $high_vulns -gt 0 || $crit_vulns -gt 0 ]]; then
+    if [[ $totalReportedVulnerabilities -gt 0 ]]; then
         echo "==> Security Alert: Found high or critical vulnerabilities."
         return 1
     else
