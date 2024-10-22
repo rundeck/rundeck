@@ -36,10 +36,10 @@ END
 <![CDATA[
 Package: ${packageName}
 Version: ${packageVersion}
-Description: ${description}
+Path: ${packagePath}
 Fixed Versions: ${fixedVersion}
 Link: ${link}
-Path: ${packagePath}
+Description: ${description}
 ]]>
       </failure>
     </testcase>
