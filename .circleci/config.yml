@@ -316,6 +316,8 @@ jobs:
           command: wizcli_scan || << parameters.continue >>
       - store_artifacts:
           path: ~/workspace/wizcli_scan_result.json
+      - store_artifacts:
+          path: ~/workspace/wizcli.log
       - store_test_results:
           path: test-results
 
