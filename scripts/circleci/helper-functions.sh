@@ -113,18 +113,7 @@ wizcli_scan() {
     mkdir -p test-results/junit
     bash "${RUNDECK_CORE_DIR}/scripts/convert_wiz_junit.sh" wizcli_scan_result.json > test-results/junit/wizcli-junit.xml
 
-    # Get total of reported vulnerabilities
-    local totalReportedVulnerabilities=$(jq '[.result.osPackages[]?.vulnerabilities[]?, .result.libraries[]?.vulnerabilities[]?] | length' < "$IN")
-
-
-    # Check if there are any high or critical vulnerabilities and return a non-zero exit code if found
-    if [[ $totalReportedVulnerabilities -gt 0 ]]; then
-        echo "==> Security Alert: Found high or critical vulnerabilities."
-        return 1
-    else
-        echo "==> No high or critical vulnerabilities found."
-        return 0
-    fi
+    return $wizexitcode
 }
 
 openapi_tests() {
