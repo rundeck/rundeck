@@ -103,7 +103,9 @@ wizcli_scan() {
     wizcli docker scan --image "${RUNDECK_IMAGE_TAG}" \
       --policy-hits-only \
       --format human \
-      --output "wizcli_scan_result.json,json,true"
+      --show-vulnerability-details \
+      --output "wizcli_scan_result.json,json,true" \
+      --log wizcli.log
 
     wizexitcode=$?
     echo "WizExitCode: $wizexitcode"
