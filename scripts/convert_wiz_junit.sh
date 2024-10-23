@@ -32,16 +32,18 @@ END
         local fixedVersion=$(echo "$vuln" | jq -r '.fixedVersion')
 
         cat <<END
-    <testcase name="${packageName}:${packageVersion} - ${name}" classname="ClassName" severity="${severity}" link="${link}" file="thafile">
-      <failure message="Package: ${packageName}">
+    <testcase name="${packageName}:${packageVersion}" classname="${name}" severity="${severity}" file="${packagePath}">
+      <failure message="${name} - Sev: ${severity}">
 <![CDATA[
-Severity: ${severity}
+Package: ${packageName}
 Current Version: ${packageVersion}
 Fixed Versions: ${fixedVersion}
 Path: ${packagePath}
 Link: ${link}
 Wiz Report: ${reportUrl}
-Description: ${description}
+Description:
+
+${description}
 ]]>
       </failure>
     </testcase>
