@@ -11,6 +11,7 @@ convert_wiz_junit() {
     local time=$(jq -r '.createdAt' < "$IN" | cut -d'T' -f1)
     local totalReportedVulnerabilities=$(jq '[.result.osPackages[]?.vulnerabilities[]?, .result.libraries[]?.vulnerabilities[]?] | length' < "$IN")
     echo "totalVulnsReported: $totalReportedVulnerabilities"
+    local reportUrl=$(jq -r '.reportUrl' < "$IN")
 
     cat <<END
 <?xml version="1.0" encoding="UTF-8"?>
@@ -18,7 +19,7 @@ convert_wiz_junit() {
   <testsuite name="Wiz Scan Vulnerabilities" tests="$totalReportedVulnerabilities" failures="$totalReportedVulnerabilities">
 END
 
-    # Concatenate vulnerabilities from osPackages and libraries, then filter for high and critical
+    # Concatenate vulnerabilities from osPackages and libraries
     jq -c '.result.osPackages[]?, .result.libraries[]? | . as $pkg | ($pkg.vulnerabilities[]? | . + {packageName: $pkg.name, packageVersion: $pkg.version, packagePath: $pkg.path})' < "$IN" |
     while IFS= read -r vuln; do
         local name=$(echo "$vuln" | jq -r '.name')
@@ -31,14 +32,15 @@ END
         local fixedVersion=$(echo "$vuln" | jq -r '.fixedVersion')
 
         cat <<END
-    <testcase name="${packageName}:${packageVersion} - ${name}" severity="${severity}" link="${link}">
-      <failure message="Severity: ${severity}">
+    <testcase name="${packageName}:${packageVersion} - ${name}" classname="ClassName" severity="${severity}" link="${link}" file="thafile">
+      <failure message="Package: ${packageName}">
 <![CDATA[
-Package: ${packageName}
-Version: ${packageVersion}
-Path: ${packagePath}
+Severity: ${severity}
+Current Version: ${packageVersion}
 Fixed Versions: ${fixedVersion}
+Path: ${packagePath}
 Link: ${link}
+Wiz Report: ${reportUrl}
 Description: ${description}
 ]]>
       </failure>
