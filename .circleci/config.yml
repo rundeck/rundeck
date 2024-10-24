@@ -310,7 +310,7 @@ jobs:
       - checkout
       - run-build-step:
           step-name: Install WizCLI
-          command: install_wizcli
+          command: wizcli_install
       - run-build-step:
           step-name: Scan Image
           command: wizcli_scan || << parameters.continue >>

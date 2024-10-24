@@ -45,12 +45,6 @@ copy_rundeck_war() {
     cp -pv "${warFile}" "${destFile}"
 }
 
-install_wizcli(){
-  curl -Lo wizcli https://wizcli.app.wiz.io/latest/wizcli-linux-amd64
-  chmod +x wizcli
-  sudo cp ./wizcli /usr/local/bin
-}
-
 # Pull the image built on this build and adds a custom tag if provided as argument.
 rundeck_pull_image() {
     docker_login
@@ -75,6 +69,12 @@ fetch_ci_shared_resources() {
     mkdir -p "${HOME}/.gnupg"
     cp -pv ci-resources/* "${HOME}/.gnupg/"
     chmod -R 700 "${HOME}/.gnupg"
+}
+
+wizcli_install(){
+  curl -Lo wizcli https://wizcli.app.wiz.io/latest/wizcli-linux-amd64
+  chmod +x wizcli
+  sudo cp ./wizcli /usr/local/bin
 }
 
 wizcli_scan() {
