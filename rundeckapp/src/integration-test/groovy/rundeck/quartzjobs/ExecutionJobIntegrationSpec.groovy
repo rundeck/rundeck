@@ -18,7 +18,7 @@ import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
 import rundeck.services.JobSchedulerService
 import rundeck.services.JobSchedulesService
-import rundeck.services.ScheduledExecutionDeletedException
+import rundeck.services.MissingScheduledExecutionException
 import rundeck.services.execution.ThresholdValue
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -434,8 +434,8 @@ class ExecutionJobIntegrationSpec extends Specification {
 
             job.initialize(context, contextMock)
         then:
-            ScheduledExecutionDeletedException e = thrown()
-            e.message == "Failed to lookup scheduledException object from job data map: id: 1 , job will be unscheduled"
+        MissingScheduledExecutionException e = thrown()
+            e.message == "Failed to lookup ScheduledExecution object from job data map: id: 1 in db, job will be unscheduled"
 
     }
 

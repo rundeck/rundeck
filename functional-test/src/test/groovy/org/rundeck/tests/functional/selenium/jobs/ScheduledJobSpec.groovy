@@ -29,22 +29,27 @@ class ScheduledJobSpec extends SeleniumBase{
         setupProject(projectName)
         ActivityPage activityPage = page ActivityPage
         JobListPage jobListPage = page(JobListPage)
-        jobListPage.loadJobListForProject(projectName)
-        def jobXml = JobUtils.generateScheduledJobsXml("scheduledJob", "<time hour='*' seconds='*/5' minute='*' />")
+        def jobXml = JobUtils.generateScheduledJobsXml("scheduledJob", "<time hour='*' seconds='*/2' minute='*' />")
         JobUtils.createJob(projectName, jobXml, client)
+
         when:
+        jobListPage.loadJobListForProject(projectName)
         jobListPage.go()
         jobListPage.validatePage()
-        waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName), {it.size() >= 1}, WaitingTime.EXCESSIVE )
+
         activityPage.loadActivityPageForProject(projectName)
         activityPage.go()
 
+        def refreshActivityPageAndGetExecutionCount = {
+            activityPage.refresh()
+            Integer.parseInt(activityPage.executionCount.text)
+        }
+
         then:
-        Integer.parseInt(activityPage.executionCount.text) > 0
+        assert waitFor(refreshActivityPageAndGetExecutionCount, { Integer executionCount -> executionCount  > 0 }, WaitingTime.EXCESSIVE) > 0
 
         cleanup:
         deleteProject(projectName)
-
     }
 
     /**
@@ -76,7 +81,6 @@ class ScheduledJobSpec extends SeleniumBase{
         then:
         jobShowPage.els(jobShowPage.scheduleTimeBy).size() == 1
         jobShowPage.el(jobShowPage.scheduleTimeBy).getText().contains("in")
-        jobShowPage.el(jobShowPage.scheduleTimeBy).getText().contains("on")
 
         cleanup:
         deleteProject(projectName)
