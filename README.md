@@ -1,9 +1,9 @@
 <p align="center">
 <a href="https://www.rundeck.com#gh-light-mode-only">
-  <img src="https://www.rundeck.com/hubfs/Pager%20Duty%20Branding/RundeckbyPagerDuty.svg" alt="Netdata" width="300"/>
+  <img src="https://www.rundeck.com/hubfs/Pager%20Duty%20Branding/RundeckbyPagerDuty.svg" alt="Rundeck" width="300"/>
 </a>
 <a href="https://www.rundeck.com#gh-dark-mode-only">
-  <img src="https://www.rundeck.com/hubfs/Pager%20Duty%20Branding/RundeckbyPagerDutyDM.svg" alt="Netdata" width="300"/>
+  <img src="https://www.rundeck.com/hubfs/Pager%20Duty%20Branding/RundeckbyPagerDutyDM.svg" alt="Rundeck" width="300"/>
 </a>
 </p>
 <h3 align="center">Execute workflows across your existing automations<br /> or quickly automate previously manual procedures.</h3>
@@ -15,9 +15,9 @@
 
 <div align="center">
 
-| Travis                                                                                                                 | Deb                                           | RPM                                           | War                                           |
+| Release                                                                                                                 | Deb                                           | RPM                                           | War                                           |
 | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
-| [![Travis CI](https://travis-ci.org/rundeck/rundeck.svg?branch=master)](https://travis-ci.org/rundeck/rundeck/builds#) | [Download](https://www.rundeck.com/downloads) | [Download](https://www.rundeck.com/downloads) | [Download](https://www.rundeck.com/downloads) |
+| [![Release Build](https://img.shields.io/github/actions/workflow/status/rundeck/rundeck/release.yml)](https://github.com/rundeck/rundeck/actions/workflows/release.yml) | [Download](https://www.rundeck.com/downloads) | [Download](https://www.rundeck.com/downloads) | [Download](https://www.rundeck.com/downloads) |
 
 </div>
 
