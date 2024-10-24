@@ -45,12 +45,6 @@ copy_rundeck_war() {
     cp -pv "${warFile}" "${destFile}"
 }
 
-install_wizcli(){
-  curl -Lo wizcli https://wizcli.app.wiz.io/latest/wizcli-linux-amd64
-  chmod +x wizcli
-  sudo cp ./wizcli /usr/local/bin
-}
-
 # Pull the image built on this build and adds a custom tag if provided as argument.
 rundeck_pull_image() {
     docker_login
@@ -77,6 +71,12 @@ fetch_ci_shared_resources() {
     chmod -R 700 "${HOME}/.gnupg"
 }
 
+wizcli_install(){
+  curl -Lo wizcli https://wizcli.app.wiz.io/latest/wizcli-linux-amd64
+  chmod +x wizcli
+  sudo cp ./wizcli /usr/local/bin
+}
+
 wizcli_scan() {
 
     docker_login
@@ -96,31 +96,24 @@ wizcli_scan() {
 
     docker pull "${RUNDECK_IMAGE_TAG}"
 
-
     #login to wizcli
     wizcli auth --id="${WIZCLI_ID}" --secret="${WIZCLI_SECRET}"
-    wizcli docker scan --image "${RUNDECK_IMAGE_TAG}" -f json > wizcli_scan_result.json
 
-    sudo chown "${CURRENT_USER}" wizcli_scan_result.json
+    # Scan showing only results that make policy fail.
+    wizcli docker scan --image "${RUNDECK_IMAGE_TAG}" \
+      --policy-hits-only \
+      --format human \
+      --show-vulnerability-details \
+      --output "wizcli_scan_result.json,json,true" \
+      --log wizcli.log
+
+    wizexitcode=$?
+    echo "WizExitCode: $wizexitcode"
 
     mkdir -p test-results/junit
     bash "${RUNDECK_CORE_DIR}/scripts/convert_wiz_junit.sh" wizcli_scan_result.json > test-results/junit/wizcli-junit.xml
 
-    # Aggregate high and critical vulnerabilities from osPackages and libraries
-    local high_vulns=$(jq '[.result.osPackages[].vulnerabilities[]?, .result.libraries[].vulnerabilities[]? | select(.severity == "HIGH") | .name] | length' wizcli_scan_result.json)
-    local crit_vulns=$(jq '[.result.osPackages[].vulnerabilities[]?, .result.libraries[].vulnerabilities[]? | select(.severity == "CRITICAL") | .name] | length' wizcli_scan_result.json)
-
-    echo "High Vulnerabilities: $high_vulns"
-    echo "Critical Vulnerabilities: $crit_vulns"
-
-    # Check if there are any high or critical vulnerabilities and return a non-zero exit code if found
-    if [[ $high_vulns -gt 0 || $crit_vulns -gt 0 ]]; then
-        echo "==> Security Alert: Found high or critical vulnerabilities."
-        return 1
-    else
-        echo "==> No high or critical vulnerabilities found."
-        return 0
-    fi
+    return $wizexitcode
 }
 
 openapi_tests() {

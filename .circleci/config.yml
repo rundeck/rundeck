@@ -310,12 +310,14 @@ jobs:
       - checkout
       - run-build-step:
           step-name: Install WizCLI
-          command: install_wizcli
+          command: wizcli_install
       - run-build-step:
           step-name: Scan Image
           command: wizcli_scan || << parameters.continue >>
       - store_artifacts:
           path: ~/workspace/wizcli_scan_result.json
+      - store_artifacts:
+          path: ~/workspace/wizcli.log
       - store_test_results:
           path: test-results
 
