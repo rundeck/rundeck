@@ -677,8 +677,10 @@ class LogFileStorageService
         File file = getFileForExecutionFiletype(e, filetype, false, false)
 
         if (!file.getParentFile().isDirectory()) {
-            if (!file.getParentFile().mkdirs()) {
-                throw new IllegalStateException("Unable to create directories for storage: " + file)
+            try {
+                Files.createDirectories(file.getParentFile().toPath());
+            } (IOException iex) {
+                throw new IllegalStateException("Unable to create directories for storage: " + file);
             }
         }
         //stream log events to file, and when closed submit asynch request to store file if needed
