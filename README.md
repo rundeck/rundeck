@@ -15,9 +15,9 @@
 
 <div align="center">
 
-| Release                                                                                                                 | Deb                                           | RPM                                           | War                                           |
-| ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
-| [![Release Build](https://img.shields.io/github/actions/workflow/status/rundeck/rundeck/release.yml)](https://github.com/rundeck/rundeck/actions/workflows/release.yml) | [Download](https://www.rundeck.com/downloads) | [Download](https://www.rundeck.com/downloads) | [Download](https://www.rundeck.com/downloads) |
+| Deb                                           | RPM                                           | War                                           |
+| --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
+| [Download](https://www.rundeck.com/downloads) | [Download](https://www.rundeck.com/downloads) | [Download](https://www.rundeck.com/downloads) |
 
 </div>
 
