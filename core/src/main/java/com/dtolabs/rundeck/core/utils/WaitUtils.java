@@ -26,6 +26,11 @@ public class WaitUtils {
         Boolean acceptanceResult = resourceAcceptanceEvaluator.apply(r);
         long initTime = System.currentTimeMillis();
         while (!acceptanceResult) {
+            // Check timeout prior to sleep to avoid sleep that is not necessary
+            if ((System.currentTimeMillis() - initTime) >= timeout.toMillis()) {
+                throw new ResourceAcceptanceTimeoutException("Timeout reached (" + timeout.toMillis() + "ms) waiting for value: " + r + " to reach the desired state");
+            }
+            // Check timeout right after sleep to short circuit execution on timeout expiration
             Thread.sleep(Math.min(checkPeriod.toMillis(), timeout.toMillis()));
             if ((System.currentTimeMillis() - initTime) >= timeout.toMillis()) {
                 throw new ResourceAcceptanceTimeoutException("Timeout reached (" + timeout.toMillis() + "ms) waiting for value: " + r + " to reach the desired state");
