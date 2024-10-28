@@ -18,4 +18,6 @@ password-node:
   file-copier: sshj-scp
   ssh-authentication: password
   ssh-password-storage-path: keys/project/core-sshj-executor-test/ssh-node.pass
+  sudo-password-storage-path: keys/project/core-sshj-executor-test/ssh-node.pass
+  sudo-command-enabled: 'true'
   tags: executor-test,ssh-node,auth-method-password
