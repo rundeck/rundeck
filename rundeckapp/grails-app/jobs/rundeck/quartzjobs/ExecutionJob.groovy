@@ -664,7 +664,7 @@ class ExecutionJob implements InterruptableJob {
          * The `findByUUID` retry is a mitigation for the race condition between this quartz scheduler thread that gets
          * ScheduledExecution ID from the memory store and the web server thread that puts the ID into the memory
          * store AND creates the ScheduledExecution object in the DB.
-         * The issue occurs when the quartz thread starts processioning the associated job and attempts to fetch the
+         * The issue occurs when the quartz thread starts processing the associated job and attempts to fetch the
          * newly (almost) created ScheduledExecution object from the DB BEFORE the DB transaction is committed by the web server thread.
          */
         try {
@@ -684,7 +684,7 @@ class ExecutionJob implements InterruptableJob {
 
             if(!projectName.equals(se.project)){
                 context.getScheduler().deleteJob(context.jobDetail.key)
-                throw new RuntimeException("ScheduledExecution found but it does not match the original project name to schedule. Project name was : ${projectName} , Project name now : ${se.project}")
+                throw new RuntimeException("ScheduledExecution found but it does not match the original project name to schedule. Project name was : ${projectName} , Project name now : ${se.project}. ${seid} job will be unscheduled")
             }
 
             return se
