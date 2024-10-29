@@ -17,6 +17,7 @@
 <%@ page import="org.rundeck.core.auth.AuthConstants" %>
 <g:set var="authAdmin" value="${auth.resourceAllowedTest(
         action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
+        any: true,
         type: AuthConstants.TYPE_PROJECT,
         name: (params.project ?: request.project),
         context: AuthConstants.CTX_APPLICATION
@@ -46,8 +47,8 @@
                name: (params.project ?: request.project), context: AuthConstants.CTX_APPLICATION
        )}"/>
 <g:set var="authReadAcl"
-       value="${auth.resourceAllowedTest(action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
-               any: true,
+       value="${authAdmin || auth.resourceAllowedTest(
+               action: AuthConstants.ACTION_READ,
                type: AuthConstants.TYPE_PROJECT_ACL,
                name: (params.project ?: request.project), context: AuthConstants.CTX_APPLICATION
        )}"/>
