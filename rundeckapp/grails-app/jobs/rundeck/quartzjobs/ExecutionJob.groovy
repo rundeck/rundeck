@@ -27,6 +27,8 @@ import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
+import com.dtolabs.rundeck.core.utils.ResourceAcceptanceTimeoutException
+import com.dtolabs.rundeck.core.utils.WaitUtils
 import grails.core.GrailsApplication
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
@@ -42,6 +44,7 @@ import rundeck.services.execution.ThresholdValue
 import rundeck.services.logging.LoggingThreshold
 
 import java.sql.Timestamp
+import java.time.Duration
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
@@ -126,12 +129,10 @@ class ExecutionJob implements InterruptableJob {
                 log.error("Unable to start Job execution: ${es.message ?: 'no message'}")
                 return
             } else {
-                log.error("Unable to start Job execution: ${es.message ?: 'no message'}", es)
-                throw es
+                throw new ExecutionServiceException("Unable to start Job execution", es)
             }
-        }catch(ScheduledExecutionDeletedException sede){
-            log.error("ScheduledExecution not found on DB: ${sede.message?sede.message:'no message'}",sede)
-            throw sede
+        }catch(MissingScheduledExecutionException e){
+            throw e
         }
         catch(Throwable t){
             markStartExecutionFailure(context)
@@ -658,24 +659,40 @@ class ExecutionJob implements InterruptableJob {
     def ScheduledExecution fetchScheduledExecution(JobDataMap jobDataMap, JobExecutionContext context) {
         String seid = requireEntry(jobDataMap, "scheduledExecutionId", String)
         String projectName = requireEntry(jobDataMap, "project", String)
-        ScheduledExecution se = ScheduledExecution.findByUUID(seid).find()
-        if(se && se instanceof ScheduledExecution){
-            se.refreshOptions() //force fetch options and option values before return object
-        }
 
-        if (!se) {
-            context.getScheduler().deleteJob(context.jobDetail.key)
-            throw new ScheduledExecutionDeletedException("Failed to lookup scheduledException object from job data map: id: ${seid} , job will be unscheduled")
-        }
-        else if(!projectName.equals(se.project)){
-            context.getScheduler().deleteJob(context.jobDetail.key)
-            throw new RuntimeException("ScheduledExecution found but it does not match the original project name to schedule. Project name was : ${projectName} , Project name now : ${se.project}")
-        }
+        /**
+         * The `findByUUID` retry is a mitigation for the race condition between this quartz scheduler thread that gets
+         * ScheduledExecution ID from the memory store and the web server thread that puts the ID into the memory
+         * store AND creates the ScheduledExecution object in the DB.
+         * The issue occurs when the quartz thread starts processing the associated job and attempts to fetch the
+         * newly (almost) created ScheduledExecution object from the DB BEFORE the DB transaction is committed by the web server thread.
+         */
+        try {
+            ScheduledExecution se = WaitUtils.<ScheduledExecution>waitFor(
+                    {ScheduledExecution.findByUUID(seid).find()},
+                    {it != null},
+                    Duration.ofSeconds(10),
+                    Duration.ofSeconds(1)
+            )
 
-        if (! se instanceof ScheduledExecution) {
-            throw new RuntimeException("JobDataMap contained invalid ScheduledExecution type: " + se.getClass().getName())
+            if(se instanceof ScheduledExecution){
+                se.refreshOptions() //force fetch options and option values before return object
+            } else {
+                // Legacy logic. Is this even possible?
+                throw new RuntimeException("JobDataMap contained invalid ScheduledExecution type: " + se.getClass().getName())
+            }
+
+            if(!projectName.equals(se.project)){
+                context.getScheduler().deleteJob(context.jobDetail.key)
+                throw new RuntimeException("ScheduledExecution found but it does not match the original project name to schedule. Project name was : ${projectName} , Project name now : ${se.project}. ${seid} job will be unscheduled")
+            }
+
+            return se
+
+        } catch (ResourceAcceptanceTimeoutException e) {
+            context.getScheduler().deleteJob(context.jobDetail.key)
+            throw new MissingScheduledExecutionException("Failed to lookup ScheduledExecution object from job data map: id: ${seid} in db, job will be unscheduled", e)
         }
-        return se
     }
 
 
