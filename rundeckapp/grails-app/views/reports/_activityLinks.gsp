@@ -113,7 +113,12 @@
             </span>
 
         <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(
-                context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: params.project, action: [AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_APP_ADMIN])}"/>
+                context: AuthConstants.CTX_APPLICATION,
+                type: AuthConstants.TYPE_PROJECT,
+                name: params.project,
+                action: [AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_APP_ADMIN],
+                any: true
+        )}"/>
         <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name:
                 params.project, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
         <g:if test="${deleteExecAuth}">

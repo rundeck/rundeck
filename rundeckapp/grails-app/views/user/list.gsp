@@ -30,7 +30,11 @@
         <div class="col-sm-10 col-sm-offset-1">
             <h3>Users
 
-            <g:if test="${auth.resourceAllowedTest(kind: AuthConstants.TYPE_USER, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN], context: AuthConstants.CTX_APPLICATION)}">
+            <g:if test="${auth.resourceAllowedTest(
+                    kind: AuthConstants.TYPE_USER,
+                    action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
+                    any: true,
+                    context: AuthConstants.CTX_APPLICATION)}">
                     <g:link action="create" class="btn btn-default btn-xs">
                         <i class="glyphicon glyphicon-plus"></i>
                         New Profile &hellip;

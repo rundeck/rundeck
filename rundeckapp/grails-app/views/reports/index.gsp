@@ -71,9 +71,18 @@ saved.filters
 search
 "/>
     <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(
-            context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: projectName, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])}"/>
-    <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name:
-            projectName, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
+            context: AuthConstants.CTX_APPLICATION,
+            type: AuthConstants.TYPE_PROJECT,
+            name: projectName,
+            action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
+            any: true
+    )}"/>
+    <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(
+            context: AuthConstants.CTX_APPLICATION,
+            type: AuthConstants.TYPE_PROJECT,
+            name: projectName,
+            action: AuthConstants.ACTION_DELETE_EXECUTION
+    ) || projAdminAuth}"/>
     <cfg:setVar var="defaultMax" defaultValue="${30}" key="pagination.default.max"/>
     <g:set var="pageMax" value="${params.max?params.int('max',defaultMax):defaultMax}"/>
     <g:javascript>

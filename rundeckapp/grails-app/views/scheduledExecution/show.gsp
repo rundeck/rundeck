@@ -139,7 +139,12 @@ search
     </script>
     <g:set var="projectName" value="${scheduledExecution.project}"/>
     <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(
-            context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: projectName, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])}"/>
+            context: AuthConstants.CTX_APPLICATION,
+            type: AuthConstants.TYPE_PROJECT,
+            name: projectName,
+            action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
+            any: true
+    )}"/>
     <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name:
             projectName, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
     <g:set var="runAccess" value="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_RUN)}"/>
