@@ -679,7 +679,7 @@ class LogFileStorageService
         if (!file.getParentFile().isDirectory()) {
             try {
                 Files.createDirectories(file.getParentFile().toPath());
-            } (IOException iex) {
+            } catch (IOException iex) {
                 throw new IllegalStateException("Unable to create directories for storage: " + file);
             }
         }
