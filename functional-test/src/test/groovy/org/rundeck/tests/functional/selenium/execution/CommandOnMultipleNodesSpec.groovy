@@ -56,8 +56,8 @@ class CommandOnMultipleNodesSpec extends SeleniumBase{
         expect:
         executionShowPage.validatePage()
         executionShowPage.waitForElementAttributeToChange executionShowPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED'
-        // Ensures there is a log line for each node
-        executionShowPage.getExecLogLines().size() == 3
+        // Waits to ensure there is a log line for each node
+        waitFor({ executionShowPage.getExecLogLines() }, { it.size() == 3 })
     }
 
     def "execution succeeds on the specific nodes matching the filter"() {
@@ -78,7 +78,7 @@ class CommandOnMultipleNodesSpec extends SeleniumBase{
         expect:
         executionShowPage.validatePage()
         executionShowPage.waitForElementAttributeToChange executionShowPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED'
-        // Ensures there is a log line for each node matching the executor-test tag
-        executionShowPage.getExecLogLines().size() == 2
+        // Waits to ensure there is a log line for each node matching the executor-test tag
+        waitFor({ executionShowPage.getExecLogLines() }, { it.size() == 2 })
     }
 }
