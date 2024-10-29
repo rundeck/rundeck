@@ -14,21 +14,6 @@ dependencies_install_zulu11jdk() {
 
 }
 
-# Install groovy SDK
-dependencies_install_groovy() {
-    # Install groovy
-    GROOVY_VERSION=3.0.19
-    curl -sSL -o /tmp/groovy.zip "https://archive.apache.org/dist/groovy/${GROOVY_VERSION}/distribution/apache-groovy-binary-${GROOVY_VERSION}.zip" &&
-        echo '6ff5e1fde0ca7dbea06bc5241502574014a64af734c4910acdb4218b4c504230 /tmp/groovy.zip' | sha256sum --check &&
-        unzip /tmp/groovy.zip -d /tmp &&
-        rm -f /tmp/groovy.zip &&
-        sudo mv "/tmp/groovy-${GROOVY_VERSION}" "/usr/local/groovy" &&
-        sudo ln --symbolic "/usr/local/groovy/bin/groovy" /usr/local/bin/groovy &&
-        sudo ln --symbolic "/usr/local/groovy/bin/groovysh" /usr/local/bin/groovysh &&
-        sudo ln --symbolic "/usr/local/groovy/bin/groovyc" /usr/local/bin/groovyc
-
-}
-
 # Install dependencies needed for packaging
 dependencies_packaging_setup() {
 
