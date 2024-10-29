@@ -9,8 +9,19 @@
     <g:set var="projectName" value="${params.project ?: request.project}"/>
     <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[projectName]:projectName}"/>
     <title><g:message code="gui.menu.Workflows"/> - <g:enc>${projectLabel}</g:enc></title>
-    <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: projectName, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])}"/>
-    <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: projectName, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
+    <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(
+            context: AuthConstants.CTX_APPLICATION,
+            type: AuthConstants.TYPE_PROJECT,
+            name: projectName,
+            action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
+            any: true
+    )}"/>
+    <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(
+            context: AuthConstants.CTX_APPLICATION,
+            type: AuthConstants.TYPE_PROJECT,
+            name: projectName,
+            action: AuthConstants.ACTION_DELETE_EXECUTION
+    ) || projAdminAuth}"/>
 
     <asset:javascript src="menu/jobs.next.js"/>
     <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
