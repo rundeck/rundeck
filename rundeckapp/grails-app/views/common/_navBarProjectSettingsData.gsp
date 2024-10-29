@@ -166,7 +166,7 @@
             link: '${createLink(controller: "menu", action: "projectDelete", params: [project: params.project])}',
             label: '${g.message(code:"delete.project")}',
             active: false,
-            enabled: ${authExport == true},
+            enabled: ${authDelete == true},
         },
         <g:ifMenuItems type="PROJECT_CONFIG"  project="${params.project}">
             <g:forMenuItems type="PROJECT_CONFIG" var="item" project="${params.project}">
