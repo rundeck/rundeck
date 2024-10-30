@@ -28,12 +28,16 @@ class SideBarPage extends BasePage {
         def navIdBy = By.id(navLink.id)
         if (navLink.projectConfig) {
             projectSettingsField.click()
-            waitForElementVisible navContainer
+            waitForNavVisible()
         } else if (!(el navIdBy).isDisplayed() && overflowFields.size() == 1) {
             overflowField.click()
             waitForAttributeContains overflowField, 'class', 'active'
         }
         el navIdBy click()
+    }
+
+    WebElement waitForNavVisible() {
+        waitForElementVisible navContainer
     }
 
     WebElement getProjectSettingsField() {
