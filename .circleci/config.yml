@@ -75,7 +75,7 @@ executors:
   # Main docker executor
   docker-builder:
     docker:
-      - image: cimg/base:2023.10-22.04
+      - image: cimg/base:current-22.04
     parameters:
       # we set the resource class to small by default
       # however, any job that uses the setup_remote_docker step will be
@@ -89,7 +89,7 @@ executors:
   # Machine executor
   machine-builder:
     machine:
-      image: default
+      image: ubuntu-2204:current
       docker_layer_caching: << parameters.docker_layer_caching >>
     parameters:
       resource_class:
@@ -146,9 +146,10 @@ commands:
           when: << parameters.when >>
           command: |
             source scripts/circleci/setup.sh
-            echo "=== ENV ===" && env && echo "=== ENV END ==="
+            echo "=== ENV ===" && env && echo "=== ENV END $(date)==="
             set -x            
             <<parameters.command>>
+            echo "=== Finished $(date) ==="
 
   # Save gradle test results
   collect-gradle-tests:
@@ -184,7 +185,7 @@ commands:
             - ~/.npm/_cacache
           key: cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-{{ .Branch }}-<<pipeline.number>>
 
-
+  ## Deps Installers quick references.
   # Install node
   install-node:
     description: Install Node
@@ -193,22 +194,35 @@ commands:
           use-nvm-cache: true
           nvm-cache-key: cache-{{ .Environment.BUILD_CACHE_VERSION }}-nvm-{{ checksum ".nvmrc" }}
 
-  # Install dependencies required for gradle builds.
+  # Install Java JDK
+  install-java-jdk:
+    description: Install JDK
+    steps:
+      - run-build-step:
+          step-name: Install Java JDK
+          command: dependencies_install_zulu11jdk
+
+  ## Dependency groups
+
+  # Install base dependencies
+  install-base-dependencies:
+    description: Install Build Dependencies
+    steps:
+      - install-java-jdk
+
+  # Install dependencies required for building
   install-build-dependencies:
     description: Install Build Dependencies
     steps:
-      - aws-cli/install
+      - install-base-dependencies
       - install-node
-      - run-build-step:
-          step-name: Install Build Dependencies
-          command: dependencies_build_setup
 
   # Install dependencies required for packaging
   install-packaging-dependencies:
     description: Install Packaging Dependencies
     steps:
+      - install-base-dependencies
       - aws-cli/install
-      - install-node
       - run-build-step:
           step-name: Install Packaging Dependencies
           command: dependencies_packaging_setup
@@ -217,8 +231,7 @@ commands:
   install-testdeck-dependencies:
     description: Install TestDeck Dependencies
     steps:
-      - aws-cli/install
-      - install-node
+      - install-base-dependencies
       - run-build-step:
           step-name: Install TestDeck Dependencies
           command: dependencies_testdeck_setup
@@ -248,8 +261,8 @@ jobs:
       - setup_docker:
           docker_layer_caching: true
       - checkout
-      - install-build-dependencies
       - restore-build-cache
+      - install-build-dependencies
       - run-build-step:
           step-name: Build War
           command: rundeck_war_build
@@ -362,7 +375,7 @@ jobs:
     steps:
       - setup_docker
       - checkout
-      - install-build-dependencies
+      - install-base-dependencies
       - restore-build-cache
       - attach_workspace:
           at: ~/workspace
@@ -382,7 +395,7 @@ jobs:
     steps:
       - setup_docker
       - checkout
-      - install-build-dependencies
+      - install-packaging-dependencies
       - restore-build-cache
       - attach_workspace:
           at: ~/workspace
@@ -537,11 +550,9 @@ jobs:
     steps:
       - checkout
       - restore-build-cache
+      - install-base-dependencies
       - attach_workspace:
           at: ~/workspace
-      - run-build-step:
-          step-name: Install Build Dependencies
-          command: dependencies_build_setup
       - run-build-step:
           step-name: Pull images
           command: rundeck_pull_image
