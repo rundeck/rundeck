@@ -47,8 +47,9 @@
                name: (params.project ?: request.project), context: AuthConstants.CTX_APPLICATION
        )}"/>
 <g:set var="authReadAcl"
-       value="${authAdmin || auth.resourceAllowedTest(
-               action: AuthConstants.ACTION_READ,
+       value="${auth.resourceAllowedTest(
+               action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
+               any: true,
                type: AuthConstants.TYPE_PROJECT_ACL,
                name: (params.project ?: request.project), context: AuthConstants.CTX_APPLICATION
        )}"/>
