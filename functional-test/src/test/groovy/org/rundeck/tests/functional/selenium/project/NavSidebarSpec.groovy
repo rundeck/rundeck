@@ -67,7 +67,6 @@ class NavSidebarSpec extends SeleniumBase {
         NavLinkTypes.SETUP_SCM
     ]
 
-    @PendingFeatureIf(value = { data.username in [NavSidebarSpec.ADMIN_USER, NavSidebarSpec.APP_ADMIN_USER] }, reason = "fixed in later change")
     @Unroll
     def "User #username with specific auth sees specific navlinks #visible"() {
         given:
