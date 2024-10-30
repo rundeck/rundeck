@@ -99,6 +99,39 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     /**
+     * Import system ACL file
+     * @param resourcePathName resource path to the file to upload
+     * @param aclPath acl path within the system
+     */
+    void importSystemAcls(String resourcePathName, String aclPath){
+        def getAcl = client.doGet("/system/acl/${aclPath}")
+        def aclFile = new File(getClass().getResource(resourcePathName).getPath())
+        def resp
+        if (getAcl.code() == 404) {
+            //POST
+            resp = client.doPost("/system/acl/${aclPath}", aclFile, 'application/yaml')
+        }else{
+            //PUT
+            resp = client.doPut("/system/acl/${aclPath}", aclFile, 'application/yaml')
+        }
+        if (!resp.successful) {
+            throw new RuntimeException("Failed to create System ACL: ${resp.body().string()}")
+        }
+    }
+
+    /**
+     * Import system ACL file
+     * @param resourcePathName resource path to the file to upload
+     * @param aclPath acl path within the system
+     */
+    void deleteSystemAcl(String aclPath){
+        def resp = client.doDelete("/system/acl/${aclPath}")
+        if (!(resp.code() in [204, 404])) {
+            throw new RuntimeException("Failed to delete System ACL: ${resp.body().string()}")
+        }
+    }
+
+    /**
      * Build a url query string from a map of parameters
      * @param params
      * @return
