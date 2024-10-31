@@ -14,15 +14,15 @@ import spock.lang.Unroll
 class NavSidebarSpec extends SeleniumBase {
     static final String SPEC_PROJECT = "NavSidebarSpec"
 
-    static final String ADMIN_USER = "NavSidebarSpec1"
-    static final String READONLY_USER = "NavSidebarSpec2"
-    static final String DELETE_USER = "NavSidebarSpec3"
-    static final String EXPORT_USER = "NavSidebarSpec4"
-    static final String IMPORT_USER = "NavSidebarSpec5"
-    static final String CONFIGURE_USER = "NavSidebarSpec6"
-    static final String ACL_READ_USER = "NavSidebarSpec7"
-    static final String ACL_ADMIN_USER = "NavSidebarSpec8"
-    static final String APP_ADMIN_USER = "NavSidebarSpec9"
+    static final String ADMIN_USER = "AuthTest1"
+    static final String READONLY_USER = "AuthTest2"
+    static final String DELETE_USER = "AuthTest3"
+    static final String EXPORT_USER = "AuthTest4"
+    static final String IMPORT_USER = "AuthTest5"
+    static final String CONFIGURE_USER = "AuthTest6"
+    static final String ACL_READ_USER = "AuthTest7"
+    static final String ACL_ADMIN_USER = "AuthTest8"
+    static final String APP_ADMIN_USER = "AuthTest9"
     static final String USER_PASS = "password"
 
     def setupSpec() {

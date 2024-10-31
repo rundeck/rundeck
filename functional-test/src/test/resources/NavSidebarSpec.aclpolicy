@@ -8,7 +8,7 @@ for:
       allow: [read,admin]
 by:
   group:
-  - NavSidebarSpec1
+  - AuthTest1
 ---
 description: read only project
 context:
@@ -20,7 +20,7 @@ for:
       allow: [read]
 by:
   group:
-  - NavSidebarSpec2
+  - AuthTest2
 ---
 description: delete project
 context:
@@ -32,7 +32,7 @@ for:
       allow: [read,delete]
 by:
   group:
-  - NavSidebarSpec3
+  - AuthTest3
 ---
 description: export project
 context:
@@ -44,7 +44,7 @@ for:
       allow: [read,export]
 by:
   group:
-  - NavSidebarSpec4
+  - AuthTest4
 ---
 description: import project
 context:
@@ -56,7 +56,7 @@ for:
       allow: [read,import]
 by:
   group:
-  - NavSidebarSpec5
+  - AuthTest5
 ---
 description: configure project
 context:
@@ -68,7 +68,7 @@ for:
       allow: [read,configure]
 by:
   group:
-  - NavSidebarSpec6
+  - AuthTest6
 ---
 
 
@@ -86,7 +86,7 @@ for:
       allow: [read]
 by:
   group:
-  - NavSidebarSpec7
+  - AuthTest7
 ---
 description: admin project acl
 context:
@@ -102,7 +102,7 @@ for:
       allow: [admin]
 by:
   group:
-  - NavSidebarSpec8
+  - AuthTest8
 ---
 
 description: app_admin project
@@ -115,5 +115,5 @@ for:
       allow: [read,app_admin]
 by:
   group:
-  - NavSidebarSpec9
+  - AuthTest9
 ---
