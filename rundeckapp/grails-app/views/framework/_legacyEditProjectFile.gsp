@@ -45,22 +45,10 @@
                                 <g:submitButton name="save" value="${g.message(code: 'button.action.Save', default: 'Save')}" class="btn btn-cta reset_page_confirm"/>
                                 <g:if test="${displayConfig?.contains('none')}">
                                     <span class="text-warning text-right">
-                                        <g:set var="authAdmin" value="${auth.resourceAllowedTest(
-                                                action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
-                                                any: true,
-                                                type: AuthConstants.TYPE_PROJECT,
-                                                name: (params.project ?: request.project),
-                                                context: AuthConstants.CTX_APPLICATION
-                                        )}"/>
-                                        <g:if test="${authAdmin}">
-                                            <g:message code="project.edit.readme.warning.not.displayed.admin.message" />
-                                            <g:link controller="framework" action="editProject" params="[project: params.project]">
-                                                <g:message code="project.configuration" />
-                                            </g:link>
-                                        </g:if>
-                                        <g:else>
-                                            <g:message code="project.edit.readme.warning.not.displayed.nonadmin.message" />
-                                        </g:else>
+                                        <g:message code="project.edit.readme.warning.not.displayed.admin.message" />
+                                        <g:link controller="framework" action="editProject" params="[project: params.project]">
+                                            <g:message code="project.configuration" />
+                                        </g:link>
                                     </span>
                                 </g:if>
                             </div>

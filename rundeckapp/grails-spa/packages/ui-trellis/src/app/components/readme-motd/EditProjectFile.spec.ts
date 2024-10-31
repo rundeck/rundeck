@@ -34,7 +34,6 @@ const mountEditProjectFile = async (props = {}) => {
     props: {
       filename: "readme.md",
       project: "default",
-      authAdmin: true,
       displayConfig: ["none"],
       ...props,
     },
@@ -99,20 +98,13 @@ describe("EditProjectFile", () => {
     );
   });
 
-  it("displays warning message and configuration link when user is an admin and displayConfig is 'none'", async () => {
+  it("displays warning message and configuration link when displayConfig is 'none'", async () => {
     const wrapper = await mountEditProjectFile();
     const footerText = wrapper.find(".card-footer").text();
     expect(footerText).toContain("file.warning.not.displayed.admin.message");
     expect(wrapper.find(".card-footer a").text()).toBe(
       "project.configuration.label",
     );
-  });
-
-  it("displays warning message and configuration link when user isn't an admin and displayConfig is 'none'", async () => {
-    const wrapper = await mountEditProjectFile({ authAdmin: false });
-    expect(
-      wrapper.find('[data-test-id="nonadmin-warning-message"]').text(),
-    ).toContain("file.warning.not.displayed.nonadmin.message");
   });
 
   it("navigates to the home page when the cancel button is clicked", async () => {
