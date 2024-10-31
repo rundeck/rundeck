@@ -4,6 +4,10 @@ import com.dtolabs.rundeck.core.VersionConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypterPlugin
+import com.dtolabs.rundeck.core.execution.service.NodeExecutor
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.plugins.PluginUtils
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
@@ -65,13 +69,21 @@ class PluginApiService {
         //framework level plugin descriptions
         //TODO: use pluginService.listPlugins for these services/plugintypes
         Map<String,List<Description>> pluginDescs= [
-                framework.getNodeExecutorService(),
                 framework.getFileCopierService(),
-                framework.getNodeStepExecutorService(),
                 framework.getStepExecutionService()
         ].collectEntries{
             [it.name, it.listDescriptions().sort {a,b->a.name<=>b.name}]
         }
+
+        NodeExecutorService nes = framework.getNodeExecutorService()
+        pluginDescs[nes.name] = pluginService.listPlugins(NodeExecutor, nes)
+                .collect {it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+
+        NodeStepExecutionService nses = framework.getNodeStepExecutorService()
+        pluginDescs[nses.name] = pluginService.listPlugins(NodeStepExecutor, nses)
+                .collect {it.value.description }
+                .sort { a, b -> a.name <=> b.name }
 
         //load via pluginService to include spring-based app plugins
         pluginDescs['ResourceModelSource'] = pluginService.listPlugins(
