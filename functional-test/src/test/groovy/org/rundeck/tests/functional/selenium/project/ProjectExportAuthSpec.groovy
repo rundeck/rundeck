@@ -16,7 +16,8 @@ import org.rundeck.util.gui.pages.project.ProjectExportPage
  * AuthTest5: project export + read + admin
  * AuthTest6: project export + read + app_admin
  * AuthTest7: project export + read
- * AuthTest8: project promote + read
+ * AuthTest8: project export + promote + read
+ * AuthTest9: project read (no export access)
  */
 @SeleniumCoreTest
 class ProjectExportAuthSpec extends SeleniumBase {
@@ -93,5 +94,21 @@ class ProjectExportAuthSpec extends SeleniumBase {
             'AuthTest5' | 'admin'     | true
             'AuthTest6' | 'app_admin' | true
             'AuthTest8' | 'promote'   | true
+    }
+
+    def "no export access should show unauthorized"() {
+        when: "view Project Export form"
+            def loginPage = go LoginPage
+            loginPage.login(user, USER_PASSWORD)
+
+            go ProjectExportPage, PROJECT_NAME
+
+        then: "unauthorized message shown"
+
+            pageSource.contains("Not authorized for action \"export\" for Project $PROJECT_NAME")
+
+        where: "user account with specific authorization is used"
+            user        | _
+            'AuthTest9' | _
     }
 }

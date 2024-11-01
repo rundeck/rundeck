@@ -139,3 +139,15 @@ for:
       name: ProjectExportAuthSpec
 context:
   application: rundeck
+---
+by:
+  group: AuthTest9
+description: No export auth allowed
+for:
+  project:
+  - allow:
+    - read
+    equals:
+      name: ProjectExportAuthSpec
+context:
+  application: rundeck
