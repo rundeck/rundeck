@@ -97,9 +97,7 @@ class PluginApiService {
         pluginDescs['ResourceModelSource'] = pluginService.listPlugins(
                 ResourceModelSourceFactory,
                 framework.getResourceModelSourceService()
-        ).findAll { it.value.description }.collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
+        ).collect { it.value.description }.sort { a, b -> a.name <=> b.name }
 
         pluginDescs[ServiceNameConstants.NodeEnhancer]=pluginService.listPlugins(NodeEnhancerPlugin).collect {
             it.value.description
