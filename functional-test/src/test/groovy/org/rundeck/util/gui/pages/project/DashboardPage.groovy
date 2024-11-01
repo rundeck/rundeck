@@ -18,9 +18,15 @@ class DashboardPage extends BasePage{
     By projectLabelBy = By.xpath("//div[@data-ko-bind='projectHome']")
     By readmeMarkDownBy = By.className("markdown-body")
     By projectSummaryBy = By.id("projectHome-summary")
+    By projectSummaryCountLinkBy = By.cssSelector("#projectHome-summary a .summary-count")
 
     DashboardPage(SeleniumContext context) {
         super(context)
+    }
+
+    DashboardPage(SeleniumContext context, String project) {
+        super(context)
+        loadDashboardForProject(project)
     }
 
     void loadDashboardForProject(String projectName){
@@ -45,5 +51,8 @@ class DashboardPage extends BasePage{
 
     WebElement getProjectSummary() {
         el projectSummaryBy
+    }
+    WebElement getProjectSummaryCountLink() {
+        el projectSummaryCountLinkBy
     }
 }
