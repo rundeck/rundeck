@@ -18,7 +18,23 @@ packaging_create_packages() {
     LIB_DIR="${PACKAGING_DIR}/lib"
     ./gradlew ${GRADLE_BASE_OPTS} -PlibsDir=${LIB_DIR} -PpackageRelease=$RELEASE_NUM clean packageArtifacts
 }
+packaging_sign_retry(){
+    N=${1:-5} # default 5
+    total=$N
+    while true; do
+      N=$(( N - 1 ))
+      if packaging_sign; then
+        echo "Succeeded."
+        exit 0
+      fi
+      [ $N -gt 0 ] || break
+      echo "Retrying package signing in 10 seconds..."
+      sleep 10
+    done
 
+    echo "FAILED after $total tries."
+    exit 1
+}
 packaging_sign() {
     fetch_ci_shared_resources
 

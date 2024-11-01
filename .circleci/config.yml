@@ -463,7 +463,7 @@ jobs:
           command: packaging_create_packages
       - run-build-step:
           step-name: Sign Packages
-          command: packaging_sign
+          command: packaging_sign_retry
       - run-build-step:
           step-name: T Packages
           command: packaging_test_packages
