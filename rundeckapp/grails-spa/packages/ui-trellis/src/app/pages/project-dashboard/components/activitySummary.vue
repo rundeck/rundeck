@@ -23,14 +23,20 @@
               }"
               :href="`${rdBase}project/${project.name}/activity?statFilter=fail`"
             >
-              ({{ project.failedCount }} Failed)
+              {{
+                $t("project.activitySummary.failedCount", [project.failedCount])
+              }}
             </a>
           </span>
           <div v-if="project.userCount > 0" data-test-id="user-count">
-            by
-            <span class="text-info">{{ project.userCount + " " }} </span>
-            <span>{{ pluralUsers }}</span
-            >:
+            <i18n-t keypath="project.activitySummary.userCount" tag="p">
+              <template #count>
+                <span class="text-info">{{ project.userCount }}</span>
+              </template>
+              <template #users>
+                {{ $tc("users.plural", project.userCount) }}
+              </template>
+            </i18n-t>
             <ul class="users">
               <li v-for="user in project.userSummary" :key="user">
                 {{ user }}
