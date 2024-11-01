@@ -4,8 +4,12 @@ import com.dtolabs.rundeck.core.VersionConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypterPlugin
+import com.dtolabs.rundeck.core.execution.service.FileCopier
+import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.plugins.PluginUtils
@@ -68,12 +72,7 @@ class PluginApiService {
 
         //framework level plugin descriptions
         //TODO: use pluginService.listPlugins for these services/plugintypes
-        Map<String,List<Description>> pluginDescs= [
-                framework.getFileCopierService(),
-                framework.getStepExecutionService()
-        ].collectEntries{
-            [it.name, it.listDescriptions().sort {a,b->a.name<=>b.name}]
-        }
+        Map<String, List<Description>> pluginDescs = Map.of()
 
         NodeExecutorService nes = framework.getNodeExecutorService()
         pluginDescs[nes.name] = pluginService.listPlugins(NodeExecutor, nes)
@@ -82,6 +81,16 @@ class PluginApiService {
 
         NodeStepExecutionService nses = framework.getNodeStepExecutorService()
         pluginDescs[nses.name] = pluginService.listPlugins(NodeStepExecutor, nses)
+                .collect {it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+
+        StepExecutionService ses = framework.getStepExecutionService()
+        pluginDescs[ses.name] = pluginService.listPlugins(StepExecutor, ses)
+                .collect {it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+
+        FileCopierService fcs = framework.getFileCopierService()
+        pluginDescs[fcs.name] = pluginService.listPlugins(FileCopier, fcs)
                 .collect {it.value.description }
                 .sort { a, b -> a.name <=> b.name }
 
