@@ -10,7 +10,6 @@
       v-if="project && showReadme !== 'false'"
       :project="project"
     ></project-readme>
-    <!-- <activity-list v-if="project" :project="project" :rdBase="rdBase" :eventBus="eventBus"></activity-list> -->
   </div>
 </template>
 
@@ -31,13 +30,7 @@ export default {
     activitySummary,
     activityList,
   },
-  props: [
-    "eventBus",
-    "showDescription",
-    "showReadme",
-    "showSummary",
-    "showActivity",
-  ],
+  props: ["eventBus", "showDescription", "showReadme", "showSummary"],
   data() {
     return {
       project: null,
