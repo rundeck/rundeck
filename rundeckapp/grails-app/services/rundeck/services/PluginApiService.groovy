@@ -73,7 +73,7 @@ class PluginApiService {
         Map<String, List<Description>> pluginDescs = [:]
 
         //framework level plugin descriptions
-        //TODO: use pluginService.listPlugins for these services/plugintypes
+        //TODO: use pluginService.listPlugins for this service / plugintype
         StepExecutionService ses = framework.getStepExecutionService()
         pluginDescs[ses.name] = ses.listDescriptions()
                 .sort {a,b -> a.name <=> b.name }
@@ -97,7 +97,9 @@ class PluginApiService {
         pluginDescs['ResourceModelSource'] = pluginService.listPlugins(
                 ResourceModelSourceFactory,
                 framework.getResourceModelSourceService()
-        ).collect { it.value.description }.sort { a, b -> a.name <=> b.name }
+        )
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
 
         pluginDescs[ServiceNameConstants.NodeEnhancer]=pluginService.listPlugins(NodeEnhancerPlugin).collect {
             it.value.description

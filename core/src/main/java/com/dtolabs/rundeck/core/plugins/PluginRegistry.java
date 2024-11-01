@@ -285,4 +285,6 @@ public interface PluginRegistry {
      * @return true if the plugin was registered
      */
     boolean hasRegisteredPlugin(String type, String name);
+
+    boolean isBlockedPlugin(String serviceName, String providerName);
 }
