@@ -18,6 +18,7 @@ class ProjectExportPage extends BasePage {
     By stripJobRefBy = By.name("stripJobRef")
     By stripNameBy = By.xpath("//label[contains(@for,'trip')]")
     By checkBoxBy = By.xpath("//*[@type='checkbox' and not(@id='preserveuuid')]")
+    By checkBoxDisabledBy = By.cssSelector("#exportInputs .export_select_list .checkbox.disabled")
     By allCheckboxBy = By.id('exportAll')
     By exportJobsCheckboxBy = By.id('exportJobs')
     By exportExecutionsCheckboxBy = By.id('exportExecutions')
@@ -58,6 +59,9 @@ class ProjectExportPage extends BasePage {
 
     List<WebElement> getCheckBoxes() {
         els checkBoxBy
+    }
+    List<WebElement> getDisabledCheckboxes() {
+        els checkBoxDisabledBy
     }
 
     WebElement checkBoxLabel(String checkBoxId) {

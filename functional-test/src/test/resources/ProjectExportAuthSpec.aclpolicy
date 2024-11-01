@@ -1,0 +1,127 @@
+by:
+  group: AuthTest1
+description: Allow [export] for project
+for:
+  project:
+  - allow:
+    - export
+    - read
+    equals:
+      name: ProjectExportAuthSpec
+context:
+  application: rundeck
+
+---
+by:
+  group: AuthTest1
+description: Allow [read] for project_acl
+for:
+  project_acl:
+  - allow:
+    - read
+context:
+  application: rundeck
+---
+by:
+  group: AuthTest2
+description: Allow [export] for project
+for:
+  project:
+  - allow:
+    - export
+    - read
+    equals:
+      name: ProjectExportAuthSpec
+context:
+  application: rundeck
+
+---
+by:
+  group: AuthTest2
+description: Allow [read] for project_acl
+for:
+  project_acl:
+  - allow:
+    - admin
+context:
+  application: rundeck
+---
+by:
+  group: AuthTest3
+description: Allow [export] for project
+for:
+  project:
+  - allow:
+    - export
+    - read
+    equals:
+      name: ProjectExportAuthSpec
+context:
+  application: rundeck
+
+---
+by:
+  group: AuthTest3
+description: Allow [read] for project_acl
+for:
+  project_acl:
+  - allow:
+    - app_admin
+context:
+  application: rundeck
+
+---
+by:
+  group: AuthTest4
+description: Allow [export] for project
+for:
+  project:
+  - allow:
+    - export
+    - read
+    - configure
+    equals:
+      name: ProjectExportAuthSpec
+context:
+  application: rundeck
+---
+by:
+  group: AuthTest5
+description: Allow [export] for project
+for:
+  project:
+  - allow:
+    - export
+    - read
+    - admin
+    equals:
+      name: ProjectExportAuthSpec
+context:
+  application: rundeck
+---
+by:
+  group: AuthTest6
+description: Allow [export] for project
+for:
+  project:
+  - allow:
+    - export
+    - read
+    - app_admin
+    equals:
+      name: ProjectExportAuthSpec
+context:
+  application: rundeck
+---
+by:
+  group: AuthTest7
+description: Allow [export] for project
+for:
+  project:
+  - allow:
+    - export
+    - read
+    equals:
+      name: ProjectExportAuthSpec
+context:
+  application: rundeck
