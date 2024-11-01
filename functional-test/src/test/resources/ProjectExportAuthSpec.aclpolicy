@@ -125,3 +125,17 @@ for:
       name: ProjectExportAuthSpec
 context:
   application: rundeck
+---
+by:
+  group: AuthTest8
+description: Allow [promote] for project
+for:
+  project:
+  - allow:
+    - export
+    - promote
+    - read
+    equals:
+      name: ProjectExportAuthSpec
+context:
+  application: rundeck

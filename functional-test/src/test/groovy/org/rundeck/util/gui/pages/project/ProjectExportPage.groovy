@@ -29,6 +29,8 @@ class ProjectExportPage extends BasePage {
     By authTokensCheckboxBy = By.xpath("//*[contains(text(), 'Include Webhook Auth Tokens')]")
     By exportArchiveButtonBy = By.xpath("//button[contains(text(),'Export Archive')]")
     By btnCtaButtonBy = By.cssSelector('a.btn.btn-cta')
+    By exportFormFooter = By.cssSelector('#exportform .card-footer')
+    By exportToOtherInstanceButtonBy = By.cssSelector('#exportform button[type="button"][data-target="#exportModal"]')
 
     String loadPath = ""
 
@@ -106,5 +108,11 @@ class ProjectExportPage extends BasePage {
 
     WebElement getBtnCtaButton() {
         return el(btnCtaButtonBy)
+    }
+    WebElement getExportFormFooter() {
+        return el(exportFormFooter)
+    }
+    WebElement getExportToOtherInstanceButton() {
+        return el(exportToOtherInstanceButtonBy)
     }
 }
