@@ -14,13 +14,37 @@ export class BaseLocalStorageStore<T> implements BaseLocalStorageInterface<T> {
         return JSON.parse(rawData);
       } catch (error) {
         localStorage.removeItem(this.key);
-        console.warn("Failed to load data from localStorage");
+        console.warn(
+          `Failed to load data from localStorage for key ${this.key}:`,
+          error,
+        );
+        return null;
       }
     }
     return {} as T;
   }
 
-  async store(data: T) {
-    localStorage.setItem(this.key, JSON.stringify(data));
+  async save(data: T) {
+    try {
+      localStorage.setItem(this.key, JSON.stringify(data));
+    } catch (error) {
+      console.warn(
+        `Error saving data to localStorage for key "${this.key}":`,
+        error,
+      );
+    }
+  }
+}
+
+export class StorageFactory {
+  private static storageInstances: {
+    [key: string]: BaseLocalStorageInterface<any>;
+  } = {};
+
+  static getStorage<T>(name: string): BaseLocalStorageInterface<T> {
+    if (!this.storageInstances[name]) {
+      this.storageInstances[name] = new BaseLocalStorageStore<T>(name);
+    }
+    return this.storageInstances[name];
   }
 }
