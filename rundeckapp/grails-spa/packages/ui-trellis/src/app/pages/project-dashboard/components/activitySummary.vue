@@ -15,7 +15,7 @@
 
           {{ $t("In the last Day") }}
 
-          <span :if="project.failedCount > 0">
+          <span v-if="project.failedCount > 0" data-test-id="failed-count">
             <a
               :class="{
                 'text-warning': project.failedCount > 0,
@@ -26,11 +26,11 @@
               ({{ project.failedCount }} Failed)
             </a>
           </span>
-          <div :if="project.userCount > 0">
+          <div v-if="project.userCount > 0" data-test-id="user-count">
             by
-            <span class="text-info">{{ project.userCount }}</span> &nbsp;
+            <span class="text-info">{{ project.userCount + " " }} </span>
             <span>{{ pluralUsers }}</span
-            >: &nbsp;
+            >:
             <ul class="users">
               <li v-for="user in project.userSummary" :key="user">
                 {{ user }}
