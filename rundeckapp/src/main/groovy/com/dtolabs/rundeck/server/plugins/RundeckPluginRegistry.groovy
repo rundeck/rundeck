@@ -801,4 +801,9 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         }
         rundeckServerServiceProviderLoader.getPluginMetadata service, provider
     }
+
+    @Override
+    boolean isBlockedPlugin(String serviceName, String providerName) {
+        return rundeckPluginBlocklist.isPluginProviderPresent(serviceName, providerName)
+    }
 }
