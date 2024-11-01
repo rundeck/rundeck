@@ -68,4 +68,6 @@ public interface PluginControlService {
      */
     void checkDisabledPlugin(String pluginName, String serviceName)
         throws PluginDisabledException;
+
+    PluginControlService newServiceForNewProject(IFramework framework, String project);
 }

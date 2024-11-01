@@ -16,20 +16,21 @@ public class PluginControlServiceImpl implements PluginControlService {
     private HashSet<String> disabledPlugins;
     private final IFramework framework;
     private final String project;
-    private final Optional<PluginRegistry> pluginRegistry;
+    private final PluginRegistry pluginRegistry;
 
-    private PluginControlServiceImpl(IFramework framework, Optional<PluginRegistry> pluginRegistry, String project) {
+    private PluginControlServiceImpl(IFramework framework, PluginRegistry pluginRegistry, String project) {
         this.framework = framework;
         this.pluginRegistry = pluginRegistry;
         this.project = project;
     }
 
-    public static PluginControlService forProject(IFramework framework, String project) {
-        return new PluginControlServiceImpl(framework, Optional.empty(), project);
+    public static PluginControlService forProject(IFramework framework, PluginRegistry pluginRegistry, String project) {
+        return new PluginControlServiceImpl(framework, pluginRegistry, project);
     }
 
-    public static PluginControlService forProject(IFramework framework, PluginRegistry pluginRegistry, String project) {
-        return new PluginControlServiceImpl(framework, Optional.of(pluginRegistry), project);
+    @Override
+    public PluginControlService newServiceForNewProject(IFramework framework, String project) {
+        return new PluginControlServiceImpl(framework, this.pluginRegistry, project);
     }
 
     /**
@@ -110,11 +111,7 @@ public class PluginControlServiceImpl implements PluginControlService {
      */
     @Override
     public boolean isDisabledPlugin(String pluginName, final String serviceName) {
-        boolean blockedByRegistry = pluginRegistry
-                .map(r -> r.isBlockedPlugin(serviceName, pluginName))
-                .orElse(false);
-
-        if (blockedByRegistry) {
+        if (pluginRegistry.isBlockedPlugin(serviceName, pluginName)) {
             return true;
         }
 
