@@ -70,9 +70,13 @@ class PluginApiService {
         IFramework framework = frameworkService.getRundeckFramework()
         Locale locale = getLocale()
 
+        Map<String, List<Description>> pluginDescs = [:]
+
         //framework level plugin descriptions
         //TODO: use pluginService.listPlugins for these services/plugintypes
-        Map<String, List<Description>> pluginDescs = Map.of()
+        StepExecutionService ses = framework.getStepExecutionService()
+        pluginDescs[ses.name] = ses.listDescriptions()
+                .sort {a,b -> a.name <=> b.name }
 
         NodeExecutorService nes = framework.getNodeExecutorService()
         pluginDescs[nes.name] = pluginService.listPlugins(NodeExecutor, nes)
@@ -81,11 +85,6 @@ class PluginApiService {
 
         NodeStepExecutionService nses = framework.getNodeStepExecutorService()
         pluginDescs[nses.name] = pluginService.listPlugins(NodeStepExecutor, nses)
-                .collect {it.value.description }
-                .sort { a, b -> a.name <=> b.name }
-
-        StepExecutionService ses = framework.getStepExecutionService()
-        pluginDescs[ses.name] = pluginService.listPlugins(StepExecutor, ses)
                 .collect {it.value.description }
                 .sort { a, b -> a.name <=> b.name }
 
