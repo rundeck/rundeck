@@ -1,18 +1,18 @@
 import { Cache } from "../../types/stores/Cache";
 
 export class SimpleCache<T> implements Cache<T> {
-  private cache: Map<string, T> = new Map();
+  private cachedValues: Map<string, T> = new Map();
 
   get(key: string): T | null {
-    return this.cache.get(key) || null;
+    return this.cachedValues.get(key) || null;
   }
 
   set(key: string, value: T): void {
-    this.cache.set(key, value);
+    this.cachedValues.set(key, value);
   }
 
   clear(): void {
-    this.cache.clear();
+    this.cachedValues.clear();
   }
 }
 

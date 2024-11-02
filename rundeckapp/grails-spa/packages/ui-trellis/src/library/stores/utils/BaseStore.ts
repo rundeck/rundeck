@@ -144,7 +144,7 @@ export class BaseStore<T extends Record<string, CollectionType>> {
     pageSize: number,
   ): T[K][string][] {
     const allItems = Object.values(this.store[collection]);
-    const start = (page - 1) * pageSize;
+    const start = page ? (page - 1) * pageSize : 0;
     const end = start + pageSize;
     return allItems.slice(start, end);
   }
