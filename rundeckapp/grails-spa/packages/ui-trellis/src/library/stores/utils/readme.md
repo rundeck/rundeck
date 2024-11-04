@@ -64,14 +64,7 @@ class UserStore extends BaseStore<UserStoreState> {
 ```
 
 ## Why a Factory is being used for cache and localStorage functionalities?
-The factory pattern is used to manage the creation and configuration of cache and storage modules. This approach
-provides several benefits:
-1. **Centralized Configuration**: Ensures consistent configuration and usage of caching and storage mechanisms
-   across different stores.
-2. **Lazy Initialization**: Cache and storage instances are created only when needed, reducing unnecessary
-   initialization.
-3. **Flexibility**: Allows for easy updates and changes to the caching and storage strategies without modifying the
-   store logic.
+This approach was necessary to mitigate the complexity introduced by global state management, particularly in large applications with numerous stores. By using the factory pattern, it is possible to create isolated instances of cache and storage for each store, thereby avoiding potential conflicts that arise when different stores require distinct configurations or behaviors.
 
 ## Initializing the Store in RootStore, with cache and localStorage functionalities
 The `RootStore` is a global place to initialize and manage all stores. This ensures that stores are only created once and can be easily accessed throughout the application. 
