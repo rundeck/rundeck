@@ -16,6 +16,13 @@ const mountActivitySummary = async (props = {}) => {
           return `${msg}/${count}`;
         },
       },
+      stubs: {
+        "i18n-t": {
+          props: ["keypath"],
+          template:
+            'i18n-t: {{keypath}} <slot name="count"></slot> <slot name="users"></slot>',
+        },
+      },
     },
   });
 };
@@ -53,7 +60,7 @@ describe("EditProjectFile", () => {
     });
     expect(
       wrapper.find(`.card-content [data-test-id="failed-count"]`).text(),
-    ).toContain(`(${failedCount.toString()} Failed)`);
+    ).toContain(`project.activitySummary.failedCount`);
     expect(
       wrapper
         .find(`.card-content [data-test-id="failed-count"] a`)
@@ -76,7 +83,9 @@ describe("EditProjectFile", () => {
     });
     expect(
       wrapper.find(`.card-content [data-test-id="user-count"]`).text(),
-    ).toContain(`by ${userCount.toString()} Users`);
+    ).toContain(
+      `i18n-t: project.activitySummary.userCount ${userCount} users.plural/${userCount}`,
+    );
   });
   it.each([["a"], ["a", "b"], ["a", "b", "c"]])(
     "renders user list",
