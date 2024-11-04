@@ -35,7 +35,7 @@ describe("BaseLocalStorageStore", () => {
 
     const result = await store.load();
 
-    expect(result).toBeNull();
+    expect(result).toEqual({});
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining(
         `Failed to load data from localStorage for key ${testKey}:`,
