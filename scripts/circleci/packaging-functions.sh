@@ -29,6 +29,8 @@ packaging_sign_retry(){
       fi
       [ $N -gt 0 ] || break
       echo "Retrying package signing in 10 seconds..."
+      #clean up old files
+      find "${PACKAGING_DIR}/packaging/build/distributions" -name '*.sig' -delete
       sleep 10
     done
 
