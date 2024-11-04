@@ -15,7 +15,7 @@
 
           {{ $t("In the last Day") }}
 
-          <span :if="project.failedCount > 0">
+          <span v-if="project.failedCount > 0" data-test-id="failed-count">
             <a
               :class="{
                 'text-warning': project.failedCount > 0,
@@ -23,14 +23,20 @@
               }"
               :href="`${rdBase}project/${project.name}/activity?statFilter=fail`"
             >
-              ({{ project.failedCount }} Failed)
+              {{
+                $t("project.activitySummary.failedCount", [project.failedCount])
+              }}
             </a>
           </span>
-          <div :if="project.userCount > 0">
-            by
-            <span class="text-info">{{ project.userCount }}</span> &nbsp;
-            <span>{{ pluralUsers }}</span
-            >: &nbsp;
+          <div v-if="project.userCount > 0" data-test-id="user-count">
+            <i18n-t keypath="project.activitySummary.userCount" tag="p">
+              <template #count>
+                <span class="text-info">{{ project.userCount }}</span>
+              </template>
+              <template #users>
+                {{ $tc("users.plural", project.userCount) }}
+              </template>
+            </i18n-t>
             <ul class="users">
               <li v-for="user in project.userSummary" :key="user">
                 {{ user }}

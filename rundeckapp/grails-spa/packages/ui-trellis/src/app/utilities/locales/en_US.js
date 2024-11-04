@@ -143,6 +143,9 @@ const messages = {
   "info.newexecutions.since.0":
     "1 New Result. Click to load. | {0} New Results. Click to load.",
   "In the last Day": "In the last Day",
+  "project.activitySummary.failedCount": "({0} Failed)",
+  "project.activitySummary.userCount": "by {count} {users}:",
+  "users.plural": "User|Users",
   Referenced: "Referenced",
   "job.has.been.deleted.0": "(Job {0} has been deleted)",
   Filters: "Filters",
