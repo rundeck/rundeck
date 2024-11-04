@@ -30,32 +30,36 @@ class UserStore extends BaseStore<UserStoreState> {
     }
 
     getUser(id: string): User | null {
-    return this.getItem('users', id);
+        return this.getItem(this.storageKey, id);
     }
 
-    setUser(user: User): void {
-    this.setItem('users', user);
+    setUsers(users: User[]): void {
+        for (user in users) {
+           this.setItem(this.storageKey, user);
+        }
     }
 
     removeUser(id: string): void {
-    this.removeItem('users', id);
+    this.removeItem(this.storageKey, id);
     }
 
     updateUser(id: string, updatedUser: Partial<User>): void {
-    this.updateItem('users', id, updatedUser);
+    this.updateItem(this.storageKey, id, updatedUser);
     }
 
     getAllUsers(): { [key: string]: User } {
-    return this.getAllItems('users');
+    return this.getAllItems(this.storageKey);
     }
 
     searchUsers(predicate: (user: User) => boolean): { [key: string]: User } {
-    return this.searchItems('users', predicate);
+    return this.searchItems(this.storageKey, predicate);
     }
 
     getPaginatedUsers(page: number, pageSize: number): User[] {
-    return this.getPaginatedItems('users', page, pageSize);
+    return this.getPaginatedItems(this.storageKey, page, pageSize);
     }
+
+   // fetch methods would be responsible for calling the service methods to retrieve data from api. Upon succeeding, the setUsers method would be called to store the data.
 }
 ```
 

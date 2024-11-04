@@ -33,6 +33,7 @@
     "src/library/stories",
     "src/library/components",
     "src/library/**/*.stories.tsx",
+    "**/*.spec.ts",
     "node_modules"
   ]
 }

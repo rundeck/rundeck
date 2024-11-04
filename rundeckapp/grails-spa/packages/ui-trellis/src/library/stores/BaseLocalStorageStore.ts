@@ -18,7 +18,6 @@ export class BaseLocalStorageStore<T> implements BaseLocalStorageInterface<T> {
           `Failed to load data from localStorage for key ${this.key}:`,
           error,
         );
-        return null;
       }
     }
     return {} as T;
