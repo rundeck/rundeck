@@ -24,8 +24,8 @@ packaging_sign_retry(){
     while true; do
       N=$(( N - 1 ))
       if packaging_sign; then
-        echo "Succeeded."
-        exit 0
+        echo "Succeeded. (force retry)"
+#        exit 0
       fi
       [ $N -gt 0 ] || break
       echo "Retrying package signing in 10 seconds..."
