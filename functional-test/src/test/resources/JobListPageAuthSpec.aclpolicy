@@ -1,0 +1,92 @@
+by:
+  group:
+  - AuthTest1
+  - AuthTest2
+  - AuthTest3
+  - AuthTest4
+description: Common read for project
+for:
+  project:
+  - allow:
+    - read
+    equals:
+      name: JobListPageAuthSpec
+context:
+  application: rundeck
+
+---
+by:
+  group:
+  - AuthTest1
+  - AuthTest2
+  - AuthTest3
+  - AuthTest4
+description: Common job and event read
+for:
+  job:
+  - allow:
+    - read
+  resource:
+  - allow:
+    - read
+    equals:
+      kind: event
+context:
+  project: JobListPageAuthSpec
+---
+
+by:
+  group:
+  - AuthTest2
+description: Admin for project
+for:
+  project:
+  - allow:
+    - admin
+    equals:
+      name: JobListPageAuthSpec
+context:
+  application: rundeck
+
+---
+
+by:
+  group:
+  - AuthTest3
+description: app_dmin for project
+for:
+  project:
+  - allow:
+    - app_admin
+    equals:
+      name: JobListPageAuthSpec
+context:
+  application: rundeck
+
+---
+
+by:
+  group:
+  - AuthTest4
+description: delete_execution for project
+for:
+  project:
+  - allow:
+    - delete_execution
+    equals:
+      name: JobListPageAuthSpec
+context:
+  application: rundeck
+---
+by:
+  group:
+  - AuthTest5
+description: deny read for events
+for:
+  resource:
+  - deny:
+    - read
+    equals:
+      kind: event
+context:
+  project: JobListPageAuthSpec

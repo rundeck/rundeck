@@ -5,8 +5,9 @@ import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
-import org.rundeck.util.gui.pages.BasePage
 import org.rundeck.util.container.SeleniumContext
+import org.rundeck.util.gui.pages.BasePage
+import org.rundeck.util.gui.pages.project.ActivityListTrait
 
 import java.time.Duration
 
@@ -14,7 +15,7 @@ import java.time.Duration
  * Job list page
  */
 @CompileStatic
-class JobListPage extends BasePage {
+class JobListPage extends BasePage implements ActivityListTrait {
 
     String loadPath = "/jobs"
     By createJobLink = By.partialLinkText('New Job')
@@ -54,6 +55,11 @@ class JobListPage extends BasePage {
 
     JobListPage(final SeleniumContext context) {
         super(context)
+    }
+
+    JobListPage(final SeleniumContext context, String project) {
+        super(context)
+        loadJobListForProject(project)
     }
 
     void loadJobListForProject(String projectName){
