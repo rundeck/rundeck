@@ -6,19 +6,30 @@ import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.execution.ExecutionStatus
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.gui.pages.BasePage
 import org.rundeck.util.gui.pages.TopMenuPage
 import org.rundeck.util.gui.pages.activity.ActivityPage
+import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.rundeck.util.gui.pages.jobs.JobListPage
+import org.rundeck.util.gui.pages.jobs.JobShowPage
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.project.AdhocPage
 import spock.lang.Shared
 
 /**
- * Verify Authorization checks on Job List page
+ * Verify Authorization checks for display of the Activity List section on these pages:
+ * * Job Show Page
+ * * Job List Page
+ * * Adhoc run page
+ * * Execution Show page
+ * * Activity List page
+ *
+ * The Activity section should not be shown unless user has Project auth for admin, app_admin or Events auth for read actions
+ * The Bulk Delete button should not be shown unless the user has Project auth for admin, app_admin or delete_execution actions
  *
  * ACLS:
  * acls in ActivitySectionAuthSpec.aclpolicy
- * Common acls: project read required, job read required
+ * Common acls: project read required, job read required, adhoc read and run required.
  *
  * AuthTest1: project read, event read
  * AuthTest2: project admin, event read
@@ -35,6 +46,8 @@ class ActivitySectionAuthSpec extends SeleniumBase {
     static final String USER_PASSWORD = 'password'
     @Shared
     String jobId
+    @Shared
+    String execId
 
     def setupSpec() {
         setupProject(PROJECT_NAME)
@@ -47,9 +60,10 @@ class ActivitySectionAuthSpec extends SeleniumBase {
         def result = JobUtils.executeJob(jobId, client)
         assert result.successful
         Execution exec = MAPPER.readValue(result.body().string(), Execution.class)
+        execId = exec.id as String
         JobUtils.waitForExecution(
             ExecutionStatus.SUCCEEDED.state,
-            exec.id as String,
+            execId,
             client,
             WaitingTime.EXCESSIVE
         )
@@ -76,14 +90,20 @@ class ActivitySectionAuthSpec extends SeleniumBase {
             login.go()
             login.login(user, USER_PASSWORD)
             waitForPageLoadComplete()
-            def testPage = page(pageName, PROJECT_NAME)
+
+            def testPage = getTestPage(pageName)
 
         when: "view page"
             testPage.go()
             waitForPageLoadComplete()
+            //if job show page, click Activity link
+            if (pageName == 'jobShow' || pageName == 'execShow') {
+                testPage.activitySectionActivityTabLink.click()
+                waitForPageLoadComplete()
+            }
         then: "activity section is shown, bulk edit button displayed based on authz"
             //bulk edit
-            testPage.activitySection.displayed
+            testPage.activityList.displayed
 
             if (expected) {
                 assert testPage.activityBulkDeleteBtn.displayed
@@ -97,7 +117,7 @@ class ActivitySectionAuthSpec extends SeleniumBase {
             waitForPageLoadComplete()
         where:
             [pageName, [user, expected]] << [
-                [JobListPage, AdhocPage, ActivityPage],
+                [JobListPage, AdhocPage, ActivityPage, 'jobShow', 'execShow'],
                 [
                     ['AuthTest1', false],
                     ['AuthTest2', true],
@@ -107,21 +127,35 @@ class ActivitySectionAuthSpec extends SeleniumBase {
             ].combinations()
     }
 
+    /**
+     * Load correct page object, the execution show and job show pages are created dynamically, otherwise use the supplied Page class.
+     * @param pageName name of page or Class for page
+     * @return
+     */
+    BasePage getTestPage(def pageName) {
+        if (pageName == 'jobShow') {
+            return page(JobShowPage, PROJECT_NAME).forJob(jobId)
+        } else if (pageName == 'execShow') {
+            return page(ExecutionShowPage, "/project/${PROJECT_NAME}/execution/show/${execId}".toString())
+        }
+        return page(pageName, PROJECT_NAME)
+    }
+
     def "user #user has no activity section on #pageName"() {
         given: "login as user"
             def login = page LoginPage
             login.go()
             login.login(user, USER_PASSWORD)
             waitForPageLoadComplete()
-            def page = page pageName, PROJECT_NAME
+            def testPage = getTestPage(pageName)
         when: "view page"
-            page.go()
+            testPage.go()
             waitForPageLoadComplete()
         then: "activity section is not shown"
-            !page.els(page.activitySectionBy)
+            !testPage.els(testPage.activityListBy)
         where:
             user = 'AuthTest5'
-            pageName << [JobListPage, AdhocPage, ActivityPage]
+            pageName << [JobListPage, AdhocPage, ActivityPage, 'jobShow', 'execShow']
 
     }
 }
