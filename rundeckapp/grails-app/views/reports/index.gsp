@@ -117,7 +117,7 @@ search
 
         <div class="row vue-project-activity">
             <div class="col-xs-12">
-                <div class="card">
+                <div class="card" id="activity_section">
                     <div class="card-content">
                         <activity-list :event-bus="EventBus"></activity-list>
                     </div>

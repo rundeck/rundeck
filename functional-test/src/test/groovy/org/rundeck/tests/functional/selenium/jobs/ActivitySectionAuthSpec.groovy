@@ -7,7 +7,7 @@ import org.rundeck.util.common.execution.ExecutionStatus
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.TopMenuPage
-import org.rundeck.util.gui.pages.home.HomePage
+import org.rundeck.util.gui.pages.activity.ActivityPage
 import org.rundeck.util.gui.pages.jobs.JobListPage
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.project.AdhocPage
@@ -97,7 +97,7 @@ class ActivitySectionAuthSpec extends SeleniumBase {
             waitForPageLoadComplete()
         where:
             [pageName, [user, expected]] << [
-                [JobListPage, AdhocPage],
+                [JobListPage, AdhocPage, ActivityPage],
                 [
                     ['AuthTest1', false],
                     ['AuthTest2', true],
@@ -121,7 +121,7 @@ class ActivitySectionAuthSpec extends SeleniumBase {
             !page.els(page.activitySectionBy)
         where:
             user = 'AuthTest5'
-            pageName << [JobListPage, AdhocPage]
+            pageName << [JobListPage, AdhocPage, ActivityPage]
 
     }
 }
