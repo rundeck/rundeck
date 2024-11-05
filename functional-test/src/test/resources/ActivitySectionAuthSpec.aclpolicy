@@ -4,13 +4,14 @@ by:
   - AuthTest2
   - AuthTest3
   - AuthTest4
+  - AuthTest5
 description: Common read for project
 for:
   project:
   - allow:
     - read
     equals:
-      name: JobListPageAuthSpec
+      name: ActivitySectionAuthSpec
 context:
   application: rundeck
 
@@ -21,18 +22,23 @@ by:
   - AuthTest2
   - AuthTest3
   - AuthTest4
-description: Common job and event read
+  - AuthTest5
+description: "Common: job read, adhoc read and run, and event read"
 for:
   job:
   - allow:
     - read
+  adhoc:
+  - allow:
+    - read
+    - run
   resource:
   - allow:
     - read
     equals:
       kind: event
 context:
-  project: JobListPageAuthSpec
+  project: ActivitySectionAuthSpec
 ---
 
 by:
@@ -44,7 +50,7 @@ for:
   - allow:
     - admin
     equals:
-      name: JobListPageAuthSpec
+      name: ActivitySectionAuthSpec
 context:
   application: rundeck
 
@@ -59,7 +65,7 @@ for:
   - allow:
     - app_admin
     equals:
-      name: JobListPageAuthSpec
+      name: ActivitySectionAuthSpec
 context:
   application: rundeck
 
@@ -74,7 +80,7 @@ for:
   - allow:
     - delete_execution
     equals:
-      name: JobListPageAuthSpec
+      name: ActivitySectionAuthSpec
 context:
   application: rundeck
 ---
@@ -89,4 +95,4 @@ for:
     equals:
       kind: event
 context:
-  project: JobListPageAuthSpec
+  project: ActivitySectionAuthSpec

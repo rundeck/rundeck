@@ -6,6 +6,8 @@ import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.execution.ExecutionStatus
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.gui.pages.TopMenuPage
+import org.rundeck.util.gui.pages.home.HomePage
 import org.rundeck.util.gui.pages.jobs.JobListPage
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.project.AdhocPage
@@ -15,7 +17,7 @@ import spock.lang.Shared
  * Verify Authorization checks on Job List page
  *
  * ACLS:
- * acls in JobListPageAuthSpec.aclpolicy
+ * acls in ActivitySectionAuthSpec.aclpolicy
  * Common acls: project read required, job read required
  *
  * AuthTest1: project read, event read
@@ -25,9 +27,9 @@ import spock.lang.Shared
  * AuthTest5: project read, NO event read
  */
 @SeleniumCoreTest
-class JobListPageAuthSpec extends SeleniumBase {
+class ActivitySectionAuthSpec extends SeleniumBase {
 
-    static final String PROJECT_NAME = 'JobListPageAuthSpec'
+    static final String PROJECT_NAME = 'ActivitySectionAuthSpec'
     public static final String ACLPOLICY_FILE = PROJECT_NAME + ".aclpolicy"
 
     static final String USER_PASSWORD = 'password'
@@ -51,6 +53,14 @@ class JobListPageAuthSpec extends SeleniumBase {
             client,
             WaitingTime.EXCESSIVE
         )
+        //run adhoc execution in the project
+        def adhoc = post("/project/${PROJECT_NAME}/run/command?exec=echo+testing+execution+bulk+delete+auth", Map)
+        JobUtils.waitForExecution(
+            ExecutionStatus.SUCCEEDED.state,
+            adhoc.execution.id.toString(),
+            client,
+            WaitingTime.EXCESSIVE
+        )
     }
 
     def cleanupSpec() {
@@ -59,44 +69,59 @@ class JobListPageAuthSpec extends SeleniumBase {
     }
 
 
-    def "activity section shown, user #user sees bulk delete based on auth #expected"() {
+    def "activity section on page #pageName user #user sees bulk delete based on auth #expected"() {
         given: "login as user"
             def login = page LoginPage
+
             login.go()
             login.login(user, USER_PASSWORD)
             waitForPageLoadComplete()
-            def jobs = page JobListPage, PROJECT_NAME
-        when: "view jobs list page"
-            jobs.go()
+            def testPage = page(pageName, PROJECT_NAME)
+
+        when: "view page"
+            testPage.go()
+            waitForPageLoadComplete()
         then: "activity section is shown, bulk edit button displayed based on authz"
             //bulk edit
-            jobs.activitySection.displayed
+            testPage.activitySection.displayed
 
             if (expected) {
-                assert jobs.activityBulkDeleteBtn.displayed
+                assert testPage.activityBulkDeleteBtn.displayed
             } else {
-                assert !jobs.els(AdhocPage.activityBulkDeleteBtnBy)
+                assert !testPage.els(AdhocPage.activityBulkDeleteBtnBy)
             }
 
+        cleanup:
+            def topMenuPage = page TopMenuPage
+            topMenuPage.logOut()
+            waitForPageLoadComplete()
         where:
-            user        | expected
-            'AuthTest1' | false
-            'AuthTest2' | true
-            'AuthTest3' | true
-            'AuthTest4' | true
+            [pageName, [user, expected]] << [
+                [JobListPage, AdhocPage],
+                [
+                    ['AuthTest1', false],
+                    ['AuthTest2', true],
+                    ['AuthTest3', true],
+                    ['AuthTest4', true],
+                ]
+            ].combinations()
     }
-    def "user #user has no activity section"() {
+
+    def "user #user has no activity section on #pageName"() {
         given: "login as user"
             def login = page LoginPage
             login.go()
             login.login(user, USER_PASSWORD)
             waitForPageLoadComplete()
-            def jobs = page JobListPage, PROJECT_NAME
-        when: "view jobs list page"
-            jobs.go()
+            def page = page pageName, PROJECT_NAME
+        when: "view page"
+            page.go()
+            waitForPageLoadComplete()
         then: "activity section is not shown"
-            !jobs.els(AdhocPage.activitySectionBy)
+            !page.els(page.activitySectionBy)
         where:
             user = 'AuthTest5'
+            pageName << [JobListPage, AdhocPage]
+
     }
 }
