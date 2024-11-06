@@ -144,8 +144,8 @@ class RdClient {
         ).execute()
     }
 
-    Response doPut(final String path, final File file) {
-        RequestBody body = RequestBody.create(file, MediaType.parse("application/zip"))
+    Response doPut(final String path, final File file, final String contentType='application/zip') {
+        RequestBody body = RequestBody.create(file, MediaType.parse(contentType))
         Request request = new Request.Builder()
                 .url(apiUrl(path))
                 .method("PUT", body)
