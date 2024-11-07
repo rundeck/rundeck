@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.common.IExecutionProviders
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.PluginControlServiceImpl
 import com.dtolabs.rundeck.core.common.ServiceSupport
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
@@ -30,6 +31,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
+import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.rules.Condition
 import com.dtolabs.rundeck.core.rules.RuleEngine
@@ -801,12 +803,17 @@ class EngineWorkflowExecutorSpec extends Specification {
         def nodeSet = Mock(INodeSet){
             getNodes() >> Arrays.asList(new NodeEntryImpl("set1node1"))
         }
+
+        def pluginRegistry = Mock(PluginRegistry) {}
+        def pcs = PluginControlServiceImpl.forProject(framework, pluginRegistry, PROJECT_NAME)
+
         def context = ExecutionContextImpl.builder().with {
             executionListener(logger)
             workflowExecutionListener(new NoopWorkflowExecutionListener())
             frameworkProject(PROJECT_NAME)
             stepNumber(1)
             nodes(nodeSet)
+            pluginControlService(pcs)
             framework(framework)
             build()
         }
