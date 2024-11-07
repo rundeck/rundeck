@@ -17,44 +17,26 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.support.ExecutionCleanerConfig
-import com.dtolabs.rundeck.core.authentication.Group
-import com.dtolabs.rundeck.core.authentication.Username
-import com.dtolabs.rundeck.core.authorization.AclRuleBuilder
-import com.dtolabs.rundeck.core.authorization.AclRuleImpl
-import com.dtolabs.rundeck.core.authorization.AclRuleSet
-import com.dtolabs.rundeck.core.authorization.AclRuleSetAuthorization
-import com.dtolabs.rundeck.core.authorization.AclRuleSetImpl
 import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
-import com.dtolabs.rundeck.core.authorization.Authorization
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.FrameworkProject
-import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.ProjectManager
-import com.dtolabs.rundeck.core.common.PropertyRetriever
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService
-import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.Description
-import com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties
 import com.dtolabs.rundeck.core.plugins.configuration.Property
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
-import com.dtolabs.rundeck.core.utils.IPropertyLookup
-import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import grails.events.bus.EventBus
-import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
 import org.grails.plugins.metricsweb.MetricService
-import org.rundeck.app.spi.Services
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.PluginStep
@@ -62,7 +44,6 @@ import rundeck.services.feature.FeatureService
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import javax.security.auth.Subject
 import javax.servlet.http.HttpSession
 
 /**
@@ -540,29 +521,6 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             ['a.svc.type1.p1': 'v','a.svc2.typeA.pA': 'q'] | 'a'    | 2     | [svc: ['type1'],svc2:['typeA']] | ['svc','svc2']
             ['a.svc.type1.p1': 'v','a.svc2.typeA.pA': 'q'] | 'a'    | 2     | [svc2:['typeA']] | ['svc2']
             ['a.svc.type1.p1': 'v','a.svc2.typeA.pA': 'q'] | 'a'    | 2     | [svc: ['type1']] | ['svc']
-    }
-
-    def "get plugin control service"() {
-        given:
-            service.rundeckFramework = Mock(Framework){
-                getFrameworkProjectMgr() >> Mock(ProjectManager) {
-                    1 * getFrameworkProject(project) >> Mock(IRundeckProject) {
-                        1 * hasProperty('disabled.plugins') >> hasProp
-                        getProperty('disabled.plugins') >> propVal
-                    }
-                }
-            }
-
-            def ctrla = service.getPluginControlService(project)
-        when:
-            def pluga = ctrla.listDisabledPlugins()
-        then:
-
-            pluga == expect
-        where:
-            project    | hasProp | propVal | expect
-            'projectA' | true    | 'a,b,c' | ['a', 'b', 'c']
-            'projectB' | false   | null    | []
     }
 
     @Unroll

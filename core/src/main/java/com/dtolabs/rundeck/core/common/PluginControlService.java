@@ -16,10 +16,6 @@
 
 package com.dtolabs.rundeck.core.common;
 
-import com.dtolabs.rundeck.core.plugins.configuration.Description;
-
-import java.util.List;
-import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -27,32 +23,10 @@ import java.util.function.Predicate;
  */
 public interface PluginControlService {
     /**
-     * @return list of disabled plugins for the project, in Service:provider format
-     */
-    List<String> listDisabledPlugins();
-    Set<String> getDisabledPlugins();
-
-    /**
-     * @param plugins     descriptions list
-     * @param serviceName service name
-     * @return list of enabled plugin descriptions
-     */
-    List<Description> filterEnabledPlugins(
-        List<Description> plugins,
-        String serviceName
-    );
-
-    /**
      * @param serviceName service name
      * @return predicate for testing enabled providers for a service
      */
     Predicate<String> enabledPredicateForService(String serviceName);
-
-    /**
-     * @param serviceName service name
-     * @return predicate for testing disabled providers for a service
-     */
-    Predicate<String> disabledPredicateForService(String serviceName);
 
     /**
      * @param pluginName  provider name
