@@ -7,6 +7,7 @@
         v-for="(field, index) in customFields"
         :key="index"
         :class="['form-group']"
+        data-testid="field-item"
       >
         <label class="col-sm-2 control-label input-sm">{{
           field.label || field.key
@@ -18,6 +19,7 @@
             :class="['form-control', 'input-sm', 'context_var_autocomplete']"
             size="100"
             @change="changeField(field)"
+            :data-testid="'field-input-' + index"
           />
         </div>
         <div class="col-sm-1">
@@ -25,19 +27,25 @@
             class="btn btn-xs btn-default"
             :title="$t('message_delete')"
             @click="removeField(field)"
+            data-testid="remove-field-button"
           >
             <i class="glyphicon glyphicon-remove"></i
           ></span>
         </div>
         <div v-if="field.desc" class="col-sm-10 col-sm-offset-2 help-block">
-          <div class="help-block">{{ field.desc }}</div>
+          <div class="help-block" data-testid="field-description-help">
+            {{ field.desc }}
+          </div>
         </div>
       </div>
     </div>
 
-    <btn type="primary" @click="openNewField()">{{
-      $t("message_addField")
-    }}</btn>
+    <btn
+      type="primary"
+      @click="openNewField()"
+      data-testid="add-field-button"
+      >{{ $t("message_addField") }}</btn
+    >
 
     <modal
       id="modal-demo"
@@ -50,9 +58,14 @@
       :keyboard="true"
       cancel-text="Close"
       append-to-body
+      data-testid="modal-title"
     >
       <div class="row" style="padding-left: 30px !important">
-        <alert v-if="duplicate" type="warning"
+        <alert
+          v-if="duplicate"
+          type="warning"
+          data-testid="duplicate-warning"
+          ref="duplicateWarningRef"
           ><b>Warning!</b> {{ $t("message_duplicated") }}.</alert
         >
 
@@ -67,6 +80,7 @@
                   track-by="label"
                   label="label"
                   :placeholder="$t('message_select')"
+                  data-testid="multiselect"
                 >
                 </vue-multiselect>
               </div>
@@ -79,6 +93,7 @@
                   v-model="newFieldDescription"
                   type="text"
                   :class="['form-control']"
+                  data-testid="field-description-input"
                 />
                 <div class="help-block">{{ $t("message_empty") }}</div>
               </div>
@@ -103,6 +118,7 @@
                   v-model="newField"
                   type="text"
                   :class="['form-control']"
+                  data-testid="field-key-input"
                 />
               </div>
             </div>
@@ -114,6 +130,7 @@
                   v-model="newFieldDescription"
                   type="text"
                   :class="['form-control']"
+                  data-testid="field-description-input"
                 />
                 <div class="help-block">{{ $t("message_empty") }}</div>
               </div>
@@ -128,6 +145,7 @@
             type="button"
             class="btn btn-default reset_page_confirm"
             @click="modalAddField = false"
+            data-testid="cancel-button"
           >
             {{ $t("message_cancel") }}
           </button>
@@ -136,6 +154,7 @@
             type="button"
             class="btn btn-cta reset_page_confirm"
             @click="addField()"
+            data-testid="confirm-add-field-button"
           >
             {{ $t("message_add") }}
           </button>
@@ -217,6 +236,7 @@ export default defineComponent({
         });
         this.customFields = fields;
       }
+      console.log("customfield:", this.customFields);
     }
 
     if (this.useOptions && this.options !== null && this.options !== "") {
@@ -271,7 +291,6 @@ export default defineComponent({
           desc: description,
         };
       }
-
       let exists = false;
       this.customFields.forEach((row: any) => {
         if (field.key === row.key) {

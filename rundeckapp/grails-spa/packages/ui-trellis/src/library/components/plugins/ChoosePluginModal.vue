@@ -4,7 +4,8 @@
     <!-- todo: search -->
 
     <div v-if="loading">
-      <i class="fas fa-spinner fa-spin"></i> {{ $t("loading.text") }}
+      <i class="fas fa-spinner fa-spin" data-testid="loading-text"></i>
+      {{ $t("loading.text") }}
     </div>
     <tabs v-else-if="loadedServices.length > 1" class="vue-tabs">
       <tab
@@ -17,6 +18,7 @@
             v-for="prov in service.providers"
             class="list-group-item"
             @click.prevent="chooseProviderAdd(service.service, prov.name)"
+            data-testid="provider-button"
           >
             <plugin-info
               :detail="prov"
@@ -43,7 +45,9 @@
       </button>
     </div>
     <template #footer>
-      <btn @click="$emit('cancel')">{{ $t("Cancel") }}</btn>
+      <btn @click="$emit('cancel')" data-testid="cancel-button">{{
+        $t("Cancel")
+      }}</btn>
     </template>
   </modal>
 </template>

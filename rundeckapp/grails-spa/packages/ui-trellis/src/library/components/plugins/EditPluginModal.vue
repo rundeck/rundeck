@@ -19,6 +19,7 @@
         scope="Instance"
         default-scope="Instance"
         group-css=""
+        data-testid="plugin-info"
       ></plugin-config>
       <slot name="extra"></slot>
     </div>
@@ -29,8 +30,12 @@
       </p>
     </div>
     <template #footer>
-      <btn @click="$emit('cancel')">{{ $t("Cancel") }}</btn>
-      <btn type="success" @click="saveChanges">{{ $t("Save") }}</btn>
+      <btn @click="$emit('cancel')" data-testid="cancel-button">{{
+        $t("Cancel")
+      }}</btn>
+      <btn type="success" @click="saveChanges" data-testid="save-button">{{
+        $t("Save")
+      }}</btn>
     </template>
   </modal>
 </template>
