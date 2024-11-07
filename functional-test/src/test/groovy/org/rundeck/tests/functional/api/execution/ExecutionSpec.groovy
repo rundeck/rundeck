@@ -144,9 +144,7 @@ class ExecutionSpec extends BaseContainer {
 
             // Waits for all executions to get cleaned
             waitFor(executionsRetrived,
-                {
-                    it != null && it.isEmpty()
-                }, // retry if executions are not empty or list is null
+                {it != null && it.isEmpty()}, // retry if executions are not empty or list is null
                 WaitingTime.XTRA_EXCESSIVE, WaitingTime.MODERATE)
             deleteProject(projectName)
 
