@@ -133,17 +133,18 @@ class ExecutionSpec extends BaseContainer {
                 json2.executions.size() == 6
             }
         cleanup:
-            def executionsRetrived = {->
+            def retrieveExecutions = {->
                 try {
                     return ExecutionUtils.Retrievers.executionsForProject(client, projectName).get()
                 } catch (JsonParseException e) {
                     // if request doesnt return an expected json, return null to retry
+                    e.printStackTrace()
                     return null
                 }
             }
 
             // Waits for all executions to get cleaned
-            waitFor(executionsRetrived,
+            waitFor(retrieveExecutions,
                 {it != null && it.isEmpty()}, // retry if executions are not empty or list is null
                 WaitingTime.XTRA_EXCESSIVE, WaitingTime.MODERATE)
             deleteProject(projectName)
