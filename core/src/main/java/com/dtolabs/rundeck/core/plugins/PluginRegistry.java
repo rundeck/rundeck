@@ -286,5 +286,9 @@ public interface PluginRegistry {
      */
     boolean hasRegisteredPlugin(String type, String name);
 
+    /**
+     * Indicates whether a particular plugin provider is blocked (disabled).
+     * @return true if the plugin provider is blocked.
+     */
     boolean isBlockedPlugin(String serviceName, String providerName);
 }
