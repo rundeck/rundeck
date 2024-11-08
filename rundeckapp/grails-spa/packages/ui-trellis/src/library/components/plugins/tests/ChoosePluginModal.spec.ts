@@ -15,7 +15,7 @@ jest.mock("@/library", () => ({
   getRundeckContext: jest.fn(() => ({
     rootStore: {
       plugins: {
-        load: jest.fn().mockImplementation(() => new Promise(() => {})),
+        load: jest.fn(),
         getServicePlugins: jest.fn((service) =>
           service === "mockService1"
             ? [{ name: "provider1" }, { name: "provider2" }]
