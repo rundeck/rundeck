@@ -18,6 +18,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
+import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.audit.AuditEventListenerPlugin
 import com.dtolabs.rundeck.plugins.config.PluginGroup
@@ -72,10 +73,10 @@ class PluginApiService {
 
         Map<String, List<Description>> pluginDescs = [:]
 
-        //framework level plugin descriptions
-        //TODO: use pluginService.listPlugins for this service / plugintype
         StepExecutionService ses = framework.getStepExecutionService()
-        pluginDescs[ses.name] = ses.listDescriptions()
+        pluginDescs[ses.name] = pluginService.listPlugins(StepExecutor, ses)
+                .findAll { it.value.description != null }
+                .collect {it.value.description }
                 .sort {a,b -> a.name <=> b.name }
 
         NodeExecutorService nes = framework.getNodeExecutorService()
@@ -93,11 +94,9 @@ class PluginApiService {
                 .collect {it.value.description }
                 .sort { a, b -> a.name <=> b.name }
 
-        //load via pluginService to include spring-based app plugins
-        pluginDescs['ResourceModelSource'] = pluginService.listPlugins(
-                ResourceModelSourceFactory,
-                framework.getResourceModelSourceService()
-        )
+        ResourceModelSourceService rmss = framework.getResourceModelSourceService()
+        pluginDescs[rmss.name] = pluginService.listPlugins(ResourceModelSourceFactory, rmss)
+                .findAll { it.value.description != null }
                 .collect { it.value.description }
                 .sort { a, b -> a.name <=> b.name }
 
