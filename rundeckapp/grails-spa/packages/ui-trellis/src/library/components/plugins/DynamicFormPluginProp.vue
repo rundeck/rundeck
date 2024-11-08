@@ -236,7 +236,6 @@ export default defineComponent({
         });
         this.customFields = fields;
       }
-      console.log("customfield:", this.customFields);
     }
 
     if (this.useOptions && this.options !== null && this.options !== "") {

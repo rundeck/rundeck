@@ -13,9 +13,9 @@ const createWrapper = (props = {}) => {
       fields: JSON.stringify({
         field1: {
           key: "field1",
-          label: "Option 1",
+          label: "Option1",
           value: "field1",
-          desc: "Description 1",
+          desc: "Description1",
         },
       }),
       options: JSON.stringify({ field1: ["option1", "option2"] }),
@@ -43,7 +43,7 @@ const createWrapper = (props = {}) => {
           template: `<div ref="duplicateWarningRef">Duplicate warning text</div>`,
         },
         VueMultiselect: {
-          template: `<div data-testid="multiselect" @input="$emit('input', { value: 'option1', label: 'Option 1' })">Multiselect Stub</div>`,
+          template: `<div data-testid="multiselect">Multiselect Stub</div>`,
         },
       },
     },
@@ -60,45 +60,41 @@ describe("DynamicFormPluginProp.vue", () => {
     await wrapper.find('[data-testid="add-field-button"]').trigger("click");
     await flushPromises();
     const modalTitle = wrapper.find('[data-testid="modal-title"]');
-    console.log(wrapper.html());
-    expect(modalTitle.exists()).toBe(true);
     expect(modalTitle.text()).toContain("Add Field");
   });
   it("adds a new field through modal interaction", async () => {
     const wrapper = createWrapper();
-    // Open the modal by clicking the "Add Field" button
     await wrapper.find('[data-testid="add-field-button"]').trigger("click");
     await flushPromises();
-    const multiselect = wrapper.find('[data-testid="multiselect"]');
-    await multiselect.trigger("click");
+    const multiselect = wrapper.findComponent(VueMultiselect);
+    await (multiselect as VueWrapper<any>).vm.$emit("update:modelValue", {
+      value: "Option1",
+      label: "Field 1",
+    });
     await flushPromises();
     const descriptionInput = wrapper.find(
       '[data-testid="field-description-input"]',
     );
     await descriptionInput.setValue("New Field Description");
-    await flushPromises();
     await wrapper
       .find('[data-testid="confirm-add-field-button"]')
       .trigger("click");
     await flushPromises();
     const fields = wrapper.findAll('[data-testid="field-item"]');
     const helpBlocks = fields.at(1)?.findAll(".help-block");
-    expect(fields.at(0)?.find("label").text()).toBe("Option 1");
-    console.log(helpBlocks.at(1).text());
+    expect(fields.length).toBe(2);
+    expect(fields.at(1)?.find("label").text()).toBe("Field 1");
     expect(helpBlocks.at(1)?.text()).toBe(
       "New Field Description (Field key: Option1)",
     );
-    expect(fields.length).toBe(2); // Assuming there was one field initially
   });
   it("removes a field when the remove button is clicked", async () => {
     const wrapper = createWrapper();
     await flushPromises();
-    // Ensure the initial field is present
     const initialFieldLabel = wrapper
       .find('[data-testid="field-item"] label')
       .text();
-    expect(initialFieldLabel).toBe("Option 1");
-    // Click the remove button on the first field
+    expect(initialFieldLabel).toBe("Option1");
     await wrapper.find('[data-testid="remove-field-button"]').trigger("click");
     await flushPromises();
     // Check if the field is removed by verifying there are no form groups left
@@ -111,13 +107,11 @@ describe("DynamicFormPluginProp.vue", () => {
     const addField = await wrapper.find('[data-testid="add-field-button"]');
     await addField.trigger("click");
     await wrapper.vm.$nextTick();
-    // Verify that the modal is open
-    expect(wrapper.find('[data-testid="modal-title"]').exists()).toBe(true);
-    await wrapper.vm.$nextTick();
-
     const multiselect = wrapper.findComponent(VueMultiselect);
-    expect(multiselect.exists()).toBe(true);
-    await wrapper.vm.$emit("input", { value: "field1", label: "Field 1" });
+    await multiselect.vm.$emit("update:modelValue", {
+      value: "field1",
+      label: "Field 1",
+    });
     await wrapper.vm.$nextTick();
     // Confirm adding the field
     const confirmAddField = wrapper.find(
@@ -126,8 +120,7 @@ describe("DynamicFormPluginProp.vue", () => {
     await confirmAddField.trigger("click");
     await flushPromises();
     const warningMessage = wrapper.find('[data-testid="duplicate-warning"]');
-    expect(warningMessage.exists()).toBe(true);
-    expect(warningMessage.text()).toBe("Warning");
+    expect(warningMessage.text()).toBe("Duplicate warning text");
   });
   it("updates field value on input change", async () => {
     const wrapper = createWrapper();

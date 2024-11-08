@@ -1,7 +1,7 @@
 import { mount, flushPromises } from "@vue/test-utils";
 import EditPluginModal from "../EditPluginModal.vue";
 import { Modal, Btn } from "uiv";
-import * as pluginService from "../../../modules/pluginService"; // Import these to use in the test
+import * as pluginService from "../../../modules/pluginService";
 jest.mock("@/library/modules/pluginService", () => ({
   ...jest.requireActual("@/library/modules/pluginService"),
   getServiceProviderDescription: jest.fn().mockResolvedValue({
@@ -72,14 +72,14 @@ describe("EditPluginModal", () => {
       name: "Test Plugin",
       description: "Plugin description",
     });
-
     const wrapper = await createWrapper();
-    const pluginConfig = wrapper.findComponent({ name: "PluginConfig" });
-    // expect(pluginConfig.text()).toContain("Plugin description");
+    // Verify that the plugin-info component is present and displays the description.
+    const pluginInfo = wrapper.findComponent({ name: "plugin-info" });
+    expect(pluginInfo.exists()).toBe(true);
+    expect(pluginInfo.text()).toContain("Plugin description");
+    // Verify that plugin-config is also rendered for editing configuration.
+    const pluginConfig = wrapper.findComponent({ name: "plugin-config" });
     expect(pluginConfig.exists()).toBe(true);
-    expect(pluginConfig.find('[data-testid="plugin-info"]').text()).toContain(
-      "Plugin description",
-    );
   });
 
   it('emits "cancel" event when cancel button is clicked', async () => {

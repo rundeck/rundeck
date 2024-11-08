@@ -15,7 +15,7 @@ jest.mock("@/library", () => ({
   getRundeckContext: jest.fn(() => ({
     rootStore: {
       plugins: {
-        load: jest.fn(),
+        load: jest.fn().mockImplementation(() => new Promise(() => {})),
         getServicePlugins: jest.fn((service) =>
           service === "mockService1"
             ? [{ name: "provider1" }, { name: "provider2" }]
@@ -25,7 +25,6 @@ jest.mock("@/library", () => ({
     },
   })),
 }));
-// Helper function to create wrapper
 const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
   const wrapper = shallowMount(ChoosePluginModal, {
     props: {
@@ -56,11 +55,12 @@ describe("ChoosePluginModal", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
+
   it('emits "selected" event with correct data when a provider button is clicked', async () => {
     const wrapper = await createWrapper();
     await flushPromises();
     const providerButtons = wrapper.findAll('[data-testid="provider-button"]');
-    expect(providerButtons.length).toBeGreaterThan(0);
+    expect(providerButtons.length).toBe(3);
     await providerButtons[0].trigger("click");
     expect(wrapper.emitted("selected")).toBeTruthy();
     expect(wrapper.emitted("selected")[0][0]).toEqual({
