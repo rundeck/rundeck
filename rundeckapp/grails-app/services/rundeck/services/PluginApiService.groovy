@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.VersionConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypterPlugin
+import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService
 import com.dtolabs.rundeck.core.execution.service.FileCopier
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor
@@ -19,6 +20,10 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.audit.AuditEventListenerPlugin
 import com.dtolabs.rundeck.plugins.config.PluginGroup
@@ -27,6 +32,7 @@ import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import com.dtolabs.rundeck.plugins.nodes.NodeEnhancerPlugin
 import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin
+import com.dtolabs.rundeck.plugins.orchestrator.OrchestratorPlugin
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
@@ -103,15 +109,21 @@ class PluginApiService {
         pluginDescs[ServiceNameConstants.NodeEnhancer]=pluginService.listPlugins(NodeEnhancerPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
-        //TODO: use pluginService.listPlugins for these services/plugintypes
-        [
-                framework.getResourceFormatParserService(),
-                framework.getResourceFormatGeneratorService(),
-                framework.getOrchestratorService()
-        ].each {
 
-            pluginDescs[it.name] = it.listDescriptions().sort { a, b -> a.name <=> b.name }
-        }
+        ResourceFormatParserService rfps = framework.getResourceFormatParserService()
+        pluginDescs[rfps.name] = pluginService.listPlugins(ResourceFormatParser, rfps)
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+
+        ResourceFormatGeneratorService rfgs = framework.getResourceFormatGeneratorService()
+        pluginDescs[rfgs.name] = pluginService.listPlugins(ResourceFormatGenerator, rfgs)
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+
+        OrchestratorService os = framework.getOrchestratorService()
+        pluginDescs[os.name] = pluginService.listPlugins(OrchestratorPlugin, os)
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
 
         if(featureService.featurePresent(Features.OPTION_VALUES_PLUGIN)) {
             pluginDescs['OptionValues'] = pluginService.listPlugins(OptionValuesPlugin).collect {
