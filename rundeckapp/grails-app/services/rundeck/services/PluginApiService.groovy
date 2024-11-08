@@ -76,22 +76,22 @@ class PluginApiService {
         StepExecutionService ses = framework.getStepExecutionService()
         pluginDescs[ses.name] = pluginService.listPlugins(StepExecutor, ses)
                 .findAll { it.value.description != null }
-                .collect {it.value.description }
+                .collect { it.value.description }
                 .sort {a,b -> a.name <=> b.name }
 
         NodeExecutorService nes = framework.getNodeExecutorService()
         pluginDescs[nes.name] = pluginService.listPlugins(NodeExecutor, nes)
-                .collect {it.value.description }
+                .collect { it.value.description }
                 .sort { a, b -> a.name <=> b.name }
 
         NodeStepExecutionService nses = framework.getNodeStepExecutorService()
         pluginDescs[nses.name] = pluginService.listPlugins(NodeStepExecutor, nses)
-                .collect {it.value.description }
+                .collect { it.value.description }
                 .sort { a, b -> a.name <=> b.name }
 
         FileCopierService fcs = framework.getFileCopierService()
         pluginDescs[fcs.name] = pluginService.listPlugins(FileCopier, fcs)
-                .collect {it.value.description }
+                .collect { it.value.description }
                 .sort { a, b -> a.name <=> b.name }
 
         ResourceModelSourceService rmss = framework.getResourceModelSourceService()
