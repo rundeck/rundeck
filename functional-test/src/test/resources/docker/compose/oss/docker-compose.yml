@@ -5,6 +5,7 @@ services:
       args:
         IMAGE: ${TEST_IMAGE:-rundeck/rundeck:SNAPSHOT}
     platform: ${TEST_TARGET_PLATFORM:-linux/amd64}
+    hostname: rundeck-oss-server-node
     environment:
       RUNDECK_DATABASE_DRIVER: org.mariadb.jdbc.Driver
       RUNDECK_DATABASE_USERNAME: rundeck
@@ -18,6 +19,7 @@ services:
       RUNDECK_FEATURE_FEATURETOTEST_ENABLED: "true"
       RUNDECK_FEATURE_FEATURETOTEST_NAME: ${TEST_RUNDECK_FEATURE_NAME}
     volumes:
+      - ./ansible:/home/rundeck/ansible:rw
       - "/etc/localtime:/etc/localtime:ro"
       - "/etc/timezone:/etc/timezone:ro"
       - "../../../tokens.properties:/home/rundeck/server/config/tokens.properties"
