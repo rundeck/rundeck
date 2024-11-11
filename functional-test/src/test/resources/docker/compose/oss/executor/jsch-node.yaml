@@ -19,3 +19,27 @@ password-node:
   ssh-authentication: password
   ssh-password-storage-path: keys/project/core-jsch-executor-test/ssh-node.pass
   tags: executor-test,ssh-node,auth-method-password
+
+ssh-agent-node:
+  description: "SSH Agent Node for Rundeck"
+  hostname: ssh-node
+  osFamily: unix
+  username: rundeck
+  node-executor: jsch-ssh
+  file-copier: jsch-scp
+  local-ssh-agent: true
+  ssh-authentication: privateKey
+  ssh-key-storage-path: keys/project/core-jsch-executor-test/ssh-node.key
+  tags: executor-test,ssh-node,auth-method-password
+  
+ssh-node-passphrase:
+  description: "SSH-PASSPHRASE Node for Rundeck"
+  hostname: ssh-node
+  osFamily: unix
+  username: rundeck
+  ssh-key-storage-path: keys/project/pro-jsch-executor-test/ssh-node-passphrase.key
+  ssh-key-passphrase-storage-path: keys/project/pro-jsch-executor-test/ssh-node-passphrase.pass
+  node-executor: jsch-ssh
+  file-copier: jsch-scp
+  ssh-authentication: privateKey
+  tags: executor-test
