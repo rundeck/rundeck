@@ -277,6 +277,11 @@ class PluginServiceTests extends Specification {
         boolean hasRegisteredPlugin(final String type, final String name) {
             return false
         }
+
+        @Override
+        boolean isBlockedPlugin(String serviceName, String providerName) {
+            return false
+        }
     }
 
     void testGetPluginDNE() {
