@@ -4,12 +4,26 @@ import com.dtolabs.rundeck.core.VersionConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypterPlugin
+import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService
+import com.dtolabs.rundeck.core.execution.service.FileCopier
+import com.dtolabs.rundeck.core.execution.service.FileCopierService
+import com.dtolabs.rundeck.core.execution.service.NodeExecutor
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.plugins.PluginUtils
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
+import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.audit.AuditEventListenerPlugin
 import com.dtolabs.rundeck.plugins.config.PluginGroup
@@ -18,6 +32,7 @@ import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import com.dtolabs.rundeck.plugins.nodes.NodeEnhancerPlugin
 import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin
+import com.dtolabs.rundeck.plugins.orchestrator.OrchestratorPlugin
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
@@ -62,37 +77,53 @@ class PluginApiService {
         IFramework framework = frameworkService.getRundeckFramework()
         Locale locale = getLocale()
 
-        //framework level plugin descriptions
-        //TODO: use pluginService.listPlugins for these services/plugintypes
-        Map<String,List<Description>> pluginDescs= [
-                framework.getNodeExecutorService(),
-                framework.getFileCopierService(),
-                framework.getNodeStepExecutorService(),
-                framework.getStepExecutionService()
-        ].collectEntries{
-            [it.name, it.listDescriptions().sort {a,b->a.name<=>b.name}]
-        }
+        Map<String, List<Description>> pluginDescs = [:]
 
-        //load via pluginService to include spring-based app plugins
-        pluginDescs['ResourceModelSource'] = pluginService.listPlugins(
-                ResourceModelSourceFactory,
-                framework.getResourceModelSourceService()
-        ).findAll { it.value.description }.collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
+        StepExecutionService ses = framework.getStepExecutionService()
+        pluginDescs[ses.name] = pluginService.listPlugins(StepExecutor, ses)
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort {a,b -> a.name <=> b.name }
+
+        NodeExecutorService nes = framework.getNodeExecutorService()
+        pluginDescs[nes.name] = pluginService.listPlugins(NodeExecutor, nes)
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+
+        NodeStepExecutionService nses = framework.getNodeStepExecutorService()
+        pluginDescs[nses.name] = pluginService.listPlugins(NodeStepExecutor, nses)
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+
+        FileCopierService fcs = framework.getFileCopierService()
+        pluginDescs[fcs.name] = pluginService.listPlugins(FileCopier, fcs)
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+
+        ResourceModelSourceService rmss = framework.getResourceModelSourceService()
+        pluginDescs[rmss.name] = pluginService.listPlugins(ResourceModelSourceFactory, rmss)
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
 
         pluginDescs[ServiceNameConstants.NodeEnhancer]=pluginService.listPlugins(NodeEnhancerPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
-        //TODO: use pluginService.listPlugins for these services/plugintypes
-        [
-                framework.getResourceFormatParserService(),
-                framework.getResourceFormatGeneratorService(),
-                framework.getOrchestratorService()
-        ].each {
 
-            pluginDescs[it.name] = it.listDescriptions().sort { a, b -> a.name <=> b.name }
-        }
+        ResourceFormatParserService rfps = framework.getResourceFormatParserService()
+        pluginDescs[rfps.name] = pluginService.listPlugins(ResourceFormatParser, rfps)
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+
+        ResourceFormatGeneratorService rfgs = framework.getResourceFormatGeneratorService()
+        pluginDescs[rfgs.name] = pluginService.listPlugins(ResourceFormatGenerator, rfgs)
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+
+        OrchestratorService os = framework.getOrchestratorService()
+        pluginDescs[os.name] = pluginService.listPlugins(OrchestratorPlugin, os)
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
 
         if(featureService.featurePresent(Features.OPTION_VALUES_PLUGIN)) {
             pluginDescs['OptionValues'] = pluginService.listPlugins(OptionValuesPlugin).collect {

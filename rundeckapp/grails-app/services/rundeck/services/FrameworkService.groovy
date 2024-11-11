@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.options.RemoteJsonOptionRetriever
 import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.core.plugins.configuration.*
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
@@ -81,7 +82,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
     ExecutionService executionService
     MetricService metricService
     Framework rundeckFramework
-    def rundeckPluginRegistry
+    PluginRegistry rundeckPluginRegistry
     PluginService pluginService
     PluginControlService pluginControlService
     def scheduledExecutionService
@@ -693,7 +694,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
     }
 
     def PluginControlService getPluginControlService(String project) {
-        PluginControlServiceImpl.forProject(getRundeckFramework(), project)
+        PluginControlServiceImpl.forProject(getRundeckFramework(), rundeckPluginRegistry, project)
     }
 
     static Map<String,String> parseOptsFromString(String argstring){
