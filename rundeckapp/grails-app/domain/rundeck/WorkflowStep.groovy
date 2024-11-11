@@ -23,7 +23,7 @@ import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import rundeck.data.validation.shared.SharedWorkflowStepConstraints
 
 @DirtyCheck
-abstract class WorkflowStep {
+abstract class WorkflowStep implements WorkflowStepData {
     Boolean enabled = true
     WorkflowStep errorHandler
     Boolean keepgoingOnSuccess
