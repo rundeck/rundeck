@@ -70,7 +70,6 @@ import org.apache.http.client.utils.URIBuilder
 import org.grails.web.json.JSONElement
 import org.quartz.CronExpression
 import org.rundeck.app.api.model.ApiErrorResponse
-import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.data.model.v1.job.JobBrowseItem
@@ -124,7 +123,7 @@ class ScheduledExecutionController  extends ControllerBase{
     ConfigurationService configurationService
     JobDataProvider jobDataProvider
     ReferencedExecutionDataProvider referencedExecutionDataProvider
-
+    GenAIService genAIService
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
 
@@ -494,6 +493,16 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
     }
+
+    private def generateJobYaml(String uuid)  {
+        def scheduledExecution = scheduledExecutionService.getByIDorUUID(uuid )
+
+        try (def writer = new StringWriter()) {
+            rundeckJobDefinitionManager.exportAs('yaml', [scheduledExecution], writer)
+            return writer.toString()
+        }
+    }
+
     private static String getFname(name){
         final Pattern s = Pattern.compile("[\\r\\n \"\\\\]")
         def fname=name.replaceAll(s,'_')
@@ -2278,6 +2287,13 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         }else{
 
             scheduledExecutionService.issueJobChangeEvent(result.jobChangeEvent)
+
+            // Hackweek 2024
+            boolean shouldGenerateJobDescription = false
+            if (shouldGenerateJobDescription) {
+                String jobYaml = generateJobYaml(found.uuid)
+                genAIService.getJobDescriptionFromJobDefinition(jobYaml)
+            }
 
             clearEditSession('_new')
             clearEditSession(scheduledExecution.id.toString())
