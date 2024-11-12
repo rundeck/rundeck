@@ -49,7 +49,7 @@ class GenAIService {
         try {
             Response response = client.newCall(request).execute()
             if (!response.isSuccessful()) {
-                println("Request failed: ${response.code()} with body: ${response.body().string()}")
+                throw new RuntimeException("Request failed: ${response.code()} with body: ${response.body().string()}")
             } else {
                 String responseBody = response.body().string()
                 def jsonResponse = new JsonSlurper().parseText(responseBody)
@@ -57,7 +57,7 @@ class GenAIService {
                 return answer
             }
         } catch (IOException e) {
-            println("An error occurred: ${e}")
+            throw new RuntimeException("An error occurred", e)
         }
     }
 

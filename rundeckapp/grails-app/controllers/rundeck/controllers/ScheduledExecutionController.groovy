@@ -124,6 +124,7 @@ class ScheduledExecutionController  extends ControllerBase{
     JobDataProvider jobDataProvider
     ReferencedExecutionDataProvider referencedExecutionDataProvider
     GenAIService genAIService
+    GithubJobDescriptionsService githubJobDescriptionsService
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
 
@@ -2289,10 +2290,11 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
             scheduledExecutionService.issueJobChangeEvent(result.jobChangeEvent)
 
             // Hackweek 2024
-            boolean shouldGenerateJobDescription = false
+            boolean shouldGenerateJobDescription = !!System.getenv("HW_2024_11") ?: false
             if (shouldGenerateJobDescription) {
                 String jobYaml = generateJobYaml(found.uuid)
-                genAIService.getJobDescriptionFromJobDefinition(jobYaml)
+                String jobDescription = genAIService.getJobDescriptionFromJobDefinition(jobYaml)
+                githubJobDescriptionsService.createOrUpdateFile(found.uuid, "Updated on ${new Date().format("yyyy-MM-dd HH:mm:ss")}", jobDescription)
             }
 
             clearEditSession('_new')
