@@ -4,16 +4,11 @@ class UrlMappings {
 
     static mappings = {
 
-//        "/migwiz"(controller: 'migWiz', action: 'index')
-
+        "/migwiz"(action: 'index', controller: 'MigWiz')
         "/$controller/$action?/$id?(.$format)?"{
             constraints {
                 // apply constraints here
             }
         }
-
-//        "/"(view:"/index")
-//        "500"(view:'/error')
-//        "404"(view:'/notFound')
     }
 }

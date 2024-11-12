@@ -902,6 +902,7 @@ const messages = {
   "plugin.type.WorkflowNodeStep.title.plural": "Node Steps",
   "plugin.type.WorkflowNodeStep.title": "Node Step",
   "JobExec.nodeStep.true.label": "Node Step",
+  "try.rba": "Try RBA",
 };
 
 export default messages;

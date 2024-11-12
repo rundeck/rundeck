@@ -16,30 +16,19 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-
-    <meta name="skipPrototypeJs" content="true"/>
     <meta name="layout" content="base"/>
-    <meta name="tabpage" content="MigWIz"/>
-    <title><g:appTitle/></title>
-    <asset:javascript src="ace-bundle.js"/>
-    <asset:stylesheet src="static/css/pages/migWiz.css"/>
-
-    <style type="text/css">
-        .dismiss-positioner button.close {
-            right: -8px !important;
-        }
-    </style>
+    <meta name="skipPrototypeJs" content="true"/>
+    <asset:javascript src="static/pages/migwiz.js"/>
+    <asset:stylesheet src="static/css/pages/migwiz.css"/>
+    <title><g:message code="gui.menu.TryRBA"/></title>
 </head>
 
 <body>
-WEEZEZEEEEEEE
-%{--<div style="display: flex;height: 100%;">--}%
-%{--    <div style="flex-grow: 1">--}%
-%{--        <div id=migWiz-vue></div>--}%
-%{--    </div>--}%
-%{--    <div style="flex-grow: 0;"><div id="tour-vue-display"></div></div>--}%
-%{--</div>--}%
+<div class="content">
+    <div id="layoutBody" class="vue-ui-socket">
+        <ui-socket section="migwiz" location="main"/>
+    </div>
+</div>
 
-<asset:javascript src="static/pages/migWiz.js"/>
 </body>
 </html>

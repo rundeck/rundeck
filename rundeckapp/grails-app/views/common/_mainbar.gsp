@@ -115,11 +115,17 @@
 
 %{--        <g:ifServletContextAttributeExists attribute="MIGWIZ_MODE_ENABLED">--}%
 %{--          <g:ifServletContextAttribute attribute="MIGWIZ_MODE_ENABLED" value="true">--}%
-          <li class="vue-ui-socket">
-            <ui-socket
-                    section="navbar-menu-placeholder"
-                    location="first"
-            ></ui-socket>
+%{--          <li class="vue-ui-socket">--}%
+%{--            <ui-socket--}%
+%{--                    section="navbar-menu-placeholder"--}%
+%{--                    location="first"--}%
+%{--            ></ui-socket>--}%
+%{--          </li>--}%
+%{--        Might swap back to a ui-socket --}%
+          <li>
+            <g:link controller="migWiz" class="btn btn-cta">
+              <g:message code="try.rba" />
+            </g:link>
           </li>
 %{--          </g:ifServletContextAttribute>--}%
 %{--        </g:ifServletContextAttributeExists>--}%
