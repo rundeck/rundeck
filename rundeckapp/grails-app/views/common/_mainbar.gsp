@@ -112,6 +112,18 @@
         </g:if>
 
       <ul id="navbar-menu" class="mainbar__group mainbar__menu">
+
+%{--        <g:ifServletContextAttributeExists attribute="MIGWIZ_MODE_ENABLED">--}%
+%{--          <g:ifServletContextAttribute attribute="MIGWIZ_MODE_ENABLED" value="true">--}%
+          <li class="vue-ui-socket">
+            <ui-socket
+                    section="navbar-menu-placeholder"
+                    location="first"
+            ></ui-socket>
+          </li>
+%{--          </g:ifServletContextAttribute>--}%
+%{--        </g:ifServletContextAttributeExists>--}%
+
         <g:set var="userDefinedInstanceName" value="${cfg.getString(config: "gui.instanceName")}"/>
         <g:if test="${userDefinedInstanceName}">
           <li>

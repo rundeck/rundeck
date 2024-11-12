@@ -1,0 +1,13 @@
+.migwiz-list.input-group-addon {
+    padding-right: 0 !important;
+}
+
+.migwiz-list .label {
+    position: relative;
+    top: 2px;
+}
+
+.migwiz-list-follows-focus{
+    background-color: var(--background-color);
+}
+
