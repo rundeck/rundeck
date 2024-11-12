@@ -217,6 +217,35 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             null != execs
             execs.contains(e2)
     }
+    def "test invalid workflow"(){
+        given:
+        ScheduledExecution se = new ScheduledExecution(
+            jobName: 'blue',
+            project: 'AProject',
+            groupPath: 'some/where',
+            description: 'a job',
+            argString: '-a b -c d',
+            workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+        )
+        se.errors.rejectValue('workflow', 'scheduledExecution.workflow.invalidstepslist.message', ['bad step'].toArray(), "Invalid workflow steps: {0}")
+
+        service.frameworkService = Mock(FrameworkService){
+            1 * getServerUUID()
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            1 * getNodes(_,_,_,_)
+        }
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService){
+            1 * beforeJobExecution(_,_)
+        }
+
+        when:
+        service.createExecution(se,createAuthContext("user1"),null,[executionType:'scheduled'])
+
+        then:
+            ExecutionServiceException e = thrown()
+            e.message=='unable to create execution: Invalid workflow steps: bad step'
+    }
 
     void testCreateExecutionSimple_userRoles() {
 
