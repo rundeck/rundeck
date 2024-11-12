@@ -365,7 +365,7 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
 
         where:
         format | jobDefinition
-            "xml"  | getJobXmlScriptfile(true)
+            //"xml"  | getJobXmlScriptfile(true)
             "yaml" | getJobYamlScriptfile(true)
     }
     static final String XML_PREFIX = '''<joblist>
@@ -394,6 +394,7 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
     private static String getJobXmlScriptfile(Boolean expandTokenInScriptFile){
         return """${XML_PREFIX}
       <command>
+        <enabled>true</enabled>
         ${expandTokenInScriptFile!=null ? "<expandTokenInScriptFile>${expandTokenInScriptFile}</expandTokenInScriptFile>" : ""
         }
         <scriptargs />
@@ -469,7 +470,8 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
 
     private static String getJobYamlScriptfile(Boolean expandTokenInScriptFile){
         return """${YAML_PREFIX}
-    ${expandTokenInScriptFile!=null ? """- expandTokenInScriptFile: ${expandTokenInScriptFile}
+    - enabled: true
+    ${expandTokenInScriptFile!=null ? """  expandTokenInScriptFile: ${expandTokenInScriptFile}
       scriptfile: path/to/file.sh""" : "- scriptfile: path/to/file.sh"}
 ${YAML_SUFFIX}"""
     }

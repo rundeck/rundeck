@@ -53,7 +53,8 @@ class ExecutionItemFactoryTest {
                 null,
                 true,
                 null,
-                null
+                null,
+                true
         )
         Assert.assertTrue(test instanceof PluginNodeStepExecutionItemImpl)
         PluginNodeStepExecutionItemImpl testcommand=(PluginNodeStepExecutionItemImpl) test
@@ -72,7 +73,7 @@ class ExecutionItemFactoryTest {
     public void creatScriptFileWithScript_withHandler(){
         StepExecutionItem handler = ExecutionItemFactory.createScriptFileItem(
                 ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE,
-                [script: 'script string'],null,false,null, null)
+                [script: 'script string'],null,false,null, null, true)
 
         Map config = [scriptInterpreter: 'interp',
                       fileExtension: 'ext',
@@ -89,7 +90,8 @@ class ExecutionItemFactoryTest {
                 handler,
                 true,
                 null,
-                null
+                null,
+                true
         )
         Assert.assertTrue(test instanceof PluginNodeStepExecutionItemImpl)
         PluginNodeStepExecutionItemImpl testcommand=(PluginNodeStepExecutionItemImpl) test
@@ -127,7 +129,8 @@ class ExecutionItemFactoryTest {
                 null,
                 false,
                 false,
-                false
+                false,
+                true
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
         JobExecutionItem testcommand=(JobExecutionItem) test
@@ -184,7 +187,8 @@ class ExecutionItemFactoryTest {
                 null,
                 false,
                 false,
-                false
+                false,
+                true
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
         JobExecutionItem testcommand=(JobExecutionItem) test
@@ -212,7 +216,8 @@ class ExecutionItemFactoryTest {
                 null,
                 false,
                 false,
-                false
+                false,
+                true
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
         JobExecutionItem testcommand=(JobExecutionItem) test
@@ -240,7 +245,8 @@ class ExecutionItemFactoryTest {
                 null,
                 false,
                 false,
-                false
+                false,
+                true
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
         JobExecutionItem testcommand=(JobExecutionItem) test
@@ -268,7 +274,8 @@ class ExecutionItemFactoryTest {
                 null,
                 false,
                 false,
-                false
+                false,
+                true
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
         JobExecutionItem testcommand=(JobExecutionItem) test
@@ -296,7 +303,8 @@ class ExecutionItemFactoryTest {
                 null,
                 false,
                 false,
-                false
+                false,
+                true
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
         JobExecutionItem testcommand=(JobExecutionItem) test
@@ -324,7 +332,8 @@ class ExecutionItemFactoryTest {
                 null,
                 false,
                 false,
-                false
+                false,
+                true
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
         JobExecutionItem testcommand=(JobExecutionItem) test
@@ -352,7 +361,8 @@ class ExecutionItemFactoryTest {
                 null,
                 false,
                 false,
-                false
+                false,
+                true
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
         JobExecutionItem testcommand=(JobExecutionItem) test
@@ -363,7 +373,7 @@ class ExecutionItemFactoryTest {
     public void createJobRef_withHandler(){
         StepExecutionItem handler =  ExecutionItemFactory.createScriptFileItem(
                 ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE,
-                [script: 'script string'],null,false,null, null)
+                [script: 'script string'],null,false,null, null, true)
 
         StepExecutionItem test = ExecutionItemFactory.createJobRef(
                 "monkey/piece",
@@ -384,7 +394,8 @@ class ExecutionItemFactoryTest {
                 null,
                 false,
                 false,
-                false
+                false,
+                true
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
         JobExecutionItem testcommand=(JobExecutionItem) test
@@ -416,7 +427,8 @@ class ExecutionItemFactoryTest {
                 null,
                 false,
                 false,
-                false
+                false,
+                true
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
         JobExecutionItem testcommand=(JobExecutionItem) test
@@ -429,7 +441,7 @@ class ExecutionItemFactoryTest {
     public void createJobRefNodeStep_withHandler(){
         StepExecutionItem handler =  ExecutionItemFactory.createScriptFileItem(
                 ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE,
-                [script: 'script string'],null,false,null, null)
+                [script: 'script string'],null,false,null, null, true)
 
         StepExecutionItem test = ExecutionItemFactory.createJobRef(
                 "monkey/piece",
@@ -450,7 +462,8 @@ class ExecutionItemFactoryTest {
                 null,
                 false,
                 false,
-                false
+                false,
+                true
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
         JobExecutionItem testcommand=(JobExecutionItem) test
@@ -483,7 +496,8 @@ class ExecutionItemFactoryTest {
                 null,
                 false,
                 false,
-                false
+                false,
+                true
         )
         Assert.assertTrue(test instanceof JobRefCommand)
         JobRefCommand testcommand=(JobRefCommand) test
@@ -498,7 +512,8 @@ class ExecutionItemFactoryTest {
                 [a:'b'],
                 true,
                 null,
-                null
+                null,
+                true
         )
         Assert.assertEquals( 'myplugin',test.type)
 
@@ -518,14 +533,15 @@ class ExecutionItemFactoryTest {
     public void createPluginStep_withHandler(){
         StepExecutionItem handler =  ExecutionItemFactory.createScriptFileItem(
                 ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE,
-                [script: 'script string'],null,false,null, null)
+                [script: 'script string'],null,false,null, null, true)
 
         StepExecutionItem test = ExecutionItemFactory.createPluginStepItem(
                 "myplugin",
                 [a:'b'],
                 true,
                 handler,
-                null
+                null,
+                true
         )
         Assert.assertEquals( 'myplugin',test.type)
 
@@ -548,7 +564,8 @@ class ExecutionItemFactoryTest {
                 [a:'b'],
                 true,
                 null,
-                null
+                null,
+                true
         )
         Assert.assertEquals( 'NodeDispatch',test.type)
 
@@ -572,14 +589,15 @@ class ExecutionItemFactoryTest {
     public void createPluginNodeStep_withHandler(){
         StepExecutionItem handler =  ExecutionItemFactory.createScriptFileItem(
                 ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE,
-                [script: 'script string'],null,false,null, null)
+                [script: 'script string'],null,false,null, null, true)
 
         StepExecutionItem test = ExecutionItemFactory.createPluginNodeStepItem(
                 "myplugin",
                 [a:'b'],
                 true,
                 handler,
-                null
+                null,
+                true
         )
         Assert.assertEquals( 'NodeDispatch',test.type)
 
@@ -621,7 +639,8 @@ class ExecutionItemFactoryTest {
                 null,
                 false,
                 false,
-                false
+                false,
+                true
         )
         Assert.assertTrue(test instanceof JobRefCommand)
         JobRefCommand testcommand=(JobRefCommand) test
@@ -651,7 +670,8 @@ class ExecutionItemFactoryTest {
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
                 false,
                 false,
-                false
+                false,
+                true
         )
         Assert.assertTrue(test instanceof JobRefCommand)
         JobRefCommand testcommand=(JobRefCommand) test
@@ -681,7 +701,8 @@ class ExecutionItemFactoryTest {
               null,
               false,
               false,
-              false
+              false,
+              true
       )
       Assert.assertTrue(test instanceof JobRefCommand)
       JobRefCommand testcommand = (JobRefCommand) test

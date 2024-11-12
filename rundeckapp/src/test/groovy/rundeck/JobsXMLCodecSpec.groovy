@@ -33,6 +33,7 @@ class JobsXMLCodecSpec extends Specification {
     </context>
     <sequence>
         <command>
+        <enabled>true</enabled>
         <exec>true</exec>
         </command>
         <command>
@@ -833,7 +834,7 @@ echo what is this monkey < test.out
 
 echo this is a test
 
-exit 0''', argString: 'elf biscuits'
+exit 0''', argString: 'elf biscuits', enabled: "true"
             ]
             wfi.type == ScriptCommand.SCRIPT_COMMAND_TYPE
 
