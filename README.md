@@ -1,11 +1,13 @@
 <p align="center">
-<a href="https://www.rundeck.com#gh-light-mode-only">
-  <img src="https://www.rundeck.com/hubfs/Pager%20Duty%20Branding/RundeckbyPagerDuty.svg" alt="Rundeck" width="300"/>
-</a>
-<a href="https://www.rundeck.com#gh-dark-mode-only">
-  <img src="https://www.rundeck.com/hubfs/Pager%20Duty%20Branding/RundeckbyPagerDutyDM.svg" alt="Rundeck" width="300"/>
+<a href="https://www.rundeck.com">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://www.rundeck.com/hubfs/Pager%20Duty%20Branding/RundeckbyPagerDutyDM.svg" width="300">
+    <source media="(prefers-color-scheme: light)" srcset="https://www.rundeck.com/hubfs/Pager%20Duty%20Branding/RundeckbyPagerDuty.svg" width="300">
+    <img alt="Rundeck">
+  </picture>
 </a>
 </p>
+
 <h3 align="center">Execute workflows across your existing automations<br /> or quickly automate previously manual procedures.</h3>
 
 <br />
