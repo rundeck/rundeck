@@ -16,7 +16,7 @@ databaseChangeLog = {
             }
         }
         addColumn(tableName: "workflow_step") {
-            column(name: "enabled", type: '${boolean.type}')
+            column(name: "enabled", type: '${boolean.type}', defaultValue: '${boolean.default.value.true}')
         }
     }
 }
