@@ -16,18 +16,16 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.core.storage.AuthStorageTree
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import grails.events.annotation.Subscriber
-import org.rundeck.app.components.RundeckJobDefinitionManager
-import rundeck.ScheduledExecution
+import com.dtolabs.rundeck.core.jobs.JobReference
+import com.dtolabs.rundeck.core.jobs.JobRevReference
 
 class JobDescriptionGenerationService {
-    RundeckJobDefinitionManager rundeckJobDefinitionManager
     GenAIService genAIService
     GithubJobDescriptionsService githubJobDescriptionsService
     ProjectManagerService projectManagerService
-    AuthStorageTree authRundeckStorageTree
+    ScheduledExecutionService scheduledExecutionService
 
 
     @Subscriber('jobChanged')
@@ -39,29 +37,54 @@ class JobDescriptionGenerationService {
         }
 
         def projectProperties=projectManagerService.getFrameworkProject(event.job.project)
-
         final boolean jobDescriptionGenEnabled = Boolean.valueOf(projectProperties.getProperty('project.job-description-gen.enable') ?: 'false')
         if (!jobDescriptionGenEnabled) {
             return
         }
 
-        // TODO: Use key storage
-        final String genAiKey = projectProperties.getProperty('project.job-description-gen.gen-ai.key')
-        final String storageKey = projectProperties.getProperty('project.job-description-gen.storage.key')
+        String updateText = generateUpdateText(event)
 
+        saveToStorage(event, updateText)
 
-        String jobDefinition = generateJobExportDefinition(event.job, 'xml')
-        String jobDescription = genAIService.getJobDescriptionFromJobDefinition(genAiKey, jobDefinition)
-        githubJobDescriptionsService.createOrUpdateFile(storageKey, event.job.uuid, "Updated on ${new Date().format("yyyy-MM-dd HH:mm:ss")}", jobDescription)
     }
 
-    private def generateJobExportDefinition(ScheduledExecution scheduledExecution, String format = 'yaml') {
-        assert format in [ 'yaml',  'xml'] : "format must be yaml or xml"
+    private  generateUpdateText(StoredJobChangeEvent event) {
 
-        try (def writer = new StringWriter()) {
-            rundeckJobDefinitionManager.exportAs(format, [scheduledExecution], writer)
-            return writer.toString()
+        final JobReference previousJobRef = event.originalJobReference
+        final String previousJobDefinition = event.originalJobDefinitionXml
+
+        final JobRevReference updatedJobRef = event.jobReference
+        final updatedJobDefinition = scheduledExecutionService.generateJobExportDefinition(event.job, 'xml')
+
+
+        // TODO: Use key storage
+        def projectProperties=projectManagerService.getFrameworkProject(event.job.project)
+        final String genAiKey = projectProperties.getProperty('project.job-description-gen.gen-ai.key')
+
+
+        String updatedJobDescriptionText = genAIService.getJobDescriptionFromJobDefinition(genAiKey, updatedJobDefinition)
+        String jobDiffText = genAIService.getJobDiffDescription(genAiKey, previousJobDefinition, updatedJobDefinition)
+
+        String updateText = """
+# Job Description (revision ${updatedJobRef.version})
+${updatedJobDescriptionText}
+"""
+
+        if (jobDiffText) {
+            updateText = updateText + """
+# Changes from previous revision ${previousJobRef.hasProperty('version') ? "(revision ${previousJobRef.version})" : ""}
+${jobDiffText}
+"""
         }
+
+        return updateText
+    }
+
+    private saveToStorage(StoredJobChangeEvent event, String updateText) {
+        // TODO: Use key storage
+        def projectProperties=projectManagerService.getFrameworkProject(event.job.project)
+        final String storageKey = projectProperties.getProperty('project.job-description-gen.storage.key')
+        githubJobDescriptionsService.createOrUpdateFile(storageKey, "${event.job.uuid}.md", "Updated on ${new Date().format("yyyy-MM-dd HH:mm:ss")}", updateText)
     }
 
 }

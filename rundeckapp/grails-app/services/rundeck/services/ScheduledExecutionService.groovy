@@ -2553,11 +2553,21 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             originalSchedule: scheduledExecution.scheduleEnabled,
             originalExecution: scheduledExecution.executionEnabled,
             originalTz: scheduledExecution.timeZone,
-            originalRef: jobEventRevRef(scheduledExecution)
+            originalRef: jobEventRevRef(scheduledExecution),
+            jobDefinitionXml:  generateJobExportDefinition(scheduledExecution, 'xml')
         )
         ImportedJob<ScheduledExecution> importedJob2 = updateJobDefinition(importedJob, params, authContext, scheduledExecution)
 
         _dosaveupdated(params, importedJob2, oldJob, authContext, changeinfo, validateJobref)
+    }
+
+    def generateJobExportDefinition(ScheduledExecution scheduledExecution, String format = 'yaml') {
+        assert format in [ 'yaml',  'xml'] : "format must be yaml or xml"
+
+        try (def writer = new StringWriter()) {
+            rundeckJobDefinitionManager.exportAs(format, [scheduledExecution], writer)
+            return writer.toString()
+        }
     }
 
     /**
@@ -3558,7 +3568,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (renamed) {
             eventType = JobChangeEvent.JobChangeEventType.MODIFY_RENAME
         }
-        def event = createJobChangeEvent(eventType, scheduledExecution, oldjob.originalRef)
+        def event = createJobChangeEvent(eventType, scheduledExecution, oldjob.originalRef, oldjob.jobDefinitionXml)
         return [success: true, scheduledExecution: scheduledExecution, jobChangeEvent: event, remoteSchedulingChanged: remoteSchedulingChanged]
 
 
@@ -3650,28 +3660,31 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 .publish()
         }
         
-        def event = createJobChangeEvent(JobChangeEvent.JobChangeEventType.CREATE, scheduledExecution)
+        def event = createJobChangeEvent(JobChangeEvent.JobChangeEventType.CREATE, scheduledExecution, null)
         return [success: true, scheduledExecution: scheduledExecution, jobChangeEvent: event]
     }
 
     private static StoredJobChangeEvent createJobChangeEvent(
             JobChangeEvent.JobChangeEventType type,
             ScheduledExecution scheduledExecution,
-            JobReference orig = null
+            JobReference originalJobRef = null,
+            String originalJobDefinitionXml = null
     )
     {
-        createJobChangeEvent(type, jobEventRevRef(scheduledExecution), scheduledExecution, orig)
+        createJobChangeEvent(type, jobEventRevRef(scheduledExecution), scheduledExecution, originalJobRef, originalJobDefinitionXml)
     }
     private static StoredJobChangeEvent createJobChangeEvent(
             JobChangeEvent.JobChangeEventType type,
             JobRevReference rev,
             ScheduledExecution job,
-            JobReference orig = null
+            JobReference originalJobRef = null,
+            String originalJobDefinitionXml = null
     )
     {
         new StoredJobChangeEvent(
                 eventType: type,
-                originalJobReference: orig?:rev,
+                originalJobReference: originalJobRef?:rev,
+                originalJobDefinitionXml: originalJobDefinitionXml,
                 jobReference: rev,
                 job:job
         )
@@ -4798,6 +4811,7 @@ class OldJob{
     Boolean originalExecution
     String originalTz
     JobRevReferenceImpl originalRef
+    String jobDefinitionXml
 
     boolean wasRenamed(String jobName, String groupPath) {
         originalRef.jobName != jobName || originalRef.groupPath != groupPath

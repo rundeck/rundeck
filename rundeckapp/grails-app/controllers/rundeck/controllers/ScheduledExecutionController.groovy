@@ -70,6 +70,7 @@ import org.apache.http.client.utils.URIBuilder
 import org.grails.web.json.JSONElement
 import org.quartz.CronExpression
 import org.rundeck.app.api.model.ApiErrorResponse
+import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.data.model.v1.job.JobBrowseItem
@@ -123,6 +124,7 @@ class ScheduledExecutionController  extends ControllerBase{
     ConfigurationService configurationService
     JobDataProvider jobDataProvider
     ReferencedExecutionDataProvider referencedExecutionDataProvider
+
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
 
@@ -492,7 +494,6 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
     }
-
     private static String getFname(name){
         final Pattern s = Pattern.compile("[\\r\\n \"\\\\]")
         def fname=name.replaceAll(s,'_')
