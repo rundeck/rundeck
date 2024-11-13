@@ -52,7 +52,8 @@ class JobExecSpec extends Specification implements DataTest {
                                 ]
                         ]
                 ],
-                description: 'a monkey'
+                description: 'a monkey',
+                enabled: true
         ]
 
         where:
@@ -81,7 +82,8 @@ class JobExecSpec extends Specification implements DataTest {
                                 ]
                         ]
                 ],
-                description: 'a monkey'
+                description: 'a monkey',
+                enabled: true
         ]
 
         where:
@@ -107,7 +109,8 @@ class JobExecSpec extends Specification implements DataTest {
                         name       : 'name',
                         project: 'projectB',
                 ],
-                description: 'a monkey'
+                description: 'a monkey',
+                enabled: true
         ]
 
     }

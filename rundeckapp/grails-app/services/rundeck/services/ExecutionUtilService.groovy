@@ -40,6 +40,7 @@ import groovy.transform.CompileStatic
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.JobExec
@@ -203,7 +204,8 @@ class ExecutionUtilService {
                     handler,
                     !!cmd.keepgoingOnSuccess,
                     cmd.description,
-                    createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
+                    createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter)),
+                    step.enabled
             )
         }else if (step instanceof JobExec || step.instanceOf(JobExec)) {
             final JobExec jobcmditem = step as JobExec;
@@ -238,7 +240,8 @@ class ExecutionUtilService {
                     jobcmditem.uuid,
                     jobcmditem.useName,
                     jobcmditem.ignoreNotifications,
-                    jobcmditem.childNodes
+                    jobcmditem.childNodes,
+                    step.enabled
             )
         }else if(step instanceof PluginStep || step.instanceOf(PluginStep)){
             final PluginStep stepitem = step as PluginStep
@@ -249,7 +252,8 @@ class ExecutionUtilService {
                         !!stepitem.keepgoingOnSuccess,
                         handler,
                         step.description,
-                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
+                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter)),
+                        step.enabled
                 )
             }else {
                 return ExecutionItemFactory.createPluginStepItem(
@@ -258,7 +262,8 @@ class ExecutionUtilService {
                         !!stepitem.keepgoingOnSuccess,
                         handler,
                         step.description,
-                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
+                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter)),
+                        step.enabled
                 )
             }
         } else {

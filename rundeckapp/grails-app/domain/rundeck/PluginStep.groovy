@@ -95,6 +95,7 @@ class PluginStep extends WorkflowStep{
         if (config) {
             map.plugins = config
         }
+        map.enabled=enabled
         map
     }
     
@@ -242,6 +243,7 @@ class PluginStep extends WorkflowStep{
 
         ce.keepgoingOnSuccess = !!data.keepgoingOnSuccess
         ce.description=data.description?.toString()
+        ce.enabled=data.enabled!=null?data.enabled:true
         if (data.plugins) {
             ce.pluginConfig = data.plugins
         }
@@ -254,7 +256,8 @@ class PluginStep extends WorkflowStep{
                 jsonData: jsonData,
                 keepgoingOnSuccess: keepgoingOnSuccess,
                 description: description,
-                pluginConfig: pluginConfig
+                pluginConfig: pluginConfig,
+                enabled: enabled
         )
     }
 

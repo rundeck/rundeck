@@ -157,15 +157,15 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
 
         where:
         format | input                       | additional
-        "xml"  | getJobXmlScriptfile(true)   | [expandTokenInScriptFile: 'true', argString: '']
-        "xml"  | getJobXmlScriptfile(false)  | [expandTokenInScriptFile: 'false', argString: '']
-        "xml"  | getJobXmlScriptfile(null)   | [argString: '']
-        "yaml" | getJobYamlScriptfile(true)  | [expandTokenInScriptFile: 'true']
-        "yaml" | getJobYamlScriptfile(false) | [expandTokenInScriptFile: 'false']
-        "yaml" | getJobYamlScriptfile(null)  | [:]
-        "json" | getJobJsonScriptfile(true)  | [expandTokenInScriptFile: 'true']
-        "json" | getJobJsonScriptfile(false) | [expandTokenInScriptFile: 'false']
-        "json" | getJobJsonScriptfile(null)  | [:]
+        "xml"  | getJobXmlScriptfile(true)   | [expandTokenInScriptFile: 'true', argString: '', enabled: "true"]
+        "xml"  | getJobXmlScriptfile(false)  | [expandTokenInScriptFile: 'false', argString: '', enabled: "true"]
+        "xml"  | getJobXmlScriptfile(null)   | [argString: '', enabled: "true"]
+        "yaml" | getJobYamlScriptfile(true)  | [expandTokenInScriptFile: 'true', enabled: true]
+        "yaml" | getJobYamlScriptfile(false) | [expandTokenInScriptFile: 'false', enabled: true]
+        "yaml" | getJobYamlScriptfile(null)  | [enabled: true]
+        "json" | getJobJsonScriptfile(true)  | [expandTokenInScriptFile: 'true', enabled: 'true']
+        "json" | getJobJsonScriptfile(false) | [expandTokenInScriptFile: 'false', enabled: 'true']
+        "json" | getJobJsonScriptfile(null)  | [enabled: 'true']
     }
     def "test decode script URL step with/without expandTokenInScriptFile field"() {
         when:
@@ -394,6 +394,7 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
     private static String getJobXmlScriptfile(Boolean expandTokenInScriptFile){
         return """${XML_PREFIX}
       <command>
+        <enabled>true</enabled>
         ${expandTokenInScriptFile!=null ? "<expandTokenInScriptFile>${expandTokenInScriptFile}</expandTokenInScriptFile>" : ""
         }
         <scriptargs />
@@ -469,8 +470,9 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
 
     private static String getJobYamlScriptfile(Boolean expandTokenInScriptFile){
         return """${YAML_PREFIX}
-    ${expandTokenInScriptFile!=null ? """- expandTokenInScriptFile: ${expandTokenInScriptFile}
-      scriptfile: path/to/file.sh""" : "- scriptfile: path/to/file.sh"}
+    - enabled: true
+    ${expandTokenInScriptFile!=null ? """  expandTokenInScriptFile: ${expandTokenInScriptFile}
+      scriptfile: path/to/file.sh""" : "  scriptfile: path/to/file.sh"}
 ${YAML_SUFFIX}"""
     }
 
@@ -564,7 +566,7 @@ ${YAML_SUFFIX}
     private static String getJobJsonScriptfile(Boolean expandTokenInScriptFile){
         return """${JSON_PREFIX}[{
       """+(expandTokenInScriptFile!=null?"""\"expandTokenInScriptFile\": ${expandTokenInScriptFile},""":"")+"""
-        "scriptfile": "path/to/file.sh"
+        "scriptfile": "path/to/file.sh", "enabled": "true"
       }]${JSON_SUFFIX}
 """
     }

@@ -153,9 +153,11 @@ class NodeFirstWorkflowStrategySpec extends Specification {
                 getCommands() >> [
                         Mock(StepExecutionItem) {
                             getType() >> 'typeA'
+                            isEnabled() >> true
                         },
                         Mock(StepExecutionItem) {
                             getType() >> 'typeB'
+                            isEnabled() >> true
                         }
                 ]
             }

@@ -62,6 +62,9 @@ abstract class JobBase {
     }
 
     public static class Command {
+        @JsonProperty("enabled")
+        private boolean enabled;
+
         @JsonProperty("exec")
         private String exec;
     }

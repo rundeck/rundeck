@@ -318,7 +318,7 @@ public class JobsYAMLCodecTests  {
         def doc = yaml.load(ymlstr)
         assertNotNull doc
         assertEquals(1,doc[0].sequence.commands.size())
-        assertEquals([exec:'abc\n' + '123\n' + 'def\n' + 'omg'], doc[0].sequence.commands[0])
+        assertEquals([exec:'abc\n' + '123\n' + 'def\n' + 'omg', enabled: true], doc[0].sequence.commands[0])
     }
     @Test
     void testEncodeStepPlugin() {
@@ -344,7 +344,7 @@ public class JobsYAMLCodecTests  {
         def doc = yaml.load(ymlstr)
         assertNotNull doc
         assertEquals(1,doc[0].sequence.commands.size())
-        assertEquals([type:'monkey', nodeStep:true, configuration: [elf: 'hider']], doc[0].sequence.commands[0])
+        assertEquals([type:'monkey', nodeStep:true, configuration: [elf: 'hider'], enabled: true], doc[0].sequence.commands[0])
     }
     @Test
     void testEncodeStepPluginEmptyConfig() {
@@ -370,7 +370,7 @@ public class JobsYAMLCodecTests  {
         def doc = yaml.load(ymlstr)
         assertNotNull doc
         assertEquals(1,doc[0].sequence.commands.size())
-        assertEquals([type:'monkey', nodeStep:true], doc[0].sequence.commands[0])
+        assertEquals([type:'monkey', nodeStep:true, enabled: true], doc[0].sequence.commands[0])
     }
     @Test
     void testEncodeStepPluginNullConfig() {
@@ -396,7 +396,7 @@ public class JobsYAMLCodecTests  {
         def doc = yaml.load(ymlstr)
         assertNotNull doc
         assertEquals(1,doc[0].sequence.commands.size())
-        assertEquals([type:'monkey', nodeStep:true], doc[0].sequence.commands[0])
+        assertEquals([type:'monkey', nodeStep:true, enabled: true], doc[0].sequence.commands[0])
     }
     @Test
     void testDecodeCrontabString() {
