@@ -11,6 +11,7 @@ import org.rundeck.app.access.InterceptorHelper
 import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
 import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
 import org.rundeck.app.data.model.v1.authtoken.SimpleTokenBuilder
+import org.rundeck.app.data.providers.v1.authtoken.TokenDataProvider
 import org.rundeck.web.infosec.AuthorizationRoleSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
@@ -28,12 +29,14 @@ import java.util.stream.Collectors
 
 class SetUserInterceptor {
     public static final String RUNNER_RQ_ATTRIB = "runnerRq"
+    public static final String RUNNER_JIT_ATTRIB = "runnerJit"
     @Autowired
     ApplicationContext applicationContext
     InterceptorHelper interceptorHelper
     UserService userService
     ApiService apiService
     ConfigurationService configurationService
+    TokenDataProvider tokenDataProvider
 
     int order = HIGHEST_PRECEDENCE + 30
 
@@ -221,7 +224,13 @@ class SetUserInterceptor {
         if(webhookType) {
             tokenobj = apiService.tokenLookupWithType(authtoken,AuthTokenType.WEBHOOK)
         } else if(request.getAttribute(RUNNER_RQ_ATTRIB)) {
-            tokenobj = apiService.tokenLookupWithType(authtoken, AuthTokenType.RUNNER)
+            if(request.getAttribute(RUNNER_JIT_ATTRIB)) {
+                println("lookup up JIT runner token")
+                tokenobj = tokenDataProvider.findByTokenAndType(authtoken, AuthTokenType.RUNNER)
+            } else{
+                println("looking up runner token")
+                tokenobj = apiService.tokenLookupWithType(authtoken, AuthTokenType.RUNNER)
+            }
         } else {
             tokenobj = apiService.tokenLookup(authtoken)
         }
