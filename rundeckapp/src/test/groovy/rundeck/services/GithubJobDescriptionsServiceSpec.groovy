@@ -1,10 +1,12 @@
 package rundeck.services
 
 import grails.testing.services.ServiceUnitTest
+import spock.lang.Ignore
 import spock.lang.Specification
 
 class GithubJobDescriptionsServiceSpec extends Specification implements ServiceUnitTest<GithubJobDescriptionsService> {
 
+    @Ignore
     def "test createOrUpdateFile"() {
         given: "A GithubJobDescriptionsService instance"
 

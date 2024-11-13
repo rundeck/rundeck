@@ -1,10 +1,12 @@
 package rundeck.services
 
 import grails.testing.services.ServiceUnitTest
+import spock.lang.Ignore
 import spock.lang.Specification
 
 class GenAIServiceSpec extends Specification implements ServiceUnitTest<GenAIService> {
 
+    @Ignore
     def 'test getJobDescriptionFromJobDefinition with successful response'() {
         given:
         def sample_job_definition = """

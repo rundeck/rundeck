@@ -15,6 +15,8 @@ class GithubJobDescriptionsService {
     OkHttpClient client = new OkHttpClient()
 
     String createOrUpdateFile(String token, String path, String message, String content) {
+        assert !!token
+
         path = path.startsWith("/") ? path.substring(1) : path
         path = "job_descriptions/$path"
         def getFileUrl = "$apiUrl/repos/$owner/$repo/contents/$path"
