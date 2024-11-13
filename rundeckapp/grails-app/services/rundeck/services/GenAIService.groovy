@@ -1,6 +1,5 @@
 package rundeck.services
 
-
 import groovy.util.logging.Log4j2
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
@@ -53,8 +52,7 @@ class GenAIService {
             } else {
                 String responseBody = response.body().string()
                 def jsonResponse = new JsonSlurper().parseText(responseBody)
-                def answer = jsonResponse.choices[0].message.content
-                return answer
+                return jsonResponse.choices[0].message.content
             }
         } catch (IOException e) {
             throw new RuntimeException("An error occurred", e)

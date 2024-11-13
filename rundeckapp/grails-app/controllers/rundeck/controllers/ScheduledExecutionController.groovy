@@ -495,11 +495,13 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
-    private def generateJobYaml(String uuid)  {
+    private def generateJobExportDefinition(String uuid, String format = 'yaml') {
+        assert format in [ 'yaml',  'xml'] : "format must be yaml or xml"
+
         def scheduledExecution = scheduledExecutionService.getByIDorUUID(uuid )
 
         try (def writer = new StringWriter()) {
-            rundeckJobDefinitionManager.exportAs('yaml', [scheduledExecution], writer)
+            rundeckJobDefinitionManager.exportAs(format, [scheduledExecution], writer)
             return writer.toString()
         }
     }
@@ -2292,8 +2294,8 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
             // Hackweek 2024
             boolean shouldGenerateJobDescription = !!System.getenv("HW_2024_11") ?: false
             if (shouldGenerateJobDescription) {
-                String jobYaml = generateJobYaml(found.uuid)
-                String jobDescription = genAIService.getJobDescriptionFromJobDefinition(jobYaml)
+                String jobDefinition = generateJobExportDefinition(found.uuid, 'xml')
+                String jobDescription = genAIService.getJobDescriptionFromJobDefinition(jobDefinition)
                 githubJobDescriptionsService.createOrUpdateFile(found.uuid, "Updated on ${new Date().format("yyyy-MM-dd HH:mm:ss")}", jobDescription)
             }
 

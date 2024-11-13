@@ -12,6 +12,7 @@ class GithubJobDescriptionsService {
     def repo = "sample_rundeck_jobs"
     def branch = "main"
     def owner = "mrdubr"
+    // Github  API token (legacy, classical)
     def token = System.getenv("GITHUB_TOKEN") ?: "SET_YOUR_GITHUB_TOKEN_IN_THE_ENV_VARIABLE"
     OkHttpClient client = new OkHttpClient()
 

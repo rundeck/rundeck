@@ -8,22 +8,28 @@ class GenAIServiceSpec extends Specification implements ServiceUnitTest<GenAISer
     def 'test getJobDescriptionFromJobDefinition with successful response'() {
         given:
         def sample_job_definition = """
-  defaultTab: nodes
-  description: Job One 5
-  executionEnabled: true
-  id: 48601def-8838-4201-a1a7-1f2e6c46a762
-  loglevel: INFO
-  name: J1
-  nodeFilterEditable: false
-  plugins:
-    ExecutionLifecycle: {}
-  scheduleEnabled: true
-  sequence:
-    commands:
-    - exec: echo Hello
-    keepgoing: false
-    strategy: node-first
-  uuid: 48601def-8838-4201-a1a7-1f2e6c46a762
+<joblist>
+  <job>
+    <defaultTab>nodes</defaultTab>
+    <description></description>
+    <executionEnabled>true</executionEnabled>
+    <id>48601def-8838-4201-a1a7-1f2e6c46a762</id>
+    <loglevel>INFO</loglevel>
+    <name>Job that prints messages to stdout</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>echo Hi</exec>
+      </command>
+      <command>
+        <exec>echo Bye</exec>
+      </command>
+    </sequence>
+    <uuid>48601def-8838-4201-a1a7-1f2e6c46a762</uuid>
+  </job>
+</joblist>
 """
 
         when:
