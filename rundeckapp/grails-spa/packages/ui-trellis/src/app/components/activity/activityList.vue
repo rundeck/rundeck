@@ -496,8 +496,30 @@
               >
                 {{ rpt.jobName }}
               </span>
-              <span v-else>
-                {{ rpt.executionString }}
+              <span v-else-if="isAdhocCommand(rpt)">
+                {{ adhocCommandString(rpt) }}
+              </span>
+              <span
+                v-else-if="
+                  rpt.execution?.workflow?.commands?.length == 1 &&
+                  rpt.execution.workflow.commands[0].type
+                "
+              >
+                <plugin-config
+                  :service-name="
+                    rpt.execution.workflow.commands[0].nodeStep
+                      ? 'WorkflowNodeStep'
+                      : 'WorkflowStep'
+                  "
+                  :provider="rpt.execution.workflow.commands[0].type"
+                  :config="rpt.execution.workflow.commands[0].configuration"
+                  :read-only="true"
+                  :show-title="true"
+                  :show-icon="true"
+                  :show-description="true"
+                  mode="show"
+                  :compact="true"
+                />
               </span>
               <span
                 v-if="
@@ -589,6 +611,7 @@
 import axios from "axios";
 import { defineComponent, PropType } from "vue";
 import moment, { MomentInput } from "moment";
+import pluginConfig from "../../../library/components/plugins/pluginConfig.vue";
 import OffsetPagination from "../../../library/components/utils/OffsetPagination.vue";
 import ActivityFilter from "./activityFilter.vue";
 
@@ -663,6 +686,7 @@ export default defineComponent({
   components: {
     OffsetPagination,
     ActivityFilter,
+    pluginConfig,
   },
   props: {
     eventBus: {
@@ -1003,6 +1027,24 @@ export default defineComponent({
         return "failed-with-retry";
       }
       return "other";
+    },
+    isAdhocCommand(rpt: any) {
+      return (
+        (rpt.executionString && !rpt.executionString.startsWith("Plugin[")) ||
+        (rpt?.execution?.workflow?.commands?.length == 1 &&
+          rpt?.execution?.workflow?.commands[0].exec)
+      );
+    },
+    adhocCommandString(rpt: any) {
+      if (rpt.executionString && !rpt.executionString.startsWith("Plugin[")) {
+        return rpt.executionString;
+      }
+      if (
+        rpt?.execution?.workflow?.commands?.length == 1 &&
+        rpt?.execution?.workflow?.commands[0].exec
+      ) {
+        return rpt?.execution?.workflow?.commands[0].exec;
+      }
     },
     reportState(rpt: any) {
       return rpt.execution.cancelled

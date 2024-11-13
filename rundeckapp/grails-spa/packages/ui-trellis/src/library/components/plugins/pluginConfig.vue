@@ -71,7 +71,12 @@
         <span v-if="validation && !validation.valid" class="text-warning">
           <i class="fas fa-exclamation-circle"></i> {{ validationWarningText }}
         </span>
-        <span v-for="prop in props" :key="prop.name" class="configprop">
+        <span
+          v-for="prop in props"
+          :key="prop.name"
+          class="configprop"
+          :class="{ compact: compact }"
+        >
           <plugin-prop-view
             v-if="
               (prop.type === 'Boolean' || config[prop.name]) &&
@@ -238,6 +243,7 @@ export default defineComponent({
     provider: { required: false },
     config: { required: false },
     mode: { required: false },
+    compact: { required: false },
     showTitle: { required: false },
     showIcon: { required: false },
     showDescription: { required: false },
@@ -641,6 +647,11 @@ export default defineComponent({
 <style lang="scss">
 .configprop + .configprop:before {
   content: " ";
+}
+.configprop.compact {
+  .configpair {
+    display: inline;
+  }
 }
 
 .has-error .ace_editor {
