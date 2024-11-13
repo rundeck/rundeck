@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.storage.AuthStorageTree
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import grails.events.annotation.Subscriber
 import org.rundeck.app.components.RundeckJobDefinitionManager
@@ -25,6 +26,9 @@ class JobDescriptionGenerationService {
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     GenAIService genAIService
     GithubJobDescriptionsService githubJobDescriptionsService
+    ProjectManagerService projectManagerService
+    AuthStorageTree authRundeckStorageTree
+
 
     @Subscriber('jobChanged')
     void onJobChange(StoredJobChangeEvent event) {
@@ -34,12 +38,21 @@ class JobDescriptionGenerationService {
             return
         }
 
-        boolean shouldGenerateJobDescription = !!System.getenv("HW_2024_11") ?: false
-        if (shouldGenerateJobDescription) {
-            String jobDefinition = generateJobExportDefinition(event.job, 'xml')
-            String jobDescription = genAIService.getJobDescriptionFromJobDefinition(jobDefinition)
-            githubJobDescriptionsService.createOrUpdateFile(event.job.uuid, "Updated on ${new Date().format("yyyy-MM-dd HH:mm:ss")}", jobDescription)
+        def projectProperties=projectManagerService.getFrameworkProject(event.job.project)
+
+        final boolean jobDescriptionGenEnabled = Boolean.valueOf(projectProperties.getProperty('project.job-description-gen.enable') ?: 'false')
+        if (!jobDescriptionGenEnabled) {
+            return
         }
+
+        // TODO: Use key storage
+        final String genAiKey = projectProperties.getProperty('project.job-description-gen.gen-ai.key')
+        final String storageKey = projectProperties.getProperty('project.job-description-gen.storage.key')
+
+
+        String jobDefinition = generateJobExportDefinition(event.job, 'xml')
+        String jobDescription = genAIService.getJobDescriptionFromJobDefinition(genAiKey, jobDefinition)
+        githubJobDescriptionsService.createOrUpdateFile(storageKey, event.job.uuid, "Updated on ${new Date().format("yyyy-MM-dd HH:mm:ss")}", jobDescription)
     }
 
     private def generateJobExportDefinition(ScheduledExecution scheduledExecution, String format = 'yaml') {

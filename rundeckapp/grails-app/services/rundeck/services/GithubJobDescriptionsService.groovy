@@ -12,11 +12,9 @@ class GithubJobDescriptionsService {
     def repo = "sample_rundeck_jobs"
     def branch = "main"
     def owner = "mrdubr"
-    // Github  API token (legacy, classical)
-    def token = System.getenv("GITHUB_TOKEN") ?: "SET_YOUR_GITHUB_TOKEN_IN_THE_ENV_VARIABLE"
     OkHttpClient client = new OkHttpClient()
 
-    String createOrUpdateFile(String path, String message, String content) {
+    String createOrUpdateFile(String token, String path, String message, String content) {
         path = path.startsWith("/") ? path.substring(1) : path
         path = "job_descriptions/$path"
         def getFileUrl = "$apiUrl/repos/$owner/$repo/contents/$path"

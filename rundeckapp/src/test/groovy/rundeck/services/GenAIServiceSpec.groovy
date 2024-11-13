@@ -31,9 +31,10 @@ class GenAIServiceSpec extends Specification implements ServiceUnitTest<GenAISer
   </job>
 </joblist>
 """
+        def apiKey = System.getenv("OPENAI_API_KEY")
 
         when:
-        def result = service.getJobDescriptionFromJobDefinition(sample_job_definition)
+        def result = service.getJobDescriptionFromJobDefinition(apiKey, sample_job_definition)
 
         then:
         !result.isEmpty()

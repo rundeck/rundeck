@@ -12,12 +12,14 @@ import groovy.json.JsonSlurper
 @Log4j2
 class GenAIService {
 
-    def apiKey = System.getenv("OPENAI_API_KEY") ?: "SET_YOUR_API_KEY_IN_THE_ENV_VARIABLE"
     def apiUrl = "https://api.openai.com/v1/chat/completions"
 
     def DEFAULT_PROMPT = "Describe the job in a couple of sentences concentrating on the actual commands"
 
-    String getJobDescriptionFromJobDefinition(String jobDefinition, String customPrompt = DEFAULT_PROMPT) {
+    String getJobDescriptionFromJobDefinition(String apiKey, String jobDefinition, String customPrompt = DEFAULT_PROMPT) {
+        assert !!apiKey
+        assert !!jobDefinition
+
         OkHttpClient client = new OkHttpClient()
 
         def jsonBuilder = new JsonBuilder()

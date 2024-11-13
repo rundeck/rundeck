@@ -13,8 +13,11 @@ class GithubJobDescriptionsServiceSpec extends Specification implements ServiceU
         def commitMessage = "Test commit"
         def fileContent = "This is a test file content."
 
+        // Github  API token (legacy, classical)
+        def token = System.getenv("GITHUB_TOKEN")
+
         when: "createOrUpdateFile is called"
-        def sha = service.createOrUpdateFile(filePath, commitMessage, fileContent)
+        def sha = service.createOrUpdateFile(token, filePath, commitMessage, fileContent)
 
         then: "The SHA of the created or updated file is returned"
         sha != null
