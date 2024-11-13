@@ -832,7 +832,6 @@ class WorkflowController extends ControllerBase {
                 item.nodeStep = params.newitemnodestep == 'true'
                 item.configuration = cleanLineEndings(params.pluginConfig)
                 item.description = params.description
-                item.enabled = params.enabled ?: false
             } else if (params.jobName || 'job' == params.newitemtype) {
                 item = new JobExec(params)
                 if (params.nodeStep instanceof String) {
@@ -849,7 +848,8 @@ class WorkflowController extends ControllerBase {
                     //TODO: validate input options
                 }
             }
-            item
+            item.enabled = params.enabled ?: false
+            return item
         }
         def modifyItemFromParams={moditem,params->
             if (params.pluginItem) {
