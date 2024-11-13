@@ -521,84 +521,84 @@ class WorkflowController extends ControllerBase {
     def save() {
         withForm{
             g.refreshFormTokensHeader()
-        if (!params.num && !params.newitem) {
-            log.error("num parameter is required")
-            return renderErrorFragment("num parameter is required")
-        }
-        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
-            return
-        }
-        def Workflow editwf = _getSessionWorkflow()
-        def item
-        def numi
-        def wfEditAction = 'true' == params.newitem ? 'insert' : 'modify'
-        AuthContext auth = rundeckAuthContextProcessor.getAuthContextForSubject(request.subject)
-        def fprojects = frameworkService.projectNames(auth).findAll{it != params.project}
-        if (null != params.num) {
-            try {
-                numi = Integer.parseInt(params.num)
-            } catch (NumberFormatException e) {
-                log.error("num parameter is invalid: " + params.num)
-                flash.'error' = "num parameter is invalid: " + params.num
-                return render(template: "/execution/wfitemEdit", model: [item: null, num: numi, scheduledExecutionId: params.scheduledExecutionId, newitemtype: params['newitemtype'], edit: true, fprojects: fprojects])
+            if (!params.num && !params.newitem) {
+                log.error("num parameter is required")
+                return renderErrorFragment("num parameter is required")
             }
-        } else {
-            numi = editwf.commands ? editwf.commands.size() : 0
-        }
-        final isErrorHandler = params.isErrorHandler == 'true'
-        if (isErrorHandler) {
-            wfEditAction = 'true' == params.newitem ? 'addHandler' : 'modifyHandler'
-        }
-        def result = _applyWFEditAction(
-                editwf,
-                [action: wfEditAction, num: numi, params: params, project: params.project]
-        )
-        if (result.error) {
-            log.error(result.error)
-            item=result.item
-
-            def itemDescription
-            def dynamicProperties
-            if(item && item.instanceOf(PluginStep)){
-                itemDescription = getPluginStepDescription(item.nodeStep, item.type)
-                dynamicProperties = getDynamicProperties(params.project,
-                        item.type,
-                        item.nodeStep,
-                        rundeckAuthorizedServicesProvider.getServicesWith(auth))
+            if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+                return
             }
-
-            def newitemtype = params['newitemtype']
-            def origitemtype = params['origitemtype']
-
-            return render(
-                    template: "/execution/wfitemEdit",
-                    model: [
-                            item                : result.item,
-                            dynamicProperties   : dynamicProperties,
-                            key                 : params.key,
-                            num                 : params.num,
-                            scheduledExecutionId: params.scheduledExecutionId,
-                            newitemtype         : newitemtype,
-                            origitemtype        : origitemtype,
-                            edit                : true,
-                            isErrorHandler      : isErrorHandler,
-                            newitemDescription  : itemDescription,
-                            report              : result.report,
-                            fprojects           : fprojects
-                    ]
+            def Workflow editwf = _getSessionWorkflow()
+            def item
+            def numi
+            def wfEditAction = 'true' == params.newitem ? 'insert' : 'modify'
+            AuthContext auth = rundeckAuthContextProcessor.getAuthContextForSubject(request.subject)
+            def fprojects = frameworkService.projectNames(auth).findAll{it != params.project}
+            if (null != params.num) {
+                try {
+                    numi = Integer.parseInt(params.num)
+                } catch (NumberFormatException e) {
+                    log.error("num parameter is invalid: " + params.num)
+                    flash.'error' = "num parameter is invalid: " + params.num
+                    return render(template: "/execution/wfitemEdit", model: [item: null, num: numi, scheduledExecutionId: params.scheduledExecutionId, newitemtype: params['newitemtype'], edit: true, fprojects: fprojects])
+                }
+            } else {
+                numi = editwf.commands ? editwf.commands.size() : 0
+            }
+            final isErrorHandler = params.isErrorHandler == 'true'
+            if (isErrorHandler) {
+                wfEditAction = 'true' == params.newitem ? 'addHandler' : 'modifyHandler'
+            }
+            def result = _applyWFEditAction(
+                    editwf,
+                    [action: wfEditAction, num: numi, params: params, project: params.project]
             )
-        }
-        _pushUndoAction(params.scheduledExecutionId, result.undo)
-        if (result.undo) {
-            _clearRedoStack(params.scheduledExecutionId)
-        }
+            if (result.error) {
+                log.error(result.error)
+                item=result.item
 
-        item = editwf.commands.get(numi)
-        if(isErrorHandler){
-            item=item.errorHandler
-        }
-        def itemDescription = item.instanceOf(PluginStep) ? getPluginStepDescription(item.nodeStep, item.type) : null
-        return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: item, i: params.key, stepNum: numi, scheduledExecutionId: params.scheduledExecutionId, edit: true,isErrorHandler: isErrorHandler,itemDescription: itemDescription])
+                def itemDescription
+                def dynamicProperties
+                if(item && item.instanceOf(PluginStep)){
+                    itemDescription = getPluginStepDescription(item.nodeStep, item.type)
+                    dynamicProperties = getDynamicProperties(params.project,
+                            item.type,
+                            item.nodeStep,
+                            rundeckAuthorizedServicesProvider.getServicesWith(auth))
+                }
+
+                def newitemtype = params['newitemtype']
+                def origitemtype = params['origitemtype']
+
+                return render(
+                        template: "/execution/wfitemEdit",
+                        model: [
+                                item                : result.item,
+                                dynamicProperties   : dynamicProperties,
+                                key                 : params.key,
+                                num                 : params.num,
+                                scheduledExecutionId: params.scheduledExecutionId,
+                                newitemtype         : newitemtype,
+                                origitemtype        : origitemtype,
+                                edit                : true,
+                                isErrorHandler      : isErrorHandler,
+                                newitemDescription  : itemDescription,
+                                report              : result.report,
+                                fprojects           : fprojects
+                        ]
+                )
+            }
+            _pushUndoAction(params.scheduledExecutionId, result.undo)
+            if (result.undo) {
+                _clearRedoStack(params.scheduledExecutionId)
+            }
+
+            item = editwf.commands.get(numi)
+            if(isErrorHandler){
+                item=item.errorHandler
+            }
+            def itemDescription = item.instanceOf(PluginStep) ? getPluginStepDescription(item.nodeStep, item.type) : null
+            return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: item, i: params.key, stepNum: numi, scheduledExecutionId: params.scheduledExecutionId, edit: true,isErrorHandler: isErrorHandler,itemDescription: itemDescription])
         }.invalidToken {
             response.status=HttpServletResponse.SC_BAD_REQUEST
             return renderErrorFragment(g.message(code: 'request.error.invalidtoken.message'))
@@ -855,7 +855,10 @@ class WorkflowController extends ControllerBase {
                 if (!params.keepgoingOnSuccess) {
                     params.keepgoingOnSuccess = 'false'
                 }
-                moditem.properties=params.subMap(['keepgoingOnSuccess','description'])
+                if (!params.enabled) {
+                    params.enabled = 'false'
+                }
+                moditem.properties=params.subMap(['keepgoingOnSuccess','description', 'enabled'])
                 moditem.configuration = cleanLineEndings(params.pluginConfig)
             } else {
                 if(params.nodeStep instanceof String) {
