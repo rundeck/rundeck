@@ -15,7 +15,7 @@ class GenAIService {
 
     def apiUrl = "https://api.openai.com/v1/chat/completions"
 
-    def DEFAULT_PROMPT = "Describe the job in a couple of sentences concentrating on the actual commands"
+    def DEFAULT_PROMPT = "Describe the job in a couple of sentences concentrating on the actual commands. In a separate paragraph titled \"Recommendation\", provide recommendations for how to make this job better, more secure and more performant?"
     def DEFAULT_DIFF_PROMPT = "Provide a brief summary of changes between two Rundeck jobs"
 
     String getJobDescriptionFromJobDefinition(IRundeckProject projectProperties, String jobDefinition, String customPrompt = DEFAULT_PROMPT) {
