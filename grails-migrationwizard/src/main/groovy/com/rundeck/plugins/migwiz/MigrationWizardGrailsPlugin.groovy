@@ -28,6 +28,8 @@ class MigrationWizardGrailsPlugin extends Plugin {
             migWizUIPlugin(MigWizUIPluginFactory) {
                 pluginRegistry = ref('rundeckPluginRegistry')
             }
+
+            migrationWizardService(MigrationWizardService)
         }
     }
 
