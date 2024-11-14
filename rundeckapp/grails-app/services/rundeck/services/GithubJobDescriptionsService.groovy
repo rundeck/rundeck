@@ -81,4 +81,35 @@ class GithubJobDescriptionsService {
             throw new RuntimeException("An error occurred", e)
         }
     }
+
+    String getFileContent(IRundeckProject projectProps, String path) {
+        assert !!projectProps
+        assert !!path
+
+        final String token = projectProps.getProperty('project.job-description-gen.storage.key')
+        final String repo = projectProps.getProperty('project.job-description-gen.storage.repo')
+        final String owner = projectProps.getProperty('project.job-description-gen.storage.owner')
+
+        assert !!token
+        assert !!repo
+        assert !!owner
+
+        path = path.startsWith("/") ? path.substring(1) : path
+        path = "job_descriptions/$path"
+        def getFileUrl = "$apiUrl/repos/$owner/$repo/contents/$path"
+        def getFileRequest = new Request.Builder()
+                .url(getFileUrl)
+                .addHeader("Authorization", "Bearer $token")
+                .build()
+
+        Response getFileResponse = client.newCall(getFileRequest).execute()
+        if (!getFileResponse.isSuccessful()) {
+            throw new RuntimeException("Request failed: ${getFileResponse.code()} with body: ${getFileResponse.body().string()}")
+        }
+
+        def getFileResponseBody = getFileResponse.body().string()
+        def getFileJson = new JsonSlurper().parseText(getFileResponseBody)
+        def content = getFileJson.content
+        return new String(content.decodeBase64())
+    }
 }

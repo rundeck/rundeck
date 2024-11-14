@@ -63,13 +63,14 @@ class JobDescriptionGenerationService {
         String jobDiffText = genAIService.getJobDiffDescription(projectProperties, previousJobDefinition, updatedJobDefinition)
 
         String updateText = """
-# Job Description (revision ${updatedJobRef.version})
+# Revision ${updatedJobRef.version})\n
+## Job Description
 ${updatedJobDescriptionText}
 """
 
         if (jobDiffText) {
             updateText = updateText + """
-# Changes from previous revision ${previousJobRef.hasProperty('version') ? "(revision ${previousJobRef.version})" : ""}
+## Changes from previous revision ${previousJobRef.hasProperty('version') ? "(revision ${previousJobRef.version})" : ""}
 ${jobDiffText}
 """
         }
@@ -106,7 +107,13 @@ ${jobDiffText}
 
     private saveToStorage(StoredJobChangeEvent event, String updateText) {
         def projectProperties=projectManagerService.getFrameworkProject(event.job.project)
-        githubJobDescriptionsService.createOrUpdateFile(projectProperties, "${event.job.uuid}.md", "Updated on ${new Date().format("yyyy-MM-dd HH:mm:ss")}", updateText)
+
+        String filePath = "${event.job.uuid}.md"
+        String existingFileContent = githubJobDescriptionsService.getFileContent(projectProperties, filePath)
+
+        String newFileContent = updateText + (existingFileContent ?: "")
+
+        githubJobDescriptionsService.createOrUpdateFile(projectProperties, filePath, "Updated on ${new Date().format("yyyy-MM-dd HH:mm:ss")}", newFileContent)
     }
 
 }

@@ -53,8 +53,8 @@ class JobSimilarityDetectionService {
         final Sketch sourceJobSketch = createMinHashSketch(scheduledExecutionService.generateJobExportDefinition(sourceJob, SIMILARITY_COMPARISON_FORMAT))
 
         jobSketchesInProject(project).findAll {
-            def similarityLog = "Similarity of ${sourceJob.jobName} with ${it.key.jobName} was: ${new JaccardSimilarity().jaccard(sourceJobSketch, it.value)}"
-            log.info(similarityLog)
+            def similarityLog = "Similarity of \"${sourceJob.jobName}\" with \"${it.key.jobName}\" is: ${new JaccardSimilarity().jaccard(sourceJobSketch, it.value)}"
+            log.warn(similarityLog)
             areSimilar(sourceJobSketch, it.value, projectJobSimilarityThreshold)
         }.collect { it.key }
                 .findAll { it.uuid != sourceJob.uuid } // remove the sourceJob itself
