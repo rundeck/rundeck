@@ -15,7 +15,7 @@ class GenAIService {
 
     def apiUrl = "https://api.openai.com/v1/chat/completions"
 
-    def DEFAULT_PROMPT = "Describe the job in a couple of sentences concentrating on the actual commands. In a separate paragraph titled \"##Recommended Improvements\", provide a brief list of recommendations for how to make this job better, more secure and more performant?"
+    def DEFAULT_PROMPT = "Describe the job in a couple of sentences concentrating on the actual commands. In a separate paragraph titled \"##Recommended Improvements\", provide a brief list of top 3 recommendations for how to make this job better, more secure and more performant?"
     def DEFAULT_DIFF_PROMPT = "Provide a brief summary of changes between two Rundeck jobs"
 
     String getJobDescriptionFromJobDefinition(IRundeckProject projectProperties, String jobDefinition, String customPrompt = DEFAULT_PROMPT) {
@@ -66,7 +66,7 @@ class GenAIService {
         }
     }
 
-    String getJobDiffDescription(IRundeckProject projectProperties, String previousJobDefinition, String updatedJobDefinition, String customPrompt = DEFAULT_DIFF_PROMPT) {
+    String getJobDiffDescription(IRundeckProject projectProperties, String previousJobDefinition, String updatedJobDefinition, String customPrompt = DEFAULT_DIFF_PROMPT, String previousJobName = "Original job", String updatedJobName = "Updated job") {
         assert !!updatedJobDefinition
 
         final String apiKey = projectProperties.getProperty('project.job-description-gen.gen-ai.key')
@@ -83,7 +83,7 @@ class GenAIService {
             model "gpt-4o-mini"
             messages([
                     [role: "system", content: "Your are an experienced Rundeck user"],
-                    [role: "user", content: "$customPrompt. Original job definition: ```$previousJobDefinition``` Updated job definition: ```$updatedJobDefinition```"]
+                    [role: "user", content: "$customPrompt. ${previousJobName} definition: ```$previousJobDefinition``` ${updatedJobName} definition: ```$updatedJobDefinition```"]
             ])
             temperature 0.9
             max_tokens 250

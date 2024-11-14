@@ -63,7 +63,7 @@ class JobDescriptionGenerationService {
         String jobDiffText = genAIService.getJobDiffDescription(projectProperties, previousJobDefinition, updatedJobDefinition)
 
         String updateText = """
-# Revision ${updatedJobRef.version})\n
+# Revision ${updatedJobRef.version}\n
 ## Job Description
 ${updatedJobDescriptionText}
 """
@@ -98,7 +98,10 @@ ${jobDiffText}
             def similarityStr = genAIService.getJobDiffDescription(
                     projectProperties, scheduledExecutionService.generateJobExportDefinition(changedSe, 'xml'),
                     scheduledExecutionService.generateJobExportDefinition(similarJob, 'xml'),
-                    "Determine if two jobs are doing something similar. If no, explain in one sentence. If yes, provide at most two sentences that summarize the similarity")
+                    "Determine if two jobs are doing something similar. If no, explain in one sentence. If yes, provide at most two sentences that summarize the similarity. Don't say yes or no in the response.",
+                    "original job",
+                    "potentially similar job"
+            )
             sb.append("**Similarity analysis**: ${similarityStr}\n\n")
         }
 
