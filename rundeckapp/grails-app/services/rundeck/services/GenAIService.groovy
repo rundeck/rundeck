@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import groovy.util.logging.Log4j2
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
@@ -17,9 +18,12 @@ class GenAIService {
     def DEFAULT_PROMPT = "Describe the job in a couple of sentences concentrating on the actual commands"
     def DEFAULT_DIFF_PROMPT = "Provide a brief summary of changes between two Rundeck jobs"
 
-    String getJobDescriptionFromJobDefinition(String apiKey, String jobDefinition, String customPrompt = DEFAULT_PROMPT) {
-        assert !!apiKey
+    String getJobDescriptionFromJobDefinition(IRundeckProject projectProperties, String jobDefinition, String customPrompt = DEFAULT_PROMPT) {
         assert !!jobDefinition
+
+        // TODO: Use key storage
+        final String apiKey = projectProperties.getProperty('project.job-description-gen.gen-ai.key')
+        assert !!apiKey
 
         OkHttpClient client = new OkHttpClient()
 
@@ -62,9 +66,11 @@ class GenAIService {
         }
     }
 
-    String getJobDiffDescription(String apiKey, String previousJobDefinition, String updatedJobDefinition, String customPrompt = DEFAULT_DIFF_PROMPT) {
-        assert !!apiKey
+    String getJobDiffDescription(IRundeckProject projectProperties, String previousJobDefinition, String updatedJobDefinition, String customPrompt = DEFAULT_DIFF_PROMPT) {
         assert !!updatedJobDefinition
+
+        final String apiKey = projectProperties.getProperty('project.job-description-gen.gen-ai.key')
+        assert !!apiKey
 
         if (!previousJobDefinition) {
             return null

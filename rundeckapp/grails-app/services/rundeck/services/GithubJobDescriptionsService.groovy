@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
 import groovy.util.logging.Log4j2
@@ -9,13 +10,20 @@ import okhttp3.*
 class GithubJobDescriptionsService {
 
     def apiUrl = "https://api.github.com"
-    def repo = "sample_rundeck_jobs"
     def branch = "main"
-    def owner = "mrdubr"
     OkHttpClient client = new OkHttpClient()
 
-    String createOrUpdateFile(String token, String path, String message, String content) {
+    String createOrUpdateFile(IRundeckProject projectProps, String path, String message, String content) {
+        assert !!projectProps
+
+        // TODO: Use key storage
+        final String token = projectProps.getProperty('project.job-description-gen.storage.key')
+        final String repo = projectProps.getProperty('project.job-description-gen.storage.repo')
+        final String owner = projectProps.getProperty('project.job-description-gen.storage.owner')
+
         assert !!token
+        assert !!repo
+        assert !!owner
 
         path = path.startsWith("/") ? path.substring(1) : path
         path = "job_descriptions/$path"

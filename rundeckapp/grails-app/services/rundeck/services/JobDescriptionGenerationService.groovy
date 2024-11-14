@@ -56,14 +56,9 @@ class JobDescriptionGenerationService {
         final JobRevReference updatedJobRef = event.jobReference
         final updatedJobDefinition = scheduledExecutionService.generateJobExportDefinition(event.job, 'xml')
 
-
-        // TODO: Use key storage
         def projectProperties=projectManagerService.getFrameworkProject(event.job.project)
-        final String genAiKey = projectProperties.getProperty('project.job-description-gen.gen-ai.key')
-
-
-        String updatedJobDescriptionText = genAIService.getJobDescriptionFromJobDefinition(genAiKey, updatedJobDefinition)
-        String jobDiffText = genAIService.getJobDiffDescription(genAiKey, previousJobDefinition, updatedJobDefinition)
+        String updatedJobDescriptionText = genAIService.getJobDescriptionFromJobDefinition(projectProperties, updatedJobDefinition)
+        String jobDiffText = genAIService.getJobDiffDescription(projectProperties, previousJobDefinition, updatedJobDefinition)
 
         String updateText = """
 # Job Description (revision ${updatedJobRef.version})
@@ -81,10 +76,8 @@ ${jobDiffText}
     }
 
     private saveToStorage(StoredJobChangeEvent event, String updateText) {
-        // TODO: Use key storage
         def projectProperties=projectManagerService.getFrameworkProject(event.job.project)
-        final String storageKey = projectProperties.getProperty('project.job-description-gen.storage.key')
-        githubJobDescriptionsService.createOrUpdateFile(storageKey, "${event.job.uuid}.md", "Updated on ${new Date().format("yyyy-MM-dd HH:mm:ss")}", updateText)
+        githubJobDescriptionsService.createOrUpdateFile(projectProperties, "${event.job.uuid}.md", "Updated on ${new Date().format("yyyy-MM-dd HH:mm:ss")}", updateText)
     }
 
 }
