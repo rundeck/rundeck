@@ -1,24 +1,41 @@
 <template>
-  <div>
-    <form>
-      <div class="form-group">
-        <label> Instance name </label>
-        <input class="form-control" />
+  <div class="flex-col">
+    <p>
+      {{ $t("migwiz.welcome") }}
+    </p>
+    <form class="flex-form">
+      <div class="form-group row">
+        <label> {{ $t("migwiz.instanceName") }} </label>
+        <div class="col-xs-12 col-sm-9 col-lg-11">
+          <input class="form-control" />
+        </div>
       </div>
-      <div class="form-group">
-        <label> Name </label>
-        <input class="form-control" />
+      <div class="form-group row">
+        <label> {{ $t("migwiz.name") }} </label>
+        <div class="col-xs-12 col-sm-9 col-lg-11">
+          <input class="form-control" />
+        </div>
       </div>
-      <div class="form-group">
-        <label> E-mail </label>
-        <input class="form-control" />
+      <div class="form-group row">
+        <label> {{ $t("migwiz.email") }} </label>
+        <div class="col-xs-12 col-sm-9 col-lg-11">
+          <input class="form-control" />
+        </div>
       </div>
-      <div class="checkbox">
-        <input type="checkbox" class="form-control" />
-        <label>I agree to terms and conditions</label>
+      <div class="form-group row">
+        <div class="col-xs-12 col-sm-9 col-lg-11">
+          <div class="checkbox">
+            <input type="checkbox" class="form-control" />
+            <label>
+              {{ $t("migwiz.confirmAgreement") }}
+            </label>
+          </div>
+        </div>
       </div>
+      <btn @click="next">
+        {{ $t("migwiz.startMigration") }}
+      </btn>
     </form>
-    <btn @click="next">Go to next step</btn>
   </div>
 </template>
 
@@ -27,6 +44,7 @@ import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "MigrationFirstStep",
+
   emits: ["nextStep"],
   data() {
     return {};
@@ -39,4 +57,25 @@ export default defineComponent({
 });
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.flex-col {
+  gap: 20px;
+}
+.flex-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+
+  .form-group {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 100%;
+
+    label {
+      flex-shrink: 0;
+    }
+  }
+}
+</style>

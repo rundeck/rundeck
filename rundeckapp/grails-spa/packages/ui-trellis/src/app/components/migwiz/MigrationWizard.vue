@@ -2,7 +2,7 @@
   <div>
     <h1 class="title text-h3">
       <i class="fas fa-rocket"></i>
-      {{ $t("try.rba") }}
+      {{ $t("try.rba") }} - {{ $t(`migwiz.step${activeStep}.title`) }}
     </h1>
     <div class="card">
       <div class="card-content">

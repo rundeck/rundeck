@@ -123,7 +123,7 @@
 %{--          </li>--}%
 %{--        Might swap back to a ui-socket --}%
           <li>
-            <g:link controller="migWiz" class="btn btn-cta">
+            <g:link controller="MigWiz" class="btn btn-cta">
               <g:message code="try.rba" />
             </g:link>
           </li>

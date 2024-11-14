@@ -903,6 +903,28 @@ const messages = {
   "plugin.type.WorkflowNodeStep.title": "Node Step",
   "JobExec.nodeStep.true.label": "Node Step",
   "try.rba": "Try RBA",
+  "migwiz.welcome":
+    "Unlock the potential of PagerDuty Runbook Automation with a free trial that mirrors your current data, allowing you to explore its full capabilities. This SaaS solution is designed to save time and meet enterprise needs with advanced features. Sign up to activate your trial and focus on building automation, automating incident remediation, and enabling self-service operations. Discover enterprise features, including commercial integrations, today!",
+  "migwiz.instanceName": "Instance name",
+  "migwiz.step1.title": "Sign up",
+  "migwiz.name": "Name",
+  "migwiz.email": "Email",
+  "migwiz.confirmAgreement": "I agree to terms and conditions",
+  "migwiz.startMigration": "Start migration",
+  "migwiz.setup.inprogress.step1": "Starting a new RBA instance",
+  "migwiz.setup.inprogress.step1.ready": "RBA instance created.",
+  "migwiz.setup.inprogress.step2": "Validating data to ensure compatibility",
+  "migwiz.setup.inprogress.step2.ready":
+    "Good news! Your data is 100% compatible, therefore everything can be imported",
+  "migwiz.setup.inprogress.step3": "Creating a runner for your jobs",
+  "migwiz.setup.inprogress.step3.ready": "Runner up and running",
+  "migwiz.setup.inprogress.step4":
+    "Importing the data and updating jobs to use the new runner",
+  "migwiz.setup.inprogress.step4.ready": "Everything is ready!",
+  "migwiz.step2.title": "Preparing your trial",
+  "migwiz.waitForActivation":
+    "Thank you for submitting your information! We are now validating your data and setting up your trial of PagerDuty Runbook Automation. This process ensures that your current data is accurately replicated, allowing you to fully experience the platform's capabilities. Please hold tight while we complete the setup. Your trial will be ready shortly, and you'll soon be able to explore all the powerful features we offer.",
+  "migwiz.accessYourTrial": "Access your trial",
 };
 
 export default messages;
