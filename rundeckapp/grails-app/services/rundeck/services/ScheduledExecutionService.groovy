@@ -2562,7 +2562,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     def generateJobExportDefinition(ScheduledExecution scheduledExecution, String format = 'yaml') {
-        assert format in [ 'yaml',  'xml'] : "format must be yaml or xml"
+        assert format in [ 'yaml',  'xml', 'json'] : "Invalid format: ${format}"
 
         try (def writer = new StringWriter()) {
             rundeckJobDefinitionManager.exportAs(format, [scheduledExecution], writer)

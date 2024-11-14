@@ -115,6 +115,7 @@ dependencies {
     implementation project(':rundeck-storage:rundeck-storage-filesys')
     implementation project(':rundeck-app-util')
 
+    implementation group: 'org.apache.datasketches', name: 'datasketches-java', version: '3.3.0'
 
     /** It's important that the configuration addition follow the form 'compile project("")'
      * so the Gradle magic happens. Other forms(ie 'compile proj' or 'compile project(proj)'

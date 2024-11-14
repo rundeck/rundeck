@@ -16,16 +16,19 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import grails.events.annotation.Subscriber
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
+import rundeck.ScheduledExecution
 
 class JobDescriptionGenerationService {
     GenAIService genAIService
     GithubJobDescriptionsService githubJobDescriptionsService
     ProjectManagerService projectManagerService
     ScheduledExecutionService scheduledExecutionService
+    JobSimilarityDetectionService jobSimilarityDetectionService
 
 
     @Subscriber('jobChanged')
@@ -45,7 +48,6 @@ class JobDescriptionGenerationService {
         String updateText = generateUpdateText(event)
 
         saveToStorage(event, updateText)
-
     }
 
     private  generateUpdateText(StoredJobChangeEvent event) {
@@ -72,7 +74,34 @@ ${jobDiffText}
 """
         }
 
+        def jobSimilaritiesText = jobSimilaritiesText(projectProperties, event.job)
+        if (jobSimilaritiesText) {
+            updateText = updateText + jobSimilaritiesText
+        }
+
         return updateText
+    }
+
+    private String jobSimilaritiesText(IRundeckProject projectProperties, ScheduledExecution changedSe) {
+        Set<ScheduledExecution> similarJobs = jobSimilarityDetectionService.findSimilarJobs(projectProperties, changedSe)
+
+        if (similarJobs.isEmpty()) {
+            return ""
+        }
+
+        def sb = new StringBuilder()
+        sb.append("## Potentally similar jobs (${similarJobs.size()})\n")
+
+        similarJobs.each { similarJob ->
+            sb.append("### ${similarJob.uuid}: ${similarJob.jobName}\n\n")
+            def similarityStr = genAIService.getJobDiffDescription(
+                    projectProperties, scheduledExecutionService.generateJobExportDefinition(changedSe, 'xml'),
+                    scheduledExecutionService.generateJobExportDefinition(similarJob, 'xml'),
+                    "Determine if two jobs are doing something similar. If no, explain in one sentence. If yes, provide at most two sentences that summarize the similarity")
+            sb.append("**Similarity analysis**: ${similarityStr}\n\n")
+        }
+
+        sb.toString()
     }
 
     private saveToStorage(StoredJobChangeEvent event, String updateText) {
