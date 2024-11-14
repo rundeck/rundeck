@@ -11,13 +11,25 @@
         </div>
       </div>
       <div class="form-group row">
-        <label> {{ $t("migwiz.name") }} </label>
+        <label> {{ $t("migwiz.firstName") }} </label>
+        <div class="col-xs-12 col-sm-9 col-lg-11">
+          <input class="form-control" />
+        </div>
+      </div>
+      <div class="form-group row">
+        <label> {{ $t("migwiz.lastName") }} </label>
         <div class="col-xs-12 col-sm-9 col-lg-11">
           <input class="form-control" />
         </div>
       </div>
       <div class="form-group row">
         <label> {{ $t("migwiz.email") }} </label>
+        <div class="col-xs-12 col-sm-9 col-lg-11">
+          <input class="form-control" />
+        </div>
+      </div>
+      <div class="form-group row">
+        <label> {{ $t("migwiz.company") }} </label>
         <div class="col-xs-12 col-sm-9 col-lg-11">
           <input class="form-control" />
         </div>
@@ -41,6 +53,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { Form } from "@primevue/forms";
 
 export default defineComponent({
   name: "MigrationFirstStep",
