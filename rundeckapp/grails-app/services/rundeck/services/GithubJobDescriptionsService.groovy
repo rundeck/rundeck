@@ -104,7 +104,8 @@ class GithubJobDescriptionsService {
 
         Response getFileResponse = client.newCall(getFileRequest).execute()
         if (!getFileResponse.isSuccessful()) {
-            throw new RuntimeException("Request failed: ${getFileResponse.code()} with body: ${getFileResponse.body().string()}")
+            log.error("Request failed: ${getFileResponse.code()} with body: ${getFileResponse.body().string()}")
+            return ""
         }
 
         def getFileResponseBody = getFileResponse.body().string()
