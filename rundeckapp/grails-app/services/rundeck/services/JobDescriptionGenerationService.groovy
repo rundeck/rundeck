@@ -21,6 +21,12 @@ import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import grails.events.annotation.Subscriber
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
+import groovy.json.JsonBuilder
+import okhttp3.MediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody
+import okhttp3.Response
 import rundeck.ScheduledExecution
 
 class JobDescriptionGenerationService {
@@ -48,6 +54,8 @@ class JobDescriptionGenerationService {
         String updateText = generateUpdateText(event)
 
         saveToStorage(event, updateText)
+        sendToSlack(projectProperties, updateText)
+
     }
 
     private  generateUpdateText(StoredJobChangeEvent event) {
@@ -117,6 +125,39 @@ ${jobDiffText}
         String newFileContent = updateText + (existingFileContent ?: "")
 
         githubJobDescriptionsService.createOrUpdateFile(projectProperties, filePath, "Updated on ${new Date().format("yyyy-MM-dd HH:mm:ss")}", newFileContent)
+    }
+
+    private void sendToSlack(IRundeckProject projectProperties, String message) {
+        final def slackWebhookUrl = 'https://slack.com/api/chat.postMessage'
+        final String slackToken = projectProperties.getProperty('project.job-description-gen.slack.key')
+        final String slackChannel = projectProperties.getProperty('project.job-description-gen.slack.channel')
+
+        OkHttpClient client = new OkHttpClient()
+
+        MediaType JSON = MediaType.get("application/json; charset=utf-8")
+
+        def jsonBuilder = new JsonBuilder()
+        jsonBuilder {
+            channel "${slackChannel}"
+            text message
+        }
+
+        String json = jsonBuilder.toString()
+
+        RequestBody body = RequestBody.create(json, JSON)
+        Request request = new Request.Builder()
+                .url(slackWebhookUrl)
+                .addHeader("Authorization", "Bearer ${slackToken}")
+                .post(body)
+                .build()
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException("Unexpected code " + response)
+            }
+        } catch (IOException e) {
+            e.printStackTrace()
+        }
     }
 
 }
