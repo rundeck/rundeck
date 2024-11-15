@@ -75,6 +75,7 @@ class UtilityTagLib{
             'jobComponentMessagesType',
             'filterPluginPropertiesByFeature',
             'groupPluginProperties',
+            'appRundeckGatewayUrl'
     ]
 
     private static Random rand=new java.util.Random()
@@ -1223,6 +1224,9 @@ class UtilityTagLib{
     }
     def appLogocss={attrs,body->
         configurationService.getString("gui.logocss") ?:g.message(code:'main.app.logocss',default:'')?:g.message(code:'main.app.default.logocss')
+    }
+    def appRundeckGatewayUrl={attrs,body->
+        configurationService.getString("awsgateway.url", "https://api.rundeck.com")
     }
 
     def executionMode={attrs,body->
