@@ -25,6 +25,7 @@ class MigrationWizardService {
     // TODO Create Runner in RBA
     // TODO Convert jobs to use Runner.
 
+
     /**
      * Imports a local project to a cloud Runbook Automation instance.
      * @param projectName
@@ -52,6 +53,7 @@ class MigrationWizardService {
                 exportAcls      : true,
                 exportScm       : true,
                 preserveuuid    : true,
+                // TODO: exportComponents
             ]
 
             // Create the archive
