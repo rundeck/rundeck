@@ -281,7 +281,7 @@
               v-tooltip.bottom="runningStatusTooltip(exec)"
               class="right date"
             >
-              <span v-if="exec.dateStarted.date">
+              <span v-if="exec.dateStarted.date" class="spacing-x-2">
                 <i class=" ">
                   {{ momentJobFormatDate(exec.dateStarted.date) }}
                 </i>
