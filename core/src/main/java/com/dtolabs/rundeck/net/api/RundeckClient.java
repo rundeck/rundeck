@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.net.api;
 
 import com.dtolabs.rundeck.net.model.ProjectImportStatus;
+import com.dtolabs.rundeck.net.model.ProjectInfo;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import retrofit2.Response;
@@ -69,6 +70,10 @@ public class RundeckClient {
                 params,
                 requestBody
         ).execute();
+    }
+
+    public Response<ProjectInfo> createProject(ProjectInfo projectInfo) throws IOException {
+        return rundeckApi.createProject(projectInfo).execute();
     }
 
     private static String buildApiUrlForVersion(String baseUrl, final int apiVers) {

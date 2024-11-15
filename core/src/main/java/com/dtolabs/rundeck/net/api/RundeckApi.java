@@ -1,4 +1,5 @@
 package com.dtolabs.rundeck.net.api;
+import com.dtolabs.rundeck.net.model.ProjectInfo;
 import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.http.*;
@@ -36,4 +37,9 @@ public interface RundeckApi {
             @QueryMap Map<String,String> params,
             @Body RequestBody body
     );
+
+    @Headers("Accept: application/json")
+    @POST("projects")
+    Call<ProjectInfo> createProject(@Body ProjectInfo projectInfo);
+
 }

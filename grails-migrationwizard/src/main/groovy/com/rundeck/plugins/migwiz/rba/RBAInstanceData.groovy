@@ -5,7 +5,7 @@ package com.rundeck.plugins.migwiz.rba
  */
 class RBAInstanceData {
     String url
-    String username
-    String password
+//    String username
+//    String password
     String token
 }

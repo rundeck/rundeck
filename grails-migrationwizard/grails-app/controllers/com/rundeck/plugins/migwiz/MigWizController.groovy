@@ -18,21 +18,18 @@ class MigWizController {
 
     def migWiz() {}
 
-    // POST endpoint to migrate a project to RBA
-//    @Post("/migWiz/migrate")
+
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_EXPORT)
-    def migrateProjectToRBA() {
+    def migrateProjectToRBA(RBAInstanceData instance) {
 
         String project = params.project
-
-        def instance = new RBAInstanceData()
 
         def authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(
             getSubject(),
             project
         )
 
-        migrationWizardService.migrateProjectToRBA(project, instance, authContext)
+        return migrationWizardService.migrateProjectToRBA(project, instance, authContext)
     }
 
 

@@ -786,7 +786,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     }
 
     /**
-     * Export the project to an outputstream with a signature compatible with grails plugins.
+     * Export the project to an outputstream with a signature compatible with external grails plugins.
      * @param project
      * @param framework
      * @return
