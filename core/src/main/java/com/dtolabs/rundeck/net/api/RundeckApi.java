@@ -38,8 +38,22 @@ public interface RundeckApi {
             @Body RequestBody body
     );
 
+    /**
+     * Create a project
+     * @param projectInfo Project info
+     * @return Created project info
+     */
     @Headers("Accept: application/json")
     @POST("projects")
     Call<ProjectInfo> createProject(@Body ProjectInfo projectInfo);
+
+    /**
+     * Get a project
+     * @param project Project name
+     * @return Project info
+     */
+    @Headers("Accept: application/json")
+    @GET("project/{project}")
+    Call<ProjectInfo> getProject(@Path("project") String project);
 
 }

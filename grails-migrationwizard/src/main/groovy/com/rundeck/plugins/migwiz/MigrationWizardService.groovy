@@ -6,15 +6,13 @@ import com.dtolabs.rundeck.net.api.RundeckClient
 import com.dtolabs.rundeck.net.model.ProjectImportStatus
 import com.dtolabs.rundeck.net.model.ProjectInfo
 import com.rundeck.plugins.migwiz.rba.RBAInstanceData
+import groovy.util.logging.Slf4j
 import okhttp3.RequestBody
 import org.rundeck.core.projects.ProjectArchiver
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Component
 
-@Component
+@Slf4j
 class MigrationWizardService {
-
-    private static final RBA_BASE_DOMAIN = "stg.runbook.pagerduty.cloud"
 
     @Autowired
     ProjectArchiver projectArchiver
@@ -39,7 +37,7 @@ class MigrationWizardService {
         File archiveFile;
 
         try {
-            archiveFile = File.createTempFile("export-${projectName}", ".jar")
+            archiveFile = createTempArchive(projectName)
             archiveFile.deleteOnExit()
 
             def project = framework.getFrameworkProjectMgr().getFrameworkProject(projectName)
@@ -67,16 +65,21 @@ class MigrationWizardService {
                 )
             }
 
-
+            // Project Config
             RundeckClient rundeckClient = new RundeckClient(instance.url, instance.token)
 
-            def projectResponse = rundeckClient.createProject(ProjectInfo.builder()
-                .name(projectName)
-                .build()
-            )
+            def projectExists = rundeckClient.getProject(projectName)
+            if (!projectExists.successful) {
 
-            if(!projectResponse.successful) {
-                throw new IllegalStateException("Failed to create project: ${projectResponse.errorBody()}")
+                def projectResponse = rundeckClient.createProject(ProjectInfo.builder()
+                    .name(projectName)
+                    .build()
+                )
+
+                if (!projectResponse.successful) {
+                    throw new IllegalStateException("Failed to create project: ${projectResponse.errorBody().string()}")
+                }
+
             }
 
             // Send archive
@@ -99,13 +102,27 @@ class MigrationWizardService {
                 throw new IllegalStateException("Failed to import project archive: ${archiveResponse.errorBody()}")
             }
 
-            return archiveResponse.body()
+            def archiveStatus = archiveResponse.body()
+            if (!archiveStatus.successful) {
+                throw new IllegalStateException("Failed to import project archive: ${archiveStatus.toString()}")
+            }
+
+            return archiveStatus
         }
         finally {
-            if(archiveFile) {
+            if (archiveFile) {
                 archiveFile.delete()
             }
         }
+    }
+
+    /**
+     * Create a temp file fir a project.
+     */
+    File createTempArchive(String projectName) {
+//        def f = new File("/Users/alberto/IdeaProjects/RundeckCore/tmp/mw/export-${projectName}.jar")
+//        return f
+        return File.createTempFile("export-${projectName}", ".jar")
     }
 
 }
