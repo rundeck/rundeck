@@ -62,6 +62,7 @@ import org.rundeck.app.components.project.ProjectComponent
 import org.rundeck.app.components.project.ProjectMetadataComponent
 import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
+import org.rundeck.core.projects.ProjectArchiver
 import rundeck.data.report.SaveReportRequestImpl
 import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
 import org.rundeck.app.services.ExecutionFile
@@ -104,7 +105,7 @@ import okhttp3.RequestBody
 import retrofit2.Response
 
 @Transactional
-class ProjectService implements InitializingBean, ExecutionFileProducer, EventPublisher {
+class ProjectService implements InitializingBean, ExecutionFileProducer, EventPublisher, ProjectArchiver {
     public static final String EXECUTION_XML_LOG_FILETYPE = 'execution.xml'
     public static final String PROJECT_BASEDIR_PROPS_PLACEHOLDER = '%PROJECT_BASEDIR%'
     final String executionFileType = EXECUTION_XML_LOG_FILETYPE
@@ -783,7 +784,28 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
         return response
     }
+
     /**
+     * Export the project to an outputstream with a signature compatible with grails plugins.
+     * @param project
+     * @param framework
+     * @return
+     * @throws ProjectServiceException
+     */
+    @Override
+    void exportProjectArchiveToOutputStream(IRundeckProject project, IFramework framework, OutputStream stream, Map options, AuthContext authContext) {
+        exportProjectToOutputStream(
+                project,
+                framework,
+                stream,
+                null,
+                ProjectArchiveParams.fromMap(options).toArchiveOptions(),
+                authContext
+        )
+    }
+
+
+/**
      * Export the project to an outputstream
      * @param project
      * @param framework
