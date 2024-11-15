@@ -31,6 +31,7 @@
           :show-buttons="showDefaultLabel"
           :mode="mode"
           :selected-projects="selectedProjects"
+          class="form-control"
           @update:selection="handleSelect"
         />
       </div>

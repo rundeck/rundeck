@@ -6,12 +6,20 @@
     </h1>
     <div class="card">
       <div class="card-content">
-        <Transition>
+        <Transition name="fade" appear>
           <MigrationFirstStep
             v-if="activeStep === 1"
             @next-step="goToNextStep"
           />
-          <MigrationValidationStep v-else />
+          <MigrationDataStep
+            v-else-if="activeStep === 2"
+            @next-step="goToNextStep"
+          />
+          <MigrationValidationStep
+            v-else-if="activeStep === 3"
+            @next-step="goToNextStep"
+          />
+          <MigrationConclusion v-else :instance-url="instanceUrl" />
         </Transition>
       </div>
     </div>
@@ -22,17 +30,33 @@
 import { defineComponent } from "vue";
 import MigrationFirstStep from "./MigrationFirstStep.vue";
 import MigrationValidationStep from "./MigrationValidationStep.vue";
+import MigrationDataStep from "./MigrationDataStep.vue";
+import MigrationConclusion from "./MigrationConclusion.vue";
 
 export default defineComponent({
   name: "MigrationWizard",
-  components: { MigrationValidationStep, MigrationFirstStep },
+  components: {
+    MigrationConclusion,
+    MigrationDataStep,
+    MigrationValidationStep,
+    MigrationFirstStep,
+  },
   data() {
     return {
       activeStep: 1,
+      form: [],
+      instanceUrl: "",
     };
   },
   methods: {
-    goToNextStep() {
+    goToNextStep(formData) {
+      if (
+        formData?.data &&
+        Object.keys(formData.data).includes("instanceName")
+      ) {
+        this.instanceUrl = `https://${formData.data.instanceName}.runbook.pagerduty.cloud`;
+      }
+      this.form.push(formData);
       this.activeStep++;
     },
   },
@@ -40,8 +64,35 @@ export default defineComponent({
 </script>
 
 <style lang="scss">
+.card {
+  .card-content {
+    padding: 20px;
+  }
+}
+
 h1,
 h2 {
   margin-top: 0;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition:
+    opacity 0.5s ease-in-out 0.1s,
+    height 0.4s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.step-container {
+  gap: 20px;
+}
+.btn {
+  margin-right: 15px;
 }
 </style>

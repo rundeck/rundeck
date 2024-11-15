@@ -1,9 +1,12 @@
 <template>
-  <div class="flex-container flex-align-items-flex-end flex-justify-end">
+  <div
+    class="flex-container flex-align-items-flex-end flex-justify-end step-container"
+  >
     <p>{{ $t("migwiz.waitForActivation") }}</p>
-    <div class="flex-col progress-container">
+    <TransitionGroup name="fade" tag="div" class="flex-col progress-container">
       <div
         v-for="(item, index) in items"
+        :key="item.step"
         class="flex flex--items-center progress-item"
         :class="item.state"
       >
@@ -16,10 +19,15 @@
           }}
         </p>
       </div>
-    </div>
-    <btn :disabled="!allStepsConcluded">
-      {{ $t("migwiz.accessYourTrial") }}
-    </btn>
+    </TransitionGroup>
+    <button
+      type="submit"
+      class="btn btn-submit"
+      :disabled="!allStepsConcluded"
+      @click="next"
+    >
+      {{ $t("migwiz.nextStep") }}
+    </button>
   </div>
 </template>
 
@@ -28,6 +36,7 @@ import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "MigrationValidationStep",
+  emits: ["nextStep"],
   data() {
     return {
       iconsBase: {
@@ -35,35 +44,51 @@ export default defineComponent({
         loading: "fas fa-spinner fa-spin",
         ready: "fas fa-check-circle",
       },
-      base: [
+      items: [
         {
-          state: "ready",
+          state: "notStarted",
           step: "instance",
         },
         {
-          state: "loading",
+          state: "notStarted",
           step: "validation",
         },
         {
           state: "notStarted",
           step: "runner",
         },
-        {
-          state: "notStarted",
-          step: "import",
-        },
       ],
     };
   },
   computed: {
-    icons() {
-      return this.loading;
-    },
-    items() {
-      return this.base;
-    },
     allStepsConcluded() {
-      return this.items.every((item) => item.ready);
+      return this.items.every((item) => item.state === "ready");
+    },
+  },
+  mounted() {
+    this.simulateTransitions();
+  },
+  methods: {
+    next() {
+      this.$emit("nextStep", {
+        isValid: true,
+      });
+    },
+    simulateTransitions() {
+      const transitionItem = (index) => {
+        if (index >= this.items.length) return;
+
+        setTimeout(() => {
+          this.items[index].state = "loading";
+
+          setTimeout(() => {
+            this.items[index].state = "ready";
+            transitionItem(index + 1);
+          }, 2000);
+        }, 1000);
+      };
+
+      transitionItem(0);
     },
   },
 });
@@ -73,11 +98,38 @@ export default defineComponent({
 .progress-container {
   gap: 10px;
 }
+
 .progress-item {
-  gap: 10px;
+  gap: 15px;
+  transition: all 0.3s ease;
 
   &.notStarted {
     opacity: 40%;
   }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.fade-enter-to,
+.fade-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+i {
+  transition: all 0.3s ease;
+}
+
+p {
+  transition: all 0.3s ease;
 }
 </style>

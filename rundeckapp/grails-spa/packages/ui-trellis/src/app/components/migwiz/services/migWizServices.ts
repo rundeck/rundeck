@@ -4,6 +4,7 @@
 
 export async function postStartMigration() {
   // const reponse = await api.post();
+  return {};
 }
 
 export async function getValidationResults() {

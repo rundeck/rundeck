@@ -904,29 +904,41 @@ const messages = {
   "JobExec.nodeStep.true.label": "Node Step",
   "try.rba": "Try RBA",
   "migwiz.welcome":
-    "Unlock the potential of PagerDuty Runbook Automation with a free trial that mirrors your current data, allowing you to explore its full capabilities. This SaaS solution is designed to save time and meet enterprise needs with advanced features. Sign up to activate your trial and focus on building automation, automating incident remediation, and enabling self-service operations. Discover enterprise features, including commercial integrations, today!",
+    "Unlock the potential of PagerDuty Runbook Automation with a free trial that mirrors your current data, allowing you to explore its full capabilities. This SaaS solution is designed to save time and meet enterprise needs with advanced features. Sign up to activate your trial and focus on building automation, automating incident remediation, and enabling self-service operations. In the next step, you'll be able to select the specific data you want to mirror. Discover enterprise features, including commercial integrations, today!",
   "migwiz.instanceName": "Instance name",
   "migwiz.step1.title": "Sign up",
   "migwiz.firstName": "First name",
   "migwiz.lastName": "Last name",
   "migwiz.email": "Email",
   "migwiz.company": "Company",
+  "migwiz.requiredField": "{field} is required",
+  "migwiz.validEmail": "A valid email is required",
   "migwiz.confirmAgreement":
     "I agree to terms and conditions, and consent to be contacted by PagerDuty regarding my trial",
-  "migwiz.startMigration": "Start migration",
-  "migwiz.setup.inprogress.step1": "Starting a new RBA instance",
-  "migwiz.setup.inprogress.step1.ready": "RBA instance created.",
-  "migwiz.setup.inprogress.step2": "Validating data to ensure compatibility",
-  "migwiz.setup.inprogress.step2.ready":
-    "Good news! Your data is 100% compatible, therefore everything can be imported",
-  "migwiz.setup.inprogress.step3": "Creating a runner for your jobs",
-  "migwiz.setup.inprogress.step3.ready": "Runner up and running",
-  "migwiz.setup.inprogress.step4":
-    "Importing the data and updating jobs to use the new runner",
-  "migwiz.setup.inprogress.step4.ready": "Everything is ready!",
-  "migwiz.step2.title": "Preparing your trial",
+  "migwiz.nextStep": "Next step",
+  "migwiz.step2.title": "About the new instance",
+  "migwiz.about":
+    "We're starting your instance now. Once your instance is created, you will receive an email shortly to set up your credentials for access. To mirror your data, we require either these new credentials or an API token, which you can create by following these steps: API Token Authentication. At this step, you can also choose whether to mirror all projects or just a single one.",
+  // step2 form data here
+  "migwiz.typeOfCredentials": "Type of credentials",
+  "migwiz.password": "Password",
+  "migwiz.apiToken": "API token",
+  "migwiz.step3.title": "Validating the data",
   "migwiz.waitForActivation":
-    "Thank you for submitting your information! We are now validating your data and setting up your trial of PagerDuty Runbook Automation. This process ensures that your current data is accurately replicated, allowing you to fully experience the platform's capabilities. Please hold tight while we complete the setup. Your trial will be ready shortly, and you'll soon be able to explore all the powerful features we offer.",
+    "Thank you for providing your information! Rest assured, your current instance will not be affected. Before we replicate your data, we'll validate it to identify any incompatibilities with Runbook Automation. If any issues are found, guidance on adjustments will be available in the new instance. Please wait until the process is complete before accessing the new instance.",
+  "migwiz.setup.inprogress.step1": "Validating data to ensure compatibility",
+  "migwiz.setup.inprogress.step1.ready":
+    "Good news! Your data is 100% compatible, therefore everything can be imported",
+  "migwiz.setup.inprogress.step2": "Creating a runner for your jobs",
+  "migwiz.setup.inprogress.step2.ready": "Runner created",
+  "migwiz.setup.inprogress.step3":
+    "Importing the data and updating jobs to use the new runner",
+  "migwiz.setup.inprogress.step3.ready": "Jobs updated to use the new runner",
+  "migwiz.step4.title": "Congratulations!",
+  "migwiz.congratulations":
+    "Everything is ready. Click on the link below to explore your trial, and use your newly created credentials to sign in.",
+  "migwiz.reminder":
+    "As a reminder, your trial will be available for 30 days starting from today. Enjoy discovering all that PagerDuty Runbook Automation has to offer!",
   "migwiz.accessYourTrial": "Access your trial",
 };
 
