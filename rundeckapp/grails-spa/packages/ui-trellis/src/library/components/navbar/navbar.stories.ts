@@ -152,7 +152,7 @@ export const navBar: StoryFn<typeof NavBar> = () => {
   return {
     components: { NavBar },
     template:
-      '<div id="section-navbar" style="width: 65px; height: 100%;overflow: hidden;"><NavBar /></div>',
+      '<div id="section-navbar" style="width: 65px; height: 100%;overflow: hidden;"><NavBar :nav-bar="rootStore.navBar" /></div>',
     mounted: function () {
       const el = this.$el as any;
       el.parentNode.style.height = "100vh";

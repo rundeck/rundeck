@@ -40,9 +40,12 @@
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
 
     <g:render template="/common/navData"/>
+    <g:set var="communityNewsDisabled" value="${cfg.getBoolean(config: 'communityNews.disabled', default: false)}"/>
 
     %{-- Core theme styles from ui-trellis --}%
+    <g:if test="${!grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
     <asset:stylesheet href="static/css/components/theme.css"/>
+    </g:if>
 
     <asset:stylesheet href="ansi24.css"/>
     <asset:stylesheet href="tokens.css"/>
@@ -73,14 +76,15 @@
     <g:render template="/common/js"/>
     <g:render template="/common/css"/>
 
+    <g:if test="${!grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
     <!-- VUE CSS MODULES -->
     <asset:stylesheet href="static/css/components/motd.css"/>
 
     <asset:stylesheet href="static/css/components/tour.css"/>
-    <g:set var="communityNewsDisabled" value="${cfg.getBoolean(config: 'communityNews.disabled', default: false)}"/>
 
     <g:if test="${!communityNewsDisabled}">
       <asset:stylesheet href="static/css/components/community-news-notification.css"/>
+    </g:if>
     </g:if>
     <!-- /VUE CSS MODULES -->
 
@@ -156,6 +160,14 @@
     </script>
 
     <g:jsonToken id="ui_token" url="${request.forwardURI}"/>
+    <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+        <g:loadEntryAssets entry="components/theme" />
+        <g:loadEntryAssets entry="components/central" />
+        <g:loadEntryAssets entry="components/navbar" />
+        <g:loadEntryAssets entry="components/uisockets" />
+        <g:loadEntryAssets entry="components/project-picker" />
+    </g:if>
+    <g:else>
     <asset:stylesheet href="static/css/chunk-vendors.css"/>
     <asset:stylesheet href="static/css/chunk-common.css"/>
     <asset:javascript src="static/js/chunk-common.js"/>
@@ -169,6 +181,7 @@
     <asset:stylesheet href="static/css/components/project-picker.css"/>
     <asset:javascript src="static/components/uisockets.js"/>
     <asset:javascript src="static/components/project-picker.js"/>
+    </g:else>
     <g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
     <g:embedJSON id="pageUiMeta" data="[uiType: uiType]"/>
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
@@ -320,6 +333,16 @@
 </script>
 
 <!-- VUE JS MODULES -->
+<g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+    <g:loadEntryAssets entry="components/motd" />
+    <g:loadEntryAssets entry="components/version" />
+    <g:loadEntryAssets entry="components/server-identity" />
+    <g:loadEntryAssets entry="components/tour" />
+    <g:if test="${!communityNewsDisabled}">
+        <g:loadEntryAssets entry="components/community-news-notification" />
+    </g:if>
+</g:if>
+<g:else>
 <asset:stylesheet href="static/css/components/motd.css"/>
 <asset:javascript src="static/components/motd.js"/>
 <asset:stylesheet href="static/css/components/version.css"/>
@@ -329,6 +352,7 @@
 <g:if test="${!communityNewsDisabled}">
     <asset:javascript src="static/components/community-news-notification.js"/>
 </g:if>
+</g:else>
 <asset:deferredScripts/>
 <!-- /VUE JS MODULES -->
 </body>

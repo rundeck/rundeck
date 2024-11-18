@@ -41,6 +41,7 @@ tasks.register("runNpmBuild", NpmTask) {
     inputs.file 'packages/ui-trellis/package-lock.json'
     inputs.file 'packages/ui-trellis/babel.config.js'
     inputs.file 'packages/ui-trellis/vue.config.app.js'
+    inputs.file 'packages/ui-trellis/vite.config.ts'
     inputs.file 'packages/ui-trellis/tsconfig.json'
     inputs.file 'packages/ui-trellis/.env.development'
     inputs.file 'packages/ui-trellis/.env.production'
@@ -50,9 +51,18 @@ tasks.register("runNpmBuild", NpmTask) {
     outputs.dir(file("$spaBuildDir"))
     outputs.cacheIf { false }
 
-    def npmCommand = System.env.CI ?
-      'ci:app:build' :
-      'dev:app:build'
+    def viteEnabled = (System.getenv("RUNDECK_SPA_VITE_ENABLED") ?: 'false').toBoolean()
+    def npmCommand
+
+    if (viteEnabled) {
+      npmCommand = System.env.CI ?
+        'ci:vite:app:build' :
+        'dev:vite:app:build'
+    } else {
+      npmCommand = System.env.CI ?
+        'ci:app:build' :
+        'dev:app:build'
+    }
 
     args = ['run', npmCommand]
 

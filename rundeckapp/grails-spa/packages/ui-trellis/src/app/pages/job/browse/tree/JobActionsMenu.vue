@@ -142,10 +142,11 @@ import { getRundeckContext } from "@/library";
 import UiSocket from "@/library/components/utils/UiSocket.vue";
 import { JobBrowseItem, JobBrowseMeta } from "@/library/types/jobs/JobBrowse";
 import { defineComponent } from "vue";
+import { Dropdown } from 'uiv';
 const context = getRundeckContext();
 export default defineComponent({
   name: "JobActionsMenu",
-  components: { JobScmActions, UiSocket },
+  components: { JobScmActions, UiSocket, Dropdown },
   props: {
     itemData: {
       type: Object,

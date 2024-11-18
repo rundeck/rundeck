@@ -5,6 +5,7 @@ export const STORAGE_JOB_FILTER_KEY = "job-filters";
 export type JobListFilter = {
   name: string;
   query: { [key: string]: string };
+  active?: boolean;
 };
 export type StoredJobFilters = {
   [project: string]: JobListFilter[];

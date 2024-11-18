@@ -34,14 +34,24 @@
           kind: AuthConstants.TYPE_EVENT
   )}"/>
 
+    <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+      <g:loadEntryAssets entry="pages/command" />
+    </g:if>
+    <g:else>
     <asset:stylesheet src="static/css/pages/command.css"/>
     <asset:javascript src="static/pages/command.js"/>
+    </g:else>
     <asset:javascript src="executionState.js"/>
     <asset:javascript src="executionControl.js"/>
     <asset:javascript src="util/yellowfade.js"/>
     <asset:javascript src="framework/adhoc.js"/>
+    <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+      <g:loadEntryAssets enttry="pages/nodes" />
+    </g:if>
+    <g:else>
     <asset:javascript src="static/pages/nodes.js" defer="defer"/>
     <asset:stylesheet src="static/css/pages/nodes.css"/>
+    </g:else>
     <g:set var="defaultLastLines" value="${cfg.getInteger(config: "gui.execution.tail.lines.default", default: 20)}"/>
     <g:set var="maxLastLines" value="${cfg.getInteger(config: "gui.execution.tail.lines.max", default: 20)}"/>
 
@@ -60,7 +70,12 @@
     ]}"/>
     <g:jsMessages code="Node,Node.plural"/>
 
+    <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+      <g:loadEntryAssets entry="pages/project-dashboard" />
+    </g:if>
+    <g:else>
     <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
+    </g:else>
     <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
     <g:jsMessages code="search.ellipsis
 jobquery.title.titleFilter
@@ -109,7 +124,12 @@ search
 }
 })
   </g:javascript>
+  <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+    <g:loadEntryAssets="pages/project-activity" />
+  </g:if>
+  <g:else>
   <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
+  </g:else>
 </head>
 <body>
 

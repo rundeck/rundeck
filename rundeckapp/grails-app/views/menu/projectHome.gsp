@@ -31,7 +31,9 @@
     <meta name="tabpage" content="projectHome"/>
     <title><g:appTitle/> - ${session.frameworkLabels?session.frameworkLabels[project]:project}</title>
     <g:embedJSON data="${[project: project]}" id="projectData"/>
+    <g:if test="${!grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
     <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
+    </g:if>
     <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all"/>
     <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(
                 context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: params.project, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])}"/>
@@ -63,7 +65,12 @@
     }
     </style>
     <asset:javascript src="menu/projectHome.js"/>
+    <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+        <g:loadEntryAssets entry="pages/project-dashboard" />
+    </g:if>
+    <g:else>
     <asset:javascript src="static/pages/project-dashboard.js" defer="defer"/>
+    </g:else>
 </head>
 
 <body>

@@ -4,4 +4,4 @@ interface JobDetailsData {
   groupPath?: string;
 }
 
-export { JobDetailsData };
+export type { JobDetailsData };

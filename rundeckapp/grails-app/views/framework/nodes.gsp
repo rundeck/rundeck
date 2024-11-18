@@ -26,8 +26,13 @@
     <g:set var="filtvalue" value="${query?.('filter')}"/>
     <title><g:message code="gui.menu.Nodes"/> - <g:enc>${projectLabel}</g:enc></title>
     <asset:javascript src="framework/nodes.js"/>
+    <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+        <g:loadEntryAssets entry="pages/nodes" />
+    </g:if>
+    <g:else>
     <asset:javascript src="static/pages/nodes.js" defer="defer"/>
     <asset:stylesheet src="static/css/pages/nodes.css"/>
+    </g:else>
     <g:embedJSON id="filterParamsJSON"
                  data="${[filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
     <g:embedJSON id="pageParams"

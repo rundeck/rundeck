@@ -67,7 +67,12 @@
     <title><g:message code="page.title.project.access.control.0" args="${[projectLabel]}"/></title>
 
     <!-- VUE JS REQUIREMENTS -->
+    <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+        <g:loadEntryAssets entry="components/ko-paginator" />
+    </g:if>
+    <g:else>
     <asset:javascript src="static/components/ko-paginator.js"/>
+    </g:else>
     <!-- /VUE JS REQUIREMENTS -->
 
     <asset:javascript src="menu/aclListing.js"/>

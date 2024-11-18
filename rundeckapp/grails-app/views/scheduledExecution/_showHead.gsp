@@ -15,7 +15,12 @@
   --}%
 
 <%@ page import="org.rundeck.core.auth.AuthConstants; rundeck.ScheduledExecution" %>
+<g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+    <g:loadEntryAssets entry="pages/job/head/scm-status-badge" />
+</g:if>
+<g:else>
 <asset:javascript src="static/pages/job/head/scm-status-badge.js" asset-defer="true" />
+</g:else>
 
 <div class="jobInfoSection">
     <g:if test="${scheduledExecution.groupPath}">

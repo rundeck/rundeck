@@ -31,6 +31,7 @@
           :show-buttons="showDefaultLabel"
           :mode="mode"
           :selected-projects="selectedProjects"
+          :project-store="projectStore"
           @update:selection="handleSelect"
         />
       </div>
@@ -39,13 +40,15 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import {defineComponent, PropType} from "vue";
 
 import Popper from "../../utility-bar/Popper.vue";
 
 import ProjectSelect from "./ProjectSelect.vue";
+import {ProjectStore} from "../../../stores/Projects.ts";
 
 export default defineComponent({
+  name: "ProjectSelectButton",
   components: {
     Popper,
     ProjectSelect,
@@ -68,6 +71,10 @@ export default defineComponent({
       default: 0,
       description:
         "this prop is only relevant when mode is multi, as it's used for calculating the button label",
+    },
+    projectStore: {
+      type: Object as PropType<ProjectStore>,
+      required: true,
     },
   },
   emits: ["update:selectedProjects"],

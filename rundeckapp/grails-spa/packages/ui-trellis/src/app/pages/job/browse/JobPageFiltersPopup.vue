@@ -51,9 +51,14 @@ import {
   JobPageStoreInjectionKey,
 } from "@/library/stores/JobPageStore";
 import { defineComponent, inject, ref } from "vue";
+import { Dropdown, Btn } from 'uiv';
 
 export default defineComponent({
   name: "JobPageFiltersPopup",
+  components: {
+    Dropdown,
+    Btn,
+  },
   emits: ["select", "delete"],
   setup(props) {
     const jobListFilterStore: JobListFilterStore = inject(

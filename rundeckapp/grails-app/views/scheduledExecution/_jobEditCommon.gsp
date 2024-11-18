@@ -1,14 +1,20 @@
+<g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+    <g:loadEntryAssets entry="pages/job/editor" />
+    <g:loadEntryAssets entry="pages/nodes" />
+</g:if>
 <asset:javascript src="vendor/jquery.autocomplete.min.js"/>
 <asset:javascript src="leavePageConfirm.js"/>
 <asset:javascript src="jobEditPage_bundle.js"/>
 <asset:javascript src="util/markdeep.js"/>
 <asset:javascript src="util/yellowfade.js"/>
 <asset:javascript src="util/tab-router.js"/>
-<g:jsMessages code="page.unsaved.changes"/>
+<g:if test="${!grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
 <asset:javascript src="static/pages/job/editor.js" defer="defer"/>
 <asset:stylesheet src="static/css/pages/job/editor.css" />
 <asset:javascript src="static/pages/nodes.js" defer="defer"/>
 <asset:stylesheet src="static/css/pages/nodes.css"/>
+</g:if>
+<g:jsMessages code="page.unsaved.changes"/>
 <g:jsMessages code="
     yes,
     no,

@@ -195,8 +195,9 @@ describe("OptionView", () => {
       const wrapper = await mountOptionView({ option, editable: true });
       expect(wrapper.vm.displayDefaultValueTruncated).toEqual(value);
       expect(wrapper.vm.displayDefaultValue).toEqual(value);
+      console.log(wrapper.html())
       let detail = wrapper.find(
-        ".optdetail > span.optdetail_default_value > span::first-child",
+        ".optdetail > span.optdetail_default_value > span:first-child",
       );
       expect(detail.exists()).toBeTruthy();
       expect(detail.text()).toEqual(value);
@@ -215,7 +216,7 @@ describe("OptionView", () => {
       value.substring(0, 20) + "...",
     );
     let detail = wrapper.find(
-      ".optdetail > span.optdetail_default_value > span::first-child",
+      ".optdetail > span.optdetail_default_value > span:first-child",
     );
     expect(detail.exists()).toBeTruthy();
     expect(detail.text()).toEqual(value.substring(0, 20) + "...");

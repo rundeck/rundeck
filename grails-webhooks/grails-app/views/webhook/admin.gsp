@@ -22,7 +22,9 @@
     <meta name="tabpage" content="Webhooks"/>
     <title><g:appTitle/></title>
     <asset:javascript src="ace-bundle.js"/>
+    <g:if test="${!grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
     <asset:stylesheet src="static/css/pages/webhooks.css"/>
+    </g:if>
 
     <style type="text/css">
         .dismiss-positioner button.close {
@@ -39,6 +41,11 @@
     <div style="flex-grow: 0;"><div id="tour-vue-display"></div></div>
 </div>
 
+<g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+    <g:loadEntryAssets entry="pages/webhooks" />
+</g:if>
+<g:else>
 <asset:javascript src="static/pages/webhooks.js"/>
+</g:else>
 </body>
 </html>

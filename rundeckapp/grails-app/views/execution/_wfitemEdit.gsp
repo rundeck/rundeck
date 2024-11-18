@@ -15,7 +15,12 @@
   --}%
 
 <%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; rundeck.PluginStep; rundeck.CommandExec; rundeck.JobExec" %>
+<g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+    <g:loadEntryAssets entry="pages/dynamic-form" />
+</g:if>
+<g:else>
 <asset:javascript src="static/pages/dynamic-form.js" defer="defer"/>
+</g:else>
 
 <%--
     _wfitemEdit.gsp

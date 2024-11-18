@@ -419,7 +419,7 @@ export default defineComponent({
   emits: ["update:modelValue"],
   data() {
     return {
-      modelData: {},
+      modelData: {} as Record<string, any>,
       name: "",
       errors: "",
       hours: [],

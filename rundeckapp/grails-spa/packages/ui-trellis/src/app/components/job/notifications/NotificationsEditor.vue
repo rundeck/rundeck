@@ -299,6 +299,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
+import { Btn, Dropdown, Popover } from 'uiv';
 
 import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
 import PluginConfig from "../../../../library/components/plugins/pluginConfig.vue";
@@ -316,6 +317,9 @@ export default defineComponent({
     ExtendedDescription,
     UndoRedo,
     VMarkdownView,
+    Btn,
+    Dropdown,
+    Popover,
   },
   props: ["notificationData"],
   emits: ["changed"],
@@ -338,16 +342,14 @@ export default defineComponent({
         onavgduration: "fa-clock text-secondary",
         onretryablefailure: "fa-redo text-warning",
       },
-      notifications: [],
+      notifications: [] as any[],
       editNotificationTrigger: null,
-      editNotification: {},
+      editNotification: {} as Record<string, any>,
       editValidation: null,
       editError: null,
       editIndex: -1,
       editModal: false,
-      autocompleteCallback: {
-        type: Function,
-      },
+      autocompleteCallback: null as Function,
       eventBus: localEB,
     };
   },

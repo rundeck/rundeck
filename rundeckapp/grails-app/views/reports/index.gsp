@@ -53,7 +53,9 @@
     ])}"/>
     <g:embedJSON id="eventsparamsJSON" data="${eventsparams}"/>
     <g:embedJSON id="pageparamsJSON" data="${pageparams}"/>
+    <g:if test="${!grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
     <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
+    </g:if>
     <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
     <g:jsMessages code="search.ellipsis
 jobquery.title.titleFilter
@@ -95,7 +97,12 @@ search
         }
     })
     </g:javascript>
+    <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+        <g:loadEntryAssets entry="pages/project-activity" />
+    </g:if>
+    <g:else>
     <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
+    </g:else>
 </head>
 <body>
 <div class="content">

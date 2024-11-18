@@ -29,7 +29,12 @@
 
     <g:set var="legacyUi" value="${params.legacyUi || feature.isEnabled(name:'legacyUi')}"/>
     <asset:javascript src="leavePageConfirm.js"/>
+    <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+        <g:loadEntryAssets entry="components/readme-motd" />
+    </g:if>
+    <g:else>
     <asset:javascript src="static/components/readme-motd.js"/>
+    </g:else>
     <g:jsMessages code="page.unsaved.changes"/>
     <g:javascript>
 

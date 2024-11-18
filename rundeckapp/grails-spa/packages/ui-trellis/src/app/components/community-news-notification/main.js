@@ -34,7 +34,8 @@ rootStore.utilityBar.addItems([
             window.open(links.communityNews, "_blank");
           },
         },
-        template: `<News @news:select-all="moreNews"/>`,
+        data() { return { rootStore }},
+        template: `<News :news-store="rootStore.news" @news:select-all="moreNews"/>`,
       }),
     ),
   },

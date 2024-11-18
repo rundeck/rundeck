@@ -93,7 +93,7 @@ export default defineComponent({
         return "";
       }
       const style = ["danger", "warning", "primary", "info", "success"].find(
-        (val) => this.project.readme.motd.indexOf("<!-- style:" + val) >= 0,
+        (val) => this.project.readme.motd.indexOf("<" + "!-- style:" + val) >= 0, // Solves "Unterminated string literal
       );
       if (style) {
         return style;

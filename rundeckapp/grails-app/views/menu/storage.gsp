@@ -30,7 +30,12 @@ implied. - See the License for the specific language governing permissions and -
             <asset:javascript src="menu/storage.js"/>
         </feature:disabled>
         <feature:enabled name="vueKeyStorage">
+            <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+                <g:loadEntryAssets entry="pages/storage" />
+            </g:if>
+            <g:else>
             <asset:javascript src="static/pages/storage.js" defer="defer"/>
+            </g:else>
             <g:javascript>
                 window._rundeck = Object.assign(window._rundeck || {}, {
                     data: { }

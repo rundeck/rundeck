@@ -93,7 +93,7 @@ export const navBar: StoryFn<typeof UtilityBar> = () => {
   return {
     components: { UtilityBar },
     template:
-      '<div style="display: flex; flex-direction: column-reverse; height: 100%"><div id="section-utility" style="width: 100%; height: 22px;"><UtilityBar /></div></div>',
+      '<div style="display: flex; flex-direction: column-reverse; height: 100%"><div id="section-utility" style="width: 100%; height: 22px;"><UtilityBar :utility-bar="rootStore.utilityBar"/></div></div>',
     mounted: function () {
       const el = this.$el as any;
       el.parentNode.style.height = "100vh";
@@ -134,7 +134,7 @@ export const widgetCounter: StoryFn<typeof UtilityBar> = (args) => {
     },
     components: { UtilityBar },
     template:
-      '<div style="display: flex; flex-direction: column-reverse; height: 100%"><div id="section-utility" style="width: 100%; height: 22px;"><UtilityBar /></div></div>',
+      '<div style="display: flex; flex-direction: column-reverse; height: 100%"><div id="section-utility" style="width: 100%; height: 22px;"><UtilityBar :utility-bar="rootStore.utilityBar"/></div></div>',
     mounted: function () {
       const el = this.$el as any;
       el.parentNode.style.height = "100vh";

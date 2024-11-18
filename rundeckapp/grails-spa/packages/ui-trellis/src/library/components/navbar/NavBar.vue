@@ -14,6 +14,7 @@
               v-if="item.type === 'container'"
               :key="item.id"
               :item="item as NavContainer"
+              :nav-bar="navBar"
             />
           </template>
         </ul>
@@ -26,6 +27,7 @@
           <NavBarContainer
             v-if="navBar.isOverflowing"
             :item="navBar.overflowItem"
+            :nav-bar="navBar"
           />
           <template v-for="item in getItems('root', 'bottom')">
             <NavBarItem
@@ -38,6 +40,7 @@
               v-if="item.type === 'container'"
               :key="item.id"
               :item="item as NavContainer"
+              :nav-bar="navBar"
             />
           </template>
         </ul>
@@ -47,7 +50,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from "vue";
+import {defineComponent, type PropType, ref} from "vue";
 
 import { NavBar, NavContainer, NavItem } from "../../stores/NavBar";
 
@@ -60,10 +63,11 @@ export default defineComponent({
     NavBarItem,
     NavBarContainer,
   },
-  data() {
-    return {
-      navBar: window._rundeck.rootStore.navBar,
-    };
+  props: {
+    navBar: {
+      type: Object as PropType<NavBar>,
+      required: true,
+    },
   },
   mounted() {
     window.addEventListener("resize", this.overflow);

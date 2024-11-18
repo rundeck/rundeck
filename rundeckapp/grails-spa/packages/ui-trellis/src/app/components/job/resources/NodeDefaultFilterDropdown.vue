@@ -84,6 +84,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
+import { Btn, Dropdown } from 'uiv';
 import { NodeSummary } from "@/app/components/job/resources/types/nodeTypes";
 import { StoredFilter } from "@/library/stores/NodeFilterLocalstore";
 import { _genUrl } from "@/app/utilities/genUrl";
@@ -91,6 +92,7 @@ import { getRundeckContext } from "@/library";
 
 export default defineComponent({
   name: "NodeDefaultFilterDropdown",
+  components: { Dropdown, Btn },
   props: {
     isDefaultFilter: {
       type: Boolean,

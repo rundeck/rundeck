@@ -4,4 +4,4 @@ type Item = {
   [key: string]: any;
 };
 
-export { Item };
+export type { Item };

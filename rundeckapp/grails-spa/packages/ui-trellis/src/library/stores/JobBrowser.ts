@@ -11,6 +11,8 @@ export class JobBrowserStoreItem {
   meta: string = "*";
   breakpoint: number = 100;
   children: JobBrowserStoreItem[] = [];
+  job: object = {};
+  groupPath: string = "";
 
   constructor(item: JobBrowseItem, path: string | null) {
     this.path = path;

@@ -22,10 +22,10 @@
 <!--[if (gt IE 9)|!(IE)]><!--> <html lang="${response.locale.language}"><!--<![endif]-->
 <head>
     <g:if test="${Environment.isDevelopmentEnvironmentAvailable()}">
-        <asset:javascript src="vendor/vue.js"/>
+        <asset:javascript src="vendor/vue.global.js"/>
     </g:if>
     <g:else>
-        <asset:javascript src="vendor/vue.min.js"/>
+        <asset:javascript src="vendor/vue.global.prod.js"/>
     </g:else>
     <title>
       <g:layoutTitle default="${g.appTitle()}"/>
@@ -40,7 +40,16 @@
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
 
     <g:render template="/common/navData"/>
-
+    <g:set var="communityNewsDisabled" value="${cfg.getBoolean(config: 'communityNews.disabled', default: false)}"/>
+    <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+        <g:loadEntryAssets entry="components/theme" />
+        <g:loadEntryAssets entry="components/motd" />
+        <g:loadEntryAssets entry="components/tour" />
+        <g:if test="${!communityNewsDisabled}">
+            <g:loadEntryAssets entry="components/community-news-notification" />
+        </g:if>
+    </g:if>
+    <g:else>
     %{-- Core theme styles from ui-trellis --}%
     <asset:stylesheet href="static/css/components/theme.css"/>
 
@@ -76,11 +85,11 @@
     <asset:stylesheet href="static/css/components/motd.css"/>
 
     <asset:stylesheet href="static/css/components/tour.css"/>
-    <g:set var="communityNewsDisabled" value="${cfg.getBoolean(config: 'communityNews.disabled', default: false)}"/>
 
     <g:if test="${!communityNewsDisabled}">
       <asset:stylesheet href="static/css/components/community-news-notification.css"/>
     </g:if>
+    </g:else>
     <!-- /VUE CSS MODULES -->
 
     <script language="javascript">
@@ -155,6 +164,12 @@
     </script>
 
     <g:jsonToken id="ui_token" url="${request.forwardURI}"/>
+    <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+        <g:loadEntryAssets entry="components/central" />
+        <g:loadEntryAssets entry="components/navbar" />
+        <g:loadEntryAssets entry="components/project-picker" />
+    </g:if>
+    <g:else>
     <asset:stylesheet href="static/css/chunk-vendors.css"/>
     <asset:stylesheet href="static/css/chunk-common.css"/>
     <asset:javascript src="static/js/chunk-common.js"/>
@@ -164,6 +179,7 @@
     %{--  Navigation components load early too  --}%
     <asset:javascript src="static/components/navbar.js"/>
     <asset:javascript src="static/components/project-picker.js"/>
+    </g:else>
 
 %{--    <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">--}%
 

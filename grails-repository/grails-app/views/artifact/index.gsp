@@ -21,7 +21,14 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="projectHome"/>
     <title><g:appTitle/></title>
+    <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+        <g:loadEntryAssets entry="components/central" />
+        <g:loadEntryAssets entry="pages/job/editor" />
+        <g:loadEntryAssets entry="pages/repository" />
+    </g:if>
+    <g:else>
     <asset:stylesheet src="static/css/pages/repository.css"/>
+    </g:else>
 </head>
 
 <body>
@@ -51,7 +58,9 @@
 <div class="container-fluid">
   <div id=repository-vue></div>
 </div>
+<g:if test="${!grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
 <asset:javascript src="static/pages/repository.js"/>
+</g:if>
 </div>
 </div>
 </body>

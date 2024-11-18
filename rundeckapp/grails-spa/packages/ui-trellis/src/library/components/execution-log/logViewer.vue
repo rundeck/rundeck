@@ -339,7 +339,7 @@ export default defineComponent({
       return this.settings.theme;
     },
     viewerEntriesByNodeCtx() {
-      return this.viewer.entries.reduce(
+      return this.viewer.entries?.slice().reduce(
         (acc, entry) => ({
           ...acc,
           [`${entry.node}:${entry.stepctx ? JobWorkflow.cleanContextId(entry.stepctx) : ""}`]:
@@ -354,7 +354,7 @@ export default defineComponent({
       );
     },
     viewerEntriesByNode() {
-      return this.viewer.entries.reduce((acc, entry) => {
+      return this.viewer.entries?.slice().reduce((acc, entry) => {
         return {
           ...acc,
           [entry.node]: [...(acc[entry.node] || []), entry],

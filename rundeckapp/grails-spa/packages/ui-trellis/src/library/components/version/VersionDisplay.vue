@@ -52,6 +52,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { Popover } from 'uiv';
 import { RundeckVersion } from "../../utilities/RundeckVersion";
 import VersionIconNameDisplay from "./VersionIconNameDisplay.vue";
 import VersionDateDisplay from "./VersionDateDisplay.vue";
@@ -59,6 +60,7 @@ import { formatFromNow } from "../../utilities/DateTimeFormatters";
 
 export default defineComponent({
   components: {
+    Popover,
     VersionIconNameDisplay,
     VersionDateDisplay,
   },

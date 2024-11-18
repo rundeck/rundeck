@@ -18,4 +18,4 @@ interface Node {
   tags: Tag[];
 }
 
-export { Node, NodeSummary, Tag };
+export type { Node, NodeSummary, Tag };

@@ -56,13 +56,22 @@
 	]}" id="homeDataPagingParams"/>
 
 	<!-- VUE JS REQUIREMENTS -->
+	<g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+		<g:loadEntryAssets entry="pages/home" />
+		<g:loadEntryAssets entry="components/ko-paginator" />
+		<g:loadEntryAssets entry="pages/login" />
+	</g:if>
+	<g:else>
 	<asset:javascript src="static/pages/home.js" defer="defer"/>
 	<asset:javascript src="static/components/ko-paginator.js"/>
+	</g:else>
 	<!-- /VUE JS REQUIREMENTS -->
 
 	<asset:javascript src="menu/home.js"/>
 
+	<g:if test="${!grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
 	<asset:javascript src="static/pages/login.js"/>
+	</g:if>
 	<style type="text/css">
     .project_list_item_link {
         display: inline-block;
@@ -96,7 +105,7 @@
 							<div class="card-content">
 								<g:set var="logoImage" value="${"static/img/${g.appLogo()}"}"/>
 								<asset:image src="${logoImage}" alt="${[g.appTitle()]}"
-								             style="width: 400px; padding-bottom: 10px" onload="SVGInject(this)"/>
+								             style="width: 400px; padding-bottom: 10px" onload="onSvgLoaded(this)"/>
 								<g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
 								<p class="h6 text-strong" style="margin-top:1em;">
 									<g:message code="you.can.see.this.message.again.by.clicking.the"/>
@@ -458,8 +467,21 @@
 		</div>
 	</div>
 	<!-- VUE JS MODULES -->
+	<g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+		<g:loadEntryAssets entry="components/first-run" />
+	</g:if>
+	<g:else>
 	<asset:stylesheet href="static/css/pages/home.css"/>
 	<asset:javascript src="static/components/first-run.js"/>
+	</g:else>
 	<!-- /VUE JS MODULES -->
+	<script type="application/javascript">
+		function onSvgLoaded(image) {
+			if (typeof SVGInject !== 'undefined') {
+				return SVGInject(image)
+			}
+			window.addEventListener('load', function() { SVGInject(image) })
+		}
+	</script>
 </body>
 </html>

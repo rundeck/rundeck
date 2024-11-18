@@ -51,11 +51,14 @@ import {
   JobPageStoreInjectionKey,
 } from "@/library/stores/JobPageStore";
 import { defineComponent, inject } from "vue";
+import { Popover } from 'uiv';
 import {ScmTextUtilities} from "../../../../library/utilities/scm/scmTextUtilities";
 
 export default defineComponent({
   name: "JobListScmStatus",
-
+  components: {
+    Popover,
+  },
   setup(props) {
     const jobPageStore: JobPageStore = inject(
       JobPageStoreInjectionKey,

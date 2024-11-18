@@ -66,7 +66,9 @@
       <g:embedJSON id="wfStepPluginsJSON" data="${stepPluginDescriptions.workflow.collectEntries { [(it.key): [title: it.value.title]] }}"/>
       <g:jsMessages codes="['execution.show.mode.Log.title','execution.page.show.tab.Nodes.title']"/>
 
+      <g:if test="${!grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
       <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
+      </g:if>
       <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
       <g:jsMessages code="search.ellipsis
 jobquery.title.titleFilter
@@ -169,11 +171,17 @@ search
     }
 })
       </g:javascript>
+      <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+          <g:loadEntryAssets entry="pages/project-activity" />
+          <g:loadEntryAssets entry="pages/execution-show" />
+      </g:if>
+      <g:else>
       <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
 
       <asset:stylesheet href="static/css/chunk-vendors.css"/>
       <asset:stylesheet href="static/css/pages/execution-show.css"/>
       <asset:javascript src="static/pages/execution-show.js" defer="defer"/>
+      </g:else>
   </head>
   <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
   <body id="executionShowPage">

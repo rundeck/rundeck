@@ -34,8 +34,13 @@
 
     <asset:javascript src="leavePageConfirm.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
+    <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+        <g:loadEntryAssets entry="pages/project-nodes-editor" />
+    </g:if>
+    <g:else>
     <asset:stylesheet href="static/css/pages/project-nodes-editor.css"/>
     <asset:javascript src="static/pages/project-nodes-editor.js" defer="defer"/>
+    </g:else>
     <g:embedJSON data="${[index:index,nextPageUrl:g.createLink(controller: 'framework',
                                                            action: 'projectNodeSources',
                                                            params: [project: project],absolute:true)]}"

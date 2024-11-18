@@ -38,6 +38,7 @@ def runNpmBuild = tasks.register('runNpmBuild', NpmTask) {
     it.inputs.file 'package.json'
     it.inputs.file 'package-lock.json'
     it.inputs.file 'vue.config.library.js'
+    it.inputs.file 'vite.config.library.ts'
     it.inputs.file 'tsconfig.json'
 
     it.inputs.dir 'src'
@@ -45,9 +46,18 @@ def runNpmBuild = tasks.register('runNpmBuild', NpmTask) {
     it.outputs.dir(file("$buildDir"))
     it.outputs.cacheIf { false }
 
-    def npmCommand = System.env.CI ?
-      'ci:library:build' :
-      'dev:library:build'
+    def viteEnabled = (System.getenv("RUNDECK_SPA_VITE_ENABLED") ?: 'false').toBoolean()
+    def npmCommand
+
+    if (viteEnabled) {
+        npmCommand = System.env.CI ?
+            'ci:vite:library:build' :
+            'dev:vite:library:build'
+    } else {
+        npmCommand = System.env.CI ?
+            'ci:library:build' :
+            'dev:library:build'
+    }
 
     args = ['run', npmCommand]
 }

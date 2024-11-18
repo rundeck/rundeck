@@ -1,4 +1,4 @@
-const esModules = ["vue-virtual-scroller", "uuid"].join("|");
+const esModules = ["vue-virtual-scroller", "uuid", "vue-multiselect"].join("|");
 module.exports = {
   moduleFileExtensions: ["js", "ts", "vue"],
   transform: {

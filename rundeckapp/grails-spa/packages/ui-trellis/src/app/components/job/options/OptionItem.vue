@@ -75,7 +75,7 @@ export default defineComponent({
   emits: ["edit", "duplicate", "moveUp", "moveDown", "delete"],
   props: {
     option: {
-      type: Object as () => PropType<JobOption>,
+      type: Object as PropType<JobOption>,
       required: true,
     },
     editable: {

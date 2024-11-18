@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div id="options-editor">
     <undo-redo
       :event-bus="localEB"
       data-test="options_undo_redo"
@@ -100,6 +100,7 @@ import UndoRedo from "../../util/UndoRedo.vue";
 import OptionEdit from "./OptionEdit.vue";
 import mitt, { Emitter, EventType } from "mitt";
 import draggable from "vuedraggable";
+import { Btn } from 'uiv';
 
 const emitter = mitt();
 const localEB: Emitter<Record<EventType, any>> = emitter;
@@ -113,6 +114,7 @@ export default defineComponent({
     UndoRedo,
     OptionEdit,
     draggable,
+    Btn,
   },
   props: {
     optionsData: {

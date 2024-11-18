@@ -446,6 +446,7 @@ import axios from "axios";
 import InlineValidationErrors from "../../form/InlineValidationErrors.vue";
 import { defineComponent, ref } from "vue";
 import type { PropType } from "vue";
+import { Dropdown } from 'uiv';
 import NodeFilterInput from "./NodeFilterInput.vue";
 import NodeFilterResults from "./NodeFilterResults.vue";
 
@@ -460,6 +461,7 @@ export default defineComponent({
     NodeFilterInput,
     NodeFilterResults,
     UiSocket,
+    Dropdown,
   },
   props: {
     modelValue: {

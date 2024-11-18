@@ -8,18 +8,25 @@
 </template>
 
 <script lang="ts">
-import { RootStore } from "../../../stores/RootStore";
-import { defineComponent, inject } from "vue";
+import {defineComponent, inject, PropType} from "vue";
 import InfoDisplay from "./RundeckInfo.vue";
+import {SystemStore} from "../../../stores/System.ts";
+import {Releases} from "../../../stores/Releases.ts";
 
 export default defineComponent({
   name: "RundeckInfoWidget",
   components: {
     InfoDisplay,
   },
-  setup() {
-    const { system, releases } = inject("rootStore") as RootStore;
-    return { system, releases };
+  props: {
+    system: {
+      type: Object as PropType<SystemStore>,
+      required: true,
+    },
+    releases: {
+      type: Object as PropType<Releases>,
+      required: true,
+    },
   },
   async mounted() {
     try {

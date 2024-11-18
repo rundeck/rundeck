@@ -92,7 +92,7 @@ describe("NodeDetailsSimple Component", () => {
         osArch: "x86_64",
       };
       Object.entries(generalAttributes).forEach(([key, value]) => {
-        const attributeElement = wrapper.find(`td.value:contains(${value})`);
+        const attributeElement = wrapper.find(`td.value[contains(.,'${value}')`);
         expect(attributeElement.exists()).toBe(true);
       });
       // Attributes without namespaces
@@ -103,7 +103,7 @@ describe("NodeDetailsSimple Component", () => {
         key6: "value6",
       };
       Object.entries(attributesWithNoNamespaces).forEach(([key, value]) => {
-        const attributeElement = wrapper.find(`td.setting:contains(${value})`);
+        const attributeElement = wrapper.find(`td.setting[contains(.,'${value}')`);
         expect(attributeElement.exists()).toBe(true);
       });
       // Check for .glyphicon-plus elements related to attributes without namespaces
@@ -120,7 +120,7 @@ describe("NodeDetailsSimple Component", () => {
         };
         Object.entries(attributesWithNamespaces).forEach(([key, value]) => {
           const attributeElement = wrapper.find(
-            `tbody.subattrs .value:contains(${value})`,
+            `tbody.subattrs .value[contains(.,'${value}')`,
           );
           expect(attributeElement.exists()).toBe(true);
         });

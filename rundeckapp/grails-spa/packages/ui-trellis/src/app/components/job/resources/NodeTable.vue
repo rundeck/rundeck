@@ -280,7 +280,7 @@
                   v-for="num in pageNumbersSkipped"
                   :key="`skipped_${num}`"
                   :class="{
-                    active: num === page,
+                    active: num === `${page}`,
                     disabled: num === '..' || loading,
                   }"
                 >
@@ -318,7 +318,7 @@
                     min="1"
                     :max="maxPages"
                     @input="
-                      (event) => browseNodesPage(Number(event.target.value) - 1)
+                      (event) => browseNodesPage(Number((event.target as HTMLInputElement).value) - 1)
                     "
                   />
                 </label>

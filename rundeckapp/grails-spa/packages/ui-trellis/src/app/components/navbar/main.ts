@@ -30,7 +30,8 @@ rootStore.utilityBar.addItems([
     widget: markRaw({
       name: "RundeckInfoWidgetItem",
       components: { RundeckInfoWidget },
-      template: `<RundeckInfoWidget/>`,
+      template: `<RundeckInfoWidget :releases="rootStore.releases" :system="rootStore.releases"/>`,
+      data() { return { rootStore }},
       provide: {
         rootStore,
       },
@@ -76,7 +77,8 @@ function initNav() {
     provide: {
       rootStore,
     },
-    template: `<NavigationBar />`,
+    data() { return { rootStore }},
+    template: `<NavigationBar  :nav-bar="rootStore.navBar"/>`,
   });
   vue.mount(elm);
 }
@@ -90,7 +92,8 @@ function initUtil() {
     provide: {
       rootStore,
     },
-    template: `<UtilityBar />`,
+    data() { return { rootStore }},
+    template: `<UtilityBar :utility-bar="rootStore.utilityBar" />`,
   });
 
   const i18n = initI18n();

@@ -11,6 +11,7 @@
         <div id="wh-list" class="px-3">
           <WebhookSelect
             :selected="curHook ? curHook.uuid : ''"
+            :webhook-store="rootStore.webhooks"
             :project="projectName"
             @item:selected="(item) => handleSelect(item)"
           />

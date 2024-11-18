@@ -69,10 +69,16 @@
     <title><g:message code="gui.menu.AccessControl"/></title>
 
     <!-- VUE JS REQUIREMENTS -->
+    <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+        <g:loadEntryAssets entry="components/ko-paginator" />
+    </g:if>
+    <g:else>
     <asset:javascript src="static/components/ko-paginator.js"/>
-    <!-- /VUE JS REQUIREMENTS -->
 
     <asset:javascript src="menu/aclListing.js"/>
+    </g:else>
+    <!-- /VUE JS REQUIREMENTS -->
+
     <script type="application/javascript">
         function SysPoliciesPage(data) {
             var self = this;

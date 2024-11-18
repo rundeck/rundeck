@@ -93,6 +93,7 @@
 import InlineValidationErrors from "../../../components/form/InlineValidationErrors.vue";
 import { defineComponent, ref } from "vue";
 import type { PropType } from "vue";
+import { Dropdown } from 'uiv';
 
 import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
 import PluginConfig from "../../../../library/components/plugins/pluginConfig.vue";
@@ -106,6 +107,7 @@ export default defineComponent({
     PluginInfo,
     PluginConfig,
     ExtendedDescription,
+    Dropdown,
   },
   props: {
     modelValue: {

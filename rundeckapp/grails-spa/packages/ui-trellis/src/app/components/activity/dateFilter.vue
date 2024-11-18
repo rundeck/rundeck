@@ -32,6 +32,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
+import { Dropdown } from 'uiv';
 import _ from "lodash";
 import DateTimePicker from "./dateTimePicker.vue";
 import type { DateFilterProps } from "./types/activityTypes";
@@ -40,6 +41,7 @@ import type { PropType } from "vue";
 export default defineComponent({
   components: {
     DateTimePicker,
+    Dropdown,
   },
 
   props: {

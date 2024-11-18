@@ -795,7 +795,7 @@ import OptionUsagePreview from "./OptionUsagePreview.vue";
 import OptionRemoteUrlConfig from "./OptionRemoteUrlConfig.vue";
 import { validateJobOption } from "@/library/services/jobEdit";
 import { cloneDeep } from "lodash";
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
 
 import { VMarkdownView } from "vue3-markdown";
 import { getRundeckContext } from "../../../../library";
@@ -831,7 +831,7 @@ export default defineComponent({
     features: { type: Object, default: () => ({}) },
     fileUploadPluginType: { type: String, default: "" },
     errors: { type: Object, default: () => ({}) },
-    optionValuesPlugins: { type: Array, default: () => [] },
+    optionValuesPlugins: { type: Array as PropType<any[]>, default: () => [] },
     uiFeatures: { type: Object, default: () => ({}) },
     jobWasScheduled: { type: Boolean, default: false },
   },

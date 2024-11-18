@@ -149,13 +149,8 @@
 import VueMultiselect from "vue-multiselect";
 import { defineComponent } from "vue";
 import { Btn, Alert, Modal } from "uiv";
+import type { CustomField } from "./types.ts";
 
-interface CustomField {
-  key?: string;
-  label?: string;
-  value?: string;
-  desc?: string;
-}
 
 export default defineComponent({
   name: "DynamicFormPluginProp",

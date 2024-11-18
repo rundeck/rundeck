@@ -29,10 +29,16 @@
     <asset:javascript src="util/markdeep.js"/>
     <asset:javascript src="vendor/jquery.autocomplete.min.js"/>
     <asset:javascript src="util/tab-router.js"/>
+    <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+        <g:loadEntryAssets entry="pages/nodes" />
+        <g:loadEntryAssets entry="pages/project-dashboard" />
+    </g:if>
+    <g:else>
     <asset:javascript src="static/pages/nodes.js" defer="defer"/>
     <asset:stylesheet src="static/css/pages/nodes.css"/>
 
     <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
+    </g:else>
     <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
     <g:jsMessages code="search.ellipsis
 jobquery.title.titleFilter
@@ -185,8 +191,14 @@ search
     }
 })
     </g:javascript>
+    <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+        <g:loadEntryAssets entry="pages/project-activity" />
+        <g:loadEntryAssets entry="components/copybox" />
+    </g:if>
+    <g:else>
     <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
     <asset:javascript src="static/components/copybox.js"/>
+    </g:else>
 </head>
 
 <body>

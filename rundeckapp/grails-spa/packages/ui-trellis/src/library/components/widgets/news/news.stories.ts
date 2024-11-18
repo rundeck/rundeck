@@ -26,7 +26,7 @@ export const pickerButtonNoLabel: StoryFn<typeof News> = () => {
   const rootStore = new RootStore(window._rundeck.rundeckClient);
 
   return {
-    template: `<News v-bind="$data"/>`,
+    template: `<News :news-store="rootStore.news" v-bind="$data"/>`,
     provide: { rootStore },
     components: { News },
     data: () => ({

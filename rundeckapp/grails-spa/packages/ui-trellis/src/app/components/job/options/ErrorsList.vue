@@ -12,10 +12,14 @@
   </template>
 </template>
 <script lang="ts">
+
+import {PropType} from "vue";
+
 export default {
   name: "ErrorsList",
   props: {
     errors: {
+      type: [String, Array as PropType<String[]>],
       required: true,
     },
   },

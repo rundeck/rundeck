@@ -32,6 +32,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { Dropdown } from 'uiv';
 import {
   AuthzMeta,
   ProjectActionsItemDropdown,
@@ -40,6 +41,7 @@ import { getRundeckContext } from "@/library";
 
 export default defineComponent({
   name: "HomeActionsMenu",
+  components: { Dropdown },
   props: {
     project: {
       type: Object,

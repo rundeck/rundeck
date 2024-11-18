@@ -1,5 +1,7 @@
 import { mount, VueWrapper } from "@vue/test-utils";
 import JobScmStatus from "../tree/JobScmStatus.vue";
+import {provide, reactive} from "vue";
+import {JobPageStore, JobPageStoreInjectionKey} from "../../../../../library/stores/JobPageStore";
 
 jest.mock("@/library/rundeckService.ts", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
@@ -8,6 +10,7 @@ jest.mock("@/library/rundeckService.ts", () => ({
   })),
 }));
 const mountJobScmStatus = async (props: any): Promise<VueWrapper<any>> => {
+  const jobPageStore = reactive(new JobPageStore());
   const wrapper = mount(JobScmStatus, {
     props,
     global: {
@@ -15,6 +18,9 @@ const mountJobScmStatus = async (props: any): Promise<VueWrapper<any>> => {
         $t: jest.fn().mockImplementation((msg) => msg),
         $tc: jest.fn().mockImplementation((msg) => msg),
       },
+      provide: {
+        [JobPageStoreInjectionKey]: jobPageStore,
+      }
     },
   });
 

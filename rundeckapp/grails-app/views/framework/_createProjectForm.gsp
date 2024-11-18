@@ -81,7 +81,12 @@
     ]}"/>
 
     <asset:javascript src="framework/editProject.js"/>
+    <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+        <g:loadEntryAssets entry="pages/project-config" />
+    </g:if>
+    <g:else>
     <asset:javascript src="static/pages/project-config.js" defer="defer" />
+    </g:else>
     <g:javascript>
 
     function init(){

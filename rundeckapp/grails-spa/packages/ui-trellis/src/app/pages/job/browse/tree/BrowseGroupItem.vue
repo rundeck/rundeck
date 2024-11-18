@@ -32,13 +32,13 @@
 
 <script lang="ts">
 import { JobBrowseItem } from "@/library/types/jobs/JobBrowse";
-import { defineComponent } from "vue";
+import {defineComponent, PropType} from "vue";
 
 export default defineComponent({
   name: "BrowseGroupItem",
   props: {
     item: {
-      type: JobBrowseItem,
+      type: Object as PropType<JobBrowseItem>,
       required: true,
     },
     expanded: {

@@ -17,7 +17,12 @@
 <%@ page import="org.rundeck.core.auth.AuthConstants;grails.util.Environment" %>
 <html>
 <head>
+    <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+        <g:loadEntryAssets entry="pages/job/head/scm-action-buttons" />
+    </g:if>
+    <g:else>
     <asset:javascript src="static/pages/job/head/scm-action-buttons.js" asset-defer="true" />
+    </g:else>
     <g:set var="rkey" value="${g.rkey()}" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
@@ -46,7 +51,12 @@
     code="jobquery.title.name,jobquery.title.jobFilter,jobquery.title.projFilter,jobquery.title.groupPath,jobquery.title.descFilter,jobquery.title.loglevelFilter,jobquery.title.idlist,jobquery.title.scheduledFilter,jobquery.title.serverNodeUUIDFilter"/>
     <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
 
+      <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+          <g:loadEntryAssets entry="pages/project-dashboard" />
+      </g:if>
+      <g:else>
       <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
+      </g:else>
       <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
       <g:jsMessages code="search.ellipsis
 jobquery.title.titleFilter
@@ -400,10 +410,17 @@ search
       </g:javascript>
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|customFilters|idlist$/)}"/>
     <g:embedJSON data="${paginateParams?.subMap(wasfiltered)?:[:]}" id="filterParams"/>
+      <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+          <g:loadEntryAssets entry="pages/project-activity" />
+          <g:loadEntryAssets entry="pages/job/browse" />
+          <g:loadEntryAssets entry="pages/nodes" />
+      </g:if>
+      <g:else>
       <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
       <asset:javascript src="static/pages/job/browse.js" defer="defer"/>
       <asset:javascript src="static/pages/nodes.js" defer="defer"/>
       <asset:stylesheet href="static/css/pages/job/browse.css" />
+      </g:else>
 </head>
 <body>
 

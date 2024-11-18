@@ -18,7 +18,7 @@
         @click="remoteEditCompleted"
       >
         <img
-          src="/static/images/icon-tiny-removex-gray.png"
+          :src="tinyRemovexGrayIcon"
           alt="Close remote editing"
         />
         Close remote editing
@@ -66,6 +66,11 @@ export default defineComponent({
     },
   },
   emits: ["remoteEditStop"],
+  computed: {
+    tinyRemovexGrayIcon() {
+      return new URL("/static/images/icon-tiny-removex-gray.png", window.document.baseURI).href;
+    },
+  },
   data() {
     return {
       remoteEditStarted: false,
