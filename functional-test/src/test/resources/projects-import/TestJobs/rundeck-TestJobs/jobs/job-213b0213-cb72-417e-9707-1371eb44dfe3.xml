@@ -1,0 +1,29 @@
+<joblist>
+  <job>
+    <context>
+      <options preserveOrder='true'>
+        <option delimiter=',' enforcedvalues='true' multivalueAllSelected='true' multivalued='true' name='test' type='text' values='var1,var2,var3,var4' valuesListDelimiter=',' />
+      </options>
+    </context>
+    <defaultTab>nodes</defaultTab>
+    <description></description>
+    <executionEnabled>true</executionEnabled>
+    <id>213b0213-cb72-417e-9707-1371eb44dfe3</id>
+    <loglevel>INFO</loglevel>
+    <name>jobOptionsSelectAllTest</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <plugins />
+    <runnerSelector>
+      <runnerFilterMode>LOCAL</runnerFilterMode>
+      <runnerFilterType>LOCAL_RUNNER</runnerFilterType>
+    </runnerSelector>
+    <scheduleEnabled>true</scheduleEnabled>
+    <schedules />
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>echo ${option.test}</exec>
+      </command>
+    </sequence>
+    <uuid>213b0213-cb72-417e-9707-1371eb44dfe3</uuid>
+  </job>
+</joblist>

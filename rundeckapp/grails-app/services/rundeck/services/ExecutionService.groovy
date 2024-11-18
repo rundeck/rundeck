@@ -2844,8 +2844,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (options) {
             def defaultoptions=[:]
             options.each {OptionData opt ->
-                if (null==optparams[opt.name] && opt.defaultValue) {
-                    defaultoptions[opt.name]=opt.defaultValue
+                if (null==optparams[opt.name]) {
+                    if(opt.defaultValue) {
+                        defaultoptions[opt.name] = opt.defaultValue
+                    } else if(opt.multivalued && opt.multivalueAllSelected){
+                        defaultoptions[opt.name] = opt.valuesList
+                    }
                 }
             }
             if(defaultoptions){

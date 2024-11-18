@@ -38,6 +38,30 @@ class JobSpec extends BaseContainer {
         ].every({fullLog.contains(it)})
     }
 
+    def "Run job with multiselect all selected option"(){
+        given:
+        def r = JobUtils.executeJobWithOptions('213b0213-cb72-417e-9707-1371eb44dfe3', client, ["options":[:]])
+        assert r.successful
+        Execution execution = MAPPER.readValue(r.body().string(), Execution.class)
+
+        waitForExecutionFinish(execution.id)
+        String fullLog = JobUtils.getExecutionOutputText(execution.id as String, client)
+        expect:
+        fullLog.contains('var1,var2,var3,var4')
+    }
+
+    def "Run job with multiselect all selected option with custom value"(){
+        given:
+        def r = JobUtils.executeJobWithOptions('213b0213-cb72-417e-9707-1371eb44dfe3', client, ["options":['test':'var2']])
+        assert r.successful
+        Execution execution = MAPPER.readValue(r.body().string(), Execution.class)
+
+        waitForExecutionFinish(execution.id)
+        String fullLog = JobUtils.getExecutionOutputText(execution.id as String, client)
+        expect:
+        fullLog.contains('var2')
+    }
+
     def "Create the same job twice fails"() {
         given:
         def jobName = UUID.randomUUID().toString()
