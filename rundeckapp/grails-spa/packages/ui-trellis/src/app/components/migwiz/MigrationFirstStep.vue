@@ -69,7 +69,10 @@ import { Form, FormField } from "@primevue/forms";
 // @ts-ignore
 import { yupResolver } from "@primevue/forms/resolvers/yup";
 import * as yup from "yup";
-import { postStartMigration } from "@/app/components/migwiz/services/migWizServices";
+import {
+  getCredentials,
+  postStartInstance,
+} from "@/app/components/migwiz/services/migWizServices";
 import { Notification } from "uiv";
 import { cloneDeep } from "lodash";
 
@@ -131,14 +134,23 @@ export default defineComponent({
     async next({ values, valid }) {
       const finalValues = cloneDeep(values || {});
       delete finalValues.acceptAgreement;
-      console.log("wt");
-      console.log(finalValues);
       if (valid && Object.keys(finalValues).length > 0) {
         try {
-          const resp = await postStartMigration(finalValues);
+          const { access_token: accessToken } =
+            await getCredentials(finalValues);
+          const resp = await postStartInstance(accessToken, {
+            email: finalValues.email,
+            instanceName: finalValues.instanceName,
+          });
+
           if (resp) {
             this.$emit("nextStep", {
-              data: { ...finalValues },
+              data: {
+                ...finalValues,
+                instanceUrl: resp.instance_url,
+                instanceStatus: resp.status,
+                trialEndDate: resp.end_date,
+              },
               isValid: valid,
             });
           }

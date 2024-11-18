@@ -918,11 +918,13 @@ const messages = {
   "migwiz.nextStep": "Next step",
   "migwiz.step2.title": "About the new instance",
   "migwiz.about":
-    "We're starting your instance now. Once your instance is created, you will receive an email shortly to set up your credentials for access. To mirror your data, we require either these new credentials or an API token, which you can create by following these steps: API Token Authentication. At this step, you can also choose whether to mirror all projects or just a single one.",
+    "We're starting your instance now. Once your instance is created, you will receive an email shortly to set up your credentials for access. To mirror your data, we require either these new credentials or an API token, which you can create by following these steps: {0}. At this step, you can also choose whether to mirror all projects or just a single one.",
+  "migwiz.link": "API Token Authentication",
   // step2 form data here
   "migwiz.typeOfCredentials": "Type of credentials",
   "migwiz.password": "Password",
   "migwiz.apiToken": "API token",
+  "migwiz.instanceUrl": "Instance url",
   "migwiz.step3.title": "Validating the data",
   "migwiz.waitForActivation":
     "Thank you for providing your information! Rest assured, your current instance will not be affected. Before we replicate your data, we'll validate it to identify any incompatibilities with Runbook Automation. If any issues are found, guidance on adjustments will be available in the new instance. Please wait until the process is complete before accessing the new instance.",
@@ -940,6 +942,7 @@ const messages = {
   "migwiz.reminder":
     "As a reminder, your trial will be available for 30 days starting from today. Enjoy discovering all that PagerDuty Runbook Automation has to offer!",
   "migwiz.accessYourTrial": "Access your trial",
+  "job.filter.project.none.selected": "No project selected",
 };
 
 export default messages;

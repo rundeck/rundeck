@@ -4,7 +4,7 @@
     aria-describedby="projectPicker"
     aria-controls="projectPicker"
     :aria-expanded="open"
-    @click="handleClick"
+    @click.prevent="handleClick"
     @mousedown="(e) => e.preventDefault()"
   >
     <i

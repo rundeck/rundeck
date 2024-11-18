@@ -13,6 +13,7 @@
           />
           <MigrationDataStep
             v-else-if="activeStep === 2"
+            :instance-url="instanceUrl"
             @next-step="goToNextStep"
           />
           <MigrationValidationStep
@@ -52,9 +53,9 @@ export default defineComponent({
     goToNextStep(formData) {
       if (
         formData?.data &&
-        Object.keys(formData.data).includes("instanceName")
+        Object.keys(formData.data).includes("instanceUrl")
       ) {
-        this.instanceUrl = `https://${formData.data.instanceName}.runbook.pagerduty.cloud`;
+        this.instanceUrl = formData.data.instanceUrl;
       }
       this.form.push(formData);
       this.activeStep++;
