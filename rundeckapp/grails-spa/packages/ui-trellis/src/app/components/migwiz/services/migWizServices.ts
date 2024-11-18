@@ -3,23 +3,27 @@ import axios from "axios";
 
 const BASE_URL_HACKWEEK = "https://api.rundeck.com/";
 export async function getCredentials(formValues) {
-  const response = await axios.post(
-    `${BASE_URL_HACKWEEK}rba/get-credentials`,
-    formValues,
-    {
-      validateStatus: function (status) {
-        return status >= 200 && status < 500;
+  try {
+    const response = await axios.post(
+      `${BASE_URL_HACKWEEK}rba/get-credentials`,
+      formValues,
+      {
+        validateStatus: function (status) {
+          return status >= 200 && status < 500;
+        },
       },
-    },
-  );
+    );
 
-  if (response.status !== 200 && response.status !== 400) {
-    throw {
-      message: `Error getting result: Response: ${response.status}`,
-      response: response,
-    };
-  } else {
-    return response.data;
+    if (response.status !== 200 && response.status !== 400) {
+      throw {
+        message: `Error getting result: Response: ${response.status}`,
+        response: response,
+      };
+    } else {
+      return response.data;
+    }
+  } catch (e: any) {
+    throw { message: "Error: " + e.message };
   }
 }
 
@@ -36,33 +40,31 @@ export async function postStartInstance(token, formValues) {
       },
     );
 
-    // const response = {
-    //   status: 200,
-    //   data: {
-    //     id: "test1",
-    //     status: "PROVISIONING",
-    //     subscription_number: null,
-    //     end_date: "2024-12-15",
-    //     instance_url: "https://test1.stg.runbook.pagerduty.cloud",
-    //   },
-    // };
-
-    if (response.status === 200) {
+    if (response.status !== 200 && response.status !== 400) {
+      throw {
+        message: `Error getting result: Response: ${response.status}`,
+        response: response,
+      };
+    } else {
       return response.data;
     }
   } catch (e) {
-    console.log(e);
+    throw { message: "Error: " + e.message };
   }
 }
 
 export async function postStartMigration(projectName, formValues) {
-  const response = await api.post(
-    `priv/migWiz/migrate/${projectName}`,
-    formValues,
-  );
-  if (response.status === 200) {
-    return { ok: true };
-  } else {
-    throw new Error("fail");
+  try {
+    const response = await api.post(
+      `priv/migWiz/migrate/${projectName}`,
+      formValues,
+    );
+    if (response.status === 200) {
+      return { ok: true };
+    } else {
+      throw new Error("fail");
+    }
+  } catch (e) {
+    throw { message: "Error: " + e.message };
   }
 }

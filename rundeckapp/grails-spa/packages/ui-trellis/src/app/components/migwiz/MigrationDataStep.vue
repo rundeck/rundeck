@@ -186,6 +186,9 @@ export default defineComponent({
         if (resp.ok && valid) {
           this.$emit("nextStep", {
             isValid: true,
+            data: {
+              instanceUrl: values.instanceUrl,
+            },
           });
         }
       } catch (e) {
