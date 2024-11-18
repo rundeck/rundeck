@@ -12,11 +12,8 @@ class MigWizController {
     MigrationWizardService migrationWizardService
     AuthContextProvider rundeckAuthContextProvider
 
-    def defaultAction = "migWiz"
 
     def index() {}
-
-    def migWiz() {}
 
 
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_EXPORT)
