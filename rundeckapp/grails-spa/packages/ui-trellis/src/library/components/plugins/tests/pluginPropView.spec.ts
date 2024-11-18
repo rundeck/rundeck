@@ -21,7 +21,7 @@ const createWrapper = (props = {}) => {
     global: {
       components: { PluginPropVal, Expandable, AceEditor },
       mocks: {
-        $t: (msg) => msg,
+        $t: (msg: string) => msg,
       },
     },
     attachTo: document.body,
