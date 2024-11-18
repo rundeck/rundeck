@@ -145,7 +145,6 @@ module.exports = {
       });
   },
   configureWebpack: {
-    cache: true,
     devtool: process.env.VUE_APP_DEVTOOL,
     resolve: {
       alias: {
