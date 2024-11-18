@@ -56,8 +56,18 @@
           </div>
         </div>
       </FormField>
-      <button type="submit" class="btn btn-submit" :disabled="!$form.valid">
-        {{ $t("migwiz.nextStep") }}
+      <button
+        type="submit"
+        class="btn btn-submit"
+        :disabled="!$form.valid || loading"
+      >
+        <template v-if="loading">
+          Loading
+          <i class="fa-lg fas fa-spinner fa-spin"></i>
+        </template>
+        <template v-else>
+          {{ $t("migwiz.nextStep") }}
+        </template>
       </button>
     </Form>
   </div>
@@ -120,6 +130,7 @@ export default defineComponent({
           acceptAgreement: yup.boolean().required().oneOf([true]),
         }),
       ),
+      loading: false,
     };
   },
   methods: {
@@ -132,6 +143,7 @@ export default defineComponent({
       });
     },
     async next({ values, valid }) {
+      this.loading = true;
       const finalValues = cloneDeep(values || {});
       delete finalValues.acceptAgreement;
       if (valid && Object.keys(finalValues).length > 0) {
@@ -160,6 +172,8 @@ export default defineComponent({
             html: true,
             content: e.message,
           });
+        } finally {
+          this.loading = false;
         }
       }
     },

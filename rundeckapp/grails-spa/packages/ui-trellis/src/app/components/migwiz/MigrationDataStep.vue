@@ -44,6 +44,7 @@
       </div>
     </div>
     <Form
+      v-slot="$form"
       :resolver="resolver"
       :validate-on-value-update="false"
       :validate-on-blur="true"
@@ -117,8 +118,18 @@
           </div>
         </div>
       </FormField>
-      <button type="submit" class="btn btn-submit">
-        {{ $t("migwiz.nextStep") }}
+      <button
+        type="submit"
+        class="btn btn-submit"
+        :disabled="!$form.valid || loading"
+      >
+        <template v-if="loading">
+          Loading
+          <i class="fa-lg fas fa-spinner fa-spin"></i>
+        </template>
+        <template v-else>
+          {{ $t("migwiz.nextStep") }}
+        </template>
       </button>
     </Form>
   </div>
@@ -160,11 +171,13 @@ export default defineComponent({
           selectedProject: yup.string().required(),
         }),
       ),
+      loading: false,
     };
   },
   methods: {
     async next({ values, valid }) {
       console.log(values);
+      this.loading = true;
       try {
         const resp = await postStartMigration(values.selectedProject, {
           url: values.instanceUrl,
@@ -181,6 +194,8 @@ export default defineComponent({
           html: true,
           content: e.message,
         });
+      } finally {
+        this.loading = false;
       }
     },
     handleSelection(selected: string[]) {
