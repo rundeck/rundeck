@@ -6,6 +6,11 @@ export async function getCredentials(formValues) {
   const response = await axios.post(
     `${BASE_URL_HACKWEEK}rba/get-credentials`,
     formValues,
+    {
+      validateStatus: function (status) {
+        return status >= 200 && status < 500;
+      },
+    },
   );
 
   if (response.status !== 200 && response.status !== 400) {
@@ -25,8 +30,22 @@ export async function postStartInstance(token, formValues) {
       formValues,
       {
         headers: { Authorization: `Bearer ${token}` },
+        validateStatus: function (status) {
+          return status >= 200 && status < 500;
+        },
       },
     );
+
+    // const response = {
+    //   status: 200,
+    //   data: {
+    //     id: "test1",
+    //     status: "PROVISIONING",
+    //     subscription_number: null,
+    //     end_date: "2024-12-15",
+    //     instance_url: "https://test1.stg.runbook.pagerduty.cloud",
+    //   },
+    // };
 
     if (response.status === 200) {
       return response.data;
