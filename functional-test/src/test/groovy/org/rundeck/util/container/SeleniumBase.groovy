@@ -1,11 +1,14 @@
 package org.rundeck.util.container
 
 import groovy.transform.CompileStatic
+import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.OutputType
 import org.openqa.selenium.TakesScreenshot
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.chrome.ChromeOptions
+import org.openqa.selenium.support.ui.WebDriverWait
+import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.spock.extensions.TestResultExtension
 import org.rundeck.util.gui.pages.BasePage
 
@@ -125,5 +128,15 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
      */
     static String getSeparator() {
         return System.getProperty("os.name").toLowerCase().contains("windows") ? "\\" : "/"
+    }
+
+    /**
+     * Wait for document readyState to be 'complete'
+     * @param waitingTime
+     */
+    void waitForPageLoadComplete(Duration waitingTime = WaitingTime.MODERATE) {
+        new WebDriverWait(driver, waitingTime).until {
+            (((JavascriptExecutor) it).executeScript("return document.readyState") == "complete")
+        }
     }
 }

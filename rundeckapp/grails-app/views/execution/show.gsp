@@ -47,7 +47,13 @@
       </g:else>
       </g:each>
       <g:set var="adhocRunAllowed" value="${auth.adhocAllowedTest(action: AuthConstants.ACTION_RUN,project:execution.project)}"/>
-      <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: params.project, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])}"/>
+      <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(
+              context: AuthConstants.CTX_APPLICATION,
+              type: AuthConstants.TYPE_PROJECT,
+              name: params.project,
+              action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
+              any: true
+      )}"/>
       <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: params.project, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
 
       <g:set var="defaultLastLines" value="${cfg.getInteger(config: "gui.execution.tail.lines.default", default: 20)}"/>

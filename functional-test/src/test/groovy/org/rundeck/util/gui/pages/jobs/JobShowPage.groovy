@@ -9,6 +9,7 @@ import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.container.SeleniumContext
 import org.rundeck.util.gui.pages.BasePage
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
+import org.rundeck.util.gui.pages.project.ActivityListTrait
 import org.rundeck.util.gui.scm.ScmStatusBadge
 
 import java.time.Duration
@@ -17,7 +18,7 @@ import java.time.Duration
  * Job show page
  */
 @CompileStatic
-class JobShowPage extends BasePage{
+class JobShowPage extends BasePage implements ActivityListTrait {
 
     By jobUuidBy = By.xpath("//*[@class='rd-copybox__content']")
     By stepsInJobDefinitionBy = By.cssSelector(".pflowitem.wfctrlholder")

@@ -5,9 +5,10 @@ import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
 import org.rundeck.util.container.SeleniumContext
 import org.rundeck.util.gui.pages.BasePage
+import org.rundeck.util.gui.pages.project.ActivityListTrait
 
 @CompileStatic
-class ActivityPage extends BasePage {
+class ActivityPage extends BasePage implements ActivityListTrait{
 
     String loadPath = "activity"
 
@@ -17,6 +18,10 @@ class ActivityPage extends BasePage {
 
     ActivityPage(final SeleniumContext context) {
         super(context)
+    }
+    ActivityPage(final SeleniumContext context, String projectName) {
+        super(context)
+        loadActivityPageForProject(projectName)
     }
 
     void loadActivityPageForProject(String projectName){
