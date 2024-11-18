@@ -102,12 +102,12 @@ public class ExecutionServiceImpl implements ExecutionService {
                 pluginLogging.begin();
             }
             try {
-                context
-                    .getPluginControlService()
-                    .checkDisabledPlugin(
-                        item.getType(),
-                        ServiceNameConstants.WorkflowStep
-                    );
+//                context
+//                    .getPluginControlService()
+//                    .checkDisabledPlugin(
+//                        item.getType(),
+//                        ServiceNameConstants.WorkflowStep
+//                    );
                 result = executor.executeWorkflowStep(context, item);
             } finally {
                 if (null != pluginLogging) {
@@ -198,12 +198,12 @@ public class ExecutionServiceImpl implements ExecutionService {
                 pluginLogging.begin();
             }
             try {
-                context
-                    .getPluginControlService()
-                    .checkDisabledPlugin(
-                        item.getNodeStepType(),
-                        ServiceNameConstants.WorkflowNodeStep
-                    );
+//                context
+//                    .getPluginControlService()
+//                    .checkDisabledPlugin(
+//                        item.getNodeStepType(),
+//                        ServiceNameConstants.WorkflowNodeStep
+//                    );
                 result = interpreter.executeNodeStep(nodeContext, item, node);
             } finally {
                 if (null != pluginLogging) {
