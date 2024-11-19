@@ -16,6 +16,6 @@ RUN apt-get update && \
     apt-get -y install netcat && \
     pip3 install --upgrade pip
 
-RUN pip3 install ansible==9.6.0
+RUN pip3 install ansible==9.6.1
 
 USER rundeck
