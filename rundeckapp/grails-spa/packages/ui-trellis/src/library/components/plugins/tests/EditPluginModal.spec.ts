@@ -33,6 +33,7 @@ jest.mock("../pluginConfig.vue", () => ({
       this.props = data.props;
     }),
   },
+  template: `<div data-testid="plugin-config">PluginConfig Mock</div>`,
 }));
 const createWrapper = async (props = {}) => {
   const wrapper = mount(EditPluginModal, {
