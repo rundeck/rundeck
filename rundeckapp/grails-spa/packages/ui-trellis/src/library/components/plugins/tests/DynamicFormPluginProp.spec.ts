@@ -83,8 +83,8 @@ describe("DynamicFormPluginProp.vue", () => {
     const fields = wrapper.findAll('[data-testid="field-item"]');
     const helpBlocks = fields.at(1)?.findAll(".help-block");
     expect(fields.length).toBe(2);
-    expect(fields.at(1)?.find("label").text()).toBe("Field 1");
-    expect(helpBlocks.at(1)?.text()).toBe(
+    expect(fields.at(1)?.find("label")?.text()).toBe("Field 1");
+    expect(helpBlocks?.at(1)?.text()).toBe(
       "New Field Description (Field key: Option1)",
     );
   });

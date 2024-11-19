@@ -22,8 +22,10 @@ jest.mock("@/library/modules/rundeckClient", () => ({
 jest.mock("../pluginConfig.vue", () => ({
   name: "PluginConfig",
   methods: {
-    loadPluginData: jest.fn().mockImplementation(function (data) {
-      this.props = data.props;
+    loadPluginData: jest.fn().mockImplementation(function (data: {
+      props: any;
+    }) {
+      (this as any).props = data.props;
     }),
   },
 }));
@@ -44,7 +46,7 @@ const createWrapper = async (props = {}) => {
     global: {
       components: { Modal, Btn },
       mocks: {
-        $t: (msg) => msg,
+        $t: (msg: string) => msg,
       },
     },
     attachTo: document.body,
@@ -100,7 +102,7 @@ describe("EditPluginModal", () => {
     await saveButton.trigger("click");
     expect(wrapper.emitted("update:modelValue")).toBeTruthy();
     expect(wrapper.emitted("save")).toBeTruthy();
-    expect(wrapper.emitted("update:modelValue")[0][0]).toEqual({
+    expect(wrapper.emitted("update:modelValue")![0][0]).toEqual({
       type: "mockType",
       name: "mockName",
       config: {},

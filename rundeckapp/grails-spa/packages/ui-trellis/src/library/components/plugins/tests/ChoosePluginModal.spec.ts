@@ -37,7 +37,7 @@ const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
     global: {
       components: { Modal, Btn, Tabs, Tab },
       mocks: {
-        $t: (msg) => msg,
+        $t: (msg: string) => msg,
       },
       stubs: {
         Modal: false,
@@ -62,10 +62,11 @@ describe("ChoosePluginModal", () => {
     const providerButtons = wrapper.findAll('[data-testid="provider-button"]');
     expect(providerButtons.length).toBe(3);
     await providerButtons[0].trigger("click");
-    expect(wrapper.emitted("selected")).toBeTruthy();
-    expect(wrapper.emitted("selected")[0][0]).toEqual({
-      service: "mockService1",
+    const emittedEvents = wrapper.emitted("selected");
+    expect(emittedEvents).toBeTruthy();
+    expect(emittedEvents?.[0]?.[0]).toEqual({
       provider: "provider1",
+      service: "mockService1",
     });
   });
   it('emits "cancel" event when cancel button is clicked', async () => {
@@ -74,7 +75,8 @@ describe("ChoosePluginModal", () => {
     const cancelButton = wrapper.find('[data-testid="cancel-button"]');
     expect(wrapper.text()).toContain("Cancel");
     await cancelButton.trigger("click");
-    expect(wrapper.emitted("cancel")).toBeTruthy();
-    expect(wrapper.emitted("cancel").length).toBe(1);
+    const emittedEvents = wrapper.emitted("cancel");
+    expect(emittedEvents).toBeTruthy();
+    expect(emittedEvents?.length).toBe(1);
   });
 });
