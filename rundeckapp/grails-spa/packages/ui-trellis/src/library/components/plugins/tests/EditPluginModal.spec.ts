@@ -2,6 +2,10 @@ import { mount, flushPromises } from "@vue/test-utils";
 import EditPluginModal from "../EditPluginModal.vue";
 import { Modal, Btn } from "uiv";
 import * as pluginService from "../../../modules/pluginService";
+
+interface MockPluginConfig {
+  props?: any;
+}
 jest.mock("@/library/modules/pluginService", () => ({
   ...jest.requireActual("@/library/modules/pluginService"),
   getServiceProviderDescription: jest.fn().mockResolvedValue({
@@ -22,10 +26,11 @@ jest.mock("@/library/modules/rundeckClient", () => ({
 jest.mock("../pluginConfig.vue", () => ({
   name: "PluginConfig",
   methods: {
-    loadPluginData: jest.fn().mockImplementation(function (data: {
-      props: any;
-    }) {
-      (this as any).props = data.props;
+    loadPluginData: jest.fn().mockImplementation(function (
+      this: MockPluginConfig,
+      data: { props: any },
+    ) {
+      this.props = data.props;
     }),
   },
 }));
@@ -49,7 +54,6 @@ const createWrapper = async (props = {}) => {
         $t: (msg: string) => msg,
       },
     },
-    attachTo: document.body,
   });
   await flushPromises();
   return wrapper;
