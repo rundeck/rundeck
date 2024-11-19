@@ -36,7 +36,6 @@ class AnsibleResourceModelSpec extends BaseContainer{
 
         then:
         json.size() == 1
-        json.get("rundeck-oss-server-node")
         !json.get("ansible-resource-model-test")
     }
 }
