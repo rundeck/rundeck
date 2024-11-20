@@ -445,6 +445,66 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         Map newmap = svc.addOptionDefaults(se, optParams)
 
         assertEquals('', newmap['test'])
+
+        expect:
+        // asserts validate above
+        1 == 1
+    }
+
+    void testAddOptionDefaults_ShouldAddMultivaluedIfAllSelected(){
+        ExecutionService svc = new ExecutionService()
+
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                uuid: 'abc',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])])
+        )
+        def opt1 = new Option(name: 'test', enforced: false, multivalued: true, multivalueAllSelected: true, valuesList: ['a,b,c'], delimiter:',')
+        se.addToOptions(opt1)
+        if (!se.validate()) {
+        }
+        assertNotNull se.save()
+
+        Map optParams = [:]
+
+        Map newmap = svc.addOptionDefaults(se, optParams)
+
+        assertEquals('a,b,c', newmap['test'])
+
+        expect:
+        // asserts validate above
+        1 == 1
+    }
+
+    void testAddOptionDefaults_ShouldNotReplaceMultivalued(){
+        ExecutionService svc = new ExecutionService()
+
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                uuid: 'abc',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])])
+        )
+        def opt1 = new Option(name: 'test', enforced: false, multivalued: true, multivalueAllSelected: true, valuesList: ['a,b,c'], delimiter:',')
+        se.addToOptions(opt1)
+        if (!se.validate()) {
+        }
+        assertNotNull se.save()
+
+        Map optParams = ['test':'a']
+
+        Map newmap = svc.addOptionDefaults(se, optParams)
+
+        assertEquals('a', newmap['test'])
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     void testCreateExecutionRetryOptionValue(){
