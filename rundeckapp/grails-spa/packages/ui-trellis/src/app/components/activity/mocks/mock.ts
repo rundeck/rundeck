@@ -51,7 +51,6 @@ export const rundeckServiceMock = {
       projectAdminAuth: true,
       deleteExecAuth: true,
       activityUrl: "/project/test/events/eventsAjax",
-      nowrunningUrl: "/api/47/project/test/executions/running",
       bulkDeleteUrl: "/execution/deleteBulkApi",
       activityPageHref: "/project/test/activity",
       sinceUpdatedUrl: "/project/test/events/since.json",
@@ -79,7 +78,7 @@ export const axiosMock = {
 export const setupRundeckContext = () => {
   window._rundeck = rundeckServiceMock.getRundeckContext();
 };
-
+export const mockQueryRunning = jest.fn();
 export const mockReports = [
   {
     node: "1/0/1",

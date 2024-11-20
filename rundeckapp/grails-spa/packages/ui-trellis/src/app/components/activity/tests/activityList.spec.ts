@@ -1,3 +1,4 @@
+import { queryRunning } from "../../../../library/services/executions";
 import {
   axiosMock,
   i18nMocks,
@@ -5,6 +6,7 @@ import {
   mockReports,
   rundeckClientMock,
   rundeckServiceMock,
+  mockQueryRunning,
 } from "../mocks/mock";
 import { flushPromises, shallowMount, VueWrapper } from "@vue/test-utils";
 import ActivityList from "../activityList.vue";
@@ -12,7 +14,11 @@ import ActivityFilter from "../activityFilter.vue";
 import OffsetPagination from "../../../../library/components/utils/OffsetPagination.vue";
 import { cloneDeep } from "lodash";
 import { Btn, Modal } from "uiv";
-
+jest.mock("../../../../library/services/executions", () => {
+  return {
+    queryRunning: mockQueryRunning,
+  };
+});
 jest.mock("../../../../library/rundeckService", () => rundeckServiceMock);
 jest.mock("@rundeck/client", () => rundeckClientMock);
 jest.mock("axios", () => axiosMock);
@@ -68,14 +74,11 @@ describe("ActivityList", () => {
   });
   beforeEach(() => {
     reports = cloneDeep(mockReports);
+    mockQueryRunning.mockResolvedValue({
+      results: mockRunningExecutions,
+      paging: { max: 20, offset: 0 },
+    });
     axiosMock.get.mockImplementation((url) => {
-      if (url.includes("running")) {
-        return {
-          data: {
-            executions: [...mockRunningExecutions],
-          },
-        };
-      }
       if (url.includes("eventsAjax")) {
         return {
           data: {
@@ -104,6 +107,10 @@ describe("ActivityList", () => {
       expect(executionItems.length).toBe(2); // Directly using the expected length value
       const reportItems = wrapper.findAll('[data-testid="report-row-item"]');
       expect(reportItems.length).toBe(2);
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        "activity-nowrunning-count",
+        2,
+      );
     });
 
     it("error message when loading(apis) fails", async () => {

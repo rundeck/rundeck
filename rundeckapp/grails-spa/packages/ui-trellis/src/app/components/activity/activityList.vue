@@ -586,6 +586,7 @@
 </template>
 
 <script lang="ts">
+import { queryRunning } from "../../../library/services/executions";
 import axios from "axios";
 import { defineComponent, PropType } from "vue";
 import moment, { MomentInput } from "moment";
@@ -593,10 +594,8 @@ import OffsetPagination from "../../../library/components/utils/OffsetPagination
 import ActivityFilter from "./activityFilter.vue";
 
 import { getRundeckContext } from "../../../library";
-import {
-  Execution,
-  ExecutionBulkDeleteResponse,
-} from "@rundeck/client/dist/lib/models";
+import { ExecutionBulkDeleteResponse } from "@rundeck/client/dist/lib/models";
+import { Execution } from "../../../library/types/executions/Execution";
 import * as DOMPurify from "dompurify";
 import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
 import { EventBus } from "../../../library";
@@ -714,7 +713,6 @@ export default defineComponent({
       showBulkEditCleanSelections: false,
       highlightExecutionId: null,
       activityUrl: "",
-      nowrunningUrl: "",
       bulkDeleteUrl: "",
       auth: {
         projectAdmin: false,
@@ -769,7 +767,6 @@ export default defineComponent({
       this.auth.projectAdmin = this.rundeckContext.data["projectAdminAuth"];
       this.auth.deleteExec = this.rundeckContext.data["deleteExecAuth"];
       this.activityUrl = this.rundeckContext.data["activityUrl"];
-      this.nowrunningUrl = this.rundeckContext.data["nowrunningUrl"];
       this.bulkDeleteUrl = this.rundeckContext.data["bulkDeleteUrl"];
       this.activityPageHref = this.rundeckContext.data["activityPageHref"];
       this.sinceUpdatedUrl = this.rundeckContext.data["sinceUpdatedUrl"];
@@ -1078,23 +1075,16 @@ export default defineComponent({
         qparams.jobIdFilter = this.query.jobIdFilter;
       }
       try {
-        //this.running = await rundeckContext.rundeckClient.executionListRunning(this.projectName)
-        const response = await axios.get(this.nowrunningUrl, {
-          headers: { "x-rundeck-ajax": true },
-          params: qparams,
-          withCredentials: true,
-        });
-
-        const executions = response.data.executions.map((e: any) => {
-          const {
-            "date-started": dateStarted,
-            "date-completed": dateCompleted,
-          } = e;
-          return Object.assign({ dateStarted, dateCompleted }, e) as Execution;
-        });
-        this.running = { executions, paging: response.data.paging };
+        const response = await queryRunning(this.projectName, qparams);
+        this.running = {
+          executions: response.results,
+          paging: response.paging,
+        };
         this.loadingRunning = false;
-        this.eventBus.emit("activity-nowrunning-count", executions.length);
+        this.eventBus.emit(
+          "activity-nowrunning-count",
+          this.running.executions.length,
+        );
       } catch (error) {
         this.disableRefresh = !this.disableRefresh;
         this.loadingRunning = false;
