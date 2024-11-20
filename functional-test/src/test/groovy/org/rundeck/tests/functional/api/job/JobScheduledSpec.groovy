@@ -28,13 +28,14 @@ class JobScheduledSpec extends BaseContainer {
             def nh = upDate.hour
             def nm = upDate.minute
             def ns = upDate.second
+            def randomUUID = UUID.randomUUID().toString()
 
             def xml = """
                 <joblist>
                    <job>
                       <name>scheduled job</name>
                       <group>api-test/job-run-scheduled</group>
-                      <uuid>api-test-job-run-scheduled</uuid>
+                      <uuid>${randomUUID}</uuid>
                       <description></description>
                       <loglevel>INFO</loglevel>
                       <context>
