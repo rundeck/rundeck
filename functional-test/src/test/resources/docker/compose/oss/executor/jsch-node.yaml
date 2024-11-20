@@ -37,8 +37,8 @@ ssh-node-passphrase:
   hostname: ssh-node
   osFamily: unix
   username: rundeck
-  ssh-key-storage-path: keys/project/pro-jsch-executor-test/ssh-node-passphrase.key
-  ssh-key-passphrase-storage-path: keys/project/pro-jsch-executor-test/ssh-node-passphrase.pass
+  ssh-key-storage-path: keys/project/core-jsch-executor-test/ssh-node-passphrase.key
+  ssh-key-passphrase-storage-path: keys/project/core-jsch-executor-test/ssh-node-passphrase.pass
   node-executor: jsch-ssh
   file-copier: jsch-scp
   ssh-authentication: privateKey
