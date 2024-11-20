@@ -24,33 +24,20 @@ const createWrapper = (props = {}) => {
         $t: (msg: string) => msg,
       },
     },
-    attachTo: document.body,
   });
 };
 describe("ConfigPair.vue", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
-  it("displays the Boolean type property correctly when true", async () => {
-    const wrapper = createWrapper({
-      prop: {
-        type: "Boolean",
-        title: "Enable Feature",
-        desc: "Enable or disable the feature",
-        options: {
-          booleanTrueDisplayValueClass: "text-success",
-        },
-      },
-      value: "true",
-    });
+  it("renders a boolean property with correct title and 'true' value styling", async () => {
+    const wrapper = createWrapper();
     const title = wrapper.find("[title='Enable or disable the feature']");
-
     expect(title.text()).toContain("Enable Feature:");
     const value = wrapper.find(".text-success");
-
     expect(value.text()).toContain("yes");
   });
-  it("displays the Integer type property correctly", async () => {
+  it("renders an Integer property with correct title and value", async () => {
     const wrapper = createWrapper({
       prop: {
         type: "Integer",
@@ -64,7 +51,7 @@ describe("ConfigPair.vue", () => {
     const value = wrapper.find('[data-testid="integer-prop-value"]');
     expect(value.text()).toBe("10");
   });
-  it("renders Options type property with multiple selected values", async () => {
+  it("renders options type property with multiple selected values", async () => {
     const wrapper = createWrapper({
       prop: {
         type: "Options",
@@ -80,7 +67,7 @@ describe("ConfigPair.vue", () => {
     expect(selectedValues[0].text()).toContain("Option1");
     expect(selectedValues[1].text()).toContain("Option2");
   });
-  it("renders multi-line values with Expandable component", async () => {
+  it("renders multi-line values using the Expandable component", async () => {
     const wrapper = createWrapper({
       prop: {
         type: "String",
@@ -112,7 +99,7 @@ describe("ConfigPair.vue", () => {
     expect(aceEditor.props("readOnly")).toBe(true);
     expect(aceEditor.props("modelValue")).toBe("console.log('Hello World');");
   });
-  it("displays custom attributes for DYNAMIC_FORM type", async () => {
+  it("renders DYNAMIC_FORM type property with custom attributes", async () => {
     const wrapper = createWrapper({
       prop: {
         type: "String",
@@ -132,7 +119,7 @@ describe("ConfigPair.vue", () => {
     expect(customPairs[1].text()).toContain("Custom Label 2:");
     expect(customPairs[1].text()).toContain("Custom Value 2");
   });
-  it("renders password type with obfuscated text", async () => {
+  it("renders password type with obfuscated value", async () => {
     const wrapper = createWrapper({
       prop: {
         type: "String",

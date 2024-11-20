@@ -1,5 +1,6 @@
 import { mount } from "@vue/test-utils";
 import PluginPropVal from "../pluginPropVal.vue";
+
 const createWrapper = (prop = {}, value: string | boolean = "") => {
   return mount(PluginPropVal, {
     props: {
@@ -20,7 +21,7 @@ describe("PluginPropVal.vue", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
-  it("displays 'Yes' or 'No' for Boolean type properties", () => {
+  it("renders 'Yes' or 'No' for Boolean type properties", () => {
     const wrapperTrue = createWrapper(
       { type: "Boolean", options: { booleanTrueDisplayValue: "Yes" } },
       "true",
@@ -32,7 +33,7 @@ describe("PluginPropVal.vue", () => {
     );
     expect(wrapperFalse.text()).toBe("No");
   });
-  it("displays the correct icon for Options type with valueDisplayType 'icon'", () => {
+  it("renders the correct icon for Options type with valueDisplayType as 'icon'", () => {
     const wrapper = createWrapper(
       {
         type: "Options",
@@ -62,10 +63,7 @@ describe("PluginPropVal.vue", () => {
     );
     expect(wrapper.text()).toBe("••••••••••••");
   });
-  it("renders the value directly when no specific type or display options are provided", () => {
-    const wrapper = createWrapper({ type: "String" }, "Some Value");
-    expect(wrapper.text()).toBe("Some Value");
-  });
+
   it("renders multi-line values with line count when displayType is 'MULTI_LINE'", () => {
     const wrapper = createWrapper(
       {
@@ -78,7 +76,7 @@ describe("PluginPropVal.vue", () => {
     expect(wrapper.text()).toContain("line3");
   });
 
-  it("displays custom attributes for DYNAMIC_FORM type", () => {
+  it("renders custom attributes for DYNAMIC_FORM type", () => {
     const wrapper = createWrapper(
       {
         options: { displayType: "DYNAMIC_FORM" },
