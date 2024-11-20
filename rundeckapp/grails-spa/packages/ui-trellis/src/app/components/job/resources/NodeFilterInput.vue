@@ -243,12 +243,14 @@ import {
   ProjectFilters,
 } from "../../../../library/stores/NodeFilterLocalstore";
 import { defineComponent, ref, PropType } from "vue";
+import { Popover } from 'uiv';
 import NodeFilterLink from "./NodeFilterLink.vue";
 
 export default defineComponent({
   name: "NodeFilterInput",
   components: {
     NodeFilterLink,
+    Popover,
   },
   inheritAttrs: false,
   props: {

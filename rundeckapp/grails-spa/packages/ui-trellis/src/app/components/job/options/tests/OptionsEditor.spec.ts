@@ -1,5 +1,4 @@
 import { mount, VueWrapper } from "@vue/test-utils";
-import { Btn } from "uiv";
 import { JobOptionsData } from "../../../../../library/types/jobs/JobEdit";
 import { Operation } from "../model/ChangeEvents";
 import OptionsEditor from "../OptionsEditor.vue";
@@ -121,10 +120,6 @@ const mountOptionsEditor = async (options: {
         PluginConfig: true,
       },
     },
-
-    components: {
-      btn: Btn,
-    },
   });
 
   // Wait for the next Vue tick to allow for asynchronous rendering
@@ -145,6 +140,7 @@ describe("OptionsEditor", () => {
       options: [],
     } as JobOptionsData;
     const wrapper = await mountOptionsEditor({ optionsData, edit: true });
+    console.log(wrapper.find('#options-editor button').html());
     let btn = wrapper.get(".ready");
     expect(btn.attributes().title).toEqual("add.new.option");
     expect(btn.text()).toEqual("add.an.option");

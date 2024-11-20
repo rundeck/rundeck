@@ -57,14 +57,24 @@
   ]}" id="homeDataPagingParams"/>
 
   <!-- VUE JS REQUIREMENTS -->
+  <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+    <g:loadEntryAssets entry="pages/home" />
+  </g:if>
+  <g:else>
   <asset:javascript src="static/pages/home.js" defer="defer"/>
+  </g:else>
   <!-- /VUE JS REQUIREMENTS -->
 
   <asset:javascript src="menu/home.js"/>
 
   <!-- VUE CSS MODULES -->
   <!-- /VUE CSS MODULES -->
+  <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+    <g:loadEntryAssets entry="pages/login" />
+  </g:if>
+  <g:else>
   <asset:javascript src="static/pages/login.js"/>
+  </g:else>
   <style type="text/css">
   .project_list_item_link {
     display: inline-block;
@@ -102,7 +112,9 @@
     </div>
   </div>
   <!-- VUE JS MODULES -->
+  <g:if test="${!grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
   <asset:stylesheet href="static/css/pages/home.css"/>
+  </g:if>
   <!-- /VUE JS MODULES -->
 </body>
 </html>

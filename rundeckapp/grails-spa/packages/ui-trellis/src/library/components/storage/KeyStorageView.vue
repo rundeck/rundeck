@@ -201,7 +201,7 @@
                 </tr>
               </tbody>
 
-              <tbody v-if="notFound() === true">
+              <tbody v-if="notFound()">
                 <tr>
                   <td colspan="2">
                     <span class="text-strong"
@@ -284,7 +284,7 @@
                   </span>
                 </div>
               </div>
-              <div v-if="wasModified() !== ''">
+              <div v-if="wasModified()">
                 <div>
                   Modified:
                   <span class="timeago text-strong">

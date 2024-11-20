@@ -15,7 +15,12 @@
   --}%
 
 <%@ page import="org.rundeck.core.auth.AuthConstants" %>
+<g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+    <g:loadEntryAssets entry="pages/job/head/scm-action-buttons" />
+</g:if>
+<g:else>
 <asset:javascript src="static/pages/job/head/scm-action-buttons.js" asset-defer="true" />
+</g:else>
 
 <g:set var="authUpdate" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_UPDATE])}"/>
 <g:set var="authRead" value="${auth.jobAllowedTest(job: scheduledExecution, any: true, action: [AuthConstants.ACTION_READ])}"/>

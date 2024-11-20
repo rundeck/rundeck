@@ -101,6 +101,7 @@ import { defineComponent, PropType } from "vue";
 
 const BashVarPrefix = "RD_";
 export default defineComponent({
+  name: "OptionUsagePreview",
   props: {
     option: {
       type: Object as PropType<JobOption>,

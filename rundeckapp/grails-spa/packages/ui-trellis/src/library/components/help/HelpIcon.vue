@@ -19,10 +19,17 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, getCurrentInstance } from "vue";
+import { Popover } from 'uiv';
 
 export default defineComponent({
   name: "HelpIcon",
+  components: { Popover },
+  computed: {
+    _uid(): number {
+      return getCurrentInstance()?.uid || 0;
+    },
+  },
   props: {
     title: String,
   },

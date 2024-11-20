@@ -139,9 +139,9 @@ export default defineComponent({
       };
     },
     entryOutputs() {
-      return this.entries.map((entry, index) => {
+      return this.entries?.map((entry, index) => {
         return this.buildEntry(entry, index);
-      });
+      }) || [];
     },
     nodeChunkKey() {
       return `key-${this.nodeIcon}-${this.command}-${this.time}-${this.gutter}-${this.lineWrap}`;

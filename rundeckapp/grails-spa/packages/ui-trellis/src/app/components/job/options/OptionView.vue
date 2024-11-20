@@ -36,7 +36,7 @@
       <popover trigger="hover" placement="bottom">
         <span class="valuesSet" data-role="trigger">
           <span class="valueslist">
-            {{ $tc("option.values.c", option.values.length) }}
+            {{ $t("option.values.c", option.values.length) }}
           </span>
         </span>
         <template #popover>
@@ -89,9 +89,13 @@
 <script lang="ts">
 import { JobOption } from "@/library/types/jobs/JobEdit";
 import { defineComponent, PropType } from "vue";
+import { Popover } from "uiv";
 
 export default defineComponent({
   name: "OptionView",
+  components: {
+    Popover,
+  },
   props: {
     option: {
       type: Object as PropType<JobOption>,

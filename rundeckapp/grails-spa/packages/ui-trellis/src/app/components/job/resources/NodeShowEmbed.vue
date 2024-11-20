@@ -73,6 +73,7 @@ import NodeStatus from "../../job/resources/NodeStatus.vue";
 import { getRundeckContext } from "../../../../library";
 import { defineComponent } from "vue";
 import type { PropType } from "vue";
+import { Popover } from 'uiv';
 import { styleForNode } from "../../../utilities/nodeUi";
 
 const rdBase = getRundeckContext().rdBase;
@@ -85,6 +86,7 @@ export default defineComponent({
     NodeIcon,
     NodeDetailsSimple,
     NodeFilterLink,
+    Popover,
   },
   props: {
     node: {

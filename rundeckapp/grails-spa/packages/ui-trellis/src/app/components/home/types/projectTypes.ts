@@ -75,15 +75,21 @@ interface Project {
   config?: object;
   meta?: MetaType[];
   extra?: any;
+  loaded?: boolean;
+  userCount?: number;
+  failedCount?: number;
+  userSummary?: string[];
+  execCount?: number;
 }
 
 interface ProjectActionsItemDropdown {
   show: boolean;
   link: string;
   text: string;
+  icon?: string;
 }
 
-export {
+export type {
   Project,
   ConfigMeta,
   AuthzMeta,

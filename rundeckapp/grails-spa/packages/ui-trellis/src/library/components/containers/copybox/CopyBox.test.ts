@@ -9,7 +9,7 @@ describe("CopyBox", () => {
     document.execCommand = jest.fn();
 
     // Simulate a click event on the component
-    await wrapper.trigger("click");
+    await wrapper.find(".rd-copybox").trigger("click");
 
     // Verify that the "execCommand" method was called with the expected argument
     expect(document.execCommand).toHaveBeenCalledWith("copy");
@@ -22,7 +22,7 @@ describe("CopyBox", () => {
     document.execCommand = jest.fn().mockReturnValue(true);
 
     // Simulate a click event on the component
-    await wrapper.trigger("click");
+    await wrapper.find(".rd-copybox").trigger("click");
     await wrapper.vm.$nextTick();
 
     // Verify that the success message is displayed
@@ -36,7 +36,7 @@ describe("CopyBox", () => {
     document.execCommand = jest.fn().mockReturnValue(false);
 
     // Simulate a click event on the component
-    await wrapper.trigger("click");
+    await wrapper.find(".rd-copybox").trigger("click");
     await wrapper.vm.$nextTick();
 
     // Verify that the error message is displayed

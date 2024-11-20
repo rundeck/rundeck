@@ -24,9 +24,15 @@
     ) || projAdminAuth}"/>
 
     <asset:javascript src="menu/jobs.next.js"/>
+    <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+        <g:loadEntryAssets entry="pages/project-activity" />
+        <g:loadEntryAssets entry="pages/job/browse" />
+    </g:if>
+    <g:else>
     <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
     <asset:javascript src="static/pages/job/browse.js" defer="defer"/>
     <asset:stylesheet href="static/css/pages/job/browse.css" />
+    </g:else>
 
     <g:jsMessages code="Node,Node.plural,job.starting.execution,job.scheduling.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text,option.select.choose.text"/>
 

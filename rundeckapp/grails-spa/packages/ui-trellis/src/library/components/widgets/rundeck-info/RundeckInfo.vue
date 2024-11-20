@@ -89,15 +89,19 @@ export default defineComponent({
   props: {
     version: {
       type: Object as PropType<VersionInfo>,
+      default: () => ({}),
     },
     latest: {
       type: Object as PropType<Release>,
+      default: () => ({}),
     },
     server: {
       type: Object as PropType<ServerInfo>,
+      default: () => ({}),
     },
     appInfo: {
       type: Object as PropType<AppInfo>,
+      default: () => ({}),
     },
   },
   methods: {

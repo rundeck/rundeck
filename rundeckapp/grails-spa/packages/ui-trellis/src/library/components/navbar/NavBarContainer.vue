@@ -53,11 +53,10 @@ export default defineComponent({
   },
   props: {
     item: Object as PropType<NavContainer>,
-  },
-  data() {
-    return {
-      navBar: window._rundeck.rootStore.navBar,
-    };
+    navBar: {
+      type: Object as PropType<NavBar>,
+      required: true,
+    },
   },
   computed: {
     label() {

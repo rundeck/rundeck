@@ -67,6 +67,7 @@ export interface JobRefDefinition {
   childNodes?: boolean;
   importOptions?: boolean;
   ignoreNotifications?: boolean;
+  nodeStep?: boolean;
   nodefilters?: {
     filter: string;
     dispatch?: {
@@ -125,6 +126,7 @@ export interface CommandEditData extends PluginConfig {
 export type EditStepData = CommandEditData & JobRefData;
 export interface StepsEditData {
   commands: EditStepData[];
+  description?: string;
 }
 
 export interface WorkflowData

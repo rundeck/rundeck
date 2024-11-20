@@ -5,11 +5,12 @@
   </btn>
   <choose-plugin-modal
     :title="addFilterTitle"
-    :services="[ServiceType.LogFilter]"
+    :services="services"
     v-model="addFilterModal"
     @cancel="addFilterModal = false"
     @selected="chooseProviderAdd"
     v-if="addFilterModal"
+    :default-translations="choosePluginTranslations"
   >
   </choose-plugin-modal>
   <edit-plugin-modal
@@ -79,6 +80,17 @@ export default defineComponent({
     },
     editFilterTitle() {
       return `Edit Log Filter Plugin for: ${this.subtitle}`;
+    },
+    services() {
+      return [ServiceType.LogFilter]
+    },
+    choosePluginTranslations() {
+      return this.services.reduce((acc, service) => {
+        acc["plugin.type." + service + ".title.plural"] = this.$t(
+          "plugin.type." + service + ".title.plural",
+        );
+        return acc;
+      }, {});
     },
   },
   methods: {

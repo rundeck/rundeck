@@ -49,13 +49,14 @@
 </template>
 <script lang="ts">
 import { getRundeckContext } from "@/library";
+import { Btn, Tab, Tabs } from 'uiv';
 import pluginInfo from "@/library/components/plugins/PluginInfo.vue";
 import { defineComponent } from "vue";
 const context = getRundeckContext();
 
 export default defineComponent({
   name: "ChoosePluginModal",
-  components: { pluginInfo },
+  components: { pluginInfo, Btn, Tab, Tabs },
   emits: ["cancel", "selected", "update:modelValue"],
   props: {
     title: {
@@ -76,13 +77,18 @@ export default defineComponent({
       required: false,
       default: false,
     },
+    defaultTranslations: {
+      type: Object,
+      required: false,
+      default: () => ({}),
+    },
   },
   methods: {
     tabTitle(service: string, i: number) {
       let name =
         this.tabNames && this.tabNames.length > i
           ? this.tabNames[i]
-          : $t("plugin.type." + service + ".title.plural") || service;
+          : this.defaultTranslations["plugin.type." + service + ".title.plural"] || service;
       let count =
         this.loadedServices.find((s) => s.service === service)?.providers
           .length || 0;

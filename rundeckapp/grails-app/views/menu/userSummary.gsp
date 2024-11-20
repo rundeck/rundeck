@@ -20,8 +20,13 @@
  <meta name="tabpage" content="configure"/>
  <meta name="tabtitle" content="${g.message(code:'page.users.title')}"/>
  <title><g:message code="page.users.title"/></title>
+    <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+        <g:loadEntryAssets entry="pages/user-summary" />
+    </g:if>
+    <g:else>
 <asset:javascript src="static/pages/user-summary.js" defer="defer"/>
 <asset:stylesheet href="static/css/pages/user-summary.css" />
+    </g:else>
 </head>
 
 <body>

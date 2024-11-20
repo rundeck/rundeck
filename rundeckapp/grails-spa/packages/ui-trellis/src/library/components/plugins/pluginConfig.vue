@@ -200,7 +200,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import {defineComponent, PropType} from "vue";
 
 import AceEditor from "../utils/AceEditor.vue";
 import Expandable from "../utils/Expandable.vue";
@@ -217,12 +217,9 @@ import {
   getServiceProviderDescription,
   validatePluginConfig,
 } from "../../modules/pluginService";
+import {EventBus} from "@/library";
+import type { PropGroup } from './types.ts';
 
-interface PropGroup {
-  name?: string;
-  secondary: boolean;
-  props: any[];
-}
 
 export default defineComponent({
   name: "PluginConfig",
@@ -234,26 +231,84 @@ export default defineComponent({
     PluginPropEdit,
   },
   props: {
-    serviceName: { required: false },
-    provider: { required: false },
-    config: { required: false },
-    mode: { required: false },
-    showTitle: { required: false },
-    showIcon: { required: false },
-    showDescription: { required: false },
-    modelValue: { required: false },
-    savedProps: { required: false },
-    pluginConfig: { required: false },
-    validation: { required: false },
-    readOnly: { required: false },
-    validationWarningText: { required: false },
-    scope: { required: false },
-    defaultScope: { required: false },
-    contextAutocomplete: { required: false },
-    autocompleteCallback: { required: false },
-    useRunnerSelector: { required: false },
-    eventBus: { required: false },
+    serviceName: {
+      type: String,
+      required: false
+    },
+    provider: {
+      type: String,
+      required: false
+    },
+    config: {
+      type: Object,
+      required: false
+    },
+    mode: {
+      type: String,
+      required: false
+    },
+    showTitle: {
+      type: Boolean,
+      required: false
+    },
+    showIcon: {
+      type: Boolean,
+      required: false
+    },
+    showDescription: {
+      type: Boolean,
+      required: false
+    },
+    modelValue: {
+      type: Object,
+      required: false
+    },
+    savedProps: {
+      type: Object,
+      required: false
+    },
+    pluginConfig: {
+      type: Object,
+      required: false
+    },
+    validation: {
+      type: Object,
+      required: false
+    },
+    readOnly: {
+      type: Boolean,
+      required: false
+    },
+    validationWarningText: {
+      type: String,
+      required: false
+    },
+    scope: {
+      type: String,
+      required: false
+    },
+    defaultScope: {
+      type: String,
+      required: false
+    },
+    contextAutocomplete: {
+      type: Boolean,
+      required: false
+    },
+    autocompleteCallback: {
+      type: Function,
+      required: false
+    },
+    useRunnerSelector: {
+      type: Boolean,
+      required: false
+    },
+    eventBus: {
+      type: Object as PropType<typeof EventBus>,
+      required: false
+    },
     groupCss: {
+      type: String,
       required: false,
       default: "col-sm-2 control-label h5 header-reset",
     },
@@ -323,9 +378,7 @@ export default defineComponent({
     hasGroups(): boolean {
       return this.props.find((prop) => {
         return this.isGroupedProp(prop);
-      })
-        ? true
-        : false;
+      });
     },
     groupedProperties(): PropGroup[] {
       const unnamed: PropGroup = { props: [], secondary: false };

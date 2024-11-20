@@ -27,15 +27,20 @@
   <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}" />
   <link rel="shortcut icon" href="${g.resource(dir: 'images', file: g.appFavicon())}"/>
   <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}" />
-  %{-- Core theme styles from ui-trellis --}%
-  <asset:stylesheet href="static/css/components/theme.css"/>
 
   <g:if test="${Environment.isDevelopmentEnvironmentAvailable()}">
-    <asset:javascript src="vendor/vue.js"/>
+    <asset:javascript src="vendor/vue.global.js"/>
   </g:if>
   <g:else>
-    <asset:javascript src="vendor/vue.min.js"/>
+    <asset:javascript src="vendor/vue.global.prod.js"/>
   </g:else>
+  <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+    <g:loadEntryAssets entry="components/theme" />
+    <g:loadEntryAssets entry="components/server-identity" />
+  </g:if>
+  <g:else>
+  %{-- Core theme styles from ui-trellis --}%
+  <asset:stylesheet href="static/css/components/theme.css"/>
   <asset:javascript src="static/js/chunk-common.js"/>
   <asset:javascript src="static/js/chunk-vendors.js"/>
   <asset:javascript src="static/components/server-identity.js" asset-defer="true" />
@@ -44,6 +49,7 @@
     <![endif]-->
   <asset:javascript src="vendor/jquery.js" />
   <asset:javascript src="bootstrap.js" />
+  </g:else>
 </head>
 
 <body id="four-oh-four-page">

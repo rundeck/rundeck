@@ -38,21 +38,23 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import {defineComponent, PropType} from "vue";
 import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
 import Skeleton from "../../skeleton/Skeleton.vue";
+import {NewsStore} from "../../../stores/News.ts";
 
 export default defineComponent({
   name: "News",
   components: {
     Skeleton,
   },
-  emits: ["news:select-all"],
-  data() {
-    return {
-      newsStore: window._rundeck.rootStore.news,
-    };
+  props: {
+    newsStore: {
+      type: Object as PropType<NewsStore>,
+      required: true,
+    }
   },
+  emits: ["news:select-all"],
   mounted() {
     this.newsStore.load();
   },

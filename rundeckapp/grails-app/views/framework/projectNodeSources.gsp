@@ -55,8 +55,13 @@
         });
   </g:javascript>
   <!-- VUE JS MODULES -->
+  <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+    <g:loadEntryAssets entry="pages/project-nodes-config" />
+  </g:if>
+  <g:else>
   <asset:javascript src="static/pages/project-nodes-config.js" defer="defer" />
   <asset:stylesheet href="static/css/pages/project-nodes-config.css" />
+  </g:else>
   <!-- /VUE JS MODULES -->
 </head>
 

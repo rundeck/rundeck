@@ -160,8 +160,8 @@ export default defineComponent({
       }
       const filters: JobPageFilter[] = this.jobPageStore.filters || [];
       return this.items
-        .filter((a: JobBrowserStoreItem) => a.job)
-        .filter((a: JobBrowserStoreItem) => filters.every((f) => f.filter(a)))
+        .filter((a: JobBrowseItem) => a.job)
+        .filter((a: JobBrowseItem) => filters.every((f) => f.filter(a)))
         .sort((a: JobBrowseItem, b: JobBrowseItem) => {
           return a.jobName.localeCompare(b.jobName);
         });

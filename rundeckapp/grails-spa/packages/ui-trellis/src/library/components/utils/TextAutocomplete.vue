@@ -30,6 +30,9 @@ import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "TextAutocomplete",
+  components: {
+    Dropdown,
+  },
   extends: Dropdown,
   props: {
     modelValue: {

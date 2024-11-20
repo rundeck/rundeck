@@ -7,5 +7,7 @@ declare global {
     _rundeck: RundeckContext;
     appLinks: AppLinks;
     ProWebhookComponents: Component[];
+    jobWasEdited?: Function;
+    notificationAutocomplete?: Function;
   }
 }

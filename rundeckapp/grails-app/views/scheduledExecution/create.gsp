@@ -5,7 +5,12 @@
 
     <meta name="tabpage" content="jobs"/>
     <meta name="layout" content="base"/>
+    <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+        <g:loadEntryAssets entry="pages/dynamic-form" />
+    </g:if>
+    <g:else>
     <asset:javascript src="static/pages/dynamic-form.js" defer="defer"/>
+    </g:else>
     <title>%{--
   - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
   -

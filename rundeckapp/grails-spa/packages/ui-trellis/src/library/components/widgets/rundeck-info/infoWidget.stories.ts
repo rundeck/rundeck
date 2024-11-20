@@ -18,7 +18,7 @@ export const infoWidget: StoryFn<typeof RundeckInfoWidget> = () => {
   window._rundeck.rootStore = rootStore;
 
   return {
-    template: `<RundeckInfoWidget/>`,
+    template: `<RundeckInfoWidget :releases="rootStore.releases" :system="rootStore.releases"/>`,
     provide: { rootStore },
     components: { RundeckInfoWidget },
   };

@@ -2,9 +2,10 @@ import { defineComponent, markRaw } from "vue";
 import { getRundeckContext } from "../../../library";
 import HomeView from "../../components/home/HomeView.vue";
 import HomeHeader from "../../components/home/HomeHeader.vue";
+import SVGInject from '@iconfu/svg-inject';
 
 // @ts-ignore
-window.SVGInject = require("@iconfu/svg-inject");
+window.SVGInject = SVGInject;
 
 const rundeckContext = getRundeckContext();
 function init() {
@@ -41,7 +42,7 @@ function init() {
             return {};
           },
           template: `
-                      <HomeView v-bind="itemData" />
+                      <HomeView v-bind="itemData"  app-title="" build-ident="" help-link-url="" logo-image=""/>
                     `,
         }),
       ),

@@ -15,4 +15,4 @@ type ModalButtons = {
   messageCode?: string;
 };
 
-export { ModalLinks, ModalButtons };
+export type { ModalLinks, ModalButtons };

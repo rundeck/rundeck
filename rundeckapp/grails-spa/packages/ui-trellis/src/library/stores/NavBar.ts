@@ -15,6 +15,7 @@ export class NavBar {
     class: "fas fa-ellipsis-h",
     label: "More",
     visible: false,
+    active: false,
   };
 
   constructor(
@@ -97,6 +98,8 @@ export interface NavItem {
   visible: boolean;
   enabled?: boolean;
   type: string;
+  active?: boolean;
+  link?: string;
 }
 
 export interface NavLink extends NavItem {

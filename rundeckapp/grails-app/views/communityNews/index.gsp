@@ -20,7 +20,9 @@
     <meta name="layout" content="base"/>
     <title><g:appTitle/></title>
     <!-- VUE CSS MODULES -->
+    <g:if test="${!grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
     <asset:stylesheet href="static/css/pages/community-news.css"/>
+    </g:if>
     <!-- /VUE CSS MODULES -->
 </head>
 
@@ -29,7 +31,12 @@
 <div id="layoutBody">
   <div id="community-news-vue"></div>
   <!-- VUE JS MODULES -->
+  <g:if test="${grailsApplication.config.getProperty("rundeck.spa.vite.enabled", Boolean.class,false)}">
+    <g:loadEntryAssets entry="pages/community-news" />
+  </g:if>
+  <g:else>
   <asset:javascript src="static/pages/community-news.js"/>
+  </g:else>
   <!-- /VUE JS MODULES -->
 </div>
 </div>

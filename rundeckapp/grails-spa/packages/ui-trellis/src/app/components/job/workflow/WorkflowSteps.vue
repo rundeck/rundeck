@@ -87,7 +87,8 @@
     <choose-plugin-modal
       v-model="addStepModal"
       title="Add a Step"
-      :services="[ServiceType.WorkflowNodeStep, ServiceType.WorkflowStep]"
+      :services="services"
+      :default-translations="choosePluginTranslations"
       :tab-names="[
         $t('plugin.type.WorkflowNodeStep.title.plural'),
         $t('plugin.type.WorkflowStep.title.plural'),
@@ -153,7 +154,8 @@ import { PluginConfig } from "@/library/interfaces/PluginConfig";
 import { ServiceType } from "@/library/stores/Plugins";
 import JobRefStep from "@/app/components/job/workflow/JobRefStep.vue";
 import { cloneDeep } from "lodash";
-import Vue, { defineComponent, nextTick } from "vue";
+import { defineComponent, nextTick } from "vue";
+import { Dropdown } from 'uiv';
 import LogFilters from "./LogFilters.vue";
 
 const context = getRundeckContext();
@@ -167,6 +169,7 @@ export default defineComponent({
     ChoosePluginModal,
     JobRefStep,
     LogFilters,
+    Dropdown,
   },
   props: {
     modelValue: {
@@ -190,6 +193,19 @@ export default defineComponent({
       editService: null,
       editIndex: -1,
     };
+  },
+  computed: {
+    services() {
+      return [ServiceType.WorkflowNodeStep, ServiceType.WorkflowStep]
+    },
+    choosePluginTranslations() {
+      return this.services.reduce((acc, service) => {
+        acc["plugin.type." + service + ".title.plural"] = this.$t(
+            "plugin.type." + service + ".title.plural",
+        );
+        return acc;
+      }, {});
+    },
   },
   methods: {
     chooseProviderAdd({
@@ -268,7 +284,7 @@ export default defineComponent({
           ServiceType.WorkflowNodeStep,
         );
     },
-    stepTitle(step: StepsEditData, index: number) {
+    stepTitle(step: Partial<StepsEditData>, index: number) {
       if (step.description) {
         return `Step ${index + 1} "` + step.description + '"';
       }

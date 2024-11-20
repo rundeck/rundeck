@@ -73,7 +73,7 @@
             {{ $t("select.none") }}
           </btn>
           {{
-            $tc(
+            $t(
               "job.bulk.panel.select.message",
               jobPageStore.selectedJobs.length,
             )
@@ -139,7 +139,7 @@
       <p>{{ $t(`job.bulk.${bulkConfirmAction}.confirm.message`) }}</p>
       <p>
         {{
-          $tc("job.bulk.panel.select.message", jobPageStore.selectedJobs.length)
+          $t("job.bulk.panel.select.message", jobPageStore.selectedJobs.length)
         }}
       </p>
       <template #footer>
@@ -171,7 +171,7 @@ import {
   JobPageStoreInjectionKey,
 } from "@/library/stores/JobPageStore";
 import { JobBrowseItem } from "@/library/types/jobs/JobBrowse";
-import { Notification } from "uiv";
+import { Notification, Dropdown, Btn } from "uiv";
 import { defineComponent, inject, ref } from "vue";
 import UiSocket from "@/library/components/utils/UiSocket.vue";
 
@@ -185,6 +185,8 @@ export default defineComponent({
     UiSocket,
     JobListScmActions,
     Notification,
+    Dropdown,
+    Btn
   },
   setup(props) {
     const jobBrowserStore: JobBrowserStore = inject(

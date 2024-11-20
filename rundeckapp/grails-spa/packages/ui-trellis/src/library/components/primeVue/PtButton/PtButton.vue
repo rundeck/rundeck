@@ -13,7 +13,10 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import type { PropType } from "vue";
 import Button from "primevue/button";
+
+type ButtonPos = 'left'| 'right'| 'top'| 'bottom' | undefined;
 
 export default defineComponent({
   name: "PtButton",
@@ -29,7 +32,7 @@ export default defineComponent({
       default: undefined,
     },
     iconPos: {
-      type: String,
+      type: String as PropType<ButtonPos>,
       default: "left",
       validator: (val: string) =>
         ["left", "top", "bottom", "right"].includes(val),

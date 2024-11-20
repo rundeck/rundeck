@@ -41,12 +41,10 @@ export default defineComponent({
       if (!_.isEqual(data, this.updatedData.options)) {
         this.updatedData.options = cloneDeep(data);
         //nb: hook to indicate job was editted, defined in jobedit.js
-        //@ts-ignore
         if (
           window.hasOwnProperty("jobWasEdited") &&
           typeof window.jobWasEdited === "function"
         ) {
-          //@ts-ignore
           window.jobWasEdited();
         }
       }

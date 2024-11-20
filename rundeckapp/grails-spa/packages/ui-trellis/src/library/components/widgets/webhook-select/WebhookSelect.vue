@@ -14,16 +14,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onBeforeMount, ref } from "vue";
-
-import { PluginStore } from "../../../stores/Plugins";
-import { WebhookStore } from "../../../stores/Webhooks";
+import { defineComponent, PropType } from "vue";
 
 import FilterList from "../../filter-list/FilterList.vue";
 
 import WebhookSelectItem from "./WebhookSelectItem.vue";
-import { RundeckContext } from "../../../interfaces/rundeckWindow";
-import { getRundeckContext } from "../../../rundeckService";
+import {WebhookStore} from "../../../stores/Webhooks.ts";
 
 export default defineComponent({
   name: "WebhookSelect",
@@ -31,8 +27,12 @@ export default defineComponent({
     FilterList,
     WebhookSelectItem,
   },
-  inject: ["rootStore"],
+  inheritAttrs: false,
   props: {
+    webhookStore: {
+      type: Object as PropType<WebhookStore>,
+      required: true,
+    },
     project: {
       type: String,
       required: true,
@@ -41,11 +41,6 @@ export default defineComponent({
       type: String,
       default: "",
     },
-  },
-  data() {
-    return {
-      webhookStore: window._rundeck.rootStore.webhooks,
-    };
   },
   computed: {
     webhooksForProject() {

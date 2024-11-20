@@ -62,10 +62,13 @@
 </template>
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
+import { Btn, Dropdown } from 'uiv';
 import { ActivityFilterStore } from "../../../library/stores/ActivityFilterStore";
 import { EventBus, getRundeckContext } from "../../../library";
 import { MessageBox, Notification } from "uiv";
 export default defineComponent({
+  name: "SavedFilters",
+  components: { Btn, Dropdown },
   props: {
     hasQuery: {
       type: Boolean,

@@ -448,19 +448,10 @@ import { getRundeckContext } from "../../rundeckService";
 import { EventBus } from "@/library";
 import UiSocket from "../utils/UiSocket.vue";
 import PluginDetails from "@/library/components/plugins/PluginDetails.vue";
-interface Prop {
-  type: string;
-  defaultValue: any;
-  title: string;
-  required: boolean;
-  options: any;
-  allowed: string;
-  name: string;
-  desc: string;
-  staticTextDefaultValue: string;
-}
+import type { Prop } from './types.ts';
 
 export default defineComponent({
+  name: "PluginPropEdit",
   components: {
     PluginDetails,
     DynamicFormPluginProp,
@@ -640,6 +631,8 @@ export default defineComponent({
     },
   },
 });
+
+export type { Prop }
 </script>
 <style scoped lang="scss">
 @import "~vue3-markdown/dist/style.css";
