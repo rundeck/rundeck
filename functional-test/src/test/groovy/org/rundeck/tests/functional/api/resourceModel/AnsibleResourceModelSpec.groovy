@@ -23,7 +23,7 @@ class AnsibleResourceModelSpec extends BaseContainer{
         )
     }
 
-    def "ansible resource model use specified binary path"(){
+    def "when the ansible bin path is wrong, the ansible resource model shoun't bring ansible nodes"(){
         when:
         def response = doGet("/project/${TEST_PROJECT}/resources")
 
