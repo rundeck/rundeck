@@ -135,4 +135,21 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
         )
     }
 
+    /** Create an object from the map values */
+    static ProjectArchiveParams fromMap(Map params) {
+        ProjectArchiveParams p = new ProjectArchiveParams()
+        p.project = params.project
+        p.exportAll = params.exportAll
+        p.exportJobs = params.exportJobs
+        p.exportExecutions = params.exportExecutions
+        p.exportConfigs = params.exportConfigs
+        p.exportReadmes = params.exportReadmes
+        p.exportAcls = params.exportAcls
+        p.exportScm = params.exportScm
+//        p.exportComponents = params.exportComponents
+//        p.exportOpts = params.exportOpts
+        p.stripJobRef = params.stripJobRef
+        p.preserveuuid = params.preserveuuid
+        return p
+    }
 }

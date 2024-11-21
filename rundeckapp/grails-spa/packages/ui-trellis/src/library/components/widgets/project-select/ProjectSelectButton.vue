@@ -4,7 +4,7 @@
     aria-describedby="projectPicker"
     aria-controls="projectPicker"
     :aria-expanded="open"
-    @click="handleClick"
+    @click.prevent="handleClick"
     @mousedown="(e) => e.preventDefault()"
   >
     <i
@@ -31,6 +31,7 @@
           :show-buttons="showDefaultLabel"
           :mode="mode"
           :selected-projects="selectedProjects"
+          class="form-control"
           @update:selection="handleSelect"
         />
       </div>

@@ -1,0 +1,106 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven { url "https://repo.grails.org/grails/core" }
+    }
+    dependencies {
+        classpath "org.grails:grails-gradle-plugin:$grailsGradlePluginVersion"
+        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:${assetPluginVersion}"
+//        classpath("org.grails.plugins:database-migration:$dbMigrationPluginVersion"){
+//            exclude group: 'org.spockframework', module: 'spock-core'
+//        }
+    }
+}
+
+plugins {
+    id "org.springframework.boot" version "${springBootVersion}"
+}
+
+
+apply plugin:"eclipse"
+apply plugin:"idea"
+apply plugin:"org.grails.grails-plugin"
+apply plugin:"org.grails.grails-gsp"
+apply plugin:"asset-pipeline"
+
+apply from: "../gradle/java-version.gradle"
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url "https://repo.grails.org/grails/core" }
+}
+
+configurations {
+    developmentOnly
+    runtimeClasspath {
+        extendsFrom developmentOnly
+    }
+}
+
+dependencies {
+    implementation project(":core")
+    implementation project(":rundeck-app-util")
+
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
+    implementation "org.springframework.boot:spring-boot-starter-log4j2"
+    implementation "org.springframework.boot:spring-boot-autoconfigure"
+    implementation("org.grails:grails-core") {
+        exclude(group:"org.yaml",module:"snakeyaml")
+    }
+    implementation "org.grails:grails-web-boot"
+    implementation "org.grails:grails-logging"
+    implementation "org.grails:grails-plugin-rest"
+    implementation "org.grails:grails-plugin-databinding"
+    implementation "org.grails:grails-plugin-i18n"
+    implementation "org.grails:grails-plugin-services"
+    implementation "org.grails:grails-plugin-url-mappings"
+    implementation "org.grails:grails-plugin-interceptors"
+    implementation "org.grails.plugins:async"
+    implementation "org.grails.plugins:scaffolding"
+    implementation "org.grails.plugins:gsp"
+    implementation "org.grails:grails-plugin-services"
+    compileOnly "org.grails:grails-plugin-domain-class"
+    runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
+
+    testImplementation "org.grails:grails-gorm-testing-support"
+    testImplementation "org.grails:grails-web-testing-support"
+    testImplementation "org.grails:grails-web-testing-support"
+    testImplementation "org.grails:grails-test-mixins:3.3.0"
+    testImplementation "org.mockito:mockito-core"
+//    testImplementation project(":grails-rundeck-data-shared")
+//    testImplementation "org.seleniumhq.selenium:selenium-htmlunit-driver:2.47.1"
+//    testImplementation "net.sourceforge.htmlunit:htmlunit:2.18"
+}
+
+bootRun {
+    ignoreExitValue true
+    jvmArgs(
+            '-Dspring.output.ansi.enabled=always',
+            '-noverify',
+            '-XX:TieredStopAtLevel=1',
+            '-Xmx1024m')
+    sourceResources sourceSets.main
+    String springProfilesActive = 'spring.profiles.active'
+    systemProperty springProfilesActive, System.getProperty(springProfilesActive)
+}
+
+tasks.withType(GroovyCompile) {
+    configure(groovyOptions) {
+        forkOptions.jvmArgs = ['-Xmx1024m']
+    }
+}
+
+tasks.withType(Test) {
+    useJUnitPlatform()
+}
+
+// enable if you wish to package this plugin as a standalone application
+//bootJar.enabled = false
+
+jar {
+    enabled = true
+    archiveClassifier = '' //use empty string
+}
+

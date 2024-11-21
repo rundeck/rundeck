@@ -68,11 +68,13 @@
     "vue3-markdown": "^1.1.9",
     "vuedraggable": "^4.1.0",
     "vuex": "^4.1.0",
-    "webpack-node-externals": "^3.0.0"
+    "webpack-node-externals": "^3.0.0",
+    "yup": "^1.4.0"
   },
   "devDependencies": {
     "@babel/core": "^7.22.11",
     "@happy-dom/jest-environment": "^9.20.3",
+    "@primevue/forms": "^4.2.2",
     "@storybook/addon-a11y": "^8.0.4",
     "@storybook/addon-essentials": "^8.0.4",
     "@storybook/addon-interactions": "^8.0.4",

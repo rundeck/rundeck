@@ -63,6 +63,7 @@ module.exports = {
     "pages/job/head/scm-status-badge": {
       entry: "./src/app/pages/job/head/scm/scm-status-badge.ts",
     },
+    "pages/migwiz": { entry: "./src/app/pages/migwiz/main.ts" },
   },
   publicPath: "/assets/static/",
   outputDir: process.env.VUE_APP_OUTPUT_DIR,
