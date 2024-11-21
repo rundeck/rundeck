@@ -3,7 +3,7 @@ package org.rundeck.util.api.scm.httpbody
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.rundeck.util.api.scm.gitea.GiteaApiRemoteRepo
 
-class GitExportSetupRequest implements GitSetupRequest<GitExportSetupRequest> {
+class GitImportSetupRequest implements GitSetupRequest<GitImportSetupRequest> {
     @JsonProperty
     Config config
 
@@ -41,42 +41,43 @@ class GitExportSetupRequest implements GitSetupRequest<GitExportSetupRequest> {
         @JsonProperty
         String project
 
-        Map toMap(){
-            return [
-                    dir: dir,
-                    url: url,
-                    committerName: committerName,
-                    committerEmail: committerEmail,
-                    pathTemplate: pathTemplate,
-                    format: format,
-                    branch: branch,
-                    strictHostKeyChecking: strictHostKeyChecking
-            ]
-        }
+        @JsonProperty
+        String useFilePattern
+
+        @JsonProperty
+        String filePattern
+
+        @JsonProperty
+        String importUuidBehavior
+
+        @JsonProperty
+        String pullAutomatically
     }
 
-    static GitExportSetupRequest defaultRequest(){
-        return new GitExportSetupRequest([config: [
-                dir : "/home/rundeck/localRepoDirExample/ScmExport",
-                url : "/url/to/remote/example",
-                committerName :"Git Test",
-                committerEmail :"A@test.com",
+    static GitImportSetupRequest defaultRequest(){
+        return new GitImportSetupRequest([config: [
+                dir : "/home/rundeck/localRepoDirExample/ScmImport",
                 pathTemplate :'${job.group}${job.name}-${job.id}.${config.format}',
-                format :"xml",
                 branch :"master",
-                strictHostKeyChecking :"yes"
+                format :"xml",
+                strictHostKeyChecking :"yes",
+                url : "/url/to/remote/example",
+                useFilePattern       : 'true',
+                filePattern          : '.*\\.xml',
+                importUuidBehavior   : 'preserve',
+                pullAutomatically    : 'false'
         ]])
     }
 
     @Override
-    GitExportSetupRequest forProject(String project){
-        this.config.dir = "/home/rundeck/${project}/ScmExport"
+    GitImportSetupRequest forProject(String project){
+        this.config.dir = "/home/rundeck/${project}/ScmImport"
 
         return this
     }
 
     @Override
-    GitExportSetupRequest withRepo(GiteaApiRemoteRepo remoteRepo){
+    GitImportSetupRequest withRepo(GiteaApiRemoteRepo remoteRepo){
         this.config.url = remoteRepo.getRepoUrlForRundeck()
         this.config.gitPasswordPath = remoteRepo.repoPassStoragePathForRundeck
         return this

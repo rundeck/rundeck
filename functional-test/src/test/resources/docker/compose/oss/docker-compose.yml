@@ -36,6 +36,17 @@ services:
       - "./mock-scripts:/home/rundeck/mock-scripts:rw"
     ports:
       - "4440:4440"
+      - "5005:5005"
+      - "9012:9012"
+    command:
+      - "-Dcom.sun.management.jmxremote"
+      - "-Dcom.sun.management.jmxremote.port=9012"
+      - "-Dcom.sun.management.jmxremote.authenticate=false"
+      - "-Dcom.sun.management.jmxremote.ssl=false"
+      - "-Dcom.sun.management.jmxremote.local.only=false"
+      - "-Dcom.sun.management.jmxremote.rmi.port=9012"
+      - "-Djava.rmi.server.hostname=localhost"
+      - "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
 
   rundeck-db:
     image: mysql:8

@@ -414,7 +414,7 @@ class JobScheduledSpec extends BaseContainer {
         parsedExecutionsResponseForExecution2AfterEnable.executions.size() == 2
     }
 
-    def "test-saga"(){
+    def "job executes when its definition and scheduled are updated"(){
         setup:
         setupProject(projectName)
         def client = getClient()
