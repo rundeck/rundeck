@@ -83,7 +83,7 @@
         </div>
     </section>
 
-    <section class="form-horizontal section-separator"
+    <section class="form-horizontal section-separator section-pad-top-lg"
              style="${wdgt.styleVisible(if: nodesetvariables && !failedNodes || nodesetempty || nodes)}">
 
         <div class="form-group">
@@ -126,7 +126,7 @@
                         <input name="extra._replaceNodeFilters"
                                value="true"
                                type="checkbox"
-                               data-bind="checked: changeTargetNodes"
+                               data-bind="checked: changeTargetNodes, attr: {disabled: !canOverrideFilter()}"
                                id="doReplaceFilters"/>
                         <label for="doReplaceFilters">
                             <g:message code="change.the.target.nodes"/>
