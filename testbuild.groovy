@@ -245,44 +245,41 @@ def testZip = { totest ->
         def counts = [:]
         def fverify = true
 
-        // index zip entries
+        // map zip entries
         Map<String, ZipEntry> entryMap = z.entries().collectEntries { [(it.name): it] }
-
         dir.each { String path ->
             if (path ==~ /^.+(#.+)$/) {
                 //verify number of entries
                 def n = path.split('#', 2)[1]
                 def dname = path.split('#', 2)[0]
-
-                def negatedMessage = ""
+                def notMessage = ""
                 Predicate<Object> check = { it ? true : false }
 
                 // Handle instruction negation
                 if (n.startsWith('!')) {
                     n = n.substring(1)
                     check = check.negate()
-                    negatedMessage = " NOT"
+                    notMessage = " NOT"
                 }
 
                 def found = entryMap.get(dname)
-
                 if (n ==~ /^\d+/) {
-                    fverify &= require("[${f.basename}] \"${dname}\" MUST${negatedMessage} exist. Result: (${found ?: false})", check.test(found))
+                    fverify &= require("[${f.basename}] \"${dname}\" MUST${notMessage} exist. Result: (${found ?: false})", check.test(found))
                     counts[dname] = [equal: Integer.parseInt(n)]
                 } else if (n == '+') {
-                    fverify &= require("[${f.basename}] \"${dname}\" MUST${negatedMessage} exist. Result: (${found ?: false})", check.test(found))
+                    fverify &= require("[${f.basename}] \"${dname}\" MUST${notMessage} exist. Result: (${found ?: false})", check.test(found))
                     counts[dname] = [atleast: 1]
                 } else if (n == '?') {
                     counts[dname] = [maybe: 1]
                 } else if (n == '~') {
                     found = entryMap.find { it.key =~ /$dname/ }?.value
-                    fverify &= require("[${f.basename}] \"${dname}\" MUST${negatedMessage} match. Result: (${found ?: false})", check.test(found))
+                    fverify &= require("[${f.basename}] \"${dname}\" MUST${notMessage} match. Result: (${found ?: false})", check.test(found))
                 } else if (n.startsWith('#')) {
                     n = n.substring(1)
                     def sum = getSha256(z.getInputStream(found))
-                    require("[${f.basename}] \"${dname}\" SHA-256 MUST${negatedMessage} match \"${n}\". Seen: ($sum) Expected: (${sumtest[n]})", check.test(sum == sumtest[n]))
+                    require("[${f.basename}] \"${dname}\" SHA-256 MUST${notMessage} match \"${n}\". Seen: ($sum) Expected: (${sumtest[n]})", check.test(sum == sumtest[n]))
                 } else if (n.isBlank()) {
-                    fverify &= require("[${f.basename}] \"${path}\" MUST${negatedMessage} exist. Result: (${found ?: false})", check.test(found))
+                    fverify &= require("[${f.basename}] \"${path}\" MUST${notMessage} exist. Result: (${found ?: false})", check.test(found))
                 } else {
                     fail("[${f.basename}] \"${path}\" invalid check command: ${n}")
                 }
