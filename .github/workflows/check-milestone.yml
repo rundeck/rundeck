@@ -1,0 +1,29 @@
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, milestoned, demilestoned]
+    branches:
+    - main
+
+#check the milestones on the pr, and fail validation if no milestone is set, and the branch target is main
+jobs:
+  milestonecheck:
+    permissions: 
+      pull-requests: read
+    name: PR Milestone Check
+    runs-on: ubuntu-latest
+      
+    steps:
+      - name: PR requires a milestone
+        run: |
+          MILESTONE=$(gh pr view $PR --json milestone -q .milestone)
+          if [ $? != 0 ] ; then
+            echo "Failed"
+            exit 1
+          fi
+          if [ -z "$MILESTONE" ] ; then
+            echo "::notice::Milestone is required"
+            exit 2
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.html_url }}
