@@ -284,8 +284,8 @@ export default defineComponent({
         undo: Operation.Insert,
       });
     },
-    async addLogFilterForIndex(index: number) {
-      eventBus.emit("step-action:add-logfilter:" + index);
+    async addLogFilterForIndex(id: string) {
+      eventBus.emit("step-action:add-logfilter:" + id);
     },
     duplicateStep(index: number) {
       const command = cloneDeep(this.model.commands[index]);
