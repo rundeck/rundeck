@@ -88,7 +88,11 @@
                     <a role="button"> {{ $t("Workflow.addErrorHandler") }}</a>
                   </li>
                   <li v-if="!element.jobref">
-                    <a role="button" @click="addLogFilterForIndex(element.id)">
+                    <a
+                      role="button"
+                      data-test="add-log-filter"
+                      @click="addLogFilterForIndex(element.id)"
+                    >
                       {{ $t("Workflow.addLogFilter") }}
                     </a>
                   </li>
