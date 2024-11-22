@@ -50,7 +50,7 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
 
         then:
         // Ensure it was ran on the local node and two nodes added by the setup
-        getOrderedNodesListExecutedOn(completedJob).size() == NODE_LIST.size()
+        getOrderedNodesListExecutedOn(completedJob).size() == (NODE_LIST.size()+1)
     }
 
     def "Create a job that executes on nodes that were not excluded"() {
@@ -92,7 +92,7 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
         def completedJob = runJobAndWait(jobId, optionsJson)
 
         then:
-        getOrderedNodesListExecutedOn(completedJob) == NODE_LIST.reverse()
+        getOrderedNodesListExecutedOn(completedJob) == NODE_LIST
 
     }
 
@@ -114,7 +114,7 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
         def completedJob = runJobAndWait(jobId, optionsJson)
 
         then:
-        getOrderedNodesListExecutedOn(completedJob) == NODE_LIST
+        getOrderedNodesListExecutedOn(completedJob) == NODE_LIST.reverse()
     }
 
     private static List<String> getOrderedNodesListExecutedOn(Map completedJob) {
