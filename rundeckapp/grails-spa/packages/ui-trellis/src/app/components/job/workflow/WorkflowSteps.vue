@@ -50,7 +50,7 @@
               :model-value="element.filters"
               :title="$t('Workflow.logFilters')"
               :subtitle="stepTitle(element, index)"
-              :add-event="'step-action:add-logfilter:' + index"
+              :add-event="'step-action:add-logfilter:' + element.id"
               mode="inline"
               @update:model-value="
                 updateHistoryWithLogFiltersData(index, $event)
@@ -88,7 +88,7 @@
                     <a role="button"> {{ $t("Workflow.addErrorHandler") }}</a>
                   </li>
                   <li v-if="!element.jobref">
-                    <a role="button" @click="addLogFilterForIndex(index)">
+                    <a role="button" @click="addLogFilterForIndex(element.id)">
                       {{ $t("Workflow.addLogFilter") }}
                     </a>
                   </li>
@@ -409,6 +409,7 @@ export default defineComponent({
   margin-bottom: 10px;
 }
 .step-list-item {
+  background: var(--card-default-background-color);
   border: 1px solid var(--list-item-border-color);
   padding: 10px !important;
   margin-bottom: 10px;
@@ -439,6 +440,10 @@ export default defineComponent({
       .configpair > span {
         display: flex;
         gap: 5px;
+      }
+
+      span[data-testid="block-description"] {
+        margin-left: 5px;
       }
     }
   }
