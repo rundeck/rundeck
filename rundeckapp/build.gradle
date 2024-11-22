@@ -79,9 +79,9 @@ configurations {
     developmentOnly
     runtimeClasspath {
         extendsFrom developmentOnly
-//        exclude group: 'junit', module: 'junit'
-//        exclude group: 'org.codehaus.groovy', module: 'groovy-ant'
-//        exclude group: 'org.grails', module: 'grails-shell'
+        exclude group: 'junit', module: 'junit'
+        exclude group: 'org.codehaus.groovy', module: 'groovy-ant'
+        exclude group: 'org.grails', module: 'grails-shell'
     }
 
     implementation.exclude module: "spring-boot-starter-tomcat"
