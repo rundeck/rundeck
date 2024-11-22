@@ -21,7 +21,7 @@ import java.util.zip.ZipEntry
 //Test the result of the build to verify expected artifacts are created
 
 cli = new CliBuilder(usage: 'slide')
-cli._(longOpt: 'buildType', args: 1, 'Build type [development | release]')
+cli._(longOpt: 'buildType', args: 1, '-buildType [development | release]')
 def options = cli.parse(args)
 
 def target="build/libs"
@@ -134,7 +134,7 @@ def manifest=[
         "WEB-INF/lib/log4j-slf4j-impl-${versions.log4j}.jar",
         "WEB-INF/lib/slf4j-api-1.7.36.jar",
         "WEB-INF/lib/libpam4j-1.11.jar",
-        ".*junit.*\\.jar#!~"
+//        ".*junit.*#!~"
     ],
     "plugins/script-node-step-plugin/${target}/rundeck-script-node-step-plugin-${version}.jar":[:],
     "plugins/script-plugin/${target}/rundeck-script-plugin-${version}.jar":[:],
