@@ -536,14 +536,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             currunning<<it
         }
 
-        def jobs =[:]
-        currunning.each{
-            if(it.scheduledExecution && !jobs[it.scheduledExecution.id.toString()]){
-                jobs[it.scheduledExecution.id.toString()] = ScheduledExecution.get(it.scheduledExecution.id)
-            }
-        }
-
-
         def total = Execution.createCriteria().count{
 
              if(query ){
@@ -642,11 +634,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }else{
                 isNull("dateCompleted")
             }
-        };
+        }
 
-        return [query:query, _filters:filters,
-            jobs: jobs, nowrunning:currunning,
-            total: total]
+        return [
+            query     : query,
+            _filters  : filters,
+            nowrunning: currunning,
+            total     : total
+        ]
     }
 
     def public finishQueueQuery(query,params,model){
