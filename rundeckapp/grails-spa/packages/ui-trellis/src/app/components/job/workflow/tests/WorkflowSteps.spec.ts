@@ -49,6 +49,9 @@ const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
         popover: true,
         tabs: true,
         tab: true,
+        dropdown: {
+          template: `<div><slot/><slot name="dropdown" /></div>`,
+        },
       },
     },
   });
@@ -153,6 +156,70 @@ describe("WorkflowSteps", () => {
                 },
                 nodeStep: true,
                 type: "exec-command",
+              },
+            ],
+          },
+        },
+      ],
+    });
+  });
+
+  it("adds log filter information in the correct step", async () => {
+    const wrapper = await createWrapper({
+      modelValue: {
+        commands: [
+          {
+            type: "exec-command",
+            description: "first-step",
+            nodeStep: true,
+            configuration: {
+              adhocRemoteString: "abc",
+            },
+          },
+          {
+            type: "exec-command",
+            description: "second-step",
+            nodeStep: true,
+            configuration: {},
+          },
+        ],
+      },
+    });
+
+    const addLogFilterSecondStep = wrapper.findAll(
+      "a[data-test='add-log-filter']",
+    )[1];
+    await addLogFilterSecondStep.trigger("click");
+    await wrapper.vm.$nextTick();
+    const chooseModal = wrapper.findAllComponents(ChoosePluginModal)[0];
+    chooseModal.vm.$emit("selected", { service: "a", provider: "b" });
+    await wrapper.vm.$nextTick();
+    const editModal = wrapper.findAllComponents(EditPluginModal)[1];
+    editModal.vm.$emit("update:modelValue", {
+      type: "key-value-data",
+      config: { regex: "" },
+    });
+    editModal.vm.$emit("save");
+    await flushPromises();
+
+    expect(wrapper.emitted("update:modelValue")[1][0]).toEqual({
+      commands: [
+        {
+          description: "first-step",
+          exec: "abc",
+          nodeStep: true,
+        },
+        {
+          description: "second-step",
+          exec: undefined,
+          nodeStep: true,
+          plugins: {
+            LogFilter: [
+              {
+                config: {
+                  regex: "",
+                },
+                type: "key-value-data",
               },
             ],
           },
