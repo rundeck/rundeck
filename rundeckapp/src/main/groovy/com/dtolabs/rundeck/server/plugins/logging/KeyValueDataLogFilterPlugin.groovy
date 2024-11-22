@@ -38,7 +38,7 @@ import java.util.regex.PatternSyntaxException
  * @author greg
  * @since 5/17/17
  */
-@Plugin(name = SimpleDataFilterPlugin.PROVIDER_NAME, service = 'LogFilter')
+@Plugin(name = KeyValueDataLogFilterPlugin.PROVIDER_NAME, service = 'LogFilter')
 @PluginDescription(title = 'Key Value Data',
         description = '''Captures simple Key/Value data using a regular expresssion.\n\n
 By default, to produce a key/value entry, echo a line similar to this:
@@ -52,7 +52,7 @@ If you provide a regular expression with only one group, the `name` input is req
 You can define the regular expression used.
 ''')
 
-class SimpleDataFilterPlugin implements LogFilterPlugin {
+class KeyValueDataLogFilterPlugin implements LogFilterPlugin {
     public static final String PROVIDER_NAME = 'key-value-data'
     public static final String PATTERN = '^RUNDECK:DATA:\\s*([^\\s]+?)\\s*=\\s*(.+)$'
     public static final String INVALID_KEY_PATTERN = '\\s|\\$|\\{|\\}|\\\\'
@@ -68,9 +68,9 @@ the data key, and the second group defines the data value. If one is defined, th
 and the **Name Data** field defines the name.
 
 See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html) documentation.''',
-            defaultValue = SimpleDataFilterPlugin.PATTERN,
+            defaultValue = KeyValueDataLogFilterPlugin.PATTERN,
             required = true,
-            validatorClass = SimpleDataFilterPlugin.NamePropertyValidator
+            validatorClass = KeyValueDataLogFilterPlugin.NamePropertyValidator
     )
     String regex
 
@@ -91,14 +91,14 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
     @PluginProperty(
             title = "Invalid Character Pattern",
             description = '''Regular expression pattern to match invalid characters in the Key. Any matched characters will be replaced by an underscore character. Default: white space and special characters.''',
-            defaultValue = SimpleDataFilterPlugin.INVALID_KEY_PATTERN,
+            defaultValue = KeyValueDataLogFilterPlugin.INVALID_KEY_PATTERN,
             required = false,
-            validatorClass = SimpleDataFilterPlugin.RegexValidator
+            validatorClass = KeyValueDataLogFilterPlugin.RegexValidator
 
     )
     @RenderingOptions(
             [
-                    @RenderingOption(key = "groupName", value = SimpleDataFilterPlugin.EXTRA_SETTINGS_GROUP_NAME),
+                    @RenderingOption(key = "groupName", value = KeyValueDataLogFilterPlugin.EXTRA_SETTINGS_GROUP_NAME),
                     @RenderingOption(key = "grouping", value = "secondary"),
                     @RenderingOption(key = "requiredValue", value = "false"),
             ]
@@ -112,7 +112,7 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
     )
     @RenderingOptions(
             [
-                    @RenderingOption(key = "groupName", value = SimpleDataFilterPlugin.EXTRA_SETTINGS_GROUP_NAME),
+                    @RenderingOption(key = "groupName", value = KeyValueDataLogFilterPlugin.EXTRA_SETTINGS_GROUP_NAME),
                     @RenderingOption(key = "grouping", value = "secondary"),
                     @RenderingOption(key = "requiredValue", value = "false"),
             ]
@@ -122,13 +122,13 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
     @PluginProperty(
             title = "Replace Invalid Character Patterns With",
             description = '''If the Invalid Character Pattern matches, the string will be replaced with an underscore by default, unless you specify which value do you want to replace the invalid character pattern with.''',
-            defaultValue = SimpleDataFilterPlugin.INVALID_KEY_PATTERN_DEFAULT_REPLACE_VALUE,
+            defaultValue = KeyValueDataLogFilterPlugin.INVALID_KEY_PATTERN_DEFAULT_REPLACE_VALUE,
             required = false
 
     )
     @RenderingOptions(
             [
-                    @RenderingOption(key = "groupName", value = SimpleDataFilterPlugin.EXTRA_SETTINGS_GROUP_NAME),
+                    @RenderingOption(key = "groupName", value = KeyValueDataLogFilterPlugin.EXTRA_SETTINGS_GROUP_NAME),
                     @RenderingOption(key = "grouping", value = "secondary"),
                     @RenderingOption(key = "requiredValue", value = "false"),
             ]
