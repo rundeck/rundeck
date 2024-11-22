@@ -40,8 +40,7 @@ import java.util.regex.PatternSyntaxException
  */
 @Plugin(name = SimpleDataFilterPlugin.PROVIDER_NAME, service = 'LogFilter')
 @PluginDescription(title = 'Key Value Data',
-        description = '''Captures simple Key/Value data using a simple text format
-from a regular expresssion.\n\n
+        description = '''Captures simple Key/Value data using a regular expresssion.\n\n
 By default, to produce a key/value entry, echo a line similar to this:
 
     RUNDECK:DATA:(key) = (value)
@@ -64,8 +63,9 @@ class SimpleDataFilterPlugin implements LogFilterPlugin {
             title = "Pattern",
             description = '''Regular Expression for matching key/value data.
 
-The regular expression must define two Capturing Groups. The first group matched defines
-the data key, and the second group defines the data value.
+The regular expression must define one or two Capturing Groups. If two are defined, the first group matched defines
+the data key, and the second group defines the data value. If one is defined, the capture group defines the data value,
+and the **Name Data** field defines the name.
 
 See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html) documentation.''',
             defaultValue = SimpleDataFilterPlugin.PATTERN,
@@ -76,7 +76,7 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
 
     @PluginProperty(
             title = 'Name Data',
-            description = '''If only one groups is provided, the name of the captured variable'''
+            description = '''If only one capture group is defined, the name of the captured variable'''
     )
     String name
 
@@ -106,8 +106,8 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
     String invalidKeyPattern
 
     @PluginProperty(
-            title = 'Replace filtered data',
-            description = '''If checked, the data will be replaced with a defined value below''',
+            title = 'Replace invalid characters',
+            description = '''If checked, any invalid characters will be replaced with a defined value below''',
             defaultValue = 'false'
     )
     @RenderingOptions(
