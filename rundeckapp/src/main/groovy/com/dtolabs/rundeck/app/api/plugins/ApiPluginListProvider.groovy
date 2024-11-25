@@ -22,11 +22,11 @@ class ApiPluginListProvider {
     @Schema(description = 'Map of metadata about the plugin if present. Since: v40')
     Map<String, String> providerMetadata
 
-    @ApiVersion(50)
-    @Schema(description = 'Indication of whether the plugin is marked as highlighted. Since: v50')
+    @ApiVersion(51)
+    @Schema(description = 'Indication of whether the plugin is marked as highlighted. Since: v51')
     Boolean isHighlighted
 
-    @ApiVersion(50)
-    @Schema(description = 'Order of the highlighted plugin. Since: v50')
+    @ApiVersion(51)
+    @Schema(description = 'Order of the highlighted plugin. Since: v51')
     Integer highlightedOrder
 }
