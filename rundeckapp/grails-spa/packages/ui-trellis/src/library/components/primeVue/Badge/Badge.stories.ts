@@ -104,7 +104,7 @@ export const Warning: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate("warning", args),
+    template: generateTemplate("warn", args),
   }),
 };
 

@@ -4,6 +4,7 @@ import PrimeVue from "primevue/config";
 import Lara from "@primevue/themes/lara";
 
 import "../src/library/theme/tokens.css";
+import "../src/library/theme/primeVue.css";
 import "./storybook.css";
 
 import Tooltip from "primevue/tooltip";
