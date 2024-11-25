@@ -9,15 +9,15 @@
     <div class="optslist">
       <draggable
         v-model="intOptions"
-        @update="dragUpdated"
         item-key="name"
         handle=".dragHandle"
+        @update="dragUpdated"
       >
         <template #item="{ element, index }">
           <div
+            :id="`optitem_${index}`"
             class="edit-option-item"
             :class="{ alternate: index % 2 === 1 }"
-            :id="`optitem_${index}`"
           >
             <option-edit
               v-if="editIndex === index"
@@ -29,7 +29,7 @@
               :features="features"
               :option-values-plugins="providers"
               :job-was-scheduled="optionsData.jobWasScheduled"
-              @update:modelValue="updateOption(index, $event)"
+              @update:model-value="updateOption(index, $event)"
               @cancel="doCancel"
             />
             <option-item
@@ -38,8 +38,8 @@
               :can-move-down="index < intOptions.length - 1"
               :can-move-up="index > 0"
               :option="element"
-              @moveUp="doMoveUp(index)"
-              @moveDown="doMoveDown(index)"
+              @move-up="doMoveUp(index)"
+              @move-down="doMoveDown(index)"
               @edit="doEdit(index)"
               @delete="doRemove(index)"
               @duplicate="doDuplicate(index)"
@@ -58,24 +58,24 @@
               :features="features"
               :option-values-plugins="providers"
               :job-was-scheduled="optionsData.jobWasScheduled"
-              @update:modelValue="saveNewOption"
+              @update:model-value="saveNewOption"
               @cancel="doCancel"
             />
           </template>
         </template>
       </draggable>
 
-      <div class="empty note" v-if="intOptions.length < 1 && !createMode">
+      <div v-if="intOptions.length < 1 && !createMode" class="empty note">
         {{ $t("no.options.message") }}
       </div>
 
-      <div style="margin: 10px 0" v-if="edit" id="optnewbutton">
+      <div v-if="edit" id="optnewbutton" style="margin: 10px 0">
         <btn
           size="sm"
           class="ready"
-          @click="optaddnew"
           :title="$t('add.new.option')"
           :disabled="!!createOption"
+          @click="optaddnew"
         >
           <b class="glyphicon glyphicon-plus"></b>
           {{ $t("add.an.option") }}
@@ -107,7 +107,6 @@ const eventBus = getRundeckContext().eventBus;
 
 export default defineComponent({
   name: "OptionsEditor",
-  emits: ["changed"],
   components: {
     OptionItem,
     UndoRedo,
@@ -124,6 +123,7 @@ export default defineComponent({
       default: true,
     },
   },
+  emits: ["changed"],
   data() {
     return {
       localEB,
@@ -138,6 +138,27 @@ export default defineComponent({
       providers: [],
       providerLabels: {},
     };
+  },
+  async mounted() {
+    this.origOptions = cloneDeep(this.optionsData.options);
+    this.intOptions = cloneDeep(this.optionsData.options);
+    this.updateIndexes();
+    this.fileUploadPluginType = this.optionsData.fileUploadPluginType;
+    this.features = this.optionsData.features;
+    pluginService.getPluginProvidersForService("OptionValues").then((data) => {
+      if (data.service) {
+        this.providers = data.descriptions;
+        this.providerLabels = data.labels;
+      }
+    });
+    this.localEB.on("undo", this.doUndo);
+    this.localEB.on("redo", this.doRedo);
+    this.localEB.on("revertAll", this.doRevertAll);
+  },
+  beforeUnmount() {
+    this.localEB.off("undo");
+    this.localEB.off("redo");
+    this.localEB.off("revertAll");
   },
   methods: {
     cloneDeep,
@@ -158,7 +179,7 @@ export default defineComponent({
       this.createMode = true;
     },
     doRemove(index: number) {
-      let orig = this.operation(Operation.Remove, { index });
+      const orig = this.operation(Operation.Remove, { index });
       this.changeEvent({
         index,
         dest: -1,
@@ -199,8 +220,9 @@ export default defineComponent({
       });
     },
     updateOption(index: number, data: any) {
-      let value = cloneDeep(data);
-      let orig = this.operation(Operation.Modify, { index, value });
+      console.log(data);
+      const value = cloneDeep(data);
+      const orig = this.operation(Operation.Modify, { index, value });
       this.changeEvent({
         index: index,
         dest: -1,
@@ -214,8 +236,8 @@ export default defineComponent({
     },
     saveNewOption(data: any) {
       this.createMode = false;
-      let index = this.intOptions.length;
-      let value = cloneDeep(data);
+      const index = this.intOptions.length;
+      const value = cloneDeep(data);
       this.operation(Operation.Insert, { index, value });
 
       this.changeEvent({
@@ -228,12 +250,12 @@ export default defineComponent({
       this.createOption = null;
     },
     operationRemove(index: number) {
-      let oldval = this.intOptions[index];
+      const oldval = this.intOptions[index];
       this.intOptions.splice(index, 1);
       return oldval;
     },
     operationModify(index: number, data: any) {
-      let orig = this.intOptions[index];
+      const orig = this.intOptions[index];
       this.intOptions[index] = cloneDeep(data);
       return orig;
     },
@@ -291,27 +313,6 @@ export default defineComponent({
       eventBus.emit("job-edit:edited", true);
       this.$emit("changed", this.intOptions);
     },
-  },
-  async mounted() {
-    this.origOptions = cloneDeep(this.optionsData.options);
-    this.intOptions = cloneDeep(this.optionsData.options);
-    this.updateIndexes();
-    this.fileUploadPluginType = this.optionsData.fileUploadPluginType;
-    this.features = this.optionsData.features;
-    pluginService.getPluginProvidersForService("OptionValues").then((data) => {
-      if (data.service) {
-        this.providers = data.descriptions;
-        this.providerLabels = data.labels;
-      }
-    });
-    this.localEB.on("undo", this.doUndo);
-    this.localEB.on("redo", this.doRedo);
-    this.localEB.on("revertAll", this.doRevertAll);
-  },
-  beforeUnmount() {
-    this.localEB.off("undo");
-    this.localEB.off("redo");
-    this.localEB.off("revertAll");
   },
 });
 </script>

@@ -26,7 +26,8 @@ export class PluginStore {
     });
 
     plugins.parsedBody.forEach((p: any) => {
-      if (this.pluginsById[p.name]) return;
+      const pluginKey = this._getPluginByIdKey(p);
+      if (this.pluginsById[pluginKey]) return;
       else this.plugins.push(p);
     });
     this._refreshPluginGroups();
@@ -41,11 +42,18 @@ export class PluginStore {
       return r;
     }, Object.create(null));
     this.pluginsById = this.plugins.reduce((r, p) => {
-      const svcKey = p.name;
+      const svcKey = this._getPluginByIdKey(p);
       r[svcKey] = r[svcKey] || [];
       r[svcKey].push(p);
       return r;
     }, Object.create(null));
+  }
+
+  _getPluginByIdKey(plugin: Plugin) {
+    if (plugin.name && plugin.service) {
+      return `${plugin.name}-${plugin.service}`;
+    }
+    return plugin.name;
   }
 
   getServicePlugins(service: string): Plugin[] {

@@ -3,11 +3,11 @@ import { NavItem } from "../../../../library/stores/NavBar";
 import { RootStore } from "../../../../library/stores/RootStore";
 
 export const i18nMocks = {
-  $t: (msg) => {
+  $t: (msg: string): string => {
     return messages[msg] || msg;
   },
-  $tc: (msg, count) => {
-    const translations = {
+  $tc: (msg: string, count: number): string => {
+    const translations: { [key: string]: string } = {
       execution: count === 1 ? "execution" : "executions",
       "info.newexecutions.since.0":
         count > 1

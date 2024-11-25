@@ -1,15 +1,13 @@
 <template>
-  <div class="form-inline" v-if="loaded">
-    <div
-      class="form-group ${hasErrors(bean: workflow, field: 'strategy', 'has-error')}"
-    >
+  <div v-if="loaded" class="form-inline">
+    <div class="form-group" :class="{ 'has-error': false }">
       <label class="col-sm-12" title="Strategy for iteration">
         {{ $t("Workflow.property.strategy.label") }}:
 
         <select
-          class="form-control"
-          v-model="model.strategy"
           v-if="pluginProviders && pluginProviders.length > 0"
+          v-model="model.strategy"
+          class="form-control"
           name="workflow.strategy"
         >
           <option
@@ -25,11 +23,12 @@
   </div>
 
   <PluginDetails
+    v-if="selectedPlugin"
     :description="selectedPlugin.description"
     :description-css="'text-info'"
-    v-if="selectedPlugin"
   />
   <plugin-config
+    v-if="selectedPlugin"
     :key="selectedPlugin.name"
     v-model="editStrategyPlugin"
     :mode="'edit'"
@@ -40,8 +39,7 @@
     :validation="editValidation"
     scope="Instance"
     default-scope="Instance"
-    groupCss=""
-    v-if="selectedPlugin"
+    group-css=""
   ></plugin-config>
 </template>
 <script lang="ts">
@@ -61,7 +59,6 @@ export default defineComponent({
     PluginDetails,
     PluginInfo,
   },
-  emits: ["update:modelValue"],
   props: {
     modelValue: {
       type: Object,
@@ -69,6 +66,7 @@ export default defineComponent({
       default: () => ({}) as StrategyData,
     },
   },
+  emits: ["update:modelValue"],
   data() {
     return {
       model: {} as StrategyData,
@@ -78,6 +76,16 @@ export default defineComponent({
       editStrategyPlugin: { type: "", config: {} },
       editValidation: null,
     };
+  },
+  computed: {
+    selectedPlugin() {
+      if (!this.model.strategy) {
+        return null;
+      }
+      return this.pluginProviders.find(
+        (p: any) => p.name === this.model.strategy,
+      );
+    },
   },
   watch: {
     model: {
@@ -96,25 +104,6 @@ export default defineComponent({
       deep: true,
     },
   },
-  computed: {
-    selectedPlugin() {
-      if (!this.model.strategy) {
-        return null;
-      }
-      return this.pluginProviders.find(
-        (p: any) => p.name === this.model.strategy,
-      );
-    },
-  },
-  methods: {
-    async getStrategyPlugins() {
-      const response = await getPluginProvidersForService("WorkflowStrategy");
-      if (response.service) {
-        this.pluginProviders = response.descriptions;
-        this.pluginLabels = response.labels;
-      }
-    },
-  },
   async mounted() {
     this.model = createStrategyData(this.modelValue, (origVal: string) => {
       if (origVal === "step-first") {
@@ -130,6 +119,15 @@ export default defineComponent({
 
     await this.getStrategyPlugins();
     this.loaded = true;
+  },
+  methods: {
+    async getStrategyPlugins() {
+      const response = await getPluginProvidersForService("WorkflowStrategy");
+      if (response.service) {
+        this.pluginProviders = response.descriptions;
+        this.pluginLabels = response.labels;
+      }
+    },
   },
 });
 </script>

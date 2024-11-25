@@ -1,6 +1,6 @@
 <template>
   <log-filters
-    v-model="model.filters"
+    v-model="model.LogFilter"
     title="Global Log Filters"
     subtitle="All workflow steps"
     :show-if-empty="true"
@@ -13,7 +13,6 @@ import { defineComponent } from "vue";
 import LogFilters from "@/app/components/job/workflow/LogFilters.vue";
 export default defineComponent({
   name: "WorkflowGlobalLogFilters",
-  emits: ["update:modelValue"],
   components: {
     LogFilters,
   },
@@ -21,12 +20,13 @@ export default defineComponent({
     modelValue: {
       type: Object,
       required: true,
-      default: () => ({}) as GlobalLogFiltersData,
+      default: () => ({ LogFilter: [] }) as GlobalLogFiltersData,
     },
   },
+  emits: ["update:modelValue"],
   data() {
     return {
-      model: { filters: [] } as GlobalLogFiltersData,
+      model: { LogFilter: [] } as GlobalLogFiltersData,
     };
   },
   watch: {
