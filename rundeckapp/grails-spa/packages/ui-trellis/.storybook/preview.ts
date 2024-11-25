@@ -35,6 +35,10 @@ setup((app) => {
   app.use(PrimeVue, {
     theme: {
       preset: Lara,
+      options: {
+        prefix: "p",
+        cssLayer: true,
+      },
     },
   });
 });
