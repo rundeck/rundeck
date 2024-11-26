@@ -1,3 +1,9 @@
+:root {
+    --p-tabs-tab-border-width: 0 0 1px 0;
+    --p-tabs-tab-font-weight: 600;
+    --p-tabs-tab-margin: 0 0 -1px 0;
+
+}
 .p-tabs {
     .p-tablist-tab-list {
         border-bottom: 1px solid var(--colors-gray-300);
@@ -7,6 +13,7 @@
 
         .p-tab {
             background: var(--colors-white);
+            border-bottom: 1px solid var(--colors-gray-300);
             border-top: 0;
 
 

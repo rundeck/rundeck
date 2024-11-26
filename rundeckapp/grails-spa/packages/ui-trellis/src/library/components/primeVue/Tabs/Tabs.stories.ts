@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/vue3";
-import "./tabview.scss";
+import "./tabs.scss";
 import Tabs from "primevue/tabs";
 import TabList from "primevue/tablist";
 import Tab from "primevue/tab";
@@ -33,7 +33,7 @@ export const Playground: Story = {
     props: Object.keys(args),
     components: { Tabs, Tab, TabList, TabPanels, TabPanel },
     setup: () => ({ args }),
-    template: `<Tabs>
+    template: `<Tabs :value="args.value">
       <TabList>
         <Tab value="0">Header I</Tab>
         <Tab value="1">Header II</Tab>
@@ -41,22 +41,24 @@ export const Playground: Story = {
       </TabList>
       <TabPanels>
         <TabPanel value="0">
-          <p class="m-0">
+          <p>
             Content I
           </p>
         </TabPanel>
         <TabPanel value="1">
-          <p class="m-0">
+          <p>
             Content II
           </p>
         </TabPanel>
         <TabPanel value="2">
-          <p class="m-0">
+          <p>
             Content III
           </p>
         </TabPanel>
       </TabPanels>
     </Tabs>`,
   }),
-  args: {},
+  args: {
+    value: "0",
+  },
 };
