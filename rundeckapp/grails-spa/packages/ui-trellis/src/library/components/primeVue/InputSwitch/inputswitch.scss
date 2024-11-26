@@ -1,17 +1,21 @@
-.p-inputswitch {
-    .p-inputswitch-slider {
+.p-toggleswitch {
+    .p-toggleswitch-handle {
+        background: var(--colors-white)
+    }
+
+    .p-toggleswitch-slider {
         background: var(--colors-gray-300);
     }
-    &.p-disabled .p-inputswitch-slider {
+    &.p-disabled .p-toggleswitch-slider {
         background: var(--colors-gray-200);
     }
 
-    &.p-highlight {
-        &.p-disabled .p-inputswitch-slider {
+    &.p-toggleswitch-checked {
+        &.p-disabled .p-toggleswitch-slider {
             background: var(--colors-blue-200);
         }
 
-        .p-inputswitch-slider {
+        .p-toggleswitch-slider {
             background: var(--colors-blue-500);
         }
     }

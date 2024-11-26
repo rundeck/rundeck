@@ -50,7 +50,7 @@ export default defineComponent({
       border-color: var(--colors-gray-500);
     }
 
-    .p-steps-number {
+    .p-steps-item-number {
       border-color: var(--colors-gray-500);
       color: var(--colors-gray-500);
     }
@@ -76,14 +76,14 @@ export default defineComponent({
     }
 
     // active step
-    &.p-highlight {
-      .p-steps-number {
+    &.p-steps-item-active {
+      .p-steps-item-number {
         background: var(--colors-gray-200);
         border-color: var(--colors-blue-500);
         color: var(--colors-blue-500);
       }
 
-      .p-steps-title {
+      .p-steps-item-label {
         color: var(--colors-gray-800);
       }
     }

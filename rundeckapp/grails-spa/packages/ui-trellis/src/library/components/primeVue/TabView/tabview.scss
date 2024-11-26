@@ -1,28 +1,32 @@
-.p-tabview {
-    .p-tabview-nav {
-        border-color: var(--colors-gray-300);
-        li {
-            .p-tabview-nav-link:not(.p-disabled) {
+.p-tabs {
+    .p-tablist-tab-list {
+        border-bottom: 1px solid var(--colors-gray-300);
+        background: var(--colors-white);
+        display: flex;
+        position: relative;
+
+        .p-tab {
+            background: var(--colors-white);
+            border-top: 0;
+
+
+            &:not(.p-disabled) {
                 color: var(--colors-gray-500);
-                border-color: var(--colors-gray-300);
 
                 &:focus-visible {
                     box-shadow: inset 0 0 0 0.1rem var(--colors-gray-800);
                 }
             }
 
-            &:not(.p-highlight):not(.p-disabled):hover {
-                .p-tabview-nav-link {
-                    color: var(--colors-gray-800);
-                    border-color: var(--colors-gray-500);
-                }
+
+            &.p-tab-active {
+                color: var(--colors-blue-500);
+                border-bottom: 1px solid var(--colors-blue-500);
             }
 
-            &.p-highlight {
-                .p-tabview-nav-link {
-                    color: var(--colors-blue-500);
-                    border-color: var(--colors-blue-500);
-                }
+            &:not(.p-tab-active):not(.p-disabled):hover {
+                color: var(--colors-gray-800);
+                border-color: var(--colors-gray-500);
             }
         }
     }
@@ -32,4 +36,9 @@
             box-shadow: inset 0 0 0 0.1rem var(--colors-gray-800);
         }
     }
+}
+
+.p-tabpanels {
+    background: var(--colors-white);
+    color: var(--colors-gray-500);
 }

@@ -27,7 +27,7 @@ const meta: Meta<typeof Tag> = {
       description: "Value to display inside the tag.",
     },
     severity: {
-      options: [undefined, "success", "warning", "danger"],
+      options: [undefined, "success", "warn", "danger"],
       control: {
         type: "select",
       },
@@ -100,11 +100,11 @@ export const Warning: Story = {
   render: (args) => ({
     components: { Tag },
     setup: () => ({ args }),
-    template: generateTemplate("warning", args),
+    template: generateTemplate("warn", args),
   }),
   args: {
     value: "Warning",
-    severity: "warning",
+    severity: "warn",
   },
 };
 

@@ -1,14 +1,17 @@
 import type { Meta, StoryObj } from "@storybook/vue3";
 import "./tabview.scss";
-import TabView from "primevue/tabview";
+import Tabs from "primevue/tabs";
+import TabList from "primevue/tablist";
+import Tab from "primevue/tab";
+import TabPanels from "primevue/tabpanels";
 import TabPanel from "primevue/tabpanel";
 
-const meta: Meta<typeof TabView> = {
-  title: "TabView",
+const meta: Meta<typeof Tabs> = {
+  title: "Tabs",
   parameters: {
     docs: {
       componentSubtitle:
-        "TabView is a container component to group content with tabs.",
+        "Tabs facilitates seamless switching between different views.",
     },
     actions: {
       disable: true,
@@ -23,30 +26,37 @@ const meta: Meta<typeof TabView> = {
 
 export default meta;
 
-type Story = StoryObj<typeof TabView>;
+type Story = StoryObj<typeof Tabs>;
 
 export const Playground: Story = {
   render: (args) => ({
     props: Object.keys(args),
-    components: { TabView, TabPanel },
+    components: { Tabs, Tab, TabList, TabPanels, TabPanel },
     setup: () => ({ args }),
-    template: `<TabView>
-      <TabPanel header="Header I">
-        <p class="m-0">
-          Content I
-        </p>
-      </TabPanel>
-      <TabPanel header="Header II">
-        <p class="m-0">
-          Content II
-        </p>
-      </TabPanel>
-      <TabPanel header="Header III">
-        <p class="m-0">
-          Content III
-        </p>
-      </TabPanel>
-    </TabView>`,
+    template: `<Tabs>
+      <TabList>
+        <Tab value="0">Header I</Tab>
+        <Tab value="1">Header II</Tab>
+        <Tab value="2">Header III</Tab>
+      </TabList>
+      <TabPanels>
+        <TabPanel value="0">
+          <p class="m-0">
+            Content I
+          </p>
+        </TabPanel>
+        <TabPanel value="1">
+          <p class="m-0">
+            Content II
+          </p>
+        </TabPanel>
+        <TabPanel value="2">
+          <p class="m-0">
+            Content III
+          </p>
+        </TabPanel>
+      </TabPanels>
+    </Tabs>`,
   }),
   args: {},
 };
