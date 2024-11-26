@@ -303,6 +303,8 @@ class PluginApiService {
                  name         : provider.name,
                  title        : provider.title,
                  description  : provider.description,
+                 isHighlighted  : provider.isHighlighted(),
+                 highlightedOrder      : provider.getOrder(),
                  builtin      : builtin,
                  pluginVersion: ver,
                  pluginAuthor : author,
