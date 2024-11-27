@@ -72,6 +72,7 @@ import { getRundeckContext } from "@/library";
 import pluginInfo from "@/library/components/plugins/PluginInfo.vue";
 import { defineComponent } from "vue";
 import PluginSearch from "@/library/components/plugins/PluginSearch.vue";
+import { ServiceType } from "@/library/stores/Plugins";
 const context = getRundeckContext();
 
 export default defineComponent({
@@ -109,12 +110,26 @@ export default defineComponent({
   data() {
     return {
       loadedServices: [],
-      filteredServices: [],
-
       loading: false,
       modalShown: false,
-      stepFilterValue: "",
+      searchQuery: "",
     };
+  },
+  computed: {
+    filteredServices() {
+      return this.loadedServices.map((service) => {
+        const filteredProviders = service.providers.filter((provider) =>
+          this.matchesSearchQuery(provider),
+        );
+        return {
+          ...service,
+          providers: filteredProviders,
+          dividerIndex: this.showDivider
+            ? this.getDividerPosition(filteredProviders)
+            : undefined,
+        };
+      });
+    },
   },
   watch: {
     modelValue(val) {
@@ -134,13 +149,8 @@ export default defineComponent({
       return {
         service,
         providers,
-        dividerIndex: this.showDivider
-          ? this.getDividerPosition(providers)
-          : undefined,
       };
     });
-
-    this.filteredServices = this.loadedServices;
     this.loading = false;
     this.modalShown = this.modelValue;
   },
@@ -159,11 +169,12 @@ export default defineComponent({
       this.$emit("selected", { service, provider });
       this.active = false;
     },
-    findProvider(name: string) {
-      return this.services.find((s) => s.name === name);
-    },
     filterLoadedServices(searchQuery: string) {
-      const filterValue = searchQuery.toLowerCase().split("=");
+      this.searchQuery = searchQuery.toLowerCase();
+    },
+    matchesSearchQuery(provider) {
+      if (!this.searchQuery) return true;
+      const filterValue = this.searchQuery.split("=");
       const prop = filterValue.length > 1 ? filterValue[0] : "title";
       const value = filterValue.length > 1 ? filterValue[1] : filterValue[0];
       const propertyFilterValue = prop.split(":") || undefined;
@@ -171,40 +182,11 @@ export default defineComponent({
       const filterByProps =
         propertyFilterValue && propertyFilterValue.length === 2;
 
-      if (!value) {
-        this.filteredServices = this.loadedServices;
-      } else {
-        if (!filterByProps) {
-          this.filteredServices = this.loadedServices.map((service) => {
-            const filteredProviders = service.providers.filter(
-              (provider) =>
-                this.checkMatch(provider, "title", value) ||
-                this.checkMatch(provider, "name", value) ||
-                this.checkMatch(provider, "description", value),
-            );
-            return {
-              ...service,
-              providers: filteredProviders,
-              dividerIndex: this.showDivider
-                ? this.getDividerPosition(filteredProviders)
-                : undefined,
-            };
-          });
-        } else if (filterByProps) {
-          this.filteredServices = this.loadedServices.map((service) => {
-            const filteredProviders = service.providers.filter((provider) =>
-              this.checkMatch(provider, propertyFilterValue[1], value),
-            );
-            return {
-              ...service,
-              providers: filteredProviders,
-              dividerIndex: this.showDivider
-                ? this.getDividerPosition(filteredProviders)
-                : undefined,
-            };
-          });
-        }
-      }
+      return filterByProps
+        ? this.checkMatch(provider, propertyFilterValue[1], value)
+        : this.checkMatch(provider, "title", value) ||
+            this.checkMatch(provider, "name", value) ||
+            this.checkMatch(provider, "description", value);
     },
     checkMatch(obj, field: string, val: string) {
       return obj[field] && val && obj[field].toLowerCase().indexOf(val) >= 0;
@@ -219,7 +201,7 @@ export default defineComponent({
         const numberOfPluginsNotHighlighted: number =
           service.providers.length - service.dividerIndex;
         let titleString: string = "node.step.plugin.plural";
-        if (service === "WorkflowStep") {
+        if (service === ServiceType.WorkflowStep) {
           titleString = "workflow.step.plugin.plural";
         }
         return this.$t(titleString, [numberOfPluginsNotHighlighted]);
