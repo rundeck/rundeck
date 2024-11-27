@@ -123,9 +123,10 @@ export default defineComponent({
   computed: {
     filteredServices() {
       return this.loadedServices.map((service) => {
-        const filteredProviders = service.providers.filter((provider) =>
-          this.matchesSearchQuery(provider),
-        );
+        const filteredProviders =
+          service.providers?.filter((provider) =>
+            this.matchesSearchQuery(provider),
+          ) || [];
         return {
           ...service,
           providers: filteredProviders,
