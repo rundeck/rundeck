@@ -23,13 +23,14 @@
           >
             <p
               v-if="service.dividerIndex > 0 && index === service.dividerIndex"
+              data-testid="divider"
               class="list-group-item text-info text-strong"
             >
               {{ dividerTitle(service) }}
             </p>
             <button
               class="list-group-item"
-              data-testid="provider-button"
+              data-test="provider-button"
               @click.prevent="chooseProviderAdd(service.service, prov.name)"
             >
               <plugin-info
@@ -44,7 +45,11 @@
         </div>
       </tab>
     </tabs>
-    <div v-else-if="filteredServices.length === 1" class="list-group">
+    <div
+      v-else-if="filteredServices.length === 1"
+      class="list-group"
+      data-testid="list-view"
+    >
       <button
         v-for="prov in filteredServices[0].providers"
         class="list-group-item"
@@ -61,9 +66,9 @@
       </button>
     </div>
     <template #footer>
-      <btn data-testid="cancel-button" @click="$emit('cancel')">{{
-        $t("Cancel")
-      }}</btn>
+      <btn data-testid="cancel-button" @click="$emit('cancel')">
+        {{ $t("Cancel") }}
+      </btn>
     </template>
   </modal>
 </template>
@@ -125,7 +130,7 @@ export default defineComponent({
           ...service,
           providers: filteredProviders,
           dividerIndex: this.showDivider
-            ? this.getDividerPosition(filteredProviders)
+            ? this.calculateDividerIndex(filteredProviders)
             : undefined,
         };
       });
@@ -191,7 +196,7 @@ export default defineComponent({
     checkMatch(obj, field: string, val: string) {
       return obj[field] && val && obj[field].toLowerCase().indexOf(val) >= 0;
     },
-    getDividerPosition(providers: any) {
+    calculateDividerIndex(providers: any) {
       return providers.findIndex(
         (provider) => provider.isHighlighted === false,
       );
@@ -201,7 +206,7 @@ export default defineComponent({
         const numberOfPluginsNotHighlighted: number =
           service.providers.length - service.dividerIndex;
         let titleString: string = "node.step.plugin.plural";
-        if (service === ServiceType.WorkflowStep) {
+        if (service.service === ServiceType.WorkflowStep) {
           titleString = "workflow.step.plugin.plural";
         }
         return this.$t(titleString, [numberOfPluginsNotHighlighted]);
