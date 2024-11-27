@@ -17,20 +17,30 @@
         :title="tabTitle(service.service, i)"
       >
         <div class="list-group">
-          <button
-            v-for="prov in service.providers"
-            class="list-group-item"
-            @click.prevent="chooseProviderAdd(service.service, prov.name)"
-            data-testid="provider-button"
+          <template
+            v-for="(prov, index) in service.providers"
+            :key="`providerItem${index}`"
           >
-            <plugin-info
-              :detail="prov"
-              :show-description="true"
-              :show-extended="false"
+            <p
+              v-if="service.dividerIndex > 0 && index === service.dividerIndex"
+              class="list-group-item text-info text-strong"
             >
-              <template #descriptionprefix> - </template>
-            </plugin-info>
-          </button>
+              {{ dividerTitle(service) }}
+            </p>
+            <button
+              class="list-group-item"
+              data-testid="provider-button"
+              @click.prevent="chooseProviderAdd(service.service, prov.name)"
+            >
+              <plugin-info
+                :detail="prov"
+                :show-description="true"
+                :show-extended="false"
+              >
+                <template #descriptionprefix> - </template>
+              </plugin-info>
+            </button>
+          </template>
         </div>
       </tab>
     </tabs>
@@ -51,7 +61,7 @@
       </button>
     </div>
     <template #footer>
-      <btn @click="$emit('cancel')" data-testid="cancel-button">{{
+      <btn data-testid="cancel-button" @click="$emit('cancel')">{{
         $t("Cancel")
       }}</btn>
     </template>
@@ -90,12 +100,17 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    showDivider: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ["cancel", "selected", "update:modelValue"],
   data() {
     return {
       loadedServices: [],
       filteredServices: [],
+
       loading: false,
       modalShown: false,
       stepFilterValue: "",
@@ -115,11 +130,16 @@ export default defineComponent({
       await context.rootStore.plugins.load(service);
     }
     this.loadedServices = this.services.map((service: string) => {
+      const providers = context.rootStore.plugins.getServicePlugins(service);
       return {
         service,
-        providers: context.rootStore.plugins.getServicePlugins(service),
+        providers,
+        dividerIndex: this.showDivider
+          ? this.getDividerPosition(providers)
+          : undefined,
       };
     });
+
     this.filteredServices = this.loadedServices;
     this.loading = false;
     this.modalShown = this.modelValue;
@@ -156,23 +176,31 @@ export default defineComponent({
       } else {
         if (!filterByProps) {
           this.filteredServices = this.loadedServices.map((service) => {
+            const filteredProviders = service.providers.filter(
+              (provider) =>
+                this.checkMatch(provider, "title", value) ||
+                this.checkMatch(provider, "name", value) ||
+                this.checkMatch(provider, "description", value),
+            );
             return {
               ...service,
-              providers: service.providers.filter(
-                (provider) =>
-                  this.checkMatch(provider, "title", value) ||
-                  this.checkMatch(provider, "name", value) ||
-                  this.checkMatch(provider, "description", value),
-              ),
+              providers: filteredProviders,
+              dividerIndex: this.showDivider
+                ? this.getDividerPosition(filteredProviders)
+                : undefined,
             };
           });
         } else if (filterByProps) {
           this.filteredServices = this.loadedServices.map((service) => {
+            const filteredProviders = service.providers.filter((provider) =>
+              this.checkMatch(provider, propertyFilterValue[1], value),
+            );
             return {
               ...service,
-              providers: service.providers.filter((provider) =>
-                this.checkMatch(provider, propertyFilterValue[1], value),
-              ),
+              providers: filteredProviders,
+              dividerIndex: this.showDivider
+                ? this.getDividerPosition(filteredProviders)
+                : undefined,
             };
           });
         }
@@ -180,6 +208,23 @@ export default defineComponent({
     },
     checkMatch(obj, field: string, val: string) {
       return obj[field] && val && obj[field].toLowerCase().indexOf(val) >= 0;
+    },
+    getDividerPosition(providers: any) {
+      return providers.findIndex(
+        (provider) => provider.isHighlighted === false,
+      );
+    },
+    dividerTitle(service: any): string {
+      if (service.dividerIndex && service.dividerIndex > 0) {
+        const numberOfPluginsNotHighlighted: number =
+          service.providers.length - service.dividerIndex;
+        let titleString: string = "node.step.plugin.plural";
+        if (service === "WorkflowStep") {
+          titleString = "workflow.step.plugin.plural";
+        }
+        return this.$t(titleString, [numberOfPluginsNotHighlighted]);
+      }
+      return "";
     },
   },
 });
