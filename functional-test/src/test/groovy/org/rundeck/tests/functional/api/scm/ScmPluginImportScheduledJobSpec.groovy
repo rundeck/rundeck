@@ -13,7 +13,6 @@ import org.rundeck.util.common.scm.ScmIntegration
 import org.rundeck.util.container.BaseContainer
 
 @APITest
-@ExcludePro
 class ScmPluginImportScheduledJobSpec extends BaseContainer {
 
     static final String PROJECT_NAME = UUID.randomUUID().toString()
