@@ -29,7 +29,7 @@ const meta: Meta<typeof PtAutoComplete> = {
   },
   // TODO: Replace these args with ones appropriate for the component you are building.
   args: {
-    content: "Hello world!",
+    value: "Hello world!",
   },
 };
 
@@ -43,7 +43,7 @@ export const Playground: Story = {
   render: (args) => ({
     components: { PtAutoComplete },
     setup: () => ({ args }),
-    template: `<PtAutoComplete></PtAutoComplete>`,
+    template: `<PtAutoComplete v-model="args.value"></PtAutoComplete>`,
   }),
 };
 

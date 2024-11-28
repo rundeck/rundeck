@@ -8,9 +8,13 @@ const config: StorybookConfig = {
   ],
   addons: [
     "@storybook/addon-webpack5-compiler-swc",
-    "@storybook/addon-links",
-    "@storybook/addon-essentials",
     "storybook-dark-mode",
+    {
+      name: "@storybook/addon-essentials",
+      options: {
+        backgrounds: false,
+      },
+    },
     {
       name: "@storybook/addon-styling-webpack",
       options: {
@@ -68,6 +72,8 @@ const config: StorybookConfig = {
     name: "@storybook/vue3-webpack5",
     options: {},
   },
-  docs: {},
+  features: {
+    backgroundsStoryGlobals: true,
+  },
 };
 export default config;

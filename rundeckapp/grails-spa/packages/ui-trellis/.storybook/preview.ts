@@ -28,6 +28,19 @@ const preview: Preview = {
         type: "auto",
       },
     },
+    initialGlobals: {
+      theme: "light",
+    },
+    darkMode: {
+      classTarget: "html",
+      stylePreview: true,
+    },
+    options: {
+      storySort: (a, b) =>
+        a.id === b.id
+          ? 0
+          : a.id.localeCompare(b.id, undefined, { numeric: true }),
+    },
   },
 };
 
@@ -39,6 +52,7 @@ setup((app) => {
       options: {
         prefix: "p",
         cssLayer: true,
+        darkModeSelector: ".dark",
       },
     },
   });
