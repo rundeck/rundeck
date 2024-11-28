@@ -5,9 +5,7 @@ import ToggleSwitch from "primevue/toggleswitch";
 const meta: Meta<typeof ToggleSwitch> = {
   title: "ToggleSwitch",
   parameters: {
-    docs: {
-      componentSubtitle: "ToggleSwitch is used to select a boolean value.",
-    },
+    componentSubtitle: "ToggleSwitch is used to select a boolean value.",
     actions: {
       disable: true,
     },

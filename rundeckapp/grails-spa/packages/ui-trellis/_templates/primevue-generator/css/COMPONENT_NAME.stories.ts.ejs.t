@@ -11,9 +11,7 @@ const meta: Meta<typeof <%=componentName%>> = {
   title: "<%=componentName%>",
   component: <%=componentName%>,
   parameters: {
-    docs: {
-        componentSubtitle: "A brief description of the <%=componentName%> component",
-    },
+    componentSubtitle: "A brief description of the <%=componentName%> component",
     actions: {
       disable: true,
     },

@@ -6,9 +6,7 @@ import Badge from "primevue/badge";
 const meta: Meta<typeof Tag> = {
   title: "Tag",
   parameters: {
-    docs: {
-      componentSubtitle: "Tag component is used to categorize content.",
-    },
+    componentSubtitle: "Tag component is used to categorize content.",
     actions: {
       disable: true,
     },

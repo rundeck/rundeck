@@ -5,10 +5,7 @@ import Badge from "primevue/badge";
 const meta: Meta<typeof Badge> = {
   title: "Badge",
   parameters: {
-    docs: {
-      componentSubtitle:
-        "Badge is a small status indicator for another element.",
-    },
+    componentSubtitle: "Badge is a small status indicator for another element.",
     actions: {
       disable: true,
     },

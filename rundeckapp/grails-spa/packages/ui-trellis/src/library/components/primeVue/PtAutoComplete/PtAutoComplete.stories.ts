@@ -6,9 +6,7 @@ const meta: Meta<typeof PtAutoComplete> = {
   title: "AutoComplete",
   component: PtAutoComplete,
   parameters: {
-    docs: {
-      componentSubtitle: "A brief description of the AutoComplete component",
-    },
+    componentSubtitle: "A brief description of the AutoComplete component",
     actions: {
       disable: true,
     },

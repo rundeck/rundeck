@@ -9,10 +9,8 @@ import TabPanel from "primevue/tabpanel";
 const meta: Meta<typeof Tabs> = {
   title: "Tabs",
   parameters: {
-    docs: {
-      componentSubtitle:
-        "Tabs facilitates seamless switching between different views.",
-    },
+    componentSubtitle:
+      "Tabs facilitates seamless switching between different views.",
     actions: {
       disable: true,
     },

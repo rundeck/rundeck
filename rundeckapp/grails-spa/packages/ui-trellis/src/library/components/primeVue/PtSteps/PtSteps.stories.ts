@@ -2,13 +2,11 @@ import type { Meta, StoryObj } from "@storybook/vue3";
 import PtSteps from "./PtSteps.vue";
 
 const meta: Meta<typeof PtSteps> = {
-  title: "PtSteps",
+  title: "Stepper",
   component: PtSteps,
   parameters: {
-    docs: {
-      componentSubtitle:
-        "PtSteps is a wrapper for the component Steps, also known as Stepper, which is an indicator for the steps in a workflow.",
-    },
+    componentSubtitle:
+      "PtSteps is a wrapper for the component Steps, also known as Stepper, which is an indicator for the steps in a workflow.",
     actions: {
       disable: true,
     },
@@ -49,6 +47,8 @@ export default meta;
 type Story = StoryObj<typeof PtSteps>;
 
 export const Playground: Story = {
+  name: "Playground",
+  tags: ["!dev"],
   render: (args) => ({
     props: Object.keys(args),
     components: { PtSteps },
