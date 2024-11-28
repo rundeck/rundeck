@@ -63,6 +63,7 @@ type Story = StoryObj<typeof Tag>;
 
 export const Playground: Story = {
   name: "Playground",
+  tags: ["!dev"],
   render: (args) => ({
     components: { Tag },
     setup: () => ({ args }),

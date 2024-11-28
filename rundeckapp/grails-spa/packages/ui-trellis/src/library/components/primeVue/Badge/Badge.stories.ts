@@ -60,6 +60,7 @@ type Story = StoryObj<typeof Badge>;
 
 export const Playground: Story = {
   name: "Playground",
+  tags: ["!dev"],
   render: (args) => ({
     components: { Badge },
     setup: () => ({ args }),
