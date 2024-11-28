@@ -114,8 +114,8 @@ class BulkJobActionsSpec extends SeleniumBase {
 
     def "bulk enable schedule action enables the schedule"() {
         given:
-        jobId1 = generateJob(["schedule-enabled": "false", "schedule-crontab": CRON_SCHEDULE_THAT_WONT_EXECUTE], "api-test-executions-running-scheduled.xml")
-        jobId2 = generateJob(["schedule-enabled": "false", "schedule-crontab": CRON_SCHEDULE_THAT_WONT_EXECUTE], "api-test-executions-running-scheduled.xml")
+        jobId1 = generateJob([ "args":"echo 1; sleep 5" ,"schedule-enabled": "false", "schedule-crontab": CRON_SCHEDULE_THAT_WONT_EXECUTE], "api-test-executions-running-scheduled.xml")
+        jobId2 = generateJob(["args":"echo 1; sleep 5", "schedule-enabled": "false", "schedule-crontab": CRON_SCHEDULE_THAT_WONT_EXECUTE], "api-test-executions-running-scheduled.xml")
 
         JobListPage jobsListPage = page JobListPage
         jobsListPage.loadPathToNextUI SELENIUM_BASIC_PROJECT
@@ -141,8 +141,8 @@ class BulkJobActionsSpec extends SeleniumBase {
 
     def "bulk disable schedule action disables the schedule"() {
         given:
-        jobId1 = generateJob(["schedule-enabled": "true", "schedule-crontab": CRON_SCHEDULE_THAT_WONT_EXECUTE], "api-test-executions-running-scheduled.xml")
-        jobId2 = generateJob(["schedule-enabled": "true", "schedule-crontab": CRON_SCHEDULE_THAT_WONT_EXECUTE], "api-test-executions-running-scheduled.xml")
+        jobId1 = generateJob(["args":"echo 1; sleep 5", "schedule-enabled": "true", "schedule-crontab": CRON_SCHEDULE_THAT_WONT_EXECUTE], "api-test-executions-running-scheduled.xml")
+        jobId2 = generateJob(["args":"echo 1; sleep 5", "schedule-enabled": "true", "schedule-crontab": CRON_SCHEDULE_THAT_WONT_EXECUTE], "api-test-executions-running-scheduled.xml")
 
         JobListPage jobsListPage = page JobListPage
         jobsListPage.loadPathToNextUI SELENIUM_BASIC_PROJECT
