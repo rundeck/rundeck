@@ -168,6 +168,9 @@ class UrlMappings {
         "/api/$api_version/project/$project/resources"(controller: 'framework') {
             action = [GET: "apiResourcesv2",/* PUT: "update", DELETE: "delete", POST: "apiProjectResourcesPost"*/]
         }
+        "/api/$api_version/project/$project/nodes/tags"(controller: 'framework') {
+            action = [GET: "apiTagsForNodes"]
+        }
         "/api/$api_version/project/$project/jobs"(controller: 'menu', action: 'apiJobsListv2')
         "/api/$api_version/project/$project/resource/$name"(controller: 'framework',action:"apiResourcev14")
         "/api/$api_version/project/$project/run/command"(controller: 'scheduledExecution', action: 'apiRunCommandv14')
