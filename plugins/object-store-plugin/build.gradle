@@ -23,6 +23,7 @@ dependencies {
     pluginLibs("io.minio:minio:8.5.12") {
         exclude(group: 'com.fasterxml.jackson.core')
         exclude(group: 'com.google.guava', module: 'guava')
+        exclude(group: 'commons-io', module: 'commons-io')
     }
 
     // Use the awesome Spock testing and specification framework
