@@ -37,6 +37,9 @@ const mountOptionView = async (options: {
 };
 
 describe("OptionView", () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
   it("shows option name", async () => {
     const option = { name: "optionName", type: "text" } as JobOption;
     const wrapper = await mountOptionView({ option, editable: true });
@@ -192,7 +195,7 @@ describe("OptionView", () => {
       expect(wrapper.vm.displayDefaultValueTruncated).toEqual(value);
       expect(wrapper.vm.displayDefaultValue).toEqual(value);
       const detail = wrapper.find(
-        ".optdetail > span.optdetail_default_value > span::first-child",
+        ".optdetail > span.optdetail_default_value > span:first-child",
       );
       expect(detail.exists()).toBeTruthy();
       expect(detail.text()).toEqual(value);
@@ -211,7 +214,7 @@ describe("OptionView", () => {
       value.substring(0, 20) + "...",
     );
     const detail = wrapper.find(
-      ".optdetail > span.optdetail_default_value > span::first-child",
+      ".optdetail > span.optdetail_default_value > span:first-child",
     );
     expect(detail.exists()).toBeTruthy();
     expect(detail.text()).toEqual(value.substring(0, 20) + "...");
