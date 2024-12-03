@@ -75,10 +75,6 @@ const mountNodeCard = async (propsData = {}) => {
       };
     },
     global: {
-      mocks: {
-        $t: (msg) => msg,
-        $tc: (msg) => msg,
-      },
       stubs: {
         btn: true,
         dropdown: true,

@@ -6,7 +6,7 @@
           v-if="loaded && !loading"
           class="text-info node_filter_results__matched_nodes_count"
         >
-          {{ $t("count.nodes.matched", [total, $tc("Node.count.vue", total)]) }}
+          {{ $t("count.nodes.matched", [total, $t("Node.count.vue", total)]) }}
         </span>
         <span v-if="loading" class="text-muted">
           <i class="glyphicon glyphicon-time"></i>
@@ -18,7 +18,7 @@
             {{
               $t("count.nodes.shown", [
                 maxShown,
-                $tc("Node.count.vue", maxShown),
+                $t("Node.count.vue", maxShown),
               ])
             }}
           </span>
