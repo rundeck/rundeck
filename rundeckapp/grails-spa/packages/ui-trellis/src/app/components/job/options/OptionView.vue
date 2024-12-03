@@ -36,7 +36,7 @@
       <popover trigger="hover" placement="bottom">
         <span class="valuesSet" data-role="trigger">
           <span class="valueslist">
-            {{ $tc("option.values.c", option.values.length) }}
+            {{ $t("option.values.c", option.values.length) }}
           </span>
         </span>
         <template #popover>
@@ -111,7 +111,7 @@ export default defineComponent({
           : "";
     },
     displayDefaultValueTruncated() {
-      let val = this.displayDefaultValue;
+      const val = this.displayDefaultValue;
       if (val.length > 20) {
         return val.substring(0, 20) + "...";
       } else {
