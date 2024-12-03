@@ -29,12 +29,7 @@ const createWrapper = (props = {}) => {
       refreshDelay: 30000,
       ...props,
     },
-    global: {
-      mocks: {
-        $t: (msg: string) => msg,
-        $tc: (msg: string) => msg,
-      },
-    },
+    global: {},
   });
 };
 

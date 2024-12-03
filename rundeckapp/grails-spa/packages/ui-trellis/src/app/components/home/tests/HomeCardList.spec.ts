@@ -15,12 +15,7 @@ const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
       projects: [],
       ...props,
     },
-    global: {
-      mocks: {
-        $t: (msg: string): string => msg,
-        $tc: (msg: string): string => msg,
-      },
-    },
+    global: {},
   });
 };
 
