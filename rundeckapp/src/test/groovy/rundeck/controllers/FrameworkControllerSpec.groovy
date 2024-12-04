@@ -16,6 +16,8 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.node.NodesResponse
+import com.dtolabs.rundeck.app.api.node.Node
 import com.dtolabs.rundeck.app.api.tag.TagForNodes
 import com.dtolabs.rundeck.app.api.tag.TagsForNodesResponse
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -968,6 +970,44 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
         response.contentType == 'application/json;charset=UTF-8'
         def respObject = OBJECT_MAPPER.readValue(response.getContentAsString(), TagsForNodesResponse)
         respObject.tags.isEmpty()
+    }
+
+    def "get nodes for project"() {
+        setup:
+        def authCtx = Mock(UserAndRolesAuthContext)
+
+        INodeSet nodeSet = new NodeSetImpl()
+        nodeSet.putNode(new NodeEntryImpl('monkey1'))
+        nodeSet.putNode(new NodeEntryImpl('monkey2'))
+
+        def projectName = 'testproj'
+
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * existsFrameworkProject(projectName) >> true
+            1 * getFrameworkProject(projectName) >> Mock(IRundeckProject) {
+                1 * getNodeSet() >> nodeSet
+            }
+        }
+
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_, _) >> true
+        }
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authorizeProjectResource(authCtx, [type: 'resource', kind: 'node'], 'read', projectName) >> true
+            1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
+            1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> nodeSet
+        }
+        params.project = projectName
+        when:
+        response.format = 'json'
+        def query = new ExtNodeFilters(project: projectName)
+        controller.apiNodes(query)
+
+        then:
+        response.contentType == 'application/json;charset=UTF-8'
+        def respObject = OBJECT_MAPPER.readValue(response.getContentAsString(), NodesResponse)
+        respObject.nodes.collect({it.nodename}).toSet() == ['monkey1', 'monkey2'] as Set
     }
 
     @Unroll
