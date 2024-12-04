@@ -114,8 +114,8 @@ class BulkJobActionsSpec extends SeleniumBase {
 
     def "bulk enable schedule action enables the schedule"() {
         given:
-        jobId1 = generateJob(["schedule-enabled": "false", "schedule-crontab": CRON_SCHEDULE_THAT_WONT_EXECUTE], "api-test-executions-running-scheduled.xml")
-        jobId2 = generateJob(["schedule-enabled": "false", "schedule-crontab": CRON_SCHEDULE_THAT_WONT_EXECUTE], "api-test-executions-running-scheduled.xml")
+        jobId1 = generateJob([ "args":"echo 1; sleep 5" ,"schedule-enabled": "false", "schedule-crontab": CRON_SCHEDULE_THAT_WONT_EXECUTE], "api-test-executions-running-scheduled.xml")
+        jobId2 = generateJob(["args":"echo 1; sleep 5", "schedule-enabled": "false", "schedule-crontab": CRON_SCHEDULE_THAT_WONT_EXECUTE], "api-test-executions-running-scheduled.xml")
 
         JobListPage jobsListPage = page JobListPage
         jobsListPage.loadPathToNextUI SELENIUM_BASIC_PROJECT
@@ -141,8 +141,8 @@ class BulkJobActionsSpec extends SeleniumBase {
 
     def "bulk disable schedule action disables the schedule"() {
         given:
-        jobId1 = generateJob(["schedule-enabled": "true", "schedule-crontab": CRON_SCHEDULE_THAT_WONT_EXECUTE], "api-test-executions-running-scheduled.xml")
-        jobId2 = generateJob(["schedule-enabled": "true", "schedule-crontab": CRON_SCHEDULE_THAT_WONT_EXECUTE], "api-test-executions-running-scheduled.xml")
+        jobId1 = generateJob(["args":"echo 1; sleep 5", "schedule-enabled": "true", "schedule-crontab": CRON_SCHEDULE_THAT_WONT_EXECUTE], "api-test-executions-running-scheduled.xml")
+        jobId2 = generateJob(["args":"echo 1; sleep 5", "schedule-enabled": "true", "schedule-crontab": CRON_SCHEDULE_THAT_WONT_EXECUTE], "api-test-executions-running-scheduled.xml")
 
         JobListPage jobsListPage = page JobListPage
         jobsListPage.loadPathToNextUI SELENIUM_BASIC_PROJECT
@@ -187,31 +187,28 @@ class BulkJobActionsSpec extends SeleniumBase {
         ExecutionShowPage executionShowPage = page ExecutionShowPage
         executionShowPage.validatePage()
     }
+    
+    def "job can be executed from the Job List Page modal with nextUI"() {
+        given:
+        String jobToExecute = generateJob(["opt1-required": "false", "opt2-required": "false"])
 
-//    /**
-//     * Once  nextUI is fixed, running this test will result in a green test run
-//     */
-//    def "job can be executed from the Job List Page modal with nextUI"() {
-//        given:
-//        String jobToExecute = generateJob(["opt1-required": "false", "opt2-required": "false"])
-//
-//        JobListPage jobsListPage = page JobListPage
-//
-//        jobsListPage.loadPathToNextUI SELENIUM_BASIC_PROJECT
-//        jobsListPage.go()
-//
-//        when:
-//        def job1RunButton = jobsListPage.waitIgnoringForElementToBeClickable(jobsListPage.getExecuteJobInModalButton(jobToExecute))
-//        job1RunButton.click()
-//
-//        def runJobNowButton = jobsListPage.waitIgnoringForElementToBeClickable(jobsListPage.getExecuteJobModalRunJobNowButton(), Duration.ofSeconds(2))
-//        runJobNowButton.click()
-//        jobsListPage.waitForUrlToContain('/execution/show/')
-//
-//        then:
-//        ExecutionShowPage executionShowPage = page ExecutionShowPage
-//        executionShowPage.validatePage()
-//    }
+        JobListPage jobsListPage = page JobListPage
+
+        jobsListPage.loadPathToNextUI SELENIUM_BASIC_PROJECT
+        jobsListPage.go()
+
+        when:
+        def job1RunButton = jobsListPage.waitIgnoringForElementToBeClickable(jobsListPage.getExecuteJobInModalButton(jobToExecute))
+        job1RunButton.click()
+
+        def runJobNowButton = jobsListPage.waitIgnoringForElementToBeClickable(jobsListPage.getExecuteJobModalRunJobNowButton(), Duration.ofSeconds(2))
+        runJobNowButton.click()
+        jobsListPage.waitForUrlToContain('/execution/show/')
+
+        then:
+        ExecutionShowPage executionShowPage = page ExecutionShowPage
+        executionShowPage.validatePage()
+    }
 
     /**
      * Should be in JobUtils, but it's going through a refactor, thus it's here for now

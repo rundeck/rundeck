@@ -79,6 +79,9 @@ configurations {
     developmentOnly
     runtimeClasspath {
         extendsFrom developmentOnly
+        exclude group: 'junit', module: 'junit'
+        exclude group: 'org.codehaus.groovy', module: 'groovy-ant'
+        exclude group: 'org.grails', module: 'grails-shell'
     }
 
     implementation.exclude module: "spring-boot-starter-tomcat"
@@ -156,6 +159,7 @@ dependencies {
     implementation 'org.owasp.encoder:encoder:1.2.1'
     implementation 'org.grails.plugins:external-config:2.0.0'
     implementation 'commons-fileupload:commons-fileupload:1.5'
+    implementation "commons-io:commons-io:${commonsIoVersion}"
     implementation 'commons-beanutils:commons-beanutils:1.9.4'
     implementation "commons-codec:commons-codec:${commonsCodecVersion}"
 
