@@ -31,9 +31,6 @@ const createWrapper = (props = {}) => {
     },
     global: {
       components: { Btn, Modal, Alert, VueMultiselect },
-      mocks: {
-        $t: (msg: string) => msg,
-      },
       stubs: {
         Modal: {
           template: `<div data-testid="modal-title"><slot></slot><slot name="footer"></slot>Add Field</div>`,
