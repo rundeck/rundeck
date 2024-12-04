@@ -20,9 +20,6 @@ const createWrapper = (props = {}) => {
     },
     global: {
       components: { PluginPropVal, Expandable, AceEditor },
-      mocks: {
-        $t: (msg: string) => msg,
-      },
     },
   });
 };

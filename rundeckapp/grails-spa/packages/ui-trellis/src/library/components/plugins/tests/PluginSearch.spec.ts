@@ -8,9 +8,6 @@ const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
       ...propsData,
     },
     global: {
-      mocks: {
-        $t: (msg: string) => msg,
-      },
       stubs: {
         btn: {
           template: `<button><slot></slot></button>`,

@@ -10,11 +10,6 @@ const createWrapper = (prop = {}, value: string | boolean = "") => {
       },
       value,
     },
-    global: {
-      mocks: {
-        $t: (msg: string) => msg,
-      },
-    },
   });
 };
 describe("PluginPropVal.vue", () => {
