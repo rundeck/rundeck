@@ -26,7 +26,7 @@ const createWrapper = (props = {}) => {
     },
   });
 };
-describe("ConfigPair.vue", () => {
+describe("pluginPropView.vue", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -134,5 +134,22 @@ describe("ConfigPair.vue", () => {
     expect(title.text()).toContain("Password:");
     const obfuscatedText = wrapper.find(".text-success");
     expect(obfuscatedText.text()).toBe("••••••••••••");
+  });
+  it("renders boolean true value with an icon and custom class", async () => {
+    const wrapper = createWrapper({
+      prop: {
+        type: "Boolean",
+        title: "Show Icon",
+        desc: "Boolean property with icon",
+        options: {
+          booleanTrueDisplayValueClass: "text-success glyphicon glyphicon-ok",
+        },
+      },
+      value: "true",
+    });
+    const title = wrapper.find("[title='Boolean property with icon']");
+    expect(title.text()).toContain("Show Icon:");
+    const icon = wrapper.find(".glyphicon.glyphicon-ok");
+    expect(icon.classes()).toContain("text-success");
   });
 });

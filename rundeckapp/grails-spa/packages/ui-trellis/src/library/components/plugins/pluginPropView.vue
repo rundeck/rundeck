@@ -14,7 +14,6 @@
             (prop.options && prop.options['booleanTrueDisplayValueClass']) ||
             'text-success'
           "
-          data-testid="boolean-true"
         >
           <plugin-prop-val :prop="prop" :value="innerValue" />
         </span>
@@ -30,14 +29,15 @@
       </template>
     </span>
     <span v-else-if="prop.type === 'Integer'" class="configpair">
-      <span :title="prop.desc" data-testid="integer-prop-title"
-        >{{ prop.title }}:</span
-      >
+      <span :title="prop.desc" data-testid="integer-prop-title">
+        {{ prop.title }}:
+      </span>
       <span
         style="font-family: Courier, monospace"
         data-testid="integer-prop-value"
-        >{{ innerValue }}</span
       >
+        {{ innerValue }}
+      </span>
     </span>
     <span
       v-else-if="['Options', 'Select', 'FreeSelect'].indexOf(prop.type) >= 0"
