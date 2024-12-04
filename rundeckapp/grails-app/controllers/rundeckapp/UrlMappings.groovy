@@ -171,6 +171,8 @@ class UrlMappings {
         "/api/$api_version/project/$project/nodes/tags"(controller: 'framework') {
             action = [GET: "apiTagsForNodes"]
         }
+        "/api/$api_version/project/$project/nodes"(controller: 'framework', action: 'apiNodes')
+
         "/api/$api_version/project/$project/jobs"(controller: 'menu', action: 'apiJobsListv2')
         "/api/$api_version/project/$project/resource/$name"(controller: 'framework',action:"apiResourcev14")
         "/api/$api_version/project/$project/run/command"(controller: 'scheduledExecution', action: 'apiRunCommandv14')

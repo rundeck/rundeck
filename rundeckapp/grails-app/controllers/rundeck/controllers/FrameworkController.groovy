@@ -16,7 +16,8 @@
 
 package rundeck.controllers
 
-
+import com.dtolabs.rundeck.app.api.node.Node
+import com.dtolabs.rundeck.app.api.node.NodesResponse
 import com.dtolabs.rundeck.app.api.project.sources.Resources
 import com.dtolabs.rundeck.app.api.project.sources.Source
 import com.dtolabs.rundeck.app.api.project.sources.Sources
@@ -3592,6 +3593,100 @@ Since: v52''',
         def tagNodes = tagSummary.collect {new TagForNodes(name: it.getKey(), nodeCount: it.getValue()) }
         respond(new TagsForNodesResponse(tags: tagNodes), formats: ['json'])
     }
+
+
+    @Get(uri='/project/{project}/nodes', produces = io.micronaut.http.MediaType.APPLICATION_JSON)
+    @Operation(
+            method='GET',
+            summary='List of project nodes',
+            description='''List of project nodes.
+
+Node Filter parameters: You can select nodes to include and exclude in the result set, see below.
+
+**Note:** If no query parameters are included, the result set will include all Node resources for the project.
+
+Refer to the [User Guide - Node Filters](https://docs.rundeck.com/docs/manual/11-node-filters.html) Documentation for information on
+the node filter syntax and usage.
+
+A basic node filter looks like:
+
+    attribute: value attribute2: value2
+
+To specify a Node Filter string as a URL parameter for an API request, use a parameter named `filter`.
+Your HTTP client will have to correctly escape the value of the `filter` parameter.  For example you can
+use `curl` like this;
+
+    curl --data-urlencode "filter=attribute: value"
+
+Common attributes:
+
+* `name` - node name
+* `tags` - tags
+* `hostname`
+* `username`
+* `osFamily`, `osName`, `osVersion`, `osArch`
+
+Custom attributes can also be used.
+
+Authorization required: `read` for project resource type `node`, as well as `read` for each Node resource
+
+Since: v52''',
+            tags=['project','nodes'],
+            parameters = [
+                    @Parameter(name = 'project', description = 'Project Name', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
+                    @Parameter(name = 'filter', description = 'Node Filter', in = ParameterIn.QUERY, schema = @Schema(type = 'string'))
+            ])
+    @ApiResponse(
+            responseCode='200',
+            description='''The project nodes.''',
+            content = @Content(
+                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                    schema=@Schema(implementation= NodesResponse)
+            )
+    )
+    def apiNodes(@Parameter(hidden = true) ExtNodeFilters query) {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+        if (query.hasErrors()) {
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                                                           code: 'api.error.invalid.request', args: [query.errors.allErrors.collect { g.message(error: it) }.join("; ")]])
+        }
+        IFramework framework = frameworkService.getRundeckFramework()
+
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
+        def projectVerificationErrors = verifyProjectQueryParam(authContext, AuthConstants.RESOURCE_TYPE_NODE, AuthConstants.ACTION_READ, 'Read Nodes')
+        if (!projectVerificationErrors.isEmpty()) {
+            return apiService.renderErrorFormat(response, projectVerificationErrors)
+        }
+
+        //convert api parameters to node filter parameters
+        def filters=extractApiNodeFilterParams(params)
+        if(filters){
+            filters.each{k,v->
+                query[k]=v
+            }
+        }
+
+        if(query.nodeFilterIsEmpty()){
+            //return all results
+            query.filter = 'name: .*'
+        }
+        def pject=frameworkService.getFrameworkProject(params.project)
+//        final Collection nodes = pject.getNodes().filterNodes(ExecutionService.filtersAsNodeSet(query))
+        final INodeSet nodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(ExecutionService.filtersAsNodeSet(query), pject.getNodeSet())
+        def readnodes = rundeckAuthContextProcessor.filterAuthorizedNodes(
+                params.project,
+                Collections.singleton('read'),
+                nodes,
+                authContext
+        )
+
+        List<Node> nodeList = readnodes.getNodes().collect { Node.from(it) }
+        respond(new NodesResponse(nodes: nodeList), formats: ['json'])
+    }
+
+
 
     def handleInvalidMimeType(InvalidMimeTypeException e) {
         return apiService.renderErrorFormat(
