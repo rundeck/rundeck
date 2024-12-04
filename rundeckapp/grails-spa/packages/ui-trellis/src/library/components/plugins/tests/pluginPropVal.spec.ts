@@ -21,17 +21,17 @@ describe("PluginPropVal.vue", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
-  it("renders 'Yes' or 'No' for Boolean type properties", () => {
+  it("renders 'Add' or 'Don't Add' for Boolean type properties", () => {
     const wrapperTrue = createWrapper(
-      { type: "Boolean", options: { booleanTrueDisplayValue: "Yes" } },
+      { type: "Boolean", options: { booleanTrueDisplayValue: "Add" } },
       "true",
     );
-    expect(wrapperTrue.text()).toBe("Yes");
+    expect(wrapperTrue.text()).toBe("Add");
     const wrapperFalse = createWrapper(
-      { type: "Boolean", options: { booleanFalseDisplayValue: "No" } },
+      { type: "Boolean", options: { booleanFalseDisplayValue: "Don't Add" } },
       "false",
     );
-    expect(wrapperFalse.text()).toBe("No");
+    expect(wrapperFalse.text()).toBe("Don't Add");
   });
   it("renders the correct icon for Options type with valueDisplayType as 'icon'", () => {
     const wrapper = createWrapper(
@@ -76,19 +76,28 @@ describe("PluginPropVal.vue", () => {
     expect(wrapper.text()).toContain("line3");
   });
 
-  it("renders custom attributes for DYNAMIC_FORM type", () => {
-    const wrapper = createWrapper(
-      {
-        options: { displayType: "DYNAMIC_FORM" },
-      },
-      JSON.stringify([
+  test.each([
+    {
+      description:
+        "renders custom attributes for DYNAMIC_FORM with two attributes",
+      prop: { options: { displayType: "DYNAMIC_FORM" } },
+      value: JSON.stringify([
         { label: "Attribute 1", value: "Value 1" },
         { label: "Attribute 2", value: "Value 2" },
       ]),
-    );
-    expect(wrapper.text()).toContain("Attribute 1");
-    expect(wrapper.text()).toContain("Value 1");
-    expect(wrapper.text()).toContain("Attribute 2");
-    expect(wrapper.text()).toContain("Value 2");
+      expectedTexts: ["Attribute 1", "Value 1", "Attribute 2", "Value 2"],
+    },
+    {
+      description:
+        "renders custom attributes for DYNAMIC_FORM with one attribute",
+      prop: { options: { displayType: "DYNAMIC_FORM" } },
+      value: JSON.stringify([{ label: "Attribute 3", value: "Value 3" }]),
+      expectedTexts: ["Attribute 3", "Value 3"],
+    },
+  ])("$description", ({ prop, value, expectedTexts }) => {
+    const wrapper = createWrapper(prop, value);
+    expectedTexts.forEach((text) => {
+      expect(wrapper.text()).toContain(text);
+    });
   });
 });
