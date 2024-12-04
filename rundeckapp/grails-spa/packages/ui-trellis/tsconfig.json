@@ -20,5 +20,8 @@
     // "./src/library/**/*",
     // "tests/**/*.ts",
     // "tests/**/*.tsx"
+  ],
+  "exclude":[
+    "**/*.spec.ts"
   ]
 }

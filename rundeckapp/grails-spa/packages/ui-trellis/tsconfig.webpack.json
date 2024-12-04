@@ -26,6 +26,7 @@
     "./src/app",
     "**/*.stories.ts",
     "**/*.stories.tsx",
+    "**/*.spec.ts",
     "node_modules/**/*"
   ]
 }
