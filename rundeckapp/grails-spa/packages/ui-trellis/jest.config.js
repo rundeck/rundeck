@@ -7,6 +7,7 @@ module.exports = {
     "^.+\\.(j|t)s$": "babel-jest",
   },
   setupFiles: ["<rootDir>/setupTests.js"],
+  setupFilesAfterEnv: ["<rootDir>/jest.global-mocks.js"],
   roots: ["<rootDir>/src/app", "<rootDir>/src/library", "<rootDir>/tests"],
   moduleNameMapper: {
     "\\.(css|less|sass|scss)$": "identity-obj-proxy",

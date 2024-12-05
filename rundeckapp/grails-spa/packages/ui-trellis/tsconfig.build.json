@@ -21,6 +21,7 @@
     "**/*.stories.ts",
     "**/*.stories.tsx",
     "**/*.test.ts",
+    "**/*.spec.ts",
     "./src/library/stories/**/*"
   ]
 }

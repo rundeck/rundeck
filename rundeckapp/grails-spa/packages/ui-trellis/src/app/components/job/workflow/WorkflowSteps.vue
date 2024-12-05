@@ -1,138 +1,177 @@
 <template>
-  <div>TODO: undo-redo</div>
-  <div>
-    <div
-      v-for="(step, index) in model.commands"
-      :key="step.id"
-      class="step-list-item"
-    >
-      <div class="step-item-display" title="Click to edit">
-        <div class="step-item-config">
-          <plugin-config
-            :service-name="
-              step.nodeStep
-                ? ServiceType.WorkflowNodeStep
-                : ServiceType.WorkflowStep
-            "
-            :provider="step.type"
-            :config="step.config"
-            :read-only="true"
-            :show-title="true"
-            :show-icon="true"
-            :show-description="true"
-            mode="show"
-            v-if="!step.jobref"
-          >
-            <template #iconSuffix v-if="step.nodeStep">
-              <i class="fas fa-hdd"></i>
-            </template>
-          </plugin-config>
-          <job-ref-step :step="step" v-else></job-ref-step>
-        </div>
-
-        <div v-if="step.description" class="wfstep-description">
-          {{ step.description }}
-        </div>
-        <template v-if="!step.jobref">
-          <log-filters
-            v-model="step.filters"
-            title="Log Filters"
-            :subtitle="stepTitle(step, index)"
-            :add-event="'step-action:add-logfilter:' + index"
-          />
-        </template>
-      </div>
-      <div class="step-item-controls">
-        <div class="btn-group" role="group" aria-label="item controls">
-          <btn @click="editStepByIndex(index)" size="xs">
-            <i class="fas fa-edit"></i>
-            Edit
-          </btn>
-          <btn
-            size="xs"
-            title="Duplicate this step"
-            @click="duplicateStep(index)"
-          >
-            <i class="glyphicon glyphicon-duplicate"></i>
-          </btn>
-          <dropdown menu-right>
-            <btn size="xs" data-role="trigger"
-              ><i class="glyphicon glyphicon-cog"></i>
-              <span class="caret"></span
-            ></btn>
-            <template #dropdown>
-              <li><a role="button">Add Error Handler</a></li>
-              <li v-if="!step.jobref">
-                <a role="button" @click="addLogFilterForIndex(index)"
-                  >Add Log Filter</a
-                >
-              </li>
-            </template>
-          </dropdown>
-          <btn
-            size="xs"
-            type="danger"
-            title="Delete this step"
-            @click="removeStep(index)"
-          >
-            <i class="glyphicon glyphicon-remove"></i>
-          </btn>
-        </div>
-
-        <span class="btn btn-xs dragHandle" title="Drag to reorder"
-          ><i class="glyphicon glyphicon-resize-vertical"></i
-        ></span>
-      </div>
-    </div>
-    <choose-plugin-modal
-      v-model="addStepModal"
-      title="Add a Step"
-      :services="[ServiceType.WorkflowNodeStep, ServiceType.WorkflowStep]"
-      :tab-names="[
-        $t('plugin.type.WorkflowNodeStep.title.plural'),
-        $t('plugin.type.WorkflowStep.title.plural'),
-      ]"
-      @cancel="addStepModal = false"
-      @selected="chooseProviderAdd"
-    >
-      <span class="text-info">Click on a Step type to add.</span>
-    </choose-plugin-modal>
-
-    <edit-plugin-modal
-      v-if="editStepModal"
-      v-model:modal-active="editStepModal"
-      v-model="editModel"
-      :validation="editModelValidation"
-      :service-name="editService"
-      title="Edit Step"
-      @cancel="cancelEditStep"
-      @save="saveEditStep"
-    >
-      <template #extra>
-        <hr />
-        <div class="form-horizontal">
-          <div class="form-group">
-            <label class="col-sm-2 control-label input-sm" for="stepDescription"
-              >Step Label</label
+  <common-undo-redo-draggable-list
+    ref="historyControls"
+    v-model="model.commands"
+    revert-all-enabled
+    draggable-tag="ol"
+    item-key="id"
+    :button-label="$t('Workflow.addStep')"
+    :loading="loadingWorflowSteps"
+    @add-button-click="toggleAddStepModal"
+  >
+    <template #item="{ item: { element, index } }">
+      <li>
+        <div class="step-list-item">
+          <div class="step-item-display">
+            <div
+              class="step-item-config"
+              data-test="edit-step-item"
+              :title="$t('Workflow.clickToEdit')"
+              @click="editStepByIndex(index)"
             >
-            <div class="col-sm-10">
-              <input
-                type="text"
-                class="form-control"
-                id="stepDescription"
-                v-model="editExtra.description"
-              />
+              <plugin-config
+                v-if="!element.jobref"
+                :service-name="
+                  element.nodeStep
+                    ? ServiceType.WorkflowNodeStep
+                    : ServiceType.WorkflowStep
+                "
+                :provider="element.type"
+                :config="element.config"
+                :read-only="true"
+                :show-title="true"
+                :show-icon="true"
+                :show-description="true"
+                mode="show"
+              >
+                <template v-if="element.nodeStep" #iconSuffix>
+                  <i class="fas fa-hdd"></i>
+                </template>
+              </plugin-config>
+              <job-ref-step v-else :step="element"></job-ref-step>
             </div>
+
+            <div v-if="element.description" class="wfstep-description">
+              {{ element.description }}
+            </div>
+
+            <log-filters
+              v-if="!element.jobref"
+              :model-value="element.filters"
+              :title="$t('Workflow.logFilters')"
+              :subtitle="stepTitle(element, index)"
+              :add-event="'step-action:add-logfilter:' + element.id"
+              mode="inline"
+              @update:model-value="
+                updateHistoryWithLogFiltersData(index, $event)
+              "
+            />
+          </div>
+          <div class="step-item-controls">
+            <div
+              class="btn-group"
+              role="group"
+              :aria-label="$t('Workflow.itemControls')"
+            >
+              <btn
+                size="xs"
+                style="min-height: 21px"
+                @click.stop="editStepByIndex(index)"
+              >
+                <i class="fas fa-edit"></i>
+                {{ $t("Workflow.edit") }}
+              </btn>
+              <btn
+                size="xs"
+                :title="$t('Workflow.duplicateStep')"
+                @click.stop="duplicateStep(index)"
+              >
+                <i class="glyphicon glyphicon-duplicate"></i>
+              </btn>
+              <dropdown menu-right>
+                <btn size="xs" data-role="trigger"
+                  ><i class="glyphicon glyphicon-cog"></i>
+                  <span class="caret"></span
+                ></btn>
+                <template #dropdown>
+                  <li>
+                    <a role="button"> {{ $t("Workflow.addErrorHandler") }}</a>
+                  </li>
+                  <li v-if="!element.jobref">
+                    <a
+                      role="button"
+                      data-test="add-log-filter"
+                      @click="addLogFilterForIndex(element.id)"
+                    >
+                      {{ $t("Workflow.addLogFilter") }}
+                    </a>
+                  </li>
+                </template>
+              </dropdown>
+              <btn
+                size="xs"
+                type="danger"
+                :title="$t('Workflow.deleteThisStep')"
+                data-test="remove-step"
+                @click.prevent="removeStep(index)"
+              >
+                <i class="glyphicon glyphicon-remove"></i>
+              </btn>
+            </div>
+
+            <span
+              class="btn btn-xs dragHandle"
+              :title="$t('Workflow.dragToReorder')"
+            >
+              <i class="glyphicon glyphicon-resize-vertical"></i>
+            </span>
           </div>
         </div>
-      </template>
-    </edit-plugin-modal>
-
-    <btn @click="addStepModal = true" size="sm">
-      <i class="fas fa-plus"></i>
-      Add a step
-    </btn>
-  </div>
+      </li>
+    </template>
+    <template #empty>
+      <p data-testid="no-steps">{{ $t("Workflow.noSteps") }}</p>
+    </template>
+    <template #extra>
+      <choose-plugin-modal
+        v-model="addStepModal"
+        :title="$t('Workflow.addStep')"
+        :services="[ServiceType.WorkflowNodeStep, ServiceType.WorkflowStep]"
+        :tab-names="[
+          $t('plugin.type.WorkflowNodeStep.title.plural'),
+          $t('plugin.type.WorkflowStep.title.plural'),
+        ]"
+        show-search
+        @cancel="addStepModal = false"
+        @selected="chooseProviderAdd"
+      >
+        <span class="text-info">{{ $t("Workflow.clickOnStepType") }}</span>
+      </choose-plugin-modal>
+      <edit-plugin-modal
+        v-if="editStepModal"
+        v-model:modal-active="editStepModal"
+        v-model="editModel"
+        data-test-id="extra-edit-modal"
+        :validation="editModelValidation"
+        :service-name="editService"
+        :title="$t('Workflow.editStep')"
+        @cancel="cancelEditStep"
+        @save="saveEditStep"
+      >
+        <template #extra>
+          <hr />
+          <div class="form-horizontal">
+            <div class="form-group">
+              <label
+                class="col-sm-2 control-label input-sm"
+                for="stepDescription"
+              >
+                {{ $t("Workflow.stepLabel") }}
+              </label>
+              <div class="col-sm-10">
+                <input
+                  id="stepDescription"
+                  v-model="editExtra.description"
+                  type="text"
+                  class="form-control"
+                />
+              </div>
+            </div>
+          </div>
+        </template>
+      </edit-plugin-modal>
+    </template>
+  </common-undo-redo-draggable-list>
 </template>
 <script lang="ts">
 import {
@@ -149,19 +188,21 @@ import { getRundeckContext } from "@/library";
 import ChoosePluginModal from "@/library/components/plugins/ChoosePluginModal.vue";
 import EditPluginModal from "@/library/components/plugins/EditPluginModal.vue";
 import pluginConfig from "@/library/components/plugins/pluginConfig.vue";
-import { PluginConfig } from "@/library/interfaces/PluginConfig";
 import { ServiceType } from "@/library/stores/Plugins";
 import JobRefStep from "@/app/components/job/workflow/JobRefStep.vue";
 import { cloneDeep } from "lodash";
-import Vue, { defineComponent, nextTick } from "vue";
+import { defineComponent } from "vue";
 import LogFilters from "./LogFilters.vue";
+import CommonUndoRedoDraggableList from "@/app/components/common/CommonUndoRedoDraggableList.vue";
+import { Operation } from "@/app/components/job/options/model/ChangeEvents";
+import { validatePluginConfig } from "@/library/modules/pluginService";
 
 const context = getRundeckContext();
 const eventBus = context.eventBus;
 export default defineComponent({
   name: "WorkflowSteps",
-  emits: ["update:modelValue"],
   components: {
+    CommonUndoRedoDraggableList,
     EditPluginModal,
     pluginConfig,
     ChoosePluginModal,
@@ -175,6 +216,7 @@ export default defineComponent({
       default: () => ({}) as StepsData,
     },
   },
+  emits: ["update:modelValue"],
   data() {
     return {
       ServiceType,
@@ -186,10 +228,28 @@ export default defineComponent({
       editStepModal: false,
       editModel: {} as EditStepData,
       editExtra: {} as EditStepData,
-      editModelValidation: null,
+      editModelValidation: { errors: [], valid: true },
       editService: null,
       editIndex: -1,
+      loadingWorflowSteps: false,
     };
+  },
+  watch: {
+    model: {
+      handler() {
+        this.$emit("update:modelValue", editCommandsToStepsData(this.model));
+      },
+      deep: true,
+    },
+  },
+  async mounted() {
+    try {
+      this.loadingWorflowSteps = true;
+      await this.getStepPlugins();
+      this.model = commandsToEditData(this.modelValue);
+    } finally {
+      this.loadingWorflowSteps = false;
+    }
   },
   methods: {
     chooseProviderAdd({
@@ -218,20 +278,34 @@ export default defineComponent({
       this.editIndex = -1;
     },
     removeStep(index: number) {
-      this.model.commands.splice(index, 1);
+      const commandToDelete = cloneDeep(this.model.commands[index]);
+      this.$refs.historyControls.operationRemove(index);
+      this.$refs.historyControls.changeEvent({
+        index,
+        dest: -1,
+        value: commandToDelete,
+        operation: Operation.Remove,
+        undo: Operation.Insert,
+      });
     },
-    async addLogFilterForIndex(index: number) {
-      eventBus.emit("step-action:add-logfilter:" + index);
+    async addLogFilterForIndex(id: string) {
+      eventBus.emit("step-action:add-logfilter:" + id);
     },
     duplicateStep(index: number) {
-      debugger;
-      let command = cloneDeep(this.model.commands[index]);
+      const command = cloneDeep(this.model.commands[index]);
       command.id = mkid();
-      this.model.commands.splice(index + 1, 0, command);
+      this.$refs.historyControls.operationInsert(index + 1, command);
+      this.$refs.historyControls.changeEvent({
+        index: 0,
+        dest: -1,
+        value: command,
+        operation: Operation.Insert,
+        undo: Operation.Remove,
+      });
     },
     editStepByIndex(index: number) {
       this.editIndex = index;
-      let command = this.model.commands[index];
+      const command = this.model.commands[index];
       this.editModel = cloneDeep(command);
       this.editExtra = cloneDeep(command);
       //todo: jobref
@@ -240,22 +314,62 @@ export default defineComponent({
         : ServiceType.WorkflowStep;
       this.editStepModal = true;
     },
-    saveEditStep() {
-      let saveData = cloneDeep(this.editExtra);
-      saveData.type = this.editModel.type;
-      saveData.config = this.editModel.config;
-      saveData.id = mkid();
-      saveData.nodeStep = this.editService === ServiceType.WorkflowNodeStep;
-      if (this.editIndex >= 0) {
-        this.model.commands[this.editIndex] = saveData;
-      } else {
-        this.model.commands.push(saveData);
+    async saveEditStep() {
+      try {
+        const saveData = cloneDeep(this.editExtra);
+        saveData.type = this.editModel.type;
+        saveData.config = this.editModel.config;
+        saveData.id = mkid();
+        saveData.nodeStep = this.editService === ServiceType.WorkflowNodeStep;
+        saveData.filters = [];
+
+        const response = await validatePluginConfig(
+          ServiceType.WorkflowNodeStep,
+          saveData.type,
+          saveData.config,
+        );
+
+        if (response.valid && Object.keys(response.errors || {}).length === 0) {
+          const dataForUpdatingHistory = {
+            index: this.model.commands.length,
+            operation: Operation.Insert,
+            undo: Operation.Remove,
+            orig: undefined,
+          };
+          if (this.editIndex >= 0) {
+            const originalData = this.model.commands[this.editIndex];
+            this.$refs.historyControls.operationModify(
+              this.editIndex,
+              saveData,
+            );
+            dataForUpdatingHistory.index = this.editIndex;
+            dataForUpdatingHistory.operation = Operation.Modify;
+            dataForUpdatingHistory.undo = Operation.Modify;
+            dataForUpdatingHistory.orig = originalData;
+          } else {
+            this.$refs.historyControls.operationInsert(
+              this.model.commands.length,
+              saveData,
+            );
+          }
+
+          this.$refs.historyControls.changeEvent({
+            dest: -1,
+            value: saveData,
+            ...dataForUpdatingHistory,
+          });
+
+          this.editStepModal = false;
+          this.editModel = {};
+          this.editExtra = {};
+          this.editModelValidation = null;
+          this.editIndex = -1;
+        } else {
+          this.editModelValidation = response;
+        }
+      } catch (e) {
+        console.log(e);
       }
-      this.editStepModal = false;
-      this.editModel = {};
-      this.editExtra = {};
-      this.editModelValidation = null;
-      this.editIndex = -1;
     },
     async getStepPlugins() {
       await context.rootStore.plugins.load(ServiceType.WorkflowNodeStep);
@@ -274,23 +388,32 @@ export default defineComponent({
       }
       return `Step ${index + 1}`;
     },
-  },
-  watch: {
-    model: {
-      handler() {
-        this.$emit("update:modelValue", editCommandsToStepsData(this.model));
-      },
-      deep: true,
+    toggleAddStepModal() {
+      this.addStepModal = !this.addStepModal;
     },
-  },
-  async mounted() {
-    await this.getStepPlugins();
-    this.model = commandsToEditData(this.modelValue);
+    updateHistoryWithLogFiltersData(index: number, data: any) {
+      const command = cloneDeep(this.model.commands[index]);
+      command.filters = cloneDeep(data);
+      const orig = this.$refs.historyControls.operationModify(index, command);
+
+      this.$refs.historyControls.changeEvent({
+        index: index,
+        dest: -1,
+        orig: orig,
+        value: command,
+        operation: Operation.Modify,
+        undo: Operation.Modify,
+      });
+    },
   },
 });
 </script>
 <style lang="scss">
+.mb-10 {
+  margin-bottom: 10px;
+}
 .step-list-item {
+  background: var(--card-default-background-color);
   border: 1px solid var(--list-item-border-color);
   padding: 10px !important;
   margin-bottom: 10px;
@@ -299,6 +422,7 @@ export default defineComponent({
   flex-direction: row;
   justify-content: space-between;
   align-items: flex-start;
+
   .step-item-display {
     flex-grow: 1;
     padding: 5px;
@@ -311,6 +435,19 @@ export default defineComponent({
         cursor: pointer;
         background-color: var(--light-gray);
         border-color: #68b3c8;
+      }
+
+      .fas {
+        margin-left: 5px;
+      }
+
+      .configpair > span {
+        display: flex;
+        gap: 5px;
+      }
+
+      span[data-testid="block-description"] {
+        margin-left: 5px;
       }
     }
   }

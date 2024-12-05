@@ -307,7 +307,7 @@ class ReportsController extends ControllerBase{
                 }
                 if (execution) {
                     //nb:response data type expects string
-                    map.execution = execution?.toMap()
+                    map.execution = execution?.toMap(false)
                     map.executionId = map.execution.id.toString()
                     map.executionHref = createLink(controller: 'execution', action: 'show', absolute: false, id: map.execution.id, params: [project: (map?.project != null) ? map.project : params.project])
                     map.jobName= map.remove('reportId')
@@ -316,7 +316,7 @@ class ReportsController extends ControllerBase{
                     return map
                 }
             } catch (Exception e) {
-                log.debug("Error getting Execution: " + e.message)
+                log.warn("Error getting Execution: " + e.message, e)
             }
 
             return null

@@ -29,7 +29,8 @@ trait WaitBehaviour {
     }
 
     /**
-     * Converts a closure that does verification on a single resource to a closure that does the verification on a collection of such resources.
+     * Converts a closure that does verification on a single resource to a closure that does the verification on a collections of resources.
+     *  A truthy is returned if all members of the collection passes the verifier.
      * @param verifier closure that verifies a single resource.
      * @return closure that takes a collection of resources and runs the verifier on every resource, short-circuiting if needed.
      */
@@ -38,4 +39,17 @@ trait WaitBehaviour {
             coll?.every(verifier)
         }
     }
+
+    /**
+     * Converts a closure that does verification on a single resource to a closure that does the verification on a collections of resources.
+     *  A truthy is returned if at least one members of the collection passes the verifier.
+     * @param verifier closure that verifies a single resource.
+     * @return closure that takes a collection of resources and runs the verifier on the collection, short-circuiting if needed.
+     */
+    final Closure<Boolean> verifyForAny(Closure<Boolean> verifier) {
+        { Collection<?> coll ->
+            coll?.any(verifier)
+        }
+    }
+
 }

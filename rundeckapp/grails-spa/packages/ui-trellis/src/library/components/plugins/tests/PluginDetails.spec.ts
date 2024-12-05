@@ -10,9 +10,6 @@ const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
       ...propsData,
     },
     global: {
-      mocks: {
-        $t: (msg: string) => msg,
-      },
       stubs: {
         VMarkdownView: {
           name: "VMarkdownView",

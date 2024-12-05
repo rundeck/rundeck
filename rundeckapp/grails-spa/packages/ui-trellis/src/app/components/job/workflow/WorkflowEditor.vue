@@ -4,7 +4,7 @@
       <div class="col-sm-2 control-label text-form-label">
         {{ $t("Workflow.label") }}
       </div>
-      <div class="col-sm-10" style="padding-top: 1em" v-if="loaded">
+      <div v-if="loaded" class="col-sm-10" style="padding-top: 1em">
         <workflow-basic v-model="basicData" />
         <WorkflowStrategy v-model="strategyData" />
         <hr />
@@ -41,7 +41,6 @@ export default defineComponent({
     WorkflowGlobalLogFilters,
     WorkflowStrategy,
   },
-  emits: ["update:modelValue"],
   props: {
     modelValue: {
       type: Object,
@@ -49,6 +48,7 @@ export default defineComponent({
       default: () => ({}) as WorkflowData,
     },
   },
+  emits: ["update:modelValue"],
   data() {
     return {
       basicData: {} as BasicData,
@@ -59,15 +59,6 @@ export default defineComponent({
     };
   },
   watch: {
-    // modelValue: {
-    //   handler() {
-    //     this.basicData = createBasicData(this.modelValue);
-    //     this.strategyData = createStrategyData(this.modelValue);
-    //     this.logFiltersData = createLogFiltersData(this.modelValue);
-    //     this.stepsData = createStepsData(this.modelValue);
-    //   },
-    //   deep: true,
-    // },
     basicData: {
       handler() {
         this.modified();
@@ -93,23 +84,23 @@ export default defineComponent({
       deep: true,
     },
   },
-  methods: {
-    modified() {
-      this.$emit("update:modelValue", {
-        ...this.modelValue,
-        ...this.basicData,
-        ...this.strategyData,
-        ...this.logFiltersData,
-        ...this.stepsData,
-      });
-    },
-  },
   mounted() {
     this.basicData = createBasicData(this.modelValue);
     this.strategyData = createStrategyData(this.modelValue);
     this.logFiltersData = createLogFiltersData(this.modelValue);
     this.stepsData = createStepsData(this.modelValue);
     this.loaded = true;
+  },
+  methods: {
+    modified() {
+      this.$emit("update:modelValue", {
+        ...this.modelValue,
+        ...this.basicData,
+        ...this.strategyData,
+        ...{ pluginConfig: this.logFiltersData },
+        ...this.stepsData,
+      });
+    },
   },
 });
 </script>
