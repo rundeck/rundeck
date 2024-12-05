@@ -1,5 +1,7 @@
 .p-message {
     border-radius: 0;
+    border-width: 0 0 0 6px;
+    border-style: solid;
     color: var(--colors-gray-800);
 
     .p-message-text {

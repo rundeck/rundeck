@@ -1,25 +1,29 @@
 import {Meta, Subtitle, Title, Canvas, Controls, Description, Stories, Markdown} from "@storybook/blocks";
-import * as TabViewStories from './TabView.stories'
+import * as TabsStories from './Tabs.stories'
 
-<Meta of={TabViewStories} />
+<Meta of={TabsStories} />
 
 <Title />
 
 <Subtitle />
-[Component reference on primevue](https://primevue.org/tabview/)
+[Component reference on primevue](https://primevue.org/tabs/)
 
 ## Import
 
 ```ts
-import TabView from "primevue/tabview";
+import Tabs from 'primevue/tabs';
+import TabList from 'primevue/tablist';
+import Tab from 'primevue/tab';
+import TabPanels from 'primevue/tabpanels';
+import TabPanel from 'primevue/tabpanel';
 ```
 
 ## Playground
 
 {/* Make sure your stories file has an export for playground, otherwise storybook will break */}
 
-<Canvas of={TabViewStories.Playground} sourceState="shown" />
-<Controls of={TabViewStories.Playground} />
+<Canvas of={TabsStories.Playground} sourceState="shown" />
+<Controls of={TabsStories.Playground} />
 
 [//]: # (## How to use)
 
@@ -27,7 +31,7 @@ import TabView from "primevue/tabview";
 [//]: # ({/* Add a note here about the relevant props to change appearance of component */})
 
 
-<Description of={TabViewStories} />
+<Description of={TabsStories} />
 
 <Stories title='' includePrimary={false} />
 
@@ -35,7 +39,7 @@ import TabView from "primevue/tabview";
 ## Accessibility
 
 ### Screen Reader
-TabView container is defined with the `tablist` role, as any attribute is passed to the container element `aria-labelledby` can be optionally used to specify an element to describe the TabView. Each tab header has a `tab` role along with `aria-selected` state attribute and `aria-controls` to refer to the corresponding tab content element. The content element of each tab has `tabpanel` role, an id to match the `aria-controls` of the header and `aria-labelledby` reference to the header as the accessible <name></name>
+The tabs container in TabList is defined with the `tablist` role, as any attribute is passed to the container element `aria-labelledby` can be optionally used to specify an element to describe the Tabs. Each Tab has a `tab` role along with `aria-selected` state attribute and `aria-controls` to refer to the corresponding TabPanel. TabPanel has `tabpanel` role, an id to match the `aria-controls` of Tab and `aria-labelledby` reference to Tab as the accessible name.
 
 ### Keyboard Navigation
 
