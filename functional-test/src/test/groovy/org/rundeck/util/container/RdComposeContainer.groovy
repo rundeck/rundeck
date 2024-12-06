@@ -3,6 +3,7 @@ package org.rundeck.util.container
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.testcontainers.containers.ComposeContainer
+import org.testcontainers.containers.ContainerState
 import org.testcontainers.containers.output.Slf4jLogConsumer
 import org.testcontainers.containers.wait.strategy.Wait
 
@@ -10,7 +11,7 @@ import java.time.Duration
 
 @CompileStatic
 @Slf4j
-class RdContainer extends ComposeContainer implements ClientProvider {
+class RdComposeContainer extends ComposeContainer implements ClientProvider {
 
     public static final String DEFAULT_SERVICE_TO_EXPOSE = System.getenv("TEST_RUNDECK_CONTAINER_SERVICE") ?: 'rundeck'
     private static final Integer DEFAULT_PORT = System.getenv("TEST_RUNDECK_CONTAINER_PORT")?.toInteger() ?: 4440
@@ -30,7 +31,7 @@ class RdContainer extends ComposeContainer implements ClientProvider {
      * @param composeFilePath
      * @param featureName an optional feature name to enable
      */
-    RdContainer(URI composeFilePath, String featureName, Map<String, Integer> clientConfig = Collections.emptyMap()) {
+    RdComposeContainer(URI composeFilePath, String featureName, Map<String, Integer> clientConfig = Collections.emptyMap()) {
         super(new File(composeFilePath))
         this.clientConfig = clientConfig
         if (CONTEXT_PATH && !CONTEXT_PATH.startsWith('/')) {
@@ -52,6 +53,12 @@ class RdContainer extends ComposeContainer implements ClientProvider {
         )
 
     }
+
+    String getRundeckContainerId(){
+        Optional<ContainerState> containerState = getContainerByServiceName("rundeck")
+        return containerState.isPresent() ? containerState.get().containerId : null
+    }
+
 
     RdClient getClient() {
         clientWithToken(STATIC_TOKEN)
