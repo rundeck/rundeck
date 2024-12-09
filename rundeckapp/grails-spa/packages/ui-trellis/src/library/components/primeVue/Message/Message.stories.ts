@@ -58,6 +58,7 @@ const generateTemplate = (severity, args) => {
 
 export const Playground: Story = {
   name: "Playground",
+  tags: ["!dev"],
   render: (args) => ({
     components: { Message },
     setup: () => ({ args }),

@@ -3,6 +3,10 @@ html {
     font-family: var(--font-family) !important;
 }
 
-.sbdocs-preview .docs-story {
+.light .sbdocs-preview .docs-story {
     background: #fff !important;
+}
+
+.dark .sbdocs-preview .docs-story {
+    background: #000 !important;
 }
