@@ -42,4 +42,14 @@ describe("Counter Store", () => {
     expect(jobStore.activeId).toBe("test");
     expect(jobStore.jobDefinition).toEqual(mockJobDefinition[0]);
   });
+
+  it("fetches a job definition without setting it as active", async () => {
+    mockedGetJobDefinition.mockResolvedValueOnce(mockJobDefinition);
+    const jobStore = useJobStore();
+    await jobStore.fetchJobDefinition("test", false);
+
+    expect(jobStore.activeId).toBe("");
+    // therefore getter will return undefined
+    expect(jobStore.jobDefinition).toEqual(undefined);
+  });
 });
