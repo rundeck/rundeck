@@ -28,7 +28,7 @@ describe("CopyBox", () => {
   });
 
   test("should display error message after failed copy", async () => {
-    mockedCopyToClipboard.mockRejectedValueOnce();
+    mockedCopyToClipboard.mockRejectedValueOnce(false);
     const wrapper = mount(CopyBox, { props: { content: "text" } });
 
     // Simulate a click event on the component
