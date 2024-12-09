@@ -9,27 +9,40 @@ export const useJobStore = defineStore("jobs", {
     jobDefinition: (state): JobDefinition => state.jobs[state.activeId],
   },
   actions: {
-    async fetchJobDefinition(jobId: string) {
+    updateJobDefinition(job: JobDefinition, jobId: string) {
+      const existingJobDefinition: JobDefinition = this.jobs[jobId || job.id];
+      if (existingJobDefinition) {
+        this.jobs[jobId || job.id] = {
+          ...existingJobDefinition,
+          ...job,
+        };
+      } else {
+        this.jobs[jobId || job.id] = job;
+      }
+    },
+    async fetchJobDefinition(jobId: string, setJobAsActive: boolean = true) {
       try {
         const jobDefinition = await getJobDefinition(jobId);
         if (jobDefinition.length > 0) {
-          this.jobs[jobId] = jobDefinition[0];
-          this.activeId = jobId;
+          this.updateJobDefinition(jobDefinition[0], jobId);
+          if (setJobAsActive) {
+            this.activeId = jobId;
+          }
         }
       } catch (e) {
         console.warn(e);
       }
     },
-    async saveJobDefinition(job: JobDefinition[], options: any) {
+    async saveJobDefinition(job: JobDefinition, options: any) {
       try {
-        const resp = await postJobDefinition(job, options);
+        const resp = await postJobDefinition([job], options);
         if (resp.succeeded && resp.succeeded.length === 1) {
           const savedJob = resp.succeeded[0];
-          this.jobs[savedJob.id] = {
+          this.updateJobDefinition({
             ...job,
             id: savedJob.id,
             uuid: savedJob.id,
-          };
+          });
         }
       } catch (e) {
         console.warn(e);
