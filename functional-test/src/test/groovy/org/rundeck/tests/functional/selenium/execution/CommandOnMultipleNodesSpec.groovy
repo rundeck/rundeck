@@ -14,6 +14,7 @@ class CommandOnMultipleNodesSpec extends SeleniumBase{
     public static final String NODE_KEY_PASSPHRASE = "testpassphrase123"
     public static final String NODE_USER_PASSWORD  = "testpassword123"
     public static final String USER_VAULT_PASSWORD = "vault123"
+    public static final List<String> NODE_LIST = ["ssh-node-passphrase", "ssh-node", "ssh-agent-node", "password-node"]
 
     def setupSpec() {
         String keyPath = getClass().getClassLoader().getResource("docker/compose/oss").getPath()+"/keys"
@@ -57,7 +58,7 @@ class CommandOnMultipleNodesSpec extends SeleniumBase{
         executionShowPage.validatePage()
         executionShowPage.waitForElementAttributeToChange executionShowPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED'
         // Waits to ensure there is a log line for each node
-        waitFor({ executionShowPage.getExecLogLines() }, { it.size() == 3 })
+        waitFor({ executionShowPage.getExecLogLines() }, { it.size() == (NODE_LIST.size()+1) })
     }
 
     def "execution succeeds on the specific nodes matching the filter"() {
@@ -79,6 +80,6 @@ class CommandOnMultipleNodesSpec extends SeleniumBase{
         executionShowPage.validatePage()
         executionShowPage.waitForElementAttributeToChange executionShowPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED'
         // Waits to ensure there is a log line for each node matching the executor-test tag
-        waitFor({ executionShowPage.getExecLogLines() }, { it.size() == 2 })
+        waitFor({ executionShowPage.getExecLogLines() }, { it.size() == NODE_LIST.size() })
     }
 }
