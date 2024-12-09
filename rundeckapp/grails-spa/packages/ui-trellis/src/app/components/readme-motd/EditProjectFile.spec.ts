@@ -113,6 +113,8 @@ describe("EditProjectFile", () => {
 
     await button.trigger("click");
 
-    expect(window.location).toBe("http://localhost:4440/project/default/home");
+    expect(window.location.href).toBe(
+      "http://localhost:4440/project/default/home",
+    );
   });
 });
