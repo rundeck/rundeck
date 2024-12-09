@@ -6,18 +6,22 @@ import { JobStore } from "../types/stores/JobsStoreTypes";
 export const useJobStore = defineStore("jobs", {
   state: (): JobStore => ({ activeId: "", jobs: {} as any }),
   getters: {
-    jobDefinition: (state): JobDefinition => state.jobs[state.activeId],
+    jobDefinition: (state): JobDefinition | undefined =>
+      state.activeId ? state.jobs[state.activeId] : undefined,
   },
   actions: {
-    updateJobDefinition(job: JobDefinition, jobId: string) {
-      const existingJobDefinition: JobDefinition = this.jobs[jobId || job.id];
+    updateJobDefinition(job: JobDefinition, jobId?: string) {
+      if (!jobId) {
+        jobId = job.id;
+      }
+      const existingJobDefinition: JobDefinition = this.jobs[jobId];
       if (existingJobDefinition) {
-        this.jobs[jobId || job.id] = {
+        this.jobs[jobId] = {
           ...existingJobDefinition,
           ...job,
         };
       } else {
-        this.jobs[jobId || job.id] = job;
+        this.jobs[jobId] = job;
       }
     },
     async fetchJobDefinition(jobId: string, setJobAsActive: boolean = true) {
@@ -33,15 +37,15 @@ export const useJobStore = defineStore("jobs", {
         console.warn(e);
       }
     },
-    async saveJobDefinition(job: JobDefinition, options: any) {
+    async saveJobDefinition(job: JobDefinition, options: any = {}) {
       try {
         const resp = await postJobDefinition([job], options);
         if (resp.succeeded && resp.succeeded.length === 1) {
           const savedJob = resp.succeeded[0];
           this.updateJobDefinition({
             ...job,
-            id: savedJob.id,
-            uuid: savedJob.id,
+            id: savedJob.id!,
+            uuid: savedJob.id!,
           });
         }
       } catch (e) {

@@ -85,7 +85,7 @@ export interface JobDefinition extends JobBasic {
   };
   schedule?: ScheduleCronTab | ScheduleTime;
   schedules?: any;
-  uuid: string;
+  uuid?: string;
   orchestrator?: string;
   configuration?: {
     attribute: string;
