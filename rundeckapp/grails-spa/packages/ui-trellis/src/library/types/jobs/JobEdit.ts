@@ -72,7 +72,7 @@ export interface SaveJobResponse {
 export interface JobSaveInfo {
   index: number;
   href?: string;
-  id?: string;
+  id: string;
   name: string;
   group: string;
   project: string;
