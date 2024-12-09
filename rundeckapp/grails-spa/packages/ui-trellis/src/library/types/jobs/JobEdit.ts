@@ -61,3 +61,21 @@ export const OptionPrototype = {
   value: "",
   isDate: false,
 } as JobOptionEdit;
+
+// TODO: Clean up genai folder that originally contained these definitions
+export interface SaveJobResponse {
+  succeeded?: JobSaveInfo[];
+  failed?: JobSaveInfo[];
+  skipped?: JobSaveInfo[];
+}
+
+export interface JobSaveInfo {
+  index: number;
+  href?: string;
+  id?: string;
+  name: string;
+  group: string;
+  project: string;
+  permalink?: string;
+  error?: string;
+}
