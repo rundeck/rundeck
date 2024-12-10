@@ -1,10 +1,11 @@
 .p-badge {
   background: var(--colors-blue-500);
+  color: var(--colors-white);
 
   &.p-badge-success {
     background: var(--colors-green-500);
   }
-  &.p-badge-warning {
+  &.p-badge-warn {
     background: var(--colors-orange-500);
   }
   &.p-badge-danger {

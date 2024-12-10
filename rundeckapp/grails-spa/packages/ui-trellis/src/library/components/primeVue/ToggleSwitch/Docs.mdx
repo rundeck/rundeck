@@ -1,32 +1,32 @@
 import { Meta, Subtitle, Title, Canvas, Controls, Description, Stories, Markdown } from "@storybook/blocks";
-import * as InputSwitchStories from './InputSwitch.stories'
+import * as ToggleSwitchStories from './ToggleSwitch.stories'
 
-<Meta of={InputSwitchStories} />
+<Meta of={ToggleSwitchStories} />
 
 <Title />
 
 <Subtitle />
-[Component reference on primevue](https://primevue.org/inputswitch/)
+[Component reference on primevue](https://primevue.org/toggleswitch/)
 
 ## Import
 
 ```ts
-import InputSwitch from "primevue/inputswitch";
+import ToggleSwitch from "primevue/toggleswitch";
 ```
 
 ## Playground
 
 {/* Make sure your stories file has an export for playground, otherwise storybook will break */}
 
-<Canvas of={InputSwitchStories.Playground} sourceState="shown" />
-<Controls of={InputSwitchStories.Playground} />
+<Canvas of={ToggleSwitchStories.Playground} sourceState="shown" />
+<Controls of={ToggleSwitchStories.Playground} />
 
 ## How to use
 
 {/* Add a note here about the relevant props to change appearance of component */}
 
 
-<Description of={InputSwitchStories} />
+<Description of={ToggleSwitchStories} />
 
 <Stories title='' includePrimary={false} />
 
@@ -34,7 +34,7 @@ import InputSwitch from "primevue/inputswitch";
 ## Accessibility
 
 ### Screen Reader
-InputSwitch component uses a hidden native checkbox element with `switch` role internally that is only visible to screen readers. Value to describe the component can either be provided via `label` tag combined with `id` prop or using `aria-labelledby`, `aria-label` props.
+ToggleSwitch component uses a hidden native checkbox element with `switch` role internally that is only visible to screen readers. Value to describe the component can either be provided via `label` tag combined with `id` prop or using `aria-labelledby`, `aria-label` props.
 
 ### Keyboard Support
 

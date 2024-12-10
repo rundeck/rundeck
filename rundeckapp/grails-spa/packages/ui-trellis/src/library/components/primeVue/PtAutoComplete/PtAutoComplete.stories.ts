@@ -1,17 +1,12 @@
----
-to: <%= h.path.join(`src/library/components/primeVue/${componentName}`, `${componentName}.stories.ts`) %>
-unless_exists: true
----
 import type { Meta, StoryObj } from "@storybook/vue3";
-import "./<%= h.changeCase.lower(componentName) %>.scss";
-import <%= h.changeCase.pascal(componentName) %> from "primevue/<%= h.changeCase.lower(componentName) %>";
 
+import PtAutoComplete from "./PtAutoComplete.vue";
 
-const meta: Meta<typeof <%=componentName%>> = {
-  title: "<%=componentName%>",
-  component: <%=componentName%>,
+const meta: Meta<typeof PtAutoComplete> = {
+  title: "AutoComplete",
+  component: PtAutoComplete,
   parameters: {
-    componentSubtitle: "A brief description of the <%=componentName%> component",
+    componentSubtitle: "A brief description of the AutoComplete component",
     actions: {
       disable: true,
     },
@@ -27,41 +22,44 @@ const meta: Meta<typeof <%=componentName%>> = {
         type: "select",
       },
       type: "string",
-      description:
-        "Severity type of the <%=componentName%>.",
+      description: "Severity type of the AutoComplete.",
     },
   },
   // TODO: Replace these args with ones appropriate for the component you are building.
   args: {
-    content: "Hello world!",
+    value: "Hello world!",
   },
 };
 
 export default meta;
 
-type Story = StoryObj<typeof <%=componentName%>>;
+type Story = StoryObj<typeof PtAutoComplete>;
 
 // TODO: manually wire the props to the component name, so that the source will update correctly in the story
 export const Playground: Story = {
   name: "Playground",
   tags: ["!dev"],
   render: (args) => ({
-      components: { <%=componentName%> },
-      setup: () => ({ args }),
-      template: `<<%=componentName%>></<%=componentName%>>`,
-    }),
+    components: { PtAutoComplete },
+    setup: () => ({ args }),
+    template: `<PtAutoComplete v-model="args.value"></PtAutoComplete>`,
+  }),
 };
 
 const generateTemplate = (args: Record<string, any>) => {
   return `<div>
-    <<%=componentName%> v-bind="args" />
+    <PtAutoComplete v-bind="args" />
   </div>`;
 };
 
 export const Default: Story = {
   render: (args) => ({
-    components: { <%=componentName%> },
-    setup: () => ({ args }),
+    props: Object.keys(args),
+    components: { PtAutoComplete },
+    setup() {
+      return { args };
+    },
     template: generateTemplate(args),
   }),
+  args: {},
 };

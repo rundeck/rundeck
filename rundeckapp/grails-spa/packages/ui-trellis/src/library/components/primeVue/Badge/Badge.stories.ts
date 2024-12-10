@@ -5,10 +5,7 @@ import Badge from "primevue/badge";
 const meta: Meta<typeof Badge> = {
   title: "Badge",
   parameters: {
-    docs: {
-      componentSubtitle:
-        "Badge is a small status indicator for another element.",
-    },
+    componentSubtitle: "Badge is a small status indicator for another element.",
     actions: {
       disable: true,
     },
@@ -60,6 +57,7 @@ type Story = StoryObj<typeof Badge>;
 
 export const Playground: Story = {
   name: "Playground",
+  tags: ["!dev"],
   render: (args) => ({
     components: { Badge },
     setup: () => ({ args }),
@@ -104,7 +102,7 @@ export const Warning: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate("warning", args),
+    template: generateTemplate("warn", args),
   }),
 };
 
