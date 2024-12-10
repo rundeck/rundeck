@@ -4,6 +4,7 @@ import SplitButton from "primevue/splitbutton";
 
 const meta: Meta<typeof PtButton> = {
   component: PtButton,
+  title: "Button",
   argTypes: {
     severity: {
       control: {

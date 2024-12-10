@@ -3,4 +3,8 @@
   &-value {
     background: var(--colors-blue-500);
   }
+  &-label {
+    color: var(--colors-white);
+    font-weight: var(--fontWeights-normal);
+  }
 }
