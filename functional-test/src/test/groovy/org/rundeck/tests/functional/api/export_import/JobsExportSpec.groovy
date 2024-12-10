@@ -19,7 +19,7 @@ class JobsExportSpec extends BaseContainer {
     }
 
     def cleanup() {
-        client.apiVersion = client.finalApiVersion
+        client.apiVersion = client.API_CURRENT_VERSION
     }
 
     def "export single job in jobs.json format (format param) and (Accept header)"() {
