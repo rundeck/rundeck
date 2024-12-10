@@ -23,11 +23,18 @@ import java.util.function.Consumer
 
 @CompileStatic
 class RdClient {
+
+    /**
+     *  The current (latest) released version of the Rundeck API
+     */
+    public static final int API_CURRENT_VERSION = 52
+
     final ObjectMapper mapper = new ObjectMapper()
     String baseUrl
     OkHttpClient httpClient
-    int apiVersion = 50
-    static final finalApiVersion = 50
+
+    // Api version used by this client
+    int apiVersion = API_CURRENT_VERSION
 
     RdClient(String baseUrl, OkHttpClient httpClient) {
         this.baseUrl = baseUrl
