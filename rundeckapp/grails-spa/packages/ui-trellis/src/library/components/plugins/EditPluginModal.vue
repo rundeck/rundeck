@@ -10,7 +10,7 @@
       </p>
       <plugin-config
         v-model="editModel"
-        :mode="'edit'"
+        :mode="pluginConfigMode"
         :plugin-config="provider"
         :show-title="false"
         :show-description="false"
@@ -19,6 +19,7 @@
         scope="Instance"
         default-scope="Instance"
         group-css=""
+        data-testid="plugin-info"
       ></plugin-config>
       <slot name="extra"></slot>
     </div>
@@ -29,8 +30,12 @@
       </p>
     </div>
     <template #footer>
-      <btn @click="$emit('cancel')">{{ $t("Cancel") }}</btn>
-      <btn type="success" @click="saveChanges">{{ $t("Save") }}</btn>
+      <btn @click="$emit('cancel')" data-testid="cancel-button">{{
+        $t("Cancel")
+      }}</btn>
+      <btn type="success" @click="saveChanges" data-testid="save-button">{{
+        $t("Save")
+      }}</btn>
     </template>
   </modal>
 </template>
@@ -45,7 +50,6 @@ import { defineComponent } from "vue";
 export default defineComponent({
   name: "EditPluginModal",
   components: { pluginInfo, pluginConfig },
-  emits: ["cancel", "save", "update:modelValue", "update:modalActive"],
   props: {
     title: {
       type: String,
@@ -71,12 +75,14 @@ export default defineComponent({
       default: () => ({}),
     },
   },
+  emits: ["cancel", "save", "update:modelValue", "update:modalActive"],
   data() {
     return {
       showModalVal: this.modalActive,
       editModel: {} as PluginConfig,
       provider: null,
       loading: false,
+      pluginConfigMode: "edit",
     };
   },
   computed: {
@@ -89,6 +95,22 @@ export default defineComponent({
         this.$emit("update:modalActive", val);
       },
     },
+  },
+  watch: {
+    modalActive(val) {
+      this.showModalVal = val;
+    },
+    async modelValue(val) {
+      this.editModel = cloneDeep(val);
+      await this.loadProvider();
+    },
+  },
+  async mounted() {
+    this.editModel = cloneDeep(this.modelValue);
+    if (Object.keys(this.modelValue.config).length === 0) {
+      this.pluginConfigMode = "create";
+    }
+    await this.loadProvider();
   },
   methods: {
     async saveChanges() {
@@ -108,19 +130,6 @@ export default defineComponent({
         this.provider = null;
       }
     },
-  },
-  watch: {
-    modalActive(val) {
-      this.showModalVal = val;
-    },
-    async modelValue(val) {
-      this.editModel = cloneDeep(val);
-      await this.loadProvider();
-    },
-  },
-  async mounted() {
-    this.editModel = cloneDeep(this.modelValue);
-    await this.loadProvider();
   },
 });
 </script>

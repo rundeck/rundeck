@@ -536,14 +536,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             currunning<<it
         }
 
-        def jobs =[:]
-        currunning.each{
-            if(it.scheduledExecution && !jobs[it.scheduledExecution.id.toString()]){
-                jobs[it.scheduledExecution.id.toString()] = ScheduledExecution.get(it.scheduledExecution.id)
-            }
-        }
-
-
         def total = Execution.createCriteria().count{
 
              if(query ){
@@ -642,11 +634,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }else{
                 isNull("dateCompleted")
             }
-        };
+        }
 
-        return [query:query, _filters:filters,
-            jobs: jobs, nowrunning:currunning,
-            total: total]
+        return [
+            query     : query,
+            _filters  : filters,
+            nowrunning: currunning,
+            total     : total
+        ]
     }
 
     def public finishQueueQuery(query,params,model){
@@ -2644,7 +2639,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         if (!execution.save(flush:true)) {
             execution.errors.allErrors.each { log.warn(it.toString()) }
-            def msg=execution.errors.allErrors.collect { ObjectError err-> lookupMessage(err.codes,err.arguments,err.defaultMessage) }.join(", ")
+            def msg=execution.errors.allErrors.collect { ObjectError err-> lookupMessage(err.codes,err.arguments?.toList(),err.defaultMessage) }.join(", ")
             log.error("unable to create execution: " + msg)
             throw new ExecutionServiceException("unable to create execution: "+msg)
         }
@@ -2844,8 +2839,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (options) {
             def defaultoptions=[:]
             options.each {OptionData opt ->
-                if (null==optparams[opt.name] && opt.defaultValue) {
-                    defaultoptions[opt.name]=opt.defaultValue
+                if (null==optparams[opt.name]) {
+                    if(opt.defaultValue) {
+                        defaultoptions[opt.name] = opt.defaultValue
+                    } else if(opt.multivalued && opt.multivalueAllSelected){
+                        defaultoptions[opt.name] = opt.valuesList
+                    }
                 }
             }
             if(defaultoptions){

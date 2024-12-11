@@ -1,13 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/vue3";
-import "./inputswitch.scss";
-import InputSwitch from "primevue/inputswitch";
+import "./toggleSwitch.scss";
+import ToggleSwitch from "primevue/toggleswitch";
 
-const meta: Meta<typeof InputSwitch> = {
-  title: "InputSwitch",
+const meta: Meta<typeof ToggleSwitch> = {
+  title: "ToggleSwitch",
   parameters: {
-    docs: {
-      componentSubtitle: "InputSwitch is used to select a boolean value.",
-    },
+    componentSubtitle: "ToggleSwitch is used to select a boolean value.",
     actions: {
       disable: true,
     },
@@ -23,7 +21,7 @@ const meta: Meta<typeof InputSwitch> = {
     },
     modelValue: {
       type: "string | boolean",
-      description: "Specifies whether a inputswitch should be checked or not.",
+      description: "Specifies whether a ToggleSwitch should be checked or not.",
     },
   },
   args: {
@@ -34,25 +32,26 @@ const meta: Meta<typeof InputSwitch> = {
 
 export default meta;
 
-type Story = StoryObj<typeof InputSwitch>;
+type Story = StoryObj<typeof ToggleSwitch>;
 
 // TODO: manually wire the props to the component name, so that the source will update correctly in the story
 export const Playground: Story = {
   name: "Playground",
+  tags: ["!dev"],
   render: (args) => ({
-    components: { InputSwitch },
+    components: { ToggleSwitch },
     setup: () => ({ args }),
-    template: `<InputSwitch :disabled="args.disabled" v-model="args.checked" />`,
+    template: `<ToggleSwitch :disabled="args.disabled" v-model="args.checked" />`,
   }),
 };
 
 const generateTemplate = (args: Record<string, any>) => {
-  return '<div><InputSwitch :disabled="args.disabled" v-model="args.modelValue" /></div>';
+  return '<div><ToggleSwitch :disabled="args.disabled" v-model="args.modelValue" /></div>';
 };
 
 export const Active: Story = {
   render: (args) => ({
-    components: { InputSwitch },
+    components: { ToggleSwitch },
     setup: () => ({ args }),
     template: generateTemplate(args),
   }),
@@ -60,10 +59,10 @@ export const Active: Story = {
 
 export const Disabled: Story = {
   render: (args) => ({
-    components: { InputSwitch },
+    components: { ToggleSwitch },
     setup: () => ({ args }),
     template:
-      '<div style="gap: 10px; display: flex;"><InputSwitch :disabled="args.disabled" v-model="args.modelValue" /><InputSwitch :disabled="args.disabled" /></div>',
+      '<div style="gap: 10px; display: flex;"><ToggleSwitch :disabled="args.disabled" v-model="args.modelValue" /><ToggleSwitch :disabled="args.disabled" /></div>',
   }),
   args: {
     disabled: true,

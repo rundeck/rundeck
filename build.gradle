@@ -293,7 +293,10 @@ tasks.register('printBootWarPath') {
 tasks.register('verifyBuild', JavaExec) {
     classpath = configurations.groovyScript
     mainClass = 'groovy.ui.GroovyMain'
-    args "testbuild.groovy",
-        "--buildType=${project.ext.environment}",
-        "-debug"
+    boolean debug = project.hasProperty('debug')
+    def scriptArgs = ["testbuild.groovy", "--buildType=${project.ext.environment}"]
+    if (debug) {
+        scriptArgs << "-debug"
+    }
+    args scriptArgs
 }

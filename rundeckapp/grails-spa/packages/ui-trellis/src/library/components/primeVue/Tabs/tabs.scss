@@ -1,0 +1,51 @@
+:root {
+    --p-tabs-tab-border-width: 0 0 1px 0;
+    --p-tabs-tab-font-weight: 600;
+    --p-tabs-tab-margin: 0 0 -1px 0;
+
+}
+.p-tabs {
+    .p-tablist-tab-list {
+        border-bottom: 1px solid var(--colors-gray-300);
+        background: var(--colors-white);
+        display: flex;
+        position: relative;
+
+        .p-tab {
+            background: var(--colors-white);
+            border-bottom: 1px solid var(--colors-gray-300);
+            border-top: 0;
+
+
+            &:not(.p-disabled) {
+                color: var(--colors-gray-500);
+
+                &:focus-visible {
+                    box-shadow: inset 0 0 0 0.1rem var(--colors-gray-800);
+                }
+            }
+
+
+            &.p-tab-active {
+                color: var(--colors-blue-500);
+                border-bottom: 1px solid var(--colors-blue-500);
+            }
+
+            &:not(.p-tab-active):not(.p-disabled):hover {
+                color: var(--colors-gray-800);
+                border-color: var(--colors-gray-500);
+            }
+        }
+    }
+
+    &-nav-btn {
+        &.p-link:focus-visible {
+            box-shadow: inset 0 0 0 0.1rem var(--colors-gray-800);
+        }
+    }
+}
+
+.p-tabpanels {
+    background: var(--colors-white);
+    color: var(--colors-gray-500);
+}
