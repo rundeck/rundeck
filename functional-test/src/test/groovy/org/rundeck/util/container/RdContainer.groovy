@@ -3,6 +3,7 @@ package org.rundeck.util.container
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.testcontainers.containers.ComposeContainer
+import org.testcontainers.containers.ContainerState
 import org.testcontainers.containers.output.Slf4jLogConsumer
 import org.testcontainers.containers.wait.strategy.Wait
 
@@ -52,6 +53,15 @@ class RdContainer extends ComposeContainer implements ClientProvider {
         )
 
     }
+
+    String getRundeckContainerId(){
+        Optional<ContainerState> containerState = getContainerByServiceName("rundeck")
+        if(containerState.isPresent()){
+            return containerState.get().containerId
+        }
+        return null
+    }
+
 
     RdClient getClient() {
         clientWithToken(STATIC_TOKEN)
