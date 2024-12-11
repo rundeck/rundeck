@@ -1,14 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/vue3";
-import PtSteps from "./PtSteps.vue";
+import PtStepper from "././PtStepper.vue";
 
-const meta: Meta<typeof PtSteps> = {
-  title: "PtSteps",
-  component: PtSteps,
+const meta: Meta<typeof PtStepper> = {
+  title: "Stepper",
+  component: PtStepper,
   parameters: {
-    docs: {
-      componentSubtitle:
-        "PtSteps is a wrapper for the component Steps, also known as Stepper, which is an indicator for the steps in a workflow.",
-    },
+    componentSubtitle:
+      "PtStepper is a wrapper for the component Stepper, that displays a wizard-like workflow by guiding users through the multi-step progression.",
     actions: {
       disable: true,
     },
@@ -22,14 +20,15 @@ const meta: Meta<typeof PtSteps> = {
         type: "number",
       },
       type: "number",
-      description: "Active step index of menuitem.",
+      description: "Index of active step.",
     },
     items: {
-      description: "An array of menuitems.",
+      description:
+        "Array of steps to render. By default each item must have a label",
     },
   },
   args: {
-    activeStep: 0,
+    activeStep: 1,
     items: [
       {
         label: "Personal Info",
@@ -46,14 +45,16 @@ const meta: Meta<typeof PtSteps> = {
 
 export default meta;
 
-type Story = StoryObj<typeof PtSteps>;
+type Story = StoryObj<typeof PtStepper>;
 
 export const Playground: Story = {
+  name: "Playground",
+  tags: ["!dev"],
   render: (args) => ({
     props: Object.keys(args),
-    components: { PtSteps },
+    components: { PtStepper },
     setup: () => ({ args }),
-    template: `<PtSteps :activeStep="args.activeStep" :items="args.items" />`,
+    template: `<PtStepper :activeStep="args.activeStep" :items="args.items" />`,
   }),
   args: {},
 };
@@ -61,14 +62,14 @@ export const Playground: Story = {
 export const Default: Story = {
   render: (args) => ({
     props: Object.keys(args),
-    components: { PtSteps },
+    components: { PtStepper },
     setup() {
       return { args };
     },
-    template: `<PtSteps  :activeStep="args.activeStep" :items="args.items"  />`,
+    template: `<PtStepper  :activeStep="args.activeStep" :items="args.items"  />`,
   }),
   args: {
-    activeStep: 0,
+    activeStep: 1,
     items: [
       {
         label: "Personal Info",
@@ -86,11 +87,11 @@ export const Default: Story = {
 export const Completed: Story = {
   render: (args) => ({
     props: Object.keys(args),
-    components: { PtSteps },
+    components: { PtStepper },
     setup() {
       return { args };
     },
-    template: `<PtSteps  :activeStep="args.activeStep" :items="args.items"  />`,
+    template: `<PtStepper :activeStep="args.activeStep" :items="args.items"  />`,
   }),
   args: {
     items: [
@@ -107,6 +108,7 @@ export const Completed: Story = {
         completed: false,
       },
     ],
+    activeStep: 2,
   },
   parameters: {
     docs: {

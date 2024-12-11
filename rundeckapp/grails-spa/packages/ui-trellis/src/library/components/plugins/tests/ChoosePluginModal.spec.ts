@@ -36,9 +36,6 @@ const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
     },
     global: {
       components: { Modal, Btn, Tabs, Tab },
-      mocks: {
-        $t: (msg: string) => msg,
-      },
       stubs: {
         Modal: false,
         Btn: false,
