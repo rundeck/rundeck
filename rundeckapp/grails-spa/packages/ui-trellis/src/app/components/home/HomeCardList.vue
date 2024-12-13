@@ -21,7 +21,7 @@
               'text-warning': searchResultsCount < 1,
             }"
           >
-            {{ $tc("page.home.search.project.title", searchResultsCount) }}
+            {{ $t("page.home.search.project.title", searchResultsCount) }}
           </span>
         </p>
         <offset-pagination

@@ -49,7 +49,6 @@ const shallowMountActivityList = async (
       },
       mocks: {
         ...i18nMocks,
-        ...options.mocks, // Use the generic options object
       },
       directives: {
         tooltip: () => {},

@@ -16,7 +16,6 @@ config.global.components = {
 // same thing with global.mocks, on mount/shallowMount pass global.mocks.$t = new code
 config.global.mocks = {
   $t: (msg) => msg,
-  $tc: (msg) => msg,
 };
 
 // todo: open a separate PR enabling these mocks and clean up tests

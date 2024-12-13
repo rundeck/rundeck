@@ -35,10 +35,6 @@ const mountNodeTable = (propsData = {}): any => {
       stubs: {
         NodeDetailsSimple,
       },
-      mocks: {
-        $t: (msg) => msg,
-        $tc: (msg) => msg,
-      },
     },
   });
 };
