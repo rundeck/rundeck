@@ -48,6 +48,7 @@
 <script>
 import { defineComponent } from "vue";
 import axios from "axios";
+import { getRundeckContext } from "@/library";
 
 export default defineComponent({
   name: "NewsletterSubscribeButton",
@@ -63,8 +64,11 @@ export default defineComponent({
   mounted() {},
   methods: {
     handleSubmit() {
+      const appRundeckGatewayUrl =
+        getRundeckContext().appMeta.appRundeckGatewayUrl;
+
       axios
-        .post("https://api.rundeck.com/user/v1/newsletter/subscribe", {
+        .post(appRundeckGatewayUrl + "/user/v1/newsletter/subscribe", {
           email: this.email,
         })
         .then((response) => {
