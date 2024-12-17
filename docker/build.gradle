@@ -108,6 +108,7 @@ tasks.register('officialPush') {
 }
 
 tasks.register('buildUbuntuBase') {
+    dependsOn buildUbuntuBasePlain
     doLast {
         exec {
             workingDir "./ubuntu-base"
@@ -116,6 +117,15 @@ tasks.register('buildUbuntuBase') {
     }
 }
 officialBuild.dependsOn buildUbuntuBase
+tasks.register('buildUbuntuBasePlain') {
+    doLast {
+        exec {
+            workingDir "./ubuntu-base-plain"
+            commandLine "docker", "build", "-t=rundeck/ubuntu-base-plain", "."
+        }
+    }
+}
+plainBuild.dependsOn buildUbuntuBasePlain
 
 tasks.register('pushUbuntuBase') {
     dependsOn buildUbuntuBase
