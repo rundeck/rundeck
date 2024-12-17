@@ -16,9 +16,6 @@
 
 package rundeck.controllers
 
-import com.dtolabs.rundeck.app.api.tag.TagForNodes
-import com.dtolabs.rundeck.app.api.tag.TagsForNodesResponse
-import com.fasterxml.jackson.databind.ObjectMapper
 import rundeck.support.filters.ExtNodeFilters
 import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -59,8 +56,6 @@ import static org.rundeck.core.auth.AuthConstants.*
  * Created by greg on 7/28/15.
  */
 class FrameworkControllerSpec extends Specification implements ControllerUnitTest<FrameworkController>, DataTest {
-
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
 
     def setupSpec() { mockDomains User }
 
@@ -845,9 +840,6 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
                 map.status==404
             })>>{it[0].status=it[1].status}
         }
-        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-            1 * getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
-        }
         def query = new ExtNodeFilters(project: 'test')
         params.project="test"
         when:
@@ -902,72 +894,6 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
 
         then:
         response.contentType == 'text/xml;charset=UTF-8'
-    }
-
-    def "get tags for project nodes"() {
-        setup:
-        def authCtx = Mock(UserAndRolesAuthContext)
-        def nodeSet = new NodeSetImpl()
-        def projectName = 'testproj'
-        def nodesTags = [t1: 1, t2: 0]
-
-        controller.frameworkService = Mock(FrameworkService) {
-            1 * existsFrameworkProject(projectName) >> true
-            1 * getFrameworkProject(projectName) >> Mock(IRundeckProject) {
-                1 * getNodeSet() >> nodeSet
-            }
-            1 * summarizeTags(nodeSet.nodes) >> nodesTags
-        }
-
-        controller.apiService = Mock(ApiService) {
-            1 * requireApi(_, _) >> true
-        }
-
-        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-            1 * authorizeProjectResource(authCtx, [type: 'resource', kind: 'node'], 'read', projectName) >> true
-            1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
-        }
-        params.project = projectName
-        when:
-        response.format = 'json'
-        controller.apiTagsForNodes(projectName)
-
-        then:
-        response.contentType == 'application/json;charset=UTF-8'
-        def respObject = OBJECT_MAPPER.readValue(response.getContentAsString(), TagsForNodesResponse)
-        respObject.tags.toSet() ==  [new TagForNodes(name: "t1", nodeCount: 1  ), new TagForNodes( name: "t2", nodeCount: 0)] as Set<TagForNodes>
-    }
-
-    def "get tags for project nodes when no tags exist"() {
-        setup:
-        def authCtx = Mock(UserAndRolesAuthContext)
-        def projectName = 'testproj'
-
-        controller.frameworkService = Mock(FrameworkService) {
-            1 * existsFrameworkProject(projectName) >> true
-            1 * getFrameworkProject(projectName) >> Mock(IRundeckProject) {
-                1 * getNodeSet() >> new NodeSetImpl()
-            }
-            1 * summarizeTags(_) >> [:]
-        }
-
-        controller.apiService = Mock(ApiService) {
-            1 * requireApi(_, _) >> true
-        }
-
-        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-            1 * authorizeProjectResource(authCtx, [type: 'resource', kind: 'node'], 'read', projectName) >> true
-            1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
-        }
-        params.project = projectName
-        when:
-        response.format = 'json'
-        controller.apiTagsForNodes(projectName)
-
-        then:
-        response.contentType == 'application/json;charset=UTF-8'
-        def respObject = OBJECT_MAPPER.readValue(response.getContentAsString(), TagsForNodesResponse)
-        respObject.tags.isEmpty()
     }
 
     @Unroll
