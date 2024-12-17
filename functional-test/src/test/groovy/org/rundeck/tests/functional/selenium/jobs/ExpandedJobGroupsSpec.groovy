@@ -1,17 +1,12 @@
 package org.rundeck.tests.functional.selenium.jobs
 
-import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
-import org.rundeck.util.gui.pages.home.HomePage
-import org.rundeck.util.gui.pages.jobs.*
+import org.rundeck.util.gui.pages.jobs.JobListPage
 import org.rundeck.util.gui.pages.login.LoginPage
-import org.rundeck.util.gui.pages.project.ProjectCreatePage
 import org.rundeck.util.gui.pages.project.ProjectEditPage
 import spock.lang.Stepwise
 
-// Add test back to pro as soon as we fix it in pro CI.
-@ExcludePro
 @SeleniumCoreTest
 @Stepwise
 class ExpandedJobGroupsSpec extends SeleniumBase {
