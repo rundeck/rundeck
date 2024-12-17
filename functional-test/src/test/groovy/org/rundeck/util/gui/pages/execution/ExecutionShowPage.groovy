@@ -2,6 +2,7 @@ package org.rundeck.util.gui.pages.execution
 
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
+
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
@@ -30,6 +31,7 @@ class ExecutionShowPage extends BasePage  implements ActivityListTrait{
     static final By logOutputBy = By.className("execution-log__content-text")
     static final By nodeFlowStateBy = By.id("nodeflowstate")
     static final By execStatusIcon = By.cssSelector('#jobInfo_ .exec-status.icon')
+    static final By activityExecStatusIconBy = By.cssSelector(".exec-status.icon")
     static final By execCompletedIcon = By.cssSelector('#subtitlebar .fas.fa-flag-checkered')
     static final By optionValueSelected = By.cssSelector(".optvalue:nth-child(3)")
     static final By jobRunSpinner = By.cssSelector(".loading-spinner")
@@ -104,6 +106,11 @@ class ExecutionShowPage extends BasePage  implements ActivityListTrait{
     WebElement getOptionValueSelected(){
         el optionValueSelected
     }
+
+    static WebElement getActivityExecStatusIcon(WebElement row) {
+        row.findElement(activityExecStatusIconBy)
+    }
+
 
     void waitUntilSpinnerHides(){
         new WebDriverWait(driver, Duration.ofMinutes(2)).until(

@@ -52,7 +52,49 @@ class JobListPage extends BasePage implements ActivityListTrait {
     By alertInfoBy = By.cssSelector(".alert.alert-info")
     By jobGraphBy = By.id("jobgraphtab")
     By dashboardTabBy = By.id("joblisttab")
-
+    static final By SAVE_FILTER_BUTTON = By.cssSelector("button[data-test-id='save-filter-button']")
+    static final By SAVE_FILTER_INPUT = By.cssSelector("input.form-control[data-action='auto-focus']")
+    static final By OK_BUTTON = By.xpath("/html/body/div[6]/div/div/div[3]/button[2]")
+    static final By FILTER_DROPDOWN = By.cssSelector("span.dropdown-toggle.btn.btn-secondary.btn-sm.text-secondary")
+    static final By SAVED_FILTER_LINK = By.cssSelector("a[data-test='filter-link']")
+    static final By ACTIVITY_ROWS = By.cssSelector("table.activity-list-table tbody tr.link.activity_row")
+    static final By EVENT_ICON = By.cssSelector("td.eventicon")
+/** Click Save Filter button */
+    JobListPage clickSaveFilterButton() {
+        el(SAVE_FILTER_BUTTON).click()
+        return this
+    }
+/** Enter filter name */
+    JobListPage enterFilterName(String filterName) {
+        el(SAVE_FILTER_INPUT).sendKeys(filterName)
+        return this
+    }
+/** Click OK button to save the filter */
+    JobListPage confirmFilterSave() {
+        waitForElementVisible(OK_BUTTON).click()
+        return this
+    }
+/** Open filter dropdown */
+    JobListPage openFilterDropdown() {
+        waitForElementVisible(FILTER_DROPDOWN).click()
+        return this
+    }
+/** Apply the saved filter */
+    JobListPage selectSavedFilter() {
+        waitForElementVisible(SAVED_FILTER_LINK).click()
+        return this
+    }
+/** Get activity rows */
+    List<WebElement> getActivityRows() {
+        return new WebDriverWait(driver, Duration.ofSeconds(10))
+                .until(ExpectedConditions.visibilityOfAllElementsLocatedBy(ACTIVITY_ROWS))
+    }
+/** Get status of the first row */
+    String getFirstRowStatus() {
+        return getActivityRows().get(0)
+                .findElement(EVENT_ICON)
+                .getAttribute("title")
+    }
     JobListPage(final SeleniumContext context) {
         super(context)
     }
