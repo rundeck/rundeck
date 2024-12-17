@@ -1,0 +1,7 @@
+
+repositories:
+  - repositoryName: official
+    enabled: true
+    type: HTTP
+    owner: RUNDECK
+

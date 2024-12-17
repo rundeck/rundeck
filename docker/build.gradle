@@ -94,6 +94,63 @@ tasks.register('officialBuild') {
         delete "$projectDir/official/.build"
     }
 }
+tasks.register('plainBuild') {
+    dependsOn ensureWar
+
+    inputs.dir "plain/etc"
+    inputs.dir "plain/lib"
+    inputs.dir "plain/config"
+    inputs.file "plain/Dockerfile"
+
+    def outputDir = "$buildDir/plaintags"
+
+    outputs.dir outputDir
+
+    for (tag in dockerTags) {
+        outputs.file "$outputDir/$tag"
+    }
+
+    doLast {
+        file(outputDir).mkdir()
+
+        def rundeckapp = project(":rundeckapp")
+        def bootArchiveFile = rundeckapp.bootWar.archiveFile.get()
+        def bootArchiveFilename = rundeckapp.bootWar.archiveFileName.get()
+
+        copy {
+            from bootArchiveFile
+            into "$projectDir/plain/.build"
+            rename "${bootArchiveFilename}", "rundeck.war"
+        }
+
+        def args = [
+            "docker",
+            "build",
+            '--no-cache',
+            "--label=com.rundeck.version=$resolvedVersion",
+            "--label=com.rundeck.commit=$commit"
+        ]
+
+        for (tag in dockerTags)
+            args.add("-t=${dockerRepository}-plain:$tag")
+
+        args.add(".")
+
+        exec {
+            workingDir "./plain"
+            commandLine args
+        }
+
+        for (tag in dockerTags) {
+            file("$outputDir/$tag").createNewFile()
+        }
+
+    }
+
+    clean {
+        delete "$projectDir/plain/.build"
+    }
+}
 
 tasks.register('officialPush') {
     dependsOn officialBuild
