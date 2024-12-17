@@ -473,7 +473,7 @@ class ConfigSpec extends BaseContainer{
         parsedUnsupportedApiVersionResponse.message?.contains("Unsupported API Version \"2\"")
 
         cleanup:
-            client.apiVersion = client.API_CURRENT_VERSION
+            client.apiVersion = client.finalApiVersion
     }
 
     def "test-require-versions"(){
