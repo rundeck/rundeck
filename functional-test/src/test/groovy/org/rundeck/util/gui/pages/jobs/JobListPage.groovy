@@ -2,6 +2,7 @@ package org.rundeck.util.gui.pages.jobs
 
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
+import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
@@ -10,6 +11,9 @@ import org.rundeck.util.gui.pages.BasePage
 import org.rundeck.util.gui.pages.project.ActivityListTrait
 
 import java.time.Duration
+
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  * Job list page
@@ -276,6 +280,24 @@ class JobListPage extends BasePage implements ActivityListTrait {
 
     WebElement getExecuteJobModalRunJobNowButton() {
         waitPresent(executeJobModalRunJobNowButtonBy)
+    }
+
+    String loopGroups(List<WebElement> groups) {
+        List<String> items = new ArrayList<>()
+        for (WebElement group : groups) {
+            if (group.findElements(By.cssSelector(".glyphicon.glyphicon-chevron-down")).size() > 0) {
+
+                String groupName = (String) ((JavascriptExecutor) driver).executeScript(
+                        "return arguments[0].nextSibling.textContent.trim();",
+                        group.findElement(By.cssSelector(".glyphicon.glyphicon-chevron-down"))
+                )
+                items.add(groupName)
+
+                String childText = group.findElement(By.cssSelector("a.hover_show_job_info.link-quiet")).getText()
+                items.add(childText)
+            }
+        }
+        return items.stream().collect(Collectors.joining('/'))
     }
 
 }

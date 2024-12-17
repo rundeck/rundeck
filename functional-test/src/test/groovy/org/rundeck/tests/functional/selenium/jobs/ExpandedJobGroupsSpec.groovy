@@ -50,10 +50,14 @@ class ExpandedJobGroupsSpec extends SeleniumBase {
         jobListPage.loadJobListForProject(projectName)
         jobListPage.go()
         jobListPage.waitForElementToBeClickable(jobListPage.getExpandedJobGroupsContainer())
-        def jobGroupsExpanded = jobListPage.getExpandedJobGroupsContainer().text
+        //def jobGroupsExpanded = jobListPage.getExpandedJobGroupsContainer().text
+
+        def jobGroups = jobListPage.getExpandedJobGroupsContainerChildren()
+        def jobGroupsExpanded = jobListPage.loopGroups(jobGroups)
+
 
         then: "We check if the job groups are expanded"
-        jobGroupsExpanded == "ParentGroup\nLevel1\nChild\nLevel2\nSubChild\nLevel3"
+        jobGroupsExpanded == "ParentGroup/Level1/Child/Level2/SubChild/Level3"
 
         when: "We change the expand level to 0"
         projectEditPage.go()
