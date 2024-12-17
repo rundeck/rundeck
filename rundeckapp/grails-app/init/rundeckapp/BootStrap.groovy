@@ -201,7 +201,7 @@ class BootStrap {
             clusterMode = grailsApplication.config.getProperty("rundeck.clusterMode.enabled", Boolean.class, false)
             servletContext.setAttribute("CLUSTER_MODE_ENABLED", Boolean.toString(clusterMode))
             if (clusterMode) {
-                serverNodeUUID = properties.getProperty("rundeck.server.uuid")
+                serverNodeUUID = grailsApplication.config.getProperty("rundeck.server.uuid",String.class)?: properties.getProperty("rundeck.server.uuid")
                 if (!serverNodeUUID) {
                     throw new RuntimeException("Cluster mode: rundeck.clusterMode.enabled is set to 'true', but " +
                             "'rundeck.server.uuid' not found in framework.properties")

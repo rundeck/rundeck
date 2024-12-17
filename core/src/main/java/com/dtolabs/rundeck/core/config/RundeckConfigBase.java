@@ -65,6 +65,12 @@ public class RundeckConfigBase {
     RundeckJobsConfig jobs;
     JobsImport jobsImport;
     Startup startup;
+    ServerConfig server;
+
+    @Data public static class ServerConfig{
+        String uuid;
+        String tags;
+    }
 
     @Data public static class Startup {
         Boolean detectFirstRun;
