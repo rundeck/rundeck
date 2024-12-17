@@ -33,15 +33,15 @@ class ProjectsSpec extends BaseContainer {
             int coincidence
             json.each { project ->
                 if (project.name == PROJECT_NAME_1){
-                    if (project.url.containsIgnoreCase(client.API_CURRENT_VERSION.toString() + "/project/" + PROJECT_NAME_1))
+                    if (project.url.containsIgnoreCase(client.finalApiVersion.toString() + "/project/" + PROJECT_NAME_1))
                         coincidence++
                 }
                 if (project.name == PROJECT_NAME_2) {
-                    if (project.url.containsIgnoreCase(client.API_CURRENT_VERSION.toString() + "/project/" + PROJECT_NAME_2))
+                    if (project.url.containsIgnoreCase(client.finalApiVersion.toString() + "/project/" + PROJECT_NAME_2))
                         coincidence++
                 }
                 if (project.name == PROJECT_NAME_3) {
-                    if (project.url.containsIgnoreCase(client.API_CURRENT_VERSION.toString() + "/project/" + PROJECT_NAME_3))
+                    if (project.url.containsIgnoreCase(client.finalApiVersion.toString() + "/project/" + PROJECT_NAME_3))
                         coincidence++
                 }
             }
@@ -66,15 +66,15 @@ class ProjectsSpec extends BaseContainer {
             int coincidence
             json.each { project ->
                 if (project.name == PROJECT_NAME_1){
-                    if (project.url.containsIgnoreCase(client.API_CURRENT_VERSION.toString() + "/project/" + PROJECT_NAME_1))
+                    if (project.url.containsIgnoreCase(client.finalApiVersion.toString() + "/project/" + PROJECT_NAME_1))
                         coincidence++
                 }
                 if (project.name == PROJECT_NAME_2) {
-                    if (project.url.containsIgnoreCase(client.API_CURRENT_VERSION.toString() + "/project/" + PROJECT_NAME_2))
+                    if (project.url.containsIgnoreCase(client.finalApiVersion.toString() + "/project/" + PROJECT_NAME_2))
                         coincidence++
                 }
                 if (project.name == PROJECT_NAME_3) {
-                    if (project.url.containsIgnoreCase(client.API_CURRENT_VERSION.toString() + "/project/" + PROJECT_NAME_3))
+                    if (project.url.containsIgnoreCase(client.finalApiVersion.toString() + "/project/" + PROJECT_NAME_3))
                         coincidence++
                 }
             }

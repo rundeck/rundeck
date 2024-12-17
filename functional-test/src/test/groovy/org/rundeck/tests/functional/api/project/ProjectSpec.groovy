@@ -26,7 +26,7 @@ class ProjectSpec extends BaseContainer{
             response.message() == "OK"
             def json = jsonValue(response.body(), Map)
             json
-            json.url.containsIgnoreCase(client.API_CURRENT_VERSION.toString()+"/project/"+PROJECT_NAME)
+            json.url.containsIgnoreCase(client.finalApiVersion.toString()+"/project/"+PROJECT_NAME)
             json.name == (PROJECT_NAME)
             json.description == ""
             json.created != ""
@@ -46,7 +46,7 @@ class ProjectSpec extends BaseContainer{
             response.message() == "Not Found"
             def json = jsonValue(response.body(), Map)
             json.errorCode == "api.error.project.missing"
-            json.apiversion == client.API_CURRENT_VERSION
+            json.apiversion == client.finalApiVersion
             json.error == true
             json.message == "Project does not exist: "+fakeProject
         }
@@ -66,7 +66,7 @@ class ProjectSpec extends BaseContainer{
             newRequest.message() == "Not Found"
             def json = jsonValue(newRequest.body(), Map)
             json.errorCode == "api.error.project.missing"
-            json.apiversion == client.API_CURRENT_VERSION
+            json.apiversion == client.finalApiVersion
             json.error == true
             json.message == "Project does not exist: "+PROJECT_NAME
         }

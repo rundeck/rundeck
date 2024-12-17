@@ -19,7 +19,7 @@ class PluginSpec extends BaseContainer {
             def result = plugin.find { it.iconUrl || it.providerMetadata }
             result == null
         cleanup:
-            client.apiVersion = client.API_CURRENT_VERSION
+            client.apiVersion = client.finalApiVersion
     }
 
     def "Returns v40 field" () {
