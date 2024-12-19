@@ -251,14 +251,21 @@ class UrlMappings {
             }
         }
 
-
-
         "/api/$api_version/metrics/$name**?"(controller: 'api', action: 'apiMetrics')
 
         "/api/$api_version/plugin/list"(controller: 'plugin', action: 'listPlugins')
         "/api/$api_version/plugin/detail/$service/$provider"(controller: 'plugin', action: 'apiPluginDetail')
 
         "/api/$api_version"(controller: 'api', action: 'info')
+
+        // Project context
+        "/api/$api_version/permissions/project/$project/job/$specifier"(controller:'permissions',action:'projectContextPermissionsForJob')
+        "/api/$api_version/permissions/project/$project/$kind"(controller:'permissions',action:'projectContextPermissionsForResourceKind')
+
+        // Application context
+        "/api/$api_version/permissions/application/$type/$specifier"(controller:'permissions',action:'appContextPermissionsForTypeWithSpecifier')
+        "/api/$api_version/permissions/application/$kind"(controller:'permissions',action:'appContextPermissionsForResourceKind')
+
         //catchall
         "/api/$api_version/$other/$extra**?"(controller: 'api', action: 'invalid')
 
