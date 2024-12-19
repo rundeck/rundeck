@@ -31,7 +31,7 @@ public class JschSecretBundleUtil {
     public static SecretBundle createBundle(final ExecutionContext context, final INodeEntry node)  {
         try {
             DefaultSecretBundle secretBundle = new DefaultSecretBundle();
-            final NodeSSHConnectionInfo nodeAuthentication = new NodeSSHConnectionInfo(node, context.getFramework(),
+            final NodeSSHConnectionInfo nodeAuthentication = new NodeSSHConnectionInfo(node, context.getIFramework(),
                                                                                        context
             );
             if(nodeAuthentication.getPasswordStoragePath() != null) {
@@ -76,7 +76,7 @@ public class JschSecretBundleUtil {
     public static List<String> getSecretsPath(final ExecutionContext context, final INodeEntry node){
         List<String> listSecretsPath = new ArrayList<>();
 
-        final NodeSSHConnectionInfo nodeAuthentication = new NodeSSHConnectionInfo(node, context.getFramework(),
+        final NodeSSHConnectionInfo nodeAuthentication = new NodeSSHConnectionInfo(node, context.getIFramework(),
                 context
         );
         if(nodeAuthentication.getPasswordStoragePath() != null) {

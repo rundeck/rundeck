@@ -16,11 +16,14 @@
 
 package org.rundeck.plugins.jsch
 
-
+import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.utils.BasicSource
 import com.dtolabs.rundeck.core.execution.utils.PasswordSource
+import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import org.rundeck.plugins.jsch.util.JschTestUtil
 import spock.lang.Specification
 
@@ -34,8 +37,12 @@ class SudoResponderSpec extends Specification {
     def "sudo not enabled"(String password, byte[] expected, boolean enabled) {
         setup:
         def node = new NodeEntryImpl("test")
-        def fwk = JschTestUtil.createTestFramework()
-        fwk.getFrameworkProjectMgr().createFrameworkProject("SudoResponderTest")
+        def fwk = Mock(IFramework){
+            getFrameworkProjectMgr()>>Mock(ProjectManager){
+                getFrameworkProject("SudoResponderTest")>>Mock(IRundeckProject)
+            }
+            getPropertyLookup()>>Mock(IPropertyLookup)
+        }
         def pwdsource = Mock(PasswordSource) {
             getPassword() >> password.bytes
         }
@@ -57,8 +64,12 @@ class SudoResponderSpec extends Specification {
         setup:
         def node = new NodeEntryImpl("test")
         node.getAttributes().put("sudo-command-enabled", "true")
-        def fwk = JschTestUtil.createTestFramework()
-        fwk.getFrameworkProjectMgr().createFrameworkProject("SudoResponderTest")
+        def fwk = Mock(IFramework){
+            getFrameworkProjectMgr()>>Mock(ProjectManager){
+                getFrameworkProject("SudoResponderTest")>>Mock(IRundeckProject)
+            }
+            getPropertyLookup()>>Mock(IPropertyLookup)
+        }
         def pwdsource = new BasicSource(password.bytes)
         def resp = SudoResponder.create(node, fwk, Mock(ExecutionContext) {
             getFrameworkProject() >> 'SudoResponderTest'
