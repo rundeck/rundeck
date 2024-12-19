@@ -67,6 +67,7 @@ jar {
         attributes 'Rundeck-Plugin-Tags': 'java,executor'
         def libList = configurations.pluginLibs.collect { 'lib/' + it.name }.join(' ')
         attributes 'Rundeck-Plugin-Libs': "${libList}"
+        attributes 'Rundeck-Plugin-Libs-Load-First': "false"
     }
 }
 
