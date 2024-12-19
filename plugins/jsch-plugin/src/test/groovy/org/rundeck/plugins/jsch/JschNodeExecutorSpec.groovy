@@ -24,7 +24,6 @@ import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.utils.IPropertyLookup
-import org.rundeck.plugins.jsch.util.JschTestUtil
 import spock.lang.Specification
 
 /**
