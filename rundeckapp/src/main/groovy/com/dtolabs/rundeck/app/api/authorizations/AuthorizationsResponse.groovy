@@ -7,10 +7,10 @@ import io.swagger.v3.oas.annotations.media.Schema
 @Schema(description = "Authorizations")
 class AuthorizationsResponse {
 
-    @Schema(oneOf = [ApplicationAuthorizationContext.class, ProjectAuthorizationContext.class])
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED,  oneOf=[ApplicationAuthorizationContext.class, ProjectAuthorizationContext.class])
     Object authorizationContext
 
-    @Schema(oneOf = [KindResource.class, TypeResource.class])
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, oneOf=[KindResource.class, TypeResource.class])
     Object resource
 
     @Schema(description = "Action authorization", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -19,13 +19,13 @@ class AuthorizationsResponse {
 
 @Schema(description = "A resource kind")
 class KindResource {
-    @Schema(description = "Resource Type", requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = ['project', 'project_acl', 'system_acl', 'system', 'plugin', 'user', 'apitoken'])
+    @Schema(description = "Resource kind", requiredMode = Schema.RequiredMode.REQUIRED)
     String kind
 }
 
 @Schema(description = "A resource type with a specifier")
 class TypeResource {
-    @Schema(description = "Resource Type", requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = ['project', 'project_acl'])
+    @Schema(description = "Resource Type", requiredMode = Schema.RequiredMode.REQUIRED)
     String type
 
     @Schema(description = "Type Specifier")
