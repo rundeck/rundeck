@@ -29,9 +29,10 @@ class PermissionsController extends ControllerBase {
 
     ScheduledExecutionService scheduledExecutionService
 
-    @Get(uri='/api/{api_version}/permissions/application/{kind}', produces = io.micronaut.http.MediaType.APPLICATION_JSON)
+    @Get(uri='/permissions/application/{kind}', produces = io.micronaut.http.MediaType.APPLICATION_JSON)
     @Operation(
             method='GET',
+            summary = "Get permissions for an application resource kind",
             description='''Get permissions for an application resource kind.
 
 Since: v53''',
@@ -67,14 +68,16 @@ Since: v53''',
         respond(result, formats: ['json'])
     }
 
-    @Get(uri='/api/{api_version}/permissions/application/{type}/{specifier}', produces = io.micronaut.http.MediaType.APPLICATION_JSON)
+    @Get(uri='/permissions/application/{type}/{specifier}', produces = io.micronaut.http.MediaType.APPLICATION_JSON)
     @Operation(
             method='GET',
+            summary = "Get permissions for an application type with specifier",
             description='''Get permissions for an application type with specifier.
 
 Since: v53''',
             tags=['permissions'],
             parameters = [
+
                     @Parameter(name = 'type', description = 'Resource Type', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
                     @Parameter(name = 'specifier', description = 'Resource specifier', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
                     @Parameter(name = 'actions', description = 'Actions to check authorization for', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(type = 'string')))
@@ -106,9 +109,10 @@ Since: v53''',
         respond(result, formats: ['json'])
     }
 
-    @Get(uri='/api/{api_version}/permissions/project/{project}/{kind}', produces = io.micronaut.http.MediaType.APPLICATION_JSON)
+    @Get(uri='/permissions/project/{project}/{kind}', produces = io.micronaut.http.MediaType.APPLICATION_JSON)
     @Operation(
             method='GET',
+            summary = "Get permissions for a project resource kind",
             description='''Get permissions for a project resource kind.
 
 Since: v53''',
@@ -145,9 +149,10 @@ Since: v53''',
         respond(result, formats: ['json'])
     }
 
-    @Get(uri='/api/{api_version}/permissions/project/{project}/job/{specifier}', produces = io.micronaut.http.MediaType.APPLICATION_JSON)
+    @Get(uri='/permissions/project/{project}/job/{specifier}', produces = io.micronaut.http.MediaType.APPLICATION_JSON)
     @Operation(
             method='GET',
+            summary = "Get permissions for a job",
             description='''Get permissions for a job.
 
 Since: v53''',
