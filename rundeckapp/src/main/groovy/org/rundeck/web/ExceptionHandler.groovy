@@ -1,6 +1,6 @@
 package org.rundeck.web
 
-import grails.artefact.controller.support.ResponseRenderer
+
 import groovy.transform.CompileStatic
 import org.rundeck.app.web.WebExceptionHandler
 import org.rundeck.core.auth.access.MissingParameter
@@ -8,6 +8,7 @@ import org.rundeck.app.web.WebUtilService
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.springframework.beans.factory.annotation.Autowired
+import rundeck.error_handling.InvalidParameterException
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -29,6 +30,8 @@ class ExceptionHandler implements WebExceptionHandler {
             handleNotFound(request, response, thrown)
         } else if (thrown instanceof MissingParameter) {
             handleMissingParameter(request, response, thrown)
+        } else if (thrown instanceof InvalidParameterException) {
+            handleInvalidParameter(request, response, thrown)
         } else {
             return false
         }
@@ -78,6 +81,21 @@ class ExceptionHandler implements WebExceptionHandler {
             'api.error.parameter.required',
             HttpServletResponse.SC_BAD_REQUEST,
             [missingParameter.parameters.join(',')]
+        )
+    }
+
+    void handleInvalidParameter(
+            final HttpServletRequest request,
+            final HttpServletResponse response,
+            final InvalidParameterException invalidParameter
+    ) {
+        request.setAttribute('titleCode', 'request.error.title')
+        rundeckWebUtil.respondError(
+                request,
+                response,
+                'api.error.parameter.invalid',
+                HttpServletResponse.SC_BAD_REQUEST,
+                [invalidParameter.suppliedValue, invalidParameter.paramName, invalidParameter.errorDescription]
         )
     }
 }
