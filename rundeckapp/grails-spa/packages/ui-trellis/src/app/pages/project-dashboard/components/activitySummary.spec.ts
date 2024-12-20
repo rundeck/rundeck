@@ -11,8 +11,7 @@ const mountActivitySummary = async (props = {}) => {
     },
     global: {
       mocks: {
-        $t: (msg) => msg,
-        $tc: (msg, count) => {
+        $t: (msg, count) => {
           return `${msg}/${count}`;
         },
       },

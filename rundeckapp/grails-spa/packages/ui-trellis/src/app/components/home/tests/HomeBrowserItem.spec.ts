@@ -52,10 +52,6 @@ const mountHomeBrowserItem = async (options = {}): Promise<VueWrapper<any>> => {
       ...options,
     },
     global: {
-      mocks: {
-        $t: (msg: string) => msg,
-        $tc: (msg: string) => msg,
-      },
       stubs: {
         HomeActionsMenu: dropdownStub,
       },
