@@ -216,7 +216,7 @@ Evaluation is made in the context of the project for the type with a specifier.
             parameters = [
                     @Parameter(name = 'project', description = 'Project Name', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
                     @Parameter(name = 'type', description = 'Resource Type', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
-                    @Parameter(name = 'specifier', description = 'Job Id', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
+                    @Parameter(name = 'specifier', description = 'Resource specifier', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
                     @Parameter(name = 'actions', description = 'Actions to check authorization for', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(type = 'string')))
             ])
     @ApiResponse(
