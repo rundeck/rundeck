@@ -1,4 +1,3 @@
-import { queryRunning } from "../../../../library/services/executions";
 import {
   axiosMock,
   i18nMocks,
@@ -241,7 +240,9 @@ describe("ActivityList", () => {
     const reportRowItem = wrapper.find('[data-testid="report-row-item"]');
     expect(reportRowItem.exists()).toBe(true);
     await reportRowItem.trigger("click");
-    expect(window.location).toBe("/project/aaa/execution/show/42");
+    expect(window.location.href).toEqual(
+      "http://localhost/project/aaa/execution/show/42",
+    );
   });
 
   it("automatically fetches data and displays a message when there are new executions since the last timestamp", async () => {
