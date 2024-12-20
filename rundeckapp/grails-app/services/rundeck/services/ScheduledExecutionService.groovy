@@ -4651,11 +4651,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             !pluginControlService?.isDisabledPlugin(k, ServiceNameConstants.Notification)
         }
 
-        def notificationPluginsDynamicProperties = notificationService.listNotificationPluginsDynamicProperties(params.project,
-                rundeckAuthorizedServicesProvider.getServicesWith(authContext)).findAll{k,v->
-            !pluginControlService?.isDisabledPlugin(k,ServiceNameConstants.Notification)
-        }
-
         def orchestratorPlugins = orchestratorPluginService.listDescriptions()
         def globals=frameworkService.getProjectGlobals(scheduledExecution?.project).keySet()
 
@@ -4672,7 +4667,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def model = [scheduledExecution          : scheduledExecution,
                      crontab                     : crontab,
                      notificationPlugins         : notificationPlugins,
-                     notificationPluginsDynamicProperties : notificationPluginsDynamicProperties,
                      orchestratorPlugins         : orchestratorPlugins,
                      strategyPlugins             : strategyPlugins,
                      params                      : params,
