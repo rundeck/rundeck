@@ -67,9 +67,26 @@ export default defineComponent({
 </script>
 
 <style lang="scss">
-.p-inputtext {
-  background: var(--color-white);
-  //border: 1px solid var(--color-gray-500);
-  //color: var(--color-gray-900);
+.p-autocomplete {
+  /* Default state */
+  .p-inputtext {
+    background-color: var(--colors-white);
+    border: 1px solid var(--colors-gray-500);
+    color: var(--colors-gray-900);
+
+    &::placeholder {
+      color: var(--colors-gray-600);
+    }
+
+    /* Selected/Hover */
+    &:focus {
+      border-color: var(--colors-blue-500);
+    }
+
+    /* Error State */
+    &.p-invalid {
+      border-color: var(--colors-red-500);
+    }
+  }
 }
 </style>
