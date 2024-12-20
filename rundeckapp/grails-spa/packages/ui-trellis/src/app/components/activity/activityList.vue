@@ -31,7 +31,7 @@
         <span v-else-if="!loadError" class="text-muted">
           <i class="fas fa-spinner fa-pulse"></i>
         </span>
-        {{ $tc("execution", pagination.total > 0 ? pagination.total : 0) }}
+        {{ $t("execution", pagination.total > 0 ? pagination.total : 0) }}
       </a>
 
       <activity-filter
@@ -147,7 +147,7 @@
     >
       <i18n-t keypath="delete.confirm.text" tag="p">
         <strong>{{ bulkSelectedIds.length }}</strong>
-        <span>{{ $tc("execution", bulkSelectedIds.length) }}</span>
+        <span>{{ $t("execution", bulkSelectedIds.length) }}</span>
       </i18n-t>
 
       <template #footer>
@@ -392,7 +392,7 @@
         >
           <tr>
             <td colspan="8" class="text-center">
-              {{ $tc("info.newexecutions.since.0", sincecount) }}
+              {{ $t("info.newexecutions.since.0", sincecount) }}
             </td>
           </tr>
         </tbody>

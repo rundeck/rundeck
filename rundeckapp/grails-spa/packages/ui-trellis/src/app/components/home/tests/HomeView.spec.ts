@@ -25,12 +25,7 @@ const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
       helpLinkUrl: "https://example.com",
       ...props,
     },
-    global: {
-      mocks: {
-        $t: jest.fn().mockImplementation((msg) => msg),
-        $tc: jest.fn().mockImplementation((msg) => msg),
-      },
-    },
+    global: {},
   });
 };
 

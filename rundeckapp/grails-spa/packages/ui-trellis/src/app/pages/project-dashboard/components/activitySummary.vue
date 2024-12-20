@@ -10,7 +10,7 @@
             >
               {{ count }}
             </span>
-            {{ $tc("execution", count) }}
+            {{ $t("execution", count) }}
           </a>
 
           {{ $t("In the last Day") }}
@@ -34,7 +34,7 @@
                 <span class="text-info">{{ project.userCount }}</span>
               </template>
               <template #users>
-                {{ $tc("users.plural", project.userCount) }}
+                {{ $t("users.plural", project.userCount) }}
               </template>
             </i18n-t>
             <ul class="users">
