@@ -7,6 +7,7 @@
       @complete="onComplete"
       @change="onChange"
       @input="updateValue"
+      @search="onSearch"
   ></AutoComplete>
 </template>
 
@@ -40,7 +41,7 @@ export default defineComponent({
       default: "label",
     },
   },
-  emits: ["update:modelValue","onChange","onComplete","search"],
+  emits: ["update:modelValue","onChange","onComplete","onSearch"],
   data() {
     return {
       value: this.modelValue || this.defaultValue,
@@ -60,6 +61,9 @@ export default defineComponent({
     },
     updateValue() {
       this.$emit("update:modelValue", this.value);
+    },
+    onSearch(event: { originalEvent: Event; query: string }) {
+      this.$emit("onSearch", event);
     },
 
   },
