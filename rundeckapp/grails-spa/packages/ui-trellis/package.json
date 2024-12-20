@@ -74,7 +74,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.22.11",
-    "@happy-dom/jest-environment": "^9.20.3",
+    "@happy-dom/jest-environment": "^15.11.7",
     "@storybook/addon-a11y": "^8.4.5",
     "@storybook/addon-essentials": "^8.4.5",
     "@storybook/addon-interactions": "^8.4.5",
