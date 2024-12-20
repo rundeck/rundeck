@@ -188,6 +188,7 @@ class ScheduledExecutionServiceJobIntegrationSpec extends Specification {
         }
 
         service.notificationService = notificationService
+        0 * service.notificationService.listNotificationPluginsDynamicProperties(_,_)
         service.orchestratorPluginService=Mock(OrchestratorPluginService)
         service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
         service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
@@ -209,8 +210,6 @@ class ScheduledExecutionServiceJobIntegrationSpec extends Specification {
         model.scheduledExecution != null
         model.scheduledExecution.options != null
         model.scheduledExecution.workflow != null
-        model.notificationPluginsDynamicProperties !=null
-        model.notificationPluginsDynamicProperties.size() == 3
         model.fileUploadPluginType == 'afileuploadplugin'
     }
 }
