@@ -48,8 +48,6 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By jobLinkTitleBy = By.xpath("//a[contains(@class, 'job-header-link')]")
     By autocompleteJobStepDefinitionBy = By.cssSelector("#wfitem_0 > span > div > div > span > span > span.text-success")
     By runFormBy = By.cssSelector("#execDiv #exec_options_form #formbuttons #execFormRunButton")
-    By runJobButtonBy = By.cssSelector(".btn.btn-success.btn-simple.btn-hover.btn-xs.act_execute_job")
-    By executionStateLabelBy = By.id("executionStateDisplayLabel")
     By optionValidationWarningBy = By.cssSelector("#execDiv #exec_options_form #optionSelect #_commandOptions div.form-group.has-warning p.text-warning")
     By jobRowBy = By.cssSelector("#job_group_tree .jobname.job_list_row[data-job-id] > a[data-job-id]")
     By jobSearchBy = By.xpath("//span[@title='Click to modify filter']")
@@ -138,26 +136,11 @@ class JobShowPage extends BasePage implements ActivityListTrait {
         }
     }
 
-    void clickRunJobButton() {
-        getRunJobButton().click();
-    }
-    void waitForExecutionState(String expectedState) {
-        new WebDriverWait(driver, Duration.ofSeconds(10)).until {
-            getExecutionStateLabel().getText().contains(expectedState)
-        }
-    }
 
     WebElement getJobExecutionDisabledIcon(){
         el jobExecutionDisabledIconBy
     }
 
-    WebElement getRunJobButton(){
-        el runJobButtonBy
-    }
-
-    WebElement getExecutionStateLabel(){
-        el executionStateLabelBy
-    }
 
     WebElement getJobDefinitionModal(){
         el jobDefinitionModalBy
