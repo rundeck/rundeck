@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.MissingParameter
 import rundeck.ScheduledExecution
 import rundeck.error_handling.InvalidParameterException
@@ -25,8 +26,8 @@ import rundeck.services.ScheduledExecutionService
 @Controller
 class AuthorizationsController extends ControllerBase {
 
-    static final def APPLICATION_CONTEXT_ALLOWED_TYPES =  ['project', 'project_acl']
-    static final def PROJECT_CONTEXT_ALLOWED_TYPES =  ['node', 'storage']
+    static final def APPLICATION_CONTEXT_ALLOWED_TYPES =  [AuthConstants.TYPE_PROJECT, AuthConstants.TYPE_PROJECT_ACL]
+    static final def PROJECT_CONTEXT_ALLOWED_TYPES =  [AuthConstants.TYPE_NODE, AuthConstants.TYPE_STORAGE]
 
     ScheduledExecutionService scheduledExecutionService
 
@@ -177,8 +178,8 @@ Evaluation is made in the context of the project for the supplied job.
     def projectContextAuthorizationsForJob() {
 
         // The `job` authorizations call is a slightly specialized `type` authorizations call, thus reuse existing validation with minor tweaks
-        params.put('type', 'job')
-        def typeParams = validateAndGetParamsForTypeWithSpecifier(params, ['job'] )
+        params.put('type', AuthConstants.TYPE_JOB)
+        def typeParams = validateAndGetParamsForTypeWithSpecifier(params, [AuthConstants.TYPE_JOB] )
 
         // Get and validate the job
         final ScheduledExecution job = Optional.ofNullable(scheduledExecutionService.getByIDorUUID(typeParams.specifier))
