@@ -481,10 +481,9 @@ jobs:
     steps:
       - setup_docker
       - checkout
-      - checkout
-      - run-build-step:
-          step-name: Scan Image
-          command: rundeck_assemble_build
+#      - run-build-step:
+#          step-name: Scan Image
+#          command: rundeck_assemble_build
       # All Snyk commands below should be identical to any Snyk scan ran using our Snyk orb: https://github.com/PagerDuty/snyk-circleci-orb/blob/main/src/commands/scan.yml
       - snyk/install
       - run: snyk config set org='rundeck-core-mtgfa3XPaKGbFtHj9aRXhg' # this will need to be updated if the project changes owners
