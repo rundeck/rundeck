@@ -481,7 +481,7 @@ jobs:
     steps:
       - setup_docker
       - checkout
-      - run-build-step:
+      - run:
           name: 'Gradle build without running the tests'
           step-name: Build War
           command: rundeck_assemble_build
