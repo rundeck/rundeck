@@ -677,7 +677,6 @@ workflows:
       - snyk_test:
           name: Snyk Security Scan
           <<: *require-build
-          continue: true
           context:
             - Snyk
             - Cloudsmith
