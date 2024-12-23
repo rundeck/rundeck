@@ -146,4 +146,23 @@ class JobActivityHistorySpec extends SeleniumBase {
         String status = statusIcon.getAttribute("data-statusstring")
         assert status.equalsIgnoreCase("SUCCEEDED") : "Expected 'SUCCEEDED', but found: '${status}'"
     }
+    /**
+        Test 2: Validate Activity History from Job List Page with Saved Filters
+        */
+    def "validate activity history from Job List Page Saved Filters"() {
+        when: "Navigate to the Job List Page and apply saved filter"
+        def jobListPage = go JobListPage, SELENIUM_BASIC_PROJECT
+        jobListPage.validatePage()
+        // Save and apply the filter
+        jobListPage.clickSaveFilterButton()
+                .enterFilterName("MySavedFilter")
+                .confirmFilterSave()
+                .openFilterDropdown()
+                .selectSavedFilter()
+        then: "Validate that the filter is applied and results are filtered"
+        assert jobListPage.getActivityRows().size() > 0 : "No filtered results found"
+        // Verify first row status
+        assert jobListPage.getFirstRowStatus() == 'succeeded' : "Expected 'succeeded' status"
+    }
+
 }
