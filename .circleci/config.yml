@@ -474,22 +474,22 @@ jobs:
           path: ~/workspace/packaging/packaging/build/distributions
 
     # Snyk implementation for repos not in PD Org.
-    snyk_test:
-      <<: *job-defaults
-      executor:
-        name: docker-builder
-      steps:
-        - setup_docker
-        - checkout
-        - run-build-step:
-            name: 'Gradle build without running the tests'
-            step-name: Build War
-            command: rundeck_assemble_build
-        # All Snyk commands below should be identical to any Snyk scan ran using our Snyk orb: https://github.com/PagerDuty/snyk-circleci-orb/blob/main/src/commands/scan.yml
-        - snyk/install
-        - run: snyk config set org='rundeck-core-mtgfa3XPaKGbFtHj9aRXhg' # this will need to be updated if the project changes owners
-        - run: snyk monitor --all-projects --detection-depth=10 --scan-all-unmanaged # run monitor first to push results to webui
-        - run: snyk test --severity-threshold=low --all-projects --detection-depth=10 --scan-all-unmanaged # will fail step if any results are found
+  snyk_test:
+    <<: *job-defaults
+    executor:
+      name: docker-builder
+    steps:
+      - setup_docker
+      - checkout
+      - run-build-step:
+          name: 'Gradle build without running the tests'
+          step-name: Build War
+          command: rundeck_assemble_build
+      # All Snyk commands below should be identical to any Snyk scan ran using our Snyk orb: https://github.com/PagerDuty/snyk-circleci-orb/blob/main/src/commands/scan.yml
+      - snyk/install
+      - run: snyk config set org='rundeck-core-mtgfa3XPaKGbFtHj9aRXhg' # this will need to be updated if the project changes owners
+      - run: snyk monitor --all-projects --detection-depth=10 --scan-all-unmanaged # run monitor first to push results to webui
+      - run: snyk test --severity-threshold=low --all-projects --detection-depth=10 --scan-all-unmanaged # will fail step if any results are found
 
   # Run Testdeck job on docker executor.
   test-docker:
