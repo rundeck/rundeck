@@ -473,7 +473,7 @@ jobs:
       - store_artifacts:
           path: ~/workspace/packaging/packaging/build/distributions
 
-    # Snyk implementation for repos not in PD Org.
+  # Snyk implementation for repos not in PD Org.
   snyk_test:
     <<: *job-defaults
     executor:
@@ -481,9 +481,9 @@ jobs:
     steps:
       - setup_docker
       - checkout
-      - run:
-          name: 'Gradle build without running the tests'
-          step-name: Build War
+      - checkout
+      - run-build-step:
+          step-name: Scan Image
           command: rundeck_assemble_build
       # All Snyk commands below should be identical to any Snyk scan ran using our Snyk orb: https://github.com/PagerDuty/snyk-circleci-orb/blob/main/src/commands/scan.yml
       - snyk/install
