@@ -1,0 +1,24 @@
+<joblist>
+  <job>
+    <defaultTab>nodes</defaultTab>
+    <description></description>
+    <executionEnabled>true</executionEnabled>
+    <id>9556bf4d-7234-4e31-9974-5555ea36ecc7</id>
+    <loglevel>INFO</loglevel>
+    <name>"aaa s" T1</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <plugins />
+    <runnerSelector>
+      <runnerFilterMode>LOCAL</runnerFilterMode>
+      <runnerFilterType>LOCAL_RUNNER</runnerFilterType>
+    </runnerSelector>
+    <scheduleEnabled>true</scheduleEnabled>
+    <schedules />
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>echo oi</exec>
+      </command>
+    </sequence>
+    <uuid>9556bf4d-7234-4e31-9974-5555ea36ecc7</uuid>
+  </job>
+</joblist>
