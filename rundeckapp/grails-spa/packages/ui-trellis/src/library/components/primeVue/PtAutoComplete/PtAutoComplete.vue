@@ -1,14 +1,18 @@
 <template>
   <AutoComplete
-    v-model="value"
-    :suggestions="suggestions"
-    @complete="search"
+      v-model="value"
+      :suggestions="suggestions"
+      :optionLabel="optionLabel"
+      :name="name"
+      @complete="onComplete"
+      @change="onChange"
+      @input="updateValue"
   ></AutoComplete>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import AutoComplete, { AutoCompleteCompleteEvent } from "primevue/autocomplete";
+import AutoComplete, { AutoCompleteCompleteEvent, AutoCompleteChangeEvent } from "primevue/autocomplete";
 
 export default defineComponent({
   name: "PtAutoComplete",
@@ -23,11 +27,23 @@ export default defineComponent({
       type: Array,
       default: () => [],
     },
+    defaultValue:{
+      type: String,
+      default: "",
+    },
+    name: {
+      type: String,
+      default: "",
+    },
+    optionLabel: {
+      type: String,
+      default: "label",
+    },
   },
-  emits: ["search"],
+  emits: ["update:modelValue","onChange","onComplete"],
   data() {
     return {
-      value: this.modelValue,
+      value: this.modelValue || this.defaultValue,
     };
   },
   watch: {
@@ -36,15 +52,41 @@ export default defineComponent({
     },
   },
   methods: {
-    search(event: AutoCompleteCompleteEvent) {
-      this.$emit("search", event);
+    onComplete(event: AutoCompleteCompleteEvent) {
+      this.$emit("onComplete", event);
     },
+    onChange(event: AutoCompleteChangeEvent) {
+      this.$emit("onChange", event);
+    },
+    updateValue() {
+      this.$emit("update:modelValue", this.value);
+    },
+
   },
 });
 </script>
 
 <style lang="scss">
-.p-inputtext {
-  background: var(--color-white);
+.p-autocomplete {
+  /* Default state */
+  .p-inputtext {
+    background-color: var(--colors-white);
+    border: 1px solid var(--colors-gray-500);
+    color: var(--colors-gray-900);
+
+    &::placeholder {
+      color: var(--colors-gray-600);
+    }
+
+    /* Selected/Hover */
+    &:focus {
+      border-color: var(--colors-blue-500);
+    }
+
+    /* Error State */
+    &.p-invalid {
+      border-color: var(--colors-red-500);
+    }
+  }
 }
 </style>
