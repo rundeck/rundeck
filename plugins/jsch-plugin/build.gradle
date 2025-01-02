@@ -22,9 +22,8 @@ configurations{
 
 dependencies {
     implementation(project(":core"))
+    pluginLibs('com.kohlschutter.junixsocket:junixsocket-core:2.10.1')
     pluginLibs("com.github.mwiede:jsch:${mwiedeJschVersion}")
-//    pluginLibs('com.jcraft:jsch.agentproxy.usocket-jna:0.0.9')
-//    pluginLibs('com.jcraft:jsch.agentproxy.usocket-nc:0.0.9')
     pluginLibs('org.apache.ant:ant-jsch:1.10.14'){
         //ant is part of core
         exclude(group: 'org.apache.ant', module: 'ant')
