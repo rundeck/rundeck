@@ -59,37 +59,37 @@ class JobListPage extends BasePage implements ActivityListTrait {
     static final By SAVED_FILTER_LINK = By.cssSelector("a[data-test='filter-link']")
     static final By ACTIVITY_ROWS = By.cssSelector("table.activity-list-table tbody tr.link.activity_row")
     static final By EVENT_ICON = By.cssSelector("td.eventicon")
-/** Click Save Filter button */
+
     JobListPage clickSaveFilterButton() {
         el(SAVE_FILTER_BUTTON).click()
         return this
     }
-/** Enter filter name */
+
     JobListPage enterFilterName(String filterName) {
         el(SAVE_FILTER_INPUT).sendKeys(filterName)
         return this
     }
-/** Click OK button to save the filter */
+
     JobListPage confirmFilterSave() {
         waitForElementVisible(OK_BUTTON).click()
         return this
     }
-/** Open filter dropdown */
+
     JobListPage openFilterDropdown() {
         waitForElementVisible(FILTER_DROPDOWN).click()
         return this
     }
-/** Apply the saved filter */
+
     JobListPage selectSavedFilter() {
         waitForElementVisible(SAVED_FILTER_LINK).click()
         return this
     }
-/** Get activity rows */
+
     List<WebElement> getActivityRows() {
         return new WebDriverWait(driver, Duration.ofSeconds(10))
                 .until(ExpectedConditions.visibilityOfAllElementsLocatedBy(ACTIVITY_ROWS))
     }
-/** Get status of the first row */
+
     String getFirstRowStatus() {
         return getActivityRows().get(0)
                 .findElement(EVENT_ICON)
