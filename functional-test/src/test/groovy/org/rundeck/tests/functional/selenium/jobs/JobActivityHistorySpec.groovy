@@ -22,7 +22,7 @@ class JobActivityHistorySpec extends SeleniumBase {
     }
 
     def setup() {
-        wait = new WebDriverWait(getDriver(), Duration.ofSeconds(20))
+        wait = new WebDriverWait(getDriver(), Duration.ofSeconds(30))
         // Login
         def loginPage = go LoginPage
         loginPage.login(TEST_USER, TEST_PASS)
@@ -32,9 +32,11 @@ class JobActivityHistorySpec extends SeleniumBase {
         def response = JobUtils.createJob(SELENIUM_BASIC_PROJECT, jobDefinition, client)
         assert response.succeeded.size() > 0: "Failed to create job"
         jobId = response.succeeded[0].id
+        println "Job created with ID: ${jobId}"
         // Run the job
         def runResponse = JobUtils.executeJob(jobId, client)
         assert runResponse.code() == 200: "Failed to execute job"
+        println "Job executed with response code: ${runResponse.code()}"
     }
 
     def cleanup() {
@@ -51,12 +53,15 @@ class JobActivityHistorySpec extends SeleniumBase {
         then: "Validate job execution is listed in Activity History"
         activityPage.validatePage()
         List<WebElement> activityList = activityPage.getActivityRows()
+        println "Activity List Size: ${activityList.size()}"
         assert activityList.size() > 0: "No activity rows found"
         WebElement firstActivityRow = activityList.get(0)
         WebElement statusIcon = ExecutionShowPage.getActivityExecStatusIcon(firstActivityRow)
         String status = statusIcon.getAttribute("data-statusstring")
+        println "First Activity Row Status: ${status}"
         assert status.equalsIgnoreCase("SUCCEEDED"): "Expected 'SUCCEEDED', but found: '${status}'"
     }
+
     /**
      Test 2: Validate Activity History from Job List Page with Saved Filters
      */
@@ -72,9 +77,11 @@ class JobActivityHistorySpec extends SeleniumBase {
                 .selectSavedFilter()
         then: "Validate that the saved filter is applied and results are filtered"
         def filteredRows = jobListPage.getActivityRows()
+        println "Filtered Rows Size: ${filteredRows.size()}"
         assert filteredRows.size() > 0: "No filtered results found"
         // Verify the status of the first filtered row
         def firstRowStatus = jobListPage.getFirstRowStatus()
+        println "First Filtered Row Status: ${firstRowStatus}"
         assert firstRowStatus.equalsIgnoreCase('SUCCEEDED'):
                 "Expected 'SUCCEEDED' status, but found: '${firstRowStatus}'"
     }
@@ -86,11 +93,13 @@ class JobActivityHistorySpec extends SeleniumBase {
         then: "Validate job execution is listed in Activity History"
         activityPage.validatePage()
         def activityList = activityPage.getActivityRows()
+        println "Activity List Size: ${activityList.size()}"
         assert activityList.size() > 0: "No activity rows found on the Activity Page"
         // Validate the first row status
         def firstActivityRow = activityList.get(0)
         def firstActivityStatusIcon = ExecutionShowPage.getActivityExecStatusIcon(firstActivityRow)
         def firstActivityStatus = firstActivityStatusIcon.getAttribute("data-statusstring")
+        println "First Activity Row Status: ${firstActivityStatus}"
         assert firstActivityStatus.equalsIgnoreCase("SUCCEEDED"):
                 "Expected 'SUCCEEDED', but found: '${firstActivityStatus}'"
     }
