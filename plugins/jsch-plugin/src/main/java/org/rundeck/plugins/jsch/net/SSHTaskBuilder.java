@@ -112,9 +112,9 @@ public class SSHTaskBuilder {
         if (base.getEnableSSHAgent()) {
             ConnectorFactory cf = ConnectorFactory.getDefault();
             try {
+                base.setSSHAgentProcess(SSHAgentUtil.startAgent(base.getTtlSSHAgent()));
                 cf.setUSocketPath(base.getSSHAgentProcess().getSocketPath());
                 cf.setPreferredUSocketFactories("jna,nc");
-                base.setSSHAgentProcess(SSHAgentUtil.startAgent(base.getTtlSSHAgent()));
                 base.getPluginLogger().log(
                         Project.MSG_DEBUG,
                         "ssh-agent started with ttl " +
