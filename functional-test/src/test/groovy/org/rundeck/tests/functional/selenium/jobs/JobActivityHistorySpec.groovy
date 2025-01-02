@@ -26,19 +26,15 @@ class JobActivityHistorySpec extends SeleniumBase {
         // Login
         def loginPage = go LoginPage
         loginPage.login(TEST_USER, TEST_PASS)
-        println "Logged in as ${TEST_USER}"
         // Create a job
         def jobDefinition = JobUtils.generateScheduledExecutionXml("TestJobActivityHistory")
         def client = getClient() // Assuming a method exists to get RdClient
         def response = JobUtils.createJob(SELENIUM_BASIC_PROJECT, jobDefinition, client)
-        println "Job creation response: ${response}"
         assert response.succeeded.size() > 0: "Failed to create job"
         jobId = response.succeeded[0].id
-        println "Job created successfully with ID: ${jobId}"
         // Run the job
         def runResponse = JobUtils.executeJob(jobId, client)
         assert runResponse.code() == 200: "Failed to execute job"
-        println "Job executed successfully"
     }
 
     def cleanup() {
@@ -56,7 +52,6 @@ class JobActivityHistorySpec extends SeleniumBase {
         activityPage.validatePage()
         List<WebElement> activityList = activityPage.getActivityRows()
         assert activityList.size() > 0: "No activity rows found"
-        println("Activity list size: ${activityList.size()}")
         WebElement firstActivityRow = activityList.get(0)
         WebElement statusIcon = ExecutionShowPage.getActivityExecStatusIcon(firstActivityRow)
         String status = statusIcon.getAttribute("data-statusstring")
@@ -69,42 +64,33 @@ class JobActivityHistorySpec extends SeleniumBase {
         when: "Navigate to the Job List Page and apply a saved filter"
         def jobListPage = go JobListPage, SELENIUM_BASIC_PROJECT
         jobListPage.validatePage()
-        println "Navigated to Job List Page for project: ${SELENIUM_BASIC_PROJECT}"
         // Save and apply the filter
         jobListPage.clickSaveFilterButton()
                 .enterFilterName("MySavedFilter")
                 .confirmFilterSave()
-        println "Filter 'MySavedFilter' saved successfully"
         jobListPage.openFilterDropdown()
                 .selectSavedFilter()
-        println "Applied saved filter 'MySavedFilter'"
         then: "Validate that the saved filter is applied and results are filtered"
         def filteredRows = jobListPage.getActivityRows()
         assert filteredRows.size() > 0: "No filtered results found"
-        println "Filtered rows size: ${filteredRows.size()}"
         // Verify the status of the first filtered row
         def firstRowStatus = jobListPage.getFirstRowStatus()
         assert firstRowStatus.equalsIgnoreCase('SUCCEEDED'):
                 "Expected 'SUCCEEDED' status, but found: '${firstRowStatus}'"
-        println "First filtered row status: '${firstRowStatus}'"
     }
 
     def "review job activity history from Activity Page"() {
         when: "Navigate to the Activity Page"
         def activityPage = go ActivityPage, SELENIUM_BASIC_PROJECT
         activityPage.loadActivityPageForProject(SELENIUM_BASIC_PROJECT)
-        println "Navigated to Activity Page for project: ${SELENIUM_BASIC_PROJECT}"
         then: "Validate job execution is listed in Activity History"
         activityPage.validatePage()
-        println "Activity Page validated successfully"
         def activityList = activityPage.getActivityRows()
-        println "Number of activity rows found: ${activityList.size()}"
         assert activityList.size() > 0: "No activity rows found on the Activity Page"
         // Validate the first row status
         def firstActivityRow = activityList.get(0)
         def firstActivityStatusIcon = ExecutionShowPage.getActivityExecStatusIcon(firstActivityRow)
         def firstActivityStatus = firstActivityStatusIcon.getAttribute("data-statusstring")
-        println "First activity row status: '${firstActivityStatus}'"
         assert firstActivityStatus.equalsIgnoreCase("SUCCEEDED"):
                 "Expected 'SUCCEEDED', but found: '${firstActivityStatus}'"
     }
