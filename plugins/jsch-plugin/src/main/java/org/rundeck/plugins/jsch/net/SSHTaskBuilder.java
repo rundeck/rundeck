@@ -26,7 +26,8 @@ package org.rundeck.plugins.jsch.net;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.utils.FileUtils;
-import com.dtolabs.rundeck.core.utils.SSHAgentProcess;
+import com.dtolabs.rundeck.core.utils.SSHAgent;
+import com.dtolabs.rundeck.core.utils.SSHAgentUtil;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.dtolabs.utils.Streams;
 import com.jcraft.jsch.JSch;
@@ -111,9 +112,9 @@ public class SSHTaskBuilder {
         if (base.getEnableSSHAgent()) {
             ConnectorFactory cf = ConnectorFactory.getDefault();
             try {
-                base.setSSHAgentProcess(new SSHAgentProcess(base.getTtlSSHAgent()));
                 cf.setUSocketPath(base.getSSHAgentProcess().getSocketPath());
                 cf.setPreferredUSocketFactories("jna,nc");
+                base.setSSHAgentProcess(SSHAgentUtil.startAgent(base.getTtlSSHAgent()));
                 base.getPluginLogger().log(
                         Project.MSG_DEBUG,
                         "ssh-agent started with ttl " +
@@ -228,7 +229,7 @@ public class SSHTaskBuilder {
     public static interface SSHBaseInterface {
         SSHUserInfo getUserInfo();
 
-        void setSSHAgentProcess(SSHAgentProcess sshAgentProcess);
+        void setSSHAgentProcess(SSHAgent sshAgentProcess);
 
         void setFailonerror(boolean b);
 
@@ -290,7 +291,7 @@ public class SSHTaskBuilder {
 
         public Boolean getEnableSSHAgent();
 
-        public SSHAgentProcess getSSHAgentProcess();
+        public SSHAgent getSSHAgentProcess();
 
         public void setTtlSSHAgent(Integer ttlSSHAgent);
 
@@ -451,12 +452,12 @@ public class SSHTaskBuilder {
         }
 
         @Override
-        public void setSSHAgentProcess(SSHAgentProcess sshAgentProcess) {
+        public void setSSHAgentProcess(SSHAgent sshAgentProcess) {
              instance.setSSHAgentProcess(sshAgentProcess);
         }
 
         @Override
-        public SSHAgentProcess getSSHAgentProcess() {
+        public SSHAgent getSSHAgentProcess() {
             return instance.getSSHAgentProcess();
         }
 
