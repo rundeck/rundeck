@@ -4,6 +4,7 @@ import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.gitea.GiteaApiRemoteRepo
 import org.rundeck.util.api.storage.KeyStorageApiClient
+import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.scm.ScmIntegration
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.login.LoginPage
@@ -12,7 +13,7 @@ import org.rundeck.util.gui.pages.scm.PerformScmActionPage
 
 @SeleniumCoreTest
 class ScmImportSpec extends SeleniumBase  {
-    private static String REPO_NAME = "statusBadgeTest"
+    private static String REPO_NAME = "importScmTest"
     private static String PROJECT_LOCATION = "/projects-import/scm/PScmImportTest.rdproject"
     private static String PROJECT_NAME = 'PScmImportTest'
     private static GitScmApiClient scmApiClient
@@ -45,6 +46,7 @@ class ScmImportSpec extends SeleniumBase  {
         ConfigureScmPage configureScmPage = go(ConfigureScmPage, PROJECT_NAME)
         configureScmPage.enableScmImport()
 
+        Thread.sleep(WaitingTime.MODERATE.toMillis())
         when:
         List<String> chosenTrackedItems = page(PerformScmActionPage, PROJECT_NAME).getChosenTrackedItems()
 
