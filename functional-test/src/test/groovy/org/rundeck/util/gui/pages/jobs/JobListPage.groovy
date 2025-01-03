@@ -59,25 +59,25 @@ class JobListPage extends BasePage implements ActivityListTrait {
     static final By SAVED_FILTER_LINK = By.cssSelector("a[data-test='filter-link']")
     static final By ACTIVITY_ROWS = By.cssSelector("table.activity-list-table tbody tr.link.activity_row")
     static final By EVENT_ICON = By.cssSelector("td.eventicon")
-    static final By ANY_TIME = By.xpath("//*[@id='activity_section']/div/div/div/section/span[2]/div[1]/span")
-    static final By LAST_WEEK = By.xpath("//*[@id='activity_section']/div/div/div/section/span[2]/div[1]/ul/li[4]/a")
+    static final By ANY_TIME_BUTTON = By.cssSelector("span[data-test-id='dropdown-toggle']")
+    static final By IN_THE_LAST_WEEK_BUTTON = By.cssSelector("a[data-test-id='period-option']")
 
     JobListPage clickAnyTimeButton() {
-        el(ANY_TIME).click()
+        waitForElementVisible(ANY_TIME_BUTTON).click()
         return this
     }
 
     JobListPage clickLastWeekButton() {
-        el(LAST_WEEK).click()
+        waitForElementVisible(IN_THE_LAST_WEEK_BUTTON).click()
         return this
     }
     JobListPage clickSaveFilterButton() {
-        el(SAVE_FILTER_BUTTON).click()
+        waitForElementVisible(SAVE_FILTER_BUTTON).click()
         return this
     }
 
     JobListPage enterFilterName(String filterName) {
-        el(SAVE_FILTER_INPUT).sendKeys(filterName)
+        waitForElementVisible(SAVE_FILTER_INPUT).sendKeys(filterName)
         return this
     }
 
