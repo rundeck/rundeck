@@ -5,6 +5,7 @@ import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
 import org.rundeck.util.container.SeleniumContext
 import org.rundeck.util.gui.pages.BasePage
+import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.rundeck.util.gui.pages.project.ActivityListTrait
 
 @CompileStatic
@@ -44,4 +45,11 @@ class ActivityPage extends BasePage implements ActivityListTrait{
         els By.xpath("//*[contains(text(),'${jobName}')]")
     }
 
+    static void validateFirstActivityRow(List<WebElement> activityList) {
+        assert !activityList.isEmpty() : "Activity list is empty, no rows to validate."
+        WebElement firstActivityRow = activityList.get(0)
+        WebElement statusIcon = ExecutionShowPage.getActivityExecStatusIcon(firstActivityRow)
+        String status = statusIcon.getAttribute("data-statusstring")
+        assert status.equalsIgnoreCase("SUCCEEDED") : "Expected 'SUCCEEDED', but found: '${status}'"
+    }
 }
