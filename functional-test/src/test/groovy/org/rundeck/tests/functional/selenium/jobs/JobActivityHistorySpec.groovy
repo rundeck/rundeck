@@ -1,6 +1,6 @@
 
 package org.rundeck.tests.functional.selenium.jobs
-
+import org.openqa.selenium.By
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
@@ -24,8 +24,8 @@ class JobActivityHistorySpec extends SeleniumBase {
      * Setup the test environment.
      */
     def setup() {
-        // Set up WebDriverWait to wait up to 30 seconds for elements that take time to appear or change
-        wait = new WebDriverWait(getDriver(), Duration.ofSeconds(30))
+        // Set up WebDriverWait to wait up to 40 seconds for elements that take time to appear or change
+        wait = new WebDriverWait(getDriver(), Duration.ofSeconds(40))
         (go LoginPage).login(TEST_USER, TEST_PASS)
         def jobDefinition = JobUtils.generateScheduledExecutionXml("TestJobActivityHistory")
         def client = getClient()
@@ -44,20 +44,32 @@ class JobActivityHistorySpec extends SeleniumBase {
         activityPage.loadActivityPageForProject(SELENIUM_BASIC_PROJECT)
         then: "Validate job execution is listed in Activity History"
         activityPage.validatePage()
-        def activityList = activityPage.getActivityRows()
-        !activityList.isEmpty()
-        def firstActivityRow = activityList.get(0)
+        wait.until {
+            def activityList = activityPage.getActivityRows()
+            activityList.size() > 0
+        }
+        def firstActivityRow = activityPage.getActivityRows().get(0)
         def statusIcon = ExecutionShowPage.getActivityExecStatusIcon(firstActivityRow)
-        wait.until { statusIcon.getAttribute("data-statusstring").equalsIgnoreCase("SUCCEEDED") }
+        wait.until {
+            statusIcon.getAttribute("data-statusstring").equalsIgnoreCase("SUCCEEDED")
+        }
     }
 
 
     def "validate activity history from Job List Page Saved Filters"() {
         when: "Navigate to the Job List Page and apply a saved filter"
         def jobListPage = go JobListPage, SELENIUM_BASIC_PROJECT
+        wait.until {
+            def anyTimeButton = driver.findElements(By.xpath("//*[@id='activity_section']/div/div/div/section/span[2]/div[1]/span"))
+            anyTimeButton.size() > 0
+        }
         jobListPage.clickAnyTimeButton()
-                .clickLastWeekButton()
-                .clickSaveFilterButton()
+        wait.until {
+            def lastWeekButton = driver.findElements(By.xpath("//*[@id='activity_section']/div/div/div/section/span[2]/div[1]/ul/li[4]/a"))
+            lastWeekButton.size() > 0
+        }
+        jobListPage.clickLastWeekButton()
+        jobListPage.clickSaveFilterButton()
                 .enterFilterName("testFilter")
                 .confirmFilterSave()
                 .openFilterDropdown()
@@ -67,8 +79,10 @@ class JobActivityHistorySpec extends SeleniumBase {
             jobListPage.getFirstRowStatus().equalsIgnoreCase('SUCCEEDED')
         }
         and: "Validate that the results are filtered"
-        def filteredRows = jobListPage.getActivityRows()
-        filteredRows.size() > 0
+        wait.until {
+            def filteredRows = jobListPage.getActivityRows()
+            filteredRows.size() > 0
+        }
     }
 
     def "review job activity history from Activity Page"() {
