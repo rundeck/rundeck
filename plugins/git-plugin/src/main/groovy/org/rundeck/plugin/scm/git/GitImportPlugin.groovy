@@ -706,7 +706,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 found << trackPath(
                         walk.getPathString(),
                         trackedItemNeedsImport(walk.getPathString()),
-                        importTracker.trackedJob(walk.getPathString())
+                        importTracker.trackedJob(walk.getPathString()) ?:
+                                jobStateMap.find {String key, Map values -> values.path?.equals(walk.getPathString())}?.key?.toString() //get job id from jobStateMap if importTracker is empty
                 )
             }
             return found
