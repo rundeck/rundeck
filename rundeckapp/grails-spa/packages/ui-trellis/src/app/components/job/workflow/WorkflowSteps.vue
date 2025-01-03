@@ -132,6 +132,7 @@
           $t('plugin.type.WorkflowStep.title.plural'),
         ]"
         show-search
+        show-divider
         @cancel="addStepModal = false"
         @selected="chooseProviderAdd"
       >

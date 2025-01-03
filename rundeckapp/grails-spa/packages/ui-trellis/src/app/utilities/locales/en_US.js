@@ -937,6 +937,8 @@ const messages = {
   "workflow.search.help.string15": "property:title=value",
   "workflow.search.help.string16": "property name:",
   "workflow.search.help.string17": "property:name=value",
+  "node.step.plugin.plural": "{0} Node Step Plugins",
+  "workflow.step.plugin.plural": "{0} Workflow Step Plugins",
 };
 
 export default messages;
