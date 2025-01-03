@@ -16,56 +16,35 @@
 
 package org.rundeck.plugins.jsch
 
-import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.FrameworkProject
-import com.dtolabs.rundeck.core.common.INodeEntry
-import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageTree
+import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import org.rundeck.plugins.jsch.net.SSHTaskBuilder
-import org.rundeck.plugins.jsch.util.JschTestUtil
 import org.rundeck.storage.api.Resource
 import spock.lang.Specification
 import spock.lang.Unroll
-
 /**
  * Created by greg on 3/18/15.
  */
 class NodeSSHConnectionInfoSpec extends Specification {
-    Framework framework
-    FrameworkProject testProject
-    def setup() {
-        framework = JschTestUtil.createTestFramework()
-        testProject=framework.getFrameworkProjectMgr().createFrameworkProject('NodeSSHConnectionInfoTest')
-    }
-    def cleanup(){
-        framework.getFrameworkProjectMgr().removeFrameworkProject('NodeSSHConnectionInfoTest')
-    }
+    public static final String PROJECT_NAME = 'NodeSSHConnectionInfoTest'
     def "get default authentication type"(){
         setup:
         INodeEntry node = new NodeEntryImpl("test1");
-        framework.getFrameworkProjectMgr().removeFrameworkProject('NodeSSHConnectionInfoTest')
-        framework.getFrameworkProjectMgr().createFrameworkProject('NodeSSHConnectionInfoTest')
+        def framework = Mock(IFramework){
+            getFrameworkProjectMgr()>>Mock(ProjectManager){
+                getFrameworkProject(PROJECT_NAME)>>Mock(IRundeckProject)
+            }
+            getPropertyLookup()>>Mock(IPropertyLookup)
+        }
         def info=new NodeSSHConnectionInfo(node,framework,Mock(ExecutionContext){
-            getFrameworkProject()>>'NodeSSHConnectionInfoTest'
+            getFrameworkProject()>> PROJECT_NAME
         })
         expect:
         info.getAuthenticationType()==SSHTaskBuilder.AuthenticationType.privateKey
-    }
-
-    private static void mergeProps(File path, Properties props){
-        def oldprops=new Properties()
-        path.withInputStream { oldprops.load(it) }
-        oldprops.putAll(props)
-        path.withOutputStream { oldprops.store(it,"") }
-    }
-    private static void removeProps(File path, Collection<String> props){
-        def oldprops=new Properties()
-        path.withInputStream { oldprops.load(it) }
-        props.each{oldprops.remove(it)}
-        path.withOutputStream { oldprops.store(it,"") }
     }
 
     def "resolve ssh-authentication"(
@@ -91,15 +70,13 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 null
         )
 
-        def framework = JschTestUtil.createTestFramework()
-        def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
-        testProject.hasProperty(projectPropName) == (null != projectVal)
-        testProject.getProperties().get(projectPropName) == projectVal
-        framework.hasProperty(frameworkPropName) == (null != fwkVal)
+        info.frameworkProject.hasProperty(projectPropName) == (null != projectVal)
+        info.frameworkProject.getProperty(projectPropName) == projectVal
+        info.framework.propertyLookup.hasProperty(frameworkPropName) == (null != fwkVal)
         if(null != fwkVal){
-            framework.getPropertyLookup().getProperty(frameworkPropName) == fwkVal
+            info.framework.getPropertyLookup().getProperty(frameworkPropName) == fwkVal
         }
         info.getAuthenticationType() == expected
 
@@ -139,15 +116,13 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 dataContext
         )
 
-        def framework = JschTestUtil.createTestFramework()
-        def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
-        testProject.hasProperty(projectPropName) == (null != projectVal)
-        testProject.getProperties().get(projectPropName) == projectVal
-        framework.hasProperty(frameworkPropName) == (null != fwkVal)
+        info.frameworkProject.hasProperty(projectPropName) == (null != projectVal)
+        info.frameworkProject.getProperty(projectPropName) == projectVal
+        info.framework.getPropertyLookup().hasProperty(frameworkPropName) == (null != fwkVal)
         if(null != fwkVal){
-            framework.getPropertyLookup().getProperty(frameworkPropName) == fwkVal
+            info.framework.getPropertyLookup().getProperty(frameworkPropName) == fwkVal
         }
         info.getPrivateKeyStoragePath() == expected
 
@@ -186,15 +161,13 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 dataContext
         )
 
-        def framework = JschTestUtil.createTestFramework()
-        def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
-        testProject.hasProperty(projectPropName) == (null != projectVal)
-        testProject.getProperties().get(projectPropName) == projectVal
-        framework.hasProperty(frameworkPropName) == (null != fwkVal)
+        info.frameworkProject.hasProperty(projectPropName) == (null != projectVal)
+        info.frameworkProject.getProperty(projectPropName) == projectVal
+        info.framework.getPropertyLookup().hasProperty(frameworkPropName) == (null != fwkVal)
         if(null != fwkVal){
-            framework.getPropertyLookup().getProperty(frameworkPropName) == fwkVal
+            info.framework.getPropertyLookup().getProperty(frameworkPropName) == fwkVal
         }
         info.getPasswordStoragePath() == expected
 
@@ -233,15 +206,13 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 dataContext
         )
 
-        def framework = JschTestUtil.createTestFramework()
-        def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
-        testProject.hasProperty(projectPropName) == (null != projectVal)
-        testProject.getProperties().get(projectPropName) == projectVal
-        framework.hasProperty(frameworkPropName) == (null != fwkVal)
+        info.frameworkProject.hasProperty(projectPropName) == (null != projectVal)
+        info.frameworkProject.getProperty(projectPropName) == projectVal
+        info.framework.getPropertyLookup().hasProperty(frameworkPropName) == (null != fwkVal)
         if(null != fwkVal){
-            framework.getPropertyLookup().getProperty(frameworkPropName) == fwkVal
+            info.framework.getPropertyLookup().getProperty(frameworkPropName) == fwkVal
         }
         info.getPrivateKeyPassphraseStoragePath() == expected
 
@@ -281,15 +252,13 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 dataContext
         )
 
-        def framework = JschTestUtil.createTestFramework()
-        def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
-        testProject.hasProperty(projectPropName) == (null != projectVal)
-        testProject.getProperties().get(projectPropName) == projectVal
-        framework.hasProperty(frameworkPropName) == (null != fwkVal)
+        info.frameworkProject.hasProperty(projectPropName) == (null != projectVal)
+        info.frameworkProject.getProperty(projectPropName) == projectVal
+        info.framework.getPropertyLookup().hasProperty(frameworkPropName) == (null != fwkVal)
         if(null != fwkVal){
-            framework.getPropertyLookup().getProperty(frameworkPropName) == fwkVal
+            info.framework.getPropertyLookup().getProperty(frameworkPropName) == fwkVal
         }
         info.getSudoPasswordStoragePath(prefix) == expected
 
@@ -340,15 +309,13 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 null
         )
 
-        def framework = JschTestUtil.createTestFramework()
-        def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
-        testProject.hasProperty(projectPropName) == (null != projectVal)
-        testProject.getProperties().get(projectPropName) == projectVal
-        framework.hasProperty(frameworkPropName) == (null != fwkVal)
-        if (null != fwkVal) {
-            framework.getPropertyLookup().getProperty(frameworkPropName) == fwkVal
+        info.frameworkProject.hasProperty(projectPropName) == (null != projectVal)
+        info.frameworkProject.getProperty(projectPropName) == projectVal
+        info.framework.getPropertyLookup().hasProperty(frameworkPropName) == (null != fwkVal)
+        if(null != fwkVal){
+            info.framework.getPropertyLookup().getProperty(frameworkPropName) == fwkVal
         }
         info.getPassword() == expectedVal
 
@@ -391,15 +358,13 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 null
         )
 
-        def framework = JschTestUtil.createTestFramework()
-        def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
-        testProject.hasProperty(projectPropName) == (null != projectVal)
-        testProject.getProperties().get(projectPropName) == projectVal
-        framework.hasProperty(frameworkPropName) == (null != fwkVal)
-        if (null != fwkVal) {
-            framework.getPropertyLookup().getProperty(frameworkPropName) == fwkVal
+        info.frameworkProject.hasProperty(projectPropName) == (null != projectVal)
+        info.frameworkProject.getProperty(projectPropName) == projectVal
+        info.framework.getPropertyLookup().hasProperty(frameworkPropName) == (null != fwkVal)
+        if(null != fwkVal){
+            info.framework.getPropertyLookup().getProperty(frameworkPropName) == fwkVal
         }
         info.getPrivateKeyPassphrase() == expectedVal
 
@@ -442,15 +407,13 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 null
         )
 
-        def framework = JschTestUtil.createTestFramework()
-        def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
-        testProject.hasProperty(projectPropName) == (null != projectVal)
-        testProject.getProperties().get(projectPropName) == projectVal
-        framework.hasProperty(frameworkPropName) == (null != fwkVal)
-        if (null != fwkVal) {
-            framework.getPropertyLookup().getProperty(frameworkPropName) == fwkVal
+        info.frameworkProject.hasProperty(projectPropName) == (null != projectVal)
+        info.frameworkProject.getProperty(projectPropName) == projectVal
+        info.framework.getPropertyLookup().hasProperty(frameworkPropName) == (null != fwkVal)
+        if(null != fwkVal){
+            info.framework.getPropertyLookup().getProperty(frameworkPropName) == fwkVal
         }
         info.getSudoPassword(prefix) == expectedVal
 
@@ -560,24 +523,26 @@ class NodeSSHConnectionInfoSpec extends Specification {
 
         setup:
         def context = Mock(ExecutionContext) {
-            getFrameworkProject() >> 'NodeSSHConnectionInfoTest'
+            getFrameworkProject() >> PROJECT_NAME
         }
         def propName = JschNodeExecutor.NODE_ATTR_SSH_CONNECT_TIMEOUT_PROP
         def projectPropName = JschNodeExecutor.PROJ_PROP_CON_TIMEOUT
         def frameworkPropName = JschNodeExecutor.FWK_PROP_CON_TIMEOUT
 //        def frameworkPropName2 = JschNodeExecutor.FRAMEWORK_SSH_CONNECT_TIMEOUT_PROP
+        def framework = mockFramework(
+            [
+                (frameworkPropName)                                  : fwkpropval,
+                (JschNodeExecutor.FRAMEWORK_SSH_CONNECT_TIMEOUT_PROP): !useDeprecated ? fwkpropval2 : null,
+                (JschNodeExecutor.SSH_TIMEOUT_PROP)                  : useDeprecated ? fwkpropval2 : null
+            ],
+            PROJECT_NAME,
+            [(projectPropName): projectpropval]
+        )
+        INodeEntry node = new NodeEntryImpl("test1");
+        if (nodepropval) {
+            node.getAttributes().put(propName, nodepropval)
+        }
 
-        NodeEntryImpl node = setupProps(
-                propName,
-                nodepropval,
-                projectPropName,
-                projectpropval,
-                [
-                        (frameworkPropName)                                  : fwkpropval,
-                        (JschNodeExecutor.FRAMEWORK_SSH_CONNECT_TIMEOUT_PROP): !useDeprecated ? fwkpropval2 : null,
-                        (JschNodeExecutor.SSH_TIMEOUT_PROP)                  : useDeprecated ? fwkpropval2 : null
-                ],
-                )
         when:
         NodeSSHConnectionInfo info = new NodeSSHConnectionInfo(node, framework, context)
 
@@ -606,62 +571,31 @@ class NodeSSHConnectionInfoSpec extends Specification {
 
     }
 
-    private NodeEntryImpl setupProps(
-            String propName,
-            String nodepropval,
-            String projectPropName,
-            String projectpropval,
-            Map<String, String> fwkProps
-    )
-    {
-        INodeEntry node = new NodeEntryImpl("test1");
-        if (nodepropval) {
-            node.getAttributes().put(propName, nodepropval)
-        }
-        if (projectpropval) {
-            def projprops = new Properties()
-            projprops.put(projectPropName, projectpropval)
-            def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
-            testProject.mergeProjectProperties(projprops, [] as Set)
-            testProject.hasProperty(projectPropName)//trigger refresh
-        }
-        removeProps(
-                new File(framework.getBaseDir(), "etc/framework.properties"),
-                fwkProps.keySet()
-        )
-        if (fwkProps) {
-            def pfwkProps = new Properties()
-            fwkProps.each { k, v ->
-                if (v) {
-                    pfwkProps.setProperty(k, v)
-                }
-            }
-            mergeProps(new File(framework.getBaseDir(), "etc/framework.properties"), pfwkProps)
-        }
-        node
-    }
-
     @Unroll
     def "ssh command timeout config"() {
         setup:
         def context = Mock(ExecutionContext) {
-            getFrameworkProject() >> 'NodeSSHConnectionInfoTest'
+            getFrameworkProject() >> PROJECT_NAME
         }
         def propName = JschNodeExecutor.NODE_ATTR_SSH_COMMAND_TIMEOUT_PROP
         def projectPropName = JschNodeExecutor.PROJ_PROP_COMMAND_TIMEOUT
         def frameworkPropName = JschNodeExecutor.FWK_PROP_COMMAND_TIMEOUT
         def frameworkPropName2 = JschNodeExecutor.FRAMEWORK_SSH_COMMAND_TIMEOUT_PROP
 
-        NodeEntryImpl node = setupProps(
-                propName,
-                nodepropval,
-                projectPropName,
-                projectpropval,
-                [
-                        (frameworkPropName) : fwkpropval,
-                        (frameworkPropName2): fwkpropval2
-                ],
-                )
+        INodeEntry node = new NodeEntryImpl("test1");
+        if (nodepropval) {
+            node.getAttributes().put(propName, nodepropval)
+        }
+
+        def framework = mockFramework(
+            [
+                (frameworkPropName) : fwkpropval,
+                (frameworkPropName2): fwkpropval2
+            ],
+            PROJECT_NAME,
+            [(projectPropName): projectpropval]
+        )
+
         when:
         NodeSSHConnectionInfo info = new NodeSSHConnectionInfo(node, framework, context)
 
@@ -689,11 +623,17 @@ class NodeSSHConnectionInfoSpec extends Specification {
     {
         INodeEntry node = new NodeEntryImpl("test1");
         node.getAttributes().put(propname, path)
+        def framework = Mock(IFramework){
+            getFrameworkProjectMgr()>>Mock(ProjectManager){
+                getFrameworkProject(PROJECT_NAME)>>Mock(IRundeckProject)
+            }
+            getPropertyLookup()>>Mock(IPropertyLookup)
+        }
         new NodeSSHConnectionInfo(
                 node,
                 framework,
                 Mock(ExecutionContext) {
-                    getFrameworkProject() >> 'NodeSSHConnectionInfoTest'
+                    getFrameworkProject() >> PROJECT_NAME
                     getStorageTree() >> Mock(StorageTree){
                         getResource(path) >> Mock(Resource){
                             getContents() >> Mock(ResourceMeta){
@@ -722,41 +662,55 @@ class NodeSSHConnectionInfoSpec extends Specification {
         INodeEntry node = new NodeEntryImpl("test1");
         node.getAttributes().put(propname, attrval)
 
-        def removePrefixes = [] as Set
-        def projprops = new Properties()
 
 
-        if (null != projectVal) {
-            projprops.put(projectPropName, projectVal)
-        } else {
-            removePrefixes << projectPropName
+        def fwkPropLookup=Mock(IPropertyLookup){
+            hasProperty(frameworkPropName)>> (null != fwkVal)
+            getProperty(frameworkPropName)>>fwkVal
         }
-        def framework = JschTestUtil.createTestFramework()
-        framework.getFrameworkProjectMgr().removeFrameworkProject('NodeSSHConnectionInfoTest')
-        framework.getFrameworkProjectMgr().createFrameworkProject('NodeSSHConnectionInfoTest')
-        def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
-        testProject.mergeProjectProperties(projprops, removePrefixes)
-        testProject.hasProperty(projectPropName)//trigger refresh
 
+        def framework = Mock(IFramework){
+            getPropertyLookup()>>fwkPropLookup
+            getFrameworkProjectMgr()>>Mock(ProjectManager){
+                getFrameworkProject(PROJECT_NAME)>>Mock(IRundeckProject){
+                    hasProperty(projectPropName)>> (null != projectVal)
+                    getProperty(projectPropName)>>projectVal
+                }
 
-        if (null != fwkVal) {
-            def fwkProps = new Properties()
-            fwkProps.setProperty(frameworkPropName, fwkVal)
-            mergeProps(new File(framework.getBaseDir(), "etc/framework.properties"), fwkProps)
-        } else {
-            removeProps(new File(framework.getBaseDir(), "etc/framework.properties"), [frameworkPropName])
+            }
         }
-        //reload fwk props
-        framework = JschTestUtil.createTestFramework()
 
         new NodeSSHConnectionInfo(
                 node,
                 framework,
                 Mock(ExecutionContext) {
-                    getFrameworkProject() >> 'NodeSSHConnectionInfoTest'
+                    getFrameworkProject() >> PROJECT_NAME
                     getPrivateDataContext() >> DataContextUtils.context(privateDataContext)
                     getDataContext() >> DataContextUtils.context(dataContext)
                 }
         )
+    }
+
+    IFramework mockFramework(Map<String, String> fwkProps, String projectName, Map<String, String> projProps) {
+        Mock(IFramework){
+            getFrameworkProjectMgr()>>Mock(ProjectManager){
+                getFrameworkProject(projectName)>>Mock(IRundeckProject){
+                    hasProperty(_)>>{
+                        projProps.get(it[0])!=null
+                    }
+                    getProperty(_)>>{
+                        projProps.get(it[0])
+                    }
+                }
+            }
+            getPropertyLookup()>>Mock(IPropertyLookup){
+                hasProperty(_)>>{
+                    fwkProps.get(it[0])!=null
+                }
+                getProperty(_)>>{
+                    fwkProps.get(it[0])
+                }
+            }
+        }
     }
 }
