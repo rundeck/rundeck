@@ -480,12 +480,19 @@ jobs:
       name: docker-builder
     steps:
       - setup_docker
+      - checkout
       - attach_workspace:
           at: ~/workspace
       - snyk/install
-      - run: snyk config set org='rundeck-core-mtgfa3XPaKGbFtHj9aRXhg' # this will need to be updated if the project changes owners
-      - run: snyk monitor ~/workspace --all-projects --detection-depth=10 --scan-all-unmanaged # run monitor first to push results to webui
-      - run: snyk test ~/workspace --severity-threshold=low --all-projects --detection-depth=10 --scan-all-unmanaged # will fail step if any results are found
+      - run-build-step:
+          step-name: Configure Snyk
+          command: snyk config set org='rundeck-core-mtgfa3XPaKGbFtHj9aRXhg' # this will need to be updated if the project changes owners
+      - run-build-step:
+          step-name: Snyk monitor
+          command: snyk monitor --all-projects --detection-depth=10 --scan-all-unmanaged # run monitor first to push results to webui
+      - run-build-step:
+            step-name: Snyk test
+            command: snyk test ~/workspace --severity-threshold=low --all-projects --detection-depth=10 --scan-all-unmanaged # will fail step if any results are found
 
   # Run Testdeck job on docker executor.
   test-docker:

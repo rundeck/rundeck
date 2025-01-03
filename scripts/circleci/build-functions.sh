@@ -57,12 +57,6 @@ rundeck_verify_build() {
         verifyBuild
 }
 
-rundeck_assemble_build() {
-    ./gradlew ${GRADLE_BASE_OPTS} \
-        -Penvironment="${ENV}" \
-        assemble
-}
-
 rundeck_gradle_functional_tests() {
     TEST_IMAGE=${TEST_IMAGE:-} ./gradlew :functional-test:${GRADLE_TASK} -Penvironment="${ENV}" -PtestFiles="${TEST_FILES}" ${GRADLE_BUILD_OPTS} --info
 }
