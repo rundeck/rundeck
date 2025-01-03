@@ -59,7 +59,18 @@ class JobListPage extends BasePage implements ActivityListTrait {
     static final By SAVED_FILTER_LINK = By.cssSelector("a[data-test='filter-link']")
     static final By ACTIVITY_ROWS = By.cssSelector("table.activity-list-table tbody tr.link.activity_row")
     static final By EVENT_ICON = By.cssSelector("td.eventicon")
+    static final By ANY_TIME = By.xpath("//*[@id='activity_section']/div/div/div/section/span[2]/div[1]/span")
+    static final By LAST_WEEK = By.xpath("//*[@id='activity_section']/div/div/div/section/span[2]/div[1]/ul/li[4]/a")
 
+    JobListPage clickAnyTimeButton() {
+        el(ANY_TIME).click()
+        return this
+    }
+
+    JobListPage clickLastWeekButton() {
+        el(LAST_WEEK).click()
+        return this
+    }
     JobListPage clickSaveFilterButton() {
         el(SAVE_FILTER_BUTTON).click()
         return this
@@ -89,6 +100,7 @@ class JobListPage extends BasePage implements ActivityListTrait {
         return new WebDriverWait(driver, Duration.ofSeconds(10))
                 .until(ExpectedConditions.visibilityOfAllElementsLocatedBy(ACTIVITY_ROWS))
     }
+
 
     String getFirstRowStatus() {
         return getActivityRows().get(0)

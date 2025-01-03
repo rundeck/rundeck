@@ -1,7 +1,6 @@
 
 package org.rundeck.tests.functional.selenium.jobs
 
-import org.openqa.selenium.WebElement
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
@@ -17,9 +16,6 @@ class JobActivityHistorySpec extends SeleniumBase {
     WebDriverWait wait
     String jobId
 
-    /**
-     * Setup the project for the test.
-     */
     def setupSpec() {
         setupProject(SELENIUM_BASIC_PROJECT)
     }
@@ -30,8 +26,7 @@ class JobActivityHistorySpec extends SeleniumBase {
     def setup() {
         // Set up WebDriverWait to wait up to 30 seconds for elements that take time to appear or change
         wait = new WebDriverWait(getDriver(), Duration.ofSeconds(30))
-        def loginPage = go LoginPage
-        loginPage.login(TEST_USER, TEST_PASS)
+        (go LoginPage).login(TEST_USER, TEST_PASS)
         def jobDefinition = JobUtils.generateScheduledExecutionXml("TestJobActivityHistory")
         def client = getClient()
         def response = JobUtils.createJob(SELENIUM_BASIC_PROJECT, jobDefinition, client)
@@ -49,33 +44,32 @@ class JobActivityHistorySpec extends SeleniumBase {
         activityPage.loadActivityPageForProject(SELENIUM_BASIC_PROJECT)
         then: "Validate job execution is listed in Activity History"
         activityPage.validatePage()
-        List<WebElement> activityList = activityPage.getActivityRows()
-        assert activityList.size() > 0: "No activity rows found"
-        WebElement firstActivityRow = activityList.get(0)
-        WebElement statusIcon = ExecutionShowPage.getActivityExecStatusIcon(firstActivityRow)
-        wait.until{statusIcon.getAttribute("data-statusstring").equalsIgnoreCase("SUCCEEDED")}
-        String status = statusIcon.getAttribute("data-statusstring")
-        assert status.equalsIgnoreCase("SUCCEEDED"): "Expected 'SUCCEEDED', but found: '${status}'"
+        def activityList = activityPage.getActivityRows()
+        !activityList.isEmpty()
+        def firstActivityRow = activityList.get(0)
+        def statusIcon = ExecutionShowPage.getActivityExecStatusIcon(firstActivityRow)
+        wait.until { statusIcon.getAttribute("data-statusstring").equalsIgnoreCase("SUCCEEDED") }
     }
 
 
     def "validate activity history from Job List Page Saved Filters"() {
         when: "Navigate to the Job List Page and apply a saved filter"
         def jobListPage = go JobListPage, SELENIUM_BASIC_PROJECT
-        jobListPage.validatePage()
-        jobListPage.clickSaveFilterButton()
-                .enterFilterName("MySavedFilter")
+        jobListPage.clickAnyTimeButton()
+                .clickLastWeekButton()
+                .clickSaveFilterButton()
+                .enterFilterName("testFilter")
                 .confirmFilterSave()
-        jobListPage.openFilterDropdown()
+                .openFilterDropdown()
                 .selectSavedFilter()
-        then: "Validate that the saved filter is applied and results are filtered"
+        then: "Wait for the job to complete and validate the saved filter is applied"
+        wait.until {
+            jobListPage.getFirstRowStatus().equalsIgnoreCase('SUCCEEDED')
+        }
+        and: "Validate that the results are filtered"
         def filteredRows = jobListPage.getActivityRows()
-        assert filteredRows.size() > 0: "No filtered results found"
-        def firstRowStatus = jobListPage.getFirstRowStatus()
-        assert firstRowStatus.equalsIgnoreCase('SUCCEEDED'):
-                "Expected 'SUCCEEDED' status, but found: '${firstRowStatus}'"
+        filteredRows.size() > 0
     }
-
 
     def "review job activity history from Activity Page"() {
         when: "Navigate to the Activity Page"
@@ -84,11 +78,7 @@ class JobActivityHistorySpec extends SeleniumBase {
         then: "Validate job execution is listed in Activity History"
         activityPage.validatePage()
         def activityList = activityPage.getActivityRows()
-        assert activityList.size() > 0: "No activity rows found on the Activity Page"
-        def firstActivityRow = activityList.get(0)
-        def firstActivityStatusIcon = ExecutionShowPage.getActivityExecStatusIcon(firstActivityRow)
-        def firstActivityStatus = firstActivityStatusIcon.getAttribute("data-statusstring")
-        assert firstActivityStatus.equalsIgnoreCase("SUCCEEDED"):
-                "Expected 'SUCCEEDED', but found: '${firstActivityStatus}'"
+        activityPage.validateFirstActivityRow(activityList)
+
     }
 }
