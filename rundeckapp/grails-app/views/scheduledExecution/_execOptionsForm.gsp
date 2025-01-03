@@ -126,7 +126,7 @@
                         <input name="extra._replaceNodeFilters"
                                value="true"
                                type="checkbox"
-                               data-bind="checked: changeTargetNodes, attr: {disabled: !canOverrideFilter()}"
+                               data-bind="checked: changeTargetNodes"
                                id="doReplaceFilters"/>
                         <label for="doReplaceFilters">
                             <g:message code="change.the.target.nodes"/>
