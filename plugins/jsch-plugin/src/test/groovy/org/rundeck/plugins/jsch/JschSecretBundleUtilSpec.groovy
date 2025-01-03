@@ -55,7 +55,7 @@ class JschSecretBundleUtilSpec extends Specification {
         }
         def context = Mock(ExecutionContext) {
             getFrameworkProject() >> PROJECT_NAME
-            getFramework() >> framework
+            getIFramework() >> framework
             getExecutionListener() >> Mock(ExecutionListener)
             getStorageTree() >> storageTree
         }

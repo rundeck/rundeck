@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 
@@ -77,6 +78,12 @@ public abstract class BaseProviderRegistryService<T>
     protected T createProviderInstanceFromType(final Class<? extends T> execClass, final String providerName) throws
         ProviderCreationException {
         try {
+            final Constructor<? extends T> method = execClass.getDeclaredConstructor(IFramework.class);
+            return method.newInstance(framework);
+        } catch (Throwable ignored) {
+
+        }
+        try {
             final Constructor<? extends T> method = execClass.getDeclaredConstructor(Framework.class);
             return method.newInstance(framework);
         } catch (NoSuchMethodException ignored) {
@@ -91,8 +98,13 @@ public abstract class BaseProviderRegistryService<T>
     protected boolean hasValidProviderSignature(final Class<?> clazz) {
 
         try {
-            final Constructor method = clazz.getDeclaredConstructor(Framework.class);
-            return null != method;
+            final Constructor<?> method = clazz.getDeclaredConstructor(IFramework.class);
+            return true;
+        } catch (NoSuchMethodException ignored) {
+        }
+        try {
+            final Constructor<?> method = clazz.getDeclaredConstructor(Framework.class);
+            return true;
         } catch (NoSuchMethodException ignored) {
         }
         return super.hasValidProviderSignature(clazz);

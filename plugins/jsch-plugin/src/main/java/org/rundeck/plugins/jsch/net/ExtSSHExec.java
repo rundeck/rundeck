@@ -25,7 +25,7 @@
 
 package org.rundeck.plugins.jsch.net;
 
-import com.dtolabs.rundeck.core.utils.SSHAgentProcess;
+import com.dtolabs.rundeck.core.utils.SSHAgent;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.jcraft.jsch.*;
 import org.apache.tools.ant.BuildException;
@@ -79,7 +79,7 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
     
     private Boolean enableSSHAgent=false;
     private Integer ttlSSHAgent=0;
-    private SSHAgentProcess sshAgentProcess=null;
+    private SSHAgent sshAgentProcess=null;
     private String bindAddress;
 
     public static final String COMMAND_TIMEOUT_MESSAGE =
@@ -274,11 +274,11 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
         return sshKeyData;
     }
 
-    public SSHAgentProcess getSSHAgentProcess() {
+    public SSHAgent getSSHAgentProcess() {
         return this.sshAgentProcess;
     }
 
-    public void setSSHAgentProcess(SSHAgentProcess sshAgentProcess) {
+    public void setSSHAgentProcess(SSHAgent sshAgentProcess) {
         this.sshAgentProcess = sshAgentProcess;
     }
 
