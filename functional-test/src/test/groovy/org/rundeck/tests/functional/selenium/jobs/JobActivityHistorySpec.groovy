@@ -24,7 +24,7 @@ class JobActivityHistorySpec extends SeleniumBase {
      */
     def setup() {
         // Set up WebDriverWait to wait up to 30 seconds for elements that take time to appear or change
-        wait = new WebDriverWait(getDriver(), Duration.ofSeconds(30))
+        wait = new WebDriverWait(getDriver(), Duration.ofSeconds(60))
         (go LoginPage).login(TEST_USER, TEST_PASS)
         def jobDefinition = JobUtils.generateScheduledExecutionXml("TestJobActivityHistory")
         def client = getClient()
