@@ -65,11 +65,13 @@ class JobListPage extends BasePage implements ActivityListTrait {
     JobListPage clickAnyTimeButton() {
         waitForElementVisible(ANY_TIME_BUTTON).click()
         return this
+
     }
 
     JobListPage clickLastWeekButton() {
         waitForElementVisible(IN_THE_LAST_WEEK_BUTTON).click()
         return this
+
     }
     JobListPage clickSaveFilterButton() {
         waitForElementVisible(SAVE_FILTER_BUTTON).click()
