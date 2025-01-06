@@ -18,7 +18,7 @@ export class PluginStore {
   async load(service: string): Promise<void> {
     if (this.pluginsByService[service]) return void 0;
     const plugins = await this.client.apiRequest({
-      pathTemplate: "api/40/plugin/list",
+      pathTemplate: "api/51/plugin/list",
       queryParameters: {
         service,
       },
@@ -58,9 +58,18 @@ export class PluginStore {
 
   getServicePlugins(service: string): Plugin[] {
     return (
-      this.pluginsByService[service]?.sort((a, b) =>
-        a.title.localeCompare(b.title),
-      ) || []
+      this.pluginsByService[service]?.sort((a, b) => {
+        if (a.isHighlighted !== undefined && b.isHighlighted !== undefined) {
+          if (a.isHighlighted !== b.isHighlighted) {
+            return a.isHighlighted ? -1 : 1;
+          }
+
+          if (a.isHighlighted && b.isHighlighted) {
+            return a.highlightedOrder! - b.highlightedOrder!;
+          }
+        }
+        return a.title.localeCompare(b.title);
+      }) || []
     );
   }
 }
@@ -81,6 +90,8 @@ export interface Plugin {
     faicon?: string;
     fabicon?: string;
   };
+  isHighlighted?: boolean;
+  highlightedOrder?: number;
 }
 
 export enum ServiceType {
