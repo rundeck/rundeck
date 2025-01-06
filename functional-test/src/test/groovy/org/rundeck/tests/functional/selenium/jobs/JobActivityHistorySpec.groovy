@@ -23,8 +23,8 @@ class JobActivityHistorySpec extends SeleniumBase {
      * Setup the test environment.
      */
     def setup() {
-        // Set up WebDriverWait to wait up to 30 seconds for elements that take time to appear or change
-        wait = new WebDriverWait(getDriver(), Duration.ofSeconds(60))
+        // Set up WebDriverWait to wait up to 35 seconds for elements that take time to appear or change
+        wait = new WebDriverWait(getDriver(), Duration.ofSeconds(35))
         (go LoginPage).login(TEST_USER, TEST_PASS)
         def jobDefinition = JobUtils.generateScheduledExecutionXml("TestJobActivityHistory")
         def client = getClient()
@@ -43,11 +43,13 @@ class JobActivityHistorySpec extends SeleniumBase {
         when: "Navigate to the Job List Page"
         def activityPage = go ActivityPage, SELENIUM_BASIC_PROJECT
         activityPage.loadActivityPageForProject(SELENIUM_BASIC_PROJECT)
+        println "Navigated to Activity Page"
 
         then: "Validate job execution is listed in Activity History"
         activityPage.validatePage()
         wait.until {
-            !activityPage.getActivityRows().isEmpty()
+            def activityRows = activityPage.getActivityRows()
+            !activityRows.isEmpty()
         }
     }
 
