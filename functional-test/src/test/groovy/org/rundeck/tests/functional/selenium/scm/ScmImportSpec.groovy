@@ -46,7 +46,7 @@ class ScmImportSpec extends SeleniumBase  {
         ConfigureScmPage configureScmPage = go(ConfigureScmPage, PROJECT_NAME)
         configureScmPage.enableScmImport()
 
-        Thread.sleep(WaitingTime.MODERATE.toMillis())
+        Thread.sleep(WaitingTime.EXCESSIVE.toMillis())
         when:
         List<String> chosenTrackedItems = page(PerformScmActionPage, PROJECT_NAME).getChosenTrackedItems()
 
