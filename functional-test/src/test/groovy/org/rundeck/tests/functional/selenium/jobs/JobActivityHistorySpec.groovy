@@ -48,8 +48,7 @@ class JobActivityHistorySpec extends SeleniumBase {
         then: "Validate job execution is listed in Activity History"
         activityPage.validatePage()
         wait.until {
-            def activityRows = activityPage.getActivityRows()
-            !activityRows.isEmpty()
+            !activityPage.getActivityRows().isEmpty()
         }
     }
 
