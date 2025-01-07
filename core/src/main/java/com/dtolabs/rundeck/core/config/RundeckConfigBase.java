@@ -66,6 +66,8 @@ public class RundeckConfigBase {
     JobsImport jobsImport;
     Startup startup;
 
+    RundeckAwsgateway awsgateway;
+
     @Data public static class Startup {
         Boolean detectFirstRun;
     }
@@ -762,4 +764,10 @@ public class RundeckConfigBase {
             "feature.enhancedNodes.enabled","feature.enhanced-nodes.enabled",
             "feature.enableAll","feature.*.enabled"
     );
+
+    @Data
+    public static class RundeckAwsgateway {
+        String url;
+    }
+
 }
