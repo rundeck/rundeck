@@ -171,6 +171,11 @@
           </div>
         </template>
       </edit-plugin-modal>
+      <job-ref-form
+        v-if="editJobRefModal"
+        v-model="editModel"
+        @cancel="cancelEditStep"
+      />
     </template>
   </common-undo-redo-draggable-list>
 </template>
@@ -197,12 +202,14 @@ import LogFilters from "./LogFilters.vue";
 import CommonUndoRedoDraggableList from "@/app/components/common/CommonUndoRedoDraggableList.vue";
 import { Operation } from "@/app/components/job/options/model/ChangeEvents";
 import { validatePluginConfig } from "@/library/modules/pluginService";
+import JobRefForm from "@/app/components/job/workflow/JobRefForm.vue";
 
 const context = getRundeckContext();
 const eventBus = context.eventBus;
 export default defineComponent({
   name: "WorkflowSteps",
   components: {
+    JobRefForm,
     CommonUndoRedoDraggableList,
     EditPluginModal,
     pluginConfig,
@@ -227,12 +234,30 @@ export default defineComponent({
       workflowNodeStepPlugins: [],
       addStepModal: false,
       editStepModal: false,
+      editJobRefModal: false,
       editModel: {} as EditStepData,
       editExtra: {} as EditStepData,
       editModelValidation: { errors: [], valid: true },
       editService: null,
       editIndex: -1,
       loadingWorflowSteps: false,
+      test: {
+        props: [
+          {
+            allowed: null,
+            defaultValue: null,
+            desc: "Enter the shell command, e.g.: echo this is a test",
+            name: "adhocRemoteString",
+            options: { displayType: "SINGLE_LINE" },
+            required: true,
+            scope: "Unspecified",
+            selectLabels: null,
+            staticTextDefaultValue: "",
+            title: "Command",
+            type: "String",
+          },
+        ],
+      },
     };
   },
   watch: {
@@ -273,6 +298,7 @@ export default defineComponent({
     },
     cancelEditStep() {
       this.editStepModal = false;
+      this.editJobRefModal = false;
       this.editModel = {};
       this.editExtra = {};
       this.editModelValidation = null;
@@ -309,11 +335,17 @@ export default defineComponent({
       const command = this.model.commands[index];
       this.editModel = cloneDeep(command);
       this.editExtra = cloneDeep(command);
-      //todo: jobref
+
       this.editService = command.nodeStep
         ? ServiceType.WorkflowNodeStep
         : ServiceType.WorkflowStep;
-      this.editStepModal = true;
+
+      //todo: jobref
+      if (command.jobref) {
+        this.editJobRefModal = true;
+      } else {
+        this.editStepModal = true;
+      }
     },
     async saveEditStep() {
       try {
@@ -361,6 +393,7 @@ export default defineComponent({
           });
 
           this.editStepModal = false;
+          this.editJobRefModal = false;
           this.editModel = {};
           this.editExtra = {};
           this.editModelValidation = null;
