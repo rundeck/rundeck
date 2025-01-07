@@ -45,10 +45,8 @@ class ActivityPage extends BasePage implements ActivityListTrait{
         els By.xpath("//*[contains(text(),'${jobName}')]")
     }
 
-    static void validateFirstActivityRow(List<WebElement> activityList) {
-        if (activityList == null || activityList.isEmpty()) {
-            throw new IllegalStateException("Activity list is empty, no rows to validate.")
-        }
+    static boolean hasActivity(List<WebElement> activityList) {
+        !!activityList
 
     }
 }

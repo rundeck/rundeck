@@ -19,9 +19,6 @@ class JobActivityHistorySpec extends SeleniumBase {
         setupProject(SELENIUM_BASIC_PROJECT)
     }
 
-    /**
-     * Setup the test environment.
-     */
     def setup() {
         // Set up WebDriverWait to wait up to 35 seconds for elements that take time to appear or change
         wait = new WebDriverWait(getDriver(), Duration.ofSeconds(35))
@@ -29,26 +26,20 @@ class JobActivityHistorySpec extends SeleniumBase {
         def jobDefinition = JobUtils.generateScheduledExecutionXml("TestJobActivityHistory")
         def client = getClient()
         def response = JobUtils.createJob(SELENIUM_BASIC_PROJECT, jobDefinition, client)
-        if (response.succeeded.size() == 0) {
-            throw new RuntimeException("Failed to create job")
-        }
         jobId = response.succeeded[0].id
-        def runResponse = JobUtils.executeJob(jobId, client)
-        if (runResponse.code() != 200) {
-            throw new RuntimeException("Failed to execute job")
-        }
+        assert JobUtils.executeJob(jobId, client).isSuccessful()
     }
+
 
     def "review job activity history from Job List Page"() {
         when: "Navigate to the Job List Page"
-        def activityPage = go ActivityPage, SELENIUM_BASIC_PROJECT
-        activityPage.loadActivityPageForProject(SELENIUM_BASIC_PROJECT)
-        println "Navigated to Activity Page"
+        def JobListPage = go JobListPage, SELENIUM_BASIC_PROJECT
+        JobListPage.loadJobListForProject(SELENIUM_BASIC_PROJECT)
 
         then: "Validate job execution is listed in Activity History"
-        activityPage.validatePage()
+        JobListPage.validatePage()
         wait.until {
-            !activityPage.getActivityRows().isEmpty()
+            !JobListPage.getActivityRows().isEmpty()
         }
     }
 
@@ -56,18 +47,19 @@ class JobActivityHistorySpec extends SeleniumBase {
         when: "Navigate to the Job List Page and apply a saved filter"
         def jobListPage = go JobListPage, SELENIUM_BASIC_PROJECT
         jobListPage.clickAnyTimeButton()
-                    .clickLastWeekButton()
-                     .clickSaveFilterButton()
-                      .enterFilterName("testFilter")
-                      .confirmFilterSave()
-                      .openFilterDropdown()
-                      .selectSavedFilter()
-
-        then: "Wait for the job to complete and validate the saved filter is applied"
-        wait.until {
-            !jobListPage.getActivityRows().isEmpty()
+                .clickLastWeekButton()
+                .clickSaveFilterButton()
+                .enterFilterName("TestFilter")
+                .confirmFilterSave()
+                .openFilterDropdown()
+                .selectSavedFilter()
+        then: "Validate the saved filter is applied"
+        wait.until{
+            jobListPage.getAppliedFilterName() == "TestFilter"
         }
-    }
+
+        }
+
 
     def "review job activity history from Activity Page"() {
         when: "Navigate to the Activity Page"
@@ -76,7 +68,6 @@ class JobActivityHistorySpec extends SeleniumBase {
         activityPage.loadActivityPageForProject(SELENIUM_BASIC_PROJECT)
 
         then: "Validate job execution is listed in Activity History"
-        activityPage.validateFirstActivityRow(activityPage.getActivityRows())
-
+        ActivityPage.hasActivity(activityPage.getActivityRows())
     }
 }

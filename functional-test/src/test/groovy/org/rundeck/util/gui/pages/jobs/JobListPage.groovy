@@ -61,6 +61,7 @@ class JobListPage extends BasePage implements ActivityListTrait {
     static final By EVENT_ICON = By.cssSelector("td.eventicon")
     static final By ANY_TIME_BUTTON = By.cssSelector("span[data-test-id='dropdown-toggle']")
     static final By IN_THE_LAST_WEEK_BUTTON = By.cssSelector("a[data-test-id='period-option']")
+    static final By APPLIED_FILTER_NAME = By.cssSelector("span[data-test-id='filter-name']")
 
     JobListPage clickAnyTimeButton() {
         waitForElementVisible(ANY_TIME_BUTTON).click()
@@ -104,6 +105,9 @@ class JobListPage extends BasePage implements ActivityListTrait {
     }
 
 
+    String getAppliedFilterName() {
+        return waitForElementVisible(APPLIED_FILTER_NAME).getText()
+    }
     String getFirstRowStatus() {
         return getActivityRows().get(0)
                 .findElement(EVENT_ICON)
