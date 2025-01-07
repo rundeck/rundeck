@@ -9,7 +9,6 @@ const rundeckContext = getRundeckContext();
 const FilterInputComp = defineComponent({
   name: "NodeFilter",
   components: { NodeFilterInput },
-  inject: ["addUiMessages"],
   props: ["itemData", "extraAttrs"],
   data() {
     return {
@@ -238,7 +237,7 @@ function init() {
             };
           },
           template: `
-                      <filter-input-comp :project="project" :item-data="itemData"/>
+                      <filter-input-comp :project="project" :item-data="itemData" :extra-attrs="itemData.extraAttrs"/>
                     `,
         }),
       ),

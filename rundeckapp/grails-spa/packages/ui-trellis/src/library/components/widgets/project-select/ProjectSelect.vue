@@ -24,24 +24,26 @@
           key-field="name"
           class="scroller"
         >
-          <a
-            v-if="mode === 'single'"
-            role="button"
-            tabindex="0"
-            class="scroller__item"
-            :title="item.name"
-            :href="itemHref(item)"
-          >
+          <slot v-if="mode === 'single'" name="single" :item="item">
+            <a
+
+                role="button"
+                tabindex="0"
+                class="scroller__item"
+                :title="item.name"
+                :href="itemHref(item)"
+            >
             <span class="text-ellipsis">
               {{ item.label || item.name }}
               <span
-                v-if="searchTerm && item.label && item.label !== item.name"
-                class="text-muted"
+                  v-if="searchTerm && item.label && item.label !== item.name"
+                  class="text-muted"
               >
                 {{ item.name }}
               </span>
             </span>
-          </a>
+            </a>
+          </slot>
           <label
             class="scroller__item scroller__item__checkbox"
             v-else-if="mode === 'multi'"

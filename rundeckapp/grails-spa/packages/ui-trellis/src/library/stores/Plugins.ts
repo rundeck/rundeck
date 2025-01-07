@@ -19,6 +19,27 @@ export class PluginStore {
   @Serial
   async load(service: string): Promise<void> {
     if (this.pluginsByService[service]) return void 0;
+    if (
+      service === ServiceType.WorkflowNodeStep ||
+      service === ServiceType.WorkflowStep
+    ) {
+      this.plugins.push({
+        artifactName: "Job reference",
+        author: "",
+        builtin: true,
+        id: "",
+        name: "job.reference",
+        pluginVersion: "",
+        service: service,
+        description: "Run a job on the remote node",
+        title: "Job reference",
+        providerMetadata: {
+          glyphicon: "book",
+        },
+        isHighlighted: true,
+        highlightedOrder: 5,
+      });
+    }
     const plugins = await this.client.apiRequest({
       pathTemplate: "api/51/plugin/list",
       queryParameters: {
