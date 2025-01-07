@@ -268,16 +268,6 @@ jobs:
       - run-build-step:
           step-name: Build War
           command: rundeck_war_build
-      - snyk/install
-      - run-build-step:
-          step-name: Configure Snyk
-          command: snyk config set org='rundeck-core-mtgfa3XPaKGbFtHj9aRXhg' # this will need to be updated if the project changes owners
-      - run-build-step:
-          step-name: Snyk monitor
-          command: snyk monitor --all-projects --detection-depth=10 --scan-all-unmanaged # run monitor first to push results to webui
-      - run-build-step:
-          step-name: Snyk test
-          command: snyk test ~/workspace --severity-threshold=low --all-projects --detection-depth=10 --scan-all-unmanaged # will fail step if any results are found
       - run-build-step:
           step-name: Build And Push Docker Images
           command: |
@@ -361,6 +351,24 @@ jobs:
       - run-build-step:
           step-name: Run Redocly OpenAPI Linting
           command: openapi_tests
+
+  #Snyk tests
+  test-snyk:
+    <<: *job-defaults
+    executor:
+      name: docker-builder
+    steps:
+      - checkout
+      - install-build-dependencies
+      - attach_workspace:
+          at: ~/workspace
+      - snyk/install
+      - run-build-step:
+          step-name: Configure Snyk
+          command: snyk config set org='rundeck-core-mtgfa3XPaKGbFtHj9aRXhg' # this will need to be updated if the project changes owners
+      - run-build-step:
+          step-name: Run Snyk Test
+          command: snyk_tests
 
   # Trigger pipeline in the enterprise repo
   trigger-enterprise:
@@ -482,27 +490,6 @@ jobs:
       - save-build-cache
       - store_artifacts:
           path: ~/workspace/packaging/packaging/build/distributions
-
-  # Snyk implementation for repos not in PD Org.
-  snyk-test:
-    <<: *job-defaults
-    executor:
-      name: docker-builder
-    steps:
-      - setup_docker
-      - checkout
-      - attach_workspace:
-          at: ~/workspace
-      - snyk/install
-      - run-build-step:
-          step-name: Configure Snyk
-          command: snyk config set org='rundeck-core-mtgfa3XPaKGbFtHj9aRXhg' # this will need to be updated if the project changes owners
-      - run-build-step:
-          step-name: Snyk monitor
-          command: snyk monitor --all-projects --detection-depth=10 --scan-all-unmanaged # run monitor first to push results to webui
-      - run-build-step:
-            step-name: Snyk test
-            command: snyk test ~/workspace --severity-threshold=low --all-projects --detection-depth=10 --scan-all-unmanaged # will fail step if any results are found
 
   # Run Testdeck job on docker executor.
   test-docker:
@@ -687,12 +674,12 @@ workflows:
           name: T Packaging
           <<: *require-build
           <<: *slack-defaults
-#      - snyk-test:
-#          name: Snyk Security Scan
-#          <<: *require-build
-#          context:
-#            - Snyk
-#            - Cloudsmith
+      - test-snyk:
+          name: Snyk Security Scan
+          <<: *require-build
+          context:
+            - Snyk
+            - Cloudsmith
       - wizcli-scan:
           name: WizCLI Scan Preview
           <<: *require-build
