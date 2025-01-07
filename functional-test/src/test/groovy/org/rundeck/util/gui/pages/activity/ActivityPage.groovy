@@ -45,8 +45,4 @@ class ActivityPage extends BasePage implements ActivityListTrait{
         els By.xpath("//*[contains(text(),'${jobName}')]")
     }
 
-    static boolean hasActivity(List<WebElement> activityList) {
-        !!activityList
-
-    }
 }

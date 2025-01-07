@@ -20,8 +20,8 @@ class JobActivityHistorySpec extends SeleniumBase {
     }
 
     def setup() {
-        // Set up WebDriverWait to wait up to 35 seconds for elements that take time to appear or change
-        wait = new WebDriverWait(getDriver(), Duration.ofSeconds(35))
+        // Set up WebDriverWait to wait up to 30 seconds for elements that take time to appear or change
+        wait = new WebDriverWait(getDriver(), Duration.ofSeconds(30))
         (go LoginPage).login(TEST_USER, TEST_PASS)
         def jobDefinition = JobUtils.generateScheduledExecutionXml("TestJobActivityHistory")
         def client = getClient()
@@ -34,16 +34,16 @@ class JobActivityHistorySpec extends SeleniumBase {
     def "review job activity history from Job List Page"() {
         when: "Navigate to the Job List Page"
         def JobListPage = go JobListPage, SELENIUM_BASIC_PROJECT
-        JobListPage.loadJobListForProject(SELENIUM_BASIC_PROJECT)
 
         then: "Validate job execution is listed in Activity History"
         JobListPage.validatePage()
         wait.until {
-            !JobListPage.getActivityRows().isEmpty()
+        !JobListPage.getActivityRows().isEmpty()
+
         }
     }
 
-    def "validate activity history from Job List Page Saved Filters"() {
+    def "review job activity history from Job List Page Saved Filters"() {
         when: "Navigate to the Job List Page and apply a saved filter"
         def jobListPage = go JobListPage, SELENIUM_BASIC_PROJECT
         jobListPage.clickAnyTimeButton()
@@ -55,7 +55,7 @@ class JobActivityHistorySpec extends SeleniumBase {
                 .selectSavedFilter()
         then: "Validate the saved filter is applied"
         wait.until{
-            jobListPage.getAppliedFilterName() == "TestFilter"
+            jobListPage.getAppliedFilterName()=="TestFilter"
         }
 
         }
@@ -68,6 +68,7 @@ class JobActivityHistorySpec extends SeleniumBase {
         activityPage.loadActivityPageForProject(SELENIUM_BASIC_PROJECT)
 
         then: "Validate job execution is listed in Activity History"
-        ActivityPage.hasActivity(activityPage.getActivityRows())
+        !activityPage.getActivityRows().isEmpty()
+
     }
 }
