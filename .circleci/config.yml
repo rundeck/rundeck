@@ -359,11 +359,14 @@ jobs:
       name: docker-builder
       resource_class: large
     steps:
+      - setup_docker:
+          docker_layer_caching: true
       - checkout
       - restore-build-cache
       - install-build-dependencies
-      - attach_workspace:
-          at: ~/workspace
+#      - run-build-step:
+#          step-name: Build War
+#          command: rundeck_war_build
       - run-build-step:
           step-name: Assemble rundeck
           command: rundeck_assemble_build
@@ -687,7 +690,7 @@ workflows:
           <<: *slack-defaults
       - test-snyk:
           name: Snyk Security Scan
-          <<: *require-build
+#          <<: *require-build
           context:
             - Snyk
             - Cloudsmith
