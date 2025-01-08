@@ -73,8 +73,8 @@ export async function storageKeyExists(path: string): Promise<Boolean> {
 }
 
 const KeyStorageContentTypes = {
-  private: 'application/octet-stream',
-  public: 'application/x-pgp-keys',
+  privateKey: 'application/octet-stream',
+  publicKey: 'application/x-pgp-keys',
   password: 'application/x-rundeck-data-password',
 }
 
