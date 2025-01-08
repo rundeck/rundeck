@@ -359,16 +359,26 @@ jobs:
       name: docker-builder
     steps:
       - checkout
+      - restore-build-cache
       - install-build-dependencies
       - attach_workspace:
           at: ~/workspace
+      - run-build-step:
+          step-name: Assemble rundeck
+          command: rundeck_assemble_build
       - snyk/install
       - run-build-step:
           step-name: Configure Snyk
           command: snyk config set org='rundeck-core-mtgfa3XPaKGbFtHj9aRXhg' # this will need to be updated if the project changes owners
       - run-build-step:
+          step-name: Run Snyk Monitors
+          command: snyk monitor --all-projects --detection-depth=10 --scan-all-unmanaged # run monitor first to push results to webui
+      - run-build-step:
           step-name: Run Snyk Test
-          command: snyk_tests
+          command: snyk test --severity-threshold=low --all-projects --detection-depth=10 --scan-all-unmanaged # will fail step if any results are
+#      - run-build-step:
+#          step-name: Run Snyk Test
+#          command: snyk_tests
 
   # Trigger pipeline in the enterprise repo
   trigger-enterprise:
