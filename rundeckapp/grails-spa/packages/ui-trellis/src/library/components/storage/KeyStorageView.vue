@@ -338,6 +338,11 @@
 </template>
 
 <script lang="ts">
+import { listProjects } from "../../services/projects";
+import {
+  storageKeyDelete,
+  storageKeyGetMetadata,
+} from "../../services/storage";
 import moment from "moment";
 import { getRundeckContext } from "../../index";
 import { defineComponent } from "vue";
@@ -462,7 +467,7 @@ export default defineComponent({
     },
     async loadProjectNames() {
       try {
-        const response = await getRundeckContext().rundeckClient.projectList();
+        const response = await listProjects();
 
         this.linksTitle = "Projects";
         this.jumpLinks = response.map((v: any) => {
@@ -482,13 +487,7 @@ export default defineComponent({
       const rundeckContext = getRundeckContext();
       this.isConfirmingDeletion = false;
 
-      const resp = await rundeckContext.rundeckClient.storageKeyDelete(
-        this.selectedKey.path.slice(5),
-      );
-      if (resp._response.status >= 400) {
-        this.errorMsg = resp.error;
-        return;
-      }
+      const resp = await storageKeyDelete(this.selectedKey.path.slice(5));
       this.selectedKey = {};
       this.isSelectedKey = false;
 
@@ -535,15 +534,13 @@ export default defineComponent({
       }
       this.loading = true;
 
-      const rundeckContext = getRundeckContext();
       const getPath = this.calcBrowsePath(this.path);
 
       const requestOptions = {
         queryParameters: forceRefresh ? { refresh: "true" } : {},
       };
 
-      rundeckContext.rundeckClient
-        .storageKeyGetMetadata(getPath, requestOptions)
+      storageKeyGetMetadata(getPath, requestOptions)
         .then((result: any) => {
           this.directories = [];
           this.files = [];
@@ -784,22 +781,18 @@ export default defineComponent({
       }
     },
     defaultSelectKey(path: any) {
-      const rundeckContext = getRundeckContext();
-
-      rundeckContext.rundeckClient
-        .storageKeyGetMetadata(this.calcBrowsePath(path))
-        .then((result: any) => {
-          if (result.resources != null) {
-            result.resources.forEach((resource: any) => {
-              if (resource.type === "file") {
-                if (resource.path === path) {
-                  this.selectedKey = resource;
-                  this.isSelectedKey = true;
-                }
+      storageKeyGetMetadata(this.calcBrowsePath(path)).then((result: any) => {
+        if (result.resources != null) {
+          result.resources.forEach((resource: any) => {
+            if (resource.type === "file") {
+              if (resource.path === path) {
+                this.selectedKey = resource;
+                this.isSelectedKey = true;
               }
-            });
-          }
-        });
+            }
+          });
+        }
+      });
     },
     loadUpPath() {
       let upPath = "";

@@ -237,11 +237,12 @@
 </template>
 
 <script lang="ts">
-import { getRundeckContext } from "../../index";
-import { defineComponent } from "vue";
-import type { PropType } from "vue";
-import InputType from "../../types/InputType";
-import KeyType from "../../types/KeyType";
+import {storageKeyCreate, storageKeyExists, storageKeyGetMetadata, storageKeyUpdate,} from '@/library/services/storage'
+import type {PropType} from 'vue'
+import {defineComponent} from 'vue'
+import {getRundeckContext} from '../../index'
+import InputType from '../../types/InputType'
+import KeyType from '../../types/KeyType'
 
 export interface UploadSetting {
   modifyMode: boolean;
@@ -375,63 +376,44 @@ export default defineComponent({
           break;
       }
 
-      const checkKey = await rundeckContext.rundeckClient.storageKeyGetMaterial(
-        fullPath,
-        {},
-      );
-
-      const exists = checkKey._response.status !== 404;
+      const exists = await storageKeyExists(fullPath);
 
       if (exists) {
         if (this.uploadSetting.dontOverwrite) {
           this.uploadSetting.errorMsg = "key already exists";
           return;
-        } else {
-          rundeckContext.rundeckClient
-            .storageKeyUpdate(fullPath, value, {
-              contentType,
-              inputType: this.uploadSetting.inputType,
-              keyType: this.uploadSetting.keyType,
-            })
-            .then((result: any) => {
-              this.$emit("finishEditing", result);
-            })
-            .catch((err: Error) => {
-              let errorMessage = "";
-              if (err?.message) {
-                errorMessage = JSON.parse(err.message)?.message;
-              }
-              this.uploadSetting.errorMsg = errorMessage;
-            });
+        }
+        try {
+          let response=await storageKeyUpdate(fullPath, value, {type: this.uploadSetting.keyType})
+          this.$emit("finishEditing", response);
+        } catch (err) {
+          let errorMessage = "";
+          if (err?.message) {
+            errorMessage = err?.message;
+          }
+          this.uploadSetting.errorMsg = errorMessage;
         }
       } else {
-        rundeckContext.rundeckClient
-          .storageKeyCreate(fullPath, value, {
-            contentType,
-            inputType: this.uploadSetting.inputType,
-            keyType: this.uploadSetting.keyType,
-          })
-          .then((result: any) => {
-            this.getCreatedKey(fullPath).then((r: any) => {
-              this.$emit("keyCreated", this.createdKey);
-              this.$emit("finishEditing", result);
-            });
-          })
-          .catch((err: Error) => {
+        try{
+          let response=await storageKeyCreate(fullPath, value, {type: this.uploadSetting.keyType})
+          this.getCreatedKey(fullPath).then((r: any) => {
+            this.$emit("keyCreated", this.createdKey);
+            this.$emit("finishEditing", response);
+          });
+        }catch(err){
             let errorMessage = "";
             if (err?.message) {
-              errorMessage = JSON.parse(err.message)?.message;
+              errorMessage = err?.message;
             }
             this.uploadSetting.errorMsg = errorMessage;
-          });
+          }
       }
     },
     async getCreatedKey(path: string) {
-      const rundeckContext = getRundeckContext();
-      const result =
-        await rundeckContext.rundeckClient.storageKeyGetMetadata(path);
-      if (result._response.status == 200) {
-        this.createdKey = result;
+      try {
+        this.createdKey = await storageKeyGetMetadata(path);
+      } catch (err) {
+        //todo: show error message
       }
     },
     calcBrowsePath(path: string) {
@@ -443,9 +425,7 @@ export default defineComponent({
       return browse;
     },
     loadKeys() {
-      const rundeckContext = getRundeckContext();
-      rundeckContext.rundeckClient
-        .storageKeyGetMetadata(this.browsePath)
+      storageKeyGetMetadata(this.browsePath)
         .then((result: any) => {
           this.directories = [];
           this.files = [];

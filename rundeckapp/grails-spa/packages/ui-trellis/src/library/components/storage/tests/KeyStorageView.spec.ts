@@ -1,37 +1,52 @@
 import { flushPromises, mount } from "@vue/test-utils";
 import { ComponentPublicInstance } from "vue";
+import {StorageKeyMetaType} from '../../../types/storage/storageKeyMetaType'
 import KeyStorageView from "../KeyStorageView.vue";
 import { getRundeckContext } from "../../../rundeckService";
+import {listProjects} from "../../../services/projects"
+import {storageKeyGetMetadata,storageKeyDelete} from "../../../services/storage"
 import { Modal } from "uiv";
-jest.mock("../../../rundeckService", () => ({
-  getRundeckContext: jest.fn().mockReturnValue({
-    rdBase: "mockRdBase",
-    rundeckClient: {
-      storageKeyGetMetadata: jest.fn().mockResolvedValue({
-        resources: [
-          {
-            name: "/myKey",
-            path: "/keys/myKey",
-            type: "file",
-            meta: { rundeckKeyType: "private" },
-          },
-          {
-            name: "/key2",
-            path: "/keys/key2",
-            type: "file",
-            meta: { rundeckKeyType: "private" },
-          },
-        ],
-        _response: { status: 200 },
-      }),
-      storageKeyDelete: jest.fn().mockResolvedValue({
-        _response: { status: 200 },
-      }),
-      projectList: jest.fn().mockResolvedValue([]),
-    },
-  }),
-  url: jest.fn().mockReturnValue({ href: "mockHref" }),
+
+
+jest.mock("@/library/rundeckService", () => ({
+  getRundeckContext: jest.fn().mockImplementation(() => ({
+    eventBus: { on: jest.fn(), emit: jest.fn() },
+    rdBase: "http://localhost:4440/",
+    projectName: "testProject",
+    apiVersion: "44",
+  })),
 }));
+jest.mock("../../../services/projects");
+jest.mock("../../../services/storage");
+
+const mockedListProjects = listProjects as jest.MockedFunction<
+  typeof listProjects
+>;
+mockedListProjects.mockResolvedValue([])
+const mockedStorageKeyGetMetadata = storageKeyGetMetadata as jest.MockedFunction<
+  typeof storageKeyGetMetadata
+>;
+mockedStorageKeyGetMetadata.mockResolvedValue({
+  resources: [
+    {
+      name: "/myKey",
+      path: "/keys/myKey",
+      type: "file",
+      meta: { rundeckKeyType: "private" as StorageKeyMetaType },
+    },
+    {
+      name: "/key2",
+      path: "/keys/key2",
+      type: "file",
+      meta: { rundeckKeyType: "private" as StorageKeyMetaType },
+    },
+  ],
+})
+const mockedStorageKeyDelete = storageKeyDelete as jest.MockedFunction<
+  typeof storageKeyDelete
+>;
+mockedStorageKeyDelete.mockResolvedValue(true)
+
 
 // Define the necessary interfaces for the KeyStorageView component
 interface KeyStorageViewComponent extends ComponentPublicInstance {
@@ -145,16 +160,15 @@ describe("KeyStorageView", () => {
     const wrapper = await mountKeyStorageView();
     const vm = wrapper.vm as unknown as KeyStorageViewComponent;
     await wrapper.vm.$nextTick();
-    rundeckClientMock.storageKeyGetMetadata.mockResolvedValueOnce({
+    mockedStorageKeyGetMetadata.mockResolvedValueOnce({
       resources: [
         {
           name: "/key2",
           path: "/keys/key2",
           type: "file",
-          meta: { rundeckKeyType: "private" },
+          meta: { rundeckKeyType: "private" as StorageKeyMetaType },
         },
       ],
-      _response: { status: 200 },
     });
 
     // Ensure we have 2 files before deletion
@@ -177,7 +191,7 @@ describe("KeyStorageView", () => {
     expect(confirmButton.exists()).toBe(true);
     await confirmButton.trigger("click");
     await flushPromises();
-    expect(rundeckClientMock.storageKeyDelete).toHaveBeenCalledWith("/myKey");
+    expect(mockedStorageKeyDelete).toHaveBeenCalledWith("/myKey");
     expect(vm.files[0].name).toBe("/key2");
     expect(vm.files).toHaveLength(1);
   });
