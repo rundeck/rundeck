@@ -2,7 +2,7 @@ import { flushPromises, shallowMount, VueWrapper } from "@vue/test-utils";
 import ExecutionEditor from "../ExecutionEditor.vue";
 import { executionLifecycle, pluginsInitialData } from "./mocks";
 import PluginConfig from "../../../../../library/components/plugins/pluginConfig.vue";
-import PluginDetails from "../../../../../library/components/plugins/PluginDetails.vue";
+jest.mock("../../../services/projects");
 
 jest.mock("@/library/modules/rundeckClient", () => ({
   client: {},
