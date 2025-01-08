@@ -136,11 +136,9 @@ class JobShowPage extends BasePage implements ActivityListTrait {
         }
     }
 
-
     WebElement getJobExecutionDisabledIcon(){
         el jobExecutionDisabledIconBy
     }
-
 
     WebElement getJobDefinitionModal(){
         el jobDefinitionModalBy
@@ -441,4 +439,3 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     }
 
 }
-

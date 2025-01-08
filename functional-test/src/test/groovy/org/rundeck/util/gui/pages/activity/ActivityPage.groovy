@@ -5,7 +5,6 @@ import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
 import org.rundeck.util.container.SeleniumContext
 import org.rundeck.util.gui.pages.BasePage
-import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.rundeck.util.gui.pages.project.ActivityListTrait
 
 @CompileStatic
