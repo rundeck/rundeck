@@ -357,6 +357,7 @@ jobs:
     <<: *job-defaults
     executor:
       name: docker-builder
+      resource_class: large
     steps:
       - checkout
       - restore-build-cache
