@@ -31,8 +31,6 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     protected static final String TEST_RUNDECK_URL = System.getenv("TEST_RUNDECK_URL") ?: System.getProperty("TEST_RUNDECK_URL")
     protected static final String TEST_RUNDECK_TOKEN = System.getenv("TEST_RUNDECK_TOKEN") ?: System.getProperty("TEST_RUNDECK_TOKEN", "admintoken")
     protected static final ObjectMapper MAPPER = new ObjectMapper()
-    private static RdDockerContainer RUNDECK_CONTAINER
-    private static RdContainer RUNDECK_COMPOSE_CONTAINER
 
     ClientProvider getClientProvider() {
         synchronized (CLIENT_PROVIDER_LOCK) {
@@ -58,7 +56,6 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
                 RdDockerContainer rdDockerContainer = new RdDockerContainer(getClass().getClassLoader().getResource(DEFAULT_DOCKERFILE_LOCATION).toURI())
                 rdDockerContainer.start()
                 CLIENT_PROVIDER = rdDockerContainer
-                RUNDECK_CONTAINER = rdDockerContainer
 
 
             } else {
@@ -79,7 +76,6 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
                 )
                 rundeckContainer.start()
                 CLIENT_PROVIDER = rundeckContainer
-                RUNDECK_COMPOSE_CONTAINER = rundeckContainer
             }
 
             return CLIENT_PROVIDER
@@ -520,50 +516,6 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
      */
     static <T> T safelyMap(Response response, Class<T> valueType, Closure<T> unsuccessfulResponseHandler = { null }) {
         response.successful ? MAPPER.readValue(response.body().string(), valueType) :  unsuccessfulResponseHandler(response)
-    }
-
-
-    void dockerNodeAction(String action, String containerId) {
-        def process = "docker ${action} ${containerId}".execute()
-        def code = process.waitFor()
-        if (code != 0) {
-            println(process.getText())
-            throw new RuntimeException("Failed to ${action} container ${containerId}")
-        }
-    }
-
-    String getRundeckContainerId(){
-        if(RUNDECK_COMPOSE_CONTAINER){
-            return RUNDECK_COMPOSE_CONTAINER.getRundeckContainerId()
-        }
-        return RUNDECK_CONTAINER.containerId
-    }
-
-    void waitForRundeckUp(RdClient client){
-        int count = 0
-        def response = null
-        try {
-            response = client.doGet("/system/info")
-        } catch (InvokerInvocationException) {
-            //Here we just ignore the exception since i couldn't find the root cause
-        }catch (ConnectException){
-        }
-        if (response == null || response.code() != 200) {
-            count++
-            hold 30
-
-            if (count < 20) {
-                waitForRundeckUp(client)
-            } else {
-                throw new RuntimeException("Rundeck did not start")
-            }
-        }
-    }
-
-    void restartRundeckContainer() {
-        dockerNodeAction("stop", getRundeckContainerId())
-        dockerNodeAction("start", getRundeckContainerId())
-        waitForRundeckUp(CLIENT_PROVIDER.getClient())
     }
 
 }

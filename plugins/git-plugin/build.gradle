@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-ext.pluginClassNames='org.rundeck.plugin.scm.git.GitExportPluginFactory,org.rundeck.plugin.scm.git.GitImportPluginFactory'
+ext.pluginClassNames='org.rundeck.plugin.scm.git.GitExportPluginFactory,org.rundeck.plugin.scm.git.GitImportPluginFactory,org.rundeck.plugin.scm.git.GitImportSparsePluginFactory,org.rundeck.plugin.scm.git.GitExportSparsePluginFactory'
 ext.pluginName = 'Git Plugin'
 ext.pluginDescription = 'Export and Import Jobs with a Git repository'
 

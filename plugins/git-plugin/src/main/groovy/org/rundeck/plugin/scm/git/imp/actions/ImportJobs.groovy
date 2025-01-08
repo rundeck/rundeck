@@ -35,7 +35,7 @@ import org.rundeck.plugin.scm.git.JobRenamedImp
 /**
  * Action to import selected jobs from git HEAD commit
  */
-class ImportJobs extends BaseAction implements GitImportAction {
+class ImportJobs extends BaseAction implements GitImportAction<GitImportPlugin> {
     ImportJobs(final String id, final String title, final String description, final String iconName) {
         super(id, title, description, iconName)
     }
