@@ -33,13 +33,12 @@ class JobActivityHistorySpec extends SeleniumBase {
 
     def "review job activity history from Job List Page"() {
         when: "Navigate to the Job List Page"
-        def JobListPage = go JobListPage, SELENIUM_BASIC_PROJECT
+        def jobListPage = go JobListPage, SELENIUM_BASIC_PROJECT
 
         then: "Validate job execution is listed in Activity History"
-        JobListPage.validatePage()
+        jobListPage.validatePage()
         wait.until {
-        !JobListPage.getActivityRows().isEmpty()
-
+            !jobListPage.getActivityRows().isEmpty()
         }
     }
 
@@ -53,12 +52,12 @@ class JobActivityHistorySpec extends SeleniumBase {
                 .confirmFilterSave()
                 .openFilterDropdown()
                 .selectSavedFilter()
+
         then: "Validate the saved filter is applied"
-        wait.until{
+        wait.until {
             jobListPage.getAppliedFilterName()=="TestFilter"
         }
-
-        }
+    }
 
 
     def "review job activity history from Activity Page"() {
@@ -68,7 +67,9 @@ class JobActivityHistorySpec extends SeleniumBase {
         activityPage.loadActivityPageForProject(SELENIUM_BASIC_PROJECT)
 
         then: "Validate job execution is listed in Activity History"
-        !activityPage.getActivityRows().isEmpty()
+        wait.until {
+            !activityPage.getActivityRows().isEmpty()
+        }
 
     }
 }
