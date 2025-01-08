@@ -255,7 +255,7 @@
                                         <div class="checkbox flex-none"  style="margin-top: 0;margin-left: 20px;">
                                                 <g:checkBox name="chosenTrackedItem"
                                                             id="chosenTrackedItem${trackedItem.id}"
-                                                            value="${enc(attr:trackedItem.id)}"
+                                                            value="${trackedItem.id}"
                                                             checked="${selectedItems?.contains(trackedItem.id)||trackedItem.selected||(trackedItem.jobId && selected?.contains(trackedItem.jobId))}"/>
                                             <label title="${trackedItem.id}" for="chosenTrackedItem${trackedItem.id}">
                                                 <g:if test="${job}">
