@@ -95,7 +95,55 @@ describe('storage key service', () => {
   })
 
   it('gets key metadata', async () => {
-    let data = {} as StorageKeyListResponse
+    let data = {
+      resources:[
+        {
+          "path": "keys/dingo.key",
+          "type": "file",
+          "name": "dingo.key",
+          "url": "http://localhost:4440/rundeckpro/api/52/storage/keys/dingo.key",
+          "meta": {
+            "Rundeck-content-type": "application/octet-stream",
+            "Rundeck-content-creation-time": "2024-12-18T00:50:57Z",
+            "Rundeck-content-modify-time": "2024-12-18T00:50:57Z",
+            "Rundeck-auth-created-username": "admin",
+            "Rundeck-auth-modified-username": "admin",
+            "Rundeck-key-type": "private",
+            "Rundeck-content-mask": "content"
+          }
+        },
+        {
+          "path": "keys/arfarf",
+          "type": "file",
+          "name": "arfarf",
+          "url": "http://localhost:4440/rundeckpro/api/52/storage/keys/arfarf",
+          "meta": {
+            "Rundeck-content-type": "application/x-rundeck-data-password",
+            "Rundeck-content-creation-time": "2025-01-09T00:07:59Z",
+            "Rundeck-content-modify-time": "2025-01-09T00:07:59Z",
+            "Rundeck-auth-created-username": "admin",
+            "Rundeck-auth-modified-username": "admin",
+            "Rundeck-data-type": "password",
+            "Rundeck-content-mask": "content"
+          }
+        },
+        {
+          "path": "keys/diso.key",
+          "type": "file",
+          "name": "diso.key",
+          "url": "http://localhost:4440/rundeckpro/api/52/storage/keys/diso.key",
+          "meta": {
+            "Rundeck-content-type": "application/octet-stream",
+            "Rundeck-content-creation-time": "2025-01-09T00:07:32Z",
+            "Rundeck-content-modify-time": "2025-01-09T00:07:32Z",
+            "Rundeck-auth-created-username": "admin",
+            "Rundeck-auth-modified-username": "admin",
+            "Rundeck-key-type": "private",
+            "Rundeck-content-mask": "content"
+          }
+        }
+      ]
+    } as StorageKeyListResponse
     axiosMock.get.mockResolvedValue({status: 200, data: data})
     let result = await storageKeyGetMetadata('somepath')
     expect(axiosMock.get).toHaveBeenCalledWith('storage/keys/somepath')
