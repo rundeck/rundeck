@@ -237,7 +237,7 @@
 </template>
 
 <script lang="ts">
-import {storageKeyCreate, storageKeyExists, storageKeyGetMetadata, storageKeyUpdate,} from '@/library/services/storage'
+import {storageKeyCreate, storageKeyExists, storageKeyGetMetadata, storageKeyUpdate,} from '../../services/storage'
 import type {PropType} from 'vue'
 import {defineComponent} from 'vue'
 import {getRundeckContext} from '../../index'
