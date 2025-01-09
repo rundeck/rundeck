@@ -37,8 +37,6 @@
       :model-value="modelValue"
       :storage-filter="storageFilter"
       @update:model-value="onSelectedKeyChange"
-      @close-selector="closeSelector"
-      @open-selector="openSelector"
       @open-editor="openEditor"
     ></key-storage-view>
   </modal>
