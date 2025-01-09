@@ -359,6 +359,8 @@ jobs:
       name: docker-builder
       resource_class: large
     steps:
+      - setup_docker:
+          docker_layer_caching: true
       - checkout
       - restore-build-cache
       - install-build-dependencies
