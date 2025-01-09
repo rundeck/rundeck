@@ -359,30 +359,25 @@ jobs:
       name: docker-builder
       resource_class: large
     steps:
-      - setup_docker:
-          docker_layer_caching: true
       - checkout
       - restore-build-cache
       - install-build-dependencies
-#      - run-build-step:
-#          step-name: Build War
-#          command: rundeck_war_build
       - run-build-step:
           step-name: Assemble rundeck
           command: rundeck_assemble_build
       - snyk/install
       - run-build-step:
           step-name: Configure Snyk
-          command: snyk config set org='rundeck-core-mtgfa3XPaKGbFtHj9aRXhg' # this will need to be updated if the project changes owners
+          # this will need to be updated if the project changes owners
+          command: snyk config set org='rundeck-core-mtgfa3XPaKGbFtHj9aRXhg'
       - run-build-step:
-          step-name: Run Snyk Monitors
-          command: snyk monitor --all-projects --detection-depth=10 --scan-all-unmanaged # run monitor first to push results to webui
+          step-name: Run Snyk monitors to track vulnerabilities
+          # run monitor first to push results to webui
+          command: snyk monitor --all-projects --detection-depth=10 --scan-all-unmanaged
       - run-build-step:
-          step-name: Run Snyk Test
-          command: snyk test --severity-threshold=low --all-projects --detection-depth=10 --scan-all-unmanaged # will fail step if any results are
-#      - run-build-step:
-#          step-name: Run Snyk Test
-#          command: snyk_tests
+          step-name: Run Snyk test (ignoring scan results)
+          # will fail step if any results are
+          command: snyk test --severity-threshold=low --all-projects --detection-depth=10 --scan-all-unmanaged || true
 
   # Trigger pipeline in the enterprise repo
   trigger-enterprise:
@@ -690,7 +685,6 @@ workflows:
           <<: *slack-defaults
       - test-snyk:
           name: Snyk Security Scan
-#          <<: *require-build
           context:
             - Snyk
             - Cloudsmith

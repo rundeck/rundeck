@@ -129,16 +129,3 @@ openapi_tests() {
         --skip-rule=no-invalid-media-type-examples
 }
 
-snyk_tests() {
-    # Extract jar content
-    mkdir -p snyk-tests-dir
-    cd snyk-tests-dir
-    find "${RUNDECK_WAR_DIR}" -name '*.war' -exec jar xvf \{\} \;
-
-    # Execute snyk tests
-    snyk monitor --detection-depth=10 --scan-all-unmanaged # run monitor first to push results to webui
-    snyk test --severity-threshold=low --detection-depth=10 --scan-all-unmanaged
-
-     # Just in case current path is important to the subsequent steps
-    cd ..
-}
