@@ -1,38 +1,11 @@
 import KeyType from '../types/KeyType'
-import {StorageKeyMetaType} from '../types/storage/storageKeyMetaType'
 import {api} from './api'
-
-/**
- * An interface representing StorageKeyListResponseMeta.
- */
-export interface StorageKeyListResponseMeta {
-  /**
-   * Possible values include: 'private', 'public'
-   */
-  rundeckKeyType?: StorageKeyMetaType;
-  rundeckContentMask?: string;
-  rundeckContentSize?: string;
-  rundeckContentType?: string;
-}
-
-/**
- * An interface representing StorageKeyMetadataMeta.
- */
-export interface StorageKeyMetadataMeta {
-  /**
-   * Possible values include: 'private', 'public'
-   */
-  rundeckKeyType?: StorageKeyMetaType;
-  rundeckContentMask?: string;
-  rundeckContentSize?: string;
-  rundeckContentType?: string;
-}
 
 /**
  * An interface representing StorageKeyMetadata.
  */
 export interface StorageKeyMetadata {
-  meta?: StorageKeyMetadataMeta;
+  meta?: any;
   url?: string;
   name?: string;
   type?: string;

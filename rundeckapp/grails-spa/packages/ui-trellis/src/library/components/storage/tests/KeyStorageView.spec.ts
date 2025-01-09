@@ -1,12 +1,10 @@
-import { flushPromises, mount } from "@vue/test-utils";
-import { ComponentPublicInstance } from "vue";
-import {StorageKeyMetaType} from '../../../types/storage/storageKeyMetaType'
-import KeyStorageView from "../KeyStorageView.vue";
-import { getRundeckContext } from "../../../rundeckService";
-import {listProjects} from "../../../services/projects"
-import {storageKeyGetMetadata,storageKeyDelete} from "../../../services/storage"
-import { Modal } from "uiv";
-
+import {flushPromises, mount} from '@vue/test-utils'
+import {Modal} from 'uiv'
+import {ComponentPublicInstance} from 'vue'
+import {getRundeckContext} from '../../../rundeckService'
+import {listProjects} from '../../../services/projects'
+import {storageKeyDelete, storageKeyGetMetadata} from '../../../services/storage'
+import KeyStorageView from '../KeyStorageView.vue'
 
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
@@ -32,13 +30,13 @@ mockedStorageKeyGetMetadata.mockResolvedValue({
       name: "/myKey",
       path: "/keys/myKey",
       type: "file",
-      meta: { rundeckKeyType: "private" as StorageKeyMetaType },
+      meta: {'Rundeck-key-type': 'private'},
     },
     {
       name: "/key2",
       path: "/keys/key2",
       type: "file",
-      meta: { rundeckKeyType: "private" as StorageKeyMetaType },
+      meta: {'Rundeck-key-type': 'private'},
     },
   ],
 })
@@ -50,9 +48,9 @@ mockedStorageKeyDelete.mockResolvedValue(true)
 
 // Define the necessary interfaces for the KeyStorageView component
 interface KeyStorageViewComponent extends ComponentPublicInstance {
-  files: { name: string; path: string; meta: { rundeckKeyType: string } }[];
+  files: { name: string; path: string; meta: { 'Rundeck-key-type': string } }[];
   isSelectedKey: boolean;
-  selectedKey: { name: string; path: string; meta: { rundeckKeyType: string } };
+  selectedKey: { name: string; path: string; meta: { 'Rundeck-key-type': string } };
   confirmDeleteKey: () => Promise<void>;
   loadKeys: () => Promise<void>;
 }
@@ -92,13 +90,13 @@ describe("KeyStorageView", () => {
         name: "/myKey",
         path: "/keys/myKey",
         type: "file",
-        meta: { rundeckKeyType: "private" },
+        meta: {'Rundeck-key-type': 'private'},
       },
       {
         name: "/key2",
         path: "/keys/key2",
         type: "file",
-        meta: { rundeckKeyType: "private" },
+        meta: {'Rundeck-key-type': 'private'},
       },
     ];
     rundeckClientMock = getRundeckContext().rundeckClient;
@@ -166,7 +164,7 @@ describe("KeyStorageView", () => {
           name: "/key2",
           path: "/keys/key2",
           type: "file",
-          meta: { rundeckKeyType: "private" as StorageKeyMetaType },
+          meta: {'Rundeck-key-type': 'private'},
         },
       ],
     });

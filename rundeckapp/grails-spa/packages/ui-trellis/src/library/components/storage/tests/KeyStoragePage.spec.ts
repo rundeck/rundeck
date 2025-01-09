@@ -1,7 +1,6 @@
 import { flushPromises, mount, VueWrapper } from "@vue/test-utils";
 import { ComponentPublicInstance } from "vue";
 import {listProjects} from '../../../services/projects'
-import {StorageKeyMetaType} from '../../../types/storage/storageKeyMetaType'
 import KeyStoragePage from "../KeyStoragePage.vue";
 import {
   storageKeyGetMetadata,
@@ -35,7 +34,7 @@ mockedStorageKeyGetMetadata.mockResolvedValue({resources: [
       name: "newKey",
       path: "/keys/newKey",
       type: "file",
-      meta: { rundeckKeyType: "private" as StorageKeyMetaType},
+      meta: { 'Rundeck-key-type': "private"},
     },
   ]})
 interface KeyStoragePageData {
@@ -143,7 +142,7 @@ describe("KeyStoragePage.vue", () => {
           name: "testKey",
           path: "/keys/testKey",
           type: "file",
-          meta: { rundeckKeyType: "private" as StorageKeyMetaType},
+          meta: { 'Rundeck-key-type': "private" },
         },
       ],
     });
@@ -152,7 +151,7 @@ describe("KeyStoragePage.vue", () => {
       name: "newKey",
       path: "/keys/newKey",
       keyType: "privateKey",
-      meta: { rundeckKeyType: "private"  as StorageKeyMetaType},
+      meta: { 'Rundeck-key-type': "private"  },
     };
     await flushPromises();
     await wrapper.vm.$nextTick();
