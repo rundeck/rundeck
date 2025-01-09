@@ -35,6 +35,7 @@
       :root-path="rootPath"
       :allow-upload="allowUpload"
       :model-value="modelValue"
+      :storage-filter="storageFilter"
       @update:model-value="onSelectedKeyChange"
       @close-selector="closeSelector"
       @open-selector="openSelector"
@@ -53,7 +54,6 @@
     <key-storage-edit
       :upload-setting="uploadSetting"
       :root-path="rootPath"
-      :storage-filter="storageFilter"
       @cancel-editing="handleCancelEditing"
       @finish-editing="handleFinishEditing"
     ></key-storage-edit>
