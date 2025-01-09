@@ -262,11 +262,6 @@ export interface UploadSetting {
 export default defineComponent({
   name: "KeyStorageEdit",
   props: {
-    storageFilter: {
-      type: String,
-      required: false,
-      default: "",
-    },
     uploadSetting: {
       type: Object as PropType<UploadSetting>,
       required: true,
