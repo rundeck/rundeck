@@ -128,4 +128,3 @@ openapi_tests() {
         --skip-rule=operation-4xx-response \
         --skip-rule=no-invalid-media-type-examples
 }
-
