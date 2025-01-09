@@ -95,23 +95,6 @@ export default defineComponent({
       }
       return path;
     },
-    allowedResource(meta: any) {
-      const filterArray = this.storageFilter.split("=");
-      const key = filterArray[0];
-      const value = filterArray[1];
-      if (key === "Rundeck-key-type") {
-        if (value === meta["rundeckKeyType"]) {
-          return true;
-        }
-      } else {
-        if (key === "Rundeck-data-type") {
-          if (value === meta["Rundeck-data-type"]) {
-            return true;
-          }
-        }
-      }
-      return false;
-    },
     beforeModalClose(args: string | Array<any>) {
       if (args === "ok") {
         // Save the selected value - Emit a key changed event with the selected value
