@@ -303,23 +303,6 @@ export default defineComponent({
     },
   },
   methods: {
-    allowedResource(meta: any) {
-      const filterArray = this.storageFilter.split("=");
-      const key = filterArray[0];
-      const value = filterArray[1];
-      if (key == "Rundeck-key-type") {
-        if (value === meta["rundeckKeyType"]) {
-          return true;
-        }
-      } else {
-        if (key == "Rundeck-data-type") {
-          if (value === meta["Rundeck-data-type"]) {
-            return true;
-          }
-        }
-      }
-      return false;
-    },
     handleCancel() {
       this.$emit("cancelEditing");
     },
@@ -423,57 +406,6 @@ export default defineComponent({
         browse = browse.substring(5);
       }
       return browse;
-    },
-    loadKeys() {
-      storageKeyGetMetadata(this.browsePath)
-        .then((result: any) => {
-          this.directories = [];
-          this.files = [];
-
-          if (result.resources != null) {
-            result.resources.forEach((resource: any) => {
-              if (!resource) return;
-              if (resource.type === "directory") {
-                this.directories.push(resource);
-
-                this.directories.sort((obj1: any, obj2: any) => {
-                  if (obj1.path > obj2.path) {
-                    return 1;
-                  }
-
-                  if (obj1.path < obj2.path) {
-                    return -1;
-                  }
-                  return 0;
-                });
-              }
-
-              if (resource.type === "file") {
-                if (this.storageFilter != null) {
-                  if (this.allowedResource(resource.meta)) {
-                    this.files.push(resource);
-                  }
-                } else {
-                  this.files.push(resource);
-                }
-
-                this.files.sort((obj1: any, obj2: any) => {
-                  if (obj1.path > obj2.path) {
-                    return 1;
-                  }
-
-                  if (obj1.path < obj2.path) {
-                    return -1;
-                  }
-                  return 0;
-                });
-              }
-            });
-          }
-        })
-        .catch((err: Error) => {
-          this.errorMsg = err.message;
-        });
     },
     handleFileUpload(e: any) {
       const files = e.target.files || e.dataTransfer.files;
