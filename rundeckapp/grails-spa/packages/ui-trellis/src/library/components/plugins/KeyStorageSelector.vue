@@ -15,7 +15,7 @@
   -->
 
 <template>
-  <btn @click="openSelector()">
+  <btn @click="openSelector()" data-testid="open-selector-btn">
     <slot>Select… <i class="glyphicon glyphicon-folder-open"></i></slot>
   </btn>
   <modal
