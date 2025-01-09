@@ -193,4 +193,45 @@ describe("KeyStorageView", () => {
     expect(vm.files[0].name).toBe("/key2");
     expect(vm.files).toHaveLength(1);
   });
+  it.each([
+    ['Rundeck-data-type=password', ['/keys/key4']],
+    ['Rundeck-key-type=private', ['/keys/key2', '/keys/key3']],
+    ['Rundeck-key-type=public', ['/keys/key1']],
+  ])('filters key values when storageFilter is %p', async (storageFilter: string,expectedKeys:string[]) => {
+    mockedStorageKeyGetMetadata.mockResolvedValueOnce({
+      resources: [
+        {
+          name: '/key2',
+          path: '/keys/key2',
+          type: 'file',
+          meta: {'Rundeck-key-type': 'private'},
+        },
+        {
+          name: '/key1',
+          path: '/keys/key1',
+          type: 'file',
+          meta: {'Rundeck-key-type': 'public'},
+        },
+        {
+          name: '/key3',
+          path: '/keys/key3',
+          type: 'file',
+          meta: {'Rundeck-key-type': 'private'},
+        },
+        {
+          name: '/key4',
+          path: '/keys/key4',
+          type: 'file',
+          meta: {'Rundeck-data-type': 'password'},
+        },
+      ],
+    })
+    const wrapper = await mountKeyStorageView({storageFilter})
+    const vm = wrapper.vm as unknown as KeyStorageViewComponent
+    await wrapper.vm.$nextTick()
+
+    // Ensure we have 2 files before deletion
+    expect(vm.files).toHaveLength(expectedKeys.length);
+    expect(vm.files.map((f)=>f.path)).toStrictEqual(expectedKeys);
+  })
 });
