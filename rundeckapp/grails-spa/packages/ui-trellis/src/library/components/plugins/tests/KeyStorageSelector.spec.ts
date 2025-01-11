@@ -31,9 +31,6 @@ const mountKeyStorageSelectorStub = async (props = {}) => {
       components: {
         Modal,
       },
-      mocks: {
-        $t: (msg: string) => msg,
-      },
       stubs: {
         KeyStorageView: {
           name: 'KeyStorageView',
@@ -71,9 +68,6 @@ const mountKeyStorageSelector = async (props = {}): Promise<VueWrapper<any>> => 
     global: {
       components: {
         Modal, KeyStorageView, KeyStorageEdit
-      },
-      mocks: {
-        $t: (msg: string) => msg,
       },
     },
     data() {

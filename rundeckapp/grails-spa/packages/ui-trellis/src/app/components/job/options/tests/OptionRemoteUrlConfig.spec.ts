@@ -10,9 +10,6 @@ jest.mock("@/library/rundeckService", () => ({
   })),
 }));
 jest.mock("../../../../../library/services/projects");
-jest.mock("@/library/modules/rundeckClient", () => ({
-  client: {},
-}));
 
 const mountOptionEdit = async (options: any): Promise<VueWrapper<any>> => {
   const wrapper = mount(OptionRemoteUrlConfig, {
