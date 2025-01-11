@@ -484,10 +484,18 @@ export default defineComponent({
       this.isConfirmingDeletion = true;
     },
     async confirmDeleteKey() {
-      const rundeckContext = getRundeckContext();
       this.isConfirmingDeletion = false;
 
-      const resp = await storageKeyDelete(this.selectedKey.path.slice(5));
+      try {
+        const resp = await storageKeyDelete(this.selectedKey.path.slice(5))
+        if(!resp){
+          this.errorMsg = "Not found";
+          return;
+        }
+      } catch (e) {
+        this.errorMsg = e.message;
+        return;
+      }
       this.selectedKey = {};
       this.isSelectedKey = false;
 
