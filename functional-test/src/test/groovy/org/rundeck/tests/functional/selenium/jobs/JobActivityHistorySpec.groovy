@@ -8,21 +8,20 @@ import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.jobs.JobListPage
 import org.rundeck.util.gui.pages.activity.ActivityPage
 import org.rundeck.util.common.jobs.JobUtils
+import spock.lang.Shared
+
 import java.time.Duration
 
 @SeleniumCoreTest
 class JobActivityHistorySpec extends SeleniumBase {
+    @Shared
     WebDriverWait wait
+
+    @Shared
     String jobId
 
     def setupSpec() {
         setupProject(SELENIUM_BASIC_PROJECT)
-    }
-
-    def setup() {
-        // Set up WebDriverWait to wait up to 30 seconds for elements that take time to appear or change
-        wait = new WebDriverWait(getDriver(), Duration.ofSeconds(30))
-        (go LoginPage).login(TEST_USER, TEST_PASS)
         def jobDefinition = JobUtils.generateScheduledExecutionXml("TestJobActivityHistory")
         def client = getClient()
         def response = JobUtils.createJob(SELENIUM_BASIC_PROJECT, jobDefinition, client)
@@ -30,6 +29,10 @@ class JobActivityHistorySpec extends SeleniumBase {
         assert JobUtils.executeJob(jobId, client).isSuccessful()
     }
 
+    def setup() {
+        wait = new WebDriverWait(getDriver(), Duration.ofSeconds(30))
+        (go LoginPage).login(TEST_USER, TEST_PASS)
+    }
 
     def "review job activity history from Job List Page"() {
         when: "Navigate to the Job List Page"
@@ -55,10 +58,9 @@ class JobActivityHistorySpec extends SeleniumBase {
 
         then: "Validate the saved filter is applied"
         wait.until {
-            jobListPage.getAppliedFilterName()=="TestFilter"
+            jobListPage.getAppliedFilterName() == "TestFilter"
         }
     }
-
 
     def "review job activity history from Activity Page"() {
         when: "Navigate to the Activity Page"
@@ -70,6 +72,5 @@ class JobActivityHistorySpec extends SeleniumBase {
         wait.until {
             !activityPage.getActivityRows().isEmpty()
         }
-
     }
 }
