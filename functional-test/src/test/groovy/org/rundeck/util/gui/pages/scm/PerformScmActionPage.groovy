@@ -18,13 +18,16 @@ import java.time.Duration
 class PerformScmActionPage extends BasePage {
 
     String loadPath
+    String project
     private static final String PERFORM_ACTION_URL_PART = "performAction?actionId="
     private static final ScmIntegration INTEGRATION_FOR_COMMIT = ScmIntegration.EXPORT
+    private static final ScmIntegration INTEGRATION_FOR_IMPORT = ScmIntegration.IMPORT
     private static final By INFO_MESSAGE_BOX_LOCATOR = By.cssSelector(".alert.alert-info")
     private static final By ERROR_MESSAGE_BOX_LOCATOR = By.cssSelector(".alert.alert-danger")
 
     PerformScmActionPage(SeleniumContext context, String project) {
         super(context)
+        this.project = project
         loadPath = "/project/${project}"
     }
 
@@ -41,6 +44,15 @@ class PerformScmActionPage extends BasePage {
             Thread.sleep(WaitingTime.MODERATE.toMillis())
 
         return resultText
+    }
+
+    List<String> getChosenTrackedItems(){
+        loadPath += "/scm/${INTEGRATION_FOR_IMPORT.name}/${PERFORM_ACTION_URL_PART}${ScmActionId.JOB_IMPORT.name}"
+        super.go()
+        List<String> trackedItems = []
+        driver.findElements(By.name("chosenTrackedItem")).each {trackedItems.add(it.getAttribute("value"))}
+
+        return trackedItems
     }
 
     private WebElement waitForResultMessageBox(){

@@ -459,7 +459,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     }
 
     @SuppressWarnings("unchecked")
-    private List getUserRolesByDn(DirContext dirContext, String userDn, String username) throws LoginException,
+    protected List getUserRolesByDn(DirContext dirContext, String userDn, String username) throws LoginException,
             NamingException, IOException {
         List<String> roleList = new ArrayList<String>();
 
