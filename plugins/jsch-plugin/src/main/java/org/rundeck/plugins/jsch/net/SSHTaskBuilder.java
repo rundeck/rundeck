@@ -119,7 +119,6 @@ public class SSHTaskBuilder {
                 );
                 try {
                     SSHAgentConnector cf = new SSHAgentConnector(Path.of(base.getSSHAgentProcess().getSocketPath()));
-//                    cf.setPreferredUSocketFactories("jna,nc");
                     AgentIdentityRepository identRepo = new AgentIdentityRepository(cf);
                     jsch.setIdentityRepository(identRepo);
                     base.getPluginLogger().log(
