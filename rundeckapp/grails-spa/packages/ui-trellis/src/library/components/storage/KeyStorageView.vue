@@ -487,8 +487,8 @@ export default defineComponent({
       this.isConfirmingDeletion = false;
 
       try {
-        const resp = await storageKeyDelete(this.selectedKey.path.slice(5))
-        if(!resp){
+        const resp = await storageKeyDelete(this.selectedKey.path.slice(5));
+        if (!resp) {
           this.errorMsg = "Not found";
           return;
         }
@@ -547,7 +547,6 @@ export default defineComponent({
       const requestOptions = {
         queryParameters: forceRefresh ? { refresh: "true" } : {},
       };
-
       storageKeyGetMetadata(getPath, requestOptions)
         .then((result: any) => {
           this.directories = [];
