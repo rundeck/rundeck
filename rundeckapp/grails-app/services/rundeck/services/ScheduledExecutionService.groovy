@@ -1049,6 +1049,64 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         claimed
     }
 
+    def reclaimAndScheduleJobByJob() {
+        String toServerUuid = frameworkService.getServerUUID()
+        Map claimed = [:]
+        def scheduledExecutions = timer("takeover query ") {
+            jobSchedulesService.getSchedulesJobToClaim(toServerUuid, null, true, null, null)
+        }
+
+        scheduledExecutions.each { ScheduledExecution se ->
+            if (claimed[se.extid]) {
+                return
+            }
+
+            def originalServerId = se.serverNodeUUID
+
+            try {
+                def claimResult = ScheduledExecution.withNewTransaction { status ->
+                    return claimScheduledJob(se, toServerUuid)
+                }
+
+                claimed[se.extid] = [
+                        success         : claimResult.claimed,
+                        jobId           : se.extid,
+                        previousServerId: originalServerId,
+                        executions      : claimResult.executions
+                ]
+            } catch (Exception e) {
+                log.error("Error claiming scheduled execution ${se.extid}.", e)
+
+                claimed[se.extid] = [
+                        success         : false,
+                        jobId           : se.extid,
+                        previousServerId: originalServerId,
+                        executions      : []
+                ]
+            }
+
+            if (claimed[se.extid]["success"]) {
+                // ScheduledExecution was updated in nested transaction. Refresh it before moving forward.
+                se.refresh()
+            } else {
+                log.warn("Scheduled execution ${se.extid} was not successfully claimed. It will not be scheduled.")
+                return
+            }
+
+            try {
+                ScheduledExecution.withNewTransaction { status ->
+                    scheduleJob(se, null, null, true)
+                }
+                log.info("rescheduled job in project ${se.project}: ${se.extid}")
+            } catch (Exception e) {
+                log.error("Job not rescheduled in project ${se.project}: ${se.extid}: ${e.message}", e)
+                claimed[se.extid]["success"] = false
+            }
+        }
+
+        return claimed
+    }
+
     /**
      *  Return a Map with a tree structure of the available grouppaths, and their job counts
      * <pre>
