@@ -20,9 +20,10 @@ public interface SchedulesManager {
      * It handles the cleaning of no longer associated schedule definitions and triggers the new ones
      * @param jobUUID
      * @param isUpdate it forces to recreate the job trigger
+     * @param pending if true, all triggers will be pending until DB commit for the associated job
      * @return boolean it returns true if at least one job was scheduled
      */
-    Map handleScheduleDefinitions(String jobUUID, boolean isUpdate);
+    Map handleScheduleDefinitions(String jobUUID, boolean isUpdate, boolean pending);
 
     /**
      * It creates a job trigger

@@ -35,6 +35,7 @@ import grails.testing.web.GrailsWebUnitTest
 import org.grails.plugins.codecs.JSONCodec
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.quartz.SchedulerException
+import org.quartz.Trigger
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
@@ -334,7 +335,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         then:
         1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
-        (remoteAssgined ? 0 : 1) * service.jobSchedulesService.handleScheduleDefinitions(_, _) >> [nextTime: scheduleDate]
+        (remoteAssgined ? 0 : 1) * service.jobSchedulesService.handleScheduleDefinitions(_, _, false) >> [nextTime: scheduleDate]
         result == [scheduleDate, serverNodeUUID]
 
         where:
@@ -467,7 +468,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         then:
         1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
-        0 * service.jobSchedulesService.handleScheduleDefinitions(_, _)
+        0 * service.jobSchedulesService.handleScheduleDefinitions(_, _, false)
         result == [null, null]
 
         where:
@@ -3210,7 +3211,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             result.jobs[0].serverNodeUUID==serverUUID
     }
 
-    def "reschedule scheduled jobs"() {
+    def "reschedule scheduled jobs via takeover #isTakeover"() {
         given:
         def job1 = new ScheduledExecution(createJobParams(userRoleList: 'a,b', user: 'bob')).save()
         service.executionServiceBean = Mock(ExecutionService)
@@ -3227,7 +3228,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             shouldScheduleExecution(_) >> job1.shouldScheduleExecution()
         }
         when:
-        def result = service.rescheduleJobs(null)
+        def result = service.rescheduleJobs(null,null, isTakeover)
 
         then:
         job1.shouldScheduleExecution()
@@ -3235,7 +3236,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         1 * service.frameworkService.getRundeckBase() >> ''
         1 * service.frameworkService.isClusterModeEnabled() >> false
         1 * service.quartzScheduler.checkExists(*_) >> false
-        1 * service.jobSchedulesService.handleScheduleDefinitions(_, _) >> new Date()
+        1 * service.jobSchedulesService.handleScheduleDefinitions(_, _, isTakeover) >> new Date()
+        where:
+            isTakeover<<[true,false]
     }
 
     def "reschedule adhoc executions"() {
@@ -3361,7 +3364,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         }
         0 * service.executionServiceBean.getExecutionsAreActive() >> true
         0 * service.frameworkService.getRundeckBase() >> ''
-        0 * service.jobSchedulesService.handleScheduleDefinitions(_, _) >> new Date()
+        0 * service.jobSchedulesService.handleScheduleDefinitions(_, _, false) >> new Date()
     }
     def "update execution flags change node ownership"() {
         given:
@@ -3574,7 +3577,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         then:
         1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
-        1 * service.jobSchedulesService.handleScheduleDefinitions(_, _) >> [nextTime:scheduleDate]
+        1 * service.jobSchedulesService.handleScheduleDefinitions(_, _, false) >> [nextTime:scheduleDate]
         result == [scheduleDate, null]
 
         where:
@@ -3888,7 +3891,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         if(shouldChange) {
             1 * service.jobSchedulerService.updateScheduleOwner(_) >> true
             if(inparams.scheduled && inparams.scheduleEnabled){
-                1 * service.jobSchedulesService.handleScheduleDefinitions(_, _)
+                1 * service.jobSchedulesService.handleScheduleDefinitions(_, _, false)
             }
         }
 
@@ -4404,7 +4407,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         then: "job should be added to quartz"
             results.success
-            1 * service.jobSchedulesService.handleScheduleDefinitions(_,exists)>>[nextTime:new Date()+1]
+            1 * service.jobSchedulesService.handleScheduleDefinitions(_,exists, false)>>[nextTime:new Date()+1]
         where:
             jobparams                                       | exists
             [scheduleEnabled: true, executionEnabled: true] | true
@@ -4812,7 +4815,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def result = service.scheduleJob(job, null, null)
 
         then:
-            0 * service.jobSchedulesService.handleScheduleDefinitions(_, _)
+            0 * service.jobSchedulesService.handleScheduleDefinitions(_, _, false)
             result == [null, null]
     }
 
@@ -5733,13 +5736,47 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.afterPropertiesSet()
         service.quartzScheduler=Mock(Scheduler)
         when:
-        def result = service.registerOnQuartz(null, [], temp, job)
+        def result = service.registerOnQuartz(null, [], temp, job, false)
         then:
         result
         count * service.
             quartzScheduler.
             deleteJob({ it.name == "${job.uuid}" && it.group == 'aProject' })
         count * service.quartzScheduler.scheduleJob(_,!null,true)
+        where:
+        temp  | count
+        true  | 0
+        false | 1
+
+    }
+    def "registerOnQuartz pending"(){
+        given:
+        def job = new ScheduledExecution(
+                createJobParams(
+                    jobName: 'testJob',
+                    groupPath: 'a/group',
+                    project:'aProject',
+                        scheduled: true,
+                        scheduleEnabled: true,
+                        executionEnabled: true,
+                        userRoleList: 'a,b'
+                )
+        ).save()
+        service.applicationContext = Mock(ConfigurableApplicationContext){
+            getBeansOfType(_) >> ["componentName":new TriggersExtenderImpl(job)]
+        }
+        service.afterPropertiesSet()
+        service.quartzScheduler=Mock(Scheduler)
+        when:
+        def result = service.registerOnQuartz(null, [], temp, job, true)
+        then:
+        result
+        count * service.
+            quartzScheduler.
+            deleteJob({ it.name == "${job.uuid}" && it.group == 'aProject' })
+        count * service.quartzScheduler.scheduleJob(_,{
+            ((Set<Trigger>)it).every{ it.getKey().getGroup()== 'pending'}
+        },true)
         where:
         temp  | count
         true  | 0
@@ -5766,7 +5803,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.afterPropertiesSet()
         service.quartzScheduler=Mock(Scheduler)
         when:
-        def result = service.registerOnQuartz(null, [], false, job)
+        def result = service.registerOnQuartz(null, [], false, job, false)
         then:
         result==null
         1 * service.
