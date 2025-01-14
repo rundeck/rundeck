@@ -149,6 +149,12 @@ describe('storage key service', () => {
     expect(axiosMock.get).toHaveBeenCalledWith('storage/keys/somepath')
     expect(result).toEqual(data)
   })
+  it('gets key metadata 404 is empty', async () => {
+    axiosMock.get.mockResolvedValue({status: 404, data: {}})
+    let result = await storageKeyGetMetadata('somepath')
+    expect(axiosMock.get).toHaveBeenCalledWith('storage/keys/somepath')
+    expect(result).toEqual({})
+  })
 
   it('deletes key with success', async () => {
     axiosMock.delete.mockResolvedValue({status: 204})

@@ -27,7 +27,9 @@ export async function storageKeyGetMetadata(
   path: string,
 ): Promise<StorageKeyListResponse> {
   let resp = await api.get(`storage/keys/${path}`)
-  if (resp.status !== 200) {
+  if (resp.status === 404) {
+    return {}
+  }else if (resp.status !== 200) {
     throw {message: resp.data.message, response: resp}
   } else {
     return resp.data
