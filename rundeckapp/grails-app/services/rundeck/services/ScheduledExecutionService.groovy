@@ -956,6 +956,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         [jobs: succeededJobs, failedJobs: failedJobs, executions: adhocRescheduleResult.executions, failedExecutions: adhocRescheduleResult.failedExecutions]
     }
 
+    private def scheduleAdHocExecutionsForJob(ScheduledExecution se, String targetServerUUID) {
+        // Reschedule any executions which were scheduled ad hoc
+        def executionList = Execution.isScheduledAdHoc()
+                .withScheduledExecution(se)
+                .withServerNodeUUID(targetServerUUID)
+                .list()
+
+        rescheduleOnetimeExecutions(executionList)
+    }
+
     /**
      * Reschedule the provided one-time executions. Invalid executions will be cleaned up.
      * @param executionList The list of executions to reschedule.
@@ -1095,7 +1105,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
             try {
                 ScheduledExecution.withNewTransaction { status ->
+                    // Schedule the job on quartz.
                     scheduleJob(se, null, null, true)
+
+                    // Schedule any ad-hoc executions for the job on quartz.
+                    scheduleAdHocExecutionsForJob(se, toServerUuid)
                 }
                 log.info("rescheduled job in project ${se.project}: ${se.extid}")
             } catch (Exception e) {

@@ -139,6 +139,9 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         withServerNodeUUID { uuid ->
             eq 'serverNodeUUID', uuid
         }
+        withScheduledExecution { se ->
+            eq 'scheduledExecution', se
+        }
         withProject{ project ->
             eq 'project', project
         }
