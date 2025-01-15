@@ -465,6 +465,9 @@ class BootStrap {
                     timer("scheduledExecutionService.rescheduleJobs") {
                         scheduledExecutionService.rescheduleJobs(clusterMode ? serverNodeUUID : null)
                     }
+                } else if('none' == rescheduleMode) {
+                    log.info("skipping job reschedule because reschedule mode is set to 'none'")
+                    //don't run reschedule
                 } else {
                     log.debug("scheduledExecutionService.rescheduleJobs: starting asynchronously")
                     scheduledExecutionService.rescheduleJobsAsync(clusterMode ? serverNodeUUID : null)
