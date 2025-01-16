@@ -178,7 +178,6 @@ export default defineComponent({
           };
           const appRundeckGatewayUrl =
             getRundeckContext().appMeta.appRundeckGatewayUrl;
-          console.log("appRundeckGatewayUrl", appRundeckGatewayUrl);
 
           axios({
             method: "post",
