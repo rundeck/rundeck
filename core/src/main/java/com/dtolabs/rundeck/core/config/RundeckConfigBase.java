@@ -40,6 +40,7 @@ public class RundeckConfigBase {
     RundeckProjectServiceConfig projectService;
     RundeckProjectManagerServiceConfig projectManagerService;
     RundeckLogFileStorageServiceConfig logFileStorageService;
+    RundeckScheduledExecutionServiceConfig scheduledExecutionService;
     FileUploadServiceConfig fileUploadService;
     RundeckAuthorizationServiceConfig authorizationService;
     RundeckReportServiceConfig reportService;
@@ -296,6 +297,15 @@ public class RundeckConfigBase {
         @Data
         public static class ResumeIncomplete {
             String strategy;
+        }
+    }
+
+    @Data
+    public static class RundeckScheduledExecutionServiceConfig {
+        Startup startup;
+        @Data
+        public static class Startup {
+            String rescheduleMode;
         }
     }
 
