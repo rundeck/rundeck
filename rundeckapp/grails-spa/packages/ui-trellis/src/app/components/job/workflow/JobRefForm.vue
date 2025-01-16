@@ -13,7 +13,7 @@
                 v-model="isUseName"
                 type="radio"
                 name="useName"
-                value="true"
+                :value="true"
               />
               <label for="useNameTrue">
                 {{ $t("Workflow.Step.jobreference.name.label") }}
@@ -28,7 +28,7 @@
                 v-model="isUseName"
                 type="radio"
                 name="useName"
-                value="false"
+                :value="false"
               />
               <label for="useNameFalse">
                 {{ $t("Workflow.Step.jobreference.uuid.label") }}
@@ -40,36 +40,39 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="col-sm-2 control-label" for="jobNameField${rkey}">{{
+          <label class="col-sm-2 control-label" for="jobNameField">{{
             $t("Workflow.Step.jobreference.name-group.label")
           }}</label>
-          <!--          <project-select :show-buttons="false">-->
-          <!--            <template #single="{ item }">-->
-          <!--              <button>-->
-          <!--                {{ item.label || item.name }}-->
-          <!--              </button>-->
-          <!--            </template>-->
-          <!--          </project-select>-->
-
           <div class="col-sm-6">
             <select
-              id="jobProjectField${rkey}"
+              id="jobProjectField"
+              v-model="editModel.jobref.project"
               name="jobProject"
-              from="${fprojects}"
-              value="${enc(attr:item?.jobProject)}"
-              no-selection="${['':message(code:'step.type.jobreference.project.label',args:[project])]}"
               class="form-control"
-            />
+            >
+              <option
+                v-for="project in projectStore.projects"
+                :value="project.name"
+              >
+                {{
+                  project.name === selectedProject
+                    ? $t("step.type.jobreference.project.label", [
+                        selectedProject,
+                      ])
+                    : project.name
+                }}
+              </option>
+            </select>
           </div>
 
           <div class="col-sm-2">
             <span
-              id="jobChooseBtn${rkey}"
+              :id="`jobChooseBtn${rkey}`"
               class="btn btn-sm btn-default act_choose_job"
               :title="$t('select.an.existing.job.to.use')"
-              data-loading-text="Loading..."
+              @click="openModal"
             >
-              {{ $t("choose.a.job...") }}
+              {{ $t(!loading ? "choose.a.job..." : "Loading...") }}
             </span>
             <span id="jobChooseSpinner"></span>
           </div>
@@ -83,8 +86,8 @@
           <label class="col-sm-2 control-label"></label>
           <div class="col-sm-5">
             <input
-              id="jobNameField${rkey}"
-              v-model="editModel.name"
+              :id="`jobNameField${rkey}`"
+              v-model="editModel.jobref.name"
               type="text"
               name="jobName"
               :placeholder="$t('scheduledExecution.jobName.label')"
@@ -95,8 +98,8 @@
           </div>
           <div class="col-sm-5">
             <input
-              id="jobGroupField${rkey}"
-              v-model="editModel.group"
+              :id="`jobGroupField${rkey}`"
+              v-model="editModel.jobref.group"
               type="text"
               name="jobGroup"
               size="100"
@@ -113,8 +116,8 @@
           }}</label>
           <div class="col-sm-10">
             <input
-              id="jobUuidField${rkey}"
-              v-model="editModel.uuid"
+              :id="`jobUuidField${rkey}`"
+              v-model="editModel.jobref.uuid"
               type="text"
               name="uuid"
               size="100"
@@ -138,7 +141,7 @@
           <div class="col-sm-10">
             <input
               id="jobArgStringField"
-              v-model="editModel.args"
+              v-model="editModel.jobref.args"
               type="text"
               name="argString"
               size="100"
@@ -155,10 +158,10 @@
             <div class="checkbox">
               <input
                 id="importOptionsCheck"
-                v-model="editModel.importOptions"
+                v-model="editModel.jobref.importOptions"
                 type="checkbox"
                 name="importOptions"
-                value="true"
+                :value="true"
               />
               <label for="importOptionsCheck">
                 {{ $t("Workflow.Step.jobreference.import.options.label") }}
@@ -175,19 +178,19 @@
             <div class="checkbox">
               <input
                 id="ignoreNotificationsCheck"
-                v-model="editModel.ignoreNotifications"
+                v-model="editModel.jobref.ignoreNotifications"
                 type="checkbox"
                 name="ignoreNotifications"
-                value="true"
+                :value="true"
               />
               <label for="ignoreNotificationsCheck">
                 {{
                   $t("Workflow.Step.jobreference.ignore.notifications.label")
                 }}
               </label>
-              <span>{{
-                $t("Workflow.Step.jobreference.ignore.notifications.help")
-              }}</span>
+              <span>
+                {{ $t("Workflow.Step.jobreference.ignore.notifications.help") }}
+              </span>
             </div>
           </div>
         </div>
@@ -197,10 +200,10 @@
             <div class="checkbox">
               <input
                 id="failOnDisableCheck"
+                v-model="editModel.jobref.failOnDisable"
                 type="checkbox"
                 name="failOnDisable"
-                :checked="editModel.failOnDisable"
-                value="true"
+                :value="true"
               />
               <label for="failOnDisableCheck">
                 {{ $t("Workflow.Step.jobreference.fail.on.disabled.label") }}
@@ -217,10 +220,10 @@
             <div class="checkbox">
               <input
                 id="childNodesCheck"
+                v-model="editModel.jobref.childNodes"
                 type="checkbox"
                 name="childNodes"
-                :checked="editModel.childNodes"
-                value="true"
+                :value="true"
               />
               <label for="childNodesCheck">
                 {{ $t("Workflow.Step.jobreference.child.nodes.label") }}
@@ -249,7 +252,7 @@
         </div>
       </section>
       <section
-        id="nodeFilterOverride${enc(attr: rkey)}"
+        :id="`nodeFilterOverride${rkey}`"
         class="collapse-expandable collapse node_filter_link_holder section-separator-solo"
         :class="{ in: nodeFilterOverrideExpanded }"
       >
@@ -270,7 +273,7 @@
             <div class="radio">
               <input
                 id="nodeIntersectFalse"
-                v-model="jobref.nodeIntersect"
+                v-model="editModel.jobref.nodeIntersect"
                 type="radio"
                 name="nodeIntersect"
                 :value="null"
@@ -283,7 +286,7 @@
             <div class="radio">
               <input
                 id="nodeIntersectTrue"
-                v-model="jobref.nodeIntersect"
+                v-model="editModel.jobref.nodeIntersect"
                 type="radio"
                 name="nodeIntersect"
                 :value="true"
@@ -296,10 +299,7 @@
         </div>
 
         <div class="form-group">
-          <label
-            class="col-sm-2 control-label"
-            for="nodeFilterField${enc(attr: rkey)}"
-          >
+          <label class="col-sm-2 control-label" :for="`nodeFilterField${rkey}`">
             {{ $t("node.filter.prompt") }}
           </label>
 
@@ -310,7 +310,7 @@
               :socket-data="{
                 extraAttrs: {
                   class: 'nodefilters',
-                  nodeFilterStore: new NodeFilterStore(),
+                  nodeFilterStore: nodeFilterStore,
                 },
                 filter: '',
                 filterFieldName: 'nodeFilter',
@@ -346,16 +346,16 @@
                 {{ $t("refresh") }}
                 <i class="glyphicon glyphicon-refresh"></i>
               </button>
-              <span data-bind="visible: total()>0">
-                <span data-bind="messageTemplate: [total,nodesTitle]">{{
-                  $t("count.nodes.matched")
-                }}</span>
+              <span v-if="total">
+                {{ $t("count.nodes.matched", [total]) }}
               </span>
-              <span data-bind="visible: !filter()">
-                <span data-bind="text: emptyMessage"></span>
+              <span v-else-if="editModel.filters.length === 0">
+                {{ $t("JobExec.property.nodeFilter.null.description") }}
               </span>
 
-              <div id="matchednodes${rkey}" class="clearfix"></div>
+              <div :id="`matchednodes${rkey}`" class="clearfix">
+                <node-list-embed :nodes="[]" />
+              </div>
             </div>
           </div>
         </div>
@@ -363,21 +363,21 @@
         <div class="form-group">
           <label
             class="col-sm-2 control-label"
-            for="nodeThreadcountField${rkey}"
+            :for="`nodeThreadcountField${rkey}`"
           >
             {{ $t("scheduledExecution.property.nodeThreadcount.label") }}
           </label>
 
           <div class="col-sm-2">
             <input
-              id="nodeThreadcountField${rkey}"
-              data-bind="enable: filter()"
+              :id="`nodeThreadcountField${rkey}`"
+              v-model="editModel.jobref.nodeThreadcount"
               type="number"
               name="nodeThreadcount"
               min="1"
-              value="${enc(attr: item?.nodeThreadcount)}"
               size="3"
               class="form-control"
+              :disabled="editModel.filters.length === 0"
             />
           </div>
           <div class="col-sm-8 help-block">
@@ -394,11 +394,11 @@
             <div class="radio">
               <input
                 id="nodeKeepgoingNull"
+                v-model="editModel.jobref.nodeKeepgoing"
                 type="radio"
                 name="nodeKeepgoing"
-                value=""
-                checked="${item?.nodeKeepgoing==null}"
-                data-bind="enable: filter()"
+                :value="null"
+                :disabled="editModel.filters.length === 0"
               />
               <label for="nodeKeepgoingNull">
                 {{ $t("JobExec.property.nodeKeepgoing.null.description") }}
@@ -408,11 +408,11 @@
             <div class="radio">
               <input
                 id="nodeKeepgoingTrue"
+                v-model="editModel.jobref.nodeKeepgoing"
                 type="radio"
                 name="nodeKeepgoing"
-                value="true"
-                checked="${item?.nodeKeepgoing!=null&&item?.nodeKeepgoing}"
-                data-bind="enable: filter()"
+                :value="true"
+                :disabled="editModel.filters.length === 0"
               />
               <label for="nodeKeepgoingTrue">
                 {{ $t("Workflow.property.keepgoing.true.description") }}
@@ -422,11 +422,11 @@
             <div class="radio">
               <input
                 id="nodeKeepgoingFalse"
+                v-model="editModel.jobref.nodeKeepgoing"
                 type="radio"
                 name="nodeKeepgoing"
-                value="false"
-                checked="${item?.nodeKeepgoing!=null&&!item?.nodeKeepgoing}"
-                data-bind="enable: filter()"
+                :value="false"
+                :disabled="editModel.filters.length === 0"
               />
               <label for="nodeKeepgoingFalse">
                 {{ $t("Workflow.property.keepgoing.false.description") }}
@@ -438,16 +438,16 @@
         <div class="form-group">
           <label
             class="col-sm-2 control-label"
-            for="nodeRankAttributeField${rkey}"
+            :for="`nodeRankAttributeField${rkey}`"
           >
             {{ $t("scheduledExecution.property.nodeRankAttribute.label") }}
           </label>
 
           <div class="col-sm-10">
             <input
-              id="nodeRankAttributeField${rkey}"
-              v-model="jobref.nodeRankAttribute"
-              data-bind="enable: filter()"
+              :id="`nodeRankAttributeField${rkey}`"
+              v-model="editModel.jobref.nodeRankAttribute"
+              :disabled="editModel.filters.length === 0"
               type="text"
               name="nodeRankAttribute"
               class="form-control"
@@ -458,7 +458,10 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="col-sm-2 control-label" for="nodeRankOrderField${rkey}">
+          <label
+            class="col-sm-2 control-label"
+            :for="`nodeRankOrderField${rkey}`"
+          >
             {{ $t("scheduledExecution.property.nodeRankOrder.label") }}
           </label>
 
@@ -466,11 +469,11 @@
             <div class="radio">
               <input
                 id="nodeRankOrderAscendingNull"
-                v-model="jobref.nodeRankOrderAscending"
+                v-model="editModel.jobref.nodeRankOrderAscending"
                 type="radio"
                 name="nodeRankOrderAscending"
-                value=""
-                data-bind="enable: filter()"
+                :value="null"
+                :disabled="editModel.filters.length === 0"
               />
               <label for="nodeRankOrderAscendingNull">
                 {{ $t("JobExec.property.nodeRankOrder.null.description") }}
@@ -479,11 +482,11 @@
             <div class="radio">
               <input
                 id="nodeRankOrderAscending"
-                v-model="jobref.nodeRankOrderAscending"
+                v-model="editModel.jobref.nodeRankOrderAscending"
                 type="radio"
                 name="nodeRankOrderAscending"
-                value="true"
-                data-bind="enable: filter()"
+                :value="true"
+                :disabled="editModel.filters.length === 0"
               />
               <label for="nodeRankOrderAscending">
                 {{
@@ -496,11 +499,11 @@
             <div class="radio">
               <input
                 id="nodeRankOrderDescending"
-                v-model="jobref.nodeRankOrderAscending"
+                v-model="editModel.jobref.nodeRankOrderAscending"
                 type="radio"
                 name="nodeRankOrderAscending"
-                value="false"
-                data-bind="enable: filter()"
+                :value="false"
+                :disabled="editModel.filters.length === 0"
               />
               <label for="nodeRankOrderDescending">
                 {{
@@ -522,10 +525,10 @@
             <div class="radio">
               <input
                 id="jobNodeStepFieldTrue"
-                v-model="jobref.nodeStep"
+                v-model="editModel.jobref.nodeStep"
                 type="radio"
                 name="nodeStep"
-                value="true"
+                :value="true"
               />
               <label for="jobNodeStepFieldTrue">
                 {{ $t("JobExec.nodeStep.true.label") }}
@@ -535,10 +538,10 @@
             <div class="radio">
               <input
                 id="jobNodeStepFieldFalse"
-                v-model="jobref.nodeStep"
+                v-model="editModel.jobref.nodeStep"
                 type="radio"
                 name="nodeStep"
-                value="false"
+                :value="false"
               />
               <label for="jobNodeStepFieldFalse">
                 {{ $t("JobExec.nodeStep.false.label") }}
@@ -550,13 +553,13 @@
       </section>
       <hr />
       <div class="form-group">
-        <label class="col-sm-2 control-label" for="description${rkey}">
+        <label class="col-sm-2 control-label" :for="`description${rkey}`">
           {{ $t("Workflow.stepLabel") }}
         </label>
 
         <div class="col-sm-10">
           <input
-            id="description${rkey}"
+            :id="`description${rkey}`"
             v-model="editModel.description"
             type="text"
             name="description"
@@ -576,60 +579,141 @@
       </btn>
     </template>
   </modal>
+  <modal
+    v-if="openJobSelectionModal"
+    v-model="openJobSelectionModal"
+    :title="$t('choose.a.job...')"
+  >
+    <ui-socket
+      v-if="showFavoritesButton"
+      section="job-list-page"
+      location="card-header"
+    />
+    <ui-socket
+      section="job-list-page"
+      location="tree-browser"
+      :socket-data="{
+        showBulkEdit: false,
+        showCreateButton: false,
+        projectToDisplay: editModel.jobref.project,
+        key: editModel.jobref.project,
+      }"
+    />
+  </modal>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
 import { PluginConfig } from "@/library/interfaces/PluginConfig";
-import { cloneDeep } from "lodash";
 import UiSocket from "@/library/components/utils/UiSocket";
 import { NodeFilterStore } from "@/library/stores/NodeFilterLocalstore";
+import { getRundeckContext } from "@/library";
+import NodeListEmbed from "@/app/components/job/resources/NodeListEmbed.vue";
+import { merge } from "lodash";
+// import NodeFilterInput from "@/app/components/job/resources/NodeFilterInput.vue";
+const eventBus = getRundeckContext().eventBus;
 
 export default defineComponent({
   name: "JobRefForm",
-  components: { UiSocket },
+  components: { NodeListEmbed, UiSocket },
+  provide() {
+    return {
+      showJobsAsLinks: false,
+    };
+  },
   props: {
     modelValue: {
       type: Object,
       required: true,
       default: () => ({}) as PluginConfig,
     },
+    modalActive: {
+      type: Boolean,
+      default: true,
+    },
   },
-  emits: ["update:modelValue", "save", "cancel"],
+  emits: ["update:modelValue", "update:modalActive", "save", "cancel"],
   data() {
     return {
       isUseName: false,
-      showModal: true,
+      showModal: this.modalActive,
       nodeFilterOverrideExpanded: false,
-      editModel: {},
-      jobref: {
-        nodeIntersect: null,
-        nodeStep: false,
-        nodeRankOrderAscending: null,
-        nodeRankAttribute: null,
+      projectStore: getRundeckContext().rootStore.projects,
+      nodeFilterStore: new NodeFilterStore(),
+      selectedProject: getRundeckContext().projectName,
+      editModel: {
+        description: "",
+        filters: [],
+        jobref: {
+          name: "",
+          group: "",
+          args: "",
+          nodeIntersect: null,
+          nodeThreadcount: null,
+          nodeStep: false,
+          nodeRankOrderAscending: null,
+          nodeRankAttribute: null,
+          importOptions: false,
+          ignoreNotifications: false,
+          failOnDisable: false,
+          childNodes: false,
+          nodeKeepgoing: null,
+          project: "",
+          uuid: "",
+        },
       },
+      filterValue: null,
+      loading: false,
+      openJobSelectionModal: false,
+      showFavoritesButton: true,
+      rkey:
+        "r_" + Math.floor(Math.random() * Math.floor(1024)).toString(16) + "_",
+      total: null,
     };
-  },
-  computed: {
-    NodeFilterStore() {
-      return NodeFilterStore;
-    },
   },
   watch: {
     modalActive(val) {
-      this.showModalVal = val;
+      this.showModal = val;
+    },
+    showModal(val) {
+      this.$emit("update:modalActive", val);
     },
     modelValue(val) {
-      this.editModel = cloneDeep(val);
+      this.editModel = merge(this.editModel, val);
+    },
+    "nodeFilterStore.filter": {
+      handler(val) {
+        this.editModel.filters = [val];
+      },
     },
   },
-  mounted() {
-    this.editModel = cloneDeep(this.modelValue);
+  async mounted() {
+    if (!this.projectStore.loaded) {
+      await this.projectStore.load();
+    }
+
+    this.editModel = merge(this.editModel, this.modelValue);
+
+    eventBus.on(`browser-job-item-selection`, this.updateJobSelection);
+    eventBus.on(`browser-jobs-empty`, this.handleFavoritesButton);
   },
   methods: {
     async saveChanges() {
       this.$emit("update:modelValue", this.editModel);
       this.$emit("save");
+    },
+    openModal() {
+      this.openJobSelectionModal = true;
+      this.showFavoritesButton = true;
+    },
+    updateJobSelection(job: any) {
+      this.editModel.jobref.uuid = job.id;
+      this.editModel.jobref.name = job.jobName;
+      this.editModel.jobref.group = job.groupPath;
+      this.openJobSelectionModal = false;
+    },
+    handleFavoritesButton() {
+      this.showFavoritesButton = false;
     },
   },
 });

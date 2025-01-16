@@ -1002,6 +1002,18 @@ const messages = {
     "Label or description of this step",
   "enter.a.node.filter.override":
     "Enter a filter string. Leave blank to use the filter defined for the triggered job.",
+  "notification.create": "Create Notification",
+  "notification.edit": "Edit Notification",
+  "mynode1.mynode2": "mynode1 mynode2",
+  include: "Include",
+  exclude: "Exclude",
+  attribute: "attribute",
+  value: "value",
+  Search: "Search",
+  "step.type.jobreference.project.label": "Current Project ({0})",
+  "no.jobs.in.this.project": "No Jobs in this Project",
+  "JobExec.property.nodeFilter.null.description":
+    "The nodes used will be those defined for the triggered Job.",
 };
 
 export default messages;
