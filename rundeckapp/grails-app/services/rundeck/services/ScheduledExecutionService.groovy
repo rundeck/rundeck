@@ -1054,6 +1054,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * scheduled execution one-by-one to avoid a number of potential race conditions that can occur when scheduling
      * the job before committing the corresponding ScheduledExecution updates.
      */
+    @NotTransactional
     def reclaimAndScheduleJobByJob() {
         String toServerUuid = frameworkService.getServerUUID()
         Map claimed = [:]
@@ -1072,6 +1073,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def claimResult = ScheduledExecution.withNewTransaction { status ->
                     return claimScheduledJob(se, toServerUuid)
                 }
+                // Note that the ScheduledExecution in se does not contain the updates from the previous transaction.
+                // Use with care.
 
                 claimed[se.extid] = [
                         success         : claimResult.claimed,
@@ -1090,17 +1093,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 ]
             }
 
-            if (claimed[se.extid]["success"]) {
-                // ScheduledExecution was updated and committed in the previous nested transaction.
-                // Refresh it before moving forward.
-                se.refresh()
-            } else {
+            if (claimed[se.extid]["success"] == false) {
                 log.warn("Scheduled execution ${se.extid} was not successfully claimed. It will not be scheduled.")
                 return
             }
 
             try {
                 ScheduledExecution.withNewTransaction { status ->
+                    // ScheduledExecution was updated and committed in the previous nested transaction.
+                    // Refresh it before moving forward.
+                    se.refresh()
+
                     // Schedule the job on quartz.
                     scheduleJob(se, null, null, true)
 
