@@ -6,6 +6,10 @@
     <meta name="tabpage" content="jobs"/>
     <meta name="layout" content="base"/>
     <asset:javascript src="static/pages/dynamic-form.js" defer="defer"/>
+    <asset:javascript src="static/pages/job/browse.js" defer="defer"/>
+    <asset:stylesheet href="static/css/pages/job/browse.css" />
+
+    <g:embedJSON id="jobTreeUiMeta" data="[hideActions: true, hideHeader: true]"/>
     <title>%{--
   - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
   -

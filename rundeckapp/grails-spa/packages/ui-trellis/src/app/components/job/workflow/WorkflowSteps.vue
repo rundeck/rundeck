@@ -174,6 +174,7 @@
       <job-ref-form
         v-if="editJobRefModal"
         v-model="editModel"
+        v-model:modal-active="editJobRefModal"
         @cancel="cancelEditStep"
       />
     </template>
@@ -241,23 +242,6 @@ export default defineComponent({
       editService: null,
       editIndex: -1,
       loadingWorflowSteps: false,
-      test: {
-        props: [
-          {
-            allowed: null,
-            defaultValue: null,
-            desc: "Enter the shell command, e.g.: echo this is a test",
-            name: "adhocRemoteString",
-            options: { displayType: "SINGLE_LINE" },
-            required: true,
-            scope: "Unspecified",
-            selectLabels: null,
-            staticTextDefaultValue: "",
-            title: "Command",
-            type: "String",
-          },
-        ],
-      },
     };
   },
   watch: {

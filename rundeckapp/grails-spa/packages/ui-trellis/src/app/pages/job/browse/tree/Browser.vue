@@ -213,6 +213,7 @@ export default defineComponent({
       );
       if (this.items.length < 1) {
         this.$emit("empty");
+        eventBus.emit(`browser-jobs-empty`);
       }
     },
     async loadMeta(path: string) {
@@ -246,6 +247,7 @@ export default defineComponent({
       }
       if (this.items.length < 1) {
         this.$emit("empty");
+        eventBus.emit(`browser-jobs-empty`);
       } else {
         const found = this.jobBrowserStore.findPath(this.browsePath);
         if (found) {
