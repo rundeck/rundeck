@@ -641,6 +641,7 @@ export default defineComponent({
         nodeStep: false,
         jobref: {
           name: "",
+          project: rundeckContext.projectName,
           group: "",
           args: "",
           failOnDisable: false,

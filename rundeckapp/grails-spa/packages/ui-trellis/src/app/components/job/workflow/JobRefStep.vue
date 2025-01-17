@@ -39,10 +39,13 @@ export default defineComponent({
   },
   computed: {
     fullName() {
-      return (
-        (this.step.jobref.group ? this.step.jobref.group + "/" : "") +
-        this.step.jobref.name
-      );
+      if (this.step.jobref.name) {
+        return (
+          (this.step.jobref.group ? this.step.jobref.group + "/" : "") +
+          this.step.jobref.name
+        );
+      }
+      return this.step.jobref.uuid;
     },
     parsed() {
       if (!this.step.jobref.args) {
