@@ -3,6 +3,7 @@ import { NodeFilterStore } from "./NodeFilterLocalstore";
 import {
   Node,
   NodeTag,
+  Tag,
 } from "../../app/components/job/resources/types/nodeTypes";
 import {
   getNodes,
@@ -13,7 +14,7 @@ import { getAppLinks } from "../rundeckService";
 interface NodesState {
   entities: Record<string, Node>;
   nodenamesToDisplay: string[];
-  tags: NodeTag[];
+  tags: NodeTag[] | Tag[];
   maxSize: number;
   nodeFilterStore: NodeFilterStore;
 }
@@ -63,15 +64,16 @@ export const useNodesStore = defineStore("nodes", {
         );
 
         this.upsertNodes(response.allnodes);
-      } catch (error) {
+      } catch (error: any) {
         throw new Error(`Failed to fetch nodes: ${error.message}`);
       }
     },
 
     async fetchTags() {
       try {
-        this.tags = await getNodeTags();
-      } catch (error) {
+        const results = await getNodeTags();
+        this.tags = results.tags;
+      } catch (error: any) {
         throw new Error(`Failed to fetch tags: ${error.message}`);
       }
     },
