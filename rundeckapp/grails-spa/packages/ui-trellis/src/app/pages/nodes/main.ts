@@ -29,6 +29,15 @@ const FilterInputComp = defineComponent({
       return !!this.extraAttrs.nodeFilterStore;
     },
   },
+  watch: {
+    isNodeStoreAvailable(val) {
+      if (val) {
+        if (this.extraAttrs.nodeFilterStore.selectedFilter) {
+          this.filterValue = this.extraAttrs.nodeFilterStore.selectedFilter;
+        }
+      }
+    },
+  },
   beforeUnmount() {
     //note: this removes subscriptions from knockout observable
     //@ts-ignore
@@ -37,7 +46,9 @@ const FilterInputComp = defineComponent({
   mounted() {
     this.attachKnockout(5);
     if (this.isNodeStoreAvailable) {
-      this.filterValue = this.extraAttrs.nodeFilterStore.selectedFilter;
+      if (this.extraAttrs.nodeFilterStore.selectedFilter) {
+        this.filterValue = this.extraAttrs.nodeFilterStore.selectedFilter;
+      }
     }
   },
   methods: {

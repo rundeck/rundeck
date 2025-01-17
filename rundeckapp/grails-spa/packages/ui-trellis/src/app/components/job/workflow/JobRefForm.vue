@@ -72,7 +72,7 @@
               :title="$t('select.an.existing.job.to.use')"
               @click="openModal"
             >
-              {{ $t(!loading ? "choose.a.job..." : "Loading...") }}
+              {{ $t(!loading ? "choose.a.job..." : "loading.text") }}
             </span>
             <span id="jobChooseSpinner"></span>
           </div>
@@ -252,6 +252,7 @@
         </div>
       </section>
       <section
+        v-if="filterLoaded"
         :id="`nodeFilterOverride${rkey}`"
         class="collapse-expandable collapse node_filter_link_holder section-separator-solo"
         :class="{ in: nodeFilterOverrideExpanded }"
@@ -273,7 +274,7 @@
             <div class="radio">
               <input
                 id="nodeIntersectFalse"
-                v-model="editModel.jobref.nodeIntersect"
+                v-model="editModel.jobref.nodefilters.dispatch.nodeIntersect"
                 type="radio"
                 name="nodeIntersect"
                 :value="null"
@@ -286,7 +287,7 @@
             <div class="radio">
               <input
                 id="nodeIntersectTrue"
-                v-model="editModel.jobref.nodeIntersect"
+                v-model="editModel.jobref.nodefilters.dispatch.nodeIntersect"
                 type="radio"
                 name="nodeIntersect"
                 :value="true"
@@ -304,28 +305,17 @@
           </label>
 
           <div class="col-sm-10 vue-ui-socket">
-            <ui-socket
-              section="job-wfitem-edit"
-              location="jobref-node-filter-input"
-              :socket-data="{
-                extraAttrs: {
-                  class: 'nodefilters',
-                  nodeFilterStore: nodeFilterStore,
-                },
-                filter: '',
-                filterFieldName: 'nodeFilter',
-                queryFieldPlaceholderText: $t('enter.a.node.filter.override'),
-              }"
+            <node-filter-input
+              :model-value="nodeFilterStore.selectedFilter"
+              :project="currentProject"
+              filter-field-name="nodeFilter"
+              :filter-field-id="`nodeFilterField${rkey}`"
+              :query-field-placeholder-text="$t('enter.a.node.filter.override')"
+              search-btn-type="cta"
+              class="nodefilters"
+              @update:model-value="updatedValue"
+              @filter="filterClicked"
             />
-            <!--                          socket-data="${enc(attr: [
-                                 extraAttrs: [ 'class': 'nodefilters' ],
-                                 filter: filtvalue?:'',
-                                 filterFieldName:'nodeFilter',
-                                 filterFieldId:'nodeFilterField'+rkey,
-                                 koFieldName:'nodeFilterMap',
-                                 koParam:'#nodeFilterOverride'+rkey,
-                                 queryFieldPlaceholderText: g.message(code:'enter.a.node.filter.override')
-                         ].encodeAsJSON())}"-->
           </div>
         </div>
 
@@ -339,22 +329,21 @@
               <button
                 type="button"
                 class="pull-right btn btn-sm refresh_nodes"
-                data-loading-text='$t("loading.text")'
-                data-bind="click: $data.updateMatchedNodes"
                 :title="$t('click.to.refresh')"
+                @click="triggerFetchNodes"
               >
-                {{ $t("refresh") }}
+                {{ $t(loading ? "loading.text" : "refresh") }}
                 <i class="glyphicon glyphicon-refresh"></i>
               </button>
               <span v-if="total">
                 {{ $t("count.nodes.matched", [total]) }}
               </span>
-              <span v-else-if="editModel.filters.length === 0">
+              <span v-else-if="!hasFilter || total === 0">
                 {{ $t("JobExec.property.nodeFilter.null.description") }}
               </span>
 
               <div :id="`matchednodes${rkey}`" class="clearfix">
-                <node-list-embed :nodes="[]" />
+                <node-list-embed :nodes="nodes" @filter="filterClicked" />
               </div>
             </div>
           </div>
@@ -371,13 +360,13 @@
           <div class="col-sm-2">
             <input
               :id="`nodeThreadcountField${rkey}`"
-              v-model="editModel.jobref.nodeThreadcount"
+              v-model="editModel.jobref.nodefilters.dispatch.threadcount"
               type="number"
               name="nodeThreadcount"
               min="1"
               size="3"
               class="form-control"
-              :disabled="editModel.filters.length === 0"
+              :disabled="!hasFilter"
             />
           </div>
           <div class="col-sm-8 help-block">
@@ -394,11 +383,11 @@
             <div class="radio">
               <input
                 id="nodeKeepgoingNull"
-                v-model="editModel.jobref.nodeKeepgoing"
+                v-model="editModel.jobref.nodefilters.dispatch.keepgoing"
                 type="radio"
                 name="nodeKeepgoing"
                 :value="null"
-                :disabled="editModel.filters.length === 0"
+                :disabled="!hasFilter"
               />
               <label for="nodeKeepgoingNull">
                 {{ $t("JobExec.property.nodeKeepgoing.null.description") }}
@@ -408,11 +397,11 @@
             <div class="radio">
               <input
                 id="nodeKeepgoingTrue"
-                v-model="editModel.jobref.nodeKeepgoing"
+                v-model="editModel.jobref.nodefilters.dispatch.keepgoing"
                 type="radio"
                 name="nodeKeepgoing"
                 :value="true"
-                :disabled="editModel.filters.length === 0"
+                :disabled="!hasFilter"
               />
               <label for="nodeKeepgoingTrue">
                 {{ $t("Workflow.property.keepgoing.true.description") }}
@@ -422,11 +411,11 @@
             <div class="radio">
               <input
                 id="nodeKeepgoingFalse"
-                v-model="editModel.jobref.nodeKeepgoing"
+                v-model="editModel.jobref.nodefilters.dispatch.keepgoing"
                 type="radio"
                 name="nodeKeepgoing"
                 :value="false"
-                :disabled="editModel.filters.length === 0"
+                :disabled="!hasFilter"
               />
               <label for="nodeKeepgoingFalse">
                 {{ $t("Workflow.property.keepgoing.false.description") }}
@@ -446,8 +435,8 @@
           <div class="col-sm-10">
             <input
               :id="`nodeRankAttributeField${rkey}`"
-              v-model="editModel.jobref.nodeRankAttribute"
-              :disabled="editModel.filters.length === 0"
+              v-model="editModel.jobref.nodefilters.dispatch.rankAttribute"
+              :disabled="!hasFilter"
               type="text"
               name="nodeRankAttribute"
               class="form-control"
@@ -469,11 +458,11 @@
             <div class="radio">
               <input
                 id="nodeRankOrderAscendingNull"
-                v-model="editModel.jobref.nodeRankOrderAscending"
+                v-model="editModel.jobref.nodefilters.dispatch.rankOrder"
                 type="radio"
                 name="nodeRankOrderAscending"
                 :value="null"
-                :disabled="editModel.filters.length === 0"
+                :disabled="!hasFilter"
               />
               <label for="nodeRankOrderAscendingNull">
                 {{ $t("JobExec.property.nodeRankOrder.null.description") }}
@@ -482,11 +471,11 @@
             <div class="radio">
               <input
                 id="nodeRankOrderAscending"
-                v-model="editModel.jobref.nodeRankOrderAscending"
+                v-model="editModel.jobref.nodefilters.dispatch.rankOrder"
                 type="radio"
                 name="nodeRankOrderAscending"
-                :value="true"
-                :disabled="editModel.filters.length === 0"
+                value="ascending"
+                :disabled="!hasFilter"
               />
               <label for="nodeRankOrderAscending">
                 {{
@@ -499,11 +488,11 @@
             <div class="radio">
               <input
                 id="nodeRankOrderDescending"
-                v-model="editModel.jobref.nodeRankOrderAscending"
+                v-model="editModel.jobref.nodefilters.dispatch.rankOrder"
                 type="radio"
                 name="nodeRankOrderAscending"
-                :value="false"
-                :disabled="editModel.filters.length === 0"
+                value="descending"
+                :disabled="!hasFilter"
               />
               <label for="nodeRankOrderDescending">
                 {{
@@ -525,7 +514,7 @@
             <div class="radio">
               <input
                 id="jobNodeStepFieldTrue"
-                v-model="editModel.jobref.nodeStep"
+                v-model="editModel.nodeStep"
                 type="radio"
                 name="nodeStep"
                 :value="true"
@@ -538,7 +527,7 @@
             <div class="radio">
               <input
                 id="jobNodeStepFieldFalse"
-                v-model="editModel.jobref.nodeStep"
+                v-model="editModel.nodeStep"
                 type="radio"
                 name="nodeStep"
                 :value="false"
@@ -606,16 +595,19 @@
 import { defineComponent } from "vue";
 import { PluginConfig } from "@/library/interfaces/PluginConfig";
 import UiSocket from "@/library/components/utils/UiSocket";
-import { NodeFilterStore } from "@/library/stores/NodeFilterLocalstore";
 import { getRundeckContext } from "@/library";
 import NodeListEmbed from "@/app/components/job/resources/NodeListEmbed.vue";
+import { JobRefData } from "@/app/components/job/workflow/types/workflowTypes";
 import { merge } from "lodash";
-// import NodeFilterInput from "@/app/components/job/resources/NodeFilterInput.vue";
-const eventBus = getRundeckContext().eventBus;
+import { mapState, mapActions } from "pinia";
+import { useNodesStore } from "@/library/stores/NodesStorePinia";
+import NodeFilterInput from "@/app/components/job/resources/NodeFilterInput.vue";
+const rundeckContext = getRundeckContext();
+const eventBus = rundeckContext.eventBus;
 
 export default defineComponent({
   name: "JobRefForm",
-  components: { NodeListEmbed, UiSocket },
+  components: { NodeFilterInput, NodeListEmbed, UiSocket },
   provide() {
     return {
       showJobsAsLinks: false,
@@ -638,38 +630,51 @@ export default defineComponent({
       isUseName: false,
       showModal: this.modalActive,
       nodeFilterOverrideExpanded: false,
-      projectStore: getRundeckContext().rootStore.projects,
-      nodeFilterStore: new NodeFilterStore(),
-      selectedProject: getRundeckContext().projectName,
+      projectStore: rundeckContext.rootStore.projects,
+      selectedProject: rundeckContext.projectName,
+      currentProject: rundeckContext.projectName,
       editModel: {
         description: "",
-        filters: [],
+        nodeStep: false,
         jobref: {
           name: "",
           group: "",
           args: "",
-          nodeIntersect: null,
-          nodeThreadcount: null,
-          nodeStep: false,
-          nodeRankOrderAscending: null,
-          nodeRankAttribute: null,
-          importOptions: false,
-          ignoreNotifications: false,
           failOnDisable: false,
           childNodes: false,
-          nodeKeepgoing: null,
-          project: "",
-          uuid: "",
+          nodefilters: {
+            filter: "",
+            dispatch: {
+              threadcount: null,
+              keepgoing: null,
+              rankAttribute: null,
+              rankOrder: null,
+              nodeIntersect: null,
+            },
+          },
         },
-      },
-      filterValue: null,
+      } as JobRefData,
       loading: false,
+      filterLoaded: false,
       openJobSelectionModal: false,
       showFavoritesButton: true,
+      queryParams: {
+        view: "embed",
+        declarenone: true,
+        fullresults: true,
+        expanddetail: true,
+        inlinepaging: false,
+        maxShown: 20,
+      },
       rkey:
         "r_" + Math.floor(Math.random() * Math.floor(1024)).toString(16) + "_",
-      total: null,
     };
+  },
+  computed: {
+    hasFilter() {
+      return Boolean(this.editModel.jobref.nodefilters.filter);
+    },
+    ...mapState(useNodesStore, ["total", "nodeFilterStore", "nodes"]),
   },
   watch: {
     modalActive(val) {
@@ -682,8 +687,13 @@ export default defineComponent({
       this.editModel = merge(this.editModel, val);
     },
     "nodeFilterStore.filter": {
-      handler(val) {
-        this.editModel.filters = [val];
+      async handler(val) {
+        // keeping this watcher so that when store is updated (by pressing search)
+        // the editModel will receive the value
+        if (val !== this.editModel.jobref.nodefilters.filter) {
+          this.editModel.jobref.nodefilters.filter = val;
+          await this.triggerFetchNodes();
+        }
       },
     },
   },
@@ -693,6 +703,20 @@ export default defineComponent({
     }
 
     this.editModel = merge(this.editModel, this.modelValue);
+
+    if (this.editModel.jobref.nodefilters.filter) {
+      this.nodeFilterStore.setSelectedFilter(
+        this.editModel.jobref.nodefilters.filter,
+      );
+      if (rundeckContext.data) {
+        this.queryParams = merge(
+          this.queryParams,
+          rundeckContext.data.nodeData,
+        );
+      }
+      await this.triggerFetchNodes();
+    }
+    this.filterLoaded = true;
 
     eventBus.on(`browser-job-item-selection`, this.updateJobSelection);
     eventBus.on(`browser-jobs-empty`, this.handleFavoritesButton);
@@ -710,11 +734,29 @@ export default defineComponent({
       this.editModel.jobref.uuid = job.id;
       this.editModel.jobref.name = job.jobName;
       this.editModel.jobref.group = job.groupPath;
+      this.loading = false;
       this.openJobSelectionModal = false;
     },
     handleFavoritesButton() {
       this.showFavoritesButton = false;
     },
+    updatedValue(val: string) {
+      this.nodeFilterStore.setSelectedFilter(val);
+    },
+    filterClicked(filter: any) {
+      this.nodeFilterStore.setSelectedFilter(filter.filter);
+    },
+    async triggerFetchNodes() {
+      try {
+        this.loading = true;
+        await this.fetchNodes(this.queryParams);
+      } catch (e) {
+        console.log(e);
+      } finally {
+        this.loading = false;
+      }
+    },
+    ...mapActions(useNodesStore, ["fetchNodes"]),
   },
 });
 </script>
