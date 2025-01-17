@@ -96,9 +96,20 @@ export interface BasicData {
   keepgoing: boolean;
 }
 
-export interface StrategyData {
+export interface WorkflowStrategyPluginConfig {
+  WorkflowStrategy?: { [key: string]: any };
+}
+
+export interface WorkflowLogFilterConfig {
+  LogFilter?: PluginConfig[];
+}
+
+export interface WorkflowPluginConfig {
+  pluginConfig?: WorkflowStrategyPluginConfig & WorkflowLogFilterConfig & any;
+}
+
+export interface StrategyConfig {
   strategy?: string;
-  strategyConfig?: any;
 }
 
 export interface GlobalLogFiltersData {
@@ -130,19 +141,35 @@ export interface StepsEditData {
 
 export interface WorkflowData
   extends BasicData,
-    StrategyData,
-    GlobalLogFiltersData,
+    StrategyConfig,
+    WorkflowPluginConfig,
     StepsData {}
 
 export function createBasicData({ keepgoing }): BasicData {
   return { keepgoing: !!keepgoing };
 }
 
-export function createStrategyData(
-  { strategy },
-  evalFunc: (val: string) => string = undefined,
-): StrategyData {
-  return { strategy: evalFunc ? evalFunc(strategy) : strategy };
+export function createStrategyData(workflowData: WorkflowData): PluginConfig {
+  const type = workflowData.strategy;
+  const strategyObj = workflowData.pluginConfig?.WorkflowStrategy;
+  const config = strategyObj ? strategyObj[type] : {};
+  return { type, config };
+}
+
+export function exportPluginData(
+  strategy: PluginConfig,
+  logFilters: GlobalLogFiltersData,
+): any {
+  const obj = {
+    pluginConfig: {
+      WorkflowStrategy: { [strategy.type]: strategy.config },
+    },
+    strategy: strategy.type,
+  };
+  if (logFilters && logFilters.LogFilter && logFilters.LogFilter.length > 0) {
+    obj.pluginConfig["LogFilter"] = logFilters.LogFilter;
+  }
+  return obj;
 }
 export function createLogFiltersData({ pluginConfig }): GlobalLogFiltersData {
   return { LogFilter: pluginConfig?.LogFilter || [] };
