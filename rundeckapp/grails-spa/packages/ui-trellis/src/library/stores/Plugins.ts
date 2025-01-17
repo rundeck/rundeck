@@ -23,6 +23,10 @@ export class PluginStore {
       service === ServiceType.WorkflowNodeStep ||
       service === ServiceType.WorkflowStep
     ) {
+      const description =
+        service === ServiceType.WorkflowNodeStep
+          ? "Run a job on the remote node"
+          : "Execute another job";
       this.plugins.push({
         artifactName: "Job reference",
         author: "",
@@ -31,7 +35,7 @@ export class PluginStore {
         name: "job.reference",
         pluginVersion: "",
         service: service,
-        description: "Run a job on the remote node",
+        description: description,
         title: "Job reference",
         providerMetadata: {
           glyphicon: "book",
