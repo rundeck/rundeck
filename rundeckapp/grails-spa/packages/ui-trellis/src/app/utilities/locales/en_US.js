@@ -1014,6 +1014,7 @@ const messages = {
   "no.jobs.in.this.project": "No Jobs in this Project",
   "JobExec.property.nodeFilter.null.description":
     "The nodes used will be those defined for the triggered Job.",
+  "commandExec.jobName.blank.message": "Job must be specified",
 };
 
 export default messages;

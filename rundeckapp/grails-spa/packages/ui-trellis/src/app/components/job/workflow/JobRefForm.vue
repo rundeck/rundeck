@@ -1,5 +1,8 @@
 <template>
   <modal v-model="showModal" :title="$t('plugin.edit.title')">
+    <div v-if="error" class="alert alert-danger">
+      <ErrorsList :errors="[errorMessage]" />
+    </div>
     <div class="wfitemEditForm">
       <section>
         <div class="form-group">
@@ -82,7 +85,10 @@
             </p>
           </div>
         </div>
-        <div class="form-group">
+        <div
+          class="form-group"
+          :class="{ 'has-error': showRequired && isUseName }"
+        >
           <label class="col-sm-2 control-label"></label>
           <div class="col-sm-5">
             <input
@@ -110,7 +116,10 @@
           </div>
         </div>
 
-        <div class="form-group">
+        <div
+          class="form-group"
+          :class="{ 'has-error': showRequired && !isUseName }"
+        >
           <label class="col-sm-2 control-label">{{
             $t("Workflow.Step.uuid.label")
           }}</label>
@@ -605,12 +614,13 @@ import { merge } from "lodash";
 import { mapState, mapActions } from "pinia";
 import { useNodesStore } from "@/library/stores/NodesStorePinia";
 import NodeFilterInput from "@/app/components/job/resources/NodeFilterInput.vue";
+import ErrorsList from "@/app/components/job/options/ErrorsList.vue";
 const rundeckContext = getRundeckContext();
 const eventBus = rundeckContext.eventBus;
 
 export default defineComponent({
   name: "JobRefForm",
-  components: { NodeFilterInput, NodeListEmbed, UiSocket },
+  components: { ErrorsList, NodeFilterInput, NodeListEmbed, UiSocket },
   provide() {
     return {
       showJobsAsLinks: false,
@@ -672,6 +682,9 @@ export default defineComponent({
       },
       rkey:
         "r_" + Math.floor(Math.random() * Math.floor(1024)).toString(16) + "_",
+      error: false,
+      errorMessage: "",
+      showRequired: false,
     };
   },
   computed: {
@@ -727,6 +740,22 @@ export default defineComponent({
   },
   methods: {
     async saveChanges() {
+      if (
+        this.editModel.jobref.name.length === 0 ||
+        this.editModel.jobref.uuid.length === 0
+      ) {
+        this.error = true;
+        this.errorMessage = this.$t("commandExec.jobName.blank.message");
+        this.showRequired = true;
+      } else {
+        this.error = false;
+        this.showRequired = true;
+      }
+
+      if (this.error) {
+        return;
+      }
+
       this.$emit("update:modelValue", this.editModel);
       this.$emit("save");
     },
@@ -752,10 +781,12 @@ export default defineComponent({
     },
     async triggerFetchNodes() {
       try {
+        this.error = null;
         this.loading = true;
         await this.fetchNodes(this.queryParams);
       } catch (e) {
-        console.log(e);
+        this.error = true;
+        this.errorMessage = e.message;
       } finally {
         this.loading = false;
       }
