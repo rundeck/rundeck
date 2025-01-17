@@ -22,15 +22,16 @@ import {
   createLogFiltersData,
   createStepsData,
   createStrategyData,
+  exportPluginData,
   GlobalLogFiltersData,
   StepsData,
-  StrategyData,
   WorkflowData,
 } from "@/app/components/job/workflow/types/workflowTypes";
 import WorkflowBasic from "@/app/components/job/workflow/WorkflowBasic.vue";
 import WorkflowGlobalLogFilters from "@/app/components/job/workflow/WorkflowGlobalLogFilters.vue";
 import WorkflowSteps from "@/app/components/job/workflow/WorkflowSteps.vue";
 import WorkflowStrategy from "@/app/components/job/workflow/WorkflowStrategy.vue";
+import { PluginConfig } from "@/library/interfaces/PluginConfig";
 import { defineComponent } from "vue";
 
 export default defineComponent({
@@ -52,7 +53,7 @@ export default defineComponent({
   data() {
     return {
       basicData: {} as BasicData,
-      strategyData: {} as StrategyData,
+      strategyData: {} as PluginConfig,
       logFiltersData: {} as GlobalLogFiltersData,
       stepsData: {} as StepsData,
       loaded: false,
@@ -96,8 +97,7 @@ export default defineComponent({
       this.$emit("update:modelValue", {
         ...this.modelValue,
         ...this.basicData,
-        ...this.strategyData,
-        ...{ pluginConfig: this.logFiltersData },
+        ...exportPluginData(this.strategyData, this.logFiltersData),
         ...this.stepsData,
       });
     },
