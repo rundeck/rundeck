@@ -324,7 +324,6 @@ export default defineComponent({
         ? ServiceType.WorkflowNodeStep
         : ServiceType.WorkflowStep;
 
-      //todo: jobref
       if (command.jobref) {
         this.editJobRefModal = true;
       } else {
@@ -338,7 +337,9 @@ export default defineComponent({
         saveData.config = this.editModel.config;
         saveData.id = mkid();
         saveData.nodeStep = this.editService === ServiceType.WorkflowNodeStep;
-        saveData.filters = [];
+        if (!saveData.jobref) {
+          saveData.filters = [];
+        }
 
         const response = await validatePluginConfig(
           ServiceType.WorkflowNodeStep,
