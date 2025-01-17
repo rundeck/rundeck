@@ -40,6 +40,10 @@ jest.mock("../../../../../library/services/projects");
 
 jest.mock("@/library/modules/pluginService");
 
+jest.mock("@/library/stores/NodesStorePinia", () => ({
+  useNodesStore: jest.fn().mockImplementation(() => ({})),
+}));
+
 const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
   const wrapper = mount(WorkflowSteps, {
     props: {
