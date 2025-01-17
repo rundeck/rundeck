@@ -17,6 +17,10 @@ jest.mock("@/library/rundeckService", () => ({
 }));
 jest.mock("../../../../../library/services/projects");
 
+jest.mock("@/library/stores/NodesStorePinia", () => ({
+  useNodesStore: jest.fn().mockImplementation(() => ({})),
+}));
+
 const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
   const wrapper = shallowMount(WorkflowEditor, {
     props: {
@@ -32,7 +36,7 @@ const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
       stubs: {
         WorkflowBasic: false,
       },
-      plugins: [createTestingPinia()],
+      plugins: [createTestingPinia({})],
     },
   });
   await wrapper.vm.$nextTick();

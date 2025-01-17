@@ -27,7 +27,7 @@ export class PluginStore {
         service === ServiceType.WorkflowNodeStep
           ? "Run a job on the remote node"
           : "Execute another job";
-      this.plugins.push({
+      const jobRefPlugin = {
         artifactName: "Job reference",
         author: "",
         builtin: true,
@@ -42,7 +42,11 @@ export class PluginStore {
         },
         isHighlighted: true,
         highlightedOrder: 5,
-      });
+      };
+      const pluginKey = this._getPluginByIdKey(jobRefPlugin);
+      if (!this.pluginsById[pluginKey]) {
+        this.plugins.push(jobRefPlugin);
+      }
     }
     const plugins = await this.client.apiRequest({
       pathTemplate: "api/51/plugin/list",

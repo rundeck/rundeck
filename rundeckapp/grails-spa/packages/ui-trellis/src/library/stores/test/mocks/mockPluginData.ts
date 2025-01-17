@@ -125,6 +125,23 @@ export const mockWorkflowStepPlugins: Plugin[] = [
     },
   },
 ];
+export const mockJobRefWorkflowStepPlugin: Plugin = {
+    id: "",
+    name: "job.reference",
+    artifactName: "Job reference",
+    title: "Job reference",
+    description: "Execute another job",
+    highlightedOrder: 5,
+    isHighlighted: true,
+    author: "",
+    builtin: true,
+    pluginVersion: "",
+    service: ServiceType.WorkflowStep,
+    iconUrl: undefined,
+    providerMetadata: {
+      glyphicon: "book"
+    }
+};
 
 export const mockWorkflowNodeStepPlugins: Plugin[] = [
   {
@@ -158,3 +175,21 @@ export const mockWorkflowNodeStepPlugins: Plugin[] = [
     },
   },
 ];
+
+export const mockJobRefWorkflowNodeStepPlugin: Plugin = {
+  id: "",
+  name: "job.reference",
+  artifactName: "Job reference",
+  title: "Job reference",
+  description: "Run a job on the remote node",
+  highlightedOrder: 5,
+  isHighlighted: true,
+  author: "",
+  builtin: true,
+  pluginVersion: "",
+  service: ServiceType.WorkflowNodeStep,
+  iconUrl: undefined,
+  providerMetadata: {
+    glyphicon: "book"
+  },
+};
