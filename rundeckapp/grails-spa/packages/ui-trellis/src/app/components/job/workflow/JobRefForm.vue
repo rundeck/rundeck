@@ -50,6 +50,7 @@
             <select
               id="jobProjectField"
               v-model="editModel.jobref.project"
+              data-testid="jobProjectField"
               name="jobProject"
               class="form-control"
             >
@@ -96,6 +97,7 @@
               v-model="editModel.jobref.name"
               type="text"
               name="jobName"
+              data-testid="jobNameField"
               :placeholder="$t('scheduledExecution.jobName.label')"
               class="form-control"
               size="100"
@@ -106,6 +108,7 @@
             <input
               :id="`jobGroupField${rkey}`"
               v-model="editModel.jobref.group"
+              data-testid="jobGroupField"
               type="text"
               name="jobGroup"
               size="100"
@@ -127,6 +130,7 @@
             <input
               :id="`jobUuidField${rkey}`"
               v-model="editModel.jobref.uuid"
+              data-testid="jobUuidField"
               type="text"
               name="uuid"
               size="100"
@@ -248,6 +252,7 @@
           <div class="col-sm-2 control-label">
             <span
               class="btn btn-sm"
+              data-testid="expandNodeFilterBtn"
               :class="{ active: nodeFilterOverrideExpanded }"
               @click="nodeFilterOverrideExpanded = !nodeFilterOverrideExpanded"
             >
@@ -263,6 +268,7 @@
       <section
         v-if="filterLoaded"
         :id="`nodeFilterOverride${rkey}`"
+        data-testid="nodeFilterContainer"
         class="collapse-expandable collapse node_filter_link_holder section-separator-solo"
         :class="{ in: nodeFilterOverrideExpanded }"
       >
@@ -373,6 +379,7 @@
             <input
               :id="`nodeThreadcountField${rkey}`"
               v-model="editModel.jobref.nodefilters.dispatch.threadcount"
+              data-testid="nodeThreadcountField"
               type="number"
               name="nodeThreadcount"
               min="1"
@@ -410,6 +417,7 @@
               <input
                 id="nodeKeepgoingTrue"
                 v-model="editModel.jobref.nodefilters.dispatch.keepgoing"
+                data-testid="nodeKeepgoingTrue"
                 type="radio"
                 name="nodeKeepgoing"
                 :value="true"
@@ -651,6 +659,7 @@ export default defineComponent({
         nodeStep: false,
         jobref: {
           name: "",
+          uuid: "",
           project: rundeckContext.projectName,
           group: "",
           args: "",
@@ -685,6 +694,7 @@ export default defineComponent({
       error: false,
       errorMessage: "",
       showRequired: false,
+      eventBus: eventBus,
     };
   },
   computed: {
@@ -735,13 +745,13 @@ export default defineComponent({
     }
     this.filterLoaded = true;
 
-    eventBus.on(`browser-job-item-selection`, this.updateJobSelection);
-    eventBus.on(`browser-jobs-empty`, this.handleFavoritesButton);
+    this.eventBus.on(`browser-job-item-selection`, this.updateJobSelection);
+    this.eventBus.on(`browser-jobs-empty`, this.handleFavoritesButton);
   },
   methods: {
     async saveChanges() {
       if (
-        this.editModel.jobref.name.length === 0 ||
+        this.editModel.jobref.name.length === 0 &&
         this.editModel.jobref.uuid.length === 0
       ) {
         this.error = true;

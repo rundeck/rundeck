@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { api } from "@/library/services/api";
+import { api } from "../../../../../library/services/api";
 import {
   getConfigMetaForExecutionMode,
   getNodeSummary,
@@ -8,11 +8,17 @@ import {
   getNodeResources,
   getNodeTags,
 } from "../services/nodeServices";
-import { getAppLinks, getRundeckContext } from "@/library";
+import { getAppLinks, getRundeckContext } from "../../../../../library";
 
 // Mock all external dependencies
 jest.mock("axios");
-jest.mock("../../../../../library/services/api");
+jest.mock("../../../../../library/services/api", () => ({
+  api: {
+    get: jest.fn(),
+    post: jest.fn(),
+  },
+}));
+
 jest.mock("../../../../../library", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
     projectName: "TestProject",
@@ -148,7 +154,7 @@ describe("Node Services", () => {
       });
 
       await expect(getNodes({}, "/nodes/query")).rejects.toEqual({
-        message: "Invalid filter",
+        message: "Error: Invalid filter",
         response: expect.any(Object),
       });
     });
