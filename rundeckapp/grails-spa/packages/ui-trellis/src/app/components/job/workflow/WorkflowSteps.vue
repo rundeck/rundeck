@@ -271,15 +271,26 @@ export default defineComponent({
       provider: string;
     }) {
       this.addStepModal = false;
-      this.editModel = {
-        type: provider,
-        config: {},
-        nodeStep: service === ServiceType.WorkflowNodeStep,
-      };
       this.editExtra = {};
       this.editIndex = -1;
       this.editService = service;
-      this.editStepModal = true;
+
+      if (provider === "job.reference") {
+        this.editModel = {
+          description: "",
+          jobref: {},
+          nodeStep: service === ServiceType.WorkflowNodeStep,
+        };
+        this.editJobRefModal = true;
+      } else {
+        this.editModel = {
+          type: provider,
+          config: {},
+          nodeStep: service === ServiceType.WorkflowNodeStep,
+        };
+
+        this.editStepModal = true;
+      }
     },
     cancelEditStep() {
       this.editStepModal = false;
@@ -338,6 +349,7 @@ export default defineComponent({
         saveData.config = this.editModel.config;
         saveData.id = mkid();
         saveData.nodeStep = this.editService === ServiceType.WorkflowNodeStep;
+        saveData.jobref = this.editModel.jobref;
 
         if (!saveData.jobref) {
           saveData.filters = [];
@@ -357,7 +369,6 @@ export default defineComponent({
             this.editModelValidation = response;
           }
         } else {
-          saveData.jobref = this.editModel.jobref;
           saveData.description = this.editModel.description;
           this.handleSuccessOnValidation(saveData);
         }
