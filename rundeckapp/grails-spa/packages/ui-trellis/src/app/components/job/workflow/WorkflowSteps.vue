@@ -176,6 +176,7 @@
         v-model="editModel"
         v-model:modal-active="editJobRefModal"
         @cancel="cancelEditStep"
+        @save="saveEditStep"
       />
     </template>
   </common-undo-redo-draggable-list>
@@ -337,54 +338,28 @@ export default defineComponent({
         saveData.config = this.editModel.config;
         saveData.id = mkid();
         saveData.nodeStep = this.editService === ServiceType.WorkflowNodeStep;
+
         if (!saveData.jobref) {
           saveData.filters = [];
-        }
 
-        const response = await validatePluginConfig(
-          ServiceType.WorkflowNodeStep,
-          saveData.type,
-          saveData.config,
-        );
+          const response = await validatePluginConfig(
+            this.editService,
+            saveData.type,
+            saveData.config,
+          );
 
-        if (response.valid && Object.keys(response.errors || {}).length === 0) {
-          const dataForUpdatingHistory = {
-            index: this.model.commands.length,
-            operation: Operation.Insert,
-            undo: Operation.Remove,
-            orig: undefined,
-          };
-          if (this.editIndex >= 0) {
-            const originalData = this.model.commands[this.editIndex];
-            this.$refs.historyControls.operationModify(
-              this.editIndex,
-              saveData,
-            );
-            dataForUpdatingHistory.index = this.editIndex;
-            dataForUpdatingHistory.operation = Operation.Modify;
-            dataForUpdatingHistory.undo = Operation.Modify;
-            dataForUpdatingHistory.orig = originalData;
+          if (
+            response.valid &&
+            Object.keys(response.errors || {}).length === 0
+          ) {
+            this.handleSuccessOnValidation(saveData);
           } else {
-            this.$refs.historyControls.operationInsert(
-              this.model.commands.length,
-              saveData,
-            );
+            this.editModelValidation = response;
           }
-
-          this.$refs.historyControls.changeEvent({
-            dest: -1,
-            value: saveData,
-            ...dataForUpdatingHistory,
-          });
-
-          this.editStepModal = false;
-          this.editJobRefModal = false;
-          this.editModel = {};
-          this.editExtra = {};
-          this.editModelValidation = null;
-          this.editIndex = -1;
         } else {
-          this.editModelValidation = response;
+          saveData.jobref = this.editModel.jobref;
+          saveData.description = this.editModel.description;
+          this.handleSuccessOnValidation(saveData);
         }
       } catch (e) {
         console.log(e);
@@ -423,6 +398,40 @@ export default defineComponent({
         operation: Operation.Modify,
         undo: Operation.Modify,
       });
+    },
+    handleSuccessOnValidation(saveData: any) {
+      const dataForUpdatingHistory = {
+        index: this.model.commands.length,
+        operation: Operation.Insert,
+        undo: Operation.Remove,
+        orig: undefined,
+      };
+      if (this.editIndex >= 0) {
+        const originalData = this.model.commands[this.editIndex];
+        this.$refs.historyControls.operationModify(this.editIndex, saveData);
+        dataForUpdatingHistory.index = this.editIndex;
+        dataForUpdatingHistory.operation = Operation.Modify;
+        dataForUpdatingHistory.undo = Operation.Modify;
+        dataForUpdatingHistory.orig = originalData;
+      } else {
+        this.$refs.historyControls.operationInsert(
+          this.model.commands.length,
+          saveData,
+        );
+      }
+
+      this.$refs.historyControls.changeEvent({
+        dest: -1,
+        value: saveData,
+        ...dataForUpdatingHistory,
+      });
+
+      this.editStepModal = false;
+      this.editJobRefModal = false;
+      this.editModel = {};
+      this.editExtra = {};
+      this.editModelValidation = null;
+      this.editIndex = -1;
     },
   },
 });

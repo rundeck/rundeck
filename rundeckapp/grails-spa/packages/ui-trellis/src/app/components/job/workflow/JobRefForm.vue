@@ -343,7 +343,10 @@
               </span>
 
               <div :id="`matchednodes${rkey}`" class="clearfix">
-                <node-list-embed :nodes="nodes" @filter="filterClicked" />
+                <node-list-embed
+                  :nodes="currentNodes"
+                  @filter="filterClicked"
+                />
               </div>
             </div>
           </div>
@@ -674,7 +677,7 @@ export default defineComponent({
     hasFilter() {
       return Boolean(this.editModel.jobref.nodefilters.filter);
     },
-    ...mapState(useNodesStore, ["total", "nodeFilterStore", "nodes"]),
+    ...mapState(useNodesStore, ["total", "nodeFilterStore", "currentNodes"]),
   },
   watch: {
     modalActive(val) {
