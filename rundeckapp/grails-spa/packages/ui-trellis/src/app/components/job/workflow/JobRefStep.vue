@@ -6,8 +6,6 @@
       ({{ step.jobref.project }})
     </template>
     <div v-if="step.jobref.args" class="argString">
-      <!--      <g:render template="/execution/execArgString" model="[argString: item.argString]"/>-->
-      <!--      TODO: job option parse-->
       <template v-if="parsed">
         <template v-for="entry in parsed" :key="entry.key">
           <span class="optkey"> {{ entry.key }} </span>
@@ -16,7 +14,7 @@
       </template>
       <code class="optvalue">{{ step.jobref.args }}</code>
     </div>
-    <template v-if="step.jobref.nodeStep">
+    <template v-if="step.nodeStep">
       <i class="fas fa-hdd"></i>
       <span class="info note">
         {{ $t("JobExec.nodeStep.true.label") }}
