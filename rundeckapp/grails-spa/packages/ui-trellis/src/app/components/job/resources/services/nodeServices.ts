@@ -76,7 +76,10 @@ export async function getNodes(params: any, url: string): Promise<any> {
     return response.data;
   } catch (e: any) {
     // e.message in this case is the error message from the server response
-    throw { message: "Error: " + e.message, response: e.response };
+    throw {
+      message: e.message.includes("Error:") ? e.message : "Error: " + e.message,
+      response: e.response,
+    };
   }
 }
 
