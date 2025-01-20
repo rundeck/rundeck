@@ -28,10 +28,12 @@ describe('NodesStore', () => {
         { nodename: 'node2', hostname: 'host2' },
     ];
 
-    const mockTags = [
-        { name: 'tag1', nodeCount: 1 },
-        { name: 'tag2', nodeCount: 2 },
-    ];
+    const mockTags = {
+        tags: [
+            { name: 'tag1', nodeCount: 1 },
+            { name: 'tag2', nodeCount: 2 },
+        ]
+    };
 
     beforeEach(() => {
         setActivePinia(createPinia());
@@ -187,7 +189,7 @@ describe('NodesStore', () => {
                 await store.fetchTags();
 
                 expect(getNodeTags).toHaveBeenCalled();
-                expect(store.tags).toEqual(mockTags);
+                expect(store.tags).toEqual(mockTags.tags);
             });
 
             it('should throw error when fetch fails', async () => {
