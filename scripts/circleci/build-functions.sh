@@ -12,6 +12,17 @@ rundeck_war_build() {
     ./gradlew -Penvironment="${ENV}" ${GRADLE_BUILD_OPTS} publishToMavenLocal build -x check
 }
 
+rundeck_assemble_build() {
+    echo "== Versions =="
+    java -version
+    echo "NPM=$(npm -version)"
+    echo "Node=$(node --version)"
+    echo "Groovy=$(groovy --version)"
+
+    echo "== Assemble build =="
+    ./gradlew -Penvironment="${ENV}" ${GRADLE_BUILD_OPTS} rundeckapp:assemble
+}
+
 rundeck_gradle_tests() {
     ./gradlew -Penvironment="${ENV}" ${GRADLE_BUILD_OPTS} check
 }
