@@ -75,6 +75,8 @@
     </template>
     <template v-else>
       <label
+        v-if="!prop.options || prop.options['labelHidden'] !== 'true'"
+        data-testid="plugin-prop-label"
         :class="
           'col-sm-2 control-label input-sm ' + (prop.required ? 'required' : '')
         "
@@ -604,10 +606,14 @@ export default defineComponent({
   },
   methods: {
     inputColSize(prop: any) {
-      if (prop.options && prop.options["selectionAccessor"]) {
-        return "col-sm-5";
+      let size = 10;
+      if (prop.options && prop.options["labelHidden"] === "true") {
+        size = 12;
       }
-      return "col-sm-10";
+      if (prop.options && prop.options["selectionAccessor"]) {
+        size -= 5;
+      }
+      return `col-sm-${size}`;
     },
     setJobName(jobUuid: string) {
       if (
