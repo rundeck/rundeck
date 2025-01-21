@@ -66,25 +66,44 @@ export default defineComponent({
       return this.socketData;
     },
   },
+  watch: {
+    location() {
+      this.reload();
+    },
+    section() {
+      this.reload();
+    },
+  },
   mounted() {
-    this.loadItems();
-    if (this.rootStore) {
-      this.uiwatcher = {
-        section: this.section,
-        location: this.location,
-        callback: (uiItems: UIItem[]) => {
-          this.items = uiItems.filter((item) => item.visible);
-        },
-      } as UIWatcher;
-      this.rootStore.ui.addWatcher(this.uiwatcher);
-    }
+    this.load();
   },
   unmounted() {
-    if (this.uiwatcher) {
-      this.rootStore.ui.removeWatcher(this.uiwatcher);
-    }
+    this.unload();
   },
   methods: {
+    load() {
+      this.loadItems();
+      if (this.rootStore) {
+        this.uiwatcher = {
+          section: this.section,
+          location: this.location,
+          callback: (uiItems: UIItem[]) => {
+            this.items = uiItems.filter((item) => item.visible);
+          },
+        } as UIWatcher;
+        this.rootStore.ui.addWatcher(this.uiwatcher);
+      }
+    },
+    unload() {
+      if (this.uiwatcher) {
+        this.rootStore.ui.removeWatcher(this.uiwatcher);
+        this.uiwatcher = null;
+      }
+    },
+    reload() {
+      this.unload();
+      this.load();
+    },
     loadItems() {
       if (this.rootStore) {
         this.items = this.rootStore.ui
