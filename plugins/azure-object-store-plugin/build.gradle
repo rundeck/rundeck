@@ -43,6 +43,7 @@ dependencies {
 
     constraints {
         pluginLibs "com.nimbusds:nimbus-jose-jwt:${nimbusJoseVersion}"
+        pluginLibs "com.squareup.okio:okio:1.17.6"
     }
 }
 
