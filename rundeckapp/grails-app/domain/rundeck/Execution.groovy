@@ -136,6 +136,9 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         isScheduledAdHoc {
             eq 'status', ExecutionService.EXECUTION_SCHEDULED
         }
+        withScheduledExecution { se ->
+            eq 'scheduledExecution', se
+        }
         withServerNodeUUID { uuid ->
             eq 'serverNodeUUID', uuid
         }
