@@ -224,7 +224,7 @@
           v-else-if="prop.options && prop.options['displayType'] === 'CODE'"
         >
           <ui-socket
-            :socket-data="{ value: modelValue, updateCallback: handleUpdate }"
+            v-model="currentValue"
             section="plugin-prop-edit-textarea-code"
             :location="`property:${prop.name}:${prop.options ? prop.options['CUSTOM_PROP_SOCKET_SECTION'] : ''}`"
           >
