@@ -1,6 +1,6 @@
 <template>
   <slot v-if="items.length < 1"></slot>
-  <template v-for="i in items">
+  <template v-for="(i, x) in items" :key="x">
     <template v-if="i.text">{{ i.text }}</template>
     <span v-else-if="i.html" v-html="i.html"></span>
     <component
