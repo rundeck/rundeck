@@ -56,7 +56,67 @@ class JobListPage extends BasePage implements ActivityListTrait {
     By alertInfoBy = By.cssSelector(".alert.alert-info")
     By jobGraphBy = By.id("jobgraphtab")
     By dashboardTabBy = By.id("joblisttab")
+    static final By SAVE_FILTER_BUTTON = By.cssSelector("button[data-test-id='save-filter-button']")
+    static final By SAVE_FILTER_INPUT = By.cssSelector("input.form-control[data-action='auto-focus']")
+    static final By OK_BUTTON = By.xpath("/html/body/div[6]/div/div/div[3]/button[2]")
+    static final By FILTER_DROPDOWN = By.cssSelector("span.dropdown-toggle.btn.btn-secondary.btn-sm.text-secondary")
+    static final By SAVED_FILTER_LINK = By.cssSelector("a[data-test='filter-link']")
+    static final By ACTIVITY_ROWS = By.cssSelector("table.activity-list-table tbody tr.link.activity_row")
+    static final By EVENT_ICON = By.cssSelector("td.eventicon")
+    static final By ANY_TIME_BUTTON = By.cssSelector("span[data-test-id='dropdown-toggle']")
+    static final By IN_THE_LAST_WEEK_BUTTON = By.cssSelector("a[data-test-id='period-option']")
+    static final By APPLIED_FILTER_NAME = By.cssSelector("span[data-test-id='filter-name']")
 
+    JobListPage clickAnyTimeButton() {
+        waitForElementVisible(ANY_TIME_BUTTON).click()
+        return this
+
+    }
+
+    JobListPage clickLastWeekButton() {
+        waitForElementVisible(IN_THE_LAST_WEEK_BUTTON).click()
+        return this
+
+    }
+    JobListPage clickSaveFilterButton() {
+        waitForElementVisible(SAVE_FILTER_BUTTON).click()
+        return this
+    }
+
+    JobListPage enterFilterName(String filterName) {
+        waitForElementVisible(SAVE_FILTER_INPUT).sendKeys(filterName)
+        return this
+    }
+
+    JobListPage confirmFilterSave() {
+        waitForElementVisible(OK_BUTTON).click()
+        return this
+    }
+
+    JobListPage openFilterDropdown() {
+        waitForElementVisible(FILTER_DROPDOWN).click()
+        return this
+    }
+
+    JobListPage selectSavedFilter() {
+        waitForElementVisible(SAVED_FILTER_LINK).click()
+        return this
+    }
+
+    List<WebElement> getActivityRows() {
+        return new WebDriverWait(driver, Duration.ofSeconds(10))
+                .until(ExpectedConditions.visibilityOfAllElementsLocatedBy(ACTIVITY_ROWS))
+    }
+
+
+    String getAppliedFilterName() {
+        return waitForElementVisible(APPLIED_FILTER_NAME).getText()
+    }
+    String getFirstRowStatus() {
+        return getActivityRows().get(0)
+                .findElement(EVENT_ICON)
+                .getAttribute("title")
+    }
     JobListPage(final SeleniumContext context) {
         super(context)
     }
