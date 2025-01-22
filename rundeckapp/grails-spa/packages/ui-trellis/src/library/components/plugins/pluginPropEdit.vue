@@ -223,18 +223,25 @@
         <template
           v-else-if="prop.options && prop.options['displayType'] === 'CODE'"
         >
-          <ace-editor
-            :id="`${rkey}prop_` + pindex"
-            v-model="currentValue"
-            :name="`${rkey}prop_` + pindex"
-            :lang="prop.options['codeSyntaxMode']"
-            :code-syntax-selectable="
-              prop.options['codeSyntaxSelectable'] === 'true' && !renderReadOnly
-            "
-            height="200"
-            width="100%"
-            :read-only="renderReadOnly"
-          />
+          <ui-socket
+            :socket-data="{ value: modelValue, updateCallback: handleUpdate }"
+            section="plugin-prop-edit-textarea-code"
+            :location="`property:${prop.name}:${prop.options ? prop.options['CUSTOM_PROP_SOCKET_SECTION'] : ''}`"
+          >
+            <ace-editor
+              :id="`${rkey}prop_` + pindex"
+              v-model="currentValue"
+              :name="`${rkey}prop_` + pindex"
+              :lang="prop.options['codeSyntaxMode']"
+              :code-syntax-selectable="
+                prop.options['codeSyntaxSelectable'] === 'true' &&
+                !renderReadOnly
+              "
+              height="200"
+              width="100%"
+              :read-only="renderReadOnly"
+            />
+          </ui-socket>
         </template>
         <template
           v-else-if="prop.options && prop.options['displayType'] === 'PASSWORD'"
