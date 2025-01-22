@@ -6,12 +6,18 @@
     <component
       :is="i.widget"
       v-else-if="i.widget && eventBus"
+      v-model="internalModel"
       :event-bus="eventBus"
       :item-data="itemData"
     >
       <slot></slot>
     </component>
-    <component :is="i.widget" v-else-if="i.widget" :item-data="itemData">
+    <component
+      :is="i.widget"
+      v-else-if="i.widget"
+      v-model="internalModel"
+      :item-data="itemData"
+    >
       <slot></slot>
     </component>
   </template>
@@ -38,12 +44,20 @@ export default defineComponent({
     eventBus: {
       type: Object as PropType<typeof EventBus>,
       required: false,
+      default: undefined,
     },
     socketData: {
       type: [String, Object] as PropType<string | Record<string, any>>,
       required: false,
+      default: undefined,
+    },
+    modelValue: {
+      type: [String, Object] as PropType<string | Record<string, any>>,
+      required: false,
+      default: undefined,
     },
   },
+  emits: ["update:modelValue"],
   setup() {
     const items = ref<UIItem[]>([]);
     const uiwatcher = ref<UIWatcher>();
@@ -55,6 +69,14 @@ export default defineComponent({
     };
   },
   computed: {
+    internalModel: {
+      get() {
+        return this.modelValue;
+      },
+      set(val: any) {
+        this.$emit("update:modelValue", val);
+      },
+    },
     itemData() {
       if (typeof this.socketData === "string") {
         try {
