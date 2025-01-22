@@ -89,7 +89,7 @@ export default defineComponent({
     softWrapControl: Boolean,
     readOnly: Boolean,
   },
-  emits: ["update:modelValue"],
+  emits: ["update:modelValue", "init"],
   data() {
     return {
       valueInternal: this.modelValue || "",
@@ -137,6 +137,7 @@ export default defineComponent({
       if (this.readOnly) {
         ace.setReadOnly(true);
       }
+      this.$emit("init", ace);
     },
   },
 });
