@@ -14,6 +14,8 @@ orbs:
   trigger: rundeck/trigger-pipeline@0.0.5
   slack: circleci/slack@4.4.0
   browser-tools: circleci/browser-tools@1.4.8
+  snyk: snyk/snyk@2.2 # https://circleci.com/developer/orbs/orb/snyk/snyk
+  git: pagerduty/git@0.1.0 # https://circleci.com/developer/orbs/orb/pagerduty/git (public PD orb)
 
 # Slack notifier
 slack-fail-post-step: &slack-fail-post-step
@@ -350,6 +352,35 @@ jobs:
           step-name: Run Redocly OpenAPI Linting
           command: openapi_tests
 
+  #Snyk tests
+  test-snyk:
+    <<: *job-defaults
+    executor:
+      name: docker-builder
+      resource_class: large
+    steps:
+      - setup_docker:
+          docker_layer_caching: true
+      - checkout
+      - restore-build-cache
+      - install-build-dependencies
+      - run-build-step:
+          step-name: Assemble rundeck
+          command: rundeck_assemble_build
+      - snyk/install
+      - run-build-step:
+          step-name: Configure Snyk
+          # this will need to be updated if the project changes owners
+          command: snyk config set org='rundeck-core-mtgfa3XPaKGbFtHj9aRXhg'
+      - run-build-step:
+          step-name: Run Snyk monitors to track vulnerabilities
+          # Run monitor first to push results to webui
+          command: snyk monitor --all-projects --detection-depth=10 --scan-all-unmanaged
+      - run-build-step:
+          step-name: Run Snyk test (ignoring scan results)
+          # Don't fail the build giving the Core team some time to clean the repo using the monitors
+          command: snyk test --severity-threshold=low --all-projects --detection-depth=10 --scan-all-unmanaged || true
+
   # Trigger pipeline in the enterprise repo
   trigger-enterprise:
     executor:
@@ -470,8 +501,6 @@ jobs:
       - save-build-cache
       - store_artifacts:
           path: ~/workspace/packaging/packaging/build/distributions
-
-
 
   # Run Testdeck job on docker executor.
   test-docker:
@@ -656,6 +685,11 @@ workflows:
           name: T Packaging
           <<: *require-build
           <<: *slack-defaults
+      - test-snyk:
+          name: Snyk Security Scan
+          context:
+            - Snyk
+            - Cloudsmith
       - wizcli-scan:
           name: WizCLI Scan Preview
           <<: *require-build

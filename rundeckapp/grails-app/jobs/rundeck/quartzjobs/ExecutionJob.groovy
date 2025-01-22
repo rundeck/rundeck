@@ -304,12 +304,14 @@ class ExecutionJob implements InterruptableJob {
                     }else{
                         initMap.jobShouldNotRun="Job ${initMap.scheduledExecution.extid} will run on server ID ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this server (${serverUUID})."
                     }
+                    log.info("Deleting job ${context.jobDetail.key} for reason: ${initMap.jobShouldNotRun}")
                     context.getScheduler().deleteJob(context.jobDetail.key)
                     return initMap
                 }else{
                     //verify run on this node but scheduled disabled
                     if(!initMap.jobSchedulesService.shouldScheduleExecution(initMap.scheduledExecution.uuid)){
                         initMap.jobShouldNotRun = "Job ${initMap.scheduledExecution.extid} schedule has been disabled, removing schedule on this server (${serverUUID})."
+                        log.info("Deleting job ${context.jobDetail.key} for reason: ${initMap.jobShouldNotRun}")
                         context.getScheduler().deleteJob(context.jobDetail.key)
                         return initMap
                     }

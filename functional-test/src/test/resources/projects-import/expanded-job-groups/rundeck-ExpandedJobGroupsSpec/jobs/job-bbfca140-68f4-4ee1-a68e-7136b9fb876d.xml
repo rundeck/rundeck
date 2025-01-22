@@ -3,7 +3,7 @@
     <defaultTab>nodes</defaultTab>
     <description></description>
     <executionEnabled>true</executionEnabled>
-    <group>Parent/Child/SubChild</group>
+    <group>ParentGroup/Child/SubChild</group>
     <id>bbfca140-68f4-4ee1-a68e-7136b9fb876d</id>
     <loglevel>INFO</loglevel>
     <name>Level3</name>
