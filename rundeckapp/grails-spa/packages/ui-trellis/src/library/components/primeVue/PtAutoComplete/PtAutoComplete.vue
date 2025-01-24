@@ -40,8 +40,6 @@ export default defineComponent({
       default: "label",
     },
   },
-
-
   emits: ["update:modelValue","onChange","onComplete"],
   data() {
     return {
