@@ -1,16 +1,26 @@
 <template>
-  <section id="workflowContent2" class="section-separator section-space-lg">
+  <section id="optionsContent" class="section-space-lg">
+    <div class="form-group">
+      <div class="col-sm-2 control-label text-form-label">
+        <span id="optsload"></span>{{ $t("options.label") }}
+      </div>
+      <div class="col-sm-10" style="margin-top: 1em">
+        <options-editor-section />
+      </div>
+    </div>
+  </section>
+  <section id="workflowContent" class="section-separator section-space-lg">
     <div class="form-group">
       <div class="col-sm-2 control-label text-form-label">
         {{ $t("Workflow.label") }}
       </div>
       <div v-if="loaded" class="col-sm-10" style="padding-top: 1em">
         <workflow-basic v-model="basicData" />
-        <WorkflowStrategy v-model="strategyData" />
+        <workflow-strategy v-model="strategyData" />
         <hr />
-        <WorkflowGlobalLogFilters v-model="logFiltersData" />
+        <workflow-global-log-filters v-model="logFiltersData" />
         <hr />
-        <WorkflowSteps v-model="stepsData" />
+        <workflow-steps v-model="stepsData" />
       </div>
     </div>
   </section>
@@ -32,10 +42,12 @@ import WorkflowGlobalLogFilters from "@/app/components/job/workflow/WorkflowGlob
 import WorkflowSteps from "@/app/components/job/workflow/WorkflowSteps.vue";
 import WorkflowStrategy from "@/app/components/job/workflow/WorkflowStrategy.vue";
 import { defineComponent } from "vue";
+import OptionsEditorSection from "@/app/pages/job/editor/OptionsEditorSection.vue";
 
 export default defineComponent({
   name: "WorkflowEditor",
   components: {
+    OptionsEditorSection,
     WorkflowBasic,
     WorkflowSteps,
     WorkflowGlobalLogFilters,
@@ -104,5 +116,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style scoped lang="scss"></style>

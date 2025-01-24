@@ -325,7 +325,7 @@ export default defineComponent({
         saveData.filters = [];
 
         const response = await validatePluginConfig(
-          ServiceType.WorkflowNodeStep,
+          this.editService,
           saveData.type,
           saveData.config,
         );
