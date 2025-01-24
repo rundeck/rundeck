@@ -2,6 +2,7 @@ import { RootStore } from "./RootStore";
 import { RundeckClient } from "@rundeck/client";
 import axios from "axios";
 import { ref } from "vue";
+import { getRundeckContext } from "../rundeckService";
 
 export class NewsStore {
   articles: Array<Article> = [];
@@ -16,7 +17,10 @@ export class NewsStore {
   load = async () => {
     if (this.loaded.value) return;
 
-    const resp = await axios.get("https://api.rundeck.com/news/v1/blog/list", {
+    const appRundeckGatewayUrl =
+      getRundeckContext().appMeta.appRundeckGatewayUrl;
+
+    const resp = await axios.get(appRundeckGatewayUrl + "/news/v1/blog/list", {
       params: {
         groupid: 7039074342,
       },

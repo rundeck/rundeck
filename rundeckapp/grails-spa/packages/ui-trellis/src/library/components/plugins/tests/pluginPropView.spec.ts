@@ -3,6 +3,9 @@ import PluginPropView from "../pluginPropView.vue";
 import PluginPropVal from "../pluginPropVal.vue";
 import Expandable from "../../utils/Expandable.vue";
 import AceEditor from "../../utils/AceEditor.vue";
+
+let originalMutationObserver: typeof MutationObserver;
+
 const createWrapper = (props = {}) => {
   return mount(PluginPropView, {
     props: {
@@ -18,13 +21,30 @@ const createWrapper = (props = {}) => {
       value: "true",
       ...props,
     },
-    global: {
-      components: { PluginPropVal, Expandable, AceEditor },
-    },
   });
 };
 describe("pluginPropView.vue", () => {
+  const allMockedObservers: any = [];
+  const mutationObserverMock = jest
+    .fn<MutationObserver, [MutationCallback]>()
+    .mockImplementation(() => {
+      const mock = {
+        observe: jest.fn(),
+        disconnect: jest.fn(),
+        takeRecords: jest.fn(),
+      };
+      allMockedObservers.push(mock);
+      return mock;
+    });
+
+  beforeEach(() => {
+    // Ensure we can restore the real MutationObserver after the test
+    originalMutationObserver = global.MutationObserver;
+    global.MutationObserver = mutationObserverMock;
+  });
+
   afterEach(() => {
+    global.MutationObserver = originalMutationObserver;
     jest.clearAllMocks();
   });
   it("renders a boolean property with correct title and 'true' value styling", async () => {
