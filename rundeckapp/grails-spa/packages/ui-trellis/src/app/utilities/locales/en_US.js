@@ -1015,7 +1015,8 @@ const messages = {
   "JobExec.property.nodeFilter.null.description":
     "The nodes used will be those defined for the triggered Job.",
   "commandExec.jobName.blank.message": "Job must be specified",
-  "results.truncated.count.results.shown":"Results truncated. {0} results shown."
+  "results.truncated.count.results.shown":"Results truncated. {0} results shown.",
+  "options.label": "Options",
 };
 
 export default messages;

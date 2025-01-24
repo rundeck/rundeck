@@ -1,11 +1,7 @@
 <template>
   <div v-if="loaded">
     <workflow-editor v-model="updatedData" />
-    <json-embed
-      v-if="loaded"
-      :output-data="updatedData"
-      field-name="jobWorkflowJson"
-    />
+    <json-embed :output-data="updatedData" field-name="jobWorkflowJson" />
   </div>
 </template>
 

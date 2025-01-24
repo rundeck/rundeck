@@ -220,41 +220,34 @@
 
       %{--Options--}%
     <div class="tab-pane" id="tab_workflow">
-      <section id="optionsContent" class=" section-space-lg" >
-          <div class="form-group">
-              <div class="${labelColSize} control-label text-form-label"><span id="optsload"></span><g:message code="options.label" /></div>
-              <div class="${fieldColSize}">
-                  <g:if test="${uiType=='next'}">
-                      <div class="job-editor-options-vue" id="job-editor-options-vue">
-                          <options-editor-section  />
-                      </div>
-                  </g:if>
-                  <g:else>
-                  <div  id="editoptssect" class="rounded">
-                      <%
-                          def options = sessionOpts
-                          if(!options){
-                              def tmpse = ScheduledExecution.get(scheduledExecution.id)
-                              options = tmpse?tmpse.options:scheduledExecution.options
-                          }
-                      %>
-                      <g:render template="/scheduledExecution/detailsOptions" model="${[options:options,edit:true]}"/>
-                      <g:if test="${scheduledExecution && scheduledExecution.argString}">
-                          <g:render template="/execution/execArgString" model="[argString: scheduledExecution.argString]"/>
-                      </g:if>
-                      <g:hiddenField name="_sessionopts" value="true"/>
-
-                  </div>
-                  </g:else>
-              </div>
+      <g:if test="${feature.isEnabled(name:'alphaUi') && uiType=='next' }">
+          <div class="job-editor-workflow-vue">
+            <workflow-editor-section  />
           </div>
-      </section>%{--//Options--}%
-      <feature:enabled name="alphaUi">
-        <div class="job-editor-workflow-vue">
-          <workflow-editor-section />
-        </div>
-      </feature:enabled>
-      <feature:disabled name="alphaUi">
+      </g:if>
+      <g:else>
+        <section id="optionsContent" class=" section-space-lg" >
+          <div class="form-group">
+            <div class="${labelColSize} control-label text-form-label"><span id="optsload"></span><g:message code="options.label" /></div>
+            <div class="${fieldColSize}">
+              <div  id="editoptssect" class="rounded">
+                <%
+                  def options = sessionOpts
+                  if(!options){
+                    def tmpse = ScheduledExecution.get(scheduledExecution.id)
+                    options = tmpse?tmpse.options:scheduledExecution.options
+                  }
+                %>
+                <g:render template="/scheduledExecution/detailsOptions" model="${[options:options,edit:true]}"/>
+                <g:if test="${scheduledExecution && scheduledExecution.argString}">
+                  <g:render template="/execution/execArgString" model="[argString: scheduledExecution.argString]"/>
+                </g:if>
+                <g:hiddenField name="_sessionopts" value="true"/>
+
+              </div>
+            </div>
+          </div>
+        </section>%{--//Options--}%
         <section id="workflowContent" class="section-separator section-space-lg" >
           <div class="form-group">
             <div class="${labelColSize}  control-label text-form-label"><g:message code="Workflow.label" /></div>
@@ -274,14 +267,16 @@
             </div>
           </div>
         </section>%{--//Workflow--}%
-        <g:render template="jobComponentProperties"
-                  model="[
-                          jobComponents:jobComponents,
-                          sectionName:'workflow',
-                          jobComponentValues:jobComponentValues
-                  ]"
-        />
-      </feature:disabled>
+      </g:else>
+
+
+      <g:render template="jobComponentProperties"
+                model="[
+                        jobComponents:jobComponents,
+                        sectionName:'workflow',
+                        jobComponentValues:jobComponentValues
+                ]"
+      />
       %{--Workflow--}%
 </div><!-- end#tab_workflow -->
 
@@ -551,6 +546,7 @@ function getCurSEID(){
 
         }
         function setupJobExecNodeFilterBinding(root,target,dataId){
+          console.log(selFrameworkProject)
             var filterParams = loadJsonData(dataId);
             var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
             var jobRefNodeFilter = new NodeFilters(
