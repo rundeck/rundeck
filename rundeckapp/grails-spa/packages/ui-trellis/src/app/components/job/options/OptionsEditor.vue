@@ -329,4 +329,8 @@ export default defineComponent({
 
   padding: 10px 4px;
 }
+
+.note {
+  margin-top: 10px;
+}
 </style>
