@@ -4,7 +4,7 @@
       <div class="col-sm-2 control-label text-form-label">
         <span id="optsload"></span>{{ $t("options.label") }}
       </div>
-      <div class="col-sm-10" style="margin-top: 1em">
+      <div class="col-sm-10" style="margin-top: 0.9em">
         <options-editor-section />
       </div>
     </div>
