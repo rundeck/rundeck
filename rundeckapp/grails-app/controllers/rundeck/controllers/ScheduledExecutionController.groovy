@@ -465,7 +465,7 @@ class ScheduledExecutionController  extends ControllerBase{
             Map compProps = [
                     properties: jobComponent.inputProperties,
                     section: compSection,
-                    pluginConfig: jobComponentValues,
+                    pluginConfig: jobComponentValues.get(jobComponent.name),
                     prefix: prefix,
                     messageType: messageType
             ]
