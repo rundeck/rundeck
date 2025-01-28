@@ -6,11 +6,6 @@ const mountOptionEdit = async (options: any): Promise<VueWrapper<any>> => {
     props: {
       ...options,
     },
-    global: {
-      mocks: {
-        $t: (msg: string) => msg,
-      },
-    },
     components: {},
   });
 

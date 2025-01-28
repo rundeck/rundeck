@@ -56,9 +56,6 @@ const mountKeyStorageView = async (props = {}) => {
       components: {
         Modal,
       },
-      mocks: {
-        $t: (msg: string) => msg,
-      },
     },
     data() {
       return {

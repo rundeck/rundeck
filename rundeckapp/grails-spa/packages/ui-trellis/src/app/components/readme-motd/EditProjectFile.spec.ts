@@ -37,11 +37,6 @@ const mountEditProjectFile = async (props = {}) => {
       displayConfig: ["none"],
       ...props,
     },
-    global: {
-      mocks: {
-        $t: (msg) => msg,
-      },
-    },
   });
 };
 
