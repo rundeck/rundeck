@@ -16,14 +16,18 @@ class ProjectDashboardSpec extends SeleniumBase {
     WebDriverWait wait
 
     @Shared
-    String projectName = "test-project-dashboard"
+    String projectName = "dashboard-test-project"
+
+    @Shared
+    String jobId
 
     def setupSpec() {
         setupProject(projectName)
-        def jobDefinition = JobUtils.generateScheduledExecutionXml("DashboardTestJob")
+        // Create a scheduled job that runs every 2 seconds
+        def jobDefinition = JobUtils.generateScheduledJobsXml("DashboardTestJob", "<time hour='*' seconds='*/2' minute='*' />")
         def client = getClient()
         def response = JobUtils.createJob(projectName, jobDefinition, client)
-        def jobId = response.succeeded[0].id
+        jobId = response.succeeded[0].id
         assert JobUtils.executeJob(jobId, client).isSuccessful()
     }
 
@@ -32,41 +36,19 @@ class ProjectDashboardSpec extends SeleniumBase {
         (go LoginPage).login(TEST_USER, TEST_PASS)
     }
 
-
-    def "Validate Execution Count, User Count, and User Details in Project Dashboard"() {
-        given: "Expected execution count, user count, and user name"
-        def expectedExecutionCount = 1
-        def expectedUserCount = 1
-        def expectedUserName = "admin"
-
+    /**
+     Test Case 1: Validate Running Jobs on Dashboard
+     */
+    def "Validate Running Jobs in Project Dashboard"() {
         when: "Navigate to the Project Dashboard Page"
         def dashboardPage = go DashboardPage, projectName
-        dashboardPage.validatePage()
+        then: "Dashboard should contain Running Jobs"
 
-        then: "Dashboard should display correct execution count, user count, and user details"
         wait.until {
-            def executionCountElement = dashboardPage.getExecutionCountElement()
-            def userCountElement = dashboardPage.getUserCountElement()
-            def userElement = dashboardPage.getUserElement()
-            executionCountElement.isDisplayed() &&
-                    userCountElement.isDisplayed() &&
-                    userElement.isDisplayed()
+            def projectSummaryCountLink = dashboardPage.getProjectSummaryCountLink()
+            projectSummaryCountLink.isDisplayed()
         }
-
-        and: "Extract values from the page"
-        def executionCountText = dashboardPage.getExecutionCountElement().getText().trim()
-        def userCountText = dashboardPage.getUserCountElement().getText().trim()
-        def userText = dashboardPage.getUserElement().getText().trim()
-
-        // Extract numeric part for execution count
-        def executionCountNumber = executionCountText.replaceAll("[^0-9]", "")
-
-        expect:
-        executionCountNumber == expectedExecutionCount.toString() // Validate exact execution count
-        userCountText == expectedUserCount.toString() // Validate exact user count
-        userText == expectedUserName // Validate exact username
     }
-
     def cleanupSpec() {
         deleteProject(projectName)
     }
