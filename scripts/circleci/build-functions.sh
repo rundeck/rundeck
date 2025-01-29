@@ -27,6 +27,11 @@ rundeck_gradle_tests() {
     ./gradlew -Penvironment="${ENV}" ${GRADLE_BUILD_OPTS} check
 }
 
+rundeck_gui_tests() {
+    cd rundeckapp/grails-spa/packages/ui-trellis
+    npm run ci:test:unit
+}
+
 rundeck_docker_build() {
     #Build image
     ./gradlew ${GRADLE_BASE_OPTS} officialBuild -Penvironment=${ENV} -PdockerRepository=${DOCKER_REPO} -PdockerTags=latest,SNAPSHOT
