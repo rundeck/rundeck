@@ -10,7 +10,6 @@ import org.rundeck.util.api.scm.httpbody.ScmJobStatusResponse
 import org.rundeck.util.api.scm.httpbody.ScmPluginInputFieldsResponse
 import org.rundeck.util.api.scm.httpbody.ScmPluginsListResponse
 import org.rundeck.util.api.scm.httpbody.ScmProjectConfigResponse
-import org.rundeck.util.api.scm.httpbody.GitExportSetupRequest
 import org.rundeck.util.api.scm.httpbody.SetupIntegrationResponse
 import org.rundeck.util.common.scm.ScmActionId
 import org.rundeck.util.common.scm.ScmIntegration
@@ -42,66 +41,65 @@ class GitScmApiClient {
         return this
     }
 
-    RundeckResponse<SetupIntegrationResponse> callSetupIntegration(GitSetupRequest requestBody){
-        Response resp = client.doPost("/project/${project}/scm/${integration}/plugin/${pluginName}/setup", requestBody)
-
-        return new RundeckResponse(resp, SetupIntegrationResponse)
+    RundeckResponse<SetupIntegrationResponse> callSetupIntegration(GitSetupRequest requestBody, IntRange validResponseHttpCodes = 200..299){
+        try (Response resp = client.doPost("/project/${project}/scm/${integration}/plugin/${pluginName}/setup", requestBody)) {
+            return new RundeckResponse(resp, SetupIntegrationResponse, validResponseHttpCodes)
+        }
     }
 
     RundeckResponse<IntegrationStatusResponse> callGetIntegrationStatus() {
-        Response resp = client.doGet("/project/${project}/scm/${integration}/status")
-
-        return new RundeckResponse(resp, IntegrationStatusResponse)
+        try (Response resp = client.doGet("/project/${project}/scm/${integration}/status")) {
+            return new RundeckResponse(resp, IntegrationStatusResponse)
+        }
     }
 
     RundeckResponse<ScmActionInputFieldsResponse> callGetFieldsForAction(ScmActionId actionId) {
-        Response resp = client.doGet("/project/${project}/scm/${integration}/action/${actionId.name}/input")
-
-        return new RundeckResponse(resp, ScmActionInputFieldsResponse)
+        try (Response resp = client.doGet("/project/${project}/scm/${integration}/action/${actionId.name}/input")) {
+            return new RundeckResponse(resp, ScmActionInputFieldsResponse)
+        }
     }
 
     RundeckResponse<SetupIntegrationResponse> callPerformAction(String actionId, ScmActionPerformRequest requestBody ) {
-        Response resp = client.doPost("/project/${project}/scm/${integration}/action/${actionId}", requestBody)
-
-        return new RundeckResponse(resp, SetupIntegrationResponse)
+        try (Response resp = client.doPost("/project/${project}/scm/${integration}/action/${actionId}", requestBody)) {
+            return new RundeckResponse(resp, SetupIntegrationResponse)
+        }
     }
 
-    RundeckResponse<ScmPluginsListResponse> callGetPluginsList(){
-        Response resp = client.doGet("/project/${project}/scm/${integration}/plugins")
-
-        return new RundeckResponse(resp, ScmPluginsListResponse)
+    RundeckResponse<ScmPluginsListResponse> callGetPluginsList(IntRange validResponseHttpCodes = 200..299, throwOnInvalidHttpCode = true){
+        try (Response resp = client.doGet("/project/${project}/scm/${integration}/plugins")) {
+            return new RundeckResponse(resp, ScmPluginsListResponse, validResponseHttpCodes, throwOnInvalidHttpCode)
+        }
     }
 
-    RundeckResponse<SetupIntegrationResponse> callSetEnabledStatusForPlugin(boolean enablePlugin, String pluginName = this.pluginName){
-        Response resp = client.doPost("/project/${project}/scm/${integration}/plugin/${pluginName}/${enablePlugin? 'enable' : 'disable'}")
-
-        return new RundeckResponse(resp, SetupIntegrationResponse)
+    RundeckResponse<SetupIntegrationResponse> callSetEnabledStatusForPlugin(boolean enablePlugin, String pluginName = this.pluginName, IntRange validResponseHttpCodes = 200..299){
+        try (Response resp = client.doPost("/project/${project}/scm/${integration}/plugin/${pluginName}/${enablePlugin? 'enable' : 'disable'}")) {
+            return new RundeckResponse(resp, SetupIntegrationResponse, validResponseHttpCodes)
+        }
     }
 
     RundeckResponse<ScmPluginInputFieldsResponse> callGetInputFieldsForPlugin(){
-        Response resp = client.doGet("/project/${project}/scm/${integration}/plugin/${pluginName}/input")
-
-        return new RundeckResponse(resp, ScmPluginInputFieldsResponse)
+        try (Response resp = client.doGet("/project/${project}/scm/${integration}/plugin/${pluginName}/input")) {
+            return new RundeckResponse(resp, ScmPluginInputFieldsResponse)
+        }
     }
 
     RundeckResponse<ScmProjectConfigResponse> callGetProjectScmConfig(){
-        Response resp = client.doGet("/project/${project}/scm/${integration}/config")
-
-        return new RundeckResponse(resp, ScmProjectConfigResponse)
+        try (Response resp = client.doGet("/project/${project}/scm/${integration}/config")) {
+            return new RundeckResponse(resp, ScmProjectConfigResponse)
+        }
     }
 
     RundeckResponse<SetupIntegrationResponse> callPerformJobAction(String actionId, ScmActionPerformRequest requestBody, String jobId ) {
-        Response resp = client.doPost("/job/${jobId}/scm/${integration}/action/${actionId}", requestBody)
-
-        return new RundeckResponse(resp, SetupIntegrationResponse)
+        try (Response resp = client.doPost("/job/${jobId}/scm/${integration}/action/${actionId}", requestBody)) {
+            return new RundeckResponse(resp, SetupIntegrationResponse)
+        }
     }
 
     RundeckResponse<ScmJobStatusResponse> callGetJobStatus(String jobId) {
-        Response resp = client.doGet("/job/${jobId}/scm/${integration}/status")
-
-        return new RundeckResponse(resp, ScmJobStatusResponse)
+        try (Response resp = client.doGet("/job/${jobId}/scm/${integration}/status")) {
+            return new RundeckResponse(resp, ScmJobStatusResponse)
+        }
     }
-
 
     String getPluginName() {
         return pluginName

@@ -32,7 +32,7 @@ class ScmPluginSetupSpec extends BaseContainer {
         GitExportSetupRequest requestBody = new GitExportSetupRequest([config: scmSetupProps])
 
         when:
-        SetupIntegrationResponse response = scmClient.callSetupIntegration(requestBody).response
+        SetupIntegrationResponse response = scmClient.callSetupIntegration(requestBody, 400..400).response
 
         then:
         !response.success
@@ -106,7 +106,7 @@ class ScmPluginSetupSpec extends BaseContainer {
         scmClient.callSetupIntegration(requestBody).response.success
 
         when:
-        SetupIntegrationResponse disablePluginResult = scmClient.callSetEnabledStatusForPlugin(false,'wrong-plugin').response
+        SetupIntegrationResponse disablePluginResult = scmClient.callSetEnabledStatusForPlugin(false,'wrong-plugin', 400..400).response
 
         then:
         verifyAll {
@@ -128,7 +128,7 @@ class ScmPluginSetupSpec extends BaseContainer {
         GitExportSetupRequest requestBody = GitExportSetupRequest.defaultRequest().withRepo(remoteRepo).forProject(projectName)
 
         when:
-        SetupIntegrationResponse disablePluginResult = scmClient.callSetEnabledStatusForPlugin(false).response
+        SetupIntegrationResponse disablePluginResult = scmClient.callSetEnabledStatusForPlugin(false, scmClient.pluginName, 400..400).response
 
         then:
         !disablePluginResult.success
@@ -229,7 +229,7 @@ class ScmPluginSetupSpec extends BaseContainer {
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
 
         when:
-        RundeckResponse.ApiError scmPlugins = scmClient.callGetPluginsList().error
+        RundeckResponse.ApiError scmPlugins = scmClient.callGetPluginsList(200..299, false).error
 
         then:
         verifyAll {
