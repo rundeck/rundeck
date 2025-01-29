@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.http.RequestProcessor
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import com.dtolabs.utils.PropertiesUtil
 import grails.testing.web.controllers.ControllerUnitTest
 import org.apache.commons.fileupload.FileItem
 import org.apache.http.Header
@@ -43,8 +44,10 @@ import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
+import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
+import org.rundeck.app.gui.UISection
 import org.rundeck.app.web.WebExceptionHandler
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.NotFound
@@ -4548,5 +4551,68 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         result != null
         result.error == "the filter \$..* return a list, please use another filter"
 
+    }
+
+    def "Test api job definition components values returns a json"(){
+        given:
+        def jobComponent1 = Mock(JobDefinitionComponent){
+            getName() >> "jc1"
+            getInputProperties() >> [new Properties().put("k1","v1")]
+            getInputLocation() >> UISection.uiLocation("section1", "sectionTitle1")
+        }
+        def jobComponent2 = Mock(JobDefinitionComponent){
+            getName() >> "jc2"
+            getInputProperties() >> [new Properties().put("k2","v2")]
+            getInputLocation() >> UISection.uiLocation("section2", "sectionTitle2")
+        }
+        controller.scheduledExecutionService=Mock(ScheduledExecutionService){
+            getByIDorUUID("jobId")>>Mock(ScheduledExecution)
+        }
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            getJobDefinitionComponentValues(_)>>[
+                "jc1":["k1":"v1"],
+                "jc2":["k2":"v2"]
+            ]
+            getJobDefinitionComponents()>>[
+                "jc1":jobComponent1,
+                "jc2":jobComponent2
+            ]
+        }
+
+        when:
+        request.method = 'GET'
+        params.id = "jobId"
+        def result = controller.apiJobDefinitionComponentsValues()
+
+        then:
+        def componentsJson = response.json
+        Map jc1 = componentsJson.get("jc1")
+        jc1.messageType == "jobComponent.jc1"
+        jc1.prefix == "jobComponent.jc1.configMap."
+        jc1.section == "section1"
+        jc1.pluginConfig == ["k1": "v1"]
+
+        Map jc2 = componentsJson.get("jc2")
+        jc2.messageType == "jobComponent.jc2"
+        jc2.prefix == "jobComponent.jc2.configMap."
+        jc2.section == "section2"
+        jc2.pluginConfig == ["k2": "v2"]
+    }
+
+    def "Test API job definition components job not found"(){
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.scheduledExecutionService=Mock(ScheduledExecutionService){
+            getByIDorUUID("jobId")>>null
+        }
+
+        when:
+        request.method = 'GET'
+        params.id = "jobId"
+        controller.apiJobDefinitionComponentsValues()
+
+        then:
+        1 * controller.apiService.renderErrorFormat(_,[status: HttpServletResponse.SC_NOT_FOUND,
+                                                       code  : 'api.error.job.not.found', args: ["jobId"], format:response.format])
     }
 }
