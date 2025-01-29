@@ -6,14 +6,15 @@ import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.gitea.GiteaApiRemoteRepo
 import org.rundeck.util.api.scm.httpbody.IntegrationStatusResponse
 import org.rundeck.util.api.scm.httpbody.GitExportSetupRequest
+import org.rundeck.util.api.scm.httpbody.SetupIntegrationResponse
 import org.rundeck.util.common.scm.ScmIntegration
 import org.rundeck.util.container.BaseContainer
 
 @APITest
 @ExcludePro
 class ScmPluginStatusSpec extends BaseContainer {
-    static final GiteaApiRemoteRepo remoteRepo = new GiteaApiRemoteRepo('repoExample')
-    static final String PROJECT_NAME = "ScmPluginStatusSpec-project"
+    static final String PROJECT_NAME = UUID.randomUUID().toString()
+    static final GiteaApiRemoteRepo remoteRepo = new GiteaApiRemoteRepo(PROJECT_NAME)
 
     def setupSpec() {
         setupProject(PROJECT_NAME)
@@ -28,6 +29,12 @@ class ScmPluginStatusSpec extends BaseContainer {
         GitExportSetupRequest requestBody = GitExportSetupRequest.defaultRequest().forProject(PROJECT_NAME).withRepo(remoteRepo)
 
         expect:
+        /**
+         * A race condition is suspected between the remoteRepo.setupRepo() call in the Spec setup and
+         * the integration setup call below. It materializes as a 400 response with the error:
+         * message=Failed cloning the repository from http://rundeckgitea@gitea:3000/rundeckgitea/<...>: Invalid remote: origin
+         * Additional error checking was added to the setupRepo() to enable diagnostic.
+         */
         scmClient.callSetupIntegration(requestBody).response.success
 
         when:
