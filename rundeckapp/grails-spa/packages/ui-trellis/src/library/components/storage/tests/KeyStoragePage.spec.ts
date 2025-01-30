@@ -1,39 +1,52 @@
 import { flushPromises, mount, VueWrapper } from "@vue/test-utils";
 import { ComponentPublicInstance } from "vue";
+import {listProjects} from '../../../services/projects'
 import KeyStoragePage from "../KeyStoragePage.vue";
-import { getRundeckContext } from "../../../rundeckService";
+import {
+  storageKeyGetMetadata,
+  storageKeyDelete
+} from '../../../services/storage'
 import { Modal } from "uiv";
 jest.mock("../../../rundeckService", () => {
-  const storageKeyGetMetadata = jest.fn().mockResolvedValue({
-    resources: [
-      {
-        name: "newKey",
-        path: "/keys/newKey",
-        type: "file",
-        meta: { rundeckKeyType: "private" },
-      },
-    ],
-    _response: { status: 200 },
-  });
 
   return {
     getRundeckContext: jest.fn().mockReturnValue({
       rdBase: "mockRdBase",
       projectName: "test-project",
-      rundeckClient: {
-        storageKeyGetMetadata,
-        storageKeyDelete: jest.fn().mockResolvedValue({}),
-        projectList: jest.fn().mockResolvedValue([]),
-      },
+
     }),
     url: jest.fn().mockReturnValue({ href: "mockHref" }),
   };
 });
+jest.mock("../../../services/storage");
+jest.mock("../../../services/projects");
 
+const mockedListProjects = listProjects as jest.MockedFunction<
+  typeof listProjects
+>;
+mockedListProjects.mockResolvedValue([])
+
+const mockedStorageKeyGetMetadata = storageKeyGetMetadata as jest.MockedFunction<
+  typeof storageKeyGetMetadata
+>;
+mockedStorageKeyGetMetadata.mockResolvedValue({resources: [
+    {
+      name: "newKey",
+      path: "/keys/newKey",
+      type: "file",
+      meta: { 'Rundeck-key-type': "private"},
+    },
+  ]})
 interface KeyStoragePageData {
   modalEdit: boolean;
   selectedKey: Record<string, any>;
 }
+const mockedStorageKeyDelete = storageKeyDelete as jest.MockedFunction<
+  typeof storageKeyDelete
+>;
+mockedStorageKeyDelete.mockResolvedValue(true)
+
+
 type KeyStoragePageComponent = ComponentPublicInstance & KeyStoragePageData;
 
 const mountKeyStoragePage = async (props = {}) => {
@@ -57,7 +70,6 @@ const mountKeyStoragePage = async (props = {}) => {
   }) as unknown as VueWrapper<KeyStoragePageComponent>;
 };
 
-const rundeckClientMock = getRundeckContext().rundeckClient;
 
 describe("KeyStoragePage.vue", () => {
   beforeEach(() => {
@@ -124,34 +136,28 @@ describe("KeyStoragePage.vue", () => {
     const wrapper = await mountKeyStoragePage();
     await wrapper.vm.$nextTick();
     // 1. First mock: Initial files before any event
-    (
-      rundeckClientMock.storageKeyGetMetadata as jest.Mock
-    ).mockResolvedValueOnce({
+    mockedStorageKeyGetMetadata.mockResolvedValueOnce({
       resources: [
         {
           name: "testKey",
           path: "/keys/testKey",
           type: "file",
-          meta: { rundeckKeyType: "private" },
+          meta: { 'Rundeck-key-type': "private" },
         },
       ],
-      _response: { status: 200 },
     });
     const keyStorageView = wrapper.findComponent({ name: "KeyStorageView" });
     const newKey = {
       name: "newKey",
       path: "/keys/newKey",
       keyType: "privateKey",
-      meta: { rundeckKeyType: "private" },
+      meta: { 'Rundeck-key-type': "private"  },
     };
     await flushPromises();
     await wrapper.vm.$nextTick();
     // 2. Second mock: After the  event, reflecting the new key
-    (
-      rundeckClientMock.storageKeyGetMetadata as jest.Mock
-    ).mockResolvedValueOnce({
+    mockedStorageKeyGetMetadata.mockResolvedValueOnce({
       resources: [newKey],
-      _response: { status: 200 },
     });
     const keyStorageEdit = wrapper.findComponent({ name: "KeyStorageEdit" });
     await keyStorageEdit.vm.$emit("keyCreated", newKey);

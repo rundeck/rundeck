@@ -1,24 +1,29 @@
-import { flushPromises, mount } from "@vue/test-utils";
-import KeyStorageEdit from "../KeyStorageEdit.vue";
-import { getRundeckContext } from "../../../rundeckService";
+import {flushPromises, mount} from '@vue/test-utils'
+import {storageKeyCreate, storageKeyExists, storageKeyGetMetadata} from '../../../services/storage'
+import KeyStorageEdit from '../KeyStorageEdit.vue'
 
-jest.mock("../../../rundeckService", () => ({
-  getRundeckContext: jest.fn().mockReturnValue({
-    rundeckClient: {
-      storageKeyGetMaterial: jest.fn().mockResolvedValue({
-        _response: { status: 404 },
-      }),
-      storageKeyUpdate: jest.fn().mockResolvedValue({}),
-      storageKeyCreate: jest.fn(),
-      storageKeyGetMetadata: jest.fn().mockResolvedValue({
-        _response: { status: 200 },
-        resources: [],
-      }),
-    },
-  }),
+jest.mock('@/library/rundeckService', () => ({
+  getRundeckContext: jest.fn().mockImplementation(() => ({
+    eventBus: {on: jest.fn(), emit: jest.fn()},
+    rdBase: 'http://localhost:4440/',
+    projectName: 'testProject',
+    apiVersion: '44',
+  })),
 }));
+jest.mock('../../../services/storage')
 
-type RundeckClient = ReturnType<typeof getRundeckContext>["rundeckClient"];
+const mockedStorageKeyGetMetadata = storageKeyGetMetadata as jest.MockedFunction<
+  typeof storageKeyGetMetadata
+>
+mockedStorageKeyGetMetadata.mockResolvedValue({resources: []})
+const mockedStorageKeyExists = storageKeyExists as jest.MockedFunction<
+  typeof storageKeyExists
+>
+mockedStorageKeyExists.mockResolvedValue(false)
+const mockedStorageKeyCreate = storageKeyCreate as jest.MockedFunction<
+  typeof storageKeyCreate
+>
+
 type DefaultProps = {
   storageFilter: string;
   uploadSetting: {
@@ -65,17 +70,13 @@ const mountKeyStorageEdit = async (props = {}) => {
 };
 
 describe("KeyStorageEdit", () => {
-  let rundeckClientMock: RundeckClient;
 
   beforeEach(() => {
-    rundeckClientMock = getRundeckContext().rundeckClient;
-    (rundeckClientMock.storageKeyCreate as jest.Mock).mockResolvedValue({
-      success: true,
-      keyDetails: {
+
+    mockedStorageKeyCreate.mockResolvedValue({
         name: "exampleKey",
         path: "/keys/test",
-        keyType: "privateKey",
-      },
+      type: 'privateKey',
     });
     jest.clearAllMocks();
   });
@@ -99,7 +100,7 @@ describe("KeyStorageEdit", () => {
     await saveButton.trigger("click");
     await flushPromises();
     expect(
-      rundeckClientMock.storageKeyCreate as jest.Mock,
+      mockedStorageKeyCreate,
     ).toHaveBeenCalledTimes(1);
     expect(wrapper.emitted().finishEditing).toHaveLength(1);
   });
@@ -132,7 +133,7 @@ describe("KeyStorageEdit", () => {
     await saveButton.trigger("click");
     await flushPromises();
     expect(
-      rundeckClientMock.storageKeyCreate as jest.Mock,
+      mockedStorageKeyCreate,
     ).toHaveBeenCalledWith(
       expect.any(String),
       "my-password",
@@ -155,16 +156,12 @@ describe("KeyStorageEdit", () => {
     await saveButton.trigger("click");
     await flushPromises();
     expect(
-      rundeckClientMock.storageKeyCreate as jest.Mock,
+      mockedStorageKeyCreate,
     ).toHaveBeenCalledTimes(1);
   });
 
   it("emits an error when key exists and overwrite is disabled", async () => {
-    (
-      rundeckClientMock.storageKeyGetMaterial as jest.Mock
-    ).mockResolvedValueOnce({
-      _response: { status: 200 }, // key exists
-    });
+    mockedStorageKeyExists.mockResolvedValueOnce(true/* key exists */)
     const wrapper = await mountKeyStorageEdit({
       uploadSetting: {
         dontOverwrite: true,
@@ -178,7 +175,7 @@ describe("KeyStorageEdit", () => {
     const errorMsg = wrapper.find('[data-testid="error-msg"]');
     expect(errorMsg.text()).toBe("key already exists");
     expect(
-      rundeckClientMock.storageKeyCreate as jest.Mock,
+      mockedStorageKeyCreate,
     ).not.toHaveBeenCalled();
   });
 
@@ -193,13 +190,10 @@ describe("KeyStorageEdit", () => {
     });
 
     // Mock the storageKeyCreate method to return success
-    (rundeckClientMock.storageKeyCreate as jest.Mock).mockResolvedValueOnce({
-      success: true,
-      keyDetails: {
+    mockedStorageKeyCreate.mockResolvedValueOnce({
         name: "newKey",
         path: "/keys/newKey",
-        keyType: "privateKey",
-      },
+        type: 'privateKey',
     });
 
     const saveButton = wrapper.find('[data-testid="save-btn"]');
@@ -208,18 +202,15 @@ describe("KeyStorageEdit", () => {
 
     const expectedEmittedEvent = [
       {
-        success: true,
-        keyDetails: {
           name: "newKey",
           path: "/keys/newKey",
-          keyType: "privateKey",
-        },
+        type: 'privateKey',
       },
     ];
 
     // Verify that the storageKeyCreate method is called
     expect(
-      rundeckClientMock.storageKeyCreate as jest.Mock,
+      mockedStorageKeyCreate
     ).toHaveBeenCalledTimes(1);
 
     // Verify that the finishEditing event is emitted with the correct data

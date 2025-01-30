@@ -1,7 +1,7 @@
-import { flushPromises, mount, VueWrapper } from "@vue/test-utils";
-import WorkflowSteps from "../WorkflowSteps.vue";
-import ChoosePluginModal from "@/library/components/plugins/ChoosePluginModal.vue";
-import EditPluginModal from "@/library/components/plugins/EditPluginModal.vue";
+import ChoosePluginModal from '@/library/components/plugins/ChoosePluginModal.vue'
+import EditPluginModal from '@/library/components/plugins/EditPluginModal.vue'
+import {flushPromises, mount, VueWrapper} from '@vue/test-utils'
+import WorkflowSteps from '../WorkflowSteps.vue'
 
 jest.mock("@/library/modules/pluginService", () => ({
   getServiceProviderDescription: jest.fn(),
@@ -20,11 +20,13 @@ jest.mock("@/library/modules/rundeckClient", () => ({
   client: jest.fn(),
 }));
 
-jest.mock("@/library", () => {
-  return {
-    getRundeckContext: jest.fn().mockImplementation(() => ({
+jest.mock('@/library/rundeckService', () => ({
+  getRundeckContext: jest.fn().mockImplementation(() => ({
       client: {},
       eventBus: { on: jest.fn(), off: jest.fn(), emit: jest.fn() },
+    rdBase: 'http://localhost:4440/',
+    projectName: 'testProject',
+    apiVersion: '44',
       rootStore: {
         plugins: {
           load: jest.fn(),
@@ -32,8 +34,8 @@ jest.mock("@/library", () => {
         },
       },
     })),
-  };
-});
+}));
+jest.mock('../../../../../library/services/projects')
 
 const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
   const wrapper = mount(WorkflowSteps, {

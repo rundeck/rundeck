@@ -15,7 +15,7 @@
   -->
 
 <template>
-  <btn @click="openSelector()">
+  <btn @click="openSelector()" data-testid="open-selector-btn">
     <slot>Select… <i class="glyphicon glyphicon-folder-open"></i></slot>
   </btn>
   <modal
@@ -35,9 +35,8 @@
       :root-path="rootPath"
       :allow-upload="allowUpload"
       :model-value="modelValue"
+      :storage-filter="storageFilter"
       @update:model-value="onSelectedKeyChange"
-      @close-selector="closeSelector"
-      @open-selector="openSelector"
       @open-editor="openEditor"
     ></key-storage-view>
   </modal>
@@ -53,7 +52,6 @@
     <key-storage-edit
       :upload-setting="uploadSetting"
       :root-path="rootPath"
-      :storage-filter="storageFilter"
       @cancel-editing="handleCancelEditing"
       @finish-editing="handleFinishEditing"
     ></key-storage-edit>
@@ -94,23 +92,6 @@ export default defineComponent({
         return "";
       }
       return path;
-    },
-    allowedResource(meta: any) {
-      const filterArray = this.storageFilter.split("=");
-      const key = filterArray[0];
-      const value = filterArray[1];
-      if (key === "Rundeck-key-type") {
-        if (value === meta["rundeckKeyType"]) {
-          return true;
-        }
-      } else {
-        if (key === "Rundeck-data-type") {
-          if (value === meta["Rundeck-data-type"]) {
-            return true;
-          }
-        }
-      }
-      return false;
     },
     beforeModalClose(args: string | Array<any>) {
       if (args === "ok") {
