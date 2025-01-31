@@ -40,6 +40,7 @@ public class RundeckConfigBase {
     RundeckProjectServiceConfig projectService;
     RundeckProjectManagerServiceConfig projectManagerService;
     RundeckLogFileStorageServiceConfig logFileStorageService;
+    RundeckScheduledExecutionServiceConfig scheduledExecutionService;
     FileUploadServiceConfig fileUploadService;
     RundeckAuthorizationServiceConfig authorizationService;
     RundeckReportServiceConfig reportService;
@@ -65,6 +66,8 @@ public class RundeckConfigBase {
     RundeckJobsConfig jobs;
     JobsImport jobsImport;
     Startup startup;
+
+    RundeckAwsgateway awsgateway;
 
     @Data public static class Startup {
         Boolean detectFirstRun;
@@ -296,6 +299,15 @@ public class RundeckConfigBase {
         @Data
         public static class ResumeIncomplete {
             String strategy;
+        }
+    }
+
+    @Data
+    public static class RundeckScheduledExecutionServiceConfig {
+        Startup startup;
+        @Data
+        public static class Startup {
+            String rescheduleMode;
         }
     }
 
@@ -762,4 +774,10 @@ public class RundeckConfigBase {
             "feature.enhancedNodes.enabled","feature.enhanced-nodes.enabled",
             "feature.enableAll","feature.*.enabled"
     );
+
+    @Data
+    public static class RundeckAwsgateway {
+        String url;
+    }
+
 }

@@ -87,7 +87,7 @@ public class JettyCombinedLdapLoginModule extends JettyCachingLdapLoginModule {
      * @throws NamingException
      */
     @Override
-    protected List getUserRoles(final DirContext dirContext, final String username)
+    protected List getUserRolesByDn(final DirContext dirContext, String userDn, final String username)
             throws LoginException, NamingException, IOException
     {
         if (_ignoreRoles) {
@@ -95,7 +95,7 @@ public class JettyCombinedLdapLoginModule extends JettyCachingLdapLoginModule {
             addSupplementalRoles(strings);
             return strings;
         } else {
-            return super.getUserRoles(dirContext, username);
+            return super.getUserRolesByDn(dirContext, userDn, username);
         }
     }
 

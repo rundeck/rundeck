@@ -4,6 +4,7 @@ import { RundeckClient } from "@rundeck/client";
 import axios from "axios";
 import { VersionInfo } from "./System";
 import { Serial } from "../utilities/Async";
+import { getRundeckContext } from "../rundeckService";
 
 export class Releases {
   releases: Array<Release> = [];
@@ -18,8 +19,11 @@ export class Releases {
     if (this.releases.length >= 1) {
       return;
     }
+    const appRundeckGatewayUrl =
+      getRundeckContext().appMeta.appRundeckGatewayUrl;
+
     const results = await axios.get<Array<ApiRelease>>(
-      "https://api.rundeck.com/news/v1/release",
+      appRundeckGatewayUrl + "/news/v1/release",
     );
     results.data.forEach((r) => {
       this.releases.push(Release.FromApi(r));
