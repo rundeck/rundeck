@@ -93,6 +93,10 @@ export default defineComponent({
   },
   methods: {
     modified() {
+      console.log(
+        "🔄 Emitting update:modelValue with stepsData:",
+        JSON.stringify(this.stepsData, null, 2),
+      );
       this.$emit("update:modelValue", {
         ...this.modelValue,
         ...this.basicData,
