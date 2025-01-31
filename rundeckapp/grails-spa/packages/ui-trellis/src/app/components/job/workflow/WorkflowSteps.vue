@@ -364,9 +364,9 @@ export default defineComponent({
     },
     async saveEditStep() {
       try {
-        console.log("🔹 Saving step, isErrorHandler:", this.isErrorHandler);
+        console.log(" Saving step, isErrorHandler:", this.isErrorHandler);
         console.log(
-          "🔹 Step before saving:",
+          " Step before saving:",
           JSON.stringify(this.model.commands[this.editIndex], null, 2),
         );
 
@@ -376,7 +376,7 @@ export default defineComponent({
         saveData.nodeStep = this.editService === ServiceType.WorkflowNodeStep;
         saveData.filters = [];
 
-        console.log("📝 Step Data to Save:", JSON.stringify(saveData, null, 2));
+        console.log(" Step Data to Save:", JSON.stringify(saveData, null, 2));
 
         // Validate plugin configuration
         const response = await validatePluginConfig(
@@ -397,7 +397,7 @@ export default defineComponent({
             if (this.editIndex >= 0 && this.model.commands[this.editIndex]) {
               const parentStep = this.model.commands[this.editIndex];
 
-              console.log("✅ Injecting Error Handler into Step:", parentStep);
+              console.log("Injecting Error Handler into Step:", parentStep);
 
               parentStep.errorhandler = {
                 configuration: saveData.config,
@@ -406,14 +406,14 @@ export default defineComponent({
               };
 
               console.log(
-                "🔥 Updated Step:",
+                " Updated Step:",
                 JSON.stringify(parentStep, null, 2),
               );
 
               // Force UI to update
               this.model.commands = [...this.model.commands];
             } else {
-              console.error("❌ Error: Invalid editIndex!", this.editIndex);
+              console.error(" Error: Invalid editIndex!", this.editIndex);
             }
           } else {
             if (this.editIndex >= 0) {
@@ -421,7 +421,7 @@ export default defineComponent({
                 this.model.commands[this.editIndex],
               );
 
-              // ✅ Track modification
+              // Track modification
               dataForUpdatingHistory = {
                 index: this.editIndex,
                 operation: Operation.Modify,
@@ -429,13 +429,13 @@ export default defineComponent({
                 orig: originalData,
               };
 
-              // ✅ Modify existing step
+              // Modify existing step
               this.$refs.historyControls.operationModify(
                 this.editIndex,
                 saveData,
               );
             } else {
-              // ✅ Insert a new step
+              // Insert a new step
               this.$refs.historyControls.operationInsert(
                 this.model.commands.length,
                 saveData,
@@ -443,14 +443,14 @@ export default defineComponent({
             }
           }
 
-          // ✅ Register the change for undo/redo
+          // Register the change for undo/redo
           this.$refs.historyControls.changeEvent({
             dest: -1,
             value: saveData,
             ...dataForUpdatingHistory,
           });
 
-          // ✅ Reset modal and editing state
+          // Reset modal and editing state
           this.editStepModal = false;
           this.isErrorHandler = false;
           this.editModel = {};
