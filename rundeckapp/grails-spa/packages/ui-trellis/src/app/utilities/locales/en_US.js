@@ -909,6 +909,9 @@ const messages = {
     stepLabel: "Step label",
     noSteps: "No workflow steps",
     addErrorHandler: "Add Error Handler",
+    errorHandlerDescription:
+      "The error handler will execute if the step fails.",
+    editErrorHandler: "Edit error handler",
   },
   "plugin.choose.title": "Choose a Plugin",
   "plugin.type.WorkflowStep.title.plural": "Workflow Steps",
