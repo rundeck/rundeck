@@ -908,6 +908,7 @@ const messages = {
     editStep: "Edit step",
     stepLabel: "Step label",
     noSteps: "No workflow steps",
+    errorHandler: "Error handler",
     addErrorHandler: "Add Error Handler",
     errorHandlerDescription:
       "The error handler will execute if the step fails.",
