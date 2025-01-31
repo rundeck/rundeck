@@ -1,18 +1,21 @@
 <template>
   <AutoComplete
-      v-model="value"
-      :suggestions="suggestions"
-      :optionLabel="optionLabel"
-      :name="name"
-      @complete="onComplete"
-      @change="onChange"
-      @input="updateValue"
+    v-model="value"
+    :suggestions="suggestions"
+    :optionLabel="optionLabel"
+    :name="name"
+    @complete="onComplete"
+    @change="onChange"
+    @input="updateValue"
   ></AutoComplete>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import AutoComplete, { AutoCompleteCompleteEvent, AutoCompleteChangeEvent } from "primevue/autocomplete";
+import AutoComplete, {
+  AutoCompleteCompleteEvent,
+  AutoCompleteChangeEvent,
+} from "primevue/autocomplete";
 
 export default defineComponent({
   name: "PtAutoComplete",
@@ -27,7 +30,7 @@ export default defineComponent({
       type: Array,
       default: () => [],
     },
-    defaultValue:{
+    defaultValue: {
       type: String,
       default: "",
     },
@@ -40,7 +43,7 @@ export default defineComponent({
       default: "label",
     },
   },
-  emits: ["update:modelValue","onChange","onComplete"],
+  emits: ["update:modelValue", "onChange", "onComplete"],
   data() {
     return {
       value: this.modelValue || this.defaultValue,
@@ -61,7 +64,6 @@ export default defineComponent({
     updateValue() {
       this.$emit("update:modelValue", this.value);
     },
-
   },
 });
 </script>
@@ -78,7 +80,8 @@ export default defineComponent({
       color: var(--colors-gray-600);
     }
 
-    /* Selected/Hover */
+    /* Hover and Focus state */
+    &:hover,
     &:focus {
       border-color: var(--colors-blue-500);
     }
