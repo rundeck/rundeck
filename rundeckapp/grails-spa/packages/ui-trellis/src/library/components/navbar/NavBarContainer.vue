@@ -19,12 +19,16 @@
             'navbar__container--list': item.style === 'list',
           }"
         >
-          <NavBarItem
+          <template
             v-for="entry in getNavBarContainerItems(item.id)"
             :key="entry.id"
-            :item="entry"
-            :item-style="item.style"
-          />
+          >
+            <NavBarItem
+              v-if="entry.enabled"
+              :item="entry"
+              :item-style="item.style"
+            />
+          </template>
         </ul>
       </template>
     </NavBarDrawer>

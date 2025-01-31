@@ -50,6 +50,7 @@ export default defineComponent({
     Popper,
     ProjectSelect,
   },
+  inheritAttrs: false,
   props: {
     projectLabel: { type: String },
     showDefaultLabel: {

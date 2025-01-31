@@ -168,6 +168,9 @@ class UrlMappings {
         "/api/$api_version/project/$project/resources"(controller: 'framework') {
             action = [GET: "apiResourcesv2",/* PUT: "update", DELETE: "delete", POST: "apiProjectResourcesPost"*/]
         }
+        "/api/$api_version/project/$project/nodes/tags"(controller: 'framework') {
+            action = [GET: "apiTagsForNodes"]
+        }
         "/api/$api_version/project/$project/jobs"(controller: 'menu', action: 'apiJobsListv2')
         "/api/$api_version/project/$project/resource/$name"(controller: 'framework',action:"apiResourcev14")
         "/api/$api_version/project/$project/run/command"(controller: 'scheduledExecution', action: 'apiRunCommandv14')
@@ -248,14 +251,22 @@ class UrlMappings {
             }
         }
 
-
-
         "/api/$api_version/metrics/$name**?"(controller: 'api', action: 'apiMetrics')
 
         "/api/$api_version/plugin/list"(controller: 'plugin', action: 'listPlugins')
         "/api/$api_version/plugin/detail/$service/$provider"(controller: 'plugin', action: 'apiPluginDetail')
 
         "/api/$api_version"(controller: 'api', action: 'info')
+
+        // Project context
+        "/api/$api_version/authorizations/project/$project/job/$specifier"(controller:'authorizations',action:'projectContextAuthorizationsForJob')
+        "/api/$api_version/authorizations/project/$project/$type/$specifier"(controller:'authorizations',action:'projectContextAuthorizationsForTypeWithSpecifier')
+        "/api/$api_version/authorizations/project/$project/$kind"(controller:'authorizations',action:'projectContextAuthorizationsForResourceKind')
+
+        // Application context
+        "/api/$api_version/authorizations/application/$type/$specifier"(controller:'authorizations',action:'appContextAuthorizationsForTypeWithSpecifier')
+        "/api/$api_version/authorizations/application/$kind"(controller:'authorizations',action:'appContextAuthorizationsForResourceKind')
+
         //catchall
         "/api/$api_version/$other/$extra**?"(controller: 'api', action: 'invalid')
 

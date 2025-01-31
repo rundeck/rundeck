@@ -1050,6 +1050,87 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     /**
+     * An alternate method of claiming and scheduling all jobs to the current server. This method updates each
+     * scheduled execution one-by-one to avoid a number of potential race conditions that can occur when scheduling
+     * the job before committing the corresponding ScheduledExecution updates.
+     */
+    @NotTransactional
+    def reclaimAndScheduleJobByJob() {
+        String toServerUuid = frameworkService.getServerUUID()
+        Map claimed = [:]
+        def scheduledExecutions = timer("takeover query ") {
+            jobSchedulesService.getSchedulesJobToClaim(toServerUuid, null, true, null, null)
+        }
+
+        scheduledExecutions.each { ScheduledExecution se ->
+            if (claimed[se.extid]) {
+                return
+            }
+
+            def originalServerId = se.serverNodeUUID
+
+            try {
+                def claimResult = ScheduledExecution.withNewTransaction { status ->
+                    return claimScheduledJob(se, toServerUuid)
+                }
+                // Note that the ScheduledExecution in se does not contain the updates from the previous transaction.
+                // Use with care.
+
+                claimed[se.extid] = [
+                        success         : claimResult.claimed,
+                        jobId           : se.extid,
+                        previousServerId: originalServerId,
+                        executions      : claimResult.executions
+                ]
+            } catch (Exception e) {
+                log.error("Error claiming scheduled execution ${se.extid}.", e)
+
+                claimed[se.extid] = [
+                        success         : false,
+                        jobId           : se.extid,
+                        previousServerId: originalServerId,
+                        executions      : []
+                ]
+            }
+
+            if (claimed[se.extid]["success"] == false) {
+                log.warn("Scheduled execution ${se.extid} was not successfully claimed. It will not be scheduled.")
+                return
+            }
+
+            try {
+                ScheduledExecution.withNewTransaction { status ->
+                    // ScheduledExecution was updated and committed in the previous nested transaction.
+                    // Refresh it before moving forward.
+                    se.refresh()
+
+                    // Schedule the job on quartz.
+                    scheduleJob(se, null, null, true)
+
+                    // Schedule any ad-hoc executions for the job on quartz.
+                    scheduleAdHocExecutionsForJob(se, toServerUuid)
+                }
+                log.info("Rescheduled job in project ${se.project}: ${se.extid}")
+            } catch (Exception e) {
+                log.error("Job not rescheduled in project ${se.project}: ${se.extid}: ${e.message}", e)
+                claimed[se.extid]["success"] = false
+            }
+        }
+
+        return claimed
+    }
+
+    private def scheduleAdHocExecutionsForJob(ScheduledExecution se, String targetServerUUID) {
+        // Reschedule any executions which were scheduled ad hoc
+        def executionList = Execution.isScheduledAdHoc()
+                .withScheduledExecution(se)
+                .withServerNodeUUID(targetServerUUID)
+                .list()
+
+        rescheduleOnetimeExecutions(executionList)
+    }
+
+    /**
      *  Return a Map with a tree structure of the available grouppaths, and their job counts
      * <pre>
           [
@@ -1175,7 +1256,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         boolean success = false
         Execution.withTransaction {
             //find any currently running executions for this job, and if so, throw exception
-            def found = Execution.createCriteria().get {
+            def found = Execution.createCriteria().list {
                 delegate.'scheduledExecution' {
                     eq('id', scheduledExecution.id)
                 }
@@ -3204,7 +3285,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     ServiceNameConstants.LogFilter,
                     input.workflow.getPluginConfigDataList(ServiceNameConstants.LogFilter)
             )
-        }else if (params.workflow instanceof Map && params.workflow.globalLogFilters) {
+        } else if (params.jobWorkflowJson) {
+            def jobWorkflowData = JSON.parse(params.jobWorkflowJson.toString())
+
+            if(jobWorkflowData instanceof JSONObject && jobWorkflowData.get("pluginConfig")) {
+                scheduledExecution.workflow.setPluginConfigData(ServiceNameConstants.LogFilter, jobWorkflowData.get("pluginConfig").get("LogFilter"))
+            }
+        } else if (params.workflow instanceof Map && params.workflow.globalLogFilters) {
             //filter configs
             def i = 0;
             def configs = []
@@ -3275,6 +3362,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 final Workflow workflow = new Workflow(wf)
                 scheduledExecution.workflow = workflow
                 wf.discard()
+            }
+        } else if (params.jobWorkflowJson) {
+            def jobWorkflowData = JSON.parse(params.jobWorkflowJson.toString())
+
+            if(jobWorkflowData instanceof JSONObject) {
+                scheduledExecution.workflow = Workflow.fromMap(jobWorkflowData)
             }
         } else if (params.workflow && params.workflow instanceof Workflow) {
             scheduledExecution.workflow = new Workflow(params.workflow)
@@ -4639,11 +4732,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             !pluginControlService?.isDisabledPlugin(k, ServiceNameConstants.Notification)
         }
 
-        def notificationPluginsDynamicProperties = notificationService.listNotificationPluginsDynamicProperties(params.project,
-                rundeckAuthorizedServicesProvider.getServicesWith(authContext)).findAll{k,v->
-            !pluginControlService?.isDisabledPlugin(k,ServiceNameConstants.Notification)
-        }
-
         def orchestratorPlugins = orchestratorPluginService.listDescriptions()
         def globals=frameworkService.getProjectGlobals(scheduledExecution?.project).keySet()
 
@@ -4660,7 +4748,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def model = [scheduledExecution          : scheduledExecution,
                      crontab                     : crontab,
                      notificationPlugins         : notificationPlugins,
-                     notificationPluginsDynamicProperties : notificationPluginsDynamicProperties,
                      orchestratorPlugins         : orchestratorPlugins,
                      strategyPlugins             : strategyPlugins,
                      params                      : params,

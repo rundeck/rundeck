@@ -12,9 +12,3 @@ mergeable:
         no_empty:
           enabled: true
           message: 'Please describe the changes'
-  - when: pull_request.*
-    validate:
-      - do: milestone
-        no_empty:
-          enabled: true # Cannot be empty when true.
-          message: 'Milestone must be assigned before merging.'

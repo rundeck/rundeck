@@ -16,7 +16,10 @@
 
 package com.dtolabs.rundeck.app.support
 
+import com.google.common.collect.Lists
+import grails.gorm.DetachedCriteria
 import grails.validation.Validateable
+import rundeck.ReferencedExecution
 import rundeck.controllers.ExecutionController
 import rundeck.services.ExecutionService
 
@@ -48,6 +51,8 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
     boolean dostartbeforeFilter
     boolean doendafterFilter
     boolean doendbeforeFilter
+    boolean includeJobRef
+    List<String> execProjects
     String recentFilter
     String userFilter
     String executionTypeFilter
@@ -81,6 +86,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         abortedbyFilter(nullable:true)
         adhoc(nullable:true)
         executionTypeFilter( nullable: true)
+        execProjects(nullable:true)
     }
     /**
      * Modify a date by rewinding a certain number of units
@@ -192,7 +198,24 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
                   if (theid instanceof Long) {
                     eq("id", theid)
                   } else {
-                    eq("uuid", theid)
+                      if(query.includeJobRef && query.execProjects){
+                          or {
+                              exists(new DetachedCriteria(ReferencedExecution, "re").build {
+                                  projections { property 're.execution.id' }
+                                  eq('re.jobUuid', theid)
+                                  eqProperty('re.execution.id', 'this.id')
+                                  List execProjectsPartitioned = Lists.partition(query.execProjects, 1000)
+                                  or {
+                                      for (def partition : execProjectsPartitioned) {
+                                          'in'('this.project', partition)
+                                      }
+                                  }
+                              })
+                              eq("uuid", theid)
+                          }
+                      }else{
+                          eq("uuid", theid)
+                      }
                   }
                 }
               }

@@ -31,7 +31,7 @@
         <span v-else-if="!loadError" class="text-muted">
           <i class="fas fa-spinner fa-pulse"></i>
         </span>
-        {{ $tc("execution", pagination.total > 0 ? pagination.total : 0) }}
+        {{ $t("execution", pagination.total > 0 ? pagination.total : 0) }}
       </a>
 
       <activity-filter
@@ -147,7 +147,7 @@
     >
       <i18n-t keypath="delete.confirm.text" tag="p">
         <strong>{{ bulkSelectedIds.length }}</strong>
-        <span>{{ $tc("execution", bulkSelectedIds.length) }}</span>
+        <span>{{ $t("execution", bulkSelectedIds.length) }}</span>
       </i18n-t>
 
       <template #footer>
@@ -281,7 +281,7 @@
               v-tooltip.bottom="runningStatusTooltip(exec)"
               class="right date"
             >
-              <span v-if="exec.dateStarted.date">
+              <span v-if="exec.dateStarted.date" class="spacing-x-2">
                 <i class=" ">
                   {{ momentJobFormatDate(exec.dateStarted.date) }}
                 </i>
@@ -392,7 +392,7 @@
         >
           <tr>
             <td colspan="8" class="text-center">
-              {{ $tc("info.newexecutions.since.0", sincecount) }}
+              {{ $t("info.newexecutions.since.0", sincecount) }}
             </td>
           </tr>
         </tbody>
@@ -586,6 +586,7 @@
 </template>
 
 <script lang="ts">
+import { queryRunning } from "../../../library/services/executions";
 import axios from "axios";
 import { defineComponent, PropType } from "vue";
 import moment, { MomentInput } from "moment";
@@ -593,10 +594,8 @@ import OffsetPagination from "../../../library/components/utils/OffsetPagination
 import ActivityFilter from "./activityFilter.vue";
 
 import { getRundeckContext } from "../../../library";
-import {
-  Execution,
-  ExecutionBulkDeleteResponse,
-} from "@rundeck/client/dist/lib/models";
+import { ExecutionBulkDeleteResponse } from "@rundeck/client/dist/lib/models";
+import { Execution } from "../../../library/types/executions/Execution";
 import * as DOMPurify from "dompurify";
 import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
 import { EventBus } from "../../../library";
@@ -714,7 +713,6 @@ export default defineComponent({
       showBulkEditCleanSelections: false,
       highlightExecutionId: null,
       activityUrl: "",
-      nowrunningUrl: "",
       bulkDeleteUrl: "",
       auth: {
         projectAdmin: false,
@@ -769,7 +767,6 @@ export default defineComponent({
       this.auth.projectAdmin = this.rundeckContext.data["projectAdminAuth"];
       this.auth.deleteExec = this.rundeckContext.data["deleteExecAuth"];
       this.activityUrl = this.rundeckContext.data["activityUrl"];
-      this.nowrunningUrl = this.rundeckContext.data["nowrunningUrl"];
       this.bulkDeleteUrl = this.rundeckContext.data["bulkDeleteUrl"];
       this.activityPageHref = this.rundeckContext.data["activityPageHref"];
       this.sinceUpdatedUrl = this.rundeckContext.data["sinceUpdatedUrl"];
@@ -1078,23 +1075,16 @@ export default defineComponent({
         qparams.jobIdFilter = this.query.jobIdFilter;
       }
       try {
-        //this.running = await rundeckContext.rundeckClient.executionListRunning(this.projectName)
-        const response = await axios.get(this.nowrunningUrl, {
-          headers: { "x-rundeck-ajax": true },
-          params: qparams,
-          withCredentials: true,
-        });
-
-        const executions = response.data.executions.map((e: any) => {
-          const {
-            "date-started": dateStarted,
-            "date-completed": dateCompleted,
-          } = e;
-          return Object.assign({ dateStarted, dateCompleted }, e) as Execution;
-        });
-        this.running = { executions, paging: response.data.paging };
+        const response = await queryRunning(this.projectName, qparams);
+        this.running = {
+          executions: response.results,
+          paging: response.paging,
+        };
         this.loadingRunning = false;
-        this.eventBus.emit("activity-nowrunning-count", executions.length);
+        this.eventBus.emit(
+          "activity-nowrunning-count",
+          this.running.executions.length,
+        );
       } catch (error) {
         this.disableRefresh = !this.disableRefresh;
         this.loadingRunning = false;

@@ -1,8 +1,7 @@
 package org.rundeck.tests.functional.selenium.jobs
 
-import com.fasterxml.jackson.databind.ObjectMapper
+
 import org.rundeck.util.annotations.SeleniumCoreTest
-import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.execution.ExecutionStatus
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.SeleniumBase
@@ -107,14 +106,11 @@ class JobReferenceSpec extends SeleniumBase {
         then:
         noExceptionThrown()
         verifyAll {
-            JobUtils.waitForExecutionToBe(
+            JobUtils.waitForExecution(
                     ExecutionStatus.SUCCEEDED.state,
                     executionId as String,
-                    new ObjectMapper(),
-                    client,
-                    WaitingTime.MODERATE,
-                    WaitingTime.MODERATE
-            )
+                    client)
+
             executionPage.waitForElementAttributeToChange executionPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED'
             executionPage.getLogOutput().first().getText() == 'this is my jobref'
         }

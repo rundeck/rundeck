@@ -1,11 +1,14 @@
 package org.rundeck.util.container
 
 import groovy.transform.CompileStatic
+import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.OutputType
 import org.openqa.selenium.TakesScreenshot
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.chrome.ChromeOptions
+import org.openqa.selenium.support.ui.WebDriverWait
+import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.spock.extensions.TestResultExtension
 import org.rundeck.util.gui.pages.BasePage
 
@@ -21,6 +24,7 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
     public static final String TEST_PASS = System.getenv("RUNDECK_TEST_PASS") ?: "admin123"
     public static final String SELENIUM_BASIC_PROJECT = "SeleniumBasic"
     public static final String downloadFolder = System.getProperty("user.dir") + "/src/test/resources" + getSeparator() +"downloads";
+    public static final boolean TEST_SELENIUM_HEADLESS_MODE = (System.getenv("TEST_SELENIUM_HEADLESS_MODE") ?: "true").toBoolean()
 
     /**
      * Create a driver
@@ -46,6 +50,9 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
             options.addArguments("--disable-default-apps")
             options.addArguments("--disable-blink-features=AutomationControlled")
             options.addArguments("--disable-features=Chrome,DownloadPromptForDownload")
+            if(TEST_SELENIUM_HEADLESS_MODE) {
+                options.addArguments("--headless=new")
+            }
             _driver = new ChromeDriver(options)
         }
         return _driver
@@ -121,5 +128,15 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
      */
     static String getSeparator() {
         return System.getProperty("os.name").toLowerCase().contains("windows") ? "\\" : "/"
+    }
+
+    /**
+     * Wait for document readyState to be 'complete'
+     * @param waitingTime
+     */
+    void waitForPageLoadComplete(Duration waitingTime = WaitingTime.MODERATE) {
+        new WebDriverWait(driver, waitingTime).until {
+            (((JavascriptExecutor) it).executeScript("return document.readyState") == "complete")
+        }
     }
 }

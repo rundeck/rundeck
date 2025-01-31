@@ -4,7 +4,7 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import org.openqa.selenium.By
 import org.openqa.selenium.Keys
-import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.Select
 import org.rundeck.util.api.responses.jobs.CreateJobResponse
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
@@ -714,6 +714,8 @@ class JobsSpec extends SeleniumBase {
     def "Url job options"(){
         given:
         def projectName = "url-job-options-test"
+        def labelToSelect = "Y Label"
+        def expectedValue = "y value"
         JobCreatePage jobCreatePage = page JobCreatePage
         JobShowPage jobShowPage = page JobShowPage
         ExecutionShowPage executionShowPage = page ExecutionShowPage
@@ -727,7 +729,7 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.optionName(0).sendKeys("remote")
         jobCreatePage.scrollToElement(jobCreatePage.jobOptionAllowedValuesRemoteUrlInput)
         jobCreatePage.jobOptionAllowedValuesRemoteUrlInput.click()
-        jobCreatePage.jobOptionAllowedValuesRemoteUrlValueTextInput.sendKeys("https://httpbin.org/stream/4")
+        jobCreatePage.jobOptionAllowedValuesRemoteUrlValueTextInput.sendKeys("http://mock-server/remoteOptions.json")
         jobCreatePage.waitForElementVisible(jobCreatePage.saveOptionButton)
         jobCreatePage.scrollToElement(jobCreatePage.saveOptionButton)
         jobCreatePage.saveOptionButton.click()
@@ -735,18 +737,77 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.createJobButton.click()
         jobShowPage.waitForElementVisible(jobShowPage.jobUuid)
         jobShowPage.goToJob(jobShowPage.jobUuid.text)
-        jobShowPage.waitForElementVisible(jobShowPage.getJobOptionValueListItem("url"))
-        jobShowPage.getJobOptionValueListItem("url").click()
-        def optionValueSelected = jobShowPage.jobOptionValueInput.getAttribute("value")
+        jobShowPage.waitForElementToBeClickable(jobShowPage.jobOptionsDropdown)
+        def optionsDropdown = new Select(jobShowPage.jobOptionsDropdown)
+        optionsDropdown.selectByVisibleText(labelToSelect)
+        def selectedElement = optionsDropdown.getFirstSelectedOption()
+        def optionValueSelected = selectedElement.getAttribute("value")
         jobShowPage.runJob(true)
         def optionValueExecuted = executionShowPage.optionValueSelected.text
 
         then:
         optionValueExecuted == optionValueSelected
+        optionValueSelected == expectedValue
+        optionValueExecuted == expectedValue
 
         cleanup:
         deleteProject(projectName)
 
     }
 
+    /**
+     * This test creates a job disables the executions and then enables it
+     * It only validates via UI that the run button shows up when enabled
+     */
+    def "job execution disable-enable"(){
+        given:
+        String projectName = "enableDisableJobSchedule"
+        setupProject(projectName)
+        String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/test.xml', client).succeeded.first().id
+        JobShowPage jobShowPage = page(JobShowPage, projectName).forJob(jobUuid)
+        JobListPage jobListPage = page(JobListPage)
+        jobListPage.loadJobListForProject(projectName)
+        when:
+        jobShowPage.go()
+        then:
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.jobExecutionDisabledIconBy, 0)
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.runJobBtnBy, 1)
+        when:
+        jobShowPage.getJobActionDropdownButton().click()
+        jobShowPage.getJobDisableExecutionButton().click()
+        jobShowPage.el(jobShowPage.jobExecToggleModalBy).findElement(jobShowPage.buttonDangerBy).click()
+        then:
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.jobExecutionDisabledIconBy, 1)
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.runJobBtnBy, 0)
+        when:
+        jobShowPage.getJobActionDropdownButton().click()
+        jobShowPage.getJobEnableExecutionButton().click()
+        jobShowPage.el(jobShowPage.jobExecToggleModalBy).findElement(jobShowPage.buttonDangerBy).click()
+        then:
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.jobExecutionDisabledIconBy, 0)
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.runJobBtnBy, 1)
+
+        cleanup:
+        deleteProject(projectName)
+    }
+
+    /**
+     * Checks for a warning message to be shown when trying to run a job with invalid option values from job show page
+     *
+     */
+    def "job execution with invalid option value"(){
+        given:
+        String projectName = "invalidInputsProject"
+        setupProject(projectName)
+        String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/jobWithOptions.xml', client).succeeded.first().id
+        JobShowPage jobShowPage = page(JobShowPage, projectName).forJob(jobUuid)
+        when:
+        jobShowPage.go()
+        jobShowPage.getRunJobBtn().click()
+        then:
+        jobShowPage.currentUrl().contains("invalidInputsProject/job/index")
+        jobShowPage.getJobOptionAlertBy().getText().contains("Option 'myOption' is required")
+        cleanup:
+        deleteProject(projectName)
+    }
 }

@@ -2,12 +2,16 @@ package grails.securityheaders
 
 import grails.plugins.*
 import org.rundeck.grails.plugins.securityheaders.CSPSecurityHeaderProvider
+import org.rundeck.grails.plugins.securityheaders.CacheControlSecurityHeaderProvider
 import org.rundeck.grails.plugins.securityheaders.CustomSecurityHeaderProvider
 import org.rundeck.grails.plugins.securityheaders.RundeckSecurityHeadersFilter
 import org.rundeck.grails.plugins.securityheaders.SessionIdChangeFilter
 import org.rundeck.grails.plugins.securityheaders.XCTOSecurityHeaderProvider
 import org.rundeck.grails.plugins.securityheaders.XFOSecurityHeaderProvider
 import org.rundeck.grails.plugins.securityheaders.XXSSPSecurityHeaderProvider
+import org.rundeck.grails.plugins.securityheaders.StrictTransportSecurityHeaderProvider
+import org.rundeck.grails.plugins.securityheaders.ReferrerPolicySecurityHeaderProvider
+import org.rundeck.grails.plugins.securityheaders.PermissionsPolicySecurityHeaderProvider
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 
 class SecurityheadersGrailsPlugin extends Plugin {
@@ -72,6 +76,31 @@ Brief summary/description of the plugin.
                 name = 'xfo'
                 defaultEnabled = true
             }
+
+            /**
+             *  Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+             * Pragma: no-cache
+             * Expires: 0
+             */
+            cacheControlSecurityHeaderProvider(CacheControlSecurityHeaderProvider) {
+                name = 'cache-control'
+                defaultEnabled = true
+            }
+            strictTransportSecurityHeaderProvider(StrictTransportSecurityHeaderProvider) {
+                name = 'strict-transport-security'
+                defaultEnabled = true
+            }
+
+            permissionsPolicySecurityHeaderProvider(PermissionsPolicySecurityHeaderProvider) {
+                name = 'Permissions-Policy'
+                defaultEnabled = true
+            }
+
+            referrerPolicySecurityHeaderProvider(ReferrerPolicySecurityHeaderProvider) {
+                name = 'Referrer-Policy'
+                defaultEnabled = true
+            }
+
             rundeckSecurityHeadersFilter(RundeckSecurityHeadersFilter) {
                 enabled = grailsApplication.config.getProperty("rundeck.security.httpHeaders.enabled",Boolean.class, false)
                 config = grailsApplication.config.getProperty("rundeck.security.httpHeaders.provider",HashMap.class,[:])

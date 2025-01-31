@@ -1,6 +1,6 @@
 package org.rundeck.tests.functional.api.project
 
-import org.rundeck.util.api.responses.execution.Execution
+
 import org.rundeck.util.api.responses.execution.RunCommand
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.container.BaseContainer
@@ -26,7 +26,7 @@ class RunCommandSpec extends BaseContainer {
         def runResponseBody = runResponse.body().string()
         def parsedResponseBody = mapper.readValue(runResponseBody, RunCommand.class)
         String newExecId = parsedResponseBody.execution.id
-        def completedExecution = waitForExecutionStatus(newExecId)
+        def completedExecution = waitForExecutionFinish(newExecId)
 
         then:
         noExceptionThrown()
@@ -38,7 +38,7 @@ class RunCommandSpec extends BaseContainer {
         runResponseBody = runResponse.body().string()
         parsedResponseBody = mapper.readValue(runResponseBody, RunCommand.class)
         newExecId = parsedResponseBody.execution.id
-        completedExecution = waitForExecutionStatus(newExecId)
+        completedExecution = waitForExecutionFinish(newExecId)
 
         then:
         noExceptionThrown()
@@ -50,7 +50,7 @@ class RunCommandSpec extends BaseContainer {
         runResponseBody = runResponse.body().string()
         parsedResponseBody = mapper.readValue(runResponseBody, RunCommand.class)
         newExecId = parsedResponseBody.execution.id
-        completedExecution = waitForExecutionStatus(newExecId)
+        completedExecution = waitForExecutionFinish(newExecId)
 
         then:
         noExceptionThrown()

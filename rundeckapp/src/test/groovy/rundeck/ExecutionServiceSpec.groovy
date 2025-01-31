@@ -5828,13 +5828,16 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 failedNodesMap: failedNodes,
                 succeededNodes: succeededNodes,
         ]
-
+        
+        // notification trigger is based on execution status but is slightly different.
+        def notificationTrigger = success ? 'success' : 'failure'
 
         when:
         service.saveExecutionState(job.uuid, e1.id, resultMap, execmap, [:])
         then:
 
         calls * service.workflowService.requestStateSummary(_,succeededNodes.toList()) >> new WorkflowStateFileLoader(workflowState: [nodeSummaries: nodeSummaries])
+        1 * service.notificationService.asyncTriggerJobNotification(notificationTrigger, job.uuid, _)
 
         e1.succeededNodeList == effectiveSuccessNodeList?.join(",")
 

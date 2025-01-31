@@ -5,6 +5,7 @@ import {
   mockReports,
   rundeckClientMock,
   rundeckServiceMock,
+  mockQueryRunning,
 } from "../mocks/mock";
 import { flushPromises, shallowMount, VueWrapper } from "@vue/test-utils";
 import ActivityList from "../activityList.vue";
@@ -12,7 +13,11 @@ import ActivityFilter from "../activityFilter.vue";
 import OffsetPagination from "../../../../library/components/utils/OffsetPagination.vue";
 import { cloneDeep } from "lodash";
 import { Btn, Modal } from "uiv";
-
+jest.mock("../../../../library/services/executions", () => {
+  return {
+    queryRunning: mockQueryRunning,
+  };
+});
 jest.mock("../../../../library/rundeckService", () => rundeckServiceMock);
 jest.mock("@rundeck/client", () => rundeckClientMock);
 jest.mock("axios", () => axiosMock);
@@ -43,7 +48,6 @@ const shallowMountActivityList = async (
       },
       mocks: {
         ...i18nMocks,
-        ...options.mocks, // Use the generic options object
       },
       directives: {
         tooltip: () => {},
@@ -68,14 +72,11 @@ describe("ActivityList", () => {
   });
   beforeEach(() => {
     reports = cloneDeep(mockReports);
+    mockQueryRunning.mockResolvedValue({
+      results: mockRunningExecutions,
+      paging: { max: 20, offset: 0 },
+    });
     axiosMock.get.mockImplementation((url) => {
-      if (url.includes("running")) {
-        return {
-          data: {
-            executions: [...mockRunningExecutions],
-          },
-        };
-      }
       if (url.includes("eventsAjax")) {
         return {
           data: {
@@ -104,6 +105,10 @@ describe("ActivityList", () => {
       expect(executionItems.length).toBe(2); // Directly using the expected length value
       const reportItems = wrapper.findAll('[data-testid="report-row-item"]');
       expect(reportItems.length).toBe(2);
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        "activity-nowrunning-count",
+        2,
+      );
     });
 
     it("error message when loading(apis) fails", async () => {
@@ -235,7 +240,9 @@ describe("ActivityList", () => {
     const reportRowItem = wrapper.find('[data-testid="report-row-item"]');
     expect(reportRowItem.exists()).toBe(true);
     await reportRowItem.trigger("click");
-    expect(window.location).toBe("/project/aaa/execution/show/42");
+    expect(window.location.href).toEqual(
+      "http://localhost/project/aaa/execution/show/42",
+    );
   });
 
   it("automatically fetches data and displays a message when there are new executions since the last timestamp", async () => {

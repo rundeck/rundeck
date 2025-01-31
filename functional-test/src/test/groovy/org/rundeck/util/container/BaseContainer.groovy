@@ -7,6 +7,7 @@ import okhttp3.Response
 import okhttp3.ResponseBody
 import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.api.storage.KeyStorageApiClient
+import org.rundeck.util.common.WaitBehaviour
 import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.jobs.JobUtils
 import spock.lang.Specification
@@ -22,14 +23,14 @@ import java.util.jar.Manifest
  * Base class for tests, starts a shared static container for all tests
  */
 @Slf4j
-abstract class BaseContainer extends Specification implements ClientProvider {
+abstract class BaseContainer extends Specification implements ClientProvider, WaitBehaviour {
     public static final String PROJECT_NAME = 'test'
     private static final Object CLIENT_PROVIDER_LOCK = new Object()
     private static ClientProvider CLIENT_PROVIDER
     private static final String DEFAULT_DOCKERFILE_LOCATION = System.getenv("DEFAULT_DOCKERFILE_LOCATION") ?: System.getProperty("DEFAULT_DOCKERFILE_LOCATION")
     protected static final String TEST_RUNDECK_URL = System.getenv("TEST_RUNDECK_URL") ?: System.getProperty("TEST_RUNDECK_URL")
     protected static final String TEST_RUNDECK_TOKEN = System.getenv("TEST_RUNDECK_TOKEN") ?: System.getProperty("TEST_RUNDECK_TOKEN", "admintoken")
-    private static final ObjectMapper MAPPER = new ObjectMapper()
+    protected static final ObjectMapper MAPPER = new ObjectMapper()
 
     ClientProvider getClientProvider() {
         synchronized (CLIENT_PROVIDER_LOCK) {
@@ -92,6 +93,41 @@ abstract class BaseContainer extends Specification implements ClientProvider {
             if (!post.successful) {
                 throw new RuntimeException("Failed to create project: ${post.body().string()}")
             }
+        } else if (!getProject.successful) {
+            throw new RuntimeException("Failed to access project: ${getProject.body().string()}")
+        }
+    }
+
+    /**
+     * Import system ACL file
+     * @param resourcePathName resource path to the file to upload
+     * @param aclPath acl path within the system
+     */
+    void importSystemAcls(String resourcePathName, String aclPath){
+        def getAcl = client.doGet("/system/acl/${aclPath}")
+        def aclFile = new File(getClass().getResource(resourcePathName).getPath())
+        def resp
+        if (getAcl.code() == 404) {
+            //POST
+            resp = client.doPost("/system/acl/${aclPath}", aclFile, 'application/yaml')
+        }else{
+            //PUT
+            resp = client.doPut("/system/acl/${aclPath}", aclFile, 'application/yaml')
+        }
+        if (!resp.successful) {
+            throw new RuntimeException("Failed to create System ACL: ${resp.body().string()}")
+        }
+    }
+
+    /**
+     * Import system ACL file
+     * @param resourcePathName resource path to the file to upload
+     * @param aclPath acl path within the system
+     */
+    void deleteSystemAcl(String aclPath){
+        def resp = client.doDelete("/system/acl/${aclPath}")
+        if (!(resp.code() in [204, 404])) {
+            throw new RuntimeException("Failed to delete System ACL: ${resp.body().string()}")
         }
     }
 
@@ -268,6 +304,8 @@ abstract class BaseContainer extends Specification implements ClientProvider {
                         throw new RuntimeException("Failed to upload archive: ${put.body().string()}")
                     }
                 }
+            } else if(!getProject.successful){
+                throw new RuntimeException("Failed to access project: ${getProject.body().string()}")
             }
         }
     }
@@ -279,15 +317,16 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         println(nodeList)
         def count = 0
 
-        while (nodeList.get(nodename) == null && count < 5) {
-            sleep(5000)
-            //force refresh project
-            client.doPutWithJsonBody("/project/$project/config/time", ["time": System.currentTimeMillis()])
-
-            response = client.doGet("/project/$project/resources")
-            nodeList = safelyMap(response, Map.class, { [:] })
-            count++
-        }
+        waitFor(
+                {
+                    //force refresh project
+                    client.doPutWithJsonBody("/project/$project/config/time", ["time": System.currentTimeMillis()])
+                    response = client.doGet("/project/$project/resources")
+                    safelyMap(response, Map.class, { [:] })
+                },
+                { it.get(nodename) != null },
+                WaitingTime.EXCESSIVE
+        )
     }
 
     RdClient _client
@@ -351,10 +390,13 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     }
 
     /**
-     *  Use JobUtils.executeJob() paired with JobUtils.waitForExecutionToBe() instead.
-     * @param jobId
-     * @param body
-     * @return
+     * Runs a job and wait for it to finish. Returning the output of the execution.
+     *
+     * @param jobId The job UUID to run.
+     * @param body An object representing the job run request options. Must be serializable to JSON.
+     * @return The output of the execution.
+     * @deprecated Use JobUtils.executeJobWithOptions(),
+     * JobUtils.waitForExecutionFinish() instead, and JobUtils.getExecutionOutput() instead.
      */
     @Deprecated
     Map runJobAndWait(String jobId, Object body = null) {
@@ -364,7 +406,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         }
 
         Execution execution = MAPPER.readValue(r.body().string(), Execution.class)
-        waitForExecutionStatus(execution.id as String, WaitingTime.EXCESSIVE)
+        waitForExecutionFinish(execution.id as String, WaitingTime.EXCESSIVE)
 
         // Maintains the data contract for the Map return type
         return client.get("/execution/${execution.id}/output", Map)
@@ -376,7 +418,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
      * @param timeout wait timeout
      * @return
      */
-    Execution waitForExecutionStatus(String executionId, Duration timeout = WaitingTime.MODERATE) {
+    Execution waitForExecutionFinish(String executionId, Duration timeout = WaitingTime.MODERATE) {
         final List<String> statusesToWaitFor = [
                 'aborted',
                 'failed',
@@ -384,7 +426,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
                 'timedout',
                 'other']
 
-        return JobUtils.waitForExecutionToBe(statusesToWaitFor, executionId, MAPPER, client, WaitingTime.LOW, timeout)
+        return JobUtils.waitForExecution(statusesToWaitFor, executionId, client, timeout)
     }
 
     /**
@@ -433,8 +475,11 @@ abstract class BaseContainer extends Specification implements ClientProvider {
      * This method utilizes the sleep function to pause the current thread for the given duration.
      * If the thread is interrupted while sleeping, it catches the InterruptedException and logs the error.
      *
+     *  Usage note: Waiting unconditionally is considered to be an anti-pattern in tests. Avoid using unless necessary. See the deprecation notice for more information.
+     *
      * @param seconds the number of seconds to pause the execution. This value should be positive.
      * @throws IllegalArgumentException if the `seconds` parameter is negative, as `Duration.ofSeconds` cannot process negative values.
+     * @deprecated in favor of WaitBehaviour.waitFor())
      */
     void hold(int seconds) {
         try {

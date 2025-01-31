@@ -23,11 +23,18 @@ import java.util.function.Consumer
 
 @CompileStatic
 class RdClient {
+
+    /**
+     *  The current (latest) released version of the Rundeck API
+     */
+    public static final int API_CURRENT_VERSION = 52
+
     final ObjectMapper mapper = new ObjectMapper()
     String baseUrl
     OkHttpClient httpClient
-    int apiVersion = 49
-    static final finalApiVersion = 49
+
+    // Api version used by this client
+    int apiVersion = API_CURRENT_VERSION
 
     RdClient(String baseUrl, OkHttpClient httpClient) {
         this.baseUrl = baseUrl
@@ -144,8 +151,8 @@ class RdClient {
         ).execute()
     }
 
-    Response doPut(final String path, final File file) {
-        RequestBody body = RequestBody.create(file, MediaType.parse("application/zip"))
+    Response doPut(final String path, final File file, final String contentType='application/zip') {
+        RequestBody body = RequestBody.create(file, MediaType.parse(contentType))
         Request request = new Request.Builder()
                 .url(apiUrl(path))
                 .method("PUT", body)

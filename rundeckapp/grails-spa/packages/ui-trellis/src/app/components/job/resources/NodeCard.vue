@@ -47,6 +47,7 @@
               <button
                 class="btn btn-default btn-sm dropdown-toggle"
                 data-toggle="dropdown"
+                data-testid="nc-actions-dropdown-toggle"
               >
                 {{ $t("actions") }} <span class="caret"></span>
               </button>
@@ -61,6 +62,7 @@
                     :class="{ has_tooltip: !runAuthorized }"
                     data-placement="left"
                     @click="runCommand"
+                    data-testid="nc-run-command"
                   >
                     <i class="glyphicon glyphicon-play"></i>
                     <span>
@@ -98,6 +100,7 @@
                     :class="{ has_tooltip: !jobCreateAuthorized }"
                     data-placement="left"
                     @click="saveJob"
+                    data-testid="nc-save-job"
                   >
                     <i class="glyphicon glyphicon-plus"></i>
                     <span>

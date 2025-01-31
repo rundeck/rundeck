@@ -36,12 +36,17 @@
 <g:set var="formControlCodeType" value="form-control code apply_ace"/>
 <g:set var="hasError" value="${error ? 'has-error' : ''}"/>
 <g:set var="required" value="${prop.required ? 'required' : ''}"/>
+<g:set var="isHidden" value="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.HIDDEN, 'HIDDEN']}"/>
+<g:set var="skipped" value="${false}"/>
+<g:if test="${prop.renderingOptions?.(StringRenderingConstants.FEATURE_FLAG_REQUIRED)}">
+    <g:set var="featureTest" value="${prop.renderingOptions[StringRenderingConstants.FEATURE_FLAG_REQUIRED]}"/>
+    <g:set var="skipped" value="${feature.isDisabled(name:featureTest)}"/>
+</g:if>
 <g:set var="propScope"
        value="${prop.scope != null && prop.scope != PropertyScope.Unspecified ? prop.scope : defaultScope}"/>
 <g:unless test="${outofscopeOnly && propScope == PropertyScope.InstanceOnly}">
 
-<g:if
-        test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.HIDDEN, 'HIDDEN']}">
+<g:if test="${isHidden}">
     <g:set var="fieldid" value="${g.rkey()}"/>
     <g:set var="valueText" value="${values && null != values[prop.name] ? values[prop.name] : prop.defaultValue}"/>
     <g:set var="hiddenIdentity" value="${prop.renderingOptions['hidden_identity']}"/>
@@ -52,7 +57,7 @@
                    data-hidden-field-identity="${hiddenIdentity}"
                    class="_config_prop_display_hidden"/>
 </g:if>
-<g:else>
+<g:elseif test="${!skipped}">
 <div class="form-group ${enc(attr:hasError)}">
 <g:if test="${outofscope}">
     <label class="${labelColType} form-control-static ${error?'has-error':''}  ${prop.required ? 'required' : ''}">
@@ -372,5 +377,5 @@
     </g:if>
 </div>
 </div>
-</g:else>
+</g:elseif>
 </g:unless>

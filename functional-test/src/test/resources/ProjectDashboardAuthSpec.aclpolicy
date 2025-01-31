@@ -1,0 +1,66 @@
+by:
+  group: AuthTest1
+description: project read access only
+for:
+  project:
+  - allow:
+    - read
+    equals:
+      name: ProjectDashboardAuthSpec
+context:
+  application: rundeck
+---
+by:
+  group: AuthTest2
+description: project admin,read access
+for:
+  project:
+  - allow:
+    - read
+    - admin
+    equals:
+      name: ProjectDashboardAuthSpec
+context:
+  application: rundeck
+---
+by:
+  group: AuthTest3
+description: project app_admin,read access
+for:
+  project:
+  - allow:
+    - read
+    - app_admin
+    equals:
+      name: ProjectDashboardAuthSpec
+context:
+  application: rundeck
+---
+by:
+  group: AuthTest4
+description: project read access, events read
+for:
+  project:
+  - allow:
+    - read
+    equals:
+      name: ProjectDashboardAuthSpec
+  resource:
+  - allow:
+    - read
+    equals:
+      kind: event
+context:
+  application: rundeck
+---
+by:
+  group: AuthTest4
+description: project read access, events read
+for:
+  resource:
+  - allow:
+    - read
+    equals:
+      kind: event
+context:
+  project: ProjectDashboardAuthSpec

@@ -13,7 +13,13 @@ enum NavLinkTypes {
     EDIT_NODES("nav-project-settings-edit-nodes","/nodes/sources", true),
     MOTD("nav-project-settings-edit-motd" , "filename=motd.md", true),
     README("nav-project-settings-edit-readme", "filename=readme.md", true),
-    PROJECT_CONFIG("nav-project-settings-edit-project", "/configure", true)
+    PROJECT_CONFIG("nav-project-settings-edit-project", "/configure", true),
+    STORAGE("nav-project-settings-storage", "/storage", true),
+    ACCESS_CONTROL("nav-project-settings-access-control", "/admin/acls", true),
+    SETUP_SCM("nav-project-settings-setup-scm", "/scm", true),
+    EXPORT_ARCHIVE("nav-project-settings-export-archive", "/export", true),
+    IMPORT_ARCHIVE("nav-project-settings-import-archive", "/import", true),
+    DELETE_PROJECT("nav-project-settings-delete-project", "/admin/delete", true),
 
     private String id
     private String url

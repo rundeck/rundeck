@@ -3,11 +3,8 @@ import { NavItem } from "../../../../library/stores/NavBar";
 import { RootStore } from "../../../../library/stores/RootStore";
 
 export const i18nMocks = {
-  $t: (msg) => {
-    return messages[msg] || msg;
-  },
-  $tc: (msg, count) => {
-    const translations = {
+  $t: (msg: string, count: number): string => {
+    const translations: { [key: string]: string } = {
       execution: count === 1 ? "execution" : "executions",
       "info.newexecutions.since.0":
         count > 1
@@ -16,7 +13,7 @@ export const i18nMocks = {
       "In the last Day": "In the last Day",
       "error.message": "An Error Occurred",
     };
-    return translations[msg] || msg;
+    return translations[msg] || messages[msg] || msg;
   },
 };
 export const mockEventBus = {
@@ -51,7 +48,6 @@ export const rundeckServiceMock = {
       projectAdminAuth: true,
       deleteExecAuth: true,
       activityUrl: "/project/test/events/eventsAjax",
-      nowrunningUrl: "/api/47/project/test/executions/running",
       bulkDeleteUrl: "/execution/deleteBulkApi",
       activityPageHref: "/project/test/activity",
       sinceUpdatedUrl: "/project/test/events/since.json",
@@ -79,7 +75,7 @@ export const axiosMock = {
 export const setupRundeckContext = () => {
   window._rundeck = rundeckServiceMock.getRundeckContext();
 };
-
+export const mockQueryRunning = jest.fn();
 export const mockReports = [
   {
     node: "1/0/1",

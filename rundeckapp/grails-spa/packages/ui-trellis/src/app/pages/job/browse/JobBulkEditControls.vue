@@ -26,6 +26,7 @@
             </template>
             <li>
               <a
+                id="project_job_actions_bulk_edit"
                 role="button"
                 @click="jobPageStore.bulkEditMode = !jobPageStore.bulkEditMode"
               >
@@ -64,16 +65,28 @@
           </h3>
         </div>
         <div class="panel-body">
-          <btn size="xs" type="simple" class="btn-hover" @click="selectAll">
+          <btn
+            id="bulk_select_all_button"
+            size="xs"
+            type="simple"
+            class="btn-hover"
+            @click="selectAll"
+          >
             <b class="glyphicon glyphicon-check"></b>
             {{ $t("select.all") }}
           </btn>
-          <btn size="xs" type="simple" class="btn-hover" @click="selectNone">
+          <btn
+            id="bulk_select_none_button"
+            size="xs"
+            type="simple"
+            class="btn-hover"
+            @click="selectNone"
+          >
             <b class="glyphicon glyphicon-unchecked"></b>
             {{ $t("select.none") }}
           </btn>
           {{
-            $tc(
+            $t(
               "job.bulk.panel.select.message",
               jobPageStore.selectedJobs.length,
             )
@@ -83,6 +96,7 @@
         <div class="panel-footer">
           <dropdown>
             <btn
+              id="bulk_perform_action_button"
               size="sm"
               class="dropdown-toggle"
               :disabled="jobPageStore.selectedJobs.length < 1"
@@ -92,14 +106,22 @@
             </btn>
             <template #dropdown>
               <li v-if="projAuthz('delete')">
-                <a role="button" @click="bulkAction('delete')">
+                <a
+                  id="bulk_delete_jobs_action"
+                  role="button"
+                  @click="bulkAction('delete')"
+                >
                   <b class="glyphicon glyphicon-remove-circle"></b>
                   {{ $t("delete.selected.jobs") }}
                 </a>
               </li>
               <li class="divider"></li>
               <li v-for="action in ['enable', 'disable']">
-                <a role="button" @click="bulkAction(`${action}_schedule`)">
+                <a
+                  :id="`bulk_${action}_schedules_action`"
+                  role="button"
+                  @click="bulkAction(`${action}_schedule`)"
+                >
                   <b
                     class="glyphicon"
                     :class="
@@ -113,7 +135,11 @@
               </li>
               <li class="divider"></li>
               <li v-for="action in ['enable', 'disable']">
-                <a role="button" @click="bulkAction(`${action}_execution`)">
+                <a
+                  :id="`bulk_${action}_execution_action`"
+                  role="button"
+                  @click="bulkAction(`${action}_execution`)"
+                >
                   <b
                     class="glyphicon"
                     :class="
@@ -139,12 +165,15 @@
       <p>{{ $t(`job.bulk.${bulkConfirmAction}.confirm.message`) }}</p>
       <p>
         {{
-          $tc("job.bulk.panel.select.message", jobPageStore.selectedJobs.length)
+          $t("job.bulk.panel.select.message", jobPageStore.selectedJobs.length)
         }}
       </p>
       <template #footer>
-        <btn @click="bulkConfirm = false">{{ $t("no") }}</btn>
+        <btn id="bulk_confirm_action_no_button" @click="bulkConfirm = false">{{
+          $t("no")
+        }}</btn>
         <btn
+          id="bulk_confirm_action_yes_button"
           type="danger"
           :disabled="jobPageStore.selectedJobs.length < 1"
           @click="performBulkAction"

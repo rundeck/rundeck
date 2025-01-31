@@ -149,6 +149,29 @@ subprojects {
     eclipse.project.name = "${project.getParent().eclipse.project.name}:${name}"
 }
 
+/*
+ Root project Configurations
+ */
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+configurations{
+    // dependencies for running groovy scripts
+    groovyScript
+}
+
+dependencies{
+
+    // dependencies for running groovy scripts
+    groovyScript localGroovy()
+    groovyScript "org.codehaus.groovy:groovy-cli-commons:${GroovySystem.version}"
+    groovyScript "org.codehaus.groovy:groovy-yaml:${GroovySystem.version}"
+}
+
+
 /**
  * Enable incremental Groovy compile
  */
@@ -176,7 +199,6 @@ project(':rundeckapp') {
         project(':plugins:flow-control-plugin'),
         project(':plugins:jasypt-encryption-plugin'),
         project(':plugins:object-store-plugin'),
-        project(':plugins:azure-object-store-plugin'),
         project(':plugins:orchestrator-plugin'),
         project(':plugins:git-plugin'),
         project(':plugins:audit-logging-plugin'),
@@ -265,4 +287,15 @@ tasks.register('printBootWarPath') {
         def bootArchiveFile = rundeckapp.bootWar.archiveFile.get()
         println "${bootArchiveFile}"
     }
+}
+
+tasks.register('verifyBuild', JavaExec) {
+    classpath = configurations.groovyScript
+    mainClass = 'groovy.ui.GroovyMain'
+    boolean debug = project.hasProperty('debug')
+    def scriptArgs = ["testbuild.groovy", "--buildType=${project.ext.environment}"]
+    if (debug) {
+        scriptArgs << "-debug"
+    }
+    args scriptArgs
 }

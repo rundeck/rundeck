@@ -1,5 +1,5 @@
 <template>
-  <span class="flow-h">
+  <div class="flow-h">
     <btn
       :class="{ disabled: !hasUndo }"
       @click="doUndo"
@@ -29,7 +29,7 @@
       <i class="glyphicon glyphicon-fast-backward"></i>
       {{ $t("util.undoredo.revertAll") }}
     </btn>
-  </span>
+  </div>
 </template>
 <script lang="ts">
 import { PropType, defineComponent } from "vue";

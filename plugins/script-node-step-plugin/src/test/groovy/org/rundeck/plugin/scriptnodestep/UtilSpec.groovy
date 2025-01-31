@@ -13,6 +13,7 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.DefaultScriptFileNodeStepUtils
+import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
 import spock.lang.Specification
 
@@ -34,31 +35,20 @@ class UtilSpec extends Specification {
         noExceptionThrown()
     }
 
-    def "handleFailureResult with failure message"() {
+    def "handleFailureResult with failure"() {
 
         given:
         NodeExecutorResult nodeExecutorResult = Mock(NodeExecutorResult) {
             isSuccess() >> false
-            failureMessage >> "Test Failure Message"
-        }
-        INodeEntry entry = new NodeEntryImpl()
-
-        when:
-        Util.handleFailureResult(nodeExecutorResult, entry)
-
-        then:
-        def ex = thrown(NodeStepException)
-        ex.message == "Test Failure Message"
-    }
-
-    def "handleFailreResult with null message"() {
-        given:
-        NodeExecutorResult nodeExecutorResult = Mock(NodeExecutorResult) {
-            isSuccess() >> false
-            failureMessage >> null
-            failureReason >> Mock(FailureReason) {
-                toString() >> "Test Failure Reason"
+            failureMessage >> message
+            failureReason >> {
+                if(reason) {
+                    return Mock(FailureReason) { toString() >> reason }
+                } else {
+                  return null
+                }
             }
+            failureData >> data
         }
         INodeEntry entry = new NodeEntryImpl()
 
@@ -67,8 +57,23 @@ class UtilSpec extends Specification {
 
         then:
         def ex = thrown(NodeStepException)
-        ex.message == "Step failed: Test Failure Reason"
+        ex.message == expected
+        if(reason){
+            assert ex.failureReason != null
+            assert ex.failureReason?.toString() == reason
+        }else{
+            assert ex.failureReason == null
+        }
+        ex.failureData == data
+        where:
+        message                | reason                | data           || expected
+        "Test Failure Message" | null                  | null           || "Test Failure Message"
+        null                   | "Test Failure Reason" | null           || "Step failed: Test Failure Reason"
+        null                   | null                  | [key: "value"] || "Step failed: null"
+        "Test Failure Message" | "Test Failure Reason" | [key: "value"] || "Test Failure Message"
+
     }
+
 
     def "CommandNodeStepPlugin handles null error message"() {
 
@@ -117,12 +122,13 @@ class UtilSpec extends Specification {
         given:
         ScriptFileNodeStepExecutor plugin = new ScriptFileNodeStepExecutor(
                 null,
+                false,
                 null,
                 null,
                 null,
                 null,
-                null,
-                false)
+                false,
+                null)
         plugin.scriptUtils = Mock(DefaultScriptFileNodeStepUtils) {
             executeScriptFile(*_) >> Mock(NodeExecutorResult) {
                 isSuccess() >> false
@@ -140,9 +146,11 @@ class UtilSpec extends Specification {
                 getSharedDataContext() >> Mock(MultiDataContext)
             }
 
-            getFramework() >> Mock(Framework) {
-                hasProperty(_) >> false
+            getIFramework() >> Mock(com.dtolabs.rundeck.core.common.IFramework) {
 
+                getPropertyLookup()>>Mock(IPropertyLookup){
+                   _* hasProperty(_)>>false
+                }
                 getExecutionService() >> Mock(ExecutionService) {
                 }
             }
@@ -154,7 +162,7 @@ class UtilSpec extends Specification {
 
         when:
 
-        plugin.executeScriptFile(context, config, nodeEntry)
+        plugin.executeScriptFile(context, nodeEntry, null)
 
         then:
         def ex = thrown(NodeStepException)

@@ -18,7 +18,7 @@ export class PluginStore {
   async load(service: string): Promise<void> {
     if (this.pluginsByService[service]) return void 0;
     const plugins = await this.client.apiRequest({
-      pathTemplate: "api/40/plugin/list",
+      pathTemplate: "api/51/plugin/list",
       queryParameters: {
         service,
       },
@@ -26,7 +26,8 @@ export class PluginStore {
     });
 
     plugins.parsedBody.forEach((p: any) => {
-      if (this.pluginsById[p.name]) return;
+      const pluginKey = this._getPluginByIdKey(p);
+      if (this.pluginsById[pluginKey]) return;
       else this.plugins.push(p);
     });
     this._refreshPluginGroups();
@@ -41,18 +42,34 @@ export class PluginStore {
       return r;
     }, Object.create(null));
     this.pluginsById = this.plugins.reduce((r, p) => {
-      const svcKey = p.name;
+      const svcKey = this._getPluginByIdKey(p);
       r[svcKey] = r[svcKey] || [];
       r[svcKey].push(p);
       return r;
     }, Object.create(null));
   }
 
+  _getPluginByIdKey(plugin: Plugin) {
+    if (plugin.name && plugin.service) {
+      return `${plugin.name}-${plugin.service}`;
+    }
+    return plugin.name;
+  }
+
   getServicePlugins(service: string): Plugin[] {
     return (
-      this.pluginsByService[service]?.sort((a, b) =>
-        a.title.localeCompare(b.title),
-      ) || []
+      this.pluginsByService[service]?.sort((a, b) => {
+        if (a.isHighlighted !== undefined && b.isHighlighted !== undefined) {
+          if (a.isHighlighted !== b.isHighlighted) {
+            return a.isHighlighted ? -1 : 1;
+          }
+
+          if (a.isHighlighted && b.isHighlighted) {
+            return a.highlightedOrder! - b.highlightedOrder!;
+          }
+        }
+        return a.title.localeCompare(b.title);
+      }) || []
     );
   }
 }
@@ -73,6 +90,8 @@ export interface Plugin {
     faicon?: string;
     fabicon?: string;
   };
+  isHighlighted?: boolean;
+  highlightedOrder?: number;
 }
 
 export enum ServiceType {

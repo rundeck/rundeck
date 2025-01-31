@@ -1,6 +1,9 @@
 package rundeck
 
 import grails.testing.gorm.DataTest
+import org.rundeck.core.execution.ExecCommand
+import org.rundeck.core.execution.ScriptCommand
+import org.rundeck.core.execution.ScriptFileCommand
 import rundeck.CommandExec
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
@@ -247,4 +250,5 @@ class CommandExecTests extends Specification implements DataTest {
         assertEquals(true, !t1.keepgoingOnSuccess)
         assertNull(t1.errorHandler)
     }
+
 }

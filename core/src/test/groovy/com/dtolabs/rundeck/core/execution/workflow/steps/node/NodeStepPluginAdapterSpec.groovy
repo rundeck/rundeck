@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.descriptions.PluginMetadata
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
@@ -76,6 +77,26 @@ class NodeStepPluginAdapterSpec extends Specification {
 
     @Plugin(name = "test2", service = ServiceNameConstants.WorkflowNodeStep)
     static class Test2Plugin implements NodeStepPlugin {
+        NodeStepPlugin impl
+
+        @PluginProperty(title = "test",
+                description = "test",
+                defaultValue = "test")
+        private String test
+
+        @Override
+        void executeNodeStep(
+                final PluginStepContext context,
+                final Map<String, Object> configuration,
+                final INodeEntry entry
+        ) throws NodeStepException
+        {
+            impl.executeNodeStep(context, configuration, entry)
+        }
+    }
+    @Plugin(name = "test2", service = ServiceNameConstants.WorkflowNodeStep)
+    @PluginMetadata(key = "NodeStepPluginAdapter.DeprecatedConfigurationMode", value = "skip")
+    static class TestSkipDeprecatedModePlugin implements NodeStepPlugin {
         NodeStepPlugin impl
 
         @PluginProperty(title = "test",
@@ -486,6 +507,42 @@ class NodeStepPluginAdapterSpec extends Specification {
         1 * plugin.executeNodeStep(!null as PluginStepContext, [:], node)
         result.isSuccess()
         wrap.test == "123456"
+    }
+
+
+    def "skip deprecated configuration mode"() {
+        given:
+        framework.frameworkServices = Mock(IFrameworkServices)
+        def optionContext = new BaseDataContext([option: [:]])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), optionContext)
+        StepExecutionContext context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getDataContext() >> optionContext
+            getSharedDataContext() >> shared
+            getFrameworkProject() >> PROJECT_NAME
+        }
+        def node = new NodeEntryImpl('node')
+        def plugin = Mock(NodeStepPlugin)
+        def wrap = new TestSkipDeprecatedModePlugin(
+                impl: plugin,
+                test: '7890'
+        )
+        def adapter = new NodeStepPluginAdapter(wrap)
+        def config = [test: '123456']
+        def item = new TestExecItem(
+                type: 'atype',
+                stepConfiguration: config,
+                nodeStepType: 'nodetype',
+                label: 'a label'
+        )
+        when:
+        def result = adapter.executeNodeStep(context, item, node)
+
+        then: "the plugin would not be re-configured, and the configuration map would be null"
+        1 * plugin.executeNodeStep(!null as PluginStepContext, null, node)
+        result.isSuccess()
+        wrap.test == '7890'
     }
 
 

@@ -1,0 +1,31 @@
+<joblist>
+  <job>
+    <defaultTab>summary</defaultTab>
+    <description>Test script failure correctly sets exit code context variable</description>
+    <executionEnabled>true</executionEnabled>
+    <id>1266c6ed-5cb7-4736-9e64-7f902f1090fa</id>
+    <loglevel>INFO</loglevel>
+    <name>Script Fails with exitCode</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='true' strategy='node-first'>
+      <command>
+        <script><![CDATA[echo "STEP 1: will succeed"
+]]></script>
+      </command>
+      <command>
+        <script><![CDATA[ echo "STEP 2: will fail with code 99"
+
+        exit 99]]></script>
+        <scriptargs />
+      </command>
+      <command>
+        <exec><![CDATA[echo "STEP 3: ExitCode from Step1: ${1:exec.exitCode*}"]]></exec>
+      </command>
+      <command>
+        <exec><![CDATA[echo "STEP 4: ExitCode from Step2: ${2:exec.exitCode*}"]]></exec>
+      </command>
+    </sequence>
+    <uuid>1266c6ed-5cb7-4736-9e64-7f902f1090fa</uuid>
+  </job>
+</joblist>

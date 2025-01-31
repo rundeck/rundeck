@@ -44,7 +44,12 @@
                   class="dropdown-menu dropdown-menu-right"
                 >
                   <li v-for="link in jumpLinks" :key="link.path">
-                    <a href="#" @click="loadDir(link.path)">{{ link.name }}</a>
+                    <a
+                      href="#"
+                      @click="loadDir(link.path)"
+                      data-testid="load-dir-link"
+                      >{{ link.name }}</a
+                    >
                   </li>
                 </ul>
               </div>
@@ -76,6 +81,7 @@
               <button
                 v-if="!readOnly || allowUpload === true"
                 class="btn btn-sm btn-cta"
+                data-testid="add-key-btn"
                 @click="actionUpload"
               >
                 <i class="glyphicon glyphicon-plus"></i>
@@ -88,6 +94,7 @@
                 "
                 class="btn btn-sm btn-warning"
                 @click="actionUploadModify"
+                data-testid="overwrite-key-btn"
               >
                 <i class="glyphicon glyphicon-pencil"></i>
                 Overwrite Key
@@ -97,6 +104,7 @@
                   selectedKey && selectedKey.path && isSelectedKey && !readOnly
                 "
                 class="btn btn-sm btn-danger"
+                data-testid="delete-key-btn"
                 @click="deleteKey"
               >
                 <i class="glyphicon glyphicon-trash"></i>
@@ -170,7 +178,7 @@
                     >
                       <i class="glyphicon glyphicon-lock"></i>
                     </span>
-                    <span>{{ key.name }}</span
+                    <span data-testid="created-key">{{ key.name }}</span
                     ><span v-if="key.expired">{{ "[CACHE EXPIRED]" }}</span>
                   </td>
                   <td class="text-strong">
@@ -238,6 +246,7 @@
           <div class="modal-footer">
             <button
               type="button"
+              data-testid="confirm-delete-btn"
               class="btn btn-sm btn-danger obs-storagedelete-select"
               @click="confirmDeleteKey"
             >
@@ -329,6 +338,11 @@
 </template>
 
 <script lang="ts">
+import { listProjects } from "../../services/projects";
+import {
+  storageKeyDelete,
+  storageKeyGetMetadata,
+} from "../../services/storage";
 import moment from "moment";
 import { getRundeckContext } from "../../index";
 import { defineComponent } from "vue";
@@ -425,6 +439,7 @@ export default defineComponent({
     },
     rootPath: function (newValue: string) {
       // Reset current path when rootPath changed.
+
       this.path = "";
       this.inputPath = "";
       this.selectedKey = {};
@@ -452,7 +467,7 @@ export default defineComponent({
     },
     async loadProjectNames() {
       try {
-        const response = await getRundeckContext().rundeckClient.projectList();
+        const response = await listProjects();
 
         this.linksTitle = "Projects";
         this.jumpLinks = response.map((v: any) => {
@@ -469,14 +484,16 @@ export default defineComponent({
       this.isConfirmingDeletion = true;
     },
     async confirmDeleteKey() {
-      const rundeckContext = getRundeckContext();
       this.isConfirmingDeletion = false;
 
-      const resp = await rundeckContext.rundeckClient.storageKeyDelete(
-        this.selectedKey.path.slice(5),
-      );
-      if (resp._response.status >= 400) {
-        this.errorMsg = resp.error;
+      try {
+        const resp = await storageKeyDelete(this.selectedKey.path.slice(5));
+        if (!resp) {
+          this.errorMsg = "Not found";
+          return;
+        }
+      } catch (e) {
+        this.errorMsg = e.message;
         return;
       }
       this.selectedKey = {};
@@ -525,15 +542,12 @@ export default defineComponent({
       }
       this.loading = true;
 
-      const rundeckContext = getRundeckContext();
       const getPath = this.calcBrowsePath(this.path);
 
       const requestOptions = {
         queryParameters: forceRefresh ? { refresh: "true" } : {},
       };
-
-      rundeckContext.rundeckClient
-        .storageKeyGetMetadata(getPath, requestOptions)
+      storageKeyGetMetadata(getPath, requestOptions)
         .then((result: any) => {
           this.directories = [];
           this.files = [];
@@ -687,6 +701,7 @@ export default defineComponent({
       if (keyType == null) {
         keyType = key.meta["Rundeck-key-type"];
       }
+
       return key && key.meta && keyType && keyType === "private";
     },
     isPublicKey(key: any) {
@@ -738,7 +753,6 @@ export default defineComponent({
       const inputPath = this.relativePath(
         this.parentDirString(this.selectedKey.path),
       );
-
       const inputType = InputType.Text;
 
       const upload = {
@@ -754,7 +768,6 @@ export default defineComponent({
         status: "update",
         errorMsg: null as any,
       };
-
       this.$emit("openEditor", upload);
     },
     clean() {
@@ -775,22 +788,18 @@ export default defineComponent({
       }
     },
     defaultSelectKey(path: any) {
-      const rundeckContext = getRundeckContext();
-
-      rundeckContext.rundeckClient
-        .storageKeyGetMetadata(this.calcBrowsePath(path))
-        .then((result: any) => {
-          if (result.resources != null) {
-            result.resources.forEach((resource: any) => {
-              if (resource.type === "file") {
-                if (resource.path === path) {
-                  this.selectedKey = resource;
-                  this.isSelectedKey = true;
-                }
+      storageKeyGetMetadata(this.calcBrowsePath(path)).then((result: any) => {
+        if (result.resources != null) {
+          result.resources.forEach((resource: any) => {
+            if (resource.type === "file") {
+              if (resource.path === path) {
+                this.selectedKey = resource;
+                this.isSelectedKey = true;
               }
-            });
-          }
-        });
+            }
+          });
+        }
+      });
     },
     loadUpPath() {
       let upPath = "";
@@ -869,16 +878,19 @@ export default defineComponent({
     relativePath(path: any) {
       const root = this.rootPath;
       const statroot = this.staticRoot;
+
       if (!statroot) {
         return path;
       }
       let newpath = "";
       if (path != null && root != null) {
         path = this.cleanPath(path);
+
         newpath = this.cleanPath(path.substring(root.length));
       }
       return newpath;
     },
+
     cleanPath(path: any) {
       if (path != null) {
         while (path.indexOf("/") == 0) {

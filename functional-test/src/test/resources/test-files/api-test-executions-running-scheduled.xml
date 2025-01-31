@@ -1,19 +1,19 @@
 <joblist>
   <job>
     <defaultTab>nodes</defaultTab>
-    <description></description>
+    <description>xml-job-description-name</description>
     <executionEnabled>true</executionEnabled>
     <id>d9500676-1cba-4e67-adec-1c28ad935048</id>
     <loglevel>INFO</loglevel>
-    <name>Simple Scheduled job</name>
+    <name>xml-job-name</name>
     <nodeFilterEditable>false</nodeFilterEditable>
     <plugins />
-    <schedule crontab="*/4 * * ? * * *"/>
-    <scheduleEnabled>true</scheduleEnabled>
+    <schedule crontab="xml-schedule-crontab"/>
+    <scheduleEnabled>xml-schedule-enabled</scheduleEnabled>
     <multipleExecutions>true</multipleExecutions>
     <sequence keepgoing='false'>
       <command>
-        <exec>echo '1'; sleep 5</exec>
+        <exec>xml-args</exec>
       </command>
     </sequence>
     <uuid>xml-uuid</uuid>

@@ -29,11 +29,13 @@ const initI18n = (options = {}) => {
         internationalization["en_US"] ||
         {},
     ),
+    ["en_US"]: internationalization["en_US"],
   };
 
   // Create VueI18n instance with options
   return createI18n({
     silentTranslationWarn: true,
+    fallbackLocale: "en_US",
     locale: locale, // set locale
     messages, // set locale messages
     ...options,

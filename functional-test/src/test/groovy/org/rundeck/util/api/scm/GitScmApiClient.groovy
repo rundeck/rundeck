@@ -1,6 +1,7 @@
 package org.rundeck.util.api.scm
 
 import okhttp3.Response
+import org.rundeck.util.api.scm.httpbody.GitSetupRequest
 import org.rundeck.util.api.scm.httpbody.IntegrationStatusResponse
 import org.rundeck.util.api.responses.common.RundeckResponse
 import org.rundeck.util.api.scm.httpbody.ScmActionInputFieldsResponse
@@ -41,7 +42,7 @@ class GitScmApiClient {
         return this
     }
 
-    RundeckResponse<SetupIntegrationResponse> callSetupIntegration(GitExportSetupRequest requestBody){
+    RundeckResponse<SetupIntegrationResponse> callSetupIntegration(GitSetupRequest requestBody){
         Response resp = client.doPost("/project/${project}/scm/${integration}/plugin/${pluginName}/setup", requestBody)
 
         return new RundeckResponse(resp, SetupIntegrationResponse)

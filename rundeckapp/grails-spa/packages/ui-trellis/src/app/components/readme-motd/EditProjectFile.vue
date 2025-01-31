@@ -77,15 +77,10 @@
                     class="text-warning text-right"
                     data-test-id="nonadmin-warning-message"
                   >
-                    <template v-if="authAdmin">
-                      {{ $t("file.warning.not.displayed.admin.message") }}
-                      <a :href="createProjectConfigureLink">
-                        {{ $t("project.configuration.label") }}
-                      </a>
-                    </template>
-                    <template v-else>
-                      {{ $t("file.warning.not.displayed.nonadmin.message") }}
-                    </template>
+                    {{ $t("file.warning.not.displayed.admin.message") }}
+                    <a :href="createProjectConfigureLink">
+                      {{ $t("project.configuration.label") }}
+                    </a>
                   </span>
                 </template>
               </div>
@@ -125,10 +120,6 @@ export default defineComponent({
     project: {
       type: String,
       default: "",
-    },
-    authAdmin: {
-      type: Boolean,
-      default: false,
     },
   },
   data() {

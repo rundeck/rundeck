@@ -1,6 +1,9 @@
 package rundeck
 
 import grails.testing.gorm.DataTest
+import org.rundeck.core.execution.ExecCommand
+import org.rundeck.core.execution.ScriptCommand
+
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -66,8 +69,8 @@ class WorkflowTests extends Specification implements DataTest {
         assertEquals('node-first',wf.strategy)
         assertNotNull(wf.commands)
         assertEquals(2,wf.commands.size())
-        assertTrue(wf.commands[0] instanceof CommandExec)
-        assertTrue(wf.commands[1] instanceof CommandExec)
+            assertTrue(wf.commands[0] instanceof PluginStep)
+            assertTrue(wf.commands[1] instanceof PluginStep)
     }
 
 
@@ -75,14 +78,19 @@ class WorkflowTests extends Specification implements DataTest {
         when:
         Workflow wf = Workflow.fromMap([keepgoing: true, strategy: 'node-first', commands: [[exec: 'string',errorhandler:[exec: 'anotherstring']], [script: 'script']]])
         then:
-        assertTrue(wf.keepgoing)
-        assertEquals('node-first',wf.strategy)
-        assertNotNull(wf.commands)
-        assertEquals(2,wf.commands.size())
-        assertTrue(wf.commands[0] instanceof CommandExec)
-        assertTrue(wf.commands[1] instanceof CommandExec)
-        assertNotNull(wf.commands[0].errorHandler)
-        assertEquals("anotherstring",wf.commands[0].errorHandler.adhocRemoteString)
+        wf.keepgoing
+        wf.strategy == 'node-first'
+        wf.commands != null
+        wf.commands.size() == 2
+        wf.commands[0] instanceof PluginStep
+        wf.commands[0].pluginType == ExecCommand.EXEC_COMMAND_TYPE
+        wf.commands[0].configuration.adhocRemoteString == "string"
+        wf.commands[1] instanceof PluginStep
+        wf.commands[1].pluginType == ScriptCommand.SCRIPT_COMMAND_TYPE
+        wf.commands[1].configuration.adhocLocalString == "script"
+        wf.commands[0].errorHandler != null
+        wf.commands[0].errorHandler instanceof PluginStep
+        wf.commands[0].errorHandler.configuration.adhocRemoteString == "anotherstring"
     }
 
     //test cloning

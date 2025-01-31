@@ -46,6 +46,7 @@
 
     <asset:stylesheet href="ansi24.css"/>
     <asset:stylesheet href="tokens.css"/>
+    <asset:stylesheet href="tokens-rundeck.css"/>
     %{-- Vendor CSS styles--}%
     <asset:stylesheet href="vendor/perfect-scrollbar.css"/>
     <asset:stylesheet href="github-markdown.css"/>
@@ -141,7 +142,8 @@
         appMeta: {
             title: '${g.appTitle()}',
             logo:'${g.appLogo()}',
-            logocss:'${g.appLogocss()}'
+            logocss:'${g.appLogocss()}',
+            appRundeckGatewayUrl: '${g.appRundeckGatewayUrl()}'
         },
         hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}',
         feature: {

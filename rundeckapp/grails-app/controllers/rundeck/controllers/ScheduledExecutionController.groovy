@@ -5542,7 +5542,10 @@ unspecified, all results will be returned''',
                 in = ParameterIn.QUERY, schema = @Schema(type = 'integer')),
             @Parameter(name = 'offset', description = '''indicate the 0-indexed offset for the first result to 
 return.''',
-                in = ParameterIn.QUERY, schema = @Schema(type = 'integer'))
+                in = ParameterIn.QUERY, schema = @Schema(type = 'integer')),
+            @Parameter(name = 'includeJobRef', description = '''if true, include executions from the job reference
+in the results. Default is false.  Requires API version 50 or later.''',
+                in = ParameterIn.QUERY, schema = @Schema(type = 'boolean'))
         ],
         responses = @ApiResponse(
             responseCode = '200',
@@ -5668,13 +5671,20 @@ return.''',
             )
         }
 
+        boolean includeExecutionsFromJobRef = false;
+
+        if (request.api_version >= ApiVersions.V50) {
+            if (params.includeJobRef && apiRequest) {
+                includeExecutionsFromJobRef = params.boolean('includeJobRef');
+            }
+        }
 
         def result = executionService.queryJobExecutions(
                 scheduledExecution,
                 params['status'],
                 params.offset ? params.int('offset') : 0,
-                params.max  ? params.int('max') : -1
-
+                params.max  ? params.int('max') : -1,
+                includeExecutionsFromJobRef
         )
         def resOffset = params.offset ? params.int('offset') : 0
         def resMax = params.max ?

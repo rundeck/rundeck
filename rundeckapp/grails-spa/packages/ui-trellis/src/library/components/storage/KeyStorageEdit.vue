@@ -1,6 +1,10 @@
 <template>
   <div>
-    <div v-if="!!uploadSetting.errorMsg" class="alert alert-danger">
+    <div
+      v-if="!!uploadSetting.errorMsg"
+      class="alert alert-danger"
+      data-testid="error-msg"
+    >
       <span>{{ uploadSetting.errorMsg }}</span>
     </div>
 
@@ -165,6 +169,7 @@
               :disabled="uploadSetting.modifyMode === true"
               name="fileName"
               class="form-control"
+              data-testid="key-name-input"
               placeholder="Specify a name."
             />
             <div v-if="uploadSetting.inputType === 'file'" class="help-block">
@@ -212,6 +217,7 @@
         <button
           type="button"
           class="btn btn-default mr-3"
+          data-testid="cancel-btn"
           @click="handleCancel"
         >
           Cancel
@@ -219,6 +225,7 @@
         <button
           type="button"
           class="btn btn-cta"
+          data-testid="save-btn"
           :disabled="validInput() === false"
           @click="handleUploadKey"
         >
@@ -230,11 +237,12 @@
 </template>
 
 <script lang="ts">
-import { getRundeckContext } from "../../index";
-import { defineComponent } from "vue";
-import type { PropType } from "vue";
-import InputType from "../../types/InputType";
-import KeyType from "../../types/KeyType";
+import {storageKeyCreate, storageKeyExists, storageKeyGetMetadata, storageKeyUpdate,} from '../../services/storage'
+import type {PropType} from 'vue'
+import {defineComponent} from 'vue'
+import {getRundeckContext} from '../../index'
+import InputType from '../../types/InputType'
+import KeyType from '../../types/KeyType'
 
 export interface UploadSetting {
   modifyMode: boolean;
@@ -254,11 +262,6 @@ export interface UploadSetting {
 export default defineComponent({
   name: "KeyStorageEdit",
   props: {
-    storageFilter: {
-      type: String,
-      required: false,
-      default: "",
-    },
     uploadSetting: {
       type: Object as PropType<UploadSetting>,
       required: true,
@@ -295,23 +298,6 @@ export default defineComponent({
     },
   },
   methods: {
-    allowedResource(meta: any) {
-      const filterArray = this.storageFilter.split("=");
-      const key = filterArray[0];
-      const value = filterArray[1];
-      if (key == "Rundeck-key-type") {
-        if (value === meta["rundeckKeyType"]) {
-          return true;
-        }
-      } else {
-        if (key == "Rundeck-data-type") {
-          if (value === meta["Rundeck-data-type"]) {
-            return true;
-          }
-        }
-      }
-      return false;
-    },
     handleCancel() {
       this.$emit("cancelEditing");
     },
@@ -368,63 +354,44 @@ export default defineComponent({
           break;
       }
 
-      const checkKey = await rundeckContext.rundeckClient.storageKeyGetMaterial(
-        fullPath,
-        {},
-      );
-
-      const exists = checkKey._response.status !== 404;
+      const exists = await storageKeyExists(fullPath);
 
       if (exists) {
         if (this.uploadSetting.dontOverwrite) {
-          this.uploadSetting.errorMsg = "key aready exists";
+          this.uploadSetting.errorMsg = "key already exists";
           return;
-        } else {
-          rundeckContext.rundeckClient
-            .storageKeyUpdate(fullPath, value, {
-              contentType,
-              inputType: this.uploadSetting.inputType,
-              keyType: this.uploadSetting.keyType,
-            })
-            .then((result: any) => {
-              this.$emit("finishEditing", result);
-            })
-            .catch((err: Error) => {
-              let errorMessage = "";
-              if (err?.message) {
-                errorMessage = JSON.parse(err.message)?.message;
-              }
-              this.uploadSetting.errorMsg = errorMessage;
-            });
+        }
+        try {
+          let response=await storageKeyUpdate(fullPath, value, {type: this.uploadSetting.keyType})
+          this.$emit("finishEditing", response);
+        } catch (err) {
+          let errorMessage = "";
+          if (err?.message) {
+            errorMessage = err?.message;
+          }
+          this.uploadSetting.errorMsg = errorMessage;
         }
       } else {
-        rundeckContext.rundeckClient
-          .storageKeyCreate(fullPath, value, {
-            contentType,
-            inputType: this.uploadSetting.inputType,
-            keyType: this.uploadSetting.keyType,
-          })
-          .then((result: any) => {
-            this.getCreatedKey(fullPath).then((r: any) => {
-              this.$emit("keyCreated", this.createdKey);
-              this.$emit("finishEditing", result);
-            });
-          })
-          .catch((err: Error) => {
+        try{
+          let response=await storageKeyCreate(fullPath, value, {type: this.uploadSetting.keyType})
+          this.getCreatedKey(fullPath).then((r: any) => {
+            this.$emit("keyCreated", this.createdKey);
+            this.$emit("finishEditing", response);
+          });
+        }catch(err){
             let errorMessage = "";
             if (err?.message) {
-              errorMessage = JSON.parse(err.message)?.message;
+              errorMessage = err?.message;
             }
             this.uploadSetting.errorMsg = errorMessage;
-          });
+          }
       }
     },
     async getCreatedKey(path: string) {
-      const rundeckContext = getRundeckContext();
-      const result =
-        await rundeckContext.rundeckClient.storageKeyGetMetadata(path);
-      if (result._response.status == 200) {
-        this.createdKey = result;
+      try {
+        this.createdKey = await storageKeyGetMetadata(path);
+      } catch (err) {
+        //todo: show error message
       }
     },
     calcBrowsePath(path: string) {
@@ -434,59 +401,6 @@ export default defineComponent({
         browse = browse.substring(5);
       }
       return browse;
-    },
-    loadKeys() {
-      const rundeckContext = getRundeckContext();
-      rundeckContext.rundeckClient
-        .storageKeyGetMetadata(this.browsePath)
-        .then((result: any) => {
-          this.directories = [];
-          this.files = [];
-
-          if (result.resources != null) {
-            result.resources.forEach((resource: any) => {
-              if (!resource) return;
-              if (resource.type === "directory") {
-                this.directories.push(resource);
-
-                this.directories.sort((obj1: any, obj2: any) => {
-                  if (obj1.path > obj2.path) {
-                    return 1;
-                  }
-
-                  if (obj1.path < obj2.path) {
-                    return -1;
-                  }
-                  return 0;
-                });
-              }
-
-              if (resource.type === "file") {
-                if (this.storageFilter != null) {
-                  if (this.allowedResource(resource.meta)) {
-                    this.files.push(resource);
-                  }
-                } else {
-                  this.files.push(resource);
-                }
-
-                this.files.sort((obj1: any, obj2: any) => {
-                  if (obj1.path > obj2.path) {
-                    return 1;
-                  }
-
-                  if (obj1.path < obj2.path) {
-                    return -1;
-                  }
-                  return 0;
-                });
-              }
-            });
-          }
-        })
-        .catch((err: Error) => {
-          this.errorMsg = err.message;
-        });
     },
     handleFileUpload(e: any) {
       const files = e.target.files || e.dataTransfer.files;

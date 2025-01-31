@@ -40,6 +40,7 @@ public class RundeckConfigBase {
     RundeckProjectServiceConfig projectService;
     RundeckProjectManagerServiceConfig projectManagerService;
     RundeckLogFileStorageServiceConfig logFileStorageService;
+    RundeckScheduledExecutionServiceConfig scheduledExecutionService;
     FileUploadServiceConfig fileUploadService;
     RundeckAuthorizationServiceConfig authorizationService;
     RundeckReportServiceConfig reportService;
@@ -65,6 +66,8 @@ public class RundeckConfigBase {
     RundeckJobsConfig jobs;
     JobsImport jobsImport;
     Startup startup;
+
+    RundeckAwsgateway awsgateway;
 
     @Data public static class Startup {
         Boolean detectFirstRun;
@@ -300,6 +303,15 @@ public class RundeckConfigBase {
     }
 
     @Data
+    public static class RundeckScheduledExecutionServiceConfig {
+        Startup startup;
+        @Data
+        public static class Startup {
+            String rescheduleMode;
+        }
+    }
+
+    @Data
     public static class FileUploadServiceConfig {
         Tempfile tempfile;
 
@@ -430,7 +442,7 @@ public class RundeckConfigBase {
         Enabled userSessionProjectsCache = new Enabled(true);
         Enabled authorizationServiceBootstrapWarmupCache = new Enabled();
         Enabled projectManagerServiceBootstrapWarmupCache = new Enabled();
-        Enabled notificationsOwnThread = new Enabled();
+        Enabled notificationsOwnThread = new Enabled(true);
         Enabled workflowDesigner = new Enabled(true);
         Enabled eventStore = new Enabled(true);
         Enabled projectKeyStorage = new Enabled(true);
@@ -444,6 +456,7 @@ public class RundeckConfigBase {
         Enabled apiProjectConfigValidation = new Enabled();
         Enabled caseInsensitiveUsername = new Enabled();
         Enabled newLocalNodeExecutor = new Enabled();
+        Enabled nodeExecutorSecureInput = new Enabled();
         Enabled alphaUi = new Enabled();
         Enabled enhancedJobTakeoverQuery = new Enabled();
 
@@ -761,4 +774,10 @@ public class RundeckConfigBase {
             "feature.enhancedNodes.enabled","feature.enhanced-nodes.enabled",
             "feature.enableAll","feature.*.enabled"
     );
+
+    @Data
+    public static class RundeckAwsgateway {
+        String url;
+    }
+
 }

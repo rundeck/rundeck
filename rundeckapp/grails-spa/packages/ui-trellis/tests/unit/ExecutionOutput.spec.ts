@@ -26,6 +26,26 @@ import { EventBus } from "../../src/library";
 
 jest.setTimeout(60000);
 
+jest.mock("@/library/modules/rundeckClient", () => ({
+  client: jest.fn(),
+}));
+
+jest.mock('@/library/rundeckService', () => ({
+  getRundeckContext: jest.fn().mockImplementation(() => ({
+    client: {},
+    eventBus: { on: jest.fn(), off: jest.fn(), emit: jest.fn() },
+    rdBase: 'http://localhost:4440/',
+    projectName: 'testProject',
+    apiVersion: '44',
+    rootStore: {
+      plugins: {
+        load: jest.fn(),
+        getServicePlugins: jest.fn(),
+      },
+    },
+  })),
+}));
+jest.mock('../../src/library/services/projects')
 jest.mock("../../src/library/stores/RootStore", () => {
   return {
     __esModule: true,

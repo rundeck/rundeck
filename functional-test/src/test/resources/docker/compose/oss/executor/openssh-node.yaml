@@ -7,7 +7,7 @@ ssh-node:
   node-executor: ssh-exec
   file-copier: ssh-copier
   ssh-authentication: privateKey
-  tags: executor-test
+  tags: executor-test,ssh-node,auth-method-key
 
 password-node:
   description: "Password Node for Rundeck"
@@ -18,4 +18,4 @@ password-node:
   file-copier: ssh-copier
   ssh-authentication: password
   ssh-password-storage-path: keys/project/openssh-executor-test/ssh-node.pass
-  tags: executor-test
+  tags: executor-test,ssh-node,auth-method-password
