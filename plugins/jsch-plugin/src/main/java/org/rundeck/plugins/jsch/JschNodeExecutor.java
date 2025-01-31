@@ -24,7 +24,7 @@
 package org.rundeck.plugins.jsch;
 
 import com.dtolabs.rundeck.core.cli.CLIUtils;
-import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
@@ -172,10 +172,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable, ProxyRunnerP
     public static final String FWK_PROP_PASS_ENV = FWK_PROP_PREFIX + NODE_ATTR_PASS_ENV;
     public static final String PROJ_PROP_PASS_ENV = PROJ_PROP_PREFIX + NODE_ATTR_PASS_ENV;
 
-    private Framework framework;
-
-    public JschNodeExecutor(final Framework framework) {
-        this.framework = framework;
+    public JschNodeExecutor() {
     }
 
     public static final String CONFIG_KEYPATH = "keypath";
@@ -336,13 +333,21 @@ public class JschNodeExecutor implements NodeExecutor, Describable, ProxyRunnerP
                 node
             );
         }
-        boolean forceNewPty = ResolverUtil.resolveBooleanProperty(CONFIG_SET_PTY,false,
-                node,context.getIFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
-                context.getIFramework());
+        final IFramework framework = context.getIFramework();
+        boolean forceNewPty = ResolverUtil.resolveBooleanProperty(
+                CONFIG_SET_PTY,
+                false,
+                node,
+                framework.getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
+                framework
+        );
 
-        boolean passEnvVar = ResolverUtil.resolveBooleanProperty(CONFIG_PASS_ENV,false,
-                node,context.getIFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
-                context.getIFramework());
+        boolean passEnvVar = ResolverUtil.resolveBooleanProperty(
+                CONFIG_PASS_ENV, false,
+                node,
+                framework.getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
+                framework
+        );
 
         final ExecutionListener listener = context.getExecutionListener();
         final Project project = new Project();
@@ -350,8 +355,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable, ProxyRunnerP
         boolean success = false;
         final ExtSSHExec sshexec;
         //perform jsch sssh command
-        final NodeSSHConnectionInfo nodeAuthentication = new NodeSSHConnectionInfo(node, framework,
-                                                                                   context);
+        final NodeSSHConnectionInfo nodeAuthentication = new NodeSSHConnectionInfo(node, framework, context);
         try {
 
             sshexec = SSHTaskBuilder.build(node, command, project, context.getDataContext(),
@@ -573,7 +577,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable, ProxyRunnerP
             INodeEntry node,
             long commandTimeout,
             long connectTimeout,
-            Framework framework
+            IFramework framework
     )
     {
         String errormsg;
@@ -623,7 +627,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable, ProxyRunnerP
     static ExtractFailure extractJschFailure(final INodeEntry node,
                                              final long commandTimeout,
                                              final long connectionTimeout,
-                                             final JSchException jSchException, final Framework framework) {
+                                             final JSchException jSchException, final IFramework framework) {
         String errormsg;
         FailureReason reason;
 
@@ -632,14 +636,14 @@ public class JschNodeExecutor implements NodeExecutor, Describable, ProxyRunnerP
 
                 String msgformat = FWK_PROP_AUTH_CANCEL_MSG_DEFAULT;
                 if (framework.getPropertyLookup().hasProperty(FWK_PROP_AUTH_CANCEL_MSG)) {
-                    msgformat = framework.getProperty(FWK_PROP_AUTH_CANCEL_MSG);
+                    msgformat = framework.getPropertyLookup().getProperty(FWK_PROP_AUTH_CANCEL_MSG);
                 }
                 errormsg = MessageFormat.format(msgformat, node.getNodename(), jSchException.getMessage());
                 reason = NodeStepFailureReason.AuthenticationFailure;
             } else if (jSchException.getMessage().contains("Auth fail")) {
                 String msgformat = FWK_PROP_AUTH_FAIL_MSG_DEFAULT;
                 if (framework.getPropertyLookup().hasProperty(FWK_PROP_AUTH_FAIL_MSG)) {
-                    msgformat = framework.getProperty(FWK_PROP_AUTH_FAIL_MSG);
+                    msgformat = framework.getPropertyLookup().getProperty(FWK_PROP_AUTH_FAIL_MSG);
                 }
                 errormsg = MessageFormat.format(msgformat, node.getNodename(), jSchException.getMessage());
                 reason = NodeStepFailureReason.AuthenticationFailure;
