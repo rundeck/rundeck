@@ -229,4 +229,104 @@ describe("WorkflowSteps", () => {
       ],
     });
   });
+  it("adds an error handler to a step and emits update:modelValue", async () => {
+    const wrapper = await createWrapper({
+      modelValue: {
+        commands: [
+          {
+            description: "step with no handler",
+            type: "exec-command",
+            nodeStep: true,
+            configuration: { adhocRemoteString: "echo step test" },
+          },
+        ],
+      },
+    });
+
+    // Click "Add Error Handler"
+    const addErrorHandlerButton = wrapper.find(
+      "a[data-test='add-error-handler']",
+    );
+    await addErrorHandlerButton.trigger("click");
+    await wrapper.vm.$nextTick();
+
+    // Choose error handler plugin
+    const chooseModal = wrapper.findComponent(ChoosePluginModal);
+    chooseModal.vm.$emit("selected", { service: "a", provider: "b" });
+    await wrapper.vm.$nextTick();
+
+    // Edit error handler config
+    const editModal = wrapper.findComponent(EditPluginModal);
+    editModal.vm.$emit("update:modelValue", {
+      type: "exec-command",
+      config: { adhocRemoteString: "echo error test" },
+    });
+    editModal.vm.$emit("save");
+    await flushPromises();
+
+    // Expect emitted event to contain the updated error handler
+    expect(wrapper.emitted("update:modelValue")[1][0]).toEqual({
+      commands: [
+        {
+          description: "step with no handler",
+          type: "exec-command",
+          nodeStep: true,
+          configuration: { adhocRemoteString: "echo step test" },
+          errorhandler: {
+            type: "exec-command",
+            configuration: { adhocRemoteString: "echo error test" },
+          },
+        },
+      ],
+    });
+  });
+
+  it("edits an existing error handler and emits update:modelValue", async () => {
+    const wrapper = await createWrapper({
+      modelValue: {
+        commands: [
+          {
+            description: "step with handler",
+            type: "exec-command",
+            nodeStep: true,
+            configuration: { adhocRemoteString: "echo step test" },
+            errorhandler: {
+              type: "exec-command",
+              configuration: { adhocRemoteString: "echo old error test" },
+            },
+          },
+        ],
+      },
+    });
+
+    // Click "Edit Step"
+    const editStep = wrapper.find('[data-test="edit-step-item"]');
+    await editStep.trigger("click");
+    await wrapper.vm.$nextTick();
+
+    // Edit error handler config
+    const editModal = wrapper.findComponent(EditPluginModal);
+    editModal.vm.$emit("update:modelValue", {
+      type: "exec-command",
+      config: { adhocRemoteString: "echo new error test" },
+    });
+    editModal.vm.$emit("save");
+    await flushPromises();
+
+    // Expect emitted event to contain the updated error handler
+    expect(wrapper.emitted("update:modelValue")[1][0]).toEqual({
+      commands: [
+        {
+          description: "step with handler",
+          type: "exec-command",
+          nodeStep: true,
+          configuration: { adhocRemoteString: "echo step test" },
+          errorhandler: {
+            type: "exec-command",
+            configuration: { adhocRemoteString: "echo new error test" },
+          },
+        },
+      ],
+    });
+  });
 });
