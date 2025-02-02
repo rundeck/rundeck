@@ -3,7 +3,7 @@ name: OWASP Dependency Check
 
 on:
   schedule:
-  - cron: "45 3/1 * * *"
+  - cron: "15 3/1 * * *"
 
 permissions:
   actions: read
@@ -26,4 +26,4 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Build with Gradle
-        run: ./gradlew dependencyCheckAggregate
+        run: ./gradlew dependencyCheckAggregate --info
