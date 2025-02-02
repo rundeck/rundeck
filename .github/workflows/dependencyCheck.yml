@@ -3,7 +3,7 @@ name: OWASP Dependency Check
 
 on:
   schedule:
-  - cron: "0 3/6 * * *"
+  - cron: "45 3/1 * * *"
 
 permissions:
   actions: read
