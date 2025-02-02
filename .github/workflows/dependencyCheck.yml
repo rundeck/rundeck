@@ -3,10 +3,7 @@ name: OWASP Dependency Check
 
 on:
   schedule:
-  - cron: "15 3/1 * * *"
-
-permissions:
-  actions: read
+  - cron: "0 3/6 * * *"
 
 jobs:
   build:
@@ -14,16 +11,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v2
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
         with:
-          fetch-depth: 0
-      - name: Set up JDK 11
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '11'
-          java-package: jdk # optional (jdk or jre) - defaults to jdk
+          java-version: 1.8
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Build with Gradle
-        run: ./gradlew dependencyCheckAggregate --info
+        run: ./gradlew dependencyCheckAggregate
