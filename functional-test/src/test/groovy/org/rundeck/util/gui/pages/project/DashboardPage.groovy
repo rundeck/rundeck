@@ -19,9 +19,9 @@ class DashboardPage extends BasePage {
     By readmeMarkDownBy = By.className("markdown-body")
     By projectSummaryBy = By.id("projectHome-summary")
     By projectSummaryCountLinkBy = By.cssSelector("#projectHome-summary a .summary-count")
-    By executionCountBy = By.cssSelector(".summary-count.text-info") // Execution count
-    By userCountBy = By.cssSelector("div[data-test-id='user-count'] .text-info") // User count
-    By userElementBy = By.cssSelector(".users li")
+    By executionCountBy = By.xpath("/html/body/section[1]/div/section/div[2]/div/div/div[2]/div/div/div/div/div/a")
+    By userCountBy = By.xpath("//p[contains(text(),'by')]/span[@class='text-info']")
+    By userElementBy = By.xpath("/html/body/section[1]/div/section/div[2]/div/div/div[2]/div/div/div/div/div/div/ul/li")
 
     DashboardPage(SeleniumContext context) {
         super(context)
