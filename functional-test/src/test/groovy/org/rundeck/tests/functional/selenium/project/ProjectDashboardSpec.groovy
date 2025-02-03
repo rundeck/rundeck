@@ -1,6 +1,5 @@
 package org.rundeck.tests.functional.selenium.project
 
-import org.openqa.selenium.By
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.common.jobs.JobUtils
@@ -34,49 +33,45 @@ class ProjectDashboardSpec extends SeleniumBase {
     }
     // Not ready for review yet. I need to finish the implementation of the test case.
 
-    /**
-     Test Case 1: Validate Running Jobs on Dashboard
-     */
-    def "Validate Execution Count and Users in Project Dashboard"() {
+
+    def "Validate Execution Count in Project Dashboard"() {
         when: "Navigate to the Project Dashboard Page"
         def dashboardPage = go DashboardPage, projectName
-        then: "Dashboard should display execution count, user count, and user details correctly"
 
+        then: "Dashboard should display execution count correctly and it should be a valid number"
         wait.until {
-            println("Waiting for execution count element...")
-            def executionCountElement = getDriver().findElement(By.xpath("/html/body/section[1]/div/section/div[2]/div/div/div[2]/div/div/div/div/div/a"))
-            println("Execution Count Element Found: ${executionCountElement != null}")
-            println("Execution Count Element Text: ${executionCountElement.getText()}")
-
-            println("Waiting for user count element...")
-            def userCountElement = getDriver().findElement(By.xpath("//p[contains(text(),'by')]/span[@class='text-info']"))
-            println("User Count Element Found: ${userCountElement != null}")
-            println("User Count Element Text: ${userCountElement.getText()}")
-
-            println("Waiting for user element...")
-            def userElement = getDriver().findElement(By.xpath("/html/body/section[1]/div/section/div[2]/div/div/div[2]/div/div/div/div/div/div/ul/li"))
-            println("User Element Found: ${userElement != null}")
-            println("User Element Text: ${userElement.getText()}")
-
-            executionCountElement.isDisplayed() &&
-                    userCountElement.isDisplayed() &&
-                    userElement.isDisplayed()
+            def executionCountElement = dashboardPage.getExecutionCountElement()
+            executionCountElement.isDisplayed()
         }
 
-        and: "Execution count should be a valid number"
-        def executionCountElement = getDriver().findElement(By.xpath("/html/body/section[1]/div/section/div[2]/div/div/div[2]/div/div/div/div/div/a"))
+        def executionCountElement = dashboardPage.getExecutionCountElement()
         def executionCountText = executionCountElement.getText().trim()
-        println("Execution Count Text: ${executionCountText}")
-        and: "User count should be a valid number"
-        def userCountElement = getDriver().findElement(By.xpath("//p[contains(text(),'by')]/span[@class='text-info']"))
+
+        // Extract the numeric part from the text
+        def executionCountNumber = executionCountText.replaceAll("[^0-9]", "")
+
+        expect:
+        executionCountNumber.isNumber()
+    }
+
+    def "Validate User Count and Details in Project Dashboard"() {
+        when: "Navigate to the Project Dashboard Page"
+        def dashboardPage = go DashboardPage, projectName
+
+        then: "Dashboard should display user count and user details correctly and user count should be a valid number and user should not be empty"
+        wait.until {
+            def userCountElement = dashboardPage.getUserCountElement()
+            def userElement = dashboardPage.getUserElement()
+            userCountElement.isDisplayed() && userElement.isDisplayed()
+        }
+
+        def userCountElement = dashboardPage.getUserCountElement()
         def userCountText = userCountElement.getText().trim()
-        println("User Count Text: ${userCountText}")
-
-
-        and: "User should not be empty"
-        def userElement = getDriver().findElement(By.xpath("/html/body/section[1]/div/section/div[2]/div/div/div[2]/div/div/div/div/div/div/ul/li"))
+        def userElement = dashboardPage.getUserElement()
         def userText = userElement.getText().trim()
-        println("User Text: ${userText}")
-        assert !userText.isEmpty()
+
+        expect:
+        userCountText.isNumber()
+        !userText.isEmpty()
     }
 }
