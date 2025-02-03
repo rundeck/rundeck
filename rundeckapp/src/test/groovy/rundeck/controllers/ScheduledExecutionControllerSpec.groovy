@@ -42,6 +42,8 @@ import org.grails.plugins.codecs.URLCodec
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.authorization.domain.AppAuthorizer
+import org.rundeck.app.authorization.domain.job.AuthorizingJob
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.components.jobs.JobDefinitionComponent
@@ -53,6 +55,7 @@ import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeJob
+import org.rundeck.core.auth.web.WebDefaultParameterNamesMapper
 import org.rundeck.util.HttpClientCreator
 import org.slf4j.Logger
 import org.springframework.web.multipart.commons.CommonsMultipartFile
@@ -4553,7 +4556,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
     }
 
-    def "Test api job definition components values returns a json"(){
+    def "Test api job definition components returns a json"(){
         given:
         def jobComponent1 = Mock(JobDefinitionComponent){
             getName() >> "jc1"
@@ -4582,37 +4585,70 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         when:
         request.method = 'GET'
         params.id = "jobId"
-        def result = controller.apiJobDefinitionComponentsValues()
+        def result = controller.apiJobDefinitionComponents()
 
         then:
         def componentsJson = response.json
         Map jc1 = componentsJson.get("jc1")
         jc1.messageType == "jobComponent.jc1"
-        jc1.prefix == "jobComponent.jc1.configMap."
         jc1.section == "section1"
-        jc1.pluginConfig == ["k1": "v1"]
 
         Map jc2 = componentsJson.get("jc2")
         jc2.messageType == "jobComponent.jc2"
-        jc2.prefix == "jobComponent.jc2.configMap."
         jc2.section == "section2"
-        jc2.pluginConfig == ["k2": "v2"]
     }
 
     def "Test API job definition components job not found"(){
         given:
         controller.apiService = Mock(ApiService)
-        controller.scheduledExecutionService=Mock(ScheduledExecutionService){
-            getByIDorUUID("jobId")>>null
+        controller.rundeckWebDefaultParameterNamesMapper=Mock(WebDefaultParameterNamesMapper)
+        controller.rundeckExceptionHandler = Mock(WebExceptionHandler)
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer){
+            1 * job(_,_)>>Mock(AuthorizingJob){
+                1 * getResource() >>  { throw new NotFound('Job', '-999') }
+            }
+        }
+        controller.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager)
+
+        when:
+        request.method = 'GET'
+        params.id = "jobId"
+        request.subject=new Subject()
+        session.subject=new Subject()
+        controller.apiJobDefinitionComponentsValues()
+
+        then:
+        1 * controller.rundeckExceptionHandler.handleException(_,_,_ as NotFound)
+    }
+
+
+    def "Test API job definition components value for job"(){
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.rundeckWebDefaultParameterNamesMapper=Mock(WebDefaultParameterNamesMapper)
+        controller.rundeckExceptionHandler = Mock(WebExceptionHandler)
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer){
+            1 * job(_,_)>>Mock(AuthorizingJob){
+                1 * getResource() >>  Mock(ScheduledExecution)
+            }
+        }
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            getJobDefinitionComponentValues(_)>>[
+                    "jc1":["k1":"v1"],
+                    "jc2":["k2":"v2"]
+            ]
         }
 
         when:
         request.method = 'GET'
         params.id = "jobId"
+        request.subject=new Subject()
+        session.subject=new Subject()
         controller.apiJobDefinitionComponentsValues()
 
         then:
-        1 * controller.apiService.renderErrorFormat(_,[status: HttpServletResponse.SC_NOT_FOUND,
-                                                       code  : 'api.error.job.not.found', args: ["jobId"], format:response.format])
+        def componentsJson = response.json
+        componentsJson.jc1 == ["k1":"v1"]
+        componentsJson.jc2 == ["k2":"v2"]
     }
 }

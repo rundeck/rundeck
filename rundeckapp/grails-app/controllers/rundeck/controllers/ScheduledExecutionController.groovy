@@ -373,21 +373,63 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
-    @Get(uri="/job/{id}/apiJobDefinitionComponentsValues")
+    @Get(uri = "/job/{id}/components")
     @Operation(
-        method = 'GET',
-        summary = 'Get Job Definition Components Values',
-        description = '''Get the values for job definition components for a job. Since: v53''',
-        tags = ['jobs'],
-        parameters = [
-                @Parameter(
-                        name = 'id',
-                        in = ParameterIn.PATH,
-                        description = 'Job ID',
-                        required = true,
-                        schema = @Schema(type = 'string')
-                )
-        ],
+            method = 'GET',
+            summary = 'Get Job Definition Components Values',
+            description = '''Get the values for job definition components for a job. Since: v53''',
+            tags = ['jobs'],
+            parameters = [
+                    @Parameter(
+                            name = 'id',
+                            in = ParameterIn.PATH,
+                            description = 'Job ID',
+                            required = true,
+                            schema = @Schema(type = 'string')
+                    )
+            ],
+            responses = @ApiResponse(
+                    responseCode = '200',
+                    description = '''Job Definition Components values response.
+''',
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(type = 'object'),
+                            examples = @ExampleObject('''{
+     "Schedules-component":{
+        "schedulesJson":"[\\n    \\n]"
+     },
+     "runner-job-selector":{
+        "runnerSelectorJson":"{\\"runnerFilterType\\":\\"TAG_FILTER_AND\\",\\"filter\\":\\"STG-TOOLS-NEW\\",\\"runnerFilterMode\\":\\"TAGS\\"}"
+     }
+}''')
+                    )
+            )
+    )
+    @RdAuthorizeJob(RundeckAccess.Job.AUTH_APP_READ_OR_VIEW)
+    def apiJobDefinitionComponentsValues() {
+        ScheduledExecution scheduledExecution = authorizingJob.resource
+
+        def jobComponentValues=rundeckJobDefinitionManager.getJobDefinitionComponentValues(scheduledExecution)
+        render(contentType: 'application/json', text: jobComponentValues as JSON)
+    }
+
+
+    @Get(uri = "/jobs/components")
+    @Operation(
+            method = 'GET',
+            summary = 'Get Job Definition Components',
+            description = '''Get job definition components properties. Since: v53''',
+            tags = ['jobs'],
+            parameters = [
+                    @Parameter(
+                            name = 'id',
+                            in = ParameterIn.PATH,
+                            description = 'Job ID',
+                            required = true,
+                            schema = @Schema(type = 'string')
+                    )
+            ],
             responses = @ApiResponse(
                     responseCode = '200',
                     description = '''Job Definition Components response.
@@ -395,8 +437,6 @@ class ScheduledExecutionController  extends ControllerBase{
 **Components Fields**
 * `properties`: List of properties for the component
 * `section`: Section of the component
-* `pluginConfig`: Plugin configuration for the component
-* `prefix`: Prefix for the component
 * `messageType`: Message type for the component
 ''',
                     content = @Content(
@@ -423,36 +463,13 @@ class ScheduledExecutionController  extends ControllerBase{
          }
       ],
       "section":"details",
-      "pluginConfig":{
-         "job-queue":null,
-         "job-tags":null,
-         "Schedules-component":{
-            "schedulesJson":"[\\n    \\n]"
-         },
-         "runner-job-selector":{
-            "runnerSelectorJson":"{\\"runnerFilterType\\":\\"TAG_FILTER_AND\\",\\"filter\\":\\"STG-TOOLS-NEW\\",\\"runnerFilterMode\\":\\"TAGS\\"}"
-         }
-      },
-      "prefix":"jobComponent.job-tags.configMap.",
       "messageType":"jobComponent.job-tags"
    }
 }''')
                     )
             )
     )
-    def apiJobDefinitionComponentsValues() {
-        ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
-
-        if (!scheduledExecution) {
-            return apiService.renderErrorFormat(response, [
-                    status: HttpServletResponse.SC_NOT_FOUND,
-                    code: 'api.error.job.not.found',
-                    args: [params.id],
-                    format: response.format
-            ])
-        }
-
-        def jobComponentValues=rundeckJobDefinitionManager.getJobDefinitionComponentValues(scheduledExecution)
+    def apiJobDefinitionComponents() {
         def jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
         Map componentsData= [:]
         jobComponents.collect { String name, JobDefinitionComponent jobComponent ->
@@ -460,13 +477,10 @@ class ScheduledExecutionController  extends ControllerBase{
                 return
             }
             def compSection = jobComponent.inputLocation?.section
-            String prefix = RundeckJobDefinitionManager.getFormFieldPrefixForJobComponent(jobComponent.name)
             String messageType = RundeckJobDefinitionManager.getMessagesTypeForJobComponent(jobComponent.name)
             Map compProps = [
                     properties: jobComponent.inputProperties,
                     section: compSection,
-                    pluginConfig: jobComponentValues.get(jobComponent.name),
-                    prefix: prefix,
                     messageType: messageType
             ]
 
