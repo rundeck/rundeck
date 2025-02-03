@@ -421,15 +421,6 @@ class ScheduledExecutionController  extends ControllerBase{
             summary = 'Get Job Definition Components',
             description = '''Get job definition components properties. Since: v53''',
             tags = ['jobs'],
-            parameters = [
-                    @Parameter(
-                            name = 'id',
-                            in = ParameterIn.PATH,
-                            description = 'Job ID',
-                            required = true,
-                            schema = @Schema(type = 'string')
-                    )
-            ],
             responses = @ApiResponse(
                     responseCode = '200',
                     description = '''Job Definition Components response.
