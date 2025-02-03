@@ -168,6 +168,7 @@ class ScheduledExecutionController  extends ControllerBase{
             apiJobUpdateSingle              : 'PUT',
             apiJobRetry                     : 'POST',
             apiJobWorkflow                  : 'GET',
+            apiJobDefinitionComponents      : 'GET',
             apiJobDefinitionComponentsValues: 'GET',
             apiJobBrowse                    : ['GET', 'POST'],
     ]
@@ -406,7 +407,7 @@ class ScheduledExecutionController  extends ControllerBase{
                     )
             )
     )
-    @RdAuthorizeJob(RundeckAccess.Job.AUTH_APP_READ_OR_VIEW)
+    @RdAuthorizeJob(RundeckAccess.General.AUTH_APP_READ)
     def apiJobDefinitionComponentsValues() {
         ScheduledExecution scheduledExecution = authorizingJob.resource
 
