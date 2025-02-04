@@ -422,7 +422,10 @@ jobs:
     <<: *job-defaults
     executor:
       name: docker-builder
-
+    parameters:
+      jreVersion:
+        type: string
+        default: "openjdk-11-jre-headless"
     steps:
       - setup_docker
       - checkout
@@ -432,7 +435,7 @@ jobs:
           at: ~/workspace
       - run-build-step:
           step-name: Build Docker Images
-          command: rundeck_docker_build openjdk-11-jre-headless
+          command: rundeck_docker_build << parameters.jreVersion >>
       - run-build-step:
           step-name: Publish Docker Images
           command: rundeck_docker_publish
@@ -806,12 +809,18 @@ workflows:
           <<: *slack-defaults
 
   build_and_test_with_jre_17:
+    triggers:
+      - schedule:
+          cron: "0 23 * * *"
+          filters:
+            branches:
+              only:
+                - main
     when:
       and:
         - << pipeline.git.branch >>
-        - not:
-            matches:
-              pattern: /^pull\/[0-9]+$/
+        - matches:
+              pattern: release/5\..*
               value: << pipeline.git.branch >>
     jobs:
       - build-rundeck:
