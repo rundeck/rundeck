@@ -18,6 +18,7 @@ ARG TARGETARCH
 
 # The required JRE version args
 ARG JRE_VERSION
+RUN echo "Image JRE: ${JRE_VERSION}"
 RUN if [ -z "$JRE_VERSION" ]; then echo "Error: JRE_VERSION is not set"; exit 1; fi
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -37,7 +38,7 @@ RUN apt-get update && \
         gnupg2 \
         ssh-client \
         sudo \
-        ${JRE_VERSION} \
+        $JRE_VERSION \
         uuid-runtime \
         wget \
         unzip && \
