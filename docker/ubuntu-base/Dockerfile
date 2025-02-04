@@ -16,6 +16,10 @@ FROM ubuntu:22.04
 
 ARG TARGETARCH
 
+# The required JRE version args
+ARG JRE_VERSION
+RUN if [ -z "$JRE_VERSION" ]; then echo "Error: JRE_VERSION is not set"; exit 1; fi
+
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
@@ -33,7 +37,7 @@ RUN apt-get update && \
         gnupg2 \
         ssh-client \
         sudo \
-        openjdk-17-jre-headless \
+        ${JRE_VERSION} \
         uuid-runtime \
         wget \
         unzip && \
