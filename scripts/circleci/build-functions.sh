@@ -33,8 +33,11 @@ rundeck_gui_tests() {
 }
 
 rundeck_docker_build() {
+    # Default to the java unless specified as the first param
+    local jreVersion=${1:-"openjdk-11-jre-headless"}
+
     #Build image
-    ./gradlew ${GRADLE_BASE_OPTS} officialBuild -Penvironment=${ENV} -PdockerRepository=${DOCKER_REPO} -PdockerTags=latest,SNAPSHOT
+    ./gradlew ${GRADLE_BASE_OPTS} officialBuild -Penvironment=${ENV} -PdockerRepository=${DOCKER_REPO} -PdockerTags=latest,SNAPSHOT -PjreVersion=${jreVersion}
 
     docker tag "${DOCKER_REPO}:latest" "${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}"
 

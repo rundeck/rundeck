@@ -259,6 +259,10 @@ jobs:
     executor:
       name: docker-builder
       resource_class: large
+    parameters:
+      jreVersion:
+        type: string
+        default: "openjdk-11-jre-headless"
     steps:
       - setup_docker:
           docker_layer_caching: true
@@ -271,7 +275,7 @@ jobs:
       - run-build-step:
           step-name: Build And Push Docker Images
           command: |
-            rundeck_docker_build
+            rundeck_docker_build << parameters.jreVersion >>
             rundeck_docker_push
       - run-build-step:
           step-name: Verify Build
@@ -758,6 +762,58 @@ workflows:
           command: bash test/run-docker-pam-tests.sh
           <<: *require-build
           <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Selenium
+          gradle-task: seleniumCoreTest
+          parallelism: 3
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/**/*{.groovy,.java}"
+          <<: *require-build
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Functional API
+          gradle-task: apiTest
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/**/*{.groovy,.java}"
+          parallelism: 3
+          <<: *require-build
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Functional Plugin Blocklist
+          gradle-task: pluginBlocklistTest
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/integration/**/*{.groovy,.java}"
+          <<: *require-build
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Feature NewLocalExec
+          gradle-task: apiTestNewLocal
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/execution/ExecutionOutputSpec.groovy"
+          <<: *require-build
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Feature NodeExecutorSecureInput
+          gradle-task: apiTestNodeExecutorSecureInput
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/job/input/*.groovy"
+          <<: *require-build
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Selenium Alpha UI
+          gradle-task: alphaUiSeleniumCoreTest
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/alphaUi/**/*{.groovy,.java}"
+          <<: *require-build
+          <<: *slack-defaults
+
+  build_and_test_with_jre_17:
+    when:
+      and:
+        - << pipeline.git.branch >>
+        - not:
+            matches:
+              pattern: /^pull\/[0-9]+$/
+              value: << pipeline.git.branch >>
+    jobs:
+      - build-rundeck:
+          name: Build with JRE 17
+          <<: *slack-defaults
+          jreVersion: "openjdk-17-jre-headless"
       - test-gradle-functional:
           name: T Selenium
           gradle-task: seleniumCoreTest
