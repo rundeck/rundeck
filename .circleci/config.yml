@@ -820,33 +820,27 @@ workflows:
       - test-docker:
           name: T Docker running JRE 17
           command: bash test/run-docker-tests.sh
-          <<: *require-build
-          <<: *slack-defaults
+          <<: *require-build-jre-17
       - test-docker:
           name: T Integration SSL running JRE 17
           command: bash test/run-docker-ssl-tests.sh
-          <<: *require-build
-          <<: *slack-defaults
+          <<: *require-build-jre-17
       - test-docker:
           name: T Integration Ansible running JRE 17
           command: bash test/run-docker-ansible-tests.sh
-          <<: *require-build
-          <<: *slack-defaults
+          <<: *require-build-jre-17
       - test-machine:
           name: T Integration LDAP running JRE 17
           command: bash test/run-docker-ldap-tests.sh
-          <<: *require-build
-          <<: *slack-defaults
+          <<: *require-build-jre-17
       - test-machine:
           name: T Integration LDAP Bind running JRE 17
           command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
-          <<: *require-build
-          <<: *slack-defaults
+          <<: *require-build-jre-17
       - test-docker:
           name: T Integration PAM running JRE 17
           command: bash test/run-docker-pam-tests.sh
-          <<: *require-build
-          <<: *slack-defaults
+          <<: *require-build-jre-17
       - test-gradle-functional:
           name: T Selenium running JRE 17
           gradle-task: seleniumCoreTest
