@@ -1,4 +1,4 @@
-import { mount } from "@vue/test-utils";
+import { mount, config } from "@vue/test-utils";
 import PtAutoComplete from "../PtAutoComplete.vue";
 import AutoComplete from "primevue/autocomplete";
 const createWrapper = async (props = {}): Promise<any> => {
