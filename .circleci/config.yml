@@ -633,6 +633,10 @@ require-build: &require-build
   requires:
     - Build
 
+require-build-jre-17: &require-build-jre-17
+  requires:
+    - Build_JRE_17
+
 filters:
   all: &filter-default
     filters:
@@ -811,44 +815,37 @@ workflows:
               value: << pipeline.git.branch >>
     jobs:
       - build-rundeck:
-          name: Build with JRE 17
-          <<: *slack-defaults
+          name: Build_JRE_17
           jreVersion: "openjdk-17-jre-headless"
       - test-gradle-functional:
           name: T Selenium
           gradle-task: seleniumCoreTest
           parallelism: 3
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/**/*{.groovy,.java}"
-          <<: *require-build
-          <<: *slack-defaults
+          <<: *require-build-jre-17
       - test-gradle-functional:
           name: T Functional API
           gradle-task: apiTest
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/**/*{.groovy,.java}"
           parallelism: 3
-          <<: *require-build
-          <<: *slack-defaults
+          <<: *require-build-jre-17
       - test-gradle-functional:
           name: T Functional Plugin Blocklist
           gradle-task: pluginBlocklistTest
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/integration/**/*{.groovy,.java}"
-          <<: *require-build
-          <<: *slack-defaults
+          <<: *require-build-jre-17
       - test-gradle-functional:
           name: T Feature NewLocalExec
           gradle-task: apiTestNewLocal
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/execution/ExecutionOutputSpec.groovy"
-          <<: *require-build
-          <<: *slack-defaults
+          <<: *require-build-jre-17
       - test-gradle-functional:
           name: T Feature NodeExecutorSecureInput
           gradle-task: apiTestNodeExecutorSecureInput
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/job/input/*.groovy"
-          <<: *require-build
-          <<: *slack-defaults
+          <<: *require-build-jre-17
       - test-gradle-functional:
           name: T Selenium Alpha UI
           gradle-task: alphaUiSeleniumCoreTest
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/alphaUi/**/*{.groovy,.java}"
-          <<: *require-build
-          <<: *slack-defaults
+          <<: *require-build-jre-17
