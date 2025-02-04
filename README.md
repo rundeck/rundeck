@@ -61,6 +61,8 @@ Creates image `rundeck/rundeck:SNAPSHOT`, you can define `-PdockerTags` to add a
 
     ./gradlew :docker:officialBuild
 
+The JRE installed on the image can be configured with  `-PjreVersion=openjdk-17-jre-headless`
+
 <br />
 
 # Documentation

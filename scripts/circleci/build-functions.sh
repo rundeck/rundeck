@@ -33,8 +33,12 @@ rundeck_gui_tests() {
 }
 
 rundeck_docker_build() {
-    # Default to the java unless specified as the first param
-    local jreVersion=${1:-"openjdk-11-jre-headless"}
+    # Ensure the JRE version is set
+    local jreVersion=${1}
+    if [ -z "$jreVersion" ]; then
+        echo "Error: jreVersion is not set"
+        exit 1
+    fi
 
     #Build image
     ./gradlew ${GRADLE_BASE_OPTS} officialBuild -Penvironment=${ENV} -PdockerRepository=${DOCKER_REPO} -PdockerTags=latest,SNAPSHOT -PjreVersion=${jreVersion}
