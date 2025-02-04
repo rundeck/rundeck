@@ -12,7 +12,7 @@ project.evaluationDependsOn(":rundeckapp")
 
 def dockerRepository = findProperty("dockerRepository")?: 'rundeck/rundeck'
 def providedTags = findProperty('dockerTags')?: ''
-def jreVersion = findProperty("dockerRepository")?: 'openjdk-11-jre-headless'
+def jreVersion = findProperty("jreVersion")?: 'openjdk-11-jre-headless'
 
 def dockerTags = [].plus(providedTags.split(',').findAll())
 
