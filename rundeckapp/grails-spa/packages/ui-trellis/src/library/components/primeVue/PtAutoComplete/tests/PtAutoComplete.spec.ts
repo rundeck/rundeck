@@ -1,6 +1,13 @@
 import { mount, config } from "@vue/test-utils";
 import PtAutoComplete from "../PtAutoComplete.vue";
 import AutoComplete from "primevue/autocomplete";
+
+config.global.mocks = {
+  $primevue: {
+    config: {}
+    }
+  };
+
 const createWrapper = async (props = {}): Promise<any> => {
   const wrapper = mount(PtAutoComplete, {
     props: {
@@ -10,12 +17,18 @@ const createWrapper = async (props = {}): Promise<any> => {
         { label: "Option 2", value: 2 },
       ],
       name: "test-autocomplete",
+      emptySearchMessage: "No results found",
       ...props,
     },
     global: {
       components: {
         AutoComplete: AutoComplete,
       },
+      mocks:{
+        $primevue: {
+          config: {}
+        }
+      }
     },
   });
   await wrapper.vm.$nextTick();
