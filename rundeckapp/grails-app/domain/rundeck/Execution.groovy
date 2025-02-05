@@ -92,6 +92,8 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
     }
 
     static mapping = {
+        uuid column: "uuid", nullable: true, length: 36
+        jobUuid column: "job_uuid", nullable: true, length: 36
 
         //mapping overrides superclass, so we need to relist these
         user column: "rduser"
