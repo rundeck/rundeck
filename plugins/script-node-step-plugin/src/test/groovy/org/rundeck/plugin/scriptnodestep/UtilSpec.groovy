@@ -35,31 +35,20 @@ class UtilSpec extends Specification {
         noExceptionThrown()
     }
 
-    def "handleFailureResult with failure message"() {
+    def "handleFailureResult with failure"() {
 
         given:
         NodeExecutorResult nodeExecutorResult = Mock(NodeExecutorResult) {
             isSuccess() >> false
-            failureMessage >> "Test Failure Message"
-        }
-        INodeEntry entry = new NodeEntryImpl()
-
-        when:
-        Util.handleFailureResult(nodeExecutorResult, entry)
-
-        then:
-        def ex = thrown(NodeStepException)
-        ex.message == "Test Failure Message"
-    }
-
-    def "handleFailreResult with null message"() {
-        given:
-        NodeExecutorResult nodeExecutorResult = Mock(NodeExecutorResult) {
-            isSuccess() >> false
-            failureMessage >> null
-            failureReason >> Mock(FailureReason) {
-                toString() >> "Test Failure Reason"
+            failureMessage >> message
+            failureReason >> {
+                if(reason) {
+                    return Mock(FailureReason) { toString() >> reason }
+                } else {
+                  return null
+                }
             }
+            failureData >> data
         }
         INodeEntry entry = new NodeEntryImpl()
 
@@ -68,8 +57,23 @@ class UtilSpec extends Specification {
 
         then:
         def ex = thrown(NodeStepException)
-        ex.message == "Step failed: Test Failure Reason"
+        ex.message == expected
+        if(reason){
+            assert ex.failureReason != null
+            assert ex.failureReason?.toString() == reason
+        }else{
+            assert ex.failureReason == null
+        }
+        ex.failureData == data
+        where:
+        message                | reason                | data           || expected
+        "Test Failure Message" | null                  | null           || "Test Failure Message"
+        null                   | "Test Failure Reason" | null           || "Step failed: Test Failure Reason"
+        null                   | null                  | [key: "value"] || "Step failed: null"
+        "Test Failure Message" | "Test Failure Reason" | [key: "value"] || "Test Failure Message"
+
     }
+
 
     def "CommandNodeStepPlugin handles null error message"() {
 

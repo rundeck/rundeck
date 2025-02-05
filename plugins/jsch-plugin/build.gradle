@@ -22,6 +22,17 @@ configurations{
 
 dependencies {
     implementation(project(":core"))
+    pluginLibs("com.jcraft:jsch:${jschVersion}")
+    pluginLibs('com.jcraft:jsch.agentproxy.jsch:0.0.9')
+    pluginLibs('com.jcraft:jsch.agentproxy.sshagent:0.0.9')
+    pluginLibs('com.jcraft:jsch.agentproxy.usocket-jna:0.0.9')
+    pluginLibs('com.jcraft:jsch.agentproxy.usocket-nc:0.0.9')
+    pluginLibs('com.jcraft:jsch.agentproxy.connector-factory:0.0.9')
+    pluginLibs('com.jcraft:jsch.agentproxy.core:0.0.9')
+    pluginLibs('org.apache.ant:ant-jsch:1.10.14'){
+        //ant is part of core
+        exclude(group: 'org.apache.ant', module: 'ant')
+    }
 
     testImplementation 'junit:junit:4.13.2',
             'org.mockito:mockito-all:1.10.19'
@@ -56,6 +67,7 @@ jar {
         attributes 'Rundeck-Plugin-Tags': 'java,executor'
         def libList = configurations.pluginLibs.collect { 'lib/' + it.name }.join(' ')
         attributes 'Rundeck-Plugin-Libs': "${libList}"
+        attributes 'Rundeck-Plugin-Libs-Load-First': "false"
     }
 }
 

@@ -312,6 +312,22 @@ jobs:
       - collect-gradle-tests
       - save-build-cache
 
+  # Run UI Tests
+  test-gui:
+    <<: *job-defaults
+    executor:
+      name: docker-builder
+    steps:
+      - setup_docker
+      - checkout
+      - install-node
+      - attach_workspace:
+          at: ~/workspace
+      - run-build-step:
+          step-name: Run GUI Tests
+          command: rundeck_gui_tests
+      - collect-gradle-tests
+
   # WizCLI Image Scan
   wizcli-scan:
     <<: *job-defaults
@@ -671,6 +687,9 @@ workflows:
           <<: *slack-defaults
       - test-gradle:
           name: T Unit Gradle
+          <<: *slack-defaults
+      - test-gui:
+          name: T Unit UI
           <<: *slack-defaults
       - trigger-enterprise:
           name: Enterprise Snapshot
