@@ -191,4 +191,14 @@ databaseChangeLog = {
             column(name: "job_uuid")
         }
     }
+
+    changeSet(author: "rundeckdev", id: "5.x-shrink-uuid-and-job-uuid-column-length") {
+        preConditions(onFail: "MARK_RAN") {
+            columnExists(tableName: "execution", columnName: 'uuid')
+            columnExists(tableName: "execution", columnName: 'job_uuid')
+        }
+        modifyDataType(tableName: "execution", columnName: "uuid", newDataType: '${varchar36.type}')
+        modifyDataType(tableName: "execution", columnName: "job_uuid", newDataType: '${varchar36.type}')
+
+    }
 }
