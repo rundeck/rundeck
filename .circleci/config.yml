@@ -443,6 +443,7 @@ jobs:
       - setup_docker
       - checkout
       - install-packaging-dependencies
+      - install-node
       - restore-build-cache
       - attach_workspace:
           at: ~/workspace
