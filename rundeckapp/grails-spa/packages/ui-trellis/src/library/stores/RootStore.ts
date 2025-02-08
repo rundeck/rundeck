@@ -58,6 +58,7 @@ export class RootStore {
   /**
    * Get API response for a path, caching the result
    * @param path API url path
+   * @returns Promise<any>
    */
   api(path: string) {
     if (this.requestCache[path] !== undefined) {
@@ -66,5 +67,13 @@ export class RootStore {
 
     this.requestCache[path] = api.get(path);
     return this.requestCache[path];
+  }
+
+  /**
+   * Invalidate a cached API response
+   * @param path
+   */
+  invalidatePath(path: string) {
+    delete this.requestCache[path];
   }
 }
