@@ -200,6 +200,7 @@
 </template>
 
 <script lang="ts">
+import { getRundeckContext } from "../../rundeckService";
 import { defineComponent } from "vue";
 
 import AceEditor from "../utils/AceEditor.vue";
@@ -214,7 +215,6 @@ import { diff } from "deep-object-diff";
 
 import {
   getPluginProvidersForService,
-  getServiceProviderDescription,
   validatePluginConfig,
 } from "../../modules/pluginService";
 
@@ -539,10 +539,11 @@ export default defineComponent({
     },
     async loadProvider(provider: any) {
       try {
-        const data: any = await getServiceProviderDescription(
-          this.serviceName,
-          provider,
-        );
+        const data =
+          await getRundeckContext().rootStore.plugins.getServiceProviderDescription(
+            this.serviceName,
+            provider,
+          );
         if (data.props) {
           this.loadPluginData(data);
         }
