@@ -1,20 +1,21 @@
-import { ExecutionOutputStore, ExecutionOutput } from "./ExecutionOutput";
+import { RundeckClient } from "@rundeck/client";
+import { reactive, UnwrapNestedRefs } from "vue";
+import { api } from "../services/api";
+import { ExecutionOutputStore } from "./ExecutionOutput";
 
 import { JobPageStore } from "./JobPageStore";
-import { WorkflowStore } from "./Workflow";
 import { NavBar } from "./NavBar";
-import { UtilityBar } from "./UtilityBar";
-import { SystemStore } from "./System";
-import { RundeckClient } from "@rundeck/client";
-import { Releases } from "./Releases";
-import { ProjectStore } from "./Projects";
 import { NewsStore } from "./News";
-import { PluginStore } from "./Plugins";
-import { WebhookStore } from "./Webhooks";
-import { ThemeStore } from "./Theme";
 import { NodeSourceFile } from "./NodeSourceFile";
+import { PluginStore } from "./Plugins";
+import { ProjectStore } from "./Projects";
+import { Releases } from "./Releases";
+import { SystemStore } from "./System";
+import { ThemeStore } from "./Theme";
 import { UIStore } from "./UIStore";
-import { reactive, UnwrapNestedRefs } from "vue";
+import { UtilityBar } from "./UtilityBar";
+import { WebhookStore } from "./Webhooks";
+import { WorkflowStore } from "./Workflow";
 
 export class RootStore {
   executionOutputStore: ExecutionOutputStore;
@@ -31,6 +32,7 @@ export class RootStore {
   ui: UnwrapNestedRefs<UIStore>;
   nodeSourceFile: UnwrapNestedRefs<NodeSourceFile>;
   jobPageStore: UnwrapNestedRefs<JobPageStore>;
+  requestCache: { [key: string]: Promise<any> } = {};
 
   constructor(
     readonly client: RundeckClient,
@@ -51,5 +53,18 @@ export class RootStore {
     this.ui = reactive(new UIStore());
     this.nodeSourceFile = reactive(new NodeSourceFile(this, client));
     this.jobPageStore = reactive(new JobPageStore());
+  }
+
+  /**
+   * Get API response for a path, caching the result
+   * @param path API url path
+   */
+  api(path: string) {
+    if (this.requestCache[path] !== undefined) {
+      return this.requestCache[path];
+    }
+
+    this.requestCache[path] = api.get(path);
+    return this.requestCache[path];
   }
 }
