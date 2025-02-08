@@ -540,7 +540,7 @@ export default defineComponent({
     async loadProvider(provider: any) {
       try {
         const data =
-          await getRundeckContext().rootStore.plugins.getServiceProviderDescription(
+          await getRundeckContext().rootStore.plugins.getPluginDetail(
             this.serviceName,
             provider,
           );

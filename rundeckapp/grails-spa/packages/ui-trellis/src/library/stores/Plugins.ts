@@ -41,7 +41,7 @@ export class PluginStore {
    * @param serviceName
    * @param provider
    */
-  getServiceProviderDescription(serviceName: string, provider: string) {
+  getPluginDetail(serviceName: string, provider: string) {
     if (this.pluginDetailLoader[`${serviceName}/${provider}`] !== undefined) {
       return this.pluginDetailLoader[`${serviceName}/${provider}`];
     }
