@@ -32,7 +32,11 @@ class GiteaApiRemoteRepo {
     }
 
     GiteaApiRemoteRepo setupRepo(){
-        doPost(CREATE_REPO_ENDPOINT, new CreateRepoRequest(name: this.repoName))
+        try (Response response = doPost(CREATE_REPO_ENDPOINT, new CreateRepoRequest(name: this.repoName))) {
+            if (!response.isSuccessful()) {
+                throw new IllegalStateException("Failed to create repository: " + response.code() + " " + response.body().string())
+            }
+        }
         return this
     }
 
@@ -159,8 +163,6 @@ class GiteaApiRemoteRepo {
     String getRepoUrlForRundeck(){
         return "${GITEA_RD_BASE_URL}/${GITEA_USER}/${repoName}.git"
     }
-
-
 
     /**
      *
