@@ -61,9 +61,9 @@ Uses the war artifact and creates the `rundeck/rundeck:SNAPSHOT` docker image:
 ./gradlew :docker:officialBuild
 ```
 
-- `-PdockerTags` adds additional tags on the image
+- `dockerTags` adds additional tags on the image
 -   - Ex: `-PdockerTags=local,local-RUN-123`
-- `-PjreVersion=openjdk-17-jre-headless` specifies the JRE version for the image
+- `jreVersion=openjdk-17-jre-headless` specifies the JRE version for the image
   - Ex: `-PjreVersion=openjdk-17-jre-headless`
 
 # Documentation
