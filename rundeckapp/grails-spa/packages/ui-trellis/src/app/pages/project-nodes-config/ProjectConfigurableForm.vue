@@ -123,7 +123,7 @@ export default defineComponent({
         properties.forEach((item: any) => {
           item.forEach((prop: any) => {
             prop.desc = prop.description;
-            resolvedProps.push(prop);
+            resolvedProps.push({ ...prop, options: prop.renderingOptions });
           });
         });
         this.pluginConfig = {
