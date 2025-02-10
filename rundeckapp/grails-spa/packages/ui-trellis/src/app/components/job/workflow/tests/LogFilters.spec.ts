@@ -8,16 +8,15 @@ jest.mock("@/library/modules/rundeckClient", () => ({
   client: jest.fn(),
 }));
 
-jest.mock("@/library", () => {
-  return {
-    getRundeckContext: jest.fn().mockImplementation(() => ({
-      client: jest.fn().mockImplementation(() => ({
-        eventBus: { on: jest.fn(), emit: jest.fn() },
-      })),
-      eventBus: { on: jest.fn(), emit: jest.fn() },
-    })),
-  };
-});
+jest.mock("@/library/rundeckService", () => ({
+  getRundeckContext: jest.fn().mockImplementation(() => ({
+    eventBus: { on: jest.fn(), emit: jest.fn() },
+    rdBase: "http://localhost:4440/",
+    projectName: "testProject",
+    apiVersion: "44",
+  })),
+}));
+jest.mock("../../../../../library/services/projects");
 
 // Mock the plugin service
 jest.mock("@/library/modules/pluginService", () => ({

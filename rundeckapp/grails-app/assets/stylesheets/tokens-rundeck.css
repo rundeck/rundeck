@@ -1,11 +1,17 @@
 :root {
     --colors-blue-100:  #DCE6FB;
+    --colors-blue-500: #285ED2;
     --colors-blue-600:  #1248BD;
-    --colors-gray-900:  #18181B;
+    --colors-gray-100: #FAFAFA;
+    --colors-gray-300: #E4E4E7;
+    --colors-gray-500: #A1A1AA;
+    --colors-gray-600: #71717A;
+    --colors-black:  #18181B;
     --colors-green-100: #D6E4DB;
     --colors-green-600: #149343;
     --colors-orange-100: #FEE8D8;
     --colors-orange-600: #E36914;
     --colors-red-100: #FADCDC;
+    --colors-red-500: #DE3434;
     --colors-red-600: #C12121;
 }
