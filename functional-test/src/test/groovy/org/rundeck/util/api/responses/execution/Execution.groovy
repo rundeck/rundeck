@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.openqa.selenium.json.Json
 import org.rundeck.util.api.responses.jobs.Job
 
 @JsonIgnoreProperties(ignoreUnknown = true)
