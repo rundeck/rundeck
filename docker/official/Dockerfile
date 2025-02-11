@@ -6,9 +6,9 @@ COPY --chown=rundeck:root .build .
 RUN java -jar rundeck.war --installonly
 
 # Directories and permissions
-RUN mkdir -p libext etc var/logs \
+RUN mkdir -p libext etc plugins-to-sideload var/logs \
         # Adjust permissions for OpenShift
-        && chmod -R 0775 libext server user-assets etc var
+        && chmod -R 0775 libext plugins-to-sideload server user-assets etc var
 
 COPY --chown=rundeck:root remco /etc/remco
 COPY --chown=rundeck:root lib docker-lib
