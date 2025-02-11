@@ -546,7 +546,6 @@ function getCurSEID(){
 
         }
         function setupJobExecNodeFilterBinding(root,target,dataId){
-          console.log(selFrameworkProject)
             var filterParams = loadJsonData(dataId);
             var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
             var jobRefNodeFilter = new NodeFilters(
