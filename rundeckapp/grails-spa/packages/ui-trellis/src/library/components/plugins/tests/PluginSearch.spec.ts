@@ -9,9 +9,6 @@ const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
     },
     global: {
       stubs: {
-        btn: {
-          template: `<button><slot></slot></button>`,
-        },
         popover: true,
       },
     },

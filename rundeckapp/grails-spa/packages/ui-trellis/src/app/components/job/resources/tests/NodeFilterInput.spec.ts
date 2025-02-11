@@ -62,9 +62,6 @@ const mountNodeFilterInput = async (
           template: '<div><slot></slot><slot name="footer"></slot></div>',
         },
       },
-      mocks: {
-        $t: (msg) => msg,
-      },
     },
   });
   await wrapper.vm.$nextTick();

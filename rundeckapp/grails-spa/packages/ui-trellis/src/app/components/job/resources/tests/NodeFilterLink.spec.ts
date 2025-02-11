@@ -38,11 +38,7 @@ describe("NodeFilterLink Component", () => {
         exclude: false,
         ...propsData,
       },
-      global: {
-        mocks: {
-          $t: (msg) => msg,
-        },
-      },
+
     });
     await wrapper.vm.$nextTick();
     return wrapper;

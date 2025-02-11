@@ -3,6 +3,7 @@ import ExecutionEditor from "../ExecutionEditor.vue";
 import { executionLifecycle, pluginsInitialData } from "./mocks";
 import PluginConfig from "../../../../../library/components/plugins/pluginConfig.vue";
 
+
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
     eventBus: { on: jest.fn(), emit: jest.fn() },
@@ -25,9 +26,6 @@ const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
       ...propsData,
     },
     global: {
-      mocks: {
-        $t: (msg: string) => msg,
-      },
       stubs: {
         pluginConfig: {
           props: [
