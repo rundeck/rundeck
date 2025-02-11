@@ -395,7 +395,7 @@ jobs:
       - run-build-step:
           step-name: Run Snyk test (ignoring scan results)
           # Don't fail the build giving the Core team some time to clean the repo using the monitors
-          command: snyk test --severity-threshold=low --all-projects --detection-depth=10 --scan-all-unmanaged || true
+          command: snyk test --severity-threshold=high --all-projects --detection-depth=10 --scan-all-unmanaged || true
 
   # Trigger pipeline in the enterprise repo
   trigger-enterprise:
