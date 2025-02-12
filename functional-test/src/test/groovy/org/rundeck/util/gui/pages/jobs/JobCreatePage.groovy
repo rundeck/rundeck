@@ -60,7 +60,7 @@ class JobCreatePage extends BasePage {
     By executionEnabledTrueBy = By.id("executionEnabledTrue")
     By scheduleEnabledFalseBy = By.id("scheduleEnabledFalse")
     By scheduleEnabledTrueBy = By.id("scheduleEnabledTrue")
-    By workflowAlphaUiContainer = By.id('workflowContent2') // TODO: delete once out of Alpha
+    By workflowAlphaUiContainer = By.id('workflowContent') // TODO: delete once out of Alpha
 
     static class NextUi {
         static By jobNameInputBy = By.cssSelector("form input[id=\"schedJobName\"]")

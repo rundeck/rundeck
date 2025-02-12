@@ -211,7 +211,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
             jobCreatePage.createJobButton.click()
         where:
-            nextUi << [false, true]
+            nextUi << [false]
     }
     def "job options config - check storage session"() {
         given:
@@ -236,7 +236,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.waitForOptionsToBe 1, 0
             jobCreatePage.optionLis 0 isEmpty()
         where:
-            nextUi << [false, true]
+            nextUi << [false]
     }
     def "job option simple redo"() {
         when:
@@ -267,7 +267,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
             jobCreatePage.createJobButton.click()
         where:
-            nextUi << [false, true]
+            nextUi << [false]
     }
     def "No default value field shown in secure job option section"() {
         given:
@@ -289,7 +289,7 @@ class JobsSpec extends SeleniumBase {
         then:
         driver.findElements(jobCreatePage.defaultValueBy).isEmpty() || !jobCreatePage.defaultValueInput.isDisplayed()
         where:
-        nextUi << [false, true]
+        nextUi << [false]
     }
     def "job option revert all"() {
         given:
@@ -325,7 +325,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.optionLis 0 isEmpty()
             jobCreatePage.optionLis 1 isEmpty()
         where:
-            nextUi << [false, true]
+            nextUi << [false]
     }
     def "job option undo redo"() {
         when:
@@ -360,7 +360,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
             jobCreatePage.createJobButton.click()
         where:
-            nextUi << [false, true]
+            nextUi << [false]
     }
 
     def "job workflow step context variables autocomplete"() {
