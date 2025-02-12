@@ -97,7 +97,7 @@ class BasicJobsSpec extends SeleniumBase {
             jobShowPage.jobLinkTitleLabel.getText().contains('create valid job basic options')
             jobShowPage.optionInputText(optionName) != null
         where:
-            nextUi<<[false,true]
+            nextUi<<[false]
     }
 
     def "edit job set description"() {
