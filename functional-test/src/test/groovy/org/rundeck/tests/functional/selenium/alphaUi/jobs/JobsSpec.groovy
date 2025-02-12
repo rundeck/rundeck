@@ -39,7 +39,7 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.nextUi=true
         jobCreatePage.go()
         def optName = 'test'
-        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
+        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+"next ui"
         jobCreatePage.optionButton.click()
         jobCreatePage.optionNameNew() sendKeys optName
         jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
@@ -63,8 +63,6 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.optionNameSaved 0 getText() equals optName
         jobCreatePage.optionNameSaved 1 getText() equals optName + '_copy'
 
-        where:
-        nextUi = true
     }
 
     def "Create option form next ui"() {
@@ -73,14 +71,12 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.nextUi=true
         jobCreatePage.go()
         def optName = 'test'
-        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
+        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+"next ui"
         jobCreatePage.optionButton.click()
 
         then: "create form is shown"
         jobCreatePage.optionNameNew() displayed
         jobCreatePage.saveOptionButton.displayed
-        where:
-        nextUi = true
     }
 
     def "create valid job basic options"() {
@@ -91,7 +87,7 @@ class JobsSpec extends SeleniumBase {
         def jobShowPage = page JobShowPage
         def optionName = 'seleniumOption1'
         then:
-        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
+        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+"next ui"
         jobCreatePage.optionButton.click()
         jobCreatePage.optionNameNew() sendKeys optionName
         jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
@@ -102,5 +98,160 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.waitForUrlToContain('/job/show')
         jobShowPage.jobLinkTitleLabel.getText().contains('create valid job basic options')
         jobShowPage.optionInputText(optionName) != null
+    }
+
+    def "job options config - check usage session"() {
+        when:
+        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+        jobCreatePage.nextUi=true
+        jobCreatePage.go()
+        then:
+        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+"next ui"
+        jobCreatePage.optionButton.click()
+        jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
+        jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+        jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.sessionSectionLabel
+        jobCreatePage.sessionSectionLabel.isDisplayed()
+        jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
+        jobCreatePage.saveOptionButton.click()
+        jobCreatePage.waitFotOptLi 0
+        jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
+        jobCreatePage.createJobButton.click()
+    }
+    def "job options config - check storage session"() {
+        given:
+        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+        jobCreatePage.nextUi=true
+        jobCreatePage.go()
+        when:
+        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+"next ui"
+        jobCreatePage.optionButton.click()
+        jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
+        jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+        jobCreatePage.sessionSectionLabel.isDisplayed()
+        jobCreatePage.secureInputTypeRadio.click()
+        jobCreatePage.optionOpenKeyStorageButton.click()
+        jobCreatePage.optionCloseKeyStorageButton.click()
+        jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
+        jobCreatePage.saveOptionButton.click()
+        jobCreatePage.waitFotOptLi 0
+        jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
+        jobCreatePage.createJobButton.click()
+        then:
+        jobCreatePage.waitForOptionsToBe 1, 0
+        jobCreatePage.optionLis 0 isEmpty()
+    }
+    def "job option simple redo"() {
+        when:
+        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+        jobCreatePage.nextUi=true
+        jobCreatePage.go()
+        then:
+        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+"next ui"
+        jobCreatePage.optionButton.click()
+        jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
+        jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+        jobCreatePage.sessionSectionLabel.isDisplayed()
+        jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
+        jobCreatePage.saveOptionButton.click()
+        jobCreatePage.waitFotOptLi 0
+        jobCreatePage.optionButton.click()
+        jobCreatePage.optionNameNew(1) sendKeys 'seleniumOption2'
+        jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+        jobCreatePage.sessionSectionLabel.isDisplayed()
+        jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
+        jobCreatePage.saveOptionButton.click()
+        jobCreatePage.waitFotOptLi 1
+        jobCreatePage.waitForElementAttributeToChange jobCreatePage.optionUndoButton, 'disabled', null
+        jobCreatePage.optionUndoButton.click()
+        expect:
+        jobCreatePage.waitForOptionsToBe 1, 0
+        jobCreatePage.optionLis 1 isEmpty()
+        jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
+        jobCreatePage.createJobButton.click()
+    }
+    def "No default value field shown in secure job option section"() {
+        given:
+        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+        jobCreatePage.nextUi=true
+        jobCreatePage.go()
+        when:
+        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+"next ui"
+        jobCreatePage.optionButton.click()
+        jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
+        jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+        jobCreatePage.sessionSectionLabel.isDisplayed()
+        jobCreatePage.secureInputTypeRadio.click()
+        jobCreatePage.storagePathInput.sendKeys("test")
+        jobCreatePage.secureInputTypeRadio.click()
+        jobCreatePage.storagePathInput.clear()
+        jobCreatePage.secureInputTypeRadio.click()
+
+        then:
+        driver.findElements(jobCreatePage.defaultValueBy).isEmpty() || !jobCreatePage.defaultValueInput.isDisplayed()
+    }
+    def "job option revert all"() {
+        given:
+        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+        jobCreatePage.nextUi=true
+        jobCreatePage.go()
+        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+"next ui"
+        jobCreatePage.optionButton.click()
+        jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
+        jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+        jobCreatePage.sessionSectionLabel.isDisplayed()
+        jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
+        jobCreatePage.saveOptionButton.click()
+        jobCreatePage.waitFotOptLi 0
+        jobCreatePage.optionButton.click()
+        jobCreatePage.optionNameNew(1) sendKeys 'seleniumOption2'
+        jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+        jobCreatePage.sessionSectionLabel.isDisplayed()
+        jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
+        jobCreatePage.saveOptionButton.click()
+        jobCreatePage.waitFotOptLi 1
+        jobCreatePage.executeScript "window.location.hash = '#optundoredo'"
+        jobCreatePage.waitForElementAttributeToChange jobCreatePage.optionUndoButton, 'disabled', null
+        jobCreatePage.optionUndoButton
+        when:
+        jobCreatePage.optionRevertAllButton.click()
+        then:
+        jobCreatePage.waitForOptionsToBe 0, 0
+        jobCreatePage.waitForOptionsToBe 1, 0
+        jobCreatePage.optionLis 0 isEmpty()
+        jobCreatePage.optionLis 1 isEmpty()
+    }
+    def "job option undo redo"() {
+        when:
+        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+        jobCreatePage.nextUi=true
+        jobCreatePage.go()
+        then:
+        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+"next ui"
+        jobCreatePage.optionButton.click()
+        jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
+        jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+        jobCreatePage.sessionSectionLabel.isDisplayed()
+        jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
+        jobCreatePage.saveOptionButton.click()
+        jobCreatePage.waitFotOptLi 0
+        jobCreatePage.optionButton.click()
+        jobCreatePage.optionNameNew(1) sendKeys 'seleniumOption2'
+        jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+        jobCreatePage.sessionSectionLabel.isDisplayed()
+        jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
+        jobCreatePage.saveOptionButton.click()
+        jobCreatePage.waitFotOptLi 1
+        jobCreatePage.executeScript "window.location.hash = '#optundoredo'"
+        jobCreatePage.waitForElementAttributeToChange jobCreatePage.optionUndoButton, 'disabled', null
+        jobCreatePage.optionUndoButton.click()
+        jobCreatePage.waitForElementToBeClickable jobCreatePage.optionRedoButton
+        sleep 1000
+        jobCreatePage.optionRedoButton.click()
+        expect:
+        !(jobCreatePage.optionLis 0 isEmpty())
+        !(jobCreatePage.optionLis 1 isEmpty())
+        jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
+        jobCreatePage.createJobButton.click()
     }
 }
