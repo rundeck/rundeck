@@ -175,7 +175,7 @@ export default defineComponent({
     },
     selectAllOptionAvailable(): boolean {
       return this.projectStore.loaded
-        ? this.projectStore.projects.length >= 1
+        ? this.projectStore.projects.length
         : false;
     },
     options() {
