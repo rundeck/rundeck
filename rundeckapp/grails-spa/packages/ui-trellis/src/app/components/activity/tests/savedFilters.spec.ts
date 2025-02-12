@@ -71,15 +71,8 @@ const mountSavedFilters = (
     },
     global: {
       mocks: {
-        $t: (msg) => msg,
         filterStore,
         $confirm: jest.fn().mockResolvedValue(true),
-      },
-      stubs: {
-        btn: true,
-        dropdown: {
-          template: '<div class="dropdown"><slot name="dropdown"></slot></div>',
-        },
       },
     },
   });

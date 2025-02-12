@@ -26,9 +26,6 @@ const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
         AceEditor,
         UiSocket,
       },
-      mocks: {
-        $t: (msg: string) => msg,
-      },
     },
   });
   await wrapper.vm.$nextTick();
