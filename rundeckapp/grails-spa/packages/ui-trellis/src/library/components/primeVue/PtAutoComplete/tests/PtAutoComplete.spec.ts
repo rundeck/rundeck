@@ -1,12 +1,6 @@
-import { mount, config } from "@vue/test-utils";
+import { mount} from "@vue/test-utils";
 import PtAutoComplete from "../PtAutoComplete.vue";
 import AutoComplete from "primevue/autocomplete";
-
-config.global.mocks = {
-  $primevue: {
-    config: {}
-    }
-  };
 
 const createWrapper = async (props = {}): Promise<any> => {
   const wrapper = mount(PtAutoComplete, {
@@ -24,11 +18,6 @@ const createWrapper = async (props = {}): Promise<any> => {
       components: {
         AutoComplete: AutoComplete,
       },
-      mocks:{
-        $primevue: {
-          config: {}
-        }
-      }
     },
   });
   await wrapper.vm.$nextTick();
