@@ -82,9 +82,9 @@ RUNDECK_JAAS_FILE_*
 By convention the module name matches the name in the docs, and the config keys match
 the config options listed in the docs uppercase, and all one word.
 
-## Sideloading Plugins
+## Container Plugins
 In certain containerized deployments, you may wish to mount the dynamic portions of Rundeck's filesystem on a separate volume.
-To include external plugins in such a deployment, place them in the `/home/rundeck/plugins-to-sideload/` directory and 
+To include external plugins in such a deployment, place them in the `/home/rundeck/container-plugins/` directory and 
 they will be included during container startup.
 
 ## Extending Configuration
