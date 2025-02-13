@@ -34,10 +34,9 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Logger;
 import com.jcraft.jsch.Session;
-import com.jcraft.jsch.agentproxy.AgentProxyException;
-import com.jcraft.jsch.agentproxy.Connector;
-import com.jcraft.jsch.agentproxy.ConnectorFactory;
-import com.jcraft.jsch.agentproxy.RemoteIdentityRepository;
+import com.jcraft.jsch.AgentProxyException;
+import com.jcraft.jsch.SSHAgentConnector;
+import com.jcraft.jsch.AgentIdentityRepository;
 import com.jcraft.jsch.SocketFactory;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.Project;
@@ -51,6 +50,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -110,19 +110,16 @@ public class SSHTaskBuilder {
 
 
         if (base.getEnableSSHAgent()) {
-            ConnectorFactory cf = ConnectorFactory.getDefault();
             try {
                 base.setSSHAgentProcess(SSHAgentUtil.startAgent(base.getTtlSSHAgent()));
-                cf.setUSocketPath(base.getSSHAgentProcess().getSocketPath());
-                cf.setPreferredUSocketFactories("jna,nc");
                 base.getPluginLogger().log(
                         Project.MSG_DEBUG,
                         "ssh-agent started with ttl " +
                         base.getTtlSSHAgent().toString()
                 );
                 try {
-                    Connector c = cf.createConnector();
-                    RemoteIdentityRepository identRepo = new RemoteIdentityRepository(c);
+                    SSHAgentConnector cf = new SSHAgentConnector(Path.of(base.getSSHAgentProcess().getSocketPath()));
+                    AgentIdentityRepository identRepo = new AgentIdentityRepository(cf);
                     jsch.setIdentityRepository(identRepo);
                     base.getPluginLogger().log(
                             Project.MSG_DEBUG,
