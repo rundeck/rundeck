@@ -31,7 +31,7 @@ import org.rundeck.plugin.scm.git.GitImportPlugin
 /**
  * Created by greg on 9/8/15.
  */
-class FetchAction extends BaseAction implements GitImportAction {
+class FetchAction extends BaseAction implements GitImportAction<GitImportPlugin> {
     FetchAction(final String id, final String title, final String description) {
         super(id, title, description)
     }
