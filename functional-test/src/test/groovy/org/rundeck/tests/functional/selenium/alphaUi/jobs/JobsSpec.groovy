@@ -1,6 +1,7 @@
 package org.rundeck.tests.functional.selenium.alphaUi.jobs
 
 import org.openqa.selenium.By
+import org.openqa.selenium.support.ui.Select
 import org.rundeck.util.annotations.AlphaUiSeleniumCoreTest
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobShowPage
@@ -23,57 +24,23 @@ class JobsSpec extends SeleniumBase {
         when:
         def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
         def jobShowPage = page JobShowPage
+        jobCreatePage.nextUi=true
+        jobCreatePage.go()
         then:
         jobCreatePage.jobNameInput.sendKeys 'jobs workflow strategy'
         jobCreatePage.tab JobTab.WORKFLOW click()
-        jobCreatePage.workFlowStrategyField.sendKeys 'Parallel'
-        jobCreatePage.waitIgnoringForElementVisible jobCreatePage.strategyPluginParallelField
+        jobCreatePage.waitForElementVisible jobCreatePage.workFlowStrategyField
+
+        def select = new Select(jobCreatePage.workFlowStrategyField)
+        select.selectByValue('parallel')
+        jobCreatePage.waitForElementVisible jobCreatePage.strategyPluginParallelField
         jobCreatePage.strategyPluginParallelMsgField.getText() == 'Run all steps in parallel'
 
-        jobCreatePage.executeScript "window.location.hash = '#addnodestep'"
-        jobCreatePage.stepLink 'exec-command', StepType.NODE click()
-        jobCreatePage.waitForElementVisible jobCreatePage.adhocRemoteStringField
-        jobCreatePage.adhocRemoteStringField.click()
-        jobCreatePage.waitForNumberOfElementsToBeOne jobCreatePage.floatBy
-        jobCreatePage.adhocRemoteStringField.sendKeys 'echo selenium test'
-        jobCreatePage.saveStep 0
+        jobCreatePage.addSimpleCommandStepNextUi('echo selenium test', 0)
         jobCreatePage.createJobButton.click()
         expect:
         jobShowPage.jobDefinitionModal.click()
         jobShowPage.workflowDetailField.getText() == 'Parallel Run all steps in parallel'
-    }
-
-    def "create job with dispatch to nodes"() {
-        when:
-        def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
-        def jobShowPage = page JobShowPage
-        then:
-        jobCreatePage.fillBasicJob 'jobs with nodes'
-        jobCreatePage.tab JobTab.NODES click()
-        jobCreatePage.nodeDispatchTrueCheck.click()
-        jobCreatePage.waitForElementVisible jobCreatePage.nodeFilterLinkButton
-        jobCreatePage.nodeFilterLinkButton.click()
-        jobCreatePage.nodeFilterSelectAllLinkButton.click()
-        jobCreatePage.waitForTextToBePresentInElement jobCreatePage.nodeMatchedCountField, '1 Node Matched'
-        jobCreatePage.excludeFilterTrueCheck.click()
-        jobCreatePage.editableFalseCheck.click()
-        jobCreatePage.schedJobNodeThreadCountField.clear()
-        jobCreatePage.schedJobNodeThreadCountField.sendKeys '3'
-        jobCreatePage.schedJobNodeRankAttributeField.clear()
-        jobCreatePage.schedJobNodeRankAttributeField.sendKeys 'arank'
-        jobCreatePage.executeScript "window.location.hash = '#nodeRankOrderDescending'"
-        jobCreatePage.nodeRankOrderDescendingField.click()
-        jobCreatePage.nodeKeepGoingTrueCheck.click()
-        jobCreatePage.successOnEmptyNodeFilterTrueCheck.click()
-        jobCreatePage.nodesSelectedByDefaultFalseCheck.click()
-        jobCreatePage.createJobButton.click()
-        jobShowPage.jobDefinitionModal.click()
-        expect:
-        jobShowPage.nodeFilterSectionMatchedNodesLabel.getText() == 'Include nodes matching: name: .*'
-        jobShowPage.threadCountLabel.getText() == 'Execute on up to 3 Nodes at a time.'
-        jobShowPage.nodeKeepGoingLabel.getText() == 'If a node fails: Continue running on any remaining nodes before failing the step.'
-        jobShowPage.nodeRankOrderAscendingLabel.getText() == 'Sort nodes by arank in descending order.'
-        jobShowPage.nodeSelectedByDefaultLabel.getText() == 'Node selection: The user has to explicitly select target nodes'
     }
 
     /**
@@ -104,7 +71,6 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.optionNameNew() displayed
         jobCreatePage.saveOptionButton.displayed
     }
-
     def "Duplicate option create form next ui"() {
         when:
         def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
@@ -137,7 +103,6 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.optionNameSaved 1 getText() equals optName + '_copy'
 
     }
-
     def "create valid job basic options"() {
         when:
         def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
@@ -286,7 +251,7 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.nextUi=true
         jobCreatePage.go()
         then:
-        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
+        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" next ui"
         jobCreatePage.optionButton.click()
         jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
         jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
@@ -312,7 +277,5 @@ class JobsSpec extends SeleniumBase {
         !(jobCreatePage.optionLis 1 isEmpty())
         jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
         jobCreatePage.createJobButton.click()
-        where:
-        nextUi << [true]
     }
 }

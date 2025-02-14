@@ -3,25 +3,25 @@
     <div class="">{{ $t("Workflow.property.keepgoing.prompt") }}</div>
     <div class="radio radio-inline">
       <input
+        id="workflowKeepGoingFail"
+        v-model="data.keepgoing"
         type="radio"
-        id="workflowKeepGoingFail_"
         name="workflow_keepgoing"
         :value="false"
-        v-model="data.keepgoing"
       />
-      <label for="workflowKeepGoingFail_">
+      <label for="workflowKeepGoingFail">
         {{ $t("Workflow.property.keepgoing.false.description") }}
       </label>
     </div>
     <div class="radio radio-inline">
       <input
+        id="workflowKeepGoingRemainingSteps"
+        v-model="data.keepgoing"
         type="radio"
-        id="workflowKeepGoingRemainingSteps_"
         name="workflow_keepgoing"
         :value="true"
-        v-model="data.keepgoing"
       />
-      <label for="workflowKeepGoingRemainingSteps_">
+      <label for="workflowKeepGoingRemainingSteps">
         {{ $t("Workflow.property.keepgoing.true.description") }}
       </label>
     </div>
@@ -37,7 +37,6 @@ import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "WorkflowBasic",
-  emits: ["update:modelValue"],
   props: {
     modelValue: {
       type: Object,
@@ -45,6 +44,7 @@ export default defineComponent({
       default: () => ({}) as BasicData,
     },
   },
+  emits: ["update:modelValue"],
   data(props) {
     return {
       data: {} as BasicData,
