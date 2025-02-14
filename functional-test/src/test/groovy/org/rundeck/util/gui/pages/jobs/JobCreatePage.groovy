@@ -84,6 +84,8 @@ class JobCreatePage extends BasePage {
         }
         static By storagePathInput = By.name("storagePath")
         static By adhocRemoteStringBy = By.xpath('//*[@data-prop-name="adhocRemoteString"]//input[@type="text"]')
+        static By workFlowStrategyBy = By.xpath('//select[contains(@name, \'workflow.strategy\')]')
+        static By strategyPluginParallelMsgBy = By.xpath('//*[@id="strategyPluginparallel"]/span')
     }
 
     By separatorOptionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
@@ -454,7 +456,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getWorkFlowStrategyField() {
-        el workFlowStrategyBy
+        el nextUi? NextUi.workFlowStrategyBy : workFlowStrategyBy
     }
 
     WebElement getStrategyPluginParallelField() {
@@ -462,7 +464,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getStrategyPluginParallelMsgField() {
-        el strategyPluginParallelMsgBy
+        el nextUi? NextUi.strategyPluginParallelMsgBy : strategyPluginParallelMsgBy
     }
 
     WebElement stepLink(String dataNodeStepType, StepType stepType) {
@@ -806,11 +808,11 @@ class JobCreatePage extends BasePage {
         def button
         if(!nextUi) {
             button = el floatBy findElement By.cssSelector(".btn.btn-cta.btn-sm")
-            executeScript "arguments[0].scrollIntoView(true);", button
+
         } else {
             button = el workflowSaveStepButton
         }
-
+        executeScript "arguments[0].scrollIntoView(true);", button
         button.click()
         waitForElementVisible By.id("wfitem_${stepNumber}")
     }
