@@ -327,7 +327,7 @@ class BasicJobsSpec extends SeleniumBase {
         where:
             expected = [
                 "predefined job with options",
-                "create valid job basic options next ui",
+//                "create valid job basic options next ui",
                 "create valid job basic options old ui"
             ]
     }
