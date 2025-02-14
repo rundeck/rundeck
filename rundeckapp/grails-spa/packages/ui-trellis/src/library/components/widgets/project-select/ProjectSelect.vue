@@ -46,9 +46,7 @@
             v-else-if="mode === 'multi'"
             @keydown.space="handleSelect(item.name)"
             tabindex="0"
-            :data-testid="
-              item.name === '_all' ? 'select-all-option' : undefined
-            "
+            :data-testid="'project-item-' + item.name"
           >
             <input
               :checked="

@@ -76,9 +76,7 @@ describe("ProjectSelect.vue", () => {
   it("allows selecting 'Select All' when projects are available", async () => {
     const wrapper = await createWrapper();
     await flushPromises();
-    const selectAllCheckbox = wrapper.get(
-      'input[type="checkbox"][value="_all"]',
-    );
+    const selectAllCheckbox = wrapper.get('[data-testid="project-item-_all"]');
     await selectAllCheckbox.trigger("click");
     const emittedEvents = wrapper.emitted("update:selection");
     expect(emittedEvents?.length).toBeGreaterThan(0);
@@ -90,9 +88,7 @@ describe("ProjectSelect.vue", () => {
       selectedProjects: ["Project A", "Project B"],
     });
     await flushPromises();
-    const selectAllCheckbox = wrapper.get(
-      'input[type="checkbox"][value="_all"]',
-    );
+    const selectAllCheckbox = wrapper.get('[data-testid="project-item-_all"]');
     await selectAllCheckbox.trigger("click");
     await flushPromises();
     const emittedEvents = wrapper.emitted("update:selection");
@@ -104,12 +100,20 @@ describe("ProjectSelect.vue", () => {
     //  At least one project available,"Select All" should be visible
     let wrapper = await createWrapper();
     await flushPromises();
-    let selectAllOption = wrapper.find('[data-testid="select-all-option"]');
+    let selectAllOption = wrapper.find('[data-testid="project-item-_all"]');
     expect(selectAllOption.text()).toBe("select.all");
     // No projects available,"Select All" should NOT be visible
     window._rundeck.rootStore.projects.projects = [];
     wrapper = await createWrapper();
     await flushPromises();
-    expect(wrapper.findAll('[data-testid="select-all-option"]').length).toBe(0);
+    expect(wrapper.findAll('[data-testid="project-item-_all"]').length).toBe(0);
+  });
+  it("ensures individual project checkboxes exist", async () => {
+    const wrapper = await createWrapper();
+    await flushPromises();
+    const firstProject = wrapper.find('[data-testid="project-item-Project A"]');
+    expect(firstProject.exists()).toBe(true);
+    const secondProject = wrapper.find('[data-testid="project-item-Project B"]');
+    expect(secondProject.exists()).toBe(true);
   });
 });
