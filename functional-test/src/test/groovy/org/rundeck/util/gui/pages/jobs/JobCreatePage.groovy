@@ -193,11 +193,7 @@ class JobCreatePage extends BasePage {
         this.projectName=projectName
         this.edit=false
     }
-
-    void setNextUi(Boolean nextUi = true) {
-        this.nextUi=nextUi
-    }
-
+    
     void fillBasicJob(String name) {
         jobNameInput.sendKeys name
         tab JobTab.WORKFLOW click()
