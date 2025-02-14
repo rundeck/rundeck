@@ -14,6 +14,7 @@
         <div class="step-list-item">
           <div class="step-item-display">
             <div
+              :id="`wfitem_${index}`"
               class="step-item-config"
               data-test="edit-step-item"
               :title="$t('Workflow.clickToEdit')"
@@ -325,7 +326,7 @@ export default defineComponent({
         saveData.filters = [];
 
         const response = await validatePluginConfig(
-          ServiceType.WorkflowNodeStep,
+          this.editService,
           saveData.type,
           saveData.config,
         );

@@ -66,7 +66,7 @@
       </draggable>
 
       <div v-if="intOptions.length < 1 && !createMode" class="empty note">
-        {{ $t("no.options.message") }}
+        <p>{{ $t("no.options.message") }}</p>
       </div>
 
       <div v-if="edit" id="optnewbutton" style="margin: 10px 0">
@@ -328,5 +328,9 @@ export default defineComponent({
   }
 
   padding: 10px 4px;
+}
+
+.note {
+  margin-top: 10px;
 }
 </style>

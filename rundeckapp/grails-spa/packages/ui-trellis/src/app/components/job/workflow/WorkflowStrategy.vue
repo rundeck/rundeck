@@ -22,11 +22,13 @@
     </div>
   </div>
 
-  <PluginDetails
-    v-if="selectedPlugin"
-    :description="selectedPlugin.description"
-    :description-css="'text-info'"
-  />
+  <div v-if="selectedPlugin" :id="`strategyPlugin${selectedPlugin.name}`">
+    <PluginDetails
+      :description="selectedPlugin.description"
+      :description-css="'text-info'"
+    />
+  </div>
+
   <plugin-config
     v-if="selectedPlugin"
     :key="selectedPlugin.name"
