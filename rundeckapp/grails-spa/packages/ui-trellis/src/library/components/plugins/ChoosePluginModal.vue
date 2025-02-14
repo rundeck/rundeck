@@ -31,6 +31,7 @@
             <button
               class="list-group-item"
               data-test="provider-button"
+              v-bind="dateStepType(service.service, prov.name)"
               @click.prevent="chooseProviderAdd(service.service, prov.name)"
             >
               <plugin-info
@@ -213,6 +214,20 @@ export default defineComponent({
         return this.$t(titleString, [numberOfPluginsNotHighlighted]);
       }
       return "";
+    },
+    dateStepType(service: string, name: string) {
+      const servicesWithDataStep = {
+        [ServiceType.WorkflowStep]: "data-step-type",
+        [ServiceType.WorkflowNodeStep]: "data-node-step-type",
+      };
+
+      if (!Object.keys(servicesWithDataStep).includes(service)) {
+        return {};
+      } else {
+        return {
+          [servicesWithDataStep[service]]: name,
+        };
+      }
     },
   },
 });

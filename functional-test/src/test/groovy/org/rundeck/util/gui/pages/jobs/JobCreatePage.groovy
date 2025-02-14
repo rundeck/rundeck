@@ -60,7 +60,9 @@ class JobCreatePage extends BasePage {
     By executionEnabledTrueBy = By.id("executionEnabledTrue")
     By scheduleEnabledFalseBy = By.id("scheduleEnabledFalse")
     By scheduleEnabledTrueBy = By.id("scheduleEnabledTrue")
-    By workflowAlphaUiContainer = By.id('workflowContent') // TODO: delete once out of Alpha
+    By workflowAlphaUiContainer = By.id("workflowContent") // TODO: delete once out of Alpha
+    By workflowAlphaUiButton = By.id("addButton")
+    By workflowSaveStepButton = By.xpath('//div[contains(@class, \'in\') and contains(@class, \'modal\')]//button[@data-testid="save-button"]')
 
     static class NextUi {
         static By jobNameInputBy = By.cssSelector("form input[id=\"schedJobName\"]")
@@ -81,6 +83,7 @@ class JobCreatePage extends BasePage {
             By.cssSelector("#optitem_$index")
         }
         static By storagePathInput = By.name("storagePath")
+        static By adhocRemoteStringBy = By.xpath('//*[@data-prop-name="adhocRemoteString"]//input[@type="text"]')
     }
 
     By separatorOptionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
@@ -189,10 +192,18 @@ class JobCreatePage extends BasePage {
         this.edit=false
     }
 
+    void setNextUi(Boolean nextUi = true) {
+        this.nextUi=nextUi
+    }
+
     void fillBasicJob(String name) {
         jobNameInput.sendKeys name
         tab JobTab.WORKFLOW click()
-        addSimpleCommandStep 'echo selenium test', 0
+        if(nextUi){
+            addSimpleCommandStepNextUi 'echo selenium test', 0
+        } else {
+            addSimpleCommandStep 'echo selenium test', 0
+        }
     }
 
     /**
@@ -202,12 +213,28 @@ class JobCreatePage extends BasePage {
      * @return
      */
     JobCreatePage addSimpleCommandStep(String command, int stepIndexNumber) {
+
         executeScript "window.location.hash = '#addnodestep'"
         stepLink 'exec-command', StepType.NODE click()
         byAndWaitClickable adhocRemoteStringBy
         adhocRemoteStringField.click()
         waitForNumberOfElementsToBeOne floatBy
+
         adhocRemoteStringField.sendKeys command
+
+        saveStep stepIndexNumber
+
+        return this
+    }
+
+    JobCreatePage addSimpleCommandStepNextUi(String command, int stepIndexNumber) {
+        clickAddStep()
+        byAndWaitClickable By.xpath("//*[@${StepType.NODE.getStepType()}='exec-command']")
+        stepLink 'exec-command', StepType.NODE click()
+        byAndWaitClickable NextUi.adhocRemoteStringBy
+        adhocRemoteStringField.click()
+        adhocRemoteStringField.sendKeys command
+
         saveStep stepIndexNumber
 
         return this
@@ -441,19 +468,30 @@ class JobCreatePage extends BasePage {
     WebElement stepLink(String dataNodeStepType, StepType stepType) {
         if(stepType == StepType.WORKFLOW)
             workFlowStepLink.click()
+
         el By.xpath("//*[@${stepType.getStepType()}='$dataNodeStepType']")
     }
 
-    WebElement getAdhocRemoteStringField() {
-        el adhocRemoteStringBy
+    WebElement getAdhocRemoteStringBy() {
+        el nextUi? NextUi.adhocRemoteStringBy : adhocRemoteStringBy
     }
+
+    WebElement getAdhocRemoteStringField() {
+        el nextUi? NextUi.adhocRemoteStringBy : adhocRemoteStringBy
+    }
+
 
     WebElement getCreateJobButton() {
         el createJobBy
     }
 
+
     void clickTimeZone(){
         (el timeZoneBy).click()
+    }
+
+    void clickAddStep(){
+        (el workflowAlphaUiButton).click()
     }
 
     WebElement getCancelButton() {
@@ -765,11 +803,18 @@ class JobCreatePage extends BasePage {
     }
 
     void saveStep(Integer stepNumber) {
-        def button = el floatBy findElement By.cssSelector(".btn.btn-cta.btn-sm")
-        executeScript "arguments[0].scrollIntoView(true);", button
-        button?.click()
+        def button
+        if(!nextUi) {
+            button = el floatBy findElement By.cssSelector(".btn.btn-cta.btn-sm")
+            executeScript "arguments[0].scrollIntoView(true);", button
+        } else {
+            button = el workflowSaveStepButton
+        }
+
+        button.click()
         waitForElementVisible By.id("wfitem_${stepNumber}")
     }
+
 
     def removeStepByIndex(int stepIndex){
         (els deleteStepBy).get(stepIndex).click()
