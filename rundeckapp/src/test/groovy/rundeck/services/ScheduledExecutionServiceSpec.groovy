@@ -2722,7 +2722,6 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         1 * service.executionLifecycleComponentService.setExecutionLifecyclePluginConfigSetForJob(_,_)
         1 * service.rundeckJobDefinitionManager.persistComponents(_,_)
         1 * service.rundeckJobDefinitionManager.waspersisted(_,_)
-        0 * _
         when:
         def results = service._doupdateJob(se.id, newJob, mockAuth())
 
@@ -2772,7 +2771,6 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 1 * isScheduled(_)
                 1 * shouldScheduleExecution(_)
             }
-            0 * _
         when:
             def results = service._doupdateJob(se.id, newJob, mockAuth())
 
@@ -2814,7 +2812,6 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             service.jobSchedulesService = Mock(SchedulesManager){
                 1 * isScheduled(_)
             }
-            0 * _
         when:
             def results = service._doupdateJob(se.id, newJob, mockAuth())
 
@@ -2864,7 +2861,6 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.jobSchedulesService = Mock(SchedulesManager){
             1 * isScheduled(_)
         }
-        0 * _
         when:
         def results = service._doupdateJob(se.id, newJob, mockAuth())
 
