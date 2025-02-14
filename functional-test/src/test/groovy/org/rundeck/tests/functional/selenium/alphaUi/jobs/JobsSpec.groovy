@@ -91,6 +91,20 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.workflowAlphaUiContainer.isDisplayed()
     }
 
+    def "Create option form next ui"() {
+        when:
+        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+        jobCreatePage.nextUi=true
+        jobCreatePage.go()
+        def optName = 'test'
+        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" next ui"
+        jobCreatePage.optionButton.click()
+
+        then: "create form is shown"
+        jobCreatePage.optionNameNew() displayed
+        jobCreatePage.saveOptionButton.displayed
+    }
+
     def "Duplicate option create form next ui"() {
         when:
         def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
@@ -102,6 +116,7 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.optionNameNew() sendKeys optName
         jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
         jobCreatePage.executeScript "window.location.hash = '#workflowKeepGoingFail'"
+        jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
         jobCreatePage.saveOptionButton.click()
         jobCreatePage.waitFotOptLi 0
 
@@ -121,20 +136,6 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.optionNameSaved 0 getText() equals optName
         jobCreatePage.optionNameSaved 1 getText() equals optName + '_copy'
 
-    }
-
-    def "Create option form next ui"() {
-        when:
-        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-        jobCreatePage.nextUi=true
-        jobCreatePage.go()
-        def optName = 'test'
-        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" next ui"
-        jobCreatePage.optionButton.click()
-
-        then: "create form is shown"
-        jobCreatePage.optionNameNew() displayed
-        jobCreatePage.saveOptionButton.displayed
     }
 
     def "create valid job basic options"() {
@@ -285,7 +286,7 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.nextUi=true
         jobCreatePage.go()
         then:
-        jobCreatePage.fillBasicJob specificationContext.currentIteration.name + " next ui"
+        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
         jobCreatePage.optionButton.click()
         jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
         jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
@@ -311,5 +312,7 @@ class JobsSpec extends SeleniumBase {
         !(jobCreatePage.optionLis 1 isEmpty())
         jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
         jobCreatePage.createJobButton.click()
+        where:
+        nextUi << [true]
     }
 }

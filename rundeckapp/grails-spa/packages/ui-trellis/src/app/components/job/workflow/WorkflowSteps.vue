@@ -14,6 +14,7 @@
         <div class="step-list-item">
           <div class="step-item-display">
             <div
+              :id="`wfitem_${index}`"
               class="step-item-config"
               data-test="edit-step-item"
               :title="$t('Workflow.clickToEdit')"
