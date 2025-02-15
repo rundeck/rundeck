@@ -46,7 +46,7 @@
             v-else-if="mode === 'multi'"
             @keydown.space="handleSelect(item.name)"
             tabindex="0"
-            :data-testid="'project-item-' + item.name"
+            :data-testid="`projectItem${item.name}`"
           >
             <input
               :checked="
