@@ -3365,13 +3365,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         } else if (params.jobWorkflowJson) {
             def jobWorkflowData = JSON.parse(params.jobWorkflowJson.toString())
-
+            log.error(" jobWorkflowJSON BEFORE fromMap: " + jobWorkflowData.toString())
             if(jobWorkflowData instanceof JSONObject) {
                 scheduledExecution.workflow = Workflow.fromMap(jobWorkflowData)
             }
+            log.error(" Workflow AFTER fromMap: " + scheduledExecution.workflow.toString())
         } else if (params.workflow && params.workflow instanceof Workflow) {
             scheduledExecution.workflow = new Workflow(params.workflow)
         }else if (params.workflow && params.workflow instanceof Map){
+            log.error(" params.workflow BEFORE new Workflow: " + params.workflow.toString())
             if (!scheduledExecution.workflow) {
                 scheduledExecution.workflow = new Workflow(params.workflow)
             }
@@ -3383,6 +3385,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             if (null != params.workflow.keepgoing) {
                 scheduledExecution.workflow.keepgoing = params.workflow.keepgoing == 'true'
             }
+            log.error("scheduledExecution.workflow AFTER processing: " + scheduledExecution.workflow.toString())
         }
         if(!scheduledExecution.workflow){
             scheduledExecution.workflow = new Workflow()

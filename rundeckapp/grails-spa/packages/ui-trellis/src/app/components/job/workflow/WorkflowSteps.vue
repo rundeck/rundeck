@@ -56,6 +56,24 @@
                 updateHistoryWithLogFiltersData(index, $event)
               "
             />
+            <div v-if="element.errorhandler" class="error-handler-section">
+              <hr />
+              <strong>{{ $t("Workflow.errorHandler") }}:</strong>
+              <plugin-config
+                :service-name="
+                  element.errorhandler.nodeStep
+                    ? ServiceType.WorkflowNodeStep
+                    : ServiceType.WorkflowStep
+                "
+                :provider="element.errorhandler.type"
+                :config="element.errorhandler.configuration"
+                :read-only="true"
+                :show-title="true"
+                :show-icon="true"
+                :show-description="true"
+                mode="show"
+              />
+            </div>
           </div>
           <div class="step-item-controls">
             <div
@@ -85,7 +103,13 @@
                 ></btn>
                 <template #dropdown>
                   <li>
-                    <a role="button"> {{ $t("Workflow.addErrorHandler") }}</a>
+                    <a
+                      role="button"
+                      data-test="add-error-handler"
+                      @click="toggleAddErrorHandlerModal(index)"
+                    >
+                      {{ $t("Workflow.addErrorHandler") }}</a
+                    >
                   </li>
                   <li v-if="!element.jobref">
                     <a
@@ -125,7 +149,11 @@
     <template #extra>
       <choose-plugin-modal
         v-model="addStepModal"
-        :title="$t('Workflow.addStep')"
+        :title="
+          isErrorHandler
+            ? $t('Workflow.addErrorHandler')
+            : $t('Workflow.addStep')
+        "
         :services="[ServiceType.WorkflowNodeStep, ServiceType.WorkflowStep]"
         :tab-names="[
           $t('plugin.type.WorkflowNodeStep.title.plural'),
@@ -133,10 +161,19 @@
         ]"
         show-search
         show-divider
-        @cancel="addStepModal = false"
+        @cancel="
+          () =>
+            isErrorHandler
+              ? toggleAddErrorHandlerModal()
+              : (addStepModal = false)
+        "
         @selected="chooseProviderAdd"
       >
-        <span class="text-info">{{ $t("Workflow.clickOnStepType") }}</span>
+        <span class="text-info">{{
+          isErrorHandler
+            ? $t("Workflow.errorHandlerDescription")
+            : $t("Workflow.clickOnStepType")
+        }}</span>
       </choose-plugin-modal>
       <edit-plugin-modal
         v-if="editStepModal"
@@ -145,27 +182,33 @@
         data-test-id="extra-edit-modal"
         :validation="editModelValidation"
         :service-name="editService"
-        :title="$t('Workflow.editStep')"
+        :title="
+          isErrorHandler
+            ? $t('Workflow.editErrorHandler')
+            : $t('Workflow.editStep')
+        "
         @cancel="cancelEditStep"
         @save="saveEditStep"
       >
         <template #extra>
-          <hr />
-          <div class="form-horizontal">
-            <div class="form-group">
-              <label
-                class="col-sm-2 control-label input-sm"
-                for="stepDescription"
-              >
-                {{ $t("Workflow.stepLabel") }}
-              </label>
-              <div class="col-sm-10">
-                <input
-                  id="stepDescription"
-                  v-model="editExtra.description"
-                  type="text"
-                  class="form-control"
-                />
+          <div v-if="!isErrorHandler">
+            <hr />
+            <div class="form-horizontal">
+              <div class="form-group">
+                <label
+                  class="col-sm-2 control-label input-sm"
+                  for="stepDescription"
+                >
+                  {{ $t("Workflow.stepLabel") }}
+                </label>
+                <div class="col-sm-10">
+                  <input
+                    id="stepDescription"
+                    v-model="editExtra.description"
+                    type="text"
+                    class="form-control"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -227,6 +270,7 @@ export default defineComponent({
       workflowNodeStepPlugins: [],
       addStepModal: false,
       editStepModal: false,
+      isErrorHandler: false,
       editModel: {} as EditStepData,
       editExtra: {} as EditStepData,
       editModelValidation: { errors: [], valid: true },
@@ -267,7 +311,9 @@ export default defineComponent({
         nodeStep: service === ServiceType.WorkflowNodeStep,
       };
       this.editExtra = {};
-      this.editIndex = -1;
+      if (!this.isErrorHandler) {
+        this.editIndex = -1;
+      }
       this.editService = service;
       this.editStepModal = true;
     },
@@ -277,6 +323,7 @@ export default defineComponent({
       this.editExtra = {};
       this.editModelValidation = null;
       this.editIndex = -1;
+      this.isErrorHandler = false;
     },
     removeStep(index: number) {
       const commandToDelete = cloneDeep(this.model.commands[index]);
@@ -317,61 +364,108 @@ export default defineComponent({
     },
     async saveEditStep() {
       try {
+        console.log(" Saving step, isErrorHandler:", this.isErrorHandler);
+        console.log(
+          " Step before saving:",
+          JSON.stringify(this.model.commands[this.editIndex], null, 2),
+        );
+
         const saveData = cloneDeep(this.editExtra);
         saveData.type = this.editModel.type;
         saveData.config = this.editModel.config;
-        saveData.id = mkid();
         saveData.nodeStep = this.editService === ServiceType.WorkflowNodeStep;
         saveData.filters = [];
 
+        console.log(" Step Data to Save:", JSON.stringify(saveData, null, 2));
+
+        // Validate plugin configuration
         const response = await validatePluginConfig(
-          ServiceType.WorkflowNodeStep,
+          this.editService,
           saveData.type,
           saveData.config,
         );
 
         if (response.valid && Object.keys(response.errors || {}).length === 0) {
-          const dataForUpdatingHistory = {
+          let dataForUpdatingHistory = {
             index: this.model.commands.length,
             operation: Operation.Insert,
             undo: Operation.Remove,
             orig: undefined,
           };
-          if (this.editIndex >= 0) {
-            const originalData = this.model.commands[this.editIndex];
-            this.$refs.historyControls.operationModify(
-              this.editIndex,
-              saveData,
-            );
-            dataForUpdatingHistory.index = this.editIndex;
-            dataForUpdatingHistory.operation = Operation.Modify;
-            dataForUpdatingHistory.undo = Operation.Modify;
-            dataForUpdatingHistory.orig = originalData;
+
+          if (this.isErrorHandler) {
+            if (this.editIndex >= 0 && this.model.commands[this.editIndex]) {
+              const parentStep = this.model.commands[this.editIndex];
+
+              console.log("Injecting Error Handler into Step:", parentStep);
+
+              parentStep.errorhandler = {
+                configuration: saveData.config,
+                type: saveData.type,
+                nodeStep: saveData.nodeStep,
+              };
+
+              console.log(
+                " Updated Step:",
+                JSON.stringify(parentStep, null, 2),
+              );
+
+              // Force UI to update
+              this.model.commands = [...this.model.commands];
+            } else {
+              console.error(" Error: Invalid editIndex!", this.editIndex);
+            }
           } else {
-            this.$refs.historyControls.operationInsert(
-              this.model.commands.length,
-              saveData,
-            );
+            if (this.editIndex >= 0) {
+              const originalData = cloneDeep(
+                this.model.commands[this.editIndex],
+              );
+
+              // Track modification
+              dataForUpdatingHistory = {
+                index: this.editIndex,
+                operation: Operation.Modify,
+                undo: Operation.Modify,
+                orig: originalData,
+              };
+
+              // Modify existing step
+              this.$refs.historyControls.operationModify(
+                this.editIndex,
+                saveData,
+              );
+            } else {
+              // Insert a new step
+              this.$refs.historyControls.operationInsert(
+                this.model.commands.length,
+                saveData,
+              );
+            }
           }
 
+          // Register the change for undo/redo
           this.$refs.historyControls.changeEvent({
             dest: -1,
             value: saveData,
             ...dataForUpdatingHistory,
           });
 
+          // Reset modal and editing state
           this.editStepModal = false;
+          this.isErrorHandler = false;
           this.editModel = {};
           this.editExtra = {};
           this.editModelValidation = null;
           this.editIndex = -1;
         } else {
+          console.warn("⚠ Validation Failed:", response);
           this.editModelValidation = response;
         }
       } catch (e) {
-        console.log(e);
+        console.error("❌ Error in saveEditStep:", e);
       }
     },
+
     async getStepPlugins() {
       await context.rootStore.plugins.load(ServiceType.WorkflowNodeStep);
       await context.rootStore.plugins.load(ServiceType.WorkflowStep);
@@ -391,6 +485,20 @@ export default defineComponent({
     },
     toggleAddStepModal() {
       this.addStepModal = !this.addStepModal;
+    },
+    toggleAddErrorHandlerModal(index: number) {
+      console.log("📌 Setting editIndex for error handler:", index);
+      this.isErrorHandler = true;
+      this.editIndex = index; // Make sure we edit the correct step
+      this.addStepModal = true;
+      console.log(
+        "📌 Current model.commands:",
+        JSON.stringify(this.model.commands, null, 2),
+      );
+      console.log(
+        "📌 Selected Step Before Edit:",
+        JSON.stringify(this.model.commands[this.editIndex], null, 2),
+      );
     },
     updateHistoryWithLogFiltersData(index: number, data: any) {
       const command = cloneDeep(this.model.commands[index]);
