@@ -24,6 +24,7 @@ import org.quartz.impl.matchers.GroupMatcher
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.Execution
+import rundeck.ScheduledExecution
 import rundeck.data.quartz.QuartzJobSpecifier
 import rundeck.quartzjobs.ExecutionJob
 
@@ -202,6 +203,7 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
             }
 
             if (trigger) {
+                log.info("Pending trigger rescheduled: $quartzJobGroup/$quartzJobName")
                 Trigger newTrigger = trigger.getTriggerBuilder().withIdentity(quartzJobName, quartzJobGroup).build()
                 quartzScheduler.rescheduleJob(trigger.getKey(), newTrigger)
             }
@@ -274,12 +276,13 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
     }
 
     private handleExecutionEvent(AbstractPersistenceEvent event) {
-        if(!(event.entityObject instanceof Execution))
-            return
-
-        Execution execution = event.entityObject as Execution
-
-        rescheduleExecutionIfPending(execution)
+        if(event.entityObject instanceof Execution){
+            Execution execution = event.entityObject as Execution
+            rescheduleExecutionIfPending(execution)
+        }else if(event.entityObject instanceof ScheduledExecution){
+            ScheduledExecution job = event.entityObject as ScheduledExecution
+            rescheduleJobIfPending(job)
+        }
     }
 
     private rescheduleExecutionIfPending(Execution execution) {
@@ -288,6 +291,14 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
         def ident = scheduledExecutionService.getJobIdent(execution.scheduledExecution, execution)
 
         reschedulePendingJob(ident.jobname, ident.groupname)
+    }
+
+    private rescheduleJobIfPending(ScheduledExecution job) {
+        log.debug("Rescheduling pending job $job.uuid")
+        def jobname = job.generateJobScheduledName()
+        def groupname = job.generateJobGroupName()
+
+        reschedulePendingJob(jobname, groupname)
     }
 
     private void interruptScheduleOnPassiveMode() throws JobScheduleFailure{
