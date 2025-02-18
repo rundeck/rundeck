@@ -300,14 +300,17 @@ export default defineComponent({
       required: false,
       default: "schedJobNodeFilter",
     },
-    /**
-     * if true, allow setting/removing default filter
-     */
     allowFilterDefault: {
       type: Boolean,
       required: false,
       default: false,
+      description: "if true, allow setting/removing default filter"
     },
+    emitFilterOnBlur: {
+      type: Boolean,
+      default: false,
+      description: "if true, on blur trigger filter event"
+    }
   },
   emits: ["filters-updated", "filter", "update:modelValue"],
   setup() {
@@ -464,6 +467,9 @@ export default defineComponent({
         this.selectedFilterName = "";
       }
       this.$emit("update:modelValue", this.outputValue);
+      // if(this.emitFilterOnBlur){
+      //   this.$emit("filter")
+      // }
     },
     handleNodefilter(val: any) {
       if (val.filterName) {

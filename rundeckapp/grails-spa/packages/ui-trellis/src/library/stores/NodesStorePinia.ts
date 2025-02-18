@@ -16,6 +16,7 @@ interface NodesState {
   nodenamesToDisplay: string[];
   tags: NodeTag[] | Tag[];
   maxSize: number;
+  lastCountFetched: number;
   nodeFilterStore: NodeFilterStore;
 }
 
@@ -25,6 +26,7 @@ export const useNodesStore = defineStore("nodes", {
     nodenamesToDisplay: [],
     tags: [],
     maxSize: 20,
+    lastCountFetched: 0,
     nodeFilterStore: new NodeFilterStore(),
   }),
 
@@ -35,21 +37,28 @@ export const useNodesStore = defineStore("nodes", {
         .filter(Boolean);
     },
 
-    total(state): number {
-      return state.nodenamesToDisplay.length;
+    total(): number {
+      return this.currentNodes.length;
     },
+    isResultsTruncated(state): boolean {
+      return state.lastCountFetched > state.maxSize
+    }
   },
 
   actions: {
     upsertNodes(nodes: Node[]) {
-      nodes.forEach((node) => {
-        this.entities[node.nodename] = {
-          ...this.entities[node.nodename],
-          ...node,
-        };
-      });
+      if(nodes.length > 0) {
+        nodes.forEach((node) => {
+          this.entities[node.nodename] = {
+            ...this.entities[node.nodename],
+            ...node,
+          };
+        });
 
-      this.nodenamesToDisplay = nodes.map((node) => node.nodename);
+        this.nodenamesToDisplay = nodes.map((node) => node.nodename);
+      } else {
+        this.nodenamesToDisplay = []
+      }
     },
 
     async fetchNodes(params: Record<string, any> = {}) {
@@ -62,8 +71,8 @@ export const useNodesStore = defineStore("nodes", {
           },
           getAppLinks().frameworkNodesQueryAjax,
         );
-
         this.upsertNodes(response.allnodes);
+        this.lastCountFetched = response.total;
       } catch (error: any) {
         throw new Error(`Failed to fetch nodes: ${error.message}`);
       }
