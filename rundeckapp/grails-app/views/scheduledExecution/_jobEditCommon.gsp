@@ -213,6 +213,7 @@
         nodeExcludePrecedence: scheduledExecution?.nodeExcludePrecedence ? 'true': 'false',
         excludeFilterUncheck: scheduledExecution?.excludeFilterUncheck ? 'true': 'false',
 ]}"/>
+<g:embedJSON id="jobTreeUiMeta" data="[hideActions: true, hideHeader: true, hideTags: true]"/>
 
 
 <g:javascript>
@@ -247,3 +248,5 @@
 </g:javascript>
 <g:embedJSON data="${globalVars ?: []}" id="globalVarData"/>
 <g:embedJSON data="${timeZones ?: []}" id="timeZonesData"/>
+<asset:javascript src="static/pages/job/browse.js" defer="defer"/>
+<asset:stylesheet href="static/css/pages/job/browse.css" />

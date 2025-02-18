@@ -217,7 +217,7 @@ const messages = {
   "cancel.bulk.delete": "Cancel Bulk Delete",
   "delete.selected.executions": "Delete Selected Executions",
   "click.to.refresh": "click to refresh",
-  "count.nodes.matched": "{0} {1} Matched",
+  "count.nodes.matched": "1 Node Matched | {n} Nodes Matched",
   "count.nodes.shown": "{0} nodes shown.",
   "delete.this.filter": "Delete this Filter",
   "delete.this.filter.confirm": "Really delete this filter?",
@@ -1015,6 +1015,7 @@ const messages = {
   "JobExec.property.nodeFilter.null.description":
     "The nodes used will be those defined for the triggered Job.",
   "commandExec.jobName.blank.message": "Job must be specified",
+  "results.truncated.count.results.shown":"Results truncated. {0} results shown."
 };
 
 export default messages;

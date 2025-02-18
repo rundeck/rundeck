@@ -3,7 +3,7 @@
     <div v-if="error" class="alert alert-danger">
       <ErrorsList :errors="[errorMessage]" />
     </div>
-    <div class="wfitemEditForm">
+    <div class="">
       <section>
         <div class="form-group">
           <label class="col-sm-2 control-label">
@@ -20,10 +20,12 @@
               />
               <label for="useNameTrue">
                 {{ $t("Workflow.Step.jobreference.name.label") }}
+                <span>
+                  {{
+                    $t("Workflow.Step.jobreference.name.description")
+                  }}
+                </span>
               </label>
-              <span>{{
-                $t("Workflow.Step.jobreference.name.description")
-              }}</span>
             </div>
             <div class="radio">
               <input
@@ -35,10 +37,10 @@
               />
               <label for="useNameFalse">
                 {{ $t("Workflow.Step.jobreference.uuid.label") }}
+                <span>
+                  {{ $t("Workflow.Step.jobreference.uuid.description") }}
+                </span>
               </label>
-              <span>
-                {{ $t("Workflow.Step.jobreference.uuid.description") }}
-              </span>
             </div>
           </div>
         </div>
@@ -253,7 +255,7 @@
             <span
               class="btn btn-sm"
               data-testid="expandNodeFilterBtn"
-              :class="{ active: nodeFilterOverrideExpanded }"
+              :class="{ active: nodeFilterOverrideExpanded && filterLoaded }"
               @click="nodeFilterOverrideExpanded = !nodeFilterOverrideExpanded"
             >
               {{ $t("override.node.filters") }}
@@ -266,7 +268,6 @@
         </div>
       </section>
       <section
-        v-if="filterLoaded"
         :id="`nodeFilterOverride${rkey}`"
         data-testid="nodeFilterContainer"
         class="collapse-expandable collapse node_filter_link_holder section-separator-solo"
@@ -321,11 +322,12 @@
 
           <div class="col-sm-10 vue-ui-socket">
             <node-filter-input
-              :model-value="nodeFilterStore.selectedFilter"
+              :model-value="editModel.jobref.nodefilters.filter"
               :project="currentProject"
               filter-field-name="nodeFilter"
               :filter-field-id="`nodeFilterField${rkey}`"
               :query-field-placeholder-text="$t('enter.a.node.filter.override')"
+              emit-filter-on-blur
               search-btn-type="cta"
               class="nodefilters"
               @update:model-value="updatedValue"
@@ -340,29 +342,36 @@
           </label>
 
           <div class="col-sm-10">
-            <div class="well well-sm embed matchednodes">
-              <button
-                type="button"
-                class="pull-right btn btn-sm refresh_nodes"
-                :title="$t('click.to.refresh')"
-                @click="triggerFetchNodes"
-              >
-                {{ $t(loading ? "loading.text" : "refresh") }}
-                <i class="glyphicon glyphicon-refresh"></i>
-              </button>
-              <span v-if="total">
-                {{ $t("count.nodes.matched", [total]) }}
-              </span>
-              <span v-else-if="!hasFilter || total === 0">
-                {{ $t("JobExec.property.nodeFilter.null.description") }}
-              </span>
+            <div  class="well well-sm embed matchednodes">
+              <template v-if="filterLoaded">
+                <button
+                    type="button"
+                    class="pull-right btn btn-sm refresh_nodes"
+                    :title="$t('click.to.refresh')"
+                    @click="triggerFetchNodes"
+                >
+                  {{ $t(loading ? "loading.text" : "refresh") }}
+                  <i class="glyphicon glyphicon-refresh"></i>
+                </button>
+                <span v-if="hasFilter && total">
+                  {{ $t("count.nodes.matched", lastCountFetched) }}
+                </span>
+                <span v-else-if="!hasFilter || total === 0">
+                  {{ $t("JobExec.property.nodeFilter.null.description") }}
+                </span>
 
-              <div :id="`matchednodes${rkey}`" class="clearfix">
-                <node-list-embed
-                  :nodes="currentNodes"
-                  @filter="filterClicked"
-                />
-              </div>
+                <div v-if="hasFilter && currentNodes.length" :id="`matchednodes${rkey}`" class="clearfix">
+                  <node-list-embed
+                      :nodes="currentNodes"
+                      @filter="filterClicked"
+                  >
+                    <p class="text-info mb-0" v-if="isResultsTruncated">
+                      {{ $t('results.truncated.count.results.shown', [total]) }}
+                    </p>
+                  </node-list-embed>
+                </div>
+              </template>
+              <i v-else class="fas fa-spinner fa-pulse"></i>
             </div>
           </div>
         </div>
@@ -604,7 +613,8 @@
       :socket-data="{
         showBulkEdit: false,
         showCreateButton: false,
-        projectToDisplay: editModel.jobref.project,
+        allowFolderNavigation: false,
+        projectToDisplay: editModel.jobref.project || selectedProject,
         key: editModel.jobref.project,
       }"
     />
@@ -650,7 +660,7 @@ export default defineComponent({
     return {
       isUseName: false,
       showModal: this.modalActive,
-      nodeFilterOverrideExpanded: false,
+      nodeFilterOverrideExpanded: null,
       projectStore: rundeckContext.rootStore.projects,
       selectedProject: rundeckContext.projectName,
       currentProject: rundeckContext.projectName,
@@ -701,7 +711,7 @@ export default defineComponent({
     hasFilter() {
       return Boolean(this.editModel.jobref.nodefilters.filter);
     },
-    ...mapState(useNodesStore, ["total", "nodeFilterStore", "currentNodes"]),
+    ...mapState(useNodesStore, ["total", "nodeFilterStore", "currentNodes", "lastCountFetched", "isResultsTruncated"]),
   },
   watch: {
     modalActive(val) {
@@ -715,7 +725,7 @@ export default defineComponent({
     },
     "nodeFilterStore.filter": {
       async handler(val) {
-        // keeping this watcher so that when store is updated (by pressing search)
+        // keeping this watcher so that when store is updated (by blurring or pressing search)
         // the editModel will receive the value
         if (val !== this.editModel.jobref.nodefilters.filter) {
           this.editModel.jobref.nodefilters.filter = val;
@@ -741,6 +751,8 @@ export default defineComponent({
           rundeckContext.data.nodeData,
         );
       }
+      this.nodeFilterOverrideExpanded = Boolean(this.editModel.jobref.nodefilters.filter.length || this.editModel.jobref.nodefilters.dispatch.nodeIntersect)
+
       await this.triggerFetchNodes();
     }
     this.filterLoaded = true;
@@ -790,15 +802,17 @@ export default defineComponent({
       this.nodeFilterStore.setSelectedFilter(filter.filter);
     },
     async triggerFetchNodes() {
-      try {
-        this.error = null;
-        this.loading = true;
-        await this.fetchNodes(this.queryParams);
-      } catch (e) {
-        this.error = true;
-        this.errorMessage = e.message;
-      } finally {
-        this.loading = false;
+      if(this.hasFilter) {
+        try {
+          this.error = null;
+          this.loading = true;
+          await this.fetchNodes(this.queryParams);
+        } catch (e) {
+          this.error = true;
+          this.errorMessage = e.message;
+        } finally {
+          this.loading = false;
+        }
       }
     },
     ...mapActions(useNodesStore, ["fetchNodes"]),
@@ -807,6 +821,12 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss">
+.mb-0 {
+  margin-bottom: 0;
+}
+.matchednodes {
+  overflow: hidden;
+}
 .checkbox,
 .radio {
   display: flex;

@@ -50,6 +50,11 @@ export default defineComponent({
     JobBulkEditControls,
     Browser,
   },
+  provide() {
+    return {
+      allowFolderNavigation: this.allowFolderNavigation,
+    };
+  },
   props: {
     path: {
       type: String,
@@ -60,6 +65,10 @@ export default defineComponent({
       default: true,
     },
     showCreateButton: {
+      type: Boolean,
+      default: true,
+    },
+    allowFolderNavigation: {
       type: Boolean,
       default: true,
     },

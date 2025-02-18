@@ -480,9 +480,27 @@ export default defineComponent({
         margin-left: 5px;
       }
 
-      .configpair > span {
-        display: flex;
-        gap: 5px;
+      .item-container {
+        max-width: 700px;
+        overflow: hidden;
+      }
+
+      .configpair {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+
+        > span {
+          display: flex;
+          gap: 5px;
+        }
+
+        .text-success {
+          max-width: 700px;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          overflow: hidden;
+        }
       }
 
       span[data-testid="block-description"] {
