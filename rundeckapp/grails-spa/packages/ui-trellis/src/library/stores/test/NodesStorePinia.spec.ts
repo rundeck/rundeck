@@ -67,23 +67,19 @@ describe('NodesStore', () => {
                 expect(store.currentNodes).toEqual([]);
             });
 
-            it('should return only nodes that exist in entities', () => {
+            it('should return only nodes that exist in entities', async () => {
                 const store = useNodesStore();
-                store.entities = {
-                    node1: mockNodes[0],
-                    node2: mockNodes[1],
-                };
+                await store.fetchNodes();
+
+                // hardcode to bypass the scenario where nodenamesToDisplay don't match existing entries
                 store.nodenamesToDisplay = ['node1', 'node2', 'node3'];
 
                 expect(store.currentNodes).toEqual([mockNodes[0], mockNodes[1]]);
             });
 
-            it('should maintain order based on nodenamesToDisplay', () => {
+            it('should maintain order based on nodenamesToDisplay', async() => {
                 const store = useNodesStore();
-                store.entities = {
-                    node1: mockNodes[0],
-                    node2: mockNodes[1],
-                };
+                await store.fetchNodes();
                 store.nodenamesToDisplay = ['node2', 'node1'];
 
                 expect(store.currentNodes).toEqual([mockNodes[1], mockNodes[0]]);
@@ -91,9 +87,9 @@ describe('NodesStore', () => {
         });
 
         describe('total', () => {
-            it('should return correct count of displayed nodes', () => {
+            it('should return correct count of displayed nodes', async () => {
                 const store = useNodesStore();
-                store.nodenamesToDisplay = ['node1', 'node2'];
+                await store.fetchNodes();
 
                 expect(store.total).toBe(2);
             });
@@ -162,7 +158,7 @@ describe('NodesStore', () => {
 
                 const store = useNodesStore();
                 await expect(store.fetchNodes()).rejects.toThrow(
-                    `Failed to fetch nodes: ${errorMessage}`
+                    `Failed to fetch nodes: Network error`
                 );
             });
 
@@ -198,29 +194,31 @@ describe('NodesStore', () => {
 
                 const store = useNodesStore();
                 await expect(store.fetchTags()).rejects.toThrow(
-                    `Failed to fetch tags: ${errorMessage}`
+                    `Failed to fetch tags: Network error`
                 );
             });
         });
 
         describe('clearResults', () => {
-            it('should clear nodenamesToDisplay', () => {
+            it('should clear nodenamesToDisplay', async () => {
                 const store = useNodesStore();
-                store.nodenamesToDisplay = ['node1', 'node2'];
+                await store.fetchNodes();
 
                 store.clearResults();
 
                 expect(store.nodenamesToDisplay).toEqual([]);
             });
 
-            it('should not affect entities', () => {
+            it('should not affect entities', async () => {
                 const store = useNodesStore();
-                store.entities = { node1: mockNodes[0] };
-                store.nodenamesToDisplay = ['node1'];
+                await store.fetchNodes();
 
                 store.clearResults();
 
-                expect(store.entities).toEqual({ node1: mockNodes[0] });
+                expect(store.entities).toEqual({
+                    node1: mockNodes[0],
+                    node2: mockNodes[1],
+                });
             });
         });
     });
