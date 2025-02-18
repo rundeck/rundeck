@@ -12,10 +12,22 @@ import { RootStore } from "../RootStore";
 import { RundeckClient } from "@rundeck/client";
 import {
   mockWorkflowStepPlugins,
-  mockWorkflowNodeStepPlugins,
-} from "./mocks/mockPluginData";
+  mockWorkflowNodeStepPlugins, mockPluginDetail,
+} from './mocks/mockPluginData'
 import { HttpOperationResponse } from "@azure/ms-rest-js/es/lib/httpOperationResponse";
+import {getPluginDetail} from "@/library/services/plugins";
+jest.mock('@/library/services/plugins');
+const mockedGetPluginDetail = getPluginDetail as jest.MockedFunction<
+  typeof getPluginDetail
+>;
 
+jest.mock('@/library/rundeckService', () => ({
+  getRundeckContext: jest.fn().mockImplementation(() => ({
+    rdBase: 'http://localhost:4440/',
+    projectName: 'testProject',
+    apiVersion: '44',
+  })),
+}))
 const mockRootStore = {} as RootStore;
 
 const createMockResponse = (plugins: Plugin[]): HttpOperationResponse => ({
@@ -115,6 +127,34 @@ describe("PluginStore", () => {
       const result = pluginStore.getServicePlugins(ServiceType.LogFilter);
 
       expect(result).toEqual([]);
+    });
+  });
+  describe("getPluginDetail", () => {
+    //test the function getPluginDetail from Plugins.ts
+    it("should return the plugin detail for a service provider", async () => {
+      mockedGetPluginDetail.mockResolvedValue(mockPluginDetail);
+
+      const result = await pluginStore.getPluginDetail(
+        ServiceType.WorkflowStep,
+        mockWorkflowStepPlugins[0].name,
+      );
+
+      expect(result).toEqual(mockPluginDetail);
+    });
+    it("should return the cached plugin detail for a service provider", async () => {
+      mockedGetPluginDetail.mockResolvedValueOnce(mockPluginDetail);
+
+      const result1 = await pluginStore.getPluginDetail(
+        ServiceType.WorkflowStep,
+        mockWorkflowStepPlugins[0].name,
+      );
+      const result2 = await pluginStore.getPluginDetail(
+        ServiceType.WorkflowStep,
+        mockWorkflowStepPlugins[0].name,
+      );
+
+      expect(result1).toEqual(mockPluginDetail);
+      expect(result2).toEqual(mockPluginDetail);
     });
   });
 });
