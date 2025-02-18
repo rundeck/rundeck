@@ -58,7 +58,6 @@ export interface CommandExecPluginConfig {
 }
 export interface JobRefDefinition {
   group: string;
-
   name: string;
   project?: string;
   uuid?: string;
@@ -79,6 +78,7 @@ export interface JobRefDefinition {
   };
 }
 export interface JobRefData {
+  description?: string;
   jobref?: JobRefDefinition;
   nodeStep?: boolean;
 }

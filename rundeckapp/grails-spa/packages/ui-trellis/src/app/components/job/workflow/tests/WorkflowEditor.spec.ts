@@ -1,6 +1,7 @@
 import { flushPromises, VueWrapper, shallowMount } from "@vue/test-utils";
 import WorkflowEditor from "../WorkflowEditor.vue";
 import WorkflowBasic from "@/app/components/job/workflow/WorkflowBasic.vue";
+import { createTestingPinia } from "@pinia/testing";
 
 jest.mock("@/library/modules/rundeckClient", () => ({
   client: jest.fn(),
@@ -15,6 +16,10 @@ jest.mock("@/library/rundeckService", () => ({
   })),
 }));
 jest.mock("../../../../../library/services/projects");
+
+jest.mock("@/library/stores/NodesStorePinia", () => ({
+  useNodesStore: jest.fn().mockImplementation(() => ({})),
+}));
 
 const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
   const wrapper = shallowMount(WorkflowEditor, {
@@ -31,6 +36,7 @@ const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
       stubs: {
         WorkflowBasic: false,
       },
+      plugins: [createTestingPinia({})],
     },
   });
   await wrapper.vm.$nextTick();

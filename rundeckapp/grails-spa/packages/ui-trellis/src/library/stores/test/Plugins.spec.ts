@@ -13,8 +13,11 @@ import { RundeckClient } from "@rundeck/client";
 import {
   mockWorkflowStepPlugins,
   mockWorkflowNodeStepPlugins,
+  mockJobRefWorkflowStepPlugin,
+  mockJobRefWorkflowNodeStepPlugin
 } from "./mocks/mockPluginData";
 import { HttpOperationResponse } from "@azure/ms-rest-js/es/lib/httpOperationResponse";
+import { cloneDeep } from "lodash";
 
 const mockRootStore = {} as RootStore;
 
@@ -47,13 +50,12 @@ describe("PluginStore", () => {
       mockApiRequest.mockResolvedValueOnce(
         createMockResponse(mockWorkflowStepPlugins),
       );
+      const expectedResponse = [mockJobRefWorkflowStepPlugin, ...mockWorkflowStepPlugins]
 
       await pluginStore.load(ServiceType.WorkflowStep);
 
-      expect(pluginStore.plugins).toEqual(mockWorkflowStepPlugins);
-      expect(pluginStore.pluginsByService[ServiceType.WorkflowStep]).toEqual(
-        mockWorkflowStepPlugins,
-      );
+      expect(pluginStore.plugins).toEqual(expectedResponse);
+      expect(pluginStore.pluginsByService[ServiceType.WorkflowStep]).toEqual(expectedResponse);
 
       const pluginNames = mockWorkflowStepPlugins.map(
         (plugin) => `${plugin.name}-${plugin.service}`,
@@ -66,6 +68,34 @@ describe("PluginStore", () => {
         mockWorkflowStepPlugins[1],
       ]);
     });
+
+    it("should load job reference job when service is WorkflowStep", async () => {
+      mockApiRequest.mockResolvedValueOnce(
+          createMockResponse(mockWorkflowStepPlugins),
+      );
+      const expectedResponse = [mockJobRefWorkflowStepPlugin, ...mockWorkflowStepPlugins];
+
+      await pluginStore.load(ServiceType.WorkflowStep);
+
+      expect(pluginStore.plugins).toEqual(expectedResponse);
+      expect(pluginStore.pluginsByService[ServiceType.WorkflowStep]).toEqual(
+          expectedResponse,
+      );
+
+      const pluginNames = expectedResponse.map(
+          (plugin) => `${plugin.name}-${plugin.service}`,
+      );
+
+      expect(pluginStore.pluginsById[pluginNames[0]]).toEqual([
+        expectedResponse[0],
+      ]);
+      expect(pluginStore.pluginsById[pluginNames[1]]).toEqual([
+        expectedResponse[1],
+      ]);
+      expect(pluginStore.pluginsById[pluginNames[2]]).toEqual([
+        expectedResponse[2],
+      ]);
+    })
 
     it("should not reload plugins if already loaded for the service", async () => {
       mockApiRequest.mockResolvedValueOnce(
@@ -86,11 +116,13 @@ describe("PluginStore", () => {
       );
       await pluginStore.load(ServiceType.WorkflowStep);
       await pluginStore.load(ServiceType.WorkflowStep);
+      await pluginStore.load(ServiceType.WorkflowStep);
 
-      expect(pluginStore.plugins).toHaveLength(1);
+      // it is 2 as workflowStep will add the plugin returned by the API + job reference
+      expect(pluginStore.plugins).toHaveLength(2);
       expect(
         pluginStore.pluginsByService[ServiceType.WorkflowStep],
-      ).toHaveLength(1);
+      ).toHaveLength(2);
     });
   });
 
@@ -106,6 +138,7 @@ describe("PluginStore", () => {
       );
 
       expect(result).toEqual([
+        mockJobRefWorkflowNodeStepPlugin, // "Job ref"
         mockWorkflowNodeStepPlugins[1], // "Local Command"
         mockWorkflowNodeStepPlugins[0], // "SSH Command"
       ]);
