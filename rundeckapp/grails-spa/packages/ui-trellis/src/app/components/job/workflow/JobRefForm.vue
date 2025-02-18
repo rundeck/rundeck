@@ -354,7 +354,7 @@
                   <i class="glyphicon glyphicon-refresh"></i>
                 </button>
                 <span v-if="hasFilter && total">
-                  {{ $t("count.nodes.matched", lastCountFetched) }}
+                  {{ $t("count.nodes.matched", [total, $t("Node.count.vue", total)]) }}
                 </span>
                 <span v-else-if="!hasFilter || total === 0">
                   {{ $t("JobExec.property.nodeFilter.null.description") }}
