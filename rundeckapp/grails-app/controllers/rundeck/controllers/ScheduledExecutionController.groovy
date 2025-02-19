@@ -52,6 +52,7 @@ import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
 import io.swagger.v3.oas.annotations.ExternalDocumentation
+import io.swagger.v3.oas.annotations.Hidden
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.enums.ParameterIn
@@ -374,6 +375,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
+    @Hidden
     @Get(uri = "/job/{id}/components")
     @Operation(
             method = 'GET',
@@ -415,7 +417,7 @@ class ScheduledExecutionController  extends ControllerBase{
         render(contentType: 'application/json', text: jobComponentValues as JSON)
     }
 
-
+    @Hidden
     @Get(uri = "/jobs/components")
     @Operation(
             method = 'GET',
