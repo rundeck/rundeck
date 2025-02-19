@@ -5,8 +5,11 @@ import { EventBus } from "../../../../utilities/vueEventBus";
 jest.mock("../../../../rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({}),
 
-  getAppLinks: jest.fn(() => ({})),
-  url: jest.fn().mockReturnValue("http://localhost"),
+  getAppLinks: jest.fn(() => ({
+    menuHome: "http://localhost",
+  })),
+  url: jest.fn((path: string) => ({ href: `http://localhost${path}` })),
+
 }));
 jest.mock("../../../../stores/RootStore", () => ({
   RootStore: jest.fn().mockImplementation(() => ({
@@ -73,47 +76,49 @@ describe("ProjectSelect.vue", () => {
     jest.clearAllMocks();
   });
 
-  it("allows selecting 'Select All' when projects are available", async () => {
+  it("typing in the search input filters the projects", async () => {
     const wrapper = await createWrapper();
+    const searchInput = wrapper.find('[data-testid="search-projects"]');
+    expect(searchInput.exists()).toBe(true);
+    await searchInput.setValue("Project A");
     await flushPromises();
-    const selectAllCheckbox = wrapper.get('[data-testid="projectItem_all"]');
-    await selectAllCheckbox.trigger("click");
-    const emittedEvents = wrapper.emitted("update:selection");
-    expect(emittedEvents.length).toBeGreaterThan(0);
-    expect(emittedEvents[0]).toEqual([["Project A", "Project B"]]);
+    const projectItems = wrapper.findAll(".scroller__item");
+    expect(projectItems).toHaveLength(1);
+    expect(projectItems[0].text()).toContain("Project A Label");
   });
-  it("allows deselecting 'Select All'", async () => {
-    const wrapper = await createWrapper({
-      mode: "multi",
-      selectedProjects: ["Project A", "Project B"],
-    });
+  it("navigates to correct URL when clicking on a project in single mode", async () => {
+    const wrapper = await createWrapper({ mode: "single" });
     await flushPromises();
-    const selectAllCheckbox = wrapper.get('[data-testid="projectItem_all"]');
-    await selectAllCheckbox.trigger("click");
+    const projectLink = wrapper.findAll(".scroller__item");
+    await flushPromises();
+    expect(projectLink).toHaveLength(2);
+    expect(projectLink[0].attributes("href")).toBe(
+      "http://localhost?project=Project A",
+    );
+  });
+  it("emits correct selection updates when selecting projects in multi mode", async () => {
+    const wrapper = await createWrapper({ mode: "multi" });
+    await flushPromises();
+    const firstProjectCheckbox = wrapper.get(
+      '[data-testid="projectCheckbox-Project A"]',
+    );
+    await firstProjectCheckbox.trigger("click");
     await flushPromises();
     const emittedEvents = wrapper.emitted("update:selection");
     expect(emittedEvents).toBeTruthy();
-    expect(emittedEvents[emittedEvents.length - 1]).toEqual([[]]);
+    expect(emittedEvents[0]).toEqual([["Project A"]]);
   });
-
-  it("handles 'Select All' visibility correctly", async () => {
-    //  At least one project available,"Select All" should be visible
-    let wrapper = await createWrapper();
-    await flushPromises();
-    let selectAllOption = wrapper.get('[data-testid="projectItem_all"]');
-    expect(selectAllOption.text()).toBe("select.all");
-    // No projects available,"Select All" should NOT be visible
-    window._rundeck.rootStore.projects.projects = [];
-    wrapper = await createWrapper();
-    await flushPromises();
-    expect(wrapper.findAll('[data-testid="projectItem_all"]').length).toBe(0);
-  });
-  it("ensures individual project checkboxes exist", async () => {
+  it("navigates correctly when clicking 'View All' and 'Click Project' button", async () => {
     const wrapper = await createWrapper();
     await flushPromises();
-    const firstProject = wrapper.find('[data-testid="projectItemProject A"]');
-    expect(firstProject.exists()).toBe(true);
-    const secondProject = wrapper.find('[data-testid="projectItemProject B"]');
-    expect(secondProject.exists()).toBe(true);
+    const viewAllButton = wrapper.find('[data-testid="view-all-button"]');
+    expect(viewAllButton.attributes("href")).toBe("http://localhost");
+    const createProjectButton = wrapper.find(
+      '[data-testid="create-project-button"]',
+    );
+    expect(createProjectButton.attributes("href")).toBe(
+      "http://localhostresources/createProject",
+    );
+
   });
 });
