@@ -9,6 +9,7 @@ jest.mock("../../../../rundeckService", () => ({
     menuHome: "http://localhost",
   })),
   url: jest.fn((path: string) => ({ href: `http://localhost${path}` })),
+
 }));
 jest.mock("../../../../stores/RootStore", () => ({
   RootStore: jest.fn().mockImplementation(() => ({
@@ -74,6 +75,7 @@ describe("ProjectSelect.vue", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
+
   it("typing in the search input filters the projects", async () => {
     const wrapper = await createWrapper();
     const searchInput = wrapper.find('[data-testid="search-projects"]');
@@ -117,5 +119,6 @@ describe("ProjectSelect.vue", () => {
     expect(createProjectButton.attributes("href")).toBe(
       "http://localhostresources/createProject",
     );
+
   });
 });

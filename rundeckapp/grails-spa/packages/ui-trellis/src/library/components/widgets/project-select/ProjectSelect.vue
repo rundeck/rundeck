@@ -47,6 +47,7 @@
             v-else-if="mode === 'multi'"
             @keydown.space="handleSelect(item.name)"
             tabindex="0"
+            :data-testid="`projectItem${item.name}`"
           >
             <input
               :checked="
@@ -179,7 +180,7 @@ export default defineComponent({
     },
     selectAllOptionAvailable(): boolean {
       return this.projectStore.loaded
-        ? this.projectStore.projects.length <= 100
+        ? this.projectStore.projects.length >= 1
         : false;
     },
     options() {
@@ -208,7 +209,6 @@ export default defineComponent({
     },
     handleSelect(projectName: string) {
       let arrayToEmit = [projectName];
-
       if (projectName === "_all") {
         arrayToEmit =
           this.selectedProjects.length === this.allProjectNames.length
