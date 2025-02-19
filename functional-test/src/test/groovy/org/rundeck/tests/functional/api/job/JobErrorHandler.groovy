@@ -55,7 +55,7 @@ class JobErrorHandler extends BaseContainer{
 
     def "when a node step job is referenced and it doesn't exist if an error handler is present should be triggered"(){
         given:
-        def jobId = "f9b34a63-ff95-41f4-9646-87d90b35fc3d"
+        def jobId = "f9b34a63-ff95-41f4-9646-87d90b35fc3X"
         def jobConfig = [
                 "loglevel": "INFO"
         ]
