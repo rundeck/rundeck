@@ -40,6 +40,37 @@ class ExecutionUtils {
             }
         }
 
+        /**
+         * Checks if executions were executed sequentially, meaning the execution at a position `n`
+         * has ended before the execution at position `n+1` has started.
+         *
+         * @param executions is the list of executions to verify sorted from first executed to last executed.
+         * @return boolean
+         */
+        static final haveExecutedSequentially(List<Execution> executions) {
+            executions.collate(2, 1, false)
+                    .every { executionsPair -> executionsPair[0].endedBeforeExecution(executionsPair[1]) }
+        }
+
+        /**
+         * Checks if all executions overlapped, meaning each execution from the first list`
+         * has an execution from the second list that overlapped in execution times.
+         *
+         * @param executions is the list of executions to verify sorted from first executed to last executed.
+         * @return boolean
+         */
+        static final haveExecutionsOverlapped(List<Execution> executions, List<Execution> overlappingExecutions) {
+            if (executions.size() != overlappingExecutions.size()) {
+                return false
+            }
+
+            return executions.indices.every { i ->
+                def currExecution = executions[i]
+                def currOverlappingExecution = overlappingExecutions[i]
+
+                return currExecution.overlappedWithExecution(currOverlappingExecution)
+            }
+        }
     }
 
     static class Retrievers {

@@ -3,11 +3,9 @@ package org.rundeck.tests.functional.api.job
 import com.fasterxml.jackson.databind.ObjectMapper
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
-import org.rundeck.util.api.responses.jobs.CreateJobResponse
 import org.rundeck.util.api.responses.common.ErrorResponse
 import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.api.responses.execution.ExecutionOutput
-import org.rundeck.util.api.responses.jobs.JobExecutionsResponse
 import org.rundeck.util.api.responses.execution.RunCommand
 import org.rundeck.util.api.responses.system.SystemInfo
 import org.rundeck.util.annotations.APITest
@@ -78,7 +76,7 @@ class JobExecutionSpec extends BaseContainer {
         List<Execution> execs =  waitFor(ExecutionUtils.Retrievers.executionsForJobId(client, jobId),
                 { it.size() == 1 })
         then:
-        execs[0].id == execId
+        execs[0].id == execId as String
     }
 
     def "job/id/executions?status=succeeded should succeed with 1 results"() {
@@ -86,7 +84,7 @@ class JobExecutionSpec extends BaseContainer {
         List<Execution> execs =  waitFor(ExecutionUtils.Retrievers.executionsForJobId(client, jobId, "status=succeeded"),
                 {it.size() == 1 })
         then:
-        execs[0].id == execId
+        execs[0].id == execId as String
     }
 
     def "run again job/id/run should succeed"() {
@@ -162,7 +160,7 @@ class JobExecutionSpec extends BaseContainer {
         List<Execution> execs =  waitFor(ExecutionUtils.Retrievers.executionsForJobId(client, jobId2, "status=failed"),
                 { it.size() == 1 })
         then:
-        execs[0].id == execId2
+        execs[0].id == execId2 as String
     }
 
     def "job/id/executions?status=running with 1 results"() {
@@ -186,7 +184,7 @@ class JobExecutionSpec extends BaseContainer {
         List<Execution> execs =  waitFor(ExecutionUtils.Retrievers.executionsForJobId(client, jobId3, "status=aborted"),
                 { it.size() == 1 })
         then:
-        execs[0].id == execId3
+        execs[0].id == execId3 as String
 
     }
 
@@ -1074,7 +1072,7 @@ class JobExecutionSpec extends BaseContainer {
 
         def execOutput = client.doGetAcceptAll("/execution/${execId.id}/output.text")
         def execOutputString = execOutput.body().string()
-        String[] lines = execOutputString.split("\n");
+        String[] lines = execOutputString.split("\n")
         List<String> outputContent = new ArrayList<>(Arrays.asList(lines))
 
         then:
