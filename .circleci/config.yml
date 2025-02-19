@@ -817,11 +817,11 @@ workflows:
               only:
                 - main
     when:
-      and:
-        - << pipeline.git.branch >>
+      or:
         - matches:
-              pattern: release/5\..*
-              value: << pipeline.git.branch >>
+            pattern: release/5\..*
+            value: << pipeline.git.branch >>
+        - equal: [ main, << pipeline.git.branch >> ]
     jobs:
       - build-rundeck:
           name: Build with Docker image using JRE 17
