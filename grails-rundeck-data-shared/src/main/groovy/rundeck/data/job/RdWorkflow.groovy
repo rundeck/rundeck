@@ -25,7 +25,7 @@ class RdWorkflow implements WorkflowData, Validateable {
         strategy(nullable:false, maxSize: 256)
         steps(validator: { List<RdWorkflowStep> val, RdWorkflow obj, Errors errors ->
             if(!val) {
-                errors.rejectValue('steps', 'scheduledExecution.workflow.empty.message')
+                errors.rejectValue('steps', 'scheduledExecution.workflow.empty.message', 'Step must not be empty')
                 return
             }
             def frameworkService = Holders.grailsApplication.mainContext.getBean(FrameworkServiceCapabilities)

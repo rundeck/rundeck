@@ -2971,7 +2971,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (!scheduledExecution.workflow || !scheduledExecution.workflow.commands ||
             scheduledExecution.workflow.commands.isEmpty()) {
 
-            scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message')
+            scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message', 'Step must not be empty')
             failed= true
         }
         failed
