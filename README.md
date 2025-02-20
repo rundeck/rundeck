@@ -55,13 +55,16 @@ Produces: `rundeckapp/build/libs/rundeck-X.Y.war`
 
 ## Docker Build
 
-Uses the war artifact and produces a docker image.
+Uses the war artifact and creates the `rundeck/rundeck:SNAPSHOT` docker image:
 
-Creates image `rundeck/rundeck:SNAPSHOT`, you can define `-PdockerTags` to add additional tags
+```
+./gradlew :docker:officialBuild
+```
 
-    ./gradlew :docker:officialBuild
-
-<br />
+- `dockerTags` adds additional tags on the image
+-   - Ex: `-PdockerTags=local,local-RUN-123`
+- `jreVersion=openjdk-17-jre-headless` specifies the JRE version for the image
+  - Ex: `-PjreVersion=openjdk-17-jre-headless`
 
 # Documentation
 
