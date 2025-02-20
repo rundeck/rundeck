@@ -60,7 +60,7 @@ export class RootStore {
    * @param path API url path
    * @returns Promise<any>
    */
-  api(path: string) {
+  cachedApi(path: string) {
     if (this.requestCache[path] !== undefined) {
       return this.requestCache[path];
     }
