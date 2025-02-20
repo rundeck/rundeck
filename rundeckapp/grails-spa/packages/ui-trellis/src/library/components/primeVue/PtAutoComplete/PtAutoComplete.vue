@@ -4,6 +4,8 @@
     :suggestions="suggestions"
     :optionLabel="optionLabel"
     :name="name"
+    :placeholder="placeholder"
+    :class="{ 'p-invalid': invalid }"
     @complete="onComplete"
     @change="onChange"
     @input="updateValue"
@@ -41,6 +43,14 @@ export default defineComponent({
     optionLabel: {
       type: String,
       default: "label",
+    },
+    invalid: {
+      type: Boolean,
+      default: false,
+    },
+    placeholder: {
+      type: String,
+      default: "",
     },
   },
   emits: ["update:modelValue", "onChange", "onComplete"],
@@ -80,8 +90,12 @@ export default defineComponent({
       color: var(--colors-grey-600);
     }
 
-    &:hover{
+    &:hover {
       border-color: var(--colors-blue-500);
+    }
+    &:enabled:focus {
+      border-color: var(--colors-blue-500);
+      box-shadow: 0 0 0 0.2rem var(--colors-blue-100);
     }
 
     /* Error State */

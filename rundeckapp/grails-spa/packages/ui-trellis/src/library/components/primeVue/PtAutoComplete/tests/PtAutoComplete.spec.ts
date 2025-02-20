@@ -1,4 +1,4 @@
-import { mount} from "@vue/test-utils";
+import { mount } from "@vue/test-utils";
 import PtAutoComplete from "../PtAutoComplete.vue";
 import AutoComplete from "primevue/autocomplete";
 
@@ -11,6 +11,7 @@ const createWrapper = async (props = {}): Promise<any> => {
         { label: "Option 2", value: 2 },
       ],
       name: "test-autocomplete",
+      placeholder: "Type here...",
       emptySearchMessage: "No results found",
       ...props,
     },
@@ -62,5 +63,10 @@ describe("PtAutoComplete", () => {
     expect(wrapper.emitted("onComplete")[0]).toEqual([
       [{ label: "Option 1", value: 1 }],
     ]);
+  });
+  it("renders the correct placeholder text and empty search message", async () => {
+    const wrapper = await createWrapper({ placeholder: "Search here.." });
+    const input = wrapper.find("input.p-inputtext");
+    expect(input.attributes("placeholder")).toBe("Search here..");
   });
 });
