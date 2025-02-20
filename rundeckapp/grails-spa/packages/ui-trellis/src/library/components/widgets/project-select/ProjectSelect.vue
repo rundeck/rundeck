@@ -10,6 +10,7 @@
             class="form-control form-control-sm"
             v-model="searchTerm"
             placeholder="Search all projects"
+            data-testid="search-projects"
           />
         </div>
       </div>
@@ -57,6 +58,7 @@
               :value="item.name"
               class="vue-multiselect-checkbox"
               @click="handleSelect(item.name)"
+              :data-testid="`projectCheckbox-${item.name}`"
             />
             <span class="text-ellipsis">
               {{ item.label || item.name }}
@@ -86,6 +88,7 @@
         role="button"
         tabindex="0"
         class="btn btn-default scroller__subbutton"
+        data-testid="view-all-button"
         style="border-radius: 0px; border: 0px; border-right: solid 1px grey"
       >
         <i class="far fa-eye"></i>
@@ -96,6 +99,7 @@
         role="button"
         tabindex="0"
         class="btn btn-default scroller__subbutton"
+        data-testid="create-project-button"
         style="border-radius: 0px; border: 0px"
       >
         <i class="fas fa-plus-circle"></i>
