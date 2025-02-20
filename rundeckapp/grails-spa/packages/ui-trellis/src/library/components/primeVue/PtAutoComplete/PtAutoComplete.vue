@@ -5,7 +5,7 @@
     :optionLabel="optionLabel"
     :name="name"
     :placeholder="placeholder"
-    :class="{ 'p-invalid': invalid }"
+    :invalid="invalid"
     @complete="onComplete"
     @change="onChange"
     @input="updateValue"
