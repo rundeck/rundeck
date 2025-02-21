@@ -1,13 +1,15 @@
-import { RootStore } from "./RootStore";
 import { RundeckClient } from "@rundeck/client";
+import { getPluginDetail } from "../services/plugins";
 
 import { Serial } from "../utilities/Async";
+import { RootStore } from "./RootStore";
 
 export class PluginStore {
   plugins: Plugin[] = [];
 
   pluginsByService: { [key: string]: Plugin[] } = {};
   pluginsById: { [key: string]: Plugin[] } = {};
+  pluginDetailLoader: { [key: string]: Promise<any> } = {};
 
   constructor(
     readonly root: RootStore,
@@ -32,6 +34,23 @@ export class PluginStore {
     });
     this._refreshPluginGroups();
     return void 0;
+  }
+
+  /**
+   * Get the plugin detail for a service provider, caching the result
+   * @param serviceName
+   * @param provider
+   */
+  getPluginDetail(serviceName: string, provider: string) {
+    if (this.pluginDetailLoader[`${serviceName}/${provider}`] !== undefined) {
+      return this.pluginDetailLoader[`${serviceName}/${provider}`];
+    }
+
+    this.pluginDetailLoader[`${serviceName}/${provider}`] = getPluginDetail(
+      serviceName,
+      provider,
+    );
+    return this.pluginDetailLoader[`${serviceName}/${provider}`];
   }
 
   _refreshPluginGroups() {
