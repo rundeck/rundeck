@@ -1,5 +1,5 @@
 <template>
-  <modal v-model="modalShown" :title="title || $t('plugin.choose.title')">
+  <modal v-model="modalShown" :title="title || $t('plugin.choose.title')" size="lg">
     <slot></slot>
     <plugin-search
       v-if="showSearch"

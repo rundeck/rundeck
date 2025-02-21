@@ -9,7 +9,6 @@ const rundeckContext = getRundeckContext();
 const FilterInputComp = defineComponent({
   name: "NodeFilter",
   components: { NodeFilterInput },
-  inject: ["addUiMessages"],
   props: ["itemData", "extraAttrs"],
   data() {
     return {
@@ -30,6 +29,15 @@ const FilterInputComp = defineComponent({
       return !!this.extraAttrs.nodeFilterStore;
     },
   },
+  watch: {
+    isNodeStoreAvailable(val) {
+      if (val) {
+        if (this.extraAttrs.nodeFilterStore.selectedFilter) {
+          this.filterValue = this.extraAttrs.nodeFilterStore.selectedFilter;
+        }
+      }
+    },
+  },
   beforeUnmount() {
     //note: this removes subscriptions from knockout observable
     //@ts-ignore
@@ -38,7 +46,9 @@ const FilterInputComp = defineComponent({
   mounted() {
     this.attachKnockout(5);
     if (this.isNodeStoreAvailable) {
-      this.filterValue = this.extraAttrs.nodeFilterStore.selectedFilter;
+      if (this.extraAttrs.nodeFilterStore.selectedFilter) {
+        this.filterValue = this.extraAttrs.nodeFilterStore.selectedFilter;
+      }
     }
   },
   methods: {
@@ -238,7 +248,7 @@ function init() {
             };
           },
           template: `
-                      <filter-input-comp :project="project" :item-data="itemData"/>
+                      <filter-input-comp :project="project" :item-data="itemData" :extra-attrs="itemData.extraAttrs"/>
                     `,
         }),
       ),
