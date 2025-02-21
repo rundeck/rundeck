@@ -1,5 +1,5 @@
 <template>
-  <modal v-model="showModal" :title="$t('plugin.edit.title')">
+  <modal v-model="showModal" size="lg" :title="$t('plugin.edit.title')">
     <div v-if="error" class="alert alert-danger">
       <ErrorsList :errors="[errorMessage]" />
     </div>
@@ -601,6 +601,7 @@
     v-if="openJobSelectionModal"
     v-model="openJobSelectionModal"
     :title="$t('choose.a.job...')"
+    size="lg"
   >
     <ui-socket
       v-if="showFavoritesButton"

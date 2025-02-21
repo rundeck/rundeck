@@ -448,6 +448,18 @@ export default defineComponent({
 });
 </script>
 <style lang="scss">
+@media (min-width: 1280px) {
+  .modal-dialog {
+    min-width: 1024px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .modal-dialog {
+    width: 1280px;
+  }
+}
+
 .mb-10 {
   margin-bottom: 10px;
 }
