@@ -1,8 +1,8 @@
 
 hibernate {
-    cache.queries = true
-    cache.use_second_level_cache = true
-    cache.use_query_cache = true
+    cache.queries = false
+    cache.use_second_level_cache = false
+    cache.use_query_cache = false
     cache.region.factory_class = "jcache"
     cache.ehcache.missing_cache_strategy = "create"
     javax{
