@@ -78,6 +78,7 @@ const jobSections = [
     name: "JobEditWorkflowApp",
     component: { WorkflowEditorSection },
     elementClass: "job-editor-workflow-vue",
+    addUiMessages: true,
     visible: uiType === "next",
   },
   {
@@ -130,15 +131,6 @@ const mountSection = (section) => {
 };
 
 jobSections.forEach((section) => section.visible && mountSection(section));
-
-rootStore.ui.addItems([
-  {
-    section: "theme-select",
-    location: "after",
-    visible: true,
-    widget: markRaw(NextUiToggle),
-  },
-]);
 
 //on job edit page listen for dom content changes and install UI Sockets
 window.addEventListener("DOMContentLoaded", (event) => {

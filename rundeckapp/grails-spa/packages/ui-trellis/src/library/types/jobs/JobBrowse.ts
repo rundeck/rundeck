@@ -1,4 +1,4 @@
-export interface JobBrowseItem {
+type JobBrowseItem = {
   job: boolean;
   jobName?: string;
   groupPath: string;
@@ -7,11 +7,17 @@ export interface JobBrowseItem {
   meta?: JobBrowseMeta[];
 }
 
-export interface JobBrowseMeta {
+interface JobBrowseMeta {
   name: string;
   data: { [key: string]: any };
 }
-export interface JobBrowseList {
+interface JobBrowseList {
   path: string;
   items: JobBrowseItem[];
+}
+
+export {
+  JobBrowseItem,
+  JobBrowseMeta,
+  JobBrowseList
 }

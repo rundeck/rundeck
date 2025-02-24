@@ -300,13 +300,11 @@ export default defineComponent({
       required: false,
       default: "schedJobNodeFilter",
     },
-    /**
-     * if true, allow setting/removing default filter
-     */
     allowFilterDefault: {
       type: Boolean,
       required: false,
       default: false,
+      description: "if true, allow setting/removing default filter"
     },
   },
   emits: ["filters-updated", "filter", "update:modelValue"],

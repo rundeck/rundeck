@@ -2,7 +2,14 @@ import { mount, VueWrapper, flushPromises } from "@vue/test-utils";
 import ChoosePluginModal from "../ChoosePluginModal.vue";
 import PluginSearch from "../PluginSearch.vue";
 import { Popover, Tabs, Tab } from "uiv";
-
+jest.mock("@/library/rundeckService", () => ({
+  getRundeckContext: jest.fn().mockImplementation(() => ({
+    eventBus: { on: jest.fn(), emit: jest.fn() },
+    rdBase: "http://localhost:4440/",
+    projectName: "testProject",
+    apiVersion: "44",
+  })),
+}));
 jest.mock("@/library", () => ({
   getRundeckContext: jest.fn(() => ({
     rootStore: {

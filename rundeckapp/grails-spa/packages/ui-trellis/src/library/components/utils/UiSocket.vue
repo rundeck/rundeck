@@ -73,7 +73,7 @@ export default defineComponent({
         section: this.section,
         location: this.location,
         callback: (uiItems: UIItem[]) => {
-          this.items = uiItems;
+          this.items = uiItems.filter((item) => item.visible);
         },
       } as UIWatcher;
       this.rootStore.ui.addWatcher(this.uiwatcher);
