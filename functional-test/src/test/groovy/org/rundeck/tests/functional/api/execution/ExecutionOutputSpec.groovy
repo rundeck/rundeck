@@ -247,6 +247,10 @@ line 4 final'''
         return logs
     }
 
+    @Deprecated(forRemoval = true)
+    /*
+    This method is deprecated. Use the method getAllLogs() from BaseContainer to retrieve logs.
+    * */
     private List<String> getAllLogs(execid, Function<Map, String> paramGen) {
         def logs = []
         def logging = [

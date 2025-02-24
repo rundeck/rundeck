@@ -16,6 +16,7 @@ import spock.lang.Specification
 import java.text.SimpleDateFormat
 import java.time.Duration
 import java.util.function.Consumer
+import java.util.function.Function
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
@@ -568,6 +569,41 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         executeDockerActionOnRundeckContainer("stop")
         executeDockerActionOnRundeckContainer("start")
         waitForRundeckAppToBeResponsive()
+    }
+
+    List<String> getAllLogs(String execId, Function<Map, String> paramGen, int max=20) {
+        def logs = []
+        def logging = [
+                lastmod: "0",
+                offset : "0",
+                done   : false,
+        ]
+        def count = 1
+        while (!logging.done && count < max) {
+            def params = paramGen.apply(logging)
+            Map output = get("/execution/${execId}/output?${params}", Map)
+            assert output != null
+            assert output.id == execId
+            if (output.entries && output.entries.size() > 0) {
+                logs.addAll(output.entries*.log)
+            }
+            if (output.offset != null) {
+                logging.offset = output.offset
+            }
+            if (output.lastModified) {
+                logging.lastmod = output.lastModified
+            }
+            if (output.completed != null && output.execCompleted != null) {
+                logging.done = output.execCompleted && output.completed
+            }
+            if (output.unmodified == true) {
+                sleep(2000)
+            } else if (!logging.done) {
+                sleep(1000)
+            }
+            count++
+        }
+        return logs
     }
 
 }
