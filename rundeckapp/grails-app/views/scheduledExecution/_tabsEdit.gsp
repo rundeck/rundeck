@@ -33,9 +33,15 @@
                 <li>
                     <a href="#tab_workflow" data-toggle="tab">
                         <g:message code="job.edit.page.tab.workflow.title"/>
-                        <!-- ko if: inPageError() -->
-                        <b class="text-warning fas fa-exclamation-circle"></b>
-                        <!-- /ko -->
+                        <g:if test="${feature.isDisabled(name:'alphaUi') && uiType=='current'}">
+                            <!-- ko if: inPageError() -->
+                            <b class="text-warning fas fa-exclamation-circle"></b>
+                            <!-- /ko -->
+                        </g:if>
+
+                        <g:if test="${sectionProps.any{jobComponentValidation?.get(it.name) || scheduledExecution.errors?.hasFieldErrors('workflow')}}">
+                            <b class="text-warning fas fa-exclamation-circle "></b>
+                        </g:if>
                     </a>
                 </li>
                 <li>
@@ -78,9 +84,12 @@
                         <li>
                             <a href="#tab_execution_plugins" data-toggle="tab">
                                 <g:message code="job.edit.page.tab.execution.plugins.title" default="Execution Plugins"/>
-                                <!-- ko if: pluginsError() -->
-                                <b class="text-warning fas fa-exclamation-circle"></b>
-                                <!-- /ko -->
+
+                                <g:if test="${feature.isDisabled(name:'alphaUi') && uiType=='current'}">
+                                    <!-- ko if: pluginsError() -->
+                                    <b class="text-warning fas fa-exclamation-circle"></b>
+                                    <!-- /ko -->
+                                </g:if>
                             </a>
                         </li>
                     </g:if>
@@ -121,7 +130,6 @@
 </div>
 
 <div class="tab-content" id="page_job_edit">
-
     <g:render template="edit"
               model="['scheduledExecution': scheduledExecution, 'crontab': crontab, authorized: authorized, sessionOpts: sessionOpts, jobComponents: jobComponents]"/>
 </div>

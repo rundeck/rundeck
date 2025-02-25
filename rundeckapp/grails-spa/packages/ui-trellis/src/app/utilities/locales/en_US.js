@@ -939,6 +939,84 @@ const messages = {
   "workflow.search.help.string17": "property:name=value",
   "node.step.plugin.plural": "{0} Node Step Plugins",
   "workflow.step.plugin.plural": "{0} Workflow Step Plugins",
+  "Workflow.Step.jobreference.title": "Select job by",
+  "Workflow.Step.jobreference.name.label": "Name",
+  "Workflow.Step.jobreference.name.description":
+    "Use Name and group to search the job.",
+  "Workflow.Step.jobreference.uuid.label": "UUID",
+  "Workflow.Step.jobreference.uuid.description":
+    "Use jobs UUID to search the job.",
+  "Workflow.Step.jobreference.name-group.label": "Job Name/Group",
+  "choose.a.job...": "Choose A Job…",
+  "Workflow.Step.jobreference.jobName.help":
+    'Select an existing job by using the Project selector and "Choose a Job..." button above or by typing the job name and/or group in the boxes below.',
+  "scheduledExecution.groupPath.label": "Group Path",
+  "Workflow.Step.uuid.label": "UUID",
+  "Workflow.Step.jobreference.uuid.help":
+    "You can enter a job name or UUID, but if both UUID and job name are specified they must correspond to the same job.",
+  "Workflow.Step.argString.label": "Arguments",
+  "Workflow.Step.jobreference.import.options.label": "Import options?",
+  "Workflow.Step.jobreference.import.options.help":
+    "Pass as argument the parent job option values that match the options on the referenced job.",
+  "Workflow.Step.jobreference.ignore.notifications.label": "Skip notifications",
+  "Workflow.Step.jobreference.ignore.notifications.help":
+    "Skip any notification in the referenced job.",
+  "Workflow.Step.jobreference.fail.on.disabled.label":
+    "Fail on disabled execution?",
+  "Workflow.Step.jobreference.fail.on.disabled.help":
+    "If the referenced job has disabled execution, it will be considered a failure.",
+  "Workflow.Step.jobreference.child.nodes.label": "Use referenced job's nodes.",
+  "Workflow.Step.jobreference.child.nodes.help":
+    "If the referenced job is from another project, you can use referenced job node list instead of the parent's nodes.",
+  "override.node.filters": "Override Node Filters?",
+  "JobExec.property.nodeFilter.help.description":
+    "Enter a node filter to override the triggered Job's target nodes. If you enter    a new filter string, you can also change the Thread Count, and behavior if the Job    fails for a node.",
+  "scheduledExecution.property.nodeIntersect.label": "Intersection of nodes",
+  "scheduledExecution.property.nodeIntersect.false":
+    "No, use referenced job defined or overridden node filter",
+  "scheduledExecution.property.nodeIntersect.true":
+    "Yes, create node intersection with current job nodes",
+  "node.filter.prompt": "Node Filter",
+  "JobExec.property.nodeThreadcount.null.description":
+    "If blank, use the Thread Count defined for the triggered Job.",
+  "JobExec.property.nodeKeepgoing.null.description":
+    "Maintain the behavior defined for the triggered Job",
+  "Workflow.property.keepgoing.true.description":
+    "Run remaining steps before failing.",
+  "Workflow.property.keepgoing.false.description": "Stop at the failed step.",
+  "JobExec.property.nodeRankOrder.null.description":
+    "Maintain the ordering defined in the triggered Job",
+  "JobExec.nodeStep.title": "Run as a",
+  "JobExec.nodeStep.true.description":
+    "Executes for each Node and allows use of node context variables as arguments to the job.",
+  "JobExec.nodeStep.false.label": "Workflow Step",
+  "JobExec.nodeStep.false.description":
+    "Executes only once and has no node context information.",
+  "Workflow.Step.jobreference.argString.placeholder":
+    "Enter arguments, e.g. -option1 value -option2 value",
+  "Workflow.Step.jobreference.uuid.placeholder":
+    "Enter UUID, e.g. 5910b723-2436-4497-96d5-49a08db95d2b",
+  "select.an.existing.job.to.use": "Select an existing Job to use",
+  "plugin.edit.title": "Edit step",
+  "Workflow.step.property.description.placeholder":
+    "Label or description of this step",
+  "enter.a.node.filter.override":
+    "Enter a filter string. Leave blank to use the filter defined for the triggered job.",
+  "notification.create": "Create Notification",
+  "notification.edit": "Edit Notification",
+  "mynode1.mynode2": "mynode1 mynode2",
+  include: "Include",
+  exclude: "Exclude",
+  attribute: "attribute",
+  value: "value",
+  Search: "Search",
+  "step.type.jobreference.project.label": "Current Project ({0})",
+  "no.jobs.in.this.project": "No Jobs in this Project",
+  "JobExec.property.nodeFilter.null.description":
+    "The nodes used will be those defined for the triggered Job.",
+  "commandExec.jobName.blank.message": "Job must be specified",
+  "results.truncated.count.results.shown":"Results truncated. {0} results shown.",
+  "options.label": "Options",
 };
 
 export default messages;
