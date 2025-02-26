@@ -17,7 +17,7 @@ const vue = createApp({
 });
 vue.use(uiv);
 vue.use(i18n);
-vue.provide("addUiMessages", async (messages) => {
+vue.provide("addUiMessages", async (messages: any[]) => {
   const newMessages = messages.reduce(
     (acc: any, message: UiMessage) => (message ? { ...acc, ...message } : acc),
     {},

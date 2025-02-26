@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
-    "strict": false,
+    "strict": true,
     "jsx": "preserve",
     "importHelpers": true,
     "moduleResolution": "node",
@@ -32,6 +32,7 @@
   "exclude": [
     "src/library/stories",
     "src/library/components",
+    "src/app/**/*.spec.ts",
     "src/library/**/*.spec.ts",
     "src/library/**/*.stories.tsx",
     "node_modules"

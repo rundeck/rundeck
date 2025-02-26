@@ -10,7 +10,7 @@ export const getTours = () => {
       .get(TourConstants.tourManifestUrl, getHeaderObject())
       .then((response) => {
         if (response && response.data && response.data.length) {
-          _.each(response.data, (tourLoader) => {
+          _.each(response.data, (tourLoader: any) => {
             tours.push(tourLoader);
           });
           resolve(tours);

@@ -58,7 +58,7 @@ const shallowMountActivityList = async (
   await wrapper.vm.$nextTick();
   return wrapper as VueWrapper<ActivityListInstance>;
 };
-let reports;
+let reports: string|any[]: string|any[]: string|any[]: string|any[]: string|any[];
 describe("ActivityList", () => {
   beforeAll(() => {
     jest.useFakeTimers();

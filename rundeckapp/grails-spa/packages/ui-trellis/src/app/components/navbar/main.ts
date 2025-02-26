@@ -97,7 +97,7 @@ function initUtil() {
   vue.use(VueCookies);
   vue.use(i18n);
   vue.use(uiv);
-  vue.provide("addUiMessages", async (messages) => {
+  vue.provide("addUiMessages", async (messages: any) => {
     await commonAddUiMessages(i18n, messages);
   });
   vue.mount(elm);

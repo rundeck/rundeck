@@ -33,11 +33,11 @@ const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
   return wrapper;
 };
 
-const assertRenderedItems = (wrapper, itemsArray = []) => {
+const assertRenderedItems = (wrapper: VueWrapper<any,any>, itemsArray = []) => {
   expect(wrapper.find(".item-container").exists()).toBe(true);
   const allRenderedItems = wrapper.findAll('[data-test="rendered-items"]');
   expect(allRenderedItems).toHaveLength(itemsArray.length);
-  expect(allRenderedItems.map((e) => e.text())).toStrictEqual(
+  expect(allRenderedItems.map((e: { text: () => any; }) => e.text())).toStrictEqual(
     itemsArray.map((item) => item.name),
   );
 };

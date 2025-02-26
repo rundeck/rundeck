@@ -76,10 +76,10 @@ function initUiComponents(elmElement: any) {
   // keeping primeVue unstyled at first to avoid unexpected conflicts
   vue.use(PrimeVue, { unstyled: true });
 
-  vue.provide("registerComponent", (name, comp) => {
+  vue.provide("registerComponent", (name: string, comp: any) => {
     vue.component(name, comp);
   });
-  vue.provide("addUiMessages", async (messages) => {
+  vue.provide("addUiMessages", async (messages: Record<string,any>) => {
     const newMessages = messages.reduce(
       (acc: any, message: UiMessage) =>
         message ? { ...acc, ...message } : acc,

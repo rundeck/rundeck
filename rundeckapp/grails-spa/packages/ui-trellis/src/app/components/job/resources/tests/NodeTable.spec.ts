@@ -60,7 +60,7 @@ describe("NodeTable Component", () => {
     expect(nodeIcons.at(1).classes()).toContain("fa-hdd");
     // Check node colors
     const nodeColors = wrapper.findAll('[data-testid="node-icon"]');
-    nodeColors.forEach((colorWrapper) => {
+    nodeColors.forEach((colorWrapper: { attributes: (arg0: string) => any; }) => {
       const styleAttribute = colorWrapper.attributes("style");
       expect(styleAttribute).toMatch(/color:\s*(red|blue);?/);
     });
@@ -109,7 +109,7 @@ describe("NodeTable Component", () => {
     const pages = wrapper.findAll("#nodesPaging li");
     expect(pages.length).toBe(5);
 
-    const arrayOfPageTexts = pages.map((page) => page.text());
+    const arrayOfPageTexts = pages.map((page: { text: () => any; }) => page.text());
     expect(arrayOfPageTexts).toEqual([
       "default.paginate.prev",
       "1",
@@ -128,7 +128,7 @@ describe("NodeTable Component", () => {
     await wrapper.vm.$nextTick();
     const pages = wrapper.findAll("#nodesPaging li");
 
-    const arrayOfPageTexts = pages.map((page) => page.text());
+    const arrayOfPageTexts = pages.map((page: { text: () => any; }) => page.text());
     expect(arrayOfPageTexts).toEqual([
       "default.paginate.prev",
       "1",

@@ -1,8 +1,8 @@
-const isObject = (item) => {
+const isObject = (item: any) => {
   return item && typeof item === "object" && !Array.isArray(item);
 };
 
-const mergeDeep = (target, ...sources) => {
+const mergeDeep = (target: { [x: string]: any; }, ...sources: any[]) => {
   if (!sources.length) return target;
   const source = sources.shift();
 

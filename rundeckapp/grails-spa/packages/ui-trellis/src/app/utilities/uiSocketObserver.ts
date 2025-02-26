@@ -5,6 +5,7 @@ import { getRundeckContext } from "../../library";
 import UiSocket from "../../library/components/utils/UiSocket.vue";
 import { initI18n, updateLocaleMessages } from "./i18n";
 import { createApp } from "vue";
+import {UiMessage} from "../../library/stores/UIStore";
 
 export const observer = new MutationObserver(function (mutations_list) {
   mutations_list.forEach(function (mutation) {
@@ -36,9 +37,9 @@ export const observer = new MutationObserver(function (mutations_list) {
             },
           );
 
-          vue.provide("addUiMessages", async (messages) => {
+          vue.provide("addUiMessages", async (messages: Record<string,any>) => {
             const newMessages = messages.reduce(
-              (acc, message) => (message ? { ...acc, ...message } : acc),
+              (acc: any, message: UiMessage) => (message ? { ...acc, ...message } : acc),
               {},
             );
             const locale = getRundeckContext().locale || "en_US";
@@ -47,6 +48,7 @@ export const observer = new MutationObserver(function (mutations_list) {
           });
 
           vue.use(i18n);
+          //@ts-expect-error
           vue.use(uiv);
           vue.mount(socketElem, true);
         }
