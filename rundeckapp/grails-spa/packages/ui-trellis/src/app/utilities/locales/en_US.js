@@ -909,6 +909,10 @@ const messages = {
     stepLabel: "Step label",
     noSteps: "No workflow steps",
     addErrorHandler: "Add Error Handler",
+    errorHandler: "Error handler",
+    errorHandlerDescription:
+        "The error handler will execute if the step fails.",
+    editErrorHandler: "Edit error handler",
   },
   "plugin.choose.title": "Choose a Plugin",
   "plugin.type.WorkflowStep.title.plural": "Workflow Steps",
@@ -1017,6 +1021,8 @@ const messages = {
   "commandExec.jobName.blank.message": "Job must be specified",
   "results.truncated.count.results.shown":"Results truncated. {0} results shown.",
   "options.label": "Options",
+  "Workflow.stepErrorHandler.keepgoingOnSuccess.label":"Keep going on success.",
+  "Workflow.stepErrorHandler.keepgoingOnSuccess.description":"If the Workflow keepgoing is false, this allows the Workflow to continue when the Error Handler is successful"
 };
 
 export default messages;

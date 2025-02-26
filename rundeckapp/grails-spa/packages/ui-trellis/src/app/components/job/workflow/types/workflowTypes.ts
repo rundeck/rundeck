@@ -90,6 +90,12 @@ export interface PluginStepData {
 export interface CommandData {
   description?: string;
   plugins?: { [key: string]: any };
+  errorhandler?: {
+    configuration: { [key: string]: any };
+    keepgoingOnSuccess: boolean;
+    nodeStep: boolean;
+    type: string;
+  }
 }
 
 export interface BasicData {

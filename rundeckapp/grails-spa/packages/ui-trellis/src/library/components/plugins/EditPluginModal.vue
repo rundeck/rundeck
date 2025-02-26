@@ -6,6 +6,7 @@
           :detail="provider"
           :show-description="true"
           :show-extended="false"
+          description-css="ml-5"
         ></plugin-info>
       </p>
       <plugin-config
@@ -19,6 +20,7 @@
         scope="Instance"
         default-scope="Instance"
         group-css=""
+        description-css="ml-5"
         data-testid="plugin-info"
       ></plugin-config>
       <slot name="extra"></slot>
@@ -133,4 +135,3 @@ export default defineComponent({
   },
 });
 </script>
-<style scoped lang="scss"></style>
