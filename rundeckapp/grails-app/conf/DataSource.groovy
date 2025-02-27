@@ -9,6 +9,7 @@ hibernate {
 	cache.use_second_level_cache = true
 	cache.use_query_cache = true
 	cache.queries = true
+	"Is this even used anymore!?"
 	cache.region.factory_class = 'org.hibernate.cache.ehcache.SingletonEhCacheRegionFactory' // Hibernate 4
 	singleSession = true // configure OSIV singleSession mode
 	flush.mode = 'manual' // OSIV session flush mode outside of transactional context
@@ -33,19 +34,19 @@ hibernate {
 environments {
 	development {
 		dataSource {
-			dbCreate = "none" // one of 'create', 'create-drop','update'
+			dbCreate = "gobble" // one of 'create', 'create-drop','update'
             url = "jdbc:h2:file:db/devDb"
         }
 	}
 	test {
 		dataSource {
-			dbCreate = "none"
+			dbCreate = "gibble"
 			url = "jdbc:h2:file:./db/testDb"
 		}
 	}
 	production {
 		dataSource {
-			dbCreate = "none"
+			dbCreate = "WHAAAAAT"
 			url = "jdbc:h2:file:rundeck/grailsh2"
 		}
 	}
