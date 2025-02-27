@@ -1,12 +1,14 @@
 <template>
   <AutoComplete
-    v-model="value"
-    :suggestions="suggestions"
-    :optionLabel="optionLabel"
-    :name="name"
-    @complete="onComplete"
-    @change="onChange"
-    @input="updateValue"
+      v-model="value"
+      :suggestions="suggestions"
+      :optionLabel="optionLabel"
+      :name="name"
+      :placeholder="placeholder"
+      :invalid="invalid"
+      @complete="onComplete"
+      @change="onChange"
+      @input="updateValue"
   ></AutoComplete>
 </template>
 
@@ -16,7 +18,6 @@ import AutoComplete, {
   AutoCompleteCompleteEvent,
   AutoCompleteChangeEvent,
 } from "primevue/autocomplete";
-
 
 export default defineComponent({
   name: "PtAutoComplete",
@@ -42,6 +43,14 @@ export default defineComponent({
     optionLabel: {
       type: String,
       default: "label",
+    },
+    invalid: {
+      type: Boolean,
+      default: false,
+    },
+    placeholder: {
+      type: String,
+      default: "",
     },
   },
   emits: ["update:modelValue", "onChange", "onComplete"],
@@ -70,7 +79,29 @@ export default defineComponent({
 </script>
 
 <style lang="scss">
-.p-inputtext {
-  background: var(--color-white);
+.p-autocomplete {
+  /* Default state */
+  .p-inputtext {
+    background-color: var(--colors-white);
+    border: 1px solid var(--colors-grey-500);
+    color: var(--colors-grey-900);
+
+    &::placeholder {
+      color: var(--colors-grey-600);
+    }
+
+    &:hover {
+      border-color: var(--colors-blue-500);
+    }
+    &:enabled:focus {
+      border-color: var(--colors-blue-500);
+      box-shadow: 0 0 0 0.2rem var(--colors-blue-100);
+    }
+
+    /* Error State */
+    &.p-invalid {
+      border-color: var(--colors-red-500);
+    }
+  }
 }
 </style>
