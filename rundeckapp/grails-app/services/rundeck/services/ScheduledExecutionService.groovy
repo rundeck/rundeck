@@ -1108,20 +1108,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
 
             try {
-                ScheduledExecution.withNewTransaction { status ->
-                    // ScheduledExecution was updated and committed in the previous nested transaction.
-                    // Refresh it before moving forward.
-                    se.refresh()
-
-                    // Schedule the job on quartz.
-                    scheduleJob(se, null, null, true)
-
-                    // Schedule any ad-hoc executions for the job on quartz.
-                    scheduleAdHocExecutionsForJob(se, toServerUuid)
-                }
-                log.info("Rescheduled job in project ${se.project}: ${se.extid}")
-            } catch (Exception e) {
-                log.error("Job not rescheduled in project ${se.project}: ${se.extid}: ${e.message}", e)
+                WaitUtils.waitFor(
+                        scheduledJobScheduler(se, toServerUuid),
+                        { it == true },
+                        Duration.ofSeconds(30),
+                        Duration.ofSeconds(5)
+                )
+                log.info("Rescheduled job ${se.extid} in project ${se.project}")
+            } catch (ResourceAcceptanceTimeoutException ex) {
+                log.error("Error rescheduling job ${se.extid} in project ${se.project} before the timeout", ex)
                 claimed[se.extid]["success"] = false
             }
         }
@@ -1146,6 +1141,32 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
 
             return claimResult
+        }
+    }
+
+    /**
+     * A function that attempts to schedule a ScheduledExecution on a server in an isolated transaction.
+     * @return true if the job was scheduled without exception. False otherwise.
+     */
+    private Supplier<Boolean> scheduledJobScheduler(ScheduledExecution se, String toServerUuid) {
+        return {
+            try {
+                ScheduledExecution.withNewTransaction { status ->
+                    // ScheduledExecution was loaded in a separate transaction, so we refresh it.
+                    se.refresh()
+
+                    // Schedule the job on quartz.
+                    scheduleJob(se, null, null, true)
+
+                    // Schedule any ad-hoc executions for the job on quartz.
+                    scheduleAdHocExecutionsForJob(se, toServerUuid)
+                }
+                log.info("Rescheduled job in project ${se.project}: ${se.extid}")
+                return true
+            } catch (Exception e) {
+                log.warn("Exeception during job scheduling ${se.project}: ${se.extid}: ${e.message}", e)
+                return false
+            }
         }
     }
 
