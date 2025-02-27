@@ -17,6 +17,8 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
+import com.dtolabs.rundeck.core.utils.ResourceAcceptanceTimeoutException
+import com.dtolabs.rundeck.core.utils.WaitUtils
 import org.springframework.jdbc.core.RowCallbackHandler
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -138,7 +140,9 @@ import java.sql.ResultSet
 import java.sql.SQLException
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
+import java.time.Duration
 import java.util.concurrent.TimeUnit
+import java.util.function.Supplier
 import java.util.stream.Collectors
 
 
@@ -1070,9 +1074,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def originalServerId = se.serverNodeUUID
 
             try {
-                def claimResult = ScheduledExecution.withNewTransaction { status ->
-                    return claimScheduledJob(se, toServerUuid)
-                }
+                def claimResult = WaitUtils.waitFor(
+                        scheduledJobClaimer(se, toServerUuid),
+                        { it != null },
+                        Duration.ofSeconds(30),
+                        Duration.ofSeconds(5)
+                )
+
                 // Note that the ScheduledExecution in se does not contain the updates from the previous transaction.
                 // Use with care.
 
@@ -1082,8 +1090,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         previousServerId: originalServerId,
                         executions      : claimResult.executions
                 ]
-            } catch (Exception e) {
-                log.error("Error claiming scheduled execution ${se.extid}.", e)
+
+            } catch (ResourceAcceptanceTimeoutException ex) {
+                log.error("Error claiming scheduled execution ${se.extid} before the timeout", ex)
 
                 claimed[se.extid] = [
                         success         : false,
@@ -1118,6 +1127,26 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         return claimed
+    }
+
+    /**
+     * A function that attempts to claim a ScheduledExecution by a server in an isolated transaction.
+     */
+    private Supplier<Map> scheduledJobClaimer(ScheduledExecution se, String toServerUuid) {
+        return {
+            def claimResult
+            try {
+                claimResult = ScheduledExecution.withNewTransaction { status ->
+                    return claimScheduledJob(se, toServerUuid)
+                }
+
+            } catch (Exception e) {
+                log.warn("Unable to claim scheduled execution ${se.extid}.", e)
+                claimResult = null
+            }
+
+            return claimResult
+        }
     }
 
     private def scheduleAdHocExecutionsForJob(ScheduledExecution se, String targetServerUUID) {

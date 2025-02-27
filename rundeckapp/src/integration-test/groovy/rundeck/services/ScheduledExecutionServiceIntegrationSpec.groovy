@@ -48,6 +48,43 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
         ] + overrides
     }
 
+    def "reclaimAndScheduleJobByJob successfully moves a scheduled job to the new current server"() {
+        given:
+        def project = 'testProject'
+        def seOneId = UUID.randomUUID().toString()
+
+        def se = ScheduledExecution.withNewTransaction {
+            def workflow = new Workflow(commands: []).save(flush: true, failOnError: true)
+            return new ScheduledExecution(
+                    jobName: 'callisto-one',
+                    groupPath: 'group/reclaimAndScheduleJobByJob',
+                    uuid: seOneId,
+                    serverNodeUUID: TEST_UUID1,
+                    project: project,
+                    workflow: workflow,
+                    scheduled: false
+            ).save(flush: true, failOnError: true)
+        }
+
+        service.frameworkService = Stub(FrameworkService) {
+            existsFrameworkProject(project) >> true
+            isClusterModeEnabled() >> true
+            getServerUUID() >> TEST_UUID2
+        }
+        service.executionServiceBean = Mock(ExecutionService) {
+            getExecutionsAreActive() >> true
+        }
+        service.jobSchedulesService = Mock(JobSchedulesService) {
+            1 * getSchedulesJobToClaim(TEST_UUID2, null, true, null, null) >> [se]
+        }
+
+        when:
+        def results = service.reclaimAndScheduleJobByJob()
+
+        then:
+        results[seOneId]["success"] == true
+    }
+
     def "reclaiming scheduled jobs includes ad hoc scheduled"() {
         given:
         def project = 'testProject'
