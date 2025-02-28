@@ -58,22 +58,37 @@
               "
             />
             <div v-if="element.errorhandler" class="error-handler-section">
-              <hr />
-              <strong>{{ $t("Workflow.errorHandler") }}:</strong>
-              <plugin-config
-                  :service-name="
-                  element.errorhandler.nodeStep
-                    ? ServiceType.WorkflowNodeStep
-                    : ServiceType.WorkflowStep
-                "
-                  :provider="element.errorhandler.type"
-                  :config="element.errorhandler.configuration"
-                  :read-only="true"
-                  :show-title="true"
-                  :show-icon="true"
-                  :show-description="true"
-                  mode="show"
-              />
+              <div class="error-handler-section--content">
+                  <strong>{{ $t("Workflow.stepErrorHandler.label.on.error") }}:</strong>
+                  <plugin-config
+                      :service-name="
+                    element.errorhandler.nodeStep
+                      ? ServiceType.WorkflowNodeStep
+                      : ServiceType.WorkflowStep
+                  "
+                      :provider="element.errorhandler.type"
+                      :config="element.errorhandler.configuration"
+                      :read-only="true"
+                      :show-title="true"
+                      :show-icon="true"
+                      :show-description="true"
+                      mode="show"
+                      class="configuration"
+                      @click=""
+                  />
+                  <span
+                      v-if="element.errorhandler.keepgoingOnSuccess"
+                      :title="$t('Workflow.stepErrorHandler.keepgoingOnSuccess.description')"
+                      class="succeed"
+                  >
+                  {{ $t("Workflow.stepErrorHandler.label.keep.going.on.success") }}
+                </span>
+              </div>
+              <div class="btn-group" role="group" aria-label="item controls">
+                  <button class="btn btn-xs btn-default">
+                    <i class="glyphicon glyphicon-remove"></i>
+                  </button>
+                </div>
             </div>
           </div>
           <div class="step-item-controls">
@@ -103,7 +118,7 @@
                   <span class="caret"></span
                 ></btn>
                 <template #dropdown>
-                  <li>
+                  <li v-if="!element.errorhandler">
                     <a
                         role="button"
                         data-test="add-error-handler"
@@ -390,10 +405,11 @@ export default defineComponent({
         undo: Operation.Remove,
       });
     },
-    editStepByIndex(index: number) {
+    editStepByIndex(index: number, isErrorHandler: boolean = false) {
       this.editIndex = index;
+
       const command = this.model.commands[index];
-      this.editModel = cloneDeep(command);
+      this.editModel = isErrorHandler ? cloneDeep(command.errorhandler.configuration) : cloneDeep(command);
       this.editExtra = cloneDeep(command);
 
       this.editService = command.nodeStep
@@ -599,6 +615,31 @@ export default defineComponent({
         margin-left: 5px;
       }
     }
+  }
+
+  .error-handler-section {
+    border: 1px solid var(--list-item-border-color);
+    border-radius: 5px;
+    margin: 10px 0px 10px 20px;
+    padding: 10px;
+    display: flex;
+    justify-content: flex-end;
+
+    &--content {
+      flex-grow: 1;
+    }
+
+    .configuration {
+      padding: 5px;
+      border: 1px dotted transparent;
+
+      &:hover {
+        cursor: pointer;
+        background-color: var(--light-gray);
+        border-color: #68b3c8;
+      }
+    }
+
   }
 }
 </style>

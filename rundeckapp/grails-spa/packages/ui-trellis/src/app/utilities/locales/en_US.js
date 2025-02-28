@@ -1022,7 +1022,9 @@ const messages = {
   "results.truncated.count.results.shown":"Results truncated. {0} results shown.",
   "options.label": "Options",
   "Workflow.stepErrorHandler.keepgoingOnSuccess.label":"Keep going on success.",
-  "Workflow.stepErrorHandler.keepgoingOnSuccess.description":"If the Workflow keepgoing is false, this allows the Workflow to continue when the Error Handler is successful"
+  "Workflow.stepErrorHandler.keepgoingOnSuccess.description":"If the Workflow keepgoing is false, this allows the Workflow to continue when the Error Handler is successful",
+  "Workflow.stepErrorHandler.label.on.error": "on error",
+  "Workflow.stepErrorHandler.label.keep.going.on.success": "keep going on success"
 };
 
 export default messages;

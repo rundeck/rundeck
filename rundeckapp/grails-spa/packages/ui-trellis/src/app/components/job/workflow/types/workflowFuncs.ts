@@ -34,6 +34,7 @@ export function commandToEditConfig(cmd: StepData): CommandEditData {
     description: cmd.description,
     id: mkid(),
     filters: cmd.plugins?.LogFilter || [],
+    errorhandler: cmd.errorhandler
   } as CommandEditData;
   if (cmd.type) {
     editData.type = cmd.type;
@@ -81,6 +82,7 @@ export function editToCommandConfig(plugin: EditStepData): StepData {
   let data = {
     description: plugin.description,
     nodeStep: plugin.nodeStep,
+    errorhandler: plugin.errorhandler
   } as StepData;
   if (plugin.filters && plugin.filters.length > 0) {
     data.plugins = {
