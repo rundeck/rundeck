@@ -62,7 +62,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                     serverNodeUUID: TEST_UUID1,
                     project: project,
                     workflow: workflow,
-                    scheduled: false
+                    scheduled: true
             ).save(flush: true, failOnError: true)
         }
 
@@ -76,13 +76,17 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
         }
         service.jobSchedulesService = Mock(JobSchedulesService) {
             1 * getSchedulesJobToClaim(TEST_UUID2, null, true, null, null) >> [se]
+            isScheduled(se.uuid) >> se.scheduled
         }
 
         when:
         def results = service.reclaimAndScheduleJobByJob()
 
         then:
+        def actualScheduledExecution = ScheduledExecution.get(se.id)
+
         results[seOneId]["success"] == true
+        actualScheduledExecution.serverNodeUUID == TEST_UUID2
     }
 
     def "reclaiming scheduled jobs includes ad hoc scheduled"() {
