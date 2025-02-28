@@ -8,7 +8,6 @@ class RequestAwareLinkGenerator extends DefaultLinkGenerator implements LinkGene
 
     RequestAwareLinkGenerator(String serverBaseURL, String contextPath) {
         super(serverBaseURL, contextPath)
-        println "RequestAwareLinkGenerator = ${serverBaseURL} ${contextPath}"
     }
 
     RequestAwareLinkGenerator(String serverBaseURL) {
