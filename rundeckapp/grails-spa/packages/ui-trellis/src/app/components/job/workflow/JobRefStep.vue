@@ -1,11 +1,13 @@
 <template>
-  <div>
-    <i class="glyphicon glyphicon-book"></i>
-    {{ fullName }}
-    <template v-if="step.jobref.project">
-      ({{ step.jobref.project }})
-    </template>
-    <div v-if="step.jobref.args" class="argString">
+  <div class="flex flex-col">
+    <p>
+      <i class="glyphicon glyphicon-book"></i>
+      {{ fullName }}
+      <span class="info" v-if="step.jobref.project">
+        ({{ step.jobref.project }})
+      </span>
+    </p>
+    <p v-if="step.jobref.args" class="argString">
       <template v-if="parsed">
         <template v-for="(entry, key) in parsed" :key="key">
           <span class="optkey"> {{ key }} </span>
@@ -13,13 +15,13 @@
         </template>
       </template>
       <code class="optvalue">{{ step.jobref.args }}</code>
-    </div>
-    <template v-if="step.nodeStep">
+    </p>
+    <p v-if="step.jobref.nodeStep">
       <i class="fas fa-hdd"></i>
       <span class="info note">
         {{ $t("JobExec.nodeStep.true.label") }}
       </span>
-    </template>
+    </p>
   </div>
 </template>
 <script lang="ts">
@@ -81,4 +83,11 @@ export default defineComponent({
   },
 });
 </script>
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+p {
+  margin-bottom: 0;
+}
+.info {
+  margin-left: 5px;
+}
+</style>

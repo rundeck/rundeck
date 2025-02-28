@@ -13,50 +13,117 @@
       <li>
         <div class="step-list-item">
           <div class="step-item-display">
-            <div
-              :id="`wfitem_${index}`"
-              class="step-item-config"
-              data-test="edit-step-item"
-              :title="$t('Workflow.clickToEdit')"
-              @click="editStepByIndex(index)"
-            >
-              <plugin-config
-                v-if="!element.jobref"
-                :service-name="
+            <div class="step-item-row">
+              <div
+                  :id="`wfitem_${index}`"
+                  class="step-item-config"
+                  data-test="edit-step-item"
+                  :title="$t('Workflow.clickToEdit')"
+                  @click="editStepByIndex(index)"
+              >
+                <plugin-config
+                    v-if="!element.jobref"
+                    :service-name="
                   element.nodeStep
                     ? ServiceType.WorkflowNodeStep
                     : ServiceType.WorkflowStep
                 "
-                :provider="element.type"
-                :config="element.config"
-                :read-only="true"
-                :show-title="true"
-                :show-icon="true"
-                :show-description="true"
-                mode="show"
-              >
-                <template v-if="element.nodeStep" #iconSuffix>
-                  <i class="fas fa-hdd"></i>
-                </template>
-              </plugin-config>
-              <job-ref-step v-else :step="element"></job-ref-step>
+                    :provider="element.type"
+                    :config="element.config"
+                    :read-only="true"
+                    :show-title="true"
+                    :show-icon="true"
+                    :show-description="true"
+                    mode="show"
+                >
+                  <template v-if="element.nodeStep" #iconSuffix>
+                    <i class="fas fa-hdd node-icon"></i>
+                  </template>
+                </plugin-config>
+                <job-ref-step v-else :step="element"></job-ref-step>
+                <div v-if="element.description" class="wfstep-description">
+                  {{ element.description }}
+                </div>
+              </div>
+              <div class="step-item-controls">
+                <div
+                    class="btn-group"
+                    role="group"
+                    :aria-label="$t('Workflow.itemControls')"
+                >
+                  <btn
+                      size="xs"
+                      style="min-height: 21px"
+                      @click.stop="editStepByIndex(index)"
+                  >
+                    <i class="fas fa-edit"></i>
+                    {{ $t("Workflow.edit") }}
+                  </btn>
+                  <btn
+                      size="xs"
+                      :title="$t('Workflow.duplicateStep')"
+                      @click.stop="duplicateStep(index)"
+                  >
+                    <i class="glyphicon glyphicon-duplicate"></i>
+                  </btn>
+                  <dropdown menu-right>
+                    <btn size="xs" data-role="trigger"
+                    ><i class="glyphicon glyphicon-cog"></i>
+                      <span class="caret"></span
+                      ></btn>
+                    <template #dropdown>
+                      <li v-if="!element.errorhandler">
+                        <a
+                            role="button"
+                            data-test="add-error-handler"
+                            @click="toggleAddErrorHandlerModal(index)"
+                        >
+                          {{ $t("Workflow.addErrorHandler") }}
+                        </a>
+                      </li>
+                      <li v-if="!element.jobref">
+                        <a
+                            role="button"
+                            data-test="add-log-filter"
+                            @click="addLogFilterForIndex(element.id)"
+                        >
+                          {{ $t("Workflow.addLogFilter") }}
+                        </a>
+                      </li>
+                    </template>
+                  </dropdown>
+                  <btn
+                      size="xs"
+                      type="danger"
+                      :title="$t('Workflow.deleteThisStep')"
+                      data-test="remove-step"
+                      @click.prevent="removeStep(index)"
+                  >
+                    <i class="glyphicon glyphicon-remove"></i>
+                  </btn>
+                </div>
+
+                <span
+                    class="btn btn-xs dragHandle"
+                    :title="$t('Workflow.dragToReorder')"
+                >
+              <i class="glyphicon glyphicon-resize-vertical"></i>
+            </span>
+              </div>
             </div>
 
-            <div v-if="element.description" class="wfstep-description">
-              {{ element.description }}
-            </div>
-
-            <log-filters
-              v-if="!element.jobref"
-              :model-value="element.filters"
-              :title="$t('Workflow.logFilters')"
-              :subtitle="stepTitle(element, index)"
-              :add-event="'step-action:add-logfilter:' + element.id"
-              mode="inline"
-              @update:model-value="
+            <div v-if="!element.jobref && element.filters.length > 0" class="step-item-logfilters">
+              <log-filters
+                  :model-value="element.filters"
+                  :title="$t('Workflow.logFilters')"
+                  :subtitle="stepTitle(element, index)"
+                  :add-event="'step-action:add-logfilter:' + element.id"
+                  mode="inline"
+                  @update:model-value="
                 updateHistoryWithLogFiltersData(index, $event)
               "
-            />
+              />
+            </div>
             <div v-if="element.errorhandler" class="error-handler-section">
               <div class="error-handler-section--content">
                   <strong>{{ $t("Workflow.stepErrorHandler.label.on.error") }}:</strong>
@@ -91,71 +158,7 @@
                 </div>
             </div>
           </div>
-          <div class="step-item-controls">
-            <div
-              class="btn-group"
-              role="group"
-              :aria-label="$t('Workflow.itemControls')"
-            >
-              <btn
-                size="xs"
-                style="min-height: 21px"
-                @click.stop="editStepByIndex(index)"
-              >
-                <i class="fas fa-edit"></i>
-                {{ $t("Workflow.edit") }}
-              </btn>
-              <btn
-                size="xs"
-                :title="$t('Workflow.duplicateStep')"
-                @click.stop="duplicateStep(index)"
-              >
-                <i class="glyphicon glyphicon-duplicate"></i>
-              </btn>
-              <dropdown menu-right>
-                <btn size="xs" data-role="trigger"
-                  ><i class="glyphicon glyphicon-cog"></i>
-                  <span class="caret"></span
-                ></btn>
-                <template #dropdown>
-                  <li v-if="!element.errorhandler">
-                    <a
-                        role="button"
-                        data-test="add-error-handler"
-                        @click="toggleAddErrorHandlerModal(index)"
-                    >
-                      {{ $t("Workflow.addErrorHandler") }}
-                    </a>
-                  </li>
-                  <li v-if="!element.jobref">
-                    <a
-                      role="button"
-                      data-test="add-log-filter"
-                      @click="addLogFilterForIndex(element.id)"
-                    >
-                      {{ $t("Workflow.addLogFilter") }}
-                    </a>
-                  </li>
-                </template>
-              </dropdown>
-              <btn
-                size="xs"
-                type="danger"
-                :title="$t('Workflow.deleteThisStep')"
-                data-test="remove-step"
-                @click.prevent="removeStep(index)"
-              >
-                <i class="glyphicon glyphicon-remove"></i>
-              </btn>
-            </div>
 
-            <span
-              class="btn btn-xs dragHandle"
-              :title="$t('Workflow.dragToReorder')"
-            >
-              <i class="glyphicon glyphicon-resize-vertical"></i>
-            </span>
-          </div>
         </div>
       </li>
     </template>
@@ -556,9 +559,6 @@ export default defineComponent({
   }
 }
 
-.mb-10 {
-  margin-bottom: 10px;
-}
 .step-list-item {
   background: var(--card-default-background-color);
   border: 1px solid var(--list-item-border-color);
@@ -569,14 +569,18 @@ export default defineComponent({
   flex-direction: row;
   justify-content: space-between;
   align-items: flex-start;
+  overflow: hidden;
 
   .step-item-display {
-    flex-grow: 1;
-    padding: 5px;
+    width: 100%;
+
     .step-item-config {
       border-width: 1px;
       border-style: dotted;
       border-color: transparent;
+      padding: 5px;
+      flex-grow: 1;
+      overflow: hidden;
 
       &:hover {
         cursor: pointer;
@@ -584,16 +588,12 @@ export default defineComponent({
         border-color: #68b3c8;
       }
 
-      .fas {
+      .node-icon {
         margin-left: 5px;
       }
 
-      .item-container {
-        max-width: 700px;
-        overflow: hidden;
-      }
-
       .configpair {
+        max-width: 700px;
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
@@ -602,25 +602,58 @@ export default defineComponent({
           display: flex;
           gap: 5px;
         }
+      }
 
+      .argString {
+        max-width: 700px;
+        overflow: hidden;
+      }
+
+      .optvalue,
+      .text-success {
+        max-width: calc(90% - 100px);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+
+      @media (max-width: 700px) {
+        .optvalue,
         .text-success {
-          max-width: 700px;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          overflow: hidden;
+          max-width: 80%;
+          white-space: wrap;
         }
       }
+    }
 
-      span[data-testid="block-description"] {
-        margin-left: 5px;
+    :deep(.node-icon) {
+      display: inline-block;
+      margin: 0 5px;
+    }
+  }
+
+  .step-item-row {
+    display: flex;
+    justify-content: stretch;
+    gap: 10px;
+
+    .step-item-controls {
+      margin-top: 5px;
+      flex-shrink: 0;
+
+      .btn-group {
+        display: inline-flex;
       }
     }
+  }
+
+  .step-item-logfilters {
+    margin: 10px 0 10px 5px;
   }
 
   .error-handler-section {
     border: 1px solid var(--list-item-border-color);
     border-radius: 5px;
-    margin: 10px 0px 10px 20px;
     padding: 10px;
     display: flex;
     justify-content: flex-end;
@@ -639,7 +672,6 @@ export default defineComponent({
         border-color: #68b3c8;
       }
     }
-
   }
 }
 </style>
