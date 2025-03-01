@@ -3,6 +3,20 @@ import { describe, it, jest } from "@jest/globals";
 import { flushPromises, shallowMount, VueWrapper } from "@vue/test-utils";
 jest.mock("../../../modules/rundeckClient", () => ({}));
 
+jest.mock("@/library/rundeckService", () => {
+  return {
+    getRundeckContext: jest.fn().mockImplementation(() => ({
+      client: {},
+      eventBus: { on: jest.fn(), off: jest.fn(), emit: jest.fn() },
+      rootStore: {
+        plugins: {
+          load: jest.fn(),
+          getServicePlugins: jest.fn(),
+        },
+      },
+    })),
+  };
+});
 const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
   const wrapper = shallowMount(pluginPropEdit, {
     props: {
