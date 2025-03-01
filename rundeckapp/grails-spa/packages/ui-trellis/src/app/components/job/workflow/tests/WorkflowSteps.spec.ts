@@ -1,8 +1,6 @@
 import ChoosePluginModal from "@/library/components/plugins/ChoosePluginModal.vue";
 import EditPluginModal from "@/library/components/plugins/EditPluginModal.vue";
 import { flushPromises, mount, VueWrapper } from "@vue/test-utils";
-import ChoosePluginModal from "@/library/components/plugins/ChoosePluginModal.vue";
-import EditPluginModal from "@/library/components/plugins/EditPluginModal.vue";
 import WorkflowSteps from "../WorkflowSteps.vue";
 import { createTestingPinia } from "@pinia/testing";
 import { getRundeckContext } from "../../../../../library";
