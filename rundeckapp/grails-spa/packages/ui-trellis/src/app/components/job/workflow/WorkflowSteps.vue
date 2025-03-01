@@ -250,6 +250,7 @@ export default defineComponent({
     model: {
       handler() {
         this.$emit("update:modelValue", editCommandsToStepsData(this.model));
+        this.notify();
       },
       deep: true,
     },
@@ -259,11 +260,16 @@ export default defineComponent({
       this.loadingWorflowSteps = true;
       await this.getStepPlugins();
       this.model = commandsToEditData(this.modelValue);
+      eventBus.on("workflow-editor-workflowsteps-request", this.notify);
+      this.notify();
     } finally {
       this.loadingWorflowSteps = false;
     }
   },
   methods: {
+    notify() {
+      eventBus.emit("workflow-editor-workflowsteps-updated", this.model);
+    },
     chooseProviderAdd({
       service,
       provider,
