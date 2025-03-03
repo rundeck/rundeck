@@ -1,7 +1,7 @@
 import { config } from "@vue/test-utils";
 import { Btn, Dropdown, Modal } from "uiv";
-// import PrimeVue from "primevue/config";
-
+import PrimeVue from "primevue/config";
+//
 // config.global.plugins = [PrimeVue];
 // Globally stub components - to disable, on mount/shallowMount pass global.stubs.[componentName] = false
 // it's also possible to pass another stub
