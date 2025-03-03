@@ -5,6 +5,7 @@ const esModules = [
   "@primevue/.*",
   "@primeuix/styled",
   "@primeuix/utils",
+  "@primeuix/styles",
 ].join("|");
 module.exports = {
   moduleFileExtensions: ["js", "ts", "vue"],
@@ -19,6 +20,8 @@ module.exports = {
   moduleNameMapper: {
     "\\.(css|less|sass|scss)$": "identity-obj-proxy",
     "^@/(.*)$": "<rootDir>/src/$1",
+    "^@primeuix/styles/(.*)$":
+      "<rootDir>/node_modules/@primeuix/styles/$1/index.mjs",
   },
   modulePathIgnorePatterns: ["<rootDir>/public"],
   testMatch: ["**/*.test.ts", "**/*.spec.ts"],
