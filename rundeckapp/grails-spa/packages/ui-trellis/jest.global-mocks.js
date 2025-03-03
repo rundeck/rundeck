@@ -1,5 +1,8 @@
 import { config } from "@vue/test-utils";
 import { Btn, Dropdown, Modal } from "uiv";
+import PrimeVue from "primevue/config";
+
+config.global.plugins = [PrimeVue];
 
 // Globally stub components - to disable, on mount/shallowMount pass global.stubs.[componentName] = false
 // it's also possible to pass another stub
@@ -17,6 +20,7 @@ config.global.components = {
 config.global.mocks = {
   $t: (msg) => msg,
 };
+
 
 // todo: open a separate PR enabling these mocks and clean up tests
 // const mockRundeckBrowser = jest.fn().mockImplementation(() => ({
