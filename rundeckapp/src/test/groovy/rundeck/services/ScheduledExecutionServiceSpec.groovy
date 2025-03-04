@@ -5865,6 +5865,65 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         se.workflow.pluginConfig == '{"LogFilter":[{"type":"abc","config":{"a":"b"}}]}'
     }
 
+    def "jobDefinitionGlobalLogFilters jobWorkflowJson with logFilter"(){
+        given:
+            mockCodec(JSONCodec)
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: true,
+                        scheduleEnabled: true,
+                        executionEnabled: true,
+                        userRoleList: 'a,b'
+                )
+        )
+        job.setUuid("testUUID")
+        job.save()
+
+        def params = baseJobParams()
+        params.jobWorkflowJson = [
+                pluginConfig: [
+                    LogFilter: [
+                        [type: 'abc', config: [a: 'b']]
+                    ]
+                ]
+            ]
+        .encodeAsJSON().toString()
+
+        when:
+        service.jobDefinitionGlobalLogFilters(job, null, params, null)
+        then:
+        job.workflow.pluginConfig == '{"LogFilter":[{"type":"abc","config":{"a":"b"}}]}'
+    }
+
+
+    def "jobDefinitionGlobalLogFilters jobWorkflowJson without logFilter"(){
+        given:
+            mockCodec(JSONCodec)
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: true,
+                        scheduleEnabled: true,
+                        executionEnabled: true,
+                        userRoleList: 'a,b'
+                )
+        )
+        job.setUuid("testUUID")
+        job.save()
+
+        def params = baseJobParams()
+        params.jobWorkflowJson = [
+                pluginConfig: [
+                    :
+                ]
+            ]
+        .encodeAsJSON().toString()
+
+        when:
+        service.jobDefinitionGlobalLogFilters(job, null, params, null)
+        then:
+        job.workflow.pluginConfig == '{}' //empty pluginConfig
+    }
+
     def "jobDefinitionGlobalLogFilters modify logFilter"(){
         given:
 
