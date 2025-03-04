@@ -922,10 +922,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     /**
      * Reschedule all scheduled jobs which match the given serverUUID, or all jobs if it is null.
-     * @param serverUUID
+     * @param serverUUID, select jobs with the specified owner serverUUID. if null, any serverUUID.
+     * @param project project name, or null. If specified, only jobs in this project will be rescheduled, otherwise any project
+     * @param wasTakeover if true, the quartz schedule will be updated after the DB transaction
      * @return
      */
-    def rescheduleJobs(String serverUUID = null, String project = null) {
+    def rescheduleJobs(String serverUUID = null, String project = null, boolean wasTakeover = false) {
         Date now = new Date()
         def succeededJobs = []
         def failedJobs = []
@@ -935,7 +937,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             try {
                 def nexttime = null
                 def nextExecNode = null
-                (nexttime, nextExecNode) = scheduleJob(se, null, null, true)
+                (nexttime, nextExecNode) = scheduleJob(se, null, null, true, false, wasTakeover)
                 succeededJobs << [job: se, nextscheduled: nexttime]
                 log.info("rescheduled job in project ${se.project}: ${se.extid}")
             } catch (Exception e) {
@@ -1048,7 +1050,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         def claimed = claimScheduledJobs(toServerUuid, fromServerUUID, all, project, ids)
         if (claimed.find { it.value.success }) {
-            rescheduleJobs(toServerUuid)
+            rescheduleJobs(toServerUuid, null, true)
         }
         claimed
     }
@@ -1461,7 +1463,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 AuthConstants.ACTION_RUN,se.project)
     }
 
-    def scheduleJob(ScheduledExecution se, String oldJobName, String oldGroupName, boolean forceLocal=false, boolean remoteAssigned = false) {
+    def scheduleJob(ScheduledExecution se, String oldJobName, String oldGroupName, boolean forceLocal=false, boolean remoteAssigned = false, boolean pending = false) {
         def jobid = "${se.generateFullName()} [${se.extid}]"
         def jobDesc = "Attempt to schedule job $jobid in project $se.project"
         if (!executionService.executionsAreActive) {
@@ -1503,11 +1505,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         if ( hasJobScheduled(se) ) {
             log.info("rescheduling existing job in project ${se.project} ${se.extid}: " + se.generateJobScheduledName())
-            def result = jobSchedulesService.handleScheduleDefinitions(se.uuid, true)
+            def result = jobSchedulesService.handleScheduleDefinitions(se.uuid, true, pending)
             nextTime = result? result.nextTime: null
         } else {
             log.info("scheduling new job in project ${se.project} ${se.extid}: " + se.generateJobScheduledName())
-            def result = jobSchedulesService.handleScheduleDefinitions(se.uuid, false)
+            def result = jobSchedulesService.handleScheduleDefinitions(se.uuid, false, pending)
             nextTime = result? result.nextTime: null
         }
 
@@ -4682,11 +4684,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param se
      * @return nextDate next execution date, or null if the trigger could not be registered
      */
-    def registerOnQuartz(JobDetail jobDetail, List<TriggerBuilderHelper> triggerBuilderHelperList, temporary, se){
+    def registerOnQuartz(JobDetail jobDetail, List<TriggerBuilderHelper> triggerBuilderHelperList, temporary, se, boolean pending){
         triggerBuilderHelperList = applyTriggerComponents(jobDetail, triggerBuilderHelperList)
         Set triggers = []
-        triggerBuilderHelperList?.each {
-            def trigger = it.getTriggerBuilder().build()
+        TriggerKey key = new TriggerKey(se.generateJobScheduledName(), pending?QuartzJobScheduleManagerService.TRIGGER_GROUP_PENDING:se.generateJobGroupName())
+        triggerBuilderHelperList?.each { TriggerBuilderHelper it->
+            TriggerBuilder builder=(TriggerBuilder)it.getTriggerBuilder()
+            def trigger = builder.withIdentity(key).build()
             triggers.add(trigger)
         }
 
