@@ -53,7 +53,7 @@ describe("WorkflowEditor", () => {
     const wrapper = await createWrapper();
 
     expect(wrapper.vm.basicData).toEqual({ keepgoing: true });
-    expect(wrapper.vm.strategyData).toEqual({ strategy: "default" });
+    expect(wrapper.vm.strategyData).toEqual({ type: "default", config: {} });
     expect(wrapper.vm.logFiltersData).toEqual({
       LogFilter: [{ type: "filter1" }],
     });
@@ -82,6 +82,7 @@ describe("WorkflowEditor", () => {
         keepgoing: false,
         pluginConfig: {
           LogFilter: [{ type: "filter1" }],
+          WorkflowStrategy: { default: {} },
         },
         commands: [{ description: "step1" }],
         strategy: "default",
