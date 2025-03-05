@@ -153,7 +153,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         given:
 
         controller.configurationService = Mock(ConfigurationService){
-            getBoolean("gui.keystorage.downloadenabled", true)>>true
+            getBoolean("gui.keystorage.downloadenabled", false)>>true
         }
         controller.storageService = Mock(StorageService)
         controller.frameworkService = Mock(FrameworkService)
@@ -228,7 +228,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         def result = controller.keyStorageDownload()
 
         then:
-        1 * controller.configurationService.getBoolean("gui.keystorage.downloadenabled", true)>>false
+        1 * controller.configurationService.getBoolean("gui.keystorage.downloadenabled", false)>>false
         response.status == 403
 
     }
@@ -477,6 +477,9 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
             controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
                 1 * getAuthContextForSubject(_)
             }
+            controller.configurationService = Mock(ConfigurationService){
+                getBoolean("feature.apiPublicKeysDownload.enabled", false)>>true
+            }
             def mContent = Mock(ContentMeta) {
                 2 * getMeta() >> ['Rundeck-content-type': 'test/data']
 
@@ -504,6 +507,36 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
             assertEquals(200, response.status)
             assertEquals('test/data', response.contentType)
             assertEquals('data1', response.text)
+    }
+
+    def apiGetResource_foundContent_feature_disabled_by_default() {
+        given:
+        params.resourcePath = 'abc'
+
+
+        controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
+            1 * getAuthContextForSubject(_)
+        }
+        def mContent = Mock(ContentMeta) {
+            2 * getMeta() >> ['Rundeck-content-type': 'test/data']
+
+        }
+        def mRes = Mock(Resource) {
+            1 * isDirectory() >> false
+            2 * getContents() >> mContent
+        }
+        controller.storageService = Mock(StorageService) {
+            1 * hasPath(_, _) >> true
+            1 * getResource(_, _) >> mRes
+        }
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_, _) >> true
+        }
+
+        when:
+        def result = controller.apiGetResource()
+        then:
+        assertEquals(403, response.status)
     }
 
     class TestRes implements Resource<ResourceMeta> {
