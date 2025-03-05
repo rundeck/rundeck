@@ -18,7 +18,7 @@ implied. - See the License for the specific language governing permissions and -
         <meta name="tabpage" content="configure"/>
         <meta name="tabtitle" content="${g.message(code: 'gui.menu.KeyStorage')}"/>
         <title><g:message code="gui.menu.KeyStorage"/></title>
-        <g:set var="downloadenabled" value="${cfg.getBoolean(config: "gui.keystorage.downloadenabled", default: true)}"/>
+        <g:set var="downloadenabled" value="${cfg.getBoolean(config: "gui.keystorage.downloadenabled", default: false)}"/>
 
         <g:embedJSON id="storageData" data="[
                 resourcePath:params.resourcePath,
