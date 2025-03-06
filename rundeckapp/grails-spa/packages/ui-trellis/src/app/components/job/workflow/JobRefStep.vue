@@ -14,7 +14,7 @@
           <code v-if="entry" class="optvalue">{{ entry }}</code>
         </template>
       </template>
-      <code class="optvalue">{{ step.jobref.args }}</code>
+      <code v-else class="optvalue">{{ step.jobref.args }}</code>
     </p>
     <p v-if="step.jobref.nodeStep">
       <i class="fas fa-hdd"></i>

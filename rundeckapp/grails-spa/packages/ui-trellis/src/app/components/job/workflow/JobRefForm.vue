@@ -570,23 +570,7 @@
         </div>
       </section>
       <hr />
-      <div class="form-group">
-        <label class="col-sm-2 control-label" :for="`description${rkey}`">
-          {{ $t("Workflow.stepLabel") }}
-        </label>
-
-        <div class="col-sm-10">
-          <input
-            :id="`description${rkey}`"
-            v-model="editModel.description"
-            type="text"
-            name="description"
-            class="form-control"
-            :placeholder="$t('Workflow.step.property.description.placeholder')"
-            size="100"
-          />
-        </div>
-      </div>
+      <slot name="extra" />
     </div>
     <template #footer>
       <btn data-testid="cancel-button" @click="$emit('cancel')">

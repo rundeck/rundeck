@@ -1024,7 +1024,9 @@ const messages = {
   "Workflow.stepErrorHandler.keepgoingOnSuccess.label":"Keep going on success.",
   "Workflow.stepErrorHandler.keepgoingOnSuccess.description":"If the Workflow keepgoing is false, this allows the Workflow to continue when the Error Handler is successful",
   "Workflow.stepErrorHandler.label.on.error": "on error",
-  "Workflow.stepErrorHandler.label.keep.going.on.success": "keep going on success"
+  "Workflow.stepErrorHandler.label.keep.going.on.success": "keep going on success",
+  "framework.service.WorkflowNodeStep.description":"Runs once for each node in the workflow.",
+  "framework.service.WorkflowStep.description":"Runs only once in a workflow."
 };
 
 export default messages;

@@ -15,26 +15,26 @@
           <div class="step-item-display">
             <div class="step-item-row">
               <div
-                  :id="`wfitem_${index}`"
-                  class="step-item-config"
-                  data-test="edit-step-item"
-                  :title="$t('Workflow.clickToEdit')"
-                  @click="editStepByIndex(index)"
+                :id="`wfitem_${index}`"
+                class="step-item-config"
+                data-test="edit-step-item"
+                :title="$t('Workflow.clickToEdit')"
+                @click="editStepByIndex(index)"
               >
                 <plugin-config
-                    v-if="!element.jobref"
-                    :service-name="
-                  element.nodeStep
-                    ? ServiceType.WorkflowNodeStep
-                    : ServiceType.WorkflowStep
-                "
-                    :provider="element.type"
-                    :config="element.config"
-                    :read-only="true"
-                    :show-title="true"
-                    :show-icon="true"
-                    :show-description="true"
-                    mode="show"
+                  v-if="!element.jobref"
+                  :service-name="
+                    element.nodeStep
+                      ? ServiceType.WorkflowNodeStep
+                      : ServiceType.WorkflowStep
+                  "
+                  :provider="element.type"
+                  :config="element.config"
+                  :read-only="true"
+                  :show-title="true"
+                  :show-icon="true"
+                  :show-description="true"
+                  mode="show"
                 >
                   <template v-if="element.nodeStep" #iconSuffix>
                     <i class="fas fa-hdd node-icon"></i>
@@ -47,45 +47,45 @@
               </div>
               <div class="step-item-controls">
                 <div
-                    class="btn-group"
-                    role="group"
-                    :aria-label="$t('Workflow.itemControls')"
+                  class="btn-group"
+                  role="group"
+                  :aria-label="$t('Workflow.itemControls')"
                 >
                   <btn
-                      size="xs"
-                      style="min-height: 21px"
-                      @click.stop="editStepByIndex(index)"
+                    size="xs"
+                    style="min-height: 21px"
+                    @click.stop="editStepByIndex(index)"
                   >
                     <i class="fas fa-edit"></i>
                     {{ $t("Workflow.edit") }}
                   </btn>
                   <btn
-                      size="xs"
-                      :title="$t('Workflow.duplicateStep')"
-                      @click.stop="duplicateStep(index)"
+                    size="xs"
+                    :title="$t('Workflow.duplicateStep')"
+                    @click.stop="duplicateStep(index)"
                   >
                     <i class="glyphicon glyphicon-duplicate"></i>
                   </btn>
                   <dropdown menu-right>
-                    <btn size="xs" data-role="trigger"
-                    ><i class="glyphicon glyphicon-cog"></i>
-                      <span class="caret"></span
-                      ></btn>
+                    <btn size="xs" data-role="trigger">
+                      <i class="glyphicon glyphicon-cog"></i>
+                      <span class="caret"></span>
+                    </btn>
                     <template #dropdown>
                       <li v-if="!element.errorhandler">
                         <a
-                            role="button"
-                            data-test="add-error-handler"
-                            @click="toggleAddErrorHandlerModal(index)"
+                          role="button"
+                          data-test="add-error-handler"
+                          @click="toggleAddErrorHandlerModal(index)"
                         >
                           {{ $t("Workflow.addErrorHandler") }}
                         </a>
                       </li>
                       <li v-if="!element.jobref">
                         <a
-                            role="button"
-                            data-test="add-log-filter"
-                            @click="addLogFilterForIndex(element.id)"
+                          role="button"
+                          data-test="add-log-filter"
+                          @click="addLogFilterForIndex(element.id)"
                         >
                           {{ $t("Workflow.addLogFilter") }}
                         </a>
@@ -93,72 +93,47 @@
                     </template>
                   </dropdown>
                   <btn
-                      size="xs"
-                      type="danger"
-                      :title="$t('Workflow.deleteThisStep')"
-                      data-test="remove-step"
-                      @click.prevent="removeStep(index)"
+                    size="xs"
+                    type="danger"
+                    :title="$t('Workflow.deleteThisStep')"
+                    data-test="remove-step"
+                    @click.prevent="removeStep(index)"
                   >
                     <i class="glyphicon glyphicon-remove"></i>
                   </btn>
                 </div>
 
                 <span
-                    class="btn btn-xs dragHandle"
-                    :title="$t('Workflow.dragToReorder')"
+                  class="btn btn-xs dragHandle"
+                  :title="$t('Workflow.dragToReorder')"
                 >
-              <i class="glyphicon glyphicon-resize-vertical"></i>
-            </span>
-              </div>
-            </div>
-
-            <div v-if="!element.jobref && element.filters.length > 0" class="step-item-logfilters">
-              <log-filters
-                  :model-value="element.filters"
-                  :title="$t('Workflow.logFilters')"
-                  :subtitle="stepTitle(element, index)"
-                  :add-event="'step-action:add-logfilter:' + element.id"
-                  mode="inline"
-                  @update:model-value="
-                updateHistoryWithLogFiltersData(index, $event)
-              "
-              />
-            </div>
-            <div v-if="element.errorhandler" class="error-handler-section">
-              <div class="error-handler-section--content">
-                  <strong>{{ $t("Workflow.stepErrorHandler.label.on.error") }}:</strong>
-                  <plugin-config
-                      :service-name="
-                    element.errorhandler.nodeStep
-                      ? ServiceType.WorkflowNodeStep
-                      : ServiceType.WorkflowStep
-                  "
-                      :provider="element.errorhandler.type"
-                      :config="element.errorhandler.configuration"
-                      :read-only="true"
-                      :show-title="true"
-                      :show-icon="true"
-                      :show-description="true"
-                      mode="show"
-                      class="configuration"
-                      @click=""
-                  />
-                  <span
-                      v-if="element.errorhandler.keepgoingOnSuccess"
-                      :title="$t('Workflow.stepErrorHandler.keepgoingOnSuccess.description')"
-                      class="succeed"
-                  >
-                  {{ $t("Workflow.stepErrorHandler.label.keep.going.on.success") }}
+                  <i class="glyphicon glyphicon-resize-vertical" />
                 </span>
               </div>
-              <div class="btn-group" role="group" aria-label="item controls">
-                  <button class="btn btn-xs btn-default">
-                    <i class="glyphicon glyphicon-remove"></i>
-                  </button>
-                </div>
             </div>
-          </div>
 
+            <div
+              v-if="!element.jobref && element.filters.length > 0"
+              class="step-item-logfilters"
+            >
+              <log-filters
+                :model-value="element.filters"
+                :title="$t('Workflow.logFilters')"
+                :subtitle="stepTitle(element, index)"
+                :add-event="'step-action:add-logfilter:' + element.id"
+                mode="inline"
+                @update:model-value="
+                  updateHistoryWithLogFiltersData(index, $event)
+                "
+              />
+            </div>
+            <error-handler-step
+              v-if="element.errorhandler"
+              :step="element"
+              @edit.prevent="editStepByIndex(index, true)"
+              @remove.prevent="removeStep(index, true)"
+            />
+          </div>
         </div>
       </li>
     </template>
@@ -183,14 +158,74 @@
         @cancel="cancelProviderAdd"
         @selected="chooseProviderAdd"
       >
+        <template v-if="isErrorHandler" #listHeader="{ service }">
+          <div class="list-group-item">
+            <p class="list-group-heading text-info text-strong">
+              {{ $t(`framework.service.${service}.description`) }}
+            </p>
+          </div>
+        </template>
         <span class="text-info">
           {{
             isErrorHandler
-                ? $t("Workflow.errorHandlerDescription")
-                : $t("Workflow.clickOnStepType")
+              ? $t("Workflow.errorHandlerDescription")
+              : $t("Workflow.clickOnStepType")
           }}
         </span>
       </choose-plugin-modal>
+<!--      <component-->
+<!--        v-if="editStepModal || editJobRefModal && modalComponent"-->
+<!--        :is="modalComponent"-->
+<!--        v-model="editModel"-->
+<!--        v-bind="modalAttributes"-->
+<!--        @cancel="cancelEditStep"-->
+<!--        @save="saveEditStep"-->
+<!--      >-->
+<!--        <template #extra>-->
+<!--          <template v-if="!isErrorHandler">-->
+<!--            <hr />-->
+<!--            <div class="form-horizontal">-->
+<!--              <div class="form-group">-->
+<!--                <label-->
+<!--                  class="col-sm-2 control-label input-sm"-->
+<!--                  for="stepDescription"-->
+<!--                >-->
+<!--                  {{ $t("Workflow.stepLabel") }}-->
+<!--                </label>-->
+<!--                <div class="col-sm-10">-->
+<!--                  <input-->
+<!--                    id="stepDescription"-->
+<!--                    v-model="editExtra.description"-->
+<!--                    type="text"-->
+<!--                    class="form-control"-->
+<!--                  />-->
+<!--                </div>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </template>-->
+<!--          <template v-else>-->
+<!--            <div class="presentation checkbox">-->
+<!--              <input-->
+<!--                name="keepgoingOnSuccess"-->
+<!--                id="keepgoingOnSuccess"-->
+<!--                v-model="editExtra.errorhandler.keepgoingOnSuccess"-->
+<!--                type="checkbox"-->
+<!--              />-->
+<!--              <label for="keepgoingOnSuccess">-->
+<!--                {{ $t("Workflow.stepErrorHandler.keepgoingOnSuccess.label") }}-->
+
+<!--                <span>-->
+<!--                  {{-->
+<!--                    $t(-->
+<!--                      "Workflow.stepErrorHandler.keepgoingOnSuccess.description",-->
+<!--                    )-->
+<!--                  }}-->
+<!--                </span>-->
+<!--              </label>-->
+<!--            </div>-->
+<!--          </template>-->
+<!--        </template>-->
+<!--      </component>-->
       <edit-plugin-modal
         v-if="editStepModal"
         v-model:modal-active="editStepModal"
@@ -212,17 +247,17 @@
             <div class="form-horizontal">
               <div class="form-group">
                 <label
-                    class="col-sm-2 control-label input-sm"
-                    for="stepDescription"
+                  class="col-sm-2 control-label input-sm"
+                  for="stepDescription"
                 >
                   {{ $t("Workflow.stepLabel") }}
                 </label>
                 <div class="col-sm-10">
                   <input
-                      id="stepDescription"
-                      v-model="editExtra.description"
-                      type="text"
-                      class="form-control"
+                    id="stepDescription"
+                    v-model="editExtra.description"
+                    type="text"
+                    class="form-control"
                   />
                 </div>
               </div>
@@ -230,11 +265,23 @@
           </template>
           <template v-else>
             <div class="presentation checkbox">
-              <input name="keepgoingOnSuccess" id="keepgoingOnSuccess" v-model="editModel.keepgoingOnSuccess" type="checkbox" />
+              <input
+                name="keepgoingOnSuccess"
+                id="keepgoingOnSuccess"
+                v-model="editExtra.errorhandler.keepgoingOnSuccess"
+                type="checkbox"
+              />
               <label for="keepgoingOnSuccess">
-                {{ $t("Workflow.stepErrorHandler.keepgoingOnSuccess.label")}}
+                {{ $t("Workflow.stepErrorHandler.keepgoingOnSuccess.label") }}
+
+                <span>
+                  {{
+                    $t(
+                      "Workflow.stepErrorHandler.keepgoingOnSuccess.description",
+                    )
+                  }}
+                </span>
               </label>
-              <span>{{ $t("Workflow.stepErrorHandler.keepgoingOnSuccess.description") }}</span>
             </div>
           </template>
         </template>
@@ -273,12 +320,14 @@ import CommonUndoRedoDraggableList from "@/app/components/common/CommonUndoRedoD
 import { Operation } from "@/app/components/job/options/model/ChangeEvents";
 import { validatePluginConfig } from "@/library/modules/pluginService";
 import JobRefForm from "@/app/components/job/workflow/JobRefForm.vue";
+import ErrorHandlerStep from "@/app/components/job/workflow/ErrorHandlerStep.vue";
 
 const context = getRundeckContext();
 const eventBus = context.eventBus;
 export default defineComponent({
   name: "WorkflowSteps",
   components: {
+    ErrorHandlerStep,
     JobRefForm,
     CommonUndoRedoDraggableList,
     EditPluginModal,
@@ -312,6 +361,8 @@ export default defineComponent({
       editService: null,
       editIndex: -1,
       loadingWorflowSteps: false,
+      modalComponent: "",
+      modalAttributes: {},
     };
   },
   watch: {
@@ -321,6 +372,35 @@ export default defineComponent({
         this.notify();
       },
       deep: true,
+    },
+    editStepModal(newValue: boolean) {
+      if (newValue) {
+        this.modalAttributes = {
+          title: this.isErrorHandler
+            ? this.$t("Workflow.editErrorHandler")
+            : this.$t("Workflow.editStep"),
+          serviceName: this.editService,
+          validation: this.editModelValidation,
+          dataTestId: "extra-edit-modal",
+        }
+
+        this.modalComponent = "edit-plugin-modal";
+      } else {
+        this.modalAttributes = {};
+        this.modalComponent = "";
+      }
+    },
+    editJobRefModal(newValue: boolean) {
+      if (newValue && !this.editStepModal) {
+        this.modalAttributes = {
+
+          dataTestId: "jobref-modal",
+        };
+        this.modalComponent = "job-ref-form";
+      } else {
+        this.modalAttributes = {};
+        this.modalComponent = "";
+      }
     },
   },
   async mounted() {
@@ -351,9 +431,26 @@ export default defineComponent({
         this.editIndex = -1;
       }
       this.editService = service;
+      console.log("============!!!!");
+      console.log("start of chooseProviderAdd");
+      console.log("errorHandler?", this.isErrorHandler);
+      console.log("editModel!");
+      console.log(this.editModel);
+      console.log("===");
+      console.log("editService", this.editService);
+
+      if (this.isErrorHandler) {
+        this.editExtra = {
+          errorhandler: {
+            configuration: {},
+            keepgoingOnSuccess: false,
+          },
+        };
+      }
 
       if (provider === "job.reference") {
         this.editModel = {
+          type: provider,
           description: "",
           jobref: {},
           nodeStep: service === ServiceType.WorkflowNodeStep,
@@ -368,6 +465,14 @@ export default defineComponent({
 
         this.editStepModal = true;
       }
+
+      console.log("editModel at the end of provider selection");
+      console.log(this.editModel);
+      console.log("---");
+      console.log("editExtra at the end of provider selection");
+      console.log(this.editExtra);
+      console.log("---");
+      console.log("ChooseProvider - END");
     },
     cancelProviderAdd() {
       this.addStepModal = false;
@@ -382,16 +487,21 @@ export default defineComponent({
       this.editIndex = -1;
       this.isErrorHandler = false;
     },
-    removeStep(index: number) {
+    removeStep(index: number, removeErrorHandler: boolean = false) {
       const commandToDelete = cloneDeep(this.model.commands[index]);
-      this.$refs.historyControls.operationRemove(index);
-      this.$refs.historyControls.changeEvent({
-        index,
-        dest: -1,
-        value: commandToDelete,
-        operation: Operation.Remove,
-        undo: Operation.Insert,
-      });
+      if (removeErrorHandler) {
+        console.log("entering on removal");
+        //   todo: add removal of a errorHandler should be application of the step of adding it
+      } else {
+        this.$refs.historyControls.operationRemove(index);
+        this.$refs.historyControls.changeEvent({
+          index,
+          dest: -1,
+          value: commandToDelete,
+          operation: Operation.Remove,
+          undo: Operation.Insert,
+        });
+      }
     },
     async addLogFilterForIndex(id: string) {
       eventBus.emit("step-action:add-logfilter:" + id);
@@ -412,7 +522,9 @@ export default defineComponent({
       this.editIndex = index;
 
       const command = this.model.commands[index];
-      this.editModel = isErrorHandler ? cloneDeep(command.errorhandler.configuration) : cloneDeep(command);
+      this.editModel = isErrorHandler
+        ? cloneDeep(command.errorhandler.configuration)
+        : cloneDeep(command);
       this.editExtra = cloneDeep(command);
 
       this.editService = command.nodeStep
@@ -428,19 +540,45 @@ export default defineComponent({
     async saveEditStep() {
       try {
         const saveData = cloneDeep(this.editExtra);
-        saveData.type = this.editModel.type;
-        saveData.config = this.editModel.config;
-        saveData.id = mkid();
-        saveData.nodeStep = this.editService === ServiceType.WorkflowNodeStep;
-        saveData.jobref = this.editModel.jobref;
+        console.log("============!!!!");
+        console.log("start of saveEditStep");
+        console.log("initial saveData");
+        console.log(saveData);
+        console.log("---");
+        if (this.isErrorHandler) {
+          console.log("editModel");
+          console.log(this.editModel);
+          console.log("editService", this.editService);
+          saveData.errorhandler = {
+            configuration: this.editModel.config,
+            jobref: this.editModel.jobref,
+            type: this.editModel.type,
+            nodeStep: this.editService === ServiceType.WorkflowNodeStep,
+          };
+        } else {
+          saveData.type = this.editModel.type;
+          saveData.config = this.editModel.config;
+          saveData.id = mkid();
+          saveData.nodeStep = this.editService === ServiceType.WorkflowNodeStep;
+          saveData.jobref = this.editModel.jobref;
+        }
 
-        if (!saveData.jobref) {
+        console.log("---");
+        console.log(`validation`, !saveData.jobref && !this.editModel.jobref);
+        console.log("provider (saveData.type)", saveData.type);
+        console.log(
+          "provider (saveData.errorhandler.type)",
+          saveData.errorhandler?.type,
+        );
+        console.log("---");
+
+        if (!saveData.jobref && !this.editModel.jobref) {
           saveData.filters = [];
 
           const response = await validatePluginConfig(
             this.editService,
             saveData.type,
-            saveData.config,
+            saveData.config || saveData.errorhandler.configuration,
           );
 
           if (
@@ -514,10 +652,14 @@ export default defineComponent({
         undo: Operation.Remove,
         orig: undefined,
       };
+      let newData = saveData;
 
       if (this.editIndex >= 0) {
         const originalData = this.model.commands[this.editIndex];
-        this.$refs.historyControls.operationModify(this.editIndex, saveData);
+        if (this.isErrorHandler) {
+          newData = { ...originalData, ...saveData };
+        }
+        this.$refs.historyControls.operationModify(this.editIndex, newData);
         dataForUpdatingHistory.index = this.editIndex;
         dataForUpdatingHistory.operation = Operation.Modify;
         dataForUpdatingHistory.undo = Operation.Modify;
@@ -525,19 +667,20 @@ export default defineComponent({
       } else {
         this.$refs.historyControls.operationInsert(
           this.model.commands.length,
-          saveData,
+          newData,
         );
       }
 
       this.$refs.historyControls.changeEvent({
         dest: -1,
-        value: saveData,
+        value: newData,
         ...dataForUpdatingHistory,
       });
 
       this.editStepModal = false;
       this.isErrorHandler = false;
       this.editJobRefModal = false;
+      this.isErrorHandler = false;
       this.editModel = {};
       this.editExtra = {};
       this.editModelValidation = null;
@@ -569,7 +712,7 @@ export default defineComponent({
   flex-direction: row;
   justify-content: space-between;
   align-items: flex-start;
-  overflow: hidden;
+  //overflow: hidden;
 
   .step-item-display {
     width: 100%;
@@ -607,6 +750,12 @@ export default defineComponent({
       .argString {
         max-width: 700px;
         overflow: hidden;
+        display: flex;
+        align-items: center;
+
+        .optvalue {
+          margin-top: 0;
+        }
       }
 
       .optvalue,
@@ -649,29 +798,6 @@ export default defineComponent({
 
   .step-item-logfilters {
     margin: 10px 0 10px 5px;
-  }
-
-  .error-handler-section {
-    border: 1px solid var(--list-item-border-color);
-    border-radius: 5px;
-    padding: 10px;
-    display: flex;
-    justify-content: flex-end;
-
-    &--content {
-      flex-grow: 1;
-    }
-
-    .configuration {
-      padding: 5px;
-      border: 1px dotted transparent;
-
-      &:hover {
-        cursor: pointer;
-        background-color: var(--light-gray);
-        border-color: #68b3c8;
-      }
-    }
   }
 }
 </style>

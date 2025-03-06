@@ -80,7 +80,6 @@ export interface JobRefDefinition {
 export interface JobRefData {
   description?: string;
   jobref?: JobRefDefinition;
-  nodeStep?: boolean;
 }
 export interface PluginStepData {
   type?: string;
@@ -116,6 +115,7 @@ export interface ErrorHandlerDefinition {
   configuration: { [key: string]: any };
   keepgoingOnSuccess: boolean;
   nodeStep: boolean;
+  jobref?: JobRefDefinition;
   type: string;
 }
 export interface ErrorHandlerData {
