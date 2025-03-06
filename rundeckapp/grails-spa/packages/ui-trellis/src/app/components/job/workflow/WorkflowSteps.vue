@@ -361,8 +361,6 @@ export default defineComponent({
       editService: null,
       editIndex: -1,
       loadingWorflowSteps: false,
-      modalComponent: "",
-      modalAttributes: {},
     };
   },
   watch: {
@@ -372,35 +370,6 @@ export default defineComponent({
         this.notify();
       },
       deep: true,
-    },
-    editStepModal(newValue: boolean) {
-      if (newValue) {
-        this.modalAttributes = {
-          title: this.isErrorHandler
-            ? this.$t("Workflow.editErrorHandler")
-            : this.$t("Workflow.editStep"),
-          serviceName: this.editService,
-          validation: this.editModelValidation,
-          dataTestId: "extra-edit-modal",
-        }
-
-        this.modalComponent = "edit-plugin-modal";
-      } else {
-        this.modalAttributes = {};
-        this.modalComponent = "";
-      }
-    },
-    editJobRefModal(newValue: boolean) {
-      if (newValue && !this.editStepModal) {
-        this.modalAttributes = {
-
-          dataTestId: "jobref-modal",
-        };
-        this.modalComponent = "job-ref-form";
-      } else {
-        this.modalAttributes = {};
-        this.modalComponent = "";
-      }
     },
   },
   async mounted() {
@@ -452,8 +421,9 @@ export default defineComponent({
         this.editModel = {
           type: provider,
           description: "",
-          jobref: {},
-          nodeStep: service === ServiceType.WorkflowNodeStep,
+          jobref: {
+            nodeStep: service === ServiceType.WorkflowNodeStep,
+          },
         };
         this.editJobRefModal = true;
       } else {

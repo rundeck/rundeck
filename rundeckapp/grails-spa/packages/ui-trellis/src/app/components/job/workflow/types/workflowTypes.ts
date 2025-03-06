@@ -66,6 +66,7 @@ export interface JobRefDefinition {
   childNodes?: boolean;
   importOptions?: boolean;
   ignoreNotifications?: boolean;
+  nodeStep?: boolean;
   nodefilters?: {
     filter: string;
     dispatch?: {

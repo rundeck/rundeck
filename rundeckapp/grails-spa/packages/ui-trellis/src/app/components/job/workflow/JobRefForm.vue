@@ -651,8 +651,8 @@ export default defineComponent({
       currentProject: rundeckContext.projectName,
       editModel: {
         description: "",
-        nodeStep: false,
         jobref: {
+          nodeStep: false,
           name: "",
           uuid: "",
           project: rundeckContext.projectName,
