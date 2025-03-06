@@ -173,71 +173,11 @@
           }}
         </span>
       </choose-plugin-modal>
-<!--      <component-->
-<!--        v-if="editStepModal || editJobRefModal && modalComponent"-->
-<!--        :is="modalComponent"-->
-<!--        v-model="editModel"-->
-<!--        v-bind="modalAttributes"-->
-<!--        @cancel="cancelEditStep"-->
-<!--        @save="saveEditStep"-->
-<!--      >-->
-<!--        <template #extra>-->
-<!--          <template v-if="!isErrorHandler">-->
-<!--            <hr />-->
-<!--            <div class="form-horizontal">-->
-<!--              <div class="form-group">-->
-<!--                <label-->
-<!--                  class="col-sm-2 control-label input-sm"-->
-<!--                  for="stepDescription"-->
-<!--                >-->
-<!--                  {{ $t("Workflow.stepLabel") }}-->
-<!--                </label>-->
-<!--                <div class="col-sm-10">-->
-<!--                  <input-->
-<!--                    id="stepDescription"-->
-<!--                    v-model="editExtra.description"-->
-<!--                    type="text"-->
-<!--                    class="form-control"-->
-<!--                  />-->
-<!--                </div>-->
-<!--              </div>-->
-<!--            </div>-->
-<!--          </template>-->
-<!--          <template v-else>-->
-<!--            <div class="presentation checkbox">-->
-<!--              <input-->
-<!--                name="keepgoingOnSuccess"-->
-<!--                id="keepgoingOnSuccess"-->
-<!--                v-model="editExtra.errorhandler.keepgoingOnSuccess"-->
-<!--                type="checkbox"-->
-<!--              />-->
-<!--              <label for="keepgoingOnSuccess">-->
-<!--                {{ $t("Workflow.stepErrorHandler.keepgoingOnSuccess.label") }}-->
-
-<!--                <span>-->
-<!--                  {{-->
-<!--                    $t(-->
-<!--                      "Workflow.stepErrorHandler.keepgoingOnSuccess.description",-->
-<!--                    )-->
-<!--                  }}-->
-<!--                </span>-->
-<!--              </label>-->
-<!--            </div>-->
-<!--          </template>-->
-<!--        </template>-->
-<!--      </component>-->
-      <edit-plugin-modal
-        v-if="editStepModal"
-        v-model:modal-active="editStepModal"
+      <component
+        v-if="editStepModal || editJobRefModal && modalComponent"
+        :is="modalComponent"
         v-model="editModel"
-        data-test-id="extra-edit-modal"
-        :validation="editModelValidation"
-        :service-name="editService"
-        :title="
-          isErrorHandler
-            ? $t('Workflow.editErrorHandler')
-            : $t('Workflow.editStep')
-        "
+        v-bind="modalAttributes"
         @cancel="cancelEditStep"
         @save="saveEditStep"
       >
@@ -285,14 +225,7 @@
             </div>
           </template>
         </template>
-      </edit-plugin-modal>
-      <job-ref-form
-        v-if="editJobRefModal"
-        v-model="editModel"
-        v-model:modal-active="editJobRefModal"
-        @cancel="cancelEditStep"
-        @save="saveEditStep"
-      />
+      </component>
     </template>
   </common-undo-redo-draggable-list>
 </template>
@@ -362,6 +295,35 @@ export default defineComponent({
       editIndex: -1,
       loadingWorflowSteps: false,
     };
+  },
+  computed: {
+    modalAttributes() {
+      if (this.editStepModal) {
+        return {
+          title: this.isErrorHandler
+              ? this.$t("Workflow.editErrorHandler")
+              : this.$t("Workflow.editStep"),
+          serviceName: this.editService,
+          validation: this.editModelValidation,
+          "data-test-id": "extra-edit-modal",
+          modalActive: this.editStepModal,
+          "onUpdate:modalActive": this.toggleModalActive,
+        }
+      } else if (this.editJobRefModal) {
+        return {
+          "data-test-id": "jobref-modal",
+          modalActive: this.editJobRefModal,
+          "onUpdate:modalActive": this.toggleModalActive,
+        }
+      }
+      return {}
+    },
+    modalComponent() {
+      if(!this.editJobRefModal && !this.editStepModal) {
+        return ""
+      }
+      return this.editStepModal? "edit-plugin-modal" : "job-ref-form"
+    }
   },
   watch: {
     model: {
@@ -583,6 +545,13 @@ export default defineComponent({
         return `Step ${index + 1} "` + step.description + '"';
       }
       return `Step ${index + 1}`;
+    },
+    toggleModalActive(val : boolean) {
+      if (this.modalComponent === 'edit-plugin-modal') {
+        this.editStepModal = val;
+      } else if (this.modalComponent === "job-ref-form") {
+        this.editJobRefModal = val;
+      }
     },
     toggleAddStepModal() {
       this.addStepModal = !this.addStepModal;

@@ -543,7 +543,7 @@
             <div class="radio">
               <input
                 id="jobNodeStepFieldTrue"
-                v-model="editModel.nodeStep"
+                v-model="editModel.jobref.nodeStep"
                 type="radio"
                 name="nodeStep"
                 :value="true"
@@ -556,7 +556,7 @@
             <div class="radio">
               <input
                 id="jobNodeStepFieldFalse"
-                v-model="editModel.nodeStep"
+                v-model="editModel.jobref.nodeStep"
                 type="radio"
                 name="nodeStep"
                 :value="false"
@@ -569,7 +569,6 @@
           </div>
         </div>
       </section>
-      <hr />
       <slot name="extra" />
     </div>
     <template #footer>
