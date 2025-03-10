@@ -213,6 +213,7 @@
               <tbody>
                 <tr v-for="directory in directories" :key="directory.name">
                   <td
+                    data-testid="keyDirectoryButton"
                     class="action"
                     colspan="2"
                     @click="loadDir(directory.path)"
