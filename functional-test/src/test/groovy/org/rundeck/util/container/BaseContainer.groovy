@@ -454,6 +454,23 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     /**
+     * Deletes the specified project key.
+     * This method sends a DELETE request to remove the project key with the given name.
+     * If the deletion operation fails, a RuntimeException is thrown.
+     *
+     * @param projectName the name of the key's parent project to be deleted. Must not be null.
+     * @param keyPath the path of the project key to be deleted. Must not be null.
+     * @throws RuntimeException if the project deletion fails.
+     *         The exception contains a detailed message obtained from the server's response.
+     */
+    void deleteProjectKey(String projectName, String keyPath) {
+        def response = client.doDelete("/storage/keys/project/${projectName}/${keyPath}")
+        if (!response.successful) {
+            throw new RuntimeException("Failed to delete project key: ${response.body().string()}")
+        }
+    }
+
+    /**
      * Updates the configuration of a project with the provided settings.
      *
      * This method sends a PUT request to update the configuration of the specified project
