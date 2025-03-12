@@ -1,0 +1,61 @@
+name: $name$
+rundeckPluginVersion: 2.0
+author: Rundeck Dev
+description: Describe your plugin here
+rundeckCompatibilityVersion: 3.x
+targetHostCompatibility: unix
+license: Apache 2.0
+tags:
+    - script
+    - FileCopier
+date: 2025-03-11T17:51:01.989Z
+version: $version$
+providers:
+    - name: $name$
+      service: $category$
+      title: $title$
+      description: The description of $title$ plugin
+      plugin-type: script
+      script-interpreter: /bin/bash
+      script-file: script.sh
+      script-args: ${file-copy.file} ${file-copy.destination}
+      config:
+        - type: String
+          name: example
+          title: 'Example String'
+          description: 'Example String'
+          required: true
+        - type: Select
+          name: exampleSelect
+          title: ExampleSelect
+          description: 'Example Select'
+          default: Beige
+          values:
+            - Blue
+            - Beige
+            - Black
+        - type: Boolean
+          name: dry_run
+          title: Dry Run?
+          description: 'Just echo what would be done'
+          default: true
+          renderingOptions:
+            groupName: 'Config'
+        - type: String
+          name: storageprivatekey
+          title: Storage Private Key
+          description: Access to storage private key example
+          renderingOptions:
+            selectionAccessor: "STORAGE_PATH"
+            valueConversion: "STORAGE_PATH_AUTOMATIC_READ"
+            storage-path-root: "keys"
+            storage-file-meta-filter: "Rundeck-key-type=private"
+        - type: String
+          name: storagepassword
+          title: Storage Password
+          description: Access to storage password example
+          renderingOptions:
+            selectionAccessor: "STORAGE_PATH"
+            valueConversion: "STORAGE_PATH_AUTOMATIC_READ"
+            storage-path-root: "keys"
+            storage-file-meta-filter: "Rundeck-data-type=password"
