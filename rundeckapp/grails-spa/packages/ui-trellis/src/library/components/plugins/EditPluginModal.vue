@@ -1,5 +1,5 @@
 <template>
-  <modal v-model="showModal" :title="title || $t('plugin.edit.title')" size="lg">
+  <modal v-model="showModal" title="BOOP" size="lg">
     <div v-if="provider">
       <p>
         <plugin-info
@@ -30,10 +30,10 @@
       </p>
     </div>
     <template #footer>
-      <btn @click="$emit('cancel')" data-testid="cancel-button">{{
+      <btn data-testid="cancel-button" @click="$emit('cancel')">{{
         $t("Cancel")
       }}</btn>
-      <btn type="success" @click="saveChanges" data-testid="save-button">{{
+      <btn type="success" data-testid="save-button" @click="saveChanges">{{
         $t("Save")
       }}</btn>
     </template>

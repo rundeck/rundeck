@@ -327,6 +327,7 @@
           type="text"
           class="form-control input-sm"
           :class="contextAutocomplete ? 'context_var_autocomplete' : ''"
+          placeholder="hey there"
         />
 
         <TextAutocomplete
