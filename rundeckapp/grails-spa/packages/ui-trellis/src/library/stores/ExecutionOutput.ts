@@ -124,16 +124,19 @@ export class ExecutionOutput {
             { exec: status.description, type: "exec", nodeStep: "true" },
           ]);
         }
-        const resp = await this.client.jobWorkflowGet(status.job!.id!);
-        return new JobWorkflow(resp.workflow);
+        const response = await api.get(`job/${status.job.id}/workflow`);
+        return new JobWorkflow(response.data.workflow);
       })();
     }
     return this.jobWorkflowProm;
   }
 
   async getExecutionStatus() {
-    if (!this.executionStatusProm)
-      this.executionStatusProm = this.client.executionStatusGet(this.id);
+    if (!this.executionStatusProm) {
+      this.executionStatusProm = api
+        .get(`execution/${this.id}`)
+        .then((response) => response.data as ExecutionStatusGetResponse);
+    }
 
     return this.executionStatusProm;
   }
