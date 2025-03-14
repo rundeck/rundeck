@@ -63,7 +63,7 @@ dependencies {
     implementation "io.micronaut:micronaut-inject-groovy"
     console "org.grails:grails-console"
     implementation project(":core")
-    api ("com.github.rundeck.repository:repository-client:0.12.0") {
+    api (project(":rundeck-repository:rundeck-repository-client")) {
         exclude(group:"org.rundeck", module:"rundeck-core")
         exclude(group:"org.rundeck", module:"rundeck-storage-api")
         exclude(group:"org.rundeck", module:"rundeck-storage-data")

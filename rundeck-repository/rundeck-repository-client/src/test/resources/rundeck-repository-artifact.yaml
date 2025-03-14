@@ -1,0 +1,17 @@
+Name: My Great Plugin
+Description: My plugin description
+Author: FirstName LastName
+AuthorId: rundeck-repository-id
+ArtifactType: JAVA_PLUGIN
+Version: '0.1'
+RundeckCompatibility: '3.0.0+'
+Support: Community
+License: Apache-2.0
+Id: 4819d98fea70
+Tags:
+    - java
+ProvidesServices:
+    - notification
+ThirdPartyDependencies : None
+SourceLink: https://github.com/youraccount/mygreatplugin
+#BinaryLink: https://bintray.com/rundeckrepository/mygreatplugin

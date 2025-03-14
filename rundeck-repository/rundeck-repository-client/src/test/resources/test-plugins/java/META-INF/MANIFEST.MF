@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Rundeck-Plugin-Classnames: org.rundeck.plugin.nodes.NodeRefreshWorkflo
+ wStep
+Rundeck-Plugin-File-Version: 3.0.1-SNAPSHOT
+Rundeck-Plugin-Date: 2018-05-03T10:58:38-05
+Rundeck-Plugin-Description: Force refresh node list
+Rundeck-Plugin-URL: http://rundeck.com
+Rundeck-Plugin-Author: Rundeck, Inc.
+Rundeck-Plugin-Version: 1.2
+Rundeck-Plugin-Name: Node Refresh Plugin
+Rundeck-Plugin-Archive: true
+
