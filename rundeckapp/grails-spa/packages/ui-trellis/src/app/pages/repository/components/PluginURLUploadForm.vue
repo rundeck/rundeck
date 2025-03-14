@@ -20,7 +20,7 @@
 import { defineComponent } from "vue";
 import { mapActions } from "vuex";
 
-import { client } from "../../../../library/modules/rundeckClient";
+import { api } from "../../../../library/services/api";
 export default defineComponent({
   name: "PluginUrlUploadForm",
   data() {
@@ -35,36 +35,31 @@ export default defineComponent({
         loadingMessage: "Installing",
         loadingSpinner: true,
       });
-      client
-        .sendRequest({
-          baseUrl: window._rundeck.rdBase,
-          pathTemplate: `/plugin/installPlugin`,
-          queryParameters: {
-            pluginUrl: this.pluginURL,
-          },
-          method: "POST",
+      api
+        .post(`/plugin/installPlugin`, null, {
+          params: { pluginUrl: this.pluginURL },
         })
         .then((response) => {
           if (response.status === 200) {
             this.openOverlay({});
-            if (response.parsedBody.err) {
+            if (response.data.err) {
               this.$alert({
                 title: "Error Uploading",
-                content: response.parsedBody.err,
+                content: response.data.err,
               });
             } else {
               this.$alert({
                 title: "Plugin Installed",
-                content: response.parsedBody.msg,
+                content: response.data.msg,
               });
             }
           } else if (response.status >= 300) {
             this.openOverlay({});
             let message = `Error: ${response.status}`;
-            if (response.parsedBody && response.parsedBody.message) {
-              message = response.parsedBody.message;
-            } else if (response.parsedBody && response.parsedBody.error) {
-              message = response.parsedBody.error;
+            if (response.data && response.data.message) {
+              message = response.data.message;
+            } else if (response.data && response.data.error) {
+              message = response.data.error;
             }
             this.$alert({
               title: "Error Uploading",

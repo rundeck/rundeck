@@ -13,6 +13,7 @@ import { RootStore } from "./RootStore";
 import { JobWorkflow, RenderedStepList } from "../utilities/JobWorkflow";
 import { ExecutionStatusGetResponse } from "@rundeck/client/dist/lib/models";
 import { Serial } from "../utilities/Async";
+import { api } from "../services/api";
 
 // export type EnrichedExecutionOutput = Omit<ExecutionOutput, 'entries'> & {entries: IRenderedEntry[]}
 
@@ -142,14 +143,9 @@ export class ExecutionOutput {
     offset: number,
     maxLines: number,
   ) {
-    return this.client
-      .apiRequest({
-        method: "GET",
-        pathTemplate: "api/43/execution/{id}/output",
-        pathParameters: {
-          id: executionId,
-        },
-        queryParameters: {
+    return api
+      .get(`execution/${executionId}/output`, {
+        params: {
           offset: offset.toString(),
           maxlines: maxLines.toString(),
         },
@@ -157,10 +153,10 @@ export class ExecutionOutput {
       .then((response) => {
         if (response.status != 200) {
           throw new Error(
-            "Error calling execution log api: " + response.bodyAsText,
+            "Error calling execution log api: " + JSON.stringify(response.data),
           );
         }
-        return response.parsedBody;
+        return response.data;
       });
   }
 
