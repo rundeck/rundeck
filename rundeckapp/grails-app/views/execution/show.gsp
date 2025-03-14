@@ -177,7 +177,6 @@ search
       <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
 
       <asset:stylesheet href="static/css/chunk-vendors.css"/>
-      <asset:stylesheet href="static/css/pages/execution-show.css"/>
       <asset:javascript src="static/pages/execution-show.js" defer="defer"/>
   </head>
   <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
