@@ -4,7 +4,7 @@ import Tokens from "../modules/tokens";
 import { getRundeckContext } from "../rundeckService";
 import { RootStore } from "./RootStore";
 import axios, { AxiosResponse } from "axios";
-import { api } from "../../services/api";
+import { api } from "../services/api";
 
 export class NodeSourceFile {
   @observable index: number = -1;
