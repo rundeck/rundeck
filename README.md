@@ -84,6 +84,17 @@ CORE_UI=rundeckapp/grails-spa/packages/ui-trellis
 npm run --prefix "$CORE_UI" dev:test:watch
 ```
 
+
+## Build UI in Dev Mode
+
+Build the core UI components in dev mode, which copies the artifacts immediately to the 
+assets dir of the running application.
+
+```shell
+CORE_UI=rundeckapp/grails-spa/packages/ui-trellis
+npm run --prefix "$CORE_UI" dev
+```
+
 # Documentation
 
 Available online at <https://docs.rundeck.com/docs>
