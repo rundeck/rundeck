@@ -1,6 +1,6 @@
 # Build remco from specific commit
 ##################################
-FROM golang:1.22.2 as remco
+FROM golang:1.24.1 as remco
 
 # REMCO_VERSION can be a release version "v0.XX.X", commit id, tag or branch name.
 
@@ -12,7 +12,7 @@ RUN go install github.com/HeavyHorst/remco/cmd/remco@$REMCO_VERSION
 
 # Build base container
 ######################
-FROM ubuntu:22.04
+FROM ubuntu:22.04@sha256:ed1544e454989078f5dec1bfdabd8c5cc9c48e0705d07b678ab6ae3fb61952d2
 
 ARG TARGETARCH
 
