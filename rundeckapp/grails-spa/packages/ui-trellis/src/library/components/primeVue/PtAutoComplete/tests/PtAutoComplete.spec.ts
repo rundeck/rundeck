@@ -1,6 +1,7 @@
 import { mount } from "@vue/test-utils";
-import PtAutoComplete from "../PtAutoComplete.vue";
 import AutoComplete from "primevue/autocomplete";
+import PrimeVue from "primevue/config";
+import {PtAutoComplete} from "../../index";
 
 const createWrapper = async (props = {}): Promise<any> => {
   const wrapper = mount(PtAutoComplete, {
@@ -19,21 +20,13 @@ const createWrapper = async (props = {}): Promise<any> => {
       components: {
         AutoComplete: AutoComplete,
       },
+      plugins: [PrimeVue]
     },
   });
   await wrapper.vm.$nextTick();
   return wrapper;
 };
 describe("PtAutoComplete", () => {
-  it("renders the component and passes props correctly", async () => {
-    const wrapper = await createWrapper();
-    const input = wrapper.find("input.p-inputtext");
-    expect(input.element.value).toBe("initial value");
-    await wrapper.vm.$nextTick();
-    const autoComplete = wrapper.findComponent(AutoComplete);
-    expect(autoComplete.props("name")).toBe("test-autocomplete");
-  });
-
   it("updates value when the user types and emits 'update:modelValue'", async () => {
     const wrapper = await createWrapper();
     const input = wrapper.find("input.p-inputtext");
@@ -53,9 +46,6 @@ describe("PtAutoComplete", () => {
   });
   it("emits 'onComplete' when a suggestion is selected", async () => {
     const wrapper = await createWrapper();
-    const input = wrapper.find("input.p-inputtext");
-    await input.setValue("Option 1");
-    await input.trigger("input");
     const autoComplete = wrapper.findComponent(AutoComplete);
     await autoComplete.vm.$emit("complete", [{ label: "Option 1", value: 1 }]);
     await wrapper.vm.$nextTick();

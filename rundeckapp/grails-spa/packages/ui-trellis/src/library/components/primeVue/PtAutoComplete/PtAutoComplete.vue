@@ -84,12 +84,12 @@ export default defineComponent({
 
   .p-inputtext {
     background-color: var(--colors-white);
-    border: 1px solid var(--colors-grey-500);
-    color: var(--colors-grey-900);
+    border: 1px solid var(--colors-gray-500);
+    color: var(--colors-gray-900);
     width: inherit;
 
     &::placeholder {
-      color: var(--colors-grey-600);
+      color: var(--colors-gray-600);
     }
 
     &:enabled:hover {
