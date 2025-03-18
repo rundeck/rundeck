@@ -48,9 +48,11 @@ RUN apt-get update && \
 # Setup rundeck user
 RUN adduser --gid 0 --shell /bin/bash --home /home/rundeck --gecos "" --disabled-password rundeck && \
     chmod 0775 /home/rundeck && \
-    sudo passwd -d rundeck && \
-    sudo addgroup rundeck sudo && \
-    sudo chmod g+w /etc/passwd
+    passwd -d rundeck && \
+    addgroup rundeck && \
+    adduser rundeck sudo && \
+    chmod g+w /etc/passwd
+
 
 # Install Tini
 ENV TINI_VERSION=0.19.0
