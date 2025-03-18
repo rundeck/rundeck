@@ -1,7 +1,5 @@
 <template>
   <section id="optionsContent" class="section-space-lg">
-<!--    <Tag value="abc" />-->
-<!--    <PtAutoComplete v-model="test"  />-->
     <div class="form-group">
       <div class="col-sm-2 control-label text-form-label">
         <span id="optsload"></span>{{ $t("options.label") }}
@@ -46,8 +44,7 @@ import WorkflowStrategy from "@/app/components/job/workflow/WorkflowStrategy.vue
 import { PluginConfig } from "@/library/interfaces/PluginConfig";
 import { defineComponent } from "vue";
 import OptionsEditorSection from "@/app/pages/job/editor/OptionsEditorSection.vue";
-// import { PtAutoComplete } from "@/library/components/primeVue";
-// import Tag from "primevue/tag";
+
 export default defineComponent({
   name: "WorkflowEditor",
   components: {
@@ -56,8 +53,6 @@ export default defineComponent({
     WorkflowSteps,
     WorkflowGlobalLogFilters,
     WorkflowStrategy,
-    // PtAutoComplete,
-    // Tag
   },
   props: {
     modelValue: {
