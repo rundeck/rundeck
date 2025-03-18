@@ -2,6 +2,7 @@ import "isomorphic-fetch";
 
 console.log(global.fetch);
 
+import { api, apiClient } from "../../src/library/services/api";
 import { ExecutionOutputStore } from "../../src/library/stores/ExecutionOutput";
 
 import { observe } from "mobx";
@@ -9,13 +10,20 @@ import { RundeckBrowser } from "@rundeck/client";
 import { RootStore } from "../../src/library/stores/RootStore";
 import { RundeckToken } from "../../src/library/interfaces/rundeckWindow";
 import { EventBus } from "../../src/library";
-import { api } from "../../src/library/services/api";
 
 jest.setTimeout(60000);
 
-jest.mock("@/library/modules/rundeckClient", () => ({
-  client: jest.fn(),
-}));
+jest.mock("../../src/library/services/api", () => {
+  const api = {
+    get: jest.fn(),
+    put: jest.fn(),
+    post: jest.fn(),
+  };
+  return {
+    api,
+    apiClient: jest.fn().mockImplementation((vers) => api),
+  };
+});
 
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
@@ -42,14 +50,6 @@ jest.mock("../../src/library/stores/RootStore", () => {
   };
 });
 
-jest.mock("../../src/library/services/api", () => ({
-  api: {
-    get: jest.fn(),
-    put: jest.fn(),
-    post: jest.fn(),
-  },
-}));
-
 describe("ExecutionOutput Store", () => {
   beforeEach(() => {
     window._rundeck = {
@@ -71,6 +71,7 @@ describe("ExecutionOutput Store", () => {
       tokens: {},
     };
     jest.resetAllMocks();
+    (apiClient as jest.MockedFn<any>).mockImplementation((vers) => api);
   });
 
   it("Loads Output", async () => {
