@@ -4,8 +4,10 @@ FROM ${IMAGE}
 USER root
 
 RUN apt-get update && \
-    apt-get install -y netcat-traditional && \
+    apt-get install -y netcat && \
     apt-get -y install sshpass
+
+RUN apt-get install -y netcat
 
 # install ansible
 RUN apt-get update && \
