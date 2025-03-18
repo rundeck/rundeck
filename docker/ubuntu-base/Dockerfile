@@ -12,7 +12,7 @@ RUN go install github.com/HeavyHorst/remco/cmd/remco@$REMCO_VERSION
 
 # Build base container
 ######################
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 ARG TARGETARCH
 
@@ -48,9 +48,9 @@ RUN apt-get update && \
 # Setup rundeck user
 RUN adduser --gid 0 --shell /bin/bash --home /home/rundeck --gecos "" --disabled-password rundeck && \
     chmod 0775 /home/rundeck && \
-    passwd -d rundeck && \
-    addgroup rundeck sudo && \
-    chmod g+w /etc/passwd
+    sudo passwd -d rundeck && \
+    sudo addgroup rundeck sudo && \
+    sudo chmod g+w /etc/passwd
 
 # Install Tini
 ENV TINI_VERSION=0.19.0
