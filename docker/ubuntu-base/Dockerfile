@@ -12,7 +12,7 @@ RUN go install github.com/HeavyHorst/remco/cmd/remco@$REMCO_VERSION
 
 # Build base container
 ######################
-FROM ubuntu:24.04
+FROM ubuntu:22.04
 
 ARG TARGETARCH
 
