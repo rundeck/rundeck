@@ -6,6 +6,9 @@ const config: StorybookConfig = {
     "../src/library/components/primeVue/**/*.mdx",
     "../src/library/components/primeVue/**/*.stories.@(js|jsx|mjs|ts|tsx)",
   ],
+  staticDirs: [
+    {from: '../../../../rundeck/rundeckapp/grails-app/assets', to: "public"},
+  ],
   addons: [
     "@storybook/addon-webpack5-compiler-swc",
     "storybook-dark-mode",

@@ -80,17 +80,19 @@ export default defineComponent({
 
 <style lang="scss">
 .p-autocomplete {
-  /* Default state */
+  width: 100%;
+
   .p-inputtext {
     background-color: var(--colors-white);
     border: 1px solid var(--colors-grey-500);
     color: var(--colors-grey-900);
+    width: inherit;
 
     &::placeholder {
       color: var(--colors-grey-600);
     }
 
-    &:hover {
+    &:enabled:hover {
       border-color: var(--colors-blue-500);
     }
     &:enabled:focus {

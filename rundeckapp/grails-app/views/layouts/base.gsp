@@ -48,6 +48,7 @@
     <asset:stylesheet href="tokens.css"/>
     <asset:stylesheet href="tokens-rundeck.css"/>
     %{-- Vendor CSS styles--}%
+    <asset:stylesheet href="primeVue.css"/>
     <asset:stylesheet href="vendor/perfect-scrollbar.css"/>
     <asset:stylesheet href="github-markdown.css"/>
     <asset:stylesheet href="vendor/jquery-ui.css"/>
