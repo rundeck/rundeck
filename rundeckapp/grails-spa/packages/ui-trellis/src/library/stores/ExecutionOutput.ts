@@ -13,7 +13,7 @@ import { RootStore } from "./RootStore";
 import { JobWorkflow, RenderedStepList } from "../utilities/JobWorkflow";
 import { ExecutionStatusGetResponse } from "@rundeck/client/dist/lib/models";
 import { Serial } from "../utilities/Async";
-import { api } from "../services/api";
+import { api, apiClient } from "../services/api";
 
 // export type EnrichedExecutionOutput = Omit<ExecutionOutput, 'entries'> & {entries: IRenderedEntry[]}
 
@@ -146,7 +146,7 @@ export class ExecutionOutput {
     offset: number,
     maxLines: number,
   ) {
-    return api
+    return apiClient(43)
       .get(`execution/${executionId}/output`, {
         params: {
           offset: offset.toString(),
