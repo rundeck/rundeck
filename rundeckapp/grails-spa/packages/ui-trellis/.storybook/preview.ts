@@ -1,7 +1,7 @@
 import type { Preview } from "@storybook/vue3";
 import { setup } from "@storybook/vue3";
 import PrimeVue from "primevue/config";
-import Lara from "@primeuix/themes";
+import Lara from "@primeuix/themes/Lara";
 
 import "../src/library/theme/tokens.css";
 import "../src/library/theme/primeVue.css";

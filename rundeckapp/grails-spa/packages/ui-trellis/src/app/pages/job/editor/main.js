@@ -126,7 +126,12 @@ const mountSection = (section) => {
       }
       app.use(PrimeVue, {
         theme: {
-          preset: Lara
+          preset: Lara,
+          options: {
+            prefix: "p",
+            cssLayer: true,
+            darkModeSelector: ".dark",
+          },
         }
       });
       app.use(pinia);
