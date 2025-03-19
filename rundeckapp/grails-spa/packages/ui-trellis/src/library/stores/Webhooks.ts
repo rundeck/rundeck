@@ -134,7 +134,7 @@ export class WebhookStore {
     } else {
       return {
         data: {
-          err: resp.data?.message || `Failed to save webhook: ${resp.status}`,
+          err: resp.data?.message || `Failed to delete webhook: ${resp.status}`,
         },
       };
     }
