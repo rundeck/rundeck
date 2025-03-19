@@ -1,6 +1,6 @@
 import { mount } from "@vue/test-utils";
 import AutoComplete from "primevue/autocomplete";
-import PrimeVue from "primevue/config";
+
 import {PtAutoComplete} from "../../index";
 
 const createWrapper = async (props = {}): Promise<any> => {
@@ -20,7 +20,6 @@ const createWrapper = async (props = {}): Promise<any> => {
       components: {
         AutoComplete: AutoComplete,
       },
-      plugins: [PrimeVue]
     },
   });
   await wrapper.vm.$nextTick();

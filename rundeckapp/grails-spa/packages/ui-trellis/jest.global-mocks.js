@@ -1,5 +1,6 @@
 import { config } from "@vue/test-utils";
 import { Btn, Dropdown, Modal } from "uiv";
+import PrimeVue from "primevue/config";
 
 // Globally stub components - to disable, on mount/shallowMount pass global.stubs.[componentName] = false
 // it's also possible to pass another stub
@@ -12,6 +13,9 @@ config.global.components = {
   Dropdown,
   Modal,
 };
+
+// noinspection JSValidateTypes
+config.global.plugins = [PrimeVue];
 
 // same thing with global.mocks, on mount/shallowMount pass global.mocks.$t = new code
 config.global.mocks = {
