@@ -17,14 +17,14 @@
 <%@ page import="rundeck.PluginStep; rundeck.ScheduledExecution; rundeck.JobExec" %>
 <%--
     _wfItemView.gsp
-
+    
     Author: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
     Created: Jul 26, 2010 5:12:38 PM
     $Id$
  --%>
             <g:set var="jobitem" value="${item.instanceOf(JobExec)}"/>
             <g:set var="pluginitem" value="${item.instanceOf(PluginStep)}"/>
-            <span class="${edit?'autohilite autoedit':''} wfitem ${jobitem?'jobtype':pluginitem?'plugintype':'exectype'}" title="${edit?'Click to edit!':''}">
+            <span class="${edit?'autohilite autoedit':''} wfitem ${jobitem?'jobtype':pluginitem?'plugintype':'exectype'}" title="${edit?'Click to edit':''}">
             <g:if test="${jobitem}">
                 %{--Display job icon and name--}%
                 <g:set var="foundjob" value="${edit?null:(item.findJob(project))}"/>

@@ -1,5 +1,9 @@
 <template>
-  <modal v-model="showModal" title="BOOP" size="lg">
+  <modal
+    v-model="showModal"
+    :title="title || $t('plugin.edit.title')"
+    size="lg"
+  >
     <div v-if="provider">
       <p>
         <plugin-info

@@ -17,7 +17,7 @@
       <PluginDetails
         :show-description="showDescription"
         :show-extended="showExtended"
-        description="AWW YEAH"
+        :description="description"
         :description-css="descriptionCss"
         :extended-css="extendedCss"
       />

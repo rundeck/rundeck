@@ -77,7 +77,6 @@ function _jobGlobalVarData() {
 }
 
 function _jobVarData() {
-  console.log("hi it me")
   if (_VAR_DATA['job'].length < 1) {
     var jobdata = {
       'id': {
@@ -270,7 +269,6 @@ function _jobEhData() {
  * @param isnodestep true if node step
  */
 function postLoadItemEdit(item, iseh, isnodestep) {
-  console.log("post load item")
   var liitem = jQuery(item);
   liitem.find('input[type=text]').each(function (ndx, elem) {
     elem.addEventListener('keypress', noenter, false);
@@ -316,7 +314,6 @@ function postLoadItemEdit(item, iseh, isnodestep) {
 }
 
 function addWfAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode, acetexteditorcallback, gettextfieldenvmode) {
-  console.log("hi it me 2")
   var baseVarData = [].concat(_jobVarData());
   baseVarData = baseVarData.concat(_jobGlobalVarData());
 
@@ -325,7 +322,6 @@ function addWfAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode,
 }
 
 var notificationAutocomplete = function (id) {
-  console.log("hi it me 2")
   var elem = jQuery('#' + id)
   var baseVarData = [].concat(_jobVarData());
   baseVarData = baseVarData.concat(_jobGlobalVarData());
@@ -626,7 +622,6 @@ function _enableNameJobRefFields(enable, uuid, nameid, groupid, projid) {
 var _iseditting = null;
 
 function _wfiedit(key, num, isErrorHandler) {
-  console.log(" hi _wfiededit")
   if (_iseditting) {
     return;
   }
@@ -666,7 +661,6 @@ function _wfiview(key, num, isErrorHandler) {
 }
 
 function _wfisave(key, num, formelem, iseh) {
-  console.log(" hi _wfisave")
   jobWasEdited();
   var data = jQuery("#" + formelem + " :input").serialize();
   jQuery.ajax({
@@ -696,7 +690,6 @@ function _wfisave(key, num, formelem, iseh) {
 var newitemElem;
 
 function _wfiaddnew(type, nodestep) {
-  console.log(" hi _wfiaddnew")
   jobWasEdited();
   var params = {
     newitemtype: type,
@@ -747,7 +740,6 @@ function _addAceTextarea(textarea, callback, ext) {
 }
 
 function _wfisavenew(formelem) {
-  console.log(" hi _wfisavenew")
   jobWasEdited();
   var data = jQuery("#" + formelem + " :input").serialize();
   jQuery.ajax({
@@ -902,7 +894,6 @@ function _wfishownewErrorHandler(key, num, nodeStep) {
 }
 
 function _wfiaddNewErrorHandler(elem, type, num, nodestep) {
-  console.log(" hi _wfiaddnewerrorhandler")
   if (null == num) {
     //find num by looking for enclosing ul and getting wfitemNum attribute
     var d = jQuery(elem).closest('ul.wfhandleritem');
