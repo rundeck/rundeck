@@ -39,6 +39,16 @@
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: g.appFavicon())}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
 
+    <link rel="stylesheet" href="https://unpkg.com/primevue/resources/themes/saga-blue/theme.css" />
+    <link rel="stylesheet" href="https://unpkg.com/primevue/resources/primevue.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/primeicons/primeicons.css" />
+    %{-- css variables for primeVue  --}%
+    <asset:stylesheet href="tokens.css"/>
+    <asset:stylesheet href="tokens-rundeck.css"/>
+
+    <script src="https://unpkg.com/primevue@latest/core/core.umd.min.js"></script>
+    <script src="https://unpkg.com/primevue@latest/button/button.umd.min.js"></script>
+
     <g:render template="/common/navData"/>
 
     %{-- Core theme styles from ui-trellis --}%
@@ -48,6 +58,7 @@
     <asset:stylesheet href="tokens.css"/>
     <asset:stylesheet href="tokens-rundeck.css"/>
     %{-- Vendor CSS styles--}%
+    <asset:stylesheet href="primeVue.css"/>
     <asset:stylesheet href="vendor/perfect-scrollbar.css"/>
     <asset:stylesheet href="github-markdown.css"/>
     <asset:stylesheet href="vendor/jquery-ui.css"/>

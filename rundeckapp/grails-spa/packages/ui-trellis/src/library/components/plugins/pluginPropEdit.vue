@@ -318,17 +318,11 @@
           class="form-control input-sm"
           :disabled="true"
         />
-        <input
-          v-else
-          :id="`${rkey}prop_` + pindex"
-          v-model="currentValue"
-          :name="`${rkey}prop_` + pindex"
-          size="100"
-          type="text"
-          class="form-control input-sm"
-          :class="contextAutocomplete ? 'context_var_autocomplete' : ''"
-          placeholder="hey there"
-        />
+
+        <SimpleAutoComplete />
+        <RegularMultipleAutoComplete />
+        <AutoCompleteWithRegex />
+        <AutoCompleteWithTooltip />
 
         <TextAutocomplete
           v-if="contextAutocomplete && !aceEditorEnabled"
@@ -458,6 +452,11 @@ import { getRundeckContext } from "../../rundeckService";
 import { EventBus } from "@/library";
 import UiSocket from "../utils/UiSocket.vue";
 import PluginDetails from "@/library/components/plugins/PluginDetails.vue";
+import SimpleAutoComplete from "@/library/components/primeVue/PtAutoComplete/SimpleAutoComplete.vue";
+import RegularMultipleAutoComplete from "@/library/components/primeVue/PtAutoComplete/RegularMultipleAutoComplete.vue";
+import AutoCompleteWithRegex from "@/library/components/primeVue/PtAutoComplete/AutoCompleteWithRegex.vue";
+import AutoCompleteWithTooltip from "@/library/components/primeVue/PtAutoComplete/AutoCompleteWithTooltip.vue";
+
 interface Prop {
   type: string;
   defaultValue: any;
@@ -480,6 +479,10 @@ export default defineComponent({
     KeyStorageSelector,
     TextAutocomplete,
     UiSocket,
+    SimpleAutoComplete,
+    RegularMultipleAutoComplete,
+    AutoCompleteWithRegex,
+    AutoCompleteWithTooltip,
   },
   props: {
     prop: {

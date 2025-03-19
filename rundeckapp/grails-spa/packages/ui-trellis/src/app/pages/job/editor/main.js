@@ -1,6 +1,6 @@
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
-import { createApp, markRaw } from "vue";
+import { createApp } from "vue";
 import { createPinia } from "pinia";
 import VueCookies from "vue-cookies";
 import * as uiv from "uiv";
@@ -15,17 +15,17 @@ import { observer } from "../../../utilities/uiSocketObserver";
 import OptionsEditorSection from "./OptionsEditorSection.vue";
 import { getRundeckContext } from "@/library";
 import { loadJsonData } from "@/app/utilities/loadJsonData";
-import NextUiToggle from "@/app/pages/job/browse/NextUiToggle.vue";
 import DetailsEditorSection from "@/app/pages/job/editor/DetailsEditorSection.vue";
 import ExecutionEditorSection from "./ExecutionEditorSection.vue";
 import WorkflowEditorSection from "@/app/pages/job/editor/WorkflowEditorSection.vue";
+import PrimeVue from "primevue/config";
+import Lara from "@primeuix/themes/lara";
 
 const locale = window._rundeck.locale || "en_US";
 moment.locale(locale);
 
 const i18n = initI18n();
 const EventBus = getRundeckContext().eventBus;
-const rootStore = getRundeckContext().rootStore;
 const uiMeta = loadJsonData("pageUiMeta");
 const uiType = uiMeta?.uiType || "current";
 const pinia = createPinia();
@@ -122,6 +122,11 @@ const mountSection = (section) => {
       if (section.addCookies) {
         app.use(VueCookies);
       }
+      app.use(PrimeVue, {
+        theme: {
+          preset: Lara,
+        },
+      });
       app.use(pinia);
       app.mount(element);
     });
@@ -130,12 +135,10 @@ const mountSection = (section) => {
   }
 };
 
-jobSections.forEach((section) => section.visible && mountSection(section));
-
 //on job edit page listen for dom content changes and install UI Sockets
-window.addEventListener("DOMContentLoaded", (event) => {
+window.addEventListener("DOMContentLoaded", () => {
+  jobSections.forEach((section) => section.visible && mountSection(section));
   // Job Editing page - Workflow Tab
-
   const elem = document.querySelector("#workflowContent .pflowlist.edit");
   if (elem) {
     observer.observe(elem, { subtree: true, childList: true });

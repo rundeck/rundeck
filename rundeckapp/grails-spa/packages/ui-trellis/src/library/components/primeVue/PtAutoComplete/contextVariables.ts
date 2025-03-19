@@ -1,0 +1,16 @@
+export const contextVariables = [
+  "$id",
+  "$execid",
+  "$executionType",
+  "$name",
+  "$group",
+  "$username",
+  "$project",
+  "$loglevel",
+  "$user.email",
+  "$retryAttempt",
+  "$retryInitialExecId",
+  "$wasRetry",
+  "$threadcount",
+  "$filter",
+];

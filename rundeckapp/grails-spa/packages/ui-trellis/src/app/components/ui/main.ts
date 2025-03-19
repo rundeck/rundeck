@@ -7,7 +7,7 @@ import { getRundeckContext } from "../../../library";
 import { UiMessage } from "../../../library/stores/UIStore";
 import UiSocket from "../../../library/components/utils/UiSocket.vue";
 import { initI18n, updateLocaleMessages } from "../../utilities/i18n";
-import Lara from "@primevue/themes/lara";
+import Lara from "@primeuix/themes/lara";
 
 const rootStore = getRundeckContext().rootStore;
 const EventBus = getRundeckContext().eventBus;
@@ -67,13 +67,11 @@ function initUiComponents(elmElement: any) {
   vue.use(VueCookies);
   vue.use(i18n);
   vue.use(uiv);
-  // TO DO: update here to add custom preset for theme
-  // vue.use(PrimeVue, {
-  //   theme: {
-  //     preset: Lara,
-  //   },
-  // });
-  // keeping primeVue unstyled at first to avoid unexpected conflicts
+  vue.use(PrimeVue, {
+    theme: {
+      preset: Lara,
+    },
+  });
   vue.use(PrimeVue, { unstyled: true });
 
   vue.provide("registerComponent", (name, comp) => {
