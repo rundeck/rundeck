@@ -45,6 +45,7 @@ public enum Features implements FeaturesDefinition{
     API_PROJECT_CONFIG_VALIDATION("apiProjectConfigValidation"),
     NEW_LOCAL_NODE_EXECUTOR("newLocalNodeExecutor"),
     NODE_EXECUTOR_SECURE_INPUT("nodeExecutorSecureInput"),
+    API_PUBLIC_KEYS_DOWNLOAD("apiPublicKeysDownload"),
     ;
 
     private final String propertyName;
