@@ -19,8 +19,8 @@ const internationalization = {
 };
 
 const initI18n = (options = {}) => {
-  const locale = window._rundeck.locale || "en_US";
-  const lang = window._rundeck.language || "en";
+  const locale = window._rundeck?.locale || "en_US";
+  const lang = window._rundeck?.language || "en";
   const messages = {
     [locale]: Object.assign(
       {},
