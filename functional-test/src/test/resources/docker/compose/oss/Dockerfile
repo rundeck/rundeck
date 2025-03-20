@@ -13,7 +13,6 @@ RUN apt-get install -y netcat
 RUN apt-get update && \
     apt-get -y install python3-pip && \
     apt-get -y install iputils-ping && \
-    apt-get -y install netcat && \
     pip3 install --upgrade pip
 
 RUN pip3 install ansible==9.6.1
