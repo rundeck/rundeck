@@ -301,7 +301,7 @@
                 v-if="selectedKey && isPublicKey(selectedKey)"
                 class="pull-right"
               >
-                <span v-if="allowDownload === true">
+                <span>
                   <a :href="downloadUrl()">
                     <i class="glyphicon glyphicon-download"></i>
                     {{ "Download" }}</a
@@ -358,7 +358,6 @@ export default defineComponent({
   props: {
     readOnly: Boolean,
     allowUpload: Boolean,
-    allowDownload: Boolean,
     modelValue: String,
     storageFilter: String,
     rootPath: String,

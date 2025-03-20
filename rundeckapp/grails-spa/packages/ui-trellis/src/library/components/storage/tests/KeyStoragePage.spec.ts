@@ -53,7 +53,6 @@ const mountKeyStoragePage = async (props = {}) => {
       project: "test-project",
       readOnly: true,
       allowUpload: true,
-      allowDownload: true,
       modelValue: "",
       storageFilter: "",
       ...props,

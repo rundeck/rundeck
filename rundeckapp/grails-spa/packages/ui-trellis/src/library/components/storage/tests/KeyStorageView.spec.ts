@@ -68,7 +68,6 @@ const mountKeyStorageView = async (props = {}) => {
       rootPath: "",
       readOnly: false,
       allowUpload: true,
-      allowDownload: true,
       ...props,
     },
     global: {

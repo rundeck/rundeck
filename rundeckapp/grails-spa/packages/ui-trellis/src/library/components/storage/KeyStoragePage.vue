@@ -9,7 +9,6 @@
         :root-path="rootPath"
         :read-only="readOnly"
         :allow-upload="allowUpload"
-        :allow-download="allowDownload"
         :value="path"
         @open-editor="openEditor"
       ></key-storage-view>
@@ -47,14 +46,7 @@ import UiSocket from "../utils/UiSocket.vue";
 export default defineComponent({
   name: "KeyStoragePage",
   components: { UiSocket, KeyStorageEdit, KeyStorageView },
-  props: [
-    "readOnly",
-    "allowUpload",
-    "allowDownload",
-    "modelValue",
-    "storageFilter",
-    "project",
-  ],
+  props: ["readOnly", "allowUpload", "modelValue", "storageFilter", "project"],
 
   data() {
     return {
