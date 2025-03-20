@@ -9,14 +9,15 @@
         :root-path="rootPath"
         :read-only="readOnly"
         :allow-upload="allowUpload"
+        :allow-download="allowDownload"
         :value="path"
         @open-editor="openEditor"
       ></key-storage-view>
       <modal
         id="storageuploadkey"
         ref="modalEdit"
-        data-testid="modal-edit"
         v-model="modalEdit"
+        data-testid="modal-edit"
         title="Add or Upload a Key"
         auto-focus
         append-to-body
@@ -46,7 +47,14 @@ import UiSocket from "../utils/UiSocket.vue";
 export default defineComponent({
   name: "KeyStoragePage",
   components: { UiSocket, KeyStorageEdit, KeyStorageView },
-  props: ["readOnly", "allowUpload", "modelValue", "storageFilter", "project"],
+  props: [
+    "readOnly",
+    "allowUpload",
+    "allowDownload",
+    "modelValue",
+    "storageFilter",
+    "project",
+  ],
 
   data() {
     return {

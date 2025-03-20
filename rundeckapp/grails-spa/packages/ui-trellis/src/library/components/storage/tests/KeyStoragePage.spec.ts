@@ -1,19 +1,17 @@
 import { flushPromises, mount, VueWrapper } from "@vue/test-utils";
 import { ComponentPublicInstance } from "vue";
-import {listProjects} from '../../../services/projects'
+import { listProjects } from "../../../services/projects";
 import KeyStoragePage from "../KeyStoragePage.vue";
 import {
   storageKeyGetMetadata,
-  storageKeyDelete
-} from '../../../services/storage'
+  storageKeyDelete,
+} from "../../../services/storage";
 import { Modal } from "uiv";
 jest.mock("../../../rundeckService", () => {
-
   return {
     getRundeckContext: jest.fn().mockReturnValue({
       rdBase: "mockRdBase",
       projectName: "test-project",
-
     }),
     url: jest.fn().mockReturnValue({ href: "mockHref" }),
   };
@@ -24,19 +22,20 @@ jest.mock("../../../services/projects");
 const mockedListProjects = listProjects as jest.MockedFunction<
   typeof listProjects
 >;
-mockedListProjects.mockResolvedValue([])
+mockedListProjects.mockResolvedValue([]);
 
-const mockedStorageKeyGetMetadata = storageKeyGetMetadata as jest.MockedFunction<
-  typeof storageKeyGetMetadata
->;
-mockedStorageKeyGetMetadata.mockResolvedValue({resources: [
+const mockedStorageKeyGetMetadata =
+  storageKeyGetMetadata as jest.MockedFunction<typeof storageKeyGetMetadata>;
+mockedStorageKeyGetMetadata.mockResolvedValue({
+  resources: [
     {
       name: "newKey",
       path: "/keys/newKey",
       type: "file",
-      meta: { 'Rundeck-key-type': "private"},
+      meta: { "Rundeck-key-type": "private" },
     },
-  ]})
+  ],
+});
 interface KeyStoragePageData {
   modalEdit: boolean;
   selectedKey: Record<string, any>;
@@ -44,8 +43,7 @@ interface KeyStoragePageData {
 const mockedStorageKeyDelete = storageKeyDelete as jest.MockedFunction<
   typeof storageKeyDelete
 >;
-mockedStorageKeyDelete.mockResolvedValue(true)
-
+mockedStorageKeyDelete.mockResolvedValue(true);
 
 type KeyStoragePageComponent = ComponentPublicInstance & KeyStoragePageData;
 
@@ -55,6 +53,7 @@ const mountKeyStoragePage = async (props = {}) => {
       project: "test-project",
       readOnly: true,
       allowUpload: true,
+      allowDownload: true,
       modelValue: "",
       storageFilter: "",
       ...props,
@@ -69,7 +68,6 @@ const mountKeyStoragePage = async (props = {}) => {
     },
   }) as unknown as VueWrapper<KeyStoragePageComponent>;
 };
-
 
 describe("KeyStoragePage.vue", () => {
   beforeEach(() => {
@@ -142,7 +140,7 @@ describe("KeyStoragePage.vue", () => {
           name: "testKey",
           path: "/keys/testKey",
           type: "file",
-          meta: { 'Rundeck-key-type': "private" },
+          meta: { "Rundeck-key-type": "private" },
         },
       ],
     });
@@ -151,7 +149,7 @@ describe("KeyStoragePage.vue", () => {
       name: "newKey",
       path: "/keys/newKey",
       keyType: "privateKey",
-      meta: { 'Rundeck-key-type': "private"  },
+      meta: { "Rundeck-key-type": "private" },
     };
     await flushPromises();
     await wrapper.vm.$nextTick();
