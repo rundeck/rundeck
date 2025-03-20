@@ -198,12 +198,8 @@ class StorageController extends ControllerBase{
             response.status = 403
             return renderError("unauthorized")
         }
-        if((askedForContent || anyContent) && !maskContent) {
-            //check if download is enabled by feature flag for api public keys retrieval
-            if(!forceDownload && request.method == "GET" && !configurationService.getBoolean("feature.apiPublicKeysDownload.enabled", false)){
-                response.status=403
-                return renderError("download is not enabled")
-            }
+        boolean downloadEnabled = configurationService.getBoolean("feature.apiPublicKeysDownload.enabled", false)
+        if(downloadEnabled && (askedForContent || anyContent) && !maskContent) {
             response.contentType=resContentType
             if(forceDownload){
                 def filename= resource.path.name
