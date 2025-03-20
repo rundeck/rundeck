@@ -524,7 +524,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
         }
         def mRes = Mock(Resource) {
-            1 * isDirectory() >> false
+            2 * isDirectory() >> false
             2 * getContents() >> mContent
         }
         controller.storageService = Mock(StorageService) {
