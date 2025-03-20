@@ -459,7 +459,7 @@ public class RundeckConfigBase {
         Enabled nodeExecutorSecureInput = new Enabled();
         Enabled alphaUi = new Enabled();
         Enabled enhancedJobTakeoverQuery = new Enabled();
-        Enabled apiPublicKeysDownload = new Enabled();
+        Enabled publicKeysDownload = new Enabled();
 
 
         @Data

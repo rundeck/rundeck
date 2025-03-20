@@ -154,6 +154,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
         controller.configurationService = Mock(ConfigurationService){
             getBoolean("gui.keystorage.downloadenabled", false)>>true
+            getBoolean("feature.publicKeysDownload.enabled", false)>>true
         }
         controller.storageService = Mock(StorageService)
         controller.frameworkService = Mock(FrameworkService)
@@ -189,6 +190,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
         controller.configurationService = Mock(ConfigurationService){
             getBoolean("gui.keystorage.downloadenabled", true)>>true
+            getBoolean("feature.publicKeysDownload.enabled", false)>>true
         }
         controller.storageService = Mock(StorageService)
         controller.frameworkService = Mock(FrameworkService)
@@ -478,7 +480,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
                 1 * getAuthContextForSubject(_)
             }
             controller.configurationService = Mock(ConfigurationService){
-                getBoolean("feature.apiPublicKeysDownload.enabled", false)>>true
+                getBoolean("feature.publicKeysDownload.enabled", false)>>true
             }
             def mContent = Mock(ContentMeta) {
                 2 * getMeta() >> ['Rundeck-content-type': 'test/data']
@@ -536,7 +538,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         when:
         def result = controller.apiGetResource()
         then:
-        assertEquals(403, response.status)
+        assertEquals(200, response.status)
     }
 
     class TestRes implements Resource<ResourceMeta> {
