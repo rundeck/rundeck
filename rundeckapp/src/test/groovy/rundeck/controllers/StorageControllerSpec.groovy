@@ -521,7 +521,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         }
         def mContent = Mock(ContentMeta) {
             2 * getMeta() >> ['Rundeck-content-type': 'test/data']
-
+            0 * writeContent(_)
         }
         def mRes = Mock(Resource) {
             3 * isDirectory() >> false
