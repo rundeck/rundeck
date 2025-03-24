@@ -16,14 +16,6 @@ const meta: Meta<typeof PtAutoComplete> = {
   },
   argTypes: {
     // TODO: ArgTypes are responsible for the prop table in the Storybook
-    severity: {
-      options: [undefined, "success", "warning", "danger", "secondary"],
-      control: {
-        type: "select",
-      },
-      type: "string",
-      description: "Severity type of the AutoComplete.",
-    },
   },
   // TODO: Replace these args with ones appropriate for the component you are building.
   args: {
@@ -48,7 +40,7 @@ export const Playground: Story = {
 
 const generateTemplate = (args: Record<string, any>) => {
   return `<div>
-    <PtAutoComplete v-bind="args" />
+    <PtAutoComplete v-model="args.value" :placeholder="args.placeholder" :suggestions="args.suggestions" />
   </div>`;
 };
 
@@ -61,5 +53,25 @@ export const Default: Story = {
     },
     template: generateTemplate(args),
   }),
-  args: {},
+  args: {
+    placeholder: "autocomplete available",
+    suggestions: [
+      "$id",
+      "$execid",
+      "$executionType",
+      "$name",
+      "$group",
+      "$username",
+      "$project",
+      "$loglevel",
+      "$user.email",
+      "$retryAttempt",
+      "$retryInitialExecId",
+      "$wasRetry",
+      "$threadcount",
+      "$filter",
+      "${job.id}",
+      "$ENV_VAR"
+    ]
+  },
 };

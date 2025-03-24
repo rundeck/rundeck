@@ -1,15 +1,17 @@
 <template>
   <AutoComplete
-    v-model="value"
-    :suggestions="suggestions"
-    :optionLabel="optionLabel"
-    :name="name"
-    :placeholder="placeholder"
-    :invalid="invalid"
-    @complete="onComplete"
-    @change="onChange"
-    @input="updateValue"
-  ></AutoComplete>
+      fluid
+      v-model="value"
+      :suggestions="formattedSuggestions"
+      :optionLabel="optionLabel"
+      :name="name"
+      :placeholder="placeholder"
+      :invalid="invalid"
+      @change="onChange"
+      @complete="onComplete"
+      :selectOnFocus="false"
+  >
+  </AutoComplete>
 </template>
 
 <script lang="ts">
@@ -42,7 +44,7 @@ export default defineComponent({
     },
     optionLabel: {
       type: String,
-      default: "label",
+      required: false,
     },
     invalid: {
       type: Boolean,
@@ -57,6 +59,7 @@ export default defineComponent({
   data() {
     return {
       value: this.modelValue || this.defaultValue,
+      formattedSuggestions: [],
     };
   },
   watch: {
@@ -66,10 +69,31 @@ export default defineComponent({
   },
   methods: {
     onComplete(event: AutoCompleteCompleteEvent) {
-      this.$emit("onComplete", event);
+      //@ts-ignore
+      const cursorPos = event.originalEvent.target.selectionStart;
+
+      // Get text from last space (or start) to cursor
+      const currentWordRegex = /[^\s]*$/;
+      const textToCursor = event.query.slice(0, cursorPos);
+      const currentWord = textToCursor.match(currentWordRegex)?.[0] || '';
+      const isDollarExpression = /\$/.test(currentWord);
+
+      // Don't show suggestions if it's not a 'dollar expression'
+      if (!isDollarExpression) return;
+
+      try {
+        this.formattedSuggestions = this.suggestions.map((suggestion: string) => {
+          const beforeWord = event.query.slice(0, cursorPos - currentWord.length);
+          const afterCursor = event.query.slice(cursorPos);
+          return beforeWord + suggestion + afterCursor;
+        });
+      } catch (e) {
+        console.error(e);
+      }
     },
     onChange(event: AutoCompleteChangeEvent) {
       this.$emit("onChange", event);
+      this.updateValue();
     },
     updateValue() {
       this.$emit("update:modelValue", this.value);
