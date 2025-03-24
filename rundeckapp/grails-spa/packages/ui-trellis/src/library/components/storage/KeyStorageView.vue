@@ -46,8 +46,8 @@
                   <li v-for="link in jumpLinks" :key="link.path">
                     <a
                       href="#"
-                      @click="loadDir(link.path)"
                       data-testid="load-dir-link"
+                      @click="loadDir(link.path)"
                       >{{ link.name }}</a
                     >
                   </li>
@@ -93,8 +93,8 @@
                   allowUpload === true && isSelectedKey === true && !readOnly
                 "
                 class="btn btn-sm btn-warning"
-                @click="actionUploadModify"
                 data-testid="overwrite-key-btn"
+                @click="actionUploadModify"
               >
                 <i class="glyphicon glyphicon-pencil"></i>
                 Overwrite Key
