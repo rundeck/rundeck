@@ -34,8 +34,31 @@ export const Playground: Story = {
   render: (args) => ({
     components: { PtAutoComplete },
     setup: () => ({ args }),
-    template: `<PtAutoComplete v-model="args.value"></PtAutoComplete>`,
+    template: `<div>
+      <PtAutoComplete v-model="args.value" :placeholder="args.placeholder" :suggestions="args.suggestions" />
+    </div>`,
   }),
+  args: {
+    placeholder: "autocomplete available - type $ to see suggestions",
+    suggestions: [
+      "$id",
+      "$execid",
+      "$executionType",
+      "$name",
+      "$group",
+      "$username",
+      "$project",
+      "$loglevel",
+      "$user.email",
+      "$retryAttempt",
+      "$retryInitialExecId",
+      "$wasRetry",
+      "$threadcount",
+      "$filter",
+      "${job.id}",
+      "$ENV_VAR"
+    ]
+  },
 };
 
 const generateTemplate = (args: Record<string, any>) => {
