@@ -41,13 +41,15 @@
 
     <g:render template="/common/navData"/>
 
+    %{-- css variables for primeVue  --}%
+    <asset:stylesheet href="tokens.css"/>
+    <asset:stylesheet href="tokens-rundeck.css"/>
     %{-- Core theme styles from ui-trellis --}%
     <asset:stylesheet href="static/css/components/theme.css"/>
 
     <asset:stylesheet href="ansi24.css"/>
-    <asset:stylesheet href="tokens.css"/>
-    <asset:stylesheet href="tokens-rundeck.css"/>
     %{-- Vendor CSS styles--}%
+    <asset:stylesheet href="primeVue.css"/>
     <asset:stylesheet href="vendor/perfect-scrollbar.css"/>
     <asset:stylesheet href="github-markdown.css"/>
     <asset:stylesheet href="vendor/jquery-ui.css"/>

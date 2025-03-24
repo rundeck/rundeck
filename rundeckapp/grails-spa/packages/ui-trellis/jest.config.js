@@ -1,14 +1,13 @@
 const esModules = [
   "vue-virtual-scroller",
   "uuid",
-  "primevue/.*",
-  "@primevue/.*",
-  "@primeuix/styled",
-  "@primeuix/utils",
-  "@primeuix/styles",
+    "primevue/.*",
+    "@primevue/.*",
+    "@primeuix/.*",
 ].join("|");
+
 module.exports = {
-  moduleFileExtensions: ["js", "ts", "vue"],
+  moduleFileExtensions: ["js", "ts", "vue", "mjs"],
   transform: {
     "^.+\\.tsx?$": ["ts-jest", { tsconfig: "tsconfig.app.json" }],
     "^.+\\.vue$": "@vue/vue3-jest",
@@ -20,8 +19,9 @@ module.exports = {
   moduleNameMapper: {
     "\\.(css|less|sass|scss)$": "identity-obj-proxy",
     "^@/(.*)$": "<rootDir>/src/$1",
-    "^@primeuix/styles/(.*)$":
-      "<rootDir>/node_modules/@primeuix/styles/$1/index.mjs",
+    "^primevue/(.*)": "<rootDir>/node_modules/primevue/$1",
+    "^@primevue/(.*)": "<rootDir>/node_modules/@primevue/$1",
+    "^@primeuix/(.*)": "<rootDir>/node_modules/@primeuix/$1",
   },
   modulePathIgnorePatterns: ["<rootDir>/public"],
   testMatch: ["**/*.test.ts", "**/*.spec.ts"],
