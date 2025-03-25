@@ -38,6 +38,10 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     protected static final ObjectMapper MAPPER = new ObjectMapper()
     private static String RUNDECK_CONTAINER_ID
 
+    String getCustomDockerComposeLocation(){
+        return null
+    }
+
     ClientProvider getClientProvider() {
         synchronized (CLIENT_PROVIDER_LOCK) {
 
@@ -64,6 +68,25 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
                 CLIENT_PROVIDER = rdDockerContainer
                 RUNDECK_CONTAINER_ID = rdDockerContainer.containerId
 
+            } else if (getCustomDockerComposeLocation() != null && !getCustomDockerComposeLocation().isBlank()) {
+                // Override default timeout values to accommodate slow container startups
+                Map<String, Integer> clientConfig = Map.of(
+                        "readTimeout", 60,
+                )
+                String featureName = System.getProperty("TEST_FEATURE_ENABLED_NAME")
+
+                log.info("Starting testcontainer: ${getClass().getClassLoader().getResource(getCustomDockerComposeLocation()).toURI()}")
+                log.info("Starting testcontainer: RUNDECK_IMAGE: ${RdComposeContainer.RUNDECK_IMAGE}")
+                log.info("Starting testcontainer: LICENSE_LOCATION: ${RdComposeContainer.LICENSE_LOCATION}")
+                log.info("Starting testcontainer: TEST_RUNDECK_GRAILS_URL: ${RdComposeContainer.TEST_RUNDECK_GRAILS_URL}")
+                var rundeckComposeContainer = new RdComposeContainer(
+                        getClass().getClassLoader().getResource(getCustomDockerComposeLocation()).toURI(),
+                        featureName,
+                        clientConfig
+                )
+                rundeckComposeContainer.start()
+                CLIENT_PROVIDER = rundeckComposeContainer
+                RUNDECK_CONTAINER_ID = rundeckComposeContainer.getRundeckContainerId()
 
             } else {
                 // Override default timeout values to accommodate slow container startups
