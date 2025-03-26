@@ -2,7 +2,7 @@
   <div v-if="step.errorhandler" class="error-handler-section">
     <div class="error-handler-section--content">
       <strong>{{ $t("Workflow.stepErrorHandler.label.on.error") }}:</strong>
-      <div class="configuration" @click="$emit('edit')">
+      <div class="configuration" @click.stop="$emit('edit')">
         <plugin-config
             v-if="!step.errorhandler.jobref"
             :service-name="
@@ -38,7 +38,7 @@
       </span>
     </div>
     <div class="btn-group" role="group" aria-label="item controls">
-      <button class="btn btn-xs btn-default" @click.stop="$emit('removeHandler', step)">
+      <button class="btn btn-xs btn-default" type="button" @click.stop="$emit('removeHandler', step)">
         <i class="glyphicon glyphicon-remove"></i>
       </button>
     </div>

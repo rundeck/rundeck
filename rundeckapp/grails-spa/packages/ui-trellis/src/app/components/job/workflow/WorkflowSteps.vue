@@ -405,20 +405,31 @@ export default defineComponent({
       this.isErrorHandler = false;
     },
     removeStep(index: number, removeErrorHandler: boolean = false) {
-      const commandToDelete = cloneDeep(this.model.commands[index]);
+      const originalData = cloneDeep(this.model.commands[index]);
+      const commandToRemove = cloneDeep(this.model.commands[index]);
+
+      let dataForUpdatingHistory = {
+        operation: Operation.Remove,
+        undo: Operation.Insert,
+        orig: undefined,
+      };
+
       if (removeErrorHandler) {
-        console.log("entering on removal");
-        //   todo: add removal of a errorHandler should be application of the step of adding it
+        delete commandToRemove.errorhandler;
+        this.$refs.historyControls.operationModify(index, commandToRemove);
+        dataForUpdatingHistory.operation = Operation.Modify;
+        dataForUpdatingHistory.undo = Operation.Modify;
+        dataForUpdatingHistory.orig = originalData;
       } else {
         this.$refs.historyControls.operationRemove(index);
-        this.$refs.historyControls.changeEvent({
-          index,
-          dest: -1,
-          value: commandToDelete,
-          operation: Operation.Remove,
-          undo: Operation.Insert,
-        });
       }
+
+      this.$refs.historyControls.changeEvent({
+        index,
+        dest: -1,
+        value: commandToRemove,
+        ...dataForUpdatingHistory,
+      });
     },
     async addLogFilterForIndex(id: string) {
       eventBus.emit("step-action:add-logfilter:" + id);
