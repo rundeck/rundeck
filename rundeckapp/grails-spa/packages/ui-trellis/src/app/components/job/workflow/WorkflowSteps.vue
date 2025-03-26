@@ -450,23 +450,24 @@ export default defineComponent({
       this.editIndex = index;
 
       const command = this.model.commands[index];
+      this.editExtra = cloneDeep(command);
+      let nodeStep = command.nodeStep;
       this.isErrorHandler = isErrorHandler;
-      // this.editModel = isErrorHandler
-      //   ? cloneDeep(command.errorhandler.configuration)
-      //   : cloneDeep(command);
       if(!isErrorHandler) {
         this.editModel = cloneDeep(command);
       } else {
-        this.editModel = cloneDeep(command.jobref ? command.jobref : command.errorhandler);
+        this.editModel = cloneDeep(command.errorhandler);
+        nodeStep = command.errorhandler.nodeStep;
+        if(command.errorhandler.jobref) {
+          nodeStep = command.errorhandler.jobref.nodeStep;
+        }
       }
 
-      this.editExtra = cloneDeep(command);
+      this.editService = nodeStep
+          ? ServiceType.WorkflowNodeStep
+          : ServiceType.WorkflowStep;
 
-      this.editService = command.nodeStep
-        ? ServiceType.WorkflowNodeStep
-        : ServiceType.WorkflowStep;
-
-      if (command.jobref) {
+      if ((!isErrorHandler && command.jobref) || (isErrorHandler && command.errorhandler.jobref)) {
         this.editJobRefModal = true;
       } else {
         this.editStepModal = true;
@@ -475,7 +476,6 @@ export default defineComponent({
     async saveEditStep() {
       try {
         const saveData = cloneDeep(this.editExtra);
-        console.log(saveData);
         if (this.isErrorHandler) {
           saveData.errorhandler = {
             ...saveData.errorhandler,
@@ -571,7 +571,7 @@ export default defineComponent({
         undo: Operation.Remove,
         orig: undefined,
       };
-      let newData = saveData;
+      let newData = cloneDeep(saveData);
 
       if (this.editIndex >= 0) {
         const originalData = this.model.commands[this.editIndex];

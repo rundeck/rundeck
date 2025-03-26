@@ -1,7 +1,8 @@
 import {
   CommandEditData,
   CommandExecPluginConfig,
-  EditStepData, ErrorHandlerData, ErrorHandlerDefinition,
+  EditStepData,
+  ErrorHandlerDefinition,
   ScriptFilePluginConfig,
   ScriptInlinePluginConfig,
   StepData,
@@ -37,7 +38,7 @@ export function commandToEditConfig(cmd: StepData): CommandEditData {
   } as CommandEditData;
   if (cmd.type) {
     editData.type = cmd.type;
-    editData.config = cmd.configuration;
+    editData.config = cmd.configuration || {};
     editData.nodeStep = cmd.nodeStep;
   } else {
     if (cmd.jobref) {
