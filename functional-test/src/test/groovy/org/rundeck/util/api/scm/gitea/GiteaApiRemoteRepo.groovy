@@ -1,5 +1,6 @@
 package org.rundeck.util.api.scm.gitea
 
+import groovy.util.logging.Slf4j
 import okhttp3.ConnectionPool
 import okhttp3.Credentials
 import okhttp3.MediaType
@@ -9,9 +10,13 @@ import okhttp3.RequestBody
 import com.fasterxml.jackson.databind.ObjectMapper
 import okhttp3.Response
 import org.rundeck.util.api.storage.KeyStorageApiClient
+import org.rundeck.util.common.ResourceAcceptanceTimeoutException
+import org.rundeck.util.common.WaitUtils
+import org.rundeck.util.common.WaitingTime
 
 import java.util.concurrent.TimeUnit
 
+@Slf4j
 class GiteaApiRemoteRepo {
     private static final String GITEA_RD_BASE_URL = "http://${GITEA_USER}@gitea:3000"
     private static final String GITEA_API_BASE_URL = 'http://localhost:3000/api/v1'
@@ -32,8 +37,33 @@ class GiteaApiRemoteRepo {
     }
 
     GiteaApiRemoteRepo setupRepo(){
-        doPost(CREATE_REPO_ENDPOINT, new CreateRepoRequest(name: this.repoName))
-        return this
+
+        /**
+         *  A race condition is suspected between the code that creates a repository for the admin user (below) and
+         *  the `gitea` docker-compose script that creates the admin user: resources/docker/compose/oss/gitea/start.sh
+         *  It manifests in the repo create API call (below) failing with:
+         *  Failed to create repository: 401 {"message":"user does not exist [uid: 0, name: rundeckgitea]","url":"http://localhost:3000/api/swagger"}
+         *
+         *  It's not clear if this is a race condition and the `gitea` container just need more time, or if the `gitea` container is in
+         *  a permanent unhealthy state and no amount of waiting will fix it.
+         *
+         *  Assuming the race condition, wait and retry is being introduced with a generous wait allowance.
+         *  If the failures continue, it would be reasonable to assume the permanent unhealthy state and evaluate alternative fixes.
+         */
+        def repoCreate = { doPost(CREATE_REPO_ENDPOINT, new CreateRepoRequest(name: this.repoName)) }
+        def repoCreateSuccessVerify = { Response r ->
+            if (!r.isSuccessful()) {
+                log.warn("Failed to create repository: " + this.repoName + " " + r.code() + " " + r.body().string())
+            }
+            r.isSuccessful()
+        }
+
+        try {
+            WaitUtils.waitFor(repoCreate, repoCreateSuccessVerify, WaitingTime.EXCESSIVE)
+            return this
+        } catch (ResourceAcceptanceTimeoutException e) {
+            throw new IllegalStateException("Failed to create repository: " + this.repoName, e)
+        }
     }
 
     /**
@@ -159,8 +189,6 @@ class GiteaApiRemoteRepo {
     String getRepoUrlForRundeck(){
         return "${GITEA_RD_BASE_URL}/${GITEA_USER}/${repoName}.git"
     }
-
-
 
     /**
      *

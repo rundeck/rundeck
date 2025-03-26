@@ -1,11 +1,13 @@
 import type { Preview } from "@storybook/vue3";
 import { setup } from "@storybook/vue3";
 import PrimeVue from "primevue/config";
-import Lara from "@primevue/themes/lara";
+import Lara from "@primeuix/themes/lara";
 
 import "../src/library/theme/tokens.css";
 import "../src/library/theme/primeVue.css";
+import "../src/library/theme/tokens-rundeck.css";
 import "./storybook.css";
+import {initI18n} from "../src/app/utilities/i18n";
 
 import Tooltip from "primevue/tooltip";
 
@@ -44,6 +46,8 @@ const preview: Preview = {
   },
 };
 
+const i18n = initI18n();
+
 setup((app) => {
   app.directive("tooltip", Tooltip);
   app.use(PrimeVue, {
@@ -56,6 +60,7 @@ setup((app) => {
       },
     },
   });
+  app.use(i18n);
 });
 
 export default preview;

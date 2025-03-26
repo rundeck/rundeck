@@ -39,11 +39,6 @@ const mountNodeDetailsSimple = async (propsData = {}) => {
       tags: ["Tag1", "Tag2"],
       ...propsData,
     },
-    global: {
-      mocks: {
-        $t: (msg) => msg,
-      },
-    },
   });
   await wrapper.vm.$nextTick();
   return wrapper;

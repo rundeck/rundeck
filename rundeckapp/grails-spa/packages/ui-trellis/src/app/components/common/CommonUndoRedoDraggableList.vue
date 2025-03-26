@@ -39,6 +39,7 @@
         </div>
         <slot v-if="mode === 'edit' && !loading">
           <btn
+            id="addButton"
             size="sm"
             class="ready"
             data-testid="add-button"

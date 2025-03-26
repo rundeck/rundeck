@@ -19,6 +19,8 @@ import NextUiToggle from "@/app/pages/job/browse/NextUiToggle.vue";
 import DetailsEditorSection from "@/app/pages/job/editor/DetailsEditorSection.vue";
 import ExecutionEditorSection from "./ExecutionEditorSection.vue";
 import WorkflowEditorSection from "@/app/pages/job/editor/WorkflowEditorSection.vue";
+import PrimeVue from 'primevue/config';
+import Lara from "@primeuix/themes/lara";
 
 const locale = window._rundeck.locale || "en_US";
 moment.locale(locale);
@@ -78,6 +80,7 @@ const jobSections = [
     name: "JobEditWorkflowApp",
     component: { WorkflowEditorSection },
     elementClass: "job-editor-workflow-vue",
+    addUiMessages: true,
     visible: uiType === "next",
   },
   {
@@ -121,6 +124,16 @@ const mountSection = (section) => {
       if (section.addCookies) {
         app.use(VueCookies);
       }
+      app.use(PrimeVue, {
+        theme: {
+          preset: Lara,
+          options: {
+            prefix: "p",
+            cssLayer: true,
+            darkModeSelector: ".dark",
+          },
+        }
+      });
       app.use(pinia);
       app.mount(element);
     });
@@ -129,20 +142,12 @@ const mountSection = (section) => {
   }
 };
 
-jobSections.forEach((section) => section.visible && mountSection(section));
 
-rootStore.ui.addItems([
-  {
-    section: "theme-select",
-    location: "after",
-    visible: true,
-    widget: markRaw(NextUiToggle),
-  },
-]);
 
 //on job edit page listen for dom content changes and install UI Sockets
 window.addEventListener("DOMContentLoaded", (event) => {
   // Job Editing page - Workflow Tab
+  jobSections.forEach((section) => section.visible && mountSection(section));
 
   const elem = document.querySelector("#workflowContent .pflowlist.edit");
   if (elem) {

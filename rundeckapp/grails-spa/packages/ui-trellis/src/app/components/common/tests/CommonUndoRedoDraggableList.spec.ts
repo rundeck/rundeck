@@ -24,13 +24,6 @@ const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
       ...props,
     },
     global: {
-      mocks: {
-        $t: (msg) => msg,
-      },
-      stubs: {
-        btn: true,
-        transition: false,
-      },
     },
     slots: {
       item: `<template #item="{ item }"><div class="item-content" data-test="rendered-items">{{ item.element.name }}</div></template>`,

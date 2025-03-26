@@ -5180,6 +5180,29 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             job.workflow.toMap().pluginConfig == [WorkflowStrategy:[aplugin:[a:'b']]]
 
     }
+    def "job definition workflow strategy config from jobWorkflowJson"() {
+        given: "jobWorkflowJson input parameter"
+            mockCodec(JSONCodec)
+            def job = new ScheduledExecution(workflow: new Workflow(strategy:'xplugin', commands: [new CommandExec(adhocRemoteString: 'test')]))
+            def params = [
+                jobWorkflowJson: [
+                    strategy    : 'aplugin',
+                    pluginConfig: [
+                        WorkflowStrategy: [
+                            aplugin: [a: 'b']
+                        ]
+                    ]
+                ].encodeAsJSON().toString()
+            ]
+            def auth = Mock(UserAndRolesAuthContext)
+        when: "workflow strategy config input"
+            service.jobDefinitionWFStrategy(job, null, params, auth)
+        then: "workflow strategy plugin config is modified"
+            job.workflow != null
+            job.workflow.toMap().strategy == 'aplugin'
+            job.workflow.toMap().pluginConfig == [WorkflowStrategy:[aplugin:[a:'b']]]
+
+    }
 
     def "job definition workflow strategy config from input"() {
         given: "existing job workflow"
@@ -5863,6 +5886,65 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def se = service.getByIDorUUID(job.uuid)
         then:
         se.workflow.pluginConfig == '{"LogFilter":[{"type":"abc","config":{"a":"b"}}]}'
+    }
+
+    def "jobDefinitionGlobalLogFilters jobWorkflowJson with logFilter"(){
+        given:
+            mockCodec(JSONCodec)
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: true,
+                        scheduleEnabled: true,
+                        executionEnabled: true,
+                        userRoleList: 'a,b'
+                )
+        )
+        job.setUuid("testUUID")
+        job.save()
+
+        def params = baseJobParams()
+        params.jobWorkflowJson = [
+                pluginConfig: [
+                    LogFilter: [
+                        [type: 'abc', config: [a: 'b']]
+                    ]
+                ]
+            ]
+        .encodeAsJSON().toString()
+
+        when:
+        service.jobDefinitionGlobalLogFilters(job, null, params, null)
+        then:
+        job.workflow.pluginConfig == '{"LogFilter":[{"type":"abc","config":{"a":"b"}}]}'
+    }
+
+
+    def "jobDefinitionGlobalLogFilters jobWorkflowJson without logFilter"(){
+        given:
+            mockCodec(JSONCodec)
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: true,
+                        scheduleEnabled: true,
+                        executionEnabled: true,
+                        userRoleList: 'a,b'
+                )
+        )
+        job.setUuid("testUUID")
+        job.save()
+
+        def params = baseJobParams()
+        params.jobWorkflowJson = [
+                pluginConfig: [
+                    :
+                ]
+            ]
+        .encodeAsJSON().toString()
+
+        when:
+        service.jobDefinitionGlobalLogFilters(job, null, params, null)
+        then:
+        job.workflow.pluginConfig == '{}' //empty pluginConfig
     }
 
     def "jobDefinitionGlobalLogFilters modify logFilter"(){

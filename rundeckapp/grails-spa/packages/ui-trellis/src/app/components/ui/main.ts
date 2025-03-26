@@ -2,12 +2,13 @@ import { createApp } from "vue";
 import * as uiv from "uiv";
 import VueCookies from "vue-cookies";
 import PrimeVue from "primevue/config";
+import Lara from "@primeuix/themes/lara";
 
 import { getRundeckContext } from "../../../library";
 import { UiMessage } from "../../../library/stores/UIStore";
 import UiSocket from "../../../library/components/utils/UiSocket.vue";
 import { initI18n, updateLocaleMessages } from "../../utilities/i18n";
-import Lara from "@primevue/themes/lara";
+
 
 const rootStore = getRundeckContext().rootStore;
 const EventBus = getRundeckContext().eventBus;

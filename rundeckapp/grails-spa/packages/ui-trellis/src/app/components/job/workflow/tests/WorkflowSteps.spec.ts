@@ -1,7 +1,9 @@
-import ChoosePluginModal from '@/library/components/plugins/ChoosePluginModal.vue'
-import EditPluginModal from '@/library/components/plugins/EditPluginModal.vue'
-import {flushPromises, mount, VueWrapper} from '@vue/test-utils'
-import WorkflowSteps from '../WorkflowSteps.vue'
+import ChoosePluginModal from "@/library/components/plugins/ChoosePluginModal.vue";
+import EditPluginModal from "@/library/components/plugins/EditPluginModal.vue";
+import { flushPromises, mount, VueWrapper } from "@vue/test-utils";
+import WorkflowSteps from "../WorkflowSteps.vue";
+import { createTestingPinia } from "@pinia/testing";
+import { getRundeckContext } from "../../../../../library";
 
 jest.mock("@/library/modules/pluginService", () => ({
   getServiceProviderDescription: jest.fn(),
@@ -20,13 +22,12 @@ jest.mock("@/library/modules/rundeckClient", () => ({
   client: jest.fn(),
 }));
 
-jest.mock('@/library/rundeckService', () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
+jest.mock("@/library/rundeckService", () => {
+  const eventBus = { on: jest.fn(), off: jest.fn(), emit: jest.fn() };
+  return {
+    getRundeckContext: jest.fn().mockImplementation(() => ({
       client: {},
-      eventBus: { on: jest.fn(), off: jest.fn(), emit: jest.fn() },
-    rdBase: 'http://localhost:4440/',
-    projectName: 'testProject',
-    apiVersion: '44',
+      eventBus,
       rootStore: {
         plugins: {
           load: jest.fn(),
@@ -34,8 +35,15 @@ jest.mock('@/library/rundeckService', () => ({
         },
       },
     })),
+  };
+});
+jest.mock("../../../../../library/services/projects");
+
+jest.mock("@/library/modules/pluginService");
+
+jest.mock("@/library/stores/NodesStorePinia", () => ({
+  useNodesStore: jest.fn().mockImplementation(() => ({})),
 }));
-jest.mock('../../../../../library/services/projects')
 
 const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
   const wrapper = mount(WorkflowSteps, {
@@ -54,7 +62,9 @@ const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
         dropdown: {
           template: `<div><slot/><slot name="dropdown" /></div>`,
         },
+        JobRefForm: true,
       },
+      plugins: [createTestingPinia()],
     },
   });
   await flushPromises();
@@ -74,6 +84,7 @@ describe("WorkflowSteps", () => {
   });
 
   it("emits update:modelValue when a step is added", async () => {
+    const mockEventBus = getRundeckContext().eventBus;
     const wrapper = await createWrapper();
     const addButton = wrapper.find('[data-testid="add-button"]');
 
@@ -101,9 +112,14 @@ describe("WorkflowSteps", () => {
         },
       ],
     });
+    expect(mockEventBus.emit).toHaveBeenCalledWith(
+      "workflow-editor-workflowsteps-updated",
+      wrapper.vm.model,
+    );
   });
 
   it("emits update:modelValue when a step is removed", async () => {
+    const mockEventBus = getRundeckContext().eventBus;
     const wrapper = await createWrapper({
       modelValue: {
         commands: [{ type: "stepType", configuration: {} }],
@@ -114,9 +130,16 @@ describe("WorkflowSteps", () => {
     expect(wrapper.emitted("update:modelValue")[1][0]).toEqual({
       commands: [],
     });
+    expect(mockEventBus.emit).toBeCalledWith(
+      "workflow-editor-workflowsteps-updated",
+      {
+        commands: [],
+      },
+    );
   });
 
   it("saves edited step and emits update:modelValue", async () => {
+    const mockEventBus = getRundeckContext().eventBus;
     const wrapper = await createWrapper({
       modelValue: {
         commands: [
@@ -164,9 +187,14 @@ describe("WorkflowSteps", () => {
         },
       ],
     });
+    expect(mockEventBus.emit).toHaveBeenCalledWith(
+      "workflow-editor-workflowsteps-updated",
+      wrapper.vm.model,
+    );
   });
 
   it("adds log filter information in the correct step", async () => {
+    const mockEventBus = getRundeckContext().eventBus;
     const wrapper = await createWrapper({
       modelValue: {
         commands: [
@@ -228,5 +256,36 @@ describe("WorkflowSteps", () => {
         },
       ],
     });
+    expect(mockEventBus.emit).toHaveBeenCalledWith(
+      "workflow-editor-workflowsteps-updated",
+      wrapper.vm.model,
+    );
+  });
+  it("on mount registers handler to respond to updated data request", async () => {
+    const mockEventBus = getRundeckContext().eventBus;
+    const wrapper = await createWrapper({
+      modelValue: {
+        commands: [
+          {
+            type: "exec-command",
+            description: "first-step",
+            nodeStep: true,
+            configuration: {
+              adhocRemoteString: "abc",
+            },
+          },
+          {
+            type: "exec-command",
+            description: "second-step",
+            nodeStep: true,
+            configuration: {},
+          },
+        ],
+      },
+    });
+    expect(mockEventBus.on).toHaveBeenCalledWith(
+      "workflow-editor-workflowsteps-request",
+      expect.any(Function),
+    );
   });
 });

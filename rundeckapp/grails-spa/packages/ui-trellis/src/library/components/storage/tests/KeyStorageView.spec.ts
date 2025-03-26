@@ -1,10 +1,13 @@
-import {flushPromises, mount} from '@vue/test-utils'
-import {Modal} from 'uiv'
-import {ComponentPublicInstance} from 'vue'
-import {getRundeckContext} from '../../../rundeckService'
-import {listProjects} from '../../../services/projects'
-import {storageKeyDelete, storageKeyGetMetadata} from '../../../services/storage'
-import KeyStorageView from '../KeyStorageView.vue'
+import { flushPromises, mount } from "@vue/test-utils";
+import { Modal } from "uiv";
+import { ComponentPublicInstance } from "vue";
+import { getRundeckContext } from "../../../rundeckService";
+import { listProjects } from "../../../services/projects";
+import {
+  storageKeyDelete,
+  storageKeyGetMetadata,
+} from "../../../services/storage";
+import KeyStorageView from "../KeyStorageView.vue";
 
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
@@ -20,37 +23,39 @@ jest.mock("../../../services/storage");
 const mockedListProjects = listProjects as jest.MockedFunction<
   typeof listProjects
 >;
-mockedListProjects.mockResolvedValue([])
-const mockedStorageKeyGetMetadata = storageKeyGetMetadata as jest.MockedFunction<
-  typeof storageKeyGetMetadata
->;
+mockedListProjects.mockResolvedValue([]);
+const mockedStorageKeyGetMetadata =
+  storageKeyGetMetadata as jest.MockedFunction<typeof storageKeyGetMetadata>;
 mockedStorageKeyGetMetadata.mockResolvedValue({
   resources: [
     {
       name: "/myKey",
       path: "/keys/myKey",
       type: "file",
-      meta: {'Rundeck-key-type': 'private'},
+      meta: { "Rundeck-key-type": "private" },
     },
     {
       name: "/key2",
       path: "/keys/key2",
       type: "file",
-      meta: {'Rundeck-key-type': 'private'},
+      meta: { "Rundeck-key-type": "private" },
     },
   ],
-})
+});
 const mockedStorageKeyDelete = storageKeyDelete as jest.MockedFunction<
   typeof storageKeyDelete
 >;
-mockedStorageKeyDelete.mockResolvedValue(true)
-
+mockedStorageKeyDelete.mockResolvedValue(true);
 
 // Define the necessary interfaces for the KeyStorageView component
 interface KeyStorageViewComponent extends ComponentPublicInstance {
-  files: { name: string; path: string; meta: { 'Rundeck-key-type': string } }[];
+  files: { name: string; path: string; meta: { "Rundeck-key-type": string } }[];
   isSelectedKey: boolean;
-  selectedKey: { name: string; path: string; meta: { 'Rundeck-key-type': string } };
+  selectedKey: {
+    name: string;
+    path: string;
+    meta: { "Rundeck-key-type": string };
+  };
   confirmDeleteKey: () => Promise<void>;
   loadKeys: () => Promise<void>;
 }
@@ -68,9 +73,6 @@ const mountKeyStorageView = async (props = {}) => {
     global: {
       components: {
         Modal,
-      },
-      mocks: {
-        $t: (msg: string) => msg,
       },
     },
     data() {
@@ -90,13 +92,13 @@ describe("KeyStorageView", () => {
         name: "/myKey",
         path: "/keys/myKey",
         type: "file",
-        meta: {'Rundeck-key-type': 'private'},
+        meta: { "Rundeck-key-type": "private" },
       },
       {
         name: "/key2",
         path: "/keys/key2",
         type: "file",
-        meta: {'Rundeck-key-type': 'private'},
+        meta: { "Rundeck-key-type": "private" },
       },
     ];
     rundeckClientMock = getRundeckContext().rundeckClient;
@@ -164,7 +166,7 @@ describe("KeyStorageView", () => {
           name: "/key2",
           path: "/keys/key2",
           type: "file",
-          meta: {'Rundeck-key-type': 'private'},
+          meta: { "Rundeck-key-type": "private" },
         },
       ],
     });
@@ -194,44 +196,47 @@ describe("KeyStorageView", () => {
     expect(vm.files).toHaveLength(1);
   });
   it.each([
-    ['Rundeck-data-type=password', ['/keys/key4']],
-    ['Rundeck-key-type=private', ['/keys/key2', '/keys/key3']],
-    ['Rundeck-key-type=public', ['/keys/key1']],
-  ])('filters key values when storageFilter is %p', async (storageFilter: string,expectedKeys:string[]) => {
-    mockedStorageKeyGetMetadata.mockResolvedValueOnce({
-      resources: [
-        {
-          name: '/key2',
-          path: '/keys/key2',
-          type: 'file',
-          meta: {'Rundeck-key-type': 'private'},
-        },
-        {
-          name: '/key1',
-          path: '/keys/key1',
-          type: 'file',
-          meta: {'Rundeck-key-type': 'public'},
-        },
-        {
-          name: '/key3',
-          path: '/keys/key3',
-          type: 'file',
-          meta: {'Rundeck-key-type': 'private'},
-        },
-        {
-          name: '/key4',
-          path: '/keys/key4',
-          type: 'file',
-          meta: {'Rundeck-data-type': 'password'},
-        },
-      ],
-    })
-    const wrapper = await mountKeyStorageView({storageFilter})
-    const vm = wrapper.vm as unknown as KeyStorageViewComponent
-    await wrapper.vm.$nextTick()
+    ["Rundeck-data-type=password", ["/keys/key4"]],
+    ["Rundeck-key-type=private", ["/keys/key2", "/keys/key3"]],
+    ["Rundeck-key-type=public", ["/keys/key1"]],
+  ])(
+    "filters key values when storageFilter is %p",
+    async (storageFilter: string, expectedKeys: string[]) => {
+      mockedStorageKeyGetMetadata.mockResolvedValueOnce({
+        resources: [
+          {
+            name: "/key2",
+            path: "/keys/key2",
+            type: "file",
+            meta: { "Rundeck-key-type": "private" },
+          },
+          {
+            name: "/key1",
+            path: "/keys/key1",
+            type: "file",
+            meta: { "Rundeck-key-type": "public" },
+          },
+          {
+            name: "/key3",
+            path: "/keys/key3",
+            type: "file",
+            meta: { "Rundeck-key-type": "private" },
+          },
+          {
+            name: "/key4",
+            path: "/keys/key4",
+            type: "file",
+            meta: { "Rundeck-data-type": "password" },
+          },
+        ],
+      });
+      const wrapper = await mountKeyStorageView({ storageFilter });
+      const vm = wrapper.vm as unknown as KeyStorageViewComponent;
+      await wrapper.vm.$nextTick();
 
-    // Ensure we have 2 files before deletion
-    expect(vm.files).toHaveLength(expectedKeys.length);
-    expect(vm.files.map((f)=>f.path)).toStrictEqual(expectedKeys);
-  })
+      // Ensure we have 2 files before deletion
+      expect(vm.files).toHaveLength(expectedKeys.length);
+      expect(vm.files.map((f) => f.path)).toStrictEqual(expectedKeys);
+    },
+  );
 });

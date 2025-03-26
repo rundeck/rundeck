@@ -1,6 +1,5 @@
 import { mount } from "@vue/test-utils";
 import PluginPropView from "../pluginPropView.vue";
-import PluginPropVal from "../pluginPropVal.vue";
 import Expandable from "../../utils/Expandable.vue";
 import AceEditor from "../../utils/AceEditor.vue";
 

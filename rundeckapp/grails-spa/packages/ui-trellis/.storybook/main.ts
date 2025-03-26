@@ -6,6 +6,7 @@ const config: StorybookConfig = {
     "../src/library/components/primeVue/**/*.mdx",
     "../src/library/components/primeVue/**/*.stories.@(js|jsx|mjs|ts|tsx)",
   ],
+  staticDirs: [],
   addons: [
     "@storybook/addon-webpack5-compiler-swc",
     "storybook-dark-mode",

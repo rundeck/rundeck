@@ -17,6 +17,8 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
+import com.dtolabs.rundeck.core.utils.ResourceAcceptanceTimeoutException
+import com.dtolabs.rundeck.core.utils.WaitUtils
 import org.springframework.jdbc.core.RowCallbackHandler
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -138,7 +140,9 @@ import java.sql.ResultSet
 import java.sql.SQLException
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
+import java.time.Duration
 import java.util.concurrent.TimeUnit
+import java.util.function.Supplier
 import java.util.stream.Collectors
 
 
@@ -1070,9 +1074,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def originalServerId = se.serverNodeUUID
 
             try {
-                def claimResult = ScheduledExecution.withNewTransaction { status ->
-                    return claimScheduledJob(se, toServerUuid)
-                }
+                def claimResult = WaitUtils.waitFor(
+                        scheduledJobClaimer(se, toServerUuid),
+                        { it != null },
+                        Duration.ofSeconds(30),
+                        Duration.ofSeconds(5)
+                )
+
                 // Note that the ScheduledExecution in se does not contain the updates from the previous transaction.
                 // Use with care.
 
@@ -1082,8 +1090,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         previousServerId: originalServerId,
                         executions      : claimResult.executions
                 ]
-            } catch (Exception e) {
-                log.error("Error claiming scheduled execution ${se.extid}.", e)
+
+            } catch (ResourceAcceptanceTimeoutException ex) {
+                log.error("Error claiming scheduled execution ${se.extid} before the timeout", ex)
 
                 claimed[se.extid] = [
                         success         : false,
@@ -1099,9 +1108,51 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
 
             try {
+                WaitUtils.waitFor(
+                        scheduledJobScheduler(se, toServerUuid),
+                        { it == true },
+                        Duration.ofSeconds(30),
+                        Duration.ofSeconds(5)
+                )
+                log.info("Rescheduled job ${se.extid} in project ${se.project}")
+            } catch (ResourceAcceptanceTimeoutException ex) {
+                log.error("Error rescheduling job ${se.extid} in project ${se.project} before the timeout", ex)
+                claimed[se.extid]["success"] = false
+            }
+        }
+
+        return claimed
+    }
+
+    /**
+     * A function that attempts to claim a ScheduledExecution by a server in an isolated transaction.
+     */
+    private Supplier<Map> scheduledJobClaimer(ScheduledExecution se, String toServerUuid) {
+        return {
+            def claimResult
+            try {
+                claimResult = ScheduledExecution.withNewTransaction { status ->
+                    return claimScheduledJob(se, toServerUuid)
+                }
+
+            } catch (Exception e) {
+                log.warn("Unable to claim scheduled execution ${se.extid}.", e)
+                claimResult = null
+            }
+
+            return claimResult
+        }
+    }
+
+    /**
+     * A function that attempts to schedule a ScheduledExecution on a server in an isolated transaction.
+     * @return true if the job was scheduled without exception. False otherwise.
+     */
+    private Supplier<Boolean> scheduledJobScheduler(ScheduledExecution se, String toServerUuid) {
+        return {
+            try {
                 ScheduledExecution.withNewTransaction { status ->
-                    // ScheduledExecution was updated and committed in the previous nested transaction.
-                    // Refresh it before moving forward.
+                    // ScheduledExecution was loaded in a separate transaction, so we refresh it.
                     se.refresh()
 
                     // Schedule the job on quartz.
@@ -1111,13 +1162,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     scheduleAdHocExecutionsForJob(se, toServerUuid)
                 }
                 log.info("Rescheduled job in project ${se.project}: ${se.extid}")
+                return true
             } catch (Exception e) {
-                log.error("Job not rescheduled in project ${se.project}: ${se.extid}: ${e.message}", e)
-                claimed[se.extid]["success"] = false
+                log.warn("Exeception during job scheduling ${se.project}: ${se.extid}: ${e.message}", e)
+                return false
             }
         }
-
-        return claimed
     }
 
     private def scheduleAdHocExecutionsForJob(ScheduledExecution se, String targetServerUUID) {
@@ -2971,7 +3021,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (!scheduledExecution.workflow || !scheduledExecution.workflow.commands ||
             scheduledExecution.workflow.commands.isEmpty()) {
 
-            scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message')
+            scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message', 'Step must not be empty')
             failed= true
         }
         failed
@@ -3288,8 +3338,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         } else if (params.jobWorkflowJson) {
             def jobWorkflowData = JSON.parse(params.jobWorkflowJson.toString())
 
-            if(jobWorkflowData instanceof JSONObject && jobWorkflowData.get("pluginConfig")) {
-                scheduledExecution.workflow.setPluginConfigData(ServiceNameConstants.LogFilter, jobWorkflowData.get("pluginConfig").get("LogFilter"))
+            if(jobWorkflowData instanceof JSONObject && jobWorkflowData.has("pluginConfig")) {
+                scheduledExecution.workflow.setPluginConfigData(
+                    ServiceNameConstants.LogFilter,
+                    jobWorkflowData.get("pluginConfig").has("LogFilter") ? jobWorkflowData.get("pluginConfig").get(
+                        "LogFilter"
+                    ) : null
+                )
             }
         } else if (params.workflow instanceof Map && params.workflow.globalLogFilters) {
             //filter configs
@@ -3324,7 +3379,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         input.workflow.strategy
                     )
             )
-        }else if (params.workflow instanceof Map) {
+        } else if (params.jobWorkflowJson) {
+            def jobWorkflowData = JSON.parse(params.jobWorkflowJson.toString())
+            if (jobWorkflowData instanceof JSONObject && jobWorkflowData.has('strategy')) {
+                scheduledExecution.workflow.strategy = jobWorkflowData.get('strategy')
+            }
+            if(jobWorkflowData instanceof JSONObject && jobWorkflowData.has("pluginConfig")) {
+                scheduledExecution.workflow.setPluginConfigData(
+                    ServiceNameConstants.WorkflowStrategy,
+                    jobWorkflowData.get("pluginConfig").has("WorkflowStrategy") ? jobWorkflowData.get("pluginConfig").get(
+                        "WorkflowStrategy"
+                    ) : null
+                )
+            }
+        } else if (params.workflow instanceof Map) {
             Map configmap = params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config
 
             scheduledExecution.workflow.setPluginConfigData(
