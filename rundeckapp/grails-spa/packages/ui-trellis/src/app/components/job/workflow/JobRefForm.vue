@@ -1,5 +1,5 @@
 <template>
-  <modal v-model="showModal" size="lg" :title="$t('plugin.edit.title')">
+  <modal data-testid="jobref-modal" v-model="showModal" size="lg" :title="$t('plugin.edit.title')">
     <div v-if="error" class="alert alert-danger">
       <ErrorsList :errors="[errorMessage]" />
     </div>
@@ -650,6 +650,7 @@ export default defineComponent({
       currentProject: rundeckContext.projectName,
       editModel: {
         description: "",
+        keepgoingOnSuccess: false,
         jobref: {
           nodeStep: false,
           name: "",

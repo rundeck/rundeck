@@ -80,6 +80,7 @@ export interface JobRefDefinition {
 }
 export interface JobRefData {
   description?: string;
+  keepgoingOnSuccess?: boolean;
   jobref?: JobRefDefinition;
 }
 export interface PluginStepData {
@@ -113,11 +114,12 @@ export interface StrategyConfig {
 }
 
 export interface ErrorHandlerDefinition {
-  configuration: { [key: string]: any };
-  keepgoingOnSuccess: boolean;
+  config: any;
+  keepgoingOnSuccess?: boolean;
   nodeStep: boolean;
   jobref?: JobRefDefinition;
   type: string;
+  id: string;
 }
 export interface ErrorHandlerData {
   errorhandler?: ErrorHandlerDefinition
@@ -146,7 +148,7 @@ export interface CommandEditData extends PluginConfig {
   errorhandler?: ErrorHandlerDefinition;
   //simply to provide a unique id for each step on client side
   id: string;
-  filters: PluginConfig[];
+  filters?: PluginConfig[];
 }
 export type EditStepData = CommandEditData;
 export interface StepsEditData {

@@ -130,8 +130,8 @@
             <error-handler-step
               v-if="element.errorhandler"
               :step="element"
-              @edit.prevent="editStepByIndex(index, true)"
-              @remove.prevent="removeStep(index, true)"
+              @edit="editStepByIndex(index, true)"
+              @removeHandler="removeStep(index, true)"
             />
           </div>
         </div>
@@ -174,7 +174,7 @@
         </span>
       </choose-plugin-modal>
       <component
-        v-if="editStepModal || editJobRefModal && modalComponent"
+        v-if="editStepModal || (editJobRefModal && modalComponent)"
         :is="modalComponent"
         v-model="editModel"
         v-bind="modalAttributes"
@@ -301,29 +301,29 @@ export default defineComponent({
       if (this.editStepModal) {
         return {
           title: this.isErrorHandler
-              ? this.$t("Workflow.editErrorHandler")
-              : this.$t("Workflow.editStep"),
+            ? this.$t("Workflow.editErrorHandler")
+            : this.$t("Workflow.editStep"),
           serviceName: this.editService,
           validation: this.editModelValidation,
-          "data-test-id": "extra-edit-modal",
+          "data-testid": "extra-edit-modal",
           modalActive: this.editStepModal,
           "onUpdate:modalActive": this.toggleModalActive,
-        }
+        };
       } else if (this.editJobRefModal) {
         return {
           "data-test-id": "jobref-modal",
           modalActive: this.editJobRefModal,
           "onUpdate:modalActive": this.toggleModalActive,
-        }
+        };
       }
-      return {}
+      return {};
     },
     modalComponent() {
-      if(!this.editJobRefModal && !this.editStepModal) {
-        return ""
+      if (!this.editJobRefModal && !this.editStepModal) {
+        return "";
       }
-      return this.editStepModal? "edit-plugin-modal" : "job-ref-form"
-    }
+      return this.editStepModal ? "edit-plugin-modal" : "job-ref-form";
+    },
   },
   watch: {
     model: {
@@ -362,18 +362,11 @@ export default defineComponent({
         this.editIndex = -1;
       }
       this.editService = service;
-      console.log("============!!!!");
-      console.log("start of chooseProviderAdd");
-      console.log("errorHandler?", this.isErrorHandler);
-      console.log("editModel!");
-      console.log(this.editModel);
-      console.log("===");
-      console.log("editService", this.editService);
 
       if (this.isErrorHandler) {
         this.editExtra = {
           errorhandler: {
-            configuration: {},
+            config: {},
             keepgoingOnSuccess: false,
           },
         };
@@ -397,14 +390,6 @@ export default defineComponent({
 
         this.editStepModal = true;
       }
-
-      console.log("editModel at the end of provider selection");
-      console.log(this.editModel);
-      console.log("---");
-      console.log("editExtra at the end of provider selection");
-      console.log(this.editExtra);
-      console.log("---");
-      console.log("ChooseProvider - END");
     },
     cancelProviderAdd() {
       this.addStepModal = false;
@@ -454,9 +439,16 @@ export default defineComponent({
       this.editIndex = index;
 
       const command = this.model.commands[index];
-      this.editModel = isErrorHandler
-        ? cloneDeep(command.errorhandler.configuration)
-        : cloneDeep(command);
+      this.isErrorHandler = isErrorHandler;
+      // this.editModel = isErrorHandler
+      //   ? cloneDeep(command.errorhandler.configuration)
+      //   : cloneDeep(command);
+      if(!isErrorHandler) {
+        this.editModel = cloneDeep(command);
+      } else {
+        this.editModel = cloneDeep(command.jobref ? command.jobref : command.errorhandler);
+      }
+
       this.editExtra = cloneDeep(command);
 
       this.editService = command.nodeStep
@@ -472,20 +464,15 @@ export default defineComponent({
     async saveEditStep() {
       try {
         const saveData = cloneDeep(this.editExtra);
-        console.log("============!!!!");
-        console.log("start of saveEditStep");
-        console.log("initial saveData");
         console.log(saveData);
-        console.log("---");
         if (this.isErrorHandler) {
-          console.log("editModel");
-          console.log(this.editModel);
-          console.log("editService", this.editService);
           saveData.errorhandler = {
-            configuration: this.editModel.config,
+            ...saveData.errorhandler,
+            config: this.editModel.config,
             jobref: this.editModel.jobref,
             type: this.editModel.type,
             nodeStep: this.editService === ServiceType.WorkflowNodeStep,
+            id: mkid()
           };
         } else {
           saveData.type = this.editModel.type;
@@ -495,22 +482,13 @@ export default defineComponent({
           saveData.jobref = this.editModel.jobref;
         }
 
-        console.log("---");
-        console.log(`validation`, !saveData.jobref && !this.editModel.jobref);
-        console.log("provider (saveData.type)", saveData.type);
-        console.log(
-          "provider (saveData.errorhandler.type)",
-          saveData.errorhandler?.type,
-        );
-        console.log("---");
-
         if (!saveData.jobref && !this.editModel.jobref) {
           saveData.filters = [];
 
           const response = await validatePluginConfig(
             this.editService,
-            saveData.type,
-            saveData.config || saveData.errorhandler.configuration,
+            saveData.type || saveData.errorhandler.type,
+            saveData.config || saveData.errorhandler.config,
           );
 
           if (
@@ -546,8 +524,8 @@ export default defineComponent({
       }
       return `Step ${index + 1}`;
     },
-    toggleModalActive(val : boolean) {
-      if (this.modalComponent === 'edit-plugin-modal') {
+    toggleModalActive(val: boolean) {
+      if (this.modalComponent === "edit-plugin-modal") {
         this.editStepModal = val;
       } else if (this.modalComponent === "job-ref-form") {
         this.editJobRefModal = val;
@@ -557,18 +535,9 @@ export default defineComponent({
       this.addStepModal = !this.addStepModal;
     },
     toggleAddErrorHandlerModal(index: number) {
-      // console.log("📌 Setting editIndex for error handler:", index);
       this.isErrorHandler = true;
       this.editIndex = index;
       this.addStepModal = true;
-      // console.log(
-      //     "📌 Current model.commands:",
-      //     JSON.stringify(this.model.commands, null, 2),
-      // );
-      // console.log(
-      //     "📌 Selected Step Before Edit:",
-      //     JSON.stringify(this.model.commands[this.editIndex], null, 2),
-      // );
     },
     updateHistoryWithLogFiltersData(index: number, data: any) {
       const command = cloneDeep(this.model.commands[index]);
@@ -656,6 +625,10 @@ export default defineComponent({
   .step-item-display {
     width: 100%;
 
+    .node-icon {
+      margin-left: 5px;
+    }
+
     .step-item-config {
       border-width: 1px;
       border-style: dotted;
@@ -668,10 +641,6 @@ export default defineComponent({
         cursor: pointer;
         background-color: var(--light-gray);
         border-color: #68b3c8;
-      }
-
-      .node-icon {
-        margin-left: 5px;
       }
 
       .configpair {
@@ -737,6 +706,10 @@ export default defineComponent({
 
   .step-item-logfilters {
     margin: 10px 0 10px 5px;
+  }
+
+  .error-handler-section {
+    margin-top: 10px;
   }
 }
 </style>

@@ -11,16 +11,20 @@
             : ServiceType.WorkflowStep
         "
             :provider="step.errorhandler.type"
-            :config="step.errorhandler.configuration"
+            :config="step.errorhandler.config"
             :read-only="true"
             :show-title="true"
             :show-icon="true"
             :show-description="true"
             mode="show"
-        />
+        >
+          <template v-if="step.errorhandler.nodeStep" #iconSuffix>
+            <i class="fas fa-hdd node-icon"></i>
+          </template>
+        </plugin-config>
         <div v-else class="row">
           <div class="col-xs-12">
-            <job-ref-step  :step="step.errorhandler"></job-ref-step>
+            <job-ref-step :step="step.errorhandler"></job-ref-step>
           </div>
         </div>
       </div>
@@ -34,7 +38,7 @@
       </span>
     </div>
     <div class="btn-group" role="group" aria-label="item controls">
-      <button class="btn btn-xs btn-default" @click="$emit('remove', step)">
+      <button class="btn btn-xs btn-default" @click.stop="$emit('removeHandler', step)">
         <i class="glyphicon glyphicon-remove"></i>
       </button>
     </div>
@@ -49,7 +53,7 @@ import JobRefStep from "@/app/components/job/workflow/JobRefStep.vue";
 
 export default {
   name: "ErrorHandlerStep",
-  components: {JobRefStep, PluginConfig },
+  components: { JobRefStep, PluginConfig },
   props: {
     step: {
       type: Object as PropType<EditStepData>,
@@ -61,7 +65,7 @@ export default {
       ServiceType,
     };
   },
-  emits: ["remove", "edit"]
+  emits: ["removeHandler", "edit"]
 };
 </script>
 <style lang="scss">

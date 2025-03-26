@@ -8,7 +8,7 @@
       </span>
     </p>
     <p v-if="step.jobref.args" class="argString">
-      <template v-if="parsed">
+      <template v-if="Object.keys(parsed).length">
         <template v-for="(entry, key) in parsed" :key="key">
           <span class="optkey"> {{ key }} </span>
           <code v-if="entry" class="optvalue">{{ entry }}</code>

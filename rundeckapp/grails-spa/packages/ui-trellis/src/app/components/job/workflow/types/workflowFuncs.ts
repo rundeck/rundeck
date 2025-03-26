@@ -1,7 +1,7 @@
 import {
   CommandEditData,
   CommandExecPluginConfig,
-  EditStepData,
+  EditStepData, ErrorHandlerData, ErrorHandlerDefinition,
   ScriptFilePluginConfig,
   ScriptInlinePluginConfig,
   StepData,
@@ -34,7 +34,6 @@ export function commandToEditConfig(cmd: StepData): CommandEditData {
     description: cmd.description,
     id: mkid(),
     filters: cmd.plugins?.LogFilter || [],
-    errorhandler: cmd.errorhandler
   } as CommandEditData;
   if (cmd.type) {
     editData.type = cmd.type;
@@ -43,7 +42,6 @@ export function commandToEditConfig(cmd: StepData): CommandEditData {
   } else {
     if (cmd.jobref) {
       editData.jobref = cmd.jobref;
-      editData.nodeStep = cmd.nodeStep;
     } else if (cmd.script) {
       editData.nodeStep = true;
       editData.type = "script-inline";
@@ -73,6 +71,12 @@ export function commandToEditConfig(cmd: StepData): CommandEditData {
       } as CommandExecPluginConfig;
     }
   }
+  if(cmd.errorhandler) {
+    editData.errorhandler = {
+      ...commandToEditConfig(cmd.errorhandler),
+      keepgoingOnSuccess: cmd.errorhandler.keepgoingOnSuccess
+    }
+  }
   return editData;
 }
 export function mkid() {
@@ -82,7 +86,7 @@ export function editToCommandConfig(plugin: EditStepData): StepData {
   let data = {
     description: plugin.description,
     nodeStep: plugin.nodeStep,
-    errorhandler: plugin.errorhandler
+    jobref: plugin.jobref
   } as StepData;
   if (plugin.filters && plugin.filters.length > 0) {
     data.plugins = {
@@ -112,6 +116,12 @@ export function editToCommandConfig(plugin: EditStepData): StepData {
     data.configuration = plugin.config;
   } else if (plugin.jobref) {
     data.jobref = plugin.jobref;
+  }
+  if(plugin.errorhandler) {
+    data.errorhandler = {
+      ...editToCommandConfig(plugin.errorhandler),
+      keepgoingOnSuccess: plugin.errorhandler.keepgoingOnSuccess
+    } as ErrorHandlerDefinition;
   }
   return data;
 }
