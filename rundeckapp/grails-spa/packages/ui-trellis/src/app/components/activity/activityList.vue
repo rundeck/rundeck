@@ -599,6 +599,7 @@ import { Execution } from "../../../library/types/executions/Execution";
 import * as DOMPurify from "dompurify";
 import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
 import { EventBus } from "../../../library";
+import { api } from "../../../library/services/api";
 
 /**
  * Generate a URL
@@ -1017,8 +1018,17 @@ export default defineComponent({
       this.bulkEditProgress = true;
       this.showBulkEditResults = true;
       try {
-        this.bulkEditResults =
-          await this.rundeckContext.rundeckClient.executionBulkDelete({ ids });
+        const response = await api.post("executions/delete", { ids });
+        //check response is not in 200 range and throw error...
+        if (response.status < 200 || response.status >= 300) {
+          this.bulkEditProgress = false;
+
+          this.bulkEditError =
+            response.data?.message ||
+            `Failed to delete executions: ${response.status} ${response.statusText}`;
+          return;
+        }
+        this.bulkEditResults = response.data;
 
         this.bulkEditProgress = false;
         this.bulkSelectedIds = [];
@@ -1029,7 +1039,7 @@ export default defineComponent({
       } catch (error) {
         this.bulkEditProgress = false;
         //@ts-ignore
-        this.bulkEditError = error;
+        this.bulkEditError = error.message || error;
       }
     },
     performBulkDelete() {
