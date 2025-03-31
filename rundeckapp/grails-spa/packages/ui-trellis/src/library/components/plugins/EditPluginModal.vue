@@ -134,10 +134,10 @@ export default defineComponent({
             this.serviceName,
             this.editModel.type,
           );
-          this.loading = false;
         } catch (e) {
-          this.loading = false;
           console.log(e);
+        } finally {
+          this.loading = false;
         }
       } else {
         this.loading = false;

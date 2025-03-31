@@ -113,8 +113,8 @@
             </div>
 
             <div
-              v-if="!element.jobref && element.filters.length > 0"
-              class="step-item-logfilters"
+              v-if="!element.jobref"
+              :class="{'step-item-logfilters': element.filters?.length > 0 }"
             >
               <log-filters
                 :model-value="element.filters"
@@ -132,6 +132,7 @@
               :step="element"
               @edit="editStepByIndex(index, true)"
               @removeHandler="removeStep(index, true)"
+              data-test="error-handler-step"
             />
           </div>
         </div>
@@ -195,6 +196,7 @@
                 <div class="col-sm-10">
                   <input
                     id="stepDescription"
+                    data-testid="step-description"
                     v-model="editExtra.description"
                     type="text"
                     class="form-control"
@@ -494,7 +496,9 @@ export default defineComponent({
         }
 
         if (!saveData.jobref && !this.editModel.jobref) {
-          saveData.filters = [];
+          if(!this.isErrorHandler) {
+            saveData.filters = [];
+          }
 
           const response = await validatePluginConfig(
             this.editService,
