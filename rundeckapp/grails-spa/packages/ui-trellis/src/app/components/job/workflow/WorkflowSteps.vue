@@ -160,12 +160,12 @@
       >
         <template v-if="isErrorHandler" #listHeader="{ service }">
           <div class="list-group-item">
-            <p class="list-group-heading text-info text-strong">
+            <p class="list-group-heading text-info text-strong" data-testid="error-handler-title">
               {{ $t(`framework.service.${service}.description`) }}
             </p>
           </div>
         </template>
-        <span class="text-info">
+        <span class="text-info" data-testid="selection-description">
           {{
             isErrorHandler
               ? $t("Workflow.errorHandlerDescription")

@@ -17,7 +17,6 @@ jest.mock("@/library/modules/pluginService", () => ({
     errors: {},
   }),
 }));
-
 jest.mock("@/library/modules/rundeckClient", () => ({
   client: jest.fn(),
 }));
@@ -45,17 +44,16 @@ jest.mock("@/library/stores/NodesStorePinia", () => ({
   useNodesStore: jest.fn().mockImplementation(() => ({})),
 }));
 
-const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
+const createWrapper = async (props = {}, stubs = {}): Promise<VueWrapper<any>> => {
   const wrapper = mount(WorkflowSteps, {
     props: {
       modelValue: {
         commands: [],
+        ...props,
       },
-      ...props,
     },
     global: {
       stubs: {
-        // LogFilters: false,
         popover: true,
         tabs: true,
         tab: true,
@@ -63,6 +61,7 @@ const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
           template: `<div><slot/><slot name="dropdown" /></div>`,
         },
         JobRefForm: true,
+        ...stubs,
       },
       plugins: [createTestingPinia()],
     },
@@ -121,9 +120,7 @@ describe("WorkflowSteps", () => {
   it("emits update:modelValue when a step is removed", async () => {
     const mockEventBus = getRundeckContext().eventBus;
     const wrapper = await createWrapper({
-      modelValue: {
         commands: [{ type: "stepType", configuration: {} }],
-      },
     });
     const removeButton = wrapper.find('[data-test="remove-step"]');
     await removeButton.trigger("click");
@@ -141,8 +138,7 @@ describe("WorkflowSteps", () => {
   it("saves edited step and emits update:modelValue", async () => {
     const mockEventBus = getRundeckContext().eventBus;
     const wrapper = await createWrapper({
-      modelValue: {
-        commands: [
+      commands: [
           {
             type: "exec-command",
             nodeStep: true,
@@ -151,7 +147,6 @@ describe("WorkflowSteps", () => {
             },
           },
         ],
-      },
     });
     const editStep = wrapper.find('[data-test="edit-step-item"]');
     await editStep.trigger("click");
@@ -196,8 +191,7 @@ describe("WorkflowSteps", () => {
   it("adds log filter information in the correct step", async () => {
     const mockEventBus = getRundeckContext().eventBus;
     const wrapper = await createWrapper({
-      modelValue: {
-        commands: [
+      commands: [
           {
             type: "exec-command",
             description: "first-step",
@@ -213,7 +207,6 @@ describe("WorkflowSteps", () => {
             configuration: {},
           },
         ],
-      },
     });
 
     const addLogFilterSecondStep = wrapper.findAll(
@@ -288,4 +281,35 @@ describe("WorkflowSteps", () => {
       expect.any(Function),
     );
   });
+
+  it("renders the correct information when adding an error handler", async () => {
+    const wrapper = await createWrapper({
+      commands: [{
+            type: "exec-command",
+            description: "first-step",
+            nodeStep: true,
+            configuration: {
+              adhocRemoteString: "abc",
+            },
+          }],
+    }, {
+      popover: {
+        template: `<div><slot/></div>`,
+      },
+      tabs: {
+        template: `<div><slot/></div>`,
+      },
+      tab: {
+        template: `<div><slot/></div>`,
+      }
+    });
+
+    const addErrorHandlerButton = wrapper.find("[data-test='add-error-handler']");
+    await addErrorHandlerButton.trigger("click");
+    await wrapper.vm.$nextTick();
+    const chooseModal = wrapper.findAllComponents(ChoosePluginModal)[0];
+    expect(chooseModal.find('.modal-title').text()).toBe('Workflow.addErrorHandler');
+    expect(chooseModal.find("[data-testid='error-handler-title']").text()).toBe("framework.service.WorkflowNodeStep.description");
+    expect(chooseModal.find("[data-testid='selection-description']").text()).toBe("Workflow.errorHandlerDescription");
+  })
 });

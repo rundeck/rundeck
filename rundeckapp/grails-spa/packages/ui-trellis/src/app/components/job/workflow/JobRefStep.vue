@@ -1,20 +1,20 @@
 <template>
   <div class="flex flex-col">
-    <p>
+    <p data-testid="job-ref-name">
       <i class="glyphicon glyphicon-book"></i>
       {{ fullName }}
-      <span class="info" v-if="step.jobref.project">
+      <span class="info" data-testid="project" v-if="step.jobref.project">
         ({{ step.jobref.project }})
       </span>
     </p>
     <p v-if="step.jobref.args" class="argString">
       <template v-if="Object.keys(parsed).length">
         <template v-for="(entry, key) in parsed" :key="key">
-          <span class="optkey"> {{ key }} </span>
+          <span class="optkey" data-test="parsed-args"> {{ key }} </span>
           <code v-if="entry" class="optvalue">{{ entry }}</code>
         </template>
       </template>
-      <code v-else class="optvalue">{{ step.jobref.args }}</code>
+      <code v-else class="optvalue" data-testid="non-parsed-args">{{ step.jobref.args }}</code>
     </p>
     <p v-if="step.jobref.nodeStep">
       <i class="fas fa-hdd"></i>

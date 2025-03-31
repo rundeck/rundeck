@@ -1,5 +1,5 @@
 <template>
-  <div v-if="step.errorhandler" class="error-handler-section">
+  <div class="error-handler-section">
     <div class="error-handler-section--content">
       <strong>{{ $t("Workflow.stepErrorHandler.label.on.error") }}:</strong>
       <div class="configuration" @click.stop="$emit('edit')">
@@ -33,12 +33,13 @@
         v-if="step.errorhandler.keepgoingOnSuccess"
         :title="$t('Workflow.stepErrorHandler.keepgoingOnSuccess.description')"
         class="succeed"
+        data-testid="keepgoingOnSuccess"
       >
         {{ $t("Workflow.stepErrorHandler.label.keep.going.on.success") }}
       </span>
     </div>
     <div class="btn-group" role="group" aria-label="item controls">
-      <button class="btn btn-xs btn-default" type="button" @click.stop="$emit('removeHandler', step)">
+      <button data-testid="remove-handler-button" class="btn btn-xs btn-default" type="button" @click.stop="$emit('removeHandler', step)">
         <i class="glyphicon glyphicon-remove"></i>
       </button>
     </div>
