@@ -653,7 +653,8 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     void generateKeyPairs(){
-        String directory = new File("src/test/resources/docker/compose/oss/keys").getCanonicalPath()
+        String directory = new File("build/resources/test/docker/compose/oss/keys").getCanonicalPath()
+
         String scriptPath = directory + "/generate-ssh-keys.sh"
 
         def scriptContent = """#!/bin/bash
