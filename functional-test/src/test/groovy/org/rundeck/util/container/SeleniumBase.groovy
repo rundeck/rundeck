@@ -7,12 +7,15 @@ import org.openqa.selenium.TakesScreenshot
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.chrome.ChromeOptions
+import org.openqa.selenium.logging.LogType
+import org.openqa.selenium.logging.LoggingPreferences
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.spock.extensions.TestResultExtension
 import org.rundeck.util.gui.pages.BasePage
 
 import java.time.Duration
+import java.util.logging.Level
 
 /**
  * Utility Base for selenium test specs
@@ -35,7 +38,11 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
     WebDriver getDriver() {
         if (null == _driver) {
             def prefs = ["download.default_directory": downloadFolder]
+            LoggingPreferences logPrefs = new LoggingPreferences()
+            logPrefs.enable(LogType.BROWSER, Level.ALL)
+
             ChromeOptions options = new ChromeOptions()
+            options.setCapability("goog:loggingPrefs", logPrefs);
             options.setImplicitWaitTimeout(Duration.ofSeconds(5))
             options.setExperimentalOption("prefs", prefs)
             options.addArguments("start-maximized")
