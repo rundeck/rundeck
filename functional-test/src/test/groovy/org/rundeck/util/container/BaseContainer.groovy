@@ -13,8 +13,11 @@ import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.jobs.JobUtils
 import spock.lang.Specification
 
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.time.Duration
+import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.function.Function
 import java.util.jar.JarEntry
@@ -64,6 +67,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
 
             } else if (DEFAULT_DOCKERFILE_LOCATION != null && !DEFAULT_DOCKERFILE_LOCATION.isBlank()) {
                 RdDockerContainer rdDockerContainer = new RdDockerContainer(getClass().getClassLoader().getResource(DEFAULT_DOCKERFILE_LOCATION).toURI())
+                generateKeyPairs()
                 rdDockerContainer.start()
                 CLIENT_PROVIDER = rdDockerContainer
                 RUNDECK_CONTAINER_ID = rdDockerContainer.containerId
@@ -84,6 +88,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
                         featureName,
                         clientConfig
                 )
+                generateKeyPairs()
                 rundeckComposeContainer.start()
                 CLIENT_PROVIDER = rundeckComposeContainer
                 RUNDECK_CONTAINER_ID = rundeckComposeContainer.getRundeckContainerId()
@@ -104,6 +109,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
                     featureName,
                     clientConfig
                 )
+                generateKeyPairs()
                 rundeckComposeContainer.start()
                 CLIENT_PROVIDER = rundeckComposeContainer
                 RUNDECK_CONTAINER_ID = rundeckComposeContainer.getRundeckContainerId()
@@ -644,6 +650,27 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
             count++
         }
         return logs
+    }
+
+    void generateKeyPairs(){
+        String directory = new File("src/test/resources/docker/compose/oss/keys").getCanonicalPath()
+        String scriptPath = directory + "/generate-ssh-keys.sh"
+
+        def scriptContent = """#!/bin/bash
+        mkdir -p "$directory"
+        ssh-keygen -t rsa -b 4096 -f "$directory/id_rsa" -N ""
+        ssh-keygen -t rsa -b 4096 -f "$directory/id_rsa_passphrase" -N "testpassphrase123"
+    """
+        try {
+            Files.createDirectories(Paths.get(directory))
+            Files.write(Paths.get(scriptPath), scriptContent.getBytes())
+            ProcessBuilder pb = new ProcessBuilder("bash", scriptPath)
+            pb.start().waitFor(3, TimeUnit.SECONDS)
+            Files.deleteIfExists(Paths.get(scriptPath))
+        } catch (IOException | InterruptedException e) {
+            LoggerFactory.getLogger(BaseContainer.class).info(e.getMessage())
+            throw new RuntimeException("Failed to create key pairs")
+        }
     }
 
 }
