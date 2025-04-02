@@ -18,5 +18,5 @@ sed -i "s/.*PasswordAuthentication.*/PasswordAuthentication yes/g" /etc/ssh/sshd
 mkdir -p /home/rundeck/.ssh
 chown -R "$USERNAME" $HOME/.ssh
 
-cat /configuration/id_rsa.pub > /home/rundeck/.ssh/authorized_keys
-cat /configuration/id_rsa_passphrase.pub >> /home/rundeck/.ssh/authorized_keys
+cat /configuration/fake_auth_test_key.pub > /home/rundeck/.ssh/authorized_keys
+cat /configuration/fake_auth_test_key_passphrase.pub >> /home/rundeck/.ssh/authorized_keys
