@@ -1,0 +1,86 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "id": "http://rundeck-repository.com/artifact.schema.json",
+    "title": "A Rundeck repository compatible artifact descriptor",
+    "description": "The artifact meta file that describes various attributes of an artifact to be used in the Rundeck repository",
+    "type": "object",
+    "properties": {
+        "Id": {
+            "description":"The id of the artifact. This is the first 12 characters of the SHA-256 encoding of the artifact name",
+            "type":"string",
+            "pattern": "^[a-fA-F0-9]{12}$"
+        },
+        "Name": {
+            "description":"The name of the artifact",
+            "type":"string"
+        },
+        "Organization": {
+            "description":"The organization distributing the artifact",
+            "type":"string"
+        },
+        "Description": {
+            "description":"The description of the artifact",
+            "type":"string"
+        },
+        "Author": {
+            "description":"The name of the author of the artifact",
+            "type":"string"
+        },
+        "AuthorId": {
+            "description":"The Rundeck developer id of the author of the artifact",
+            "type":"string"
+        },
+        "Version": {
+            "description":"The version of the artifact",
+            "type":"string"
+        },
+        "ArtifactType": {
+            "description":"The artifact type",
+            "enum": ["JAVA_PLUGIN","SCRIPT_PLUGIN","java-plugin","script-plugin"]
+        },
+        "License": {
+            "description":"Artifact license",
+            type:"string"
+        },
+        "Support": {
+            "description":"Support level offered for the artifact",
+            "enum": ["Community","Rundeck","Rundeck Pro","Third Party"]
+        },
+        "RundeckCompatibility": {
+            "description":"The minimum version of Rundeck needed by this artifact",
+            "type":"string",
+            "pattern": "^[\\d]*\\.[\\dx]*\\.?[\\dx]?"
+        },
+        "Tags": {
+          "description": "Tags describing the artifact",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "ProvidesServices": {
+          "description": "Rundeck services provided by the artifact",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "ThirdPartyDependencies": {
+            "description":"Third party dependencies required by the artifact.",
+            "type":"string"
+        },
+        "SourceLink": {
+            "description":"Link to the source of the artifact",
+            "type":"string"
+        },
+        "BinaryLink": {
+            "description":"Link to the binary download",
+            "type":"string"
+        }
+    },
+    "required": ["Name","Author","AuthorId","ArtifactType","Version","Id","Tags","ProvidesServices","RundeckCompatibility"]
+}
