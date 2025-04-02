@@ -3,6 +3,7 @@ import { getPluginDetail } from "../services/plugins";
 
 import { Serial } from "../utilities/Async";
 import { RootStore } from "./RootStore";
+import { apiClient } from "../services/api";
 
 export class PluginStore {
   plugins: Plugin[] = [];
@@ -48,15 +49,11 @@ export class PluginStore {
         this.plugins.push(jobRefPlugin);
       }
     }
-    const plugins = await this.client.apiRequest({
-      pathTemplate: "api/51/plugin/list",
-      queryParameters: {
-        service,
-      },
-      method: "GET",
+    const plugins = await apiClient(51).get("plugin/list", {
+      params: { service },
     });
 
-    plugins.parsedBody.forEach((p: any) => {
+    plugins.data.forEach((p: any) => {
       const pluginKey = this._getPluginByIdKey(p);
       if (this.pluginsById[pluginKey]) return;
       else this.plugins.push(p);
