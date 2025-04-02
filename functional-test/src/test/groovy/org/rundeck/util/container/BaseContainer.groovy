@@ -200,8 +200,8 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     def loadKeysForNodes(String baseKeyPath, String project, String nodeKeyPassPhrase, String nodeUserPassword, String userVaultPassword) {
-        client.doPost("/storage/keys/project/$project/ssh-node.key", new File("${baseKeyPath}/id_rsa"), "application/octet-stream")
-        client.doPost("/storage/keys/project/$project/ssh-node-passphrase.key", new File("${baseKeyPath}/id_rsa_passphrase"), "application/octet-stream")
+        client.doPost("/storage/keys/project/$project/ssh-node.key", new File("${baseKeyPath}/fake_auth_test_key"), "application/octet-stream")
+        client.doPost("/storage/keys/project/$project/ssh-node-passphrase.key", new File("${baseKeyPath}/fake_auth_test_key_passphrase"), "application/octet-stream")
         if (nodeKeyPassPhrase) loadKey("project/$project/ssh-node-passphrase.pass", nodeKeyPassPhrase, "password")
         if (nodeUserPassword) loadKey("project/$project/ssh-node.pass", nodeUserPassword, "password")
         if (userVaultPassword) loadKey("project/$project/vault-user.pass", userVaultPassword, "password")
