@@ -14,7 +14,9 @@ import org.rundeck.util.common.jobs.JobUtils
 import spock.lang.Specification
 
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.text.SimpleDateFormat
 import java.time.Duration
 import java.util.concurrent.TimeUnit
@@ -653,24 +655,34 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     void generateKeyPairs(){
-        String directory = new File("build/resources/test/docker/compose/oss/keys").getCanonicalPath()
+        String ossDirectory = new File("build/resources/test/docker/compose/oss/keys").getCanonicalPath()
+        String proDirectory = new File("build/resources/test/docker/compose/pro/keys").getCanonicalPath()
 
-        String scriptPath = directory + "/generate-ssh-keys.sh"
+        String scriptPath = ossDirectory + "/generate-ssh-keys.sh"
 
         def scriptContent = """#!/bin/bash
-        mkdir -p "$directory"
-        ssh-keygen -t rsa -b 4096 -f "$directory/id_rsa" -N ""
-        ssh-keygen -t rsa -b 4096 -f "$directory/id_rsa_passphrase" -N "testpassphrase123"
-    """
+        mkdir -p "$ossDirectory"
+        ssh-keygen -t rsa -b 4096 -f "$ossDirectory/id_rsa" -N ""
+        ssh-keygen -t rsa -b 4096 -f "$ossDirectory/id_rsa_passphrase" -N "testpassphrase123"
+        """
         try {
-            Files.createDirectories(Paths.get(directory))
+            Files.createDirectories(Paths.get(ossDirectory))
+            Files.createDirectories(Paths.get(proDirectory))
+
             Files.write(Paths.get(scriptPath), scriptContent.getBytes())
             ProcessBuilder pb = new ProcessBuilder("bash", scriptPath)
             pb.start().waitFor(3, TimeUnit.SECONDS)
             Files.deleteIfExists(Paths.get(scriptPath))
+            File sourceDir = new File(ossDirectory)
+            File destDir = new File(proDirectory)
+
+            for (File file : sourceDir.listFiles()) {
+                Path sourcePath = file.toPath()
+                Path destPath = Paths.get(destDir.getAbsolutePath(), file.getName())
+                Files.copy(sourcePath, destPath, StandardCopyOption.REPLACE_EXISTING)
+            }
         } catch (IOException | InterruptedException e) {
-            LoggerFactory.getLogger(BaseContainer.class).info(e.getMessage())
-            throw new RuntimeException("Failed to create key pairs")
+            throw new RuntimeException("Failed to create key pairs, error : "+e.getMessage())
         }
     }
 
