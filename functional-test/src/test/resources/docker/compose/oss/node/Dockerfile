@@ -10,5 +10,3 @@ FROM rundeck/node-demo
 
 COPY init.sh  /usr/local/sbin/init
 RUN chmod +x /usr/local/sbin/init
-
-CMD /usr/local/sbin/init && /usr/local/sbin/rdeck_ssh_start
