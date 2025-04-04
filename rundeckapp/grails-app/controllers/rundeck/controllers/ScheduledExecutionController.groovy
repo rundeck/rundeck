@@ -1127,9 +1127,6 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
         def jpath = JsonPath.using(Configuration.defaultConfiguration())
         try {
             def jsonFilterResult = jpath.parse(payload).read(jobOptionConfigRemoteUrl.getJsonFilter())
-            if(jsonFilterResult instanceof ArrayList){
-                return [error: "the filter ${jobOptionConfigRemoteUrl.getJsonFilter()} return a list, please use another filter"]
-            }
             return [jsonElement: jsonFilterResult, string: jsonFilterResult.toString()]
 
         }catch (Exception e){
