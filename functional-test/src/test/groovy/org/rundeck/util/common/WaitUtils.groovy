@@ -9,7 +9,7 @@ class WaitUtils  {
 
     /** Waits for the resource to be in the expected state by retrieving it and evaluating its acceptance as many times as needed.
      * @param retryableResourceRetriever executed multiple times to retrieve the current state of the R resource.
-     * @param resourceAcceptanceEvaluator evaluates the state of the resource and and returns true if the resource is accepted.
+     * @param resourceAcceptanceEvaluator evaluates the state of the resource and and returns true if the resource is accepted. Defaults to the R resource truthy value.
      * @param timeout max duration to wait for the resource to reach the expected state.
      * @param checkPeriod time to wait between each check.
      * @return the resource that met the acceptance criteria.
@@ -18,7 +18,7 @@ class WaitUtils  {
     @TypeChecked
     static <R> R waitFor(
             Supplier<R> retryableResourceRetriever,
-            Function<R, Boolean> resourceAcceptanceEvaluator = { it != null },
+            Function<R, Boolean> resourceAcceptanceEvaluator = { it ? true : false },
             Duration timeout = WaitingTime.MODERATE,
             Duration checkPeriod = WaitingTime.LOW) {
         R r = retryableResourceRetriever()
@@ -38,7 +38,7 @@ class WaitUtils  {
     /** Waits for the resource to be in the expected state by retrieving it by its identifier and evaluating its acceptance as many times as needed.
      * @param resourceId resource identifier that is passable into the resourceRetriever as an input argument.
      * @param resourceRetriever Function that takes the RID resourceId and returns the current state of the R resource.
-     * @param resourceAcceptanceEvaluator Function that evaluates the state of the resource by taking a R resource and returning true of the resource is accepted.
+     * @param resourceAcceptanceEvaluator Function that evaluates the state of the resource by taking a R resource and returning true of the resource is accepted. Defaults to the R resource truthy value.
      * @param acceptanceFailureOutputProducer Function that produces a string output when the resource acceptance evaluator returns false to be included in the exception message.
      * @param timeout max duration to wait for the resource to reach the expected state.
      * @param checkPeriod time to wait between each check.
@@ -48,7 +48,7 @@ class WaitUtils  {
     @TypeChecked
     static <RID, R> R waitForResource(RID resourceId,
                                       Function<RID, R> resourceRetriever,
-                                      Function<R, Boolean> resourceAcceptanceEvaluator = { R r -> true },
+                                      Function<R, Boolean> resourceAcceptanceEvaluator = { it ? true : false },
                                       Function<RID, String> acceptanceFailureOutputProducer = { RID id -> "" },
                                       Duration timeout = WaitingTime.MODERATE,
                                       Duration checkPeriod = WaitingTime.LOW) {
@@ -67,7 +67,7 @@ class WaitUtils  {
      *  No guarantees are made about the order and timing of the retrieval.
      * @param resourceIdentifiers collection of resource identifiers. Each identifier should be passable into the resourceRetriever as an input argument.
      * @param resourceRetriever Function that takes the RID resourceId and returns the current state of the R resource.
-     * @param resourceAcceptanceEvaluator Function that evaluates the state of the resource by taking a R resource and returning true of the resource is accepted.
+     * @param resourceAcceptanceEvaluator Function that evaluates the state of the resource by taking a R resource and returning true of the resource is accepted. Defaults to the R resource truthy value.
      * @param timeout max duration to wait for the resource to reach the expected state.
      * @param checkPeriod time to wait between each check.
      * @param acceptanceFailureOutputProducer Function that produces a string output when the resource acceptance evaluator returns false to be included in the exception message.
@@ -78,7 +78,7 @@ class WaitUtils  {
     @TypeChecked
     static <RID, R> Map<RID, R> waitForAllResources(Collection<RID> resourceIdentifiers,
                                                     Function<RID, R> resourceRetriever,
-                                                    Function<R, Boolean> resourceAcceptanceEvaluator = { R r -> true },
+                                                    Function<R, Boolean> resourceAcceptanceEvaluator = { it ? true : false  },
                                                     Duration timeout = WaitingTime.MODERATE,
                                                     Duration checkPeriod = WaitingTime.LOW,
                                                     Function<RID, String> acceptanceFailureOutputProducer = { RID id -> "" }) {
