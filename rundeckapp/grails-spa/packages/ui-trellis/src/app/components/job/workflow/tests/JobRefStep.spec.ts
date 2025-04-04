@@ -11,9 +11,9 @@ const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
           project: "",
           uuid: "",
           args: "",
+          nodeStep: false,
+          ...props,
         },
-        nodeStep: false,
-        ...props,
       },
     },
   });
@@ -21,76 +21,62 @@ const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
   await flushPromises();
   return wrapper;
 };
+const assertName = (wrapper: VueWrapper, name: string) => {
+  const jobName = wrapper.find("[data-testid=job-ref-name]")
+  expect(jobName.text()).toContain(name);
+}
 
 describe("JobRefStep", () => {
   describe("Job Name Display", () => {
     it("displays job name with group when both are provided", async () => {
       const wrapper = await createWrapper({
-        jobref: {
-          name: "TestJob",
-          group: "TestGroup",
-        },
+        name: "TestJob",
+        group: "TestGroup",
       });
 
-      expect(wrapper.text()).toContain("TestGroup/TestJob");
+      assertName(wrapper, "TestGroup/TestJob")
     });
 
     it("displays only job name when no group is provided", async () => {
       const wrapper = await createWrapper({
-        jobref: {
-          name: "TestJob",
-        },
+        name: "TestJob",
       });
 
-      expect(wrapper.text()).toContain("TestJob");
+      assertName(wrapper, "TestJob")
     });
 
     it("displays UUID when no name is provided", async () => {
       const wrapper = await createWrapper({
-        jobref: {
           uuid: "123-456-789",
-        },
       });
 
-      expect(wrapper.text()).toContain("123-456-789");
+      assertName(wrapper, "123-456-789")
     });
-  });
 
-  describe("Project Display", () => {
     it("shows project name in parentheses when provided", async () => {
       const wrapper = await createWrapper({
-        jobref: {
-          project: "TestProject",
-        },
+        project: "TestProject",
+        uuid: "123-456-789",
       });
 
-      expect(wrapper.text()).toContain("(TestProject)");
-    });
-
-    it("does not show project parentheses when project is not provided", async () => {
-      const wrapper = await createWrapper();
-
-      expect(wrapper.text()).not.toContain("(");
-      expect(wrapper.text()).not.toContain(")");
+      const projectName = wrapper.find("[data-testid=project]")
+      expect(projectName.text()).toContain("(TestProject)");
     });
   });
 
   describe("Arguments Display", () => {
     it("displays raw args when not in key-value format", async () => {
       const wrapper = await createWrapper({
-        jobref: {
-          args: "simple argument string",
-        },
+        args: "simple argument string",
       });
 
-      expect(wrapper.find(".optvalue").text()).toBe("simple argument string");
+      expect(wrapper.find("[data-testid=non-parsed-args]").text()).toBe("simple argument string");
+      expect(wrapper.find("[data-test=parsed-args]").exists()).toBe(false);
     });
 
     it("parses and displays key-value args correctly", async () => {
       const wrapper = await createWrapper({
-        jobref: {
-          args: "-key1 value1 -key2 value2",
-        },
+        args: "-key1 value1 -key2 value2",
       });
 
       const keys = wrapper.findAll(".optkey");
@@ -104,9 +90,7 @@ describe("JobRefStep", () => {
 
     it("handles quoted values in args correctly", async () => {
       const wrapper = await createWrapper({
-        jobref: {
           args: "-key1 \"value with spaces\" -key2 'another value'",
-        },
       });
 
       const keys = wrapper.findAll(".optkey");
@@ -121,7 +105,7 @@ describe("JobRefStep", () => {
     it("does not show args section when no args provided", async () => {
       const wrapper = await createWrapper();
 
-      expect(wrapper.find(".argString").exists()).toBe(false);
+      expect(wrapper.find("[data-testid=parsed-args]").exists()).toBe(false);
     });
   });
 

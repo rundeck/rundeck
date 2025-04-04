@@ -43,8 +43,8 @@ const createWrapper = async (
     props: {
       modelValue: {
         description: "",
-        nodeStep: false,
         jobref: {
+          nodeStep: false,
           name: "",
           project: "TestProject",
           group: "",

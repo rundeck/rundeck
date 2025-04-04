@@ -17,6 +17,7 @@
         :title="tabTitle(service.service, i)"
       >
         <div class="list-group">
+          <slot name="listHeader" :service="service.service" />
           <template
             v-for="(prov, index) in service.providers"
             :key="`providerItem${index}`"

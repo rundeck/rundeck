@@ -66,6 +66,7 @@ export interface JobRefDefinition {
   childNodes?: boolean;
   importOptions?: boolean;
   ignoreNotifications?: boolean;
+  nodeStep?: boolean;
   nodefilters?: {
     filter: string;
     dispatch?: {
@@ -79,8 +80,8 @@ export interface JobRefDefinition {
 }
 export interface JobRefData {
   description?: string;
+  keepgoingOnSuccess?: boolean;
   jobref?: JobRefDefinition;
-  nodeStep?: boolean;
 }
 export interface PluginStepData {
   type?: string;
@@ -112,6 +113,18 @@ export interface StrategyConfig {
   strategy?: string;
 }
 
+export interface ErrorHandlerDefinition {
+  config: any;
+  keepgoingOnSuccess?: boolean;
+  nodeStep: boolean;
+  jobref?: JobRefDefinition;
+  type: string;
+  id: string;
+}
+export interface ErrorHandlerData {
+  errorhandler?: ErrorHandlerDefinition
+}
+
 export interface GlobalLogFiltersData {
   filters?: PluginConfig[];
   LogFilter?: PluginConfig[];
@@ -122,7 +135,9 @@ export type StepData = CommandData &
   PluginStepData &
   ScriptFileData &
   ScriptInlineData &
-  CommandExecData;
+  CommandExecData &
+  ErrorHandlerData;
+
 export interface StepsData {
   commands: StepData[];
 }
@@ -130,11 +145,12 @@ export interface CommandEditData extends PluginConfig {
   nodeStep: boolean;
   description?: string;
   jobref?: JobRefDefinition;
+  errorhandler?: ErrorHandlerDefinition;
   //simply to provide a unique id for each step on client side
   id: string;
-  filters: PluginConfig[];
+  filters?: PluginConfig[];
 }
-export type EditStepData = CommandEditData & JobRefData;
+export type EditStepData = CommandEditData;
 export interface StepsEditData {
   commands: EditStepData[];
 }
