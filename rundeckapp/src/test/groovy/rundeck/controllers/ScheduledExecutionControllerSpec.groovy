@@ -4527,14 +4527,14 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.logger = jobChangeLogger
 
         JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
-        configRemoteUrl.jsonFilter = "\$..*"
+        configRemoteUrl.jsonFilter = "\$.key2[*].['sub-key3']"
 
         HttpResponse rsp = Mock(HttpResponse){
             getStatusLine()>>Mock(StatusLine){
                 getStatusCode()>>200
             }
             getEntity()>>Mock(HttpEntity){
-                getContent()>>new ByteArrayInputStream('{"key1":"value1", "key2": {"sub-key3":"value3", "sub-key4":"value4"}}'.getBytes());
+                getContent()>>new ByteArrayInputStream('{"key1":"value1", "key2": [{"sub-key3":"value3"}, {"sub-key3":"value4"}]}'.getBytes());
             }
             getFirstHeader("Content-Type")>>Mock(Header){
                 getValue()>>"application/json"
@@ -4552,7 +4552,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
 
         result != null
-        result.error == "the filter \$..* return a list, please use another filter"
+        !result.error
+        result.json==["value3","value4"]
 
     }
 
@@ -4651,4 +4652,42 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         componentsJson.jc1 == ["k1":"v1"]
         componentsJson.jc2 == ["k2":"v2"]
     }
+
+    @Unroll
+    def "test remoteUrlParse method with #testDesc"() {
+        given:
+            def payload = '{"key1":"value1", "key2": {"sub-key3":"value3", "sub-key4":"value4"}, "array": [1,2,3]}'
+            def configRemoteUrl = filter ? new JobOptionConfigRemoteUrl(jsonFilter: filter) : null
+
+        when:
+            def result = ScheduledExecutionController.remoteUrlParse(payload, configRemoteUrl)
+
+        then:
+            if (expectError) {
+                assert result.error != null
+                assert result.jsonElement == null
+            } else {
+                assert result.error == null
+                assert result.jsonElement != null
+                assert result.string != null
+                if (filter) {
+                    assert result.jsonElement == expectedResult
+                } else {
+                    assert result.jsonElement.key1 == "value1"
+                    assert result.jsonElement.key2 instanceof Map
+                    assert result.jsonElement.array instanceof List
+                }
+            }
+
+        where:
+            testDesc                | filter             | expectError | expectedResult
+            "no filter"             | null               | false       | null
+            "simple filter"         | "\$.key1"          | false       | "value1"
+            "nested filter"         | "\$.key2.sub-key3" | false       | "value3"
+            "array filter"          | "\$.array[1]"      | false       | 2
+            "non-existent path"     | "\$.nonexistent"   | true        | null
+            "invalid filter syntax" | "invalid[syntax"   | true        | null
+    }
+
 }
+
