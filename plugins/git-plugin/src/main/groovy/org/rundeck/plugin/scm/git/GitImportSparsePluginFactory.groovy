@@ -1,19 +1,3 @@
-/*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.rundeck.plugin.scm.git
 
 import com.dtolabs.rundeck.core.plugins.Plugin
@@ -27,20 +11,16 @@ import com.dtolabs.rundeck.plugins.scm.ScmImportPluginFactory
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import org.rundeck.plugin.scm.git.config.Common
 import org.rundeck.plugin.scm.git.config.Config
-import org.rundeck.plugin.scm.git.config.Import
+import org.rundeck.plugin.scm.git.config.SparseImport
 
 import static BuilderUtil.pluginDescription
 
-/**
- * Created by greg on 9/9/15.
- */
-@Plugin(name = GitImportPluginFactory.PROVIDER_NAME, service = ServiceNameConstants.ScmImport)
-@PluginDescription(title = GitImportPluginFactory.TITLE, description = GitImportPluginFactory.DESC)
-class GitImportPluginFactory implements ScmImportPluginFactory, Describable {
-    static final String PROVIDER_NAME = 'git-import'
-    public static final String DESC = "Import Jobs from a Git Repository"
-    public static final String TITLE = "Git Import"
-
+@Plugin(name = GitImportSparsePluginFactory.PROVIDER_NAME, service = ServiceNameConstants.ScmImport)
+@PluginDescription(title = GitImportSparsePluginFactory.TITLE, description = GitImportSparsePluginFactory.DESC)
+class GitImportSparsePluginFactory implements ScmImportPluginFactory, Describable {
+    static final String PROVIDER_NAME = 'git-import-sparse'
+    public static final String DESC = "Import Jobs from a Git Repository (Sparse Checkout)"
+    public static final String TITLE = "Git Import Sparse"
 
     @Override
     Description getDescription() {
@@ -60,9 +40,8 @@ class GitImportPluginFactory implements ScmImportPluginFactory, Describable {
         Common.addDirDefaultValue setupProperties, basedir, ServiceNameConstants.ScmImport
     }
 
-
     static List<Property> getSetupProperties() {
-        Config.listProperties Import
+        Config.listProperties SparseImport
     }
 
     @Override
@@ -70,8 +49,7 @@ class GitImportPluginFactory implements ScmImportPluginFactory, Describable {
             final ScmOperationContext context,
             final Map<String, String> input,
             final List<String> trackedItems
-    )
-    {
+    ) {
         return createPlugin(context, input, trackedItems, true)
     }
 
@@ -81,14 +59,12 @@ class GitImportPluginFactory implements ScmImportPluginFactory, Describable {
             final Map<String, String> input,
             final List<String> trackedItems,
             final boolean initialize
-    )
-    {
-        def config = Config.create Import, input
-        def plugin = new GitImportPlugin(config, trackedItems)
-        if(initialize){
+    ) {
+        def config = Config.create SparseImport, input
+        def plugin = new GitImportSparsePlugin(config, trackedItems)
+        if (initialize) {
             plugin.initialize context
         }
         return plugin
     }
-
-}
+} 

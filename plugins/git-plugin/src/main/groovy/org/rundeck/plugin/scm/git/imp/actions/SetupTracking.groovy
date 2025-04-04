@@ -37,7 +37,7 @@ import java.util.regex.PatternSyntaxException
 /**
  * Created by greg on 9/10/15.
  */
-class SetupTracking extends BaseAction implements GitImportAction {
+class SetupTracking extends BaseAction implements GitImportAction<GitImportPlugin> {
 
     SetupTracking(final String id, final String title, final String description, final String iconName) {
         super(id, title, description, iconName)
