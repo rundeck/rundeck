@@ -486,6 +486,8 @@ const messages = {
   "scheduledExecution.action.download.button.label": "Download Definition",
   "scheduledExecution.action.downloadformat.button.label":
     "Download Job definition in {0}",
+  "scheduledExecution.action.activity.button.label":
+    "View Activity for this Job",
   "scheduledExecution.action.delete.button.label": "Delete this Job",
   "scheduledExecution.action.edit.button.tooltip": "Edit this Job",
   "scheduledExecution.action.duplicate.button.tooltip": "Duplicate Job",
@@ -1015,7 +1017,8 @@ const messages = {
   "JobExec.property.nodeFilter.null.description":
     "The nodes used will be those defined for the triggered Job.",
   "commandExec.jobName.blank.message": "Job must be specified",
-  "results.truncated.count.results.shown":"Results truncated. {0} results shown.",
+  "results.truncated.count.results.shown":
+    "Results truncated. {0} results shown.",
   "options.label": "Options",
 };
 
