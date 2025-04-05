@@ -2,9 +2,16 @@ import { defineStore } from "pinia";
 import { getJobDefinition, postJobDefinition } from "../services/jobEdit";
 import { JobDefinition } from "../types/jobs/JobDefinition";
 import { JobStore } from "../types/stores/JobsStoreTypes";
+import { contextVariables, ContextVariablesByType } from "./context_variables";
 
 export const useJobStore = defineStore("jobs", {
-  state: (): JobStore => ({ activeId: "", jobs: {} as any }),
+  state: (): JobStore => {
+    return {
+      activeId: "",
+      jobs: {} as any,
+      contextVariables: contextVariables() as ContextVariablesByType,
+    };
+  },
   getters: {
     jobDefinition: (state): JobDefinition | undefined =>
       state.activeId ? state.jobs[state.activeId] : undefined,

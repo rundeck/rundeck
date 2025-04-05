@@ -129,16 +129,15 @@
             $t("Workflow.Step.uuid.label")
           }}</label>
           <div class="col-sm-10">
-            <input
+            <PtAutoComplete
               :id="`jobUuidField${rkey}`"
               v-model="editModel.jobref.uuid"
-              data-testid="jobUuidField"
-              type="text"
+              class="context_var_autocomplete"
               name="uuid"
-              size="100"
-              :readonly="!!isUseName"
+              data-testid="jobUuidField"
+              :suggestions="inputTypeContextVariables"
+              :read-only="!!isUseName"
               :placeholder="$t('Workflow.Step.jobreference.uuid.placeholder')"
-              class="form-control context_var_autocomplete"
             />
           </div>
         </div>
@@ -154,16 +153,12 @@
             $t("Workflow.Step.argString.label")
           }}</label>
           <div class="col-sm-10">
-            <input
+            <PtAutoComplete
               id="jobArgStringField"
               v-model="editModel.jobref.args"
-              type="text"
               name="argString"
-              size="100"
-              :placeholder="
-                $t('Workflow.Step.jobreference.argString.placeholder')
-              "
-              class="form-control"
+              :suggestions="inputTypeContextVariables"
+              :placeholder="$t('Workflow.Step.jobreference.argString.placeholder')"
             />
           </div>
         </div>
@@ -634,12 +629,21 @@ import { mapState, mapActions } from "pinia";
 import { useNodesStore } from "@/library/stores/NodesStorePinia";
 import NodeFilterInput from "@/app/components/job/resources/NodeFilterInput.vue";
 import ErrorsList from "@/app/components/job/options/ErrorsList.vue";
+import PtAutoComplete from "../../../../library/components/primeVue/PtAutoComplete/PtAutoComplete.vue";
+import { getContextVariables } from "@/library/components/utils/contextVariableUtils";
+
 const rundeckContext = getRundeckContext();
 const eventBus = rundeckContext.eventBus;
 
 export default defineComponent({
   name: "JobRefForm",
-  components: { ErrorsList, NodeFilterInput, NodeListEmbed, UiSocket },
+  components: {
+    ErrorsList,
+    NodeFilterInput,
+    NodeListEmbed,
+    UiSocket,
+    PtAutoComplete,
+  },
   provide() {
     return {
       showJobsAsLinks: false,
@@ -706,6 +710,7 @@ export default defineComponent({
       errorMessage: "",
       showRequired: false,
       eventBus: eventBus,
+      inputTypeContextVariables: getContextVariables("input", "WorkflowStep"),
     };
   },
   computed: {
