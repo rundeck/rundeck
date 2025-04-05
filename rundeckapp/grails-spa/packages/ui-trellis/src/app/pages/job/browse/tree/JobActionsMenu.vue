@@ -125,6 +125,15 @@
           </a>
         </li>
       </template>
+      <template v-if="authProjEventRead && authz['read']">
+        <li class="divider"></li>
+        <li>
+          <a :href="activityPageHref()">
+            <b class="fas fa-history"></b>
+            {{ $t("scheduledExecution.action.activity.button.label") }}
+          </a>
+        </li>
+      </template>
       <job-scm-actions :job="job"></job-scm-actions>
       <ui-socket
         location="job-actions-menu"
@@ -225,6 +234,9 @@ export default defineComponent({
     },
     downloadFormatHref(format: string) {
       return `${context.rdBase}project/${context.projectName}/job/show/${this.job.id}?format=${encodeURIComponent(format)}`;
+    },
+    activityPageHref() {
+      return `${context.rdBase}project/${context.projectName}/activity?jobIdFilter=${encodeURIComponent(this.job.id)}`;
     },
     action(name: string) {
       context.eventBus.emit(`job-action-single`, { name, job: this.job });
