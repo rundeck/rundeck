@@ -200,7 +200,7 @@ export default defineComponent({
       const schedule = this.findJobMeta("schedule");
       return schedule && schedule.executionEnabled;
     },
-    authz(): Object | undefined {
+    authz(): object | undefined {
       return this.findJobMeta("authz");
     },
     projAuthz(): object | undefined {
