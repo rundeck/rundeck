@@ -7,7 +7,7 @@ export async function getProjectMeta(
   meta: string = "*",
 ): Promise<JobBrowseMeta[]> {
   const resp = await getRundeckContext().rootStore.cachedApi(
-    `project/${project}/meta?meta=${meta}`,
+    `project/${project}/meta?meta=${encodeURIComponent(meta)}`,
   );
   if (resp.status !== 200) {
     throw { message: resp.data.message, response: resp };
@@ -22,9 +22,9 @@ export async function browsePath(
   meta: string = "*",
   breakpoint: number = 100,
 ): Promise<JobBrowseList> {
-  const resp = await api.get(
-    `project/${project}/jobs/browse/?path=${path}&meta=${meta}&breakpoint=${breakpoint}`,
-  );
+  const resp = await api.get(`project/${project}/jobs/browse/`, {
+    params: { path, meta, breakpoint },
+  });
   if (resp.status !== 200) {
     throw { message: resp.data.message, response: resp };
   } else {
@@ -38,11 +38,8 @@ export async function queryPath(
   breakpoint: number = 100,
   query: { [key: string]: any },
 ): Promise<JobBrowseList> {
-  let qstring = `path=${path}&meta=${meta}&breakpoint=${breakpoint}`;
-  for (const key in query) {
-    qstring += "&" + key + "=" + query[key];
-  }
-  const resp = await api.get(`project/${project}/jobs/browse/?${qstring}`);
+  const params = Object.assign({}, query, { path, meta, breakpoint });
+  const resp = await api.get(`project/${project}/jobs/browse/`, { params });
   if (resp.status !== 200) {
     throw { message: resp.data.message, response: resp };
   } else {
@@ -55,7 +52,7 @@ export async function getJobMeta(
   meta: string = "*",
 ): Promise<JobBrowseMeta[]> {
   const resp = await getRundeckContext().rootStore.cachedApi(
-    `job/${id}/meta?meta=${meta}`,
+    `job/${id}/meta?meta=${encodeURIComponent(meta)}`,
   );
   if (resp.status !== 200) {
     throw { message: resp.data.message, response: resp };
