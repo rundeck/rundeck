@@ -26,6 +26,7 @@
         group-css=""
         description-css="ml-5"
         data-testid="plugin-info"
+        :service-name="serviceName"
       ></plugin-config>
       <slot name="extra"></slot>
     </div>
