@@ -20,6 +20,7 @@
         default-scope="Instance"
         group-css=""
         data-testid="plugin-info"
+        :service-name="serviceName"
       ></plugin-config>
       <slot name="extra"></slot>
     </div>

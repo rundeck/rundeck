@@ -21,9 +21,7 @@
               <label for="useNameTrue">
                 {{ $t("Workflow.Step.jobreference.name.label") }}
                 <span>
-                  {{
-                    $t("Workflow.Step.jobreference.name.description")
-                  }}
+                  {{ $t("Workflow.Step.jobreference.name.description") }}
                 </span>
               </label>
             </div>
@@ -129,16 +127,15 @@
             $t("Workflow.Step.uuid.label")
           }}</label>
           <div class="col-sm-10">
-            <input
+            <PtAutoComplete
               :id="`jobUuidField${rkey}`"
               v-model="editModel.jobref.uuid"
-              data-testid="jobUuidField"
-              type="text"
+              class="context_var_autocomplete"
               name="uuid"
-              size="100"
+              data-testid="jobUuidField"
+              :suggestions="inputTypeContextVariables"
               :readonly="!!isUseName"
               :placeholder="$t('Workflow.Step.jobreference.uuid.placeholder')"
-              class="form-control context_var_autocomplete"
             />
           </div>
         </div>
@@ -154,16 +151,14 @@
             $t("Workflow.Step.argString.label")
           }}</label>
           <div class="col-sm-10">
-            <input
+            <PtAutoComplete
               id="jobArgStringField"
-              v-model="editModel.jobref.args"
-              type="text"
+              v-model="editModel.jobref.argString"
               name="argString"
-              size="100"
+              :suggestions="inputTypeContextVariables"
               :placeholder="
                 $t('Workflow.Step.jobreference.argString.placeholder')
               "
-              class="form-control"
             />
           </div>
         </div>
@@ -342,31 +337,40 @@
           </label>
 
           <div class="col-sm-10">
-            <div  class="well well-sm embed matchednodes">
+            <div class="well well-sm embed matchednodes">
               <template v-if="filterLoaded">
                 <button
-                    type="button"
-                    class="pull-right btn btn-sm refresh_nodes"
-                    :title="$t('click.to.refresh')"
-                    @click="triggerFetchNodes"
+                  type="button"
+                  class="pull-right btn btn-sm refresh_nodes"
+                  :title="$t('click.to.refresh')"
+                  @click="triggerFetchNodes"
                 >
                   {{ $t(loading ? "loading.text" : "refresh") }}
                   <i class="glyphicon glyphicon-refresh"></i>
                 </button>
                 <span v-if="hasFilter && total">
-                  {{ $t("count.nodes.matched", [total, $t("Node.count.vue", total)]) }}
+                  {{
+                    $t("count.nodes.matched", [
+                      total,
+                      $t("Node.count.vue", total),
+                    ])
+                  }}
                 </span>
                 <span v-else-if="!hasFilter || total === 0">
                   {{ $t("JobExec.property.nodeFilter.null.description") }}
                 </span>
 
-                <div v-if="hasFilter && currentNodes.length" :id="`matchednodes${rkey}`" class="clearfix">
+                <div
+                  v-if="hasFilter && currentNodes.length"
+                  :id="`matchednodes${rkey}`"
+                  class="clearfix"
+                >
                   <node-list-embed
-                      :nodes="currentNodes"
-                      @filter="filterClicked"
+                    :nodes="currentNodes"
+                    @filter="filterClicked"
                   >
-                    <p class="text-info mb-0" v-if="isResultsTruncated">
-                      {{ $t('results.truncated.count.results.shown', [total]) }}
+                    <p v-if="isResultsTruncated" class="text-info mb-0">
+                      {{ $t("results.truncated.count.results.shown", [total]) }}
                     </p>
                   </node-list-embed>
                 </div>
@@ -634,12 +638,21 @@ import { mapState, mapActions } from "pinia";
 import { useNodesStore } from "@/library/stores/NodesStorePinia";
 import NodeFilterInput from "@/app/components/job/resources/NodeFilterInput.vue";
 import ErrorsList from "@/app/components/job/options/ErrorsList.vue";
+import PtAutoComplete from "../../../../library/components/primeVue/PtAutoComplete/PtAutoComplete.vue";
+import { getContextVariables } from "@/library/components/utils/contextVariableUtils";
+
 const rundeckContext = getRundeckContext();
 const eventBus = rundeckContext.eventBus;
 
 export default defineComponent({
   name: "JobRefForm",
-  components: { ErrorsList, NodeFilterInput, NodeListEmbed, UiSocket },
+  components: {
+    ErrorsList,
+    NodeFilterInput,
+    NodeListEmbed,
+    UiSocket,
+    PtAutoComplete,
+  },
   provide() {
     return {
       showJobsAsLinks: false,
@@ -706,13 +719,20 @@ export default defineComponent({
       errorMessage: "",
       showRequired: false,
       eventBus: eventBus,
+      inputTypeContextVariables: getContextVariables("WorkflowStep"),
     };
   },
   computed: {
     hasFilter() {
       return Boolean(this.editModel.jobref.nodefilters.filter);
     },
-    ...mapState(useNodesStore, ["total", "nodeFilterStore", "currentNodes", "lastCountFetched", "isResultsTruncated"]),
+    ...mapState(useNodesStore, [
+      "total",
+      "nodeFilterStore",
+      "currentNodes",
+      "lastCountFetched",
+      "isResultsTruncated",
+    ]),
   },
   watch: {
     modalActive(val) {
@@ -752,7 +772,10 @@ export default defineComponent({
           rundeckContext.data.nodeData,
         );
       }
-      this.nodeFilterOverrideExpanded = Boolean(this.editModel.jobref.nodefilters.filter.length || this.editModel.jobref.nodefilters.dispatch.nodeIntersect)
+      this.nodeFilterOverrideExpanded = Boolean(
+        this.editModel.jobref.nodefilters.filter.length ||
+          this.editModel.jobref.nodefilters.dispatch.nodeIntersect,
+      );
 
       await this.triggerFetchNodes();
     }
@@ -803,7 +826,7 @@ export default defineComponent({
       this.nodeFilterStore.setSelectedFilter(filter.filter);
     },
     async triggerFetchNodes() {
-      if(this.hasFilter) {
+      if (this.hasFilter) {
         try {
           this.error = null;
           this.loading = true;

@@ -10,7 +10,7 @@
     </span>
     <slot name="titleprefix"> </slot>
     <span v-if="showTitle" :class="titleCss" style="margin-left: 5px">
-      {{ title }}
+      green water bottle
     </span>
     <slot name="descriptionprefix"> </slot>
     <slot name="description">
