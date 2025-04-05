@@ -1,3 +1,4 @@
+import { getRundeckContext } from "../rundeckService";
 import { api } from "./api";
 import { JobBrowseList, JobBrowseMeta } from "../types/jobs/JobBrowse";
 
@@ -5,7 +6,9 @@ export async function getProjectMeta(
   project: string,
   meta: string = "*",
 ): Promise<JobBrowseMeta[]> {
-  const resp = await api.get(`project/${project}/meta?meta=${meta}`);
+  const resp = await getRundeckContext().rootStore.cachedApi(
+    `project/${project}/meta?meta=${meta}`,
+  );
   if (resp.status !== 200) {
     throw { message: resp.data.message, response: resp };
   } else {
@@ -51,7 +54,9 @@ export async function getJobMeta(
   id: string,
   meta: string = "*",
 ): Promise<JobBrowseMeta[]> {
-  const resp = await api.get(`job/${id}/meta?meta=${meta}`);
+  const resp = await getRundeckContext().rootStore.cachedApi(
+    `job/${id}/meta?meta=${meta}`,
+  );
   if (resp.status !== 200) {
     throw { message: resp.data.message, response: resp };
   } else {
