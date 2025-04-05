@@ -223,9 +223,8 @@ export default defineComponent({
       return this.job?.meta?.find((meta: JobBrowseMeta) => meta.name === key)
         ?.data;
     },
-
     downloadFormatHref(format: string) {
-      return `${context.rdBase}project/${context.projectName}/job/show/${this.job.id}?format=${format}`;
+      return `${context.rdBase}project/${context.projectName}/job/show/${this.job.id}?format=${encodeURIComponent(format)}`;
     },
     action(name: string) {
       context.eventBus.emit(`job-action-single`, { name, job: this.job });
