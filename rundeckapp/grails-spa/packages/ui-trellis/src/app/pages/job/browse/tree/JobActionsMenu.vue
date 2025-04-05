@@ -1,12 +1,13 @@
 <template>
   <dropdown
     v-if="authz"
-    class="btn-group pull-right visibility-hidden"
-    menu-right
+    class="btn-group"
+    :class="{ 'pull-right': pullRight, 'visibility-hidden': showOnHover }"
+    :menu-right="pullRight"
     append-to-body
   >
     <btn size="xs" class="dropdown-toggle" :data-job-id="job.id">
-      {{ $t("actions") }}
+      <template v-if="showButtonTitle">{{ $t("actions") }}</template>
       <span class="caret"></span>
     </btn>
     <template #dropdown>
@@ -164,6 +165,18 @@ export default defineComponent({
       type: Object,
       default: () => {},
     },
+    showButtonTitle: {
+      type: Boolean,
+      default: true,
+    },
+    showOnHover: {
+      type: Boolean,
+      default: true,
+    },
+    pullRight: {
+      type: Boolean,
+      default: true,
+    },
   },
 
   setup() {
@@ -245,4 +258,8 @@ export default defineComponent({
 });
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.btn-group {
+  margin-right: var(--spacing-2);
+}
+</style>
