@@ -19,7 +19,7 @@
           {{ $t("scheduledExecution.action.edit.button.label") }}
         </a>
       </li>
-      <li v-if="authz['read'] && authz['create']">
+      <li v-if="authz['read'] && authz['create'] && authProjJobCreate">
         <a
           :title="$t('scheduledExecution.action.duplicate.button.tooltip')"
           :href="duplicateHref"
@@ -42,7 +42,7 @@
       </li>
 
       <li class="divider"></li>
-      <li v-if="authz['delete']">
+      <li v-if="authz['delete'] && authProjJobDelete">
         <a
           :title="$t('delete.this.job')"
           :href="deleteHref"
@@ -140,8 +140,12 @@
 import JobScmActions from "@/app/pages/job/browse/tree/JobScmActions.vue";
 import { getRundeckContext } from "@/library";
 import UiSocket from "@/library/components/utils/UiSocket.vue";
+import {
+  JobPageStore,
+  JobPageStoreInjectionKey,
+} from "@/library/stores/JobPageStore";
 import { JobBrowseItem, JobBrowseMeta } from "@/library/types/jobs/JobBrowse";
-import { defineComponent } from "vue";
+import { defineComponent, inject } from "vue";
 const context = getRundeckContext();
 export default defineComponent({
   name: "JobActionsMenu",
@@ -151,6 +155,12 @@ export default defineComponent({
       type: Object,
       default: () => {},
     },
+  },
+
+  setup() {
+    return {
+      jobPageStore: inject(JobPageStoreInjectionKey) as JobPageStore,
+    };
   },
   computed: {
     job(): JobBrowseItem {
@@ -170,6 +180,18 @@ export default defineComponent({
     },
     authz(): Object | undefined {
       return this.findJobMeta("authz");
+    },
+    projAuthz(): object | undefined {
+      return this.jobPageStore.projTypesAuthz;
+    },
+    authProjEventRead(): boolean {
+      return this.jobPageStore.projTypesAuthz?.event?.read || false;
+    },
+    authProjJobDelete(): boolean {
+      return this.jobPageStore.projTypesAuthz?.job?.delete || false;
+    },
+    authProjJobCreate(): boolean {
+      return this.jobPageStore.projTypesAuthz?.job?.create || false;
     },
     editHref() {
       return `${context.rdBase}project/${context.projectName}/job/edit/${this.job.id}`;
