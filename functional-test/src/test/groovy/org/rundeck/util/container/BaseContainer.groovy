@@ -1,6 +1,8 @@
 package org.rundeck.util.container
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.jcraft.jsch.JSch
+import com.jcraft.jsch.KeyPair
 import groovy.util.logging.Slf4j
 import okhttp3.Request
 import okhttp3.Response
@@ -13,6 +15,8 @@ import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.jobs.JobUtils
 import spock.lang.Specification
 
+import java.nio.file.Files
+import java.nio.file.attribute.PosixFilePermission
 import java.text.SimpleDateFormat
 import java.time.Duration
 import java.util.function.Consumer
@@ -37,6 +41,9 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     protected static final String TEST_RUNDECK_TOKEN = System.getenv("TEST_RUNDECK_TOKEN") ?: System.getProperty("TEST_RUNDECK_TOKEN", "admintoken")
     protected static final ObjectMapper MAPPER = new ObjectMapper()
     private static String RUNDECK_CONTAINER_ID
+    private static final String OSS_TEST_KEYS_DIRECTORY = new File("build/resources/test/docker/compose/oss/keys").getCanonicalPath()
+    private static final String PRO_TEST_KEYS_DIRECTORY = new File("build/resources/test/docker/compose/pro/keys").getCanonicalPath()
+
 
     String getCustomDockerComposeLocation(){
         return null
@@ -515,6 +522,10 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     def setupSpec() {
+        generatePrivateKey(OSS_TEST_KEYS_DIRECTORY,"id_rsa")
+        generatePrivateKey(OSS_TEST_KEYS_DIRECTORY,"id_rsa_passphrase")
+        generatePrivateKey(PRO_TEST_KEYS_DIRECTORY,"id_rsa")
+        generatePrivateKey(PRO_TEST_KEYS_DIRECTORY,"id_rsa_passphrase")
         startEnvironment()
     }
 
@@ -646,4 +657,27 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         return logs
     }
 
+    static def generatePrivateKey(String filePath, String keyName, String passphrase = null){
+        JSch jsch=new JSch()
+        KeyPair keyPair= KeyPair.genKeyPair(jsch, KeyPair.RSA)
+        if(passphrase){
+            keyPair.writePrivateKey(filePath + File.separator + keyName, passphrase.getBytes())
+        }else{
+            keyPair.writePrivateKey(filePath + File.separator + keyName)
+        }
+        try {
+            keyPair.writePublicKey(filePath + File.separator + keyName + ".pub", "test private key")
+
+            keyPair.dispose()
+
+            File privateKey = new File(filePath + File.separator + keyName)
+            Set<PosixFilePermission> perms = new HashSet<PosixFilePermission>()
+            perms.add(PosixFilePermission.OWNER_READ)
+            perms.add(PosixFilePermission.OWNER_WRITE)
+            Files.setPosixFilePermissions(privateKey.toPath(), perms)
+        }
+        catch (Exception e) {
+        log.error("Failed to generate key pair with message : ", e)
+        }
+    }
 }
