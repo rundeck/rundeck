@@ -662,21 +662,28 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         if (!dir.exists()) {
             dir.mkdirs()
         }
-        JSch jsch=new JSch()
-        KeyPair keyPair= KeyPair.genKeyPair(jsch, KeyPair.RSA)
-        if(passphrase){
-            keyPair.writePrivateKey(filePath + File.separator + keyName, passphrase.getBytes())
-        }else{
-            keyPair.writePrivateKey(filePath + File.separator + keyName)
+
+        File privateKeyFile = new File(filePath + File.separator + keyName)
+        File publicKeyFile = new File(filePath + File.separator + keyName + ".pub")
+
+        if (privateKeyFile.exists() && publicKeyFile.exists()) {
+            return
         }
-        keyPair.writePublicKey(filePath + File.separator + keyName + ".pub", "test private key")
 
+        JSch jsch = new JSch()
+        KeyPair keyPair = KeyPair.genKeyPair(jsch, KeyPair.RSA)
+
+        if (passphrase) {
+            keyPair.writePrivateKey(privateKeyFile.absolutePath, passphrase.getBytes())
+        } else {
+            keyPair.writePrivateKey(privateKeyFile.absolutePath)
+        }
+
+        keyPair.writePublicKey(publicKeyFile.absolutePath, "test private key")
         keyPair.dispose()
-
-        File privateKey = new File(filePath + File.separator + keyName)
-        Set<PosixFilePermission> perms = new HashSet<PosixFilePermission>()
+        Set<PosixFilePermission> perms = new HashSet<>()
         perms.add(PosixFilePermission.OWNER_READ)
         perms.add(PosixFilePermission.OWNER_WRITE)
-        Files.setPosixFilePermissions(privateKey.toPath(), perms)
+        Files.setPosixFilePermissions(privateKeyFile.toPath(), perms)
     }
 }
