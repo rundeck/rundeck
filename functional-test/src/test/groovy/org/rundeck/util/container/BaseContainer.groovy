@@ -658,6 +658,10 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     static def generatePrivateKey(String filePath, String keyName, String passphrase = null){
+        File dir = new File(filePath)
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
         JSch jsch=new JSch()
         KeyPair keyPair= KeyPair.genKeyPair(jsch, KeyPair.RSA)
         if(passphrase){
@@ -665,19 +669,14 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         }else{
             keyPair.writePrivateKey(filePath + File.separator + keyName)
         }
-        try {
-            keyPair.writePublicKey(filePath + File.separator + keyName + ".pub", "test private key")
+        keyPair.writePublicKey(filePath + File.separator + keyName + ".pub", "test private key")
 
-            keyPair.dispose()
+        keyPair.dispose()
 
-            File privateKey = new File(filePath + File.separator + keyName)
-            Set<PosixFilePermission> perms = new HashSet<PosixFilePermission>()
-            perms.add(PosixFilePermission.OWNER_READ)
-            perms.add(PosixFilePermission.OWNER_WRITE)
-            Files.setPosixFilePermissions(privateKey.toPath(), perms)
-        }
-        catch (Exception e) {
-        log.error("Failed to generate key pair with message : ", e)
-        }
+        File privateKey = new File(filePath + File.separator + keyName)
+        Set<PosixFilePermission> perms = new HashSet<PosixFilePermission>()
+        perms.add(PosixFilePermission.OWNER_READ)
+        perms.add(PosixFilePermission.OWNER_WRITE)
+        Files.setPosixFilePermissions(privateKey.toPath(), perms)
     }
 }
