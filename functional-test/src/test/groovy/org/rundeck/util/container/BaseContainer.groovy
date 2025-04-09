@@ -41,7 +41,6 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     protected static final String TEST_RUNDECK_TOKEN = System.getenv("TEST_RUNDECK_TOKEN") ?: System.getProperty("TEST_RUNDECK_TOKEN", "admintoken")
     protected static final ObjectMapper MAPPER = new ObjectMapper()
     private static String RUNDECK_CONTAINER_ID
-    private static final String OSS_TEST_KEYS_DIRECTORY = new File("build/resources/test/docker/compose/oss/keys").getCanonicalPath()
 
     String getCustomDockerComposeLocation(){
         return null
@@ -520,8 +519,8 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     def setupSpec() {
-        generatePrivateKey(OSS_TEST_KEYS_DIRECTORY,"id_rsa")
-        generatePrivateKey(OSS_TEST_KEYS_DIRECTORY,"id_rsa_passphrase")
+        generatePrivateKey(getClass().getClassLoader().getResource("docker/compose/oss").getPath()+"/keys","id_rsa")
+        generatePrivateKey(getClass().getClassLoader().getResource("docker/compose/oss").getPath()+"/keys","id_rsa_passphrase")
         startEnvironment()
     }
 
