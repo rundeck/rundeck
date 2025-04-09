@@ -521,13 +521,17 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
 
     def setupSpec() {
         def tempKeyDir = ".build/tmp/keys"
-        def ossKeyPath = getClass().getClassLoader().getResource("docker/compose/oss").getPath() + "/keys"
-        def proKeyPath = getClass().getClassLoader().getResource("docker/compose/pro").getPath() + "/keys"
+
+        def ossResource = getClass().getClassLoader().getResource("docker/compose/oss")
+        def proResource = getClass().getClassLoader().getResource("docker/compose/pro")
+
+        def ossKeyPath = ossResource ? ossResource.getPath() + "/keys" : null
+        def proKeyPath = proResource ? proResource.getPath() + "/keys" : null
 
         generatePrivateKey(tempKeyDir, "id_rsa")
-        copyKeyToDestinations(tempKeyDir, "id_rsa", [ossKeyPath, proKeyPath])
-        generatePrivateKey(tempKeyDir, "id_rsa_passphrase", "myPassphrase")
-        copyKeyToDestinations(tempKeyDir, "id_rsa_passphrase", [ossKeyPath, proKeyPath])
+        generatePrivateKey(tempKeyDir, "id_rsa_passphrase", "testpassphrase123")
+        copyKeyToDestinations(tempKeyDir, "id_rsa", [ossKeyPath, proKeyPath].findAll { it })
+        copyKeyToDestinations(tempKeyDir, "id_rsa_passphrase", [ossKeyPath, proKeyPath].findAll { it })
         startEnvironment()
     }
 
