@@ -16,6 +16,7 @@ import org.rundeck.util.common.jobs.JobUtils
 import spock.lang.Specification
 
 import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermission
 import java.text.SimpleDateFormat
 import java.time.Duration
@@ -519,8 +520,14 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     def setupSpec() {
-        generatePrivateKey(getClass().getClassLoader().getResource("docker/compose/oss").getPath()+"/keys","id_rsa")
-        generatePrivateKey(getClass().getClassLoader().getResource("docker/compose/oss").getPath()+"/keys","id_rsa_passphrase")
+        def tempKeyDir = ".build/tmp/keys"
+        def ossKeyPath = getClass().getClassLoader().getResource("docker/compose/oss").getPath() + "/keys"
+        def proKeyPath = getClass().getClassLoader().getResource("docker/compose/pro").getPath() + "/keys"
+
+        generatePrivateKey(tempKeyDir, "id_rsa")
+        copyKeyToDestinations(tempKeyDir, "id_rsa", [ossKeyPath, proKeyPath])
+        generatePrivateKey(tempKeyDir, "id_rsa_passphrase", "myPassphrase")
+        copyKeyToDestinations(tempKeyDir, "id_rsa_passphrase", [ossKeyPath, proKeyPath])
         startEnvironment()
     }
 
@@ -652,14 +659,14 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         return logs
     }
 
-    static def generatePrivateKey(String filePath, String keyName, String passphrase = null){
-        File dir = new File(filePath)
+    static def generatePrivateKey(String tempDirPath, String keyName, String passphrase = null){
+        File dir = new File(tempDirPath)
         if (!dir.exists()) {
             dir.mkdirs()
         }
 
-        File privateKeyFile = new File(filePath + File.separator + keyName)
-        File publicKeyFile = new File(filePath + File.separator + keyName + ".pub")
+        File privateKeyFile = new File(tempDirPath + File.separator + keyName)
+        File publicKeyFile = new File(tempDirPath + File.separator + keyName + ".pub")
 
         if (privateKeyFile.exists() && publicKeyFile.exists()) {
             return
@@ -676,9 +683,26 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
 
         keyPair.writePublicKey(publicKeyFile.absolutePath, "test private key")
         keyPair.dispose()
+
         Set<PosixFilePermission> perms = new HashSet<>()
         perms.add(PosixFilePermission.OWNER_READ)
         perms.add(PosixFilePermission.OWNER_WRITE)
         Files.setPosixFilePermissions(privateKeyFile.toPath(), perms)
     }
+
+    static def copyKeyToDestinations(String tempDirPath, String keyName, List<String> destinationPaths) {
+        File privateKeyFile = new File(tempDirPath + File.separator + keyName)
+        File publicKeyFile = new File(tempDirPath + File.separator + keyName + ".pub")
+
+        destinationPaths.each { destPath ->
+            File destDir = new File(destPath)
+            if (!destDir.exists()) {
+                destDir.mkdirs()
+            }
+
+            Files.copy(privateKeyFile.toPath(), new File(destDir, keyName).toPath(), StandardCopyOption.REPLACE_EXISTING)
+            Files.copy(publicKeyFile.toPath(), new File(destDir, keyName + ".pub").toPath(), StandardCopyOption.REPLACE_EXISTING)
+        }
+    }
+
 }
