@@ -42,8 +42,6 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     protected static final ObjectMapper MAPPER = new ObjectMapper()
     private static String RUNDECK_CONTAINER_ID
     private static final String OSS_TEST_KEYS_DIRECTORY = new File("build/resources/test/docker/compose/oss/keys").getCanonicalPath()
-    private static final String PRO_TEST_KEYS_DIRECTORY = new File("build/resources/test/docker/compose/pro/keys").getCanonicalPath()
-
 
     String getCustomDockerComposeLocation(){
         return null
@@ -524,8 +522,6 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     def setupSpec() {
         generatePrivateKey(OSS_TEST_KEYS_DIRECTORY,"id_rsa")
         generatePrivateKey(OSS_TEST_KEYS_DIRECTORY,"id_rsa_passphrase")
-        generatePrivateKey(PRO_TEST_KEYS_DIRECTORY,"id_rsa")
-        generatePrivateKey(PRO_TEST_KEYS_DIRECTORY,"id_rsa_passphrase")
         startEnvironment()
     }
 
