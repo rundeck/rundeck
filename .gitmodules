@@ -2,4 +2,3 @@
 	path = packaging/packaging
 	url = git@github.com:rundeck/packaging.git
 	branch = test-java-17-support
-
