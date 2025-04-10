@@ -1,5 +1,4 @@
 [submodule "packaging/packaging"]
 	path = packaging/packaging
 	url = git@github.com:rundeck/packaging.git
-	branch = main
-
+	branch = test-java-17-support
