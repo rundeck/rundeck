@@ -54,6 +54,8 @@ class UserService {
         return userDataProvider.findByLogin(login)?.email
     }
 
+    String getUserId(String login) {return userDataProvider.findByLogin(login)?.id}
+
     def registerLogin(String login, String sessionId){
         try {
             return userDataProvider.registerLogin(login, sessionId)
