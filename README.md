@@ -66,6 +66,24 @@ Uses the war artifact and creates the `rundeck/rundeck:SNAPSHOT` docker image:
 - `jreVersion=openjdk-17-jre-headless` specifies the JRE version for the image
   - Ex: `-PjreVersion=openjdk-17-jre-headless`
 
+## Run UI Tests
+
+Run jest unit tests for Core UI
+
+```shell
+CORE_UI=rundeckapp/grails-spa/packages/ui-trellis
+npm run --prefix "$CORE_UI" dev:test:unit
+```
+
+## Watch UI Tests
+
+Run jest unit tests for Core UI and watch for changes
+
+```shell
+CORE_UI=rundeckapp/grails-spa/packages/ui-trellis
+npm run --prefix "$CORE_UI" dev:test:watch
+```
+
 # Documentation
 
 Available online at <https://docs.rundeck.com/docs>

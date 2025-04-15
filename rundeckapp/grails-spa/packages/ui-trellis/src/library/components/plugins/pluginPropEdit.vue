@@ -75,6 +75,8 @@
     </template>
     <template v-else>
       <label
+        v-if="!prop.options || prop.options['labelHidden'] !== 'true'"
+        data-testid="plugin-prop-label"
         :class="
           'col-sm-2 control-label input-sm ' + (prop.required ? 'required' : '')
         "
@@ -221,18 +223,25 @@
         <template
           v-else-if="prop.options && prop.options['displayType'] === 'CODE'"
         >
-          <ace-editor
-            :id="`${rkey}prop_` + pindex"
+          <ui-socket
             v-model="currentValue"
-            :name="`${rkey}prop_` + pindex"
-            :lang="prop.options['codeSyntaxMode']"
-            :code-syntax-selectable="
-              prop.options['codeSyntaxSelectable'] === 'true' && !renderReadOnly
-            "
-            height="200"
-            width="100%"
-            :read-only="renderReadOnly"
-          />
+            section="plugin-prop-edit-textarea-code"
+            :location="`property:${prop.name}:${prop.options ? prop.options['CUSTOM_PROP_SOCKET_SECTION'] : ''}`"
+          >
+            <ace-editor
+              :id="`${rkey}prop_` + pindex"
+              v-model="currentValue"
+              :name="`${rkey}prop_` + pindex"
+              :lang="prop.options['codeSyntaxMode']"
+              :code-syntax-selectable="
+                prop.options['codeSyntaxSelectable'] === 'true' &&
+                !renderReadOnly
+              "
+              height="200"
+              width="100%"
+              :read-only="renderReadOnly"
+            />
+          </ui-socket>
         </template>
         <template
           v-else-if="prop.options && prop.options['displayType'] === 'PASSWORD'"
@@ -604,10 +613,14 @@ export default defineComponent({
   },
   methods: {
     inputColSize(prop: any) {
-      if (prop.options && prop.options["selectionAccessor"]) {
-        return "col-sm-5";
+      let size = 10;
+      if (prop.options && prop.options["labelHidden"] === "true") {
+        size = 12;
       }
-      return "col-sm-10";
+      if (prop.options && prop.options["selectionAccessor"]) {
+        size -= 5;
+      }
+      return `col-sm-${size}`;
     },
     setJobName(jobUuid: string) {
       if (

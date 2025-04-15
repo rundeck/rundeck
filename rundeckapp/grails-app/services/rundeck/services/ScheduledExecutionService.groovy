@@ -3338,8 +3338,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         } else if (params.jobWorkflowJson) {
             def jobWorkflowData = JSON.parse(params.jobWorkflowJson.toString())
 
-            if(jobWorkflowData instanceof JSONObject && jobWorkflowData.get("pluginConfig")) {
-                scheduledExecution.workflow.setPluginConfigData(ServiceNameConstants.LogFilter, jobWorkflowData.get("pluginConfig").get("LogFilter"))
+            if(jobWorkflowData instanceof JSONObject && jobWorkflowData.has("pluginConfig")) {
+                scheduledExecution.workflow.setPluginConfigData(
+                    ServiceNameConstants.LogFilter,
+                    jobWorkflowData.get("pluginConfig").has("LogFilter") ? jobWorkflowData.get("pluginConfig").get(
+                        "LogFilter"
+                    ) : null
+                )
             }
         } else if (params.workflow instanceof Map && params.workflow.globalLogFilters) {
             //filter configs
@@ -3374,7 +3379,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         input.workflow.strategy
                     )
             )
-        }else if (params.workflow instanceof Map) {
+        } else if (params.jobWorkflowJson) {
+            def jobWorkflowData = JSON.parse(params.jobWorkflowJson.toString())
+            if (jobWorkflowData instanceof JSONObject && jobWorkflowData.has('strategy')) {
+                scheduledExecution.workflow.strategy = jobWorkflowData.get('strategy')
+            }
+            if(jobWorkflowData instanceof JSONObject && jobWorkflowData.has("pluginConfig")) {
+                scheduledExecution.workflow.setPluginConfigData(
+                    ServiceNameConstants.WorkflowStrategy,
+                    jobWorkflowData.get("pluginConfig").has("WorkflowStrategy") ? jobWorkflowData.get("pluginConfig").get(
+                        "WorkflowStrategy"
+                    ) : null
+                )
+            }
+        } else if (params.workflow instanceof Map) {
             Map configmap = params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config
 
             scheduledExecution.workflow.setPluginConfigData(
