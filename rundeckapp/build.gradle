@@ -238,7 +238,7 @@ dependencies {
         exclude group:'org.ow2.asm', module: 'asm'
     }
 
-    implementation ("net.minidev:json-smart:2.4.10")
+    implementation ("net.minidev:json-smart:2.5.2")
     
     // OpenApi Dependencies
     compileOnly "io.swagger.core.v3:swagger-annotations:${swaggerVersion}"
