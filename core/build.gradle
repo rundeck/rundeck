@@ -93,7 +93,7 @@ dependencies {
       exclude group:'org.apache.httpcomponents', module: 'httpcore'
     }
 
-    implementation ("org.apache.httpcomponents:httpcore:4.4.16")
+    implementation ("org.apache.httpcomponents:httpcore:${httpCoreVersion}")
 
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
