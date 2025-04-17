@@ -202,7 +202,7 @@ class LocalJobSchedulesManager implements SchedulesManager {
         TriggerBuilder triggerBuilder
         try {
             triggerBuilder = TriggerBuilder.newTrigger().withIdentity(jobName, jobGroup)
-                    .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
+                    .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression).withMisfireHandlingInstructionIgnoreMisfires())
                     .withPriority(priority)
 
         } catch (java.text.ParseException ex) {
@@ -218,11 +218,11 @@ class LocalJobSchedulesManager implements SchedulesManager {
         try {
             if(se.timeZone){
                 triggerBuilder = TriggerBuilder.newTrigger().withIdentity(se.generateJobScheduledName(), se.generateJobGroupName())
-                        .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression).inTimeZone(TimeZone.getTimeZone(se.timeZone)))
+                        .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression).inTimeZone(TimeZone.getTimeZone(se.timeZone)).withMisfireHandlingInstructionIgnoreMisfires())
                 builderParams[TriggerHelperImpl.TIME_ZONE_KEY] = TimeZone.getTimeZone(se.timeZone)
             }else {
                 triggerBuilder = TriggerBuilder.newTrigger().withIdentity(se.generateJobScheduledName(), se.generateJobGroupName())
-                        .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
+                        .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression).withMisfireHandlingInstructionIgnoreMisfires())
             }
         } catch (java.text.ParseException ex) {
             throw new RuntimeException("Failed creating trigger. Invalid cron expression: " + cronExpression )
