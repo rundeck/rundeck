@@ -67,7 +67,7 @@
                     <i class="glyphicon glyphicon-duplicate"></i>
                   </btn>
                   <dropdown menu-right>
-                    <btn size="xs" data-role="trigger">
+                    <btn size="xs" data-role="trigger" :disabled="!!(element.errorhandler && element.jobref)">
                       <i class="glyphicon glyphicon-cog"></i>
                       <span class="caret"></span>
                     </btn>

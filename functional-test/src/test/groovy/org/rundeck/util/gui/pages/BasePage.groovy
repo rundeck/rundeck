@@ -246,4 +246,14 @@ abstract class BasePage {
     List<WebElement> findElementsByXpath(String xpath){
         return driver.findElements(By.xpath(xpath))
     }
+
+    /**
+     * Get elements with data-prop-name. Helpful for getting dynamically populated inputs
+     * @param value of the data-prop-name that should be retrieved
+     * @param child element that should be retrieved. Defaults to input[type='text']
+     * @return webElement
+     */
+    WebElement getElementByDataPropName(String value, String childElement = "input[type='text']") {
+        el By.cssSelector("[data-prop-name='${value}'] ${childElement}")
+    }
 }

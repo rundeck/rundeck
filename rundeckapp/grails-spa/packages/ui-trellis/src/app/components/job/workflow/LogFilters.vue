@@ -31,6 +31,7 @@
     v-if="model.length > 0 && mode !== 'inline'"
     class="log-filters-container"
     data-testid="log-filters-button-container"
+    :id="id"
   >
     <template v-for="(entry, i) in model">
       <LogFilterButton
@@ -86,6 +87,10 @@ export default defineComponent({
       required: false,
       default: "block",
     },
+    id: {
+      type: String,
+      default: "logFilters"
+    }
   },
   emits: ["update:modelValue"],
   data() {

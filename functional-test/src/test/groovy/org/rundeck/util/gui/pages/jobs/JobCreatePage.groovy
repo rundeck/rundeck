@@ -86,6 +86,8 @@ class JobCreatePage extends BasePage {
         static By adhocRemoteStringBy = By.xpath('//*[@data-prop-name="adhocRemoteString"]//input[@type="text"]')
         static By workFlowStrategyBy = By.xpath('//select[contains(@name, \'workflow.strategy\')]')
         static By strategyPluginParallelMsgBy = By.xpath('//*[@id="strategyPluginparallel"]/span')
+        static By numberOfStepsBy = By.cssSelector("[data-test='edit-step-item']")
+        static By deleteStepBy = By.cssSelector('button[data-test="remove-step"]')
     }
 
     By separatorOptionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
@@ -155,6 +157,8 @@ class JobCreatePage extends BasePage {
     By optionsBy = By.cssSelector(".opt.item")
     By timeZoneBy = By.id("timeZone")
     By optEditFormBy = By.className("optEditForm")
+    By addGlobalLogFilter = By.cssSelector("div[data-testid='log-filters-container'] > button")
+    By addErrorHandlerOption = By.cssSelector("a[data-test='add-error-handler']")
 
     private String loadPath = "/job/create"
     private final String copyPath = "/job/copy"
@@ -198,6 +202,7 @@ class JobCreatePage extends BasePage {
         jobNameInput.sendKeys name
         tab JobTab.WORKFLOW click()
         if(nextUi){
+            waitForElementVisible workflowAlphaUiButton
             addSimpleCommandStepNextUi 'echo selenium test', 0
         } else {
             addSimpleCommandStep 'echo selenium test', 0
@@ -239,12 +244,31 @@ class JobCreatePage extends BasePage {
     }
 
     JobCreatePage addStep(JobStep step, int stepNumber = 0){
-        tab(JobTab.WORKFLOW).click()
-        stepLink(step.STEP_NAME, step.stepType).click()
+        def stepName = step.STEP_NAME
+        if(nextUi){
+            clickAddStep();
+        } else{
+            tab(JobTab.WORKFLOW).click()
+        }
+        stepLink(stepName, step.stepType).click()
 
-        step.configure(this)
+        step.configure(this, nextUi)
 
         saveStep stepNumber
+        return this
+    }
+
+    JobCreatePage addErrorHandler(String stepName, StepType stepType, int stepNumber = 0){
+        clickAddErrorHandler(stepNumber);
+
+        stepLink(stepName, stepType).click()
+
+        if(stepName == 'exec-command') {
+            adhocRemoteStringField.click()
+            adhocRemoteStringField.sendKeys 'echo test'
+            saveStep stepNumber
+        }
+
         return this
     }
 
@@ -467,7 +491,7 @@ class JobCreatePage extends BasePage {
         if(stepType == StepType.WORKFLOW)
             workFlowStepLink.click()
 
-        el By.xpath("//*[@${stepType.getStepType()}='$dataNodeStepType']")
+            el By.xpath("//*[contains(@${stepType.getStepType()}, '$dataNodeStepType')]")
     }
 
     WebElement getAdhocRemoteStringBy() {
@@ -478,11 +502,9 @@ class JobCreatePage extends BasePage {
         el nextUi? NextUi.adhocRemoteStringBy : adhocRemoteStringBy
     }
 
-
     WebElement getCreateJobButton() {
         el createJobBy
     }
-
 
     void clickTimeZone(){
         (el timeZoneBy).click()
@@ -490,6 +512,12 @@ class JobCreatePage extends BasePage {
 
     void clickAddStep(){
         (el workflowAlphaUiButton).click()
+    }
+
+    void clickAddErrorHandler(int position){
+        stepDropdownTrigger(position).click()
+        waitForElementVisible(addErrorHandlerOption)
+        (el addErrorHandlerOption).click()
     }
 
     WebElement getCancelButton() {
@@ -804,7 +832,6 @@ class JobCreatePage extends BasePage {
         def button
         if(!nextUi) {
             button = el floatBy findElement By.cssSelector(".btn.btn-cta.btn-sm")
-
         } else {
             button = el workflowSaveStepButton
         }
@@ -813,14 +840,17 @@ class JobCreatePage extends BasePage {
         waitForElementVisible By.id("wfitem_${stepNumber}")
     }
 
-
-    def removeStepByIndex(int stepIndex){
-        (els deleteStepBy).get(stepIndex).click()
+    void removeStepByIndex(int stepIndex){
+        if(nextUi) {
+            (el By.cssSelector("#wfitem_${stepIndex} + .step-item-controls button[data-test='remove-step']")).click()
+        } else {
+            (els deleteStepBy).get(stepIndex).click()
+        }
     }
 
     def expectNumberOfStepsToBe(int numberSteps){
         new WebDriverWait(driver,  Duration.ofSeconds(5)).until(
-                ExpectedConditions.numberOfElementsToBe(numberOfStepsBy, numberSteps)
+                ExpectedConditions.numberOfElementsToBe(this.nextUi? NextUi.numberOfStepsBy: numberOfStepsBy, numberSteps)
         )
     }
 
@@ -887,6 +917,42 @@ class JobCreatePage extends BasePage {
 
     WebElement getWorkflowAlphaUiContainer() {
         el workflowAlphaUiContainer
+    }
+
+    WebElement getAddGlobalLogFilter() {
+        el addGlobalLogFilter
+    }
+
+    WebElement getListItemIndex(int position) {
+        el By.cssSelector(".list-group[data-testid='list-view'] > .list-group-item:nth-child(${position})")
+    }
+
+    WebElement getInputField(String value, String childElement) {
+        getElementByDataPropName(value, childElement)
+    }
+
+    List<WebElement> getLogFilterButtons(String id) {
+        els By.cssSelector("${id} .btn-group")
+    }
+
+    WebElement getWorkflowSaveStepButton() {
+        el workflowSaveStepButton
+    }
+
+    WebElement getWorkflowAlphaUiButton() {
+        el workflowAlphaUiButton
+    }
+
+    WebElement removeErrorHandlerButton(int index) {
+        el By.cssSelector(".item-container:nth-child(${index+1}) button[data-testid='remove-handler-button']");
+    }
+
+    WebElement stepDropdownTrigger(int index) {
+        el By.cssSelector("#wfitem_${index} +.step-item-controls button[data-role='trigger']")
+    }
+
+    def doesntHasDropdownOption(int index, String dataTest) {
+        els(By.cssSelector("#wfitem_${index} +.step-item-controls a[data-test='${dataTest}']")).isEmpty()
     }
 }
 
