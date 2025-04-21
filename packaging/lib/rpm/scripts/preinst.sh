@@ -8,6 +8,7 @@ if [ "$JAVA_MAJOR_VERSION" = "1" ]; then
 fi
 
 if [[ "$JAVA_MAJOR_VERSION" != "11" && "$JAVA_MAJOR_VERSION" != "17" ]]; then
+  echo "Java 11 or 17 is required"
   exit 1
 fi
 
