@@ -32,7 +32,7 @@ class JobsSpec extends SeleniumBase {
      */
     def "job workflow alphaUi"() {
         when:
-        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+        def jobCreatePage = page JobCreatePage, projectName
         jobCreatePage.nextUi=true
         jobCreatePage.go()
         then:
@@ -44,7 +44,7 @@ class JobsSpec extends SeleniumBase {
 
     def "Create option form next ui"() {
         when:
-        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+        def jobCreatePage = page JobCreatePage, projectName
         jobCreatePage.nextUi=true
         jobCreatePage.go()
         def optName = 'test'
@@ -57,7 +57,7 @@ class JobsSpec extends SeleniumBase {
     }
     def "Duplicate option create form next ui"() {
         when:
-        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+        def jobCreatePage = page JobCreatePage, projectName
         jobCreatePage.nextUi=true
         jobCreatePage.go()
         def optName = 'test'
@@ -89,7 +89,7 @@ class JobsSpec extends SeleniumBase {
     }
     def "create valid job basic options"() {
         when:
-        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+        def jobCreatePage = page JobCreatePage, projectName
         jobCreatePage.nextUi=true
         jobCreatePage.go()
         def jobShowPage = page JobShowPage
@@ -110,7 +110,7 @@ class JobsSpec extends SeleniumBase {
 
     def "job options config - check usage session"() {
         when:
-        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+        def jobCreatePage = page JobCreatePage, projectName
         jobCreatePage.nextUi=true
         jobCreatePage.go()
         then:
@@ -128,7 +128,7 @@ class JobsSpec extends SeleniumBase {
     }
     def "job options config - check storage session"() {
         given:
-        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+        def jobCreatePage = page JobCreatePage, projectName
         jobCreatePage.nextUi=true
         jobCreatePage.go()
         when:
@@ -151,7 +151,7 @@ class JobsSpec extends SeleniumBase {
     }
     def "job option simple redo"() {
         when:
-        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+        def jobCreatePage = page JobCreatePage, projectName
         jobCreatePage.nextUi=true
         jobCreatePage.go()
         then:
@@ -180,7 +180,7 @@ class JobsSpec extends SeleniumBase {
     }
     def "No default value field shown in secure job option section"() {
         given:
-        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+        def jobCreatePage = page JobCreatePage, projectName
         jobCreatePage.nextUi=true
         jobCreatePage.go()
         when:
@@ -200,7 +200,7 @@ class JobsSpec extends SeleniumBase {
     }
     def "job option revert all"() {
         given:
-        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+        def jobCreatePage = page JobCreatePage, projectName
         jobCreatePage.nextUi=true
         jobCreatePage.go()
         jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" next ui"
@@ -231,7 +231,7 @@ class JobsSpec extends SeleniumBase {
     }
     def "job option undo redo"() {
         when:
-        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+        def jobCreatePage = page JobCreatePage, projectName
         jobCreatePage.nextUi=true
         jobCreatePage.go()
         then:
