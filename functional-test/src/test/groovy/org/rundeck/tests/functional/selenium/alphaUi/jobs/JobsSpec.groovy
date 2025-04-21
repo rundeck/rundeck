@@ -11,9 +11,11 @@ import org.rundeck.util.gui.pages.jobs.JobTab
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.jobs.StepType
 import org.rundeck.util.gui.pages.login.LoginPage
+import spock.lang.Shared
 
 @AlphaUiSeleniumCoreTest
 class JobsSpec extends SeleniumBase {
+    @Shared
     String projectName
     JobCreatePage jobCreatePage
 
