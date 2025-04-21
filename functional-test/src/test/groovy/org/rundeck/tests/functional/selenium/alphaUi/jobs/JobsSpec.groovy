@@ -22,6 +22,7 @@ class JobsSpec extends SeleniumBase {
         go(LoginPage).login(TEST_USER, TEST_PASS)
     }
 
+    @Override
     def cleanup() {
         deleteProject(projectName)
     }
