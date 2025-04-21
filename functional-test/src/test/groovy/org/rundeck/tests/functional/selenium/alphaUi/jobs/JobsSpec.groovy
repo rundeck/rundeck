@@ -22,9 +22,12 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage = setupJobCreatePage()
     }
 
-    @Override
-    def cleanup() {
-        deleteProject(projectName)
+    def cleanupSpec() {
+        try {
+            deleteProject(projectName)
+        } catch (Exception e) {
+            println "Warning: Final cleanup failed: ${e.message}"
+        }
     }
 
     private void setupEnvironment() {
