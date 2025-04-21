@@ -283,7 +283,7 @@ class JobsSpec extends SeleniumBase {
 
     def "Node steps"() {
         when: "Create a new job and add a node step"
-        String jobUuid = JobUtils.jobImportFile(SELENIUM_BASIC_PROJECT, '/test-files/simple-job-ref.xml', client).succeeded.first().id
+        String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/simple-job-ref.xml', client).succeeded.first().id
         def jobShowPage = page JobShowPage
         jobCreatePage.fillBasicJob 'job with node steps'
         jobCreatePage.expectNumberOfStepsToBe(1)
