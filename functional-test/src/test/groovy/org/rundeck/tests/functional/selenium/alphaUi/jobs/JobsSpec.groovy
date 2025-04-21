@@ -14,12 +14,16 @@ import org.rundeck.util.gui.pages.login.LoginPage
 
 @AlphaUiSeleniumCoreTest
 class JobsSpec extends SeleniumBase {
-    def setupSpec() {
-        setupProjectArchiveDirectoryResource(SELENIUM_BASIC_PROJECT, "/projects-import/${SELENIUM_BASIC_PROJECT}")
-    }
+    String projectName
 
     def setup() {
+        projectName = UUID.randomUUID().toString()
+        setupProject(projectName)
         go(LoginPage).login(TEST_USER, TEST_PASS)
+    }
+
+    def cleanup() {
+        deleteProject(projectName)
     }
 
     /**
@@ -288,13 +292,7 @@ class JobsSpec extends SeleniumBase {
             then:
             jobCreatePage.fillBasicJob 'job with global log filter'
             jobCreatePage.addGlobalLogFilter.click()
-            jobCreatePage.getListItemIndex(3).click()
-            def highlightPatternInput = jobCreatePage.getInputField("regex", "input[type='text']")
-            highlightPatternInput.click()
-            highlightPatternInput.sendKeys 'test'
-            def select = new Select(jobCreatePage.getInputField("fgcolor", "select"))
-            select.selectByValue('yellow')
-            jobCreatePage.workflowSaveStepButton.click()
+            jobCreatePage.fillHighlightLogFilter();
         expect:
             jobCreatePage.getLogFilterButtons('#globalLogFilters').size() == 1
     }
@@ -309,9 +307,16 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.fillBasicJob 'job with node steps'
             jobCreatePage.expectNumberOfStepsToBe(1)
         then: "Duplicate a step"
+            jobCreatePage.waitForElementToBeClickable jobCreatePage.duplicateWfStepButton;
             jobCreatePage.duplicateWfStepButton.click()
             jobCreatePage.expectNumberOfStepsToBe(2)
+        then: "Add a log filter to step"
+            jobCreatePage.waitForElementToBeClickable jobCreatePage.stepDropdownTrigger(0);
+            jobCreatePage.clickAddLogFilter(0);
+            jobCreatePage.fillHighlightLogFilter();
+            jobCreatePage.getLogFilterButtons('#logFilters').size() == 1
         then: "Add another step"
+            jobCreatePage.scrollToElement(jobCreatePage.createJobButton)
             jobCreatePage.addStep(new JobReferenceStep([
                     childJobUuid: jobUuid,
                     stepType    : StepType.NODE
@@ -336,10 +341,10 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.nextUi=true
         jobCreatePage.go()
         jobCreatePage.fillBasicJob 'job with error handlers'
-        then: "add error handler and check that its not possible to add more error handlers to same step"
+        then: "Add error handler and check that its not possible to add more error handlers to same step"
             jobCreatePage.addErrorHandler( 'exec-command',  StepType.NODE)
             assert jobCreatePage.doesntHasDropdownOption(0, "add-error-handler")
-        then: "duplicate step and remove duplicated error handler"
+        then: "Duplicate step and remove duplicated error handler"
             jobCreatePage.scrollToElement(jobCreatePage.duplicateWfStepButton)
             jobCreatePage.duplicateWfStepButton.click()
             jobCreatePage.expectNumberOfStepsToBe(2)

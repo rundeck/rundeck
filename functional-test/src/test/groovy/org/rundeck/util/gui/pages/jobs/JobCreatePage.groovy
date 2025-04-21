@@ -158,6 +158,7 @@ class JobCreatePage extends BasePage {
     By timeZoneBy = By.id("timeZone")
     By optEditFormBy = By.className("optEditForm")
     By addGlobalLogFilter = By.cssSelector("div[data-testid='log-filters-container'] > button")
+    By addLogFilterOption = By.cssSelector("a[data-test='add-log-filter']")
     By addErrorHandlerOption = By.cssSelector("a[data-test='add-error-handler']")
 
     private String loadPath = "/job/create"
@@ -518,6 +519,13 @@ class JobCreatePage extends BasePage {
         stepDropdownTrigger(position).click()
         waitForElementVisible(addErrorHandlerOption)
         (el addErrorHandlerOption).click()
+    }
+
+    def clickAddLogFilter(int position) {
+        stepDropdownTrigger(position).click()
+        waitForElementVisible(addErrorHandlerOption)
+        (el addLogFilterOption).click()
+        return this
     }
 
     WebElement getCancelButton() {
@@ -919,16 +927,27 @@ class JobCreatePage extends BasePage {
         el workflowAlphaUiContainer
     }
 
-    WebElement getAddGlobalLogFilter() {
-        el addGlobalLogFilter
-    }
-
     WebElement getListItemIndex(int position) {
         el By.cssSelector(".list-group[data-testid='list-view'] > .list-group-item:nth-child(${position})")
     }
 
     WebElement getInputField(String value, String childElement) {
         getElementByDataPropName(value, childElement)
+    }
+
+    WebElement getAddGlobalLogFilter() {
+        el addGlobalLogFilter
+    }
+
+    def fillHighlightLogFilter() {
+        getListItemIndex(3).click();
+        def highlightPatternInput = getInputField("regex", "input[type='text']")
+        highlightPatternInput.click()
+        highlightPatternInput.sendKeys 'test'
+        def select = new Select(getInputField("fgcolor", "select"))
+        select.selectByValue('yellow')
+        getWorkflowSaveStepButton().click()
+        return this
     }
 
     List<WebElement> getLogFilterButtons(String id) {
