@@ -5,7 +5,8 @@ enum NavProjectSettings {
     EXEC_MODE("Execution Mode"),
     USER_INTERFACE("User Interface"),
     DEFAULT_FILE_COPIER("Default File Copier"),
-    DEFAULT_NODE_EXECUTOR("Default Node Executor")
+    DEFAULT_NODE_EXECUTOR("Default Node Executor"),
+    PLUGINS("Plugins")
 
     String tabLink
 
