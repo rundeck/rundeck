@@ -880,6 +880,24 @@ class ApiService implements WebUtilService{
     }
 
     /**
+     * Find and remove AuthTokens by user id
+     * @param userId
+     * @return
+     */
+    @Transactional
+    @CompileStatic
+    def removeAllTokensByUser(String userId) {
+        log.debug("Attempting to remove tokens for user: ${userId}")
+
+        List<AuthenticationToken> tokenlist = tokenDataProvider.findAllByUser(userId)
+
+        if(tokenlist) {
+            tokenlist.forEach { token -> tokenDataProvider.delete(token.uuid)}
+        }
+        tokenlist.size()
+    }
+
+    /**
      * Find and remove AuthTokens created by creator that are expired
      * @param creator
      * @return
