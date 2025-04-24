@@ -305,18 +305,18 @@
             v-if="isAutoCompleteField"
             v-model="currentValue"
             :suggestions="inputTypeContextVariables"
-        />
-        <input
-          v-else
-          :id="`${rkey}prop_` + pindex"
-          v-model="currentValue"
-          :name="`${rkey}prop_` + pindex"
-          size="100"
-          type="text"
-          class="form-control input-sm"
-          :class="contextAutocomplete ? 'context_var_autocomplete' : ''"
-        />
-          </template>
+          />
+          <input
+            v-else
+            :id="`${rkey}prop_` + pindex"
+            v-model="currentValue"
+            :name="`${rkey}prop_` + pindex"
+            size="100"
+            type="text"
+            class="form-control input-sm"
+            :class="contextAutocomplete ? 'context_var_autocomplete' : ''"
+          />
+        </template>
       </div>
       <div
         v-if="
@@ -539,9 +539,6 @@ export default defineComponent({
       jobContext: [] as any,
       aceEditorEnabled: false,
       renderReadOnly: false,
-      inputTypeContextVariables: getContextVariables("input", this.stepType, this.pluginType),
-      scriptTypeContextVariables: getContextVariables("script", this.stepType, this.pluginType),
-      isAutoCompleteField: isAutoCompleteField(this.stepType),
     };
   },
   computed: {
@@ -556,6 +553,17 @@ export default defineComponent({
         this.$emit("update:modelValue", val);
         this.setJobName(val);
       },
+    },
+    isAutoCompleteField(): boolean {
+      return isAutoCompleteField(this.stepType);
+    },
+    inputTypeContextVariables(): any {
+      if (!this.isAutoCompleteField) return [];
+      return getContextVariables("input", this.stepType, this.pluginType);
+    },
+    scriptTypeContextVariables(): any {
+      if (!this.isAutoCompleteField) return [];
+      return getContextVariables("script", this.stepType, this.pluginType);
     },
   },
   watch: {

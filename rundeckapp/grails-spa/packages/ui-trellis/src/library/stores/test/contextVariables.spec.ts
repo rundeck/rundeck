@@ -1,10 +1,10 @@
-import { contextVariables } from "../context_variables";
+import { contextVariables } from "../contextVariables";
 import { getRundeckContext } from "../../rundeckService";
 
 jest.mock("../../rundeckService")
 const mockedRundeckContext = getRundeckContext as jest.Mock<unknown>;
 
-describe("contextVariableUtils", () => {
+describe("contextVariables", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockedRundeckContext.mockImplementation(() => {})

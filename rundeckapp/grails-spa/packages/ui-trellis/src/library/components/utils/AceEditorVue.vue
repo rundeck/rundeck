@@ -6,7 +6,7 @@ import { defineComponent, PropType } from "vue";
 
 import * as ace from "ace-builds";
 import { AceAutoCompleter, Completion, type EditorOptions } from "../../types/AceEditor";
-import { ContextVariable } from "../../stores/context_variables";
+import { ContextVariable } from "../../stores/contextVariables";
 
 export default defineComponent({
   props: {
@@ -113,7 +113,7 @@ export default defineComponent({
 
     editor.setOptions({
       // @ts-ignore
-      enableLiveAutocompletion: true,
+      enableLiveAutocompletion: contextVariableSuggestions.length > 0,
       ...(this.options || {}),
     });
 

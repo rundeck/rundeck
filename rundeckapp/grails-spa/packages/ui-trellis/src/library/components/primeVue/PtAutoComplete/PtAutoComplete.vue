@@ -22,7 +22,7 @@ import AutoComplete, {
   AutoCompleteCompleteEvent,
   AutoCompleteChangeEvent,
 } from "primevue/autocomplete";
-import { ContextVariable } from "../../stores/context_variables";
+import { ContextVariable } from "../../stores/contextVariables";
 
 export default defineComponent({
   name: "PtAutoComplete",

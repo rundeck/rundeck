@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { getJobDefinition, postJobDefinition } from "../services/jobEdit";
 import { JobDefinition } from "../types/jobs/JobDefinition";
 import { JobStore } from "../types/stores/JobsStoreTypes";
-import { contextVariables, ContextVariablesByType } from "./context_variables";
+import { contextVariables, ContextVariablesByType } from "./contextVariables";
 
 export const useJobStore = defineStore("jobs", {
   state: (): JobStore => {

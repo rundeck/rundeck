@@ -1,4 +1,4 @@
-import { ContextVariable } from "../../stores/context_variables";
+import { ContextVariable } from "../../stores/contextVariables";
 import { useJobStore } from "../../stores/JobsStore";
 
 export type WorkflowStepType = "WorkflowNodeStep" | "WorkflowStep" | "Notification";

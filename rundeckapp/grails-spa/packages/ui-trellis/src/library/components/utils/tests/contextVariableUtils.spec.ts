@@ -1,4 +1,4 @@
-import { contextVariables } from "../../../stores/context_variables";
+import { contextVariables } from "../../../stores/contextVariables";
 import { isAutoCompleteField, getContextVariables } from "../contextVariableUtils";
 
 jest.mock("@/library/rundeckService", () => ({

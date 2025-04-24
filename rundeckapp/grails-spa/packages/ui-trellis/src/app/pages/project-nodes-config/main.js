@@ -40,7 +40,7 @@ for (let i = 0; i < els.length; i++) {
 
     data() {
       return {
-        EventBus: context.eventBus,
+        eventBus: context.eventBus,
       };
     },
   });

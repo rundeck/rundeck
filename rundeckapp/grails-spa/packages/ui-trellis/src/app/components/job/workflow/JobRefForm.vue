@@ -340,10 +340,10 @@
             <div  class="well well-sm embed matchednodes">
               <template v-if="filterLoaded">
                 <button
-                    type="button"
-                    class="pull-right btn btn-sm refresh_nodes"
-                    :title="$t('click.to.refresh')"
-                    @click="triggerFetchNodes"
+                  type="button"
+                  class="pull-right btn btn-sm refresh_nodes"
+                  :title="$t('click.to.refresh')"
+                  @click="triggerFetchNodes"
                 >
                   {{ $t(loading ? "loading.text" : "refresh") }}
                   <i class="glyphicon glyphicon-refresh"></i>
