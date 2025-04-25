@@ -84,7 +84,7 @@ search
             action: AuthConstants.ACTION_DELETE_EXECUTION
     ) || projAdminAuth}"/>
     <cfg:setVar var="defaultMax" defaultValue="${30}" key="pagination.default.max"/>
-    <g:set var="pageMax" value="${params.max?params.int('max',defaultMax):defaultMax}"/>
+    <g:set var="pageMax" value="${params.max?params.int('max'):defaultMax}"/>
     <g:javascript>
     window._rundeck = Object.assign(window._rundeck || {}, {
         data:{
