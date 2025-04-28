@@ -11,6 +11,7 @@ import org.rundeck.util.gui.pages.project.ActivityListTrait
 class ActivityPage extends BasePage implements ActivityListTrait{
 
     String loadPath = "activity"
+    String params=""
 
     By activityRowBy = By.cssSelector(".link.activity_row.autoclickable.succeed.job")
     By timeAbs = By.className("timeabs")
@@ -25,7 +26,7 @@ class ActivityPage extends BasePage implements ActivityListTrait{
     }
 
     void loadActivityPageForProject(String projectName){
-        this.loadPath = "/project/${projectName}/activity"
+        this.loadPath = "/project/${projectName}/activity${params}"
     }
 
     WebElement getExecutionCount(){
