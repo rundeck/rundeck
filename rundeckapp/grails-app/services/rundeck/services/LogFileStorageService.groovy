@@ -318,7 +318,14 @@ class LogFileStorageService
         logFileTaskExecutor?.execute(new TaskRunner<Map>(retrievalRequests, this.&runRetrievalRequestTask))
         if (getConfiguredResumeStrategy() == 'periodic') {
             long delay = getConfiguredStorageRetryDelay() * 1000
-            logFileStorageTaskScheduler.scheduleAtFixedRate(this.&dequeueIncompleteLogStorage, new Date(System.currentTimeMillis() + delay), delay)
+            logFileStorageTaskScheduler.scheduleAtFixedRate(
+                {
+                    try{
+                        dequeueIncompleteLogStorage()
+                    }catch (Throwable t){
+                        log.error("Error dequeueing incomplete log storage requests", t)
+                    }
+                }, new Date(System.currentTimeMillis() + delay), delay)
         }
     }
 
