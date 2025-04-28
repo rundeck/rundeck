@@ -1,5 +1,6 @@
 <template>
   <log-filters
+    id="globalLogFilters"
     v-model="model.LogFilter"
     title="Global Log Filters"
     subtitle="All workflow steps"

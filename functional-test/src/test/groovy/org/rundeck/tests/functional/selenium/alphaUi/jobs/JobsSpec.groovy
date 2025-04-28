@@ -3,56 +3,52 @@ package org.rundeck.tests.functional.selenium.alphaUi.jobs
 import org.openqa.selenium.By
 import org.openqa.selenium.support.ui.Select
 import org.rundeck.util.annotations.AlphaUiSeleniumCoreTest
+import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
+import org.rundeck.util.gui.pages.jobs.JobReferenceStep
 import org.rundeck.util.gui.pages.jobs.JobShowPage
 import org.rundeck.util.gui.pages.jobs.JobTab
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.jobs.StepType
 import org.rundeck.util.gui.pages.login.LoginPage
+import spock.lang.Shared
 
 @AlphaUiSeleniumCoreTest
 class JobsSpec extends SeleniumBase {
-    def setupSpec() {
-        setupProjectArchiveDirectoryResource(SELENIUM_BASIC_PROJECT, "/projects-import/${SELENIUM_BASIC_PROJECT}")
-    }
+    @Shared
+    String projectName
+    JobCreatePage jobCreatePage
 
     def setup() {
+        setupEnvironment()
+        jobCreatePage = setupJobCreatePage()
+    }
+
+    def cleanupSpec() {
+        try {
+            deleteProject(projectName)
+        } catch (Exception e) {
+            println "Warning: Final cleanup failed: ${e.message}"
+        }
+    }
+
+    private void setupEnvironment() {
+        projectName = UUID.randomUUID().toString()
+        setupProject(projectName)
         go(LoginPage).login(TEST_USER, TEST_PASS)
     }
 
-    def "change workflow strategy"() {
-        when:
-        def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
-        def jobShowPage = page JobShowPage
-        jobCreatePage.nextUi=true
-        jobCreatePage.go()
-        then:
-        jobCreatePage.jobNameInput.sendKeys 'jobs workflow strategy'
-        jobCreatePage.tab JobTab.WORKFLOW click()
-        jobCreatePage.waitForElementVisible jobCreatePage.workFlowStrategyField
-
-        def select = new Select(jobCreatePage.workFlowStrategyField)
-        select.selectByValue('parallel')
-        jobCreatePage.waitForElementVisible jobCreatePage.strategyPluginParallelField
-        jobCreatePage.strategyPluginParallelMsgField.getText() == 'Run all steps in parallel'
-
-        jobCreatePage.addSimpleCommandStepNextUi('echo selenium test', 0)
-        jobCreatePage.createJobButton.click()
-        expect:
-        jobShowPage.jobDefinitionModal.click()
-        jobShowPage.workflowDetailField.getText() == 'Parallel Run all steps in parallel'
+    private JobCreatePage setupJobCreatePage() {
+        def page = page JobCreatePage, projectName
+        page.nextUi = true
+        page.go()
+        return page
     }
 
-    /**
-     * Checks that new workflow tab is active
-     */
     def "job workflow alphaUi"() {
         when:
-        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-        jobCreatePage.nextUi=true
-        jobCreatePage.go()
-        then:
         jobCreatePage.tab JobTab.WORKFLOW click()
+        then:
         jobCreatePage.waitForTextToBePresentBySelector(By.xpath("//section[@id='workflowContent']//div[contains(@class, 'control-label')]"), "Workflow",60)
         expect:
         jobCreatePage.workflowAlphaUiContainer.isDisplayed()
@@ -60,9 +56,6 @@ class JobsSpec extends SeleniumBase {
 
     def "Create option form next ui"() {
         when:
-        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-        jobCreatePage.nextUi=true
-        jobCreatePage.go()
         def optName = 'test'
         jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" next ui"
         jobCreatePage.optionButton.click()
@@ -71,11 +64,9 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.optionNameNew() displayed
         jobCreatePage.saveOptionButton.displayed
     }
+
     def "Duplicate option create form next ui"() {
         when:
-        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-        jobCreatePage.nextUi=true
-        jobCreatePage.go()
         def optName = 'test'
         jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" next ui"
         jobCreatePage.optionButton.click()
@@ -87,7 +78,6 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.waitFotOptLi 0
 
         jobCreatePage.duplicateButton( optName, 0) click()
-
 
         then: "create form is shown"
         jobCreatePage.optionNameNew() displayed
@@ -101,13 +91,10 @@ class JobsSpec extends SeleniumBase {
         then:
         jobCreatePage.optionNameSaved 0 getText() equals optName
         jobCreatePage.optionNameSaved 1 getText() equals optName + '_copy'
-
     }
+
     def "create valid job basic options"() {
         when:
-        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-        jobCreatePage.nextUi=true
-        jobCreatePage.go()
         def jobShowPage = page JobShowPage
         def optionName = 'seleniumOption1'
         then:
@@ -126,15 +113,12 @@ class JobsSpec extends SeleniumBase {
 
     def "job options config - check usage session"() {
         when:
-        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-        jobCreatePage.nextUi=true
-        jobCreatePage.go()
-        then:
         jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" next ui"
         jobCreatePage.optionButton.click()
         jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
         jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
         jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.sessionSectionLabel
+        then:
         jobCreatePage.sessionSectionLabel.isDisplayed()
         jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
         jobCreatePage.saveOptionButton.click()
@@ -142,11 +126,9 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
         jobCreatePage.createJobButton.click()
     }
+
     def "job options config - check storage session"() {
         given:
-        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-        jobCreatePage.nextUi=true
-        jobCreatePage.go()
         when:
         jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" next ui"
         jobCreatePage.optionButton.click()
@@ -165,13 +147,11 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.waitForOptionsToBe 1, 0
         jobCreatePage.optionLis 0 isEmpty()
     }
+
     def "job option simple redo"() {
         when:
-        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-        jobCreatePage.nextUi=true
-        jobCreatePage.go()
-        then:
         jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" next ui"
+        then:
         jobCreatePage.optionButton.click()
         jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
         jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
@@ -194,11 +174,9 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
         jobCreatePage.createJobButton.click()
     }
+
     def "No default value field shown in secure job option section"() {
         given:
-        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-        jobCreatePage.nextUi=true
-        jobCreatePage.go()
         when:
         jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" next ui"
         jobCreatePage.optionButton.click()
@@ -214,11 +192,9 @@ class JobsSpec extends SeleniumBase {
         then:
         driver.findElements(jobCreatePage.defaultValueBy).isEmpty() || !jobCreatePage.defaultValueInput.isDisplayed()
     }
+
     def "job option revert all"() {
         given:
-        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-        jobCreatePage.nextUi=true
-        jobCreatePage.go()
         jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" next ui"
         jobCreatePage.optionButton.click()
         jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
@@ -245,13 +221,11 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.optionLis 0 isEmpty()
         jobCreatePage.optionLis 1 isEmpty()
     }
+
     def "job option undo redo"() {
         when:
-        def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-        jobCreatePage.nextUi=true
-        jobCreatePage.go()
-        then:
         jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
+        then:
         jobCreatePage.optionButton.click()
         jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
         jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
@@ -279,5 +253,89 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.createJobButton.click()
         where:
         nextUi << [true]
+    }
+
+    def "change workflow strategy"() {
+        when:
+        def jobShowPage = page JobShowPage
+        then:
+        jobCreatePage.fillBasicJob 'parallel workflow strategy'
+        jobCreatePage.waitForElementVisible jobCreatePage.workFlowStrategyField
+
+        def select = new Select(jobCreatePage.workFlowStrategyField)
+        select.selectByValue('parallel')
+        jobCreatePage.waitForElementVisible jobCreatePage.strategyPluginParallelField
+        jobCreatePage.strategyPluginParallelMsgField.getText() == 'Run all steps in parallel'
+        jobCreatePage.createJobButton.click()
+        expect:
+        jobShowPage.jobDefinitionModal.click()
+        jobShowPage.workflowDetailField.getText() == 'Parallel Run all steps in parallel'
+    }
+
+    def "add global log filters"() {
+        when:
+        jobCreatePage.fillBasicJob 'job with global log filter'
+        jobCreatePage.addGlobalLogFilter.click()
+        jobCreatePage.fillHighlightLogFilter();
+        then:
+        assert jobCreatePage.getLogFilterButtons('#globalLogFilters').size() == 1
+    }
+
+    def "Node steps"() {
+        when: "Create a new job and add a node step"
+        String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/simple-job-ref.xml', client).succeeded.first().id
+        def jobShowPage = page JobShowPage
+        jobCreatePage.fillBasicJob 'job with node steps'
+        jobCreatePage.expectNumberOfStepsToBe(1)
+        then: "Duplicate a step"
+        jobCreatePage.waitForElementToBeClickable jobCreatePage.duplicateWfStepButton;
+        jobCreatePage.duplicateWfStepButton.click()
+        jobCreatePage.expectNumberOfStepsToBe(2)
+        then: "Add a log filter to step"
+        jobCreatePage.waitForElementToBeClickable jobCreatePage.stepDropdownTrigger(0);
+        jobCreatePage.clickAddLogFilter(0);
+        jobCreatePage.fillHighlightLogFilter();
+        jobCreatePage.getLogFilterButtons('#logFilters').size() == 1
+        then: "Add another step"
+        jobCreatePage.scrollToElement(jobCreatePage.createJobButton)
+        jobCreatePage.addStep(new JobReferenceStep([
+                childJobUuid: jobUuid,
+                stepType    : StepType.NODE
+        ]))
+        jobCreatePage.expectNumberOfStepsToBe(3)
+        then: "Remove a step"
+        jobCreatePage.waitForElementToBeClickable jobCreatePage.deleteStepBy
+        jobCreatePage.removeStepByIndex(0)
+        jobCreatePage.expectNumberOfStepsToBe(2)
+        expect: "Save the job successfully"
+        jobCreatePage.scrollToElement(jobCreatePage.createJobButton);
+        jobCreatePage.createJobButton.click()
+        jobShowPage.waitForElementToBeClickable jobShowPage.jobDefinitionModal
+        jobShowPage.jobDefinitionModal.click()
+        jobShowPage.expectNumberOfStepsToBe(2)
+    }
+
+    def "Error handlers"() {
+        when:
+        def jobShowPage = page JobShowPage
+        jobCreatePage.fillBasicJob 'job with error handlers'
+        then: "Add error handler and check that its not possible to add more error handlers to same step"
+        jobCreatePage.addErrorHandler( 'exec-command',  StepType.NODE)
+        assert jobCreatePage.doesntHasDropdownOption(0, "add-error-handler")
+        then: "Duplicate step and remove duplicated error handler"
+        jobCreatePage.scrollToElement(jobCreatePage.duplicateWfStepButton)
+        jobCreatePage.duplicateWfStepButton.click()
+        jobCreatePage.expectNumberOfStepsToBe(2)
+        assert jobCreatePage.doesntHasDropdownOption(1, "add-error-handler")
+        jobCreatePage.scrollToElement(jobCreatePage.workflowAlphaUiButton)
+        jobCreatePage.removeErrorHandlerButton(1).click()
+        assert !jobCreatePage.doesntHasDropdownOption(1, "add-error-handler")
+        expect: "Save the job successfully"
+        jobCreatePage.scrollToElement(jobCreatePage.createJobButton);
+        jobCreatePage.waitForElementToBeClickable jobCreatePage.createJobButton
+        jobCreatePage.createJobButton.click()
+        jobShowPage.waitForElementToBeClickable jobShowPage.jobDefinitionModal
+        jobShowPage.jobDefinitionModal.click()
+        jobShowPage.expectNumberOfStepsToBe(3) // it counts the error handler as a step due to class
     }
 }

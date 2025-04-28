@@ -1,5 +1,5 @@
 <template>
-  <modal v-model="showModal" size="lg" :title="$t('plugin.edit.title')">
+  <modal data-testid="jobref-modal" v-model="showModal" size="lg" :title="$t('plugin.edit.title')">
     <div v-if="error" class="alert alert-danger">
       <ErrorsList :errors="[errorMessage]" />
     </div>
@@ -543,7 +543,7 @@
             <div class="radio">
               <input
                 id="jobNodeStepFieldTrue"
-                v-model="editModel.nodeStep"
+                v-model="editModel.jobref.nodeStep"
                 type="radio"
                 name="nodeStep"
                 :value="true"
@@ -556,7 +556,7 @@
             <div class="radio">
               <input
                 id="jobNodeStepFieldFalse"
-                v-model="editModel.nodeStep"
+                v-model="editModel.jobref.nodeStep"
                 type="radio"
                 name="nodeStep"
                 :value="false"
@@ -569,24 +569,7 @@
           </div>
         </div>
       </section>
-      <hr />
-      <div class="form-group">
-        <label class="col-sm-2 control-label" :for="`description${rkey}`">
-          {{ $t("Workflow.stepLabel") }}
-        </label>
-
-        <div class="col-sm-10">
-          <input
-            :id="`description${rkey}`"
-            v-model="editModel.description"
-            type="text"
-            name="description"
-            class="form-control"
-            :placeholder="$t('Workflow.step.property.description.placeholder')"
-            size="100"
-          />
-        </div>
-      </div>
+      <slot name="extra" />
     </div>
     <template #footer>
       <btn data-testid="cancel-button" @click="$emit('cancel')">
@@ -667,8 +650,9 @@ export default defineComponent({
       currentProject: rundeckContext.projectName,
       editModel: {
         description: "",
-        nodeStep: false,
+        keepgoingOnSuccess: false,
         jobref: {
+          nodeStep: false,
           name: "",
           uuid: "",
           project: rundeckContext.projectName,
