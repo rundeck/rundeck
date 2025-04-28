@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.execution.ExecArgList
 import com.dtolabs.rundeck.core.execution.NodeExecutionService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
+
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
 import com.dtolabs.rundeck.core.jobs.JobExecutionEvent
 import com.dtolabs.rundeck.core.plugins.Plugin
@@ -13,8 +14,6 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
 import groovy.transform.CompileStatic
 import org.rundeck.app.spi.AuthorizedServicesProvider
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 @Plugin(name = KillHandlerExecutionLifecyclePlugin.PROVIDER_NAME, service = ServiceNameConstants.ExecutionLifecycle)
 @PluginDescription(title = KillHandlerExecutionLifecyclePlugin.PLUGIN_TITLE, description = KillHandlerExecutionLifecyclePlugin.PLUGIN_DESC)
@@ -35,7 +34,7 @@ This operation will use the 'kill' and 'pkill' for Unix and 'taskkill' for Windo
             title = "Kill spawned processes",
             description = "Also kill processes whose process SID matches the tracked PIDs"
     )
-    boolean killChilds = true
+    boolean killChildren = true
 
     @PluginProperty(
             title = "Kill only on job failure",
@@ -45,6 +44,7 @@ This operation will use the 'kill' and 'pkill' for Unix and 'taskkill' for Windo
 
     @Override
     ExecutionLifecycleStatus afterJobEnds(final JobExecutionEvent event) {
+
 
         if (!onFailOnly || !event.result.result.success || event.result.aborted) {
 
@@ -56,6 +56,8 @@ This operation will use the 'kill' and 'pkill' for Unix and 'taskkill' for Windo
                 processTrackingService.flushExecution(execId)
 
                 event.executionLogger.log(Constants.WARN_LEVEL, "Kill Handler processing tracked processes...")
+                println "EVENT CLASS: ${event.getClass().name}"
+                println "EVENT PROPERTIES: ${event.metaClass.properties*.name}"
                 def authContext = event.executionContext.getUserAndRolesAuthContext()
                 def nodeExecutionService = rundeckAuthorizedServicesProvider.getServicesWith(authContext).getService(NodeExecutionService)
                 def execContext = event.executionContext
@@ -66,7 +68,7 @@ This operation will use the 'kill' and 'pkill' for Unix and 'taskkill' for Windo
                     if (nodePidData && nodePidData.pids) {
                         def commaPidList = nodePidData.pids.join(",")
                         event.executionLogger.log(Constants.DEBUG_LEVEL, "Killing tracked processes on node '${node.nodename}': ${commaPidList}")
-                        String cmdKill = "kill -9 " + nodePidData.pids.join(" ")
+                        String cmdKill = "pkill -P " + nodePidData.pids.join(" ")
 
                         if (OSFAMILY_WINDOWS.equalsIgnoreCase(node.osFamily)) {
                             cmdKill = "taskkill /PID " + nodePidData.pids.join(" ") + " /F"
@@ -77,10 +79,11 @@ This operation will use the 'kill' and 'pkill' for Unix and 'taskkill' for Windo
                                 ExecArgList.fromStrings(false, false, cmdKill),
                                 node)
 
+
                         event.executionLogger.log(Constants.DEBUG_LEVEL, "Result from killing processes attempt: "+ result)
 
                         // Kill children processes
-                        if (killChilds && !OSFAMILY_WINDOWS.equalsIgnoreCase(node.osFamily)) {
+                        if (killChildren && !OSFAMILY_WINDOWS.equalsIgnoreCase(node.osFamily)) {
                             event.executionLogger.log(Constants.DEBUG_LEVEL, "Killing processes by parent on node '${node.nodename}': ${commaPidList}")
                             // When the parent pid is killed, children processes change its ppid to 1 (init pid)
                             // To circumvent this, we issue a kill by SID also.
