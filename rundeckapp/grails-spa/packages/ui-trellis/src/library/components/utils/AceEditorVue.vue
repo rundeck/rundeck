@@ -4,8 +4,7 @@
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
 
-import * as ace from "ace-builds";
-import { AceAutoCompleter, Completion, type EditorOptions } from "../../types/AceEditor";
+import ace, { Ace } from "ace-builds";
 import { ContextVariable } from "../../stores/contextVariables";
 
 export default defineComponent({
@@ -43,7 +42,7 @@ export default defineComponent({
       default: "",
     },
     options: {
-      type: Object as PropType<EditorOptions>,
+      type: Object as PropType<Ace.EditorOptions>,
       default: () => {},
     },
     contextVariableSuggestions: {
@@ -52,12 +51,17 @@ export default defineComponent({
     },
   },
   emits: ["init", "update:modelValue"],
-  data() {
+  data(): {
+    editor: Ace.Editor | null;
+    contentBackup: string;
+    observer: MutationObserver | null;
+    jsonSpaces: number;
+  } {
     return {
-      editor: undefined as undefined | ace.Ace.Editor,
+      editor: null,
       contentBackup: "",
-      observer: undefined as undefined | MutationObserver,
-      jsonSpaces: 2 as number,
+      observer: null,
+      jsonSpaces: 2,
     };
   },
   computed: {
@@ -111,10 +115,11 @@ export default defineComponent({
     editor.getSession().setMode(this.resolveLang(lang));
     editor.setTheme(this.resolveTheme(theme));
 
+    const shouldEnableAutoCompletion =
+      this.contextVariableSuggestions && this.contextVariableSuggestions.length > 0;
     editor.setOptions({
-      // @ts-ignore
-      enableLiveAutocompletion: contextVariableSuggestions.length > 0,
       ...(this.options || {}),
+      enableLiveAutocompletion: shouldEnableAutoCompletion,
     });
 
     if (this.modelValue) editor.setValue(this.resolveValue(this.modelValue), 1);
@@ -201,20 +206,24 @@ export default defineComponent({
     },
 
     addContextVariableSuggestions(): void {
-      const staticWordCompleter: AceAutoCompleter[] = {
-        // @ts-ignore
-        identifierRegexps: [/[@%a-zA-Z_0-9\.\$\-\u00A2-\uFFFF]/],
+      const staticWordCompleter: Ace.Completer = {
         ...this.buildCompletionProvider(),
         ...this.buildDocTooltipProvider(),
-      };
-      // @ts-ignore
+        identifierRegexps: [/[@%a-zA-Z_0-9.\$\-\u00A2-\uFFFF]/],
+      } as Ace.Completer;
+
       this.editor!.completers = [staticWordCompleter];
     },
 
     buildCompletionProvider() {
       return {
-        // @ts-ignore
-        getCompletions: (_editor, _session, _pos, _prefix, callback) => {
+        getCompletions: (
+          _editor: Ace.Editor,
+          _session: Ace.EditSession,
+          _pos: Ace.Point,
+          _prefix: string,
+          callback: Ace.CompleterCallback,
+        ) => {
           const suggestions = this.contextVariableSuggestions.map(
             ({ name, type, description, title }) => ({
               name,
@@ -233,7 +242,7 @@ export default defineComponent({
     buildDocTooltipProvider() {
       const lang = ace.require("ace/lib/lang");
       return {
-        getDocTooltip: (item: Completion) => {
+        getDocTooltip: (item: Ace.Completion & { title: string; desc?: string }) => {
           const title = lang.escapeHTML(item.title);
           const desc = item.desc ? `<br><hr>${lang.escapeHTML(item.desc)}` : "";
           item.docHTML = `<b>${title}${desc}</b>`;
