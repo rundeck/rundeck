@@ -53,7 +53,7 @@
 </template>
 <script lang="ts">
 import NodeListEmbed from "../../job/resources/NodeListEmbed.vue";
-import { _genUrl } from "../../../utilities/genUrl";
+import { _genUrl } from "../../../../library/utilities/genUrl";
 import axios from "axios";
 import { defineComponent, ref } from "vue";
 

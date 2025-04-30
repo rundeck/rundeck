@@ -4,9 +4,7 @@ export function _genUrlQuery(params: any) {
     urlparams = [params];
   } else if (typeof params === "object") {
     for (const e in params) {
-      urlparams.push(
-        encodeURIComponent(e) + "=" + encodeURIComponent(params[e]),
-      );
+      urlparams.push(encodeURIComponent(e) + "=" + encodeURIComponent(params[e]));
     }
   }
   return urlparams.join("&");
@@ -21,8 +19,5 @@ export function _genUrlQuery(params: any) {
  */
 export function _genUrl(url: string, params: any) {
   const paramString = _genUrlQuery(params);
-  return (
-    url +
-    (paramString.length ? (url.indexOf("?") > 0 ? "&" : "?") + paramString : "")
-  );
+  return url + (paramString.length ? (url.indexOf("?") > 0 ? "&" : "?") + paramString : "");
 }

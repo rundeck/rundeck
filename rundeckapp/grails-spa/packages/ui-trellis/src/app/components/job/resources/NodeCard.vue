@@ -210,7 +210,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import { _genUrl } from "@/app/utilities/genUrl";
+import { _genUrl } from "../../../../library/utilities/genUrl";
 import { getAppLinks, getRundeckContext } from "@/library";
 import NodeFilterLink from "@/app/components/job/resources/NodeFilterLink.vue";
 import NodeTable from "@/app/components/job/resources/NodeTable.vue";
