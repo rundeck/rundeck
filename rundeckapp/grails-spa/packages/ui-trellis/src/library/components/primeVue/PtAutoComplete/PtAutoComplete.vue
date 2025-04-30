@@ -10,7 +10,6 @@
     :disabled="readOnly"
     @complete="onComplete"
     @option-select="replaceSelection"
-    @input="updateValue"
     @keydown.enter.prevent
     @change="onChange"
   ></AutoComplete>
@@ -131,6 +130,7 @@ export default defineComponent({
         cursorPosition,
       );
       this.value = newFullText;
+      this.$emit("update:modelValue", newFullText);
       this.moveCursorBackToReplacedText(
         fullInputText,
         selectedSuggestion,
@@ -181,7 +181,14 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
+:root[data-color-theme="light"] {
+  --input-bg-color: var(--colors-white);
+  --font-color: var(--colors-gray-900);
+  --input-outline-color: var(--colors-gray-500);
+  --input-focus-color: var(--colors-gray-300);
+}
+
 .p-autocomplete-overlay {
   z-index: 1200 !important;
   color: var(--font-color);
@@ -206,15 +213,15 @@ export default defineComponent({
 }
 
 .p-autocomplete-option:not(.p-autocomplete-option-selected):not(.p-disabled).p-focus {
-  background-color: var(--input-bg-color);
+  background-color: var(--input-focus-color);
 }
 
 .p-autocomplete-option-selected {
-  background-color: var(--input-bg-color);
+  background-color: var(--input-focus-color);
 }
 
 .p-autocomplete-list-container {
-  background-color: var(--input-focus-color);
+  background-color: var(--input-bg-color);
   border: 1px solid var(--gray-input-outline);
   border-radius: var(--p-autocomplete-overlay-border-radius);
 }
@@ -236,7 +243,7 @@ export default defineComponent({
     }
 
     &:enabled:focus {
-      background-color: var(--input-focus-color);
+      background-color: var(--input-bg-color);
       border-color: var(--gray-input-outline);
       box-shadow: none;
     }
