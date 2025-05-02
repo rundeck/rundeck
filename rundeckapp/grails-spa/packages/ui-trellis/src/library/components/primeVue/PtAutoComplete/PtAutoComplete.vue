@@ -181,7 +181,7 @@ export default defineComponent({
 });
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 :root[data-color-theme="light"] {
   --input-bg-color: var(--colors-white);
   --font-color: var(--colors-gray-900);
