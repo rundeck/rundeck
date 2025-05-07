@@ -1,12 +1,8 @@
-import {
-  JobOptionEdit,
-  OptionValidation,
-  SaveJobResponse,
-} from "../types/jobs/JobEdit";
+import { JobOptionEdit, OptionValidation, SaveJobResponse } from "../types/jobs/JobEdit";
 import { api } from "./api";
-import { _genUrl } from "../../app/utilities/genUrl";
 import { getRundeckContext } from "../rundeckService";
 import { JobDefinition } from "../types/jobs/JobDefinition";
+import { _genUrl } from "../utilities/genUrl";
 
 const rundeckContext = getRundeckContext();
 
@@ -16,10 +12,7 @@ export async function validateJobOption(
   option: JobOptionEdit,
 ): Promise<OptionValidation> {
   return api
-    .post(
-      `project/${project}/jobs/validateOption?jobWasScheduled=${jobWasScheduled}`,
-      option,
-    )
+    .post(`project/${project}/jobs/validateOption?jobWasScheduled=${jobWasScheduled}`, option)
     .then((r) => r.data)
     .catch((e) => {
       if (e.response && e.response.status === 400) {

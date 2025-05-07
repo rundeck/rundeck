@@ -1,5 +1,5 @@
 import axios, { AxiosResponse } from "axios";
-import { _genUrl } from "../../../../utilities/genUrl";
+import { _genUrl } from "../../../../../library/utilities/genUrl";
 import { getAppLinks, getRundeckContext } from "../../../../../library";
 import { ConfigMeta } from "../../../home/types/projectTypes";
 import { api } from "../../../../../library/services/api";

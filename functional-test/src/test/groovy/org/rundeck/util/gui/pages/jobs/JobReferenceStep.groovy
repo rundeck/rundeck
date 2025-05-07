@@ -15,7 +15,7 @@ class JobReferenceStep implements JobStep {
     private static final By useNameBox = By.id("useNameTrue")
     private static final By jobChooseBtn = By.xpath("//*[starts-with(@id, 'jobChooseBtn')]")
     private static final By jobNameFieldBy = By.xpath("//*[starts-with(@id, 'jobNameField')]")
-    private static final By jobUuidFieldBy = By.xpath("//*[starts-with(@id, 'jobUuidField')]")
+    private static final By jobUuidFieldBy = By.xpath("//*[@data-testid='jobUuidField']//input");
     String childJobUuid
     String childJobName
     boolean useChooseAJobButton = false
