@@ -1022,7 +1022,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Map extraParamsExposed = null
     ) {
         //TODO: method can be transactional readonly
-        metricService.markMeter(this.class.name,'executionStartMeter')
         execution.refresh()
 
         // update start date
@@ -1050,11 +1049,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         )
         execution.outputfilepath = loghandler.filepath?.getAbsolutePath()
         execution.save(flush:true)
-        if(execution.scheduledExecution){
-            metricService.markMeter(this.class.name,'executionJobStartMeter')
-        }else{
-            metricService.markMeter(this.class.name,'executionAdhocStartMeter')
-        }
         boolean logsInstalled=false
         try{
             def jobcontext=exportContextForExecution(execution, grailsLinkGenerator)
@@ -1245,10 +1239,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     threshold         : threshold,
                     periodicCheck     : checkpoint
             )
-        }catch(Exception e) {
-            log.error("Failed while starting execution: ${execution.id}", e)
+        } catch(Throwable e) {
+            log.error("Failed while starting execution: ${execution.id}", t)
             loghandler.logError('Failed to start execution: ' + e.getClass().getName() + ": " + e.message)
-            metricService.markMeter(this.class.name,'executionJobStartFailedMeter')
             if(logsInstalled) {
                 sysThreadBoundOut.removeThreadStream()?.close()
                 sysThreadBoundErr.removeThreadStream()?.close()

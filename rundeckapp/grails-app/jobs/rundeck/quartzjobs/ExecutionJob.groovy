@@ -123,26 +123,28 @@ class ExecutionJob implements InterruptableJob {
     void execute_internal(JobExecutionContext context) {
         boolean success=false
         RunContext initMap
-        try{
+        try {
             initMap= initialize(context,context.jobDetail.jobDataMap)
         } catch (ExecutionServiceException es) {
-            markStartExecutionFailure(context)
             if (es.code == 'conflict') {
+                meterStartExecutionFailure(context, 'Conflict')
                 log.error("Unable to start Job execution: ${es.message ?: 'no message'}")
                 return
             } else {
-                throw new ExecutionServiceException("Unable to start Job execution", es)
+                meterStartExecutionFailure(context)
+                throw new ExecutionServiceException("Unable to start Job execution: ${es.message}", es)
             }
-        }catch(MissingScheduledExecutionException e){
+        } catch(MissingScheduledExecutionException e){
+            meterStartExecutionFailure(context, 'Missing')
             throw e
-        }
-        catch(Throwable t){
-            markStartExecutionFailure(context)
+        } catch(Throwable t){
+            meterStartExecutionFailure(context)
             log.error("Unable to start Job execution: ${t.message?t.message:'no message'}",t)
             throw t
         }
         executionId = initMap.executionId ?: initMap.execution?.id
         if(initMap.jobShouldNotRun){
+            meterStartExecutionFailure(context, 'NotRun')
             log.info(initMap.jobShouldNotRun)
             return
         }
@@ -154,18 +156,28 @@ class ExecutionJob implements InterruptableJob {
                 initMap.authContext
         )
         if (beforeExec == JobScheduleManager.BeforeExecutionBehavior.skip) {
+            meterStartExecutionFailure(context, 'Skipped')
             return
         }
         RunResult result = null
         def statusString=null
         try {
             if(!wasInterrupted){
-                result = executeCommand(initMap)
-                success=result.success
-                statusString=Execution.isCustomStatusString(result.result?.statusString)?result.result?.statusString:null
+                result = executeCommand(initMap, context)
+                success=result?.success
+                statusString=Execution.isCustomStatusString(result?.result?.statusString)?result?.result?.statusString:null
             }
         }catch(Throwable t){
             log.error("Failed execution ${initMap.execution.id} : ${t.message?t.message:'no message'}",t)
+        }
+        if(!result){
+            //failed to start
+        }else if (success) {
+            meterExecutionSuccess(context)
+        } else if (wasInterrupted) {
+            meterExecutionInterrupted(context)
+        } else {
+            meterExecutionFailure(context)
         }
         saveState(
                 context.jobDetail.jobDataMap,
@@ -183,11 +195,38 @@ class ExecutionJob implements InterruptableJob {
         initMap.jobSchedulerService.afterExecution(initMap.execution.asReference(), context.mergedJobDataMap, initMap.authContext)
     }
 
-    private void markStartExecutionFailure(JobExecutionContext context) {
-        MetricRegistry metricRegistry=context.jobDetail.jobDataMap.get('metricRegistry')
-        if(metricRegistry) {
-            metricRegistry.meter(MetricRegistry.name(ExecutionService.name, 'executionJobStartFailedMeter')).mark()
+
+    private void markMeter(JobExecutionContext context, String name) {
+        MetricRegistry metricRegistry = context.jobDetail.jobDataMap.get('metricRegistry')
+        if (metricRegistry) {
+            metricRegistry.meter(MetricRegistry.name(ExecutionService.name, name)).mark()
         }
+    }
+
+    private void meterStartExecutionFailure(JobExecutionContext context, String additional=null) {
+        if(additional){
+            markMeter(context, "executionJobStartFailed${additional}Meter")
+        }
+        markMeter(context, 'executionJobStartFailedMeter')
+    }
+    private void meterStartExecutionSucceeded(JobExecutionContext context, boolean isjob) {
+        markMeter(context, 'executionJobStartSucceededMeter')
+        //note: legacy meter
+        markMeter(context, 'executionStartMeter')
+        if (isjob) {
+            markMeter(context, 'executionJobStartMeter')
+        } else {
+            markMeter(context, 'executionAdhocStartMeter')
+        }
+    }
+    private void meterExecutionFailure(JobExecutionContext context) {
+        markMeter(context, 'executionJobRunFailedMeter')
+    }
+    private void meterExecutionInterrupted(JobExecutionContext context) {
+        markMeter(context, 'executionJobRunInterruptedMeter')
+    }
+    private void meterExecutionSuccess(JobExecutionContext context) {
+        markMeter(context, 'executionJobRunSucceededMeter')
     }
 
     public void interrupt(){
@@ -371,7 +410,7 @@ class ExecutionJob implements InterruptableJob {
         WorkflowExecutionResult result
     }
     @CompileStatic
-    RunResult executeCommand(RunContext runContext) {
+    RunResult executeCommand(RunContext runContext, JobExecutionContext jobExecutionContext) {
         def success = true
         ExecutionService.AsyncStarted execmap
         try {
@@ -383,15 +422,17 @@ class ExecutionJob implements InterruptableJob {
                 runContext.secureOpts,
                 runContext.secureOptsExposed
             )
-
+            if (!execmap) {
+                //failed to start
+                meterStartExecutionFailure(jobExecutionContext)
+                return null
+            }
         } catch (Exception e) {
             log.error("Execution ${runContext.execution.id} failed to start: " + e.getMessage(), e)
+            meterStartExecutionFailure(jobExecutionContext)
             throw e
         }
-        if (!execmap) {
-            //failed to start
-            return new RunResult(success: false)
-        }
+        meterStartExecutionSucceeded(jobExecutionContext, runContext.scheduledExecution?true:false)
         def timeoutms = 1000 * runContext.timeout
         def shouldCheckTimeout = timeoutms > 0
         long startTime = System.currentTimeMillis()
