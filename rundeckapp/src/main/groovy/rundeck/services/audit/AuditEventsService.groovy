@@ -84,6 +84,19 @@ class AuditEventsService
             .addListenerMap(buildACLFileListeners())
     }
 
+    @Subscriber('rundeck.configuration.change')
+    def onRundeckConfigurationChange(Set<String> keys){
+        if (!keys.any { it.startsWith('framework.plugin.AuditEventListener.') }) {
+            return
+        }
+        LOG.info("Reloading audit plugins configuration")
+        try {
+            installedPlugins = null
+            getListenerPlugins()
+        } catch (Throwable t) {
+            LOG.error("Error reloading audit plugins: " + t.getMessage(), t)
+        }
+    }
     @Subscriber('audit.job.update')
     void publishJobUpdateEvent(JobUpdateAuditEvent event) {
         eventBuilder()
