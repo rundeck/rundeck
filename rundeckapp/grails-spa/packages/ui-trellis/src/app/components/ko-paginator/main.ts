@@ -1,4 +1,4 @@
-import { createApp } from "vue";
+import {createApp, defineComponent} from "vue";
 import Pagination from "../../../library/components/utils/Pagination.vue";
 
 const template = `
@@ -10,7 +10,7 @@ const template = `
     `;
 
 /** Adapt KO Pager with Paginator wrapper */
-const KoPaginator = {
+const KoPaginator = defineComponent({
   template,
   components: { Pagination },
   props: ["pager"],
@@ -39,7 +39,7 @@ const KoPaginator = {
       this.pager.setPage(page - 1);
     },
   },
-};
+});
 
 const mounted = new Map<string, boolean>();
 

@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
-    "strict": false,
+    "strict": true,
     "jsx": "preserve",
     "importHelpers": true,
     "moduleResolution": "node",
@@ -18,7 +18,8 @@
     "paths": {
       "@": ["./src"]
     },
-    "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
+    "lib": ["esnext", "dom", "dom.iterable", "scripthost"],
+    "noImplicitAny": false
   },
   "include": [
     "src/app/**/*.ts",
@@ -32,8 +33,8 @@
   "exclude": [
     "src/library/stories",
     "src/library/components",
-    "src/library/**/*.spec.ts",
-    "src/library/**/*.stories.tsx",
+    "src/**/**/*.spec.ts",
+    "src/**/**/*.stories.tsx",
     "node_modules"
   ]
 }

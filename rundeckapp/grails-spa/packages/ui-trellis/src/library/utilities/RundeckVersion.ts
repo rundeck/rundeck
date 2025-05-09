@@ -247,7 +247,7 @@ export class RundeckVersion {
       data["hexuuid" + i] = partsa[i];
     }
     const partsb = partsa.join("");
-    const sixes = [];
+    const sixes: string[] = [];
     for (let j = 0; (j + 1) * 6 < partsb.length; j++) {
       data["6let" + j] = partsb.substring(j * 6, (j + 1) * 6);
       sixes.push(partsb.substring(j * 6, (j + 1) * 6));

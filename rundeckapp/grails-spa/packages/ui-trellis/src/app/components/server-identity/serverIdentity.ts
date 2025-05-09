@@ -18,7 +18,7 @@ const ServerIdentityComp = defineComponent({
   },
   data() {
     return {
-      serverInfo: null,
+      serverInfo: null as ServerInfo | null,
     };
   },
   mounted() {

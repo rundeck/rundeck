@@ -2,7 +2,7 @@ export class ScmTextUtilities {
     constructor(private readonly translateFunction: (key: string) => string) {
     }
 
-    importDisplayText(importSynchState: string) {
+    importDisplayText(importSynchState: string = '') {
         switch (importSynchState) {
             case "IMPORT_NEEDED":
                 return this.translateFunction(
@@ -22,7 +22,7 @@ export class ScmTextUtilities {
         return importSynchState;
     }
 
-    exportDisplayText(exportSynchState: string) {
+    exportDisplayText(exportSynchState: string = '') {
         switch (exportSynchState) {
             case "EXPORT_NEEDED":
                 return this.translateFunction(
@@ -46,11 +46,11 @@ export class ScmTextUtilities {
         return exportSynchState;
     }
 
-    jobScmDescription(exportSynchState: string, importSynchState: string) {
-        let exportStatus = null;
-        let importStatus = null;
-        let text = null;
-        if (exportSynchState) {
+    jobScmDescription(exportSynchState: string = '', importSynchState: string = '') {
+        let exportStatus: string = '';
+        let importStatus: string = '';
+        let text: string = '';
+        if (exportSynchState.length) {
             exportStatus = exportSynchState;
             switch (exportStatus) {
                 case "EXPORT_NEEDED":
@@ -73,7 +73,7 @@ export class ScmTextUtilities {
                     text = exportStatus;
             }
         }
-        if (importSynchState) {
+        if (importSynchState.length) {
             if (text) {
                 text += ', ';
             } else {
@@ -106,7 +106,7 @@ export class ScmTextUtilities {
         return text;
     }
 
-    jobScmStatusIconClass(jobSynchState: string) {
+    jobScmStatusIconClass(jobSynchState: string = '') {
         switch (jobSynchState) {
             case "EXPORT_NEEDED":
                 return "text-info";
@@ -126,7 +126,7 @@ export class ScmTextUtilities {
         return "text-primary";
     }
 
-    jobScmStatusIcon(jobSynchState: string) {
+    jobScmStatusIcon(jobSynchState: string = '') {
         switch (jobSynchState) {
             case "EXPORT_NEEDED":
             case "CREATE_NEEDED":

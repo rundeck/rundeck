@@ -92,7 +92,7 @@ export function formatDurationHumanize(ms: number) {
     return "";
   }
   const duration = moment.duration(ms);
-  const valarr = [];
+  const valarr: string[] = [];
   if (duration.years() > 0) {
     valarr.push(duration.years() + "y");
   }

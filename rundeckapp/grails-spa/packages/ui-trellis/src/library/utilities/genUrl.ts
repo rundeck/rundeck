@@ -1,5 +1,5 @@
 export function _genUrlQuery(params: any) {
-  let urlparams = [];
+  let urlparams: string[] = [];
   if (typeof params === "string") {
     urlparams = [params];
   } else if (typeof params === "object") {

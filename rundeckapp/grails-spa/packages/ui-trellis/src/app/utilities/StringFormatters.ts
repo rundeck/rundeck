@@ -2,7 +2,8 @@ export function splitAtCapitalLetter(val: string) {
   if (!val) return "";
   val = val.toString();
   if (val.match(/^[A-Z]+$/g)) return val;
-  return val.match(/[A-Z][a-z]+|[0-9]+/g).join(" ");
+  const matches = val.match(/[A-Z][a-z]+|[0-9]+/g);
+  return matches ? matches.join(" ") : val;
 }
 
 export function limitString200ClickForMore(val: string) {

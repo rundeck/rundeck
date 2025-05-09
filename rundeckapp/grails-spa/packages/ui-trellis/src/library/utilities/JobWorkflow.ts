@@ -104,7 +104,7 @@ export class JobWorkflow {
     return false;
   }
 
-  static stepNumberForContextId(ctxid: string) {
+  static stepNumberForContextId(ctxid: string): number|null {
     const m = ctxid.match(/^(\d+)(e)?(@.+)?$/);
     if (m != null && m[1]) {
       return parseInt(m[1]);
@@ -112,7 +112,7 @@ export class JobWorkflow {
     return null;
   }
 
-  static workflowIndexForContextId(ctxid: string) {
+  static workflowIndexForContextId(ctxid: string): number | null {
     const m = this.stepNumberForContextId(ctxid);
     if (m != null) {
       return m - 1;
@@ -167,10 +167,13 @@ export class JobWorkflow {
 
     if (parts == null) return null;
 
-    const newParts = [];
+    const newParts: (number|null)[] = [];
 
     for (const part of parts) {
-      newParts.push(JobWorkflow.stepNumberForContextId(part));
+      const stepNumber = JobWorkflow.stepNumberForContextId(part);
+      if (stepNumber !== null) {
+        newParts.push(stepNumber);
+      }
     }
 
     return newParts.join(JobWorkflow.CONTEXT_STRING_SEPARATOR);
@@ -193,7 +196,7 @@ export class JobWorkflow {
    * internal chars with backslash
    */
   static joinEscaped = function (arr: string[], sep: string) {
-    const res = [];
+    const res: string[] = [];
     for (let i = 0; i < arr.length; i++) {
       if (i > 0) {
         res.push(sep);
@@ -207,7 +210,7 @@ export class JobWorkflow {
    * Escape listed chars in the string with the escape char
    */
   static escapeStr = function (str: string, echar: string, chars: string[]) {
-    const arr = [];
+    const arr: string[] = [];
     for (let i = 0; i < str.length; i++) {
       const c = str.charAt(i);
       if (chars.indexOf(c) >= 0) {
@@ -224,9 +227,9 @@ export class JobWorkflow {
     chars: string[],
     breakchars: string[],
   ) {
-    const arr = [];
+    const arr: string[] = [];
     let e = false;
-    let bchar = null;
+    let bchar: string|null = null;
 
     let i = 0;
     for (; i < input.length; i++) {

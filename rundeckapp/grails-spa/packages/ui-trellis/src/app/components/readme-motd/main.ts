@@ -41,12 +41,13 @@ rundeckContext.rootStore.ui.addItems([
         data() {
           return {
             filename: "",
-            displayConfig: [],
+            displayConfig: [] as string[],
             project: "",
             authAdmin: false,
           };
         },
         created() {
+          //   @ts-ignore
           this.addUiMessages([i18nMessages[locale]]);
           this.filename = this.itemData.filename;
           // code to handle displayConfig

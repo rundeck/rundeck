@@ -4,7 +4,7 @@ const CSSColors =
   );
 
 export function cssForIcon(attrs: any) {
-  const classnames = [];
+  const classnames: string[] = [];
   const fgColor = iconFgCss(attrs, "ui:icon:color");
   if (fgColor) {
     classnames.push(fgColor);
@@ -62,7 +62,7 @@ export function statusIconStyle(attrs: any) {
 }
 
 export function statusIconCss(attrs: any) {
-  const classnames = [];
+  const classnames: string[] = [];
   const fgColor = iconFgCss(attrs, "ui:status:color");
   if (fgColor) {
     classnames.push(fgColor);
@@ -179,7 +179,7 @@ export function glyphiconForName(name: string) {
 }
 
 export function glyphiconBadges(attributes: any): Array<string> {
-  const badges = [];
+  const badges: string[] = [];
   if (attributes["ui:badges"]) {
     const found = attributes["ui:badges"].split(/,\s*/g);
     for (let i = 0; i < found.length; i++) {

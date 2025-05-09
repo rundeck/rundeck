@@ -166,7 +166,7 @@ export function createBasicData({ keepgoing }): BasicData {
 }
 
 export function createStrategyData(workflowData: WorkflowData): PluginConfig {
-  const type = workflowData.strategy;
+  const type :string = workflowData.strategy!;
   const strategyObj = workflowData.pluginConfig?.WorkflowStrategy;
   const config = strategyObj ? strategyObj[type] : {};
   return { type, config };

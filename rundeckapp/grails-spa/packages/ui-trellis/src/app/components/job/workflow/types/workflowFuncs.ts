@@ -16,7 +16,7 @@ import {
  */
 export function commandsToEditData(stepsData: StepsData): StepsEditData {
   return {
-    commands: (stepsData.commands || []).map((cmd) => commandToEditConfig(cmd)),
+    commands: (stepsData.commands || []).map((cmd) => commandToEditConfig(cmd) as CommandEditData),
   };
 }
 
@@ -30,12 +30,13 @@ export function editCommandsToStepsData(editData: StepsEditData): StepsData {
   };
 }
 
-export function commandToEditConfig(cmd: StepData): CommandEditData {
+export function commandToEditConfig(cmd: StepData): Partial<CommandEditData> {
   let editData = {
     description: cmd.description,
     id: mkid(),
     filters: cmd.plugins?.LogFilter || [],
-  } as CommandEditData;
+    nodeStep: false, // Default value to satisfy the type requirement
+  } as Partial<CommandEditData>;
   if (cmd.type) {
     editData.type = cmd.type;
     editData.config = cmd.configuration || {};
@@ -73,9 +74,16 @@ export function commandToEditConfig(cmd: StepData): CommandEditData {
     }
   }
   if(cmd.errorhandler) {
+    const errorHandlerConfig = commandToEditConfig(cmd.errorhandler);
     editData.errorhandler = {
-      ...commandToEditConfig(cmd.errorhandler),
-      keepgoingOnSuccess: cmd.errorhandler.keepgoingOnSuccess
+      ...errorHandlerConfig,
+      keepgoingOnSuccess: cmd.errorhandler.keepgoingOnSuccess,
+      // Ensure config is present as it's required by ErrorHandlerDefinition
+      config: errorHandlerConfig.config || {},
+      // Ensure other required properties are present
+      type: errorHandlerConfig.type || '',
+      id: errorHandlerConfig.id || mkid(),
+      nodeStep: errorHandlerConfig.nodeStep || false
     }
   }
   return editData;

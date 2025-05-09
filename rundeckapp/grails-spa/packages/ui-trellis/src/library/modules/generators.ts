@@ -1,6 +1,6 @@
 export const generateUrl = (url: string, params: any) => {
   return new Promise<string>((resolve) => {
-    let urlparams = [];
+    let urlparams: string[] = [];
     if (typeof params === "string") {
       urlparams = [params];
     } else if (typeof params === "object") {

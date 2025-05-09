@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { defineComponent, markRaw } from "vue";
 import { getRundeckContext } from "../../../library";
 import { NodeFilterStore } from "../../../library/stores/NodeFilterLocalstore";

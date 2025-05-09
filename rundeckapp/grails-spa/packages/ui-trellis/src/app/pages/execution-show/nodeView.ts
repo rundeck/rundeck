@@ -68,7 +68,7 @@ window._rundeck.eventBus.on("ko-exec-show-output", (nodeStep: any) => {
       if (execOutput.completed) {
         reaction.dispose();
         nodeStep.outputLineCount(0);
-        vue._container.remove();
+        vue._container?.remove();
         return;
       } else {
         return;
