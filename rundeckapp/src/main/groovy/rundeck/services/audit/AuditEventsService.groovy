@@ -93,8 +93,11 @@ class AuditEventsService
         try {
             installedPlugins = null
             getListenerPlugins()
-        } catch (Throwable t) {
-            LOG.error("Error reloading audit plugins: " + t.getMessage(), t)
+        } catch (Exception e) {
+            LOG.error("Error reloading audit plugins: " + e.getMessage(), e)
+        } catch (Error err) {
+            LOG.error("Critical error reloading audit plugins: " + err.getMessage(), err)
+            throw err
         }
     }
     @Subscriber('audit.job.update')
