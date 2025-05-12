@@ -592,23 +592,19 @@ class JobsSpec extends SeleniumBase {
         jobShowPage.selectOptionFromOptionListByName(optionListOfNames, selection)
         jobShowPage.waitForElementToBeClickable(jobShowPage.getOptionSelectByName(optionListOfValues))
         jobShowPage.waitForNumberOfElementsToBe(By.name("extra.option.search"), Integer.valueOf(selection))
-        def flag = true
-        (0..(selection-1)).each{
-            if(!jobShowPage.getOptionSelectChildren(optionListOfValues)[it].isSelected()) flag = false
-        }
-        noUnselectedOptions = flag
+        def children = jobShowPage.getOptionSelectChildren(optionListOfValues)
 
         then:
-        jobShowPage.validatePage()
+        children.every{it.isSelected()}
 
         cleanup:
         deleteProject(projectName)
 
         where:
-        selection   | noUnselectedOptions
-        2           | true
-        3           | true
-        4           | true
+        selection   | _
+        2           | _
+        3           | _
+        4           | _
 
     }
 
