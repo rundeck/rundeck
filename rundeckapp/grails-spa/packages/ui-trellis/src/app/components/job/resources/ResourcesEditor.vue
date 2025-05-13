@@ -441,7 +441,7 @@
 </template>
 <script lang="ts">
 import OrchestratorEditor from "../../../components/job/resources/OrchestratorEditor.vue";
-import { _genUrl } from "../../../utilities/genUrl";
+import { _genUrl } from "../../../../library/utilities/genUrl";
 import axios from "axios";
 import InlineValidationErrors from "../../form/InlineValidationErrors.vue";
 import { defineComponent, ref } from "vue";
