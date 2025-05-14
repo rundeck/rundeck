@@ -90,20 +90,19 @@ export class WebhookStore {
     return webhook;
   }
 
-  async save(webhook: Webhook): Promise<AxiosResponse> {
+  async save(webhook: Webhook): Promise<any> {
     const resp = await api.post(
       `project/${webhook.project}/webhook/${webhook.id.toString()}`,
       webhook.toApi(),
     );
 
-    if (resp.status == 200) {
-      webhook.new = false;
-      this.add(webhook);
-    } else {
-      throw {
-        error: `Failed to save webhook: ${resp.data?.message || resp.status}`,
+    if (resp.status !== 200) {
+      return {
+        data: resp.data,
       };
     }
+    webhook.new = false;
+    this.add(webhook);
 
     return resp;
   }
@@ -115,9 +114,7 @@ export class WebhookStore {
     );
     if (resp.status !== 200) {
       return {
-        data: {
-          err: resp.data?.message || `Failed to create webhook: ${resp.status}`,
-        },
+        data: resp.data,
       };
     }
 
@@ -129,15 +126,12 @@ export class WebhookStore {
       `project/${webhook.project}/webhook/${webhook.id.toString()}`,
     );
 
-    if (resp.status == 200) {
-      this.remove(webhook);
-    } else {
+    if (resp.status !== 200) {
       return {
-        data: {
-          err: resp.data?.message || `Failed to delete webhook: ${resp.status}`,
-        },
+        data: resp.data,
       };
     }
+    this.remove(webhook);
 
     return resp;
   }
