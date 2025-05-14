@@ -7,33 +7,36 @@ if (document && document.getElementById("web_ui_token")) {
   const elementById = document.getElementById("web_ui_token");
   token = JSON.parse(elementById!.textContent!);
 }
+export const apiClient = function (apiVersion: number | string) {
+  const api = axios.create({
+    baseURL: rundeckContext.rdBase + "api/" + apiVersion + "/",
+    headers: {
+      "X-Rundeck-ajax": "true",
+      Accept: "application/json",
+    },
+    validateStatus: function (status) {
+      return status >= 200 && status < 500;
+    },
+  });
 
-export const api = axios.create({
-  baseURL: rundeckContext.rdBase + "api/" + rundeckContext.apiVersion + "/",
-  headers: {
-    "X-Rundeck-ajax": "true",
-    Accept: "application/json",
-  },
-  validateStatus: function (status) {
-    return status >= 200 && status < 500;
-  },
-});
-
-api.interceptors.request.use((config) => {
-  config.headers["Accept"] = "application/json";
-  if (config.method !== "get") {
-    config.headers["X-RUNDECK-TOKEN-URI"] = token.URI!;
-    config.headers["X-RUNDECK-TOKEN-KEY"] = token.TOKEN!;
-  }
-  return config;
-});
-api.interceptors.response.use((resp) => {
-  if (
-    resp.headers["x-rundeck-token-key"] &&
-    resp.headers["x-rundeck-token-uri"]
-  ) {
-    token.TOKEN = resp.headers["x-rundeck-token-key"];
-    token.URI = resp.headers["x-rundeck-token-uri"];
-  }
-  return resp;
-});
+  api.interceptors.request.use((config) => {
+    config.headers["Accept"] = "application/json";
+    if (config.method !== "get") {
+      config.headers["X-RUNDECK-TOKEN-URI"] = token.URI!;
+      config.headers["X-RUNDECK-TOKEN-KEY"] = token.TOKEN!;
+    }
+    return config;
+  });
+  api.interceptors.response.use((resp) => {
+    if (
+      resp.headers["x-rundeck-token-key"] &&
+      resp.headers["x-rundeck-token-uri"]
+    ) {
+      token.TOKEN = resp.headers["x-rundeck-token-key"];
+      token.URI = resp.headers["x-rundeck-token-uri"];
+    }
+    return resp;
+  });
+  return api;
+};
+export const api = apiClient(rundeckContext.apiVersion);
