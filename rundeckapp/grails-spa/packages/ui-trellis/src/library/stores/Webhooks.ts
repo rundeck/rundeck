@@ -1,5 +1,4 @@
 import { RundeckClient } from "@rundeck/client";
-import { AxiosResponse } from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { reactive } from "vue";
 import { api } from "../services/api";
