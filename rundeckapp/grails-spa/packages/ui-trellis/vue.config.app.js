@@ -5,6 +5,8 @@ const BUILD_COPYRIGHT = `© ${new Date().getFullYear()} PagerDuty, Inc. All Righ
 
 process.env.VUE_APP_BUILD_COPYRIGHT = BUILD_COPYRIGHT;
 
+const TSCONFIG_PATH = Path.resolve(__dirname, "./tsconfig.app.json");
+
 module.exports = {
   pages: {
     "components/central": { entry: "./src/app/components/central/main.ts" },
@@ -142,6 +144,35 @@ module.exports = {
       .set("options", {
         publicPath: "../../",
       });
+
+    config.module
+      .rule("ts")
+      .use("ts-loader")
+      .merge({
+        options: {
+          configFile: TSCONFIG_PATH,
+          appendTsSuffixTo: [/\.vue$/], // Properly process .vue files with TypeScript
+          transpileOnly: true, // Keep transpileOnly as true, type checking will be done by fork-ts-checker
+          happyPackMode: true, // Enable happyPackMode for better performance with fork-ts-checker
+        },
+      });
+
+    config.plugin("fork-ts-checker").tap((args) => {
+      args[0].typescript.configFile = TSCONFIG_PATH;
+      // Make sure Vue uses the project's TypeScript version
+      args[0].typescript.typescriptPath = require.resolve('typescript');
+      // Match the file patterns from tsconfig.app.json exactly
+      // Remove the hardcoded includes/excludes and use tsconfig.app.json directly
+      // to ensure consistency between tsc and Vue CLI
+      // Enable type checking during development
+      args[0].typescript.mode = "write-references";
+      args[0].typescript.diagnosticOptions = {
+        semantic: true,
+        syntactic: true
+      };
+      // Let the TypeScript configuration in tsconfig.app.json handle which files to check
+      return args;
+    });
   },
   configureWebpack: {
     devtool: process.env.VUE_APP_DEVTOOL,

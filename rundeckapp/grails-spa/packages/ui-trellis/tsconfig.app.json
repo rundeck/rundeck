@@ -14,12 +14,20 @@
     "allowJs": true,
     "baseUrl": ".",
     "skipLibCheck": true,
-    "types": ["webpack-env", "jest", "node"],
+    "types": ["webpack-env", "jest", "node", "vue"], 
     "paths": {
-      "@": ["./src"]
+      "@/*": ["./src/*"],
+      // Add explicit path mappings for imports
+      "src/*": ["./src/*"],
+      "library/*": ["./src/library/*"],
+      "app/*": ["./src/app/*"]
     },
     "lib": ["esnext", "dom", "dom.iterable", "scripthost"],
-    "noImplicitAny": false
+    "noImplicitAny": false,
+    // Add Vue-specific compiler options
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": false
   },
   "include": [
     "src/app/**/*.ts",
@@ -34,7 +42,10 @@
     "src/library/stories",
     "src/library/components",
     "src/**/**/*.spec.ts",
+    "src/**/**/*.test.ts",
     "src/**/**/*.stories.tsx",
-    "node_modules"
+    "node_modules",
+    "src/**/node_modules",
+
   ]
 }
