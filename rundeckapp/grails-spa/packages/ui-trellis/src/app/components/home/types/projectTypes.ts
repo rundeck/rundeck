@@ -83,7 +83,7 @@ interface ProjectActionsItemDropdown {
   text: string;
 }
 
-export {
+export type {
   Project,
   ConfigMeta,
   AuthzMeta,

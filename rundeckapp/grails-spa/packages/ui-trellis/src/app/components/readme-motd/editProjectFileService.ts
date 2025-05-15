@@ -27,7 +27,7 @@ export async function getFileText(project: string, filename: string) {
     } else {
       throw { success: false, message: response.data.message };
     }
-  } catch (error) {
+  } catch (error: any) {
     // If it's a 404, we need to maintain the warning flag
     if (error.response && error.response.status === 404) {
       throw { success: false, warning: true };

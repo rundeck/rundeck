@@ -42,4 +42,4 @@ interface NodeTags {
   tags: NodeTag[] | Tag[];
 }
 
-export { Node, Nodes, NodeSummary, Tag, NodeTag, NodeTags };
+export type { Node, Nodes, NodeSummary, Tag, NodeTag, NodeTags };

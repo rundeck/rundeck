@@ -39,4 +39,4 @@ interface PluginDataFromApi {
   validationErrors?: any;
 }
 
-export { PluginInitialData, Plugin, JobPlugins, PluginDataFromApi };
+export type { PluginInitialData, Plugin, JobPlugins, PluginDataFromApi };
