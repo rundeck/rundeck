@@ -16,7 +16,7 @@ interface JobBrowseList {
   items: JobBrowseItem[];
 }
 
-export {
+export type{
   JobBrowseItem,
   JobBrowseMeta,
   JobBrowseList

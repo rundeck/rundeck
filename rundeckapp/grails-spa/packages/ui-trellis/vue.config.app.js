@@ -161,15 +161,23 @@ module.exports = {
       args[0].typescript.configFile = TSCONFIG_PATH;
       // Make sure Vue uses the project's TypeScript version
       args[0].typescript.typescriptPath = require.resolve('typescript');
-      // Match the file patterns from tsconfig.app.json exactly
-      // Remove the hardcoded includes/excludes and use tsconfig.app.json directly
-      // to ensure consistency between tsc and Vue CLI
-      // Enable type checking during development
-      args[0].typescript.mode = "write-references";
+      
+      // Use stricter checking mode
+      args[0].typescript.mode = "write-tsbuildinfo";
       args[0].typescript.diagnosticOptions = {
         semantic: true,
-        syntactic: true
+        syntactic: true,
+        declaration: true,
+        global: true
       };
+      
+      // Ensure errors are reported immediately
+      args[0].async = false;
+      args[0].issue = { include: [{ file: "**/*.ts" }] };
+      
+      // Report all type errors with helpful formatting
+      args[0].formatter = "codeframe";
+      
       // Let the TypeScript configuration in tsconfig.app.json handle which files to check
       return args;
     });
