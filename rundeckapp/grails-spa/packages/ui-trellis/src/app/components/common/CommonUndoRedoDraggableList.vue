@@ -113,8 +113,8 @@ export default defineComponent({
     return {
       eventBus,
       localEB,
-      internalData: null,
-      originalData: null,
+      internalData: null as any[] | null,
+      originalData: null as any[] | null,
     };
   },
   watch: {
@@ -155,21 +155,25 @@ export default defineComponent({
       });
     },
     operationRemove(index: number) {
+      if (!this.internalData) return undefined;
       const oldval = this.internalData[index];
       this.internalData.splice(index, 1);
       return oldval;
     },
     operationModify(index: number, data: any) {
+      if (!this.internalData) return undefined;
       const orig = this.internalData[index];
       this.internalData[index] = cloneDeep(data);
       return orig;
     },
     operationMove(index: number, dest: number) {
+      if (!this.internalData) return;
       const orig = this.internalData[index];
       this.internalData.splice(index, 1);
       this.internalData.splice(dest, 0, orig);
     },
     operationInsert(index: number, value: any) {
+      if (!this.internalData) return;
       this.internalData.splice(index, 0, cloneDeep(value));
     },
     operation(op: Operation, data: any) {
@@ -185,8 +189,8 @@ export default defineComponent({
     },
     doUndo(change: ChangeEvent) {
       this.operation(change.undo, {
-        index: change.dest >= 0 ? change.dest : change.index,
-        dest: change.index >= 0 ? change.index : change.dest,
+        index: change.dest !== undefined && change.dest >= 0 ? change.dest : change.index,
+        dest: change.index !== undefined && change.index >= 0 ? change.index : change.dest,
         value: change.orig || change.value,
       });
       this.wasChanged();

@@ -153,7 +153,6 @@ module.exports = {
           configFile: TSCONFIG_PATH,
           appendTsSuffixTo: [/\.vue$/], // Properly process .vue files with TypeScript
           transpileOnly: true, // Keep transpileOnly as true, type checking will be done by fork-ts-checker
-          happyPackMode: true, // Enable happyPackMode for better performance with fork-ts-checker
         },
       });
 
@@ -162,23 +161,10 @@ module.exports = {
       // Make sure Vue uses the project's TypeScript version
       args[0].typescript.typescriptPath = require.resolve('typescript');
       
-      // Use stricter checking mode
-      args[0].typescript.mode = "write-tsbuildinfo";
-      args[0].typescript.diagnosticOptions = {
-        semantic: true,
-        syntactic: true,
-        declaration: true,
-        global: true
-      };
-      
-      // Ensure errors are reported immediately
-      args[0].async = false;
-      args[0].issue = { include: [{ file: "**/*.ts" }] };
-      
-      // Report all type errors with helpful formatting
+      // Simplified configuration - remove redundant options
+      // The fork-ts-checker-webpack-plugin already uses these values by default
       args[0].formatter = "codeframe";
       
-      // Let the TypeScript configuration in tsconfig.app.json handle which files to check
       return args;
     });
   },
