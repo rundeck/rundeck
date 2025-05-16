@@ -25,18 +25,25 @@ class JettyCompatibleSpringSecurityPasswordEncoder implements PasswordEncoder {
     String getUsername() {
         WebUtils.retrieveGrailsWebRequest().getCurrentRequest().getParameter("j_username")
     }
+
     @Override
     String encode(final CharSequence rawPassword) {
         //does not encode password
         return rawPassword
     }
+
     @Override
     boolean matches(final CharSequence rawPass, final String encPass) {
-        if(!encPass || !rawPass) return false
-        if(encPass.startsWith("MD5:")) return Credential.MD5.digest(rawPass.toString()) == encPass
-        if(encPass.startsWith("OBF:")) return Password.obfuscate(rawPass.toString()) == encPass
-        if(encPass.startsWith("CRYPT:")) return Credential.Crypt.crypt(username, rawPass.toString()) == encPass
-        if(encPass.startsWith("BCRYPT:")) return new BcryptCredentialProvider().getCredential(encPass).check(rawPass)
+        if (!encPass || !rawPass) return false
+        if (encPass.startsWith("MD5:")) return Credential.MD5.digest(rawPass.toString()) == encPass
+        if (encPass.startsWith("OBF:")) return Password.obfuscate(rawPass.toString()) == encPass
+        if (encPass.startsWith("CRYPT:")) return Credential.Crypt.crypt(username, rawPass.toString()) == encPass
+        if(encPass.startsWith("BCRYPT:")) {
+            // Applying 72-character limit only for BCrypt passwords
+            if (rawPass.length() > 72) return false
+            return new BcryptCredentialProvider().getCredential(encPass).check(rawPass)
+        }
         return encPass == rawPass
     }
 }
+
