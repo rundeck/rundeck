@@ -44,8 +44,10 @@
       type="primary"
       @click="openNewField()"
       data-testid="add-field-button"
-      >{{ $t("message_addField") }}</btn
+      class="col-sm-offset-2"
     >
+      {{ $t("message_addField") }}
+    </btn>
 
     <modal
       id="modal-demo"

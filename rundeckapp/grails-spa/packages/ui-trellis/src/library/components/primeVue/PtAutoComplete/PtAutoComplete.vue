@@ -182,52 +182,49 @@ export default defineComponent({
 </script>
 
 <style lang="scss">
-:root[data-color-theme="light"] {
+.p-autocomplete {
   --input-bg-color: var(--colors-white);
   --font-color: var(--colors-gray-900);
   --input-outline-color: var(--colors-gray-500);
   --input-focus-color: var(--colors-gray-300);
-}
-
-.p-autocomplete-overlay {
-  z-index: 1200 !important;
-  color: var(--font-color);
-  border: none !important;
-  border: 1px solid var(--gray-input-outline);
-}
-
-.p-autocomplete-list {
-  padding: 0;
-  margin: 0;
-  min-height: 40px;
-
-  li {
-    min-height: 40px;
-    display: flex;
-    align-items: center;
-  }
-}
-
-.p-autocomplete-option {
-  color: var(--font-color);
-}
-
-.p-autocomplete-option:not(.p-autocomplete-option-selected):not(.p-disabled).p-focus {
-  background-color: var(--input-focus-color);
-}
-
-.p-autocomplete-option-selected {
-  background-color: var(--input-focus-color);
-}
-
-.p-autocomplete-list-container {
-  background-color: var(--input-bg-color);
-  border: 1px solid var(--gray-input-outline);
-  border-radius: var(--p-autocomplete-overlay-border-radius);
-}
-
-.p-autocomplete {
   width: 100%;
+
+  &-overlay {
+    z-index: 1200 !important;
+    color: var(--font-color);
+    border: none !important;
+    border: 1px solid var(--gray-input-outline);
+  }
+
+  &-list {
+    padding: 0;
+    margin: 0;
+    min-height: 40px;
+
+    li {
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+    }
+
+    &-container {
+      background-color: var(--input-bg-color);
+      border: 1px solid var(--gray-input-outline);
+      border-radius: var(--p-autocomplete-overlay-border-radius);
+    }
+  }
+
+  &-option {
+    color: var(--font-color);
+
+    &:not(.p-autocomplete-option-selected):not(.p-disabled).p-focus {
+      background-color: var(--input-focus-color);
+    }
+
+    &-selected{
+      background-color: var(--input-focus-color);
+    }
+  }
 
   .p-inputtext {
     background-color: var(--input-bg-color);
