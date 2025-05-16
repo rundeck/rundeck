@@ -134,7 +134,7 @@ class ExecutionSpec extends BaseContainer {
         cleanup:
             def retrieveExecutions = {->
                 try {
-                    return ExecutionUtils.Retrievers.executionsForProject(client, projectName).get()
+                    return ExecutionUtils.Retrievers.executionsForProjectClosure(client, projectName).call()
                 } catch (JsonParseException e) {
                     // if request doesnt return an expected json, return null to retry
                     e.printStackTrace()
