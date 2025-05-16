@@ -15,6 +15,7 @@ export class JobPageStore {
   bulkEditMode: boolean = false;
   loaded: boolean = false;
   jobAuthz: { [key: string]: boolean } = {};
+  projTypesAuthz: { [key: string]: boolean } = {};
   projAuthz: { [key: string]: boolean } = {};
   executionMode: boolean = false;
   projectExecutionsEnabled: boolean = false;
@@ -110,6 +111,9 @@ export class JobPageStore {
     const projAuthz = this.findMeta("authz");
     if (projAuthz?.types?.job && typeof projAuthz.types.job === "object") {
       this.jobAuthz = projAuthz?.types?.job;
+    }
+    if (projAuthz?.types && typeof projAuthz.types === "object") {
+      this.projTypesAuthz = projAuthz?.types;
     }
     if (projAuthz?.project && typeof projAuthz.project === "object") {
       this.projAuthz = projAuthz?.project;
