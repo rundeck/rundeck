@@ -5,7 +5,7 @@
         v-if="prop.defaultValue !== 'true'"
         class="col-xs-10 col-xs-offset-2"
       >
-        <div class="checkbox">
+        <div class="checkbox reversed">
           <input
             v-if="!renderReadOnly"
             :id="`${rkey}prop_` + pindex"
@@ -23,39 +23,22 @@
           'col-sm-2 control-label input-sm ' + (prop.required ? 'required' : '')
         "
         :for="`${rkey}prop_` + pindex"
-        >{{ prop.title }}</label
       >
+        {{ prop.title }}
+      </label>
       <div v-if="prop.defaultValue === 'true'" class="col-xs-10">
-        <label :for="`${rkey}prop_true_` + pindex" class="radio-inline">
+        <div class="checkbox reversed">
           <input
-            v-if="!renderReadOnly"
-            :id="`${rkey}prop_true_` + pindex"
-            v-model="currentValue"
-            type="radio"
-            :name="`${rkey}prop_` + pindex"
-            value="true"
+              :id="`${rkey}prop_` + pindex"
+              v-model="currentValue"
+              type="checkbox"
+              :name="`${rkey}prop_` + pindex"
+              value="true"
+              :disabled="renderReadOnly"
           />
-          <input
-            v-else
-            :id="`${rkey}prop_true_` + pindex"
-            v-model="currentValue"
-            type="radio"
-            :name="`${rkey}prop_` + pindex"
-            value="true"
-            :disabled="true"
-          />
-          <plugin-prop-val :prop="prop" :value="'true'" />
-        </label>
-        <label :for="`${rkey}prop_false_` + pindex" class="radio-inline">
-          <input
-            :id="`${rkey}prop_false_` + pindex"
-            v-model="currentValue"
-            type="radio"
-            :name="`${rkey}prop_` + pindex"
-            value="false"
-          />
-          <plugin-prop-val :prop="prop" :value="'false'" />
-        </label>
+<!--          need empty label due to css-->
+          <label :for="`${rkey}prop_` + pindex" :aria-label="prop.title"></label>
+        </div>
       </div>
     </template>
     <template
@@ -656,5 +639,32 @@ export default defineComponent({
 .longlist {
   max-height: 500px;
   overflow-y: auto;
+}
+
+.form-horizontal .checkbox.reversed {
+  padding-left: 0;
+  padding-right: 20px;
+  display: inline-flex;
+
+  input[type="checkbox"] {
+    right: 0;
+    margin-left: initial;
+  }
+
+  label {
+    padding-left: 0;
+    &:not(:empty) {
+      padding-right: 10px;
+    }
+
+
+    &:before,
+    &:after{
+      margin-right: -20px;
+      margin-left: 0;
+      left: initial;
+      right: 0;
+    }
+  }
 }
 </style>
