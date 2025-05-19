@@ -74,7 +74,9 @@ class GormStoredEventProvider implements StoredEventProvider {
             if (query.dateFrom && !query.dateTo)
                 ge('lastUpdated', query.dateFrom)
 
-            max(query.maxResults)
+            if (query.maxResults != null && query.maxResults > 0) {
+                max(query.maxResults)
+            }
             if (query.offset)
                 offset(query.offset)
 
