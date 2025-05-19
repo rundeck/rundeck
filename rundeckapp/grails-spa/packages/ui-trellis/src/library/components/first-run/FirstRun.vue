@@ -41,7 +41,7 @@
         </div>
       </div>
       <div class="col-md-3 bg-white rounded p-6 shadow">
-        <div class="stickers-section">
+        <div class="welcome-section">
           <div class="l1">First Steps</div>
           <div class="l2">to Learn</div>
           <div class="l3">Automation</div>
@@ -142,7 +142,7 @@ export default defineComponent({
     }
   }
 }
-.stickers-section {
+.welcome-section {
   padding: 12px 24px;
   text-align: center;
   .l1 {
