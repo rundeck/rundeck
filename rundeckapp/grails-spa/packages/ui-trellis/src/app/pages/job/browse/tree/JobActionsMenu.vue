@@ -203,9 +203,6 @@ export default defineComponent({
     authz(): object | undefined {
       return this.findJobMeta("authz");
     },
-    projAuthz(): object | undefined {
-      return this.jobPageStore.projTypesAuthz;
-    },
     authProjEventRead(): boolean {
       return this.jobPageStore.projTypesAuthz?.event?.read || false;
     },
