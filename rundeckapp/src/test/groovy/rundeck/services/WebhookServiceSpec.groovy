@@ -18,6 +18,8 @@ package rundeck.services
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.config.Features
+import com.dtolabs.rundeck.core.event.EventImpl
+import com.dtolabs.rundeck.core.event.EventQueryImpl
 import com.dtolabs.rundeck.core.event.EventQueryResultImpl
 import com.dtolabs.rundeck.core.event.EventStoreService
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
@@ -47,6 +49,7 @@ import org.rundeck.app.data.providers.GormWebhookDataProvider
 import org.rundeck.app.data.providers.storedEvent.GormStoredEventProvider
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
+import org.rundeck.app.spi.SimpleServiceProvider
 import org.rundeck.app.util.spi.AuthTokenManager
 import org.springframework.context.MessageSource
 import rundeck.StoredEvent
@@ -100,7 +103,6 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         service.storageService = Mock(MockStorageService)
 
 
-        when:
         def mockPropertyResolver = Mock(PropertyResolver)
         def webhookProviderService = Mock(PluggableProviderService)
 
@@ -132,6 +134,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         def request = Mock(HttpServletRequest) {
             getHeader("X-Rundeck-TestHdr") >> { "Hdr1" }
         }
+        when:
         def responder = service.processWebhook("test-webhook-event","{}",data,mockUserAuth,request)
 
         then:
@@ -141,7 +144,100 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         responder instanceof DefaultWebhookResponder
 
     }
+    def "process webhook event store usage"() {
+        given:
+        def mockUserAuth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> { "webhookUser" }
+            getRoles() >> { ["webhook","test"] }
+        }
+        WebhookDataImpl data = new WebhookDataImpl()
+        data.webhook = "testhook"
+        data.sender = "asender"
+        data.contentType = "text/plain"
+        data.data = new ByteArrayInputStream("my event data".bytes)
+        service.storageService = Mock(MockStorageService)
 
+
+        def mockPropertyResolver = Mock(PropertyResolver)
+        def webhookProviderService = Mock(PluggableProviderService)
+
+        service.featureService = Mock(FeatureService) {
+            featurePresent(Features.EVENT_STORE) >> true
+        }
+
+        def scopedService=Mock(EventStoreService)
+        service.gormEventStoreService = Mock(EventStoreService) {
+            scoped(_,_) >> scopedService
+        }
+
+        service.rundeckAuthorizedServicesProvider = Mock(AuthorizedServicesProvider) {
+            getServicesWith(_) >> new SimpleServiceProvider([:])
+        }
+        service.frameworkService = Mock(MockFrameworkService) {
+            getFrameworkPropertyResolver(_,_) >> { mockPropertyResolver }
+        }
+        service.rundeckPluginRegistry = Mock(PluginRegistry) {
+            createPluggableService(WebhookEventPlugin) >> {
+                webhookProviderService
+            }
+        }
+
+        TestLoggingWebhookEventPlugin testPlugin = new TestLoggingWebhookEventPlugin()
+
+        service.pluginService = Mock(MockPluginService) {
+            configurePlugin("test-webhook-event", _, _,_) >> { new ConfiguredPlugin<WebhookEventPlugin>(testPlugin, [:] ) }
+        }
+        def request = Mock(HttpServletRequest) {
+            getHeader("X-Rundeck-TestHdr") >> { "Hdr1" }
+        }
+        when:
+        def responder = service.processWebhook("test-webhook-event","{}",data,mockUserAuth,request)
+
+        then:
+        1 * service.storageService.storageTreeWithContext(_) >> Mock(KeyStorageTree)
+        responder instanceof DefaultWebhookResponder
+
+        1 * scopedService.query({
+            it.queryType == StoredEventQueryType.DELETE
+            it.projectName == 'aproj'
+            it.topic == 'webhook test'
+            it.subsystem == 'blah'
+        })>> new EventQueryResultImpl(totalCount: 1,events:[])
+        1*scopedService.storeEvent({
+            it.projectName == 'aproj'
+            it.topic == 'webhook test'
+            it.subsystem == 'blah'
+            it.meta.data == "my event data"
+            it.meta.headers["X-Rundeck-TestHdr"] == "Hdr1"
+        })
+    }
+
+    class TestLoggingWebhookEventPlugin implements WebhookEventPlugin {
+
+        @Override
+        List<String> getRequestHeadersToCopy() {
+            return ["X-Rundeck-TestHdr"]
+        }
+
+        @Override
+        WebhookResponder onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
+
+            def svc = context.services.getService(EventStoreService)
+            svc.storeEvent(new EventImpl(
+                projectName: 'aproj',
+                topic: 'webhook test',
+                subsystem: 'blah',
+                meta: [data: data.data.text, headers: data.headers]
+            ))
+            svc.query(new EventQueryImpl(
+                projectName: 'aproj',
+                topic: 'webhook test',
+                subsystem: 'blah',
+                queryType: StoredEventQueryType.DELETE
+            ))
+            return null
+        }
+    }
     class TestWebhookEventPlugin implements WebhookEventPlugin {
         WebhookData captured
 
