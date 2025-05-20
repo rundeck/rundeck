@@ -48,8 +48,7 @@ class WebhookService {
     private static final ObjectMapper mapper = new ObjectMapper()
     private static final String KEY_STORE_PREFIX = "\${KS:"
     private static final String END_MARKER = "}"
-    static final String TOPIC_RECENT_EVENTS = 'webhook:events:recent'
-    static final String TOPIC_DEBUG_EVENTS = 'webhook:events:debug'
+    static final String TOPIC_EVENTS_BASE = 'webhook:events'
 
     WebhookDataProvider webhookDataProvider
 
@@ -101,9 +100,7 @@ class WebhookService {
      * @param webhook
      */
     def deleteWebhookEventsData(RdWebhook webhook) {
-        Long queryResultForDebug = deleteEvents(TOPIC_DEBUG_EVENTS, webhook)
-        Long queryResultForRecentEvents = deleteEvents(TOPIC_RECENT_EVENTS, webhook)
-        def totalAmountOfRowsAffected = queryResultForDebug + queryResultForRecentEvents
+        Long totalAmountOfRowsAffected = deleteEvents(TOPIC_EVENTS_BASE+':*', webhook)
         log.info("${totalAmountOfRowsAffected} events deleted related to the webhook: ${webhook.name}")
     }
 

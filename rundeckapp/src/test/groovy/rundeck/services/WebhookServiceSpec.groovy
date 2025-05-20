@@ -18,6 +18,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.config.Features
+import com.dtolabs.rundeck.core.event.EventQueryResultImpl
 import com.dtolabs.rundeck.core.event.EventStoreService
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
@@ -41,6 +42,7 @@ import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
 import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
 import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
+import org.rundeck.app.data.model.v1.storedevent.StoredEventQueryType
 import org.rundeck.app.data.providers.GormWebhookDataProvider
 import org.rundeck.app.data.providers.storedEvent.GormStoredEventProvider
 import org.rundeck.app.spi.AuthorizedServicesProvider
@@ -778,18 +780,11 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         Webhook.countByProject(project) == 0
     }
 
-    def "delete webhook stored event data in DB"(){
+    def "delete webhook events data"(){
         setup:
         String project = "prj1"
-        String dbSubsystem = 'webhooks'
         String hookName1 = "hook1"
         String hookUuid1 = "7903a5ae-f30a-42b2-99e1-e0e17f00ba0c"
-        String hookName2 = "hook2"
-        String hookUuid2 = "a487aa9f-92ea-4c67-9f85-1375d43f7716"
-        String eventTopicDebugForHook1 = "${WebhookService.TOPIC_DEBUG_EVENTS}:${hookUuid1}"
-        String eventTopicRecentEventsForHook1 = "${WebhookService.TOPIC_RECENT_EVENTS}:${hookUuid1}"
-        String eventTopicDebugForHook2 = "${WebhookService.TOPIC_DEBUG_EVENTS}:${hookUuid2}"
-        String eventTopicRecentEventsForHook2 = "${WebhookService.TOPIC_RECENT_EVENTS}:${hookUuid2}"
         String authToken = "123"
         String eventPlugin = "advanced-run-job"
         // We create 2 webhooks with advanced job run as a plugin provider
@@ -799,47 +794,21 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
                 eventPlugin: eventPlugin,
                 uuid: hookUuid1
         ).save()
-        def hook2 = new Webhook(name:hookName2,
-                project:project,
-                authToken: authToken,
-                eventPlugin: eventPlugin,
-                uuid: hookUuid2
-        ).save()
-        // We create two events attached to the webhooks in DB
-        service.eventStoreService.storeEventBatch(Arrays.asList(
-                [
-                        projectName: project,
-                        subsystem: dbSubsystem,
-                        topic: eventTopicDebugForHook1,
-                ] as Evt,
-                [
-                        projectName: project,
-                        subsystem: dbSubsystem,
-                        topic: eventTopicRecentEventsForHook1,
-                ] as Evt,
-                [
-                        projectName: project,
-                        subsystem: dbSubsystem,
-                        topic: eventTopicDebugForHook2,
-                ] as Evt,
-                [
-                        projectName: project,
-                        subsystem: dbSubsystem,
-                        topic: eventTopicRecentEventsForHook2,
-                ] as Evt
-        ))
+        service.eventStoreService = Mock(EventStoreService)
 
         when:
-        // First we delete the stored events for one particular webhook (2 rows affected)
         service.deleteWebhookEventsData(hook1)
-        // Then we check if the other webhook still have its events stored (2 rows count)
-        def eventStillInDb = service.eventStoreService.query([
-                projectName: project,
-                topic: "*:*:*:${hookUuid2}"
-        ] as EvtQuery)
 
         then:
-        eventStillInDb.totalCount == 2
+        1 * service.eventStoreService.query(
+            {
+                it.queryType == StoredEventQueryType.DELETE
+                it.subsystem == 'webhooks'
+                it.projectName == project
+                it.topic == "webhook:events:*:${hookUuid1}"
+            }
+        )>> new EventQueryResultImpl(totalCount:2,events:[])
+        0 * service.eventStoreService.query(*_)
     }
 
     interface MockUserService {
