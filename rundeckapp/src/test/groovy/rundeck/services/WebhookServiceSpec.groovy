@@ -890,13 +890,13 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
                 eventPlugin: eventPlugin,
                 uuid: hookUuid1
         ).save()
-        service.eventStoreService = Mock(EventStoreService)
+        service.gormEventStoreService = Mock(EventStoreService)
 
         when:
         service.deleteWebhookEventsData(hook1)
 
         then:
-        1 * service.eventStoreService.query(
+        1 * service.gormEventStoreService.query(
             {
                 it.queryType == StoredEventQueryType.DELETE
                 it.subsystem == 'webhooks'
@@ -904,7 +904,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
                 it.topic == "webhook:events:*:${hookUuid1}"
             }
         )>> new EventQueryResultImpl(totalCount:2,events:[])
-        0 * service.eventStoreService.query(*_)
+        0 * service.gormEventStoreService.query(*_)
     }
 
     interface MockUserService {
