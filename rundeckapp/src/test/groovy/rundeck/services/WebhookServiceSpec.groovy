@@ -86,7 +86,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         }
         eventStoreService.frameworkService = framework
         eventStoreService.storedEventProvider = new GormStoredEventProvider()
-        service.eventStoreService = eventStoreService
+        service.gormEventStoreService = eventStoreService
         service.rundeckAuthTokenManagerService = Mock(RundeckAuthTokenManagerService)
     }
     def "process webhook"() {
