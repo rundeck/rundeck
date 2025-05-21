@@ -57,7 +57,7 @@ class WebhookService {
     WebhookDataProvider webhookDataProvider
 
     @Autowired
-    EventStoreService eventStoreService
+    EventStoreService gormEventStoreService
     def rundeckPluginRegistry
     def pluginService
     def frameworkService
@@ -66,7 +66,6 @@ class WebhookService {
     def userService
     def rundeckAuthTokenManagerService
     def storageService
-    def gormEventStoreService
     def featureService
 
     def processWebhook(String pluginName, String pluginConfigJson, WebhookDataImpl data, UserAndRolesAuthContext authContext, HttpServletRequest request) {
@@ -136,7 +135,7 @@ class WebhookService {
      * @param webhook
      */
     private def deleteEvents(String eventTopic, RdWebhook webhook) {
-        EventQueryResult queryResult = eventStoreService.query(new EvtQuery(
+        EventQueryResult queryResult = gormEventStoreService.query(new EvtQuery(
                 queryType: StoredEventQueryType.DELETE,
                 projectName: webhook.project,
                 subsystem: "webhooks",
