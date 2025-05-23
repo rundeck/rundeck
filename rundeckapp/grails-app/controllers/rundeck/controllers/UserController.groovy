@@ -602,6 +602,7 @@ For APIv27+, the results will contain additional fields:
                 obj.email = it.email
                 obj.created = it.dateCreated
                 obj.updated = it.lastUpdated
+                obj.lastLogin= it.lastLogin
                 def lastExec = Execution.lastExecutionByUser(it.login).list()
                 if(lastExec?.size()>0){
                     obj.lastJob = lastExec.get(0).dateStarted
@@ -627,6 +628,7 @@ For APIv27+, the results will contain additional fields:
                             if(request.api_version >= ApiVersions.V27){
                                 created(u.created)
                                 updated(u.updated)
+                                lastLogin(u.lastLogin)
                                 lastJob(u.lastJob)
                                 tokens(u.tokens)
                             }
