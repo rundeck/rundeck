@@ -544,6 +544,7 @@ Since: v21''',
 For APIv27+, the results will contain additional fields:
 * `created` creation date
 * `updated` updated date
+* `lastLogin` last login time
 * `lastJob` last job execution
 * `tokens` number of API tokens
 ''',
@@ -557,6 +558,7 @@ For APIv27+, the results will contain additional fields:
     "email":"user@server.com",
     "created": "2017-10-01T09:00:20Z",
     "updated": "2018-08-24T13:53:02Z",
+    "last_login": "2024-03-01T17:00:00Z",
     "lastJob": "2018-08-28T13:31:00Z",
     "tokens": 1
 },
@@ -567,6 +569,7 @@ For APIv27+, the results will contain additional fields:
     "email":"admin@server.com",
     "created": "2016-07-17T18:42:00Z",
     "updated": "2018-08-24T13:53:00Z",
+    "last_login": "2024-03-01T17:00:00Z",
     "lastJob": "2018-08-28T13:31:00Z",
     "tokens": 6
 }]''')
@@ -602,6 +605,7 @@ For APIv27+, the results will contain additional fields:
                 obj.email = it.email
                 obj.created = it.dateCreated
                 obj.updated = it.lastUpdated
+                obj.lastLogin= it.lastLogin
                 def lastExec = Execution.lastExecutionByUser(it.login).list()
                 if(lastExec?.size()>0){
                     obj.lastJob = lastExec.get(0).dateStarted
@@ -627,6 +631,7 @@ For APIv27+, the results will contain additional fields:
                             if(request.api_version >= ApiVersions.V27){
                                 created(u.created)
                                 updated(u.updated)
+                                lastLogin(u.lastLogin)
                                 lastJob(u.lastJob)
                                 tokens(u.tokens)
                             }
