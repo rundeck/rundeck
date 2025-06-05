@@ -17,15 +17,25 @@ class ScmStatusBadge {
     static final String tooltipsAttribute = "title"
 
     ScmStatusBadge(JobShowPage jobShowPage){
-        new WebDriverWait(jobShowPage.driver, Duration.ofSeconds(10)).until(
-                ExpectedConditions.not(
-                        ExpectedConditions.textToBe(elementSelector, loadingFromServerText)
-                )
-        )
-
+        checkStatusBadge(jobShowPage)
         WebElement statusBadge = jobShowPage.driver.findElement(elementSelector)
         this.tooltips = statusBadge.getAttribute(tooltipsAttribute)
         this.badgeText = statusBadge.getText()
         this.iconClasses = statusBadge.findElement(By.tagName("i")).getAttribute("class").split(" ")
+    }
+
+    void checkStatusBadge(JobShowPage jobShowPage, boolean withRetry = true){
+        try{
+            new WebDriverWait(jobShowPage.driver, Duration.ofSeconds(10)).until(
+                    ExpectedConditions.not(
+                            ExpectedConditions.textToBe(elementSelector, loadingFromServerText)
+                    )
+            )
+        }catch(Exception e){
+            if(withRetry){
+                jobShowPage.driver.navigate().refresh()
+                checkStatusBadge(jobShowPage, false)
+            }
+        }
     }
 }
