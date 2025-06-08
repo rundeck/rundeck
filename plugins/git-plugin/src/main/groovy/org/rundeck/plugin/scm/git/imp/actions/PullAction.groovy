@@ -33,7 +33,7 @@ import org.rundeck.plugin.scm.git.GitImportPlugin
 /**
  * Created by greg on 9/28/15.
  */
-class PullAction extends BaseAction implements GitImportAction {
+class PullAction extends BaseAction implements GitImportAction<GitImportPlugin> {
     PullAction(final String id, final String title, final String description) {
         super(id, title, description)
     }
