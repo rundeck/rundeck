@@ -95,6 +95,16 @@ class ExecutionUtils {
          * @return a closure that lists all executions for the project
          */
         static final Supplier<List<Execution>> executionsForProject(RdClient client, String projectName, String queryString = null) {
+            return executionsForProjectClosure(client, projectName, queryString) as Supplier
+        }
+        /**
+         * Returns a closure that retrieves executions for a project.
+         * @param client
+         * @param projectName name of the project or * for all projects
+         * @param queryString query string to append to the request
+         * @return a closure that lists all executions for the project
+         */
+        static final Closure<List<Execution>> executionsForProjectClosure(RdClient client, String projectName, String queryString = null) {
             { ->
                 def execsResponse = client.doGetAcceptAll("/project/${projectName}/executions" + (queryString ? "?${queryString}" : ""))
                 JobExecutionsResponse parsedResponse = OBJECT_MAPPER.readValue(execsResponse.body().string(), JobExecutionsResponse.class)
