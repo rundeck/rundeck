@@ -10,8 +10,8 @@ class JobSchedulesService implements SchedulesManager {
     SchedulesManager rundeckJobSchedulesManager
 
     @Override
-    Map handleScheduleDefinitions(String jobUUID, boolean isUpdate) {
-        return rundeckJobSchedulesManager.handleScheduleDefinitions(jobUUID, isUpdate)
+    Map handleScheduleDefinitions(String jobUUID, boolean isUpdate, boolean pending) {
+        return rundeckJobSchedulesManager.handleScheduleDefinitions(jobUUID, isUpdate, pending)
     }
 
     @Override
@@ -79,13 +79,13 @@ class LocalJobSchedulesManager implements SchedulesManager {
     Scheduler quartzScheduler
 
     @Override
-    Map handleScheduleDefinitions(String jobUUID, boolean isUpdate) {
+    Map handleScheduleDefinitions(String jobUUID, boolean isUpdate, boolean pending) {
         def se = ScheduledExecution.findByUuid(jobUUID)
         def jobDetail = scheduledExecutionService.createJobDetail(se, se.generateJobScheduledName(), se.generateJobGroupName())
         def trigger = createTriggerBuilder(se)
         jobDetail.getJobDataMap().put("bySchedule", true)
         Date nextTime
-        nextTime = scheduledExecutionService.registerOnQuartz(jobDetail, [trigger], false, se)
+        nextTime = scheduledExecutionService.registerOnQuartz(jobDetail, [trigger], false, se, pending)
         return [nextTime: nextTime]
     }
 
