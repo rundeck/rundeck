@@ -29,4 +29,5 @@ class StoredJobChangeEvent implements JobChangeEvent{
     JobRevReference jobReference
     JobReference originalJobReference
     ScheduledExecution job
+    String originalJobDefinitionXml
 }
