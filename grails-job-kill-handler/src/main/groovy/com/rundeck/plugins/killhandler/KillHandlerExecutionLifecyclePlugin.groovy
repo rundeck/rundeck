@@ -66,7 +66,7 @@ This operation will use the 'kill' and 'pkill' for Unix and 'taskkill' for Windo
                     if (nodePidData && nodePidData.pids) {
                         def commaPidList = nodePidData.pids.join(",")
                         event.executionLogger.log(Constants.DEBUG_LEVEL, "Killing tracked processes on node '${node.nodename}': ${commaPidList}")
-                        String cmdKill = "kill -9 " + nodePidData.pids.join(" ")
+                        String cmdKill = "pkill -P " + nodePidData.pids.join(" ")
 
                         if (OSFAMILY_WINDOWS.equalsIgnoreCase(node.osFamily)) {
                             cmdKill = "taskkill /PID " + nodePidData.pids.join(" ") + " /F"
