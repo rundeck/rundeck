@@ -760,20 +760,20 @@ beans={
 
     //list of plugin classes to generate factory beans for
     [
-            //log converters
-            JsonConverterPlugin,
-            PropertiesConverterPlugin,
-            HTMLTableViewConverterPlugin,
-            MarkdownConverterPlugin,
-            TabularDataConverterPlugin,
-            HTMLViewConverterPlugin,
-            //log filters
-            MaskPasswordsFilterPlugin,
-            MaskLogOutputByRegexPlugin,
-            SimpleDataFilterPlugin,
-            RenderDatatypeFilterPlugin,
-            QuietFilterPlugin,
-            HighlightFilterPlugin
+        //log converters
+        JsonConverterPlugin,
+        PropertiesConverterPlugin,
+        HTMLTableViewConverterPlugin,
+        MarkdownConverterPlugin,
+        TabularDataConverterPlugin,
+        HTMLViewConverterPlugin,
+        //log filters
+        MaskPasswordsFilterPlugin,
+        MaskLogOutputByRegexPlugin,
+        KeyValueDataLogFilterPlugin,
+        RenderDatatypeFilterPlugin,
+        QuietFilterPlugin,
+        HighlightFilterPlugin
     ].each {
         "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
     }
