@@ -28,8 +28,9 @@ class ActivitySpec extends SeleniumBase {
             assert !driver.currentUrl.contains('/user/error')
         when: "view activity page"
             def activityPage = go ActivityPage, TEST_PROJECT
+            activityPage.waitForActivityRowsPresent()
         then: "activity page shows 2 rows"
-            assert activityPage.getActivityRows().size() == 2
+            activityPage.getActivityRows().size() == 2
     }
 
     def "activity page with default max #max shows #expect rows"() {
@@ -41,8 +42,10 @@ class ActivitySpec extends SeleniumBase {
             def activityPage = page ActivityPage
             activityPage.params = "?max=${max}"
             activityPage.loadActivityPageForProject(TEST_PROJECT)
+            activityPage.go()
+            activityPage.waitForActivityRowsPresent()
         then: "activity page shows 2 rows"
-            assert activityPage.getActivityRows().size() == expect
+            activityPage.getActivityRows().size() == expect
         where:
             max | expect
             1   | 1

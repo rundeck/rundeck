@@ -37,6 +37,10 @@ class ActivityPage extends BasePage implements ActivityListTrait{
         els activityRowBy
     }
 
+    def waitForActivityRowsPresent() {
+        waitForNumberOfElementsToBeMoreThan activityRowBy, 0
+    }
+
     WebElement getTimeAbs() {
         el timeAbs
     }
