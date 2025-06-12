@@ -7,7 +7,7 @@ echo "current NUMBER: $CUR_VERSION"
 echo "current TAG: $CUR_TAG"
 
 if [ -z "$1" ] ; then
-echo "usage: setversion.sh <version> [GA|rcX]"
+echo "usage: setversion.sh <version> [GA|rcX|SNAPSHOT]"
 exit 2
 fi
 
@@ -16,6 +16,16 @@ shift
 VTAG="${1:-GA}"
 
 VDATE="$(date +%Y%m%d)"
+
+if [ "$VTAG" == "SNAPSHOT" ]; then
+  IFS='.' read -r MAJOR MINOR PATCH <<< "$VNUM"
+  if [ "$PATCH" -ne 0 ]; then
+    echo "Error: For SNAPSHOT, patch version must be 0 (got $VNUM)"
+    exit 4
+  fi
+  MINOR=$((MINOR + 1))
+  VNUM="$MAJOR.$MINOR.0"
+fi
 
 if [ "$VTAG" == "GA" ] ; then
 	VNAME="$VNUM-$VDATE"
