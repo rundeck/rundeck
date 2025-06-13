@@ -13,10 +13,30 @@ class ActivityPage extends BasePage implements ActivityListTrait{
     String loadPath = "activity"
     String params=""
 
-    By activityRowBy = By.cssSelector(".link.activity_row.autoclickable.succeed.job")
     By timeAbs = By.className("timeabs")
     By executionCount = By.className("summary-count")
+    enum ActivityType {
+        ANY(''),
+        JOB('.job'),
+        ADHOC('.adhoc')
+        String css
 
+        ActivityType(String css) {
+            this.css = css
+        }
+    }
+
+    enum ActivityState {
+        ANY(''),
+        SUCCEEDED('.succeed'),
+        FAILED('.failed'),
+        ABORTED('.aborted')
+        String css
+
+        ActivityState(String css) {
+            this.css = css
+        }
+    }
     ActivityPage(final SeleniumContext context) {
         super(context)
     }
@@ -33,12 +53,20 @@ class ActivityPage extends BasePage implements ActivityListTrait{
         el executionCount
     }
 
-    List<WebElement> getActivityRows() {
-        els activityRowBy
+    static By activityRowBy(ActivityType type, ActivityState state) {
+        By.cssSelector(".link.activity_row.autoclickable${state.css}${type.css}")
     }
 
-    def waitForActivityRowsPresent() {
-        waitForNumberOfElementsToBeMoreThan activityRowBy, 0
+    List<WebElement> getActivityRows() {
+        els(activityRowBy(ActivityType.JOB, ActivityState.SUCCEEDED))
+    }
+
+    List<WebElement> getActivityRows(ActivityType type, ActivityState state) {
+        els(activityRowBy(type, state))
+    }
+
+    def waitForActivityRowsPresent(ActivityType type = ActivityType.ANY, ActivityState state = ActivityState.ANY) {
+        waitForNumberOfElementsToBeMoreThan(activityRowBy(type, state), 0)
     }
 
     WebElement getTimeAbs() {
