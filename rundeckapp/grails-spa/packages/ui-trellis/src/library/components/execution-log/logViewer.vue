@@ -405,28 +405,33 @@ export default defineComponent({
     this.loadConfig();
   },
   async mounted() {
-    this.viewer = this.rootStore.executionOutputStore.createOrGet(
-      this.executionId,
-    );
+    try {
+      this.viewer = this.rootStore.executionOutputStore.createOrGet(
+          this.executionId,
+      );
 
-    this.startTime = Date.now();
-    this.addScrollBlocker();
+      this.startTime = Date.now();
+      this.addScrollBlocker();
 
-    this.updateProgress();
+      this.updateProgress();
 
-    await this.viewer.init();
+      await this.viewer.init();
 
-    this.execCompleted = this.viewer.execCompleted;
-    this.mfollow = !this.viewer.execCompleted;
+      this.execCompleted = this.viewer.execCompleted;
+      this.mfollow = !this.viewer.execCompleted;
 
-    if (this.viewer.execCompleted && this.viewer.size > this.maxLogSize) {
-      this.logSize = this.viewer.size;
-      this.nextProgress = 0;
-      this.updateProgress(100);
-      return;
+      if (this.viewer.execCompleted && this.viewer.size > this.maxLogSize) {
+        this.logSize = this.viewer.size;
+        this.nextProgress = 0;
+        this.updateProgress(100);
+        return;
+      }
+
+      this.populateLogsProm = await this.populateLogs();
+    } catch(e) {
+      console.error(e);
     }
 
-    this.populateLogsProm = await this.populateLogs();
   },
   methods: {
     loadConfig() {

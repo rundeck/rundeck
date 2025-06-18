@@ -139,7 +139,7 @@ export default defineComponent({
       };
     },
     entryOutputs() {
-      return this.entries.map((entry, index) => {
+      return this.entries?.map((entry, index) => {
         return this.buildEntry(entry, index);
       });
     },
