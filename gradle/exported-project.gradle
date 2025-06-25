@@ -99,8 +99,8 @@ publishing {
      repositories {
          maven {
              // change URLs to point to your repos, e.g. http://my.org/repo
-             def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
-             def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
+             def releasesRepoUrl = 'https://ossrh-staging-api.central.sonatype.com/service/local/'
+             def snapshotsRepoUrl = 'https://central.sonatype.com/repository/maven-snapshots/'
              url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
              credentials {
                  username findProperty('sonatypeUsername')
