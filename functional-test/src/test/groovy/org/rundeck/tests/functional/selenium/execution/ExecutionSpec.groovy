@@ -146,6 +146,7 @@ class ExecutionSpec extends SeleniumBase {
         then:
         executionShowPage.waitForNumberOfElementsToBe executionShowPage.autoCaretBy, 2
         executionShowPage.autoCaret.get(1).click()
+        executionShowPage.implicitlyWait(2000)
         executionShowPage.waitForElementVisible  executionShowPage.execLogNode
         executionShowPage.execLogNode.isDisplayed()
         executionShowPage.execLogNode.text == "Hello world"
