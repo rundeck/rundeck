@@ -82,9 +82,9 @@ dependencies {
         'commons-cli:commons-cli:1.0',
         "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}",
         "org.yaml:snakeyaml:${snakeyamlVersion}",
-        "com.squareup.retrofit2:retrofit:${retrofitVersion}",
-        "com.squareup.retrofit2:converter-jackson:${retrofitVersion}",
-        "com.squareup.retrofit2:converter-jaxb:${retrofitVersion}",
+        "com.squareup.retrofit2:retrofit:3.0.0",
+        "com.squareup.retrofit2:converter-jackson:3.0.0",
+        "com.squareup.retrofit2:converter-jaxb:3.0.0",
         'javax.servlet:javax.servlet-api:4.0.1'
 
 
