@@ -180,8 +180,11 @@ import { Btn, BtnGroup, ProgressBar } from "uiv";
 import { App, PropType } from "vue";
 import LogNodeChunk from "./LogNodeChunk.vue";
 import { JobWorkflow } from "@/library/utilities/JobWorkflow";
+import { getRundeckContext } from "../../rundeckService";
 
 const CONFIG_STORAGE_KEY = "execution-viewer";
+const context = getRundeckContext();
+const rootStore = context.rootStore;
 
 interface IEventViewerSettings {
   theme: string;
@@ -263,7 +266,6 @@ export default defineComponent({
   emits: ["line-select", "line-deselect"],
   data() {
     return {
-      rootStore: window._rundeck.rootStore,
       eventBus: window._rundeck.eventBus as typeof EventBus,
       themes: [
         { label: "Rundeck Theme", value: "rundeck" },
@@ -308,6 +310,8 @@ export default defineComponent({
       selectedLineIdx: null,
       percentLoaded: 0,
       entries: [],
+      entriesFromViewer: [],
+      viewerEntriesByNodeCtx: null
     };
   },
   computed: {
@@ -334,24 +338,9 @@ export default defineComponent({
     },
     colorTheme() {
       if (this.settings.theme == "rundeck") {
-        return this.rootStore.theme.theme;
+        return rootStore.theme.theme;
       }
       return this.settings.theme;
-    },
-    viewerEntriesByNodeCtx() {
-      return this.viewer.entries.reduce(
-        (acc, entry) => ({
-          ...acc,
-          [`${entry.node}:${entry.stepctx ? JobWorkflow.cleanContextId(entry.stepctx) : ""}`]:
-            [
-              ...(acc[
-                `${entry.node}:${entry.stepctx ? JobWorkflow.cleanContextId(entry.stepctx) : ""}`
-              ] || []),
-              entry,
-            ],
-        }),
-        {},
-      );
     },
     viewerEntriesByNode() {
       return this.viewer.entries.reduce((acc, entry) => {
@@ -362,11 +351,11 @@ export default defineComponent({
       }, {});
     },
     viewerEntries() {
-      if (this.viewer == null) {
+      if(this.viewer == null) {
         return [];
       }
       if (this.node) {
-        if (this.stepCtx) {
+        if (this.stepCtx && this.viewerEntriesByNodeCtx) {
           return this.viewerEntriesByNodeCtx[
             `${this.node}:${JobWorkflow.cleanContextId(this.stepCtx)}`
           ];
@@ -374,6 +363,7 @@ export default defineComponent({
         return this.viewerEntriesByNode[this.node];
       }
       return this.viewer.entries;
+      return this.entriesFromViewer;
     },
   },
   watch: {
@@ -400,38 +390,51 @@ export default defineComponent({
         this.populateLogsProm = this.populateLogs();
       }
     },
+    viewer: {
+      handler(newVal) {
+        this.entriesFromViewer = newVal.entries;
+        this.viewerEntriesByNodeCtx = this.entriesFromViewer.reduce(
+            (acc, entry) => ({
+              ...acc,
+              [`${entry.node}:${entry.stepctx ? JobWorkflow.cleanContextId(entry.stepctx) : ""}`]:
+                [
+                  ...(acc[
+                    `${entry.node}:${entry.stepctx ? JobWorkflow.cleanContextId(entry.stepctx) : ""}`
+                  ] || []),
+                  entry,
+                ],
+            }),
+            {},
+          );
+      },
+      deep: true
+    }
   },
   beforeMount() {
     this.loadConfig();
+    this.viewer = rootStore.executionOutputStore.createOrGet(
+        this.executionId,
+    );
   },
   async mounted() {
-    try {
-      this.viewer = this.rootStore.executionOutputStore.createOrGet(
-          this.executionId,
-      );
+    await this.viewer.init();
 
-      this.startTime = Date.now();
-      this.addScrollBlocker();
+    this.startTime = Date.now();
+    this.addScrollBlocker();
 
-      this.updateProgress();
+    this.updateProgress();
 
-      await this.viewer.init();
+    this.execCompleted = this.viewer.execCompleted;
+    this.mfollow = !this.viewer.execCompleted;
 
-      this.execCompleted = this.viewer.execCompleted;
-      this.mfollow = !this.viewer.execCompleted;
-
-      if (this.viewer.execCompleted && this.viewer.size > this.maxLogSize) {
-        this.logSize = this.viewer.size;
-        this.nextProgress = 0;
-        this.updateProgress(100);
-        return;
-      }
-
-      this.populateLogsProm = await this.populateLogs();
-    } catch(e) {
-      console.error(e);
+    if (this.viewer.execCompleted && this.viewer.size > this.maxLogSize) {
+      this.logSize = this.viewer.size;
+      this.nextProgress = 0;
+      this.updateProgress(100);
+      return;
     }
 
+    this.populateLogsProm = await this.populateLogs();
   },
   methods: {
     loadConfig() {
