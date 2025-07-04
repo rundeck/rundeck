@@ -104,7 +104,7 @@ dependencies {
     testImplementation platform("org.spockframework:spock-bom:${spockVersion}")
     testImplementation "org.spockframework:spock-core"
     testImplementation "org.spockframework:spock-junit4"
-    testImplementation "com.squareup.retrofit2:retrofit-mock:2.7.2"
+    testImplementation "com.squareup.retrofit2:retrofit-mock:3.0.0"
     testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"
     testImplementation "cglib:cglib-nodep:2.2.2"
 
@@ -114,9 +114,7 @@ dependencies {
 
     // Add constraints to fix transitive dependency conflicts
     constraints {
-        implementation ("org.jetbrains.kotlin:kotlin-stdlib:2.1.21") {
-            because "fix conflict between versions by using newer 2.1.21 version brought by retrofit 3.0.0"
-        }
+        implementation ("org.jetbrains.kotlin:kotlin-stdlib:1.6.21")
     }
 }
 
