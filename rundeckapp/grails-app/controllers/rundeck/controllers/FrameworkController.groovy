@@ -1738,7 +1738,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             method = 'GET',
             summary = 'Get Project Configurations Using Mapping defined in ProjectConfigurable beans',
             description = 'Get Project Configurable configs and properties.',
-            tags = ['project', 'configuration'],
+            tags = ['project'],
             responses = [
                     @ApiResponse(
                             responseCode = '200',
@@ -1825,7 +1825,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             method = 'POST',
             summary = 'Create or Update Configurations Using Mapping defined in ProjectConfigurable beans',
             description = 'Create or update configs and properties.',
-            tags = ['project', 'configuration'],
+            tags = ['project'],
             requestBody = @RequestBody(
                     required = true,
                     description = '''Update Config Request.
@@ -2804,7 +2804,7 @@ whether it is `writeable`.  The `href` indicates the URL for `/project/{project}
 Authorization required: `configure` for project resource
 
 Since: v23''',
-        tags=['project','nodes'],
+        tags=['project'],
         parameters = @Parameter(
             name = 'project',
             description = 'Project Name',
@@ -2926,7 +2926,7 @@ Since: v23''',
 Authorization required: `configure` for project resource
 
 Since: v23''',
-        tags = ['project', 'nodes'],
+        tags = ['project'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -2985,7 +2985,24 @@ Since: v23''',
         ),
         responses = [
             @ApiResponse(
-                ref = '#/paths/~1project~1%7Bproject%7D~1source~1%7Bindex%7D~1resources/get/responses/200'
+                responseCode='200',
+                description='''The resource model data.''',
+                content = [
+                    @Content(
+                            mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                            schema=@Schema(type='object', externalDocs = @ExternalDocumentation(
+                                    url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
+                                    description = "Resources JSON Format"
+                            ))
+                    ),
+                    @Content(
+                            mediaType = 'text/yaml',
+                            schema=@Schema(type='string', externalDocs = @ExternalDocumentation(
+                                    url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
+                                    description = "Resources YAML Format"
+                            ))
+                    )
+                ]
             ),
             @ApiResponse(
                 responseCode="400",
@@ -3139,7 +3156,7 @@ whether it is `writeable`.  The `href` indicates the URL for `/project/{project}
 Authorization required: `configure` for project resource
 
 Since: v23''',
-        tags=['project','nodes'],
+        tags=['project'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -3277,7 +3294,7 @@ Since: v23''',
 Authorization required: `configure` for project resource
 
 Since: v23''',
-        tags=['project','nodes'],
+        tags=['project'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -3295,9 +3312,26 @@ Since: v23''',
             )
         ],
         responses = [
-            @ApiResponse(
-                ref = '#/paths/~1project~1%7Bproject%7D~1resources/get/responses/200'
-            )
+                @ApiResponse(
+                        responseCode='200',
+                        description='''The resource model data.''',
+                        content = [
+                                @Content(
+                                        mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                                        schema=@Schema(type='object', externalDocs = @ExternalDocumentation(
+                                                url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
+                                                description = "Resources JSON Format"
+                                        ))
+                                ),
+                                @Content(
+                                        mediaType = 'text/yaml',
+                                        schema=@Schema(type='string', externalDocs = @ExternalDocumentation(
+                                                url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
+                                                description = "Resources YAML Format"
+                                        ))
+                                )
+                        ]
+                )
         ]
     )
     def apiSourceGetContent() {
@@ -3355,7 +3389,7 @@ Since: v23''',
 Authorization required: `read` for project resource type `node`, as well as `read` for the Node 
 
 Since: v14''',
-        tags=['project','nodes'],
+        tags=['project'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -3373,7 +3407,24 @@ Since: v14''',
             )
         ],
         responses = @ApiResponse(
-            ref = '#/paths/~1project~1%7Bproject%7D~1resources/get/responses/200'
+                responseCode='200',
+                description='''The resource model data.''',
+                content = [
+                        @Content(
+                                mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                                schema=@Schema(type='object', externalDocs = @ExternalDocumentation(
+                                        url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
+                                        description = "Resources JSON Format"
+                                ))
+                        ),
+                        @Content(
+                                mediaType = 'text/yaml',
+                                schema=@Schema(type='string', externalDocs = @ExternalDocumentation(
+                                        url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
+                                        description = "Resources YAML Format"
+                                ))
+                        )
+                ]
         )
     )
     /**
@@ -3457,7 +3508,7 @@ Custom attributes can also be used.
 Authorization required: `read` for project resource type `node`, as well as `read` for each Node resource
 
 Since: v14''',
-        tags=['project','nodes'],
+        tags=['project'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -3564,7 +3615,7 @@ Since: v14''',
             description='''List tags for project nodes.
 
 Since: v52''',
-            tags=['project','nodes'],
+            tags=['project'],
             parameters = [
                     @Parameter(name = 'project', description = 'Project Name', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string'))
             ])
@@ -3755,11 +3806,36 @@ Since: v14""",
             )
         ],
         requestBody = @RequestBody(
-            ref = '#/paths/~1system~1acl~1%7Bpath%7D/post/requestBody'
+            description='''If the `Content-Type` is `application/yaml` or `text/plain`, then the request body is the ACL policy contents directly.
+
+Otherwise, you can use JSON to wrap the yaml content inside `contents`
+''',
+            content = [
+                    @Content(
+                            mediaType = 'application/yaml',
+                            schema=@Schema(type='string')
+                    ),
+                    @Content(
+                            mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                            schema=@Schema(type='object')
+                    )
+            ]
         ),
         responses = [
             @ApiResponse(
-                ref = '#/paths/~1system~1acl~1%7Bpath%7D/get/responses/200'
+                responseCode = "200",
+                description = "ACL Policy Document",
+                content = [
+                    @Content(
+                            mediaType = 'text/plain'
+                    ),
+                    @Content(
+                            mediaType = "application/yaml"
+                    ),
+                    @Content(
+                            mediaType = "application/json"
+                    )
+                ]
             ),
 
             @ApiResponse(

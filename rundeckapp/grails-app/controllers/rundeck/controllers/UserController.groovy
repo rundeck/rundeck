@@ -289,14 +289,12 @@ Since: v21''',
             )
         ),
         responses=[
-            @ApiResponse(
-                ref = '#/paths/~1user~1info/get/responses/403'
-            ),
-            @ApiResponse(
-                ref = '#/paths/~1user~1info/get/responses/404'
-            ),
-            @ApiResponse(
-                ref = '#/paths/~1user~1info/get/responses/200'
+            @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
+            @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
+            @ApiResponse(responseCode='200',description = 'User Profile Data',
+                content=@Content(
+                        mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object')
+                )
             )
         ]
 
@@ -324,14 +322,12 @@ Since: v21''',
             )
         ),
         responses=[
-            @ApiResponse(
-                ref = '#/paths/~1user~1info/get/responses/403'
-            ),
-            @ApiResponse(
-                ref = '#/paths/~1user~1info/get/responses/404'
-            ),
-            @ApiResponse(
-                ref = '#/paths/~1user~1info/get/responses/200'
+            @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
+            @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
+            @ApiResponse(responseCode='200',description = 'User Profile Data',
+                    content=@Content(
+                            mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object')
+                    )
             )
         ]
 
@@ -385,14 +381,12 @@ Since: v21''',
             )
         ],
         responses=[
-            @ApiResponse(
-                ref = '#/paths/~1user~1info/get/responses/403'
-            ),
-            @ApiResponse(
-                ref = '#/paths/~1user~1info/get/responses/404'
-            ),
-            @ApiResponse(
-                ref = '#/paths/~1user~1info/get/responses/200'
+            @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
+            @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
+            @ApiResponse(responseCode='200',description = 'User Profile Data',
+                    content=@Content(
+                            mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object')
+                    )
             )
         ]
     )
@@ -484,7 +478,7 @@ Since: v21''',
         description = '''Get a list of the authenticated user's roles.
 
 Since: v30''',
-        tags = ['user', 'authorization'],
+        tags = ['user'],
         responses = [
             @ApiResponse(
                 responseCode = '200',
