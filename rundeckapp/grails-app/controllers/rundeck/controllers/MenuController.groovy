@@ -2209,7 +2209,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
 Since: V45
 ''',
-            tags=["summary","projects","executions"],
+            tags=["execution"],
             responses = @ApiResponse(
                     responseCode = "200",
                     description = '''Success response, with summary information.
@@ -2298,7 +2298,7 @@ Authorization required: `read` for `system` resource
 
 Since: V17
 ''',
-        tags=["system","logstorage"],
+        tags=["logstorage"],
         responses = @ApiResponse(
             responseCode = "200",
             description = '''Success response, with log storage info and stats.
@@ -2412,7 +2412,7 @@ Fields:
 Authorization required: `read` for `system` resource
 
 Since: V17''',
-        tags=["system","logstorage"],
+        tags=["logstorage"],
         responses = @ApiResponse(
             responseCode = "200",
             description = '''
@@ -2587,7 +2587,7 @@ Since: V17''',
 Authorization required: `ops_admin` for `system` resource
 
 Since: V17''',
-        tags=["system","logstorage"],
+        tags=["logstorage"],
         responses = @ApiResponse(
             responseCode = "200",
             description = '''Resumed response''',
@@ -3015,9 +3015,14 @@ Format is a string like `2d1h4n5s` using the following characters for time units
 Authorization required: `read` or `view` for each job resource
 
 Since: v17''',
-        tags = ['jobs', 'scheduler'],
+        tags = ['jobs'],
         responses = @ApiResponse(
-            ref = '#/paths/~1project~1%7Bproject%7D~1jobs/get/responses/200'
+            responseCode='200',
+            description='Job List',
+            content=@Content(
+                    mediaType=MediaType.APPLICATION_JSON,
+                    array = @ArraySchema(schema=@Schema(implementation = JobInfo))
+            )
         )
     )
     /**
@@ -3034,9 +3039,14 @@ Since: v17''',
 Authorization required: `read` or `view` for each job resource
 
 Since: v17''',
-        tags = ['jobs', 'scheduler'],
+        tags = ['jobs'],
         responses = @ApiResponse(
-            ref = '#/paths/~1project~1%7Bproject%7D~1jobs/get/responses/200'
+                responseCode='200',
+                description='Job List',
+                content=@Content(
+                        mediaType=MediaType.APPLICATION_JSON,
+                        array = @ArraySchema(schema=@Schema(implementation = JobInfo))
+                )
         )
     )
     /**
@@ -3357,7 +3367,7 @@ Since: v14
 
 Authorization required: `read` for project resource type `event`
 ''',
-        tags = ['project', 'execution'],
+        tags = ['execution'],
         parameters = [
             @Parameter(
                 name = 'project',
