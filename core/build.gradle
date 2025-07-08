@@ -82,9 +82,9 @@ dependencies {
         'commons-cli:commons-cli:1.0',
         "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}",
         "org.yaml:snakeyaml:${snakeyamlVersion}",
-        'com.squareup.retrofit2:retrofit:2.9.0',
-        'com.squareup.retrofit2:converter-jackson:2.9.0',
-        'com.squareup.retrofit2:converter-jaxb:2.9.0',
+        'com.squareup.retrofit2:retrofit:2.12.0',
+        'com.squareup.retrofit2:converter-jackson:2.12.0',
+        'com.squareup.retrofit2:converter-jaxb:2.12.0',
         'javax.servlet:javax.servlet-api:4.0.1'
 
 
@@ -104,7 +104,7 @@ dependencies {
     testImplementation platform("org.spockframework:spock-bom:${spockVersion}")
     testImplementation "org.spockframework:spock-core"
     testImplementation "org.spockframework:spock-junit4"
-    testImplementation "com.squareup.retrofit2:retrofit-mock:2.7.2"
+    testImplementation "com.squareup.retrofit2:retrofit-mock:2.12.0"
     testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"
     testImplementation "cglib:cglib-nodep:2.2.2"
 
