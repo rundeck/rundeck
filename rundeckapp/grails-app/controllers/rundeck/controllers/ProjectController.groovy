@@ -80,7 +80,7 @@ import java.text.SimpleDateFormat
 import org.apache.commons.fileupload.util.Streams
 import org.springframework.web.multipart.MultipartHttpServletRequest
 
-@Controller('/project')
+@Controller
 class ProjectController extends ControllerBase{
     FrameworkService frameworkService
     ProjectService projectService
@@ -722,7 +722,7 @@ Authorization required: `read` for project resource
     /**
      * API: /api/11/project/NAME
      */
-    @Get('/{project}')
+    @Get('/project/{project}')
     @Operation(
             method = "GET",
             summary = "Get a project",
@@ -954,7 +954,7 @@ Authorization required: `create` for resource type `project`
     /**
      * API: /api/11/project/NAME
      */
-    @Delete('/{project}')
+    @Delete('/project/{project}')
     @Operation(
             method = "Delete",
             summary = "Delete a project",
@@ -1091,7 +1091,7 @@ Authorization required: `delete` access for `project` resource type or `admin` o
         return frameworkService.getFrameworkProject(project)
     }
 
-    @Get('/{project}/config')
+    @Get('/project/{project}/config')
     @Operation(
             method = "GET",
             summary = "Get a project config",
@@ -1174,7 +1174,7 @@ key2=value''')
     /**
      * /api/14/project/NAME/acl/* endpoint
      */
-    @Get('/{project}/acl/{path}')
+    @Get('/project/{project}/acl/{path}')
     @Operation(
             method = "GET",
             summary = "Get ACL Policy file for a project.",
@@ -1253,7 +1253,7 @@ by:
     )
     protected def apiProjectAclsGet_docs(){}
 
-    @Post('/{project}/acl/{path}')
+    @Post('/project/{project}/acl/{path}')
     @Operation(
             method = "POST",
             summary = "Update a Project ACL Policy",
@@ -1377,7 +1377,7 @@ by:
     )
     protected def apiProjectAclsPost_docs(){}
 
-    @Put('/{project}/acl/{path}')
+    @Put('/project/{project}/acl/{path}')
     @Operation(
             method = "PUT",
             summary = "Update a Project ACL Policy",
@@ -1490,7 +1490,7 @@ by:
     )
     protected def apiProjectAclsPut_docs(){}
 
-    @Delete('/{project}/acl/{path}')
+    @Delete('/project/{project}/acl/{path}')
     @Operation(
             method = "DELETE",
             summary = "Delete an ACL policy file.",
@@ -1813,7 +1813,7 @@ Since: v14""",
         render(status: HttpServletResponse.SC_NO_CONTENT)
     }
 
-    @Put('/{project}/{filename}')
+    @Put('/project/{project}/{filename}')
     @Operation(
             method = "PUT",
             summary = "To create or modify the `readme.md` and `motd.md` contents",
@@ -1981,7 +1981,7 @@ Authorization required: `configure` access for `project` resource type or `admin
         }
     }
 
-    @Get('/{project}/{filename}')
+    @Get('/project/{project}/{filename}')
     @Operation(
             method = "GET",
             summary = "Get `readme.md` and `motd.md`",
@@ -2077,7 +2077,7 @@ Authorization required: `configure` access for `project` resource type or `admin
         }
     }
 
-    @Delete('/{project}/{filename}')
+    @Delete('/project/{project}/{filename}')
     @Operation(
             method = "DELETE",
             summary = "Delete `readme.md` and `motd.md`",
@@ -2150,7 +2150,7 @@ Authorization required: `configure` access for `project` resource type or `admin
         render(status: HttpServletResponse.SC_NO_CONTENT)
     }
 
-    @Put('/{project}/config')
+    @Put('/project/{project}/config')
     @Operation(
             method = "PUT",
             summary = "Modify a project config",
@@ -2318,7 +2318,7 @@ key2=value'''
         respondProjectConfig(respFormat, project)
     }
 
-    @Get('/{project}/config/{keypath}')
+    @Get('/project/{project}/config/{keypath}')
     @Operation(
             method = "GET",
             summary = "Get an individual project config by their key",
@@ -2450,7 +2450,7 @@ key2=value''')
         }
     }
 
-    @Put('/{project}/config/{keypath}')
+    @Put('/project/{project}/config/{keypath}')
     @Operation(
             method = "PUT",
             summary = "Set the value.",
@@ -2665,7 +2665,7 @@ Authorization required: `configure` access for `project` resource type or `admin
         }
     }
 
-    @Delete('/{project}/config/{keypath}')
+    @Delete('/project/{project}/config/{keypath}')
     @Operation(
             method = "DELETE",
             summary = "Delete the key",
@@ -2720,7 +2720,7 @@ Authorization required: `configure` access for `project` resource type or `admin
         render(status: HttpServletResponse.SC_NO_CONTENT)
     }
 
-    @Get('/{project}/export')
+    @Get('/project/{project}/export')
     @Operation(
             method = "GET",
             summary = "Export a zip archive of the project.",
@@ -2874,7 +2874,7 @@ Requires `export` authorization for the project resource.""",
         )
     }
 
-    @Get('/{project}/export/async')
+    @Get('/project/{project}/export/async')
     @Operation(
             method = "GET",
             summary = "Export a zip archive of the project asynchronously.",
@@ -2956,7 +2956,7 @@ Requires `export` authorization for the project resource.""",
     protected def apiProjectExportAsync_docs() {}
 
 
-    @Get('/{project}/export/status/{token}')
+    @Get('/project/{project}/export/status/{token}')
     @Operation(
             method = "GET",
             summary = "Get the status of an async export request",
@@ -3047,7 +3047,7 @@ Since: v19""",
         )
     }
 
-    @Get('/{project}/export/download/{token}')
+    @Get('/project/{project}/export/download/{token}')
     @Operation(
             method = "GET",
             summary = "Download the zip archive file",
@@ -3133,7 +3133,7 @@ Since: v19""",
         projectService.releasePromise(session.user, token)
     }
 
-    @Put('/{project}/import')
+    @Put('/project/{project}/import')
     @Operation(
             method = "PUT",
             summary = "Import a zip archive.",
@@ -3459,7 +3459,7 @@ Note: `other_errors` included since API v35""",
         )
     }
 
-    @Get('/{project}/meta')
+    @Get('/project/{project}/meta')
     @Operation(
         method = "GET",
         summary = "Get Project UI Metadata",
