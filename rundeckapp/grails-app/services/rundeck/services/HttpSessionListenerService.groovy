@@ -42,9 +42,8 @@ class HttpSessionListenerService implements HttpSessionListener{
         if (user && session) {
             if (!sessions.containsKey(user)) {
                 sessions.put(user, new ArrayList<>())
-            }else {
-                sessions.get(user).add(session)
             }
+            sessions.get(user).add(session)
         }
     }
 }
