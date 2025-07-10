@@ -109,7 +109,7 @@ dependencies {
     //Rundeck plugin dependencies
     pluginFiles project.findProperty('bundledPlugins')?:[]
 
-    testImplementation group: 'com.squareup.retrofit2', name: 'retrofit-mock', version: '2.9.0'
+    testImplementation group: 'com.squareup.retrofit2', name: 'retrofit-mock', version: '3.0.0'
 
     spa project(path: ':rundeckapp:grails-spa', configuration: 'spa')
 
