@@ -533,6 +533,22 @@
             grouptags:loadJsonData('namegrouptagsJson'),
             nodeFilter: nodeFilter
         })
+        kocontrollers.runformoptions.nodeOverride.subscribe(function (val) {
+            if (val === 'filter') {
+                // Add a small delay to ensure DOM is ready
+                setTimeout(function () {
+                    const filterInput = document.querySelector('input[name="extra.nodefilter"]');
+                    if (filterInput && !filterInput.value.trim()) {
+                        filterInput.value = 'name: localhost';
+                        filterInput.dispatchEvent(new Event('input', {bubbles: true}));
+                        filterInput.focus();
+                        if (typeof nodeFilter !== 'undefined') {
+                            nodeFilter.updateMatchedNodes();
+                        }
+                    }
+                }, 50);
+            }
+        });
         if (typeof (nodeFilter) !== 'undefined') {
             kocontrollers.runformoptions.isNodeFilterVisible.subscribe(nodeFilter.nodeFiltersVisible)
             nodeFilter.nodeFiltersVisible(kocontrollers.runformoptions.isNodeFilterVisible())
