@@ -533,20 +533,21 @@
             grouptags:loadJsonData('namegrouptagsJson'),
             nodeFilter: nodeFilter
         })
+        const DEFAULT_NODE_FILTER = 'name: localhost';
         kocontrollers.runformoptions.nodeOverride.subscribe(function (val) {
             if (val === 'filter') {
-                // Add a small delay to ensure DOM is ready
-                setTimeout(function () {
+                // Schedule after Knockout bindings are complete
+                ko.tasks.schedule(function () {
                     const filterInput = document.querySelector('input[name="extra.nodefilter"]');
                     if (filterInput && !filterInput.value.trim()) {
-                        filterInput.value = 'name: localhost';
-                        filterInput.dispatchEvent(new Event('input', {bubbles: true}));
+                        filterInput.value = DEFAULT_NODE_FILTER;
+                        filterInput.dispatchEvent(new Event('input', { bubbles: true }));
                         filterInput.focus();
                         if (typeof nodeFilter !== 'undefined') {
                             nodeFilter.updateMatchedNodes();
                         }
                     }
-                }, 50);
+                });
             }
         });
         if (typeof (nodeFilter) !== 'undefined') {
