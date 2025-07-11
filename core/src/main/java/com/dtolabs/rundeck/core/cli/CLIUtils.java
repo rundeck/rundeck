@@ -136,6 +136,27 @@ public class CLIUtils {
         quoteUnixShellArg(stringBuilder, arg);
         return stringBuilder.toString();
     }
+
+    public static String quoteWindowsCMDArg(String arg) {
+        StringBuilder stringBuilder = new StringBuilder();
+        quoteWindowsCMDArg(stringBuilder, arg);
+        return stringBuilder.toString();
+    }
+
+    private static void quoteWindowsCMDArg(StringBuilder sb, String arg) {
+        if (StringUtils.containsNone(arg, WINDOWS_CMD_CHARS) &&
+                StringUtils.containsNone(arg, WINDOWS_WS_CHARS) &&
+                StringUtils.containsNone(arg, " ")) {
+            if (arg != null) {
+                sb.append(arg);
+            }
+            return;
+        }
+        sb.append("'");
+        sb.append(arg.replace("'", "'\"'\"'"));
+        sb.append("'");
+    }
+
     private static void quoteUnixShellArg(StringBuilder sb, String arg) {
         if (StringUtils.containsNone(arg, UNIX_SHELL_CHARS) &&
                 StringUtils.containsNone(arg, WS_CHARS) &&
@@ -163,8 +184,9 @@ public class CLIUtils {
         Converter<String, String> defaultConverter = UNIX_ARGUMENT_QUOTE;
         if ("unix".equalsIgnoreCase(type)) {
             return UNIX_ARGUMENT_QUOTE;
-            //TODO: windows
-        } else {
+        }else if("windows".equalsIgnoreCase(type)){
+            return WINDOWS_ARGUMENT_QUOTE;
+        }else {
             return defaultConverter;
         }
     }
@@ -177,6 +199,13 @@ public class CLIUtils {
             return quoteUnixShellArg(s);
         }
     };
+
+    public static final Converter<String, String> WINDOWS_ARGUMENT_QUOTE= new Converter<String, String>() {
+        public String convert(String s) {
+            return quoteWindowsCMDArg(s);
+        }
+    };
+
     /**
      * Converter that can escape shell-special characters
      */
@@ -197,12 +226,14 @@ public class CLIUtils {
         return stringBuilder.toString();
     }
 
-    public static final String UNIX_SHELL_CHARS = "\"';{}()&$\\|*?><";
+    public static final String UNIX_SHELL_CHARS = "\"';{}()&$\\|*?><`";
+    public static final String WINDOWS_CMD_CHARS = "&|<>^%!;,()\\/:*?\"<>|$`'\"{}";
     public static final String UNIX_SHELL_CHARS_NO_QUOTES = ";{}()&$\\|*?><";
     /**
      * non-space whitespace
      */
     private static final String WS_CHARS = "\n\r\t";
+    private static final String WINDOWS_WS_CHARS = "\n\r\t\0";
 
     public static void escapeUnixShellChars(StringBuilder out, String str, final String unixShellChars) {
         if (StringUtils.containsNone(str, unixShellChars)) {
