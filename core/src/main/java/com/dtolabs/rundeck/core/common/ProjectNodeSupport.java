@@ -65,7 +65,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     /**
      * @param projectConfig
      * @param resourceFormatGeneratorService
-     * @param nodeSourceLoader               model source provider
+     * @param nodeSourceLoader model source provider
      */
     public ProjectNodeSupport(
             final File varDir,
@@ -319,7 +319,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
 
 
     private File getResourceModelSourceFileCacheForType(String ident) {
-//        String varDir = projectConfig.getProperty("framework.var.dir");
         File file = new File(varDir, "resourceModelSourceCache/" + projectConfig.getName() + "/" + ident + ".xml");
         if (!file.getParentFile().exists() && !file.getParentFile().mkdirs()) {
             logger.warn("Failed to create cache dirs for source file cache");
