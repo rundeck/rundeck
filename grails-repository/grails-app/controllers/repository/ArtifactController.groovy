@@ -12,7 +12,10 @@ class ArtifactController {
 
 
     def index() {
-        if(!authorized(AuthConstants.RESOURCE_TYPE_PLUGIN, AuthConstants.ACTION_READ)) {
+        boolean hasReadPermission = authorized(AuthConstants.RESOURCE_TYPE_PLUGIN, AuthConstants.ACTION_READ)
+        boolean hasInstallPermission = authorized(AuthConstants.RESOURCE_TYPE_PLUGIN, AuthConstants.ACTION_INSTALL)
+
+        if(!(hasReadPermission || hasInstallPermission)) {
             specifyUnauthorizedError()
             return
         }
