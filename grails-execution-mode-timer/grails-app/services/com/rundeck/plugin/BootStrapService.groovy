@@ -17,6 +17,7 @@ class BootStrapService {
 
     @Subscriber("rundeck.bootstrap")
     void init() {
+        log.info("rundeck.bootstrap:BootStrapService:init:init bootstrap")
         timer("executionModeService.init") {
             executionModeService.initProcess()
         }
@@ -24,5 +25,6 @@ class BootStrapService {
         timer("updateModeProjectService.init") {
             updateModeProjectService.initProcess()
         }
+        log.info("rundeck.bootstrap:BootStrapService:init:end bootstrap")
     }
 }

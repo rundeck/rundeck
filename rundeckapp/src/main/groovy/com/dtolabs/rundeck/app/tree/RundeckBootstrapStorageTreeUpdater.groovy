@@ -23,11 +23,13 @@ class RundeckBootstrapStorageTreeUpdater {
 
     @Subscriber("rundeck.bootstrap")
     void bootstrapEvent() {
+        log.info("rundeck.bootstrap:RundeckBootstrapStorageTreeUpdater:bootstrapEvent:init bootstrap")
         try {
             performTreeUpdate()
         } catch (Throwable t) {
             log.error("Error during storage tree update: ${t.getMessage()}", t)
         }
+        log.info("rundeck.bootstrap:RundeckBootstrapStorageTreeUpdater:bootstrapEvent:end bootstrap")
     }
 
     @Transactional
