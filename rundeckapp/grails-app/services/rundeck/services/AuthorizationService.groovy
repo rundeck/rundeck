@@ -186,6 +186,7 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
     @Subscriber("rundeck.bootstrap")
     @CompileStatic
     public void init() {
+        log.info("rundeck.bootstrap:AuthorizationService:init:init bootstrap")
         if(!featureService.featurePresent(Features.AUTH_SVC_BOOTSTRAP_WARMUP_CACHE)){
             return
         }
@@ -193,6 +194,7 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
         long start = System.currentTimeMillis()
         loadCachedStoredPolicies()
         log.debug("init: loadCachedStoredPolicies: ${System.currentTimeMillis() - start}")
+        log.info("rundeck.bootstrap:AuthorizationService:init:end bootstrap")
     }
 
     /**
