@@ -176,24 +176,25 @@ public class ExecArgList {
 
     public ArrayList<String> buildCommandForNode(
             MultiDataContext<ContextView, DataContext> sharedContext,
-            String nodeName, String osFamily
+            String nodeName, String osFamily, String commandInterpreter
     )
     {
-        return buildCommandForNode(this, sharedContext, nodeName, osFamily);
+        return buildCommandForNode(this, sharedContext, nodeName, osFamily, commandInterpreter);
     }
 
     private static ArrayList<String> buildCommandForNode(
             ExecArgList command,
             MultiDataContext<ContextView, DataContext> sharedContext,
             String nodeName,
-            String osFamily
+            String osFamily,
+            String commandInterpreter
     )
     {
 
         final ArrayList<String> commandList = new ArrayList<>();
         CommandVisitor visiter = new CommandVisitor(
                 commandList,
-                CLIUtils.argumentQuoteForOperatingSystem(osFamily),
+                CLIUtils.argumentQuoteForOperatingSystem(osFamily, commandInterpreter),
                 str -> SharedDataContextUtils.replaceDataReferences(
                         str,
                         sharedContext,

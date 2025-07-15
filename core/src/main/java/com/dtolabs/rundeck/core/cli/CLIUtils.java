@@ -180,11 +180,19 @@ public class CLIUtils {
             return defaultConverter;
         }
     }
+
     public static Converter<String, String> argumentQuoteForOperatingSystem(String type) {
+        return argumentQuoteForOperatingSystem(type, null);
+    }
+
+    public static Converter<String, String> argumentQuoteForOperatingSystem(String type, String commandInterpreter) {
         Converter<String, String> defaultConverter = UNIX_ARGUMENT_QUOTE;
         if ("unix".equalsIgnoreCase(type)) {
             return UNIX_ARGUMENT_QUOTE;
         }else if("windows".equalsIgnoreCase(type)){
+            if("cmd".equalsIgnoreCase(commandInterpreter)){
+                return WINDOWS_CMD_ESCAPE;
+            }
             return WINDOWS_ARGUMENT_QUOTE;
         }else {
             return defaultConverter;
@@ -214,6 +222,13 @@ public class CLIUtils {
             return escapeUnixShellChars(s);
         }
     };
+
+    public static final Converter<String,String> WINDOWS_CMD_ESCAPE =new Converter<String, String>() {
+        public String convert(String s) {
+            return escapeWindowsCMDChars(s);
+        }
+    };
+
     public static String escapeUnixShellChars(String str) {
         StringBuilder stringBuilder = new StringBuilder();
         escapeUnixShellChars(stringBuilder, str, UNIX_SHELL_CHARS);
@@ -226,6 +241,12 @@ public class CLIUtils {
         return stringBuilder.toString();
     }
 
+    public static String escapeWindowsCMDChars(String str) {
+        StringBuilder stringBuilder = new StringBuilder();
+        escapeWindowsCMDChars(stringBuilder, str);
+        return stringBuilder.toString();
+    }
+
     public static final String UNIX_SHELL_CHARS = "\"';{}()&$\\|*?><`";
     public static final String WINDOWS_CMD_CHARS = "&|<>^%!;,()\\/:*?\"<>|$`'\"{}";
     public static final String UNIX_SHELL_CHARS_NO_QUOTES = ";{}()&$\\|*?><";
@@ -234,6 +255,17 @@ public class CLIUtils {
      */
     private static final String WS_CHARS = "\n\r\t";
     private static final String WINDOWS_WS_CHARS = "\n\r\t\0";
+
+    public static void escapeWindowsCMDChars(StringBuilder sb, String str) {
+        if (str != null) {
+            for (char c : str.toCharArray()) {
+                if (WINDOWS_CMD_CHARS.indexOf(c) >= 0) {
+                    sb.append('^');
+                }
+                sb.append(c);
+            }
+        }
+    }
 
     public static void escapeUnixShellChars(StringBuilder out, String str, final String unixShellChars) {
         if (StringUtils.containsNone(str, unixShellChars)) {

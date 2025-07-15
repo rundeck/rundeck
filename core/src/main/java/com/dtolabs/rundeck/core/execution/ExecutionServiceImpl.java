@@ -414,10 +414,16 @@ public class ExecutionServiceImpl implements ExecutionService {
                 .nodeContextData(node)
                 .build();
 
+        String commandInterpreter = node.getAttributes().get("winrm-shell") != null ?
+                node.getAttributes().get("winrm-shell")
+                : context.getIFramework().getFrameworkProjectMgr()
+                        .getFrameworkProject("Project1").getProperty("project.plugin.NodeExecutor.WinRMPython.shell");
+
         final ArrayList<String> commandList = command.buildCommandForNode(
                 nodeContext.getSharedDataContext(),
                 node.getNodename(),
-                node.getOsFamily()
+                node.getOsFamily(),
+                commandInterpreter
         );
 
         NodeExecutorResult result = null;
