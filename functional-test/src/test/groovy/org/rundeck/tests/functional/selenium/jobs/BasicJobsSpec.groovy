@@ -268,7 +268,7 @@ class BasicJobsSpec extends SeleniumBase {
 
         expect:
         jobShowPage.schedJobNodeFilter.isDisplayed()
-        jobShowPage.nodeFilterInputValue.getDomProperty("value").contains("localhost")
+        jobShowPage.nodeFilterInputValue.getDomProperty("value").trim() == 'name: localhost'
     }
 
     def "job filter by name results"() {
