@@ -156,8 +156,8 @@ class AuthorizationsSpec extends Specification {
         Explanation other
 
         @Override
-        void describe(final PrintStream out) {
-            other?.describe(out)
+        String toString() {
+            return other?.toString() ?: "Explanation(code: ${code})"
         }
     }
 

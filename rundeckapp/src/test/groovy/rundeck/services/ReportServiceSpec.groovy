@@ -321,7 +321,7 @@ class ReportServiceSpec extends Specification implements ServiceUnitTest<ReportS
             Map<String, String> resource,
             String action
     ) {
-        newDecisionInstance(newInstanceExplanation(explanation), authorized, resource, action)
+        newDecisionInstance(Explanation.with(explanation, "some reason"), authorized, resource, action)
     }
 
     private Decision newDecisionInstance(
@@ -392,20 +392,4 @@ class ReportServiceSpec extends Specification implements ServiceUnitTest<ReportS
         };
     }
 
-    Explanation newInstanceExplanation(Explanation.Code reasonId) {
-        new Explanation() {
-
-            public Explanation.Code getCode() {
-                return reasonId
-            }
-
-            public void describe(PrintStream out) {
-                out.println(toString())
-            }
-
-            public String toString() {
-                return "\t" + "some reason => " + reasonId
-            }
-        }
-    }
 }

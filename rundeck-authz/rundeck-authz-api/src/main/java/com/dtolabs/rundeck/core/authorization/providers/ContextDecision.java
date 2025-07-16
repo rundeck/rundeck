@@ -59,9 +59,6 @@ public class ContextDecision implements Explanation {
         return this.id;
     }
 
-    public void describe(PrintStream out) {
-        out.println(toString());
-    }
 
     @Override
     public String toString() {

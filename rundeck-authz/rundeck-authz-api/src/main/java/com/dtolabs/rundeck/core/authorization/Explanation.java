@@ -43,6 +43,25 @@ public interface Explanation {
     };
     
     public Code getCode();
-    
-    public void describe(PrintStream out);
+
+    /**
+     * Create an explanation with the given code and explanation string.
+     *
+     * @param code        the code for the explanation
+     * @param description the explanation string
+     * @return an Explanation instance
+     */
+    static Explanation with(Code code, String description) {
+        return new Explanation() {
+            @Override
+            public Code getCode() {
+                return code;
+            }
+
+            @Override
+            public String toString() {
+                return description + " => " + code;
+            }
+        };
+    }
 }
