@@ -7,7 +7,6 @@ export async function getPluginDetail(serviceName: string, provider: string) {
   if (params.project) {
     projectName = params.project;
   }
-  console.log("getPluginDetail" + " params: ", params);
   const resp = await api.get(
     `/plugin/detail/${serviceName}/${provider}?project=${projectName}`,
   );
