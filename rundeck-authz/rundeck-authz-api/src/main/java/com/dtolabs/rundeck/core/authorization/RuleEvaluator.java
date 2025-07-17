@@ -19,7 +19,6 @@ package com.dtolabs.rundeck.core.authorization;
 import com.dtolabs.rundeck.core.authorization.providers.*;
 
 import javax.security.auth.Subject;
-import java.io.PrintStream;
 import java.security.Principal;
 import java.text.MessageFormat;
 import java.util.*;
@@ -186,64 +185,35 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
             final Set<Attribute> environment
     )
     {
-        Set<Decision> decisions = new HashSet<Decision>();
-        long duration = 0;
+        Set<Decision> decisions = new HashSet<>();
         List<AclRule> matchedRules = narrowContext(getRuleSet(), aclSubjectCreator.createFrom(subject), environment);
-        boolean anyAuthorized = false;
         for (Map<String, String> resource : resources) {
             for (String action : actions) {
-                final Decision decision = internalEvaluate(
+                final Decision decision = evaluate(
                         resource, subject, action, environment, matchedRules
                 );
-                duration += decision.evaluationDuration();
                 decisions.add(decision);
-                if(decision.isAuthorized()){
-                    anyAuthorized = true;
-                }
             }
         }
 
         return decisions;
     }
 
-    /**
-     * Return the evaluation decision for the resource, subject, action, environment and contexts
-     */
-    private Decision evaluate(
-            Map<String, String> resource, Subject subject,
-            String action, Set<Attribute> environment, List<AclRule> matchedRules
-    )
-    {
 
-        return internalEvaluate(resource, subject, action, environment, matchedRules);
-    }
-
-
-    private static Decision authorize(
-            final boolean authorized, final String reason,
+    private static Decision reject(
+            final String reason,
             final Explanation.Code reasonId, final Map<String, String> resource, final Subject subject,
             final String action, final Set<Attribute> environment, final long evaluationTime
     )
     {
-        return createAuthorize(
-                authorized, new Explanation() {
-
-                    public Code getCode() {
-                        return reasonId;
-                    }
-
-                    public void describe(PrintStream out) {
-                        out.println(toString());
-                    }
-
-                    public String toString() {
-                        return "\t" + reason + " => " + reasonId;
-                    }
-                }, resource, subject, action, environment, evaluationTime
+        return createDecision(
+                false,
+                Explanation.with(reasonId, reason),
+                resource, subject, action, environment, evaluationTime
         );
     }
 
-    static Decision createAuthorize(
+    static Decision createDecision(
             final boolean authorized, final Explanation explanation,
             final Map<String, String> resource, final Subject subject,
             final String action, final Set<Attribute> environment, final long evaluationTime
@@ -341,17 +311,16 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
      *
      * @return decision
      */
-    private Decision internalEvaluate(
+    private Decision evaluate(
             Map<String, String> resource, Subject subject, String action,
             Set<Attribute> environment, List<AclRule> matchingRules
     )
     {
         long start = System.currentTimeMillis();
-        if (matchingRules.size() < 1) {
-            return authorize(
-                    false,
+        if (matchingRules.isEmpty()) {
+            return reject(
                     "No context matches subject or environment",
-                    Explanation.Code.REJECTED_NO_SUBJECT_OR_ENV_FOUND,
+                    Explanation.Code.REJECTED,
                     resource,
                     subject,
                     action,
@@ -363,16 +332,15 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
             throw new IllegalArgumentException(
                     "Resource does not identify any resource because it's an empty resource property or null."
             );
-        } else {
-            for (Map.Entry<String, String> entry : resource.entrySet()) {
-                if (entry.getKey() == null) {
-                    throw new IllegalArgumentException("Resource definition cannot contain null property name.");
-                }
-                if (entry.getValue() == null) {
-                    throw new IllegalArgumentException(
-                            "Resource definition cannot contain null value.  Corresponding key: " + entry.getKey()
-                    );
-                }
+        }
+        for (Map.Entry<String, String> entry : resource.entrySet()) {
+            if (entry.getKey() == null) {
+                throw new IllegalArgumentException("Resource definition cannot contain null property name.");
+            }
+            if (entry.getValue() == null) {
+                throw new IllegalArgumentException(
+                        "Resource definition cannot contain null value.  Corresponding key: " + entry.getKey()
+                );
             }
         }
 
@@ -380,8 +348,7 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
             throw new IllegalArgumentException("Invalid subject, subject is null.");
         }
         if (action == null || action.length() <= 0) {
-            return authorize(
-                    false,
+            return reject(
                     "No action provided.",
                     Explanation.Code.REJECTED,
                     resource,
@@ -400,34 +367,30 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
         ContextDecision contextDecision = null;
         ContextDecision lastDecision = null;
 
-        //long contextIncludeStart = System.currentTimeMillis();
         boolean granted = false;
-        boolean denied = false;
         for (AclRule rule : matchingRules) {
             final ContextDecision includes = ruleIncludesResourceAction(rule, resource, action);
             if (Explanation.Code.REJECTED_DENIED == includes.getCode()) {
-                contextDecision = includes;
-                denied = true;
-                return createAuthorize(
-                        false, contextDecision, resource, subject, action, environment,
+                return createDecision(
+                        false, includes, resource, subject, action, environment,
                         System.currentTimeMillis() - start
                 );
-            } else if (includes.granted()) {
+            }
+            if (includes.granted()) {
                 contextDecision = includes;
                 granted = true;
             }
             lastDecision = includes;
         }
         if (granted) {
-            return createAuthorize(
+            return createDecision(
                     true, contextDecision, resource, subject, action, environment,
                     System.currentTimeMillis() - start
             );
         }
 
         if (lastDecision == null) {
-            return authorize(
-                    false,
+            return reject(
                     "No resource or action matched.",
                     Explanation.Code.REJECTED,
                     resource,
@@ -437,7 +400,7 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
                     System.currentTimeMillis() - start
             );
         } else {
-            return createAuthorize(
+            return createDecision(
                     false,
                     lastDecision,
                     resource,
