@@ -6,6 +6,7 @@ import spock.lang.Unroll
 import javax.security.auth.Subject
 
 import static com.dtolabs.rundeck.core.authorization.Explanation.Code.GRANTED
+import static com.dtolabs.rundeck.core.authorization.Explanation.Code.GRANTED_OVERRIDE
 import static com.dtolabs.rundeck.core.authorization.Explanation.Code.REJECTED
 import static com.dtolabs.rundeck.core.authorization.Explanation.Code.REJECTED_DENIED
 
@@ -13,6 +14,7 @@ class AuthorizationsSpec extends Specification {
     static final Explanation.Code G = GRANTED
     static final Explanation.Code R = REJECTED
     static final Explanation.Code D = REJECTED_DENIED
+    static final Explanation.Code O = GRANTED_OVERRIDE
 
     def "append single auth"() {
         given:
@@ -41,6 +43,16 @@ class AuthorizationsSpec extends Specification {
             mkd(D)    | mkd(R)    | false  | D
             mkd(R)    | mkd(D)    | false  | D
             mkd(G)    | mkd(D)    | false  | D
+            mkd(D)    | mkd(D)    | false  | D
+            //override result
+            mkd(G)    | mkd(O)    | true   | O
+            mkd(R)    | mkd(O)    | true   | O
+            mkd(D)    | mkd(O)    | true   | O
+            mkd(O)    | mkd(O)    | true   | O
+            mkd(O)    | mkd(G)    | true   | O
+            mkd(O)    | mkd(R)    | true   | O
+            mkd(O)    | mkd(D)    | true   | O
+            mkd(O)    | mkd(O)    | true   | O
     }
 
     @Unroll
@@ -66,9 +78,9 @@ class AuthorizationsSpec extends Specification {
                 (0..1).collect { mkd(evalB[it], res, actions[it]) }
             }
             result.size() == 2
-            result.find { it.action == 'a' }.authorized == (expect[0] == G)
+            result.find { it.action == 'a' }.authorized == (expect[0] == G || expect[0] == O)
             result.find { it.action == 'a' }.explain().code == codes[0]
-            result.find { it.action == 'b' }.authorized == (expect[1] == G)
+            result.find { it.action == 'b' }.authorized == (expect[1] == G || expect[1] == O)
             result.find { it.action == 'b' }.explain().code == codes[1]
 
         where:
@@ -126,20 +138,29 @@ class AuthorizationsSpec extends Specification {
             [D, G] | [G, D] | [D, D] | [D, D]
             [D, G] | [D, D] | [D, D] | [D, D]
             [G, D] | [D, D] | [D, D] | [D, D]
+        //Override over deny
+            [D, O] | [D, D] | [D, O] | [D, O]
+            [D, D] | [D, O] | [D, O] | [D, O]
+            [D, O] | [D, O] | [D, O] | [D, O]
+
+            [D, D] | [O, D] | [O, D] | [O, D]
+            [O, D] | [D, D] | [O, D] | [O, D]
+            [O, D] | [O, D] | [O, D] | [O, D]
+
+            [O, O] | [D, D] | [O, O] | [O, O]
+            [O, O] | [D, O] | [O, O] | [O, O]
+            [O, O] | [O, D] | [O, O] | [O, O]
+            [O, O] | [O, O] | [O, O] | [O, O]
+            [D, O] | [O, D] | [O, O] | [O, O]
+            [O, D] | [D, O] | [O, O] | [O, O]
+            [O, D] | [O, O] | [O, O] | [O, O]
+            [D, O] | [O, O] | [O, O] | [O, O]
     }
 
-
-    static Decision mkd(int ordinal, Map<String, String> resource = [:], String action = 'action') {
-        mkd(Explanation.Code.values()[ordinal])
-    }
-
-    static Decision mkd(boolean success, Map<String, String> resource = [:], String action = 'action') {
-        mkd(success ? GRANTED : REJECTED, resource, action)
-    }
 
     static Decision mkd(Explanation.Code code, Map<String, String> resource = [:], String action = 'action') {
         new D(
-            authorized: code == GRANTED,
+            authorized: code == GRANTED || code== GRANTED_OVERRIDE,
             explanation: new E(
                 code: code
             ),

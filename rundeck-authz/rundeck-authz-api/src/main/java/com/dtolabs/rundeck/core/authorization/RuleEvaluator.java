@@ -383,7 +383,7 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
             return authorize(
                     false,
                     "No action provided.",
-                    Explanation.Code.REJECTED_NO_ACTION_PROVIDED,
+                    Explanation.Code.REJECTED,
                     resource,
                     subject,
                     action,
@@ -429,7 +429,7 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
             return authorize(
                     false,
                     "No resource or action matched.",
-                    Explanation.Code.REJECTED_NO_RESOURCE_OR_ACTION_MATCH,
+                    Explanation.Code.REJECTED,
                     resource,
                     subject,
                     action,

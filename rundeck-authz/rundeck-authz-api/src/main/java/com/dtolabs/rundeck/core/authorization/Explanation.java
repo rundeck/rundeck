@@ -16,33 +16,24 @@
 
 package com.dtolabs.rundeck.core.authorization;
 
-import java.io.PrintStream;
+/**
+ * Explanation provides a way to encapsulate the result of an authorization decision with a Code defining the
+ * decision and a description string.
+ */
+public interface Explanation {
 
-public interface Explanation { 
-    
-    public enum Code {
-        GRANTED, 
-        GRANTED_NO_AUTHORIZATION_ATTEMPTED, 
-        GRANTED_ACTIONS_AND_COMMANDS_MATCHED, 
-        REJECTED, 
-        REJECTED_NO_ACTION_PROVIDED, 
-        REJECTED_NO_SUBJECT_OR_ENV_FOUND, 
-        REJECTED_NO_RESOURCE_OR_ACTION_MATCH, 
-        REJECTED_NO_ACTIONS_DECLARED, 
-        REJECTED_ACTIONS_DECLARED_EMPTY, 
-        REJECTED_NO_ACTIONS_MATCHED, 
-        REJECTED_CONTEXT_EVALUATION_ERROR, 
-        REJECTED_COMMAND_NOT_MATCHED, 
-        REJECTED_NO_RESOURCE_PROPERTY_PROVIDED, 
-        REJECTED_RESOURCE_PROPERTY_NOT_MATCHED, 
-        REJECTED_NO_RULES_DECLARED, 
-        REJECTED_NO_DESCRIPTION_PROVIDED, 
-        REJECTED_NO_RESOURCE_TYPE,
-        REJECTED_INVALID_FOR_SECTION,
+    /**
+     * Enumeration of possible codes for authorization explanations. Ordering matters when resolving multiple
+     * authorization decisions, lower ordinal values take precedence.
+     */
+    enum Code {
+        GRANTED_OVERRIDE,
         REJECTED_DENIED,
+        GRANTED,
+        REJECTED
     };
     
-    public Code getCode();
+    Code getCode();
 
     /**
      * Create an explanation with the given code and explanation string.

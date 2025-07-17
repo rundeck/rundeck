@@ -332,10 +332,7 @@ class RuleEvaluatorSpec extends Specification {
 
         where:
         allowed                 | denied                  | tested    | isauthorized | code
-        []                      | []                      |
-                'EXECUTE'                                             |
-                false                                                                |
-                Explanation.Code.REJECTED_NO_SUBJECT_OR_ENV_FOUND
+        []                      | []                      | 'EXECUTE' | false        | Explanation.Code.REJECTED
         [['*']]                 | []                      | 'EXECUTE' | true         | Explanation.Code.GRANTED
         [['*']]                 | []                      | 'HALLO'   | true         | Explanation.Code.GRANTED
         [['EXECUTE']]           | []                      | 'EXECUTE' | true         | Explanation.Code.GRANTED

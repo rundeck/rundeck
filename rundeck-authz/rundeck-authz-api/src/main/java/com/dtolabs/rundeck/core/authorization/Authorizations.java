@@ -30,17 +30,6 @@ public class Authorizations {
             this.auth2 = auth2;
         }
 
-        /**
-         * @param code
-         * @return ordinal of code, or -1 if REJECTED_DENIED
-         */
-        static int codeOrdinal(Explanation.Code code) {
-            if (code == Explanation.Code.REJECTED_DENIED) {
-                return -1;
-            }
-            return code.ordinal();
-        }
-
         @Override
         public Decision evaluate(
                 final Map<String, String> resource,
@@ -62,8 +51,8 @@ public class Authorizations {
          * @return decisions with highest priority
          */
         public Decision prioritize(final Decision decision1, final Decision decision2) {
-            int d1 = codeOrdinal(decision1.explain().getCode());
-            int d2 = codeOrdinal(decision2.explain().getCode());
+            int d1 = decision1.explain().getCode().ordinal();
+            int d2 = decision2.explain().getCode().ordinal();
             if (d1 < d2) {
                 return decision1;
             } else if (d2 < d1) {
