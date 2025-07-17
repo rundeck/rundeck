@@ -601,7 +601,7 @@ class ExecutionJob implements InterruptableJob {
                 timeout          : jobDataMap?.get("timeout"),
         ]
         ExecutionCompleteEvent executionCompleteEvent
-        Closure action={//int count ->
+        Closure action={
             executionCompleteEvent = executionService.saveExecutionState_newTransaction(
                     scheduledExecutionId,
                     execution.id,
