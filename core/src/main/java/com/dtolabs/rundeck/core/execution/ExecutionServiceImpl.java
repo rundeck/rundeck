@@ -414,6 +414,7 @@ public class ExecutionServiceImpl implements ExecutionService {
                 .nodeContextData(node)
                 .build();
 
+        //It tries to get the interpreter from the node attributes first, then from the project properties.
         String commandInterpreter = node.getAttributes().get("winrm-shell") != null ?
                 node.getAttributes().get("winrm-shell")
                 : context.getIFramework().getFrameworkProjectMgr()

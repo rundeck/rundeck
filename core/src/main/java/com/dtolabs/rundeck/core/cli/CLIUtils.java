@@ -185,6 +185,13 @@ public class CLIUtils {
         return argumentQuoteForOperatingSystem(type, null);
     }
 
+    /**
+     * Create a converter for quoting arguments for the given operating system type and command interpreter.
+     *
+     * @param type               "unix" or "windows"
+     * @param commandInterpreter "cmd" for Windows cmd.exe, or null for default
+     * @return a Converter that quotes arguments appropriately for the specified OS and command interpreter
+     */
     public static Converter<String, String> argumentQuoteForOperatingSystem(String type, String commandInterpreter) {
         Converter<String, String> defaultConverter = UNIX_ARGUMENT_QUOTE;
         if ("unix".equalsIgnoreCase(type)) {
@@ -208,6 +215,10 @@ public class CLIUtils {
         }
     };
 
+    /**
+     * Converter that can quote arguments for Windows
+     * This is not the same as escaping special characters, it quotes the entire argument
+     */
     public static final Converter<String, String> WINDOWS_ARGUMENT_QUOTE= new Converter<String, String>() {
         public String convert(String s) {
             return quoteWindowsCMDArg(s);
@@ -223,6 +234,9 @@ public class CLIUtils {
         }
     };
 
+    /**
+     * Converter that can escape Windows CMD special characters
+     */
     public static final Converter<String,String> WINDOWS_CMD_ESCAPE =new Converter<String, String>() {
         public String convert(String s) {
             return escapeWindowsCMDChars(s);
@@ -256,6 +270,12 @@ public class CLIUtils {
     private static final String WS_CHARS = "\n\r\t";
     private static final String WINDOWS_WS_CHARS = "\n\r\t\0";
 
+    /**
+     * Escape special characters in a string for use in a Windows CMD command line.
+     *
+     * @param sb  StringBuilder to append the escaped string to
+     * @param str String to escape
+     */
     public static void escapeWindowsCMDChars(StringBuilder sb, String str) {
         if (str != null) {
             for (char c : str.toCharArray()) {
