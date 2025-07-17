@@ -314,7 +314,7 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
                     builder.append(">");
                     builder.append(": authorized: ");
                     builder.append(isAuthorized());
-                    builder.append(": ");
+                    builder.append(": \t");
                     builder.append(explanation.toString());
 
                     this.representation = builder.toString();
