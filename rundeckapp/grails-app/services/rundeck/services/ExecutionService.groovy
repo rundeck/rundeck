@@ -19,6 +19,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
+import org.springframework.dao.DataAccessException
 import rundeck.data.util.ExecReportUtil
 import rundeck.services.workflow.WorkflowMetricsWriterImpl
 import rundeck.support.filters.BaseNodeFilters
@@ -875,7 +876,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         [mdcprops, "id: " + e.id +" state: " + state +  " project: " + e.project + " user: " + e.user + jobstring]
     }
 
-    public logExecution(uri,project,user,issuccess,statusString,execId,Date startDate=null, jobExecId=null, jobName=null,
+    private logExecution(uri,project,user,issuccess,statusString,execId,Date startDate=null, jobExecId=null, jobName=null,
                         jobSummary=null,iscancelled=false,istimedout=false,willretry=false, nodesummary=null,
                         abortedby=null, succeededNodeList=null, failedNodeList=null, filter=null, executionUuid=null, jobUuid=null){
 
@@ -3064,13 +3065,31 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     @CompileStatic
     def saveExecutionState(schedId, exId, Map props, AsyncStarted execmap, Map retryContext) {
-        def event = Execution.withNewTransaction {
-            saveCompletedExecution_currentTransaction(schedId, exId, props, execmap, retryContext)
-        }
+        def event = saveExecutionState_newTransaction(schedId, exId, props, execmap, retryContext)
 
         // To avoid the possibility of "stuck" executions, it is important that notifications are not processed
         // until the transaction that updates the execution to "completed" status has committed.
         triggerJobCompleteNotifications(execmap, event)
+
+        return event
+    }
+
+    /**
+     * Save execution status within a new transaction
+     * @param schedId
+     * @param exId
+     * @param props
+     * @param execmap
+     * @param retryContext
+     * @return
+     */
+    @CompileStatic
+    ExecutionCompleteEvent saveExecutionState_newTransaction(schedId, exId, Map props, AsyncStarted execmap, Map retryContext) {
+        def event = Execution.withNewTransaction {
+            saveCompletedExecution_currentTransaction(schedId, exId, props, execmap, retryContext)
+        }
+
+        return event
     }
 
     /**
@@ -3224,7 +3243,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
-    private def triggerJobCompleteNotifications(AsyncStarted execRun, ExecutionCompleteEvent event) {
+    public def triggerJobCompleteNotifications(AsyncStarted execRun, ExecutionCompleteEvent event) {
         def context = execRun?.thread?.context
         def execution = event.execution
         def export = execRun?.thread?.resultObject?.getSharedContext()?.consolidate()?.getData(ContextView.global())

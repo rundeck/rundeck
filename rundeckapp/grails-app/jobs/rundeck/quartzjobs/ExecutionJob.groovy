@@ -36,10 +36,12 @@ import org.quartz.InterruptableJob
 import org.quartz.JobDataMap
 import org.quartz.JobExecutionContext
 import org.rundeck.util.Sizes
+import org.springframework.dao.DataAccessException
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
+import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.execution.ThresholdValue
 import rundeck.services.logging.LoggingThreshold
 
@@ -598,8 +600,9 @@ class ExecutionJob implements InterruptableJob {
                 retryAttempt     : jobDataMap?.get("retryAttempt"),
                 timeout          : jobDataMap?.get("timeout"),
         ]
-        Closure action={
-            executionService.saveExecutionState(
+        ExecutionCompleteEvent executionCompleteEvent
+        Closure action={//int count ->
+            executionCompleteEvent = executionService.saveExecutionState_newTransaction(
                     scheduledExecutionId,
                     execution.id,
                     resultMap,
@@ -621,9 +624,26 @@ class ExecutionJob implements InterruptableJob {
             if (!saveStateComplete) {
                 execution.refresh()
                 log.error("ExecutionJob: Failed to save execution state for ${execution.id}, after retrying ${finalizeRetryMax} times: ${retried.caught}")
+            } else if(executionCompleteEvent){
+                Retried notificationRetried = withRetry(
+                        finalizeRetryMax,
+                        finalizeRetryDelay,
+                        "Execution ${execution.id} trigger job complete notifications:",
+                        executionService.&isApplicationShutdown,
+                        {
+                            executionService.triggerJobCompleteNotifications(execmap, executionCompleteEvent)
+                            true
+                        }
+                )
+                if (!notificationRetried.complete) {
+                    log.error("ExecutionJob: Failed to trigger job complete notifications for ${execution.id}, after retrying ${finalizeRetryMax} times: ${notificationRetried.caught}")
+                }
             }
         }else{
             action.call()
+            if(executionCompleteEvent){
+                executionService.triggerJobCompleteNotifications(execmap, executionCompleteEvent)
+            }
         }
         if (!isTemp && scheduledExecutionId && success) {
             //update ScheduledExecution statistics for successful execution

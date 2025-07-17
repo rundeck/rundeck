@@ -19,6 +19,7 @@ import rundeck.services.FrameworkService
 import rundeck.services.JobSchedulerService
 import rundeck.services.JobSchedulesService
 import rundeck.services.MissingScheduledExecutionException
+import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.execution.ThresholdValue
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -74,7 +75,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             def execMap = new ExecutionService.AsyncStarted()
 
             boolean saveStateCalled = false
-            1 * mockes.saveExecutionState(
+            1 * mockes.saveExecutionState_newTransaction(
                 scheduledExecution.uuid, execution.id, {
                 it.status == 'succeeded'
                 it.cancelled == false
@@ -83,6 +84,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             }, _, _
             ) >> {
                 saveStateCalled = true
+                new ExecutionCompleteEvent()
             }
             def saveStatsComplete = false
             def fail3times = throwXTimes(3)
@@ -182,11 +184,11 @@ class ExecutionJobIntegrationSpec extends Specification {
                     execMap
                 )
         then:
-            1 * mockes.saveExecutionState(
+            1 * mockes.saveExecutionState_newTransaction(
                 scheduledExecution.uuid, execution.id, {
                 it.subMap(expectresult.keySet()) == expectresult
             }, _, _
-            ) >> true
+            ) >> new ExecutionCompleteEvent()
 
             1 * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }) >> true
     }
@@ -209,7 +211,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             def execMap = new ExecutionService.AsyncStarted()
             def fail3times = throwXTimes(3)
 
-            2 * mockes.saveExecutionState(
+            2 * mockes.saveExecutionState_newTransaction(
                 scheduledExecution.uuid, execution.id, {
                 it.subMap(expectresult.keySet()) == expectresult
             }, _, _
@@ -324,7 +326,7 @@ class ExecutionJobIntegrationSpec extends Specification {
         when:
             job.saveState(null, mockes, execution, true, false, false, true, null, null, initMap, execMap)
         then:
-            1 * mockes.saveExecutionState(
+            1 * mockes.saveExecutionState_newTransaction(
                 null, execution.id, {
                 it.subMap(expectresult.keySet()) == expectresult
             }, execMap, _
@@ -831,7 +833,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             1 * jobSchedulerServiceMock.beforeExecution(_, _, _) >> JobScheduleManager.BeforeExecutionBehavior.proceed
             1 * mockes.executeAsyncBegin(*_)>>new ExecutionService.AsyncStarted(
                 [thread: stb, scheduledExecution: se])
-            1 * mockes.saveExecutionState(*_)
+            1 * mockes.saveExecutionState_newTransaction(*_)
             1 * jobSchedulerServiceMock.afterExecution(_,_, _)
     }
 
@@ -1000,7 +1002,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             job.saveState(null, mockes, execution, true, false, false, true, null, null, null, execMap)
         then:
 
-            1 * mockes.saveExecutionState(
+            1 * mockes.saveExecutionState_newTransaction(
                 null, execution.id, {
                 it.subMap(expectresult.keySet()) == expectresult
             }, execMap, _
