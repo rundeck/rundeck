@@ -240,6 +240,59 @@ class ExecutionJobIntegrationSpec extends Specification {
             1 * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }) >> true
     }
 
+    def testSaveStateWithFailureOnNotification() {
+        given:
+        def job = new ExecutionJob()
+        job.finalizeRetryMax = 4
+        job.finalizeRetryDelay = 0
+        def scheduledExecution = setupJob()
+        def execution = setupExecution(scheduledExecution, new Date(), null)
+        def mockes = Mock(ExecutionService)
+
+        def expectresult = [
+                status        : 'succeeded',
+                cancelled     : false,
+                failedNodes   : null,
+                failedNodesMap: null,
+        ]
+        def execMap = new ExecutionService.AsyncStarted()
+        def fail3times = throwXTimes(3)
+
+        4 * mockes.saveExecutionState_newTransaction(
+                scheduledExecution.uuid, execution.id, {
+            it.subMap(expectresult.keySet()) == expectresult
+        }, _, _
+        ) >> {
+            fail3times.call()
+            return new ExecutionCompleteEvent()
+        }
+
+        def fail5times = throwXTimes(5)
+        4 * mockes.triggerJobCompleteNotifications(_, _) >> {
+            fail5times.call()
+        }
+
+        when:
+        def result = job.
+                saveState(
+                        null,
+                        mockes,
+                        execution,
+                        true,
+                        false,
+                        false,
+                        false,
+                        null,
+                        scheduledExecution.uuid,
+                        null,
+                        execMap
+                )
+        then:
+        result
+
+        1 * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }) >> true
+    }
+
 
     /**
      * executeAsyncBegin succeeds,finish succeeds, thread succeeds, calls avgDurationExceeded
