@@ -476,8 +476,20 @@
         var pageParams = loadJsonData('pageParams');
         jQuery('body').on('click', '.nodefilterlink', function (evt) {
             evt.preventDefault();
-            nodeFilter.selectNodeFilterLink(this);
+            const nodeFilterValue = jQuery(this).data('node-filter');
+            const filterInput = document.querySelector('input[name="extra.nodefilter"]');
+            if (filterInput) {
+                filterInput.value = nodeFilterValue;
+                filterInput.dispatchEvent(new Event('input', { bubbles: true }));
+                filterInput.focus();
+            }
+            if (typeof nodeFilter !== 'undefined') {
+                jQuery.data(this, 'node-filter-name', '');
+                jQuery.data(this, 'node-filter', nodeFilterValue);
+                nodeFilter.selectNodeFilterLink(this);
+            }
         });
+
         jQuery('#nodesContent').on('click', '.closeoutput', function (evt) {
             evt.preventDefault();
             closeOutputArea();
