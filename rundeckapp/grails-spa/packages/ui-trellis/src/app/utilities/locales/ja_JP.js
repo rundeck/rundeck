@@ -237,6 +237,9 @@ const messages = {
   refresh: "\u66f4\u65b0",
   "save.filter.ellipsis": "Save Filter\u2026",
   "search.ellipsis": "Search\u2026",
+  "ScheduledExecution.page.edit.title": "\u30b8\u30e7\u30d6\u306e\u7de8\u96c6",
+  "ScheduledExecution.page.create.title":
+    "\u65b0\u3057\u3044\u30b8\u30e7\u30d6\u3092\u4f5c\u6210",
   "scheduledExecution.property.defaultTab.label": "Default Tab",
   "scheduledExecution.property.defaultTab.description": "Default Tab",
   "scheduledExecution.property.excludeFilterUncheck.label":
