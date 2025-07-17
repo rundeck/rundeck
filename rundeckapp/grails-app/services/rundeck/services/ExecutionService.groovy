@@ -876,7 +876,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         [mdcprops, "id: " + e.id +" state: " + state +  " project: " + e.project + " user: " + e.user + jobstring]
     }
 
-    private logExecution(uri,project,user,issuccess,statusString,execId,Date startDate=null, jobExecId=null, jobName=null,
+    public logExecution(uri,project,user,issuccess,statusString,execId,Date startDate=null, jobExecId=null, jobName=null,
                         jobSummary=null,iscancelled=false,istimedout=false,willretry=false, nodesummary=null,
                         abortedby=null, succeededNodeList=null, failedNodeList=null, filter=null, executionUuid=null, jobUuid=null){
 
