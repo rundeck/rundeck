@@ -1,6 +1,7 @@
 package org.rundeck.tests.functional.selenium.jobs
 
 import org.openqa.selenium.By
+import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
@@ -8,6 +9,8 @@ import org.rundeck.util.gui.pages.home.HomePage
 import org.rundeck.util.gui.pages.jobs.*
 import org.rundeck.util.gui.pages.login.LoginPage
 import spock.lang.Stepwise
+
+import java.time.Duration
 
 @SeleniumCoreTest
 @Stepwise
@@ -261,10 +264,23 @@ class BasicJobsSpec extends SeleniumBase {
         jobShowPage.runJobLink '7a0d71b2-e096-4fbd-9efb-21bcbe826c0e' click()
         jobShowPage.waitForElementToBeClickable jobShowPage.nodeFilterInput
         jobShowPage.nodeFilterInput.click()
-        jobShowPage.waitForElementToBeClickable jobShowPage.nodeFilterSelect
-        jobShowPage.nodeFilterSelect.click()
         jobShowPage.waitForElementToBeClickable jobShowPage.nodeFilterOverride
         jobShowPage.nodeFilterOverride.click()
+
+        def dropdownToggle = driver.findElement(By.cssSelector("button[data-testid='nfi-toggle']"))
+        dropdownToggle.click()
+
+
+        def selectNodesRadio = driver.findElement(By.cssSelector("a.xnodefilterlink.job_edit__node_filter__filter_select_all"))
+        selectNodesRadio.click()
+
+        def localhostNode = driver.findElement(By.xpath("//span[text()='localhost']"))
+        localhostNode.click()
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10))
+
+
+        def arrowIcon = driver.findElement(By.cssSelector("a.nodefilterlink[data-node-filter='name: localhost']")).findElement(By.cssSelector("i.glyphicon.glyphicon-circle-arrow-right"))
+        arrowIcon.click()
 
         expect:
         jobShowPage.schedJobNodeFilter.isDisplayed()
