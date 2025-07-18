@@ -133,8 +133,9 @@
 <g:embedJSON id="jobDetailsJSON"
              data="${ [
                      jobName: scheduledExecution?.jobName,
-                      groupPath: scheduledExecution?.groupPath,
-                       description:scheduledExecution?.description,
+                     groupPath: scheduledExecution?.groupPath,
+                     description:scheduledExecution?.description,
+                     href:scheduledExecution?.id?createLink(controller:'scheduledExecution',action:'show',params:[project:scheduledExecution.project,id:scheduledExecution.extid]):null
              ]}"/>
 <g:embedJSON id="jobNotificationsJSON"
              data="${ [notifications:scheduledExecution.notifications?.collect{it.toNormalizedMap()}?:[],

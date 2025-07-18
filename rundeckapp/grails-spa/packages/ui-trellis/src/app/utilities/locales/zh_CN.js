@@ -236,6 +236,8 @@ const messages = {
   "notification.event.onretryablefailure": "On Retryable Failure",
   refresh: "\u5237\u65B0",
   "save.filter.ellipsis": "\u4FDD\u5B58\u8FC7\u6EE4\u6761\u4EF6&hellip;",
+  "ScheduledExecution.page.edit.title": "\u7F16\u8F91\u4EFB\u52A1",
+  "ScheduledExecution.page.create.title": "\u521B\u5EFA\u65B0\u4EFB\u52A1",
   "scheduledExecution.property.defaultTab.label": "Default Tab",
   "scheduledExecution.property.defaultTab.description":
     "Default tab to display when you follow an execution.",

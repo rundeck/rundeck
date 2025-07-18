@@ -239,6 +239,8 @@ const messages = {
   refresh: "refrescar",
   "save.filter.ellipsis": "Guardar Filtro\u2026",
   "search.ellipsis": "Search\u2026",
+  "ScheduledExecution.page.edit.title": "Editar Trabajo",
+  "ScheduledExecution.page.create.title": "Crear Nuevo Trabajo",
   "scheduledExecution.property.defaultTab.label": "Pestaña por defecto",
   "scheduledExecution.property.defaultTab.description":
     "Pestaña por defecto para ser mostrada cuando sigues una ejecución.",
