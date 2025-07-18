@@ -50,7 +50,9 @@ class ScmLoaderService implements EventBusAware {
     @Subscriber("rundeck.bootstrap")
     @CompileDynamic
     void beginScmLoader(){
+        log.info("rundeck.bootstrap:ScmLoaderService:beginScmLoader:init bootstrap")
         if(!frameworkService) {
+            log.info("rundeck.bootstrap:ScmLoaderService:beginScmLoader:end bootstrap")
             return
         }
         //check if each project has set the SCM Loader process (if needed)
@@ -86,6 +88,7 @@ class ScmLoaderService implements EventBusAware {
                 scmLoaderIntervalSeconds,
                 TimeUnit.SECONDS
         )
+        log.info("rundeck.bootstrap:ScmLoaderService:beginScmLoader:end bootstrap")
     }
 
     String getProjectIntegration(String project, String integration){
