@@ -43,9 +43,14 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By jobActionBy = By.xpath("//div[contains(@class, 'job-action-button')]")
     By jobActionEditBy = By.xpath("//a[@title='Edit this Job']")
     By nodeFilterInputBy = By.cssSelector("#doReplaceFilters")
-    By nodeFilterSelectBy = By.cssSelector("#cherrypickradio")
     By nodeFilterOverrideBy = By.cssSelector("#filterradio")
     By nodeFilterInputValueBy = By.cssSelector('input[name="extra.nodefilter"]')
+    By dropDownToggleBy = By.cssSelector("button[data-testid='nfi-toggle']")
+    By selectAllNodesLinkBy = By.cssSelector("a.xnodefilterlink.job_edit__node_filter__filter_select_all")
+    By localhostNodeBy = By.xpath("//span[text()='localhost']")
+    By popoverContentBy = By.cssSelector("div.popover-content")
+    By nodeFilterLinkBy = By.cssSelector("node-filter-link[params*='linkicon']")
+    By arrowIconBy = By.cssSelector("i.glyphicon-circle-arrow-right")
     By schedJobNodeFilterBy = By.cssSelector("div[class='input-group nodefilters multiple-control-input-group']")
     By jobLinkTitleBy = By.xpath("//a[contains(@class, 'job-header-link')]")
     By autocompleteJobStepDefinitionBy = By.cssSelector("#wfitem_0 > span > div > div > span > span > span.text-success")
@@ -247,14 +252,26 @@ class JobShowPage extends BasePage implements ActivityListTrait {
         el nodeFilterInputBy
     }
 
-    WebElement getNodeFilterSelect() {
-        el nodeFilterSelectBy
-    }
 
     WebElement getNodeFilterInputValue() {
         el nodeFilterInputValueBy
     }
 
+    WebElement getDropDownToggle() {
+        el dropDownToggleBy
+    }
+
+    WebElement getSelectAllNodesLink() {
+        el selectAllNodesLinkBy
+    }
+
+    WebElement getLocalhostNode() {
+        el localhostNodeBy
+    }
+
+    WebElement getNodeFilterArrowIcon() {
+        el(popoverContentBy).findElement(nodeFilterLinkBy).findElement(arrowIconBy)
+    }
 
     WebElement getNodeFilterOverride() {
         el nodeFilterOverrideBy
