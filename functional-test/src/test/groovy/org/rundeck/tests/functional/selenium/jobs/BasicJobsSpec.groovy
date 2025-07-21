@@ -1,8 +1,6 @@
 package org.rundeck.tests.functional.selenium.jobs
 
 import org.openqa.selenium.By
-import org.openqa.selenium.support.ui.ExpectedConditions
-import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
@@ -10,8 +8,6 @@ import org.rundeck.util.gui.pages.home.HomePage
 import org.rundeck.util.gui.pages.jobs.*
 import org.rundeck.util.gui.pages.login.LoginPage
 import spock.lang.Stepwise
-
-import java.time.Duration
 
 @SeleniumCoreTest
 @Stepwise
@@ -270,9 +266,8 @@ class BasicJobsSpec extends SeleniumBase {
         jobShowPage.dropDownToggle.click()
         jobShowPage.waitForElementToBeClickable jobShowPage.selectAllNodesLink
         jobShowPage.selectAllNodesLink.click()
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30))
-        def localhostElement = wait.until(ExpectedConditions.elementToBeClickable(jobShowPage.localhostNodeBy))
-        localhostElement.click()
+        jobShowPage.waitForElementToBeClickable jobShowPage.localhostNode
+        jobShowPage.localhostNode.click()
         jobShowPage.waitForElementToBeClickable jobShowPage.nodeFilterArrowIcon
         jobShowPage.nodeFilterArrowIcon.click()
         expect:
