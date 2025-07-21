@@ -266,6 +266,7 @@ class BasicJobsSpec extends SeleniumBase {
         jobShowPage.dropDownToggle.click()
         jobShowPage.waitForElementToBeClickable jobShowPage.selectAllNodesLink
         jobShowPage.selectAllNodesLink.click()
+        Thread.sleep(2000)
         jobShowPage.waitForElementToBeClickable jobShowPage.localhostNode
         jobShowPage.localhostNode.click()
         jobShowPage.waitForElementToBeClickable jobShowPage.nodeFilterArrowIcon
