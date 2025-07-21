@@ -255,25 +255,21 @@ class BasicJobsSpec extends SeleniumBase {
     def "run job modal should show node filter editable input and configure to localhost"() {
         when:
         def jobShowPage = go JobShowPage, SELENIUM_BASIC_PROJECT
-
         then:
-        jobShowPage.with {
-            validatePage()
-            runJobLink '7a0d71b2-e096-4fbd-9efb-21bcbe826c0e' click()
-            waitForElementToBeClickable nodeFilterInput
-            nodeFilterInput.click()
-            waitForElementToBeClickable nodeFilterOverride
-            nodeFilterOverride.click()
-            waitForElementToBeClickable dropDownToggle
-            dropDownToggle.click()
-            waitForElementToBeClickable selectAllNodesLink
-            selectAllNodesLink.click()
-            waitForElementToBeClickable localhostNode
-            localhostNode.click()
-            waitForElementToBeClickable nodeFilterArrowIcon
-            nodeFilterArrowIcon.click()
-        }
-
+        jobShowPage.validatePage()
+        jobShowPage.runJobLink '7a0d71b2-e096-4fbd-9efb-21bcbe826c0e' click()
+        jobShowPage.waitForElementToBeClickable jobShowPage.nodeFilterInput
+        jobShowPage.nodeFilterInput.click()
+        jobShowPage.waitForElementToBeClickable jobShowPage.nodeFilterOverride
+        jobShowPage.nodeFilterOverride.click()
+        jobShowPage.waitForElementToBeClickable jobShowPage.dropDownToggle
+        jobShowPage.dropDownToggle.click()
+        jobShowPage.waitForElementToBeClickable jobShowPage.selectAllNodesLink
+        jobShowPage.selectAllNodesLink.click()
+        jobShowPage.waitForElementToBeClickable jobShowPage.localhostNode
+        jobShowPage.localhostNode.click()
+        jobShowPage.waitForElementToBeClickable jobShowPage.nodeFilterArrowIcon
+        jobShowPage.nodeFilterArrowIcon.click()
         expect:
         jobShowPage.schedJobNodeFilter.isDisplayed()
         jobShowPage.nodeFilterInputValue.getDomProperty("value").trim() == 'name: localhost'
