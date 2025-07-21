@@ -47,7 +47,7 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By nodeFilterInputValueBy = By.cssSelector('input[name="extra.nodefilter"]')
     By dropDownToggleBy = By.cssSelector("button[data-testid='nfi-toggle']")
     By selectAllNodesLinkBy = By.cssSelector("a.xnodefilterlink.job_edit__node_filter__filter_select_all")
-    By localhostNodeBy = By.xpath("//a[@data-node='localhost']");
+    By localhostNodeBy = By.cssSelector("a.server[data-node='localhost']")
     By popoverContentBy = By.cssSelector("div.popover-content")
     By nodeFilterLinkBy = By.cssSelector("node-filter-link[params*='linkicon']")
     By arrowIconBy = By.cssSelector("i.glyphicon-circle-arrow-right")
