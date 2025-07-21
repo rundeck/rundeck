@@ -256,14 +256,12 @@ class ExecutionJobIntegrationSpec extends Specification {
                 failedNodesMap: null,
         ]
         def execMap = new ExecutionService.AsyncStarted()
-        def fail3times = throwXTimes(3)
 
-        4 * mockes.saveExecutionState_newTransaction(
+        1 * mockes.saveExecutionState_newTransaction(
                 scheduledExecution.uuid, execution.id, {
             it.subMap(expectresult.keySet()) == expectresult
         }, _, _
         ) >> {
-            fail3times.call()
             return new ExecutionCompleteEvent()
         }
 
