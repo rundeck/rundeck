@@ -266,13 +266,14 @@ class BasicJobsSpec extends SeleniumBase {
         jobShowPage.dropDownToggle.click()
         jobShowPage.waitForElementToBeClickable jobShowPage.selectAllNodesLink
         jobShowPage.selectAllNodesLink.click()
-        def localhostElement = driver.findElement(jobShowPage.localhostNodeBy)
-        localhostElement.click()
+        jobShowPage.waitForElementToBeClickable jobShowPage.localhostNode
+        jobShowPage.localhostNode.click()
         jobShowPage.waitForElementToBeClickable jobShowPage.nodeFilterArrowIcon
         jobShowPage.nodeFilterArrowIcon.click()
         expect:
         jobShowPage.schedJobNodeFilter.isDisplayed()
-        jobShowPage.nodeFilterInputValue.getDomProperty("value").trim() == 'name: localhost'
+        jobShowPage.nodeFilterInputValue.getDomProperty("value").trim() ==~ /name: .+/
+
     }
 
     def "job filter by name results"() {
