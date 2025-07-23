@@ -45,7 +45,7 @@
     "@primeuix/themes": "^1.0.0",
     "@rundeck/client": "^0.2.5",
     "ace-builds": "^1.23.4",
-    "axios": "^1.8.2",
+    "axios": "^1.11.0",
     "core-js": "^3.6.5",
     "deep-object-diff": "^1.1.9",
     "dompurify": "^3.2.4",
