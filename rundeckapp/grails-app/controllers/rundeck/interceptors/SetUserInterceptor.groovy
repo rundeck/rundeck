@@ -2,6 +2,7 @@ package rundeck.interceptors
 
 import com.dtolabs.rundeck.core.authentication.Group
 import grails.compiler.GrailsCompileStatic
+import grails.events.EventPublisher
 import org.rundeck.app.auth.RequiredRoleProvider
 import org.rundeck.app.authentication.Token
 import com.dtolabs.rundeck.core.authentication.Username
@@ -26,7 +27,7 @@ import javax.servlet.ServletContext
 import javax.servlet.http.HttpServletRequest
 import java.util.stream.Collectors
 
-class SetUserInterceptor {
+class SetUserInterceptor implements EventPublisher  {
     public static final String RUNNER_RQ_ATTRIB = "runnerRq"
     @Autowired
     ApplicationContext applicationContext
@@ -69,6 +70,9 @@ class SetUserInterceptor {
 
             request.subject = subject
             session.subject = subject
+
+            notify("addSession", request.userPrincipal.name, session)
+
         } else if(request.remoteUser && session.subject &&
                 configurationService.getBoolean("security.authorization.preauthenticated.enabled",false)){
             // Preauthenticated mode is enabled, handle upstream role changes
