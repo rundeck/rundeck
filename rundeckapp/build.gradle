@@ -141,9 +141,7 @@ dependencies {
     }
 
     // From BuildConfig.groovy.
-    implementation( 'org.quartz-scheduler:quartz:2.3.2'){
-        exclude(group: 'com.zaxxer', module: 'HikariCP-java7')
-    }
+    implementation( 'org.quartz-scheduler:quartz:2.3.2')
     implementation 'org.grails.plugins:quartz:2.0.13'
     implementation 'org.grails.plugins:mail:3.0.0'
 
