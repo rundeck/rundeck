@@ -269,8 +269,12 @@ class ExecutionController extends ControllerBase{
         String maxLogSizeConfig = getGrailsApplication().config.getProperty("rundeck.logviewer.maxLogSize", String)
         Long trimOutput = Sizes.parseFileSize(max)
         Long maxLogSize = Sizes.parseFileSize(maxLogSizeConfig)
-
-        return loadExecutionViewPlugins() + [
+        def statsMap=[:]
+        if(e.scheduledExecution){
+            def stats = scheduledExecutionService.calculateJobStats(e.scheduledExecution)
+            statsMap= [successrate: stats.successRate, execCount: stats.execCount, avgduration: stats.averageDuration]
+        }
+        return statsMap + loadExecutionViewPlugins() + [
                 scheduledExecution    : e.scheduledExecution ?: null,
                 isScheduled           : e.scheduledExecution ? scheduledExecutionService.isScheduled(e.scheduledExecution) : false,
                 execution             : e,
