@@ -493,19 +493,11 @@ class ExecutionController extends ControllerBase{
             filesize = file.length()
         }
         final state = e.executionState
-        if(e.scheduledExecution){
-            def ScheduledExecution se = e.scheduledExecution //ScheduledExecution.get(e.scheduledExecutionId)
-            return render(
-                    view: "mailNotification/status",
-                    model: loadExecutionViewPlugins() + [execstate: state, scheduledExecution: se, execution: e,
-                                                         filesize: filesize]
-            )
-        }else{
-            return render(
-                    view: "mailNotification/status",
-                    model: loadExecutionViewPlugins() + [execstate: state, execution: e, filesize: filesize]
-            )
-        }
+        return render(
+                view: "mailNotification/status",
+                model: loadExecutionViewPlugins() + [execstate: state, scheduledExecution: e.scheduledExecution, execution: e,
+                                                     filesize: filesize]
+        )
     }
     def executionMode(){
         withForm {
