@@ -279,7 +279,7 @@ dependencies {
     testRuntimeOnly "org.seleniumhq.selenium:selenium-firefox-driver"
     testRuntimeOnly "org.seleniumhq.selenium:selenium-remote-driver"
     testRuntimeOnly "org.seleniumhq.selenium:selenium-api"
-    testRuntimeOnly 'org.jetbrains.kotlin:kotlin-stdlib:1.6.21'
+    testRuntimeOnly "org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}"
     testRuntimeOnly 'org.aspectj:aspectjweaver:1.9.7'
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
     // transitive dependencies constraints.

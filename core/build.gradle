@@ -114,7 +114,7 @@ dependencies {
 
     // Add constraints to fix transitive dependency conflicts
     constraints {
-        implementation ("org.jetbrains.kotlin:kotlin-stdlib:1.6.21")
+        implementation ("org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}")
     }
 }
 
