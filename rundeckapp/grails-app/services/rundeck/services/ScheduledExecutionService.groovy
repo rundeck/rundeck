@@ -19,6 +19,7 @@ package rundeck.services
 import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
 import com.dtolabs.rundeck.core.utils.ResourceAcceptanceTimeoutException
 import com.dtolabs.rundeck.core.utils.WaitUtils
+import org.rundeck.app.components.jobs.stats.JobStatsProvider
 import org.springframework.jdbc.core.RowCallbackHandler
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -150,7 +151,7 @@ import java.util.stream.Collectors
  *  ScheduledExecutionService manages scheduling jobs with the Quartz scheduler
  */
 @Transactional
-class ScheduledExecutionService implements ApplicationContextAware, InitializingBean, ProjectConfigurable, EventPublisher {
+class ScheduledExecutionService implements ApplicationContextAware, InitializingBean, ProjectConfigurable, EventPublisher, JobStatsProvider {
     static transactional = true
     public static final String CONF_GROUP_EXPAND_LEVEL = 'project.jobs.gui.groupExpandLevel'
     public static final String CONF_PROJECT_DISABLE_EXECUTION = 'project.disable.executions'
@@ -5029,6 +5030,26 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return scmOptions
     }
 
+
+    @GrailsCompileStatic
+    JobStats calculateJobStats(String uuid){
+        return calculateJobStats(ScheduledExecution.findByUuid(uuid))
+    }
+
+    @GrailsCompileStatic
+    JobStats calculateJobStats(ScheduledExecution scheduledExecution) {
+        def successcount = Execution.countByScheduledExecutionAndStatus(scheduledExecution, 'succeeded')
+        def refsuccesscount = referencedExecutionDataProvider.countByJobUuidAndStatus(scheduledExecution.uuid, 'succeeded')
+        def execCount = Execution.countByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution)
+        def refexecCount = referencedExecutionDataProvider.countByJobUuid(scheduledExecution.uuid)
+        def totalCount = execCount + refexecCount
+        double successrate = (totalCount) > 0 ? ((successcount + refsuccesscount) / ((double)totalCount)) : -1d
+        JobStats.with(
+            successrate,
+            execCount,
+            executionService.getAverageDuration(scheduledExecution.uuid),
+            )
+    }
 }
 @CompileStatic
 class OldJob{

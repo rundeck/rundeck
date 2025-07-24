@@ -560,7 +560,9 @@ Since: v53''',
 
         withFormat{
             html{
-                dataMap
+                def stats = scheduledExecutionService.calculateJobStats(scheduledExecution)
+                def statsMap = [successrate: stats.successRate, execCount: stats.execCount, avgduration: stats.averageDuration]
+                statsMap + dataMap
             }
             yaml{
                 response.setHeader("Content-Disposition","attachment; filename=\"${getFname(scheduledExecution.jobName)}.yaml\"")
