@@ -373,40 +373,40 @@ jobs:
           command: openapi_tests
 
   #Snyk tests
-test-snyk:
-  <<: *job-defaults
-  executor:
-    name: docker-builder
-    resource_class: large
-  steps:
-    - setup_docker:
-        docker_layer_caching: true
-    - checkout
-    - restore-build-cache
-    - install-build-dependencies
-    - run-build-step:
-        step-name: Assemble rundeck
-        command: rundeck_assemble_build
-    - snyk/install
-    - run-build-step:
-        step-name: Configure Snyk
-        command: snyk config set org='rundeck-core-mtgfa3XPaKGbFtHj9aRXhg'
-    - run-build-step:
-        step-name: Run Snyk monitors to track vulnerabilities
-        command: |
-          if [ "$CIRCLE_BRANCH" = "main" ]; then
-            snyk monitor --all-projects --detection-depth=10 --scan-all-unmanaged
-          else
-            echo "Skipping monitor for non-main branch"
-          fi
-    - run-build-step:
-        step-name: Run Snyk test
-        command: |
-          if [ "$CIRCLE_BRANCH" = "main" ]; then
-            snyk test --severity-threshold=high --all-projects --detection-depth=10 --scan-all-unmanaged || true
-          else
-            snyk test --severity-threshold=high --all-projects --detection-depth=10 --scan-all-unmanaged --report=false || true
-          fi
+  test-snyk:
+    <<: *job-defaults
+    executor:
+      name: docker-builder
+      resource_class: large
+    steps:
+      - setup_docker:
+          docker_layer_caching: true
+      - checkout
+      - restore-build-cache
+      - install-build-dependencies
+      - run-build-step:
+          step-name: Assemble rundeck
+          command: rundeck_assemble_build
+      - snyk/install
+      - run-build-step:
+          step-name: Configure Snyk
+          command: snyk config set org='rundeck-core-mtgfa3XPaKGbFtHj9aRXhg'
+      - run-build-step:
+          step-name: Run Snyk monitors to track vulnerabilities
+          command: |
+            if [ "$CIRCLE_BRANCH" = "main" ]; then
+              snyk monitor --all-projects --detection-depth=10 --scan-all-unmanaged
+            else
+              echo "Skipping monitor for non-main branch"
+            fi
+      - run-build-step:
+          step-name: Run Snyk test
+          command: |
+            if [ "$CIRCLE_BRANCH" = "main" ]; then
+              snyk test --severity-threshold=high --all-projects --detection-depth=10 --scan-all-unmanaged || true
+            else
+              snyk test --severity-threshold=high --all-projects --detection-depth=10 --scan-all-unmanaged --report=false || true
+            fi
 
   # Trigger pipeline in the enterprise repo
   trigger-enterprise:
