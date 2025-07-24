@@ -167,8 +167,8 @@ dependencies{
 
     // dependencies for running groovy scripts
     groovyScript localGroovy()
-    groovyScript "org.codehaus.groovy:groovy-cli-commons:${GroovySystem.version}"
-    groovyScript "org.codehaus.groovy:groovy-yaml:${GroovySystem.version}"
+    groovyScript "org.codehaus.groovy:groovy-cli-commons:${groovyVersion}"
+    groovyScript "org.codehaus.groovy:groovy-yaml:${groovyVersion}"
 }
 
 
