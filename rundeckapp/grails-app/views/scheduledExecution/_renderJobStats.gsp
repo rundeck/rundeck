@@ -13,6 +13,12 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
-
-<g:render template="/scheduledExecution/showStats"
-          model="[scheduledExecution: scheduledExecution, avgduration:avgduration, hasSuccessRate:hasSuccessRate, successrate: successrate, execCount:execCount ]"/>
+<g:if test="${uiType=='next'}">
+    <div class="vue-ui-socket">
+        <ui-socket section="job-stats" location="main" socket-data="${enc(attr:[uuid:scheduledExecution.uuid].encodeAsJSON())}"/>
+    </div>
+</g:if>
+<g:else>
+    <g:render template="/scheduledExecution/showStats"
+              model="[scheduledExecution: scheduledExecution, avgduration:avgduration, hasSuccessRate:hasSuccessRate, successrate: successrate, execCount:execCount ]"/>
+</g:else>
