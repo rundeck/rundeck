@@ -726,8 +726,6 @@ workflows:
           context:
             - Snyk
             - Cloudsmith
-          filters:
-            branches: { only: main }
       - wizcli-scan:
           name: WizCLI Scan Preview
           <<: *require-build
