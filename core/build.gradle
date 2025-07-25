@@ -78,7 +78,7 @@ dependencies {
         'commons-collections:commons-collections:3.2.2',
         'org.apache.commons:commons-lang3:3.18.0',
         'jaxen:jaxen:1.2.0',
-        'commons-cli:commons-cli:1.0',
+        'commons-cli:commons-cli:1.4',
         "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}",
         "org.yaml:snakeyaml:${snakeyamlVersion}",
         "com.squareup.retrofit2:retrofit:3.0.0",
