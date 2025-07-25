@@ -16,11 +16,12 @@
 package rundeckapp.init
 
 import grails.events.annotation.Subscriber
+import groovy.util.logging.Slf4j
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.services.PluginApiService
 import rundeck.services.UiPluginService
 
-
+@Slf4j
 class PluginCachePreloader {
 
     @Autowired UiPluginService uiPluginService
@@ -28,6 +29,7 @@ class PluginCachePreloader {
 
     @Subscriber("rundeck.bootstrap")
     void boostrap() {
+        log.info("rundeck.bootstrap:PluginCachePreloader:boostrap:init bootstrap")
         try {
             def plugins = pluginApiService.listPluginsDetailed()
             plugins.descriptions.each { svc, v ->
@@ -42,5 +44,6 @@ class PluginCachePreloader {
             println "Error heating the plugin cache"
             t.printStackTrace()
         }
+        log.info("rundeck.bootstrap:PluginCachePreloader:boostrap:end bootstrap")
     }
 }

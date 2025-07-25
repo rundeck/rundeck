@@ -168,6 +168,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     @Subscriber('rundeck.bootstrap')
     @CompileStatic
     void init() {
+        log.info("rundeck.bootstrap:ProjectManagerService:init:init bootstrap")
         if(!featureService.featurePresent(Features.PROJMGR_SVC_BOOTSTRAP_WARMUP_CACHE)){
             return
         }
@@ -175,6 +176,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         long now = System.currentTimeMillis()
         listFrameworkProjects()
         log.debug("init: listFrameworkProjects: ${System.currentTimeMillis() - now}")
+        log.info("rundeck.bootstrap:ProjectManagerService:init:end bootstrap")
     }
 
     /**
