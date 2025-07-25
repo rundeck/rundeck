@@ -401,10 +401,13 @@ jobs:
             else
               echo "Skipping monitor for non-main branch - no data sent to dashboard"
             fi
-      - run-build-step:
-          step-name: Run Snyk test (ignoring scan results)
+      - run:
+          name: Run Snyk test (ignoring scan results)
           # Don't fail the build giving the Core team some time to clean the repo using the monitors
-          command: snyk test --severity-threshold=high --all-projects --detection-depth=10 --scan-all-unmanaged || true
+          no_output_timeout: 30m
+          command: |
+            source scripts/circleci/setup.sh
+            snyk test --severity-threshold=medium --all-projects --detection-depth=10 --scan-all-unmanaged || true
 
   # Trigger pipeline in the enterprise repo
   trigger-enterprise:
