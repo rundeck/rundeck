@@ -117,16 +117,6 @@
         </g:ifServletContextAttribute>
     </g:if>
 
-    <%--
-      _sidebarClass is the variable container for
-      if the sidebar should be open or closed on
-      page render
-    --%>
-    <g:set var="_sidebarClass" value="" scope="page"/>
-
-    <g:if test="${session.filterPref?.sidebarClosed && session.filterPref?.sidebarClosed == 'true'}">
-      <g:set var="_sidebarClass" value="sidebar-mini" scope="page"/>
-    </g:if>
 
     <asset:javascript src="global/rundeckui.js"/>
     <script type="text/javascript">
