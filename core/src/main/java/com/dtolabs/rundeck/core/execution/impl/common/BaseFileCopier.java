@@ -23,20 +23,13 @@
 */
 package com.dtolabs.rundeck.core.execution.impl.common;
 
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
-import com.dtolabs.utils.Streams;
-import org.apache.commons.lang.RandomStringUtils;
 
 import java.io.*;
-import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**

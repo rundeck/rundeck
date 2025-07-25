@@ -38,7 +38,7 @@ import com.jcraft.jsch.AgentProxyException;
 import com.jcraft.jsch.SSHAgentConnector;
 import com.jcraft.jsch.AgentIdentityRepository;
 import com.jcraft.jsch.SocketFactory;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.optional.ssh.SSHUserInfo;
 import org.apache.tools.ant.taskdefs.optional.ssh.Scp;
