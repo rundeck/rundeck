@@ -34,7 +34,6 @@
                  data="${[pagingMax:params.int('max')?:20, project:params.project?:request.project]}"/>
 
     <g:jsMessages code="Node,Node.plural"/>
-    <g:set var="legacyUi" value="${params.legacyUi || feature.isEnabled(name:'legacyUi')}"/>
 </head>
 <body>
 
@@ -43,15 +42,9 @@
 <g:set var="job_create_authorized" value="${auth.resourceAllowedTest(kind:AuthConstants.TYPE_JOB, action: AuthConstants.ACTION_CREATE,project: params.project ?: request.project)}"/>
 <div class="content">
     <div id="layoutBody">
-        <g:if test="${legacyUi}">
-            <tmpl:legacyNodesList />
-        </g:if>
-        <g:else>
-            <div class="vue-ui-socket">
-                <ui-socket section="nodes-page" location="main" socket-data="${enc(attr: [filter: filtvalue?:'', showInputTitle: true, autofocus: false, runAuthorized: run_authorized, jobCreateAuthorized: job_create_authorized].encodeAsJSON())}"></ui-socket>
-            </div>
-        </g:else>
-
+        <div class="vue-ui-socket">
+            <ui-socket section="nodes-page" location="main" socket-data="${enc(attr: [filter: filtvalue?:'', showInputTitle: true, autofocus: false, runAuthorized: run_authorized, jobCreateAuthorized: job_create_authorized].encodeAsJSON())}"></ui-socket>
+        </div>
     </div>
 </div>
 </body>
