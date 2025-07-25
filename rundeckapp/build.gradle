@@ -36,6 +36,9 @@ apply plugin: "signing"
 
 allprojects {
     ext["liquibase.version"] = liquibaseVersion
+    configurations.all {
+        exclude group: 'commons-lang', module: 'commons-lang'
+    }
 }
 
 //list of grails plugins to depend on in various ways
@@ -192,7 +195,7 @@ dependencies {
 
     implementation "org.grails:grails-web-boot"
     implementation "org.grails:grails-logging"
-    implementation "org.grails:grails-plugin-rest"
+    implementation ("org.grails:grails-plugin-rest")
     implementation "org.grails:grails-plugin-databinding"
     implementation "org.grails:grails-plugin-i18n"
     implementation "org.grails:grails-plugin-services"
@@ -227,7 +230,9 @@ dependencies {
     implementation ("org.grails:grails-console") {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
-    implementation "org.grails.plugins:database-migration:${dbMigrationPluginVersion}"
+    implementation ("org.grails.plugins:database-migration:${dbMigrationPluginVersion}"){
+        exclude (group:"commons-lang", module:"commons-lang")
+    }
     implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: "${httpClientVersion}"
     profile ("org.grails.profiles:web"){
         exclude(group:"org.grails.profiles",module:"web")
@@ -282,6 +287,7 @@ dependencies {
     testRuntimeOnly 'org.jetbrains.kotlin:kotlin-stdlib:1.3.70'
     testRuntimeOnly 'org.aspectj:aspectjweaver:1.9.7'
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+    implementation 'org.apache.commons:commons-lang3:3.18.0'
     // transitive dependencies constraints.
     constraints {
         implementation("com.mchange:c3p0:0.9.5.4") {
@@ -295,6 +301,9 @@ dependencies {
         }
         implementation ("org.yaml:snakeyaml:${snakeyamlVersion}") {
             because "required by rundeck:repository"
+        }
+        implementation ("org.apache.commons:commons-lang3:3.18.0") {
+            because "solves CVE-2025-48924"
         }
     }
 
