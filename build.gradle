@@ -136,6 +136,13 @@ allprojects {
         exclude group: 'ch.qos.logback', module: 'logback-classic'
         exclude group: 'ch.qos.logback', module: 'logback-core'
     }
+    
+    // Global dependency constraints to fix security vulnerabilities
+    configurations.all {
+        resolutionStrategy {
+            force "commons-io:commons-io:${commonsIoVersion}"
+        }
+    }
 }
 
 /**
