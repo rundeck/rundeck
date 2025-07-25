@@ -269,8 +269,12 @@ class ExecutionController extends ControllerBase{
         String maxLogSizeConfig = getGrailsApplication().config.getProperty("rundeck.logviewer.maxLogSize", String)
         Long trimOutput = Sizes.parseFileSize(max)
         Long maxLogSize = Sizes.parseFileSize(maxLogSizeConfig)
-
-        return loadExecutionViewPlugins() + [
+        def statsMap=[:]
+        if(e.scheduledExecution){
+            def stats = scheduledExecutionService.calculateJobStats(e.scheduledExecution)
+            statsMap= [successrate: stats.successRate, execCount: stats.execCount, avgduration: stats.averageDuration]
+        }
+        return statsMap + loadExecutionViewPlugins() + [
                 scheduledExecution    : e.scheduledExecution ?: null,
                 isScheduled           : e.scheduledExecution ? scheduledExecutionService.isScheduled(e.scheduledExecution) : false,
                 execution             : e,
@@ -493,19 +497,11 @@ class ExecutionController extends ControllerBase{
             filesize = file.length()
         }
         final state = e.executionState
-        if(e.scheduledExecution){
-            def ScheduledExecution se = e.scheduledExecution //ScheduledExecution.get(e.scheduledExecutionId)
-            return render(
-                    view: "mailNotification/status",
-                    model: loadExecutionViewPlugins() + [execstate: state, scheduledExecution: se, execution: e,
-                                                         filesize: filesize]
-            )
-        }else{
-            return render(
-                    view: "mailNotification/status",
-                    model: loadExecutionViewPlugins() + [execstate: state, execution: e, filesize: filesize]
-            )
-        }
+        return render(
+                view: "mailNotification/status",
+                model: loadExecutionViewPlugins() + [execstate: state, scheduledExecution: e.scheduledExecution, execution: e,
+                                                     filesize: filesize]
+        )
     }
     def executionMode(){
         withForm {
