@@ -16,6 +16,8 @@
 
 <%@ page import="org.rundeck.core.auth.AuthConstants" %>
 
+<g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
+
 <g:render template="/common/errorFragment"/>
 <g:render template="editLogFilterModal"/>
 
@@ -29,30 +31,37 @@
         onsubmit="if(typeof(validateJobEditForm)=='function'){return validateJobEditForm(this);}">
 
 <div class="card " id="editForm">
-    <div class="card-header" data-ko-bind="jobeditor">
-        <div class="row">
-            <h4 class="col-sm-10 card-title">
-                <span class="text-secondary colon-after"><g:message code="ScheduledExecution.page.edit.title" /></span>
-                <a class="link-quiet text-strong" href="#" data-bind="text: jobName, attr: {href: href, title: groupPath}, bootstrapTooltip: groupPath">
-
-                </a>
-                <span class=" text-muted" data-bind="text: uuid"></span>
-            </h4>
-
-            <auth:resourceAllowed action="${AuthConstants.ACTION_CREATE}"
-                                  project="${params.project}" kind="${AuthConstants.TYPE_JOB}">
-
-                <div class="col-sm-2 ">
-                    <g:link controller="scheduledExecution" action="upload"
-                            params="[project: params.project ?: request.project]"
-                            class="btn btn-default btn-sm pull-right">
-                        <i class="glyphicon glyphicon-upload"></i>
-                        <g:message code="upload.definition.button.label" />
-                    </g:link>
-                </div>
-            </auth:resourceAllowed>
+    <g:if test="${uiType=='next'}">
+        <div class="card-header job-editor-header-vue" id="job-editor-header-vue">
+            <header-section  />
         </div>
-    </div>
+    </g:if>
+    <g:else>
+        <div class="card-header" data-ko-bind="jobeditor">
+            <div class="row">
+                <h4 class="col-sm-10 card-title">
+                    <span class="text-secondary colon-after"><g:message code="ScheduledExecution.page.edit.title" /></span>
+                    <a class="link-quiet text-strong" href="#" data-bind="text: jobName, attr: {href: href, title: groupPath}, bootstrapTooltip: groupPath">
+
+                    </a>
+                    <span class=" text-muted" data-bind="text: uuid"></span>
+                </h4>
+
+                <auth:resourceAllowed action="${AuthConstants.ACTION_CREATE}"
+                                      project="${params.project}" kind="${AuthConstants.TYPE_JOB}">
+
+                    <div class="col-sm-2 ">
+                        <g:link controller="scheduledExecution" action="upload"
+                                params="[project: params.project ?: request.project]"
+                                class="btn btn-default btn-sm pull-right">
+                            <i class="glyphicon glyphicon-upload"></i>
+                            <g:message code="upload.definition.button.label" />
+                        </g:link>
+                    </div>
+                </auth:resourceAllowed>
+            </div>
+        </div>
+    </g:else>
 
     <div class="card-content">
         <tmpl:tabsEdit scheduledExecution="${scheduledExecution}" crontab="${crontab}" authorized="${authorized}"
