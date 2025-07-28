@@ -282,6 +282,7 @@ dependencies {
     testRuntimeOnly 'org.jetbrains.kotlin:kotlin-stdlib:1.3.70'
     testRuntimeOnly 'org.aspectj:aspectjweaver:1.9.7'
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+    implementation 'org.apache.commons:commons-lang3:3.18.0'
     // transitive dependencies constraints.
     constraints {
         implementation("com.mchange:c3p0:0.9.5.4") {
