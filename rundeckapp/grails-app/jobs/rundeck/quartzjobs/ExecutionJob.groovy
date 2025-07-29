@@ -36,7 +36,6 @@ import org.quartz.InterruptableJob
 import org.quartz.JobDataMap
 import org.quartz.JobExecutionContext
 import org.rundeck.util.Sizes
-import org.springframework.dao.DataAccessException
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.data.util.OptionsParserUtil
@@ -110,16 +109,6 @@ class ExecutionJob implements InterruptableJob {
         }
     }
 
-    private int asInt(def value) {
-        if(value instanceof String){
-            return value.toInteger()
-        }else if(value instanceof Integer){
-            return value
-        }else{
-            throw new IllegalArgumentException("Not able to convert to integer, value: ${value}")
-        }
-    }
-
     void execute_internal(JobExecutionContext context) {
         boolean success=false
         RunContext initMap
@@ -167,7 +156,7 @@ class ExecutionJob implements InterruptableJob {
                 success=result?.success
                 statusString=Execution.isCustomStatusString(result?.result?.statusString)?result?.result?.statusString:null
             }
-        }catch(Throwable t){
+        } catch (Throwable t) {
             log.error("Failed execution ${initMap.execution.id} : ${t.message?t.message:'no message'}",t)
         }
         if(!result){
