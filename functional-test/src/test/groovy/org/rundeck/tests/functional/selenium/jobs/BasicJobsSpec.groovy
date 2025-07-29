@@ -252,6 +252,7 @@ class BasicJobsSpec extends SeleniumBase {
         jobShowPage.optionValidationWarningText.getText().contains 'Option \'reqOpt1\' is required'
     }
 
+    //Added test for Fix for RUN-3462: after jobShowPage.nodeFilterOverride.click()
     def "run job modal should show node filter editable input and configure to localhost"() {
         when:
         def jobShowPage = go JobShowPage, SELENIUM_BASIC_PROJECT
@@ -259,8 +260,6 @@ class BasicJobsSpec extends SeleniumBase {
         jobShowPage.validatePage()
         jobShowPage.runJobLink '7a0d71b2-e096-4fbd-9efb-21bcbe826c0e' click()
         jobShowPage.waitForElementToBeClickable jobShowPage.nodeFilterInput
-
-
         jobShowPage.nodeFilterInput.click()
         jobShowPage.waitForElementToBeClickable jobShowPage.nodeFilterOverride
         jobShowPage.nodeFilterOverride.click()

@@ -513,6 +513,7 @@
     var pageParams = loadJsonData('pageParams');
     jQuery('body').on('click', '.nodefilterlink', function(evt) {
       evt.preventDefault();
+      //Fix for RUN-3462: Populate node filter field when selecting a node in "Change the Target Nodes" section
       const nodeFilterValue = jQuery(this).data('node-filter');
       const filterInput = document.querySelector('input[name="extra.nodefilter"]');
       if (filterInput) {
