@@ -296,6 +296,9 @@ dependencies {
         implementation ("org.yaml:snakeyaml:${snakeyamlVersion}") {
             because "required by rundeck:repository"
         }
+        implementation("commons-io:commons-io:${commonsIoVersion}") {
+            because "Fix CVE-2024-47554 - force newer version over transitive dependencies"
+        }
     }
 
 
