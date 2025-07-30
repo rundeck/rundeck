@@ -299,6 +299,9 @@ dependencies {
         implementation("commons-io:commons-io:${commonsIoVersion}") {
             because "Fix CVE-2024-47554 - force newer version over transitive dependencies"
         }
+        implementation("commons-fileupload:commons-fileupload:1.6.0") {
+            because "Fix CVE-2025-48976 - force newer version over transitive dependencies from grails-web-fileupload"
+        }
     }
 
 
