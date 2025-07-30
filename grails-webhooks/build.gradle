@@ -67,6 +67,12 @@ dependencies {
     testImplementation "org.grails:grails-gorm-testing-support"
     testImplementation "org.mockito:mockito-core"
     testImplementation "org.grails:grails-web-testing-support"
+    
+    constraints {
+        implementation("commons-fileupload:commons-fileupload:1.6.0") {
+            because "Fix CVE-2025-48976 - force newer version over transitive dependencies from grails-web-fileupload"
+        }
+    }
 }
 
 bootRun {
