@@ -22,7 +22,6 @@ configurations.all {
         // Only force artifacts that exist for version 1.21
         force "org.apache.commons:commons-compress:${commonsCompressVersion}"
     }
-    exclude group: 'org.apache.commons:commons-compress:1.21'
 }
 
 
@@ -37,7 +36,7 @@ dependencies {
     testImplementation "com.squareup.okhttp3:okhttp-urlconnection:${okhttpUrlConnectionVersion}"
     testImplementation group: 'com.jcraft', name: 'jsch', version: "${jschVersion}"
 
-    testImplementation "org.apache.commons:commons-compress:${commonsCompressVersion}"
+    implementation "org.apache.commons:commons-compress:${commonsCompressVersion}"
 
 }
 

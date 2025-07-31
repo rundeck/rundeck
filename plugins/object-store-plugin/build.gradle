@@ -23,8 +23,8 @@ configurations.all {
         // Only force artifacts that exist for version 1.21
         force "org.apache.commons:commons-compress:${commonsCompressVersion}"
     }
-    exclude group: 'org.apache.commons:commons-compress:1.21'
 }
+
 
 dependencies {
     // Use the latest Groovy version for building this library
