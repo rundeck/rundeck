@@ -16,6 +16,16 @@ testlogger {
 
 project.evaluationDependsOn(":rundeckapp")
 
+configurations.all {
+    resolutionStrategy {
+        // Force safe commons-compress versions to fix CVE-2024-25710
+        // Only force artifacts that exist for version 1.21
+        force "org.apache.commons:commons-compress:${commonsCompressVersion}"
+    }
+    exclude group: 'org.apache.commons:commons-compress:1.21'
+}
+
+
 dependencies {
     testImplementation "org.spockframework:spock-core:${spockVersion}"
     testImplementation "org.testcontainers:testcontainers:${testContainersVersion}"
@@ -26,6 +36,9 @@ dependencies {
     testImplementation "org.seleniumhq.selenium:selenium-java:${seleniumJavaVersion}"
     testImplementation "com.squareup.okhttp3:okhttp-urlconnection:${okhttpUrlConnectionVersion}"
     testImplementation group: 'com.jcraft', name: 'jsch', version: "${jschVersion}"
+
+    testImplementation "org.apache.commons:commons-compress:${commonsCompressVersion}"
+
 }
 
 //This prevents tasks from being cached
