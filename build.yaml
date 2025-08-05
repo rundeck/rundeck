@@ -1,10 +1,10 @@
 ---
 rundeck:
   plugins: # Extra plugins to bundle
-  - "com.github.rundeck-plugins:ansible-plugin:4.0.8"
-  - "com.github.rundeck-plugins:aws-s3-model-source:v1.0.9"
+  - "com.github.rundeck-plugins:ansible-plugin:4.0.10"
+  - "com.github.rundeck-plugins:aws-s3-model-source:v1.0.10"
   - "com.github.rundeck-plugins:py-winrm-plugin:2.1.3@zip"
   - "com.github.rundeck-plugins:openssh-node-execution:2.0.3@zip"
-  - "org.rundeck.plugins:multiline-regex-datacapture-filter:1.1.2"
-  - "org.rundeck.plugins:attribute-match-node-enhancer:0.2.1"
-  - "com.github.rundeck-plugins:sshj-plugin:v0.1.18"
+  - "org.rundeck.plugins:multiline-regex-datacapture-filter:1.1.5"
+  - "org.rundeck.plugins:attribute-match-node-enhancer:0.2.3"
+  - "com.github.rundeck-plugins:sshj-plugin:v0.1.19"
