@@ -273,7 +273,7 @@ class KillHandlerExecutionLifecyclePluginSpec extends Specification {
         def pids = ["1234"]
 
         def node = Mock(INodeEntry)
-        node.nodename >> nodeName  // Fixed: was nodeName, should be nodename
+        node.nodename >> nodeName
         node.osFamily >> "unix"
 
         def nodePidList = Mock(KillHandlerProcessTrackingService.NodePidList)
