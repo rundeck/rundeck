@@ -255,6 +255,7 @@ export default defineComponent({
     modelValue: {
       type: [String, null] as PropType<string | null>,
       required: true,
+
     },
     showTitle: {
       type: Boolean,
@@ -387,18 +388,19 @@ export default defineComponent({
     },
   },
   watch: {
-    modelValue() {
-      if (this.modelValue) {
-        this.outputValue = this.modelValue;
-      }
-      if (
-        this.selectedFilterName &&
-        this.selectedFilterName !== this.matchedFilter
-      ) {
-        this.selectedFilterName = "";
-      } else if (this.matchedFilter) {
-        this.selectedFilterName = this.matchedFilter;
-      }
+    modelValue: {
+      handler(newValue) {
+        const safeValue = newValue === undefined ? '' : (newValue || '');
+        if (safeValue !== this.outputValue) {
+          this.outputValue = safeValue;
+        }
+        if (this.selectedFilterName && this.selectedFilterName !== this.matchedFilter) {
+          this.selectedFilterName = "";
+        } else if (this.matchedFilter) {
+          this.selectedFilterName = this.matchedFilter;
+        }
+      },
+      immediate: true
     },
     filterName() {
       this.selectedFilterName = this.filterName;
