@@ -158,7 +158,8 @@ This operation will use the 'kill' and 'pkill' for Unix and 'taskkill' for Windo
         try {
             // When the parent pid is killed, children processes change its ppid to 1 (init pid)
             // To circumvent this, we issue a kill by SID also.
-            // Note: This command will not work on macOS version of pkill
+            // Note: The 'pkill -s' (session ID) option is not supported on macOS (all known versions, including macOS 10.x through 14.x/Sonoma).
+            // This command will not work on macOS nodes due to the BSD implementation of pkill lacking the '-s' flag.
             String cmdKillSid = "pkill -SIGKILL -s " + commaPidList
             return nodeExecutionService.executeCommand(execContext,
                     ExecArgList.fromStrings(false, false, cmdKillSid),
