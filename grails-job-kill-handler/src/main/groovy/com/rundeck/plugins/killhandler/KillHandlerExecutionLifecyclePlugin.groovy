@@ -167,7 +167,7 @@ This operation will use the 'kill' and 'pkill' for Unix and 'taskkill' for Windo
         } catch (Exception e) {
             logger.warn("Failed to kill child processes by SID on node '${node.nodename}': ${e.message}")
             event.executionLogger.log(Constants.DEBUG_LEVEL, "Failed to kill child processes by SID on node '${node.nodename}': ${e.message}")
-            throw e // Re-throw to be handled by the calling method
+            return NodeExecutorResultImpl.createFailure("Failed to kill child processes by SID: ${e.message}", node)
         }
     }
 }
