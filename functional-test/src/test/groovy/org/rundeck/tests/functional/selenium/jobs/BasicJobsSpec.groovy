@@ -2,11 +2,16 @@ package org.rundeck.tests.functional.selenium.jobs
 
 import org.openqa.selenium.By
 import org.rundeck.util.annotations.ExcludePro
+import org.rundeck.util.gui.pages.jobs.JobCreatePage
+import org.rundeck.util.gui.pages.jobs.JobListPage
+import org.rundeck.util.gui.pages.home.HomePage
+import org.rundeck.util.gui.pages.jobs.JobShowPage
+import org.rundeck.util.gui.pages.jobs.JobTab
+import org.rundeck.util.gui.pages.jobs.NotificationEvent
+import org.rundeck.util.gui.pages.jobs.NotificationType
+import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
-import org.rundeck.util.gui.pages.home.HomePage
-import org.rundeck.util.gui.pages.jobs.*
-import org.rundeck.util.gui.pages.login.LoginPage
 import spock.lang.Stepwise
 
 @SeleniumCoreTest
@@ -75,12 +80,12 @@ class BasicJobsSpec extends SeleniumBase {
     def "create valid job basic options"() {
         when:
         def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-        jobCreatePage.nextUi = nextUi
+        jobCreatePage.nextUi=nextUi
         jobCreatePage.go()
         def jobShowPage = page JobShowPage
         def optionName = 'seleniumOption1'
         then:
-        jobCreatePage.fillBasicJob specificationContext.currentIteration.name + " ${nextUi ? "next ui" : "old ui"}"
+        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
         jobCreatePage.optionButton.click()
         jobCreatePage.optionNameNew() sendKeys optionName
         jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
@@ -92,16 +97,16 @@ class BasicJobsSpec extends SeleniumBase {
         jobShowPage.jobLinkTitleLabel.getText().contains('create valid job basic options')
         jobShowPage.optionInputText(optionName) != null
         where:
-        nextUi << [false]
+        nextUi<<[false]
     }
 
     def "edit job set description"() {
         when:
         def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-        jobCreatePage.nextUi = nextUi
+        jobCreatePage.nextUi=nextUi
         jobCreatePage.go()
         def jobShowPage = page JobShowPage
-        jobShowPage.nextUi = nextUi
+        jobShowPage.nextUi=nextUi
         then:
         jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
         jobCreatePage.go()
@@ -110,13 +115,13 @@ class BasicJobsSpec extends SeleniumBase {
         expect:
         'a new job description' == jobShowPage.descriptionTextLabel.getText()
         where:
-        nextUi << [false, true]
+        nextUi<<[false,true]
     }
 
     def "edit job set groups"() {
         when:
         def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-        jobCreatePage.nextUi = nextUi
+        jobCreatePage.nextUi=nextUi
         jobCreatePage.go()
         then:
         jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
@@ -124,13 +129,13 @@ class BasicJobsSpec extends SeleniumBase {
         jobCreatePage.jobGroupField.clear()
         jobCreatePage.jobGroupField.sendKeys 'testGroup'
         where:
-        nextUi << [false, true]
+        nextUi<<[false,true]
     }
 
     def "edit job set group via modal"() {
         when:
         def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-        jobCreatePage.nextUi = nextUi
+        jobCreatePage.nextUi=nextUi
         jobCreatePage.go()
         then:
         jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
@@ -141,7 +146,7 @@ class BasicJobsSpec extends SeleniumBase {
         expect:
         'test' == jobCreatePage.jobGroupField.getAttribute("value")
         where:
-        nextUi << [false, true]
+        nextUi<<[false, true]
     }
 
     def "edit job and set schedules tab"() {
@@ -166,7 +171,7 @@ class BasicJobsSpec extends SeleniumBase {
         jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
         jobCreatePage.go()
         jobCreatePage.tab JobTab.EXECUTION_PLUGINS click()
-        if (jobCreatePage.executionPluginsRows.size() > 1) {
+        if(jobCreatePage.executionPluginsRows.size() > 1){
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.killHandlerPluginPreviousRow
         }
         if (jobCreatePage.killHandlerPluginCheckbox.isSelected()) {
@@ -181,7 +186,7 @@ class BasicJobsSpec extends SeleniumBase {
         jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.updateJobButton
         jobCreatePage.updateJobButton.click()
         where:
-        nextUi << [false, true]
+        nextUi<<[false,true]
     }
 
     def "edit job and set other tab"() {
@@ -224,7 +229,7 @@ class BasicJobsSpec extends SeleniumBase {
         def jobListPage = page JobListPage
         def jobShowPage = page JobShowPage
         when:
-        homePage.goProjectHome "SeleniumBasic"
+        homePage.goProjectHome"SeleniumBasic"
         jobListPage.loadPathToShowJob SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
         then:
         jobListPage.go()
@@ -252,8 +257,7 @@ class BasicJobsSpec extends SeleniumBase {
         jobShowPage.optionValidationWarningText.getText().contains 'Option \'reqOpt1\' is required'
     }
 
-    //Added test for Fix for RUN-3462: after jobShowPage.nodeFilterOverride.click()
-    def "run job modal should show node filter editable input and configure to localhost"() {
+    def "run job modal should show node filter editable input"() {
         when:
         def jobShowPage = go JobShowPage, SELENIUM_BASIC_PROJECT
         then:
@@ -263,18 +267,9 @@ class BasicJobsSpec extends SeleniumBase {
         jobShowPage.nodeFilterInput.click()
         jobShowPage.waitForElementToBeClickable jobShowPage.nodeFilterOverride
         jobShowPage.nodeFilterOverride.click()
-        jobShowPage.waitForElementToBeClickable jobShowPage.dropDownToggle
-        jobShowPage.dropDownToggle.click()
-        jobShowPage.waitForElementToBeClickable jobShowPage.selectAllNodesLink
-        jobShowPage.selectAllNodesLink.click()
-        jobShowPage.waitForElementToBeClickable jobShowPage.localhostNode
-        jobShowPage.localhostNode.click()
-        jobShowPage.waitForElementToBeClickable jobShowPage.nodeFilterArrowIcon
-        jobShowPage.nodeFilterArrowIcon.click()
         expect:
         jobShowPage.schedJobNodeFilter.isDisplayed()
-        jobShowPage.nodeFilterInputValue.getDomProperty("value").trim() ==~ /name: .+/
-
+        jobShowPage.nodeFilterInputValue.getDomProperty("value").trim() == 'name: RunnerBBB'
     }
 
     def "job filter by name results"() {
@@ -368,5 +363,4 @@ class BasicJobsSpec extends SeleniumBase {
         jobsListPage.getLink('Upload Definition').isDisplayed()
         jobsListPage.getLink('Bulk Edit').isDisplayed()
     }
-
 }
