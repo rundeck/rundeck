@@ -69,7 +69,7 @@
             <node-filter-input
               id="job_edit__node_filter_include"
               :value="modelData.filter"
-              @update:value="modelData.filter"
+              @update:value="newValue => modelData.filter = newValue"
               :project="modelData.project"
               :filter-name="modelData.filterName"
               :node-summary="nodeSummary"
@@ -102,7 +102,7 @@
             <node-filter-input
               id="job_edit__node_filter_exclude"
               :value="modelData.filterExclude"
-              @update:value="modelData.filterExclude"
+              @update:value="newvalue => modelData.filterExclude = newvalue"
               :project="modelData.project"
               :filter-name="modelData.filterNameExclude"
               :node-summary="nodeSummary"
