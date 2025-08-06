@@ -141,7 +141,7 @@ allprojects {
     configurations.all {
         resolutionStrategy {
             force "commons-io:commons-io:${commonsIoVersion}"
-            force "commons-fileupload:${commonsFileuploadVersion}"
+            force "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
         }
     }
 }
