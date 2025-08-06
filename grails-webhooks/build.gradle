@@ -69,7 +69,7 @@ dependencies {
     testImplementation "org.grails:grails-web-testing-support"
     
     constraints {
-        implementation("commons-fileupload:${commonsFileuploadVersion}") {
+        implementation("commons-fileupload:commons-fileupload:${commonsFileuploadVersion}") {
             because "Fix CVE-2025-48976 - force newer version over transitive dependencies from grails-web-fileupload"
         }
     }
