@@ -335,7 +335,7 @@ describe("JobRefForm", () => {
 
       await wrapper
         .findComponent({ name: "NodeFilterInput" })
-        .vm.$emit("update:modelValue", "new-filter");
+        .vm.$emit("update:value", "new-filter");
 
       expect(store.nodeFilterStore.setSelectedFilter).toHaveBeenCalledWith(
         "new-filter",
