@@ -112,16 +112,16 @@ class JobShowPage extends BasePage implements ActivityListTrait {
         this.loadPath = "/project/$project/jobs"
     }
 
-    JobShowPage forJob(String jobUuid) {
+    JobShowPage forJob(String jobUuid){
         this.loadPath = "/project/$project/job/show/$jobUuid"
         return this
     }
 
-    ExecutionShowPage runJob(boolean waitForFinalState = false) {
+    ExecutionShowPage runJob(boolean waitForFinalState = false){
         getRunJobBtn().click()
 
         ExecutionShowPage execution = new ExecutionShowPage(context)
-        if (waitForFinalState) {
+        if(waitForFinalState) {
             execution.waitForRunAgainLink()
             execution.waitForFinalState()
         }
@@ -129,11 +129,11 @@ class JobShowPage extends BasePage implements ActivityListTrait {
         return execution
     }
 
-    ScmStatusBadge getScmStatusBadge() {
+    ScmStatusBadge getScmStatusBadge(){
         return new ScmStatusBadge(this)
     }
 
-    List<WebElement> getOptionsFields() {
+    List<WebElement> getOptionsFields(){
         driver.findElements(By.xpath("//input[contains(@name, 'extra.option.')]"))
     }
 
@@ -143,15 +143,15 @@ class JobShowPage extends BasePage implements ActivityListTrait {
         }
     }
 
-    WebElement getJobExecutionDisabledIcon() {
+    WebElement getJobExecutionDisabledIcon(){
         el jobExecutionDisabledIconBy
     }
 
-    WebElement getJobDefinitionModal() {
+    WebElement getJobDefinitionModal(){
         el jobDefinitionModalBy
     }
 
-    WebElement getNotificationDefinition() {
+    WebElement getNotificationDefinition(){
         el notificationDefinitionBy
     }
 
@@ -256,27 +256,27 @@ class JobShowPage extends BasePage implements ActivityListTrait {
         el nodeFilterOverrideBy
     }
 
-    WebElement getNodeFilterInputValue() {
+    WebElement getNodeFilterInputValue(){
         el nodeFilterInputValueBy
     }
 
-    WebElement getDropDownToggle() {
+    WebElement getDropDownToggle(){
         el dropDownToggleBy
     }
 
-    WebElement getSelectAllNodesLink() {
+    WebElement getSelectAllNodesLink(){
         el selectAllNodesLinkBy
     }
 
-    WebElement getLocalhostNode() {
+    WebElement getLocalhostNode(){
         el localhostNodeBy
     }
 
-    WebElement getNodeFilterArrowIcon() {
+    WebElement getNodeFilterArrowIcon(){
         el(popoverContentBy).findElement(nodeFilterLinkBy).findElement(arrowIconBy)
     }
 
-    WebElement getSchedJobNodeFilter() {
+    WebElement getSchedJobNodeFilter(){
         el schedJobNodeFilterBy
     }
 
@@ -300,28 +300,28 @@ class JobShowPage extends BasePage implements ActivityListTrait {
         el jobSearchSubmitBy
     }
 
-    WebElement getRunJobBtn() {
+    WebElement getRunJobBtn(){
         el runJobBtnBy
     }
 
-    WebElement getLogOutputBtn() {
+    WebElement getLogOutputBtn(){
         el logOutputBtn
     }
 
-    WebElement getJobOptionsValuesDropdown() {
+    WebElement getJobOptionsValuesDropdown(){
         el jobOptionValuesBy
     }
 
-    WebElement getJobOptionValueListItem(String name) {
+    WebElement getJobOptionValueListItem(String name){
         waitForNumberOfElementsToBeOne(By.xpath("//option[. = '${name}']"))
         driver.findElement(By.xpath("//option[. = '${name}']"))
     }
 
-    WebElement getJobOptionValueInput() {
+    WebElement getJobOptionValueInput(){
         el jobOptionValueInputBy
     }
 
-    WebElement getJobOptionsDropdown() {
+    WebElement getJobOptionsDropdown(){
         el jobOptionsDropdownBy
     }
 
@@ -331,12 +331,12 @@ class JobShowPage extends BasePage implements ActivityListTrait {
      * @param minimum number of log entries that should contain logLineText
      * @param timeout to be waiting for results
      */
-    void waitForLogOutput(String logLineText, Integer minimum = 0, Integer timeout = 10) {
+    void waitForLogOutput (String logLineText, Integer minimum = 0, Integer timeout = 10) {
         By logLineSelector = By.xpath("//span[contains(text(),'${logLineText}')]")
         new WebDriverWait(driver, Duration.ofSeconds(timeout)).until(ExpectedConditions.numberOfElementsToBeMoreThan(logLineSelector, minimum))
     }
 
-    WebElement getExecutionOptionsDropdown() {
+    WebElement getExecutionOptionsDropdown(){
         driver.findElement(By.id("execOptFormRunButtons")).findElement(By.className("btn-secondary"))
     }
 
@@ -344,44 +344,44 @@ class JobShowPage extends BasePage implements ActivityListTrait {
         el runJobLaterBy
     }
 
-    WebElement getRunJobLaterMinuteArrowUp() {
+    WebElement getRunJobLaterMinuteArrowUp(){
         el runJobLaterMinuteArrowUpBy
     }
 
-    WebElement getRunJobLaterCreateScheduleButton() {
+    WebElement getRunJobLaterCreateScheduleButton(){
         el runJobLaterScheduleCreateButtonBy
     }
 
-    WebElement getJobStatusBar() {
+    WebElement getJobStatusBar(){
         el jobStatusBarBy
     }
 
-    void selectOptionFromOptionListByName(String optionListName, int optionNo) {
+    void selectOptionFromOptionListByName(String optionListName,int optionNo){
         def select = new Select(getOptionSelectByName(optionListName))
         select.selectByValue("option${optionNo}")
     }
 
-    WebElement getOptionSelectByName(String name) {
+    WebElement getOptionSelectByName(String name){
         driver.findElement(By.name("extra.option.${name}"))
     }
 
-    List<WebElement> getOptionSelectChildren(String name) {
+    List<WebElement> getOptionSelectChildren(String name){
         final By optionSelector = By.name("extra.option.${name}")
 
         waitForElementVisible(optionSelector)
         driver.findElements(optionSelector)
     }
 
-    void waitForLogOutput(By logOutput, Integer number, Integer seconds) {
-        new WebDriverWait(driver, Duration.ofSeconds(seconds)).until(ExpectedConditions.numberOfElementsToBeMoreThan(logOutput, number))
+    void waitForLogOutput (By logOutput, Integer number, Integer seconds){
+        new WebDriverWait(driver, Duration.ofSeconds(seconds)).until(ExpectedConditions.numberOfElementsToBeMoreThan(logOutput,number))
     }
 
-    void goToJob(String jobUuidText) {
+    void goToJob(String jobUuidText){
         go(PAGE_PATH + "/$jobUuidText")
     }
 
-    def expectNumberOfStepsToBe(int steps) {
-        new WebDriverWait(driver, Duration.ofSeconds(10)).until(
+    def expectNumberOfStepsToBe(int steps){
+        new WebDriverWait(driver,  Duration.ofSeconds(10)).until(
                 ExpectedConditions.numberOfElementsToBe(stepsInJobDefinitionBy, steps)
         )
     }
@@ -389,31 +389,31 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     /**
      * It returns the list of "Actions" buttons
      */
-    def getJobActionsButtonList() {
+    def getJobActionsButtonList(){
         (el jobActionsListButtonBy)
     }
 
-    def getJobDeleteButtons() {
+    def getJobDeleteButtons(){
         (el jobDeleteButtonBy)
     }
 
-    def getJobDisableScheduleButtonBy() {
+    def getJobDisableScheduleButtonBy(){
         (el jobDisableScheduleButtonBy)
     }
 
-    def getJobEnableScheduleButtonBy() {
+    def getJobEnableScheduleButtonBy(){
         (el jobEnableScheduleButtonBy)
     }
 
-    def getJobDisableExecutionButton() {
+    def getJobDisableExecutionButton(){
         (el jobDisableExecutionButtonBy)
     }
 
-    def getJobEnableExecutionButton() {
+    def getJobEnableExecutionButton(){
         (el jobEnableExecutionButtonBy)
     }
 
-    def getJobDeleteConfirmBy() {
+    def getJobDeleteConfirmBy(){
         (el jobDeleteConfirmBy)
     }
 
@@ -423,46 +423,45 @@ class JobShowPage extends BasePage implements ActivityListTrait {
         )
     }
 
-    WebElement getJobUuid() {
+    WebElement getJobUuid(){
         el jobUuidBy
     }
 
-    WebElement getDeleteJobBtn() {
+    WebElement getDeleteJobBtn(){
         waitForElementVisible jobDeleteModalBy
         el jobDeleteModalBy findElement(By.cssSelector(".btn.btn-danger.btn-sm"))
     }
 
-    List<WebElement> getExtraOptFirsts(String optionName) {
+    List<WebElement> getExtraOptFirsts(String optionName){
         els By.name("extra.option.$optionName")
     }
 
-    WebElement getDuplicateJobButton() {
+    WebElement getDuplicateJobButton(){
         el duplicateJobButtonBy
     }
 
-    WebElement getDuplicateJobToProjectButtonBy() {
+    WebElement getDuplicateJobToProjectButtonBy(){
         el duplicateJobToProjectButtonBy
     }
 
-    void selectProjectToDuplicateJob(String projectName) {
+    void selectProjectToDuplicateJob(String projectName){
         Select selector = new Select(el(projectDropDownToDuplicateBy))
         selector.selectByValue(projectName)
     }
 
-    WebElement getDuplicateJobToProjectSubmitButton() {
+    WebElement getDuplicateJobToProjectSubmitButton(){
         el duplicateJobToProjectSubmitBy
     }
 
-    List<WebElement> getJobStatsElements() {
+    List<WebElement> getJobStatsElements(){
         els jobStatsBy
     }
 
-    List<WebElement> getOptionInputs() {
+    List<WebElement> getOptionInputs(){
         return (els optionInputBy)
     }
 
-    WebElement getJobOptionAlertBy() {
+    WebElement getJobOptionAlertBy(){
         el jobOptionAlertBy
     }
-
 }
