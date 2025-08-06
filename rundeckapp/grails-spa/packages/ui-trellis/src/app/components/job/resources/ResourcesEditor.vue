@@ -68,7 +68,7 @@
 
             <node-filter-input
               id="job_edit__node_filter_include"
-              v-model="modelData.filter"
+              v-model:value="modelData.filter"
               :project="modelData.project"
               :filter-name="modelData.filterName"
               :node-summary="nodeSummary"
@@ -100,7 +100,7 @@
 
             <node-filter-input
               id="job_edit__node_filter_exclude"
-              v-model="modelData.filterExclude"
+              v-model:value="modelData.filterExclude"
               :project="modelData.project"
               :filter-name="modelData.filterNameExclude"
               :node-summary="nodeSummary"

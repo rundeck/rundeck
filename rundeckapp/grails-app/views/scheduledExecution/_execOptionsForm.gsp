@@ -510,23 +510,11 @@
   })
 
   function init() {
-    var pageParams = loadJsonData('pageParams');
-    jQuery('body').on('click', '.nodefilterlink', function(evt) {
-      evt.preventDefault();
-      //Fix for RUN-3462: Populate node filter field when selecting a node in "Change the Target Nodes" section
-      const nodeFilterValue = jQuery(this).data('node-filter');
-      const filterInput = document.querySelector('input[name="extra.nodefilter"]');
-      if (filterInput) {
-        filterInput.value = nodeFilterValue;
-        filterInput.dispatchEvent(new Event('input', { bubbles: true }));
-        filterInput.focus();
-      }
-      if (typeof nodeFilter !== 'undefined') {
-        jQuery.data(this, 'node-filter-name', '');
-        jQuery.data(this, 'node-filter', nodeFilterValue);
-        nodeFilter.selectNodeFilterLink(this);
-      }
-    });
+      var pageParams = loadJsonData('pageParams');
+      jQuery('body').on('click', '.nodefilterlink', function (evt) {
+          evt.preventDefault();
+          nodeFilter.selectNodeFilterLink(this);
+      });
 
     jQuery('#nodesContent').on('click', '.closeoutput', function(evt) {
       evt.preventDefault();
@@ -583,10 +571,15 @@
       grouptags: loadJsonData('namegrouptagsJson'),
       nodeFilter: nodeFilter
     })
-    if (typeof (nodeFilter) !== 'undefined') {
-      kocontrollers.runformoptions.isNodeFilterVisible.subscribe(nodeFilter.nodeFiltersVisible)
-      nodeFilter.nodeFiltersVisible(kocontrollers.runformoptions.isNodeFilterVisible())
-    }
+      if (typeof (nodeFilter) !== 'undefined') {
+          kocontrollers.runformoptions.isNodeFilterVisible.subscribe(function(isVisible) {
+              nodeFilter.nodeFiltersVisible(isVisible);
+              if (isVisible) {
+                  nodeFilter.selectNodeFilter({filter: ""}, false);
+              }
+          });
+          nodeFilter.nodeFiltersVisible(kocontrollers.runformoptions.isNodeFilterVisible())
+      }
 
     jQuery('div.jobmatchednodes').on('click', 'span.obs_tag_group', function(evt) {
       var ischecked = jQuery(this).data('tagselected') != 'false';

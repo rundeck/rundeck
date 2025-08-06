@@ -103,14 +103,14 @@ const FilterInputComp = defineComponent({
   },
   template: `
           <node-filter-input :project="project"
-                             v-model="filterValue"
+                             v-model:value="filterValue"
                              :show-title="showInputTitle"
                              :autofocus="autofocus"
                              :filterFieldName="filterFieldName"
                              :filter-field-id="filterFieldId"
                              :query-field-placeholder-text="queryFieldPlaceholderText"
                              search-btn-type="cta"
-                             @update:model-value="updatedValue"
+                             @update:value="updatedValue"
                              @filter="filterClicked"
                              v-bind="extraAttrs"
           />
