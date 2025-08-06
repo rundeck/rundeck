@@ -388,19 +388,18 @@ export default defineComponent({
     },
   },
   watch: {
-    value: {
-      handler(newValue) {
-        const safeValue = newValue === undefined ? '' : (newValue || '');
-        if (safeValue !== this.outputValue) {
-          this.outputValue = safeValue;
-        }
-        if (this.selectedFilterName && this.selectedFilterName !== this.matchedFilter) {
-          this.selectedFilterName = "";
-        } else if (this.matchedFilter) {
-          this.selectedFilterName = this.matchedFilter;
-        }
-      },
-      immediate: true
+    value() {
+      if (this.value) {
+        this.outputValue = this.value;
+      }
+      if (
+          this.selectedFilterName &&
+          this.selectedFilterName !== this.matchedFilter
+      ) {
+        this.selectedFilterName = "";
+      } else if (this.matchedFilter) {
+        this.selectedFilterName = this.matchedFilter;
+      }
     },
     filterName() {
       this.selectedFilterName = this.filterName;
