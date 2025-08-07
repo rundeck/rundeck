@@ -186,7 +186,7 @@ class ExecutionJob implements InterruptableJob {
 
 
     private void markMeter(JobExecutionContext context, String name) {
-        MetricRegistry metricRegistry = context.jobDetail.jobDataMap.get('metricRegistry')
+        MetricRegistry metricRegistry = context.jobDetail?.jobDataMap?.get('metricRegistry')
         if (metricRegistry) {
             metricRegistry.meter(MetricRegistry.name(ExecutionService.name, name)).mark()
         }
