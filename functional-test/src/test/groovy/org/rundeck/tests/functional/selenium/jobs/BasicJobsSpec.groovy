@@ -62,7 +62,6 @@ class BasicJobsSpec extends SeleniumBase {
             def validationMsg = jobCreatePage.formValidationAlert.getText()
             !validationMsg.contains('"Job Name" parameter cannot be blank')
             validationMsg.contains('Workflow must have at least one step')
-        
     }
 
     def "create valid job basic workflow"() {
@@ -269,6 +268,7 @@ class BasicJobsSpec extends SeleniumBase {
             jobShowPage.nodeFilterOverride.click()
         expect:
             jobShowPage.schedJobNodeFilter.isDisplayed()
+            jobShowPage.nodeFilterInputValue.getDomProperty("value").trim() == 'name: RunnerBBB'
     }
 
     def "job filter by name results"() {
@@ -362,5 +362,4 @@ class BasicJobsSpec extends SeleniumBase {
             jobsListPage.getLink('Upload Definition').isDisplayed()
             jobsListPage.getLink('Bulk Edit').isDisplayed()
     }
-
 }
