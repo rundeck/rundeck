@@ -147,7 +147,11 @@ class ScmLoaderService implements EventBusAware {
                                         scmFailedProjectInit.put(projectIntegration, pluginConfigData)
                                         process = true
                                         scmToFalse(pluginConfigData, project, integration)
-                                        removingLoaderProcess(project, integration)
+                                        removingLoaderProcess(
+                                            project,
+                                            integration,
+                                            "Error initializing SCM: " + t.message
+                                        )
                                     }else{
                                         retryCount++
                                         log.error("Error initializing SCM for: $project/$integration: ${t.message}. Retrying ${retryCount}/${retryTimes}")
@@ -157,8 +161,11 @@ class ScmLoaderService implements EventBusAware {
                             }
 
                         }else{
-                            removingLoaderProcess(project, integration)
+                            removingLoaderProcess(project, integration, "SCM disabled or project removed")
                         }
+                    } catch (CancelTaskException throwable) {
+                        log.warn("Stopping loader process for ${project}/${integration}: ${throwable.message}", throwable)
+                        throw throwable
                     } catch (Throwable throwable) {
                         log.error("Error initializing SCM project loader for ${project}/${integration}: ${throwable.message}", throwable)
                     }
@@ -176,14 +183,20 @@ class ScmLoaderService implements EventBusAware {
         scmService.storeConfig(scmPluginConfig, project, integration)
     }
 
-    def removingLoaderProcess(String project, String integration){
+    static class CancelTaskException extends Exception {
+        CancelTaskException(String message) {
+            super(message)
+        }
+    }
+
+    def removingLoaderProcess(String project, String integration, String message){
         String projectIntegration = getProjectIntegration(project, integration)
 
         //removing task
         log.debug("removing thread ${projectIntegration}")
         scmProjectLoaderProcess.remove(projectIntegration)
         cleanUpScmPlugin(project, integration)
-        throw new RuntimeException("SCM disabled or project removed");
+        throw new CancelTaskException(message);
     }
 
     long getScmLoaderInitialDelaySeconds() {
