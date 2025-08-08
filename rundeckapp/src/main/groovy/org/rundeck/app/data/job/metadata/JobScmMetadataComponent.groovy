@@ -109,7 +109,7 @@ class JobScmMetadataComponent implements JobMetadataComponent {
                         }
                     }
                 }
-            } catch (ScmPluginException e) {
+            } catch (Throwable e) {
                 log.warn("Failed to get SCM Export status: ${e.message}")
             }
         }
@@ -137,7 +137,7 @@ class JobScmMetadataComponent implements JobMetadataComponent {
                         }
                     }
                 }
-            } catch (ScmPluginException e) {
+            } catch (Throwable e) {
                 log.warn("Failed to get SCM Import status: ${e.message}")
             }
         }
