@@ -113,6 +113,10 @@ dependencies {
     testImplementation group: 'org.junit-pioneer', name: 'junit-pioneer', version: '1.5.0'
 }
 
+// Add constraints to fix transitive dependency conflicts
+constraints {
+    implementation ("org.jetbrains.kotlin:kotlin-stdlib:1.6.21")
+}
 
 buildConfig {
     className("BuildConfig")
