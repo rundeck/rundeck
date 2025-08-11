@@ -68,7 +68,8 @@
 
             <node-filter-input
               id="job_edit__node_filter_include"
-              v-model="modelData.filter"
+              :value="modelData.filter"
+              @update:value="newValue => modelData.filter = newValue"
               :project="modelData.project"
               :filter-name="modelData.filterName"
               :node-summary="nodeSummary"
@@ -100,7 +101,8 @@
 
             <node-filter-input
               id="job_edit__node_filter_exclude"
-              v-model="modelData.filterExclude"
+              :value="modelData.filterExclude"
+              @update:value="newvalue => modelData.filterExclude = newvalue"
               :project="modelData.project"
               :filter-name="modelData.filterNameExclude"
               :node-summary="nodeSummary"
