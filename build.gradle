@@ -142,6 +142,11 @@ allprojects {
         resolutionStrategy {
             force "commons-io:commons-io:${commonsIoVersion}"
             force "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
+            force "com.fasterxml.jackson.core:jackson-core:${jacksonDatabindVersion}"
+            force "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
+            force "com.fasterxml.jackson.core:jackson-annotations:${jacksonDatabindVersion}"
+            force "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonDatabindVersion}"
+            force "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonDataformatCBORVersion}"
         }
     }
 }
