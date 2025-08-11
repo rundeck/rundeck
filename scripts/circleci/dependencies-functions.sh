@@ -38,3 +38,17 @@ dependencies_testdeck_setup() {
         dpkg \
         jq
 }
+
+# Install specific Groovy version
+  dependencies_install_groovy() {
+    local groovy_version=${1:-3.0.25}
+    echo "Installing Groovy $groovy_version"
+
+    # Download and install Groovy
+    curl -s "https://downloads.apache.org/groovy/${groovy_version}/distribution/apache-groovy-binary-${groovy_version}.zip" -o groovy.zip
+    sudo unzip -q groovy.zip -d /opt/
+    sudo ln -sf "/opt/groovy-${groovy_version}/bin/"* /usr/local/bin/
+
+    # Verify installation
+    groovy --version
+  }

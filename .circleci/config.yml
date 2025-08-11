@@ -204,6 +204,14 @@ commands:
           step-name: Install Java JDK
           command: dependencies_install_zulu11jdk
 
+  # Install Groovy
+  install-groovy:
+    description: Install Groovy from Apache archive
+    steps:
+      - run-build-step:
+          step-name: Install Groovy
+          command: dependencies_install_groovy
+
   ## Dependency groups
 
   # Install base dependencies
@@ -211,6 +219,7 @@ commands:
     description: Install Build Dependencies
     steps:
       - install-java-jdk
+      - install-groovy
 
   # Install dependencies required for building
   install-build-dependencies:
