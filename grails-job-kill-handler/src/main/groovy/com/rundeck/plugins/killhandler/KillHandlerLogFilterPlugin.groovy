@@ -62,7 +62,7 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
             if (match.matches()) {
                 if (match.groupCount() > 0) {
                     def execId = context.dataContext.job.execid
-                    def nodename = event.metadata.node
+                    def nodename = event.metadata?.node ?: "__global"
                     def pid = match.group(1)
                     processTrackingService.registerPID(execId, nodename, pid)
                 }
