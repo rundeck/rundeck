@@ -775,7 +775,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
         )
         when:
 
-        def result=executionJob.executeCommand(runContext)
+        def result=executionJob.executeCommand(runContext, Mock(JobExecutionContext))
 
         then:
         1 * es.avgDurationExceeded(_, content) >> {
