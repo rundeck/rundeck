@@ -14,7 +14,7 @@ dependencies_install_zulu11jdk() {
 
 }
 
- # Download and install Groovy 3.0.231
+ # Download and install Groovy 3.0.23
 dependencies_install_groovy() {
     cd /tmp
     wget https://archive.apache.org/dist/groovy/3.0.23/distribution/apache-groovy-binary-3.0.23.zip
