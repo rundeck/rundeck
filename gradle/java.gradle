@@ -26,19 +26,19 @@ eclipse.project.name = "${project.getParent().eclipse.project.name}:${name}"
 
 // produce a jar file for our test classes
 task testJar(type: Jar) {
-    classifier = 'tests'
+    archiveClassifier = 'tests'
     from sourceSets.test.java
 }
 
 // produce a jar file for our source files
 task sourceJar(type: Jar) {
-    classifier = 'sources'
+    archiveClassifier = 'sources'
     from sourceSets.main.java
 }
 
 // produce a jar file for our javadoc
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc.destinationDir
 }
 
