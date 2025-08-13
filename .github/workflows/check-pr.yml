@@ -6,10 +6,10 @@ on:
 
 #check the milestones on the pr, and fail validation if no milestone is set, and the branch target is main
 jobs:
-  milestonecheck:
+  prcheck:
     permissions: 
       pull-requests: read
-    name: PR Milestone Check
+    name: PR Hygiene Check
     runs-on: ubuntu-latest
       
     steps:
@@ -28,7 +28,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
       
-      - name: PR title format check
+      - name: PR requires at least one ticket number before title
         run: |
           TITLE="${{ github.event.pull_request.title }}"
           if [[ ! "$TITLE" =~ ^RUN-[0-9]{3,6}( ?RUN-[0-9]{3,6})+: ]]; then
