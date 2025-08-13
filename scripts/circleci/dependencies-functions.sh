@@ -14,15 +14,15 @@ dependencies_install_zulu11jdk() {
 
 }
 
- # Download and install Groovy 3.0.23
+ # Download and install Groovy 3.0.25
 dependencies_install_groovy() {
     cd /tmp
-    wget https://archive.apache.org/dist/groovy/3.0.23/distribution/apache-groovy-binary-3.0.23.zip
-    sudo unzip apache-groovy-binary-3.0.23.zip -d /opt/
-    sudo ln -sf /opt/groovy-3.0.23/bin/groovy /usr/local/bin/groovy
-    sudo ln -sf /opt/groovy-3.0.23/bin/groovyc /usr/local/bin/groovyc
-    sudo ln -sf /opt/groovy-3.0.23/bin/groovysh /usr/local/bin/groovysh
-    export GROOVY_HOME=/opt/groovy-3.0.23
+    wget https://archive.apache.org/dist/groovy/3.0.25/distribution/apache-groovy-binary-3.0.25.zip
+    sudo unzip apache-groovy-binary-3.0.25.zip -d /opt/
+    sudo ln -sf /opt/groovy-3.0.25/bin/groovy /usr/local/bin/groovy
+    sudo ln -sf /opt/groovy-3.0.25/bin/groovyc /usr/local/bin/groovyc
+    sudo ln -sf /opt/groovy-3.0.25/bin/groovysh /usr/local/bin/groovysh
+    export GROOVY_HOME=/opt/groovy-3.0.25
     export PATH=$GROOVY_HOME/bin:$PATH
 
     # Verify installation
