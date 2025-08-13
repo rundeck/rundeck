@@ -32,7 +32,7 @@ jobs:
         run: |
           TITLE="${{ github.event.pull_request.title }}"
           if [[ ! "$TITLE" =~ ^RUN-[0-9]{3,6}( RUN-[0-9]{3,6})*: ]]; then
-            echo "::error::PR title must start with 'RUN-####:' format (e.g., 'RUN-2921: A good title' or 'RUN-2921 RUN-2922: A good title with multiple tickets')"
+            echo "::error::PR title must start with 'RUN-####:' format. If specifying multiple ticket numbers, they must be separated by a single space (e.g., 'RUN-2921: A good title' or 'RUN-2921 RUN-2922: A good title with multiple tickets')."
             exit 1
           fi
           echo "::notice::PR title format is valid"
