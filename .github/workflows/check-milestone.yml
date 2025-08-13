@@ -27,3 +27,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
+      
+      - name: PR title format check
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          if [[ ! "$TITLE" =~ ^RUN-[0-9]+: ]]; then
+            echo "::error::PR title must start with 'RUN-####:' format (e.g., 'RUN-2921: Add index for retry_execution_id')"
+            exit 1
+          fi
+          echo "::notice::PR title format is valid"
