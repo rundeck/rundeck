@@ -31,7 +31,7 @@ jobs:
       - name: PR title format check
         run: |
           TITLE="${{ github.event.pull_request.title }}"
-          if [[ ! "$TITLE" =~ ^RUN-[0-9]{1,6}: ]]; then
+          if [[ ! "$TITLE" =~ ^RUN-[0-9]{3,6}: ]]; then
             echo "::error::PR title must start with 'RUN-####:' format (e.g., 'RUN-2921: A good title')"
             exit 1
           fi
