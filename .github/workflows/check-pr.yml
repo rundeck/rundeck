@@ -14,6 +14,7 @@ jobs:
       
     steps:
       - name: PR requires a milestone
+        if: github.event.action != 'edited'
         run: |
           MILESTONE=$(gh pr view $PR --json milestone -q .milestone)
           if [ $? != 0 ] ; then
@@ -29,6 +30,7 @@ jobs:
           PR: ${{ github.event.pull_request.html_url }}
       
       - name: PR requires at least one ticket number before title
+        if: (github.event.action == 'edited' && github.event.changes.title) || contains(fromJSON('["opened", "reopened", "synchronize"]'), github.event.action)
         run: |
           TITLE="${{ github.event.pull_request.title }}"
           if [[ ! "$TITLE" =~ ^RUN-[0-9]{3,6}( RUN-[0-9]{3,6})*: ]]; then
