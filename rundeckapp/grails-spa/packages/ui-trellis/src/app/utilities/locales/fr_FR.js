@@ -203,7 +203,7 @@ const messages = {
   "add.node.source": "Ajouter une nouvelle source de n\u0153ud",
   "nodes.title": "N\u0153uds",
   "project.edit.ResourceModelSource.explanation":
-    "Node Sources for the project. Sources are loaded in the defined order, with later sources overriding earlier sources. (You can use  {'${project.name}'} inside configuration values to substitute the project name.)",												
+    "Sources de nœuds pour le projet. Les sources sont chargées dans l'ordre défini, les sources ultérieures remplaçant les précédentes. (Vous pouvez utiliser {'${project.name}'} dans les valeurs de configuration pour substituer le nom du projet.)",
 
   "acl.config.link.title": "Param\u00e8tres du projet > Contr\u00f4le d\u02bcacc\u00e8s",
   "acl.config.system.link.title": "Param\u00e8tres syst\u00e8me > Contr\u00f4le d\u02bcacc\u00e8s",
