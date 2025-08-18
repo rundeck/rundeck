@@ -198,7 +198,8 @@ class StorageController extends ControllerBase{
             response.status = 403
             return renderError("unauthorized")
         }
-        if((askedForContent || anyContent) && !maskContent) {
+        boolean downloadEnabled = configurationService.getBoolean("feature.publicKeysDownload.enabled", false)
+        if(downloadEnabled && (askedForContent || anyContent) && !maskContent) {
             response.contentType=resContentType
             if(forceDownload){
                 def filename= resource.path.name
@@ -275,7 +276,7 @@ class StorageController extends ControllerBase{
      */
     public def keyStorageDownload(StorageParams storageParams){
 
-        Boolean downloadenabled = configurationService.getBoolean("gui.keystorage.downloadenabled", true)
+        Boolean downloadenabled = configurationService.getBoolean("gui.keystorage.downloadenabled", false)
         if(!downloadenabled){
             response.status=403
             return renderError("download is not enabled")

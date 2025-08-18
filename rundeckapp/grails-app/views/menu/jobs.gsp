@@ -31,8 +31,19 @@
 
     <title><g:message code="gui.menu.Workflows"/> - <g:enc>${projectLabel}</g:enc></title>
 
-    <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: projectName, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])}"/>
-    <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: projectName, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
+    <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(
+            context: AuthConstants.CTX_APPLICATION,
+            type: AuthConstants.TYPE_PROJECT,
+            name: projectName,
+            action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
+            any: true
+    )}"/>
+    <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(
+            context: AuthConstants.CTX_APPLICATION,
+            type: AuthConstants.TYPE_PROJECT,
+            name: projectName,
+            action: AuthConstants.ACTION_DELETE_EXECUTION
+    ) || projAdminAuth}"/>
 
     <asset:javascript src="menu/jobs.js"/>
     <g:embedJSON data="${projectNames ?: []}" id="projectNamesData"/>
@@ -376,7 +387,6 @@ search
             jobslistDateFormatMoment:"${enc(js:g.message(code:'jobslist.date.format.ko'))}",
             runningDateFormatMoment:"${enc(js:g.message(code:'jobslist.running.format.ko'))}",
             activityUrl: appLinks.reportsEventsAjax,
-            nowrunningUrl: "${createLink(uri:"/api/${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}/project/${projectName}/executions/running")}",
             bulkDeleteUrl: appLinks.apiExecutionsBulkDelete,
             activityPageHref:"${enc(js:createLink(controller:'reports',action:'index',params:[project:projectName]))}",
             sinceUpdatedUrl:"${enc(js:g.createLink(controller:'reports',action: 'since.json', params: [project:projectName]))}",
@@ -402,6 +412,7 @@ search
     <g:embedJSON data="${paginateParams?.subMap(wasfiltered)?:[:]}" id="filterParams"/>
       <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
       <asset:javascript src="static/pages/job/browse.js" defer="defer"/>
+      <asset:javascript src="static/pages/nodes.js" defer="defer"/>
       <asset:stylesheet href="static/css/pages/job/browse.css" />
 </head>
 <body>

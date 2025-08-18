@@ -1,0 +1,44 @@
+<joblist>
+    <job>
+        <defaultTab>nodes</defaultTab>
+        <description>Simple script step</description>
+        <dispatch>
+            <excludePrecedence>true</excludePrecedence>
+            <keepgoing>false</keepgoing>
+            <rankOrder>ascending</rankOrder>
+            <successOnEmptyNodeFilter>false</successOnEmptyNodeFilter>
+            <threadcount>1</threadcount>
+        </dispatch>
+        <executionEnabled>true</executionEnabled>
+        <id>a5fbe8c2-1a8b-4a6f-ae34-92e5b3d4f8a9</id>
+        <loglevel>INFO</loglevel>
+        <name>simple-script-step</name>
+        <nodeFilterEditable>false</nodeFilterEditable>
+        <nodefilters>
+            <filter>tags: executor-test </filter>
+        </nodefilters>
+        <nodesSelectedByDefault>true</nodesSelectedByDefault>
+        <plugins />
+        <scheduleEnabled>true</scheduleEnabled>
+        <schedules />
+        <sequence keepgoing='false' strategy='node-first'>
+            <command>
+                <node-step-plugin type='copyfile'>
+                    <configuration>
+                        <entry key='destinationPath' value='/tmp/' />
+                        <entry key='echo' value='true' />
+                        <entry key='recursive' value='false' />
+                        <entry key='sourcePath' value='/home/rundeck/executor/helloWorld.sh' />
+                    </configuration>
+                </node-step-plugin>
+            </command>
+            <command>
+                <exec>chmod u+x /tmp/helloWorld.sh</exec>
+            </command>
+            <command>
+                <exec>sh /tmp/helloWorld.sh</exec>
+            </command>
+        </sequence>
+        <uuid>a5fbe8c2-1a8b-4a6f-ae34-92e5b3d4f8a9</uuid>
+    </job>
+</joblist>

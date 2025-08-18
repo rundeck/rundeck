@@ -36,7 +36,7 @@ class ProjectNodesEnhancer implements IProjectNodes {
         nodeset.nodeNames.each { String node ->
             INodeEntry origNode = nodeset.getNode(node)
             Map<String, String> attrs = new HashMap<>(origNode.attributes)
-            Set<String> tags = new HashSet<>(origNode.tags)
+            Set<String> tags = new HashSet<>(origNode.tags as Set<String>)
             plugins.each { plugin ->
 
                 if(ignorePlugins?.contains(plugin.type)){
@@ -49,7 +49,7 @@ class ProjectNodesEnhancer implements IProjectNodes {
                 plugin.updateNode(project, newNode)
                 if (newNode.attributes != attrs || newNode.tags != tags) {
                     attrs = new HashMap<>(newNode.attributes)
-                    tags = new HashSet<>(newNode.tags)
+                    tags = new HashSet<>(newNode.tags as Set<String>)
                 }
             }
             INodeEntry newNode = new NodeEntryImpl(node)

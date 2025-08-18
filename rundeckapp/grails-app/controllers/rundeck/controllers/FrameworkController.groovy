@@ -20,6 +20,8 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.api.project.sources.Resources
 import com.dtolabs.rundeck.app.api.project.sources.Source
 import com.dtolabs.rundeck.app.api.project.sources.Sources
+import com.dtolabs.rundeck.app.api.tag.TagForNodes
+import com.dtolabs.rundeck.app.api.tag.TagsForNodesResponse
 import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
@@ -469,6 +471,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         return model
     }
+
+    @Deprecated
     def nodeSummaryAjax(String project){
 
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,project)
@@ -484,12 +488,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     format:'json'
             ])
         }
-        RdUser u = userService.findOrCreateUser(session.user)
-        def defaultFilter = null
-        Map filterpref = userService.parseKeyValuePref(u.filterPref)
-        if (filterpref['nodes']) {
-            defaultFilter = filterpref['nodes']
-        }
+
 
         def fwkproject = frameworkService.getFrameworkProject(project)
         INodeSet nodes1 = fwkproject.getNodeSet()
@@ -498,7 +497,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         tagsummary = tagsummary.keySet().sort().collect{
             [tag:it,count:tagsummary[it]]
         }
-        render(contentType: 'application/json',text: [tags:tagsummary,totalCount:size,defaultFilter:defaultFilter] as JSON)
+        render(contentType: 'application/json',text: [tags:tagsummary,totalCount:size] as JSON)
     }
     /**
      * nodesFragment renders a set of nodes in HTML snippet, for ajax
@@ -519,13 +518,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 AuthConstants.ACTION_READ, 'Project', 'nodes', true
         )) {
             return
-        }
-        RdUser u = userService.findOrCreateUser(session.user)
-        if (!params.filterName && u && query.nodeFilterIsEmpty() && params.formInput != 'true') {
-            Map filterpref = userService.parseKeyValuePref(u.filterPref)
-            if (filterpref['nodes']) {
-                params.filterName = filterpref['nodes']
-            }
         }
 
         if (params['Clear']) {
@@ -3522,24 +3514,11 @@ Since: v14''',
                                                            code: 'api.error.invalid.request', args: [query.errors.allErrors.collect { g.message(error: it) }.join("; ")]])
         }
         IFramework framework = frameworkService.getRundeckFramework()
-        if(!params.project){
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                                                           code: 'api.error.parameter.required', args: ['project']])
 
-        }
-        def exists=frameworkService.existsFrameworkProject(params.project)
-        if(!exists){
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
-                                                           code: 'api.error.item.doesnotexist', args: ['project',params.project]])
-
-
-        }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
-        if (!rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_NODE,
-                AuthConstants.ACTION_READ, params.project)) {
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                                                           code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project]])
-
+        def projectVerificationErrors = verifyProjectQueryParam(authContext, AuthConstants.RESOURCE_TYPE_NODE, AuthConstants.ACTION_READ, 'Read Nodes')
+        if (!projectVerificationErrors.isEmpty()) {
+            return apiService.renderErrorFormat(response, projectVerificationErrors)
         }
 
         //convert api parameters to node filter parameters
@@ -3564,6 +3543,42 @@ Since: v14''',
                 authContext
         )
         return apiRenderNodeResult(readnodes, framework, params.project)
+    }
+
+    @Get(uri='/project/{project}/nodes/tags', produces = io.micronaut.http.MediaType.APPLICATION_JSON)
+    @Operation(
+            method='GET',
+            summary='List tags for project nodes',
+            description='''List tags for project nodes.
+
+Since: v52''',
+            tags=['project','nodes'],
+            parameters = [
+                    @Parameter(name = 'project', description = 'Project Name', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string'))
+            ])
+    @ApiResponse(
+                    responseCode='200',
+                    description='''The tags for nodes.''',
+                    content = @Content(
+                            mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                            schema=@Schema(implementation=TagsForNodesResponse)
+                    )
+    )
+    def apiTagsForNodes(String project){
+
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
+        def projectVerificationErrors = verifyProjectQueryParam(authContext, AuthConstants.RESOURCE_TYPE_NODE, AuthConstants.ACTION_READ, 'Read Nodes')
+        if (!projectVerificationErrors.isEmpty()) {
+            return apiService.renderErrorFormat(response, projectVerificationErrors)
+        }
+
+        def tagSummary = frameworkService.summarizeTags(frameworkService.getFrameworkProject(project).getNodeSet().nodes)
+        def tagNodes = tagSummary.collect {new TagForNodes(name: it.getKey(), nodeCount: it.getValue()) }
+        respond(new TagsForNodesResponse(tags: tagNodes), formats: ['json'])
     }
 
     def handleInvalidMimeType(InvalidMimeTypeException e) {
@@ -4244,5 +4259,31 @@ by:
         removedPlugins.each { plugin ->
             frameworkService.grailsEventBus.notify(PROJECT_PLUGINS_REMOVED_EVENT + '.' + plugin['type'], [ plugin: plugin, project: project ])
         }
+    }
+
+    /**
+     * Verifies the validity of project parameter in the request query and authorization to access the project resources in the provided auth context.
+     * @param authContext
+     * @param projectResourceType
+     * @param projectResourceAction
+     * @param actionErrorArg
+     * @return a map of verification errors or an empty map
+     */
+    private def verifyProjectQueryParam(AuthContext authContext, Map<String, String> projectResourceType, String projectResourceAction, String actionErrorArg) {
+        if(!params.project){
+            return [status: HttpServletResponse.SC_BAD_REQUEST, code: 'api.error.parameter.required', args: ['project']]
+
+        }
+        def exists=frameworkService.existsFrameworkProject(params.project)
+        if(!exists){
+            return [status: HttpServletResponse.SC_NOT_FOUND, code: 'api.error.item.doesnotexist', args: ['project',params.project]]
+
+        }
+        if (!rundeckAuthContextProcessor.authorizeProjectResource(authContext, projectResourceType,
+                projectResourceAction, params.project)) {
+            return [status: HttpServletResponse.SC_FORBIDDEN, code: 'api.error.item.unauthorized', args: [actionErrorArg, 'Project', params.project]]
+        }
+
+        return Collections.EMPTY_MAP
     }
 }

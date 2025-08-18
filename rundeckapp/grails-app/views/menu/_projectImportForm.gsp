@@ -26,7 +26,7 @@
             <div class="form-group">
               <label>
                 <g:message code="choose.a.rundeck.archive"/>
-                <input type="file" name="zipFile" class="form-control"/>
+                <input type="file" name="zipFile" class="form-control" accept=".jar,.zip" id="uploadFormFileInput"/>
               </label>
               <p class="help-block">
                 <g:message code="archive.import.help"/>

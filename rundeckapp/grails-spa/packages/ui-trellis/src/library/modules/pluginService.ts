@@ -44,6 +44,7 @@ export const getPluginProvidersForService = async (svcName: string) => {
   }
   const params = await getParameters();
   try {
+    //TODO: convert endpoint to API
     const resp = await client.sendRequest({
       pathTemplate: `/plugin/providers/{svcName}`,
       pathParameters: { svcName: svcName },
@@ -79,10 +80,11 @@ export const getServiceProviderDescription = async (
     qparams.project = params.project;
   }
 
+  //TODO: convert endpoint to API
   const resp = await client.sendRequest({
     pathTemplate: `/plugin/detail/{svcName}/{provider}`,
     pathParameters: { svcName: svcName, provider: provider },
-    baseUrl: params.rdBase,
+    baseUrl: params.apiBase,
     method: "GET",
     queryParameters: qparams,
   });
@@ -112,6 +114,8 @@ export const validatePluginConfig = async (
   if (ignoredScope != null) {
     qparams["ignoredScope"] = ignoredScope;
   }
+
+  //TODO: convert endpoint to API
   const resp = await client.sendRequest({
     pathTemplate: `/plugin/validate/{svcName}/{provider}`,
     pathParameters: { svcName: svcName, provider: provider },

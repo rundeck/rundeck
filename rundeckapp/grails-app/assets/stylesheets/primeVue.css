@@ -1,0 +1,5 @@
+/*To do review inter font */
+.p-component {
+    font-family: Inter, var(--fonts-body);
+    font-size: 14px !important; /* adding this rule for now to avoid components showing too small */
+}

@@ -144,18 +144,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             sdf.format(it)
         }
         BuilderUtil builder = new BuilderUtil(converters: [(Date): dateConvert, (java.sql.Timestamp): dateConvert])
-        if (report.jobId) {
-            //convert internal job ID to extid
-            def se
-            try {
-                se = ScheduledExecution.get(Long.parseLong(report.jobId))
-                if (se) {
-                    report.jobId = se.extid
-                }
-            } catch (NumberFormatException e) {
-
-            }
-        }
         //convert map to xml
         zip.file("$name") { Writer writer ->
             def xml = new MarkupBuilder(writer)
@@ -269,6 +257,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 saveReportRequest.executionId = execIdMap[object.jcExecId]
             } else if (object.executionId && execIdMap && execIdMap[object.executionId]) {
                 saveReportRequest.executionId = execIdMap[object.executionId]
+                def executionUuid = Execution.get(saveReportRequest.executionId)?.uuid
+                if (executionUuid) {
+                    saveReportRequest.executionUuid = executionUuid
+                }
             } else {
                 //skip report for exec id that cannot be found
                 return null
@@ -1257,18 +1249,33 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             }
         }
 
-
+        def importFileCount = 0
         //have files in dir
-        (jobxml + execxml +
+        (jobxml +
+                execxml +
                 execout.values() +
                 reportxml +
                 jfrecords +
                 [configtemp] +
                 [scmimporttemp, scmexporttemp] +
                 mdfilestemp.values() +
-                aclfilestemp.values()).
-                each { it?.deleteOnExit() }
-        importerstemp.values().each { it.values()*.deleteOnExit() }
+                aclfilestemp.values())
+                .stream()
+                .filter { it != null }
+                .forEach {
+                    importFileCount++
+                    it.deleteOnExit()
+                }
+        importerstemp.values().each {
+            it.values().each { File f ->
+                importFileCount++
+                f.deleteOnExit()
+            }
+        }
+
+        if(!importFileCount) {
+            throw new ProjectServiceException("Nothing to import found in archive")
+        }
 
         def loadjobresults = []
         def loadjoberrors = []
@@ -1281,163 +1288,175 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def importerErrors = [:]
         def projectName = project.name
 
-        sortOrder.each { String sortKey ->
+        try {
+            sortOrder.each { String sortKey ->
 
-            if (sortKey == BuiltinImportComponents.jobs.name()) {
-                //load jobs
-                jobxml.each { File jxml ->
-                    def path = jobxmlmap[jxml].path
-                    def name = jobxmlmap[jxml].name
-                    def jobset
-                    jxml.withInputStream {
-                        try {
-                            def reader = new InputStreamReader(it, "UTF-8")
-                            jobset = rundeckJobDefinitionManager.decodeFormat('xml', reader)
-                        } catch (JobDefinitionException e) {
-                            log.error("Failed parsing jobs from XML at archive path: ${path}${name}")
-                            loadjoberrors << "Job XML file at archive path: ${path}${name} had errors: ${e.message}"
-                            return
-                        }
-                        if (null == jobset) {
-                            log.error("failed decoding jobs xml from zip: ${path}${name}")
-                            return [errorCode: 'api.error.jobs.import.empty']
-                        }
-                        //contains list of old extids in input order
-                        def oldids = jobset.collect { it.job.extid }
-                        //change project name to the current project
-                        jobset.each { it.job.project = projectName }
-                        //remove uuid to reset it
-                        def uuidBehavior = options.jobUuidOption ?: 'preserve'
-                        switch (uuidBehavior) {
-                            case 'remove':
-                                jobset.each { it.job.uuid = null }
-                                break;
-                            case 'preserve':
-                                //no-op, leave UUIDs and attempt to import
-                                break;
-                                break;
-                        }
-                        def results = scheduledExecutionService.loadImportedJobs(
-                                jobset,
-                                'update',
-                                null,
-                                [:],
-                                authContext,
-                                validateJobref
-                        )
-
-                        scheduledExecutionService.issueJobChangeEvents(results.jobChangeEvents)
-
-                        if (results.errjobs) {
-                            log.error(
-                                    "Failed loading (${results.errjobs.size()}) jobs from XML at archive path: ${path}${name}"
-
+                if (sortKey == BuiltinImportComponents.jobs.name()) {
+                    //load jobs
+                    jobxml.each { File jxml ->
+                        def path = jobxmlmap[jxml].path
+                        def name = jobxmlmap[jxml].name
+                        def jobset
+                        jxml.withInputStream {
+                            try {
+                                def reader = new InputStreamReader(it, "UTF-8")
+                                jobset = rundeckJobDefinitionManager.decodeFormat('xml', reader)
+                            } catch (JobDefinitionException e) {
+                                log.error("Failed parsing jobs from XML at archive path: ${path}${name}")
+                                loadjoberrors << "Job XML file at archive path: ${path}${name} had errors: ${e.message}"
+                                return
+                            }
+                            if (null == jobset) {
+                                log.error("failed decoding jobs xml from zip: ${path}${name}")
+                                return [errorCode: 'api.error.jobs.import.empty']
+                            }
+                            //contains list of old extids in input order
+                            def oldids = jobset.collect { it.job.extid }
+                            //change project name to the current project
+                            jobset.each { it.job.project = projectName }
+                            //remove uuid to reset it
+                            def uuidBehavior = options.jobUuidOption ?: 'preserve'
+                            switch (uuidBehavior) {
+                                case 'remove':
+                                    jobset.each { it.job.uuid = null }
+                                    break;
+                                case 'preserve':
+                                    //no-op, leave UUIDs and attempt to import
+                                    break;
+                                    break;
+                            }
+                            def results = scheduledExecutionService.loadImportedJobs(
+                                    jobset,
+                                    'update',
+                                    null,
+                                    [:],
+                                    authContext,
+                                    validateJobref
                             )
-                            results.errjobs.each {
-                                // Cleaning and separating the Job's name
-                                String rawFailedExecutionOutput = it.scheduledExecution;
-                                String[] jobContent;
-                                jobContent = rawFailedExecutionOutput.split("/");
-                                String singleJob = jobContent[1];
-                                String cleanJobInfo = singleJob.replaceAll("[/ \\- ]", "");
-                                // Separating the Job's uuid
-                                String failedJobUuid = jobset.collect { it.job.uuid }
-                                // Separating the Job's Workflow details
-                                String failedJobWorkflow = jobset.collect { it.job.workflow.toString() }
-                                //Populate error object
-                                String loggingOutput = "There was a problem with the Job: " +
-                                        "[ Name: ${cleanJobInfo}, UUID: ${failedJobUuid}, Workflow Data: ${failedJobWorkflow} ], error detail: ${it.errmsg}"
-                                loadjoberrors << loggingOutput
-                                // Logging Output
-                                log.error(loggingOutput)
-                                if (it.entrynum != null && oldids[it.entrynum - 1]) {
-                                    skipJobIds << oldids[it.entrynum - 1]
+
+                            scheduledExecutionService.issueJobChangeEvents(results.jobChangeEvents)
+
+                            if (results.errjobs) {
+                                log.error(
+                                        "Failed loading (${results.errjobs.size()}) jobs from XML at archive path: ${path}${name}"
+
+                                )
+                                results.errjobs.each {
+                                    // Cleaning and separating the Job's name
+                                    String rawFailedExecutionOutput = it.scheduledExecution;
+                                    String[] jobContent;
+                                    jobContent = rawFailedExecutionOutput.split("/");
+                                    String singleJob = jobContent[1];
+                                    String cleanJobInfo = singleJob.replaceAll("[/ \\- ]", "");
+                                    // Separating the Job's uuid
+                                    String failedJobUuid = jobset.collect { it.job.uuid }
+                                    // Separating the Job's Workflow details
+                                    String failedJobWorkflow = jobset.collect { it.job.workflow.toString() }
+                                    //Populate error object
+                                    String loggingOutput = "There was a problem with the Job: " +
+                                            "[ Name: ${cleanJobInfo}, UUID: ${failedJobUuid}, Workflow Data: ${failedJobWorkflow} ], error detail: ${it.errmsg}"
+                                    loadjoberrors << loggingOutput
+                                    // Logging Output
+                                    log.error(loggingOutput)
+                                    if (it.entrynum != null && oldids[it.entrynum - 1]) {
+                                        skipJobIds << oldids[it.entrynum - 1]
+                                    }
+                                }
+                            }
+                            loadjobresults.addAll(results.jobs)
+                            results.jobsi.each { jobi ->
+                                if (jobi.entrynum != null && oldids[jobi.entrynum - 1]) {
+                                    jobIdMap[oldids[jobi.entrynum - 1]] = jobi.scheduledExecution.extid
+                                    jobsByOldId[oldids[jobi.entrynum - 1]] = jobi.scheduledExecution
                                 }
                             }
                         }
-                        loadjobresults.addAll(results.jobs)
-                        results.jobsi.each { jobi ->
-                            if (jobi.entrynum != null && oldids[jobi.entrynum - 1]) {
-                                jobIdMap[oldids[jobi.entrynum - 1]] = jobi.scheduledExecution.extid
-                                jobsByOldId[oldids[jobi.entrynum - 1]] = jobi.scheduledExecution
-                            }
+                    }
+
+                    log.info("Loaded ${loadjobresults.size()} jobs")
+                } else if (sortKey == BuiltinImportComponents.executions.name() && importExecutions) {
+
+                    Map execidmap = importExecutionsToProject(
+                            execxml,
+                            execout,
+                            projectName,
+                            framework,
+                            jobIdMap,
+                            skipJobIds,
+                            execxmlmap,
+                            execerrors
+                    )
+                    //load reports
+                    importReportsToProject(reportxml, jobsByOldId, reportxmlnames, execidmap, projectName, execerrors)
+                    importFileRecordsToProject(jfrecords, jobIdMap, jfrecordnames, execidmap, execerrors)
+
+                } else if (sortKey == BuiltinImportComponents.config.name() && (importConfig || importNodes) && configtemp) {
+                    importProjectConfig(configtemp, project, framework, importConfig, importNodes)
+                    log.debug("${project.name}: Loaded project configuration from archive")
+                } else if (sortKey == BuiltinImportComponents.readme.name() && importConfig && mdfilestemp) {
+                    importProjectMdFiles(mdfilestemp, project)
+                } else if (sortKey == BuiltinImportComponents.acl.name() && importACL && aclfilestemp) {
+                    aclerrors = importProjectACLPolicies(aclfilestemp, project)
+                } else if (sortKey == BuiltinImportComponents.scm.name() && importScm) {
+
+                    if (scmimporttemp) {
+                        def hasConfig = scmService.projectHasConfiguredPlugin(project.name, 'import')
+                        if (!hasConfig) {
+                            scmerrors += importScmConfig(scmimporttemp, project, framework, authContext, 'import')
+                            log.debug("${project.name}: Loaded scm import configuration from archive")
+                        } else {
+                            log.error("${project.name}: cannot import SCM import configuration, already configured")
                         }
                     }
-                }
-
-                log.info("Loaded ${loadjobresults.size()} jobs")
-            } else if (sortKey == BuiltinImportComponents.executions.name() && importExecutions) {
-
-                Map execidmap = importExecutionsToProject(
-                        execxml,
-                        execout,
-                        projectName,
-                        framework,
-                        jobIdMap,
-                        skipJobIds,
-                        execxmlmap,
-                        execerrors
-                )
-                //load reports
-                importReportsToProject(reportxml, jobsByOldId, reportxmlnames, execidmap, projectName, execerrors)
-                importFileRecordsToProject(jfrecords, jobIdMap, jfrecordnames, execidmap, execerrors)
-
-            } else if (sortKey == BuiltinImportComponents.config.name() && (importConfig || importNodes) && configtemp) {
-                importProjectConfig(configtemp, project, framework, importConfig, importNodes)
-                log.debug("${project.name}: Loaded project configuration from archive")
-            } else if (sortKey == BuiltinImportComponents.readme.name() && importConfig && mdfilestemp) {
-                importProjectMdFiles(mdfilestemp, project)
-            } else if (sortKey == BuiltinImportComponents.acl.name() && importACL && aclfilestemp) {
-                aclerrors = importProjectACLPolicies(aclfilestemp, project)
-            } else if (sortKey == BuiltinImportComponents.scm.name() && importScm) {
-
-                if (scmimporttemp) {
-                    def hasConfig = scmService.projectHasConfiguredPlugin(project.name, 'import')
-                    if (!hasConfig) {
-                        scmerrors += importScmConfig(scmimporttemp, project, framework, authContext, 'import')
-                        log.debug("${project.name}: Loaded scm import configuration from archive")
-                    } else {
-                        log.error("${project.name}: cannot import SCM import configuration, already configured")
-                    }
-                }
-                if (scmexporttemp) {
-                    def hasConfig = scmService.projectHasConfiguredPlugin(project.name, 'export')
-                    if (!hasConfig) {
-                        scmerrors += importScmConfig(scmexporttemp, project, framework, authContext, 'export')
-                        log.debug("${project.name}: Loaded scm export configuration from archive")
-                    } else {
-                        log.error("${project.name}: cannot import SCM export configuration, already configured")
-                    }
-                }
-
-            } else {
-                if (projectImporters && projectImporters[sortKey] && options.importComponents && options.importComponents[sortKey]) {
-                    ProjectComponent importer = projectImporters[sortKey]
-                    if (importerstemp[importer.name]) {
-                        try {
-                            def result = importer.doImport(
-                                    authContext,
-                                    project.name,
-                                    importerstemp[importer.name],
-                                    options.importOpts?options.importOpts[importer.name]:[:]
-                            )
-                            if (result) {
-                                importerErrors[importer.name] = result
-                            }
-                        } catch (Throwable e) {
-                            log.warn("Error during project import for ${importer.name}: $e.message")
-                            log.debug("Error during project import for ${importer.name}: $e.message", e)
-                            importerErrors[importer.name] = [e.message]
+                    if (scmexporttemp) {
+                        def hasConfig = scmService.projectHasConfiguredPlugin(project.name, 'export')
+                        if (!hasConfig) {
+                            scmerrors += importScmConfig(scmexporttemp, project, framework, authContext, 'export')
+                            log.debug("${project.name}: Loaded scm export configuration from archive")
+                        } else {
+                            log.error("${project.name}: cannot import SCM export configuration, already configured")
                         }
                     }
 
+                } else {
+                    if (projectImporters && projectImporters[sortKey] && options.importComponents && options.importComponents[sortKey]) {
+                        ProjectComponent importer = projectImporters[sortKey]
+                        if (importerstemp[importer.name]) {
+                            try {
+                                def result = importer.doImport(
+                                        authContext,
+                                        project.name,
+                                        importerstemp[importer.name],
+                                        options.importOpts ? options.importOpts[importer.name] : [:]
+                                )
+                                if (result) {
+                                    importerErrors[importer.name] = result
+                                }
+                            } catch (Throwable e) {
+                                log.warn("Error during project import for ${importer.name}: $e.message")
+                                log.debug("Error during project import for ${importer.name}: $e.message", e)
+                                importerErrors[importer.name] = [e.message]
+                            }
+                        }
+
+                    }
                 }
             }
         }
+        finally {
+            (jobxml +
+                    execxml +
+                    execout.values() +
+                    reportxml +
+                    jfrecords +
+                    [configtemp] +
+                    [scmimporttemp, scmexporttemp] +
+                    mdfilestemp.values() +
+                    aclfilestemp.values())
+                    .each { it?.delete() }
+            importerstemp.values().each { it.values()*.delete() }
+        }
 
-        (jobxml + execxml + execout.values() + reportxml + [configtemp] + [scmimporttemp, scmexporttemp] + mdfilestemp.values() + aclfilestemp.values()).
-                each { it?.delete() }
-        importerstemp.values().each { it.values()*.delete() }
         return [success        : (loadjoberrors) ? false :
                 true, joberrors: loadjoberrors, execerrors: execerrors, aclerrors: aclerrors, scmerrors: scmerrors, importerErrors: importerErrors]
     }

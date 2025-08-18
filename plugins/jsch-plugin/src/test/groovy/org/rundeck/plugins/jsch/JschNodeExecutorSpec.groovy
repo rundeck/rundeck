@@ -17,12 +17,13 @@
 package org.rundeck.plugins.jsch
 
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.ExecutionListener
-import org.rundeck.plugins.jsch.util.JschTestUtil
+import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import spock.lang.Specification
 
 /**
@@ -30,21 +31,11 @@ import spock.lang.Specification
  */
 class JschNodeExecutorSpec extends Specification {
     public static final String PROJECT_NAME = 'JschNodeExecutorSpec'
-    Framework framework
-    IRundeckProject testProject
 
-    def setup() {
-        framework = JschTestUtil.createTestFramework()
-        testProject = framework.getFrameworkProjectMgr().createFrameworkProject(PROJECT_NAME)
-    }
-
-    def cleanup() {
-        framework.getFrameworkProjectMgr().removeFrameworkProject(PROJECT_NAME)
-    }
 
     def "require hostname"() {
         given:
-        def exec = new JschNodeExecutor(framework)
+        def exec = new JschNodeExecutor()
         def context = Mock(ExecutionContext) {
             getFrameworkProject() >> PROJECT_NAME
         }
@@ -69,18 +60,18 @@ class JschNodeExecutorSpec extends Specification {
 
     def "ssh-accept-env from project configuration"() {
         given:
-        framework = JschTestUtil.createTestFramework()
-        testProject = framework.getFrameworkProjectMgr().createFrameworkProject(PROJECT_NAME)
 
-        def exec = new JschNodeExecutor(framework)
         def frameworkProject = Mock(IRundeckProject)
+        def framework=Mock(Framework){
+            getFrameworkProjectMgr()>> Mock(ProjectManager){
+                getFrameworkProject(PROJECT_NAME) >> frameworkProject
+            }
+            getPropertyLookup()>>Mock(IPropertyLookup)
+        }
+        def exec = new JschNodeExecutor()
         def context = Mock(ExecutionContext) {
             getFrameworkProject() >> PROJECT_NAME
-            getFramework() >> Mock(Framework){
-                getFrameworkProjectMgr()>> Mock(ProjectManager){
-                    getFrameworkProject(PROJECT_NAME) >> frameworkProject
-                }
-            }
+            getIFramework() >> framework
             getExecutionListener() >> Mock(ExecutionListener)
         }
         def command = ['echo', 'hi'].toArray(new String[2])
@@ -99,17 +90,19 @@ class JschNodeExecutorSpec extends Specification {
 
     def "ssh-accept-env from framework configuration"() {
         given:
-        def exec = new JschNodeExecutor(framework)
+        def lookup = Mock(IPropertyLookup)
+
         def frameworkProject = Mock(IRundeckProject)
-        def framework = Mock(Framework){
+        def framework = Mock(IFramework){
             getFrameworkProjectMgr()>> Mock(ProjectManager){
                 getFrameworkProject(PROJECT_NAME) >> frameworkProject
             }
-
+            getPropertyLookup()>>lookup
         }
+        def exec = new JschNodeExecutor()
         def context = Mock(ExecutionContext) {
             getFrameworkProject() >> PROJECT_NAME
-            getFramework() >> framework
+            getIFramework() >> framework
             getExecutionListener() >> Mock(ExecutionListener)
         }
         def command = ['echo', 'hi'].toArray(new String[2])
@@ -122,8 +115,8 @@ class JschNodeExecutorSpec extends Specification {
 
         then:
         1 * frameworkProject.hasProperty(JschNodeExecutor.PROJ_PROP_PREFIX + JschNodeExecutor.CONFIG_PASS_ENV) >> false
-        1 * framework.hasProperty(JschNodeExecutor.FWK_PROP_PREFIX + JschNodeExecutor.CONFIG_PASS_ENV) >> true
-        1 * framework.getProperty(JschNodeExecutor.FWK_PROP_PREFIX + JschNodeExecutor.CONFIG_PASS_ENV) >> 'true'
+        1 * lookup.hasProperty(JschNodeExecutor.FWK_PROP_PREFIX + JschNodeExecutor.CONFIG_PASS_ENV) >> true
+        1 * lookup.getProperty(JschNodeExecutor.FWK_PROP_PREFIX + JschNodeExecutor.CONFIG_PASS_ENV) >> 'true'
 
     }
 }

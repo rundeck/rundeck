@@ -1,12 +1,12 @@
 export interface StoredFilter {
   filterName: string;
   isJobEdit: boolean;
-  filter: string;
+  filter: string | null;
 }
 
 export interface ProjectFilters {
   filters?: StoredFilter[];
-  defaultFilter?: string;
+  defaultFilter?: null | string;
 }
 
 export interface StoredNodeFilters {
@@ -55,7 +55,7 @@ export class NodeFilterStore {
     return storedNodeFilters[project] || {};
   }
 
-  getStoredDefaultFilter(project: string): string | undefined {
+  getStoredDefaultFilter(project: string): string | null | undefined {
     return this.loadStoredProjectNodeFilters(project).defaultFilter;
   }
 

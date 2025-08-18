@@ -14,9 +14,13 @@ import rundeck.Execution
 import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.Workflow
+import rundeck.services.feature.FeatureService
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
+
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * Integration tests for the ScheduledExecutionService.
@@ -45,6 +49,109 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                 scheduled     : true,
                 userRoleList  : ''
         ] + overrides
+    }
+
+    def "reclaimAndScheduleJobByJob successfully moves a scheduled job to the new current server"() {
+        given:
+        def project = 'testProject'
+        def seOneId = UUID.randomUUID().toString()
+
+        // Create the resource in a separate transaction so that it can be seen by the separate transactions
+        // in the takeover.
+        def se = ScheduledExecution.withNewTransaction {
+            def workflow = new Workflow(commands: []).save(flush: true, failOnError: true)
+            return new ScheduledExecution(
+                    jobName: 'callisto-one',
+                    groupPath: 'group/reclaimAndScheduleJobByJob',
+                    uuid: seOneId,
+                    serverNodeUUID: TEST_UUID1,
+                    project: project,
+                    workflow: workflow,
+                    scheduled: true
+            ).save(flush: true, failOnError: true)
+        }
+
+        service.frameworkService = Stub(FrameworkService) {
+            existsFrameworkProject(project) >> true
+            isClusterModeEnabled() >> true
+            getServerUUID() >> TEST_UUID2
+        }
+        service.executionServiceBean = Mock(ExecutionService) {
+            getExecutionsAreActive() >> true
+        }
+        service.jobSchedulesService = Mock(JobSchedulesService) {
+            1 * getSchedulesJobToClaim(TEST_UUID2, null, true, null, null) >> [se]
+            isScheduled(se.uuid) >> se.scheduled
+        }
+
+        when:
+        def results = service.reclaimAndScheduleJobByJob()
+
+        then:
+        def actualScheduledExecution = ScheduledExecution.get(se.id)
+
+        results[seOneId]["success"] == true
+        actualScheduledExecution.serverNodeUUID == TEST_UUID2
+    }
+
+    def "reclaimAndScheduleJobByJob retries claim job on failure"() {
+        given:
+        def project = 'testProject'
+        def seOneId = UUID.randomUUID().toString()
+
+        // Create the resource in a separate transaction so that it can be seen by the separate transactions
+        // in the takeover.
+        def se = ScheduledExecution.withNewTransaction {
+            def workflow = new Workflow(commands: []).save(flush: true, failOnError: true)
+            return new ScheduledExecution(
+                    jobName: 'callisto-two',
+                    groupPath: 'group/reclaimAndScheduleJobByJob',
+                    uuid: seOneId,
+                    serverNodeUUID: TEST_UUID1,
+                    project: project,
+                    workflow: workflow,
+                    scheduled: true
+            ).save(flush: true, failOnError: true)
+        }
+
+        // Hold a lock on the resource that gets released after at least one retry.
+        CountDownLatch testLatch = new CountDownLatch(1)
+        CountDownLatch lockLatch = new CountDownLatch(2)
+        Thread.start {
+            ScheduledExecution.withNewTransaction {
+                // Acquire a lock and hold it until the latch is released.
+                ScheduledExecution.get(se.id).lock()
+                testLatch.countDown()
+                lockLatch.await(1, TimeUnit.MINUTES)
+            }
+        }
+        // Continue the test after the lock is acquired.
+        testLatch.await(1, TimeUnit.MINUTES)
+
+        service.frameworkService = Stub(FrameworkService) {
+            existsFrameworkProject(project) >> true
+            isClusterModeEnabled() >> true
+            getServerUUID() >> TEST_UUID2
+        }
+        service.executionServiceBean = Mock(ExecutionService) {
+            getExecutionsAreActive() >> true
+        }
+        service.jobSchedulesService = Mock(JobSchedulesService) {
+            1 * getSchedulesJobToClaim(TEST_UUID2, null, true, null, null) >> [se]
+            (2.._) * isScheduled(se.uuid) >> {
+                lockLatch.countDown()
+                se.scheduled
+            }
+        }
+
+        when:
+        def results = service.reclaimAndScheduleJobByJob()
+
+        then:
+        def actualScheduledExecution = ScheduledExecution.get(se.id)
+
+        results[seOneId]["success"] == true
+        actualScheduledExecution.serverNodeUUID == TEST_UUID2
     }
 
     def "reclaiming scheduled jobs includes ad hoc scheduled"() {
@@ -221,6 +328,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
         def projectMock = Mock(IRundeckProject) {
             getProjectProperties() >> [:]
         }
+        service.featureService = Mock(FeatureService)
         service.executionServiceBean    = Mock(ExecutionService)
         service.fileUploadService = Mock(FileUploadService)
         service.quartzScheduler         = Mock(Scheduler)

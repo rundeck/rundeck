@@ -41,12 +41,15 @@
 
     <g:render template="/common/navData"/>
 
+    %{-- css variables for primeVue  --}%
+    <asset:stylesheet href="tokens.css"/>
+    <asset:stylesheet href="tokens-rundeck.css"/>
     %{-- Core theme styles from ui-trellis --}%
     <asset:stylesheet href="static/css/components/theme.css"/>
 
     <asset:stylesheet href="ansi24.css"/>
-    <asset:stylesheet href="tokens.css"/>
     %{-- Vendor CSS styles--}%
+    <asset:stylesheet href="primeVue.css"/>
     <asset:stylesheet href="vendor/perfect-scrollbar.css"/>
     <asset:stylesheet href="github-markdown.css"/>
     <asset:stylesheet href="vendor/jquery-ui.css"/>
@@ -114,16 +117,6 @@
         </g:ifServletContextAttribute>
     </g:if>
 
-    <%--
-      _sidebarClass is the variable container for
-      if the sidebar should be open or closed on
-      page render
-    --%>
-    <g:set var="_sidebarClass" value="" scope="page"/>
-
-    <g:if test="${session.filterPref?.sidebarClosed && session.filterPref?.sidebarClosed == 'true'}">
-      <g:set var="_sidebarClass" value="sidebar-mini" scope="page"/>
-    </g:if>
 
     <asset:javascript src="global/rundeckui.js"/>
     <script type="text/javascript">
@@ -141,7 +134,8 @@
         appMeta: {
             title: '${g.appTitle()}',
             logo:'${g.appLogo()}',
-            logocss:'${g.appLogocss()}'
+            logocss:'${g.appLogocss()}',
+            appRundeckGatewayUrl: '${g.appRundeckGatewayUrl()}'
         },
         hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}',
         feature: {

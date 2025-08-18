@@ -1,15 +1,20 @@
 import { mount, VueWrapper } from "@vue/test-utils";
 import OptionRemoteUrlConfig from "../OptionRemoteUrlConfig.vue";
 
+jest.mock("@/library/rundeckService", () => ({
+  getRundeckContext: jest.fn().mockImplementation(() => ({
+    eventBus: { on: jest.fn(), emit: jest.fn() },
+    rdBase: "http://localhost:4440/",
+    projectName: "testProject",
+    apiVersion: "44",
+  })),
+}));
+jest.mock("../../../../../library/services/projects");
+
 const mountOptionEdit = async (options: any): Promise<VueWrapper<any>> => {
   const wrapper = mount(OptionRemoteUrlConfig, {
     props: {
       ...options,
-    },
-    global: {
-      mocks: {
-        $t: (msg: string) => msg,
-      },
     },
     components: {},
   });

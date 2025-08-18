@@ -11,6 +11,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionS
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,6 +23,8 @@ public class BaseFrameworkExecutionServices
     final HashMap<String, FrameworkSupportService> services = new HashMap<String, FrameworkSupportService>();
 
     @Getter @Setter private Framework framework;
+
+    @Getter @Setter private NodeExecutorService nodeExecutorService;
 
     public static BaseFrameworkExecutionServices create(final Framework framework) {
         BaseFrameworkExecutionServices impl = new BaseFrameworkExecutionServices();
@@ -35,6 +38,9 @@ public class BaseFrameworkExecutionServices
      */
     @Override
     public FrameworkSupportService getService(String name) {
+        if(ServiceNameConstants.NodeExecutor.equals(name)){
+            return getNodeExecutorService();
+        }
         return services.get(name);
     }
 
@@ -85,11 +91,6 @@ public class BaseFrameworkExecutionServices
     @Override
     public FileCopierService getFileCopierService() {
         return FileCopierService.getInstanceForFramework(getFramework(), this);
-    }
-
-    @Override
-    public NodeExecutorService getNodeExecutorService() {
-        return NodeExecutorService.getInstanceForFramework(getFramework(), this);
     }
 
     @Override

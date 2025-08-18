@@ -130,7 +130,13 @@
         'onavgduration',
         'onretryablefailure'
 ].collect{'notification.event.'+it}}"/>
-
+<g:embedJSON id="jobDetailsJSON"
+             data="${ [
+                     jobName: scheduledExecution?.jobName,
+                     groupPath: scheduledExecution?.groupPath,
+                     description:scheduledExecution?.description,
+                     href:scheduledExecution?.id?createLink(controller:'scheduledExecution',action:'show',params:[project:scheduledExecution.project,id:scheduledExecution.extid]):null
+             ]}"/>
 <g:embedJSON id="jobNotificationsJSON"
              data="${ [notifications:scheduledExecution.notifications?.collect{it.toNormalizedMap()}?:[],
                        notifyAvgDurationThreshold:scheduledExecution?.notifyAvgDurationThreshold,
@@ -182,6 +188,12 @@
                      useCrontabString:scheduledExecution?.crontabString?true:scheduledExecution?.shouldUseCrontabString()?true:false,
                      timeZones:timeZones ?: []
              ]}"/>
+<g:embedJSON id="jobExecutionPluginsJSON"
+             data="${ [
+                     pluginsInitialData: executionLifecyclePlugins.values()?.collect{it.description}?.flatten(),
+                     ExecutionLifecycle: scheduledExecution?.pluginConfigMap?.get('ExecutionLifecycle')?:[:],
+                     validationErrors:  params.executionLifecyclePluginValidation,
+             ]}"/>
 <g:embedJSON id="jobOtherJSON"
              data="${ [
                      multipleExecutions:scheduledExecution.multipleExecutions ? true: false,
@@ -197,19 +209,39 @@
                      uuid:scheduledExecution?.uuid
              ]}"/>
 
+<g:embedJSON id="jobWorkflowJSON" data="${ scheduledExecution?.workflow?.toMap()?:[:]}"/>
+<g:embedJSON id="jobNodeDataJSON" data="${ [
+        nodeExcludePrecedence: scheduledExecution?.nodeExcludePrecedence ? 'true': 'false',
+        excludeFilterUncheck: scheduledExecution?.excludeFilterUncheck ? 'true': 'false',
+]}"/>
+<g:embedJSON id="jobTreeUiMeta" data="[hideActions: true, hideHeader: true, hideTags: true]"/>
+
+
 <g:javascript>
     window._rundeck = Object.assign(window._rundeck || {}, {
         data: {
+            detailsData: loadJsonData('jobDetailsJSON'),
             notificationData: loadJsonData('jobNotificationsJSON'),
             optionsData: loadJsonData('jobOptionsJSON'),
             resourcesData: loadJsonData('jobResourcesJSON'),
             schedulesData: loadJsonData('jobSchedulesJSON'),
-            otherData: loadJsonData('jobOtherJSON')
+            executionData: loadJsonData('jobExecutionPluginsJSON'),
+            otherData: loadJsonData('jobOtherJSON'),
+            workflowData: loadJsonData('jobWorkflowJSON'),
+            nodeData: loadJsonData('jobNodeDataJSON')
         }
     })
     var workflowEditor = new WorkflowEditor();
     var confirm = new PageConfirm(message('page.unsaved.changes'));
     _onJobEdit(confirm.setNeedsConfirm);
+    //enable page confirm handling via Vue event bus
+    _rundeck.eventBus.on('jobedit.page.confirm', function (needsConfirm) {
+        if(needsConfirm) {
+            confirm.setNeedsConfirm()
+        }else{
+            confirm.clearNeedConfirm()
+        }
+    });
     jQuery(function () {
         setupTabRouter('#job_edit_tabs', 'tab_');
         jQuery('input').not(".allowenter").on('keydown', noenter);
@@ -217,3 +249,5 @@
 </g:javascript>
 <g:embedJSON data="${globalVars ?: []}" id="globalVarData"/>
 <g:embedJSON data="${timeZones ?: []}" id="timeZonesData"/>
+<asset:javascript src="static/pages/job/browse.js" defer="defer"/>
+<asset:stylesheet href="static/css/pages/job/browse.css" />

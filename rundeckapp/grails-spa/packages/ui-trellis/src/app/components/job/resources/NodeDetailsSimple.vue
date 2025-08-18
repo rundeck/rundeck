@@ -6,7 +6,7 @@
     >
       <tbody>
         <tr v-if="attributes.description">
-          <td class="value text-strong" colspan="4">
+          <td data-test="description" class="value text-strong" colspan="4">
             {{ attributes.description }}
           </td>
         </tr>
@@ -20,7 +20,7 @@
           <td class="key">
             {{ $t("node.metadata.status") }}
           </td>
-          <td class="value">
+          <td data-test="attributes" class="value">
             <node-status :node="{ attributes }" :show-text="true" />
           </td>
         </tr>
@@ -29,7 +29,7 @@
           <td v-if="hasOsData()" class="key">
             {{ $t("node.metadata.os") }}
           </td>
-          <td v-if="hasOsData()" class="value">
+          <td v-if="hasOsData()" class="value" data-test="os-data">
             <node-filter-link
               v-for="attr in filteredAttrs"
               :key="attr"
@@ -52,6 +52,7 @@
                 v-if="attributes.username"
                 filter-key="username"
                 :filter-val="attributes.username"
+                data-testid="node-attribute-link-username"
                 @nodefilterclick="filterClick"
               ></node-filter-link>
               <span class="atsign">@</span>
@@ -59,6 +60,7 @@
                 v-if="attributes.hostname"
                 filter-key="hostname"
                 :filter-val="attributes.hostname"
+                data-testid="node-attribute-link-hostname"
                 @nodefilterclick="filterClick"
               ></node-filter-link>
             </td>
@@ -172,7 +174,7 @@
           >
             <template v-for="nsattr in namespace.values">
               <tr class="hover-action-holder">
-                <td class="key setting">
+                <td class="key setting" :data-test="nsattr.name">
                   <node-filter-link
                     :filter-key="nsattr.name"
                     filter-val=".*"
@@ -181,7 +183,7 @@
                   </node-filter-link>
                 </td>
                 <td class="setting" colspan="3">
-                  <div class="value">
+                  <div class="value" :data-test="`${nsattr.name}-value`">
                     {{ nsattr.value }}
 
                     <node-filter-link
@@ -337,7 +339,6 @@ export default defineComponent({
   methods: {
     toggleNs(ns: string) {
       const val = this.uiNs[ns];
-      console.log(`toggle ${ns} ${val} = ${!val}`);
       this.uiNs[ns] = !val;
     },
 

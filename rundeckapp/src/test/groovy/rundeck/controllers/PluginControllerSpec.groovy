@@ -1,5 +1,7 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
@@ -18,9 +20,12 @@ import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import grails.testing.web.controllers.ControllerUnitTest
+import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.web.WebExceptionHandler
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.access.NotFound
 import rundeck.UtilityTagLib
 import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
@@ -56,6 +61,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
             configurationService(ConfigurationService) {
                 grailsApplication = grailsApplication
             }
+            rundeckExceptionHandler(InstanceFactoryBean, Mock(WebExceptionHandler))
         }
 
         mockTagLib(UtilityTagLib)
@@ -172,6 +178,8 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         controller.frameworkService = fwksvc
         controller.uiPluginService = Mock(UiPluginService)
         controller.pluginApiService = Mock(PluginApiService)
+        controller.featureService = Mock(FeatureService)
+        controller.featureService.featurePresent(_) >> false
 
         when:
         def fakePluginDesc = new PluginApiServiceSpec.FakePluginDescription()
@@ -182,11 +190,11 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         1 * controller.uiPluginService.getPluginMessage('Notification','fake','plugin.title','Fake Plugin',_)>>'plugin.title'
         1 * controller.uiPluginService.getPluginMessage('Notification','fake','plugin.description','This is the best fake plugin',_)>>'plugin.description'
         1 * controller.uiPluginService.getProfileFor('Notification','fake')>>[:]
-        1* controller.pluginApiService.pluginPropertiesAsMap('Notification','fake',_)>>[
-                [name:'prop1',apiData:true],
-                [name:'password',apiData:true]
+        1 * controller.pluginApiService.pluginPropertiesAsMap('Notification','fake',_)>>[
+                [name:'prop1'],
+                [name:'password']
         ]
-        controller.pluginDetail()
+        controller.pluginDetail('Notification', 'fake')
         def rj = response.json
         def rp1 = rj.props.find { it.name == "prop1" }
         def rp2 = rj.props.find { it.name == "password" }
@@ -197,9 +205,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         rj.title == 'plugin.title'
         rj.desc == 'plugin.description'
         rp1.name == "prop1"
-        rp1.apiData
         rp2.name == "password"
-        rp2.apiData
     }
 
     void "plugin detail no plugin or framework service"() {
@@ -212,19 +218,19 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
             controller.frameworkService = fwksvc
             controller.uiPluginService = Mock(UiPluginService)
             controller.pluginApiService = Mock(PluginApiService)
-
+            controller.featureService = Mock(FeatureService)
+            controller.featureService.featurePresent(_) >> false
+            def handler = Mock(WebExceptionHandler)
+            controller.rundeckExceptionHandler= handler
         when:
             def fakePluginDesc = new PluginApiServiceSpec.FakePluginDescription()
             params.name = "fake"
             params.service = "Notification"
 
-            controller.pluginDetail()
+            controller.pluginDetail('Notification', 'fake')
 
         then:
-            response.status == 404
-            1 * controller.pluginService.getPluginDescriptor("fake", 'Notification') >> null
-            1 * controller.frameworkService.rundeckFramework.getService('Notification') >> null
-
+            1 * handler.handleException(_,_,_ as NotFound)
     }
 
     def "plugin list filters by service"() {
@@ -257,6 +263,48 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
             a                | b
             null             | 3
             'WebhookEvent'   | 2
+    }
+
+    def "plugin list returns isHighlighted and highlightedOrder properties"() {
+        given:
+        controller.pluginService = Mock(PluginService)
+        controller.pluginApiService = Mock(PluginApiService)
+        controller.uiPluginService = Mock(UiPluginService)
+        params.service = null
+
+        def plugins = [
+                [
+                        service  : 'WebhookEvent',
+                        providers: [
+                                [isHighlighted   : true,
+                                 highlightedOrder: 123
+                                ],
+                                [:]],
+                ],
+                [
+                        service  : 'Foo',
+                        providers: [
+                                [isHighlighted   : Boolean.FALSE,
+                                 highlightedOrder: Integer.valueOf(321)
+                                ]
+                        ]
+                ]
+        ]
+
+        when:
+        controller.listPlugins()
+        then:
+        1 * controller.pluginApiService.listPlugins() >> plugins
+        response.json.size() == 3
+
+        response.json[0].isHighlighted == true
+        response.json[0].highlightedOrder == 123
+
+        !response.json[1].isHighlighted
+        !response.json[1].highlightedOrder
+
+        response.json[2].isHighlighted == false
+        response.json[2].highlightedOrder == 321
     }
 
     def "plugin service descriptions"() {
@@ -634,7 +682,6 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
 
     def "plugin detail for ui plugin"() {
         given:
-
             params.name = 'test1'
             params.service = 'UI'
             controller.pluginService = Mock(PluginService)
@@ -646,12 +693,12 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
             def plugin = Mock(UIPlugin)
             def description = DescriptionBuilder.builder().name('test1').build()
             def pluginMeta = Mock(PluginMetadata)
+            controller.featureService = Mock(FeatureService)
+            1 * controller.featureService.featurePresent(_) >> false
         when:
-            controller.pluginDetail()
+            controller.pluginDetail('UI', 'test1')
         then:
             response.status == 200
-
-            response.contentType.startsWith 'application/json'
 
             1 * controller.uiPluginService.getUiPluginProviderService() >> uiPluginProviderService
             1 * controller.uiPluginService.getPluginMessage('UI', 'test1', 'plugin.title', _, _) >> 'ptitle'

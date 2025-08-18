@@ -62,6 +62,9 @@ import java.util.Map;
 public class ExecutionServiceImpl implements ExecutionService {
     @Getter @Setter private IExecutionProviders executionProviders;
 
+    private static final String NODE_LEVEL_INTERPRETER = "shell-escaping-interpreter";
+    private static final String PROJECT_LEVEL_INTERPRETER = "project.plugin.Shell.Escaping.interpreter";
+
     public ExecutionServiceImpl() {
     }
 
@@ -393,6 +396,11 @@ public class ExecutionServiceImpl implements ExecutionService {
 
     public NodeExecutorResult executeCommand(final ExecutionContext context, final ExecArgList command,
                                              final INodeEntry node) {
+        return executeCommand(context, command, null, node);
+    }
+    public NodeExecutorResult executeCommand(final ExecutionContext context, final ExecArgList command,
+                                             InputStream inputStream,
+                                             final INodeEntry node) {
 
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginNodeExecution(context, command.asFlatStringArray(), node);
@@ -409,10 +417,17 @@ public class ExecutionServiceImpl implements ExecutionService {
                 .nodeContextData(node)
                 .build();
 
+        //It tries to get the interpreter from the node attributes first, then from the project properties.
+        String commandInterpreter = node.getAttributes().get(NODE_LEVEL_INTERPRETER) != null ?
+                node.getAttributes().get(NODE_LEVEL_INTERPRETER)
+                : context.getIFramework().getFrameworkProjectMgr()
+                        .getFrameworkProject(context.getFrameworkProject()).getProperty(PROJECT_LEVEL_INTERPRETER);
+
         final ArrayList<String> commandList = command.buildCommandForNode(
                 nodeContext.getSharedDataContext(),
                 node.getNodename(),
-                node.getOsFamily()
+                node.getOsFamily(),
+                commandInterpreter
         );
 
         NodeExecutorResult result = null;
@@ -424,7 +439,7 @@ public class ExecutionServiceImpl implements ExecutionService {
         }
 
         try {
-            result = nodeExecutor.executeCommand(nodeContext, commandArray, node);
+            result = nodeExecutor.executeCommand(nodeContext, commandArray, inputStream, node);
         } finally {
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishNodeExecution(result, context, commandArray, node);

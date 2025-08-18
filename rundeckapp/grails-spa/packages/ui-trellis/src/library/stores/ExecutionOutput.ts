@@ -13,6 +13,7 @@ import { RootStore } from "./RootStore";
 import { JobWorkflow, RenderedStepList } from "../utilities/JobWorkflow";
 import { ExecutionStatusGetResponse } from "@rundeck/client/dist/lib/models";
 import { Serial } from "../utilities/Async";
+import { api, apiClient } from "../services/api";
 
 // export type EnrichedExecutionOutput = Omit<ExecutionOutput, 'entries'> & {entries: IRenderedEntry[]}
 
@@ -123,16 +124,19 @@ export class ExecutionOutput {
             { exec: status.description, type: "exec", nodeStep: "true" },
           ]);
         }
-        const resp = await this.client.jobWorkflowGet(status.job!.id!);
-        return new JobWorkflow(resp.workflow);
+        const response = await api.get(`job/${status.job.id}/workflow`);
+        return new JobWorkflow(response.data.workflow);
       })();
     }
     return this.jobWorkflowProm;
   }
 
   async getExecutionStatus() {
-    if (!this.executionStatusProm)
-      this.executionStatusProm = this.client.executionStatusGet(this.id);
+    if (!this.executionStatusProm) {
+      this.executionStatusProm = api
+        .get(`execution/${this.id}`)
+        .then((response) => response.data as ExecutionStatusGetResponse);
+    }
 
     return this.executionStatusProm;
   }
@@ -142,14 +146,9 @@ export class ExecutionOutput {
     offset: number,
     maxLines: number,
   ) {
-    return this.client
-      .apiRequest({
-        method: "GET",
-        pathTemplate: "api/43/execution/{id}/output",
-        pathParameters: {
-          id: executionId,
-        },
-        queryParameters: {
+    return apiClient(43)
+      .get(`execution/${executionId}/output`, {
+        params: {
           offset: offset.toString(),
           maxlines: maxLines.toString(),
         },
@@ -157,10 +156,10 @@ export class ExecutionOutput {
       .then((response) => {
         if (response.status != 200) {
           throw new Error(
-            "Error calling execution log api: " + response.bodyAsText,
+            "Error calling execution log api: " + JSON.stringify(response.data),
           );
         }
-        return response.parsedBody;
+        return response.data;
       });
   }
 

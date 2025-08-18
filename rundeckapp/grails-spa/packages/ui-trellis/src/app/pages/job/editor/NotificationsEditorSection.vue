@@ -12,7 +12,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import * as _ from "lodash";
 import NotificationsEditor from "../../../components/job/notifications/NotificationsEditor.vue";
 import JsonEmbed from "./JsonEmbed.vue";
@@ -45,8 +45,7 @@ export default {
     changed(data) {
       if (!_.isEqual(data, this.updatedData.notifications)) {
         this.updatedData.notifications = data;
-        //nb: hook to indicate job was editted, defined in jobedit.js
-        window.jobWasEdited();
+        this.eventBus.emit("jobedit.page.confirm", true);
       }
     },
   },

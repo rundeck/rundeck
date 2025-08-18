@@ -665,5 +665,57 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         closureCalled
     }
 
+    private GormTokenDataProvider setupTokenProvider(String userId = null, List<AuthToken> tokens = []) {
+        def mockProvider = Mock(GormTokenDataProvider)
+        if (userId) {
+            mockProvider.findAllByUser(userId) >> tokens
+        }
+        service.tokenDataProvider = mockProvider
+        return mockProvider
+    }
 
+    def "removeAllTokensByUser removes all tokens"() {
+        given:
+        def user = new User(login: 'testuser').save()
+        def userId = user.id.toString()
+        def provider = setupTokenProvider(userId, [
+                new AuthToken(uuid: 'token1', creator: 'admin', authRoles: 'admin', user: userId),
+                new AuthToken(uuid: 'token2', creator: 'admin', authRoles: 'admin', user: userId)
+        ])
+
+        when:
+        def result = service.removeAllTokensByUser(userId)
+
+        then:
+        result == 2
+        2 * provider.delete(_)
+    }
+
+    def "removeAllTokensByUser handles empty token list"() {
+        given:
+        def user = new User(login: 'testuser').save()
+        def userId = user.id.toString()
+        def provider = setupTokenProvider(userId, [])
+
+        when:
+        def result = service.removeAllTokensByUser(userId)
+
+        then:
+        result == 0
+        0 * provider.delete(_)
+    }
+
+    def "removeAllTokensByUser handles provider error"() {
+        given:
+        def user = new User(login: 'testuser').save()
+        def userId = user.id.toString()
+        def provider = setupTokenProvider()
+        provider.findAllByUser(userId) >> { throw new RuntimeException("test error") }
+
+        when:
+        service.removeAllTokensByUser(userId)
+
+        then:
+        thrown(RuntimeException)
+    }
 }

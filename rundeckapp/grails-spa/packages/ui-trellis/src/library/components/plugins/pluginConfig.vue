@@ -27,6 +27,9 @@
       :detail="detail"
     >
       <slot name="titlePrefix"></slot>
+      <template #titleprefix>
+        <slot name="iconSuffix"></slot>
+      </template>
       <template #suffix>
         <slot name="titleSuffix"></slot>
       </template>
@@ -37,14 +40,32 @@
         v-if="inputShowIcon || inputShowTitle || inputShowDescription"
         class="col-xs-12 col-sm-12"
       >
-        <p>
-          <pluginInfo
-            :show-title="inputShowTitle"
-            :show-icon="inputShowIcon"
-            :show-description="inputShowDescription"
-            :detail="detail"
-          />
-        </p>
+        <slot
+          name="header"
+          :header="{
+            inputShowTitle,
+            inputShowIcon,
+            inputShowDescription,
+            detail,
+          }"
+        >
+          <p>
+            <pluginInfo
+              :show-title="inputShowTitle"
+              :show-icon="inputShowIcon"
+              :show-description="inputShowDescription"
+              :detail="detail"
+            >
+              <slot name="titlePrefix"></slot>
+              <template #titleprefix>
+                <slot name="iconSuffix"></slot>
+              </template>
+              <template #suffix>
+                <slot name="titleSuffix"></slot>
+              </template>
+            </pluginInfo>
+          </p>
+        </slot>
       </div>
       <div v-if="isShowMode && config" class="col-xs-12 col-sm-12">
         <span v-if="validation && !validation.valid" class="text-warning">
@@ -69,7 +90,7 @@
         v-else-if="isShowConfigForm && inputLoaded"
         class="col-xs-12 col-sm-12 form-horizontal"
       >
-        <div class="form-group">
+        <div v-if="$slots.extraProperties" class="form-group">
           <div class="col-sm-12">
             <slot name="extraProperties"></slot>
           </div>
@@ -110,6 +131,8 @@
                 :pindex="pindex"
                 :selector-data="propsComputedSelectorData"
                 :autocomplete-callback="autocompleteCallback"
+                :step-type="serviceName"
+                :plugin-type="modelValue.type"
                 @plugin-props-mounted="notifyHandleAutoComplete"
               />
             </div>
@@ -121,7 +144,7 @@
           >
             <summary>
               <span class="row">
-                <span class="col-sm-2 control-label h5 header-reset">
+                <span :class="groupCss">
                   {{ group.name !== "-" ? group.name : "More" }}
                   <i
                     class="more-indicator-verbiage more-info-icon glyphicon glyphicon-chevron-right"
@@ -166,6 +189,8 @@
                   :rkey="'g_' + gindex + '_' + rkey"
                   :pindex="pindex"
                   :selector-data="propsComputedSelectorData"
+                  :step-type="serviceName"
+                  :plugin-type="modelValue.type"
                   :autocomplete-callback="autocompleteCallback"
                 />
               </div>
@@ -179,6 +204,7 @@
 </template>
 
 <script lang="ts">
+import { getRundeckContext } from "../../rundeckService";
 import { defineComponent } from "vue";
 
 import AceEditor from "../utils/AceEditor.vue";
@@ -193,7 +219,6 @@ import { diff } from "deep-object-diff";
 
 import {
   getPluginProvidersForService,
-  getServiceProviderDescription,
   validatePluginConfig,
 } from "../../modules/pluginService";
 
@@ -212,27 +237,31 @@ export default defineComponent({
     PluginPropView,
     PluginPropEdit,
   },
-  props: [
-    "serviceName",
-    "provider",
-    "config",
-    "mode",
-    "showTitle",
-    "showIcon",
-    "showDescription",
-    "modelValue",
-    "savedProps",
-    "pluginConfig",
-    "validation",
-    "readOnly",
-    "validationWarningText",
-    "scope",
-    "defaultScope",
-    "contextAutocomplete",
-    "autocompleteCallback",
-    "useRunnerSelector",
-    "eventBus",
-  ],
+  props: {
+    serviceName: { required: false },
+    provider: { required: false },
+    config: { required: false },
+    mode: { required: false },
+    showTitle: { required: false },
+    showIcon: { required: false },
+    showDescription: { required: false },
+    modelValue: { required: false },
+    savedProps: { required: false },
+    pluginConfig: { required: false },
+    validation: { required: false },
+    readOnly: { required: false },
+    validationWarningText: { required: false },
+    scope: { required: false },
+    defaultScope: { required: false },
+    contextAutocomplete: { required: false },
+    autocompleteCallback: { required: false },
+    useRunnerSelector: { required: false },
+    eventBus: { required: false },
+    groupCss: {
+      required: false,
+      default: "col-sm-2 control-label h5 header-reset",
+    },
+  },
   emits: [
     "update:modelValue",
     "change",
@@ -514,10 +543,11 @@ export default defineComponent({
     },
     async loadProvider(provider: any) {
       try {
-        const data: any = await getServiceProviderDescription(
-          this.serviceName,
-          provider,
-        );
+        const data =
+          await getRundeckContext().rootStore.plugins.getPluginDetail(
+            this.serviceName,
+            provider,
+          );
         if (data.props) {
           this.loadPluginData(data);
         }
@@ -616,6 +646,10 @@ export default defineComponent({
 <style lang="scss">
 .configprop + .configprop:before {
   content: " ";
+}
+
+.has-error .ace_editor {
+  border: 1px solid var(--danger-color);
 }
 </style>
 <style lang="scss" scoped>

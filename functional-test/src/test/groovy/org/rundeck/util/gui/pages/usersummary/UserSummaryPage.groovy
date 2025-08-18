@@ -13,6 +13,9 @@ class UserSummaryPage extends BasePage{
 
     String loadPath = "/menu/userSummary"
     By userCountFieldBy = By.className("text-info")
+    By searchButtonBy = By.xpath("//button[@class='btn btn-default btn btn-secondary btn-sm' and @type='button' and normalize-space()='Search...']")
+    By loginInputBy = By.xpath("//input[@class='form-control' and @placeholder='Login']")
+    By modalSearchButtonBy = By.xpath("//button[contains(@class, 'btn btn-cta') and text()='Search']")
 
     UserSummaryPage(final SeleniumContext context) {
         super(context)
@@ -26,5 +29,17 @@ class UserSummaryPage extends BasePage{
 
     WebElement getUserCountField() {
         el userCountFieldBy
+    }
+
+    WebElement getSearchButton(){
+        el searchButtonBy
+    }
+
+    WebElement getLoginInput(){
+        el loginInputBy
+    }
+
+    WebElement getModalSearchButton(){
+        el modalSearchButtonBy
     }
 }

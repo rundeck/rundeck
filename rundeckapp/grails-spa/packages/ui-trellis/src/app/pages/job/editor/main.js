@@ -1,6 +1,7 @@
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import { createApp, markRaw } from "vue";
+import { createPinia } from "pinia";
 import VueCookies from "vue-cookies";
 import * as uiv from "uiv";
 import moment from "moment";
@@ -9,140 +10,149 @@ import NotificationsEditorSection from "./NotificationsEditorSection.vue";
 import ResourcesEditorSection from "./ResourcesEditorSection.vue";
 import SchedulesEditorSection from "./SchedulesEditorSection.vue";
 import OtherEditorSection from "./OtherEditorSection.vue";
-import { EventBus } from "../../../../library/utilities/vueEventBus";
 import { initI18n, updateLocaleMessages } from "../../../utilities/i18n";
 import { observer } from "../../../utilities/uiSocketObserver";
 import OptionsEditorSection from "./OptionsEditorSection.vue";
 import { getRundeckContext } from "@/library";
 import { loadJsonData } from "@/app/utilities/loadJsonData";
 import NextUiToggle from "@/app/pages/job/browse/NextUiToggle.vue";
+import DetailsEditorSection from "@/app/pages/job/editor/DetailsEditorSection.vue";
+import ExecutionEditorSection from "./ExecutionEditorSection.vue";
+import WorkflowEditorSection from "@/app/pages/job/editor/WorkflowEditorSection.vue";
+import PrimeVue from "primevue/config";
+import Lara from "@primeuix/themes/lara";
+import HeaderSection from "@/app/pages/job/editor/HeaderSection.vue";
 
 const locale = window._rundeck.locale || "en_US";
 moment.locale(locale);
 
 const i18n = initI18n();
-const els = document.body.getElementsByClassName(
-  "job-editor-notifications-vue",
-);
-
-for (let i = 0; i < els.length; i++) {
-  const e = els[i];
-  const app = createApp({
-    name: "JobEditNotificationsApp",
-    components: { NotificationsEditorSection },
-    data() {
-      return { EventBus };
-    },
-  });
-  app.use(uiv);
-  app.use(i18n);
-  app.use(VueCookies);
-  app.mount(e);
-}
-const resels = document.body.getElementsByClassName("job-editor-resources-vue");
-
-for (let i = 0; i < resels.length; i++) {
-  const e = resels[i];
-  const rapp = createApp({
-    name: "JobEditResourcesApp",
-    components: { ResourcesEditorSection },
-    data() {
-      return { EventBus };
-    },
-  });
-  rapp.use(uiv);
-  rapp.use(i18n);
-  rapp.provide("addUiMessages", async (messages) => {
-    const newMessages = messages.reduce(
-      (acc, message) => (message ? { ...acc, ...message } : acc),
-      {},
-    );
-    const locale = window._rundeck.locale || "en_US";
-    const lang = window._rundeck.language || "en";
-    return updateLocaleMessages(i18n, locale, lang, newMessages);
-  });
-  rapp.mount(e);
-}
+const EventBus = getRundeckContext().eventBus;
 const rootStore = getRundeckContext().rootStore;
 const uiMeta = loadJsonData("pageUiMeta");
 const uiType = uiMeta?.uiType || "current";
-rootStore.ui.addItems([
+const pinia = createPinia();
+
+const jobSections = [
   {
-    section: "theme-select",
-    location: "after",
-    visible: true,
-    widget: markRaw(NextUiToggle),
+    name: "JobEditDetailsApp",
+    component: { DetailsEditorSection },
+    elementClass: "job-editor-details-vue",
+    visible: uiType === "next",
   },
-]);
-if (uiType === "next") {
-  const optsels = document.body.getElementsByClassName(
-    "job-editor-options-vue",
-  );
-
-  for (let i = 0; i < optsels.length; i++) {
-    const e = optsels[i];
-    const rapp = createApp({
-      name: "JobEditOptionsApp",
-      components: { OptionsEditorSection },
-    });
-    rapp.use(uiv);
-    rapp.use(i18n);
-    rapp.provide("addUiMessages", async (messages) => {
-      const newMessages = messages.reduce(
-        (acc, message) => (message ? { ...acc, ...message } : acc),
-        {},
-      );
-      const locale = window._rundeck.locale || "en_US";
-      const lang = window._rundeck.language || "en";
-      return updateLocaleMessages(i18n, locale, lang, newMessages);
-    });
-    rapp.mount(e);
-  }
-}
-const scsels = document.body.getElementsByClassName("job-editor-schedules-vue");
-
-for (let i = 0; i < scsels.length; i++) {
-  const e = scsels[i];
-  const sapp = createApp({
+  {
+    name: "JobEditHeaderApp",
+    component: { HeaderSection },
+    elementClass: "job-editor-header-vue",
+    visible: uiType === "next",
+  },
+  {
+    name: "JobEditNotificationsApp",
+    component: { NotificationsEditorSection },
+    elementClass: "job-editor-notifications-vue",
+    addEventBus: true,
+    addCookies: true,
+    visible: true,
+  },
+  {
+    name: "JobEditResourcesApp",
+    component: { ResourcesEditorSection },
+    elementClass: "job-editor-resources-vue",
+    addEventBus: true,
+    addUiMessages: true,
+    visible: true,
+  },
+  {
+    name: "JobEditExecutionApp",
+    component: { ExecutionEditorSection },
+    elementClass: "job-editor-execution-vue",
+    visible: true,
+  },
+  {
     name: "JobEditSchedulesApp",
-    components: { SchedulesEditorSection },
-    data() {
-      return { EventBus };
-    },
-  });
-  sapp.use(uiv);
-  sapp.use(i18n);
-  sapp.provide("addUiMessages", async (messages) => {
-    const newMessages = messages.reduce(
-      (acc, message) => (message ? { ...acc, ...message } : acc),
-      {},
-    );
-    const locale = window._rundeck.locale || "en_US";
-    const lang = window._rundeck.language || "en";
-    return updateLocaleMessages(i18n, locale, lang, newMessages);
-  });
-  sapp.mount(e);
+    component: { SchedulesEditorSection },
+    elementClass: "job-editor-schedules-vue",
+    addEventBus: true,
+    addUiMessages: true,
+    visible: true,
+  },
+  {
+    name: "JobEditOtherApp",
+    component: { OtherEditorSection },
+    elementClass: "job-editor-other-vue",
+    addEventBus: true,
+    visible: true,
+  },
+  {
+    name: "JobEditWorkflowApp",
+    component: { WorkflowEditorSection },
+    elementClass: "job-editor-workflow-vue",
+    addUiMessages: true,
+    visible: uiType === "next",
+  },
+  {
+    name: "JobEditOptionsApp",
+    component: { OptionsEditorSection },
+    elementClass: "job-editor-options-vue",
+    addUiMessages: true,
+    addEventBus: true,
+    visible: uiType === "next",
+  },
+];
 
-  const othels = document.body.getElementsByClassName("job-editor-other-vue");
+const mountSection = (section) => {
+  section.elements = document.body.getElementsByClassName(section.elementClass);
 
-  for (let i = 0; i < othels.length; i++) {
-    const e = othels[i];
-    const oapp = createApp({
-      name: "JobEditOtherApp",
-      components: { OtherEditorSection },
-      data() {
-        return { EventBus };
-      },
-    });
-    oapp.use(uiv);
-    oapp.use(i18n);
-    oapp.mount(e);
+  if (!section.elements || section.elements.length === 0) {
+    return;
   }
-}
+  try {
+    section.elements.forEach((element) => {
+      const app = createApp({
+        name: section.name,
+        components: { ...section.component },
+        data() {
+          return section.addEventBus ? { EventBus } : {};
+        },
+      });
+      app.use(uiv);
+      app.use(i18n);
+      if (section.addUiMessages) {
+        app.provide("addUiMessages", async (messages) => {
+          const newMessages = messages.reduce(
+            (acc, message) => (message ? { ...acc, ...message } : acc),
+            {},
+          );
+          const locale = window._rundeck.locale || "en_US";
+          const lang = window._rundeck.language || "en";
+          return updateLocaleMessages(i18n, locale, lang, newMessages);
+        });
+      }
+      if (section.addCookies) {
+        app.use(VueCookies);
+      }
+      app.use(PrimeVue, {
+        theme: {
+          preset: Lara,
+          options: {
+            prefix: "p",
+            cssLayer: true,
+            darkModeSelector: ".dark",
+          },
+        },
+      });
+      app.use(pinia);
+      app.mount(element);
+    });
+  } catch (e) {
+    console.warn(e, section);
+  }
+};
 
 //on job edit page listen for dom content changes and install UI Sockets
 window.addEventListener("DOMContentLoaded", (event) => {
   // Job Editing page - Workflow Tab
+  jobSections.forEach((section) => section.visible && mountSection(section));
 
   const elem = document.querySelector("#workflowContent .pflowlist.edit");
   if (elem) {

@@ -4,11 +4,26 @@ import com.dtolabs.rundeck.core.VersionConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypterPlugin
+import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService
+import com.dtolabs.rundeck.core.execution.service.FileCopier
+import com.dtolabs.rundeck.core.execution.service.FileCopierService
+import com.dtolabs.rundeck.core.execution.service.NodeExecutor
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.plugins.PluginUtils
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
+import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.audit.AuditEventListenerPlugin
 import com.dtolabs.rundeck.plugins.config.PluginGroup
@@ -17,6 +32,7 @@ import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import com.dtolabs.rundeck.plugins.nodes.NodeEnhancerPlugin
 import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin
+import com.dtolabs.rundeck.plugins.orchestrator.OrchestratorPlugin
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
@@ -61,37 +77,53 @@ class PluginApiService {
         IFramework framework = frameworkService.getRundeckFramework()
         Locale locale = getLocale()
 
-        //framework level plugin descriptions
-        //TODO: use pluginService.listPlugins for these services/plugintypes
-        Map<String,List<Description>> pluginDescs= [
-                framework.getNodeExecutorService(),
-                framework.getFileCopierService(),
-                framework.getNodeStepExecutorService(),
-                framework.getStepExecutionService()
-        ].collectEntries{
-            [it.name, it.listDescriptions().sort {a,b->a.name<=>b.name}]
-        }
+        Map<String, List<Description>> pluginDescs = [:]
 
-        //load via pluginService to include spring-based app plugins
-        pluginDescs['ResourceModelSource'] = pluginService.listPlugins(
-                ResourceModelSourceFactory,
-                framework.getResourceModelSourceService()
-        ).findAll { it.value.description }.collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
+        StepExecutionService ses = framework.getStepExecutionService()
+        pluginDescs[ses.name] = pluginService.listPlugins(StepExecutor, ses)
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort {a,b -> a.name <=> b.name }
+
+        NodeExecutorService nes = framework.getNodeExecutorService()
+        pluginDescs[nes.name] = pluginService.listPlugins(NodeExecutor, nes)
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+
+        NodeStepExecutionService nses = framework.getNodeStepExecutorService()
+        pluginDescs[nses.name] = pluginService.listPlugins(NodeStepExecutor, nses)
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+
+        FileCopierService fcs = framework.getFileCopierService()
+        pluginDescs[fcs.name] = pluginService.listPlugins(FileCopier, fcs)
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+
+        ResourceModelSourceService rmss = framework.getResourceModelSourceService()
+        pluginDescs[rmss.name] = pluginService.listPlugins(ResourceModelSourceFactory, rmss)
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
 
         pluginDescs[ServiceNameConstants.NodeEnhancer]=pluginService.listPlugins(NodeEnhancerPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
-        //TODO: use pluginService.listPlugins for these services/plugintypes
-        [
-                framework.getResourceFormatParserService(),
-                framework.getResourceFormatGeneratorService(),
-                framework.getOrchestratorService()
-        ].each {
 
-            pluginDescs[it.name] = it.listDescriptions().sort { a, b -> a.name <=> b.name }
-        }
+        ResourceFormatParserService rfps = framework.getResourceFormatParserService()
+        pluginDescs[rfps.name] = pluginService.listPlugins(ResourceFormatParser, rfps)
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+
+        ResourceFormatGeneratorService rfgs = framework.getResourceFormatGeneratorService()
+        pluginDescs[rfgs.name] = pluginService.listPlugins(ResourceFormatGenerator, rfgs)
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+
+        OrchestratorService os = framework.getOrchestratorService()
+        pluginDescs[os.name] = pluginService.listPlugins(OrchestratorPlugin, os)
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
 
         if(featureService.featurePresent(Features.OPTION_VALUES_PLUGIN)) {
             pluginDescs['OptionValues'] = pluginService.listPlugins(OptionValuesPlugin).collect {
@@ -271,6 +303,8 @@ class PluginApiService {
                  name         : provider.name,
                  title        : provider.title,
                  description  : provider.description,
+                 isHighlighted  : provider.isHighlighted(),
+                 highlightedOrder      : provider.getOrder(),
                  builtin      : builtin,
                  pluginVersion: ver,
                  pluginAuthor : author,
@@ -303,8 +337,25 @@ class PluginApiService {
         tersePluginList
     }
 
+    /**
+     *
+     * @param property property
+     * @return true if the property has a feature flag requirement and the feature is present, or no requirement is specified
+     */
+    boolean hasRequiredFeatures(Property property){
+        if (property.renderingOptions.containsKey(StringRenderingConstants.FEATURE_FLAG_REQUIRED)) {
+            def featureFlag = property.renderingOptions[StringRenderingConstants.FEATURE_FLAG_REQUIRED]?.toString()
+            if (featureFlag && !featureService.featurePresent(featureFlag)) {
+                return false
+            }
+        }
+        return true
+    }
+
     List<Map> pluginPropertiesAsMap(String service, String pluginName, List<Property> properties) {
-        properties.collect { Property prop ->
+        properties.findAll {
+            hasRequiredFeatures(it)
+        }.collect { Property prop ->
             pluginPropertyMap(service, pluginName, prop)
         }
     }
@@ -318,9 +369,32 @@ class PluginApiService {
      * @return
      */
     Map pluginPropertyMap(String service, String pluginName, Property prop) {
+        def optsMap = asStringMap(prop)
+        def staticTextDefaultValue = uiPluginService.getPluginMessage(
+            service,
+            pluginName,
+            "property.${prop.name}.defaultValue",
+            prop.defaultValue ?: '',
+            locale
+        )
+        if(staticTextDefaultValue && optsMap && optsMap['staticTextContentType'] in ['text/html','text/markdown']){
+            if(optsMap['staticTextContentType'] == 'text/markdown') {
+                staticTextDefaultValue = staticTextDefaultValue.decodeMarkdown()
+                optsMap['staticTextContentType'] = 'application/x-text-html-sanitized'
+            }else{
+                staticTextDefaultValue = staticTextDefaultValue.encodeAsSanitizedHTML()
+                optsMap['staticTextContentType'] = 'application/x-text-html-sanitized'
+            }
+        }
         [
             name                  : prop.name,
-            desc                  : prop.description,
+            desc                  : uiPluginService.getPluginMessage(
+                service,
+                pluginName,
+                "property.${prop.name}.description",
+                prop.description ?: '',
+                locale
+            ),
             title                 : uiPluginService.getPluginMessage(
                 service,
                 pluginName,
@@ -329,19 +403,13 @@ class PluginApiService {
                 locale
             ),
             defaultValue          : prop.defaultValue,
-            staticTextDefaultValue: uiPluginService.getPluginMessage(
-                service,
-                pluginName,
-                "property.${prop.name}.defaultValue",
-                prop.defaultValue ?: '',
-                locale
-            ),
+            staticTextDefaultValue: staticTextDefaultValue,
             required              : prop.required,
             type                  : prop.type.toString(),
             allowed               : prop.selectValues,
             selectLabels          : prop.selectLabels,
             scope                 : prop.scope?.toString(),
-            options               : asStringMap(prop)
+            options               : optsMap
         ]
     }
 

@@ -23,18 +23,25 @@ class JobCreatePage extends BasePage {
     By selectNode = By.cssSelector(".glyphicon-circle-arrow-right")
     By lastNodeInList = By.cssSelector(".col-xs-6:nth-child(3) span:nth-child(2)")
     By refreshNodesBy = By.cssSelector(".refresh_nodes")
-    By numberOfStepsBy = By.cssSelector(".autohilite.autoedit.wfitem.exectype")
+    By numberOfStepsBy = By.cssSelector(".autohilite.autoedit.wfitem")
     By notificationModalBy = By.cssSelector('#job-notifications-edit-modal')
     By notificationDropDownBy = By.cssSelector('#notification-edit-type-dropdown > button')
     By notificationSaveBy = By.id("job-notifications-edit-modal-btn-save")
     By updateJob = By.id("jobUpdateSaveButton")
     By jobNameInputBy = By.cssSelector("form input[name=\"jobName\"]")
     By groupPathInputBy = By.cssSelector("form input[name=\"groupPath\"]")
+    By groupChooseButton = By.id("groupChooseModalBtn")
+    By groupChooseModal = By.cssSelector('#groupChooseModal')
+    By groupNameOption = By.cssSelector("span.groupname.jobgroupexpand")
     By descriptionTextareaBy = By.cssSelector("form textarea[name='description']")
     By jobGroupBy = By.cssSelector("input#schedJobGroup")
-    By scheduleRunYesBy = By.cssSelector('input#scheduledTrue')
+    By scheduleRunYesBy = By.id('scheduledTrue')
     By scheduleEveryDayCheckboxBy = By.cssSelector('input#everyDay')
     By scheduleDaysCheckboxDivBy = By.cssSelector('div#DayOfWeekDialog')
+    By executionPluginsRows = By.xpath('//*[@id="tab_execution_plugins"]//*[@class="list-group-item"]')
+    By killHandlerPluginPreviousRow = By.xpath('//input[@value="killhandler"]/preceding-sibling::div[1]')
+    By killHandlerPluginCheckbox = By.xpath('//*[@value="killhandler"]//following-sibling::div[1]//input[@type="checkbox"]')
+    By killHandlerPluginKillSpawnedCheckbox = By.xpath('//*[@value="killhandler"]//following-sibling::div[1]//div[2]//input[@type="checkbox"]')
     By multiExecFalseBy = By.cssSelector('input#multipleFalse')
     By multiExecTrueBy = By.cssSelector('input#multipleTrue')
     By workFlowStrategyBy = By.xpath('//*[@id="workflow.strategy"]')
@@ -48,8 +55,22 @@ class JobCreatePage extends BasePage {
     By createJobBy = By.id("Create")
     By cancelBy = By.id('createFormCancelButton')
     By optionBy = By.cssSelector("#optnewbutton > span")
+    By nodeStepSectionActiveBy = By.cssSelector(".node_step_section.tab-pane.active")
+    By executionEnabledFalseBy = By.id("executionEnabledFalse")
+    By executionEnabledTrueBy = By.id("executionEnabledTrue")
+    By scheduleEnabledFalseBy = By.id("scheduleEnabledFalse")
+    By scheduleEnabledTrueBy = By.id("scheduleEnabledTrue")
+    By workflowAlphaUiContainer = By.id("workflowContent") // TODO: delete once out of Alpha
+    By workflowAlphaUiButton = By.id("addButton")
+    By workflowSaveStepButton = By.xpath('//div[contains(@class, \'in\') and contains(@class, \'modal\')]//button[@data-testid="save-button"]')
 
     static class NextUi {
+        static By jobNameInputBy = By.cssSelector("form input[id=\"schedJobName\"]")
+        static By groupPathInputBy = By.cssSelector("form input[id=\"schedJobGroup\"]")
+        static By descriptionTextareaBy = By.cssSelector("form textarea.ace_text-input")
+        static By killHandlerPluginPreviousRow = By.xpath('//input[@value="killhandler"]/ancestor::div[@class="list-group-item"]/preceding-sibling::div[@class="list-group-item"][1]')
+        static By killHandlerPluginCheckbox = By.xpath('//input[@value="killhandler"]')
+        static By killHandlerPluginKillSpawnedCheckbox = By.xpath('//*[@data-prop-name="killChilds"]//input[@type="checkbox"]')
         static By optionBy = By.cssSelector("#optnewbutton > button")
         static By separatorOptionBy = By.cssSelector("#option_preview")
         static By optionCloseKeyStorageBy = By.cssSelector("#storage-file.modal .modal-footer > button.btn-default")
@@ -62,6 +83,11 @@ class JobCreatePage extends BasePage {
             By.cssSelector("#optitem_$index")
         }
         static By storagePathInput = By.name("storagePath")
+        static By adhocRemoteStringBy = By.xpath('//*[@data-prop-name="adhocRemoteString"]//input[@type="text"]')
+        static By workFlowStrategyBy = By.xpath('//select[contains(@name, \'workflow.strategy\')]')
+        static By strategyPluginParallelMsgBy = By.xpath('//*[@id="strategyPluginparallel"]/span')
+        static By numberOfStepsBy = By.cssSelector("[data-test='edit-step-item']")
+        static By deleteStepBy = By.cssSelector('button[data-test="remove-step"]')
     }
 
     By separatorOptionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
@@ -131,8 +157,12 @@ class JobCreatePage extends BasePage {
     By optionsBy = By.cssSelector(".opt.item")
     By timeZoneBy = By.id("timeZone")
     By optEditFormBy = By.className("optEditForm")
+    By addGlobalLogFilter = By.cssSelector("div[data-testid='log-filters-container'] > button")
+    By addLogFilterOption = By.cssSelector("a[data-test='add-log-filter']")
+    By addErrorHandlerOption = By.cssSelector("a[data-test='add-error-handler']")
 
     private String loadPath = "/job/create"
+    private final String copyPath = "/job/copy"
     String projectName
     String jobId
     boolean edit=false
@@ -157,21 +187,27 @@ class JobCreatePage extends BasePage {
         loadCreatePath(projectName)
     }
 
-    void loadEditPath(String projectName, String jobId) {
+    void loadEditPath(String projectName, String jobId, Boolean nextUi = false) {
         this.edit=true
         this.projectName=projectName
         this.jobId=jobId
+        this.nextUi=nextUi
     }
 
     void loadCreatePath(String projectName) {
         this.projectName=projectName
         this.edit=false
     }
-
+    
     void fillBasicJob(String name) {
         jobNameInput.sendKeys name
         tab JobTab.WORKFLOW click()
-        addSimpleCommandStep 'echo selenium test', 0
+        if(nextUi){
+            waitForElementVisible workflowAlphaUiButton
+            addSimpleCommandStepNextUi 'echo selenium test', 0
+        } else {
+            addSimpleCommandStep 'echo selenium test', 0
+        }
     }
 
     /**
@@ -181,24 +217,59 @@ class JobCreatePage extends BasePage {
      * @return
      */
     JobCreatePage addSimpleCommandStep(String command, int stepIndexNumber) {
+
         executeScript "window.location.hash = '#addnodestep'"
         stepLink 'exec-command', StepType.NODE click()
         byAndWaitClickable adhocRemoteStringBy
         adhocRemoteStringField.click()
         waitForNumberOfElementsToBeOne floatBy
+
         adhocRemoteStringField.sendKeys command
+
+        saveStep stepIndexNumber
+
+        return this
+    }
+
+    JobCreatePage addSimpleCommandStepNextUi(String command, int stepIndexNumber) {
+        clickAddStep()
+        byAndWaitClickable By.xpath("//*[@${StepType.NODE.getStepType()}='exec-command']")
+        stepLink 'exec-command', StepType.NODE click()
+        byAndWaitClickable NextUi.adhocRemoteStringBy
+        adhocRemoteStringField.click()
+        adhocRemoteStringField.sendKeys command
+
         saveStep stepIndexNumber
 
         return this
     }
 
     JobCreatePage addStep(JobStep step, int stepNumber = 0){
-        tab(JobTab.WORKFLOW).click()
-        stepLink(step.STEP_NAME, step.stepType).click()
+        def stepName = step.STEP_NAME
+        if(nextUi){
+            clickAddStep();
+        } else{
+            tab(JobTab.WORKFLOW).click()
+        }
+        stepLink(stepName, step.stepType).click()
 
-        step.configure(this)
+        step.configure(this, nextUi)
 
         saveStep stepNumber
+        return this
+    }
+
+    JobCreatePage addErrorHandler(String stepName, StepType stepType, int stepNumber = 0){
+        clickAddErrorHandler(stepNumber);
+
+        stepLink(stepName, stepType).click()
+
+        if(stepName == 'exec-command') {
+            adhocRemoteStringField.click()
+            adhocRemoteStringField.sendKeys 'echo test'
+            saveStep stepNumber
+        }
+
         return this
     }
 
@@ -234,6 +305,22 @@ class JobCreatePage extends BasePage {
         return new JobShowPage(context)
     }
 
+    WebElement getExecutionEnabledFalse(){
+        el executionEnabledFalseBy
+    }
+
+    WebElement getExecutionEnabledTrue(){
+        el executionEnabledTrueBy
+    }
+
+    WebElement getScheduleEnabledFalse(){
+        el scheduleEnabledFalseBy
+    }
+
+    WebElement getScheduleEnabledTrue(){
+        el scheduleEnabledTrueBy
+    }
+
     boolean commandStepVisible(){
         stepLink 'exec-command', StepType.NODE displayed
     }
@@ -241,6 +328,12 @@ class JobCreatePage extends BasePage {
     void validatePage() {
         if (!driver.currentUrl.endsWith(getLoadPath())) {
             throw new IllegalStateException("Not on job create page: " + driver.currentUrl)
+        }
+    }
+
+    void validateCopyPage() {
+        if (!driver.currentUrl.contains(copyPath)) {
+            throw new IllegalStateException("Not on job copy page: " + driver.currentUrl)
         }
     }
 
@@ -297,20 +390,36 @@ class JobCreatePage extends BasePage {
         waitForNumberOfElementsToBe notificationModalBy, totalNotificationModals
     }
 
+    void waitGroupModal(Integer totalGroupModals) {
+        waitForNumberOfElementsToBe groupChooseModal, totalGroupModals
+    }
+
     WebElement getJobNameInput() {
-        el jobNameInputBy
+        el nextUi ? NextUi.jobNameInputBy : jobNameInputBy
     }
 
     WebElement getGroupPathInput() {
-        el groupPathInputBy
+        el nextUi ? NextUi.groupPathInputBy :groupPathInputBy
+    }
+
+    WebElement getGroupChooseButton() {
+        el groupChooseButton
+    }
+
+    WebElement getGroupNameOption() {
+        el groupNameOption
     }
 
     WebElement getDescriptionTextarea() {
-        def element = el descriptionTextareaBy
-        String js = 'jQuery(\'form textarea[name="description"]\').show()'
-        ((JavascriptExecutor) driver).executeScript(js, element)
-        waitForElementVisible element
-        element
+        if(nextUi) {
+            el NextUi.descriptionTextareaBy
+        } else {
+            def element = el descriptionTextareaBy
+            String js = 'jQuery(\'form textarea[name="description"]\').show()'
+            ((JavascriptExecutor) driver).executeScript(js, element)
+            waitForElementVisible element
+            element
+        }
     }
 
     WebElement getRefreshNodesButton(){
@@ -329,6 +438,36 @@ class JobCreatePage extends BasePage {
         el scheduleDaysCheckboxDivBy
     }
 
+    List<WebElement> getExecutionPluginsRows() {
+        driver.findElements(executionPluginsRows)
+    }
+
+    WebElement getKillHandlerPluginPreviousRow() {
+        if(nextUi){
+            new WebDriverWait(driver,  Duration.ofSeconds(50)).until(
+                    ExpectedConditions.presenceOfElementLocated(NextUi.killHandlerPluginPreviousRow)
+            )
+            el NextUi.killHandlerPluginPreviousRow
+        } else {
+            el killHandlerPluginPreviousRow
+        }
+    }
+
+    WebElement getKillHandlerPluginCheckbox() {
+        if(nextUi){
+            new WebDriverWait(driver,  Duration.ofSeconds(50)).until(
+                    ExpectedConditions.presenceOfElementLocated(NextUi.killHandlerPluginCheckbox)
+            )
+            el NextUi.killHandlerPluginCheckbox
+        } else {
+            el killHandlerPluginCheckbox
+        }
+    }
+
+    WebElement getKillHandlerPluginKillSpawnedCheckbox() {
+        el nextUi ? NextUi.killHandlerPluginKillSpawnedCheckbox : killHandlerPluginKillSpawnedCheckbox
+    }
+
     WebElement getMultiExecFalseField() {
         el multiExecFalseBy
     }
@@ -338,7 +477,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getWorkFlowStrategyField() {
-        el workFlowStrategyBy
+        el nextUi? NextUi.workFlowStrategyBy : workFlowStrategyBy
     }
 
     WebElement getStrategyPluginParallelField() {
@@ -346,17 +485,22 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getStrategyPluginParallelMsgField() {
-        el strategyPluginParallelMsgBy
+        el nextUi? NextUi.strategyPluginParallelMsgBy : strategyPluginParallelMsgBy
     }
 
     WebElement stepLink(String dataNodeStepType, StepType stepType) {
         if(stepType == StepType.WORKFLOW)
             workFlowStepLink.click()
-        el By.xpath("//*[@${stepType.getStepType()}='$dataNodeStepType']")
+
+            el By.xpath("//*[contains(@${stepType.getStepType()}, '$dataNodeStepType')]")
+    }
+
+    WebElement getAdhocRemoteStringBy() {
+        el nextUi? NextUi.adhocRemoteStringBy : adhocRemoteStringBy
     }
 
     WebElement getAdhocRemoteStringField() {
-        el adhocRemoteStringBy
+        el nextUi? NextUi.adhocRemoteStringBy : adhocRemoteStringBy
     }
 
     WebElement getCreateJobButton() {
@@ -365,6 +509,23 @@ class JobCreatePage extends BasePage {
 
     void clickTimeZone(){
         (el timeZoneBy).click()
+    }
+
+    void clickAddStep(){
+        (el workflowAlphaUiButton).click()
+    }
+
+    void clickAddErrorHandler(int position){
+        stepDropdownTrigger(position).click()
+        waitForElementVisible(addErrorHandlerOption)
+        (el addErrorHandlerOption).click()
+    }
+
+    def clickAddLogFilter(int position) {
+        stepDropdownTrigger(position).click()
+        waitForElementVisible(addErrorHandlerOption)
+        (el addLogFilterOption).click()
+        return this
     }
 
     WebElement getCancelButton() {
@@ -676,19 +837,28 @@ class JobCreatePage extends BasePage {
     }
 
     void saveStep(Integer stepNumber) {
-        def button = el floatBy findElement By.cssSelector(".btn.btn-cta.btn-sm")
+        def button
+        if(!nextUi) {
+            button = el floatBy findElement By.cssSelector(".btn.btn-cta.btn-sm")
+        } else {
+            button = el workflowSaveStepButton
+        }
         executeScript "arguments[0].scrollIntoView(true);", button
-        button?.click()
+        button.click()
         waitForElementVisible By.id("wfitem_${stepNumber}")
     }
 
-    def removeStepByIndex(int stepIndex){
-        (els deleteStepBy).get(stepIndex).click()
+    void removeStepByIndex(int stepIndex){
+        if(nextUi) {
+            (el By.cssSelector("#wfitem_${stepIndex} + .step-item-controls button[data-test='remove-step']")).click()
+        } else {
+            (els deleteStepBy).get(stepIndex).click()
+        }
     }
 
     def expectNumberOfStepsToBe(int numberSteps){
         new WebDriverWait(driver,  Duration.ofSeconds(5)).until(
-                ExpectedConditions.numberOfElementsToBe(numberOfStepsBy, numberSteps)
+                ExpectedConditions.numberOfElementsToBe(this.nextUi? NextUi.numberOfStepsBy: numberOfStepsBy, numberSteps)
         )
     }
 
@@ -749,6 +919,60 @@ class JobCreatePage extends BasePage {
         els optDetailBy
     }
 
+    def getTotalFoundPlugins(String pluginName){
+        return (el nodeStepSectionActiveBy).findElements(By.name(pluginName)).size()
+    }
+
+    WebElement getWorkflowAlphaUiContainer() {
+        el workflowAlphaUiContainer
+    }
+
+    WebElement getListItemIndex(int position) {
+        el By.cssSelector(".list-group[data-testid='list-view'] > .list-group-item:nth-child(${position})")
+    }
+
+    WebElement getInputField(String value, String childElement) {
+        getElementByDataPropName(value, childElement)
+    }
+
+    WebElement getAddGlobalLogFilter() {
+        el addGlobalLogFilter
+    }
+
+    def fillHighlightLogFilter() {
+        getListItemIndex(3).click();
+        def highlightPatternInput = getInputField("regex", "input[type='text']")
+        highlightPatternInput.click()
+        highlightPatternInput.sendKeys 'test'
+        def select = new Select(getInputField("fgcolor", "select"))
+        select.selectByValue('yellow')
+        getWorkflowSaveStepButton().click()
+        return this
+    }
+
+    List<WebElement> getLogFilterButtons(String id) {
+        els By.cssSelector("${id} .btn-group")
+    }
+
+    WebElement getWorkflowSaveStepButton() {
+        el workflowSaveStepButton
+    }
+
+    WebElement getWorkflowAlphaUiButton() {
+        el workflowAlphaUiButton
+    }
+
+    WebElement removeErrorHandlerButton(int index) {
+        el By.cssSelector(".item-container:nth-child(${index+1}) button[data-testid='remove-handler-button']");
+    }
+
+    WebElement stepDropdownTrigger(int index) {
+        el By.cssSelector("#wfitem_${index} +.step-item-controls button[data-role='trigger']")
+    }
+
+    def doesntHasDropdownOption(int index, String dataTest) {
+        els(By.cssSelector("#wfitem_${index} +.step-item-controls a[data-test='${dataTest}']")).isEmpty()
+    }
 }
 
 
@@ -873,4 +1097,5 @@ enum JobTab {
     String getTabName() {
         return tabName
     }
+
 }

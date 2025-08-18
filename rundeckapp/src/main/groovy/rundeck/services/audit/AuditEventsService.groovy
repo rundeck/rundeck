@@ -1,5 +1,6 @@
 package rundeck.services.audit
 
+import com.codahale.metrics.Counter
 import com.dtolabs.rundeck.core.audit.*
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
@@ -45,17 +46,21 @@ import java.util.stream.Collectors
  *
  */
 class AuditEventsService
-    implements LogoutHandler {
+    implements LogoutHandler, InitializingBean {
 
     static final Logger LOG = LoggerFactory.getLogger(AuditEventsService.class)
 
     FrameworkService frameworkService
+    def metricService
 
     private ContextACLManager<AppACLContext> aclFileManagerService
     protected AsyncTaskExecutor asyncTaskExecutor
     protected final CopyOnWriteArrayList<AuditEventListener> internalListeners = new CopyOnWriteArrayList<>()
 
     protected volatile Map<String, DescribedPlugin> installedPlugins = null
+    Counter userLoginSuccess
+    Counter userLoginFailure
+    Counter userLogoutSuccess
 
     AuditEventsService() {
         LOG.info("Init auditing events service")
@@ -65,6 +70,13 @@ class AuditEventsService
         asyncTaskExecutor.initialize()
     }
 
+    @Override
+    void afterPropertiesSet() throws Exception {
+        userLoginSuccess = metricService.counter("userLogin","success")
+        userLoginFailure = metricService.counter("userLogin","failure")
+        userLogoutSuccess = metricService.counter("userLogout","success")
+    }
+
     @Subscriber('rundeck.bootstrap')
     void init() throws Exception {
         Holders.getApplicationContext()
@@ -72,6 +84,22 @@ class AuditEventsService
             .addListenerMap(buildACLFileListeners())
     }
 
+    @Subscriber('rundeck.configuration.change')
+    def onRundeckConfigurationChange(Set<String> keys){
+        if (!keys.any { it.startsWith('framework.plugin.AuditEventListener.') }) {
+            return
+        }
+        LOG.info("Reloading audit plugins configuration")
+        try {
+            installedPlugins = null
+            getListenerPlugins()
+        } catch (Exception e) {
+            LOG.error("Error reloading audit plugins: " + e.getMessage(), e)
+        } catch (Error err) {
+            LOG.error("Critical error reloading audit plugins: " + err.getMessage(), err)
+            throw err
+        }
+    }
     @Subscriber('audit.job.update')
     void publishJobUpdateEvent(JobUpdateAuditEvent event) {
         eventBuilder()
@@ -162,6 +190,7 @@ class AuditEventsService
      */
     @EventListener
     void handleAuthenticationSuccessEvent(AuthenticationSuccessEvent event) {
+        userLoginSuccess.inc()
         eventBuilder()
                 .setUsername(extractUsername(event.authentication))
                 .setUserRoles(extractAuthorities(event.authentication))
@@ -173,6 +202,7 @@ class AuditEventsService
 
     @EventListener
     void handleAuthenticationFailureEvent(AuthenticationFailureBadCredentialsEvent event) {
+        userLoginFailure.inc()
         if (!event.authentication) {
             LOG.error("Null authentication on login failure event. Cancelling event dispatch.")
             return
@@ -199,6 +229,7 @@ class AuditEventsService
             LOG.error("Null authentication on logout event. Cancelling event dispatch.")
             return
         }
+        userLogoutSuccess.inc()
 
         eventBuilder()
                 .setUsername(extractUsername(authentication))

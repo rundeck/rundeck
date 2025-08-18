@@ -2,6 +2,8 @@ package rundeck.interceptors
 
 import com.codahale.metrics.MetricRegistry
 import org.grails.web.util.WebUtils
+import org.rundeck.app.web.RequestIdProvider
+
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
@@ -88,6 +90,7 @@ class AA_TimerInterceptor {
                        duration: data.duration,
                        remoteUser: request.remoteUser ?: request.authenticatedUser,
                        remoteHost: request.remoteHost,
+                       requestId: request.getAttribute(RequestIdProvider.HTTP_ATTRIBUTE_NAME),
                        userAgent: request.getHeader('User-Agent') ?: '-',
                        authToken: (request.authenticatedToken ? 'token' : 'form'),
                        method: request.method,

@@ -24,8 +24,10 @@ import com.google.common.collect.Lists
 import grails.gorm.DetachedCriteria
 import grails.gorm.transactions.Transactional
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.data.model.v1.execution.ExecutionData
 import org.rundeck.app.data.model.v1.query.RdExecQuery
 import org.rundeck.app.data.model.v1.report.dto.SaveReportResponse
+import org.rundeck.app.data.providers.DBExecReportSupport
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import rundeck.data.report.SaveReportRequestImpl
 import rundeck.data.report.SaveReportResponseImpl
@@ -528,9 +530,18 @@ class ReportService  {
         return rundeckAuthContextEvaluator.authorizeProjectResources(authContext,resHS, constraints, project)
     }
 
-    def deleteByExecutionUuid(String uuid){
-        execReportDataProvider.deleteAllByExecutionUuid(uuid)
+    def deleteByExecution(ExecutionData e) {
+        if (e.uuid) {
+            execReportDataProvider.deleteAllByExecutionUuid(e.uuid)
+        } else if (execReportDataProvider instanceof DBExecReportSupport) {
+            execReportDataProvider.deleteAllByExecutionId(e.internalId as Long)
+        } else {
+            throw new IllegalStateException(
+                "The execution data does not specify a UUID, however the data provider requires one."
+            )
+        }
     }
+
     private boolean isOracleDatasource(){
         def dataSource = applicationContext.getBean('dataSource', DataSource)
         def databaseProductName = dataSource?.getConnection()?.metaData?.databaseProductName

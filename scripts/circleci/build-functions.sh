@@ -12,13 +12,36 @@ rundeck_war_build() {
     ./gradlew -Penvironment="${ENV}" ${GRADLE_BUILD_OPTS} publishToMavenLocal build -x check
 }
 
+rundeck_assemble_build() {
+    echo "== Versions =="
+    java -version
+    echo "NPM=$(npm -version)"
+    echo "Node=$(node --version)"
+    echo "Groovy=$(groovy --version)"
+
+    echo "== Assemble build =="
+    ./gradlew -Penvironment="${ENV}" ${GRADLE_BUILD_OPTS} rundeckapp:assemble
+}
+
 rundeck_gradle_tests() {
     ./gradlew -Penvironment="${ENV}" ${GRADLE_BUILD_OPTS} check
 }
 
+rundeck_gui_tests() {
+    cd rundeckapp/grails-spa/packages/ui-trellis
+    npm run ci:test:unit
+}
+
 rundeck_docker_build() {
+    # Ensure the JRE version is set
+    local jreVersion=${1}
+    if [ -z "$jreVersion" ]; then
+        echo "Error: jreVersion is not set"
+        exit 1
+    fi
+
     #Build image
-    ./gradlew ${GRADLE_BASE_OPTS} officialBuild -Penvironment=${ENV} -PdockerRepository=${DOCKER_REPO} -PdockerTags=latest,SNAPSHOT
+    ./gradlew ${GRADLE_BASE_OPTS} officialBuild -Penvironment=${ENV} -PdockerRepository=${DOCKER_REPO} -PdockerTags=latest,SNAPSHOT -PjreVersion=${jreVersion}
 
     docker tag "${DOCKER_REPO}:latest" "${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}"
 
@@ -52,9 +75,11 @@ rundeck_docker_publish() {
 }
 
 rundeck_verify_build() {
-    groovy testbuild.groovy --buildType="${ENV}" -debug
+    ./gradlew ${GRADLE_BASE_OPTS} \
+        -Penvironment="${ENV}" \
+        verifyBuild
 }
 
 rundeck_gradle_functional_tests() {
-    TEST_IMAGE=${TEST_IMAGE:-} ./gradlew :functional-test:${GRADLE_TASK} -Penvironment="${ENV}" ${GRADLE_BUILD_OPTS} --info
+    TEST_IMAGE=${TEST_IMAGE:-} ./gradlew :functional-test:${GRADLE_TASK} -Penvironment="${ENV}" -PtestFiles="${TEST_FILES}" ${GRADLE_BUILD_OPTS} --info
 }

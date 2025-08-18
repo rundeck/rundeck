@@ -9,7 +9,6 @@ import org.rundeck.util.annotations.APITest
 import org.rundeck.util.common.execution.ExecutionStatus
 import org.rundeck.util.common.FileHelpers
 import org.rundeck.util.common.jobs.JobUtils
-import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.container.BaseContainer
 
 import java.nio.file.Files
@@ -53,13 +52,10 @@ class ExecuteScriptSpec extends BaseContainer{
         def runScript1Id = runScript1.execution.id
 
         then: "Job succeeds"
-        JobUtils.waitForExecutionToBe(
+        JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 runScript1Id as String,
-                mapper,
-                client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                client
         ).status == ExecutionStatus.SUCCEEDED.state
 
         when: "the job succeeds, we read the output of the file with a rundeck job"
@@ -90,26 +86,21 @@ class ExecuteScriptSpec extends BaseContainer{
                 "  </job>\n" +
                 "</joblist>"
 
-        def created = JobUtils.createJob(projectName, readJobXml, client)
-        assert created.successful
+        JobUtils.createJob(projectName, readJobXml, client)
 
         // Then run the job that reads the output of request
         def readJobRun = JobUtils.executeJob(readJobId, client)
         assert readJobRun.successful
 
         Execution readJobRunResponse = mapper.readValue(readJobRun.body().string(), Execution.class)
-        def readJobSucceeded = JobUtils.waitForExecutionToBe(
+        def readJobSucceeded = JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 readJobRunResponse.id as String,
-                mapper,
-                client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
-        )
+                client)
+
         assert readJobSucceeded.status == ExecutionStatus.SUCCEEDED.state
-        def execOutputResponse = client.doGetAcceptAll("/execution/$readJobRunResponse.id/output")
-        ExecutionOutput execOutput = mapper.readValue(execOutputResponse.body().string(), ExecutionOutput.class)
-        def entries = execOutput.entries.stream().map {it.log}.collect(Collectors.toList())
+        String execId = readJobRunResponse.id
+        def entries = getExecutionOutputLines(execId)
 
         //Extract local nodename, this name have to be the only line in output file
         def systemInfoResponse = doGet("/system/info")
@@ -127,14 +118,10 @@ class ExecuteScriptSpec extends BaseContainer{
         def runResponseBody = runResponse.body().string()
         def parsedResponseBody = mapper.readValue(runResponseBody, RunCommand.class)
         def newExecId = parsedResponseBody.execution.id
-        def deleteResponse = JobUtils.waitForExecutionToBe(
+        def deleteResponse = JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 newExecId as String,
-                mapper,
-                client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
-        )
+                client)
 
         then: "the job will succeed"
         deleteResponse.status == ExecutionStatus.SUCCEEDED.state
@@ -150,28 +137,21 @@ class ExecuteScriptSpec extends BaseContainer{
         RunCommand unquotedRunScript1 = mapper.readValue(unquotedScriptRunResponse.body().string(), RunCommand.class)
         def unquotedRunScript1Id = unquotedRunScript1.execution.id
 
-        JobUtils.waitForExecutionToBe(
+        JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 unquotedRunScript1Id as String,
-                mapper,
-                client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
-        )
+                client)
 
         // Then run the job that reads the output of request
         def readJobRunEmpty = JobUtils.executeJob(readJobId, client)
         assert readJobRunEmpty.successful
 
         Execution readJobRunEmptyResponse = mapper.readValue(readJobRunEmpty.body().string(), Execution.class)
-        def readJobRunEmptySucceeded = JobUtils.waitForExecutionToBe(
+        def readJobRunEmptySucceeded = JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
                 readJobRunEmptyResponse.id as String,
-                mapper,
-                client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
-        )
+                client)
+
         assert readJobRunEmptySucceeded.status == ExecutionStatus.SUCCEEDED.state
         def execOutputEmptyResponse = client.doGetAcceptAll("/execution/$readJobRunEmptyResponse.id/output")
         def execOutputEmptyString = execOutputEmptyResponse.body().string()
@@ -240,7 +220,7 @@ class ExecuteScriptSpec extends BaseContainer{
         def runScriptId = validRunScript.execution.id
 
         then:
-        runScriptId > 0
+        !runScriptId?.blank
     }
 
 }

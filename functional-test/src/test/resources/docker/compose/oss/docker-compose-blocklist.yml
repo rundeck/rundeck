@@ -1,7 +1,7 @@
-version: "3"
 services:
   rundeck:
     image: ${TEST_IMAGE}
+    platform: ${TEST_TARGET_PLATFORM:-linux/amd64}
     environment:
       RUNDECK_GRAILS_URL: ${TEST_RUNDECK_GRAILS_URL}
       RUNDECK_SERVER_FORWARDED: 'true'
@@ -9,6 +9,8 @@ services:
       RUNDECK_MULTIURL_ENABLED: "true"
       RUNDECK_METRICS_ENABLED: "true"
       RUNDECK_PLUGINS_PROVIDERBLOCKLISTFILE: /home/rundeck/blocklist.yaml
+    ports:
+      - "4440:4440"
     volumes:
       - "/etc/localtime:/etc/localtime:ro"
       - "/etc/timezone:/etc/timezone:ro"

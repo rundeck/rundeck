@@ -469,7 +469,7 @@ class ProjectController extends ControllerBase{
                 flash.warn=warning.join(",")
                 }catch( Exception e ){
                     def hint = hintErrorCause(e)
-                    flash.error="There was some errors in the import process: [ ${e.getMessage()} ]"
+                    flash.error="There were errors in the import process: [ ${e.getMessage()} ]"
                     if( hint.length() ){
                         flash.warn=hint
                     }

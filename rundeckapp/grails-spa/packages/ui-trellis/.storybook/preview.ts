@@ -1,10 +1,13 @@
 import type { Preview } from "@storybook/vue3";
 import { setup } from "@storybook/vue3";
 import PrimeVue from "primevue/config";
+import Lara from "@primeuix/themes/lara";
 
-import "primevue/resources/themes/lara-light-amber/theme.css";
 import "../src/library/theme/tokens.css";
+import "../src/library/theme/primeVue.css";
+import "../src/library/theme/tokens-rundeck.css";
 import "./storybook.css";
+import {initI18n} from "../src/app/utilities/i18n";
 
 import Tooltip from "primevue/tooltip";
 
@@ -27,12 +30,37 @@ const preview: Preview = {
         type: "auto",
       },
     },
+    initialGlobals: {
+      theme: "light",
+    },
+    darkMode: {
+      classTarget: "html",
+      stylePreview: true,
+    },
+    options: {
+      storySort: {
+        method: "alphabetical",
+        order: ["Docs"],
+      },
+    },
   },
 };
 
+const i18n = initI18n();
+
 setup((app) => {
   app.directive("tooltip", Tooltip);
-  app.use(PrimeVue);
+  app.use(PrimeVue, {
+    theme: {
+      preset: Lara,
+      options: {
+        prefix: "p",
+        cssLayer: true,
+        darkModeSelector: ".dark",
+      },
+    },
+  });
+  app.use(i18n);
 });
 
 export default preview;

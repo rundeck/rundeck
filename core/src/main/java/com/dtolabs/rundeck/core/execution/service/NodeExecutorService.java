@@ -15,18 +15,17 @@
  */
 
 /*
-* CommandExecutorFactory.java
-* 
-* User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/21/11 3:28 PM
-* 
-*/
+ * CommandExecutorFactory.java
+ *
+ * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
+ * Created: 3/21/11 3:28 PM
+ *
+ */
 package com.dtolabs.rundeck.core.execution.service;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig;
-import com.dtolabs.rundeck.core.common.IServicesRegistration;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor;
 import com.dtolabs.rundeck.core.execution.impl.local.NewLocalNodeExecutor;
 import com.dtolabs.rundeck.core.plugins.*;
@@ -34,6 +33,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.*;
 
@@ -55,32 +56,56 @@ public class NodeExecutorService
         "service." + SERVICE_NAME + ".default.local.provider";
     public static final String NODE_SERVICE_SPECIFIER_ATTRIBUTE = "node-executor";
     public static final String LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "local-node-executor";
-    public static final String DEFAULT_LOCAL_PROVIDER = LocalNodeExecutor.SERVICE_PROVIDER_TYPE;
-    public static final String DEFAULT_REMOTE_PROVIDER = "sshj-ssh";
-    private static final Map<String, Class<? extends NodeExecutor>> PRESET_PROVIDERS ;
 
-    static {
-        Map<String, Class<? extends NodeExecutor>> map = new HashMap<>();
-        map.put(LocalNodeExecutor.SERVICE_PROVIDER_TYPE, LocalNodeExecutor.class);
-        map.put(NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE, NewLocalNodeExecutor.class);
-        PRESET_PROVIDERS = Collections.unmodifiableMap(map);
+    /**
+     * Legacy profile for old behavior
+     */
+    @Getter
+    static class LegacyProfile
+            implements NodeExecutorServiceProfile
+    {
+        public static final String DEFAULT_REMOTE_PROVIDER = "sshj-ssh";
+        private static final Map<String, Class<? extends NodeExecutor>> PRESET_PROVIDERS;
+
+        static {
+            PRESET_PROVIDERS =
+                    Map.of(
+                            LocalNodeExecutor.SERVICE_PROVIDER_TYPE,
+                            LocalNodeExecutor.class,
+                            NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE,
+                            NewLocalNodeExecutor.class
+                    );
+        }
+
+        private final String defaultLocalProvider = LocalNodeExecutor.SERVICE_PROVIDER_TYPE;
+        private final String defaultRemoteProvider = DEFAULT_REMOTE_PROVIDER;
+        private final Map<String, Class<? extends NodeExecutor>> localRegistry = PRESET_PROVIDERS;
     }
+
+    static final NodeExecutorServiceProfile LEGACY_PROFILE = new LegacyProfile();
+
+    @Getter @Setter private NodeExecutorServiceProfile serviceProfile;
 
     public String getName() {
         return SERVICE_NAME;
     }
 
     public List<String> getBundledProviderNames() {
-        return Collections.unmodifiableList(new ArrayList<>(registry.keySet()));
+        return List.copyOf(getRegistryMap().keySet());
     }
+
+    public NodeExecutorService(Framework framework, NodeExecutorServiceProfile serviceProfile) {
+        super(framework, true);
+        this.serviceProfile = serviceProfile;
+    }
+
     public NodeExecutorService(Framework framework) {
-        super(framework,true);
-
-        registry.putAll(PRESET_PROVIDERS);
+        this(framework, LEGACY_PROFILE);
     }
 
-    public static boolean isRegistered(String name){
-        return PRESET_PROVIDERS.containsKey(name);
+    @Override
+    protected Map<String, Class<? extends NodeExecutor>> getRegistryMap() {
+        return serviceProfile.getLocalRegistry();
     }
 
     @Override
@@ -91,31 +116,22 @@ public class NodeExecutorService
         );
     }
 
-    public static NodeExecutorService getInstanceForFramework(final Framework framework,
-                                                              final IServicesRegistration registration) {
-        if (null == registration.getService(SERVICE_NAME)) {
-            final NodeExecutorService service = new NodeExecutorService(framework);
-            registration.setService(SERVICE_NAME, service);
-            return service;
-        }
-        return (NodeExecutorService) registration.getService(SERVICE_NAME);
-    }
 
     @Override
     public String getServiceProviderNodeAttributeForNode(INodeEntry node) {
         return getNodeAttributeForProvider(framework.isLocalNode(node));
     }
-    public static String getProviderNameForNode(
+    public String getProviderNameForNode(
             final boolean localNode,
             final IRundeckProjectConfig loadProjectConfig
     )
     {
         if (localNode) {
-            final String value = loadProjectConfig.getProperty( SERVICE_DEFAULT_LOCAL_PROVIDER_PROPERTY);
-            return null != value ? value : DEFAULT_LOCAL_PROVIDER;
+            final String value = loadProjectConfig.getProperty(SERVICE_DEFAULT_LOCAL_PROVIDER_PROPERTY);
+            return null != value ? value : serviceProfile.getDefaultLocalProvider();
         }
-        final String value = loadProjectConfig.getProperty( SERVICE_DEFAULT_PROVIDER_PROPERTY);
-        return null != value ? value : DEFAULT_REMOTE_PROVIDER;
+        final String value = loadProjectConfig.getProperty(SERVICE_DEFAULT_PROVIDER_PROPERTY);
+        return null != value ? value : serviceProfile.getDefaultRemoteProvider();
     }
 
     public static String getNodeAttributeForProvider(final boolean localNode) {
@@ -140,7 +156,7 @@ public class NodeExecutorService
     }
 
     public List<Description> listDescriptions() {
-        return DescribableServiceUtil.listDescriptions(this, false);
+        return DescribableServiceUtil.listDescriptions(this, true);
     }
 
     public List<ProviderIdent> listDescribableProviders() {

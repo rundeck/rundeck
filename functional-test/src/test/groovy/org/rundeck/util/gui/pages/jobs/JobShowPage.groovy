@@ -9,6 +9,7 @@ import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.container.SeleniumContext
 import org.rundeck.util.gui.pages.BasePage
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
+import org.rundeck.util.gui.pages.project.ActivityListTrait
 import org.rundeck.util.gui.scm.ScmStatusBadge
 
 import java.time.Duration
@@ -17,7 +18,7 @@ import java.time.Duration
  * Job show page
  */
 @CompileStatic
-class JobShowPage extends BasePage{
+class JobShowPage extends BasePage implements ActivityListTrait {
 
     By jobUuidBy = By.xpath("//*[@class='rd-copybox__content']")
     By stepsInJobDefinitionBy = By.cssSelector(".pflowitem.wfctrlholder")
@@ -41,6 +42,16 @@ class JobShowPage extends BasePage{
     By closeDefinitionModalBy = By.cssSelector("div[id='job-definition-modal_footer'] button[data-dismiss='modal']")
     By jobActionBy = By.xpath("//div[contains(@class, 'job-action-button')]")
     By jobActionEditBy = By.xpath("//a[@title='Edit this Job']")
+    By nodeFilterInputBy = By.cssSelector("#doReplaceFilters")
+    By nodeFilterOverrideBy = By.cssSelector("#filterradio")
+    By nodeFilterInputValueBy = By.cssSelector('input[name="extra.nodefilter"]')
+    By dropDownToggleBy = By.cssSelector("button[data-testid='nfi-toggle']")
+    By selectAllNodesLinkBy = By.cssSelector("a.xnodefilterlink.job_edit__node_filter__filter_select_all")
+    By localhostNodeBy = By.cssSelector(".col-xs-6.node_ident.embedded_node.tight.server .fas.fa-hdd")
+    By popoverContentBy = By.cssSelector("div.popover-content")
+    By nodeFilterLinkBy = By.cssSelector("node-filter-link[params*='linkicon']")
+    By arrowIconBy = By.cssSelector("i.glyphicon-circle-arrow-right")
+    By schedJobNodeFilterBy = By.cssSelector("div[class='input-group nodefilters multiple-control-input-group']")
     By jobLinkTitleBy = By.xpath("//a[contains(@class, 'job-header-link')]")
     By autocompleteJobStepDefinitionBy = By.cssSelector("#wfitem_0 > span > div > div > span > span > span.text-success")
     By runFormBy = By.cssSelector("#execDiv #exec_options_form #formbuttons #execFormRunButton")
@@ -50,7 +61,7 @@ class JobShowPage extends BasePage{
     By jobSearchNameBy = By.cssSelector('#jobs_filters form input[name="jobFilter"]')
     By jobSearchGroupBy = By.cssSelector('#jobs_filters form input[name="groupPath"]')
     By jobSearchSubmitBy = By.cssSelector('#jobs_filters form #jobs_filters_footer input[type="submit"][name="_action_jobs"]')
-    By runJobBtn = By.id("execFormRunButton")
+    By runJobBtnBy = By.id("execFormRunButton")
     By logOutputBtn = By.id('btn_view_output')
     By jobActionsListButtonBy = By.linkText("Action")
     By jobDeleteButtonBy = By.linkText("Delete this Job")
@@ -62,10 +73,34 @@ class JobShowPage extends BasePage{
     By jobStatusBarBy = By.className("job-stats-value")
     By jobOptionValuesBy = By.cssSelector(".optionvalues")
     By jobOptionValueInputBy = By.cssSelector(".optionvalues > option:nth-child(6)")
+    By jobDisableScheduleButtonBy = By.linkText("Disable Schedule")
+    By jobEnableScheduleButtonBy = By.linkText("Enable Schedule")
+    By jobInfoSectionBy = By.id("jobInfo_")
+    By jobDisableScheduleModalButtonBy = By.cssSelector("[value='Disable Schedule']")
+    By jobExecutionDisabledIconBy = By.cssSelector(".glyphicon.glyphicon-ban-circle")
+    By jobExecToggleModalBy = By.id("jobexectoggle")
+    By jobScheduleToggleModalBy = By.id("jobdschedtoggle")
+    By buttonDangerBy = By.cssSelector(".btn.btn-danger.btn-sm")
+    By jobDisableExecutionButtonBy = By.linkText("Disable Execution")
+    By jobEnableExecutionButtonBy = By.linkText("Enable Execution")
+    By jobOptionsDropdownBy = By.cssSelector(".optionvalues")
+    By duplicateJobButtonBy = By.partialLinkText("Duplicate this Job")
+    By duplicateJobToProjectButtonBy = By.partialLinkText("Duplicate this Job to other Project")
+    By projectDropDownToDuplicateBy = By.id("jobProject")
+    By duplicateJobToProjectSubmitBy = By.id("submittbn")
+    By jobStatsBy = By.cssSelector(".col-xs-12.col-sm-4.job-stats-item")
+    By optionInputBy = By.cssSelector(".optionvaluesfield")
+    By jobOptionAlertBy = By.cssSelector(".alert.alert-danger")
+
+    static class NextUi {
+        static By descriptionText = By
+                .xpath("//*[@class=\"markdown-body\"]")
+    }
 
     static final String PAGE_PATH = "/job/show"
     String loadPath = "/job/show"
     private String project
+    boolean nextUi = false
 
     JobShowPage(final SeleniumContext context) {
         super(context)
@@ -108,6 +143,10 @@ class JobShowPage extends BasePage{
         }
     }
 
+    WebElement getJobExecutionDisabledIcon(){
+        el jobExecutionDisabledIconBy
+    }
+
     WebElement getJobDefinitionModal(){
         el jobDefinitionModalBy
     }
@@ -126,7 +165,7 @@ class JobShowPage extends BasePage{
     }
 
     WebElement getDescriptionTextLabel() {
-        el descriptionText
+        el nextUi ? NextUi.descriptionText : descriptionText
     }
 
     List<WebElement> getCronLabel() {
@@ -209,6 +248,38 @@ class JobShowPage extends BasePage{
         el optionValidationWarningBy
     }
 
+    WebElement getNodeFilterInput() {
+        el nodeFilterInputBy
+    }
+
+    WebElement getNodeFilterOverride() {
+        el nodeFilterOverrideBy
+    }
+
+    WebElement getNodeFilterInputValue(){
+        el nodeFilterInputValueBy
+    }
+
+    WebElement getDropDownToggle(){
+        el dropDownToggleBy
+    }
+
+    WebElement getSelectAllNodesLink(){
+        el selectAllNodesLinkBy
+    }
+
+    WebElement getLocalhostNode(){
+        el localhostNodeBy
+    }
+
+    WebElement getNodeFilterArrowIcon(){
+        el(popoverContentBy).findElement(nodeFilterLinkBy).findElement(arrowIconBy)
+    }
+
+    WebElement getSchedJobNodeFilter(){
+        el schedJobNodeFilterBy
+    }
+
     List<WebElement> getJobRowLink() {
         els jobRowBy
     }
@@ -230,7 +301,7 @@ class JobShowPage extends BasePage{
     }
 
     WebElement getRunJobBtn(){
-        el runJobBtn
+        el runJobBtnBy
     }
 
     WebElement getLogOutputBtn(){
@@ -248,6 +319,10 @@ class JobShowPage extends BasePage{
 
     WebElement getJobOptionValueInput(){
         el jobOptionValueInputBy
+    }
+
+    WebElement getJobOptionsDropdown(){
+        el jobOptionsDropdownBy
     }
 
     /**
@@ -322,6 +397,22 @@ class JobShowPage extends BasePage{
         (el jobDeleteButtonBy)
     }
 
+    def getJobDisableScheduleButtonBy(){
+        (el jobDisableScheduleButtonBy)
+    }
+
+    def getJobEnableScheduleButtonBy(){
+        (el jobEnableScheduleButtonBy)
+    }
+
+    def getJobDisableExecutionButton(){
+        (el jobDisableExecutionButtonBy)
+    }
+
+    def getJobEnableExecutionButton(){
+        (el jobEnableExecutionButtonBy)
+    }
+
     def getJobDeleteConfirmBy(){
         (el jobDeleteConfirmBy)
     }
@@ -345,4 +436,32 @@ class JobShowPage extends BasePage{
         els By.name("extra.option.$optionName")
     }
 
+    WebElement getDuplicateJobButton(){
+        el duplicateJobButtonBy
+    }
+
+    WebElement getDuplicateJobToProjectButtonBy(){
+        el duplicateJobToProjectButtonBy
+    }
+
+    void selectProjectToDuplicateJob(String projectName){
+        Select selector = new Select(el(projectDropDownToDuplicateBy))
+        selector.selectByValue(projectName)
+    }
+
+    WebElement getDuplicateJobToProjectSubmitButton(){
+        el duplicateJobToProjectSubmitBy
+    }
+
+    List<WebElement> getJobStatsElements(){
+        els jobStatsBy
+    }
+
+    List<WebElement> getOptionInputs(){
+        return (els optionInputBy)
+    }
+
+    WebElement getJobOptionAlertBy(){
+        el jobOptionAlertBy
+    }
 }

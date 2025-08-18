@@ -1,15 +1,17 @@
 <template>
   <span>
     <btn
-      v-if="hasQuery && (!query || !query.ftilerName)"
+      v-if="hasQuery && (!query || !query.filterName)"
       size="xs"
       type="default"
+      data-test-id="save-filter-button"
       @click="saveFilterPrompt"
     >
       {{ $t("filter.save.button") }}
     </btn>
-    <span v-if="query && query.filterName">{{ query.filterName }}</span>
-
+    <span v-if="query && query.filterName" data-test-id="filter-name">{{
+      query.filterName
+    }}</span>
     <dropdown v-if="filters && filters.length > 0">
       <span
         class="dropdown-toggle btn btn-secondary btn-sm"
@@ -20,7 +22,11 @@
       </span>
       <template #dropdown>
         <li v-if="query && query.filterName">
-          <a role="button" @click="deleteFilter">
+          <a
+            role="button"
+            data-test-id="delete-filter-btn"
+            @click="deleteFilter"
+          >
             <i class="glyphicon glyphicon-trash"></i>
             {{ $t("filter.delete.named.text", [query.filterName]) }}
           </a>
@@ -34,8 +40,16 @@
           <i class="glyphicon glyphicon-filter"></i>
           {{ $t("saved.filters") }}
         </li>
-        <li v-for="filter in filters" :key="filter.filterName">
-          <a role="button" @click="selectFilter(filter)">
+        <li
+          v-for="filter in filters"
+          :key="filter.filterName"
+          data-test="filter-item"
+        >
+          <a
+            role="button"
+            @click="selectFilter(filter)"
+            data-test="filter-link"
+          >
             {{ filter.filterName }}
             <span v-if="query && filter.filterName === query.filterName"
               >√</span
@@ -47,13 +61,23 @@
   </span>
 </template>
 <script lang="ts">
+import { defineComponent, PropType } from "vue";
 import { ActivityFilterStore } from "../../../library/stores/ActivityFilterStore";
-import { defineComponent } from "vue";
-import { getRundeckContext } from "../../../library";
+import { EventBus, getRundeckContext } from "../../../library";
 import { MessageBox, Notification } from "uiv";
-
 export default defineComponent({
-  props: ["query", "hasQuery", "eventBus"],
+  props: {
+    hasQuery: {
+      type: Boolean,
+    },
+    query: {
+      type: Object,
+    },
+    eventBus: {
+      type: Object as PropType<typeof EventBus>,
+      required: true,
+    },
+  },
   emits: ["select_filter"],
   data() {
     return {
@@ -69,11 +93,12 @@ export default defineComponent({
   mounted() {
     this.projectName = getRundeckContext().projectName;
     this.loadFilters();
+
     this.eventBus &&
       this.eventBus.on("invoke-save-filter", this.saveFilterPrompt);
   },
   beforeUnmount() {
-    this.eventBus && this.eventBus.off("invoke-save-filter");
+    this.eventBus.off("invoke-save-filter");
   },
   methods: {
     notifyError(msg) {
@@ -95,6 +120,7 @@ export default defineComponent({
       if (!this.query || !this.query.filterName) {
         return;
       }
+
       this.$confirm({
         title: this.$t("Delete Saved Filter"),
         content: this.$t("filter.delete.confirm.text", [this.query.filterName]),
@@ -103,18 +129,18 @@ export default defineComponent({
           this.doDeleteFilter(this.query.filterName);
         })
         .catch(() => {
-          //this.$notify("Delete canceled.");
+          // this.$notify("Delete canceled.");
         });
     },
     async doDeleteFilter(name) {
-      this.filterStore.removeFilter(this.projectName, name);
+      await this.filterStore.removeFilter(this.projectName, name);
       await this.loadFilters();
     },
     async doSaveFilter(name) {
       if (this.filters.find((f) => f.filterName === name)) {
         this.notifyError(`Filter with name ${name} already exists`);
       } else {
-        this.filterStore.saveFilter(this.projectName, {
+        await this.filterStore.saveFilter(this.projectName, {
           filterName: name,
           query: { ...this.query, projFilter: this.projectName },
         });
@@ -125,17 +151,15 @@ export default defineComponent({
       MessageBox.prompt({
         title: this.promptTitle,
         content: this.promptContent,
-        validator(value) {
+        validator: (value) => {
           return /.+/.test(value) ? null : this.promptError;
         },
       })
         .then((value) => {
-          console.log("save value", value);
           this.doSaveFilter(value);
         })
-        .catch((e) => {
-          console.log(e);
-          //this.$notify("Save canceled.");
+        .catch(() => {
+          // this.$notify("Save canceled.");
         });
     },
   },

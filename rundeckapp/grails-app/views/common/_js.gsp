@@ -52,7 +52,6 @@
         menuDeleteJobFilterAjax: "${createLink(controller:"menu",action:"deleteJobFilterAjax",params:projParams)}",
         menuSaveJobFilterAjax: "${createLink(controller:"menu",action:"saveJobFilterAjax",params:projParams)}",
         reportsEventsAjax: "${g.createLink(controller: 'reports', action: 'eventsAjax',params:projParams)}",
-        menuNowrunningAjax: "${g.createLink(controller: 'menu', action: 'nowrunningAjax',params:projParams)}",
         menuHome: "${g.createLink(controller: 'menu', action: 'home',params:projParams)}",
         menuHomeAjax: "${g.createLink(controller: 'menu', action: 'homeAjax',params:projParams)}",
         menuHomeSummaryAjax: "${g.createLink(controller: 'menu', action: 'homeSummaryAjax',params:projParams)}",

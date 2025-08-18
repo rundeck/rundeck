@@ -13,6 +13,7 @@
       <span
         v-if="showText && node.attributes['ui:status:text']"
         class="node-status-text"
+        data-testid="node-status-text"
         >{{ node.attributes["ui:status:text"] }}</span
       >
     </slot>

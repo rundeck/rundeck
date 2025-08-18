@@ -38,6 +38,7 @@
           :data-node-filter="i.filter"
           :title="i.filter"
           :href="linkForFilterName(i)"
+          data-testid="saved-filter"
           @click.prevent="saveFilter(i)"
         >
           {{ i.filterName }}
@@ -53,13 +54,21 @@
             </a>
           </li>
           <li v-if="i.filterName !== nodeSummary.defaultFilter">
-            <a role="button" @click="setDefault(i)">
+            <a
+              role="button"
+              data-testid="set-default-filter-link"
+              @click="setDefault(i)"
+            >
               <i class="glyphicon glyphicon-filter"></i>
               {{ $t("set.as.default.filter") }}
             </a>
           </li>
           <li v-else>
-            <a role="button" @click="removeDefault()">
+            <a
+              role="button"
+              data-testid="remove-default-filter-link"
+              @click="removeDefault()"
+            >
               <i class="glyphicon glyphicon-ban-circle"></i>
               {{ $t("remove.default.filter") }}
             </a>
@@ -77,7 +86,7 @@
 import { defineComponent, PropType } from "vue";
 import { NodeSummary } from "@/app/components/job/resources/types/nodeTypes";
 import { StoredFilter } from "@/library/stores/NodeFilterLocalstore";
-import { _genUrl } from "@/app/utilities/genUrl";
+import { _genUrl } from "../../../../library/utilities/genUrl";
 import { getRundeckContext } from "@/library";
 
 export default defineComponent({

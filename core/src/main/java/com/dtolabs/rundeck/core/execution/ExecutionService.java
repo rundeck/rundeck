@@ -181,4 +181,14 @@ public interface ExecutionService
      * @return result
      */
     public NodeExecutorResult executeCommand(ExecutionContext context, ExecArgList command, INodeEntry node) ;
+
+    /**
+     * Execute a command within the context on the node.
+     * @param context context
+     * @param command command
+     * @param stream input to the process
+     * @param node node
+     * @return result
+     */
+    public NodeExecutorResult executeCommand(ExecutionContext context, ExecArgList command, InputStream stream, INodeEntry node) ;
 }

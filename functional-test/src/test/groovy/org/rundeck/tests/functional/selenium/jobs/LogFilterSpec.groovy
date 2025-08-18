@@ -1,7 +1,5 @@
 package org.rundeck.tests.functional.selenium.jobs
 
-import okhttp3.MultipartBody
-import okhttp3.RequestBody
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.SeleniumBase
@@ -13,66 +11,21 @@ import org.rundeck.util.gui.pages.login.LoginPage
 @SeleniumCoreTest
 class LogFilterSpec extends SeleniumBase{
 
-    /**
-     * It runs a job with 2 steps and a global log filter
-     * then checks that the second steps has the right replacement value
-     */
-    def "job global filter with replacement"(){
-        given:
-        def projectName = "logFilterProject"
+    String projectName
+
+    def setup() {
+        projectName = UUID.randomUUID().toString()
         setupProject(projectName)
-        def homePage = page HomePage
+
         def loginPage = page LoginPage
-        def jobShowPage = page JobShowPage
-        def executionShowPage = page ExecutionShowPage
-        def jobName = "globalLogFilterJob"
-        def jobUuid = "9d089361-315a-4b20-8693-304f244a40b5"
-        def yamlJob = """
-                        - defaultTab: nodes
-                          description: ''
-                          executionEnabled: true
-                          id: ${jobUuid}
-                          loglevel: INFO
-                          name: ${jobName}
-                          nodeFilterEditable: false
-                          plugins:
-                            ExecutionLifecycle: {}
-                          scheduleEnabled: true
-                          schedules: []
-                          sequence:
-                            commands:
-                            - exec: echo "FIRST=data pass example from first step"
-                            - exec: 'echo "data passed: \${data.FIRST}"'
-                            keepgoing: false
-                            pluginConfig:
-                              LogFilter:
-                              - config:
-                                  invalidKeyPattern: \\s|\\\$|\\{|\\}|\\\\
-                                  logData: 'false'
-                                  regex: ^(FIRST|SECOND)\\s*=\\s*(.+)\$
-                                  replaceFilteredResult: 'false'
-                                type: key-value-data
-                            strategy: node-first
-                          uuid: ${jobUuid}
-                        """
-        def pathToJob = JobUtils.generateFileToImport(yamlJob, "yaml")
-        def multipartBody = new MultipartBody.Builder()
-                .setType(MultipartBody.FORM)
-                .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
-                .build()
-        client.doPostWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
-        when:
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
-        jobShowPage.go("/project/${projectName}/job/show/${jobUuid}")
-        jobShowPage.getRunJobBtn().click()
-        executionShowPage.getViewButtonOutput().click()
-        then:
-        executionShowPage.getLogOutput().size() == 2
-        executionShowPage.getLogOutput()[0].getText() == "FIRST=data pass example from first step"
-        executionShowPage.getLogOutput()[1].getText() == "data passed: data pass example from first step"
-        cleanup:
+
+        def homePage = page HomePage
+        homePage.go()
+    }
+
+    def cleanup() {
         deleteProject(projectName)
     }
 
@@ -81,7 +34,6 @@ class LogFilterSpec extends SeleniumBase{
      */
     def "job step filter highlight"(){
         given:
-        def projectName = "stepLogFilterProject"
         def jobUuid = "b37751f9-4d20-42c2-984f-212a615f4ba2"
         def yaml = """
                         - defaultTab: nodes
@@ -109,21 +61,11 @@ class LogFilterSpec extends SeleniumBase{
                             strategy: node-first
                           uuid: ${jobUuid}
                     """
-        setupProject(projectName)
-        def homePage = page HomePage
-        def loginPage = page LoginPage
         def jobShowPage = page JobShowPage
         def executionShowPage = page ExecutionShowPage
         def pathToJob = JobUtils.generateFileToImport(yaml, "yaml")
-        def multipartBody = new MultipartBody.Builder()
-                .setType(MultipartBody.FORM)
-                .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
-                .build()
-        client.doPostWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        JobUtils.jobImportYamlFile(projectName, pathToJob, client)
         when:
-        loginPage.go()
-        loginPage.login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
         jobShowPage.go("/project/${projectName}/job/show/${jobUuid}")
         jobShowPage.getRunJobBtn().click()
         executionShowPage.getViewButtonOutput().click()
@@ -132,8 +74,206 @@ class LogFilterSpec extends SeleniumBase{
         executionShowPage.getLogOutput()[0].getText() == "This is an example for highlight filter"
         executionShowPage.getElementByCss(".ansi-bg-green.ansi-fg-yellow.ansi-mode-bold").isDisplayed()
         executionShowPage.getElementByCss(".ansi-bg-green.ansi-fg-yellow.ansi-mode-bold").getText() == "This is an example"
-        cleanup:
-        deleteProject(projectName)
+    }
 
+    def "job step log filter with basic capture"(){
+        given:
+        def jobShowPage = page JobShowPage
+        def executionShowPage = page ExecutionShowPage
+        def jobUuid = UUID.randomUUID().toString()
+        def jobName = jobUuid
+
+        // A job with 2 steps and a step log filter set on the first step.
+        def yamlJob = """
+                        - defaultTab: nodes
+                          description: ''
+                          executionEnabled: true
+                          id: ${jobUuid}
+                          loglevel: INFO
+                          name: ${jobName}
+                          nodeFilterEditable: false
+                          plugins:
+                            ExecutionLifecycle: {}
+                          scheduleEnabled: true
+                          schedules: []
+                          sequence:
+                            commands:
+                            - exec: echo "FIRST=data pass example from first step"
+                              plugins:
+                                LogFilter:
+                                - config:
+                                    invalidKeyPattern: \\s|\\\$|\\{|\\}|\\\\
+                                    logData: 'false'
+                                    regex: ^(FIRST|SECOND)\\s*=\\s*(.+)\$
+                                    replaceFilteredResult: 'false'
+                                  type: key-value-data
+                            - exec: 'echo "data passed: \${data.FIRST}"'
+                            keepgoing: false
+                            strategy: node-first
+                          uuid: ${jobUuid}
+                        """
+        def pathToJob = JobUtils.generateFileToImport(yamlJob, "yaml")
+        JobUtils.jobImportYamlFile(projectName, pathToJob, client)
+        when:
+        jobShowPage.go("/project/${projectName}/job/show/${jobUuid}")
+        jobShowPage.getRunJobBtn().click()
+        executionShowPage.getViewButtonOutput().click()
+
+        then: "Checks that the second steps has the right captured value from the first step."
+        executionShowPage.getLogOutput().size() == 2
+        executionShowPage.getLogOutput()[0].getText() == "FIRST=data pass example from first step"
+        executionShowPage.getLogOutput()[1].getText() == "data passed: data pass example from first step"
+    }
+
+    def "global log filter with advanced capture and replacement"(){
+        given:
+        def jobShowPage = page JobShowPage
+        def executionShowPage = page ExecutionShowPage
+        def jobUuid = UUID.randomUUID().toString()
+        def jobName = jobUuid
+
+        //  A job with 2 steps and a global log filter
+        def yamlJob = """
+                        - defaultTab: nodes
+                          description: ''
+                          executionEnabled: true
+                          id: ${jobUuid}
+                          loglevel: INFO
+                          name: ${jobName}
+                          nodeFilterEditable: false
+                          plugins:
+                            ExecutionLifecycle: {}
+                          scheduleEnabled: true
+                          schedules: []
+                          sequence:
+                            commands:
+                            - exec: echo "A B=data pass example from first step"
+                            - exec: 'echo "data passed: \${data.AXB}"'
+                            keepgoing: false
+                            pluginConfig:
+                              LogFilter:
+                              - config:
+                                  invalidCharactersReplacement: X
+                                  invalidKeyPattern: \\s|\\\$|\\{|\\}|\\\\
+                                  logData: 'false'
+                                  regex: ^(A\\s*B)\\s*=\\s*(.+)\$
+                                  replaceFilteredResult: 'true'
+                                type: key-value-data
+                            strategy: node-first
+                          uuid: ${jobUuid}
+                        """
+        def pathToJob = JobUtils.generateFileToImport(yamlJob, "yaml")
+        JobUtils.jobImportYamlFile(projectName, pathToJob, client)
+        when:
+        jobShowPage.go("/project/${projectName}/job/show/${jobUuid}")
+        jobShowPage.getRunJobBtn().click()
+        executionShowPage.getViewButtonOutput().click()
+
+        then: "Checks that the second steps has the right replacement value"
+        executionShowPage.getLogOutput().size() == 3
+        executionShowPage.getLogOutput()[0].getText() == "Key contains not valid value which will be replaced"
+        executionShowPage.getLogOutput()[1].getText() == "A B=data pass example from first step"
+        executionShowPage.getLogOutput()[2].getText() == "data passed: data pass example from first step"
+    }
+
+    def "global log filter with a multiline regex data capture"(){
+        given:
+        def jobShowPage = page JobShowPage
+        def executionShowPage = page ExecutionShowPage
+        def jobUuid = UUID.randomUUID().toString()
+        def jobName = jobUuid
+
+        //  A job with 2 steps and a global log filter
+        def yamlJob = """
+                        - defaultTab: nodes
+                          description: ''
+                          executionEnabled: true
+                          id: ${jobUuid}
+                          loglevel: INFO
+                          name: ${jobName}
+                          nodeFilterEditable: false
+                          plugins:
+                            ExecutionLifecycle: {}
+                          scheduleEnabled: true
+                          schedules: []
+                          sequence:
+                            commands:
+                            - exec: echo 123
+                            - exec: 'echo "\${data.test_capture_result}"'
+                            keepgoing: false
+                            pluginConfig:
+                              LogFilter:
+                              - config:
+                                  captureMultipleKeysValues: 'true'
+                                  hideOutput: 'false'
+                                  logData: 'false'
+                                  name: test_capture_result
+                                  regex: \\s*(.+)
+                                type: key-value-data-multilines
+                            strategy: node-first
+                          uuid: ${jobUuid}
+                        """
+        def pathToJob = JobUtils.generateFileToImport(yamlJob, "yaml")
+        JobUtils.jobImportYamlFile(projectName, pathToJob, client)
+        when:
+        jobShowPage.go("/project/${projectName}/job/show/${jobUuid}")
+        jobShowPage.getRunJobBtn().click()
+        executionShowPage.getViewButtonOutput().click()
+
+        then: "Checks that the second steps has the right replacement value"
+        executionShowPage.getLogOutput().size() >= 2
+        executionShowPage.getLogOutput()[0].getText() == "123"
+        executionShowPage.getLogOutput()[1].getText() == "123"
+    }
+
+    def "step log filter with a multiline regex data capture"(){
+        given:
+        def jobShowPage = page JobShowPage
+        def executionShowPage = page ExecutionShowPage
+        def jobUuid = UUID.randomUUID().toString()
+        def jobName = jobUuid
+
+        //  A job with 2 steps and a  log filter on the first step.
+        def yamlJob = """
+                        - defaultTab: nodes
+                          description: ''
+                          executionEnabled: true
+                          id: ${jobUuid}
+                          loglevel: INFO
+                          name: ${jobName}
+                          nodeFilterEditable: false
+                          plugins:
+                            ExecutionLifecycle: {}
+                          scheduleEnabled: true
+                          schedules: []
+                          sequence:
+                            commands:
+                            - exec: echo 123
+                              plugins:
+                                LogFilter:
+                                - config:
+                                    captureMultipleKeysValues: 'false'
+                                    hideOutput: 'false'
+                                    logData: 'false'
+                                    name: test_capture_result
+                                    regex: \\s*(.+)
+                                  type: key-value-data-multilines
+                            - exec: 'echo "\${data.test_capture_result}"'
+                            keepgoing: false
+                            strategy: node-first
+                          uuid: ${jobUuid}
+                        """
+        def pathToJob = JobUtils.generateFileToImport(yamlJob, "yaml")
+        JobUtils.jobImportYamlFile(projectName, pathToJob, client)
+        when:
+        jobShowPage.go("/project/${projectName}/job/show/${jobUuid}")
+        jobShowPage.getRunJobBtn().click()
+        executionShowPage.getViewButtonOutput().click()
+
+        then: "Checks that the second steps has the right replacement value"
+        executionShowPage.getLogOutput().size() >= 2
+        executionShowPage.getLogOutput()[0].getText() == "123"
+        executionShowPage.getLogOutput()[1].getText() == "123"
     }
 }
+

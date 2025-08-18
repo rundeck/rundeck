@@ -1,0 +1,25 @@
+<joblist>
+  <job>
+    <defaultTab>nodes</defaultTab>
+    <description>Reference Job of deleted Job with an error handler</description>
+    <executionEnabled>true</executionEnabled>
+    <id>f9b34a63-ff95-41f4-9646-87d90b35fc3d</id>
+    <loglevel>INFO</loglevel>
+    <name>Reference Job of deleted job</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <schedules />
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <errorhandler keepgoingOnSuccess='true'>
+          <exec>echo 'this is the error handler and should keep going if there is a failure WORKFLOW-STEP'</exec>
+        </errorhandler>
+        <jobref name='Job to delete'>
+          <useName>true</useName>
+        </jobref>
+      </command>
+    </sequence>
+    <uuid>f9b34a63-ff95-41f4-9646-87d90b35fc3d</uuid>
+  </job>
+</joblist>

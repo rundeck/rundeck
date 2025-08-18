@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.plugins.Closeables
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.SourceFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
@@ -82,9 +83,10 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
                 PropertyBuilder.builder().with {
                     booleanType 'enabled'
                     title 'Use Asynchronous Cache'
-                    description 'Use asynchronous cache for all Resource Model Source results in this project'
+                    description 'Use asynchronous cache for all Node Source results in this project'
                     required(false)
                     defaultValue 'true'
+                    renderingOption(StringRenderingConstants.GROUP_NAME, 'Node Sources')
                 }.build(),
                 PropertyBuilder.builder().with {
                     integer 'delay'
@@ -92,6 +94,7 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
                     description 'Delay in seconds, at least 30.\n\nRefresh results after this many seconds have passed. Results may be this many seconds old. Cache refreshes no more frequently that 30s.'
                     required(false)
                     defaultValue '30'
+                    renderingOption(StringRenderingConstants.GROUP_NAME, 'Node Sources')
                 }.build(),
                 PropertyBuilder.builder().with {
                     booleanType  'firstLoadSynch'
@@ -99,6 +102,7 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
                     description 'When the cache is empty, forces the first load to happen synchronously to prevent empty node results.'
                     required(false)
                     defaultValue 'true'
+                    renderingOption(StringRenderingConstants.GROUP_NAME, 'Node Sources')
                 }.build()
         ]
     }
@@ -121,6 +125,17 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
                         }
                     }
             );
+
+
+    private File _frameworkVarDir
+
+    private File getFrameworkVarDir(){
+        if (null == _frameworkVarDir) {
+            // loaded after startup to avoid repeated queries for framework props value which would not change
+            _frameworkVarDir = frameworkService.getFrameworkVarDir()
+        }
+        return _frameworkVarDir
+    }
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -228,6 +243,7 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
         def resourceModelSourceService = framework.getResourceModelSourceService()
 
         def nodeSupport = new ProjectNodeSupport(
+            getFrameworkVarDir(),
             rdprojectconfig,
             framework.getResourceFormatGeneratorService(),
             resourceModelSourceService,

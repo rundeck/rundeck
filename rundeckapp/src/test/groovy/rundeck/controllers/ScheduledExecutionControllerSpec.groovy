@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.http.RequestProcessor
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import com.dtolabs.utils.PropertiesUtil
 import grails.testing.web.controllers.ControllerUnitTest
 import org.apache.commons.fileupload.FileItem
 import org.apache.http.Header
@@ -41,15 +42,20 @@ import org.grails.plugins.codecs.URLCodec
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.authorization.domain.AppAuthorizer
+import org.rundeck.app.authorization.domain.job.AuthorizingJob
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
+import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
+import org.rundeck.app.gui.UISection
 import org.rundeck.app.web.WebExceptionHandler
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeJob
+import org.rundeck.core.auth.web.WebDefaultParameterNamesMapper
 import org.rundeck.util.HttpClientCreator
 import org.slf4j.Logger
 import org.springframework.web.multipart.commons.CommonsMultipartFile
@@ -4521,14 +4527,14 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.logger = jobChangeLogger
 
         JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
-        configRemoteUrl.jsonFilter = "\$..*"
+        configRemoteUrl.jsonFilter = "\$.key2[*].['sub-key3']"
 
         HttpResponse rsp = Mock(HttpResponse){
             getStatusLine()>>Mock(StatusLine){
                 getStatusCode()>>200
             }
             getEntity()>>Mock(HttpEntity){
-                getContent()>>new ByteArrayInputStream('{"key1":"value1", "key2": {"sub-key3":"value3", "sub-key4":"value4"}}'.getBytes());
+                getContent()>>new ByteArrayInputStream('{"key1":"value1", "key2": [{"sub-key3":"value3"}, {"sub-key3":"value4"}]}'.getBytes());
             }
             getFirstHeader("Content-Type")>>Mock(Header){
                 getValue()>>"application/json"
@@ -4546,7 +4552,142 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
 
         result != null
-        result.error == "the filter \$..* return a list, please use another filter"
+        !result.error
+        result.json==["value3","value4"]
 
     }
+
+    def "Test api job definition components returns a json"(){
+        given:
+        def jobComponent1 = Mock(JobDefinitionComponent){
+            getName() >> "jc1"
+            getInputProperties() >> [new Properties().put("k1","v1")]
+            getInputLocation() >> UISection.uiLocation("section1", "sectionTitle1")
+        }
+        def jobComponent2 = Mock(JobDefinitionComponent){
+            getName() >> "jc2"
+            getInputProperties() >> [new Properties().put("k2","v2")]
+            getInputLocation() >> UISection.uiLocation("section2", "sectionTitle2")
+        }
+        controller.scheduledExecutionService=Mock(ScheduledExecutionService){
+            getByIDorUUID("jobId")>>Mock(ScheduledExecution)
+        }
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            getJobDefinitionComponentValues(_)>>[
+                "jc1":["k1":"v1"],
+                "jc2":["k2":"v2"]
+            ]
+            getJobDefinitionComponents()>>[
+                "jc1":jobComponent1,
+                "jc2":jobComponent2
+            ]
+        }
+
+        when:
+        request.method = 'GET'
+        params.id = "jobId"
+        def result = controller.apiJobDefinitionComponents()
+
+        then:
+        def componentsJson = response.json
+        Map jc1 = componentsJson.get("jc1")
+        jc1.messageType == "jobComponent.jc1"
+        jc1.section == "section1"
+
+        Map jc2 = componentsJson.get("jc2")
+        jc2.messageType == "jobComponent.jc2"
+        jc2.section == "section2"
+    }
+
+    def "Test API job definition components job not found"(){
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.rundeckWebDefaultParameterNamesMapper=Mock(WebDefaultParameterNamesMapper)
+        controller.rundeckExceptionHandler = Mock(WebExceptionHandler)
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer){
+            1 * job(_,_)>>Mock(AuthorizingJob){
+                1 * getResource() >>  { throw new NotFound('Job', '-999') }
+            }
+        }
+        controller.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager)
+
+        when:
+        request.method = 'GET'
+        params.id = "jobId"
+        request.subject=new Subject()
+        session.subject=new Subject()
+        controller.apiJobDefinitionComponentsValues()
+
+        then:
+        1 * controller.rundeckExceptionHandler.handleException(_,_,_ as NotFound)
+    }
+
+
+    def "Test API job definition components value for job"(){
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.rundeckWebDefaultParameterNamesMapper=Mock(WebDefaultParameterNamesMapper)
+        controller.rundeckExceptionHandler = Mock(WebExceptionHandler)
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer){
+            1 * job(_,_)>>Mock(AuthorizingJob){
+                1 * getResource() >>  Mock(ScheduledExecution)
+            }
+        }
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            getJobDefinitionComponentValues(_)>>[
+                    "jc1":["k1":"v1"],
+                    "jc2":["k2":"v2"]
+            ]
+        }
+
+        when:
+        request.method = 'GET'
+        params.id = "jobId"
+        request.subject=new Subject()
+        session.subject=new Subject()
+        controller.apiJobDefinitionComponentsValues()
+
+        then:
+        def componentsJson = response.json
+        componentsJson.jc1 == ["k1":"v1"]
+        componentsJson.jc2 == ["k2":"v2"]
+    }
+
+    @Unroll
+    def "test remoteUrlParse method with #testDesc"() {
+        given:
+            def payload = '{"key1":"value1", "key2": {"sub-key3":"value3", "sub-key4":"value4"}, "array": [1,2,3]}'
+            def configRemoteUrl = filter ? new JobOptionConfigRemoteUrl(jsonFilter: filter) : null
+
+        when:
+            def result = ScheduledExecutionController.remoteUrlParse(payload, configRemoteUrl)
+
+        then:
+            if (expectError) {
+                assert result.error != null
+                assert result.jsonElement == null
+            } else {
+                assert result.error == null
+                assert result.jsonElement != null
+                assert result.string != null
+                if (filter) {
+                    assert result.jsonElement == expectedResult
+                } else {
+                    assert result.jsonElement.key1 == "value1"
+                    assert result.jsonElement.key2 instanceof Map
+                    assert result.jsonElement.array instanceof List
+                }
+            }
+
+        where:
+            testDesc                | filter             | expectError | expectedResult
+            "no filter"             | null               | false       | null
+            "simple filter"         | "\$.key1"          | false       | "value1"
+            "nested filter"         | "\$.key2.sub-key3" | false       | "value3"
+            "array filter"          | "\$.array[1]"      | false       | 2
+            "non-existent path"     | "\$.nonexistent"   | true        | null
+            "invalid filter syntax" | "invalid[syntax"   | true        | null
+    }
+
 }
+

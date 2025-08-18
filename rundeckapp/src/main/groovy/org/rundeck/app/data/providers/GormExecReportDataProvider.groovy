@@ -1,7 +1,6 @@
 package org.rundeck.app.data.providers
 
 import com.google.common.collect.Lists
-import grails.gorm.DetachedCriteria
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.rundeck.app.data.model.v1.query.RdExecQuery
@@ -20,7 +19,7 @@ import rundeck.services.ConfigurationService
 import javax.sql.DataSource
 
 @CompileStatic(TypeCheckingMode.SKIP)
-class GormExecReportDataProvider implements ExecReportDataProvider {
+class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReportSupport {
     @Autowired
     ConfigurationService configurationService
     @Autowired
@@ -182,6 +181,13 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
         }
     }
 
+    @Override
+    void deleteAllByExecutionId(Long id) {
+        ExecReport.findAllByExecutionId(id).each { rpt ->
+            rpt.delete()
+        }
+    }
+
     def applyExecutionCriteria(RdExecQuery query, delegate, boolean isJobs=true, String seId=null, List<String> execUuids=[]){
         def eqfilters = [
                 stat: 'status',
@@ -295,7 +301,14 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
                                 if(!isOracleDatasource())
                                     ne(val,'')
                             }
-                        } else if (query["${key}Filter"]) {
+                        } else if (key == "jobId" && query["${key}Filter"]) {
+                            or {
+                                eq(val, query["${key}Filter"])
+                                if(seId) {
+                                    eq('jobUuid', seId)
+                                }
+                            }
+                        }else if (query["${key}Filter"]) {
                             eq(val, query["${key}Filter"])
                         }
                     }

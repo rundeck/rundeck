@@ -52,6 +52,7 @@ import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
 import io.swagger.v3.oas.annotations.ExternalDocumentation
+import io.swagger.v3.oas.annotations.Hidden
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.enums.ParameterIn
@@ -73,6 +74,7 @@ import org.rundeck.app.api.model.ApiErrorResponse
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
+import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.data.model.v1.job.JobBrowseItem
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
@@ -131,43 +133,45 @@ class ScheduledExecutionController  extends ControllerBase{
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
-            delete                       : ['POST', 'GET'],
-            deleteBulk                   : 'POST',
-            flipExecutionDisabledBulk    : 'POST',
-            flipExecutionEnabledBulk     : 'POST',
-            flipScheduleDisabledBulk     : 'POST',
-            flipScheduleEnabledBulk      : 'POST',
-            flipScheduleEnabled          : 'POST',
-            flipExecutionEnabled         : 'POST',
-            scheduleJobInline            : 'POST',
-            runJobInline                 : 'POST',
-            runJobNow                    : 'POST',
-            runJobLater                  : 'POST',
-            runAdhocInline               : 'POST',
-            save                         : 'POST',
-            saveAndExec                  : 'POST',
-            update                       : 'POST',
-            upload                       : 'GET',
-            uploadPost                   : ['POST'],
-            apiFlipExecutionEnabled      : 'POST',
-            apiFlipExecutionEnabledBulk  : 'POST',
-            apiFlipScheduleEnabled       : 'POST',
-            apiFlipScheduleEnabledBulk   : 'POST',
-            apiJobCreateSingle           : 'POST',
-            apiJobRun                    : 'POST',
-            apiJobFileUpload             : 'POST',
-            apiJobsImportv14             : 'POST',
-            apiJobDelete                 : 'DELETE',
-            apiRunScriptv14              : 'POST',
-            apiRunScriptUrlv14           : ['POST', 'GET'],
-            apiRunCommand                : ['POST', 'GET'],
-            apiRunCommandv14             : ['POST', 'GET'],
-            apiJobDeleteBulk             : ['DELETE', 'POST'],
-            apiJobClusterTakeoverSchedule: 'PUT',
-            apiJobUpdateSingle           : 'PUT',
-            apiJobRetry                  : 'POST',
-            apiJobWorkflow               : 'GET',
-            apiJobBrowse                 : ['GET','POST'],
+            delete                          : ['POST', 'GET'],
+            deleteBulk                      : 'POST',
+            flipExecutionDisabledBulk       : 'POST',
+            flipExecutionEnabledBulk        : 'POST',
+            flipScheduleDisabledBulk        : 'POST',
+            flipScheduleEnabledBulk         : 'POST',
+            flipScheduleEnabled             : 'POST',
+            flipExecutionEnabled            : 'POST',
+            scheduleJobInline               : 'POST',
+            runJobInline                    : 'POST',
+            runJobNow                       : 'POST',
+            runJobLater                     : 'POST',
+            runAdhocInline                  : 'POST',
+            save                            : 'POST',
+            saveAndExec                     : 'POST',
+            update                          : 'POST',
+            upload                          : 'GET',
+            uploadPost                      : ['POST'],
+            apiFlipExecutionEnabled         : 'POST',
+            apiFlipExecutionEnabledBulk     : 'POST',
+            apiFlipScheduleEnabled          : 'POST',
+            apiFlipScheduleEnabledBulk      : 'POST',
+            apiJobCreateSingle              : 'POST',
+            apiJobRun                       : 'POST',
+            apiJobFileUpload                : 'POST',
+            apiJobsImportv14                : 'POST',
+            apiJobDelete                    : 'DELETE',
+            apiRunScriptv14                 : 'POST',
+            apiRunScriptUrlv14              : ['POST', 'GET'],
+            apiRunCommand                   : ['POST', 'GET'],
+            apiRunCommandv14                : ['POST', 'GET'],
+            apiJobDeleteBulk                : ['DELETE', 'POST'],
+            apiJobClusterTakeoverSchedule   : 'PUT',
+            apiJobUpdateSingle              : 'PUT',
+            apiJobRetry                     : 'POST',
+            apiJobWorkflow                  : 'GET',
+            apiJobDefinitionComponents      : 'GET',
+            apiJobDefinitionComponentsValues: 'GET',
+            apiJobBrowse                    : ['GET', 'POST'],
     ]
 
     def cancel (){
@@ -370,6 +374,116 @@ class ScheduledExecutionController  extends ControllerBase{
             )
         }
     }
+
+    @Hidden
+    @Get(uri = "/job/{id}/components")
+    @Operation(
+            method = 'GET',
+            summary = 'Get Job Definition Components Values',
+            description = '''Get the values for job definition components for a job. Since: v53''',
+            tags = ['jobs'],
+            parameters = [
+                    @Parameter(
+                            name = 'id',
+                            in = ParameterIn.PATH,
+                            description = 'Job ID',
+                            required = true,
+                            schema = @Schema(type = 'string')
+                    )
+            ],
+            responses = @ApiResponse(
+                    responseCode = '200',
+                    description = '''Job Definition Components values response.
+''',
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(type = 'object'),
+                            examples = @ExampleObject('''{
+     "Schedules-component":{
+        "schedulesJson":"[\\n    \\n]"
+     },
+     "runner-job-selector":{
+        "runnerSelectorJson":"{\\"runnerFilterType\\":\\"TAG_FILTER_AND\\",\\"filter\\":\\"STG-TOOLS-NEW\\",\\"runnerFilterMode\\":\\"TAGS\\"}"
+     }
+}''')
+                    )
+            )
+    )
+    @RdAuthorizeJob(RundeckAccess.General.AUTH_APP_READ)
+    def apiJobDefinitionComponentsValues() {
+        ScheduledExecution scheduledExecution = authorizingJob.resource
+
+        def jobComponentValues=rundeckJobDefinitionManager.getJobDefinitionComponentValues(scheduledExecution)
+        render(contentType: 'application/json', text: jobComponentValues as JSON)
+    }
+
+    @Hidden
+    @Get(uri = "/jobs/components")
+    @Operation(
+            method = 'GET',
+            summary = 'Get Job Definition Components',
+            description = '''Get job definition components properties. Since: v53''',
+            tags = ['jobs'],
+            responses = @ApiResponse(
+                    responseCode = '200',
+                    description = '''Job Definition Components response.
+
+**Components Fields**
+* `properties`: List of properties for the component
+* `section`: Section of the component
+* `messageType`: Message type for the component
+''',
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(type = 'object'),
+                            examples = @ExampleObject('''{
+    "job-tags":{
+      "properties":[
+         {
+            "blankIfUnexpandable":true,
+            "defaultValue":null,
+            "description":"Input multiple tags separated by commas. Remove a tag by clicking on it.",
+            "name":"tags",
+            "renderingOptions":{
+               
+            },
+            "required":false,
+            "scope":null,
+            "selectLabels":null,
+            "selectValues":null,
+            "title":"Tags",
+            "type":"String",
+            "validator":null
+         }
+      ],
+      "section":"details",
+      "messageType":"jobComponent.job-tags"
+   }
+}''')
+                    )
+            )
+    )
+    def apiJobDefinitionComponents() {
+        def jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
+        Map componentsData= [:]
+        jobComponents.collect { String name, JobDefinitionComponent jobComponent ->
+            if (!jobComponent.inputProperties) {
+                return
+            }
+            def compSection = jobComponent.inputLocation?.section
+            String messageType = RundeckJobDefinitionManager.getMessagesTypeForJobComponent(jobComponent.name)
+            Map compProps = [
+                    properties: jobComponent.inputProperties,
+                    section: compSection,
+                    messageType: messageType
+            ]
+
+            componentsData.put(jobComponent.name, compProps)
+        }
+
+        render(contentType: 'application/json', text: componentsData as JSON)
+    }
+
     def show () {
         log.debug("ScheduledExecutionController: show : params: " + params)
         def infoMessage = flash.info
@@ -1013,9 +1127,6 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
         def jpath = JsonPath.using(Configuration.defaultConfiguration())
         try {
             def jsonFilterResult = jpath.parse(payload).read(jobOptionConfigRemoteUrl.getJsonFilter())
-            if(jsonFilterResult instanceof ArrayList){
-                return [error: "the filter ${jobOptionConfigRemoteUrl.getJsonFilter()} return a list, please use another filter"]
-            }
             return [jsonElement: jsonFilterResult, string: jsonFilterResult.toString()]
 
         }catch (Exception e){
@@ -4175,16 +4286,22 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
             if (result.error == 'unauthorized') {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                         code: 'api.error.item.unauthorized', args: ['Execute', 'Job ID', jobid]])
+            } else if (result.error=='disabled') {
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                                                               code: 'api.error.job.disabled', message: result.message])
             } else if (result.error=='invalid') {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                         code: 'api.error.job.options-invalid', args: [result.message]])
+            } else if (result.error=='failed') {
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                                                               code: 'api.error.execution.failed', args: [result.message]])
             } else if (result.error=='conflict') {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_CONFLICT,
                         code: 'api.error.execution.conflict', args: [result.message]])
             } else {
                 //failed
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                        code: 'api.error.execution.failed', args: [result.message]])
+                        code: 'api.error.execution.error', args: [result.message]])
             }
         }
         def e = result.execution
@@ -5312,13 +5429,19 @@ For Content-Type: `multipart/form-data`
             if (results.error == 'unauthorized') {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                         code: 'api.error.item.unauthorized', args: ['Execute', 'Adhoc', 'Command']])
+            } else if (results.error=='disabled') {
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                                                               code: 'api.error.job.disabled', args: [results.message]])
             } else if (results.error == 'invalid') {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                         code: 'api.error.execution.invalid', args: [errors.join(", ")]])
+            } else if (results.error=='failed') {
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                                                               code: 'api.error.execution.failed', args: [results.message]])
             } else {
                 //failed
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                        code: 'api.error.execution.failed', args: [errors.join(", ")]])
+                        code: 'api.error.execution.error', args: [errors.join(", ")]])
             }
         } else {
             def controller = this
@@ -5530,7 +5653,10 @@ unspecified, all results will be returned''',
                 in = ParameterIn.QUERY, schema = @Schema(type = 'integer')),
             @Parameter(name = 'offset', description = '''indicate the 0-indexed offset for the first result to 
 return.''',
-                in = ParameterIn.QUERY, schema = @Schema(type = 'integer'))
+                in = ParameterIn.QUERY, schema = @Schema(type = 'integer')),
+            @Parameter(name = 'includeJobRef', description = '''if true, include executions from the job reference
+in the results. Default is false.  Requires API version 50 or later.''',
+                in = ParameterIn.QUERY, schema = @Schema(type = 'boolean'))
         ],
         responses = @ApiResponse(
             responseCode = '200',
@@ -5656,13 +5782,20 @@ return.''',
             )
         }
 
+        boolean includeExecutionsFromJobRef = false;
+
+        if (request.api_version >= ApiVersions.V50) {
+            if (params.includeJobRef && apiRequest) {
+                includeExecutionsFromJobRef = params.boolean('includeJobRef');
+            }
+        }
 
         def result = executionService.queryJobExecutions(
                 scheduledExecution,
                 params['status'],
                 params.offset ? params.int('offset') : 0,
-                params.max  ? params.int('max') : -1
-
+                params.max  ? params.int('max') : -1,
+                includeExecutionsFromJobRef
         )
         def resOffset = params.offset ? params.int('offset') : 0
         def resMax = params.max ?

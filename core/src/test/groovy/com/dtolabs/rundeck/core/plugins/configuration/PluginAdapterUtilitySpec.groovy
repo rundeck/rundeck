@@ -17,12 +17,7 @@
 package com.dtolabs.rundeck.core.plugins.configuration
 
 import com.dtolabs.rundeck.core.plugins.Plugin
-import com.dtolabs.rundeck.plugins.descriptions.PluginMeta
-import com.dtolabs.rundeck.plugins.descriptions.PluginMetadata
-import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
-import com.dtolabs.rundeck.plugins.descriptions.ReplaceDataVariablesWithBlanks
-import com.dtolabs.rundeck.plugins.descriptions.SelectLabels
-import com.dtolabs.rundeck.plugins.descriptions.SelectValues
+import com.dtolabs.rundeck.plugins.descriptions.*
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import spock.lang.Specification
 
@@ -113,7 +108,7 @@ class PluginAdapterUtilitySpec extends Specification {
     }
 
 
-    def "configure options field string"() {
+    def "configure options field string value #value"() {
         given:
         Configuretest1 test = new Configuretest1();
         when:
@@ -130,6 +125,51 @@ class PluginAdapterUtilitySpec extends Specification {
         'a'     | _
         'a,b'   | _
         'a,b,c' | _
+        ''      | _
+    }
+    def "configure options field boxed Boolean"() {
+        given:
+        Configuretest1 test = new Configuretest1();
+        when:
+
+        HashMap<String, Object> configuration = new HashMap<String, Object>();
+        configuration.put("testbool1", value);
+        PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+
+        then:
+        test.testbool1 == expected
+
+        where:
+            value   | expected
+            null    | null
+            ''      | false
+            'true'  | true
+            'false' | false
+            'other' | false
+            true    | true
+            false   | false
+    }
+    def "configure options field boolean"() {
+        given:
+        Configuretest1 test = new Configuretest1();
+        when:
+
+        HashMap<String, Object> configuration = new HashMap<String, Object>();
+        configuration.put("testbool2", value);
+        PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+
+        then:
+        test.testbool2 == expected
+
+        where:
+            value   | expected
+            null    | false
+            ''      | false
+            'true'  | true
+            'false' | false
+            'other' | false
+            true    | true
+            false   | false
     }
 
     def "configure options field set"() {

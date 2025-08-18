@@ -1,5 +1,7 @@
 package org.rundeck.util.api.responses.nodes
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter
+import com.fasterxml.jackson.annotation.JsonAnySetter
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
@@ -25,4 +27,9 @@ class Node {
     String tags
     @JsonProperty("type")
     String type
+
+    // Map any unknown properties as attributes
+    @JsonAnySetter
+    @JsonAnyGetter
+    Map<String, String> attributes = [:]
 }

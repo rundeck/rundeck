@@ -10,7 +10,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import ScheduleEditor from "../../../components/job/schedule/ScheduleEditor.vue";
 import JsonEmbed from "./JsonEmbed.vue";
 
@@ -38,7 +38,7 @@ export default {
         this.eventBus.emit("job-edit-schedules-changed", this.updatedData);
         const { timeZones, ...other } = this.updatedData;
         this.outputData = other;
-        window.jobWasEdited();
+        this.eventBus.emit("jobedit.page.confirm", true);
       },
       deep: true,
     },

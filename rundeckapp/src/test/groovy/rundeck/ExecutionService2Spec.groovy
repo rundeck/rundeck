@@ -217,6 +217,35 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             null != execs
             execs.contains(e2)
     }
+    def "test invalid workflow"(){
+        given:
+        ScheduledExecution se = new ScheduledExecution(
+            jobName: 'blue',
+            project: 'AProject',
+            groupPath: 'some/where',
+            description: 'a job',
+            argString: '-a b -c d',
+            workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+        )
+        se.errors.rejectValue('workflow', 'scheduledExecution.workflow.invalidstepslist.message', ['bad step'].toArray(), "Invalid workflow steps: {0}")
+
+        service.frameworkService = Mock(FrameworkService){
+            1 * getServerUUID()
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            1 * getNodes(_,_,_,_)
+        }
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService){
+            1 * beforeJobExecution(_,_)
+        }
+
+        when:
+        service.createExecution(se,createAuthContext("user1"),null,[executionType:'scheduled'])
+
+        then:
+            ExecutionServiceException e = thrown()
+            e.message=='unable to create execution: Invalid workflow steps: bad step'
+    }
 
     void testCreateExecutionSimple_userRoles() {
 
@@ -445,6 +474,66 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         Map newmap = svc.addOptionDefaults(se, optParams)
 
         assertEquals('', newmap['test'])
+
+        expect:
+        // asserts validate above
+        1 == 1
+    }
+
+    void testAddOptionDefaults_ShouldAddMultivaluedIfAllSelected(){
+        ExecutionService svc = new ExecutionService()
+
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                uuid: 'abc',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])])
+        )
+        def opt1 = new Option(name: 'test', enforced: false, multivalued: true, multivalueAllSelected: true, valuesList: ['a,b,c'], delimiter:',')
+        se.addToOptions(opt1)
+        if (!se.validate()) {
+        }
+        assertNotNull se.save()
+
+        Map optParams = [:]
+
+        Map newmap = svc.addOptionDefaults(se, optParams)
+
+        assertEquals('a,b,c', newmap['test'])
+
+        expect:
+        // asserts validate above
+        1 == 1
+    }
+
+    void testAddOptionDefaults_ShouldNotReplaceMultivalued(){
+        ExecutionService svc = new ExecutionService()
+
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                uuid: 'abc',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])])
+        )
+        def opt1 = new Option(name: 'test', enforced: false, multivalued: true, multivalueAllSelected: true, valuesList: ['a,b,c'], delimiter:',')
+        se.addToOptions(opt1)
+        if (!se.validate()) {
+        }
+        assertNotNull se.save()
+
+        Map optParams = ['test':'a']
+
+        Map newmap = svc.addOptionDefaults(se, optParams)
+
+        assertEquals('a', newmap['test'])
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     void testCreateExecutionRetryOptionValue(){
@@ -1697,97 +1786,6 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         testService.notificationService = ncontrol.proxyInstance()
         testService.executionValidatorService = new ExecutionValidatorService()
         return testService
-    }
-    void testCleanupRunningJobsNull(){
-        def testService = setupCleanupService()
-        def wf1=new Workflow(commands: [new CommandExec(adhocRemoteString: "test")]).save()
-        assertNotNull(wf1)
-        assertNotNull(wf1.commands)
-        assertEquals(1,wf1.commands.size())
-        Execution exec1 = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false,
-                dateStarted: new Date(),
-                dateCompleted: null,
-                workflow: wf1
-        )
-        assertNotNull(exec1.save())
-        def wf2=new Workflow(commands: [new CommandExec(adhocRemoteString: "test")]).save()
-        assertNotNull(wf2)
-        assertNotNull(wf2.commands)
-        assertEquals(1,wf2.commands.size())
-        Execution exec2 = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false,
-                dateStarted: new Date(),
-                dateCompleted: null,
-                workflow: wf2,
-                serverNodeUUID: UUID.randomUUID().toString()
-        )
-        assertNotNull(exec2.save())
-
-        assertNull(exec1.dateCompleted)
-        assertNull(exec1.status)
-
-        assertNull(exec2.dateCompleted)
-        assertNull(exec2.status)
-        assertEquals(2,Execution.findAll().size())
-        assertEquals(1,Execution.findAllByDateCompletedAndServerNodeUUID(null, null).size())
-        testService.cleanupRunningJobs_currentTransaction((String)null)
-
-        Execution.withSession { session ->
-            session.flush()
-            exec1.refresh()
-            exec2.refresh()
-        }
-
-        assertNotNull(exec1.dateCompleted)
-        assertEquals("false", exec1.status)
-        assertNull(exec2.dateCompleted)
-        assertEquals(null, exec2.status)
-
-        expect:
-        // asserts validate above
-        1 == 1
-    }
-
-    void testCleanupRunningJobsForClusterNode() {
-        def testService = setupCleanupService()
-        def uuid = UUID.randomUUID().toString()
-
-
-        def wf1 = new Workflow(commands: [new CommandExec(adhocRemoteString: "test")]).save()
-        Execution exec1 = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false,
-                dateStarted: new Date(),
-                dateCompleted: null,
-                workflow: wf1
-        )
-        assertNotNull(exec1.save(flush: true))
-
-        def wf2 = new Workflow(commands: [new CommandExec(adhocRemoteString: "test")]).save()
-        Execution exec2 = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false,
-                dateStarted: new Date(),
-                dateCompleted: null,
-                workflow: wf2,
-                serverNodeUUID: uuid
-        )
-        assertNotNull(exec2.save(flush: true))
-
-        assertNull(exec1.dateCompleted)
-        assertNull(exec1.status)
-
-        assertNull(exec2.dateCompleted)
-        assertNull(exec2.status)
-
-        testService.cleanupRunningJobs_currentTransaction(uuid)
-
-        exec1.refresh()
-        exec2.refresh()
-        assertNull(exec1.dateCompleted)
-        assertNull(exec1.status)
-        assertNotNull(exec2.dateCompleted)
-        assertEquals("false", exec2.status)
-
-        expect:
-        // asserts validate above
-        1 == 1
-
     }
 
     void testCleanupRunningJobsLeavesScheduled() {

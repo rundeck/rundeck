@@ -6,9 +6,7 @@ import Badge from "primevue/badge";
 const meta: Meta<typeof Tag> = {
   title: "Tag",
   parameters: {
-    docs: {
-      componentSubtitle: "Tag component is used to categorize content.",
-    },
+    componentSubtitle: "Tag component is used to categorize content.",
     actions: {
       disable: true,
     },
@@ -27,7 +25,7 @@ const meta: Meta<typeof Tag> = {
       description: "Value to display inside the tag.",
     },
     severity: {
-      options: [undefined, "success", "warning", "danger"],
+      options: [undefined, "success", "warn", "danger"],
       control: {
         type: "select",
       },
@@ -63,6 +61,7 @@ type Story = StoryObj<typeof Tag>;
 
 export const Playground: Story = {
   name: "Playground",
+  tags: ["!dev"],
   render: (args) => ({
     components: { Tag },
     setup: () => ({ args }),
@@ -72,7 +71,7 @@ export const Playground: Story = {
 
 const generateTemplate = (severity, args) => {
   return `
-      <Tag value="${args.value}" severity="${severity}" ico="${args.icon}" />
+      <Tag value="${args.value}" severity="${severity}" icon="${args.icon}" />
 `;
 };
 
@@ -100,11 +99,11 @@ export const Warning: Story = {
   render: (args) => ({
     components: { Tag },
     setup: () => ({ args }),
-    template: generateTemplate("warning", args),
+    template: generateTemplate("warn", args),
   }),
   args: {
     value: "Warning",
-    severity: "warning",
+    severity: "warn",
   },
 };
 

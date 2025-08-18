@@ -110,7 +110,7 @@ class ScheduledExecutionSpec extends Specification implements DataTest
     void testGenerateJobScheduledName() {
         when:
         def ScheduledExecution se = new ScheduledExecution()
-        def props = [jobName: "TestName", project: "TestFrameworkProject", type: "AType", command: "doCommand", argString: "-test", description: "whatever"]
+        def props = [uuid: "a1", jobName: "TestName", project: "TestFrameworkProject", type: "AType", command: "doCommand", argString: "-test", description: "whatever"]
         se.properties = props
         se.validate()
         def StringBuffer sb = new StringBuffer()
@@ -122,7 +122,7 @@ class ScheduledExecutionSpec extends Specification implements DataTest
         then:
         assertEquals 1, ScheduledExecution.count()
         assertNotNull "id should be set: ${se.id}", se.id
-        assertEquals "incorrect job name: ${se.generateJobScheduledName()}", se.id + ":TestName", se.generateJobScheduledName()
+        assertEquals "incorrect job name: ${se.generateJobScheduledName()}", se.uuid, se.generateJobScheduledName()
     }
 
     void testConstraintsRetry(){

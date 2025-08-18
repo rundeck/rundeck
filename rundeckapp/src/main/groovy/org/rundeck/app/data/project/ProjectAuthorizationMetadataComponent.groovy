@@ -17,6 +17,9 @@ class ProjectAuthorizationMetadataComponent implements ProjectMetadataComponent 
             (AuthConstants.TYPE_JOB): [
                 AuthConstants.ACTION_CREATE,
                 AuthConstants.ACTION_DELETE
+            ],
+            (AuthConstants.TYPE_EVENT): [
+                AuthConstants.ACTION_READ
             ]
         ]
     )

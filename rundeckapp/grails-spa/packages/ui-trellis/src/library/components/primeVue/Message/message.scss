@@ -1,5 +1,7 @@
 .p-message {
     border-radius: 0;
+    border-width: 0 0 0 6px;
+    border-style: solid;
     color: var(--colors-gray-800);
 
     .p-message-text {
@@ -35,7 +37,7 @@
         }
     }
 
-    &--warning {
+    &-warn {
         background: var(--colors-orange-100);
         border-color: var(--colors-orange-600);
 
@@ -44,7 +46,7 @@
         }
     }
 
-    &--danger {
+    &-error {
         background: var(--colors-red-100);
         border-color: var(--colors-red-600);
 

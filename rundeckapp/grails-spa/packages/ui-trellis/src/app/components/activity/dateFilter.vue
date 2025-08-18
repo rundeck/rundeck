@@ -30,16 +30,25 @@
     </div>
   </div>
 </template>
-<script>
+<script lang="ts">
 import { defineComponent } from "vue";
 import _ from "lodash";
 import DateTimePicker from "./dateTimePicker.vue";
+import type { DateFilterProps } from "./types/activityTypes";
+import type { PropType } from "vue";
 
 export default defineComponent({
   components: {
     DateTimePicker,
   },
-  props: ["modelValue"],
+
+  props: {
+    modelValue: {
+      type: Object as PropType<DateFilterProps>,
+      required: true,
+    },
+  },
+
   emits: ["update:modelValue"],
   data() {
     return {

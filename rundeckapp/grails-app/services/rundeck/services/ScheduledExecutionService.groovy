@@ -17,8 +17,15 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
+import com.dtolabs.rundeck.core.utils.ResourceAcceptanceTimeoutException
+import com.dtolabs.rundeck.core.utils.WaitUtils
+import org.springframework.jdbc.core.RowCallbackHandler
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import rundeck.data.job.reference.JobReferenceImpl
 import rundeck.data.job.reference.JobRevReferenceImpl
+import rundeck.data.util.JobTakeoverQueryBuilder
+import rundeck.services.feature.FeatureService
 import rundeck.support.filters.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.audit.ActionTypes
@@ -129,9 +136,13 @@ import rundeck.utils.OptionsUtil
 import org.rundeck.app.spi.AuthorizedServicesProvider
 
 import javax.servlet.http.HttpSession
+import java.sql.ResultSet
+import java.sql.SQLException
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
+import java.time.Duration
 import java.util.concurrent.TimeUnit
+import java.util.function.Supplier
 import java.util.stream.Collectors
 
 
@@ -152,6 +163,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     ReferencedExecutionDataProvider referencedExecutionDataProvider
     JobStatsDataProvider jobStatsDataProvider
     QuartzJobSpecifier quartzJobSpecifier
+    def dataSource
 
     public final String REMOTE_OPTION_DISABLE_JSON_CHECK = 'project.jobs.disableRemoteOptionJsonCheck'
 
@@ -218,6 +230,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     JobDataProvider jobDataProvider
     UserService userService
     RdJobService rdJobService
+    FeatureService featureService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -650,7 +663,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     childPath=path+'/'+parts[0]
                 }else{
                     def parts = item.groupPath.split('/')
-                    childPath=parts[0]
+                    childPath=parts.length ? parts[0]: ''
                 }
             }
             if(!childPath){
@@ -770,6 +783,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return [claimed: !retry, executions: claimedExecs]
     }
 
+    def timer(String name, Closure closure) {
+        long start = System.currentTimeMillis()
+        def result = closure()
+        long end = System.currentTimeMillis()
+        log.info("Timer ${name} took ${end-start}ms")
+        return result
+    }
     /**
      * Claim scheduling for any jobs assigned to fromServerUUID, or not assigned if it is null
      * @param toServerUUID uuid to assign to scheduled jobs
@@ -789,7 +809,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def queryFromServerUUID = fromServerUUID
         def queryProject = projectFilter
         ScheduledExecution.withSession { session ->
-            def scheduledExecutions = jobSchedulesService.getSchedulesJobToClaim(toServerUUID, queryFromServerUUID, selectAll, queryProject, jobids)
+            def scheduledExecutions = timer("takeover query ") {
+                jobSchedulesService.getSchedulesJobToClaim(toServerUUID, queryFromServerUUID, selectAll, queryProject, jobids)
+            }
             scheduledExecutions.each { ScheduledExecution se ->
                 def orig = se.serverNodeUUID
                 if (!claimed[se.extid]) {
@@ -1032,6 +1054,133 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     /**
+     * An alternate method of claiming and scheduling all jobs to the current server. This method updates each
+     * scheduled execution one-by-one to avoid a number of potential race conditions that can occur when scheduling
+     * the job before committing the corresponding ScheduledExecution updates.
+     */
+    @NotTransactional
+    def reclaimAndScheduleJobByJob() {
+        String toServerUuid = frameworkService.getServerUUID()
+        Map claimed = [:]
+        def scheduledExecutions = timer("takeover query ") {
+            jobSchedulesService.getSchedulesJobToClaim(toServerUuid, null, true, null, null)
+        }
+
+        scheduledExecutions.each { ScheduledExecution se ->
+            if (claimed[se.extid]) {
+                return
+            }
+
+            def originalServerId = se.serverNodeUUID
+
+            try {
+                def claimResult = WaitUtils.waitFor(
+                        scheduledJobClaimer(se, toServerUuid),
+                        { it != null },
+                        Duration.ofSeconds(30),
+                        Duration.ofSeconds(5)
+                )
+
+                // Note that the ScheduledExecution in se does not contain the updates from the previous transaction.
+                // Use with care.
+
+                claimed[se.extid] = [
+                        success         : claimResult.claimed,
+                        jobId           : se.extid,
+                        previousServerId: originalServerId,
+                        executions      : claimResult.executions
+                ]
+
+            } catch (ResourceAcceptanceTimeoutException ex) {
+                log.error("Error claiming scheduled execution ${se.extid} before the timeout", ex)
+
+                claimed[se.extid] = [
+                        success         : false,
+                        jobId           : se.extid,
+                        previousServerId: originalServerId,
+                        executions      : []
+                ]
+            }
+
+            if (claimed[se.extid]["success"] == false) {
+                log.warn("Scheduled execution ${se.extid} was not successfully claimed. It will not be scheduled.")
+                return
+            }
+
+            try {
+                WaitUtils.waitFor(
+                        scheduledJobScheduler(se, toServerUuid),
+                        { it == true },
+                        Duration.ofSeconds(30),
+                        Duration.ofSeconds(5)
+                )
+                log.info("Rescheduled job ${se.extid} in project ${se.project}")
+            } catch (ResourceAcceptanceTimeoutException ex) {
+                log.error("Error rescheduling job ${se.extid} in project ${se.project} before the timeout", ex)
+                claimed[se.extid]["success"] = false
+            }
+        }
+
+        return claimed
+    }
+
+    /**
+     * A function that attempts to claim a ScheduledExecution by a server in an isolated transaction.
+     */
+    private Supplier<Map> scheduledJobClaimer(ScheduledExecution se, String toServerUuid) {
+        return {
+            def claimResult
+            try {
+                claimResult = ScheduledExecution.withNewTransaction { status ->
+                    return claimScheduledJob(se, toServerUuid)
+                }
+
+            } catch (Exception e) {
+                log.warn("Unable to claim scheduled execution ${se.extid}.", e)
+                claimResult = null
+            }
+
+            return claimResult
+        }
+    }
+
+    /**
+     * A function that attempts to schedule a ScheduledExecution on a server in an isolated transaction.
+     * @return true if the job was scheduled without exception. False otherwise.
+     */
+    private Supplier<Boolean> scheduledJobScheduler(ScheduledExecution se, String toServerUuid) {
+        return {
+            try {
+                ScheduledExecution.withNewTransaction { status ->
+                    // ScheduledExecution was loaded in a separate transaction, so we refresh it.
+                    se.refresh()
+
+                    // Schedule the job on quartz.
+                    scheduleJob(se, null, null, true)
+
+                    // Schedule any ad-hoc executions for the job on quartz.
+                    scheduleAdHocExecutionsForJob(se, toServerUuid)
+                }
+                log.info("Rescheduled job in project ${se.project}: ${se.extid}")
+                return true
+            } catch (Exception e) {
+                log.warn("Exeception during job scheduling ${se.project}: ${se.extid}: ${e.message}", e)
+                return false
+            }
+        }
+    }
+
+    private def scheduleAdHocExecutionsForJob(ScheduledExecution se, String targetServerUUID) {
+        // Reschedule any executions which were scheduled ad hoc
+        def executionList = Execution.isScheduledAdHoc()
+                .withScheduledExecution(se)
+                .withServerNodeUUID(targetServerUUID)
+                .list()
+
+        rescheduleOnetimeExecutions(executionList)
+    }
+
+    /**
      *  Return a Map with a tree structure of the available grouppaths, and their job counts
      * <pre>
           [
@@ -1157,7 +1306,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         boolean success = false
         Execution.withTransaction {
             //find any currently running executions for this job, and if so, throw exception
-            def found = Execution.createCriteria().get {
+            def found = Execution.createCriteria().list {
                 delegate.'scheduledExecution' {
                     eq('id', scheduledExecution.id)
                 }
@@ -1664,7 +1813,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         data.put("scheduledExecutionId", se.uuid)
         data.put("rdeck.base", frameworkService.getRundeckBase())
 
-        if(se.scheduled){
+        if(se.scheduled ||jobSchedulesService.shouldScheduleExecution(se.uuid)){
             data.put("userRoles", se.userRoleList)
             if(frameworkService.isClusterModeEnabled()){
                 data.put("serverUUID", frameworkService.getServerUUID())
@@ -2421,6 +2570,26 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         PluginConfigSet.with ServiceNameConstants.ExecutionLifecycle, configs
     }
 
+    static PluginConfigSet parseExecutionLifecyclePluginsJSON (JSONObject executionLifecyclePluginsParams) {
+        List<String> keys = executionLifecyclePluginsParams.keys().collect{it.toString()}
+
+        List<PluginProviderConfiguration> configs = []
+
+        keys.each { key ->
+            def pluginType = key
+            Map config = [:]
+            def confprops = executionLifecyclePluginsParams[key] ?: [:]
+            confprops.each { k, v ->
+                if (v != '' && v != null && !k.startsWith('_')) {
+                    config[k] = v
+                }
+            }
+
+            configs << SimplePluginConfiguration.builder().provider(pluginType).configuration(config).build()
+        }
+        PluginConfigSet.with ServiceNameConstants.ExecutionLifecycle, configs
+    }
+
     private Map validateExecutionLifecyclePlugin(
             String type,
             Map config,
@@ -2852,7 +3021,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (!scheduledExecution.workflow || !scheduledExecution.workflow.commands ||
             scheduledExecution.workflow.commands.isEmpty()) {
 
-            scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message')
+            scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message', 'Step must not be empty')
             failed= true
         }
         failed
@@ -2952,6 +3121,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             //define execution life cycle plugins config
             configSet = parseExecutionLifecyclePluginsParams(plugins)
         }
+        if (params?.jobExecutionPluginsJSON) {
+            def pluginsData = JSON.parse(params.jobExecutionPluginsJSON.toString())
+
+            if(pluginsData instanceof JSONObject) {
+                def executionLifecyclePlugins = pluginsData.getJSONObject("ExecutionLifecycle");
+                if(executionLifecyclePlugins && executionLifecyclePlugins instanceof JSONObject) {
+                    configSet = parseExecutionLifecyclePluginsJSON(executionLifecyclePlugins)
+                }
+
+            }
+        }
+
         executionLifecycleComponentService.setExecutionLifecyclePluginConfigSetForJob(scheduledExecution, configSet)
     }
 
@@ -3154,7 +3335,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     ServiceNameConstants.LogFilter,
                     input.workflow.getPluginConfigDataList(ServiceNameConstants.LogFilter)
             )
-        }else if (params.workflow instanceof Map && params.workflow.globalLogFilters) {
+        } else if (params.jobWorkflowJson) {
+            def jobWorkflowData = JSON.parse(params.jobWorkflowJson.toString())
+
+            if(jobWorkflowData instanceof JSONObject && jobWorkflowData.has("pluginConfig")) {
+                scheduledExecution.workflow.setPluginConfigData(
+                    ServiceNameConstants.LogFilter,
+                    jobWorkflowData.get("pluginConfig").has("LogFilter") ? jobWorkflowData.get("pluginConfig").get(
+                        "LogFilter"
+                    ) : null
+                )
+            }
+        } else if (params.workflow instanceof Map && params.workflow.globalLogFilters) {
             //filter configs
             def i = 0;
             def configs = []
@@ -3187,7 +3379,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         input.workflow.strategy
                     )
             )
-        }else if (params.workflow instanceof Map) {
+        } else if (params.jobWorkflowJson) {
+            def jobWorkflowData = JSON.parse(params.jobWorkflowJson.toString())
+            if (jobWorkflowData instanceof JSONObject && jobWorkflowData.has('strategy')) {
+                scheduledExecution.workflow.strategy = jobWorkflowData.get('strategy')
+            }
+            if(jobWorkflowData instanceof JSONObject && jobWorkflowData.has("pluginConfig")) {
+                scheduledExecution.workflow.setPluginConfigData(
+                    ServiceNameConstants.WorkflowStrategy,
+                    jobWorkflowData.get("pluginConfig").has("WorkflowStrategy") ? jobWorkflowData.get("pluginConfig").get(
+                        "WorkflowStrategy"
+                    ) : null
+                )
+            }
+        } else if (params.workflow instanceof Map) {
             Map configmap = params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config
 
             scheduledExecution.workflow.setPluginConfigData(
@@ -3225,6 +3430,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 final Workflow workflow = new Workflow(wf)
                 scheduledExecution.workflow = workflow
                 wf.discard()
+            }
+        } else if (params.jobWorkflowJson) {
+            def jobWorkflowData = JSON.parse(params.jobWorkflowJson.toString())
+
+            if(jobWorkflowData instanceof JSONObject) {
+                scheduledExecution.workflow = Workflow.fromMap(jobWorkflowData)
             }
         } else if (params.workflow && params.workflow instanceof Workflow) {
             scheduledExecution.workflow = new Workflow(params.workflow)
@@ -3301,11 +3512,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 ) || !input.properties[it]
             }
             basicProps = foundprops ? input.properties.subMap(foundprops) : [:]
-
         }
 
         if (scheduledExecution.uuid) {
-            basicProps.uuid = scheduledExecution.uuid//don't modify uuid if it exists
+            basicProps.uuid = scheduledExecution.uuid //don't modify uuid if it exists
         }else if(!basicProps.uuid){
             //set UUID if not submitted
             basicProps.uuid = UUID.randomUUID().toString()
@@ -3313,6 +3523,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (scheduledExecution.serverNodeUUID) {
             //don't modify serverNodeUUID, it will be set if needed after validation
             basicProps.serverNodeUUID = scheduledExecution.serverNodeUUID
+        }
+        if (params?.jobDetailsJson) {
+            def detailsData = JSON.parse(params.jobDetailsJson.toString())
+
+            if(detailsData instanceof JSONObject) {
+                detailsData.keySet().forEach(detailKey -> {
+                    basicProps."$detailKey" = detailsData.get(detailKey)
+                })
+            }
         }
 
         //clean up values that should be cleared
@@ -4418,7 +4637,31 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return
      */
     List<ScheduledExecution> getSchedulesJobToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids, ignoreInnerScheduled = false) {
-
+        if(featureService.featurePresent("enhancedJobTakeoverQuery")) {
+            log.info("Using enhanced job takeover query")
+            String qry = JobTakeoverQueryBuilder.buildTakeoverQuery(toServerUUID, fromServerUUID, selectAll, projectFilter, jobids, ignoreInnerScheduled)
+            List<ScheduledExecution> jobList = []
+            var qryParams = new MapSqlParameterSource()
+            qryParams.addValue("toServerUUID", toServerUUID)
+            if(fromServerUUID){
+                qryParams.addValue("fromServerUUID", fromServerUUID)
+            }
+            if(projectFilter){
+                qryParams.addValue("projectFilter", projectFilter)
+            }
+            if(jobids){
+                qryParams.addValue("jobids", jobids)
+            }
+            NamedParameterJdbcTemplate jdbcTemplate = new NamedParameterJdbcTemplate(dataSource)
+            jdbcTemplate.query(qry, qryParams, new RowCallbackHandler() {
+                @Override
+                void processRow(ResultSet rs) throws SQLException {
+                    jobList.add(ScheduledExecution.read(rs.getLong("id") as Serializable))
+                }
+            })
+            return jobList
+        }
+        log.info("Using legacy job takeover query")
         return ScheduledExecution.createCriteria().listDistinct {
             or {
                 applyAdhocScheduledExecutionsCriteria(delegate, selectAll, fromServerUUID, toServerUUID, projectFilter)
@@ -4557,11 +4800,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             !pluginControlService?.isDisabledPlugin(k, ServiceNameConstants.Notification)
         }
 
-        def notificationPluginsDynamicProperties = notificationService.listNotificationPluginsDynamicProperties(params.project,
-                rundeckAuthorizedServicesProvider.getServicesWith(authContext)).findAll{k,v->
-            !pluginControlService?.isDisabledPlugin(k,ServiceNameConstants.Notification)
-        }
-
         def orchestratorPlugins = orchestratorPluginService.listDescriptions()
         def globals=frameworkService.getProjectGlobals(scheduledExecution?.project).keySet()
 
@@ -4578,7 +4816,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def model = [scheduledExecution          : scheduledExecution,
                      crontab                     : crontab,
                      notificationPlugins         : notificationPlugins,
-                     notificationPluginsDynamicProperties : notificationPluginsDynamicProperties,
                      orchestratorPlugins         : orchestratorPlugins,
                      strategyPlugins             : strategyPlugins,
                      params                      : params,

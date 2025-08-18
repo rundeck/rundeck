@@ -15,6 +15,7 @@
           'btn-default': !selectedFilterName,
         }"
         data-toggle="dropdown"
+        data-testid="nfi-toggle"
       >
         <span>{{ filterNameDisplay }}</span> <span class="caret"></span>
       </button>
@@ -96,6 +97,7 @@
       class="schedJobNodeFilter form-control"
       :autofocus="autofocus"
       :placeholder="queryFieldPlaceholderText || $t('enter.a.node.filter')"
+      data-testid="filter-input"
       @keydown.enter.prevent="doSearch"
       @blur="doSearch"
     />
@@ -170,6 +172,7 @@
             v-model="newFilterName"
             type="text"
             class="form-control input-sm"
+            data-testid="new-filter-name-input"
           />
         </div>
       </div>
@@ -189,12 +192,12 @@
     </div>
     <template #footer>
       <div>
-        <btn @click="saveFilterModal = false">{{
-          $t("button.action.Cancel")
-        }}</btn>
-        <btn type="primary" @click="saveFilter">{{
-          $t("save.filter.ellipsis")
-        }}</btn>
+        <btn @click="saveFilterModal = false" data-testid="sfm-button-cancel">
+          {{ $t("button.action.Cancel") }}
+        </btn>
+        <btn type="primary" @click="saveFilter" data-testid="sfm-button-save">
+          {{ $t("save.filter.ellipsis") }}
+        </btn>
       </div>
     </template>
   </modal>
@@ -234,7 +237,7 @@
   </modal>
 </template>
 <script lang="ts">
-import { getRundeckContext } from "@/library";
+import { getRundeckContext } from "../../../../library";
 import {
   NodeFilterStore,
   ProjectFilters,
@@ -249,9 +252,10 @@ export default defineComponent({
   },
   inheritAttrs: false,
   props: {
-    modelValue: {
-      type: [String, null] as PropType<string | null>,
+    value: {
+      type: String,
       required: true,
+
     },
     showTitle: {
       type: Boolean,
@@ -297,16 +301,14 @@ export default defineComponent({
       required: false,
       default: "schedJobNodeFilter",
     },
-    /**
-     * if true, allow setting/removing default filter
-     */
     allowFilterDefault: {
       type: Boolean,
       required: false,
       default: false,
+      description: "if true, allow setting/removing default filter"
     },
   },
-  emits: ["filters-updated", "filter", "update:modelValue"],
+  emits: ["filters-updated", "filter", "update:value"],
   setup() {
     const outputValue = ref("");
     const selectedFilterName = ref("");
@@ -386,16 +388,18 @@ export default defineComponent({
     },
   },
   watch: {
-    modelValue() {
-      this.outputValue = this.modelValue;
-      if (
-        this.selectedFilterName &&
-        this.selectedFilterName !== this.matchedFilter
-      ) {
-        this.selectedFilterName = "";
-      } else if (this.matchedFilter) {
-        this.selectedFilterName = this.matchedFilter;
-      }
+    value: {
+      handler(newValue) {
+        if (newValue) {
+          this.outputValue = newValue;
+        }
+        if (this.selectedFilterName && this.selectedFilterName !== this.matchedFilter) {
+          this.selectedFilterName = "";
+        } else if (this.matchedFilter) {
+          this.selectedFilterName = this.matchedFilter;
+        }
+      },
+      immediate: true
     },
     filterName() {
       this.selectedFilterName = this.filterName;
@@ -458,7 +462,7 @@ export default defineComponent({
       ) {
         this.selectedFilterName = "";
       }
-      this.$emit("update:modelValue", this.outputValue);
+      this.$emit("update:value", this.outputValue);
     },
     handleNodefilter(val: any) {
       if (val.filterName) {
@@ -481,7 +485,9 @@ export default defineComponent({
       this.setDefaultFilterValue(".*");
     },
     async onMount() {
-      this.outputValue = this.modelValue;
+      if (this.value) {
+        this.outputValue = this.value;
+      }
       if (
         this.selectedFilterName &&
         this.selectedFilterName !== this.matchedFilter

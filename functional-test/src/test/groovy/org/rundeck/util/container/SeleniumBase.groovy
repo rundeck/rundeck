@@ -1,15 +1,21 @@
 package org.rundeck.util.container
 
 import groovy.transform.CompileStatic
+import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.OutputType
 import org.openqa.selenium.TakesScreenshot
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.chrome.ChromeOptions
+import org.openqa.selenium.logging.LogType
+import org.openqa.selenium.logging.LoggingPreferences
+import org.openqa.selenium.support.ui.WebDriverWait
+import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.spock.extensions.TestResultExtension
 import org.rundeck.util.gui.pages.BasePage
 
 import java.time.Duration
+import java.util.logging.Level
 
 /**
  * Utility Base for selenium test specs
@@ -21,6 +27,7 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
     public static final String TEST_PASS = System.getenv("RUNDECK_TEST_PASS") ?: "admin123"
     public static final String SELENIUM_BASIC_PROJECT = "SeleniumBasic"
     public static final String downloadFolder = System.getProperty("user.dir") + "/src/test/resources" + getSeparator() +"downloads";
+    public static final boolean TEST_SELENIUM_HEADLESS_MODE = (System.getenv("TEST_SELENIUM_HEADLESS_MODE") ?: "true").toBoolean()
 
     /**
      * Create a driver
@@ -31,7 +38,11 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
     WebDriver getDriver() {
         if (null == _driver) {
             def prefs = ["download.default_directory": downloadFolder]
+            LoggingPreferences logPrefs = new LoggingPreferences()
+            logPrefs.enable(LogType.BROWSER, Level.ALL)
+
             ChromeOptions options = new ChromeOptions()
+            options.setCapability("goog:loggingPrefs", logPrefs);
             options.setImplicitWaitTimeout(Duration.ofSeconds(5))
             options.setExperimentalOption("prefs", prefs)
             options.addArguments("start-maximized")
@@ -46,6 +57,9 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
             options.addArguments("--disable-default-apps")
             options.addArguments("--disable-blink-features=AutomationControlled")
             options.addArguments("--disable-features=Chrome,DownloadPromptForDownload")
+            if(TEST_SELENIUM_HEADLESS_MODE) {
+                options.addArguments("--headless=new")
+            }
             _driver = new ChromeDriver(options)
         }
         return _driver
@@ -53,21 +67,23 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
 
 
     def cleanup() {
-        specificationContext.currentSpec.listeners
-                .findAll { it instanceof TestResultExtension.ErrorListener }
-                .each {
-                    def errorInfo = (it as TestResultExtension.ErrorListener).errorInfo
-                    if(errorInfo){
-                        File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE)
-                        File testResourcesDir = new File("build/test-results/images")
-                        if (!testResourcesDir.exists()) {
-                            testResourcesDir.mkdirs()
+        if(_driver){
+            specificationContext.currentSpec.listeners
+                    .findAll { it instanceof TestResultExtension.ErrorListener }
+                    .each {
+                        def errorInfo = (it as TestResultExtension.ErrorListener).errorInfo
+                        if(errorInfo){
+                            File screenshot = ((TakesScreenshot) _driver).getScreenshotAs(OutputType.FILE)
+                            File testResourcesDir = new File("build/test-results/images")
+                            if (!testResourcesDir.exists()) {
+                                testResourcesDir.mkdirs()
+                            }
+                            File destination = new File(testResourcesDir, "${specificationContext.currentSpec.filename}-${specificationContext.currentIteration.name}" + ".png")
+                            screenshot.renameTo(destination)
                         }
-                        File destination = new File(testResourcesDir, "${specificationContext.currentSpec.filename}-${specificationContext.currentIteration.name}" + ".png")
-                        screenshot.renameTo(destination)
                     }
-                }
-        driver?.quit()
+            _driver?.quit()
+        }
     }
 
     /**
@@ -119,5 +135,15 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
      */
     static String getSeparator() {
         return System.getProperty("os.name").toLowerCase().contains("windows") ? "\\" : "/"
+    }
+
+    /**
+     * Wait for document readyState to be 'complete'
+     * @param waitingTime
+     */
+    void waitForPageLoadComplete(Duration waitingTime = WaitingTime.MODERATE) {
+        new WebDriverWait(driver, waitingTime).until {
+            (((JavascriptExecutor) it).executeScript("return document.readyState") == "complete")
+        }
     }
 }

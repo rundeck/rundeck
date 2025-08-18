@@ -17,9 +17,17 @@
 package com.dtolabs.rundeck.plugins.storage;
 
 import com.dtolabs.rundeck.core.storage.StorageTree;
+import org.rundeck.storage.api.Path;
 
 /**
  * Plugin to provide a storage backend.
  */
 public interface StoragePlugin extends StorageTree {
+
+    /**
+     * Returns true if the plugin is configured and ready to be used and false otherwise
+     */
+    default boolean isConfigured(Path basePath) {
+        return listDirectory(basePath) != null;
+    }
 }

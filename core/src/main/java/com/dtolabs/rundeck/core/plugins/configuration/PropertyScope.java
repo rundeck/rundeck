@@ -50,7 +50,12 @@ public enum PropertyScope {
     /**
      * No specific scope specified
      */
-    Unspecified;
+    Unspecified,
+    /**
+     * Value should be resolved as a feature flag
+     */
+    FeatureFlag,
+    ;
 
     /**
      * @return true if this scope is {@link #Unspecified}
@@ -78,5 +83,12 @@ public enum PropertyScope {
      */
     public boolean isFrameworkLevel() {
         return this == Framework || this == Project || this == Instance;
+    }
+
+    /**
+     * @return true if this scope is ignored for validation
+     */
+    public boolean isDefaultValidationIgnored() {
+        return this == FeatureFlag;
     }
 }

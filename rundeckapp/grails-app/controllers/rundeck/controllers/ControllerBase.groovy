@@ -35,6 +35,7 @@ import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.rundeck.core.auth.app.type.AuthorizingSystem
 import org.rundeck.core.auth.web.WebDefaultParameterNamesMapper
+import rundeck.error_handling.InvalidParameterException
 import rundeck.services.ApiService
 import rundeck.services.UiPluginService
 
@@ -247,6 +248,14 @@ class ControllerBase {
      */
     def handleMissingParameter(MissingParameter notFound){
         rundeckExceptionHandler.handleException(request, response, notFound)
+    }
+
+    /**
+     * Handle invalidParameterException
+     * @param invalidParameterException exception to handle
+     */
+    def handleMissingParameter(InvalidParameterException invalidParameterException){
+        rundeckExceptionHandler.handleException(request, response, invalidParameterException)
     }
 
     /**

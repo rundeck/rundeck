@@ -1,0 +1,119 @@
+description: admin project
+context:
+  application: 'rundeck'
+for:
+  project:
+    - equals:
+        name: NavSidebarSpec
+      allow: [read,admin]
+by:
+  group:
+  - AuthTest1
+---
+description: read only project
+context:
+  application: 'rundeck'
+for:
+  project:
+    - equals:
+        name: NavSidebarSpec
+      allow: [read]
+by:
+  group:
+  - AuthTest2
+---
+description: delete project
+context:
+  application: 'rundeck'
+for:
+  project:
+    - equals:
+        name: NavSidebarSpec
+      allow: [read,delete]
+by:
+  group:
+  - AuthTest3
+---
+description: export project
+context:
+  application: 'rundeck'
+for:
+  project:
+    - equals:
+        name: NavSidebarSpec
+      allow: [read,export]
+by:
+  group:
+  - AuthTest4
+---
+description: import project
+context:
+  application: 'rundeck'
+for:
+  project:
+    - equals:
+        name: NavSidebarSpec
+      allow: [read,import]
+by:
+  group:
+  - AuthTest5
+---
+description: configure project
+context:
+  application: 'rundeck'
+for:
+  project:
+    - equals:
+        name: NavSidebarSpec
+      allow: [read,configure]
+by:
+  group:
+  - AuthTest6
+---
+
+
+description: read project acl
+context:
+  application: 'rundeck'
+for:
+  project:
+    - equals:
+        name: NavSidebarSpec
+      allow: [read]
+  project_acl:
+    - equals:
+        name: NavSidebarSpec
+      allow: [read]
+by:
+  group:
+  - AuthTest7
+---
+description: admin project acl
+context:
+  application: 'rundeck'
+for:
+  project:
+    - equals:
+        name: NavSidebarSpec
+      allow: [read]
+  project_acl:
+    - equals:
+        name: NavSidebarSpec
+      allow: [admin]
+by:
+  group:
+  - AuthTest8
+---
+
+description: app_admin project
+context:
+  application: 'rundeck'
+for:
+  project:
+    - equals:
+        name: NavSidebarSpec
+      allow: [read,app_admin]
+by:
+  group:
+  - AuthTest9
+---

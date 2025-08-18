@@ -39,6 +39,7 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
+import lombok.Getter;
 import org.rundeck.app.spi.Services;
 import org.rundeck.core.execution.ExecCommand;
 import org.rundeck.core.execution.ScriptCommand;
@@ -60,9 +61,12 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicProperties {
+    public static final String DEPRECATED_CONFIGURATION_MODE = "NodeStepPluginAdapter.DeprecatedConfigurationMode";
+    public static final String SKIP = "skip";
     protected static Logger  log = LoggerFactory.getLogger(NodeStepPluginAdapter.class.getName());
-    private          String  serviceName;
-    private          boolean blankIfUnexpanded;
+    @Getter private String serviceName;
+    private boolean blankIfUnexpanded;
+    @Getter private NodeStepPlugin plugin;
 
     @Override
     public Description getDescription() {
@@ -92,8 +96,6 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
         return null;
     }
 
-    private NodeStepPlugin plugin;
-
     public NodeStepPluginAdapter(final NodeStepPlugin plugin) {
         this(ServiceNameConstants.WorkflowNodeStep, plugin, true);
     }
@@ -112,15 +114,6 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
     public static boolean canAdaptType(Class<?> testType){
         return NodeStepPlugin.class.isAssignableFrom(testType);
     }
-
-    public String getServiceName() {
-        return serviceName;
-    }
-
-    public void setServiceName(String serviceName) {
-        this.serviceName = serviceName;
-    }
-
 
     public static class ConvertToNodeStepExecutor
             implements Converter<NodeStepPlugin, NodeStepExecutor>
@@ -157,13 +150,31 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
 
         final String providerName = item.getNodeStepType();
         final PluginStepContext pluginContext = PluginStepContextImpl.from(context);
+        Map<String, Object> config;
         final Map<String, Object> instanceConfiguration = createConfig(context, item, node);
+        final Description description = getDescription();
 
-        final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(context,
-                instanceConfiguration,
-                getServiceName(),
-                providerName);
-        Map<String, Object>  config =  PluginAdapterUtility.configureProperties(resolver, getDescription(), plugin, PropertyScope.InstanceOnly);
+        if (skipDeprecatedConfiguration(description)) {
+            //configuration mode that does not supply config map, and relies on preconfigured plugin instance or
+            // Configurable behavior.
+            config = null;
+        } else {
+            //deprecated configuration mode:
+            // the plugin may already be configured, however the configuration data is reloaded/applied
+            // in order to define the configuration Map that is passed as parameter to the plugin.
+            final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(
+                    context,
+                    instanceConfiguration,
+                    getServiceName(),
+                    providerName
+            );
+            config = PluginAdapterUtility.configureProperties(
+                    resolver,
+                    getDescription(),
+                    plugin,
+                    PropertyScope.InstanceOnly
+            );
+        }
 
         try {
             plugin.executeNodeStep(pluginContext, config, node);
@@ -187,6 +198,11 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
                                           node);
         }
         return new NodeStepResultImpl(node);
+    }
+
+    private static boolean skipDeprecatedConfiguration(final Description description) {
+        return description.getMetadata() != null &&
+               SKIP.equals(description.getMetadata().get(DEPRECATED_CONFIGURATION_MODE));
     }
 
     public Map<String, Object> createConfig( StepExecutionContext context,
@@ -227,10 +243,6 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
         } else {
             return null;
         }
-    }
-
-    public NodeStepPlugin getPlugin(){
-        return this.plugin;
     }
 
 }

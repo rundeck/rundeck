@@ -1,0 +1,23 @@
+ssh-node:
+  description: "SSH Node for Rundeck"
+  hostname: ssh-node
+  osFamily: unix
+  username: rundeck
+  ssh-key-storage-path: keys/project/core-sshj-executor-test/ssh-node.key
+  node-executor: sshj-ssh
+  file-copier: sshj-scp
+  ssh-authentication: privateKey
+  tags: executor-test,ssh-node,auth-method-key
+
+password-node:
+  description: "Password Node for Rundeck"
+  hostname: ssh-node
+  osFamily: unix
+  username: rundeck
+  node-executor: sshj-ssh
+  file-copier: sshj-scp
+  ssh-authentication: password
+  ssh-password-storage-path: keys/project/core-sshj-executor-test/ssh-node.pass
+  sudo-password-storage-path: keys/project/core-sshj-executor-test/ssh-node.pass
+  sudo-command-enabled: 'true'
+  tags: executor-test,ssh-node,auth-method-password

@@ -1,0 +1,41 @@
+<joblist>
+  <job>
+    <defaultTab>nodes</defaultTab>
+    <description></description>
+    <dispatch>
+      <excludePrecedence>true</excludePrecedence>
+      <keepgoing>false</keepgoing>
+      <rankOrder>ascending</rankOrder>
+      <successOnEmptyNodeFilter>false</successOnEmptyNodeFilter>
+      <threadcount>1</threadcount>
+    </dispatch>
+    <executionEnabled>true</executionEnabled>
+    <id>fbf165bd-b5d9-44a7-98b9-fb8aa273ff9d</id>
+    <loglevel>INFO</loglevel>
+    <name>j1</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <nodefilters>
+      <filter>name: password-node </filter>
+    </nodefilters>
+    <nodesSelectedByDefault>true</nodesSelectedByDefault>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <schedules />
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>echo example</exec>
+      </command>
+      <command>
+        <exec>sudo echo example</exec>
+      </command>
+      <command>
+        <fileExtension>.sh</fileExtension>
+        <script><![CDATA[whoami]]></script>
+        <scriptargs />
+        <scriptinterpreter>sudo su - root</scriptinterpreter>
+      </command>
+    </sequence>
+    <timeout>10s</timeout>
+    <uuid>fbf165bd-b5d9-44a7-98b9-fb8aa273ff9d</uuid>
+  </job>
+</joblist>

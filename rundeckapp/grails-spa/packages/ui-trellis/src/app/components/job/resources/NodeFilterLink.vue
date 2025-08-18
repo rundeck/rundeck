@@ -1,18 +1,19 @@
 <template>
-  <a :href="href" class="xnodefilterlink" @click.prevent="handleClick">
+  <a
+    :href="href"
+    :data-testid="dataTestId"
+    class="xnodefilterlink"
+    @click.prevent="handleClick"
+  >
     <slot name="prefix"></slot>
     <slot>{{ getText() }}</slot>
     <slot name="suffix"></slot>
   </a>
 </template>
 <script lang="ts">
-import { _genUrl } from "../../../utilities/genUrl";
+import { _genUrl } from "../../../../library/utilities/genUrl";
 import { defineComponent } from "vue";
-
 import { getRundeckContext, url } from "../../../../library";
-
-const rdBase = getRundeckContext().rdBase;
-const project = getRundeckContext().projectName;
 
 export default defineComponent({
   name: "NodeFilterLink",
@@ -49,6 +50,12 @@ export default defineComponent({
     },
   },
   emits: ["nodefilterclick"],
+  data() {
+    return {
+      project: getRundeckContext().projectName,
+    };
+  },
+
   computed: {
     filterParam() {
       return this.exclude ? "filterExclude" : "filter";
@@ -61,10 +68,13 @@ export default defineComponent({
       }
       return params;
     },
+    dataTestId() {
+      return "nfl-" + this.sanitizeText(this.getText());
+    },
     href() {
       return url(
         _genUrl(
-          "/project/" + project + "/nodes",
+          "/project/" + this.project + "/nodes",
           Object.assign({}, this.filterParamValues),
         ),
       ).href;
@@ -74,7 +84,11 @@ export default defineComponent({
     handleClick() {
       this.$emit("nodefilterclick", this.filterParamValues);
     },
-
+    sanitizeText(text: string | undefined): string {
+      // replace non-alphanumeric characters with underscores to ensure the text is safe
+      // to use as a property value
+      return text ? text.replace(/[^a-zA-Z0-9-_]/g, "_") : "";
+    },
     getText() {
       if (this.text) {
         return this.text;

@@ -257,6 +257,8 @@ const messages = {
   refresh: "rafra\u00eechir",
   "save.filter.ellipsis": "Enregistrer le filtre \u2026",
   "search.ellipsis": "Rechercher\u2026",
+  "ScheduledExecution.page.edit.title": "Modifier le traitement",
+  "ScheduledExecution.page.create.title": "Cr\u00e9er un nouveau traitement",
   "scheduledExecution.property.defaultTab.label": "Onglet par d\u00e9faut",
   "scheduledExecution.property.defaultTab.description":
     "L\u02bconglet par d\u00e9faut \u00e0 afficher lorsque vous suivez une ex\u00e9cution.",

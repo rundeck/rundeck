@@ -22,6 +22,13 @@ configurations{
 
 dependencies {
     implementation(project(":core"))
+    pluginLibs('com.kohlschutter.junixsocket:junixsocket-core:2.10.1')
+    pluginLibs("com.github.mwiede:jsch:${mwiedeJschVersion}")
+    pluginLibs('org.apache.ant:ant-jsch:1.10.14'){
+        //ant is part of core
+        exclude(group: 'org.apache.ant', module: 'ant')
+        exclude(group: 'com.jcraft', module: 'jsch')
+    }
 
     testImplementation 'junit:junit:4.13.2',
             'org.mockito:mockito-all:1.10.19'
@@ -56,6 +63,7 @@ jar {
         attributes 'Rundeck-Plugin-Tags': 'java,executor'
         def libList = configurations.pluginLibs.collect { 'lib/' + it.name }.join(' ')
         attributes 'Rundeck-Plugin-Libs': "${libList}"
+        attributes 'Rundeck-Plugin-Libs-Load-First': "false"
     }
 }
 

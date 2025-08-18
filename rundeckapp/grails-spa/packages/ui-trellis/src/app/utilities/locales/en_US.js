@@ -9,12 +9,6 @@ const messages = {
     "Dispatch to Nodes": "Dispatch to Nodes",
     Nodes: "Nodes",
   },
-  uiv: {
-    modal: {
-      cancel: "Cancel",
-      ok: "OK",
-    },
-  },
   cron: {
     section: {
       0: "Seconds",
@@ -149,6 +143,9 @@ const messages = {
   "info.newexecutions.since.0":
     "1 New Result. Click to load. | {0} New Results. Click to load.",
   "In the last Day": "In the last Day",
+  "project.activitySummary.failedCount": "({0} Failed)",
+  "project.activitySummary.userCount": "by {count} {users}:",
+  "users.plural": "User|Users",
   Referenced: "Referenced",
   "job.has.been.deleted.0": "(Job {0} has been deleted)",
   Filters: "Filters",
@@ -257,6 +254,8 @@ const messages = {
   refresh: "refresh",
   "search.ellipsis": "Search\u2026",
   "save.filter.ellipsis": "Save Filter",
+  "ScheduledExecution.page.edit.title": "Edit Job",
+  "ScheduledExecution.page.create.title": "Create New Job",
   "scheduledExecution.property.defaultTab.label": "Default Tab",
   "scheduledExecution.property.defaultTab.description":
     "Default tab to display when you follow an execution.",
@@ -489,6 +488,8 @@ const messages = {
   "scheduledExecution.action.download.button.label": "Download Definition",
   "scheduledExecution.action.downloadformat.button.label":
     "Download Job definition in {0}",
+  "scheduledExecution.action.activity.button.label":
+    "View Activity for this Job",
   "scheduledExecution.action.delete.button.label": "Delete this Job",
   "scheduledExecution.action.edit.button.tooltip": "Edit this Job",
   "scheduledExecution.action.duplicate.button.tooltip": "Duplicate Job",
@@ -829,6 +830,212 @@ const messages = {
   "option.view.action.moveUp.title": "Move Up",
   "option.view.action.moveDown.title": "Move Down",
   "option.view.action.drag.title": "Drag to reorder",
+  "pagination.of": "of",
+  uiv: {
+    datePicker: {
+      clear: "Clear",
+      today: "Today",
+      month: "Month",
+      month1: "January",
+      month2: "February",
+      month3: "March",
+      month4: "April",
+      month5: "May",
+      month6: "June",
+      month7: "July",
+      month8: "August",
+      month9: "September",
+      month10: "October",
+      month11: "November",
+      month12: "December",
+      year: "Year",
+      week1: "Mon",
+      week2: "Tue",
+      week3: "Wed",
+      week4: "Thu",
+      week5: "Fri",
+      week6: "Sat",
+      week7: "Sun",
+    },
+    timePicker: {
+      am: "AM",
+      pm: "PM",
+    },
+    modal: {
+      cancel: "Cancel",
+      ok: "OK",
+    },
+    multiSelect: {
+      placeholder: "Select...",
+      filterPlaceholder: "Search...",
+    },
+  },
+  "scheduledExecution.jobName.label": "Job Name",
+  "scheduledExecution.property.description.label": "Description",
+  "job.editor.preview.runbook": "Preview Readme",
+  "choose.action.label": "Choose",
+  "scheduledExecution.property.description.plain.description":
+    "The description will be shown in plain text",
+  "scheduledExecution.property.description.description":
+    "The first line of the description will be shown in plain text, the rest will be rendered with Markdown.\n\n" +
+    "See [Markdown](http://en.wikipedia.org/wiki/Markdown).\n\n" +
+    "Within the extended description you can link to the job using {'`{{job.permalink}}`'} as the URL to the job, e.g. `[run job]({'{{job.permalink}}#runjob'})`\n\n" +
+    "You can add a Readme by using a HR separater `---` by itself on a line, and everything following that will be rendered in a separate tab using [Markdeep](https://casual-effects.com/markdeep).",
+  "scheduledExecution.groupPath.description": "Group is a / separated path",
+  more: "More\u2026",
+  less: "Less\u2026",
+  "job.edit.groupPath.choose.text": "Click on the name of the group to use",
+  "scheduledExecution.property.executionLifecyclePluginConfig.help.text":
+    "Selected Plugins will be enabled for this Job.",
+  Workflow: {
+    label: "Workflow",
+    property: {
+      keepgoing: {
+        true: { description: "Run remaining steps before failing." },
+        false: { description: "Stop at the failed step." },
+        prompt: "If a step fails:",
+      },
+      strategy: {
+        label: "Strategy",
+      },
+    },
+    addStep: "Add a step",
+    logFilters: "Log Filters",
+    addLogFilter: "Add Log Filter",
+    clickToEdit: "Click to edit",
+    edit: "Edit",
+    duplicateStep: "Duplicate this step",
+    itemControls: "Item controls",
+    deleteThisStep: "Delete this step",
+    dragToReorder: "Drag to reorder",
+    clickOnStepType: "Click on a step type to add",
+    editStep: "Edit step",
+    stepLabel: "Step label",
+    noSteps: "No workflow steps",
+    addErrorHandler: "Add Error Handler",
+    errorHandler: "Error handler",
+    errorHandlerDescription:
+      "The error handler will execute if the step fails.",
+    editErrorHandler: "Edit error handler",
+  },
+  "plugin.choose.title": "Choose a Plugin",
+  "plugin.type.WorkflowStep.title.plural": "Workflow Steps",
+  "plugin.type.WorkflowStep.title": "Workflow Step",
+  "plugin.type.WorkflowNodeStep.title.plural": "Node Steps",
+  "plugin.type.WorkflowNodeStep.title": "Node Step",
+  "JobExec.nodeStep.true.label": "Node Step",
+  "step.plugins.filter.prompt": "Search step",
+  "enter.a.step.filter.override": "Enter a step filter string.",
+  "workflow.search.help.string1": "Basic search:",
+  "workflow.search.help.string2": "mystep1",
+  "workflow.search.help.string3":
+    'This will show steps that contains "mystep1" in the title, description, or name.',
+  "workflow.search.help.string4": "Filter by matching a specific field:",
+  "workflow.search.help.string5": "description:",
+  "workflow.search.help.string6": "description=value",
+  "workflow.search.help.string7": "name:",
+  "workflow.search.help.string8": "name=value",
+  "workflow.search.help.string9": "title:",
+  "workflow.search.help.string10": "title=value",
+  "workflow.search.help.string11":
+    "Filter by matching an input property value:",
+  "workflow.search.help.string12": "property description:",
+  "workflow.search.help.string13": "property:description=value",
+  "workflow.search.help.string14": "property title:",
+  "workflow.search.help.string15": "property:title=value",
+  "workflow.search.help.string16": "property name:",
+  "workflow.search.help.string17": "property:name=value",
+  "node.step.plugin.plural": "{0} Node Step Plugins",
+  "workflow.step.plugin.plural": "{0} Workflow Step Plugins",
+  "Workflow.Step.jobreference.title": "Select job by",
+  "Workflow.Step.jobreference.name.label": "Name",
+  "Workflow.Step.jobreference.name.description":
+    "Use Name and group to search the job.",
+  "Workflow.Step.jobreference.uuid.label": "UUID",
+  "Workflow.Step.jobreference.uuid.description":
+    "Use jobs UUID to search the job.",
+  "Workflow.Step.jobreference.name-group.label": "Job Name/Group",
+  "choose.a.job...": "Choose A Job…",
+  "Workflow.Step.jobreference.jobName.help":
+    'Select an existing job by using the Project selector and "Choose a Job..." button above or by typing the job name and/or group in the boxes below.',
+  "scheduledExecution.groupPath.label": "Group Path",
+  "Workflow.Step.uuid.label": "UUID",
+  "Workflow.Step.jobreference.uuid.help":
+    "You can enter a job name or UUID, but if both UUID and job name are specified they must correspond to the same job.",
+  "Workflow.Step.argString.label": "Arguments",
+  "Workflow.Step.jobreference.import.options.label": "Import options?",
+  "Workflow.Step.jobreference.import.options.help":
+    "Pass as argument the parent job option values that match the options on the referenced job.",
+  "Workflow.Step.jobreference.ignore.notifications.label": "Skip notifications",
+  "Workflow.Step.jobreference.ignore.notifications.help":
+    "Skip any notification in the referenced job.",
+  "Workflow.Step.jobreference.fail.on.disabled.label":
+    "Fail on disabled execution?",
+  "Workflow.Step.jobreference.fail.on.disabled.help":
+    "If the referenced job has disabled execution, it will be considered a failure.",
+  "Workflow.Step.jobreference.child.nodes.label": "Use referenced job's nodes.",
+  "Workflow.Step.jobreference.child.nodes.help":
+    "If the referenced job is from another project, you can use referenced job node list instead of the parent's nodes.",
+  "override.node.filters": "Override Node Filters?",
+  "JobExec.property.nodeFilter.help.description":
+    "Enter a node filter to override the triggered Job's target nodes. If you enter    a new filter string, you can also change the Thread Count, and behavior if the Job    fails for a node.",
+  "scheduledExecution.property.nodeIntersect.label": "Intersection of nodes",
+  "scheduledExecution.property.nodeIntersect.false":
+    "No, use referenced job defined or overridden node filter",
+  "scheduledExecution.property.nodeIntersect.true":
+    "Yes, create node intersection with current job nodes",
+  "node.filter.prompt": "Node Filter",
+  "JobExec.property.nodeThreadcount.null.description":
+    "If blank, use the Thread Count defined for the triggered Job.",
+  "JobExec.property.nodeKeepgoing.null.description":
+    "Maintain the behavior defined for the triggered Job",
+  "Workflow.property.keepgoing.true.description":
+    "Run remaining steps before failing.",
+  "Workflow.property.keepgoing.false.description": "Stop at the failed step.",
+  "JobExec.property.nodeRankOrder.null.description":
+    "Maintain the ordering defined in the triggered Job",
+  "JobExec.nodeStep.title": "Run as a",
+  "JobExec.nodeStep.true.description":
+    "Executes for each Node and allows use of node context variables as arguments to the job.",
+  "JobExec.nodeStep.false.label": "Workflow Step",
+  "JobExec.nodeStep.false.description":
+    "Executes only once and has no node context information.",
+  "Workflow.Step.jobreference.argString.placeholder":
+    "Enter arguments, e.g. -option1 value -option2 value",
+  "Workflow.Step.jobreference.uuid.placeholder":
+    "Enter UUID, e.g. 5910b723-2436-4497-96d5-49a08db95d2b",
+  "select.an.existing.job.to.use": "Select an existing Job to use",
+  "plugin.edit.title": "Edit step",
+  "Workflow.step.property.description.placeholder":
+    "Label or description of this step",
+  "enter.a.node.filter.override":
+    "Enter a filter string. Leave blank to use the filter defined for the triggered job.",
+  "notification.create": "Create Notification",
+  "notification.edit": "Edit Notification",
+  "mynode1.mynode2": "mynode1 mynode2",
+  include: "Include",
+  exclude: "Exclude",
+  attribute: "attribute",
+  value: "value",
+  Search: "Search",
+  "step.type.jobreference.project.label": "Current Project ({0})",
+  "no.jobs.in.this.project": "No Jobs in this Project",
+  "JobExec.property.nodeFilter.null.description":
+    "The nodes used will be those defined for the triggered Job.",
+  "commandExec.jobName.blank.message": "Job must be specified",
+  "results.truncated.count.results.shown":
+    "Results truncated. {0} results shown.",
+  "options.label": "Options",
+  "Workflow.stepErrorHandler.keepgoingOnSuccess.label":
+    "Keep going on success.",
+  "Workflow.stepErrorHandler.keepgoingOnSuccess.description":
+    "If the Workflow keepgoing is false, this allows the Workflow to continue when the Error Handler is successful",
+  "Workflow.stepErrorHandler.label.on.error": "on error",
+  "Workflow.stepErrorHandler.label.keep.going.on.success":
+    "keep going on success",
+  "framework.service.WorkflowNodeStep.description":
+    "Runs once for each node in the workflow.",
+  "framework.service.WorkflowStep.description": "Runs only once in a workflow.",
 };
 
 export default messages;

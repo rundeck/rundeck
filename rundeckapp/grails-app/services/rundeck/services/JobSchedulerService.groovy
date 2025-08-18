@@ -251,11 +251,17 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
             if (triggerKey.group == TRIGGER_GROUP_PENDING) {
                 Trigger trigger = quartzScheduler.getTrigger(triggerKey)
                 /** Trigger may have been rescheduled already under heavy activity */
-                if (trigger == null)
+                if (trigger == null) {
                     return
+                }
 
                 Map data = trigger.jobDataMap
-                Instant created = data.get('meta.created') as Instant
+                def value = data.get('meta.created')
+                if(value == null) {
+                    log.warn("No created timestamp found for trigger: $triggerKey")
+                    return
+                }
+                Instant created = value as Instant
 
                 if (created.isBefore(created.minus(2, ChronoUnit.MINUTES)))
                     quartzScheduler.unscheduleJob(triggerKey)

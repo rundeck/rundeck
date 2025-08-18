@@ -121,6 +121,7 @@ export default defineComponent({
   a {
     flex: initial;
     margin-right: 0.5em;
+
     &.nodedesc {
       flex: auto;
     }

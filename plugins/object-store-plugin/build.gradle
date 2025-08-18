@@ -17,18 +17,30 @@ configurations{
     }
 }
 
+configurations.all {
+    resolutionStrategy {
+        // Force safe commons-compress versions to fix CVE-2024-25710
+        // Only force artifacts that exist for version 1.21
+        force "org.apache.commons:commons-compress:${commonsCompressVersion}"
+    }
+}
+
+
 dependencies {
     // Use the latest Groovy version for building this library
     implementation "org.codehaus.groovy:groovy:${groovyVersion}"
-    pluginLibs("io.minio:minio:7.1.0") {
+    pluginLibs("io.minio:minio:8.5.12") {
         exclude(group: 'com.fasterxml.jackson.core')
         exclude(group: 'com.google.guava', module: 'guava')
+        exclude(group: 'commons-io', module: 'commons-io')
     }
+
+    implementation "org.apache.commons:commons-compress:${commonsCompressVersion}"
 
     // Use the awesome Spock testing and specification framework
     testImplementation "org.spockframework:spock-core:${spockVersion}"
     testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"
-    testImplementation "org.testcontainers:testcontainers:1.16.0"
+    testImplementation "org.testcontainers:testcontainers:${testContainersVersion}"
 }
 
 repositories {

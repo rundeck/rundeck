@@ -82,6 +82,11 @@ RUNDECK_JAAS_FILE_*
 By convention the module name matches the name in the docs, and the config keys match
 the config options listed in the docs uppercase, and all one word.
 
+## Container Plugins
+In certain containerized deployments, you may wish to mount the dynamic portions of Rundeck's filesystem on a separate volume.
+To include external plugins in such a deployment, place them in the `/home/rundeck/container-plugins/` directory and 
+they will be included during container startup.
+
 ## Extending Configuration
 [Remco](https://github.com/HeavyHorst/remco) is used to generate configuration files
 from templates. It supports different key/value sources such as vault, etcd, and dynamodb.
@@ -217,12 +222,12 @@ Specify location of a static tokens file. See [configuration file reference](htt
 ### `RUNDECK_SECURITY_HTTPHEADERS_PROVIDER_XCTO_ENABLED=true`
 ### `RUNDECK_SECURITY_HTTPHEADERS_PROVIDER_XXSSP_ENABLED=true`
 ### `RUNDECK_SECURITY_HTTPHEADERS_PROVIDER_XFO_ENABLED=true`
+### `RUNDECK_SECURITY_HTTPHEADERS_PROVIDER_CACHECONTROL_ENABLED=true`
 ### `RUNDECK_SECURITY_HTTPHEADERS_PROVIDER_CSP_ENABLED=true`
 ### `RUNDECK_SECURITY_HTTPHEADERS_PROVIDER_CSP_CONFIG_INCLUDEXCSPHEADER=false`
 ### `RUNDECK_SECURITY_HTTPHEADERS_PROVIDER_CSP_CONFIG_INCLUDEXWKCSPHEADER=false`
 ### `RUNDECK_SECURITY_HTTPHEADERS_PROVIDER_CSP_CONFIG_POLICY`
-Controls for CSP headers.
-
+Controls for CSP and other security headers.
 
 ### `RUNDECK_MAIL_SMTP_HOST`
 ### `RUNDECK_MAIL_SMTP_PORT`

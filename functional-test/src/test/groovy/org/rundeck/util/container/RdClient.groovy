@@ -23,25 +23,32 @@ import java.util.function.Consumer
 
 @CompileStatic
 class RdClient {
+
+    /**
+     *  The current (latest) released version of the Rundeck API
+     */
+    public static final int API_CURRENT_VERSION = 53
+
     final ObjectMapper mapper = new ObjectMapper()
     String baseUrl
     OkHttpClient httpClient
-    int apiVersion = 48
-    static final finalApiVersion = 48
+
+    // Api version used by this client
+    int apiVersion = API_CURRENT_VERSION
 
     RdClient(String baseUrl, OkHttpClient httpClient) {
         this.baseUrl = baseUrl
         this.httpClient = httpClient
     }
 
-    static RdClient create(final String baseUrl, final String apiToken) {
+    static RdClient create(final String baseUrl, final String apiToken, Map<String, Integer> config = Collections.emptyMap() ) {
         new RdClient(
                 baseUrl,
                 new OkHttpClient.Builder().
                         addInterceptor(new HeaderInterceptor("X-Rundeck-Auth-token", apiToken)).
-                        connectTimeout(25, TimeUnit.SECONDS).
-                        readTimeout(25, TimeUnit.SECONDS).
-                        writeTimeout(25, TimeUnit.SECONDS).
+                        connectTimeout(config.getOrDefault("connectTimeout", 25), TimeUnit.SECONDS).
+                        readTimeout(config.getOrDefault("readTimeout", 25), TimeUnit.SECONDS).
+                        writeTimeout(config.getOrDefault("writeTimeout", 25), TimeUnit.SECONDS).
                         connectionPool(new ConnectionPool(2, 25, TimeUnit.SECONDS)).
                         build()
         )
@@ -144,8 +151,8 @@ class RdClient {
         ).execute()
     }
 
-    Response doPut(final String path, final File file) {
-        RequestBody body = RequestBody.create(file, MediaType.parse("application/zip"))
+    Response doPut(final String path, final File file, final String contentType='application/zip') {
+        RequestBody body = RequestBody.create(file, MediaType.parse(contentType))
         Request request = new Request.Builder()
                 .url(apiUrl(path))
                 .method("PUT", body)

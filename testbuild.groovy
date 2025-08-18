@@ -1,4 +1,7 @@
 #!/usr/bin/env groovy
+import java.util.function.Predicate
+import java.util.zip.ZipEntry
+
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -14,13 +17,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import groovy.cli.commons.CliBuilder
-
 
 //Test the result of the build to verify expected artifacts are created
 
 cli = new CliBuilder(usage: 'slide')
-cli._(longOpt: 'buildType', args: 1, 'Build type [development | release]')
+cli._(longOpt: 'buildType', args: 1, '-buildType [development | release]')
 def options = cli.parse(args)
 
 def target="build/libs"
@@ -44,11 +45,14 @@ if(options.buildType == 'development'){
 
 def debug=Boolean.getBoolean('debug')?:("-debug" in args)
 
+def gprops=new Properties()
+new File('gradle.properties').withReader(gprops.&load)
+
 //versions of dependency we want to verify
 def versions=[
-        jetty:'9.4.53.v20231009',
+        jetty: gprops['jetty.version'],
         servlet:'api-3.1.0',
-        log4j:'2.17.1'
+        log4j: gprops['log4j2.version']
 ]
 
 def warFile= "rundeckapp/${target}/rundeck-${version}.war"
@@ -56,7 +60,7 @@ def coreJarFile = "core/${target}/rundeck-core-${version}.jar"
 //def launcherJarFile = "rundeck-launcher/launcher/${target}/rundeck-launcher-${version}.jar"
 
 //the list of bundled plugins to verify in the war and jar
-def plugins=['script','script-node-step','stub','localexec','copyfile','job-state','flow-control','jasypt-encryption','git','object-store','azure-object-store','orchestrator', 'source-refresh','upvar', 'audit-logging','jsch']
+def plugins=['script','script-node-step','stub','localexec','copyfile','job-state','flow-control','jasypt-encryption','git','object-store','orchestrator', 'source-refresh','upvar', 'audit-logging','jsch']
 //load build.yaml from rundeckcore
 def corebuild = new File('build.yaml').withReader{reader->
     new groovy.yaml.YamlSlurper().parse(reader)
@@ -129,7 +133,8 @@ def manifest=[
         "WEB-INF/lib/log4j-core-${versions.log4j}.jar",
         "WEB-INF/lib/log4j-slf4j-impl-${versions.log4j}.jar",
         "WEB-INF/lib/slf4j-api-1.7.36.jar",
-        "WEB-INF/lib/libpam4j-1.11.jar"
+        "WEB-INF/lib/libpam4j-1.11.jar",
+        ".*junit.*#!~"
     ],
     "plugins/script-node-step-plugin/${target}/rundeck-script-node-step-plugin-${version}.jar":[:],
     "plugins/script-plugin/${target}/rundeck-script-plugin-${version}.jar":[:],
@@ -142,7 +147,6 @@ def manifest=[
     "plugins/upvar-plugin/${target}/rundeck-upvar-plugin-${version}.jar":[:],
     "plugins/object-store-plugin/${target}/rundeck-object-store-plugin-${version}.jar":[:],
     "plugins/audit-logging-plugin/${target}/rundeck-audit-logging-plugin-${version}.jar":[:],
-    "plugins/azure-object-store-plugin/${target}/rundeck-azure-object-store-plugin-${version}.jar":[:],
     "plugins/jsch-plugin/${target}/rundeck-jsch-plugin-${version}.jar":[:],
 ]
 def pluginsum=1
@@ -194,7 +198,7 @@ def expect={t,v->
     true
 }
 
-getSha256={fis->
+def getSha256 = { fis ->
     java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
     // FileInputStream fis = new FileInputStream(delegate);
 
@@ -202,14 +206,14 @@ getSha256={fis->
 
     int nread = 0;
     while ((nread = fis.read(dataBytes)) != -1) {
-      md.update(dataBytes, 0, nread);
+        md.update(dataBytes, 0, nread);
     };
     byte[] mdbytes = md.digest();
 
-   //convert the byte to hex format method 2
+    //convert the byte to hex format method 2
     StringBuffer hexString = new StringBuffer();
-    for (int i=0;i<mdbytes.length;i++) {
-      hexString.append(Integer.toHexString(0xFF & mdbytes[i]));
+    for (int i = 0; i < mdbytes.length; i++) {
+        hexString.append(Integer.toHexString(0xFF & mdbytes[i]));
     }
     hexString.toString()
 }
@@ -234,56 +238,77 @@ manifest.each{ fname,mfest->
 }
 
 //test zip contents
-def testZip={ totest ->
-    totest.each{ f,dir->
+def testZip = { totest ->
+    totest.each { f, dir ->
         def z = new java.util.zip.ZipFile(f)
-        def counts=[:]
-        def fverify=true
-        dir.each{ path->
-            if(path==~/^.+(#.+)$/){
+        def counts = [:]
+        def fverify = true
+
+        // map zip entries
+        Map<String, ZipEntry> entryMap = z.entries().collectEntries { [(it.name): it] }
+        dir.each { String path ->
+            if (path ==~ /^.+(#.+)$/) {
                 //verify number of entries
-                def n = path.split('#',2)[1]
-                def dname = path.split('#',2)[0]
-                def found=z.getEntry(dname)
-                if(n==~/^\d+/){
-                    fverify&=require("[${f.basename}] \"${dname}\" MUST exist. Result: (${found?:false})",found)
-                    counts[dname]=[equal:Integer.parseInt(n)]
-                }else if(n=='+'){
-                    fverify&=require("[${f.basename}] \"${dname}\" MUST exist. Result: (${found?:false})",found)
-                    counts[dname]=[atleast:1]
-                }else if(n=='?'){
-                    counts[dname]=[maybe:1]
-                }else if(n.startsWith('#')){
-                    n=n.substring(1)
-                    def sum=getSha256(z.getInputStream(found))
-                    require("[${f.basename}] \"${dname}\" SHA-256 MUST match \"${n}\". Seen: ($sum) Expected: (${sumtest[n]})", sum==sumtest[n])
+                def n = path.split('#', 2)[1]
+                def dname = path.split('#', 2)[0]
+                def notMessage = ""
+                Predicate<Object> check = { it ? true : false }
+
+                // Handle instruction negation
+                if (n.startsWith('!')) {
+                    n = n.substring(1)
+                    check = check.negate()
+                    notMessage = " NOT"
                 }
-            }else{
-                def found=z.getEntry(path)
-                fverify&=require("[${f.basename}] \"${path}\" MUST exist. Result: (${found?:false})",found)
+
+                def found = entryMap.get(dname)
+                if (n ==~ /^\d+/) {
+                    fverify &= require("[${f.basename}] \"${dname}\" MUST${notMessage} exist. Result: (${found ?: false})", check.test(found))
+                    counts[dname] = [equal: Integer.parseInt(n)]
+                } else if (n == '+') {
+                    fverify &= require("[${f.basename}] \"${dname}\" MUST${notMessage} exist. Result: (${found ?: false})", check.test(found))
+                    counts[dname] = [atleast: 1]
+                } else if (n == '?') {
+                    counts[dname] = [maybe: 1]
+                } else if (n == '~') {
+                    found = entryMap.find { it.key =~ /$dname/ }?.value
+                    fverify &= require("[${f.basename}] \"${dname}\" MUST${notMessage} match. Result: (${found ?: false})", check.test(found))
+                } else if (n.startsWith('#')) {
+                    n = n.substring(1)
+                    def sum = getSha256(z.getInputStream(found))
+                    require("[${f.basename}] \"${dname}\" SHA-256 MUST${notMessage} match \"${n}\". Seen: ($sum) Expected: (${sumtest[n]})", check.test(sum == sumtest[n]))
+                } else if (n.isBlank()) {
+                    fverify &= require("[${f.basename}] \"${path}\" MUST${notMessage} exist. Result: (${found ?: false})", check.test(found))
+                } else {
+                    fail("[${f.basename}] \"${path}\" invalid check command: ${n}")
+                }
+            } else {
+                def found = entryMap.get(path)
+                fverify &= require("[${f.basename}] \"${path}\" MUST exist. Result: (${found ?: false})", found)
             }
         }
+
         //verify any counts
-        def fcounts=[:]
-        def path=[]
-        z.entries().findAll{!it.isDirectory()}.each{e->
+        def fcounts = [:]
+        def path = []
+        z.entries().findAll { !it.isDirectory() }.each { e ->
             //println e.name
-            counts.each{n,v->
-                if(dirname(e.name)==n){
-                    fcounts[n]=1+(fcounts[n]?:0)
+            counts.each { n, v ->
+                if (dirname(e.name) == n) {
+                    fcounts[n] = 1 + (fcounts[n] ?: 0)
                 }
             }
         }
-        counts.each{n,c->
-            if(c['equal']){
-                fverify&=require("[${f.basename}] \"${n}\" MUST have ==${c.equal} files. Result: ${fcounts[n]?:0}",c.equal==fcounts[n])
-            }else if(c['atleast']){
-                fverify&=require("[${f.basename}] \"${n}\" MUST have >=${c.atleast} files. Result: ${fcounts[n]?:0}",c.atleast<=fcounts[n])
-            }else if(c['maybe']){
-                fverify&=expect("[${f.basename}] \"${n}\" SHOULD have >=${c.maybe} files. Result: ${fcounts[n]?:0}",fcounts[n]>0)
+        counts.each { n, c ->
+            if (c['equal']) {
+                fverify &= require("[${f.basename}] \"${n}\" MUST have ==${c.equal} files. Result: ${fcounts[n] ?: 0}", c.equal == fcounts[n])
+            } else if (c['atleast']) {
+                fverify &= require("[${f.basename}] \"${n}\" MUST have >=${c.atleast} files. Result: ${fcounts[n] ?: 0}", c.atleast <= fcounts[n])
+            } else if (c['maybe']) {
+                fverify &= expect("[${f.basename}] \"${n}\" SHOULD have >=${c.maybe} files. Result: ${fcounts[n] ?: 0}", fcounts[n] > 0)
             }
         }
-        require("${f}: was${fverify?'':' NOT'} verified",fverify)
+        require("${f}: was${fverify ? '' : ' NOT'} verified", fverify)
     }
 }
 testZip(ziptest)

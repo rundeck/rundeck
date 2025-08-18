@@ -11,6 +11,7 @@ class ProjectImportPage extends BasePage{
     String loadPath = ""
     By importButtonBy = By.id("uploadFormUpload")
     By importAlertMessageBy = By.cssSelector(".alert")
+    By fileInputBy = By.id("uploadFormFileInput")
 
     ProjectImportPage(SeleniumContext context) {
         super(context)
@@ -35,5 +36,10 @@ class ProjectImportPage extends BasePage{
      */
     WebElement getImportAlertMessage(){
         (el importAlertMessageBy)
+    }
+
+    /** Return WebElement for the file input */
+    WebElement getFileInput() {
+        (el fileInputBy)
     }
 }

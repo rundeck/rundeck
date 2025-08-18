@@ -24,7 +24,10 @@ import com.dtolabs.rundeck.app.gui.UserSummaryMenuItem
 import com.dtolabs.rundeck.app.internal.framework.ConfigFrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
+import com.dtolabs.rundeck.app.internal.framework.NodeExecutorServiceFactory
+import com.dtolabs.rundeck.app.internal.framework.FeatureToggleNodeExecutorProfile
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
+import com.dtolabs.rundeck.app.internal.framework.RundeckNodeExecutorProfile
 import com.dtolabs.rundeck.app.tree.DelegateStorageTree
 import com.dtolabs.rundeck.app.tree.RundeckBootstrapStorageTreeUpdater
 import com.dtolabs.rundeck.app.tree.JasyptEncryptionEnforcerUpdaterConfig
@@ -41,6 +44,9 @@ import com.dtolabs.rundeck.core.common.FrameworkExecutionProviderServices
 import com.dtolabs.rundeck.core.common.FrameworkFactory
 import com.dtolabs.rundeck.core.common.NodeSupport
 import com.dtolabs.rundeck.core.common.ServiceSupport
+import com.dtolabs.rundeck.core.config.Features
+import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor
+import com.dtolabs.rundeck.core.execution.impl.local.NewLocalNodeExecutor
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileManagerService
 import com.dtolabs.rundeck.core.execution.ExecutionServiceImpl
 import com.dtolabs.rundeck.core.execution.service.NodeSpecifiedPlugins
@@ -49,6 +55,7 @@ import com.dtolabs.rundeck.core.plugins.JarPluginScanner
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.plugins.ScriptPluginScanner
 import com.dtolabs.rundeck.core.plugins.WatchingPluginDirProvider
+import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterImpl
 import com.dtolabs.rundeck.core.resources.format.ResourceFormats
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.storage.KeyStorageContextProvider
@@ -135,8 +142,10 @@ import org.rundeck.app.data.workflow.WorkflowDataWorkflowExecutionItemFactory
 import org.rundeck.app.quartz.ExecutionJobQuartzJobSpecifier
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
+import org.rundeck.app.spi.features.FeatureInfo
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.security.*
+import org.rundeck.web.DefaultRequestIdProvider
 import org.rundeck.web.ExceptionHandler
 import org.rundeck.web.WebUtil
 import org.rundeck.web.infosec.ContainerPrincipalRoleSource
@@ -301,9 +310,34 @@ beans={
     rundeckNodeSpecifiedProviderNames(NodeSpecifiedPlugins){
         projectManager = ref('projectManagerService')
         frameworkNodes = ref('rundeckNodeSupport')
+        nodeExecutorService = ref('rundeckNodeExecutorService')
     }
+    rundeckBaseNodeExecutorProfile(RundeckNodeExecutorProfile){
+        defaultLocalProvider = LocalNodeExecutor.SERVICE_PROVIDER_TYPE
+        defaultRemoteProvider = "sshj-ssh"
+        localRegistry = [
+                (LocalNodeExecutor.SERVICE_PROVIDER_TYPE): LocalNodeExecutor,
+                (NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE): NewLocalNodeExecutor,
+        ]
+    }
+    rundeckNewLocalNodeExecutorProfile(RundeckNodeExecutorProfile){
+        defaultLocalProvider = NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE
+        defaultRemoteProvider = "sshj-ssh"
+        localRegistry = [
+            (LocalNodeExecutor.SERVICE_PROVIDER_TYPE): LocalNodeExecutor,
+            (NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE): NewLocalNodeExecutor,
+        ]
+    }
+    rundeckNodeExecutorProfile(FeatureToggleNodeExecutorProfile){
+        baseProfile = ref('rundeckBaseNodeExecutorProfile')
+        toggleProfile = ref('rundeckNewLocalNodeExecutorProfile')
+        featureService = ref('featureService')
+        feature = Features.NEW_LOCAL_NODE_EXECUTOR
+    }
+    rundeckNodeExecutorService(NodeExecutorServiceFactory)
     rundeckBaseFrameworkExecutionServices(BaseFrameworkExecutionServices){
         framework = ref('rundeckFramework')
+        nodeExecutorService = ref('rundeckNodeExecutorService')
     }
     rundeckBaseFrameworkExecutionProviders(BaseFrameworkExecutionProviders){
         executionServices = ref('rundeckBaseFrameworkExecutionServices')
@@ -343,13 +377,15 @@ beans={
         clusterInfoServiceDelegate = ref('frameworkService')
     }
     rundeckApiInfoService(ApiInfo)
+    rundeckFeatureInfoService(FeatureInfo)
 
     rundeckSpiBaseServicesProvider(RundeckSpiBaseServicesProvider) {
         services = [
             (ClusterInfoService)         : ref('clusterInfoService'),
             (ApiInfo)                    : ref('rundeckApiInfoService'),
             (ExecutionFileManagerService): ref('logFileStorageService'),
-            (ResourceFormats)            : ref('pluginService')
+            (ResourceFormats)            : ref('pluginService'),
+            (FeatureInfo)                : ref('rundeckFeatureInfoService'),
         ]
     }
 
@@ -463,6 +499,10 @@ beans={
                 ref('jarPluginScanner'),
                 ref('scriptPluginScanner')
         ]
+    }
+
+    rundeckPluginAdapter(PluginAdapterImpl){
+        featureInfoService = ref('rundeckFeatureInfoService')
     }
 
     rundeckFrameworkExecutionProviderServices(FrameworkExecutionProviderServices){
@@ -592,6 +632,7 @@ beans={
 
     auditEventsService(AuditEventsService) {
         frameworkService = ref('frameworkService')
+        metricService = ref('metricService')
     }
 
     scmJobImporter(ScmJobImporter)
@@ -762,6 +803,7 @@ beans={
         pluginDirectory=pluginDir
         pluginCacheDirectory=cacheDir
         rundeckPluginBlocklist=ref("rundeckPluginBlocklist")
+        rundeckPluginAdapter = ref('rundeckPluginAdapter')
     }
     hMacSynchronizerTokensManager(HMacSynchronizerTokensManager){
 
@@ -935,6 +977,8 @@ beans={
         workflowService = ref('workflowService')
     }
     quartzJobSpecifier(ExecutionJobQuartzJobSpecifier)
+
+    requestIdProvider(DefaultRequestIdProvider)
 
     //provider implementations
     tokenDataProvider(GormTokenDataProvider)

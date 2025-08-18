@@ -1,15 +1,10 @@
 <template>
-  <div>
-    <options-editor
-      :options-data="optionsData"
-      v-if="optionsData"
-      @changed="changed"
-    />
-    <json-embed
-      :output-data="updatedData.options"
-      field-name="jobOptionsJson"
-    />
-  </div>
+  <options-editor
+    v-if="optionsData"
+    :options-data="optionsData"
+    @changed="changed"
+  />
+  <json-embed :output-data="updatedData.options" field-name="jobOptionsJson" />
 </template>
 <script lang="ts">
 import { cloneDeep } from "lodash";
@@ -36,22 +31,6 @@ export default defineComponent({
       subs: {},
     };
   },
-  methods: {
-    changed(data) {
-      if (!_.isEqual(data, this.updatedData.options)) {
-        this.updatedData.options = cloneDeep(data);
-        //nb: hook to indicate job was editted, defined in jobedit.js
-        //@ts-ignore
-        if (
-          window.hasOwnProperty("jobWasEdited") &&
-          typeof window.jobWasEdited === "function"
-        ) {
-          //@ts-ignore
-          window.jobWasEdited();
-        }
-      }
-    },
-  },
   async mounted() {
     if (getRundeckContext() && getRundeckContext().data) {
       this.optionsData = getRundeckContext().data.optionsData;
@@ -69,6 +48,22 @@ export default defineComponent({
       "job-edit-schedules-changed",
       this.subs["job-edit-schedules-changed"],
     );
+  },
+  methods: {
+    changed(data) {
+      if (!_.isEqual(data, this.updatedData.options)) {
+        this.updatedData.options = cloneDeep(data);
+        //nb: hook to indicate job was editted, defined in jobedit.js
+        //@ts-ignore
+        if (
+          window.hasOwnProperty("jobWasEdited") &&
+          typeof window.jobWasEdited === "function"
+        ) {
+          //@ts-ignore
+          window.jobWasEdited();
+        }
+      }
+    },
   },
 });
 </script>

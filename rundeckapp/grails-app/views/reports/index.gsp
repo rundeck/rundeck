@@ -71,11 +71,20 @@ saved.filters
 search
 "/>
     <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(
-            context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: projectName, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])}"/>
-    <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name:
-            projectName, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
+            context: AuthConstants.CTX_APPLICATION,
+            type: AuthConstants.TYPE_PROJECT,
+            name: projectName,
+            action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
+            any: true
+    )}"/>
+    <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(
+            context: AuthConstants.CTX_APPLICATION,
+            type: AuthConstants.TYPE_PROJECT,
+            name: projectName,
+            action: AuthConstants.ACTION_DELETE_EXECUTION
+    ) || projAdminAuth}"/>
     <cfg:setVar var="defaultMax" defaultValue="${30}" key="pagination.default.max"/>
-    <g:set var="pageMax" value="${params.max?params.int('max',defaultMax):defaultMax}"/>
+    <g:set var="pageMax" value="${params.max?params.int('max'):defaultMax}"/>
     <g:javascript>
     window._rundeck = Object.assign(window._rundeck || {}, {
         data:{
@@ -84,7 +93,6 @@ search
             jobslistDateFormatMoment:"${enc(js:g.message(code:'jobslist.date.format.ko'))}",
             runningDateFormatMoment:"${enc(js:g.message(code:'jobslist.running.format.ko'))}",
             activityUrl: appLinks.reportsEventsAjax,
-            nowrunningUrl: "${createLink(uri:"/api/${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}/project/${projectName}/executions/running")}",
             bulkDeleteUrl: appLinks.apiExecutionsBulkDelete,
             activityPageHref:"${enc(js:createLink(controller:'reports',action:'index',params:[project:projectName]))}",
             sinceUpdatedUrl:"${enc(js:g.createLink(controller:'reports',action: 'since.json', params: [project:projectName]))}",
@@ -108,7 +116,7 @@ search
 
         <div class="row vue-project-activity">
             <div class="col-xs-12">
-                <div class="card">
+                <div class="card" id="activity_section">
                     <div class="card-content">
                         <activity-list :event-bus="EventBus"></activity-list>
                     </div>

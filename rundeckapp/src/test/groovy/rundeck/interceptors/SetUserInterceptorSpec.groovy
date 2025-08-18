@@ -3,6 +3,7 @@ package rundeck.interceptors
 import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
+import org.rundeck.app.auth.RequiredRoleProvider
 import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
 import grails.testing.gorm.DataTest
 import grails.testing.web.interceptor.InterceptorUnitTest
@@ -138,11 +139,14 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         setup:
         defineBeans {
             rundeckConfig(RundeckConfig)
+            testRequiredRoleProvider(TestRequireRoleProvider) {
+                requiredRoles = testRequiredRoles
+            }
             configurationService(ConfigurationService) {
                 grailsApplication = grailsApplication
             }
-
         }
+
         GroovyMock(ConfigurationService, global: true)
 
         mockCodec(URIComponentCodec)
@@ -176,15 +180,17 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         flash.loginErrorCode==code
 
         where:
-        commaSeparatedUserRoles | groups           | userAllowed | code
-        "admin"                 |["admin", "user"] | true        | null
-        "user"                  |["admin", "user"] | true        | null
-        "user    "              |["admin", "user"] | true        | null
-        "    user    "          |["admin", "user"] | true        | null
-        "admin, user"           |["admin"]         | true        | null
-        "admin,user"            |["admin", "user"] | true        | null
-        "admin,user,other"      |["allowed"]       | false       | 'user.not.allowed'
-        "admin,user"            |["anyOfThem"]     | false       | 'user.not.allowed'
+        commaSeparatedUserRoles | groups           | userAllowed | testRequiredRoles | code
+        "admin"                 |["admin", "user"] | true        | []                | null
+        "user"                  |["admin", "user"] | true        | []                | null
+        "user    "              |["admin", "user"] | true        | []                | null
+        "    user    "          |["admin", "user"] | true        | []                | null
+        "admin, user"           |["admin"]         | true        | []                | null
+        "admin,user"            |["admin", "user"] | true        | []                | null
+        ""                      |["extra", "user"] | true        | ["extra"]         | null
+        ""                      |["admin", "user"] | false       | ["extra"]         | 'user.not.allowed'
+        "admin,user,other"      |["allowed"]       | false       | []              | 'user.not.allowed'
+        "admin,user"            |["anyOfThem"]     | false       | []              | 'user.not.allowed'
 
     }
 
@@ -267,6 +273,12 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
 
     def "request without remote auth info will be invalid"(){
         given:
+            defineBeans {
+                rundeckConfig(RundeckConfig)
+                configurationService(ConfigurationService) {
+                    grailsApplication = grailsApplication
+                }
+            }
             request.api_version=12
             interceptor.interceptorHelper=Mock(InterceptorHelper)
         when:
@@ -336,4 +348,12 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
 
     }
 
+    static class TestRequireRoleProvider implements RequiredRoleProvider {
+        List<String> requiredRoles = []
+
+        @Override
+        List<String> getRequiredRoles() {
+            return requiredRoles
+        }
+    }
 }

@@ -28,7 +28,7 @@ class FormTokenInterceptor {
     public static final String TOKEN_KEY_HEADER = 'X-RUNDECK-TOKEN-KEY'
     public static final String TOKEN_URI_HEADER = 'X-RUNDECK-TOKEN-URI'
 
-    int order = HIGHEST_PRECEDENCE + 1
+    int order = HIGHEST_PRECEDENCE + 2
 
     InterceptorHelper interceptorHelper
 

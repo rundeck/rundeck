@@ -136,6 +136,9 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         isScheduledAdHoc {
             eq 'status', ExecutionService.EXECUTION_SCHEDULED
         }
+        withScheduledExecution { se ->
+            eq 'scheduledExecution', se
+        }
         withServerNodeUUID { uuid ->
             eq 'serverNodeUUID', uuid
         }
@@ -347,7 +350,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         return "com.dtolabs.rundeck.core."+this.command
     }
 
-    def Map toMap(){
+    def Map toMap(boolean includeWorkflow = true) {
         def map=[:]
         if(scheduledExecution){
             map.jobId=scheduledExecution.extid
@@ -413,7 +416,9 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         }
         map.project= this.project
         map.user= this.user
-        map.workflow=this.workflow.toMap()
+        if(includeWorkflow) {
+            map.workflow = this.workflow.toMap()
+        }
 		if(this.orchestrator){
 			map.orchestrator=this.orchestrator.toMap();
 		}
@@ -426,6 +431,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         Execution exec= new Execution()
         if(job){
             exec.scheduledExecution=job
+            exec.jobUuid=job.uuid
         }
         exec.dateStarted=data.dateStarted
         exec.dateCompleted=data.dateCompleted

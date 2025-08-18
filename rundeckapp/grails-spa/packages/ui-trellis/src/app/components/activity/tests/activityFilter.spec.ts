@@ -46,9 +46,6 @@ const mountActivityFilter = async (props = {}) => {
       directives: {
         tooltip: () => {},
       },
-      mocks: {
-        $t: (msg) => msg,
-      },
     },
   });
   await wrapper.vm.$nextTick();

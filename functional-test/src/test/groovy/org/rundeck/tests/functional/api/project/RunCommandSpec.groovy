@@ -1,20 +1,20 @@
 package org.rundeck.tests.functional.api.project
 
-import org.rundeck.util.api.responses.execution.Execution
+
 import org.rundeck.util.api.responses.execution.RunCommand
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.container.BaseContainer
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper
 
 @APITest
-class RunCommandSpec extends BaseContainer{
+class RunCommandSpec extends BaseContainer {
 
     def setupSpec() {
         startEnvironment()
         setupProject()
     }
 
-    def "test-run-command"(){
+    def "test-run-command"() {
         given:
         def client = getClient()
         def mapper = new ObjectMapper()
@@ -25,12 +25,35 @@ class RunCommandSpec extends BaseContainer{
         def runResponse = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs}")
         def runResponseBody = runResponse.body().string()
         def parsedResponseBody = mapper.readValue(runResponseBody, RunCommand.class)
-        def newExecId = parsedResponseBody.execution.id
+        String newExecId = parsedResponseBody.execution.id
+        def completedExecution = waitForExecutionFinish(newExecId)
 
         then:
         noExceptionThrown()
-        newExecId > 0
-        mapper.readValue(client.doGetAcceptAll("/execution/$newExecId").body().string(), Execution.class) != null //extra validation to check if exec exists
-    }
+        completedExecution.status != "failed"
 
+        when:
+        def nodeFilter = ".*"
+        runResponse = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs};filter=${nodeFilter}")
+        runResponseBody = runResponse.body().string()
+        parsedResponseBody = mapper.readValue(runResponseBody, RunCommand.class)
+        newExecId = parsedResponseBody.execution.id
+        completedExecution = waitForExecutionFinish(newExecId)
+
+        then:
+        noExceptionThrown()
+        completedExecution.status != "failed"
+
+        when:
+        nodeFilter = "not-matching-node-filter"
+        runResponse = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs}&filter=${nodeFilter}")
+        runResponseBody = runResponse.body().string()
+        parsedResponseBody = mapper.readValue(runResponseBody, RunCommand.class)
+        newExecId = parsedResponseBody.execution.id
+        completedExecution = waitForExecutionFinish(newExecId)
+
+        then:
+        noExceptionThrown()
+        completedExecution.status == "failed"
+    }
 }

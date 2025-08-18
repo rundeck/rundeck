@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.options.RemoteJsonOptionRetriever
 import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.core.plugins.configuration.*
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
@@ -81,7 +82,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
     ExecutionService executionService
     MetricService metricService
     Framework rundeckFramework
-    def rundeckPluginRegistry
+    PluginRegistry rundeckPluginRegistry
     PluginService pluginService
     PluginControlService pluginControlService
     def scheduledExecutionService
@@ -693,7 +694,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
     }
 
     def PluginControlService getPluginControlService(String project) {
-        PluginControlServiceImpl.forProject(getRundeckFramework(), project)
+        PluginControlServiceImpl.forProject(getRundeckFramework(), rundeckPluginRegistry, project)
     }
 
     static Map<String,String> parseOptsFromString(String argstring){
@@ -833,7 +834,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
         def result = [:]
         result.valid = false
         result.desc = description
-        Map props = parsePluginConfigInput(description, prefix, params)
+        Map props = parsePluginConfigInput(description, prefix, params, defaultScope, ignored)
         result.props=props
         PropertyResolver resolver = getFrameworkPropertyResolver(project, props)
         if (result.desc) {
@@ -854,10 +855,13 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
      * @return map of property name to value based on correct property types.
      */
     @CompileStatic(TypeCheckingMode.SKIP)
-    public Map parsePluginConfigInput(Description desc, String prefix, final Map params) {
+    public Map parsePluginConfigInput(Description desc, String prefix, final Map params,PropertyScope defaultScope=null, PropertyScope ignoredScope=null) {
         Map props = [:]
         if (desc) {
             desc.properties.each {prop ->
+                if (Validator.isPropertyScopeIgnored(prop.scope ?: defaultScope, ignoredScope)) {
+                    return
+                }
                 def v = params ? params[prefix + prop.name] : null
                 if (prop.type == Property.Type.Boolean) {
                     props.put(prop.name, (v == 'true' || v == 'on') ? 'true' : 'false')
@@ -1384,13 +1388,14 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
         return (PluggableProviderService<T>)storagePluginProviderService
     }
 
-    public File getFirstLoginFile() {
-        String vardir
-        if(rundeckFramework.hasProperty('framework.var.dir')) {
-            vardir = rundeckFramework.getProperty('framework.var.dir')
+    public File getFrameworkVarDir() {
+        if (rundeckFramework.hasProperty('framework.var.dir')) {
+            return new File(rundeckFramework.getProperty('framework.var.dir'))
         } else {
-            vardir = getRundeckBase()+"/var"
+            return new File(getRundeckBase(), "var")
         }
-        return new File(vardir, FIRST_LOGIN_FILE)
+    }
+    public File getFirstLoginFile() {
+        return new File(getFrameworkVarDir(), FIRST_LOGIN_FILE)
     }
 }

@@ -414,6 +414,7 @@ class JobsXMLCodec {
                         cmd.interpreterArgsQuoted = XmlParserUtil.stringToBool(cmd.scriptinterpreter.remove
                                 ('argsquoted'),false)
                         cmd.scriptInterpreter = cmd.scriptinterpreter.remove('<text>')
+                        cmd.remove('scriptinterpreter')
                     }else if(cmd.scriptinterpreter instanceof String){
                         cmd.scriptInterpreter = cmd.remove('scriptinterpreter')
                     }else if(cmd.scriptinterpreter !=null){

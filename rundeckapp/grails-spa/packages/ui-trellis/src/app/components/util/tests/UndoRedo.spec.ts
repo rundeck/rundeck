@@ -14,10 +14,6 @@ const mountUndoRedo = async (options: {
       revertAllEnabled: options.revertAllEnabled,
     },
     global: {
-      mocks: {
-        $t: jest.fn().mockImplementation((msg) => msg),
-        $tc: jest.fn().mockImplementation((msg) => msg),
-      },
       stubs: {
         Btn: {
           name: "Btn",
@@ -47,9 +43,9 @@ describe("UndoRedo", () => {
     const eventBus: Emitter<Record<EventType, any>> = mitt();
     const wrapper = await mountUndoRedo({ eventBus, revertAllEnabled: false });
 
-    let undo = wrapper.get("[data-test=undo-btn]");
+    const undo = wrapper.get("[data-test=undo-btn]");
     expect(undo.classes()).toContain("disabled");
-    let redo = wrapper.get("[data-test=redo-btn]");
+    const redo = wrapper.get("[data-test=redo-btn]");
     expect(redo.classes()).toContain("disabled");
   });
   it.each([true, false])(
@@ -61,11 +57,11 @@ describe("UndoRedo", () => {
 
       await wrapper.vm.$nextTick();
 
-      let undo = wrapper.get("[data-test=undo-btn]");
+      const undo = wrapper.get("[data-test=undo-btn]");
       expect(undo.classes()).not.toContain("disabled");
-      let redo = wrapper.get("[data-test=redo-btn]");
+      const redo = wrapper.get("[data-test=redo-btn]");
       expect(redo.classes()).toContain("disabled");
-      let revertAll = wrapper.find("[data-test=revertAll-btn]");
+      const revertAll = wrapper.find("[data-test=revertAll-btn]");
       expect(revertAll.exists()).toEqual(revertAllEnabled);
     },
   );
@@ -78,13 +74,13 @@ describe("UndoRedo", () => {
 
     await wrapper.vm.$nextTick();
 
-    let undo = wrapper.get("[data-test=undo-btn]");
+    const undo = wrapper.get("[data-test=undo-btn]");
     expect(undo.classes()).not.toContain("disabled");
     wrapper.vm.doUndo();
     await wrapper.vm.$nextTick();
     expect(undoHandler).toHaveBeenCalledWith({ test: "event" });
 
-    let redo = wrapper.get("[data-test=redo-btn]");
+    const redo = wrapper.get("[data-test=redo-btn]");
     expect(redo.classes()).not.toContain("disabled");
 
     expect(undo.classes()).toContain("disabled");
@@ -98,7 +94,7 @@ describe("UndoRedo", () => {
 
     await wrapper.vm.$nextTick();
 
-    let undo = wrapper.get("[data-test=undo-btn]");
+    const undo = wrapper.get("[data-test=undo-btn]");
     expect(undo.classes()).not.toContain("disabled");
     wrapper.vm.doUndo();
     await wrapper.vm.$nextTick();
@@ -106,7 +102,7 @@ describe("UndoRedo", () => {
     await wrapper.vm.$nextTick();
     expect(redoHandler).toHaveBeenCalledWith({ test: "event" });
 
-    let redo = wrapper.get("[data-test=redo-btn]");
+    const redo = wrapper.get("[data-test=redo-btn]");
     expect(redo.classes()).toContain("disabled");
 
     expect(undo.classes()).not.toContain("disabled");
@@ -119,14 +115,14 @@ describe("UndoRedo", () => {
     eventBus.on("revertAll", handler);
     await wrapper.vm.$nextTick();
 
-    let revertAll = wrapper.get("[data-test=revertAll-btn]");
+    const revertAll = wrapper.get("[data-test=revertAll-btn]");
     expect(revertAll.classes()).not.toContain("disabled");
     wrapper.vm.doRevertAll();
     await wrapper.vm.$nextTick();
     expect(handler).toHaveBeenCalled();
 
-    let undo = wrapper.get("[data-test=undo-btn]");
-    let redo = wrapper.get("[data-test=redo-btn]");
+    const undo = wrapper.get("[data-test=undo-btn]");
+    const redo = wrapper.get("[data-test=redo-btn]");
     expect(undo.classes()).toContain("disabled");
     expect(redo.classes()).not.toContain("disabled");
   });

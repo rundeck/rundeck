@@ -3,6 +3,7 @@ package webhooks
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.config.Features
+import com.dtolabs.rundeck.core.event.Event
 import com.dtolabs.rundeck.core.event.EventImpl
 import com.dtolabs.rundeck.core.event.EventQueryImpl
 import com.dtolabs.rundeck.core.event.EventQueryResult
@@ -23,10 +24,12 @@ import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.gorm.transactions.Transactional
+import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import org.apache.commons.lang.RandomStringUtils
 import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
 import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
+import org.rundeck.app.data.model.v1.storedevent.StoredEventQuery
 import org.rundeck.app.data.model.v1.storedevent.StoredEventQueryType
 import org.rundeck.app.data.model.v1.webhook.RdWebhook
 import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookRequest
@@ -37,6 +40,7 @@ import org.rundeck.app.spi.SimpleServiceProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.transaction.annotation.Propagation
 import webhooks.authenticator.AuthorizationHeaderAuthenticator
 
 import javax.servlet.http.HttpServletRequest
@@ -48,13 +52,12 @@ class WebhookService {
     private static final ObjectMapper mapper = new ObjectMapper()
     private static final String KEY_STORE_PREFIX = "\${KS:"
     private static final String END_MARKER = "}"
-    static final String TOPIC_RECENT_EVENTS = 'webhook:events:recent'
-    static final String TOPIC_DEBUG_EVENTS = 'webhook:events:debug'
+    static final String TOPIC_EVENTS_BASE = 'webhook:events'
 
     WebhookDataProvider webhookDataProvider
 
     @Autowired
-    EventStoreService eventStoreService
+    EventStoreService gormEventStoreService
     def rundeckPluginRegistry
     def pluginService
     def frameworkService
@@ -63,7 +66,6 @@ class WebhookService {
     def userService
     def rundeckAuthTokenManagerService
     def storageService
-    def gormEventStoreService
     def featureService
 
     def processWebhook(String pluginName, String pluginConfigJson, WebhookDataImpl data, UserAndRolesAuthContext authContext, HttpServletRequest request) {
@@ -85,7 +87,7 @@ class WebhookService {
                 new EvtQuery(projectName: data.project, subsystem: 'webhooks')
             )
             contextServices = contextServices.combine(
-                    new SimpleServiceProvider([(EventStoreService): scopedStore])
+                    new SimpleServiceProvider([(EventStoreService): new EventStoreServiceTxn(scopedStore)])
             )
         }
         def keyStorageService = storageService.storageTreeWithContext(authContext)
@@ -96,14 +98,34 @@ class WebhookService {
         return plugin.onEvent(context,data) ?: new DefaultWebhookResponder()
     }
 
+    @CompileStatic
+    static class EventStoreServiceTxn implements EventStoreService{
+        @Delegate
+        EventStoreService delegate
+
+        EventStoreServiceTxn(final EventStoreService delegate) {
+            this.delegate = delegate
+        }
+
+        @Transactional(propagation = Propagation.REQUIRES_NEW)
+        @Override
+        void storeEvent(final Event event) {
+            delegate.storeEvent(event)
+        }
+
+        @Transactional(propagation = Propagation.REQUIRES_NEW)
+        @Override
+        EventQueryResult query(final StoredEventQuery query) {
+            return delegate.query(query)
+        }
+    }
+
     /**
      * Receives a webhook and delete all the stored event data in DB related to it
      * @param webhook
      */
     def deleteWebhookEventsData(RdWebhook webhook) {
-        Long queryResultForDebug = deleteEvents(TOPIC_DEBUG_EVENTS, webhook)
-        Long queryResultForRecentEvents = deleteEvents(TOPIC_RECENT_EVENTS, webhook)
-        def totalAmountOfRowsAffected = queryResultForDebug + queryResultForRecentEvents
+        Long totalAmountOfRowsAffected = deleteEvents(TOPIC_EVENTS_BASE+':*', webhook)
         log.info("${totalAmountOfRowsAffected} events deleted related to the webhook: ${webhook.name}")
     }
 
@@ -113,7 +135,7 @@ class WebhookService {
      * @param webhook
      */
     private def deleteEvents(String eventTopic, RdWebhook webhook) {
-        EventQueryResult queryResult = eventStoreService.query(new EvtQuery(
+        EventQueryResult queryResult = gormEventStoreService.query(new EvtQuery(
                 queryType: StoredEventQueryType.DELETE,
                 projectName: webhook.project,
                 subsystem: "webhooks",

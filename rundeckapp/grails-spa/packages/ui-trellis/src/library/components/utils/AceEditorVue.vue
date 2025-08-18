@@ -2,35 +2,66 @@
   <div :id="identifier" ref="root" :style="styleCss"></div>
 </template>
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
 
-import * as ace from "ace-builds";
+import ace, { Ace } from "ace-builds";
+import { ContextVariable } from "../../stores/contextVariables";
 
-/**
- * Ace Vue wrapper
- */
 export default defineComponent({
   props: {
-    identifier: String,
+    identifier: {
+      type: String,
+      default: "",
+    },
     modelValue: {
       type: String,
       required: true,
     },
-    height: String,
-    width: String,
-    lang: String,
-    softWrap: Boolean,
-    theme: String,
-    darkTheme: String,
-    options: Object,
+    height: {
+      type: String,
+      default: "",
+    },
+    width: {
+      type: String,
+      default: "",
+    },
+    lang: {
+      type: String,
+      default: "",
+    },
+    softWrap: {
+      type: Boolean,
+      default: true,
+    },
+    theme: {
+      type: String,
+      default: "",
+    },
+    darkTheme: {
+      type: String,
+      default: "",
+    },
+    options: {
+      type: Object as PropType<Ace.EditorOptions>,
+      default: () => {},
+    },
+    contextVariableSuggestions: {
+      type: Array<ContextVariable>,
+      default: () => [],
+    },
   },
   emits: ["init", "update:modelValue"],
-  data() {
+  data(): {
+    editor: Ace.Editor | null;
+    contentBackup: string;
+    observer: MutationObserver | null;
+    jsonSpaces: number;
+  } {
     return {
-      editor: undefined as undefined | ace.Ace.Editor,
+      editor: null,
       contentBackup: "",
-      observer: undefined as undefined | MutationObserver,
-      jsonSpaces: 2 as number,
+      observer: null,
+      jsonSpaces: 2,
     };
   },
   computed: {
@@ -42,10 +73,9 @@ export default defineComponent({
     },
   },
   watch: {
-    modelValue: function (val): void {
+    modelValue: function (val: string): void {
       if (this.contentBackup !== val) {
-        // @ts-ignore
-        this.editor!.getSession().setValue(this.resolveValue(val), 1);
+        this.editor!.getSession().setValue(this.resolveValue(val));
         this.contentBackup = this.resolveValue(val);
       }
     },
@@ -79,19 +109,24 @@ export default defineComponent({
     require("ace-builds/src-noconflict/ext-emmet");
 
     const editor = (this.editor = ace.edit(this.$el));
-    // @ts-ignore
-    editor.$blockScrolling = Infinity;
 
     this.$emit("init", editor);
     editor.getSession().setUseWorker(false);
     editor.getSession().setMode(this.resolveLang(lang));
     editor.setTheme(this.resolveTheme(theme));
 
+    const shouldEnableAutoCompletion =
+      this.contextVariableSuggestions && this.contextVariableSuggestions.length > 0;
+    editor.setOptions({
+      ...(this.options || {}),
+      enableLiveAutocompletion: shouldEnableAutoCompletion,
+    });
+
     if (this.modelValue) editor.setValue(this.resolveValue(this.modelValue), 1);
 
     this.contentBackup = this.modelValue;
 
-    if (this.options) editor.setOptions(this.options);
+    this.addContextVariableSuggestions();
     this.observeDarkMode();
     this.attachChangeEventToEditor();
   },
@@ -127,13 +162,9 @@ export default defineComponent({
       let theme = document.documentElement.dataset.colorTheme || "light";
 
       if (theme == "system")
-        theme = matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
+        theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 
-      return theme == "dark"
-        ? this.darkTheme || "tomorrow_night_eighties"
-        : this.theme || "chrome";
+      return theme == "dark" ? this.darkTheme || "tomorrow_night_eighties" : this.theme || "chrome";
     },
     px(value: string): string {
       if (/^\d*$/.test(value)) return `${value}px`;
@@ -153,10 +184,14 @@ export default defineComponent({
      */
     resolveValue(val: string) {
       const LANG_JSON: string = "json";
-      if (this.lang == LANG_JSON) {
-        return JSON.stringify(JSON.parse(val), null, this.jsonSpaces);
+      try {
+        if (this.lang == LANG_JSON) {
+          return JSON.stringify(JSON.parse(val), null, this.jsonSpaces);
+        }
+        return val;
+      } catch (e) {
+        return val;
       }
-      return val;
     },
     /**
      * Attach change event to ace editor
@@ -168,6 +203,51 @@ export default defineComponent({
         this.$emit("update:modelValue", content);
         this.contentBackup = content;
       });
+    },
+
+    addContextVariableSuggestions(): void {
+      const staticWordCompleter: Ace.Completer = {
+        ...this.buildCompletionProvider(),
+        ...this.buildDocTooltipProvider(),
+        identifierRegexps: [/[@%a-zA-Z_0-9.\$\-\u00A2-\uFFFF]/],
+      } as Ace.Completer;
+
+      this.editor!.completers = [staticWordCompleter];
+    },
+
+    buildCompletionProvider() {
+      return {
+        getCompletions: (
+          _editor: Ace.Editor,
+          _session: Ace.EditSession,
+          _pos: Ace.Point,
+          _prefix: string,
+          callback: Ace.CompleterCallback,
+        ) => {
+          const suggestions = this.contextVariableSuggestions.map(
+            ({ name, type, description, title }) => ({
+              name,
+              title,
+              desc: description,
+              value: name,
+              meta: type[0].toUpperCase() + type.slice(1),
+            }),
+          );
+
+          callback(null, suggestions);
+        },
+      };
+    },
+
+    buildDocTooltipProvider() {
+      const lang = ace.require("ace/lib/lang");
+      return {
+        getDocTooltip: (item: Ace.Completion & { title: string; desc?: string }) => {
+          const title = lang.escapeHTML(item.title);
+          const desc = item.desc ? `<br><hr>${lang.escapeHTML(item.desc)}` : "";
+          item.docHTML = `<b>${title}${desc}</b>`;
+        },
+      };
     },
   },
 });

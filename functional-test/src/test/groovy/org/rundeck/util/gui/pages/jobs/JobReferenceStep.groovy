@@ -15,13 +15,14 @@ class JobReferenceStep implements JobStep {
     private static final By useNameBox = By.id("useNameTrue")
     private static final By jobChooseBtn = By.xpath("//*[starts-with(@id, 'jobChooseBtn')]")
     private static final By jobNameFieldBy = By.xpath("//*[starts-with(@id, 'jobNameField')]")
+    private static final By jobUuidFieldBy = By.xpath("//*[@data-testid='jobUuidField']//input");
     String childJobUuid
     String childJobName
     boolean useChooseAJobButton = false
 
 
     @Override
-    void configure(JobCreatePage jobCreatePage) {
+    void configure(JobCreatePage jobCreatePage, Boolean nextUi = false) {
         if(childJobName && useChooseAJobButton){
             jobCreatePage.driver.findElement(jobChooseBtn).click()
             WebElement jobItem = new WebDriverWait(jobCreatePage.driver, Duration.ofSeconds(5)).until(
@@ -40,10 +41,17 @@ class JobReferenceStep implements JobStep {
         }
 
         if (childJobUuid) {
-            jobCreatePage.waitForElementVisible(By.className("_wfiedit"))
-            jobCreatePage.driver.findElement(By.className("_wfiedit")).findElement(By.name("uuid")).sendKeys(childJobUuid)
+            if(nextUi) {
+                WebElement jobUuidField = jobCreatePage.driver.findElement(jobUuidFieldBy)
+                jobUuidField.click()
+                jobUuidField.sendKeys(childJobUuid)
+            } else {
+                jobCreatePage.waitForElementVisible(By.className("_wfiedit"))
+                jobCreatePage.driver.findElement(By.className("_wfiedit")).findElement(By.name("uuid")).sendKeys(childJobUuid)
+            }
+
         }
 
-        Thread.sleep(WaitingTime.LOW.milliSeconds)
+        Thread.sleep(WaitingTime.LOW.toMillis())
     }
 }

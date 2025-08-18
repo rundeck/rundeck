@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -223,23 +224,127 @@ public class ScriptExecUtil {
             final OutputStream errorStream
     )
             throws IOException, InterruptedException {
-        final String[] envarr = createEnvironmentArray(envMap);
+        return runLocalCommand(
+                command,
+                envMap,
+                workingdir,
+                outputStream,
+                errorStream,
+                false,
+                ScriptExecUtil::killProcessHandleDescend
+        );
+    }
 
-        final Runtime runtime = Runtime.getRuntime();
-        final Process exec = runtime.exec(command, envarr, workingdir);
-        exec.getOutputStream().close();
+    /**
+     * Run a command with environment variables in a working dir, and copy the streams
+     *
+     * @param command      the command array to run
+     * @param envMap       the environment variables to pass in
+     * @param workingdir   optional working dir location (or null)
+     * @param outputStream stream for stdout
+     * @param errorStream  stream for stderr
+     *
+     * @return the exit code of the command
+     *
+     * @throws IOException          if any IO exception occurs
+     * @throws InterruptedException if interrupted while waiting for the command to finish
+     */
+    public static int runLocalCommand(
+            final String[] command,
+            final Map<String, String> envMap,
+            final File workingdir,
+            final OutputStream outputStream,
+            final OutputStream errorStream,
+            boolean clearEnv,
+            Consumer<ProcessHandle> killHandler
+    )
+            throws IOException, InterruptedException
+    {
+        return runLocalCommand(
+                command,
+                envMap,
+                workingdir,
+                outputStream,
+                errorStream,
+                clearEnv,
+                killHandler,
+                null
+        );
+    }
+
+    /**
+     * Run a command with environment variables in a working dir, and copy the streams
+     *
+     * @param command      the command array to run
+     * @param envMap       the environment variables to pass in
+     * @param workingdir   optional working dir location (or null)
+     * @param outputStream stream for stdout
+     * @param errorStream  stream for stderr
+     * @return the exit code of the command
+     * @throws IOException          if any IO exception occurs
+     * @throws InterruptedException if interrupted while waiting for the command to finish
+     */
+    public static int runLocalCommand(
+            final String[] command,
+            final Map<String, String> envMap,
+            final File workingdir,
+            final OutputStream outputStream,
+            final OutputStream errorStream,
+            boolean clearEnv,
+            Consumer<ProcessHandle> killHandler,
+            InputStream inputStream
+    )
+            throws IOException, InterruptedException {
+        final ProcessBuilder processBuilder = new ProcessBuilder().command(command);
+
+        final Map<String, String> environment = processBuilder.environment();
+        if(clearEnv) {
+            environment.clear();
+        }
+        environment.putAll(envMap);
+        if (null != workingdir) {
+            processBuilder.directory(workingdir);
+        }
+
+        final Process exec = processBuilder.start();
+        final Streams.StreamCopyThread inthread;
+        final OutputStream outputStream1 = exec.getOutputStream();
+        if (inputStream != null) {
+            inthread = Streams.copyStreamThread(inputStream, outputStream1, () -> {
+                try {
+                    outputStream1.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+        } else {
+            inthread = null;
+            outputStream1.close();
+        }
+
         final Streams.StreamCopyThread errthread = Streams.copyStreamThread(exec.getErrorStream(), errorStream);
         final Streams.StreamCopyThread outthread = Streams.copyStreamThread(exec.getInputStream(), outputStream);
+        if (null != inthread) {
+            inthread.start();
+        }
         errthread.start();
         outthread.start();
         try {
             final int result = exec.waitFor();
             outputStream.flush();
             errorStream.flush();
+            if (inthread != null) {
+                inthread.join();
+                outputStream1.close();
+            }
+
             errthread.join();
             outthread.join();
             exec.getInputStream().close();
             exec.getErrorStream().close();
+            if (null != inthread && null != inthread.getException()) {
+                throw inthread.getException();
+            }
             if (null != outthread.getException()) {
                 throw outthread.getException();
             }
@@ -248,12 +353,22 @@ public class ScriptExecUtil {
             }
             return result;
         } catch (InterruptedException e) {
-            exec.destroy();
+            if (null != killHandler) {
+                killHandler.accept(exec.toHandle());
+            }
             if(exec.isAlive()){
                 exec.waitFor();
             }
             throw new InterruptedException("Execution interrupted with code: " + exec.exitValue());
         }
+    }
+
+    public static void killProcessHandleDescend(ProcessHandle handle) {
+        handle.descendants().forEach(ScriptExecUtil::killProcessHandle);
+        handle.destroy();
+    }
+    public static void killProcessHandle(ProcessHandle handle) {
+        handle.destroy();
     }
 
     /**

@@ -16,9 +16,27 @@ packaging_create_packages() {
 
     cd "${PACKAGING_DIR}/packaging"
     LIB_DIR="${PACKAGING_DIR}/lib"
-    ./gradlew ${GRADLE_BASE_OPTS} -PlibsDir=$LIB_DIR -PpackageRelease=$RELEASE_NUM clean packageArtifacts
+    ./gradlew ${GRADLE_BASE_OPTS} -PlibsDir=${LIB_DIR} -PpackageRelease=$RELEASE_NUM clean packageArtifacts
 }
+packaging_sign_retry(){
+    N=${1:-5} # default 5
+    total=$N
+    while true; do
+      N=$(( N - 1 ))
+      if packaging_sign; then
+        echo "Succeeded."
+        exit 0
+      fi
+      [ $N -gt 0 ] || break
+      echo "Retrying package signing in 10 seconds..."
+      #clean up old files
+      find "${PACKAGING_DIR}/packaging/build/distributions" -name '*.sig' -delete
+      sleep 10
+    done
 
+    echo "FAILED after $total tries."
+    exit 1
+}
 packaging_sign() {
     fetch_ci_shared_resources
 
@@ -35,10 +53,12 @@ packaging_test_packages() {
 
 packaging_publish() {
     cd "${PACKAGING_DIR}/packaging"
+    LIB_DIR="${PACKAGING_DIR}/lib"
     for PACKAGE in deb rpm; do
         ./gradlew ${GRADLE_BASE_OPTS} --info \
             -PpackagePrefix="rundeck-" \
             -PpackageType=${PACKAGE} \
+            -PlibsDir=${LIB_DIR} \
             -PpackageOrg=rundeck \
             -PpackageRevision=1 \
             publish
@@ -47,8 +67,10 @@ packaging_publish() {
 
 packaging_publish_war() {
     cd "${PACKAGING_DIR}/packaging"
+    LIB_DIR="${PACKAGING_DIR}/lib"
     ./gradlew ${GRADLE_BASE_OPTS} --info \
         -PpackageType=war \
+        -PlibsDir=${LIB_DIR} \
         -PpackageOrg=rundeck \
         -PpackageRevision=1 \
         publishWar

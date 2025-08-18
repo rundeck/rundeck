@@ -16,6 +16,7 @@ class SideBarPage extends BasePage {
     String loadPath = ""
 
     By projectSettings = By.id("nav-project-settings")
+    By projectSettingsExportArchive = By.id("nav-project-settings-export-archive")
     By navContainer = By.cssSelector('.navbar__item-container.active')
     By isOverflow = By.id("overflow")
 
@@ -27,7 +28,7 @@ class SideBarPage extends BasePage {
         def navIdBy = By.id(navLink.id)
         if (navLink.projectConfig) {
             projectSettingsField.click()
-            waitForElementVisible navContainer
+            waitForNavVisible()
         } else if (!(el navIdBy).isDisplayed() && overflowFields.size() == 1) {
             overflowField.click()
             waitForAttributeContains overflowField, 'class', 'active'
@@ -35,8 +36,16 @@ class SideBarPage extends BasePage {
         el navIdBy click()
     }
 
+    WebElement waitForNavVisible() {
+        waitForElementVisible navContainer
+    }
+
     WebElement getProjectSettingsField() {
         el projectSettings
+    }
+
+    WebElement getProjectSettingsExportArchiveField() {
+        el projectSettingsExportArchive
     }
 
     WebElement getOverflowField() {

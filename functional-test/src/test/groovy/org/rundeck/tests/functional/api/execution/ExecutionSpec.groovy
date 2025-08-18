@@ -1,10 +1,12 @@
 package org.rundeck.tests.functional.api.execution
 
+import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.util.annotations.APITest
-import org.rundeck.util.common.execution.ExecutionStatus
-import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.common.WaitingTime
+import org.rundeck.util.common.execution.ExecutionStatus
+import org.rundeck.util.common.execution.ExecutionUtils
+import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.common.projects.ProjectUtils
 import org.rundeck.util.container.BaseContainer
 
@@ -22,7 +24,7 @@ class ExecutionSpec extends BaseContainer {
     }
 
     def cleanup() {
-        client.apiVersion = client.finalApiVersion
+        client.apiVersion = client.API_CURRENT_VERSION
     }
 
     def "run command get execution"() {
@@ -129,19 +131,23 @@ class ExecutionSpec extends BaseContainer {
                 def json2 = client.jsonValue(response.body(), Map)
                 json2.executions.size() == 6
             }
-            // wait for executions to finish
-            sleep 60000
-            // get executions
-            def responseClean = client.doGet("/project/${projectName}/executions")
-            // verify if executions were cleaned
-            verifyAll {
-                responseClean.successful
-                responseClean.code() == 200
-                def json3 = jsonValue(responseClean.body())
-                json3.executions.size() == 0
-            }
-            deleteProject(projectName)
         cleanup:
+            def retrieveExecutions = {->
+                try {
+                    return ExecutionUtils.Retrievers.executionsForProjectClosure(client, projectName).call()
+                } catch (JsonParseException e) {
+                    // if request doesnt return an expected json, return null to retry
+                    e.printStackTrace()
+                    return null
+                }
+            }
+
+            // Waits for all executions to get cleaned
+            waitFor(retrieveExecutions,
+                {it != null && it.isEmpty()}, // retry if executions are not empty or list is null
+                WaitingTime.XTRA_EXCESSIVE, WaitingTime.MODERATE)
+            deleteProject(projectName)
+
             tmpjar.delete()
         where:
             version | projectName
@@ -165,8 +171,9 @@ class ExecutionSpec extends BaseContainer {
     def "execution state OK"() {
         when:
             def runCommand = post("/project/${PROJECT_NAME}/run/command?exec=echo+testing+execution+api", null, Map)
-            def idExec = runCommand.execution.id
-            sleep 5000
+            def idExec = runCommand.execution.id as String
+            // Waits for all executions to finish
+            waitFor(ExecutionUtils.Retrievers.executionById(client, idExec), ExecutionUtils.Verifiers.executionFinished())
             def response = doGet("/execution/${idExec}/state")
         then:
             verifyAll {
@@ -188,14 +195,11 @@ class ExecutionSpec extends BaseContainer {
             def jobId = responseImport.succeeded[2].id
             def jobRun = JobUtils.executeJobWithArgs(jobId, client, "-opt1 foobar")
             def execId = jsonValue(jobRun.body()).id
-            def response = JobUtils.waitForExecutionToBe(
+            def response = JobUtils.waitForExecution(
                     ExecutionStatus.SUCCEEDED.state,
                     execId as String,
-                    mapper,
-                    client,
-                    WaitingTime.LOW.milliSeconds / 1000 as int,
-                    WaitingTime.LOW.milliSeconds
-            )
+                    client)
+
             def state = client.get("/execution/${response.id}/state", Map)
         then:
             verifyAll {
@@ -239,40 +243,28 @@ class ExecutionSpec extends BaseContainer {
             def jobRun2 = JobUtils.executeJobWithArgs(jobId2, client, "-opt2 a")
             int execId4 = jsonValue(jobRun2.body()).id as Integer
         then: "wait for executions to finish"
-            def responseExecId1 = JobUtils.waitForExecutionToBe(
+            def responseExecId1 = JobUtils.waitForExecution(
                     ExecutionStatus.SUCCEEDED.state,
                     execId1 as String,
-                    mapper,
-                    client,
-                    WaitingTime.LOW.milliSeconds / 1000 as int,
-                    WaitingTime.LOW.milliSeconds
+                    client
             )
             responseExecId1.status == 'succeeded'
-            def responseExecId2 = JobUtils.waitForExecutionToBe(
+            def responseExecId2 = JobUtils.waitForExecution(
                     ExecutionStatus.FAILED.state,
                     execId2 as String,
-                    mapper,
-                    client,
-                    WaitingTime.LOW.milliSeconds / 1000 as int,
-                    WaitingTime.LOW.milliSeconds
+                    client
             )
             responseExecId2.status == 'failed'
-            def responseExecId3 = JobUtils.waitForExecutionToBe(
+            def responseExecId3 = JobUtils.waitForExecution(
                     ExecutionStatus.SUCCEEDED.state,
                     execId3 as String,
-                    mapper,
-                    client,
-                    WaitingTime.LOW.milliSeconds / 1000 as int,
-                    WaitingTime.LOW.milliSeconds
+                    client
             )
             responseExecId3.status == 'succeeded'
-            def responseExecId4 = JobUtils.waitForExecutionToBe(
+            def responseExecId4 = JobUtils.waitForExecution(
                     ExecutionStatus.SUCCEEDED.state,
                     execId4 as String,
-                    mapper,
-                    client,
-                    WaitingTime.LOW.milliSeconds / 1000 as int,
-                    WaitingTime.LOW.milliSeconds
+                    client
             )
             responseExecId4.status == 'succeeded'
         when: "executions"
@@ -367,13 +359,19 @@ class ExecutionSpec extends BaseContainer {
             }
         cleanup:
             (2..4).each {
-                updateConfigurationProject("${projectNameSuffix}-${it}", [
+                def projectName = "${projectNameSuffix}-${it}"
+                updateConfigurationProject(projectName, [
                     "project.disable.schedule": "true",
                     "project.later.schedule.enable": "false",
                     "project.disable.executions": "true"
                 ])
-                hold 10 //Wait until the executions stop
-                deleteProject("${projectNameSuffix}-${it}")
+
+                // Waits for all executions to finish
+                waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
+                        verifyForAll(ExecutionUtils.Verifiers.executionFinished()),
+                        WaitingTime.EXCESSIVE )
+
+                deleteProject(projectName)
             }
     }
 
