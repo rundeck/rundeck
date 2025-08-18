@@ -254,6 +254,8 @@ const messages = {
   refresh: "refresh",
   "search.ellipsis": "Search\u2026",
   "save.filter.ellipsis": "Save Filter",
+  "ScheduledExecution.page.edit.title": "Edit Job",
+  "ScheduledExecution.page.create.title": "Create New Job",
   "scheduledExecution.property.defaultTab.label": "Default Tab",
   "scheduledExecution.property.defaultTab.description":
     "Default tab to display when you follow an execution.",
@@ -486,6 +488,8 @@ const messages = {
   "scheduledExecution.action.download.button.label": "Download Definition",
   "scheduledExecution.action.downloadformat.button.label":
     "Download Job definition in {0}",
+  "scheduledExecution.action.activity.button.label":
+    "View Activity for this Job",
   "scheduledExecution.action.delete.button.label": "Delete this Job",
   "scheduledExecution.action.edit.button.tooltip": "Edit this Job",
   "scheduledExecution.action.duplicate.button.tooltip": "Duplicate Job",
@@ -909,6 +913,10 @@ const messages = {
     stepLabel: "Step label",
     noSteps: "No workflow steps",
     addErrorHandler: "Add Error Handler",
+    errorHandler: "Error handler",
+    errorHandlerDescription:
+      "The error handler will execute if the step fails.",
+    editErrorHandler: "Edit error handler",
   },
   "plugin.choose.title": "Choose a Plugin",
   "plugin.type.WorkflowStep.title.plural": "Workflow Steps",
@@ -1015,8 +1023,19 @@ const messages = {
   "JobExec.property.nodeFilter.null.description":
     "The nodes used will be those defined for the triggered Job.",
   "commandExec.jobName.blank.message": "Job must be specified",
-  "results.truncated.count.results.shown":"Results truncated. {0} results shown.",
+  "results.truncated.count.results.shown":
+    "Results truncated. {0} results shown.",
   "options.label": "Options",
+  "Workflow.stepErrorHandler.keepgoingOnSuccess.label":
+    "Keep going on success.",
+  "Workflow.stepErrorHandler.keepgoingOnSuccess.description":
+    "If the Workflow keepgoing is false, this allows the Workflow to continue when the Error Handler is successful",
+  "Workflow.stepErrorHandler.label.on.error": "on error",
+  "Workflow.stepErrorHandler.label.keep.going.on.success":
+    "keep going on success",
+  "framework.service.WorkflowNodeStep.description":
+    "Runs once for each node in the workflow.",
+  "framework.service.WorkflowStep.description": "Runs only once in a workflow.",
 };
 
 export default messages;

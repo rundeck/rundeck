@@ -488,12 +488,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     format:'json'
             ])
         }
-        RdUser u = userService.findOrCreateUser(session.user)
-        def defaultFilter = null
-        Map filterpref = userService.parseKeyValuePref(u.filterPref)
-        if (filterpref['nodes']) {
-            defaultFilter = filterpref['nodes']
-        }
+
 
         def fwkproject = frameworkService.getFrameworkProject(project)
         INodeSet nodes1 = fwkproject.getNodeSet()
@@ -502,7 +497,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         tagsummary = tagsummary.keySet().sort().collect{
             [tag:it,count:tagsummary[it]]
         }
-        render(contentType: 'application/json',text: [tags:tagsummary,totalCount:size,defaultFilter:defaultFilter] as JSON)
+        render(contentType: 'application/json',text: [tags:tagsummary,totalCount:size] as JSON)
     }
     /**
      * nodesFragment renders a set of nodes in HTML snippet, for ajax
@@ -523,13 +518,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 AuthConstants.ACTION_READ, 'Project', 'nodes', true
         )) {
             return
-        }
-        RdUser u = userService.findOrCreateUser(session.user)
-        if (!params.filterName && u && query.nodeFilterIsEmpty() && params.formInput != 'true') {
-            Map filterpref = userService.parseKeyValuePref(u.filterPref)
-            if (filterpref['nodes']) {
-                params.filterName = filterpref['nodes']
-            }
         }
 
         if (params['Clear']) {

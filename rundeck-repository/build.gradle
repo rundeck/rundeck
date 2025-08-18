@@ -1,0 +1,59 @@
+
+buildscript {
+    dependencies {
+    }
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: "java-library"
+    apply plugin: "groovy"
+
+    apply from: "../../gradle/java-version.gradle"
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        implementation("org.codehaus.groovy:groovy:${groovyVersion}")
+        testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
+        testImplementation "org.spockframework:spock-core:${spockVersion}"
+        testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+
+    }
+
+    jar {
+        manifest.attributes provider: 'gradle'
+    }
+
+    tasks.withType(Test) {
+        useJUnitPlatform()
+    }
+
+}
+
+
+
+project(':rundeck-repository:rundeck-repository-client') {
+
+    dependencies {
+        // Use the latest Groovy version for building this library
+        implementation("org.codehaus.groovy:groovy-all:${groovyVersion}")
+        api project(":rundeck-repository:rundeck-repository-api")
+        api project(":core")
+        api project(":rundeck-storage:rundeck-storage-filesys")
+        implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonDatabindVersion}"
+        implementation "org.bouncycastle:bcprov-jdk18on:${bouncyCastleVersion}"
+        implementation "org.bouncycastle:bcpg-jdk18on:${bouncyCastleVersion}"
+        implementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
+        api "org.slf4j:slf4j-api:${slf4jVersion}"
+        // Use the awesome Spock testing and specification framework
+        testImplementation 'org.spockframework:spock-core:2.3-groovy-3.0'
+        testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"
+    }
+
+}

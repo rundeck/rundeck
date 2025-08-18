@@ -19,8 +19,9 @@ import NextUiToggle from "@/app/pages/job/browse/NextUiToggle.vue";
 import DetailsEditorSection from "@/app/pages/job/editor/DetailsEditorSection.vue";
 import ExecutionEditorSection from "./ExecutionEditorSection.vue";
 import WorkflowEditorSection from "@/app/pages/job/editor/WorkflowEditorSection.vue";
-import PrimeVue from 'primevue/config';
+import PrimeVue from "primevue/config";
 import Lara from "@primeuix/themes/lara";
+import HeaderSection from "@/app/pages/job/editor/HeaderSection.vue";
 
 const locale = window._rundeck.locale || "en_US";
 moment.locale(locale);
@@ -37,6 +38,12 @@ const jobSections = [
     name: "JobEditDetailsApp",
     component: { DetailsEditorSection },
     elementClass: "job-editor-details-vue",
+    visible: uiType === "next",
+  },
+  {
+    name: "JobEditHeaderApp",
+    component: { HeaderSection },
+    elementClass: "job-editor-header-vue",
     visible: uiType === "next",
   },
   {
@@ -132,7 +139,7 @@ const mountSection = (section) => {
             cssLayer: true,
             darkModeSelector: ".dark",
           },
-        }
+        },
       });
       app.use(pinia);
       app.mount(element);
@@ -141,8 +148,6 @@ const mountSection = (section) => {
     console.warn(e, section);
   }
 };
-
-
 
 //on job edit page listen for dom content changes and install UI Sockets
 window.addEventListener("DOMContentLoaded", (event) => {

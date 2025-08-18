@@ -8,12 +8,26 @@ echo "current TAG: $CUR_TAG"
 
 if [ -z "$1" ] ; then
 echo "usage: setversion.sh <version> [GA|rcX]"
+echo "       setversion.sh --bump-minor"
 exit 2
 fi
 
-VNUM="$1"
-shift
-VTAG="${1:-GA}"
+if [ "$1" == "--bump-minor" ]; then
+  IFS='.' read -r MAJOR MINOR PATCH <<< "$CUR_VERSION"
+  if [ -z "$MAJOR" ] || [ -z "$MINOR" ] || [ -z "$PATCH" ]; then
+    echo "Error: Current version ($CUR_VERSION) is not in MAJOR.MINOR.PATCH format"
+    exit 3
+  fi
+  MINOR=$((MINOR + 1))
+  PATCH=0
+  VNUM="$MAJOR.$MINOR.$PATCH"
+  VTAG="$CUR_TAG"
+  shift
+else
+  VNUM="$1"
+  shift
+  VTAG="${1:-GA}"
+fi
 
 VDATE="$(date +%Y%m%d)"
 

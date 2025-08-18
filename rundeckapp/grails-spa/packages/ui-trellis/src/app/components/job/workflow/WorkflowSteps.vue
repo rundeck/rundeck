@@ -13,109 +13,127 @@
       <li>
         <div class="step-list-item">
           <div class="step-item-display">
-            <div
-              :id="`wfitem_${index}`"
-              class="step-item-config"
-              data-test="edit-step-item"
-              :title="$t('Workflow.clickToEdit')"
-              @click="editStepByIndex(index)"
-            >
-              <plugin-config
-                v-if="!element.jobref"
-                :service-name="
-                  element.nodeStep
-                    ? ServiceType.WorkflowNodeStep
-                    : ServiceType.WorkflowStep
-                "
-                :provider="element.type"
-                :config="element.config"
-                :read-only="true"
-                :show-title="true"
-                :show-icon="true"
-                :show-description="true"
-                mode="show"
+            <div class="step-item-row">
+              <div
+                :id="`wfitem_${index}`"
+                class="step-item-config"
+                data-test="edit-step-item"
+                :title="$t('Workflow.clickToEdit')"
+                @click="editStepByIndex(index)"
               >
-                <template v-if="element.nodeStep" #iconSuffix>
-                  <i class="fas fa-hdd"></i>
-                </template>
-              </plugin-config>
-              <job-ref-step v-else :step="element"></job-ref-step>
+                <plugin-config
+                  v-if="!element.jobref"
+                  :service-name="
+                    element.nodeStep
+                      ? ServiceType.WorkflowNodeStep
+                      : ServiceType.WorkflowStep
+                  "
+                  :provider="element.type"
+                  :config="element.config"
+                  :read-only="true"
+                  :show-title="true"
+                  :show-icon="true"
+                  :show-description="true"
+                  mode="show"
+                >
+                  <template v-if="element.nodeStep" #iconSuffix>
+                    <i class="fas fa-hdd node-icon"></i>
+                  </template>
+                </plugin-config>
+                <job-ref-step v-else :step="element"></job-ref-step>
+                <div v-if="element.description" class="wfstep-description">
+                  {{ element.description }}
+                </div>
+              </div>
+              <div class="step-item-controls">
+                <div
+                  class="btn-group"
+                  role="group"
+                  :aria-label="$t('Workflow.itemControls')"
+                >
+                  <btn
+                    size="xs"
+                    style="min-height: 21px"
+                    @click.stop="editStepByIndex(index)"
+                  >
+                    <i class="fas fa-edit"></i>
+                    {{ $t("Workflow.edit") }}
+                  </btn>
+                  <btn
+                    size="xs"
+                    :title="$t('Workflow.duplicateStep')"
+                    @click.stop="duplicateStep(index)"
+                  >
+                    <i class="glyphicon glyphicon-duplicate"></i>
+                  </btn>
+                  <dropdown menu-right>
+                    <btn size="xs" data-role="trigger" :disabled="!!(element.errorhandler && element.jobref)">
+                      <i class="glyphicon glyphicon-cog"></i>
+                      <span class="caret"></span>
+                    </btn>
+                    <template #dropdown>
+                      <li v-if="!element.errorhandler">
+                        <a
+                          role="button"
+                          data-test="add-error-handler"
+                          @click="toggleAddErrorHandlerModal(index)"
+                        >
+                          {{ $t("Workflow.addErrorHandler") }}
+                        </a>
+                      </li>
+                      <li v-if="!element.jobref">
+                        <a
+                          role="button"
+                          data-test="add-log-filter"
+                          @click="addLogFilterForIndex(element.id)"
+                        >
+                          {{ $t("Workflow.addLogFilter") }}
+                        </a>
+                      </li>
+                    </template>
+                  </dropdown>
+                  <btn
+                    size="xs"
+                    type="danger"
+                    :title="$t('Workflow.deleteThisStep')"
+                    data-test="remove-step"
+                    @click.prevent="removeStep(index)"
+                  >
+                    <i class="glyphicon glyphicon-remove"></i>
+                  </btn>
+                </div>
+
+                <span
+                  class="btn btn-xs dragHandle"
+                  :title="$t('Workflow.dragToReorder')"
+                >
+                  <i class="glyphicon glyphicon-resize-vertical" />
+                </span>
+              </div>
             </div>
 
-            <div v-if="element.description" class="wfstep-description">
-              {{ element.description }}
-            </div>
-
-            <log-filters
+            <div
               v-if="!element.jobref"
-              :model-value="element.filters"
-              :title="$t('Workflow.logFilters')"
-              :subtitle="stepTitle(element, index)"
-              :add-event="'step-action:add-logfilter:' + element.id"
-              mode="inline"
-              @update:model-value="
-                updateHistoryWithLogFiltersData(index, $event)
-              "
-            />
-          </div>
-          <div class="step-item-controls">
-            <div
-              class="btn-group"
-              role="group"
-              :aria-label="$t('Workflow.itemControls')"
+              :class="{'step-item-logfilters': element.filters?.length > 0 }"
             >
-              <btn
-                size="xs"
-                style="min-height: 21px"
-                @click.stop="editStepByIndex(index)"
-              >
-                <i class="fas fa-edit"></i>
-                {{ $t("Workflow.edit") }}
-              </btn>
-              <btn
-                size="xs"
-                :title="$t('Workflow.duplicateStep')"
-                @click.stop="duplicateStep(index)"
-              >
-                <i class="glyphicon glyphicon-duplicate"></i>
-              </btn>
-              <dropdown menu-right>
-                <btn size="xs" data-role="trigger"
-                  ><i class="glyphicon glyphicon-cog"></i>
-                  <span class="caret"></span
-                ></btn>
-                <template #dropdown>
-                  <li>
-                    <a role="button"> {{ $t("Workflow.addErrorHandler") }}</a>
-                  </li>
-                  <li v-if="!element.jobref">
-                    <a
-                      role="button"
-                      data-test="add-log-filter"
-                      @click="addLogFilterForIndex(element.id)"
-                    >
-                      {{ $t("Workflow.addLogFilter") }}
-                    </a>
-                  </li>
-                </template>
-              </dropdown>
-              <btn
-                size="xs"
-                type="danger"
-                :title="$t('Workflow.deleteThisStep')"
-                data-test="remove-step"
-                @click.prevent="removeStep(index)"
-              >
-                <i class="glyphicon glyphicon-remove"></i>
-              </btn>
+              <log-filters
+                :model-value="element.filters"
+                :title="$t('Workflow.logFilters')"
+                :subtitle="stepTitle(element, index)"
+                :add-event="'step-action:add-logfilter:' + element.id"
+                mode="inline"
+                @update:model-value="
+                  updateHistoryWithLogFiltersData(index, $event)
+                "
+              />
             </div>
-
-            <span
-              class="btn btn-xs dragHandle"
-              :title="$t('Workflow.dragToReorder')"
-            >
-              <i class="glyphicon glyphicon-resize-vertical"></i>
-            </span>
+            <error-handler-step
+              v-if="element.errorhandler"
+              :step="element"
+              @edit="editStepByIndex(index, true)"
+              @removeHandler="removeStep(index, true)"
+              data-test="error-handler-step"
+            />
           </div>
         </div>
       </li>
@@ -126,7 +144,11 @@
     <template #extra>
       <choose-plugin-modal
         v-model="addStepModal"
-        :title="$t('Workflow.addStep')"
+        :title="
+          isErrorHandler
+            ? $t('Workflow.addErrorHandler')
+            : $t('Workflow.addStep')
+        "
         :services="[ServiceType.WorkflowNodeStep, ServiceType.WorkflowStep]"
         :tab-names="[
           $t('plugin.type.WorkflowNodeStep.title.plural'),
@@ -134,51 +156,78 @@
         ]"
         show-search
         show-divider
-        @cancel="addStepModal = false"
+        @cancel="cancelProviderAdd"
         @selected="chooseProviderAdd"
       >
-        <span class="text-info">{{ $t("Workflow.clickOnStepType") }}</span>
+        <template v-if="isErrorHandler" #listHeader="{ service }">
+          <div class="list-group-item">
+            <p class="list-group-heading text-info text-strong" data-testid="error-handler-title">
+              {{ $t(`framework.service.${service}.description`) }}
+            </p>
+          </div>
+        </template>
+        <span class="text-info" data-testid="selection-description">
+          {{
+            isErrorHandler
+              ? $t("Workflow.errorHandlerDescription")
+              : $t("Workflow.clickOnStepType")
+          }}
+        </span>
       </choose-plugin-modal>
-      <edit-plugin-modal
-        v-if="editStepModal"
-        v-model:modal-active="editStepModal"
+      <component
+        v-if="editStepModal || (editJobRefModal && modalComponent)"
+        :is="modalComponent"
         v-model="editModel"
-        data-test-id="extra-edit-modal"
-        :validation="editModelValidation"
-        :service-name="editService"
-        :title="$t('Workflow.editStep')"
+        v-bind="modalAttributes"
         @cancel="cancelEditStep"
         @save="saveEditStep"
       >
         <template #extra>
-          <hr />
-          <div class="form-horizontal">
-            <div class="form-group">
-              <label
-                class="col-sm-2 control-label input-sm"
-                for="stepDescription"
-              >
-                {{ $t("Workflow.stepLabel") }}
-              </label>
-              <div class="col-sm-10">
-                <input
-                  id="stepDescription"
-                  v-model="editExtra.description"
-                  type="text"
-                  class="form-control"
-                />
+          <template v-if="!isErrorHandler">
+            <hr />
+            <div class="form-horizontal">
+              <div class="form-group">
+                <label
+                  class="col-sm-2 control-label input-sm"
+                  for="stepDescription"
+                >
+                  {{ $t("Workflow.stepLabel") }}
+                </label>
+                <div class="col-sm-10">
+                  <input
+                    id="stepDescription"
+                    data-testid="step-description"
+                    v-model="editExtra.description"
+                    type="text"
+                    class="form-control"
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          </template>
+          <template v-else>
+            <div class="presentation checkbox">
+              <input
+                name="keepgoingOnSuccess"
+                id="keepgoingOnSuccess"
+                v-model="editExtra.errorhandler.keepgoingOnSuccess"
+                type="checkbox"
+              />
+              <label for="keepgoingOnSuccess">
+                {{ $t("Workflow.stepErrorHandler.keepgoingOnSuccess.label") }}
+
+                <span>
+                  {{
+                    $t(
+                      "Workflow.stepErrorHandler.keepgoingOnSuccess.description",
+                    )
+                  }}
+                </span>
+              </label>
+            </div>
+          </template>
         </template>
-      </edit-plugin-modal>
-      <job-ref-form
-        v-if="editJobRefModal"
-        v-model="editModel"
-        v-model:modal-active="editJobRefModal"
-        @cancel="cancelEditStep"
-        @save="saveEditStep"
-      />
+      </component>
     </template>
   </common-undo-redo-draggable-list>
 </template>
@@ -206,12 +255,14 @@ import CommonUndoRedoDraggableList from "@/app/components/common/CommonUndoRedoD
 import { Operation } from "@/app/components/job/options/model/ChangeEvents";
 import { validatePluginConfig } from "@/library/modules/pluginService";
 import JobRefForm from "@/app/components/job/workflow/JobRefForm.vue";
+import ErrorHandlerStep from "@/app/components/job/workflow/ErrorHandlerStep.vue";
 
 const context = getRundeckContext();
 const eventBus = context.eventBus;
 export default defineComponent({
   name: "WorkflowSteps",
   components: {
+    ErrorHandlerStep,
     JobRefForm,
     CommonUndoRedoDraggableList,
     EditPluginModal,
@@ -237,6 +288,7 @@ export default defineComponent({
       workflowNodeStepPlugins: [],
       addStepModal: false,
       editStepModal: false,
+      isErrorHandler: false,
       editJobRefModal: false,
       editModel: {} as EditStepData,
       editExtra: {} as EditStepData,
@@ -245,6 +297,35 @@ export default defineComponent({
       editIndex: -1,
       loadingWorflowSteps: false,
     };
+  },
+  computed: {
+    modalAttributes() {
+      if (this.editStepModal) {
+        return {
+          title: this.isErrorHandler
+            ? this.$t("Workflow.editErrorHandler")
+            : this.$t("Workflow.editStep"),
+          serviceName: this.editService,
+          validation: this.editModelValidation,
+          "data-testid": "extra-edit-modal",
+          modalActive: this.editStepModal,
+          "onUpdate:modalActive": this.toggleModalActive,
+        };
+      } else if (this.editJobRefModal) {
+        return {
+          "data-test-id": "jobref-modal",
+          modalActive: this.editJobRefModal,
+          "onUpdate:modalActive": this.toggleModalActive,
+        };
+      }
+      return {};
+    },
+    modalComponent() {
+      if (!this.editJobRefModal && !this.editStepModal) {
+        return "";
+      }
+      return this.editStepModal ? "edit-plugin-modal" : "job-ref-form";
+    },
   },
   watch: {
     model: {
@@ -279,14 +360,27 @@ export default defineComponent({
     }) {
       this.addStepModal = false;
       this.editExtra = {};
-      this.editIndex = -1;
+      if (!this.isErrorHandler) {
+        this.editIndex = -1;
+      }
       this.editService = service;
+
+      if (this.isErrorHandler) {
+        this.editExtra = {
+          errorhandler: {
+            config: {},
+            keepgoingOnSuccess: false,
+          },
+        };
+      }
 
       if (provider === "job.reference") {
         this.editModel = {
+          type: provider,
           description: "",
-          jobref: {},
-          nodeStep: service === ServiceType.WorkflowNodeStep,
+          jobref: {
+            nodeStep: service === ServiceType.WorkflowNodeStep,
+          },
         };
         this.editJobRefModal = true;
       } else {
@@ -299,6 +393,10 @@ export default defineComponent({
         this.editStepModal = true;
       }
     },
+    cancelProviderAdd() {
+      this.addStepModal = false;
+      this.isErrorHandler = false;
+    },
     cancelEditStep() {
       this.editStepModal = false;
       this.editJobRefModal = false;
@@ -306,16 +404,33 @@ export default defineComponent({
       this.editExtra = {};
       this.editModelValidation = null;
       this.editIndex = -1;
+      this.isErrorHandler = false;
     },
-    removeStep(index: number) {
-      const commandToDelete = cloneDeep(this.model.commands[index]);
-      this.$refs.historyControls.operationRemove(index);
+    removeStep(index: number, removeErrorHandler: boolean = false) {
+      const originalData = cloneDeep(this.model.commands[index]);
+      const commandToRemove = cloneDeep(this.model.commands[index]);
+
+      let dataForUpdatingHistory = {
+        operation: Operation.Remove,
+        undo: Operation.Insert,
+        orig: undefined,
+      };
+
+      if (removeErrorHandler) {
+        delete commandToRemove.errorhandler;
+        this.$refs.historyControls.operationModify(index, commandToRemove);
+        dataForUpdatingHistory.operation = Operation.Modify;
+        dataForUpdatingHistory.undo = Operation.Modify;
+        dataForUpdatingHistory.orig = originalData;
+      } else {
+        this.$refs.historyControls.operationRemove(index);
+      }
+
       this.$refs.historyControls.changeEvent({
         index,
         dest: -1,
-        value: commandToDelete,
-        operation: Operation.Remove,
-        undo: Operation.Insert,
+        value: commandToRemove,
+        ...dataForUpdatingHistory,
       });
     },
     async addLogFilterForIndex(id: string) {
@@ -333,17 +448,28 @@ export default defineComponent({
         undo: Operation.Remove,
       });
     },
-    editStepByIndex(index: number) {
+    editStepByIndex(index: number, isErrorHandler: boolean = false) {
       this.editIndex = index;
+
       const command = this.model.commands[index];
-      this.editModel = cloneDeep(command);
       this.editExtra = cloneDeep(command);
+      let nodeStep = command.nodeStep;
+      this.isErrorHandler = isErrorHandler;
+      if(!isErrorHandler) {
+        this.editModel = cloneDeep(command);
+      } else {
+        this.editModel = cloneDeep(command.errorhandler);
+        nodeStep = command.errorhandler.nodeStep;
+        if(command.errorhandler.jobref) {
+          nodeStep = command.errorhandler.jobref.nodeStep;
+        }
+      }
 
-      this.editService = command.nodeStep
-        ? ServiceType.WorkflowNodeStep
-        : ServiceType.WorkflowStep;
+      this.editService = nodeStep
+          ? ServiceType.WorkflowNodeStep
+          : ServiceType.WorkflowStep;
 
-      if (command.jobref) {
+      if ((!isErrorHandler && command.jobref) || (isErrorHandler && command.errorhandler.jobref)) {
         this.editJobRefModal = true;
       } else {
         this.editStepModal = true;
@@ -352,19 +478,32 @@ export default defineComponent({
     async saveEditStep() {
       try {
         const saveData = cloneDeep(this.editExtra);
-        saveData.type = this.editModel.type;
-        saveData.config = this.editModel.config;
-        saveData.id = mkid();
-        saveData.nodeStep = this.editService === ServiceType.WorkflowNodeStep;
-        saveData.jobref = this.editModel.jobref;
+        if (this.isErrorHandler) {
+          saveData.errorhandler = {
+            ...saveData.errorhandler,
+            config: this.editModel.config,
+            jobref: this.editModel.jobref,
+            type: this.editModel.type,
+            nodeStep: this.editService === ServiceType.WorkflowNodeStep,
+            id: mkid()
+          };
+        } else {
+          saveData.type = this.editModel.type;
+          saveData.config = this.editModel.config;
+          saveData.id = mkid();
+          saveData.nodeStep = this.editService === ServiceType.WorkflowNodeStep;
+          saveData.jobref = this.editModel.jobref;
+        }
 
-        if (!saveData.jobref) {
-          saveData.filters = [];
+        if (!saveData.jobref && !this.editModel.jobref) {
+          if(!this.isErrorHandler) {
+            saveData.filters = [];
+          }
 
           const response = await validatePluginConfig(
             this.editService,
-            saveData.type,
-            saveData.config,
+            saveData.type || saveData.errorhandler.type,
+            saveData.config || saveData.errorhandler.config,
           );
 
           if (
@@ -400,8 +539,20 @@ export default defineComponent({
       }
       return `Step ${index + 1}`;
     },
+    toggleModalActive(val: boolean) {
+      if (this.modalComponent === "edit-plugin-modal") {
+        this.editStepModal = val;
+      } else if (this.modalComponent === "job-ref-form") {
+        this.editJobRefModal = val;
+      }
+    },
     toggleAddStepModal() {
       this.addStepModal = !this.addStepModal;
+    },
+    toggleAddErrorHandlerModal(index: number) {
+      this.isErrorHandler = true;
+      this.editIndex = index;
+      this.addStepModal = true;
     },
     updateHistoryWithLogFiltersData(index: number, data: any) {
       const command = cloneDeep(this.model.commands[index]);
@@ -418,15 +569,20 @@ export default defineComponent({
       });
     },
     handleSuccessOnValidation(saveData: any) {
-      const dataForUpdatingHistory = {
+      let dataForUpdatingHistory = {
         index: this.model.commands.length,
         operation: Operation.Insert,
         undo: Operation.Remove,
         orig: undefined,
       };
+      let newData = cloneDeep(saveData);
+
       if (this.editIndex >= 0) {
         const originalData = this.model.commands[this.editIndex];
-        this.$refs.historyControls.operationModify(this.editIndex, saveData);
+        if (this.isErrorHandler) {
+          newData = { ...originalData, ...saveData };
+        }
+        this.$refs.historyControls.operationModify(this.editIndex, newData);
         dataForUpdatingHistory.index = this.editIndex;
         dataForUpdatingHistory.operation = Operation.Modify;
         dataForUpdatingHistory.undo = Operation.Modify;
@@ -434,18 +590,20 @@ export default defineComponent({
       } else {
         this.$refs.historyControls.operationInsert(
           this.model.commands.length,
-          saveData,
+          newData,
         );
       }
 
       this.$refs.historyControls.changeEvent({
         dest: -1,
-        value: saveData,
+        value: newData,
         ...dataForUpdatingHistory,
       });
 
       this.editStepModal = false;
+      this.isErrorHandler = false;
       this.editJobRefModal = false;
+      this.isErrorHandler = false;
       this.editModel = {};
       this.editExtra = {};
       this.editModelValidation = null;
@@ -467,9 +625,6 @@ export default defineComponent({
   }
 }
 
-.mb-10 {
-  margin-bottom: 10px;
-}
 .step-list-item {
   background: var(--card-default-background-color);
   border: 1px solid var(--list-item-border-color);
@@ -480,14 +635,22 @@ export default defineComponent({
   flex-direction: row;
   justify-content: space-between;
   align-items: flex-start;
+  //overflow: hidden;
 
   .step-item-display {
-    flex-grow: 1;
-    padding: 5px;
+    width: 100%;
+
+    .node-icon {
+      margin-left: 5px;
+    }
+
     .step-item-config {
       border-width: 1px;
       border-style: dotted;
       border-color: transparent;
+      padding: 5px;
+      flex-grow: 1;
+      overflow: hidden;
 
       &:hover {
         cursor: pointer;
@@ -495,16 +658,8 @@ export default defineComponent({
         border-color: #68b3c8;
       }
 
-      .fas {
-        margin-left: 5px;
-      }
-
-      .item-container {
-        max-width: 700px;
-        overflow: hidden;
-      }
-
       .configpair {
+        max-width: 700px;
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
@@ -513,19 +668,63 @@ export default defineComponent({
           display: flex;
           gap: 5px;
         }
+      }
 
-        .text-success {
-          max-width: 700px;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          overflow: hidden;
+      .argString {
+        max-width: 700px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+
+        .optvalue {
+          margin-top: 0;
         }
       }
 
-      span[data-testid="block-description"] {
-        margin-left: 5px;
+      .optvalue,
+      .text-success {
+        max-width: calc(90% - 100px);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+
+      @media (max-width: 700px) {
+        .optvalue,
+        .text-success {
+          max-width: 80%;
+          white-space: wrap;
+        }
       }
     }
+
+    :deep(.node-icon) {
+      display: inline-block;
+      margin: 0 5px;
+    }
+  }
+
+  .step-item-row {
+    display: flex;
+    justify-content: stretch;
+    gap: 10px;
+
+    .step-item-controls {
+      margin-top: 5px;
+      flex-shrink: 0;
+
+      .btn-group {
+        display: inline-flex;
+      }
+    }
+  }
+
+  .step-item-logfilters {
+    margin: 10px 0 10px 5px;
+  }
+
+  .error-handler-section {
+    margin-top: 10px;
   }
 }
 </style>

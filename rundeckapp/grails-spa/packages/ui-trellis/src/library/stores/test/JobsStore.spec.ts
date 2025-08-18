@@ -34,6 +34,15 @@ describe("Counter Store", () => {
     expect(jobStore.activeId).toBe("");
   });
 
+  it("initializes with context variables", async () => {
+    const jobStore = useJobStore();
+    expect(jobStore.contextVariables).toHaveProperty("error_handler")
+    expect(jobStore.contextVariables).toHaveProperty("job")
+    expect(jobStore.contextVariables).toHaveProperty("node")
+    expect(jobStore.contextVariables).toHaveProperty("execution")
+    expect(jobStore.contextVariables).toHaveProperty("options")
+  });
+
   it("fetches a job definition and set it as active", async () => {
     mockedGetJobDefinition.mockResolvedValueOnce(mockJobDefinition);
     const jobStore = useJobStore();

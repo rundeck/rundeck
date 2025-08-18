@@ -5,7 +5,7 @@
     data-testid="log-filters-container"
   >
     <template v-if="showIfEmpty || model.length > 0">{{ title }}</template>
-    <div v-if="model.length > 0 && mode === 'inline'" class="add-gap">
+    <div v-if="model.length > 0 && mode === 'inline'" class="add-gap" :id="id">
       <template v-for="(entry, i) in model">
         <LogFilterButton
           v-if="findProvider(entry.type)"
@@ -31,6 +31,7 @@
     v-if="model.length > 0 && mode !== 'inline'"
     class="log-filters-container"
     data-testid="log-filters-button-container"
+    :id="id"
   >
     <template v-for="(entry, i) in model">
       <LogFilterButton
@@ -85,6 +86,10 @@ export default defineComponent({
       type: String,
       required: false,
       default: "block",
+    },
+    id: {
+      type: String,
+      default: "logFilters",
     },
   },
   emits: ["update:modelValue"],

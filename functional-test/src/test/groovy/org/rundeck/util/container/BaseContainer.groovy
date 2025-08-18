@@ -1,6 +1,8 @@
 package org.rundeck.util.container
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.jcraft.jsch.JSch
+import com.jcraft.jsch.KeyPair
 import groovy.util.logging.Slf4j
 import okhttp3.Request
 import okhttp3.Response
@@ -13,6 +15,9 @@ import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.jobs.JobUtils
 import spock.lang.Specification
 
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import java.nio.file.attribute.PosixFilePermission
 import java.text.SimpleDateFormat
 import java.time.Duration
 import java.util.function.Consumer
@@ -477,6 +482,23 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     /**
+     * Deletes the specified project key.
+     * This method sends a DELETE request to remove the project key with the given name.
+     * If the deletion operation fails, a RuntimeException is thrown.
+     *
+     * @param projectName the name of the key's parent project to be deleted. Must not be null.
+     * @param keyPath the path of the project key to be deleted. Must not be null.
+     * @throws RuntimeException if the project deletion fails.
+     *         The exception contains a detailed message obtained from the server's response.
+     */
+    void deleteProjectKey(String projectName, String keyPath) {
+        def response = client.doDelete("/storage/keys/project/${projectName}/${keyPath}")
+        if (!response.successful) {
+            throw new RuntimeException("Failed to delete project key: ${response.body().string()}")
+        }
+    }
+
+    /**
      * Updates the configuration of a project with the provided settings.
      *
      * This method sends a PUT request to update the configuration of the specified project
@@ -498,6 +520,18 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     def setupSpec() {
+        def tempKeyDir = ".build/tmp/keys"
+
+        def ossResource = getClass().getClassLoader().getResource("docker/compose/oss")
+        def proResource = getClass().getClassLoader().getResource("docker/compose/pro")
+
+        def ossKeyPath = ossResource ? ossResource.getPath() + "/keys" : null
+        def proKeyPath = proResource ? proResource.getPath() + "/keys" : null
+
+        generatePrivateKey(tempKeyDir, "id_rsa")
+        generatePrivateKey(tempKeyDir, "id_rsa_passphrase", "testpassphrase123")
+        copyKeyToDestinations(tempKeyDir, "id_rsa", [ossKeyPath, proKeyPath].findAll { it })
+        copyKeyToDestinations(tempKeyDir, "id_rsa_passphrase", [ossKeyPath, proKeyPath].findAll { it })
         startEnvironment()
     }
 
@@ -627,6 +661,52 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
             count++
         }
         return logs
+    }
+
+    static def generatePrivateKey(String tempDirPath, String keyName, String passphrase = null){
+        File dir = new File(tempDirPath)
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+
+        File privateKeyFile = new File(tempDirPath + File.separator + keyName)
+        File publicKeyFile = new File(tempDirPath + File.separator + keyName + ".pub")
+
+        if (privateKeyFile.exists() && publicKeyFile.exists()) {
+            return
+        }
+
+        JSch jsch = new JSch()
+        KeyPair keyPair = KeyPair.genKeyPair(jsch, KeyPair.RSA)
+
+        if (passphrase) {
+            keyPair.writePrivateKey(privateKeyFile.absolutePath, passphrase.getBytes())
+        } else {
+            keyPair.writePrivateKey(privateKeyFile.absolutePath)
+        }
+
+        keyPair.writePublicKey(publicKeyFile.absolutePath, "test private key")
+        keyPair.dispose()
+
+        Set<PosixFilePermission> perms = new HashSet<>()
+        perms.add(PosixFilePermission.OWNER_READ)
+        perms.add(PosixFilePermission.OWNER_WRITE)
+        Files.setPosixFilePermissions(privateKeyFile.toPath(), perms)
+    }
+
+    static def copyKeyToDestinations(String tempDirPath, String keyName, List<String> destinationPaths) {
+        File privateKeyFile = new File(tempDirPath + File.separator + keyName)
+        File publicKeyFile = new File(tempDirPath + File.separator + keyName + ".pub")
+
+        destinationPaths.each { destPath ->
+            File destDir = new File(destPath)
+            if (!destDir.exists()) {
+                destDir.mkdirs()
+            }
+
+            Files.copy(privateKeyFile.toPath(), new File(destDir, keyName).toPath(), StandardCopyOption.REPLACE_EXISTING)
+            Files.copy(publicKeyFile.toPath(), new File(destDir, keyName + ".pub").toPath(), StandardCopyOption.REPLACE_EXISTING)
+        }
     }
 
 }

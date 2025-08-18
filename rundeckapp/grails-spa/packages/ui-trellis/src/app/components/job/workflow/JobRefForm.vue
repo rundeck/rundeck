@@ -1,5 +1,5 @@
 <template>
-  <modal v-model="showModal" size="lg" :title="$t('plugin.edit.title')">
+  <modal data-testid="jobref-modal" v-model="showModal" size="lg" :title="$t('plugin.edit.title')">
     <div v-if="error" class="alert alert-danger">
       <ErrorsList :errors="[errorMessage]" />
     </div>
@@ -129,16 +129,15 @@
             $t("Workflow.Step.uuid.label")
           }}</label>
           <div class="col-sm-10">
-            <input
+            <PtAutoComplete
               :id="`jobUuidField${rkey}`"
               v-model="editModel.jobref.uuid"
-              data-testid="jobUuidField"
-              type="text"
+              class="context_var_autocomplete"
               name="uuid"
-              size="100"
-              :readonly="!!isUseName"
+              data-testid="jobUuidField"
+              :suggestions="inputTypeContextVariables"
+              :read-only="!!isUseName"
               :placeholder="$t('Workflow.Step.jobreference.uuid.placeholder')"
-              class="form-control context_var_autocomplete"
             />
           </div>
         </div>
@@ -154,16 +153,12 @@
             $t("Workflow.Step.argString.label")
           }}</label>
           <div class="col-sm-10">
-            <input
+            <PtAutoComplete
               id="jobArgStringField"
               v-model="editModel.jobref.args"
-              type="text"
               name="argString"
-              size="100"
-              :placeholder="
-                $t('Workflow.Step.jobreference.argString.placeholder')
-              "
-              class="form-control"
+              :suggestions="inputTypeContextVariables"
+              :placeholder="$t('Workflow.Step.jobreference.argString.placeholder')"
             />
           </div>
         </div>
@@ -322,7 +317,7 @@
 
           <div class="col-sm-10 vue-ui-socket">
             <node-filter-input
-              :model-value="editModel.jobref.nodefilters.filter"
+              :value="editModel.jobref.nodefilters.filter"
               :project="currentProject"
               filter-field-name="nodeFilter"
               :filter-field-id="`nodeFilterField${rkey}`"
@@ -330,7 +325,7 @@
               emit-filter-on-blur
               search-btn-type="cta"
               class="nodefilters"
-              @update:model-value="updatedValue"
+              @update:value="updatedValue"
               @filter="filterClicked"
             />
           </div>
@@ -345,10 +340,10 @@
             <div  class="well well-sm embed matchednodes">
               <template v-if="filterLoaded">
                 <button
-                    type="button"
-                    class="pull-right btn btn-sm refresh_nodes"
-                    :title="$t('click.to.refresh')"
-                    @click="triggerFetchNodes"
+                  type="button"
+                  class="pull-right btn btn-sm refresh_nodes"
+                  :title="$t('click.to.refresh')"
+                  @click="triggerFetchNodes"
                 >
                   {{ $t(loading ? "loading.text" : "refresh") }}
                   <i class="glyphicon glyphicon-refresh"></i>
@@ -543,7 +538,7 @@
             <div class="radio">
               <input
                 id="jobNodeStepFieldTrue"
-                v-model="editModel.nodeStep"
+                v-model="editModel.jobref.nodeStep"
                 type="radio"
                 name="nodeStep"
                 :value="true"
@@ -556,7 +551,7 @@
             <div class="radio">
               <input
                 id="jobNodeStepFieldFalse"
-                v-model="editModel.nodeStep"
+                v-model="editModel.jobref.nodeStep"
                 type="radio"
                 name="nodeStep"
                 :value="false"
@@ -569,24 +564,7 @@
           </div>
         </div>
       </section>
-      <hr />
-      <div class="form-group">
-        <label class="col-sm-2 control-label" :for="`description${rkey}`">
-          {{ $t("Workflow.stepLabel") }}
-        </label>
-
-        <div class="col-sm-10">
-          <input
-            :id="`description${rkey}`"
-            v-model="editModel.description"
-            type="text"
-            name="description"
-            class="form-control"
-            :placeholder="$t('Workflow.step.property.description.placeholder')"
-            size="100"
-          />
-        </div>
-      </div>
+      <slot name="extra" />
     </div>
     <template #footer>
       <btn data-testid="cancel-button" @click="$emit('cancel')">
@@ -634,12 +612,21 @@ import { mapState, mapActions } from "pinia";
 import { useNodesStore } from "@/library/stores/NodesStorePinia";
 import NodeFilterInput from "@/app/components/job/resources/NodeFilterInput.vue";
 import ErrorsList from "@/app/components/job/options/ErrorsList.vue";
+import PtAutoComplete from "../../../../library/components/primeVue/PtAutoComplete/PtAutoComplete.vue";
+import { getContextVariables } from "@/library/components/utils/contextVariableUtils";
+
 const rundeckContext = getRundeckContext();
 const eventBus = rundeckContext.eventBus;
 
 export default defineComponent({
   name: "JobRefForm",
-  components: { ErrorsList, NodeFilterInput, NodeListEmbed, UiSocket },
+  components: {
+    ErrorsList,
+    NodeFilterInput,
+    NodeListEmbed,
+    UiSocket,
+    PtAutoComplete,
+  },
   provide() {
     return {
       showJobsAsLinks: false,
@@ -667,8 +654,9 @@ export default defineComponent({
       currentProject: rundeckContext.projectName,
       editModel: {
         description: "",
-        nodeStep: false,
+        keepgoingOnSuccess: false,
         jobref: {
+          nodeStep: false,
           name: "",
           uuid: "",
           project: rundeckContext.projectName,
@@ -706,6 +694,7 @@ export default defineComponent({
       errorMessage: "",
       showRequired: false,
       eventBus: eventBus,
+      inputTypeContextVariables: getContextVariables("input", "WorkflowStep"),
     };
   },
   computed: {

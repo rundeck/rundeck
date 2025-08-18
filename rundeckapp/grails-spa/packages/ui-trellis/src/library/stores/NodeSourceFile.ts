@@ -1,10 +1,10 @@
 import { observable } from "mobx";
 import { RundeckClient } from "@rundeck/client";
-import { client } from "../modules/rundeckClient";
 import Tokens from "../modules/tokens";
 import { getRundeckContext } from "../rundeckService";
 import { RootStore } from "./RootStore";
 import axios, { AxiosResponse } from "axios";
+import { api } from "../services/api";
 
 export class NodeSourceFile {
   @observable index: number = -1;
@@ -54,33 +54,24 @@ export class NodeSourceFile {
 
   async listProjectNodeSources(): Promise<NodeSource[]> {
     const rundeckContext = getRundeckContext();
-    const resp = await client.sendRequest({
-      pathTemplate: "/api/{apiVersion}/project/{projectName}/sources",
-      pathParameters: rundeckContext,
-      baseUrl: rundeckContext.rdBase,
-      method: "GET",
-    });
-    if (!resp.parsedBody) {
+    const response = await api.get(
+      `/project/${rundeckContext.projectName}/sources`,
+    );
+    if (response.data) {
+      return response.data as NodeSource[];
+    } else {
       throw new Error(
         `Error getting node sources list for ${rundeckContext.projectName}`,
       );
-    } else {
-      return resp.parsedBody as NodeSource[];
     }
   }
 
   async getProjectNodeSource(index: number): Promise<NodeSource> {
-    const response = await getRundeckContext().rundeckClient.sendRequest({
-      method: "GET",
-      pathTemplate: "/api/{apiVersion}/project/{projectName}/source/{index}",
-      baseUrl: getRundeckContext().rdBase,
-      pathParameters: {
-        ...getRundeckContext(),
-        index: index.toString(),
-      },
-    });
-    if (response.parsedBody) {
-      return response.parsedBody as NodeSource;
+    const response = await api.get(
+      `/project/${getRundeckContext().projectName}/source/${index}`,
+    );
+    if (response.data) {
+      return response.data as NodeSource;
     } else {
       throw new Error("request failed: " + response);
     }

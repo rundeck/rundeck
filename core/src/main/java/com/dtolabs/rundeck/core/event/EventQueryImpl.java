@@ -14,8 +14,8 @@ public class EventQueryImpl implements StoredEventQuery {
     String objectId;
     Date dateFrom;
     Date dateTo;
-    Integer maxResults = 20;
-    Integer offset = 0;
+    Integer maxResults = null;
+    Integer offset = null;
     Long sequence;
-    StoredEventQueryType queryType = StoredEventQueryType.SELECT;
+    StoredEventQueryType queryType = null;
 }

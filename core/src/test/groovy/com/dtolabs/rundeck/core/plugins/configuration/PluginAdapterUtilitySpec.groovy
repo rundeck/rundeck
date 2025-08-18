@@ -17,12 +17,7 @@
 package com.dtolabs.rundeck.core.plugins.configuration
 
 import com.dtolabs.rundeck.core.plugins.Plugin
-import com.dtolabs.rundeck.plugins.descriptions.PluginMeta
-import com.dtolabs.rundeck.plugins.descriptions.PluginMetadata
-import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
-import com.dtolabs.rundeck.plugins.descriptions.ReplaceDataVariablesWithBlanks
-import com.dtolabs.rundeck.plugins.descriptions.SelectLabels
-import com.dtolabs.rundeck.plugins.descriptions.SelectValues
+import com.dtolabs.rundeck.plugins.descriptions.*
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import spock.lang.Specification
 
@@ -113,7 +108,7 @@ class PluginAdapterUtilitySpec extends Specification {
     }
 
 
-    def "configure options field string"() {
+    def "configure options field string value #value"() {
         given:
         Configuretest1 test = new Configuretest1();
         when:
@@ -130,6 +125,7 @@ class PluginAdapterUtilitySpec extends Specification {
         'a'     | _
         'a,b'   | _
         'a,b,c' | _
+        ''      | _
     }
     def "configure options field boxed Boolean"() {
         given:

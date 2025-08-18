@@ -112,24 +112,10 @@
       </div>
       <template v-else-if="prop.type === 'FreeSelect'">
         <div class="col-sm-5">
-          <input
-            v-if="!renderReadOnly"
-            :id="`${rkey}prop_` + pindex"
+          <pt-auto-complete
             v-model="currentValue"
-            :name="`${rkey}prop_` + pindex"
-            size="100"
-            type="text"
-            class="form-control input-sm"
-          />
-          <input
-            v-else
-            :id="`${rkey}prop_` + pindex"
-            v-model="currentValue"
-            :name="`${rkey}prop_` + pindex"
-            size="100"
-            type="text"
-            class="form-control input-sm"
-            :disabled="true"
+            :suggestions="inputTypeContextVariables"
+            :read-only="renderReadOnly"
           />
         </div>
         <div class="col-sm-5">
@@ -185,14 +171,10 @@
         </div>
       </template>
       <div v-else :class="inputColSize(prop)">
-        <input
+        <pt-auto-complete
           v-if="['Integer', 'Long'].indexOf(prop.type) >= 0 && !renderReadOnly"
-          :id="`${rkey}prop_` + pindex"
-          v-model.number="currentValue"
-          :name="`${rkey}prop_` + pindex"
-          size="100"
-          type="number"
-          class="form-control input-sm"
+          v-model="currentValue"
+          :suggestions="inputTypeContextVariables"
         />
         <template
           v-else-if="
@@ -228,18 +210,18 @@
             section="plugin-prop-edit-textarea-code"
             :location="`property:${prop.name}:${prop.options ? prop.options['CUSTOM_PROP_SOCKET_SECTION'] : ''}`"
           >
-            <ace-editor
+            <ace-editor-vue
               :id="`${rkey}prop_` + pindex"
               v-model="currentValue"
               :name="`${rkey}prop_` + pindex"
               :lang="prop.options['codeSyntaxMode']"
               :code-syntax-selectable="
-                prop.options['codeSyntaxSelectable'] === 'true' &&
-                !renderReadOnly
+                prop.options['codeSyntaxSelectable'] === 'true' && !renderReadOnly
               "
               height="200"
               width="100%"
               :read-only="renderReadOnly"
+              :context-variable-suggestions="scriptTypeContextVariables"
             />
           </ui-socket>
         </template>
@@ -318,33 +300,23 @@
           class="form-control input-sm"
           :disabled="true"
         />
-        <input
-          v-else
-          :id="`${rkey}prop_` + pindex"
-          v-model="currentValue"
-          :name="`${rkey}prop_` + pindex"
-          size="100"
-          type="text"
-          class="form-control input-sm"
-          :class="contextAutocomplete ? 'context_var_autocomplete' : ''"
-        />
-
-        <TextAutocomplete
-          v-if="contextAutocomplete && !aceEditorEnabled"
-          v-model="currentValue"
-          :target="'#' + rkey + 'prop_' + pindex"
-          :data="jobContext"
-          item-key="name"
-          autocomplete-key="$"
-        >
-          <template #item="{ items, select, highlight }">
-            <li v-for="(item, index) in items" :key="item.name">
-              <a role="button" @click="select(item.name)">
-                <span v-html="highlight(item)"></span> - {{ item.description }}
-              </a>
-            </li>
-          </template>
-        </TextAutocomplete>
+        <template v-else>
+          <pt-auto-complete
+            v-if="isAutoCompleteField"
+            v-model="currentValue"
+            :suggestions="inputTypeContextVariables"
+          />
+          <input
+            v-else
+            :id="`${rkey}prop_` + pindex"
+            v-model="currentValue"
+            :name="`${rkey}prop_` + pindex"
+            size="100"
+            type="text"
+            class="form-control input-sm"
+            :class="contextAutocomplete ? 'context_var_autocomplete' : ''"
+          />
+        </template>
       </div>
       <div
         v-if="
@@ -443,20 +415,25 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
-
 import JobConfigPicker from "./JobConfigPicker.vue";
 import KeyStorageSelector from "./KeyStorageSelector.vue";
 
-import AceEditor from "../utils/AceEditor.vue";
+import AceEditorVue from "../utils/AceEditorVue.vue";
 import PluginPropVal from "./pluginPropVal.vue";
 import { client } from "../../modules/rundeckClient";
 import DynamicFormPluginProp from "./DynamicFormPluginProp.vue";
-import TextAutocomplete from "../utils/TextAutocomplete.vue";
 import type { PropType } from "vue";
 import { getRundeckContext } from "../../rundeckService";
 import { EventBus } from "@/library";
 import UiSocket from "../utils/UiSocket.vue";
 import PluginDetails from "@/library/components/plugins/PluginDetails.vue";
+import PtAutoComplete from "../primeVue/PtAutoComplete/PtAutoComplete.vue";
+import {
+  getContextVariables,
+  isAutoCompleteField,
+  WorkflowStepType,
+} from "../utils/contextVariableUtils";
+
 interface Prop {
   type: string;
   defaultValue: any;
@@ -473,11 +450,11 @@ export default defineComponent({
   components: {
     PluginDetails,
     DynamicFormPluginProp,
-    AceEditor,
+    AceEditorVue,
     JobConfigPicker,
     PluginPropVal,
     KeyStorageSelector,
-    TextAutocomplete,
+    PtAutoComplete,
     UiSocket,
   },
   props: {
@@ -492,6 +469,10 @@ export default defineComponent({
     },
     modelValue: {
       required: false,
+      default: "",
+    },
+    pluginType: {
+      require: true,
       default: "",
     },
     useRunnerSelector: {
@@ -544,6 +525,11 @@ export default defineComponent({
       type: Object as PropType<any>,
       required: true,
     },
+    stepType: {
+      type: String as PropType<WorkflowStepType>,
+      required: false,
+      default: null,
+    },
   },
   emits: ["update:modelValue", "pluginPropsMounted"],
   data() {
@@ -568,6 +554,17 @@ export default defineComponent({
         this.setJobName(val);
       },
     },
+    isAutoCompleteField(): boolean {
+      return isAutoCompleteField(this.stepType);
+    },
+    inputTypeContextVariables(): any {
+      if (!this.isAutoCompleteField) return [];
+      return getContextVariables("input", this.stepType, this.pluginType);
+    },
+    scriptTypeContextVariables(): any {
+      if (!this.isAutoCompleteField) return [];
+      return getContextVariables("script", this.stepType, this.pluginType);
+    },
   },
   watch: {
     currentValue: function (newval) {
@@ -584,7 +581,6 @@ export default defineComponent({
     },
   },
   mounted() {
-    this.$emit("pluginPropsMounted");
     this.setJobName(this.modelValue);
     if (getRundeckContext() && getRundeckContext().projectName) {
       this.keyPath = "keys/project/" + getRundeckContext().projectName + "/";

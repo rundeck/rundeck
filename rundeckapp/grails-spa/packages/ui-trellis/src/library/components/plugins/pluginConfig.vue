@@ -131,6 +131,8 @@
                 :pindex="pindex"
                 :selector-data="propsComputedSelectorData"
                 :autocomplete-callback="autocompleteCallback"
+                :step-type="serviceName"
+                :plugin-type="modelValue.type"
                 @plugin-props-mounted="notifyHandleAutoComplete"
               />
             </div>
@@ -187,6 +189,8 @@
                   :rkey="'g_' + gindex + '_' + rkey"
                   :pindex="pindex"
                   :selector-data="propsComputedSelectorData"
+                  :step-type="serviceName"
+                  :plugin-type="modelValue.type"
                   :autocomplete-callback="autocompleteCallback"
                 />
               </div>

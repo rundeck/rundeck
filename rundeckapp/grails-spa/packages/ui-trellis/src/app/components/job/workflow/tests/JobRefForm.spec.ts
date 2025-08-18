@@ -43,8 +43,8 @@ const createWrapper = async (
     props: {
       modelValue: {
         description: "",
-        nodeStep: false,
         jobref: {
+          nodeStep: false,
           name: "",
           project: "TestProject",
           group: "",
@@ -122,7 +122,7 @@ describe("JobRefForm", () => {
         wrapper.find("[data-testid='jobGroupField']").attributes("readonly"),
       ).toBeDefined();
       expect(
-        wrapper.find("[data-testid='jobUuidField']").attributes("readonly"),
+        wrapper.find("[data-testid='jobUuidField'] input").attributes("disabled"),
       ).toBeUndefined();
 
       // Switch to name-based reference
@@ -136,7 +136,7 @@ describe("JobRefForm", () => {
         wrapper.find("[data-testid='jobGroupField']").attributes("readonly"),
       ).toBeUndefined();
       expect(
-        wrapper.find("[data-testid='jobUuidField']").attributes("readonly"),
+        wrapper.find("[data-testid='jobUuidField'] input").attributes("disabled"),
       ).toBeDefined();
     });
   });
@@ -154,7 +154,7 @@ describe("JobRefForm", () => {
     it("emits save event when form is valid", async () => {
       const wrapper = await createWrapper();
 
-      await wrapper.find("[data-testid='jobUuidField']").setValue("test-uuid");
+      await wrapper.find("[data-testid='jobUuidField'] input").setValue("test-uuid");
       await wrapper
         .find("[data-testid='jobProjectField']")
         .setValue("test-job");
@@ -260,7 +260,7 @@ describe("JobRefForm", () => {
 
       expect(
         (
-          wrapper.find("[data-testid='jobUuidField']")
+          wrapper.find("[data-testid='jobUuidField'] input")
             .element as HTMLInputElement
         ).value,
       ).toBe("test-id");
@@ -335,7 +335,7 @@ describe("JobRefForm", () => {
 
       await wrapper
         .findComponent({ name: "NodeFilterInput" })
-        .vm.$emit("update:modelValue", "new-filter");
+        .vm.$emit("update:value", "new-filter");
 
       expect(store.nodeFilterStore.setSelectedFilter).toHaveBeenCalledWith(
         "new-filter",

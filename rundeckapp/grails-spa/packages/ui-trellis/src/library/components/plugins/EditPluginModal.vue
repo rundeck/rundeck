@@ -1,11 +1,16 @@
 <template>
-  <modal v-model="showModal" :title="title || $t('plugin.edit.title')" size="lg">
+  <modal
+    v-model="showModal"
+    :title="title || $t('plugin.edit.title')"
+    size="lg"
+  >
     <div v-if="provider">
       <p>
         <plugin-info
           :detail="provider"
           :show-description="true"
           :show-extended="false"
+          description-css="ml-5"
         ></plugin-info>
       </p>
       <plugin-config
@@ -19,7 +24,9 @@
         scope="Instance"
         default-scope="Instance"
         group-css=""
+        description-css="ml-5"
         data-testid="plugin-info"
+        :service-name="serviceName"
       ></plugin-config>
       <slot name="extra"></slot>
     </div>
@@ -30,12 +37,12 @@
       </p>
     </div>
     <template #footer>
-      <btn @click="$emit('cancel')" data-testid="cancel-button">{{
-        $t("Cancel")
-      }}</btn>
-      <btn type="success" @click="saveChanges" data-testid="save-button">{{
-        $t("Save")
-      }}</btn>
+      <btn @click="$emit('cancel')" data-testid="cancel-button">
+        {{ $t("Cancel") }}
+      </btn>
+      <btn type="success" @click="saveChanges" data-testid="save-button">
+        {{ $t("Save") }}
+      </btn>
     </template>
   </modal>
 </template>
@@ -67,7 +74,7 @@ export default defineComponent({
     modalActive: {
       type: Boolean,
       required: false,
-      default: false,
+      default: true,
     },
     validation: {
       type: Object,
@@ -107,7 +114,10 @@ export default defineComponent({
   },
   async mounted() {
     this.editModel = cloneDeep(this.modelValue);
-    if (Object.keys(this.modelValue.config).length === 0) {
+    if (
+      this.modelValue.config &&
+      Object.keys(this.modelValue.config).length === 0
+    ) {
       this.pluginConfigMode = "create";
     }
     await this.loadProvider();
@@ -119,12 +129,17 @@ export default defineComponent({
     },
     async loadProvider() {
       if (this.editModel.type) {
-        this.loading = true;
-        this.provider = await getServiceProviderDescription(
-          this.serviceName,
-          this.editModel.type,
-        );
-        this.loading = false;
+        try {
+          this.loading = true;
+          this.provider = await getServiceProviderDescription(
+            this.serviceName,
+            this.editModel.type,
+          );
+        } catch (e) {
+          console.log(e);
+        } finally {
+          this.loading = false;
+        }
       } else {
         this.loading = false;
         this.provider = null;
@@ -133,4 +148,3 @@ export default defineComponent({
   },
 });
 </script>
-<style scoped lang="scss"></style>

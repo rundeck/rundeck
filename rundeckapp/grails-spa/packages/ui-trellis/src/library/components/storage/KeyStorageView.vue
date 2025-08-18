@@ -213,6 +213,7 @@
               <tbody>
                 <tr v-for="directory in directories" :key="directory.name">
                   <td
+                    data-testid="keyDirectoryButton"
                     class="action"
                     colspan="2"
                     @click="loadDir(directory.path)"
@@ -342,10 +343,11 @@ import { listProjects } from "../../services/projects";
 import {
   storageKeyDelete,
   storageKeyGetMetadata,
+  StorageKeyListResponse,
 } from "../../services/storage";
 import moment from "moment";
 import { getRundeckContext } from "../../index";
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
 import KeyType from "../../types/KeyType";
 import InputType from "../../types/InputType";
 import {
@@ -363,6 +365,13 @@ export default defineComponent({
     rootPath: String,
     createdKey: {},
     runnerId: String,
+    getKeyMetadata: {
+      type: Function as PropType<
+        (path: string) => Promise<StorageKeyListResponse>
+      >,
+      default: storageKeyGetMetadata,
+      required: true,
+    },
   },
   emits: ["update:modelValue", "openEditor"],
   data() {
@@ -547,7 +556,7 @@ export default defineComponent({
       const requestOptions = {
         queryParameters: forceRefresh ? { refresh: "true" } : {},
       };
-      storageKeyGetMetadata(getPath, requestOptions)
+      this.getKeyMetadata(getPath, requestOptions)
         .then((result: any) => {
           this.directories = [];
           this.files = [];

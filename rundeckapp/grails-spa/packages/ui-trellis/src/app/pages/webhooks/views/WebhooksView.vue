@@ -487,7 +487,7 @@ export default defineComponent({
         resp = await this.webhookStore.save(webhook);
       }
 
-      const data = resp.parsedBody;
+      const data = resp.data;
 
       if (!data || data.err) {
         this.setError("Failed to save!\n" + data.err);
@@ -525,7 +525,7 @@ export default defineComponent({
           this.webhookStore
             .delete(this.curHook)
             .then((response) => {
-              const data = response.parsedBody;
+              const data = response.data;
               if (data.err) {
                 this.setError("Failed to delete! " + data.err);
               } else if (response.status !== 200) {
