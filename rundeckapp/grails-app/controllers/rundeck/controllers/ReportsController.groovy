@@ -111,8 +111,6 @@ class ReportsController extends ControllerBase{
         ){
             return
         }
-        def RdUser u = userService.findOrCreateUser(session.user)
-        def filterPref= userService.parseKeyValuePref(u.filterPref)
 
         def options = [:]
         if (params['execRptCustomView']) {
@@ -192,7 +190,6 @@ class ReportsController extends ControllerBase{
         }
 //        System.err.println("lastDatex: "+model.lastDate);
         model = reportService.finishquery(query,params,model)
-        model.filterPref=filterPref
         return model
     }
 
