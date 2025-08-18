@@ -6287,6 +6287,7 @@ breakpoint are available, no metadata will be loaded''',
         query.groupPath = path
         query.projFilter = project
         query.inputParamMap = params
+        query.max = -1
         List<JobBrowseItem> result = scheduledExecutionService.basicQueryJobs(
             project,
             query,
