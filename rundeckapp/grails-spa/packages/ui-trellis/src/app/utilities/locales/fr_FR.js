@@ -249,7 +249,7 @@ const messages = {
   "node.metadata.status": "Status",
   nodes: "N\u0153uds :",
   "notification.event.onfailure": "En cas d\u02bc\u00e9chec",
-  "edit.nodes.header": "Edit Nodes",									
+  "edit.nodes.header": "Modifier les nœuds",
   "notification.event.onsuccess": "En cas de succ\u00e8s",
   "notification.event.onstart": "Au d\u00e9marrage",
   "notification.event.onavgduration": "Dur\u00e9e moyenne d\u00e9pass\u00e9e",
