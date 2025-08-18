@@ -21,6 +21,8 @@
 //= require scheduledExecution/jobRunFormOptionsKO
 //= require knockout.min
 //= require koBind
+//= require nodeFiltersKO
+
 /*
 Next gen UI, this code should be migrated eventually to Vue
  */

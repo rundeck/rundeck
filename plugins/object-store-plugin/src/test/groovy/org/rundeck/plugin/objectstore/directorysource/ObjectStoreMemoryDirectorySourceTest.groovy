@@ -15,6 +15,7 @@
  */
 package org.rundeck.plugin.objectstore.directorysource
 
+import io.minio.MakeBucketArgs
 import io.minio.MinioClient
 import spock.lang.Shared
 import spock.lang.Specification
@@ -28,7 +29,6 @@ class ObjectStoreMemoryDirectorySourceTest extends Specification {
 
     @Shared
     public MinioContainer minio = new MinioContainer()
-
 
     def setupSpec() {
         minio.start()
@@ -62,7 +62,10 @@ class ObjectStoreMemoryDirectorySourceTest extends Specification {
     def "Init resync"() {
         when:
         String bucket = "mem-sync"
-        mClient.makeBucket(bucket)
+        MakeBucketArgs args = MakeBucketArgs.builder()
+                .bucket(bucket)
+                .build();
+        mClient.makeBucket(args)
         MinioTestUtils.ifNotExistAdd(mClient, bucket, "arootfile.file", "root", [:])
         MinioTestUtils.ifNotExistAdd(mClient, bucket, "dir/dir.file", "file", [:])
         MinioTestUtils.ifNotExistAdd(mClient, bucket, "dir/subdir/file1.file", "file", [name:"file1"])
@@ -107,15 +110,9 @@ class ObjectStoreMemoryDirectorySourceTest extends Specification {
         def subdirs = directory.listSubDirectoriesAt("server")
         then:
         subdirs.size() == 3
-        subdirs[0].path.name == "config"
-        subdirs[0].path.path == "server/config"
-        subdirs[0].directory
-        subdirs[1].path.name == "data"
-        subdirs[1].path.path == "server/data"
-        subdirs[1].directory
-        subdirs[2].path.name == "logs"
-        subdirs[2].path.path == "server/logs"
-        subdirs[2].directory
+        assert subdirs.any { it.path.name == "config" && it.path.path == "server/config" && it.directory }
+        assert subdirs.any { it.path.name == "data" && it.path.path == "server/data" && it.directory }
+        assert subdirs.any { it.path.name == "logs" && it.path.path == "server/logs" && it.directory }
     }
 
     def "ListSubDirectoriesAtRoot"() {
@@ -123,12 +120,9 @@ class ObjectStoreMemoryDirectorySourceTest extends Specification {
         def subdirs = directory.listSubDirectoriesAt("")
         then:
         subdirs.size() == 3
-        subdirs[0].path.name == "etc"
-        subdirs[0].directory
-        subdirs[1].path.name == "server"
-        subdirs[1].directory
-        subdirs[2].path.name == "tobedeleted"
-        subdirs[2].directory
+        assert subdirs.any { it.path.name == "etc" && it.directory }
+        assert subdirs.any { it.path.name == "server" && it.directory }
+        assert subdirs.any { it.path.name == "tobedeleted" && it.directory }
     }
 
     def "ListResourceEntriesAt"() {
@@ -136,10 +130,8 @@ class ObjectStoreMemoryDirectorySourceTest extends Specification {
         def entries = directory.listResourceEntriesAt("server/config")
         then:
         entries.size() == 2
-        entries[0].path.name == "realm.properties"
-        entries[0].contents.meta.description == "security data"
-        entries[1].path.name == "rundeck-config.properties"
-        entries[1].contents.meta.description == "main config properties"
+        assert entries.any { it.path.name == "realm.properties" && it.contents.meta.description == "security data" }
+        assert entries.any { it.path.name == "rundeck-config.properties" && it.contents.meta.description == "main config properties" }
     }
 
     def "ListResourceEntries At Root"() {

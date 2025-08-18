@@ -23,15 +23,6 @@ const mountHomeActionsMenu = async (): Promise<VueWrapper<any>> => {
       },
       index: 0,
     },
-    global: {
-      mocks: {
-        $t: (msg: string) => msg,
-      },
-    },
-    components: {
-      Dropdown,
-      btn: Btn,
-    },
   });
 
   // Wait for the next Vue tick to allow for asynchronous rendering

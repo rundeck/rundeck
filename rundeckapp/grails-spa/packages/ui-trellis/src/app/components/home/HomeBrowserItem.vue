@@ -100,14 +100,14 @@
             {{ project.execCount }}
           </span>
           <span>
-            {{ $tc("Execution", project.execCount) }}
+            {{ $t("Execution", project.execCount) }}
           </span>
           {{ $t("page.home.duration.in.the.last.day") }}
           {{ $t("by") }}
           <span class="text-info">
             {{ project.userCount }}
           </span>
-          <span> {{ $tc("user", project.userCount) }}: </span>
+          <span> {{ $t("user", project.userCount) }}: </span>
           <span>
             {{ project.userSummary.join(", ") }}
           </span>

@@ -1,0 +1,13 @@
+repositories:
+-   repositoryName: private
+    type: FILE
+    owner: PRIVATE
+    configProperties:
+        repositoryLocation: /tmp/repository-repo
+        manifestLocation: /tmp/repository-repo/manifest.json
+-   repositoryName: official
+    enabled: false
+    type: HTTP
+    owner: RUNDECK
+    configProperties:
+        rundeckRepoEndpoint: http://localhost:8000

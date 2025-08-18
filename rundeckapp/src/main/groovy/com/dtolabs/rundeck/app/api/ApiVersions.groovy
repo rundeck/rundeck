@@ -38,20 +38,48 @@ class ApiVersions {
     public static final int V48 = 48
     public static final int V49 = 49
     public static final int V50 = 50
+    public static final int V51 = 51
+    public static final int V52 = 52
+    public static final int V53 = 53
+
+    // ^^^ New version is to be added above this line. ^^^
+    // Ensure the constant name follows the API_VERSION_VARIABLE_NAME_PATTERN pattern.
+    // Update the "Current API version Configuration" section below.
+
+    /**
+     * Current API version Configuration
+     */
+    // References the current API version
+    public final static int API_CURRENT_VERSION = V53
+    // Hardcoded inline string constant for the current version used in API doc generation
+    public final static String API_CURRENT_VERSION_STR = "53"
+
+    /**
+     * Version span configurations
+     */
+    public final static int API_EARLIEST_VERSION = V14
+    public final static int API_DEPRECATION_VERSION = V17
+
+    /**
+     *  The code bellow uses reflection on the data declared above
+     */
+
+    // Uses class metadata to generate a List and a Map of supported API versions
+    public static final def API_VERSION_VARIABLE_NAME_PATTERN = /\bV\d+\b/
+    public static final List<Integer> Versions
+    static  {
+        def collectedVersions = ApiVersions.declaredFields.findAll {
+            it.name ==~ API_VERSION_VARIABLE_NAME_PATTERN && it.type == int
+        }.collect { (Integer)it.get(null) }
+        Versions = collectedVersions.asImmutable()
+    }
+
     public static final Map VersionMap = [:]
-    public static final List Versions = [V14, V15, V16, V17, V18,
-                                         V19, V20, V21, V22, V23, V24, V25, V26,
-                                         V27, V28, V29, V30, V31, V32,V33,V34,V35,
-                                         V36, V37, V38, V39, V40, V41, V42, V43, V44, V45, V46, V47, V48, V49, V50]
     static {
         Versions.each { VersionMap[it.toString()] = it }
     }
     public static final Set VersionStrings = new HashSet(VersionMap.values())
 
-    public final static int API_EARLIEST_VERSION = V14
-    public final static int API_DEPRECATION_VERSION = V17
-    public final static int API_CURRENT_VERSION = V50
-    public final static String API_CURRENT_VERSION_STR = '50'
     public final static int API_MIN_VERSION = API_EARLIEST_VERSION
     public final static int API_MAX_VERSION = API_CURRENT_VERSION
 }

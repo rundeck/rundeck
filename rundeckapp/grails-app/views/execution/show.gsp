@@ -47,7 +47,13 @@
       </g:else>
       </g:each>
       <g:set var="adhocRunAllowed" value="${auth.adhocAllowedTest(action: AuthConstants.ACTION_RUN,project:execution.project)}"/>
-      <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: params.project, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])}"/>
+      <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(
+              context: AuthConstants.CTX_APPLICATION,
+              type: AuthConstants.TYPE_PROJECT,
+              name: params.project,
+              action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
+              any: true
+      )}"/>
       <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: params.project, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
 
       <g:set var="defaultLastLines" value="${cfg.getInteger(config: "gui.execution.tail.lines.default", default: 20)}"/>
@@ -147,7 +153,6 @@ search
             jobslistDateFormatMoment:"${enc(js:g.message(code:'jobslist.date.format.ko'))}",
             runningDateFormatMoment:"${enc(js:g.message(code:'jobslist.running.format.ko'))}",
             activityUrl: appLinks.reportsEventsAjax,
-            nowrunningUrl: "${createLink(uri:"/api/${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}/project/${projectName}/executions/running")}",
             bulkDeleteUrl: appLinks.apiExecutionsBulkDelete,
             activityPageHref:"${enc(js:createLink(controller:'reports',action:'index',params:[project:projectName]))}",
             sinceUpdatedUrl:"${enc(js:g.createLink(controller:'reports',action: 'since.json', params: [project:projectName]))}",
@@ -172,7 +177,6 @@ search
       <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
 
       <asset:stylesheet href="static/css/chunk-vendors.css"/>
-      <asset:stylesheet href="static/css/pages/execution-show.css"/>
       <asset:javascript src="static/pages/execution-show.js" defer="defer"/>
   </head>
   <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>

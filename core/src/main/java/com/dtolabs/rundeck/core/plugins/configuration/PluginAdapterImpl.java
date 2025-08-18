@@ -14,6 +14,7 @@ import lombok.Setter;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Plugin adapter implementation
@@ -694,7 +695,9 @@ public class PluginAdapterImpl
             final List<String> splitList;
             if (value instanceof String) {
                 String valstring = (String) value;
-                splitList = Arrays.asList(valstring.split(", *"));
+                splitList = Arrays.stream(valstring.split(", *"))
+                                  .filter(s -> !s.isBlank())
+                                  .collect(Collectors.toList());
             } else if (value instanceof List) {
                 splitList = (List<String>) value;
             } else if (value instanceof Set) {

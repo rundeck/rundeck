@@ -19,6 +19,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
+import org.springframework.dao.DataAccessException
 import rundeck.data.util.ExecReportUtil
 import rundeck.services.workflow.WorkflowMetricsWriterImpl
 import rundeck.support.filters.BaseNodeFilters
@@ -536,14 +537,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             currunning<<it
         }
 
-        def jobs =[:]
-        currunning.each{
-            if(it.scheduledExecution && !jobs[it.scheduledExecution.id.toString()]){
-                jobs[it.scheduledExecution.id.toString()] = ScheduledExecution.get(it.scheduledExecution.id)
-            }
-        }
-
-
         def total = Execution.createCriteria().count{
 
              if(query ){
@@ -642,11 +635,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }else{
                 isNull("dateCompleted")
             }
-        };
+        }
 
-        return [query:query, _filters:filters,
-            jobs: jobs, nowrunning:currunning,
-            total: total]
+        return [
+            query     : query,
+            _filters  : filters,
+            nowrunning: currunning,
+            total     : total
+        ]
     }
 
     def public finishQueueQuery(query,params,model){
@@ -2644,7 +2640,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         if (!execution.save(flush:true)) {
             execution.errors.allErrors.each { log.warn(it.toString()) }
-            def msg=execution.errors.allErrors.collect { ObjectError err-> lookupMessage(err.codes,err.arguments,err.defaultMessage) }.join(", ")
+            def msg=execution.errors.allErrors.collect { ObjectError err-> lookupMessage(err.codes,err.arguments?.toList(),err.defaultMessage) }.join(", ")
             log.error("unable to create execution: " + msg)
             throw new ExecutionServiceException("unable to create execution: "+msg)
         }
@@ -2844,8 +2840,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (options) {
             def defaultoptions=[:]
             options.each {OptionData opt ->
-                if (null==optparams[opt.name] && opt.defaultValue) {
-                    defaultoptions[opt.name]=opt.defaultValue
+                if (null==optparams[opt.name]) {
+                    if(opt.defaultValue) {
+                        defaultoptions[opt.name] = opt.defaultValue
+                    } else if(opt.multivalued && opt.multivalueAllSelected){
+                        defaultoptions[opt.name] = opt.valuesList
+                    }
                 }
             }
             if(defaultoptions){
@@ -3065,13 +3065,31 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     @CompileStatic
     def saveExecutionState(schedId, exId, Map props, AsyncStarted execmap, Map retryContext) {
-        def event = Execution.withNewTransaction {
-            saveCompletedExecution_currentTransaction(schedId, exId, props, execmap, retryContext)
-        }
+        def event = saveExecutionState_newTransaction(schedId, exId, props, execmap, retryContext)
 
         // To avoid the possibility of "stuck" executions, it is important that notifications are not processed
         // until the transaction that updates the execution to "completed" status has committed.
         triggerJobCompleteNotifications(execmap, event)
+
+        return event
+    }
+
+    /**
+     * Save execution status within a new transaction
+     * @param schedId
+     * @param exId
+     * @param props
+     * @param execmap
+     * @param retryContext
+     * @return
+     */
+    @CompileStatic
+    ExecutionCompleteEvent saveExecutionState_newTransaction(schedId, exId, Map props, AsyncStarted execmap, Map retryContext) {
+        def event = Execution.withNewTransaction {
+            saveCompletedExecution_currentTransaction(schedId, exId, props, execmap, retryContext)
+        }
+
+        return event
     }
 
     /**
@@ -3225,7 +3243,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
-    private def triggerJobCompleteNotifications(AsyncStarted execRun, ExecutionCompleteEvent event) {
+    public def triggerJobCompleteNotifications(AsyncStarted execRun, ExecutionCompleteEvent event) {
         def context = execRun?.thread?.context
         def execution = event.execution
         def export = execRun?.thread?.resultObject?.getSharedContext()?.consolidate()?.getData(ContextView.global())

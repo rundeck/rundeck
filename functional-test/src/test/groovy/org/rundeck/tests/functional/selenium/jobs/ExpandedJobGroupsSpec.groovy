@@ -1,12 +1,9 @@
 package org.rundeck.tests.functional.selenium.jobs
 
-
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
-import org.rundeck.util.gui.pages.home.HomePage
-import org.rundeck.util.gui.pages.jobs.*
+import org.rundeck.util.gui.pages.jobs.JobListPage
 import org.rundeck.util.gui.pages.login.LoginPage
-import org.rundeck.util.gui.pages.project.ProjectCreatePage
 import org.rundeck.util.gui.pages.project.ProjectEditPage
 import spock.lang.Stepwise
 
@@ -48,10 +45,14 @@ class ExpandedJobGroupsSpec extends SeleniumBase {
         jobListPage.loadJobListForProject(projectName)
         jobListPage.go()
         jobListPage.waitForElementToBeClickable(jobListPage.getExpandedJobGroupsContainer())
-        def jobGroupsExpanded = jobListPage.getExpandedJobGroupsContainer().text
+        //def jobGroupsExpanded = jobListPage.getExpandedJobGroupsContainer().text
+
+        def jobGroups = jobListPage.getExpandedJobGroupsContainerChildren()
+        def jobGroupsExpanded = jobListPage.loopGroups(jobGroups)
+
 
         then: "We check if the job groups are expanded"
-        jobGroupsExpanded == "Parent\nLevel1\nChild\nLevel2\nSubChild\nLevel3"
+        jobGroupsExpanded == "ParentGroup/Level1/Child/Level2/SubChild/Level3"
 
         when: "We change the expand level to 0"
         projectEditPage.go()

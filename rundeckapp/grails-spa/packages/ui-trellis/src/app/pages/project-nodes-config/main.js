@@ -13,6 +13,8 @@ import ProjectConfigurableForm from "./ProjectConfigurableForm.vue";
 import ProjectNodePage from "./ProjectNodePage.vue";
 import { getRundeckContext } from "../../../library";
 import { initI18n, updateLocaleMessages } from "../../utilities/i18n";
+import PrimeVue from "primevue/config";
+import Lara from "@primeuix/themes/lara";
 
 // include any i18n injected in the page by the app
 
@@ -26,12 +28,6 @@ for (let i = 0; i < els.length; i++) {
 
   const app = createApp({
     name: "ProjectNodeApp",
-
-    data() {
-      return {
-        EventBus: context.eventBus,
-      };
-    },
     components: {
       ProjectPluginConfig,
       ProjectNodeSourcesConfig,
@@ -41,10 +37,26 @@ for (let i = 0; i < els.length; i++) {
       ProjectConfigurableForm,
       ProjectNodePage,
     },
+
+    data() {
+      return {
+        EventBus: context.eventBus,
+      };
+    },
   });
   app.use(VueCookies);
   app.use(uiv);
   app.use(i18n);
+  app.use(PrimeVue, {
+    theme: {
+      preset: Lara,
+      options: {
+        prefix: "p",
+        cssLayer: true,
+        darkModeSelector: ".dark",
+      },
+    },
+  });
   app.provide("addUiMessages", async (messages) => {
     const newMessages = messages.reduce(
       (acc, message) => (message ? { ...acc, ...message } : acc),

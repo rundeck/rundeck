@@ -136,6 +136,14 @@ allprojects {
         exclude group: 'ch.qos.logback', module: 'logback-classic'
         exclude group: 'ch.qos.logback', module: 'logback-core'
     }
+    
+    // Global dependency constraints to fix security vulnerabilities
+    configurations.all {
+        resolutionStrategy {
+            force "commons-io:commons-io:${commonsIoVersion}"
+            force "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
+        }
+    }
 }
 
 /**
@@ -148,6 +156,29 @@ subprojects {
     apply from: "${rootDir}/gradle/java-version.gradle"
     eclipse.project.name = "${project.getParent().eclipse.project.name}:${name}"
 }
+
+/*
+ Root project Configurations
+ */
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+configurations{
+    // dependencies for running groovy scripts
+    groovyScript
+}
+
+dependencies{
+
+    // dependencies for running groovy scripts
+    groovyScript localGroovy()
+    groovyScript "org.codehaus.groovy:groovy-cli-commons:${groovyVersion}"
+    groovyScript "org.codehaus.groovy:groovy-yaml:${groovyVersion}"
+}
+
 
 /**
  * Enable incremental Groovy compile
@@ -176,7 +207,6 @@ project(':rundeckapp') {
         project(':plugins:flow-control-plugin'),
         project(':plugins:jasypt-encryption-plugin'),
         project(':plugins:object-store-plugin'),
-        project(':plugins:azure-object-store-plugin'),
         project(':plugins:orchestrator-plugin'),
         project(':plugins:git-plugin'),
         project(':plugins:audit-logging-plugin'),
@@ -222,6 +252,8 @@ nexusPublishing {
     repositories {
         sonatype{
             stagingProfileId = '67d196ce5bae'
+            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
         }
     }
 }
@@ -265,4 +297,15 @@ tasks.register('printBootWarPath') {
         def bootArchiveFile = rundeckapp.bootWar.archiveFile.get()
         println "${bootArchiveFile}"
     }
+}
+
+tasks.register('verifyBuild', JavaExec) {
+    classpath = configurations.groovyScript
+    mainClass = 'groovy.ui.GroovyMain'
+    boolean debug = project.hasProperty('debug')
+    def scriptArgs = ["testbuild.groovy", "--buildType=${project.ext.environment}"]
+    if (debug) {
+        scriptArgs << "-debug"
+    }
+    args scriptArgs
 }

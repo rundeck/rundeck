@@ -1,16 +1,21 @@
 <template>
-  <modal v-model="showModal" :title="title || $t('plugin.edit.title')">
+  <modal
+    v-model="showModal"
+    :title="title || $t('plugin.edit.title')"
+    size="lg"
+  >
     <div v-if="provider">
       <p>
         <plugin-info
           :detail="provider"
           :show-description="true"
           :show-extended="false"
+          description-css="ml-5"
         ></plugin-info>
       </p>
       <plugin-config
         v-model="editModel"
-        :mode="'edit'"
+        :mode="pluginConfigMode"
         :plugin-config="provider"
         :show-title="false"
         :show-description="false"
@@ -19,6 +24,9 @@
         scope="Instance"
         default-scope="Instance"
         group-css=""
+        description-css="ml-5"
+        data-testid="plugin-info"
+        :service-name="serviceName"
       ></plugin-config>
       <slot name="extra"></slot>
     </div>
@@ -29,8 +37,12 @@
       </p>
     </div>
     <template #footer>
-      <btn @click="$emit('cancel')">{{ $t("Cancel") }}</btn>
-      <btn type="success" @click="saveChanges">{{ $t("Save") }}</btn>
+      <btn @click="$emit('cancel')" data-testid="cancel-button">
+        {{ $t("Cancel") }}
+      </btn>
+      <btn type="success" @click="saveChanges" data-testid="save-button">
+        {{ $t("Save") }}
+      </btn>
     </template>
   </modal>
 </template>
@@ -45,7 +57,6 @@ import { defineComponent } from "vue";
 export default defineComponent({
   name: "EditPluginModal",
   components: { pluginInfo, pluginConfig },
-  emits: ["cancel", "save", "update:modelValue", "update:modalActive"],
   props: {
     title: {
       type: String,
@@ -63,7 +74,7 @@ export default defineComponent({
     modalActive: {
       type: Boolean,
       required: false,
-      default: false,
+      default: true,
     },
     validation: {
       type: Object,
@@ -71,12 +82,14 @@ export default defineComponent({
       default: () => ({}),
     },
   },
+  emits: ["cancel", "save", "update:modelValue", "update:modalActive"],
   data() {
     return {
       showModalVal: this.modalActive,
       editModel: {} as PluginConfig,
       provider: null,
       loading: false,
+      pluginConfigMode: "edit",
     };
   },
   computed: {
@@ -90,25 +103,6 @@ export default defineComponent({
       },
     },
   },
-  methods: {
-    async saveChanges() {
-      this.$emit("update:modelValue", this.editModel);
-      this.$emit("save");
-    },
-    async loadProvider() {
-      if (this.editModel.type) {
-        this.loading = true;
-        this.provider = await getServiceProviderDescription(
-          this.serviceName,
-          this.editModel.type,
-        );
-        this.loading = false;
-      } else {
-        this.loading = false;
-        this.provider = null;
-      }
-    },
-  },
   watch: {
     modalActive(val) {
       this.showModalVal = val;
@@ -120,8 +114,37 @@ export default defineComponent({
   },
   async mounted() {
     this.editModel = cloneDeep(this.modelValue);
+    if (
+      this.modelValue.config &&
+      Object.keys(this.modelValue.config).length === 0
+    ) {
+      this.pluginConfigMode = "create";
+    }
     await this.loadProvider();
+  },
+  methods: {
+    async saveChanges() {
+      this.$emit("update:modelValue", this.editModel);
+      this.$emit("save");
+    },
+    async loadProvider() {
+      if (this.editModel.type) {
+        try {
+          this.loading = true;
+          this.provider = await getServiceProviderDescription(
+            this.serviceName,
+            this.editModel.type,
+          );
+        } catch (e) {
+          console.log(e);
+        } finally {
+          this.loading = false;
+        }
+      } else {
+        this.loading = false;
+        this.provider = null;
+      }
+    },
   },
 });
 </script>
-<style scoped lang="scss"></style>

@@ -17,6 +17,7 @@
 <%@ page import="org.rundeck.core.auth.AuthConstants" %>
 <g:set var="authAdmin" value="${auth.resourceAllowedTest(
         action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
+        any: true,
         type: AuthConstants.TYPE_PROJECT,
         name: (params.project ?: request.project),
         context: AuthConstants.CTX_APPLICATION
@@ -46,7 +47,8 @@
                name: (params.project ?: request.project), context: AuthConstants.CTX_APPLICATION
        )}"/>
 <g:set var="authReadAcl"
-       value="${auth.resourceAllowedTest(action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
+       value="${auth.resourceAllowedTest(
+               action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
                any: true,
                type: AuthConstants.TYPE_PROJECT_ACL,
                name: (params.project ?: request.project), context: AuthConstants.CTX_APPLICATION
@@ -166,7 +168,7 @@
             link: '${createLink(controller: "menu", action: "projectDelete", params: [project: params.project])}',
             label: '${g.message(code:"delete.project")}',
             active: false,
-            enabled: ${authExport == true},
+            enabled: ${authDelete == true},
         },
         <g:ifMenuItems type="PROJECT_CONFIG"  project="${params.project}">
             <g:forMenuItems type="PROJECT_CONFIG" var="item" project="${params.project}">

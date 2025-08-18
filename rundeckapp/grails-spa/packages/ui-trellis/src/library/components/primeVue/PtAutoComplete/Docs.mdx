@@ -1,0 +1,36 @@
+import { Meta, Subtitle, Title, Canvas, Controls, Description, Stories } from "@storybook/blocks";
+import * as PtAutoCompleteStories from './PtAutoComplete.stories'
+
+<Meta of={PtAutoCompleteStories} />
+
+<Title />
+
+<Subtitle />
+[Component reference on primevue](https://primevue.org/autocomplete/)
+
+## Import
+
+```ts
+import PtAutoComplete from "@rundeck/ui-trellis/src/library/components/primeVue/PtAutoComplete.vue";
+```
+
+## Playground
+
+{/* Make sure your stories file has an export for playground, otherwise storybook will break */}
+
+<Canvas of={PtAutoCompleteStories.Playground} sourceState="shown" />
+<Controls of={PtAutoCompleteStories.Playground} />
+
+## How to use
+
+{/* Add a note here about the relevant props to change appearance of component */}
+
+
+<Description of={PtAutoCompleteStories} />
+
+<Stories title='' includePrimary={false} />
+
+
+## Accessibility
+
+{/* Bring in accessibility notes from primeVue here and\/or add aspects important for accessibility */}

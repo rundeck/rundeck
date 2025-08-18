@@ -1,5 +1,6 @@
 package org.rundeck.tests.functional.api.execution
 
+import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.common.WaitingTime
@@ -23,7 +24,7 @@ class ExecutionSpec extends BaseContainer {
     }
 
     def cleanup() {
-        client.apiVersion = client.finalApiVersion
+        client.apiVersion = client.API_CURRENT_VERSION
     }
 
     def "run command get execution"() {
@@ -131,10 +132,20 @@ class ExecutionSpec extends BaseContainer {
                 json2.executions.size() == 6
             }
         cleanup:
+            def retrieveExecutions = {->
+                try {
+                    return ExecutionUtils.Retrievers.executionsForProjectClosure(client, projectName).call()
+                } catch (JsonParseException e) {
+                    // if request doesnt return an expected json, return null to retry
+                    e.printStackTrace()
+                    return null
+                }
+            }
+
             // Waits for all executions to get cleaned
-            waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
-                {it.isEmpty()},
-                WaitingTime.EXCESSIVE)
+            waitFor(retrieveExecutions,
+                {it != null && it.isEmpty()}, // retry if executions are not empty or list is null
+                WaitingTime.XTRA_EXCESSIVE, WaitingTime.MODERATE)
             deleteProject(projectName)
 
             tmpjar.delete()

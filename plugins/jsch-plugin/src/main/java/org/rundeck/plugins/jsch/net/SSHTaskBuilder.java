@@ -26,17 +26,17 @@ package org.rundeck.plugins.jsch.net;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.utils.FileUtils;
-import com.dtolabs.rundeck.core.utils.SSHAgentProcess;
+import com.dtolabs.rundeck.core.utils.SSHAgent;
+import com.dtolabs.rundeck.core.utils.SSHAgentUtil;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.dtolabs.utils.Streams;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Logger;
 import com.jcraft.jsch.Session;
-import com.jcraft.jsch.agentproxy.AgentProxyException;
-import com.jcraft.jsch.agentproxy.Connector;
-import com.jcraft.jsch.agentproxy.ConnectorFactory;
-import com.jcraft.jsch.agentproxy.RemoteIdentityRepository;
+import com.jcraft.jsch.AgentProxyException;
+import com.jcraft.jsch.SSHAgentConnector;
+import com.jcraft.jsch.AgentIdentityRepository;
 import com.jcraft.jsch.SocketFactory;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.Project;
@@ -50,6 +50,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -109,19 +110,16 @@ public class SSHTaskBuilder {
 
 
         if (base.getEnableSSHAgent()) {
-            ConnectorFactory cf = ConnectorFactory.getDefault();
             try {
-                base.setSSHAgentProcess(new SSHAgentProcess(base.getTtlSSHAgent()));
-                cf.setUSocketPath(base.getSSHAgentProcess().getSocketPath());
-                cf.setPreferredUSocketFactories("jna,nc");
+                base.setSSHAgentProcess(SSHAgentUtil.startAgent(base.getTtlSSHAgent()));
                 base.getPluginLogger().log(
                         Project.MSG_DEBUG,
                         "ssh-agent started with ttl " +
                         base.getTtlSSHAgent().toString()
                 );
                 try {
-                    Connector c = cf.createConnector();
-                    RemoteIdentityRepository identRepo = new RemoteIdentityRepository(c);
+                    SSHAgentConnector cf = new SSHAgentConnector(Path.of(base.getSSHAgentProcess().getSocketPath()));
+                    AgentIdentityRepository identRepo = new AgentIdentityRepository(cf);
                     jsch.setIdentityRepository(identRepo);
                     base.getPluginLogger().log(
                             Project.MSG_DEBUG,
@@ -131,7 +129,7 @@ public class SSHTaskBuilder {
                 } catch (AgentProxyException e) {
                     throw new JSchException("Unable to add key to ssh-agent: " + e);
                 }
-            } catch (AgentProxyException e) {
+            } catch (IOException e) {
                 throw new JSchException("Unable to start ssh-agent: " + e);
             }
         }
@@ -228,7 +226,7 @@ public class SSHTaskBuilder {
     public static interface SSHBaseInterface {
         SSHUserInfo getUserInfo();
 
-        void setSSHAgentProcess(SSHAgentProcess sshAgentProcess);
+        void setSSHAgentProcess(SSHAgent sshAgentProcess);
 
         void setFailonerror(boolean b);
 
@@ -290,7 +288,7 @@ public class SSHTaskBuilder {
 
         public Boolean getEnableSSHAgent();
 
-        public SSHAgentProcess getSSHAgentProcess();
+        public SSHAgent getSSHAgentProcess();
 
         public void setTtlSSHAgent(Integer ttlSSHAgent);
 
@@ -451,12 +449,12 @@ public class SSHTaskBuilder {
         }
 
         @Override
-        public void setSSHAgentProcess(SSHAgentProcess sshAgentProcess) {
+        public void setSSHAgentProcess(SSHAgent sshAgentProcess) {
              instance.setSSHAgentProcess(sshAgentProcess);
         }
 
         @Override
-        public SSHAgentProcess getSSHAgentProcess() {
+        public SSHAgent getSSHAgentProcess() {
             return instance.getSSHAgentProcess();
         }
 

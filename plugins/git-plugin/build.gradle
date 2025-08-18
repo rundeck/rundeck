@@ -58,8 +58,8 @@ dependencies {
     pluginLibs group: 'com.hierynomus', name: 'asn-one', version: '0.6.0', ext: 'jar'
     pluginLibs 'net.i2p.crypto:eddsa:0.3.0'
 
-    implementation ("org.bouncycastle:bcprov-jdk15on:${bouncyCastleVersion}")
-    implementation ("org.bouncycastle:bcpg-jdk15on:${bouncyCastleVersion}")
+    implementation ("org.bouncycastle:bcprov-jdk18on:${bouncyCastleVersion}")
+    implementation ("org.bouncycastle:bcpg-jdk18on:${bouncyCastleVersion}")
     testImplementation 'junit:junit:4.8.1',
                 'org.mockito:mockito-all:1.10.19'
 

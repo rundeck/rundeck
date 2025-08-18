@@ -1,4 +1,4 @@
-import { client } from "../../services/rundeckClient";
+import { api } from "../../../library/services/api";
 
 import { getRundeckContext } from "../../../library";
 
@@ -22,19 +22,15 @@ export interface StorageAccess {
   description: string;
 }
 export async function getProjectNodeSources(): Promise<NodeSource[]> {
-  const rundeckContext = getRundeckContext();
-  const resp = await client.sendRequest({
-    pathTemplate: "/api/{apiVersion}/project/{projectName}/sources",
-    pathParameters: rundeckContext,
-    baseUrl: rundeckContext.rdBase,
-    method: "GET",
-  });
-  if (!resp.parsedBody) {
-    throw new Error(
-      `Error getting node sources list for ${rundeckContext.projectName}`,
-    );
+  const response = await api.get(
+    `/project/${getRundeckContext().projectName}/sources`,
+  );
+  if (response.data) {
+    return response.data as NodeSource[];
   } else {
-    return resp.parsedBody as NodeSource[];
+    throw new Error(
+      `Error getting node sources list for ${getRundeckContext().projectName}`,
+    );
   }
 }
 
@@ -42,20 +38,14 @@ export async function getProjectConfigurable(
   project: string,
   category: string,
 ) {
-  const resp = await client.sendRequest({
-    baseUrl: `${getRundeckContext().rdBase}api/${getRundeckContext().apiVersion}`,
-    pathTemplate: "/project/" + project + "/configurable",
-    method: "GET",
-    queryParameters: {
-      category: category,
-      project: project,
-    },
+  const response = await api.get(`/project/${project}/configurable`, {
+    params: { category },
   });
 
-  if (resp.status === 200) {
-    return { success: true, response: resp.parsedBody };
+  if (response.status === 200) {
+    return { success: true, response: response.data };
   } else {
-    throw { success: false, message: resp.parsedBody.message };
+    throw { success: false, message: response.data.message };
   }
 }
 
@@ -64,21 +54,19 @@ export async function setProjectConfigurable(
   category: string,
   extraConfig: any,
 ) {
-  const resp = await client.sendRequest({
-    baseUrl: `${getRundeckContext().rdBase}api/${getRundeckContext().apiVersion}`,
-    pathTemplate: "/project/" + project + "/configurable",
-    method: "POST",
-    queryParameters: {
-      category: category,
+  const response = await api.post(
+    `/project/${project}/configurable`,
+    {
+      extraConfig,
     },
-    body: {
-      extraConfig: extraConfig,
+    {
+      params: { category },
     },
-  });
+  );
 
-  if (resp.parsedBody.result?.success) {
-    return { success: true, response: resp.parsedBody.result.success };
+  if (response.data.result?.success) {
+    return { success: true, response: response.data.result.success };
   } else {
-    throw { success: false, message: resp.parsedBody.errors };
+    throw { success: false, message: response.data.errors };
   }
 }

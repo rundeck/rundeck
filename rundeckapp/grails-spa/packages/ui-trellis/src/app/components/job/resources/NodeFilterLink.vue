@@ -11,7 +11,7 @@
   </a>
 </template>
 <script lang="ts">
-import { _genUrl } from "../../../utilities/genUrl";
+import { _genUrl } from "../../../../library/utilities/genUrl";
 import { defineComponent } from "vue";
 import { getRundeckContext, url } from "../../../../library";
 

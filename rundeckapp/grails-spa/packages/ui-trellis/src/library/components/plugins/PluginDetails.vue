@@ -5,7 +5,7 @@
       (showDescription && inlineDescription && extraDescription.length === 0)
     "
   >
-    <span :class="descriptionCss" data-testid="block-description">
+    <span :class="descriptionCss || 'ml-5'" data-testid="block-description">
       {{ shortDescription }}
     </span>
   </slot>

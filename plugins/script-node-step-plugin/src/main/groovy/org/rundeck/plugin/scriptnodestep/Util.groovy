@@ -10,6 +10,7 @@ class Util {
             throw new NodeStepException(
                 nodeExecutorResult.failureMessage ?: ('Step failed: ' + nodeExecutorResult.failureReason),
                 nodeExecutorResult.failureReason,
+                nodeExecutorResult.failureData,
                 entry.getNodename()
             )
         }

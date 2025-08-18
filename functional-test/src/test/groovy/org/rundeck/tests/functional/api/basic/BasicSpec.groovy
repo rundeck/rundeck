@@ -35,6 +35,28 @@ class BasicSpec extends BaseContainer {
         data.system.rundeck.apiversion.toInteger() >= 14
     }
 
+    def testSecurityHeaders() {
+        when:
+        def response = doGet("/system/info")
+        then:
+        response.headers() != null
+        response.headers().get("cache-control") != null
+        response.headers().get("content-security-policy") != null
+        response.headers().get("x-content-type-options") != null
+        response.headers().get("x-content-type-options").contains("nosniff")
+        response.headers().get("x-frame-options") != null
+        response.headers().get("x-frame-options").contains("deny")
+        response.headers().get("x-xss-protection") != null
+        response.headers().get("strict-transport-security") != null
+        response.headers().get("strict-transport-security").contains("max-age=31536000; includeSubDomains")
+        response.headers().get("permissions-policy") != null
+        response.headers().get("permissions-policy").contains("accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()")
+        response.headers().get("referrer-policy") != null
+        response.headers().get("referrer-policy").contains("strict-origin-when-cross-origin")
+
+
+    }
+
     def invalidUrl() {
         when:
             def data = doGet("/dnexist?project=test")

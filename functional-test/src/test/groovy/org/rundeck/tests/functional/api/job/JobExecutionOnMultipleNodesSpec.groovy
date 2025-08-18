@@ -14,6 +14,7 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
     public static final String NODE_KEY_PASSPHRASE = "testpassphrase123"
     public static final String NODE_USER_PASSWORD = "testpassword123"
     public static final String USER_VAULT_PASSWORD = "vault123"
+    public static final List<String> NODE_LIST = ["ssh-node-passphrase", "ssh-node", "ssh-agent-node", "password-node"]
     private static final MAPPER = new ObjectMapper()
 
     def setupSpec() {
@@ -43,18 +44,13 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
 
         when:
         def response = JobUtils.createJob(TEST_PROJECT, new File(path).text, client)
-
-        then:
-        response.successful
-
-        when:
-        def jobId = MAPPER.readValue(response.body().string(), CreateJobResponse.class).getSucceeded().get(0).id
+        def jobId = response.getSucceeded().get(0).id
         Object optionsJson = ["options": [opt1: "z", opt2: "a"]]
         def completedJob = runJobAndWait(jobId, optionsJson)
 
         then:
         // Ensure it was ran on the local node and two nodes added by the setup
-        getOrderedNodesListExecutedOn(completedJob).size() == 3
+        getOrderedNodesListExecutedOn(completedJob).size() == (NODE_LIST.size()+1)
     }
 
     def "Create a job that executes on nodes that were not excluded"() {
@@ -69,12 +65,7 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
 
         when:
         def response = JobUtils.createJob(TEST_PROJECT, new File(path).text, client)
-
-        then:
-        response.successful
-
-        when:
-        def jobId = MAPPER.readValue(response.body().string(), CreateJobResponse.class).getSucceeded().get(0).id
+        def jobId = response.getSucceeded().get(0).id
         Object optionsJson = ["options": [opt1: "z", opt2: "a"]]
         def completedJob = runJobAndWait(jobId, optionsJson)
 
@@ -96,17 +87,12 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
 
         when:
         def response = JobUtils.createJob(TEST_PROJECT, new File(path).text, client)
-
-        then:
-        response.successful
-
-        when:
-        def jobId = MAPPER.readValue(response.body().string(), CreateJobResponse.class).getSucceeded().get(0).id
+        def jobId = response.getSucceeded().get(0).id
         Object optionsJson = ["options": [opt1: "z", opt2: "a"]]
         def completedJob = runJobAndWait(jobId, optionsJson)
 
         then:
-        getOrderedNodesListExecutedOn(completedJob) == ["ssh-node", "password-node"]
+        getOrderedNodesListExecutedOn(completedJob) == NODE_LIST
 
     }
 
@@ -123,17 +109,12 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
 
         when:
         def response = JobUtils.createJob(TEST_PROJECT, new File(path).text, client)
-
-        then:
-        response.successful
-
-        when:
-        def jobId = MAPPER.readValue(response.body().string(), CreateJobResponse.class).getSucceeded().get(0).id
+        def jobId = response.getSucceeded().get(0).id
         Object optionsJson = ["options": [opt1: "z", opt2: "a"]]
         def completedJob = runJobAndWait(jobId, optionsJson)
 
         then:
-        getOrderedNodesListExecutedOn(completedJob) == ["password-node", "ssh-node"]
+        getOrderedNodesListExecutedOn(completedJob) == NODE_LIST.reverse()
     }
 
     private static List<String> getOrderedNodesListExecutedOn(Map completedJob) {

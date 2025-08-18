@@ -3,7 +3,7 @@ package org.rundeck.util.api.scm.httpbody
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.rundeck.util.api.scm.gitea.GiteaApiRemoteRepo
 
-class GitExportSetupRequest {
+class GitExportSetupRequest implements GitSetupRequest<GitExportSetupRequest> {
     @JsonProperty
     Config config
 
@@ -68,12 +68,14 @@ class GitExportSetupRequest {
         ]])
     }
 
+    @Override
     GitExportSetupRequest forProject(String project){
         this.config.dir = "/home/rundeck/${project}/ScmExport"
 
         return this
     }
 
+    @Override
     GitExportSetupRequest withRepo(GiteaApiRemoteRepo remoteRepo){
         this.config.url = remoteRepo.getRepoUrlForRundeck()
         this.config.gitPasswordPath = remoteRepo.repoPassStoragePathForRundeck

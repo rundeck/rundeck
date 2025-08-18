@@ -47,7 +47,7 @@ const mountNodeFilterInput = async (
   const wrapper = mount(NodeFilterInput, {
     props: {
       nodeSummary: mockNodeSummary,
-      modelValue: "",
+      value: "",
       project: "test-project",
       eventBus,
       ...props,
@@ -62,9 +62,6 @@ const mountNodeFilterInput = async (
           template: '<div><slot></slot><slot name="footer"></slot></div>',
         },
       },
-      mocks: {
-        $t: (msg) => msg,
-      },
     },
   });
   await wrapper.vm.$nextTick();
@@ -74,17 +71,17 @@ describe("NodeFilterInput Component", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
-  it("updates modelValue on input and performs search on enter keydown", async () => {
+  it("updates value on input and performs search on enter keydown", async () => {
     const wrapper = await mountNodeFilterInput({
-      modelValue: "initial filter",
+      value: "initial filter",
     });
     const input = wrapper.find('input[data-testid="filter-input"]');
     await input.setValue("new filter");
     await input.trigger("blur");
-    expect(wrapper.emitted()["update:modelValue"][0]).toEqual(["new filter"]);
+    expect(wrapper.emitted()["update:value"][0]).toEqual(["new filter"]);
     await input.setValue("updated filter");
     await input.trigger("keydown.enter");
-    expect(wrapper.emitted()["update:modelValue"][1]).toEqual([
+    expect(wrapper.emitted()["update:value"][1]).toEqual([
       "updated filter",
     ]);
   });

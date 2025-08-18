@@ -1,7 +1,10 @@
 package org.rundeck.app.components
 
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import grails.testing.gorm.DataTest
+import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.rundeck.app.components.jobs.ImportedJob
+import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.core.execution.ExecCommand
 import org.rundeck.core.execution.ScriptCommand
 import org.rundeck.core.execution.ScriptFileCommand
@@ -9,13 +12,130 @@ import rundeck.CommandExec
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
 import rundeck.Workflow
+import spock.lang.Shared
 import spock.lang.Specification
 
 class RundeckJobDefinitionManagerSpec extends Specification implements DataTest   {
-    RundeckJobDefinitionManager rundeckJobDefinitionManager = new RundeckJobDefinitionManager()
+    @Shared
+    RundeckJobDefinitionManager rundeckJobDefinitionManager
 
     void setupSpec() {
         mockDomains Workflow, ScheduledExecution, CommandExec, PluginStep
+        rundeckJobDefinitionManager = new RundeckJobDefinitionManager()
+    }
+
+    def "validateImportedJob invalid component"(){
+        given:
+            def jobDefMgr= new RundeckJobDefinitionManager()
+            def names=[
+                'testComponent1',
+                'testComponent2',
+                'testComponent3',
+            ]
+
+            jobDefMgr.applicationContext = applicationContext
+            def mockComponent = Mock(JobDefinitionComponent)
+            def mockComponent2 = Mock(JobDefinitionComponent)
+            def mockComponent3 = Mock(JobDefinitionComponent)
+            defineBeans{
+                testComponent(InstanceFactoryBean, mockComponent, JobDefinitionComponent)
+                testComponent2(InstanceFactoryBean, mockComponent2, JobDefinitionComponent)
+                testComponent3(InstanceFactoryBean, mockComponent3, JobDefinitionComponent)
+            }
+            List<ImportedJob<ScheduledExecution>> jobList = jobDefMgr.decodeFormat(format, new ByteArrayInputStream(input.getBytes()))
+        when:
+            def result = jobDefMgr.validateImportedJob(jobList[0])
+
+        then:
+            !result.valid
+            result.validations.get(names[0]) != null
+            result.validations.get(names[1]) != null
+            result.validations.get(names[2]) != null
+            result.validations.get(names[0]).valid == validation[0]
+            result.validations.get(names[1]).valid == validation[1]
+            result.validations.get(names[2]).valid == validation[2]
+            if(!validation[0]){
+                assert result.validations.get(names[0]).errors == [field: 'field has an error']
+            }
+            if(!validation[1]){
+                assert result.validations.get(names[1]).errors == [field: 'field has an error']
+            }
+            if(!validation[2]){
+                assert result.validations.get(names[2]).errors == [field: 'field has an error']
+            }
+
+            _ * mockComponent.getName() >> names[0]
+            _ * mockComponent2.getName() >> names[1]
+            _ * mockComponent3.getName() >> names[2]
+            1 * mockComponent.validateImported(_,_)>>{
+                return !validation[0]?Validator.errorReport("field", "field has an error"):Validator.buildReport().build()
+            }
+            1 * mockComponent2.validateImported(_,_)>>{
+                return !validation[1]?Validator.errorReport("field", "field has an error"):Validator.buildReport().build()
+            }
+            1 * mockComponent3.validateImported(_,_)>>{
+                return !validation[2]?Validator.errorReport("field", "field has an error"):Validator.buildReport().build()
+            }
+        where:
+            format = 'yaml'
+            input = getJobYamlScriptfile(true)
+            validation<<[
+                [true, true, false],
+                [true, false, false],
+                [false, false, false],
+                [false, true, false],
+                [false, false, true],
+                [false, true, true],
+            ]
+
+    }
+    def "validateImportedJob valid components"(){
+        given:
+            def jobDefMgr= new RundeckJobDefinitionManager()
+            def names=[
+                'testComponent1',
+                'testComponent2',
+                'testComponent3',
+            ]
+
+            jobDefMgr.applicationContext = applicationContext
+            def mockComponent = Mock(JobDefinitionComponent)
+            def mockComponent2 = Mock(JobDefinitionComponent)
+            def mockComponent3 = Mock(JobDefinitionComponent)
+            defineBeans{
+                testComponent(InstanceFactoryBean, mockComponent, JobDefinitionComponent)
+                testComponent2(InstanceFactoryBean, mockComponent2, JobDefinitionComponent)
+                testComponent3(InstanceFactoryBean, mockComponent3, JobDefinitionComponent)
+            }
+            List<ImportedJob<ScheduledExecution>> jobList = jobDefMgr.decodeFormat(format, new ByteArrayInputStream(input.getBytes()))
+        when:
+            def result = jobDefMgr.validateImportedJob(jobList[0])
+
+        then:
+            result.valid
+            result.validations.get(names[0]) != null
+            result.validations.get(names[1]) != null
+            result.validations.get(names[2]) != null
+            result.validations.get(names[0]).valid == validation[0]
+            result.validations.get(names[1]).valid == validation[1]
+            result.validations.get(names[2]).valid == validation[2]
+            result.validations.get(names[0]).errors == [:]
+            result.validations.get(names[1]).errors == [:]
+            result.validations.get(names[2]).errors == [:]
+
+
+            _ * mockComponent.getName() >> names[0]
+            _ * mockComponent2.getName() >> names[1]
+            _ * mockComponent3.getName() >> names[2]
+            1 * mockComponent.validateImported(_,_)>>Validator.buildReport().build()
+            1 * mockComponent2.validateImported(_,_)>>Validator.buildReport().build()
+            1 * mockComponent3.validateImported(_,_)>>Validator.buildReport().build()
+        where:
+            format = 'yaml'
+            input = getJobYamlScriptfile(true)
+            validation= [true, true, true]
+
+
     }
 
 

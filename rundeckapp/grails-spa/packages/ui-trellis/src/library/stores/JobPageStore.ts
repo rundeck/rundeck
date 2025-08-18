@@ -15,6 +15,7 @@ export class JobPageStore {
   bulkEditMode: boolean = false;
   loaded: boolean = false;
   jobAuthz: { [key: string]: boolean } = {};
+  projTypesAuthz: { [key: string]: boolean } = {};
   projAuthz: { [key: string]: boolean } = {};
   executionMode: boolean = false;
   projectExecutionsEnabled: boolean = false;
@@ -27,6 +28,7 @@ export class JobPageStore {
   browser!: JobBrowserStore;
   filters: Array<JobPageFilter> = [];
   browsePath: string = "";
+  currentProject: string = "";
 
   addBulkJob(job: JobBrowseItem) {
     if (!this.selectedJobs.find((j) => j.id === job.id)) {
@@ -100,14 +102,18 @@ export class JobPageStore {
     return this.projAuthz;
   }
 
-  async load() {
-    if (this.loaded) {
+  async load(project: string = getRundeckContext().projectName) {
+    if (this.loaded && this.currentProject === project) {
       return;
     }
-    this.meta = await getProjectMeta(getRundeckContext().projectName);
+    this.currentProject = project;
+    this.meta = await getProjectMeta(this.currentProject);
     const projAuthz = this.findMeta("authz");
     if (projAuthz?.types?.job && typeof projAuthz.types.job === "object") {
       this.jobAuthz = projAuthz?.types?.job;
+    }
+    if (projAuthz?.types && typeof projAuthz.types === "object") {
+      this.projTypesAuthz = projAuthz?.types;
     }
     if (projAuthz?.project && typeof projAuthz.project === "object") {
       this.projAuthz = projAuthz?.project;
@@ -132,22 +138,22 @@ export class JobPageStore {
   createProjectScmActionHref(id: string, integration: string) {
     ///project/demo/scm/export/performAction?actionId=project-commit
     const context = getRundeckContext();
-    return `${context.rdBase}project/${context.projectName}/scm/${integration}/performAction?actionId=${id}`;
+    return `${context.rdBase}project/${this.currentProject}/scm/${integration}/performAction?actionId=${id}`;
   }
   createJobHref() {
     const context = getRundeckContext();
-    return `${context.rdBase}project/${context.projectName}/job/create`;
+    return `${context.rdBase}project/${this.currentProject}/job/create`;
   }
   uploadJobHref() {
     const context = getRundeckContext();
-    return `${context.rdBase}project/${context.projectName}/job/upload`;
+    return `${context.rdBase}project/${this.currentProject}/job/upload`;
   }
   jobPagePathHref(path: string) {
     const context = getRundeckContext();
-    return `${context.rdBase}project/${context.projectName}/jobs/${path}`;
+    return `${context.rdBase}project/${this.currentProject}/jobs/${path}`;
   }
   getProject(): string {
-    return getRundeckContext().projectName;
+    return this.currentProject;
   }
 
   getJobBrowser(): JobBrowserStore {

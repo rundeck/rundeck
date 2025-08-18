@@ -17,7 +17,7 @@
 package org.rundeck.plugins.jsch;
 
 import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
@@ -38,11 +38,11 @@ import java.util.Map;
 */
 final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
     final INodeEntry node;
-    final Framework framework;
+    final IFramework framework;
     final ExecutionContext context;
     IRundeckProject frameworkProject;
 
-    NodeSSHConnectionInfo(final INodeEntry node, final Framework framework, final ExecutionContext context) {
+    NodeSSHConnectionInfo(final INodeEntry node, final IFramework framework, final ExecutionContext context) {
 
         this.node = node;
         this.framework = framework;
@@ -61,9 +61,9 @@ final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
 
     public String getPrivateKeyfilePath() {
         String path = resolve(JschNodeExecutor.NODE_ATTR_SSH_KEYPATH);
-        if (path == null && framework.hasProperty(Constants.SSH_KEYPATH_PROP)) {
+        if (path == null && framework.getPropertyLookup().hasProperty(Constants.SSH_KEYPATH_PROP)) {
             //return default framework level
-            path = framework.getProperty(Constants.SSH_KEYPATH_PROP);
+            path = framework.getPropertyLookup().getProperty(Constants.SSH_KEYPATH_PROP);
         }
         //expand properties in path
         if (path != null && path.contains("${")) {
@@ -100,9 +100,9 @@ final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
 
     public String getPrivateKeyStoragePath() {
         String path = resolve(JschNodeExecutor.NODE_ATTR_SSH_KEY_RESOURCE);
-        if (null == path && framework.hasProperty(Constants.SSH_KEYRESOURCE_PROP)) {
+        if (null == path && framework.getPropertyLookup().hasProperty(Constants.SSH_KEYRESOURCE_PROP)) {
             //return default framework level
-            path = framework.getProperty(Constants.SSH_KEYRESOURCE_PROP);
+            path = framework.getPropertyLookup().getProperty(Constants.SSH_KEYRESOURCE_PROP);
         }
         //expand properties in path
         if (path != null && path.contains("${")) {
@@ -221,7 +221,7 @@ final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
     public long getTimeout() {
         int timeout = 0;
         if (framework.getPropertyLookup().hasProperty(JschNodeExecutor.SSH_TIMEOUT_PROP)) {
-            final String val = framework.getProperty(JschNodeExecutor.SSH_TIMEOUT_PROP);
+            final String val = framework.getPropertyLookup().getProperty(JschNodeExecutor.SSH_TIMEOUT_PROP);
             try {
                 timeout = Integer.parseInt(val);
             } catch (NumberFormatException ignored) {
@@ -253,7 +253,7 @@ final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
         long timeout = defval;
         String opt = resolve(key);
         if (opt == null && frameworkProp != null && framework.getPropertyLookup().hasProperty(frameworkProp)) {
-            opt = framework.getProperty(frameworkProp);
+            opt = framework.getPropertyLookup().getProperty(frameworkProp);
         }
         if (opt != null) {
             try {
@@ -293,7 +293,7 @@ final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
                    && null != nonBlank(frameworkProject.getProperty(JschNodeExecutor.PROJECT_SSH_USER))) {
             user = nonBlank(frameworkProject.getProperty(JschNodeExecutor.PROJECT_SSH_USER));
         } else {
-            user = nonBlank(framework.getProperty(Constants.SSH_USER_PROP));
+            user = nonBlank(framework.getPropertyLookup().getProperty(Constants.SSH_USER_PROP));
         }
         if (null != user && user.contains("${")) {
             return DataContextUtils.replaceDataReferencesInString(user, context.getDataContext());
@@ -321,7 +321,7 @@ final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
         );
     }
 
-    public static Map<String, String> sshConfigFromFramework(Framework framework) {
+    public static Map<String, String> sshConfigFromFramework(IFramework framework) {
         HashMap<String, String> config = new HashMap<>();
         IPropertyLookup propertyLookup = framework.getPropertyLookup();
         for (Object o : propertyLookup.getPropertiesMap().keySet()) {

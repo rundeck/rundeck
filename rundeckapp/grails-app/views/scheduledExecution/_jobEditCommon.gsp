@@ -133,8 +133,9 @@
 <g:embedJSON id="jobDetailsJSON"
              data="${ [
                      jobName: scheduledExecution?.jobName,
-                      groupPath: scheduledExecution?.groupPath,
-                       description:scheduledExecution?.description,
+                     groupPath: scheduledExecution?.groupPath,
+                     description:scheduledExecution?.description,
+                     href:scheduledExecution?.id?createLink(controller:'scheduledExecution',action:'show',params:[project:scheduledExecution.project,id:scheduledExecution.extid]):null
              ]}"/>
 <g:embedJSON id="jobNotificationsJSON"
              data="${ [notifications:scheduledExecution.notifications?.collect{it.toNormalizedMap()}?:[],
@@ -209,6 +210,12 @@
              ]}"/>
 
 <g:embedJSON id="jobWorkflowJSON" data="${ scheduledExecution?.workflow?.toMap()?:[:]}"/>
+<g:embedJSON id="jobNodeDataJSON" data="${ [
+        nodeExcludePrecedence: scheduledExecution?.nodeExcludePrecedence ? 'true': 'false',
+        excludeFilterUncheck: scheduledExecution?.excludeFilterUncheck ? 'true': 'false',
+]}"/>
+<g:embedJSON id="jobTreeUiMeta" data="[hideActions: true, hideHeader: true, hideTags: true]"/>
+
 
 <g:javascript>
     window._rundeck = Object.assign(window._rundeck || {}, {
@@ -220,7 +227,8 @@
             schedulesData: loadJsonData('jobSchedulesJSON'),
             executionData: loadJsonData('jobExecutionPluginsJSON'),
             otherData: loadJsonData('jobOtherJSON'),
-            workflowData: loadJsonData('jobWorkflowJSON')
+            workflowData: loadJsonData('jobWorkflowJSON'),
+            nodeData: loadJsonData('jobNodeDataJSON')
         }
     })
     var workflowEditor = new WorkflowEditor();
@@ -241,3 +249,5 @@
 </g:javascript>
 <g:embedJSON data="${globalVars ?: []}" id="globalVarData"/>
 <g:embedJSON data="${timeZones ?: []}" id="timeZonesData"/>
+<asset:javascript src="static/pages/job/browse.js" defer="defer"/>
+<asset:stylesheet href="static/css/pages/job/browse.css" />

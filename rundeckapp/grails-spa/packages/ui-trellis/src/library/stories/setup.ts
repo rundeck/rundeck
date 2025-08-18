@@ -60,7 +60,6 @@ w.appLinks = {
   menuJobs: "/project",
   menuJobsAjax: "/menu/jobsAjax?format=json",
   menuJobsPicker: "/menu/jobsPicker",
-  menuNowrunningAjax: "/menu/nowrunningAjax",
   menuProjectNamesAjax: "/menu/projectNamesAjax",
   menuSaveJobFilterAjax: "/menu/saveJobFilterAjax",
   projectMOTD: "/api/39/project/null/motd.md",

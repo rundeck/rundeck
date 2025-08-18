@@ -16,7 +16,11 @@
 package org.rundeck.plugin.objectstore.directorysource
 
 import com.dtolabs.rundeck.core.storage.BaseStreamResource
+import groovy.transform.CompileStatic
+import io.minio.BucketExistsArgs
+import io.minio.ListObjectsArgs
 import io.minio.MinioClient
+import io.minio.StatObjectArgs
 import org.rundeck.plugin.objectstore.stream.LazyAccessObjectStoreInputStream
 import org.rundeck.plugin.objectstore.tree.ObjectStoreResource
 import org.rundeck.plugin.objectstore.tree.ObjectStoreUtils
@@ -33,6 +37,7 @@ import org.rundeck.storage.api.Resource
 * will be done through the object tree.
  */
 
+@CompileStatic
 class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
     private static final String DIR_MARKER = "/"
     DirectoryNode root = new DirectoryNode("")
@@ -47,7 +52,10 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
 
     private init() {
         try {
-            if (mClient.bucketExists(bucket)) {
+            BucketExistsArgs args = BucketExistsArgs.builder()
+                    .bucket(bucket)
+                    .build();
+            if (mClient.bucketExists(args)) {
                 resyncDirectory()
             }
         } catch(SocketTimeoutException stex) {
@@ -57,7 +65,7 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
 
     @Override
     boolean checkPathExists(final String path) {
-        List<String> parts = path.split(DIR_MARKER)
+        List<String> parts = new ArrayList<>(Arrays.asList(path.split(DIR_MARKER)))
         String resourceName = parts.removeLast()
         DirectoryNode dir = getDir(parts)
         if(!dir) return false
@@ -66,7 +74,7 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
 
     @Override
     boolean checkResourceExists(final String path) {
-        List<String> parts = path.split(DIR_MARKER)
+        List<String> parts = new ArrayList<>(Arrays.asList(path.split(DIR_MARKER)))
         String resourceName = parts.removeLast()
         DirectoryNode dir = getDir(parts)
         if(!dir) return false
@@ -75,13 +83,13 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
 
     @Override
     boolean checkPathExistsAndIsDirectory(final String path) {
-        List<String> parts = path.split(DIR_MARKER)
+        List<String> parts = new ArrayList<>(Arrays.asList(path.split(DIR_MARKER)))
         return getDir(parts) != null
     }
 
     @Override
     Map<String, String> getEntryMetadata(final String path) {
-        List<String> parts = path.split(DIR_MARKER)
+        List<String> parts = new ArrayList<>(Arrays.asList(path.split(DIR_MARKER)))
         String resourceName = parts.removeLast()
         DirectoryNode dir = getDir(parts)
         return dir.getEntry(resourceName).meta
@@ -89,18 +97,19 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
 
     @Override
     Set<Resource<BaseStreamResource>> listSubDirectoriesAt(final String path) {
-        List<String> parts = path.split(DIR_MARKER)
+        List<String> parts = new ArrayList<>(Arrays.asList(path.split(DIR_MARKER)))
         DirectoryNode dir = getDir(parts)
-        if(!dir) return []
-        return dir.listSubDirs().collect { entry -> new ObjectStoreResource(path+ "/"+ entry, null, true) }
+        if(!dir) return Collections.emptySet()
+        def list = dir.listSubDirs().collect { entry -> new ObjectStoreResource(path+ "/"+ entry, null, true) }
+        return list.toSet() as Set<Resource<BaseStreamResource>>
     }
 
     @Override
     Set<Resource<BaseStreamResource>> listEntriesAndSubDirectoriesAt(final String path) {
-        List<String> parts = path.split(DIR_MARKER)
+        List<String> parts = new ArrayList<>(Arrays.asList(path.split(DIR_MARKER)))
         DirectoryNode dir = getDir(parts)
-        def resources = []
-        if(!dir) return resources
+        if(!dir) return Collections.emptySet()
+        def resources = new HashSet<Resource<BaseStreamResource>>()
         dir.listEntries().each { entry ->
             resources.add(new ObjectStoreResource(path+ "/"+ entry.nodeName, new BaseStreamResource(entry.meta, new LazyAccessObjectStoreInputStream(mClient, bucket, path+ "/"+ entry.nodeName))))
         }
@@ -112,17 +121,18 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
 
     @Override
     Set<Resource<BaseStreamResource>> listResourceEntriesAt(final String path) {
-        List<String> parts = path.split(DIR_MARKER)
+        List<String> parts = new ArrayList<>(Arrays.asList(path.split(DIR_MARKER)))
         DirectoryNode dir = getDir(parts)
-        if(!dir) return []
-        return dir.listEntries().collect { entry ->
+        if(!dir) return Collections.emptySet()
+        def list = dir.listEntries().collect { entry ->
             new ObjectStoreResource(path+ "/"+ entry.nodeName, new BaseStreamResource(entry.meta, new LazyAccessObjectStoreInputStream(mClient, bucket, path+ "/"+ entry.nodeName)))
         }
+        return list.toSet() as Set<Resource<BaseStreamResource>>
     }
 
     @Override
     void updateEntry(final String fullPathToEntry, final Map<String, String> meta) {
-        List<String> parts = fullPathToEntry.split(DIR_MARKER)
+        List<String> parts =  new ArrayList<>(Arrays.asList(fullPathToEntry.split(DIR_MARKER)))
         String resourceName = parts.removeLast()
         DirectoryNode dir = root
         for(int i = 0; i < parts.size(); i++) {
@@ -136,13 +146,13 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
 
     @Override
     void deleteEntry(final String fullEntryPath) {
-        List<String> parts = fullEntryPath.split(DIR_MARKER)
+        List<String> parts = new ArrayList<>(Arrays.asList(fullEntryPath.split(DIR_MARKER)))
         String resourceName = parts.removeLast()
         DirectoryNode dir = getDir(parts)
         dir.removeEntry(resourceName)
         if(dir.isEmpty()) {
             //remove this dir
-            List<String> patDirParts = fullEntryPath.split(DIR_MARKER)
+            List<String> patDirParts = new ArrayList<>(Arrays.asList(fullEntryPath.split(DIR_MARKER)))
             patDirParts.removeLast()
             if (!patDirParts.isEmpty()) {
                 patDirParts.removeLast()
@@ -155,8 +165,16 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
     @Override
     void resyncDirectory() {
         root = new DirectoryNode("")
-        mClient.listObjects(bucket).each {
-            def meta = ObjectStoreUtils.objectStatToMap(mClient.statObject(bucket, it.get().objectName()))
+        ListObjectsArgs args = ListObjectsArgs.builder()
+                .bucket(bucket)
+                .recursive(true)
+                .build()
+        mClient.listObjects(args).each {
+            StatObjectArgs statArgs = StatObjectArgs.builder()
+                    .bucket(bucket)
+                    .object(it.get().objectName())
+                    .build()
+            def meta = ObjectStoreUtils.objectStatToMap(mClient.statObject(statArgs))
             updateEntry(it.get().objectName(),meta)
         }
     }
@@ -193,8 +211,8 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
 
     private class DirectoryNode {
         String dirName
-        private TreeMap<String,EntryNode> children = [:]
-        private TreeMap<String,DirectoryNode> subdirs = [:]
+        private Map<String,EntryNode> children = new TreeMap<>()
+        private Map<String,DirectoryNode> subdirs = new TreeMap<>()
 
         DirectoryNode(String dirName) {
             this.dirName = dirName

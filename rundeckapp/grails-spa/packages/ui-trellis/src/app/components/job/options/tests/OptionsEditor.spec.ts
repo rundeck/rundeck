@@ -28,8 +28,8 @@ jest.mock("@/library/rundeckService.ts", () => ({
   })),
 }));
 const expectOptionOrder = (wrapper: VueWrapper<any>, order: string[]) => {
-  let draggable = wrapper.get("[data-test=draggable-stub]");
-  let spans = draggable.findAll("[data-test-component=OptionItemComponent]");
+  const draggable = wrapper.get("[data-test=draggable-stub]");
+  const spans = draggable.findAll("[data-test-component=OptionItemComponent]");
   expect(spans).toHaveLength(order.length);
   for (let i = 0; i < order.length; i++) {
     expect(spans[i].text()).toContain(`OptionItem: ${order[i]}`);
@@ -44,14 +44,14 @@ const expectOptionOrder = (wrapper: VueWrapper<any>, order: string[]) => {
 const mountBasicOptionsEditor = async (
   names: string[] = ["option1", "option2"],
 ): Promise<VueWrapper<any>> => {
-  let options = names.map((name) => {
+  const options = names.map((name) => {
     return {
       name,
       type: "text",
       inputType: "plain",
     };
   });
-  let optionsData = {
+  const optionsData = {
     features: { feature1: true, feature2: false },
     fileUploadPluginType: "fileUploadPluginType",
     jobWasScheduled: false,
@@ -72,10 +72,6 @@ const mountOptionsEditor = async (options: {
       edit: options.edit,
     },
     global: {
-      mocks: {
-        $t: jest.fn().mockImplementation((msg) => msg),
-        $tc: jest.fn().mockImplementation((msg) => msg),
-      },
       stubs: {
         Draggable: {
           name: "Draggable",
@@ -138,29 +134,29 @@ describe("OptionsEditor", () => {
     jest.clearAllMocks();
   });
   it("edit shows add button", async () => {
-    let optionsData = {
+    const optionsData = {
       features: { feature1: true, feature2: false },
       fileUploadPluginType: "fileUploadPluginType",
       jobWasScheduled: false,
       options: [],
     } as JobOptionsData;
     const wrapper = await mountOptionsEditor({ optionsData, edit: true });
-    let btn = wrapper.get(".ready");
+    const btn = wrapper.get(".ready");
     expect(btn.attributes().title).toEqual("add.new.option");
     expect(btn.text()).toEqual("add.an.option");
-    let icon = btn.get(".glyphicon.glyphicon-plus");
+    const icon = btn.get(".glyphicon.glyphicon-plus");
     expect(icon).toBeDefined();
   });
 
   it("shows empty list text", async () => {
-    let optionsData = {
+    const optionsData = {
       features: { feature1: true, feature2: false },
       fileUploadPluginType: "fileUploadPluginType",
       jobWasScheduled: false,
       options: [],
     } as JobOptionsData;
     const wrapper = await mountOptionsEditor({ optionsData, edit: true });
-    let btn = wrapper.get(".empty.note");
+    const btn = wrapper.get(".empty.note");
     expect(btn.text()).toEqual("no.options.message");
   });
   it("shows list of options", async () => {
@@ -261,8 +257,8 @@ describe("OptionsEditor", () => {
       const wrapper = await mountBasicOptionsEditor();
       wrapper.vm.doEdit(selected);
       await wrapper.vm.$nextTick();
-      let draggable = wrapper.get("[data-test=draggable-stub]");
-      let spans = draggable.findAll("div[data-test-component]");
+      const draggable = wrapper.get("[data-test=draggable-stub]");
+      const spans = draggable.findAll("div[data-test-component]");
       expect(spans).toHaveLength(2);
       expect(spans[0].text()).toContain(
         selected == 0 ? "OptionEdit: option1" : "OptionItem: option1",
@@ -277,7 +273,7 @@ describe("OptionsEditor", () => {
   it.each([true, false])(
     "option edit prop jobWasScheduled value %p",
     async (jobWasScheduled: boolean) => {
-      let propVals = {
+      const propVals = {
         optionsData: {
           features: {
             feature1: true,
@@ -298,8 +294,8 @@ describe("OptionsEditor", () => {
       const wrapper = await mountOptionsEditor(propVals);
       wrapper.vm.doEdit(0);
       await wrapper.vm.$nextTick();
-      let draggable = wrapper.get("[data-test=draggable-stub]");
-      let spans = draggable.findAll("div[data-test-component]");
+      const draggable = wrapper.get("[data-test=draggable-stub]");
+      const spans = draggable.findAll("div[data-test-component]");
       expect(spans).toHaveLength(1);
       expect(spans[0].text()).toContain("OptionEdit: option1");
       expect(spans[0].attributes("data-job-was-scheduled")).toEqual(
@@ -317,8 +313,8 @@ describe("OptionsEditor", () => {
     const wrapper = await mountBasicOptionsEditor();
     wrapper.vm.optaddnew();
     await wrapper.vm.$nextTick();
-    let draggable = wrapper.get("[data-test=draggable-footer]");
-    let item = draggable.get("[data-test-component=OptionEditComponent]");
+    const draggable = wrapper.get("[data-test=draggable-footer]");
+    const item = draggable.get("[data-test-component=OptionEditComponent]");
     expect(item.text()).toEqual("OptionEdit:");
   });
   it.each([
@@ -386,14 +382,14 @@ describe("OptionsEditor", () => {
   ])(
     "duplicate option shows edit form with new name %p to %p",
     async (orig: string, newname: string) => {
-      let options = [
+      const options = [
         {
           name: orig,
           type: "text",
           inputType: "plain",
         },
       ];
-      let optionsData = {
+      const optionsData = {
         features: { feature1: true, feature2: false },
         fileUploadPluginType: "fileUploadPluginType",
         jobWasScheduled: false,
@@ -402,8 +398,8 @@ describe("OptionsEditor", () => {
       const wrapper = await mountOptionsEditor({ optionsData, edit: true });
       wrapper.vm.doDuplicate(0);
       await wrapper.vm.$nextTick();
-      let draggable = wrapper.get("[data-test=draggable-footer]");
-      let item = draggable.get("[data-test-component=OptionEditComponent]");
+      const draggable = wrapper.get("[data-test=draggable-footer]");
+      const item = draggable.get("[data-test-component=OptionEditComponent]");
       expect(item.text()).toEqual(`OptionEdit: ${newname}`);
     },
   );
@@ -437,7 +433,7 @@ describe("OptionsEditor", () => {
   it("sortIndex is updated after doRemove", async () => {
     const wrapper = await mountBasicOptionsEditor();
     //expect sortIndex to be set correctly after mount
-    let intOptions = wrapper.vm.intOptions;
+    const intOptions = wrapper.vm.intOptions;
     expect(intOptions.map((item) => item.sortIndex)).toEqual([1, 2]);
     //remove first item
     wrapper.vm.doRemove(0);
@@ -446,7 +442,7 @@ describe("OptionsEditor", () => {
   it("sortIndex is updated after doMoveUp", async () => {
     const wrapper = await mountBasicOptionsEditor();
     //expect sortIndex to be set correctly after mount
-    let intOptions = wrapper.vm.intOptions;
+    const intOptions = wrapper.vm.intOptions;
     expect(intOptions.map((item) => item.sortIndex)).toEqual([1, 2]);
     //remove first item
     wrapper.vm.doMoveUp(1);
@@ -455,7 +451,7 @@ describe("OptionsEditor", () => {
   it("sortIndex is updated after doMoveDown", async () => {
     const wrapper = await mountBasicOptionsEditor();
     //expect sortIndex to be set correctly after mount
-    let intOptions = wrapper.vm.intOptions;
+    const intOptions = wrapper.vm.intOptions;
     expect(intOptions.map((item) => item.sortIndex)).toEqual([1, 2]);
     //remove first item
     wrapper.vm.doMoveDown(0);
@@ -464,7 +460,7 @@ describe("OptionsEditor", () => {
   it("sortIndex is updated after saveNewOption", async () => {
     const wrapper = await mountBasicOptionsEditor();
     //expect sortIndex to be set correctly after mount
-    let intOptions = wrapper.vm.intOptions;
+    const intOptions = wrapper.vm.intOptions;
     expect(intOptions.map((item) => item.sortIndex)).toEqual([1, 2]);
     //remove first item
     wrapper.vm.saveNewOption({

@@ -59,8 +59,13 @@
   opacity: 1;
 }
 
+.checkbox input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+}
+
 .checkbox input[type="checkbox"]:disabled + label {
   color: #cfcfcf;
+  cursor: not-allowed;
 }
 
 .checkbox input[type="checkbox"]:disabled + label::before {

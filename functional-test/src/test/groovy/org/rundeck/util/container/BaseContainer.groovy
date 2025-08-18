@@ -1,6 +1,8 @@
 package org.rundeck.util.container
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.jcraft.jsch.JSch
+import com.jcraft.jsch.KeyPair
 import groovy.util.logging.Slf4j
 import okhttp3.Request
 import okhttp3.Response
@@ -8,22 +10,30 @@ import okhttp3.ResponseBody
 import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.api.storage.KeyStorageApiClient
 import org.rundeck.util.common.WaitBehaviour
+import org.rundeck.util.common.WaitUtils
 import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.jobs.JobUtils
 import spock.lang.Specification
 
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import java.nio.file.attribute.PosixFilePermission
 import java.text.SimpleDateFormat
 import java.time.Duration
 import java.util.function.Consumer
+import java.util.function.Function
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
+
+import org.slf4j.LoggerFactory;
 
 /**
  * Base class for tests, starts a shared static container for all tests
  */
 @Slf4j
 abstract class BaseContainer extends Specification implements ClientProvider, WaitBehaviour {
+
     public static final String PROJECT_NAME = 'test'
     private static final Object CLIENT_PROVIDER_LOCK = new Object()
     private static ClientProvider CLIENT_PROVIDER
@@ -31,6 +41,11 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     protected static final String TEST_RUNDECK_URL = System.getenv("TEST_RUNDECK_URL") ?: System.getProperty("TEST_RUNDECK_URL")
     protected static final String TEST_RUNDECK_TOKEN = System.getenv("TEST_RUNDECK_TOKEN") ?: System.getProperty("TEST_RUNDECK_TOKEN", "admintoken")
     protected static final ObjectMapper MAPPER = new ObjectMapper()
+    private static String RUNDECK_CONTAINER_ID
+
+    String getCustomDockerComposeLocation(){
+        return null
+    }
 
     ClientProvider getClientProvider() {
         synchronized (CLIENT_PROVIDER_LOCK) {
@@ -56,7 +71,27 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
                 RdDockerContainer rdDockerContainer = new RdDockerContainer(getClass().getClassLoader().getResource(DEFAULT_DOCKERFILE_LOCATION).toURI())
                 rdDockerContainer.start()
                 CLIENT_PROVIDER = rdDockerContainer
+                RUNDECK_CONTAINER_ID = rdDockerContainer.containerId
 
+            } else if (getCustomDockerComposeLocation() != null && !getCustomDockerComposeLocation().isBlank()) {
+                // Override default timeout values to accommodate slow container startups
+                Map<String, Integer> clientConfig = Map.of(
+                        "readTimeout", 60,
+                )
+                String featureName = System.getProperty("TEST_FEATURE_ENABLED_NAME")
+
+                log.info("Starting testcontainer: ${getClass().getClassLoader().getResource(getCustomDockerComposeLocation()).toURI()}")
+                log.info("Starting testcontainer: RUNDECK_IMAGE: ${RdComposeContainer.RUNDECK_IMAGE}")
+                log.info("Starting testcontainer: LICENSE_LOCATION: ${RdComposeContainer.LICENSE_LOCATION}")
+                log.info("Starting testcontainer: TEST_RUNDECK_GRAILS_URL: ${RdComposeContainer.TEST_RUNDECK_GRAILS_URL}")
+                var rundeckComposeContainer = new RdComposeContainer(
+                        getClass().getClassLoader().getResource(getCustomDockerComposeLocation()).toURI(),
+                        featureName,
+                        clientConfig
+                )
+                rundeckComposeContainer.start()
+                CLIENT_PROVIDER = rundeckComposeContainer
+                RUNDECK_CONTAINER_ID = rundeckComposeContainer.getRundeckContainerId()
 
             } else {
                 // Override default timeout values to accommodate slow container startups
@@ -66,16 +101,17 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
 
                 String featureName = System.getProperty("TEST_FEATURE_ENABLED_NAME")
                 log.info("Starting testcontainer: ${getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI()}")
-                log.info("Starting testcontainer: RUNDECK_IMAGE: ${RdContainer.RUNDECK_IMAGE}")
-                log.info("Starting testcontainer: LICENSE_LOCATION: ${RdContainer.LICENSE_LOCATION}")
-                log.info("Starting testcontainer: TEST_RUNDECK_GRAILS_URL: ${RdContainer.TEST_RUNDECK_GRAILS_URL}")
-                var rundeckContainer = new RdContainer(
+                log.info("Starting testcontainer: RUNDECK_IMAGE: ${RdComposeContainer.RUNDECK_IMAGE}")
+                log.info("Starting testcontainer: LICENSE_LOCATION: ${RdComposeContainer.LICENSE_LOCATION}")
+                log.info("Starting testcontainer: TEST_RUNDECK_GRAILS_URL: ${RdComposeContainer.TEST_RUNDECK_GRAILS_URL}")
+                var rundeckComposeContainer = new RdComposeContainer(
                     getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI(),
                     featureName,
                     clientConfig
                 )
-                rundeckContainer.start()
-                CLIENT_PROVIDER = rundeckContainer
+                rundeckComposeContainer.start()
+                CLIENT_PROVIDER = rundeckComposeContainer
+                RUNDECK_CONTAINER_ID = rundeckComposeContainer.getRundeckContainerId()
             }
 
             return CLIENT_PROVIDER
@@ -95,6 +131,39 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
             }
         } else if (!getProject.successful) {
             throw new RuntimeException("Failed to access project: ${getProject.body().string()}")
+        }
+    }
+
+    /**
+     * Import system ACL file
+     * @param resourcePathName resource path to the file to upload
+     * @param aclPath acl path within the system
+     */
+    void importSystemAcls(String resourcePathName, String aclPath){
+        def getAcl = client.doGet("/system/acl/${aclPath}")
+        def aclFile = new File(getClass().getResource(resourcePathName).getPath())
+        def resp
+        if (getAcl.code() == 404) {
+            //POST
+            resp = client.doPost("/system/acl/${aclPath}", aclFile, 'application/yaml')
+        }else{
+            //PUT
+            resp = client.doPut("/system/acl/${aclPath}", aclFile, 'application/yaml')
+        }
+        if (!resp.successful) {
+            throw new RuntimeException("Failed to create System ACL: ${resp.body().string()}")
+        }
+    }
+
+    /**
+     * Import system ACL file
+     * @param resourcePathName resource path to the file to upload
+     * @param aclPath acl path within the system
+     */
+    void deleteSystemAcl(String aclPath){
+        def resp = client.doDelete("/system/acl/${aclPath}")
+        if (!(resp.code() in [204, 404])) {
+            throw new RuntimeException("Failed to delete System ACL: ${resp.body().string()}")
         }
     }
 
@@ -413,6 +482,23 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     /**
+     * Deletes the specified project key.
+     * This method sends a DELETE request to remove the project key with the given name.
+     * If the deletion operation fails, a RuntimeException is thrown.
+     *
+     * @param projectName the name of the key's parent project to be deleted. Must not be null.
+     * @param keyPath the path of the project key to be deleted. Must not be null.
+     * @throws RuntimeException if the project deletion fails.
+     *         The exception contains a detailed message obtained from the server's response.
+     */
+    void deleteProjectKey(String projectName, String keyPath) {
+        def response = client.doDelete("/storage/keys/project/${projectName}/${keyPath}")
+        if (!response.successful) {
+            throw new RuntimeException("Failed to delete project key: ${response.body().string()}")
+        }
+    }
+
+    /**
      * Updates the configuration of a project with the provided settings.
      *
      * This method sends a PUT request to update the configuration of the specified project
@@ -434,6 +520,18 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     def setupSpec() {
+        def tempKeyDir = ".build/tmp/keys"
+
+        def ossResource = getClass().getClassLoader().getResource("docker/compose/oss")
+        def proResource = getClass().getClassLoader().getResource("docker/compose/pro")
+
+        def ossKeyPath = ossResource ? ossResource.getPath() + "/keys" : null
+        def proKeyPath = proResource ? proResource.getPath() + "/keys" : null
+
+        generatePrivateKey(tempKeyDir, "id_rsa")
+        generatePrivateKey(tempKeyDir, "id_rsa_passphrase", "testpassphrase123")
+        copyKeyToDestinations(tempKeyDir, "id_rsa", [ossKeyPath, proKeyPath].findAll { it })
+        copyKeyToDestinations(tempKeyDir, "id_rsa_passphrase", [ossKeyPath, proKeyPath].findAll { it })
         startEnvironment()
     }
 
@@ -483,6 +581,132 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
      */
     static <T> T safelyMap(Response response, Class<T> valueType, Closure<T> unsuccessfulResponseHandler = { null }) {
         response.successful ? MAPPER.readValue(response.body().string(), valueType) :  unsuccessfulResponseHandler(response)
+    }
+
+
+    void executeDockerActionOnRundeckContainer(String action) {
+        def process = "docker ${action} ${RUNDECK_CONTAINER_ID}".execute()
+        def stdout = new StringWriter()
+        def stderr = new StringWriter()
+        process.consumeProcessOutput(stdout, stderr)
+
+        def code = process.waitFor()
+
+        if (code != 0) {
+            throw new RuntimeException("Failed to ${action} container ${RUNDECK_CONTAINER_ID} with code ${code} - ${stderr.toString()}")
+        }
+    }
+
+
+
+    void waitForRundeckAppToBeResponsive(){
+
+        def checkIsRundeckApiResponding = {
+            try {
+                def response = client.doGet("/system/info")
+                return (response != null && response.code() == 200)
+            } catch (Exception e) {
+                LoggerFactory.getLogger(BaseContainer.class).info(e.getMessage())
+                return false
+            }
+        }
+
+        WaitUtils.waitFor(
+                checkIsRundeckApiResponding,
+                {
+                    it
+                },
+                WaitingTime.XTRA_EXCESSIVE,
+                WaitingTime.LOW
+
+        )
+    }
+
+    void restartRundeckContainer() {
+        executeDockerActionOnRundeckContainer("stop")
+        executeDockerActionOnRundeckContainer("start")
+        waitForRundeckAppToBeResponsive()
+    }
+
+    List<String> getAllLogs(String execId, Function<Map, String> paramGen, int max=20) {
+        def logs = []
+        def logging = [
+                lastmod: "0",
+                offset : "0",
+                done   : false,
+        ]
+        def count = 1
+        while (!logging.done && count < max) {
+            def params = paramGen.apply(logging)
+            Map output = get("/execution/${execId}/output?${params}", Map)
+            assert output != null
+            assert output.id == execId
+            if (output.entries && output.entries.size() > 0) {
+                logs.addAll(output.entries*.log)
+            }
+            if (output.offset != null) {
+                logging.offset = output.offset
+            }
+            if (output.lastModified) {
+                logging.lastmod = output.lastModified
+            }
+            if (output.completed != null && output.execCompleted != null) {
+                logging.done = output.execCompleted && output.completed
+            }
+            if (output.unmodified == true) {
+                sleep(2000)
+            } else if (!logging.done) {
+                sleep(1000)
+            }
+            count++
+        }
+        return logs
+    }
+
+    static def generatePrivateKey(String tempDirPath, String keyName, String passphrase = null){
+        File dir = new File(tempDirPath)
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+
+        File privateKeyFile = new File(tempDirPath + File.separator + keyName)
+        File publicKeyFile = new File(tempDirPath + File.separator + keyName + ".pub")
+
+        if (privateKeyFile.exists() && publicKeyFile.exists()) {
+            return
+        }
+
+        JSch jsch = new JSch()
+        KeyPair keyPair = KeyPair.genKeyPair(jsch, KeyPair.RSA)
+
+        if (passphrase) {
+            keyPair.writePrivateKey(privateKeyFile.absolutePath, passphrase.getBytes())
+        } else {
+            keyPair.writePrivateKey(privateKeyFile.absolutePath)
+        }
+
+        keyPair.writePublicKey(publicKeyFile.absolutePath, "test private key")
+        keyPair.dispose()
+
+        Set<PosixFilePermission> perms = new HashSet<>()
+        perms.add(PosixFilePermission.OWNER_READ)
+        perms.add(PosixFilePermission.OWNER_WRITE)
+        Files.setPosixFilePermissions(privateKeyFile.toPath(), perms)
+    }
+
+    static def copyKeyToDestinations(String tempDirPath, String keyName, List<String> destinationPaths) {
+        File privateKeyFile = new File(tempDirPath + File.separator + keyName)
+        File publicKeyFile = new File(tempDirPath + File.separator + keyName + ".pub")
+
+        destinationPaths.each { destPath ->
+            File destDir = new File(destPath)
+            if (!destDir.exists()) {
+                destDir.mkdirs()
+            }
+
+            Files.copy(privateKeyFile.toPath(), new File(destDir, keyName).toPath(), StandardCopyOption.REPLACE_EXISTING)
+            Files.copy(publicKeyFile.toPath(), new File(destDir, keyName + ".pub").toPath(), StandardCopyOption.REPLACE_EXISTING)
+        }
     }
 
 }

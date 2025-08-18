@@ -39,11 +39,6 @@ const mountNodeDetailsSimple = async (propsData = {}) => {
       tags: ["Tag1", "Tag2"],
       ...propsData,
     },
-    global: {
-      mocks: {
-        $t: (msg) => msg,
-      },
-    },
   });
   await wrapper.vm.$nextTick();
   return wrapper;
@@ -81,34 +76,27 @@ describe("NodeDetailsSimple Component", () => {
         nodeColumns,
         showExcludeFilterLinks: true,
       });
-      // General attributes
-      const generalAttributes = {
-        description: "Test Node 1",
-        "ui:status:text": "Healthy",
-        "ui:status:icon": "fa-check",
-        osFamily: "Linux",
-        osName: "Ubuntu",
-        osVersion: "20.04",
-        osArch: "x86_64",
-      };
-      Object.entries(generalAttributes).forEach(([key, value]) => {
-        const attributeElement = wrapper.find(`td.value:contains(${value})`);
-        expect(attributeElement.exists()).toBe(true);
-      });
-      // Attributes without namespaces
-      const attributesWithNoNamespaces = {
-        key3: "value3",
-        key4: "value4",
-        key5: "value5",
-        key6: "value6",
-      };
-      Object.entries(attributesWithNoNamespaces).forEach(([key, value]) => {
-        const attributeElement = wrapper.find(`td.setting:contains(${value})`);
-        expect(attributeElement.exists()).toBe(true);
-      });
+
+      expect(wrapper.find(`[data-test="description"]`).text()).toBe(
+        "Test Node 1",
+      );
+      expect(wrapper.find(`[data-testid="node-status-text"]`).text()).toBe(
+        "Healthy",
+      );
+      const icon = wrapper.find(`i.fa-check.node-status-icon`);
+      expect(icon.exists()).toBeTruthy();
+
+      const osAttributes = ["Linux", "Ubuntu", "20.04", "x86_64"];
+      const osElements = wrapper.findAll("td[data-test='os-data'] > a");
+      expect(osElements.length).toBe(4);
+      osElements.forEach((osElement) =>
+        expect(osAttributes).toContain(osElement.text()),
+      );
+
       // Check for .glyphicon-plus elements related to attributes without namespaces
       const plusLinks = wrapper.findAll(".setting .glyphicon-plus");
       expect(plusLinks.length).toBe(expectedPlusCount);
+
       // Check for .glyphicon-minus elements related to attributes without namespaces
       const minusLinks = wrapper.findAll(".setting .glyphicon-minus");
       expect(minusLinks.length).toBe(expectedMinusCount);
@@ -118,11 +106,12 @@ describe("NodeDetailsSimple Component", () => {
           "namespace:key1": "value1",
           "namespace:key2": "value2",
         };
+
         Object.entries(attributesWithNamespaces).forEach(([key, value]) => {
-          const attributeElement = wrapper.find(
-            `tbody.subattrs .value:contains(${value})`,
-          );
-          expect(attributeElement.exists()).toBe(true);
+          const cellTitle = wrapper.find(`[data-test="${key}"]`);
+          expect(cellTitle.text()).toEqual(`${key.replace("namespace:", "")}:`);
+          const cellValue = wrapper.find(`[data-test="${key}-value"]`);
+          expect(cellValue.text()).toEqual(value);
         });
         // Check for glyphicon-chevron to ensure proper rendering of namespaces
         const chevrons = wrapper.findAll(".namespace .auto-caret");

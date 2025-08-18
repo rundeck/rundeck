@@ -1,0 +1,68 @@
+description: Allow [read] for (All) event
+by:
+  group:
+  - AuthTest1
+  - AuthTest2
+  - AuthTest3
+  - AuthTest4
+for:
+  resource:
+  - allow:
+    - read
+    equals:
+      kind: event
+  adhoc:
+  - allow:
+    - read
+context:
+  project: ExecutionShowAuth
+---
+description: admin project
+context:
+  application: 'rundeck'
+for:
+  project:
+    - equals:
+        name: ExecutionShowAuth
+      allow: [read,admin]
+by:
+  group:
+  - AuthTest1
+---
+description: read only project
+context:
+  application: 'rundeck'
+for:
+  project:
+    - equals:
+        name: ExecutionShowAuth
+      allow: [read]
+by:
+  group:
+  - AuthTest2
+---
+description: delete_execution project
+context:
+  application: 'rundeck'
+for:
+  project:
+    - equals:
+        name: ExecutionShowAuth
+      allow: [read,delete_execution]
+by:
+  group:
+  - AuthTest3
+---
+
+description: app_admin project
+context:
+  application: 'rundeck'
+for:
+  project:
+    - equals:
+        name: ExecutionShowAuth
+      allow: [read,app_admin]
+by:
+  group:
+  - AuthTest4
+---

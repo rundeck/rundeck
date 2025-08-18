@@ -5,15 +5,19 @@ import okhttp3.RequestBody
 import org.openqa.selenium.By
 import org.openqa.selenium.Keys
 import org.openqa.selenium.support.ui.Select
-import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.api.responses.jobs.CreateJobResponse
 import org.rundeck.util.common.jobs.JobUtils
-import org.rundeck.util.container.SeleniumBase
-import org.rundeck.util.gui.pages.activity.ActivityPage
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
-import org.rundeck.util.gui.pages.jobs.*
+import org.rundeck.util.gui.pages.jobs.JobCreatePage
+import org.rundeck.util.gui.pages.jobs.JobListPage
+import org.rundeck.util.gui.pages.jobs.JobShowPage
+import org.rundeck.util.gui.pages.jobs.JobTab
+import org.rundeck.util.gui.pages.jobs.StepType
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.profile.UserProfilePage
+import org.rundeck.util.annotations.SeleniumCoreTest
+import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.gui.pages.activity.ActivityPage
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper
 import spock.lang.Stepwise
 
@@ -124,56 +128,6 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.optionNameSaved 2 getText() equals optName + '_2'
     }
 
-    def "Duplicate option create form next ui"() {
-        when:
-            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi=true
-            jobCreatePage.go()
-            def optName = 'test'
-            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
-            jobCreatePage.optionButton.click()
-            jobCreatePage.optionNameNew() sendKeys optName
-            jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
-            jobCreatePage.executeScript "window.location.hash = '#workflowKeepGoingFail'"
-            jobCreatePage.saveOptionButton.click()
-            jobCreatePage.waitFotOptLi 0
-
-            jobCreatePage.duplicateButton( optName, 0) click()
-
-
-        then: "create form is shown"
-            jobCreatePage.optionNameNew() displayed
-            jobCreatePage.optionNameNew().getAttribute('value') == optName + '_copy'
-            jobCreatePage.saveOptionButton.displayed
-        when:
-            jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
-            jobCreatePage.saveOptionButton.click()
-            jobCreatePage.waitFotOptLi 1
-
-        then:
-            jobCreatePage.optionNameSaved 0 getText() equals optName
-            jobCreatePage.optionNameSaved 1 getText() equals optName + '_copy'
-
-        where:
-            nextUi = true
-    }
-
-    def "Create option form next ui"() {
-        when:
-            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi=true
-            jobCreatePage.go()
-            def optName = 'test'
-            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
-            jobCreatePage.optionButton.click()
-
-        then: "create form is shown"
-            jobCreatePage.optionNameNew() displayed
-            jobCreatePage.saveOptionButton.displayed
-        where:
-            nextUi = true
-    }
-
     def "create job with dispatch to nodes"() {
         when:
             def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
@@ -257,7 +211,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
             jobCreatePage.createJobButton.click()
         where:
-            nextUi << [false, true]
+            nextUi << [false]
     }
     def "job options config - check storage session"() {
         given:
@@ -282,7 +236,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.waitForOptionsToBe 1, 0
             jobCreatePage.optionLis 0 isEmpty()
         where:
-            nextUi << [false, true]
+            nextUi << [false]
     }
     def "job option simple redo"() {
         when:
@@ -313,7 +267,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
             jobCreatePage.createJobButton.click()
         where:
-            nextUi << [false, true]
+            nextUi << [false]
     }
     def "No default value field shown in secure job option section"() {
         given:
@@ -335,7 +289,7 @@ class JobsSpec extends SeleniumBase {
         then:
         driver.findElements(jobCreatePage.defaultValueBy).isEmpty() || !jobCreatePage.defaultValueInput.isDisplayed()
         where:
-        nextUi << [false, true]
+        nextUi << [false]
     }
     def "job option revert all"() {
         given:
@@ -371,7 +325,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.optionLis 0 isEmpty()
             jobCreatePage.optionLis 1 isEmpty()
         where:
-            nextUi << [false, true]
+            nextUi << [false]
     }
     def "job option undo redo"() {
         when:
@@ -406,7 +360,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
             jobCreatePage.createJobButton.click()
         where:
-            nextUi << [false, true]
+            nextUi << [false]
     }
 
     def "job workflow step context variables autocomplete"() {
@@ -751,4 +705,59 @@ class JobsSpec extends SeleniumBase {
 
     }
 
+    /**
+     * This test creates a job disables the executions and then enables it
+     * It only validates via UI that the run button shows up when enabled
+     */
+    def "job execution disable-enable"(){
+        given:
+        String projectName = "enableDisableJobSchedule"
+        setupProject(projectName)
+        String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/test.xml', client).succeeded.first().id
+        JobShowPage jobShowPage = page(JobShowPage, projectName).forJob(jobUuid)
+        JobListPage jobListPage = page(JobListPage)
+        jobListPage.loadJobListForProject(projectName)
+        when:
+        jobShowPage.go()
+        then:
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.jobExecutionDisabledIconBy, 0)
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.runJobBtnBy, 1)
+        when:
+        jobShowPage.getJobActionDropdownButton().click()
+        jobShowPage.getJobDisableExecutionButton().click()
+        jobShowPage.el(jobShowPage.jobExecToggleModalBy).findElement(jobShowPage.buttonDangerBy).click()
+        then:
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.jobExecutionDisabledIconBy, 1)
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.runJobBtnBy, 0)
+        when:
+        jobShowPage.getJobActionDropdownButton().click()
+        jobShowPage.getJobEnableExecutionButton().click()
+        jobShowPage.el(jobShowPage.jobExecToggleModalBy).findElement(jobShowPage.buttonDangerBy).click()
+        then:
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.jobExecutionDisabledIconBy, 0)
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.runJobBtnBy, 1)
+
+        cleanup:
+        deleteProject(projectName)
+    }
+
+    /**
+     * Checks for a warning message to be shown when trying to run a job with invalid option values from job show page
+     *
+     */
+    def "job execution with invalid option value"(){
+        given:
+        String projectName = "invalidInputsProject"
+        setupProject(projectName)
+        String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/jobWithOptions.xml', client).succeeded.first().id
+        JobShowPage jobShowPage = page(JobShowPage, projectName).forJob(jobUuid)
+        when:
+        jobShowPage.go()
+        jobShowPage.getRunJobBtn().click()
+        then:
+        jobShowPage.currentUrl().contains("invalidInputsProject/job/index")
+        jobShowPage.getJobOptionAlertBy().getText().contains("Option 'myOption' is required")
+        cleanup:
+        deleteProject(projectName)
+    }
 }

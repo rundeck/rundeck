@@ -148,7 +148,7 @@
     <modal
       id="job-notifications-edit-modal"
       v-model="editModal"
-      :title="$t(editIndex < 0 ? 'Create Notification' : 'Edit Notification')"
+      :title="$t(editIndex < 0 ? 'notification.create' : 'notification.edit')"
       size="lg"
       append-to-body
     >

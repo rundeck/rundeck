@@ -5,6 +5,7 @@ services:
       args:
         IMAGE: ${TEST_IMAGE:-rundeck/rundeck:SNAPSHOT}
     platform: ${TEST_TARGET_PLATFORM:-linux/amd64}
+    hostname: rundeck-oss-server-node
     environment:
       RUNDECK_DATABASE_DRIVER: org.mariadb.jdbc.Driver
       RUNDECK_DATABASE_USERNAME: rundeck
@@ -18,6 +19,7 @@ services:
       RUNDECK_FEATURE_FEATURETOTEST_ENABLED: "true"
       RUNDECK_FEATURE_FEATURETOTEST_NAME: ${TEST_RUNDECK_FEATURE_NAME}
     volumes:
+      - ./ansible:/home/rundeck/ansible:rw
       - "/etc/localtime:/etc/localtime:ro"
       - "/etc/timezone:/etc/timezone:ro"
       - "../../../tokens.properties:/home/rundeck/server/config/tokens.properties"
@@ -34,6 +36,17 @@ services:
       - "./mock-scripts:/home/rundeck/mock-scripts:rw"
     ports:
       - "4440:4440"
+      - "5005:5005"
+      - "9012:9012"
+    command:
+      - "-Dcom.sun.management.jmxremote"
+      - "-Dcom.sun.management.jmxremote.port=9012"
+      - "-Dcom.sun.management.jmxremote.authenticate=false"
+      - "-Dcom.sun.management.jmxremote.ssl=false"
+      - "-Dcom.sun.management.jmxremote.local.only=false"
+      - "-Dcom.sun.management.jmxremote.rmi.port=9012"
+      - "-Djava.rmi.server.hostname=localhost"
+      - "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
 
   rundeck-db:
     image: mysql:8

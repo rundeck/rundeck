@@ -16,12 +16,15 @@
 package org.rundeck.plugin.objectstore.directorysource
 
 import com.dtolabs.rundeck.core.storage.BaseStreamResource
+import groovy.transform.CompileStatic
+import io.minio.ListObjectsArgs
 import io.minio.MinioClient
+import io.minio.Result
+import io.minio.StatObjectArgs
 import io.minio.errors.ErrorResponseException
 import io.minio.messages.Item
 import org.rundeck.plugin.objectstore.stream.LazyAccessObjectStoreInputStream
 import org.rundeck.plugin.objectstore.tree.ObjectStoreResource
-import org.rundeck.plugin.objectstore.tree.ObjectStoreTree
 import org.rundeck.plugin.objectstore.tree.ObjectStoreUtils
 import org.rundeck.storage.api.Resource
 
@@ -35,6 +38,7 @@ import java.util.regex.Pattern
  * This store works best when the object store is going to be accessed by multiple cluster members
  * or the object store is regularly updated by third party tools
  */
+@CompileStatic
 class ObjectStoreDirectAccessDirectorySource implements ObjectStoreDirectorySource {
     private static final String DIR_MARKER = "/"
     private final String bucket
@@ -47,17 +51,26 @@ class ObjectStoreDirectAccessDirectorySource implements ObjectStoreDirectorySour
 
     @Override
     boolean checkPathExists(final String path) {
-        def items = mClient.listObjects(bucket, path)
+        ListObjectsArgs args = ListObjectsArgs.builder()
+                .bucket(bucket)
+                .prefix(path)
+                .recursive(false)
+                .build()
+        def items = mClient.listObjects(args)
         return items.size() > 0
     }
 
     @Override
     boolean checkResourceExists(final String path) {
         try {
-            mClient.statObject(bucket, path)
+            StatObjectArgs args = StatObjectArgs.builder()
+                    .bucket(bucket)
+                    .object(path)
+                    .build()
+            mClient.statObject(args)
             return true
         } catch(ErrorResponseException erex) {
-            if(erex.response.code() == 404) return false
+            if(erex.response().code() == 404) return false
         }
 
         return false
@@ -65,24 +78,38 @@ class ObjectStoreDirectAccessDirectorySource implements ObjectStoreDirectorySour
 
     @Override
     boolean checkPathExistsAndIsDirectory(final String path) {
-        def items = mClient.listObjects(bucket, path, false)
+        ListObjectsArgs args = ListObjectsArgs.builder()
+                .bucket(bucket)
+                .prefix(path)
+                .recursive(false)
+                .build()
+        def items = mClient.listObjects(args)
         if(items.size() != 1) return false
         return items[0].get().objectName().endsWith(DIR_MARKER)
     }
 
     @Override
     Map<String, String> getEntryMetadata(final String path) {
-        return ObjectStoreUtils.objectStatToMap(mClient.statObject(bucket, path))
+        StatObjectArgs args = StatObjectArgs.builder()
+                .bucket(bucket)
+                .object(path)
+                .build()
+        return ObjectStoreUtils.objectStatToMap(mClient.statObject(args))
     }
 
     @Override
     Set<Resource<BaseStreamResource>> listSubDirectoriesAt(final String path) {
-        def resources = []
-        def subdirs = [] as Set
+        def resources = [] as Set<Resource<BaseStreamResource>>
+        def subdirs = [] as Set<String>
         String lstPath = path == "" ? null : path
         Pattern directSubDirMatch = ObjectStoreUtils.createSubdirCheckForPath(lstPath)
 
-        mClient.listObjects(bucket, lstPath, true).each { result ->
+        ListObjectsArgs args = ListObjectsArgs.builder()
+                .bucket(bucket)
+                .prefix(lstPath)
+                .recursive(true)
+                .build()
+        mClient.listObjects(args).each { result ->
             Matcher m = directSubDirMatch.matcher(result.get().objectName())
             if(m.matches()) {
                 subdirs.add(m.group(1))
@@ -94,11 +121,16 @@ class ObjectStoreDirectAccessDirectorySource implements ObjectStoreDirectorySour
 
     @Override
     Set<Resource<BaseStreamResource>> listEntriesAndSubDirectoriesAt(final String path) {
-        def resources = []
+        def resources = [] as Set<Resource<BaseStreamResource>>
         Pattern directSubDirMatch = ObjectStoreUtils.createSubdirCheckForPath(path)
-        def subdirs = [] as Set
+        def subdirs = [] as Set<String>
 
-        mClient.listObjects(bucket, path, true).each { result ->
+        ListObjectsArgs args = ListObjectsArgs.builder()
+                .bucket(bucket)
+                .prefix(path)
+                .recursive(true)
+                .build()
+        mClient.listObjects(args).each { result ->
             Matcher m = directSubDirMatch.matcher(result.get().objectName())
             if(m.matches()) {
                 subdirs.add(path+DIR_MARKER+m.group(1))
@@ -112,15 +144,21 @@ class ObjectStoreDirectAccessDirectorySource implements ObjectStoreDirectorySour
 
     @Override
     Set<Resource<BaseStreamResource>> listResourceEntriesAt(final String path) {
-        def resources = []
+        def resources = [] as Set<Resource<BaseStreamResource>>
         String lstPath = path == "" ? null : path
         String rPath = path == "" ?: path+"/"
 
-        mClient.listObjects(bucket, lstPath, true)
-               .findAll {
-            !(it.get().objectName().replaceAll(rPath,"").contains("/"))
+        ListObjectsArgs args = ListObjectsArgs.builder()
+                .bucket(bucket)
+                .prefix(lstPath)
+                .recursive(true)
+                .build()
+        mClient.listObjects(args)
+               .findAll { Result<Item> r ->
+                   !(r.get().objectName().replaceAll(rPath,"").contains("/"))
         }.each { result ->
-            resources.add(createResourceListItemWithMetadata(result.get()))
+            Result<Item> typedResult = result as Result<Item>
+            resources.add(createResourceListItemWithMetadata(typedResult.get()))
         }
         return resources
     }

@@ -16,6 +16,7 @@
         id="storageuploadkey"
         ref="modalEdit"
         v-model="modalEdit"
+        data-testid="modal-edit"
         title="Add or Upload a Key"
         auto-focus
         append-to-body
@@ -46,6 +47,7 @@ export default defineComponent({
   name: "KeyStoragePage",
   components: { UiSocket, KeyStorageEdit, KeyStorageView },
   props: ["readOnly", "allowUpload", "modelValue", "storageFilter", "project"],
+
   data() {
     return {
       activeTab: "keys",

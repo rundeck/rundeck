@@ -53,9 +53,12 @@ export default {
       this.count = count;
     },
     pollCommunityNews() {
+      const appRundeckGatewayUrl =
+        this.RundeckContext.appMeta.appRundeckGatewayUrl;
+
       return new Promise(function (resolve, reject) {
         axios
-          .get("https://api.rundeck.com/news/v1/blog/list", {
+          .get(appRundeckGatewayUrl + "/news/v1/blog/list", {
             params: {
               groupid: 7039074342,
             },

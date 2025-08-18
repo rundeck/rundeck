@@ -534,7 +534,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                 }
             }
         } else if (newval) {
-            vals.addAll(newval.propertyNames().collect())
+            vals.addAll(newval.propertyNames().collect() as Set<String>)
         }
         vals
     }
@@ -547,17 +547,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         rundeckNodeService.refreshProjectNodes(projectName)
     }
 
-    private IPropertyLookup createProjectPropertyLookup(String projectName, Properties config) {
-        final Properties ownProps = new Properties();
-        ownProps.setProperty("project.name", projectName);
-        def create = PropertyLookup.create(
-                createDirectProjectPropertyLookup(projectName,config),
-                frameworkService.getRundeckFramework().propertyLookup
-        )
-
-        create.expand()
-        return create
-    }
     private static IPropertyLookup createDirectProjectPropertyLookup(String projectName, Properties config) {
         final Properties ownProps = new Properties();
         ownProps.setProperty("project.name", projectName);
@@ -610,7 +599,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         }
         def res = storeProjectConfig(projectName, null, storedProps)
         def rdprojectconfig = new RundeckProjectConfig(projectName,
-                                                       createProjectPropertyLookup(projectName, res.config ?: new Properties()),
                                                        createDirectProjectPropertyLookup(projectName, res.config ?: new Properties()),
                                                        res.lastModified, res.creationTime
         )
@@ -677,7 +665,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         }
         def resource=mergeProjectProperties(project.name,properties,removePrefixes)
         def rdprojectconfig = new RundeckProjectConfig(project.name,
-                                                       createProjectPropertyLookup(project.name, resource.config ?: new Properties()),
                                                        createDirectProjectPropertyLookup(project.name, resource.config ?: new Properties()),
                                                        resource.lastModified,
                                                         resource.creationTime
@@ -728,7 +715,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     void setProjectProperties(final RundeckProject project, final Properties properties) {
         def resource=setProjectProperties(project.name,properties)
         def rdprojectconfig = new RundeckProjectConfig(project.name,
-                                                       createProjectPropertyLookup(project.name, resource.config ?: new Properties()),
                                                        createDirectProjectPropertyLookup(project.name, resource.config ?: new Properties()),
                                                        resource.lastModified,
                 resource.creationTime
@@ -759,10 +745,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     IRundeckProjectConfig loadProjectConfig(final String project) {
         def resource = loadProjectConfigResource(project)
         def rdprojectconfig = new RundeckProjectConfig(project,
-                                                 createProjectPropertyLookup(
-                                                         project,
-                                                         resource.config ?: new Properties()
-                                                 ),
                                                  createDirectProjectPropertyLookup(
                                                          project,
                                                          resource.config ?: new Properties()

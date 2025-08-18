@@ -6,6 +6,7 @@ import {
   ExecutionOutputEntry,
 } from "@rundeck/client/dist/lib/models";
 import { Rundeck } from "@rundeck/client";
+import { api } from "../services/api";
 
 import { RenderedStepList, JobWorkflow } from "./JobWorkflow";
 
@@ -47,10 +48,15 @@ export class ExecutionLog {
 
   /** Optional method to populate information about execution output */
   async init() {
-    const resp = await this.client.executionOutputGet(this.id, {
-      offset: "0",
-      maxlines: 1,
+    // Replace client.executionOutputGet with api.get
+    const response = await api.get(`execution/${this.id}/output`, {
+      params: {
+        offset: "0",
+        maxlines: 1,
+      },
     });
+
+    const resp = response.data;
     this.execCompleted = resp.execCompleted;
     this.size = resp.totalSize;
   }
@@ -64,16 +70,21 @@ export class ExecutionLog {
             { exec: status.description, type: "exec", nodeStep: "true" },
           ]);
         }
-        const resp = await this.client.jobWorkflowGet(status.job!.id!);
-        return new JobWorkflow(resp.workflow);
+        // Replace client.jobWorkflowGet with api.get
+        const response = await api.get(`job/${status.job.id}/workflow`);
+        return new JobWorkflow(response.data.workflow);
       })();
     }
     return this.jobWorkflowProm;
   }
 
   async getExecutionStatus() {
-    if (!this.executionStatusProm)
-      this.executionStatusProm = this.client.executionStatusGet(this.id);
+    if (!this.executionStatusProm) {
+      // Replace client.executionStatusGet with api.get
+      this.executionStatusProm = api
+        .get(`execution/${this.id}`)
+        .then((response) => response.data as ExecutionStatusGetResponse);
+    }
 
     return this.executionStatusProm;
   }
@@ -81,10 +92,15 @@ export class ExecutionLog {
   async getOutput(maxLines: number): Promise<ExecutionOutputGetResponse> {
     await this.waitBackOff();
 
-    const res = await this.client.executionOutputGet(this.id, {
-      offset: this.offset.toString(),
-      maxlines: maxLines,
+    // Replace client.executionOutputGet with api.get
+    const response = await api.get(`execution/${this.id}/output`, {
+      params: {
+        offset: this.offset.toString(),
+        maxlines: maxLines,
+      },
     });
+
+    const res = response.data;
     this.offset = parseInt(res.offset);
     this.size = res.totalSize;
     this.completed = res.completed && res.execCompleted;
@@ -94,9 +110,6 @@ export class ExecutionLog {
     } else {
       this.decreaseBackOff();
     }
-
-    // console.log(`Backoff: ${this.backoff}`)
-    // console.log(`Results: ${res.entries.length}`)
 
     return res;
   }

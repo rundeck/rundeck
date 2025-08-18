@@ -3,6 +3,7 @@
     ref="itemDiv"
     class="job_list_group_header hover-reveal-hidden"
     @click="handleClick"
+    @keydown.enter="handleClick"
   >
     <btn
       type="link"
@@ -19,6 +20,7 @@
       {{ lastPathItem(item.groupPath) }}
     </btn>
     <a
+      v-if="allowFolderNavigation"
       class="groupname text-strong group-name visibility-hidden"
       :title="`Browse job group: ${item.groupPath}`"
       :href="href"
@@ -36,6 +38,11 @@ import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "BrowseGroupItem",
+  inject: {
+    allowFolderNavigation: {
+      default: true,
+    },
+  },
   props: {
     item: {
       type: JobBrowseItem,
