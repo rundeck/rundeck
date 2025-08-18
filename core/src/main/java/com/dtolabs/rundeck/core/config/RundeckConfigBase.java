@@ -460,6 +460,7 @@ public class RundeckConfigBase {
         Enabled alphaUi = new Enabled();
         Enabled enhancedJobTakeoverQuery = new Enabled();
         Enabled publicKeysDownload = new Enabled();
+        Enabled guiHideRoiInstructions = new Enabled();
 
 
         @Data

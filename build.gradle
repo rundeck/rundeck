@@ -136,6 +136,14 @@ allprojects {
         exclude group: 'ch.qos.logback', module: 'logback-classic'
         exclude group: 'ch.qos.logback', module: 'logback-core'
     }
+    
+    // Global dependency constraints to fix security vulnerabilities
+    configurations.all {
+        resolutionStrategy {
+            force "commons-io:commons-io:${commonsIoVersion}"
+            force "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
+        }
+    }
 }
 
 /**
@@ -167,8 +175,8 @@ dependencies{
 
     // dependencies for running groovy scripts
     groovyScript localGroovy()
-    groovyScript "org.codehaus.groovy:groovy-cli-commons:${GroovySystem.version}"
-    groovyScript "org.codehaus.groovy:groovy-yaml:${GroovySystem.version}"
+    groovyScript "org.codehaus.groovy:groovy-cli-commons:${groovyVersion}"
+    groovyScript "org.codehaus.groovy:groovy-yaml:${groovyVersion}"
 }
 
 

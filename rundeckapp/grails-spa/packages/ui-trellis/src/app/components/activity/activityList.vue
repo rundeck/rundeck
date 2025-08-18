@@ -596,7 +596,7 @@ import ActivityFilter from "./activityFilter.vue";
 import { getRundeckContext } from "../../../library";
 import { ExecutionBulkDeleteResponse } from "@rundeck/client/dist/lib/models";
 import { Execution } from "../../../library/types/executions/Execution";
-import * as DOMPurify from "dompurify";
+import DOMPurify from "dompurify";
 import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
 import { EventBus } from "../../../library";
 import { api } from "../../../library/services/api";

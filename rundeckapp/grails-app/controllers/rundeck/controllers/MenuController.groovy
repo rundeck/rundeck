@@ -191,13 +191,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         //include id of last completed execution for the project
         def eid=executionService.lastExecutionId(query.projFilter)
         model.lastExecId=eid
-
-        RdUser u = userService.findOrCreateUser(session.user)
-        Map filterpref=[:]
-        if(u){
-            filterpref= userService.parseKeyValuePref(u.filterPref)
-        }
-        model.boxfilters=filterpref
         return model
     }
 
