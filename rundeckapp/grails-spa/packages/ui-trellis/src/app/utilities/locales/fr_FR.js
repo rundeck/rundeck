@@ -222,7 +222,7 @@ const messages = {
   "click.to.refresh": "cliquez pour actualiser",
   "count.nodes.matched": "{0} {1} Correspondant",
   "count.nodes.shown": "{0} n\u0153uds affich\u00e9s.",
-  "delete.this.filter": "Delete this Filter",										 
+  "delete.this.filter": "Supprimer ce filtre",										 
   "delete.this.filter.confirm": "Vraiment supprimer ce filtre ?",
   "saved.filters": "Filtres enregistr\u00e9s",
   "save.node.filter": "Enregistrer le filtre de n\u0153ud",
