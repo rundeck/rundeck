@@ -82,52 +82,50 @@ class ExecutionsCleanUp implements InterruptableJob {
                                                          ReferencedExecutionDataProvider referencedExecutionDataProvider,
                                                          ReportService reportService){
         try {
-            Execution.withTransaction {
-                if (execution.dateCompleted == null && execution.dateStarted != null) {
-                    return DeleteExecutionResult.failure('running', "Failed to delete execution {{Execution ${execution.id}}}: The execution is currently running", execution.id)
-                }
-
-                referencedExecutionDataProvider.deleteByExecutionId(execution.id)
-                reportService.deleteByExecution(execution)
-                def executionFiles = logFileStorageService.getExecutionFiles(execution, [], false)
-
-                List<File> files = []
-                def execs = []
-                execs << execution
-                executionFiles.each { ftype, executionFile ->
-                    def localFile = logFileStorageService.getFileForExecutionFiletype(execution, ftype, false, false)
-                    if (null != localFile && localFile.exists()) {
-                        files << localFile
-                    }
-                    def partialFile = logFileStorageService.getFileForExecutionFiletype(execution, ftype, false, true)
-                    if (null != partialFile && partialFile.exists()) {
-                        files << partialFile
-                    }
-                    def resultDeleteRemote = logFileStorageService.removeRemoteLogFile(execution, ftype)
-                    if(!resultDeleteRemote.started){
-                        log.debug(String.valueOf(resultDeleteRemote.error))
-                    }
-                }
-                fileUploadService.deleteRecordsForExecution(execution)
-                log.debug("${files.size()} files from execution will be deleted")
-                //find an execution that this is a retry for
-                List<Execution> retryExecutions = Execution.findAll("from Execution where retryExecution = :exec", [exec: execution])
-                retryExecutions.each { Execution e2 ->
-                    e2.retryExecution = null
-                }
-                execution.delete(flush: true)
-                def deletedfiles = 0
-                files.each { file ->
-                    if (!FileUtils.deleteQuietly(file)) {
-                        log.warn("Failed to delete file while deleting execution ${execution.id}: ${file.absolutePath}")
-                    } else {
-                        deletedfiles++
-                    }
-                }
-                log.debug("${deletedfiles} files removed")
-                log.info("Deleted execution: ${execution.id}")
-                return DeleteExecutionResult.success(execution.id)
+            if (execution.dateCompleted == null && execution.dateStarted != null) {
+                return DeleteExecutionResult.failure('running', "Failed to delete execution {{Execution ${execution.id}}}: The execution is currently running", execution.id)
             }
+
+            referencedExecutionDataProvider.deleteByExecutionId(execution.id)
+            reportService.deleteByExecution(execution)
+            def executionFiles = logFileStorageService.getExecutionFiles(execution, [], false)
+
+            List<File> files = []
+            def execs = []
+            execs << execution
+            executionFiles.each { ftype, executionFile ->
+                def localFile = logFileStorageService.getFileForExecutionFiletype(execution, ftype, false, false)
+                if (null != localFile && localFile.exists()) {
+                    files << localFile
+                }
+                def partialFile = logFileStorageService.getFileForExecutionFiletype(execution, ftype, false, true)
+                if (null != partialFile && partialFile.exists()) {
+                    files << partialFile
+                }
+                def resultDeleteRemote = logFileStorageService.removeRemoteLogFile(execution, ftype)
+                if(!resultDeleteRemote.started){
+                    log.debug(String.valueOf(resultDeleteRemote.error))
+                }
+            }
+            fileUploadService.deleteRecordsForExecution(execution)
+            log.debug("${files.size()} files from execution will be deleted")
+            //find an execution that this is a retry for
+            List<Execution> retryExecutions = Execution.findAll("from Execution where retryExecution = :exec", [exec: execution])
+            retryExecutions.each { Execution e2 ->
+                e2.retryExecution = null
+            }
+            execution.delete(flush: true)
+            def deletedfiles = 0
+            files.each { file ->
+                if (!FileUtils.deleteQuietly(file)) {
+                    log.warn("Failed to delete file while deleting execution ${execution.id}: ${file.absolutePath}")
+                } else {
+                    deletedfiles++
+                }
+            }
+            log.debug("${deletedfiles} files removed")
+            log.info("Deleted execution: ${execution.id}")
+            return DeleteExecutionResult.success(execution.id)
         } catch (Exception ex) {
             log.error("Failed to delete execution ${execution?.id}", ex)
             return DeleteExecutionResult.failure('failure', "Failed to delete execution {{Execution ${execution?.id}}}: ${ex.message}", execution?.id)
@@ -230,7 +228,7 @@ class ExecutionsCleanUp implements InterruptableJob {
             for (Execution exec : collectedExecutions) {
                 DeleteExecutionResult result = deleteExecution(exec, fileUploadService, logFileStorageService, referencedExecutionDataProvider, reportService)
                 if (!result.success) {
-                    log.info(result.message as String)
+                    log.error(result.message as String)
                 } else {
                     count++
                 }
