@@ -10,6 +10,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import grails.events.bus.EventBus
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
+import org.rundeck.app.config.ConfigService
 import rundeck.ScheduledExecution
 import rundeck.data.job.reference.JobRevReferenceImpl
 import rundeck.services.FrameworkService
@@ -575,6 +576,136 @@ class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<Scm
         0 * service.scmService.exportjobRefsForJobs(_,_)
         0 * service.scmService.unregisterPlugin("export", project)
         0 * service.scmService.initProject(project, "export")
+    }
+
+    def "SCM project loader succeeds after retrying" (){
+        def project = "test"
+        def integration = 'export'
+        service.frameworkService = Mock(FrameworkService){
+            isClusterModeEnabled()>>true
+        }
+
+        def job = new ScheduledExecution()
+        job.id = 123
+        job.uuid = "123-123"
+        job.jobName = "test"
+        job.groupPath = "demo"
+        job.project = project
+
+        def jobs = [job]
+
+        def listWorkflow = [
+            "schedlist": jobs
+        ]
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            listWorkflows(_)>>listWorkflow
+        }
+        def username = "admin"
+        def roles = ["admin"]
+
+        def plugin  = Mock(ScmExportPlugin)
+        def scmPluginConfigData = Mock(ScmPluginConfigData){
+            getSetting("username")>>username
+            getSettingList("roles")>>roles
+            getEnabled()>>true
+        }
+
+        def jobExportReference = Mock(JobScmReference){
+            getId()>>job.id
+            getProject()>>job.project
+        }
+        def jobList = [jobExportReference]
+        service.scmService = Mock(ScmService){
+            _*projectHasConfiguredExportPlugin(project)>>true
+            _*scmOperationContext(username,roles,project) >> Mock(ScmOperationContext)
+            loadPluginWithConfig(_, _, _, _) >> { throw new Exception("fail plugin config")  }  >> { throw new Exception("fail plugin config")  }  >> _
+            1 * getLoadedExportPluginFor(project)  >> plugin
+            1 * exportjobRefsForJobs(jobs,_)>>jobList
+            1 * loadScmConfig(project, integration) >> scmPluginConfigData
+        }
+        service.configurationService = Mock(ConfigService){
+            _*getLong('scmLoader.init.retry', _) >> ((long)repeatMax)
+            _*getLong('scmLoader.init.delay', _) >> 0L
+        }
+        def loader = service.createProjectLoader(project, 'export')
+
+        when:
+            loader.run()
+
+        then:
+            1 * plugin.initJobsStatus(_)
+            1 * plugin.refreshJobsStatus(_)
+            jobs.size()*service.scmService.getRenamedPathForJobId(_,_)
+            1 * plugin.clusterFixJobs(_,_,_)
+            service.scmProjectInitLoaded.containsKey(project+"-export")
+            noExceptionThrown()
+        where:
+            repeatMax = 2
+    }
+
+    def "SCM project loader throws exception if retry does not succeed" (){
+        def project = "test"
+        def integration = 'export'
+        service.frameworkService = Mock(FrameworkService){
+            isClusterModeEnabled()>>true
+        }
+
+        def job = new ScheduledExecution()
+        job.id = 123
+        job.uuid = "123-123"
+        job.jobName = "test"
+        job.groupPath = "demo"
+        job.project = project
+
+        def jobs = [job]
+
+        def listWorkflow = [
+            "schedlist": jobs
+        ]
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            listWorkflows(_)>>listWorkflow
+        }
+        def username = "admin"
+        def roles = ["admin"]
+
+        def plugin  = Mock(ScmExportPlugin)
+        def scmPluginConfigData = Mock(ScmPluginConfigData){
+            getSetting("username")>>username
+            getSettingList("roles")>>roles
+            getEnabled()>>true
+        }
+
+        def jobExportReference = Mock(JobScmReference){
+            getId()>>job.id
+            getProject()>>job.project
+        }
+        def jobList = [jobExportReference]
+        service.scmService = Mock(ScmService){
+            _*projectHasConfiguredExportPlugin(project)>>true
+            _*scmOperationContext(username,roles,project) >> Mock(ScmOperationContext)
+            loadPluginWithConfig(_, _, _, _) >> { throw new Exception("fail plugin config")  } >> { throw new Exception("fail plugin config")  } >> _
+            0 * getLoadedExportPluginFor(project)  >> plugin
+            0 * exportjobRefsForJobs(jobs,_)>>jobList
+            1 * loadScmConfig(project, integration) >> scmPluginConfigData
+        }
+        service.configurationService = Mock(ConfigService){
+            1*getLong('scmLoader.init.retry', _) >> ((long)repeatMax)
+            1*getLong('scmLoader.init.delay', _) >> 0L
+        }
+
+        when:
+            service.createProjectLoader(project, 'export').run()
+
+        then:
+            thrown(ScmLoaderService.CancelTaskException)
+
+            0 * plugin.initJobsStatus(_)
+            0 * plugin.refreshJobsStatus(_)
+            0 * service.scmService.getRenamedPathForJobId(_,_)
+            0 * plugin.clusterFixJobs(_,_,_)
+            !service.scmProjectInitLoaded.containsKey(project+"-export")
+        where: "max 2 attempts"
+            repeatMax << [0L, 1L]
     }
 
     def "SCM import bad plugin config"(){
