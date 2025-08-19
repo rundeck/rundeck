@@ -126,17 +126,6 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
                     }
             );
 
-
-    private File _frameworkVarDir
-
-    private File getFrameworkVarDir(){
-        if (null == _frameworkVarDir) {
-            // loaded after startup to avoid repeated queries for framework props value which would not change
-            _frameworkVarDir = frameworkService.getFrameworkVarDir()
-        }
-        return _frameworkVarDir
-    }
-
     @Override
     void afterPropertiesSet() throws Exception {
         def spec = configurationService?.getString('nodeService.nodeCache.spec', DEFAULT_CACHE_SPEC)?:DEFAULT_CACHE_SPEC
@@ -243,7 +232,6 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
         def resourceModelSourceService = framework.getResourceModelSourceService()
 
         def nodeSupport = new ProjectNodeSupport(
-            getFrameworkVarDir(),
             rdprojectconfig,
             framework.getResourceFormatGeneratorService(),
             resourceModelSourceService,
