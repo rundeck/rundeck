@@ -1,44 +1,43 @@
 package rundeck.quartzjobs
 
 import com.dtolabs.rundeck.app.support.ExecutionQuery
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.quartz.InterruptableJob
 import org.quartz.JobExecutionContext
 import org.quartz.JobExecutionException
 import org.quartz.UnableToInterruptJobException
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import rundeck.Execution
 import rundeck.services.*
-import rundeck.services.jobs.ResolvedAuthJobService
 
+@CompileStatic
+@Slf4j
 class ExecutionsCleanUp implements InterruptableJob {
-    static Logger logger = LoggerFactory.getLogger(ExecutionsCleanUp)
     boolean wasInterrupted
 
     void interrupt() throws UnableToInterruptJobException {
         wasInterrupted = true
     }
 
-
     void execute(JobExecutionContext context) throws JobExecutionException {
-        JobSchedulerService jobSchedulerService = fetchJobSchedulerService(context.jobDetail.jobDataMap)
         FrameworkService frameworkService = fetchFrameworkService(context.jobDetail.jobDataMap)
         ReportService reportService = fetchReportService(context.jobDetail.jobDataMap)
         String project = context.jobDetail.jobDataMap.get('project')
         String uuid = frameworkService.getServerUUID()
 
-        logger.info("Initializing cleaner execution history job from server ${uuid}")
+        log.info("Initializing cleaner execution history job from server ${uuid}")
 
         String maxDaysToKeep = context.jobDetail.jobDataMap.get('maxDaysToKeep')
         String minimumExecutionToKeep = context.jobDetail.jobDataMap.get('minimumExecutionToKeep')
         String maximumDeletionSize = context.jobDetail.jobDataMap.get('maximumDeletionSize')
 
-        logger.info("Cleaner parameters: Project name: ${project}")
-        logger.info("Max days to keep: ${maxDaysToKeep}")
-        logger.info("Minimum executions to keep: ${minimumExecutionToKeep}")
-        logger.info("Maximum size of deletions: ${maximumDeletionSize ?: '500 (default)'}")
+        log.info("Cleaner parameters: Project name: ${project}")
+        log.info("Max days to keep: ${maxDaysToKeep}")
+        log.info("Minimum executions to keep: ${minimumExecutionToKeep}")
+        log.info("Maximum size of deletions: ${maximumDeletionSize ?: '500 (default)'}")
 
         ExecutionService executionService = fetchExecutionService(context.jobDetail.jobDataMap)
         FileUploadService fileUploadService = fetchFileUploadService(context.jobDetail.jobDataMap)
@@ -46,109 +45,103 @@ class ExecutionsCleanUp implements InterruptableJob {
         ReferencedExecutionDataProvider referencedExecutionDataProvider = fetchReferencedExecutionDataProvider(context.jobDetail.jobDataMap)
 
         if(!wasInterrupted) {
-            List execIdsToExclude = searchExecutions(frameworkService, executionService, jobSchedulerService, project,
+            List<Execution> execIdsToExclude = searchExecutions(
+                    executionService,
+                    project,
                     maxDaysToKeep ? Integer.parseInt(maxDaysToKeep) : 0,
                     minimumExecutionToKeep ? Integer.parseInt(minimumExecutionToKeep) : 0,
                     maximumDeletionSize ? Integer.parseInt(maximumDeletionSize) : 500)
-            logger.info("Executions to delete: ${execIdsToExclude.toListString()}")
+            log.info("Executions to delete: ${execIdsToExclude.size()}")
             deleteByExecutionList(execIdsToExclude, fileUploadService, logFileStorageService, referencedExecutionDataProvider, reportService)
         }
     }
 
-    private Map deleteBulkExecutionIds(List<Long> execs, FileUploadService fileUploadService,
-                                LogFileStorageService logFileStorageService, ReferencedExecutionDataProvider referencedExecutionDataProvider, ReportService reportService) {
-        def failures=[]
-        def failed=false
-        def count=0
-        for (Long exec : execs) {
-            def result
-            if (!exec) {
-                result = [success: false, message: 'Execution Not found: ' + exec, id: exec]
-            } else {
-                result = deleteExecution(exec, fileUploadService, logFileStorageService, referencedExecutionDataProvider, reportService)
-                result.id = exec
-            }
-            if(!result.success){
-                failed=true
-                failures<<result
-            }else{
-                count++
-            }
-        }
+    private static class DeleteExecutionResult {
+        boolean success
+        String error
+        String message
+        Long executionId
 
-        return [success:!failed, failures:failures, successTotal:count]
+        DeleteExecutionResult(boolean success, String error, String message, Long executionId) {
+            this.success = success
+            this.error = error
+            this.message = message
+            this.executionId = executionId
+        }
+        static DeleteExecutionResult success(Long executionId) {
+            return new DeleteExecutionResult(true, null, null, executionId)
+        }
+        static DeleteExecutionResult failure(String error, String message, Long executionId) {
+            return new DeleteExecutionResult(false, error, message, executionId)
+        }
     }
 
-    private Map deleteExecution(Long execId, FileUploadService fileUploadService, LogFileStorageService logFileStorageService, ReferencedExecutionDataProvider referencedExecutionDataProvider, ReportService reportService){
-        Map result
+    private DeleteExecutionResult deleteExecution(Execution execution,
+                                                         FileUploadService fileUploadService,
+                                                         LogFileStorageService logFileStorageService,
+                                                         ReferencedExecutionDataProvider referencedExecutionDataProvider,
+                                                         ReportService reportService){
         try {
-            Execution e = Execution.findById(execId)
-
-            if (e.dateCompleted == null && e.dateStarted != null) {
-                return [error: 'running', message: "Failed to delete execution {{Execution ${e.id}}}: The execution is currently running", success: false]
-            }
-
-            referencedExecutionDataProvider.deleteByExecutionId(e.id)
-
-            //delete all reports
-            reportService.deleteByExecution(e)
-            def executionFiles = logFileStorageService.getExecutionFiles(e, [], false)
-
-            List<File> files = []
-            def execs = []
-            //aggregate all files to delete
-            execs << e
-            executionFiles.each { ftype, executionFile ->
-
-                def localFile = logFileStorageService.getFileForExecutionFiletype(e, ftype, false, false)
-                if (null != localFile && localFile.exists()) {
-                    files << localFile
+            Execution.withTransaction {
+                if (execution.dateCompleted == null && execution.dateStarted != null) {
+                    return DeleteExecutionResult.failure('running', "Failed to delete execution {{Execution ${execution.id}}}: The execution is currently running", execution.id)
                 }
 
-                def partialFile = logFileStorageService.getFileForExecutionFiletype(e, ftype, false, true)
-                if (null != partialFile && partialFile.exists()) {
-                    files << partialFile
-                }
+                referencedExecutionDataProvider.deleteByExecutionId(execution.id)
+                reportService.deleteByExecution(execution)
+                def executionFiles = logFileStorageService.getExecutionFiles(execution, [], false)
 
-                def resultDeleteRemote = logFileStorageService.removeRemoteLogFile(e, ftype)
-                if(!resultDeleteRemote.started){
-                    logger.debug(resultDeleteRemote.error)
+                List<File> files = []
+                def execs = []
+                execs << execution
+                executionFiles.each { ftype, executionFile ->
+                    def localFile = logFileStorageService.getFileForExecutionFiletype(execution, ftype, false, false)
+                    if (null != localFile && localFile.exists()) {
+                        files << localFile
+                    }
+                    def partialFile = logFileStorageService.getFileForExecutionFiletype(execution, ftype, false, true)
+                    if (null != partialFile && partialFile.exists()) {
+                        files << partialFile
+                    }
+                    def resultDeleteRemote = logFileStorageService.removeRemoteLogFile(execution, ftype)
+                    if(!resultDeleteRemote.started){
+                        log.debug(String.valueOf(resultDeleteRemote.error))
+                    }
                 }
-            }
-            //delete all job file records
-            fileUploadService.deleteRecordsForExecution(e)
-
-            logger.debug("${files.size()} files from execution will be deleted")
-            //delete execution
-            //find an execution that this is a retry for
-            Execution.findAllByRetryExecution(e).each{e2->
-                e2.retryExecution=null
-            }
-            e.delete(flush: true)
-            //delete all files
-            def deletedfiles = 0
-            files.each { file ->
-                if (!FileUtils.deleteQuietly(file)) {
-                    logger.warn("Failed to delete file while deleting execution ${e.id}: ${file.absolutePath}")
-                } else {
-                    deletedfiles++
+                fileUploadService.deleteRecordsForExecution(execution)
+                log.debug("${files.size()} files from execution will be deleted")
+                //find an execution that this is a retry for
+                List<Execution> retryExecutions = Execution.findAll("from Execution where retryExecution = :exec", [exec: execution])
+                retryExecutions.each { Execution e2 ->
+                    e2.retryExecution = null
                 }
+                execution.delete(flush: true)
+                def deletedfiles = 0
+                files.each { file ->
+                    if (!FileUtils.deleteQuietly(file)) {
+                        log.warn("Failed to delete file while deleting execution ${execution.id}: ${file.absolutePath}")
+                    } else {
+                        deletedfiles++
+                    }
+                }
+                log.debug("${deletedfiles} files removed")
+                log.info("Deleted execution: ${execution.id}")
+                return DeleteExecutionResult.success(execution.id)
             }
-            logger.debug("${deletedfiles} files removed")
-            logger.info("Deleted execution: ${e.id}")
-            result = [success: true]
         } catch (Exception ex) {
-            logger.error("Failed to delete execution ${execId}", ex)
-            result = [error:'failure',message: "Failed to delete execution {{Execution ${execId}}}: ${ex.message}", success: false]
+            log.error("Failed to delete execution ${execution?.id}", ex)
+            return DeleteExecutionResult.failure('failure', "Failed to delete execution {{Execution ${execution?.id}}}: ${ex.message}", execution?.id)
         }
-        return result
     }
 
-    private List<Long> searchExecutions(FrameworkService frameworkService, ExecutionService executionService, JobSchedulerService jobSchedulerService, String project, Integer maxDaysToKeep,
-                                             Integer minimumExecutionToKeep, Integer maximumDeletionSize = 500){
-        List collectedExecutions= []
+    private List<Execution> searchExecutions(ExecutionService executionService,
+                                             String project,
+                                             Integer maxDaysToKeep,
+                                             Integer minimumExecutionToKeep,
+                                             Integer maximumDeletionSize = 500){
+        List<Execution> collectedExecutions= []
 
-        logger.info("Searching All Executions")
+        log.info("Searching All Executions")
 
         Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d", null)
 
@@ -169,16 +162,16 @@ class ExecutionsCleanUp implements InterruptableJob {
             Integer totalFound = jobList.size()
             Integer totalToExclude = result.size()
 
-            logger.info("found ${totalFound} executions")
+            log.info("found ${totalFound} executions")
             if(totalToExclude >0) {
                 if (minimumExecutionToKeep > 0) {
 
                     int totalExecutions = this.totalAllExecutions(project)
                     int sub = totalExecutions - totalToExclude
 
-                    logger.info("minimum executions to keep: ${minimumExecutionToKeep}")
-                    logger.info("total exections of project ${project}: ${totalExecutions}")
-                    logger.info("total to exclude: ${totalToExclude}")
+                    log.info("minimum executions to keep: ${minimumExecutionToKeep}")
+                    log.info("total exections of project ${project}: ${totalExecutions}")
+                    log.info("total to exclude: ${totalToExclude}")
 
                     boolean removeSubResult= false
                     boolean remove= true
@@ -193,15 +186,15 @@ class ExecutionsCleanUp implements InterruptableJob {
 
                     if (removeSubResult) {
                         int jump = minimumExecutionToKeep - sub
-                        logger.info("${jump} executions can not be removed")
+                        log.info("${jump} executions can not be removed")
                         //remove the oldest executions
                         def finalIndex = result.size() - jump
                         result = jump < result.size() ? result.subList(0, finalIndex) : []
-                        logger.info("${result.size()} executions will be removed")
+                        log.info("${result.size()} executions will be removed")
                     }
 
                     if(!remove){
-                        logger.info("${result.size()} executions can not be removed ")
+                        log.info("${result.size()} executions can not be removed ")
                         result = []
                     }
                 }
@@ -212,7 +205,7 @@ class ExecutionsCleanUp implements InterruptableJob {
 
 
         if(collectedExecutions.size()==0){
-            logger.info("No executions to delete")
+            log.info("No executions to delete")
         }
         return collectedExecutions
     }
@@ -226,32 +219,32 @@ class ExecutionsCleanUp implements InterruptableJob {
     }
 
 
-    private int deleteByExecutionList(List<Long> collectedExecutions, FileUploadService fileUploadService, LogFileStorageService logFileStorageService,referencedExecutionDataProvider, ReportService reportService) {
-        logger.info("Start to delete ${collectedExecutions.size()} executions")
-        if(collectedExecutions.size()>0) {
-            Map result = deleteBulkExecutionIds(collectedExecutions, fileUploadService, logFileStorageService, referencedExecutionDataProvider, reportService)
-            if (result != null) {
-                List failureList = new ArrayList<>();
-                List<Map> resultList = (List<Map>) result.get("failures")
-                if(resultList != null) {
-                    for (Map res : resultList) {
-                        if (!(Boolean) result.get("success")) {
-                            failureList.add((String) res.get("message"))
-                            logger.info(res.get("message"))
-                        }
-                    }
+    private int deleteByExecutionList(List<Execution> collectedExecutions,
+                                      FileUploadService fileUploadService,
+                                      LogFileStorageService logFileStorageService,
+                                      ReferencedExecutionDataProvider referencedExecutionDataProvider,
+                                      ReportService reportService) {
+        log.info("Start to delete ${collectedExecutions.size()} executions")
+        int count = 0
+        if (collectedExecutions.size() > 0) {
+            for (Execution exec : collectedExecutions) {
+                DeleteExecutionResult result = deleteExecution(exec, fileUploadService, logFileStorageService, referencedExecutionDataProvider, reportService)
+                if (!result.success) {
+                    log.info(result.message as String)
+                } else {
+                    count++
                 }
-                Integer successTotal = (Integer) result.get("successTotal")
-                logger.info("Deleted ${successTotal} of ${collectedExecutions.size()} executions")
-                if(successTotal<collectedExecutions.size()){
-                    logger.error("Some executions weren't deleted")
-                }
-                return successTotal
             }
+            log.info("Deleted ${count} of ${collectedExecutions.size()} executions")
+            if (count < collectedExecutions.size()) {
+                log.error("Some executions weren't deleted")
+            }
+            return count
         }
         return 0
     }
 
+    @CompileDynamic
     private ExecutionService fetchExecutionService(def jobDataMap) {
         def es = jobDataMap.get("executionService")
         if (es==null) {
@@ -264,18 +257,7 @@ class ExecutionsCleanUp implements InterruptableJob {
 
     }
 
-    private ResolvedAuthJobService fetchResolvedAuthJobService(def jobDataMap) {
-        def raj = jobDataMap.get("resolvedAuthJobService")
-        if (raj==null) {
-            throw new RuntimeException("ResolvedAuthJobService could not be retrieved from JobDataMap!")
-        }
-        if (! (raj instanceof ResolvedAuthJobService)) {
-            throw new RuntimeException("JobDataMap contained invalid ResolvedAuthJobService type: " + raj.getClass().getName())
-        }
-        return raj
-
-    }
-
+    @CompileDynamic
     private FileUploadService fetchFileUploadService(def jobDataMap) {
         def fu = jobDataMap.get("fileUploadService")
         if (fu==null) {
@@ -284,22 +266,22 @@ class ExecutionsCleanUp implements InterruptableJob {
         if (! (fu instanceof FileUploadService)) {
             throw new RuntimeException("JobDataMap contained invalid FileUploadService type: " + fu.getClass().getName())
         }
-        return fu
-
+        return (FileUploadService)fu
     }
 
+    @CompileDynamic
     private LogFileStorageService fetchLogFileStorageService(def jobDataMap) {
         def lfs = jobDataMap.get("logFileStorageService")
         if (lfs==null) {
             throw new RuntimeException("logFileStorageService could not be retrieved from JobDataMap!")
         }
         if (! (lfs instanceof LogFileStorageService)) {
-            throw new RuntimeException("JobDataMap contained invalid logFileStorageService type: " + lfs.getClass().getName())
+            throw new RuntimeException("JobDataMap contained invalid LogFileStorageService type: " + lfs.getClass().getName())
         }
-        return lfs
-
+        return (LogFileStorageService)lfs
     }
 
+    @CompileDynamic
     private FrameworkService fetchFrameworkService(def jobDataMap) {
         def fws = jobDataMap.get("frameworkService")
         if (fws==null) {
@@ -308,34 +290,22 @@ class ExecutionsCleanUp implements InterruptableJob {
         if (! (fws instanceof FrameworkService)) {
             throw new RuntimeException("JobDataMap contained invalid frameworkService type: " + fws.getClass().getName())
         }
-        return fws
-
+        return (FrameworkService)fws
     }
 
-
-    private JobSchedulerService fetchJobSchedulerService(def jobDataMap){
-        def jobSchedulerService = jobDataMap.get("jobSchedulerService")
-        if (jobSchedulerService==null) {
-            throw new RuntimeException("jobSchedulerService could not be retrieved from JobDataMap!")
-        }
-        if (! (jobSchedulerService instanceof JobSchedulerService)) {
-            throw new RuntimeException("JobDataMap contained invalid JobSchedulerService type: " + jobSchedulerService.getClass().getName())
-        }
-        return jobSchedulerService
-    }
-
-
+    @CompileDynamic
     private ReportService fetchReportService(def jobDataMap) {
         def fws = jobDataMap.get("reportService")
         if (fws==null) {
             throw new RuntimeException("reportService could not be retrieved from JobDataMap!")
         }
         if (! (fws instanceof ReportService)) {
-            throw new RuntimeException("JobDataMap contained invalid reportService type: " + fws.getClass().getName())
+            throw new RuntimeException("JobDataMap contained invalid ReportService type: " + fws.getClass().getName())
         }
-        return fws
+        return (ReportService)fws
     }
 
+    @CompileDynamic
     private ReferencedExecutionDataProvider fetchReferencedExecutionDataProvider(def jobDataMap){
         def referencedExecutionDataProvider = jobDataMap.get("referencedExecutionDataProvider")
         if (referencedExecutionDataProvider==null) {
@@ -344,6 +314,6 @@ class ExecutionsCleanUp implements InterruptableJob {
         if (! (referencedExecutionDataProvider instanceof ReferencedExecutionDataProvider)) {
             throw new RuntimeException("JobDataMap contained invalid ReferencedExecutionDataProvider type: " + referencedExecutionDataProvider.getClass().getName())
         }
-        return referencedExecutionDataProvider
+        return (ReferencedExecutionDataProvider)referencedExecutionDataProvider
     }
 }
