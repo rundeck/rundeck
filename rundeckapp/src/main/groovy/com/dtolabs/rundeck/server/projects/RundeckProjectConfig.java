@@ -30,16 +30,19 @@ public class RundeckProjectConfig implements IRundeckProjectConfig {
     private String name;
     private Date lastModifiedTime;
     private Date createdTime;
+    private IPropertyLookup lookup;
     private IPropertyLookup projectLookup;
 
     public RundeckProjectConfig(
             final String name,
+            final IPropertyLookup lookup,
             final IPropertyLookup projectLookup,
             final Date lastModifiedTime,
             final Date createdTime
     )
     {
         this.name = name;
+        this.setLookup(lookup);
         this.setProjectLookup(projectLookup);
         this.setLastModifiedTime(lastModifiedTime);
         this.setCreatedTime(createdTime);
@@ -91,7 +94,11 @@ public class RundeckProjectConfig implements IRundeckProjectConfig {
     }
 
     public IPropertyLookup getLookup() {
-        return projectLookup;
+        return lookup;
+    }
+
+    public void setLookup(final IPropertyLookup lookup) {
+        this.lookup = lookup;
     }
 
     public IPropertyLookup getProjectLookup() {
