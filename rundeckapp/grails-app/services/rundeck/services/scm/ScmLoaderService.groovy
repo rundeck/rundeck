@@ -11,9 +11,9 @@ import grails.events.bus.EventBusAware
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.rundeck.app.config.ConfigService
 import rundeck.ScheduledExecution
 import rundeck.data.job.reference.JobRevReferenceImpl
-import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 
 import rundeck.services.ScheduledExecutionService
@@ -32,7 +32,7 @@ class ScmLoaderService implements EventBusAware {
     FrameworkService frameworkService
     ScmService scmService
     ScheduledExecutionService scheduledExecutionService
-    ConfigurationService configurationService
+    ConfigService configurationService
     public static final long DEFAULT_LOADER_DELAY = 0
     public static final long DEFAULT_LOADER_INTERVAL_SEC = 20
     public static final long INIT_RETRY_TIMES = 5
@@ -109,58 +109,92 @@ class ScmLoaderService implements EventBusAware {
 
         return false
     }
+    /**
+     * Project SCM Loader
+     * This class is responsible for loading the SCM configuration and processing the import/export operations.
+     */
+    static class ProjectScmLoader implements Runnable{
+        String project
+        String integration
+        ScmLoaderService service
+
+        ScmLoaderState state = new ScmLoaderStateImpl()
+        private long retryTimes
+        private long retryDelay
+
+        ProjectScmLoader(String project, String integration, ScmLoaderService service, long delay, long retryCount) {
+            this.project = project
+            this.integration = integration
+            this.service = service
+            retryDelay = delay
+            retryTimes = retryCount
+        }
+
+        @Override
+        void run() {
+            String projectIntegration = service.getProjectIntegration(project, integration)
+            ScmPluginConfigData pluginConfigData = service.scmService.loadScmConfig(project, integration)
+            if(!service.scmPluginMeta.get(projectIntegration)){
+                service.scmPluginMeta.put(projectIntegration, pluginConfigData)
+            }
+            if(pluginConfigData && pluginConfigData.enabled){
+                boolean process = false
+                int retryCount = 0
+
+                if (pluginConfigData.properties.get("flagToReturnProcess")) {
+                    pluginConfigData.properties.remove("flagToReturnProcess")
+                    service.scmService.storeConfig(pluginConfigData, project, integration)
+                }
+
+                while (!process){
+                    try {
+                        if (integration == service.scmService.EXPORT) {
+                            service.processScmExportLoader(project, pluginConfigData, state)
+                        }else{
+                            service.processScmImportLoader(project, pluginConfigData, state)
+                        }
+                        process = true
+
+                    } catch (Throwable t) {
+                        if(retryCount>= retryTimes){
+                            service.scmFailedProjectInit.put(projectIntegration, pluginConfigData)
+                            process = true
+                            service.scmToFalse(pluginConfigData, project, integration)
+                            service.removingLoaderProcess(
+                                project,
+                                integration,
+                                "Error initializing SCM: " + t.message
+                            )
+                        }else{
+                            retryCount++
+                            log.error("Error initializing SCM for: $project/$integration: ${t.message}. Retrying ${retryCount}/${retryTimes}")
+                            Thread.sleep(this.retryDelay)
+                        }
+                    }
+                }
+
+            }else{
+                service.removingLoaderProcess(project, integration, "SCM disabled or project removed")
+            }
+        }
+    }
 
     def startScmLoader(String project, String integration){
 
-        def state = new ScmLoaderStateImpl()
+        def loader = createProjectLoader(project, integration)
         //enable project integration cache loader
         def scheduler = scheduledExecutor.scheduleAtFixedRate(
             {
                     try {
-                        String projectIntegration = getProjectIntegration(project, integration)
-                        ScmPluginConfigData pluginConfigData = scmService.loadScmConfig(project, integration)
-                        if(!scmPluginMeta.get(projectIntegration)){
-                            scmPluginMeta.put(projectIntegration, pluginConfigData)
-                        }
-                        if(pluginConfigData && pluginConfigData.enabled){
-                            boolean process = false
-                            int retryCount = 0
-                            long retryTimes = getScmLoaderInitialRetryTimes()
-                            long retryDelay = getScmLoaderInitialRetryDelay()
-
-                            if (pluginConfigData.properties.get("flagToReturnProcess")) {
-                                pluginConfigData.properties.remove("flagToReturnProcess")
-                                scmService.storeConfig(pluginConfigData, project, integration)
-                            }
-
-                            while (!process){
-                                try {
-                                    if (integration == scmService.EXPORT) {
-                                        processScmExportLoader(project, pluginConfigData, state)
-                                    }else{
-                                        processScmImportLoader(project, pluginConfigData, state)
-                                    }
-                                    process = true
-
-                                } catch (Throwable t) {
-                                    if(retryCount>=retryTimes){
-                                        scmFailedProjectInit.put(projectIntegration, pluginConfigData)
-                                        process = true
-                                        scmToFalse(pluginConfigData, project, integration)
-                                        removingLoaderProcess(project, integration)
-                                    }else{
-                                        retryCount++
-                                        log.error("Error initializing SCM for: $project/$integration: ${t.message}. Retrying ${retryCount}/${retryTimes}")
-                                        Thread.sleep(retryDelay)
-                                    }
-                                }
-                            }
-
-                        }else{
-                            removingLoaderProcess(project, integration)
-                        }
+                        loader.run()
+                    } catch (CancelTaskException throwable) {
+                        log.warn("Stopping loader process for ${project}/${integration}: ${throwable.message}", throwable)
+                        throw throwable
                     } catch (Throwable throwable) {
-                        log.error("Error initializing SCM project loader for ${project}/${integration}: ${throwable.message}", throwable)
+                        log.error(
+                            "Error initializing SCM project loader for ${project}/${integration}: ${throwable.message}",
+                            throwable
+                        )
                     }
                 },
                 scmLoaderInitialDelaySeconds,
@@ -170,20 +204,30 @@ class ScmLoaderService implements EventBusAware {
         scheduler
     }
 
+    ProjectScmLoader createProjectLoader(String project, String integration) {
+        new ProjectScmLoader(project, integration, this, this.getScmLoaderInitialRetryDelay(), this.getScmLoaderInitialRetryTimes())
+    }
+
     def scmToFalse(ScmPluginConfigData scmPluginConfig, String project, String integration) {
         log.debug("SCM disabled")
         scmPluginConfig.enabled = false
         scmService.storeConfig(scmPluginConfig, project, integration)
     }
 
-    def removingLoaderProcess(String project, String integration){
+    static class CancelTaskException extends Exception {
+        CancelTaskException(String message) {
+            super(message)
+        }
+    }
+
+    def removingLoaderProcess(String project, String integration, String message){
         String projectIntegration = getProjectIntegration(project, integration)
 
         //removing task
         log.debug("removing thread ${projectIntegration}")
         scmProjectLoaderProcess.remove(projectIntegration)
         cleanUpScmPlugin(project, integration)
-        throw new RuntimeException("SCM disabled or project removed");
+        throw new CancelTaskException(message);
     }
 
     long getScmLoaderInitialDelaySeconds() {
@@ -192,11 +236,13 @@ class ScmLoaderService implements EventBusAware {
 
 
     long getScmLoaderInitialRetryTimes() {
-        configurationService?.getLong('scmLoader.init.retry', INIT_RETRY_TIMES) ?: INIT_RETRY_TIMES
+        def result = configurationService?.getLong('scmLoader.init.retry', INIT_RETRY_TIMES)
+        result != null ? result : INIT_RETRY_TIMES
     }
 
     long getScmLoaderInitialRetryDelay() {
-        configurationService?.getLong('scmLoader.init.delay', INIT_RETRY_TIMES_DELAY) ?: INIT_RETRY_TIMES_DELAY
+        def result = configurationService?.getLong('scmLoader.init.delay', INIT_RETRY_TIMES_DELAY)
+        result != null ? result : INIT_RETRY_TIMES_DELAY
     }
 
     long getScmLoaderIntervalSeconds() {
