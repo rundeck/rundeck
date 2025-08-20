@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.dtolabs.rundeck.server.projects.RundeckProject
+import com.dtolabs.rundeck.server.projects.RundeckProjectConfig
 import com.google.common.cache.LoadingCache
 import grails.events.bus.EventBus
 import grails.testing.gorm.DataTest
@@ -109,10 +110,7 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         0*service.rundeckNodeService.getNodes('test1')
         result!=null
         'test1'==result.name
-
-        //framework props no longer used as defaults in project config
-        null == result.getProperty('fwkprop')
-
+        'fwkvalue'==result.getProperty('fwkprop')
         'test1'==result.getProperty('project.name')
         1==result.getProjectProperties().size()
         'test1'==result.getProjectProperties().get('project.name')
@@ -153,8 +151,7 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         0*service.rundeckNodeService.getNodes('test1')
         result!=null
         'test1'==result.name
-        //framework props no longer used as defaults in project config
-        null == result.getProperty('fwkprop')
+        'fwkvalue'==result.getProperty('fwkprop')
         'test1'==result.getProperty('project.name')
         'projval'==result.getProperty('projkey')
         3==result.getProjectProperties().size()
@@ -213,8 +210,7 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         0*service.rundeckNodeService.getNodes('test1')
         result!=null
         'test1'==result.name
-        //framework props no longer used as defaults in project config
-        null == result.getProperty('fwkprop')
+        'fwkvalue'==result.getProperty('fwkprop')
         'test1'==result.getProperty('project.name')
         'projval'==result.getProperty('projkey')
         3==result.getProjectProperties().size()
@@ -258,8 +254,7 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         0*service.rundeckNodeService.getNodes('test1')
         result!=null
         'test1'==result.name
-        //framework props no longer used as defaults in project config
-        null == result.getProperty('fwkprop')
+        'fwkvalue'==result.getProperty('fwkprop')
         'test1'==result.getProperty('project.name')
         !result.hasProperty('projkey')
         1==result.getProjectProperties().size()
