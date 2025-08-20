@@ -81,6 +81,22 @@ class NodesSpec extends SeleniumBase {
         nodesPage.expectLinkTextToExist("password-node")
     }
 
+    def "matching nodes shown when filtering by the tag name attribute combining two tags name"() {
+        given:
+        nodesPage.setNodeInputText(".*")
+        nodesPage.clickSearchNodes()
+        when:
+        nodesPage.els(NodesPage.nodesTableNodeFilterLinkByResolver("executor-test")).first().click()
+        then:
+        nodesPage.getDisplayedNodesCount() == 4
+        nodesPage.el(nodesPage.searchNodeInputBy).getAttribute("value") == "tags: \"executor-test\""
+        when:
+        nodesPage.els(NodesPage.nodesTableNodeFilterLinkByResolver("ssh-node")).first().click()
+        then:
+        nodesPage.getDisplayedNodesCount() == 4
+        nodesPage.el(nodesPage.searchNodeInputBy).getAttribute("value") == "tags: \"executor-test\" tags: \"ssh-node\""
+    }
+
     def "nodes list displays appropriate node attributes"() {
         when:
         nodesPage.setNodeInputText("name: password-node")

@@ -521,13 +521,23 @@ export default defineComponent({
     },
     handleFilterClick(val: any) {
       if (val.filter) {
-        this.modelData.filter = val.filter;
+        if(val.filter ===".*" || this.modelData.filter === ".*") {
+          this.modelData.filter = val.filter;
+        } else {
+          this.modelData.filter = [this.modelData.filter, val.filter].join(" ");
+        }
       }
       if (val.filterName) {
         this.modelData.filterName = val.filterName;
       }
       if (val.filterExclude) {
-        this.modelData.filterExclude = val.filterExclude;
+        if (val.filter) {
+          if(val.filter ===".*" || this.modelData.filter === ".*") {
+            this.modelData.filterExclude = val.filter;
+          } else {
+            this.modelData.filterExclude = [this.modelData.filterExclude, val.filter].join(" ");
+          }
+        }
       }
       if (val.filterNameExclude) {
         this.modelData.filterNameExclude = val.filterNameExclude;
