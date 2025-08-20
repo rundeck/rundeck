@@ -90,7 +90,7 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
                             File browserLogs = new File(testLogsDir, "browser-${specificationContext.currentSpec.filename}-${specificationContext.currentIteration.name}" + ".txt")
                             LogEntries logEntries = _driver.manage().logs().get(LogType.BROWSER)
                             browserLogs.withWriter { w ->
-                                for (org.openqa.selenium.logging.LogEntry entry : logEntries.iterator()) {
+                                for (LogEntry entry : logEntries) {
                                     def msg = "[${entry.getTimestamp()}] ${entry.getLevel()} ${entry.getMessage()}"
                                     System.err.println("BROWSER: " + msg)
                                     w << msg + "\n"
