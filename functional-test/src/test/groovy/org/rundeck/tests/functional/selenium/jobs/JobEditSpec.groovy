@@ -132,6 +132,6 @@ class JobEditSpec extends SeleniumBase{
 
 
         then:
-        jobCreatePage.nodeFilterInput.getAttribute("value") == "tags: \"testBoth\" tags: \"test\""
+        jobCreatePage.nodeFilterInput.getAttribute("value") == " tags: \"testBoth\" tags: \"test\""
     }
 }
