@@ -80,6 +80,20 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
                             }
                             File destination = new File(testResourcesDir, "${specificationContext.currentSpec.filename}-${specificationContext.currentIteration.name}" + ".png")
                             screenshot.renameTo(destination)
+                            
+                            File testLogsDir = new File("build/test-results/logs")
+                            if (!testLogsDir.exists()) {
+                                testLogsDir.mkdirs()
+                            }
+                            File browserLogs = new File(testLogsDir, "browser-${specificationContext.currentSpec.filename}-${specificationContext.currentIteration.name}" + ".txt")
+                            LogEntries logEntries = _driver.manage().logs().get(LogType.BROWSER)
+                            browserLogs.withWriter { w ->
+                                for (org.openqa.selenium.logging.LogEntry entry : logEntries.iterator()) {
+                                    def msg = "[${entry.getTimestamp()}] ${entry.getLevel()} ${entry.getMessage()}"
+                                    System.err.println("BROWSER: " + msg)
+                                    w << msg + "\n"
+                                }
+                            }
                         }
                     }
             _driver?.quit()
