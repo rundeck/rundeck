@@ -157,7 +157,11 @@ function init() {
           methods: {
             updateNodeFilter(val: any) {
               const filterName = val && val.filter ? val.filter : val;
-              this.nodeFilterStore.setSelectedFilter(filterName);
+              if(filterName ===".*" || this.nodeFilterStore.filter === ".*") {
+                this.nodeFilterStore.setSelectedFilter(filterName);
+              } else {
+                this.nodeFilterStore.setSelectedFilter([this.nodeFilterStore.filter, filterName].join(" "));
+              }
             },
           },
           template: `

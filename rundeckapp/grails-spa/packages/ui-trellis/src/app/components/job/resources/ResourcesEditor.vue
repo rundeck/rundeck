@@ -531,7 +531,13 @@ export default defineComponent({
         this.modelData.filterName = val.filterName;
       }
       if (val.filterExclude) {
-        this.modelData.filterExclude = [this.modelData.filterExclude, val.filterExclude].join(" ");
+        if (val.filter) {
+          if(val.filter ===".*" || this.modelData.filter === ".*") {
+            this.modelData.filterExclude = val.filter;
+          } else {
+            this.modelData.filterExclude = [this.modelData.filterExclude, val.filter].join(" ");
+          }
+        }
       }
       if (val.filterNameExclude) {
         this.modelData.filterNameExclude = val.filterNameExclude;
