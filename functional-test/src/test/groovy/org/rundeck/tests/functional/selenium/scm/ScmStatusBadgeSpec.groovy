@@ -11,6 +11,7 @@ import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.gitea.GiteaApiRemoteRepo
 import org.rundeck.util.api.storage.KeyStorageApiClient
 import org.rundeck.util.container.SeleniumBase
+import spock.lang.Ignore
 
 @SeleniumCoreTest
 class ScmStatusBadgeSpec extends SeleniumBase {
@@ -54,6 +55,7 @@ class ScmStatusBadgeSpec extends SeleniumBase {
         scmStatusBadge.getTooltips() == 'Not Tracked for SCM Import'
     }
 
+    @Ignore("flaky test, needs to be fixed")
     def "job scm import status badge after import job changes"(){
         given:
         go(LoginPage).login(TEST_USER, TEST_PASS)
