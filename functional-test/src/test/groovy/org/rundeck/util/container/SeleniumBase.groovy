@@ -7,6 +7,8 @@ import org.openqa.selenium.TakesScreenshot
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.chrome.ChromeOptions
+import org.openqa.selenium.logging.LogEntries
+import org.openqa.selenium.logging.LogEntry
 import org.openqa.selenium.logging.LogType
 import org.openqa.selenium.logging.LoggingPreferences
 import org.openqa.selenium.support.ui.WebDriverWait
@@ -80,6 +82,20 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
                             }
                             File destination = new File(testResourcesDir, "${specificationContext.currentSpec.filename}-${specificationContext.currentIteration.name}" + ".png")
                             screenshot.renameTo(destination)
+                            
+                            File testLogsDir = new File("build/test-results/logs")
+                            if (!testLogsDir.exists()) {
+                                testLogsDir.mkdirs()
+                            }
+                            File browserLogs = new File(testLogsDir, "browser-${specificationContext.currentSpec.filename}-${specificationContext.currentIteration.name}" + ".txt")
+                            LogEntries logEntries = _driver.manage().logs().get(LogType.BROWSER)
+                            browserLogs.withWriter { w ->
+                                for (LogEntry entry : logEntries) {
+                                    def msg = "[${entry.getTimestamp()}] ${entry.getLevel()} ${entry.getMessage()}"
+                                    System.err.println("BROWSER: " + msg)
+                                    w << msg + "\n"
+                                }
+                            }
                         }
                     }
             _driver?.quit()
