@@ -31,7 +31,9 @@ class FrameworkBaseSpec extends Specification {
         def mgr = Mock(ProjectManager) {
             1 * getFrameworkProject('test') >> project
         }
-        def lookup = Mock(IPropertyLookup)
+        def lookup = Mock(IPropertyLookup) {
+            1 * getPropertiesMap() >> frameworkProps
+        }
         def services = Mock(IFrameworkServices)
         def nodes = Mock(IFrameworkNodes)
         def base = new FrameworkBase(mgr, lookup, services, nodes)
@@ -39,15 +41,43 @@ class FrameworkBaseSpec extends Specification {
         when:
         def result = base.getProjectGlobals('test')
         then:
-
         result == expected
 
         where:
-        projProps                                              | expected
-        [:]                                                    | [:]
-        ['framework.globals.a': 'b']                           | [a: 'b']
-        ['project.globals.a': 'b']                             | [a: 'b']
-        ['framework.globals.a': 'b', 'project.globals.a': 'c'] | [a: 'c']
-        ['framework.globals.': 'b']                            | [:]
+        projProps                        | frameworkProps                | expected
+        [:]                              | [:]                           | [:]
+        ['project.globals.a': 'b']       | [:]                           | [a: 'b']
+        [:]                              | ['framework.globals.a': 'b']   | [a: 'b']
+        ['project.globals.a': 'c']       | ['framework.globals.a': 'b']   | [a: 'c']
+        ['project.globals.a': 'c', 'other.prop': 'z']              | ['framework.globals.a': 'b', 'framework.globals.x': 'y']   | [a: 'c', x: 'y']
+        ['project.globals.': 'empty']    | [:]                           | [:]
+        ['project.globals.a': 'c']       | ['framework.globals.': 'b']   | [a: 'c']
     }
+    
+    def "framework globals"() {
+        given:
+        def mgr = Mock(ProjectManager)
+        def lookup = Mock(IPropertyLookup) {
+            1 * getPropertiesMap() >> frameworkProps
+        }
+        def services = Mock(IFrameworkServices)
+        def nodes = Mock(IFrameworkNodes)
+        def base = new FrameworkBase(mgr, lookup, services, nodes)
+
+        when:
+        def result = base.getFrameworkGlobals()
+        
+        then:
+        result == expected
+
+        where:
+        frameworkProps                                           | expected
+        [:]                                                      | [:]
+        ['framework.globals.a': 'b']                             | [a: 'b']
+        ['framework.globals.x': 'y', 'otherProp': 'z']           | [x: 'y']
+        ['framework.globals.x': 'y', 'framework.globals.z': 'w'] | [x: 'y', z: 'w']
+        ['framework.globals.': 'b']                              | [:]
+        ['nonmatching': 'value']                                 | [:]
+    }
+
 }
