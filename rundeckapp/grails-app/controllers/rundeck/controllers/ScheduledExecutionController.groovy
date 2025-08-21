@@ -6279,6 +6279,12 @@ Since: v46''',
 breakpoint are available, no metadata will be loaded''',
             schema = @Schema(type = 'integer')
         ) Integer breakpoint,
+        @Parameter(
+            name = 'max',
+            in = ParameterIn.QUERY,
+            description = 'Since v54: Maximum number of jobs to retrieve. If not specified, all jobs will be returned.',
+            schema = @Schema(type = 'integer')
+        ) Integer max,
         @Parameter(hidden = true) RdJobQueryInput query
     ) {
         if (!apiService.requireApi(request, response, ApiVersions.V46)) {
@@ -6287,6 +6293,10 @@ breakpoint are available, no metadata will be loaded''',
         query.groupPath = path
         query.projFilter = project
         query.inputParamMap = params
+        if(apiService.requireApi(request, response, ApiVersions.V54)) {
+            query.max = max ?: -1
+        }
+
         List<JobBrowseItem> result = scheduledExecutionService.basicQueryJobs(
             project,
             query,

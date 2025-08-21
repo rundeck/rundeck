@@ -89,6 +89,7 @@ import { defineComponent, inject } from "vue";
 
 export default defineComponent({
   name: "JobScheduleInfo",
+  inheritAttrs: false,
   props: {
     itemData: {
       type: Object,
