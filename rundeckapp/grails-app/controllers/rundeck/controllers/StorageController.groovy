@@ -487,23 +487,23 @@ Authorization under the key path `project/{project}` can be granted at the proje
             allowReserved = true
         ),
         requestBody = @RequestBody(
-            description='Private key, public key, or password content',
-            required=true,
-            content=[
+            description = "Private key, public key, or password content",
+            required = true,
+            content = [
                 @Content(
-                    mediaType='application/octet-stream',
-                    schema=@Schema(type='string'),
-                    examples=@ExampleObject('''...private key...''')
+                    mediaType = 'application/octet-stream',
+                    schema = @Schema(type = 'string'),
+                    examples = @ExampleObject('''...private key...''')
                 ),
                 @Content(
-                    mediaType='application/pgp-keys',
-                    schema=@Schema(type='string'),
-                    examples=@ExampleObject('''...public key...''')
+                    mediaType = 'application/pgp-keys',
+                    schema = @Schema(type = 'string'),
+                    examples = @ExampleObject('''...public key...''')
                 ),
                 @Content(
-                    mediaType='application/x-rundeck-data-password',
-                    schema=@Schema(type='string'),
-                    examples=@ExampleObject('''password-value''')
+                    mediaType = 'application/x-rundeck-data-password',
+                    schema = @Schema(type = 'string'),
+                    examples = @ExampleObject('''password-value''')
                 )
             ]
         ),
@@ -532,11 +532,11 @@ Authorization under the key path `project/{project}` can be granted at the proje
                     ),
                     @Content(
                         mediaType = 'application/pgp-keys',
-                        schema=@Schema(type='string'),
+                        schema = @Schema(type = 'string'),
                         examples = @ExampleObject(
-                            name='public-key',
-                            summary='Public Key contents',
-                            value='''...Public Key Contents...'''
+                            name = 'public-key',
+                            summary = 'Public Key contents',
+                            value = '''...Public Key Contents...'''
                         )
                     )
                 ]
@@ -700,9 +700,50 @@ Authorization under the key path `project/{project}` can be granted at the proje
             allowReserved = true,
             required = true
         ),
-        requestBody = @RequestBody(ref = '#/paths/~1storage~1keys~1%7Bpath%7D/post/requestBody'),
+        requestBody = @RequestBody(
+            description = "Private key, public key, or password content",
+            required = true,
+            content = [
+                @Content(
+                    mediaType = 'application/octet-stream',
+                    schema = @Schema(type = 'string'),
+                    examples = @ExampleObject('''...private key...''')
+                ),
+                @Content(
+                    mediaType = 'application/pgp-keys',
+                    schema = @Schema(type = 'string'),
+                    examples = @ExampleObject('''...public key...''')
+                ),
+                @Content(
+                    mediaType = 'application/x-rundeck-data-password',
+                    schema = @Schema(type = 'string'),
+                    examples = @ExampleObject('''password-value''')
+                )
+            ]
+        ),
         responses = [
-            @ApiResponse(ref = '#/paths/~1storage~1keys~1%7Bpath%7D/get/responses/200'),
+            @ApiResponse(
+                responseCode = "200",
+                description = "Key Metadata",
+                content = [
+                    @Content(
+                        mediaType = MediaType.APPLICATION_JSON,
+                        schema = @Schema(type = 'object'),
+                        examples = [
+                            @ExampleObject(value = '''{ ... }''', name = 'key-metadata', summary = 'Key Metadata Result')
+                        ]
+                    ),
+                    @Content(
+                        mediaType = 'application/pgp-keys',
+                        schema = @Schema(type = 'string'),
+                        examples = @ExampleObject(
+                            name = 'public-key',
+                            summary = 'Public Key contents',
+                            value = '''...Public Key Contents...'''
+                        )
+                    )
+                ]
+            ),
             @ApiResponse(responseCode='403',description='Unauthorized'),
             @ApiResponse(responseCode='404',description='The file does not exist')
         ]
@@ -764,7 +805,7 @@ Lists resources at the specified PATH if it is a directory.
 
 Otherwise if it is a file, return the metadata about the stored file if JSON response is requested.
 
-Provides the content for **public key** files if the `Accept` request header matches `*/*` or `application/pgp-keys`.
+Provides the content for **public key** files if the `Accept` request header matches `*&#47;*` or `application/pgp-keys`.
 
 Returns `403` if content is requested from other Key file types.
 
