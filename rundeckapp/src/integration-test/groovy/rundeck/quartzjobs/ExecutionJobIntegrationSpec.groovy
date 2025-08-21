@@ -52,7 +52,8 @@ class ExecutionJobIntegrationSpec extends Specification {
                     executionService: mockes,
                     executionUtilService: mockeus,
                     execution: execution,
-                    )
+                    ),
+                Mock(JobExecutionContext)
             )
         then:
             1 * mockes.executeAsyncBegin(_, _, execution, _, _, _) >> testExecmap
@@ -142,7 +143,8 @@ class ExecutionJobIntegrationSpec extends Specification {
                     executionService: mockes,
                     executionUtilService: mockeus,
                     execution: execution,
-                    )
+                    ),
+                Mock(JobExecutionContext)
             )
         then:
             execution!=null
@@ -336,7 +338,8 @@ class ExecutionJobIntegrationSpec extends Specification {
                     executionUtilService: eus,
                     execution: execution,
                     scheduledExecution: se
-                )
+                ),
+                Mock(JobExecutionContext)
             )
         then:
             execution!=null
@@ -660,9 +663,9 @@ class ExecutionJobIntegrationSpec extends Specification {
     }
 
     /**
-     * executeAsyncBegin fails to start, result is success=false
+     * executeAsyncBegin fails to start, result is null
      */
-    def testExecuteCommandStartFailed() {
+    def "executeCommand Start failure returns null"() {
         given:
             ScheduledExecution se = setupJob()
             Execution execution = setupExecution(se, new Date(), new Date())
@@ -678,10 +681,11 @@ class ExecutionJobIntegrationSpec extends Specification {
                     executionUtilService: mockeus,
                     execution: execution,
                     scheduledExecution: se
-                )
+                ),
+                Mock(JobExecutionContext)
             )
         then:
-            !result.success
+            result == null
     }
 
     def "execute beforeExecution skip value preempts"() {
@@ -919,7 +923,8 @@ class ExecutionJobIntegrationSpec extends Specification {
                     executionUtilService: mockeus,
                     execution: execution,
                     scheduledExecution: se
-                )
+                ),
+                Mock(JobExecutionContext)
             )
         then:
             execution!=null
@@ -956,7 +961,8 @@ class ExecutionJobIntegrationSpec extends Specification {
                     executionUtilService: mockeus,
                     execution: execution,
                     scheduledExecution: se
-                )
+                ),
+                Mock(JobExecutionContext)
             )
         then:
             execution!=null
@@ -994,7 +1000,8 @@ class ExecutionJobIntegrationSpec extends Specification {
                     executionUtilService: mockeus,
                     execution: execution,
                     scheduledExecution: se
-                )
+                ),
+                Mock(JobExecutionContext)
             )
         then:
             !result.success
@@ -1026,7 +1033,8 @@ class ExecutionJobIntegrationSpec extends Specification {
                     executionUtilService: mockeus,
                     execution: execution,
                     scheduledExecution: se
-                )
+                ),
+                Mock(JobExecutionContext)
             )
         then:
             RuntimeException e = thrown()
