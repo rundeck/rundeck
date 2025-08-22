@@ -49,6 +49,7 @@ class ProjectNodeSupportSpec extends Specification {
     def "reloads after closed"() {
         given:
         Date modifiedTime = new Date()
+        File varDir = File.createTempFile("ProjectNodeSupportSpec-varDir", "-tmp")
         def config = Mock(IRundeckProjectConfig) {
             getName() >> PROJECT_NAME
             getProperties() >> ([
@@ -64,7 +65,7 @@ class ProjectNodeSupportSpec extends Specification {
         def generatorService = ResourceFormatGeneratorService.getInstanceForFramework(framework,framework)
         def sourceService = ResourceModelSourceService.getInstanceForFramework(framework,framework)
 
-        def support = new ProjectNodeSupport(config, generatorService, sourceService)
+        def support = new ProjectNodeSupport(varDir, config, generatorService, sourceService)
 
         when:
 
@@ -88,6 +89,7 @@ class ProjectNodeSupportSpec extends Specification {
 
         given:
         Date modifiedTime = new Date()
+        File varDir = File.createTempFile("ProjectNodeSupportSpec-varDir", "-tmp")
         def config = Mock(IRundeckProjectConfig) {
             getName() >> PROJECT_NAME
             getProperties() >> (
@@ -105,7 +107,7 @@ class ProjectNodeSupportSpec extends Specification {
         def generatorService = ResourceFormatGeneratorService.getInstanceForFramework(framework,framework)
         def sourceService = ResourceModelSourceService.getInstanceForFramework(framework,framework)
 
-        def support = new ProjectNodeSupport(config, generatorService, sourceService, null)
+        def support = new ProjectNodeSupport(varDir, config, generatorService, sourceService, null)
 
         when:
 
