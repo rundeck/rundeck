@@ -188,7 +188,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
         }
     }
 
-    def applyExecutionCriteria(RdExecQuery query, delegate, boolean isJobs=true, String seId=null, List<String> execUuids=[]){
+    def applyExecutionCriteria(RdExecQuery query, delegate, boolean isJobs=true, String seId=null, List execsId=[]){
         def eqfilters = [
                 stat: 'status',
                 reportId: 'reportId',
@@ -255,9 +255,9 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
 
                 if (query.execProjects && seId) {
                     or {
-                        if(execUuids && execUuids.size() > 0){
+                        if(execsId && execsId.size() > 0){
                             and{
-                                'in'('executionUuid', execUuids)
+                                'in'('executionId', execsId)
                                 List execProjectsPartitioned = Lists.partition(query.execProjects, 1000)
                                 or{
                                     for(def partition : execProjectsPartitioned){
