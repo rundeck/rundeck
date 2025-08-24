@@ -457,7 +457,7 @@ class ReportService  {
                 lastDate = it.dateCompleted.time
             }
         }
-        def total = execReportDataProvider.countExecutionReportsWithTransaction(query, isJobs, seUuid)
+        def total = execReportDataProvider.countExecutionReportsWithTransaction(query, isJobs, seUuid, execUuids)
 
         filters.putAll(specialfilters)
 
