@@ -97,6 +97,14 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
         }
     }
 
+    int countExecutionReportsWithTransaction(RdExecQuery query, boolean isJobs, String jobId, execsId) {
+        return ExecReport.withTransaction {
+            ExecReport.createCriteria().count {
+                applyExecutionCriteria(query, delegate, isJobs, jobId, execsId)
+            }
+        }
+    }
+
     @Override
     int countAndSaveByStatus() {
         int count=0
