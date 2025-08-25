@@ -708,5 +708,13 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
             Files.copy(publicKeyFile.toPath(), new File(destDir, keyName + ".pub").toPath(), StandardCopyOption.REPLACE_EXISTING)
         }
     }
+    /**
+     * Generate a unique project name given the input name, replaces invalid chars and truncates to 20 chars, appends a timestamp
+     * @param name
+     * @return
+     */
+    static String generateProjectName(String name = "test") {
+        return "${name.replaceAll(/[^a-zA-Z0-9_-]+/, '_').substring(0, 20)}-${System.currentTimeMillis()}"
+    }
 
 }
