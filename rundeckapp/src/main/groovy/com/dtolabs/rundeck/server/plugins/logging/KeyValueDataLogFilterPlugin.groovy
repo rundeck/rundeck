@@ -40,7 +40,7 @@ import java.util.regex.PatternSyntaxException
  */
 @Plugin(name = KeyValueDataLogFilterPlugin.PROVIDER_NAME, service = 'LogFilter')
 @PluginDescription(title = 'Key Value Data',
-        description = '''Captures simple Key/Value data using a regular expresssion.\n\n
+        description = '''Captures simple Key/Value data using a regular expression.\n\n
 By default, to produce a key/value entry, echo a line similar to this:
 
     RUNDECK:DATA:(key) = (value)
