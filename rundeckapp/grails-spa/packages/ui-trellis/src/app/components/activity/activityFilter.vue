@@ -225,7 +225,6 @@
           {{ $t("search") }}
         </btn>
 
-        >
         <btn type="default" class="btn-default pull-right" @click="saveFilter">
           <i class="glyphicon glyphicon-plus"></i>
           {{ $t("Save as a Filter...") }}

@@ -159,9 +159,6 @@
                           </div>
                     </g:if>
                     <!--/SSO Login Feature-->
-                    <g:templateExists name="extendedlogin">
-                      <g:render template="extendedlogin" />
-                    </g:templateExists>
                     <g:showLocalLogin>
 
                     <g:set var="loginmsg" value="${cfg.getString(config: "gui.login.welcome",  default: g.message(code: 'gui.login.welcome', default: ''))}"/>

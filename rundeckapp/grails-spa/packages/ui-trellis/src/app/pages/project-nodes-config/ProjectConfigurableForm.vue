@@ -3,23 +3,23 @@
     <div class="form-horizontal">
       <plugin-config
         v-if="isConfigSet"
+        v-model="cacheConfig"
         mode="create"
         :show-title="false"
         :show-description="false"
         :use-runner-selector="true"
-        v-model="cacheConfig"
         :event-bus="rundeckContext.eventBus"
         :plugin-config="pluginConfig"
         :category="category"
       >
-        <template v-slot:extra>
+        <template #extra>
           <div class="row">
             <div class="col-xs-12 col-sm-12">
               <span>
                 <a
+                  key="save"
                   class="btn btn-cta reset_page_confirm"
                   @click="saveConfig"
-                  key="save"
                   >{{ "Save" }}</a
                 >
               </span>
@@ -79,6 +79,12 @@ export default defineComponent({
   components: {
     PluginConfig,
   },
+  props: {
+    category: {
+      type: String,
+      required: true,
+    },
+  },
   data() {
     return {
       rundeckContext: {} as RundeckContext,
@@ -89,11 +95,8 @@ export default defineComponent({
       massagedConfig: {},
     };
   },
-  props: {
-    category: {
-      type: String,
-      required: true,
-    },
+  async mounted() {
+    await this.loadConfig();
   },
   methods: {
     async loadConfig() {
@@ -105,7 +108,7 @@ export default defineComponent({
         this.apiResponse = config.response["projectConfigurable"] as [
           ConfigurableItem,
         ];
-        let properties = [];
+        const properties = [];
         this.apiResponse.forEach((item: ConfigurableItem) => {
           const itemName = item.name;
           item.properties.forEach((prop: any) => {
@@ -119,11 +122,11 @@ export default defineComponent({
           });
           properties.push(item.properties);
         });
-        let resolvedProps = [];
+        const resolvedProps = [];
         properties.forEach((item: any) => {
           item.forEach((prop: any) => {
             prop.desc = prop.description;
-            resolvedProps.push(prop);
+            resolvedProps.push({ ...prop, options: prop.renderingOptions });
           });
         });
         this.pluginConfig = {
@@ -198,9 +201,6 @@ export default defineComponent({
         duration: 5000,
       });
     },
-  },
-  async mounted() {
-    await this.loadConfig();
   },
 });
 </script>

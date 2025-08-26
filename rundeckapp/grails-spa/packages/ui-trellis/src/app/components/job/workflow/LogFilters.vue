@@ -1,24 +1,47 @@
 <template>
-  <div>
+  <div
+    class="log-filters-container"
+    :class="{ inline: mode === 'inline' }"
+    data-testid="log-filters-container"
+  >
     <template v-if="showIfEmpty || model.length > 0">{{ title }}</template>
-    <template v-for="(entry, i) in model">
-      <LogFilterButton
-        :plugin-description="findProvider(entry.type)"
-        v-if="findProvider(entry.type)"
-        @editFilter="editFilterByIndex(i)"
-        @removeFilter="removeFilterIndex(i)"
-      ></LogFilterButton>
-    </template>
+    <div v-if="model.length > 0 && mode === 'inline'" class="add-gap" :id="id">
+      <template v-for="(entry, i) in model">
+        <LogFilterButton
+          v-if="findProvider(entry.type)"
+          :key="`logFilter${i}`"
+          :plugin-description="findProvider(entry.type)"
+          @edit-filter="editFilterByIndex(i)"
+          @remove-filter="removeFilterIndex(i)"
+        ></LogFilterButton>
+      </template>
+    </div>
     <log-filter-controls
+      v-if="filtersEb"
       v-model="editModel"
       :title="title"
       :subtitle="subtitle"
       :event-bus="filtersEb"
-      @update:modelValue="saveEditFilter"
-      @cancel="clearEdit"
       :show-button="showIfEmpty || model.length > 0"
-      v-if="filtersEb"
+      @update:model-value="saveEditFilter"
+      @cancel="clearEdit"
     />
+  </div>
+  <div
+    v-if="model.length > 0 && mode !== 'inline'"
+    class="log-filters-container"
+    data-testid="log-filters-button-container"
+    :id="id"
+  >
+    <template v-for="(entry, i) in model">
+      <LogFilterButton
+        v-if="findProvider(entry.type)"
+        :key="`logFilter${i}`"
+        :plugin-description="findProvider(entry.type)"
+        @edit-filter="editFilterByIndex(i)"
+        @remove-filter="removeFilterIndex(i)"
+      ></LogFilterButton>
+    </template>
   </div>
 </template>
 
@@ -59,7 +82,17 @@ export default defineComponent({
       type: String,
       required: false,
     },
+    mode: {
+      type: String,
+      required: false,
+      default: "block",
+    },
+    id: {
+      type: String,
+      default: "logFilters",
+    },
   },
+  emits: ["update:modelValue"],
   data() {
     return {
       ServiceType,
@@ -85,6 +118,26 @@ export default defineComponent({
       return `Edit Log Filter Plugin: ${this.subtitle}`;
     },
   },
+  watch: {
+    modelValue(newVal) {
+      this.model = cloneDeep(newVal);
+    },
+  },
+  async mounted() {
+    await this.getLogFilterPlugins();
+    this.model = cloneDeep(this.modelValue);
+    this.filtersEb = mitt();
+    if (this.addEvent) {
+      eventBus.on(this.addEvent, () => {
+        this.addFilter();
+      });
+    }
+  },
+  beforeUnmount() {
+    if (this.addEvent) {
+      eventBus.off(this.addEvent);
+    }
+  },
   methods: {
     editFilterByIndex(index: number) {
       this.editFilterIndex = index;
@@ -103,16 +156,19 @@ export default defineComponent({
       this.clearEdit();
       this.filtersEb.emit("add");
     },
-    saveEditFilter() {
-      //todo: validate
-      if (this.editFilterIndex === -1) {
-        this.model.push(cloneDeep(this.editModel));
-      } else {
-        //update existing
-        this.model[this.editFilterIndex] = cloneDeep(this.editModel);
+    async saveEditFilter() {
+      try {
+        if (this.editFilterIndex === -1) {
+          this.model.push(cloneDeep(this.editModel));
+        } else {
+          //update existing
+          this.model[this.editFilterIndex] = cloneDeep(this.editModel);
+        }
+        this.clearEdit();
+        this.$emit("update:modelValue", this.model);
+      } catch (e) {
+        console.log(e);
       }
-      this.clearEdit();
-      this.$emit("update:modelValue", this.model);
     },
     findProvider(type: string) {
       return this.pluginProviders.find((prov) => prov.name === type);
@@ -127,22 +183,24 @@ export default defineComponent({
       }
     },
   },
-  async mounted() {
-    await this.getLogFilterPlugins();
-    this.model = cloneDeep(this.modelValue);
-    this.filtersEb = mitt();
-    if (this.addEvent) {
-      eventBus.on(this.addEvent, () => {
-        this.addFilter();
-      });
-    }
-  },
-  beforeUnmount() {
-    if (this.addEvent) {
-      eventBus.off(this.addEvent);
-    }
-  },
 });
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.log-filters-container {
+  align-items: center;
+
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+
+  &.inline {
+    margin-bottom: 0;
+  }
+
+  .add-gap {
+    display: flex;
+    gap: 10px;
+  }
+}
+</style>

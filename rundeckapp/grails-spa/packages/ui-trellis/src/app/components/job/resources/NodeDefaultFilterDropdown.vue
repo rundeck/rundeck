@@ -86,7 +86,7 @@
 import { defineComponent, PropType } from "vue";
 import { NodeSummary } from "@/app/components/job/resources/types/nodeTypes";
 import { StoredFilter } from "@/library/stores/NodeFilterLocalstore";
-import { _genUrl } from "@/app/utilities/genUrl";
+import { _genUrl } from "../../../../library/utilities/genUrl";
 import { getRundeckContext } from "@/library";
 
 export default defineComponent({

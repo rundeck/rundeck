@@ -12,7 +12,7 @@ class JobImportSpec extends BaseContainer {
     }
 
     def cleanup(){
-        client.apiVersion = client.finalApiVersion
+        client.apiVersion = client.API_CURRENT_VERSION
     }
 
     static final List JOB_JSON_MAP = [

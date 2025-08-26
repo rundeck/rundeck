@@ -51,9 +51,6 @@ const createWrapper = async (props = {}) => {
     },
     global: {
       components: { Modal, Btn },
-      mocks: {
-        $t: (msg: string) => msg,
-      },
     },
   });
   await flushPromises();

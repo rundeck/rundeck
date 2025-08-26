@@ -265,6 +265,48 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
             'WebhookEvent'   | 2
     }
 
+    def "plugin list returns isHighlighted and highlightedOrder properties"() {
+        given:
+        controller.pluginService = Mock(PluginService)
+        controller.pluginApiService = Mock(PluginApiService)
+        controller.uiPluginService = Mock(UiPluginService)
+        params.service = null
+
+        def plugins = [
+                [
+                        service  : 'WebhookEvent',
+                        providers: [
+                                [isHighlighted   : true,
+                                 highlightedOrder: 123
+                                ],
+                                [:]],
+                ],
+                [
+                        service  : 'Foo',
+                        providers: [
+                                [isHighlighted   : Boolean.FALSE,
+                                 highlightedOrder: Integer.valueOf(321)
+                                ]
+                        ]
+                ]
+        ]
+
+        when:
+        controller.listPlugins()
+        then:
+        1 * controller.pluginApiService.listPlugins() >> plugins
+        response.json.size() == 3
+
+        response.json[0].isHighlighted == true
+        response.json[0].highlightedOrder == 123
+
+        !response.json[1].isHighlighted
+        !response.json[1].highlightedOrder
+
+        response.json[2].isHighlighted == false
+        response.json[2].highlightedOrder == 321
+    }
+
     def "plugin service descriptions"() {
         given:
         controller.pluginService = Mock(PluginService)

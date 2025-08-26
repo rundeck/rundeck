@@ -173,7 +173,6 @@ The request must contain a `value` with a "Time duration expression". (See reque
     @Tags(
         [
             @Tag(name="project execution mode"),
-            @Tag(name="project schedule mode")
         ]
     )
     def apiProjectEnableLater(String project) {
@@ -309,7 +308,6 @@ The request must contain a `value` with a "Time duration expression". (See reque
     @Tags(
         [
             @Tag(name="project execution mode"),
-            @Tag(name="project schedule mode")
         ]
     )
     def apiProjectDisableLater(String project){

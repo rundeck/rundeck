@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
+    "target": "ESNext",
+    "module": "ESNext",
     "strict": false,
     "jsx": "preserve",
     "importHelpers": true,
@@ -32,6 +32,7 @@
   "exclude": [
     "src/library/stories",
     "src/library/components",
+    "src/library/**/*.spec.ts",
     "src/library/**/*.stories.tsx",
     "node_modules"
   ]

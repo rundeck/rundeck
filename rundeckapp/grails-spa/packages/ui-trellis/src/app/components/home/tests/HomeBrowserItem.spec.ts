@@ -1,6 +1,5 @@
 import { mount, VueWrapper } from "@vue/test-utils";
 import HomeBrowserItem from "../HomeBrowserItem.vue";
-import HomeActionsMenu from "../HomeActionsMenu.vue";
 import UiSocket from "@/library/components/utils/UiSocket.vue";
 import { Dropdown, Tooltip } from "uiv";
 
@@ -52,10 +51,6 @@ const mountHomeBrowserItem = async (options = {}): Promise<VueWrapper<any>> => {
       ...options,
     },
     global: {
-      mocks: {
-        $t: (msg: string) => msg,
-        $tc: (msg: string) => msg,
-      },
       stubs: {
         HomeActionsMenu: dropdownStub,
       },

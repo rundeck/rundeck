@@ -10,6 +10,7 @@
             class="form-control form-control-sm"
             v-model="searchTerm"
             placeholder="Search all projects"
+            data-testid="search-projects"
           />
         </div>
       </div>
@@ -46,6 +47,7 @@
             v-else-if="mode === 'multi'"
             @keydown.space="handleSelect(item.name)"
             tabindex="0"
+            :data-testid="`projectItem${item.name}`"
           >
             <input
               :checked="
@@ -56,6 +58,7 @@
               :value="item.name"
               class="vue-multiselect-checkbox"
               @click="handleSelect(item.name)"
+              :data-testid="`projectCheckbox-${item.name}`"
             />
             <span class="text-ellipsis">
               {{ item.label || item.name }}
@@ -85,6 +88,7 @@
         role="button"
         tabindex="0"
         class="btn btn-default scroller__subbutton"
+        data-testid="view-all-button"
         style="border-radius: 0px; border: 0px; border-right: solid 1px grey"
       >
         <i class="far fa-eye"></i>
@@ -95,6 +99,7 @@
         role="button"
         tabindex="0"
         class="btn btn-default scroller__subbutton"
+        data-testid="create-project-button"
         style="border-radius: 0px; border: 0px"
       >
         <i class="fas fa-plus-circle"></i>
@@ -175,7 +180,7 @@ export default defineComponent({
     },
     selectAllOptionAvailable(): boolean {
       return this.projectStore.loaded
-        ? this.projectStore.projects.length <= 100
+        ? this.projectStore.projects.length >= 1
         : false;
     },
     options() {
@@ -204,7 +209,6 @@ export default defineComponent({
     },
     handleSelect(projectName: string) {
       let arrayToEmit = [projectName];
-
       if (projectName === "_all") {
         arrayToEmit =
           this.selectedProjects.length === this.allProjectNames.length

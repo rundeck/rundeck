@@ -705,6 +705,26 @@ class ExecutionTest extends Specification implements DataTest  {
         assertEquals(true, map.willRetry)
     }
 
+    def "toMap includes workflow #includeWorkflow"() {
+        when:
+            def exec2 = new Execution(
+                project: 'test1', user: 'user1',
+                workflow: new Workflow(
+                    commands: [
+                        new CommandExec(adhocRemoteString: "exec")
+                    ]
+                )
+            )
+            def map = exec2.toMap(includeWorkflow)
+        then:
+            map != null
+            map.workflow == expectWorkflow
+        where:
+            includeWorkflow | expectWorkflow
+            true            | [keepgoing:false, strategy:'node-first', commands:[[exec:'exec']]]
+            false           | null
+    }
+
     void testDeleteExecutionWorkflowCascadeAll() {
 
         when:

@@ -651,8 +651,8 @@ class UpdateModeProjectService implements ProjectConfigurable {
                 }
             }
 
-        }catch(Exception e){
-            log.warn("error initProcess: ${e.message}")
+        } catch(Throwable t){
+            log.warn("error initProcess: ${t.message}")
         }
     }
 }

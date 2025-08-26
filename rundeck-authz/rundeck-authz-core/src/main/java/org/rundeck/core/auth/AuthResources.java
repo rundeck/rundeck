@@ -168,7 +168,7 @@ public class AuthResources {
         appResAttrsByType.put(AuthConstants.TYPE_PROJECT_ACL, Collections.singletonList("name"));
         appResAttrsByType.put(AuthConstants.TYPE_STORAGE, Arrays.asList("path", "name"));
         appResAttrsByType.put(AuthConstants.TYPE_APITOKEN, Arrays.asList("username", "roles"));
-        appResAttrsByType.put(AuthConstants.TYPE_RUNNER, Arrays.asList("username", "roles"));
+        appResAttrsByType.put(AuthConstants.TYPE_RUNNER, Collections.emptyList());
 
     }
 

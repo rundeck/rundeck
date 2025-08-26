@@ -1,15 +1,13 @@
 <template>
-  <div class="form-inline" v-if="loaded">
-    <div
-      class="form-group ${hasErrors(bean: workflow, field: 'strategy', 'has-error')}"
-    >
+  <div v-if="loaded" class="form-inline">
+    <div class="form-group" :class="{ 'has-error': false }">
       <label class="col-sm-12" title="Strategy for iteration">
         {{ $t("Workflow.property.strategy.label") }}:
 
         <select
-          class="form-control"
-          v-model="model.strategy"
           v-if="pluginProviders && pluginProviders.length > 0"
+          v-model="model.type"
+          class="form-control"
           name="workflow.strategy"
         >
           <option
@@ -24,12 +22,15 @@
     </div>
   </div>
 
-  <PluginDetails
-    :description="selectedPlugin.description"
-    :description-css="'text-info'"
-    v-if="selectedPlugin"
-  />
+  <div v-if="selectedPlugin" :id="`strategyPlugin${selectedPlugin.name}`">
+    <PluginDetails
+      :description="selectedPlugin.description"
+      :description-css="'text-info'"
+    />
+  </div>
+
   <plugin-config
+    v-if="selectedPlugin"
     :key="selectedPlugin.name"
     v-model="editStrategyPlugin"
     :mode="'edit'"
@@ -40,20 +41,16 @@
     :validation="editValidation"
     scope="Instance"
     default-scope="Instance"
-    groupCss=""
-    v-if="selectedPlugin"
+    group-css=""
   ></plugin-config>
 </template>
 <script lang="ts">
-import {
-  createStrategyData,
-  StrategyData,
-} from "@/app/components/job/workflow/types/workflowTypes";
 import PluginConfig from "@/library/components/plugins/pluginConfig.vue";
 import PluginDetails from "@/library/components/plugins/PluginDetails.vue";
-import { getPluginProvidersForService } from "@/library/modules/pluginService";
 import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
+import { getPluginProvidersForService } from "@/library/modules/pluginService";
 import { defineComponent } from "vue";
+
 export default defineComponent({
   name: "WorkflowStrategy",
   components: {
@@ -61,52 +58,71 @@ export default defineComponent({
     PluginDetails,
     PluginInfo,
   },
-  emits: ["update:modelValue"],
   props: {
     modelValue: {
       type: Object,
       required: true,
-      default: () => ({}) as StrategyData,
+      default: () => ({}) as PluginConfig,
     },
   },
+  emits: ["update:modelValue"],
   data() {
     return {
-      model: {} as StrategyData,
+      model: {} as PluginConfig,
       pluginProviders: [],
       pluginLabels: [],
       loaded: false,
-      editStrategyPlugin: { type: "", config: {} },
+      editStrategyPlugin: { type: "", config: {} } as PluginConfig,
       editValidation: null,
     };
+  },
+  computed: {
+    selectedPlugin() {
+      if (!this.model.type) {
+        return null;
+      }
+      return this.pluginProviders.find((p: any) => p.name === this.model.type);
+    },
   },
   watch: {
     model: {
       handler() {
-        this.editStrategyPlugin.type = this.model.strategy;
-        this.editStrategyPlugin.config = this.model.strategyConfig || {};
+        this.editStrategyPlugin.type = this.model.type;
+        this.editStrategyPlugin.config = this.model.config || {};
         this.$emit("update:modelValue", this.model);
       },
       deep: true,
     },
     editStrategyPlugin: {
       handler() {
-        this.model.strategy = this.editStrategyPlugin.type;
-        this.model.strategyConfig = this.editStrategyPlugin.config || {};
+        this.model.type = this.editStrategyPlugin.type;
+        this.model.config = this.editStrategyPlugin.config || {};
       },
       deep: true,
     },
   },
-  computed: {
-    selectedPlugin() {
-      if (!this.model.strategy) {
-        return null;
-      }
-      return this.pluginProviders.find(
-        (p: any) => p.name === this.model.strategy,
-      );
-    },
+  async mounted() {
+    this.model = {
+      type: this.cleanStrategy(this.modelValue.type),
+      config: this.modelValue.config,
+    };
+    this.editStrategyPlugin.type = this.model.type;
+    this.editStrategyPlugin.config = this.model.config || {};
+
+    await this.getStrategyPlugins();
+    this.loaded = true;
   },
   methods: {
+    cleanStrategy(strategy: string) {
+      if (strategy === "step-first") {
+        return "sequential";
+      } else if (typeof strategy === "string" && strategy !== "") {
+        return strategy;
+      } else if (!strategy || strategy === "") {
+        return "node-first";
+      }
+      return strategy;
+    },
     async getStrategyPlugins() {
       const response = await getPluginProvidersForService("WorkflowStrategy");
       if (response.service) {
@@ -114,22 +130,6 @@ export default defineComponent({
         this.pluginLabels = response.labels;
       }
     },
-  },
-  async mounted() {
-    this.model = createStrategyData(this.modelValue, (origVal: string) => {
-      if (origVal === "step-first") {
-        return "sequential";
-      } else if (typeof origVal === "string" && origVal !== "") {
-        return origVal;
-      } else if (!origVal || origVal === "") {
-        return "node-first";
-      }
-    });
-    this.editStrategyPlugin.type = this.model.strategy;
-    this.editStrategyPlugin.config = this.model.strategyConfig || {};
-
-    await this.getStrategyPlugins();
-    this.loaded = true;
   },
 });
 </script>

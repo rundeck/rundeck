@@ -45,6 +45,7 @@ import { defineComponent, inject } from "vue";
 
 export default defineComponent({
   name: "JobRunButton",
+  inheritAttrs: false,
   props: {
     itemData: {
       type: Object,

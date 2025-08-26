@@ -148,7 +148,7 @@ Authorization Required: `configure` for the Project resource (app context)
 
 Since: v15
 ''',
-        tags = ['scm', 'plugins'],
+        tags = ['scm'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -207,7 +207,7 @@ The response will list each input field.
 Authorization Required: `export` or `scm_export` or `import` or `scm_import` for the Project resource (app context), depending on the integration type
 
 Since: v15''',
-        tags = ['scm', 'plugins'],
+        tags = ['scm'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -430,7 +430,7 @@ If a validation error occurs with the configuration, then the response will incl
 Authorization Required: `configure` for the Project resource (app context)
 
 Since: v15''',
-        tags = ['scm', 'plugins'],
+        tags = ['scm'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -557,7 +557,7 @@ Since: v15''',
 Authorization Required: `configure` for the Project resource (app context)
 
 Since: v15''',
-        tags = ['scm', 'plugins'],
+        tags = ['scm'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -582,7 +582,12 @@ Since: v15''',
             )
         ],
         responses = @ApiResponse(
-            ref = '#/paths/~1project~1%7Bproject%7D~1scm~1%7Bintegration%7D~1plugin~1%7Btype%7D~1setup/post/responses/200'
+                responseCode = '200',
+                description = '''Success result.''',
+                content = @Content(
+                        mediaType = MediaType.APPLICATION_JSON,
+                        schema = @Schema(implementation = ScmActionResult)
+                )
         )
     )
     /**
@@ -638,7 +643,7 @@ Since: v15''',
 Authorization Required: `configure` for the Project resource (app context)
 
 Since: v15''',
-        tags = ['scm', 'plugins'],
+        tags = ['scm'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -663,7 +668,12 @@ Since: v15''',
             )
         ],
         responses = @ApiResponse(
-            ref = '#/paths/~1project~1%7Bproject%7D~1scm~1%7Bintegration%7D~1plugin~1%7Btype%7D~1setup/post/responses/200'
+            responseCode = '200',
+            description = '''Success result.''',
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ScmActionResult)
+            )
         )
     )
     /**
@@ -708,7 +718,7 @@ This action is idempotent.
 Authorization Required: `configure` for the Project resource (app context)
 
 Since: v46''',
-        tags = ['scm', 'plugins'],
+        tags = ['scm'],
         requestBody = @RequestBody(
             description='Configuration values for the plugin.',
             content=@Content(
@@ -913,7 +923,7 @@ Since: v46''',
 Authorization Required: `export` or `scm_export` or `import` or `scm_import` for the Project resource (app context), depending on the integration type
 
 Since: v15''',
-        tags = ['scm', 'plugins'],
+        tags = ['scm'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -1027,7 +1037,7 @@ Since: v15''',
 Authorization Required: `configure` for the Project resource (app context)
 
 Since: v15''',
-        tags = ['scm', 'plugins'],
+        tags = ['scm'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -1118,7 +1128,7 @@ which can be selected for the action, they will also be associated with a Job af
 Authorization Required: `export` or `scm_export` or `import` or `scm_import` for the Project resource (app context), depending on the integration type
 
 Since: v15''',
-        tags = ['scm', 'plugins'],
+        tags = ['scm'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -1401,7 +1411,7 @@ will not automatically delete a renamed item.
 Authorization Required: `export` or `scm_export` or `import` or `scm_import` for the Project resource (app context), depending on the integration type
 
 Since: v15''',
-        tags = ['scm', 'plugins'],
+        tags = ['scm'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -1925,7 +1935,7 @@ Authorization required: `export` or `scm_export` (for export integration), or `i
 
 Since: v15
 ''',
-        tags = ['jobs', 'scm'],
+        tags = ['scm'],
         parameters = [
             @Parameter(
                 name = 'id',
@@ -2112,7 +2122,7 @@ a unified diff format is used.
 Authorization required: `export` or `scm_export` (for export integration), or `import` or `scm_import` (for import integration), for the Job resource.
 
 Since: v15''',
-        tags = ['jobs', 'scm'],
+        tags = ['scm'],
         parameters = [
             @Parameter(
                 name = 'id',
@@ -2278,7 +2288,7 @@ which can be selected for the action, they will also be associated with a Job af
 Authorization required: `export` or `scm_export` (for export integration), or `import` or `scm_import` (for import integration), for the Job resource.
 
 Since: v15''',
-        tags = ['jobs', 'scm'],
+        tags = ['scm'],
         parameters = [
             @Parameter(
                 name = 'id',
@@ -2393,7 +2403,7 @@ expect a set of `input` values.
 Authorization required: `export` or `scm_export` (for export integration), or `import` or `scm_import` (for import integration), for the Job resource.
 
 Since: v15''',
-        tags = ['jobs', 'scm'],
+        tags = ['scm'],
         parameters = [
             @Parameter(
                 name = 'id',

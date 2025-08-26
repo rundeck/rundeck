@@ -1,5 +1,6 @@
 <template>
   <div
+    :id="id"
     class="switch"
     type="button"
     role="switch"
@@ -34,6 +35,11 @@ import { defineComponent } from "vue";
 export default defineComponent({
   name: "RdSwitch",
   props: {
+    id: {
+      type: String,
+      required: false,
+      default: "switch",
+    },
     modelValue: {
       type: Boolean,
       default: false,

@@ -84,6 +84,8 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
         entry.name == "fake"
         entry.title == "Fake Plugin"
         entry.description == "This is the best fake plugin"
+        entry.highlightedOrder == 1
+        entry.isHighlighted == true
         entry.builtin == false
         entry.pluginVersion == "1.0"
         entry.pluginDate == 1534253342000
@@ -382,6 +384,16 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
         @Override
         String getDescription() {
             return "This is the best fake plugin"
+        }
+
+        @Override
+        boolean isHighlighted() {
+            return true
+        }
+
+        @Override
+        int getOrder() {
+            return 1
         }
 
         @Override

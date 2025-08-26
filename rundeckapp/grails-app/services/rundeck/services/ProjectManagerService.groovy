@@ -534,7 +534,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                 }
             }
         } else if (newval) {
-            vals.addAll(newval.propertyNames().collect())
+            vals.addAll(newval.propertyNames().collect() as Set<String>)
         }
         vals
     }

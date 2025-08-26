@@ -34,9 +34,6 @@ const mountNodeDefaultFilterDropdown = async (props = {}) => {
         },
         btn: true,
       },
-      mocks: {
-        $t: (msg) => msg,
-      },
     },
   });
   await wrapper.vm.$nextTick();

@@ -90,7 +90,7 @@
         v-else-if="isShowConfigForm && inputLoaded"
         class="col-xs-12 col-sm-12 form-horizontal"
       >
-        <div class="form-group" v-if="$slots.extraProperties">
+        <div v-if="$slots.extraProperties" class="form-group">
           <div class="col-sm-12">
             <slot name="extraProperties"></slot>
           </div>
@@ -131,6 +131,8 @@
                 :pindex="pindex"
                 :selector-data="propsComputedSelectorData"
                 :autocomplete-callback="autocompleteCallback"
+                :step-type="serviceName"
+                :plugin-type="modelValue.type"
                 @plugin-props-mounted="notifyHandleAutoComplete"
               />
             </div>
@@ -187,6 +189,8 @@
                   :rkey="'g_' + gindex + '_' + rkey"
                   :pindex="pindex"
                   :selector-data="propsComputedSelectorData"
+                  :step-type="serviceName"
+                  :plugin-type="modelValue.type"
                   :autocomplete-callback="autocompleteCallback"
                 />
               </div>
@@ -200,6 +204,7 @@
 </template>
 
 <script lang="ts">
+import { getRundeckContext } from "../../rundeckService";
 import { defineComponent } from "vue";
 
 import AceEditor from "../utils/AceEditor.vue";
@@ -214,7 +219,6 @@ import { diff } from "deep-object-diff";
 
 import {
   getPluginProvidersForService,
-  getServiceProviderDescription,
   validatePluginConfig,
 } from "../../modules/pluginService";
 
@@ -539,10 +543,11 @@ export default defineComponent({
     },
     async loadProvider(provider: any) {
       try {
-        const data: any = await getServiceProviderDescription(
-          this.serviceName,
-          provider,
-        );
+        const data =
+          await getRundeckContext().rootStore.plugins.getPluginDetail(
+            this.serviceName,
+            provider,
+          );
         if (data.props) {
           this.loadPluginData(data);
         }

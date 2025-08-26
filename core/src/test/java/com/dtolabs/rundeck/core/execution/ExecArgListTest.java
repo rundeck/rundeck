@@ -197,4 +197,12 @@ public class ExecArgListTest {
         Assert.assertEquals("'a b c'", ExecArgList.joinAndQuote(list("a", "b", "c"),
                 CLIUtils.argumentQuoteForOperatingSystem("unix")));
     }
+
+    @Test
+    public void buildWindowsEscaping() {
+        ExecArgList list = ExecArgList.fromStrings(false, true, "echo", "a&b");
+        List<String> expected = Arrays.asList("echo", "'a&b'");
+        ArrayList<String> result = list.buildCommandForNode(null, "windows");
+        Assert.assertEquals(expected, result);
+    }
 }

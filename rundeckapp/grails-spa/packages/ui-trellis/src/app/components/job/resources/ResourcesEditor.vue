@@ -68,7 +68,8 @@
 
             <node-filter-input
               id="job_edit__node_filter_include"
-              v-model="modelData.filter"
+              :value="modelData.filter"
+              @update:value="newValue => modelData.filter = newValue"
               :project="modelData.project"
               :filter-name="modelData.filterName"
               :node-summary="nodeSummary"
@@ -100,7 +101,8 @@
 
             <node-filter-input
               id="job_edit__node_filter_exclude"
-              v-model="modelData.filterExclude"
+              :value="modelData.filterExclude"
+              @update:value="newvalue => modelData.filterExclude = newvalue"
               :project="modelData.project"
               :filter-name="modelData.filterNameExclude"
               :node-summary="nodeSummary"
@@ -441,7 +443,7 @@
 </template>
 <script lang="ts">
 import OrchestratorEditor from "../../../components/job/resources/OrchestratorEditor.vue";
-import { _genUrl } from "../../../utilities/genUrl";
+import { _genUrl } from "../../../../library/utilities/genUrl";
 import axios from "axios";
 import InlineValidationErrors from "../../form/InlineValidationErrors.vue";
 import { defineComponent, ref } from "vue";
@@ -519,13 +521,23 @@ export default defineComponent({
     },
     handleFilterClick(val: any) {
       if (val.filter) {
-        this.modelData.filter = val.filter;
+        if(val.filter ===".*" || this.modelData.filter === ".*") {
+          this.modelData.filter = val.filter;
+        } else {
+          this.modelData.filter = [this.modelData.filter, val.filter].join(" ");
+        }
       }
       if (val.filterName) {
         this.modelData.filterName = val.filterName;
       }
       if (val.filterExclude) {
-        this.modelData.filterExclude = val.filterExclude;
+        if (val.filter) {
+          if(val.filter ===".*" || this.modelData.filter === ".*") {
+            this.modelData.filterExclude = val.filter;
+          } else {
+            this.modelData.filterExclude = [this.modelData.filterExclude, val.filter].join(" ");
+          }
+        }
       }
       if (val.filterNameExclude) {
         this.modelData.filterNameExclude = val.filterNameExclude;

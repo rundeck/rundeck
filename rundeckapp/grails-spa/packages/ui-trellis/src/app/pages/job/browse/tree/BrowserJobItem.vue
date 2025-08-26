@@ -17,9 +17,22 @@
       section="job-browse-item"
       :socket-data="{ job, meta: meta.data }"
     />
-    <a :href="jobLinkHref(job)" :data-job-id="job.uuid" class="link-quiet">
+    <a
+      v-if="showJobsAsLinks"
+      :href="jobLinkHref(job)"
+      :data-job-id="job.uuid"
+      class="link-quiet"
+    >
       {{ job.jobName }}
     </a>
+    <button
+      v-else
+      class="btn-link link-quiet"
+      :data-job-id="job.uuid"
+      @click.prevent="handleJobSelection"
+    >
+      {{ job.jobName }}
+    </button>
     <span v-if="job.description" class="text-secondary job-description">
       {{ shortDescription }}
     </span>
@@ -54,6 +67,12 @@ const eventBus = context.eventBus;
 export default defineComponent({
   name: "BrowserJobItem",
   components: { UiSocket },
+  inject: {
+    showJobsAsLinks: {
+      type: Boolean,
+      default: true,
+    },
+  },
   props: {
     job: {
       type: Object as PropType<JobBrowseItem>,
@@ -110,9 +129,14 @@ export default defineComponent({
         //only emit if the click was not within a button,input or link
         eventBus.emit(`browser-job-item-click:${this.job.id}`, this.job);
         if (this.loadMeta && !this.job.meta) {
-          this.job.meta = await this.jobPageStore.getJobBrowser().loadJobMeta(this.job.id);
+          this.job.meta = await this.jobPageStore
+            .getJobBrowser()
+            .loadJobMeta(this.job.id);
         }
       }
+    },
+    async handleJobSelection() {
+      eventBus.emit(`browser-job-item-selection`, this.job);
     },
   },
 });
@@ -132,5 +156,14 @@ export default defineComponent({
 .hover .job-list-row-item {
   background: var(--background-color-accent-lvl2);
   border-color: var(--border-color);
+}
+
+.btn-link.link-quiet {
+  color: var(--font-color);
+
+  &:hover,
+  &:focus {
+    color: var(--primary-highlight-color);
+  }
 }
 </style>

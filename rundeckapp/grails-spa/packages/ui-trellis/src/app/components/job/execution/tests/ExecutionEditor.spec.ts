@@ -2,12 +2,20 @@ import { flushPromises, shallowMount, VueWrapper } from "@vue/test-utils";
 import ExecutionEditor from "../ExecutionEditor.vue";
 import { executionLifecycle, pluginsInitialData } from "./mocks";
 import PluginConfig from "../../../../../library/components/plugins/pluginConfig.vue";
-import PluginDetails from "../../../../../library/components/plugins/PluginDetails.vue";
 
+
+jest.mock("@/library/rundeckService", () => ({
+  getRundeckContext: jest.fn().mockImplementation(() => ({
+    eventBus: { on: jest.fn(), emit: jest.fn() },
+    rdBase: "http://localhost:4440/",
+    projectName: "testProject",
+    apiVersion: "44",
+  })),
+}));
+jest.mock("../../../../../library/services/projects");
 jest.mock("@/library/modules/rundeckClient", () => ({
   client: {},
 }));
-
 const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
   const wrapper = shallowMount(ExecutionEditor, {
     props: {
@@ -18,9 +26,6 @@ const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
       ...propsData,
     },
     global: {
-      mocks: {
-        $t: (msg: string) => msg,
-      },
       stubs: {
         pluginConfig: {
           props: [

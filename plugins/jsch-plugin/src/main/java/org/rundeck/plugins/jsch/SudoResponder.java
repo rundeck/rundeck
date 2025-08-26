@@ -16,7 +16,7 @@
 
 package org.rundeck.plugins.jsch;
 
-import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
@@ -83,7 +83,7 @@ class SudoResponder implements Responder {
 
 
     static SudoResponder create(final INodeEntry node,
-                                final Framework framework,
+                                final IFramework framework,
                                 final ExecutionContext context,
                                 final String configPrefix,
                                 final PasswordSource passwordSource, final String defaultSudoCommandPattern) {
@@ -110,7 +110,7 @@ class SudoResponder implements Responder {
     private void init(
             final INodeEntry node,
             final IRundeckProject frameworkProject,
-            final Framework framework
+            final IFramework framework
     ) {
         sudoEnabled = ResolverUtil.resolveBooleanProperty(
                 configPrefix + JschNodeExecutor.NODE_ATTR_SUDO_COMMAND_ENABLED,

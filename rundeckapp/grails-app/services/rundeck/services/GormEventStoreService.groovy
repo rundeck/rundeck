@@ -56,21 +56,19 @@ class GormEventStoreService implements EventStoreService {
                     totalCount: count,
                     events: Collections.emptyList() as List<Event>
                 )
-            case StoredEventQueryType.SELECT:
-                Page<StoredEventData> events = storedEventProvider.listStoredEvent(query)
-
-                return new EvtQueryResult(
-                    totalCount: events.total,
-                    events: events.results as List<Event>
-                )
             case StoredEventQueryType.DELETE:
                 long count = storedEventProvider.deleteStoredEvent(query).longValue()
                 return new EvtQueryResult(
                     totalCount: count,
                     events: Collections.emptyList() as List<Event>
                 )
-            default:
-                return new EvtQueryResult(totalCount: 0, events: Collections.emptyList() as List<Event>)
+            default: //SELECT
+                Page<StoredEventData> events = storedEventProvider.listStoredEvent(query)
+
+                return new EvtQueryResult(
+                    totalCount: events.total,
+                    events: events.results as List<Event>
+                )
         }
     }
 

@@ -18,7 +18,7 @@ implied. - See the License for the specific language governing permissions and -
         <meta name="tabpage" content="configure"/>
         <meta name="tabtitle" content="${g.message(code: 'gui.menu.KeyStorage')}"/>
         <title><g:message code="gui.menu.KeyStorage"/></title>
-        <g:set var="downloadenabled" value="${cfg.getBoolean(config: "gui.keystorage.downloadenabled", default: true)}"/>
+        <g:set var="downloadenabled" value="${cfg.getBoolean(config: "gui.keystorage.downloadenabled", default: false)&&cfg.getBoolean(config: "feature.publicKeysDownload.enabled", default: false)}"/>
 
         <g:embedJSON id="storageData" data="[
                 resourcePath:params.resourcePath,
@@ -225,7 +225,7 @@ implied. - See the License for the specific language governing permissions and -
                     <span class="text-h3"><i class="fas fa-key"></i> ${g.message(code:"gui.menu.KeyStorage")}</span>
                 </div>
                 <div id="keyStoragePage">
-                    <key-storage-page project="${params.project}" :read-only="false" :allow-upload="true"></key-storage-page>
+                    <key-storage-page project="${params.project}" :read-only="false" :allow-upload="true" :allow-download="${downloadenabled}"></key-storage-page>
                 </div>
             </div>
         </div>

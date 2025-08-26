@@ -46,8 +46,8 @@
                   <li v-for="link in jumpLinks" :key="link.path">
                     <a
                       href="#"
-                      @click="loadDir(link.path)"
                       data-testid="load-dir-link"
+                      @click="loadDir(link.path)"
                       >{{ link.name }}</a
                     >
                   </li>
@@ -93,8 +93,8 @@
                   allowUpload === true && isSelectedKey === true && !readOnly
                 "
                 class="btn btn-sm btn-warning"
-                @click="actionUploadModify"
                 data-testid="overwrite-key-btn"
+                @click="actionUploadModify"
               >
                 <i class="glyphicon glyphicon-pencil"></i>
                 Overwrite Key
@@ -213,6 +213,7 @@
               <tbody>
                 <tr v-for="directory in directories" :key="directory.name">
                   <td
+                    data-testid="keyDirectoryButton"
                     class="action"
                     colspan="2"
                     @click="loadDir(directory.path)"
@@ -338,9 +339,15 @@
 </template>
 
 <script lang="ts">
+import { listProjects } from "../../services/projects";
+import {
+  storageKeyDelete,
+  storageKeyGetMetadata,
+  StorageKeyListResponse,
+} from "../../services/storage";
 import moment from "moment";
 import { getRundeckContext } from "../../index";
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
 import KeyType from "../../types/KeyType";
 import InputType from "../../types/InputType";
 import {
@@ -358,6 +365,13 @@ export default defineComponent({
     rootPath: String,
     createdKey: {},
     runnerId: String,
+    getKeyMetadata: {
+      type: Function as PropType<
+        (path: string) => Promise<StorageKeyListResponse>
+      >,
+      default: storageKeyGetMetadata,
+      required: true,
+    },
   },
   emits: ["update:modelValue", "openEditor"],
   data() {
@@ -462,7 +476,7 @@ export default defineComponent({
     },
     async loadProjectNames() {
       try {
-        const response = await getRundeckContext().rundeckClient.projectList();
+        const response = await listProjects();
 
         this.linksTitle = "Projects";
         this.jumpLinks = response.map((v: any) => {
@@ -479,14 +493,16 @@ export default defineComponent({
       this.isConfirmingDeletion = true;
     },
     async confirmDeleteKey() {
-      const rundeckContext = getRundeckContext();
       this.isConfirmingDeletion = false;
 
-      const resp = await rundeckContext.rundeckClient.storageKeyDelete(
-        this.selectedKey.path.slice(5),
-      );
-      if (resp._response.status >= 400) {
-        this.errorMsg = resp.error;
+      try {
+        const resp = await storageKeyDelete(this.selectedKey.path.slice(5));
+        if (!resp) {
+          this.errorMsg = "Not found";
+          return;
+        }
+      } catch (e) {
+        this.errorMsg = e.message;
         return;
       }
       this.selectedKey = {};
@@ -535,15 +551,12 @@ export default defineComponent({
       }
       this.loading = true;
 
-      const rundeckContext = getRundeckContext();
       const getPath = this.calcBrowsePath(this.path);
 
       const requestOptions = {
         queryParameters: forceRefresh ? { refresh: "true" } : {},
       };
-
-      rundeckContext.rundeckClient
-        .storageKeyGetMetadata(getPath, requestOptions)
+      this.getKeyMetadata(getPath, requestOptions)
         .then((result: any) => {
           this.directories = [];
           this.files = [];
@@ -784,22 +797,18 @@ export default defineComponent({
       }
     },
     defaultSelectKey(path: any) {
-      const rundeckContext = getRundeckContext();
-
-      rundeckContext.rundeckClient
-        .storageKeyGetMetadata(this.calcBrowsePath(path))
-        .then((result: any) => {
-          if (result.resources != null) {
-            result.resources.forEach((resource: any) => {
-              if (resource.type === "file") {
-                if (resource.path === path) {
-                  this.selectedKey = resource;
-                  this.isSelectedKey = true;
-                }
+      storageKeyGetMetadata(this.calcBrowsePath(path)).then((result: any) => {
+        if (result.resources != null) {
+          result.resources.forEach((resource: any) => {
+            if (resource.type === "file") {
+              if (resource.path === path) {
+                this.selectedKey = resource;
+                this.isSelectedKey = true;
               }
-            });
-          }
-        });
+            }
+          });
+        }
+      });
     },
     loadUpPath() {
       let upPath = "";

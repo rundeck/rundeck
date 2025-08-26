@@ -38,9 +38,9 @@ class PluginCachePreloader {
                     }
                 }
             }
-        } catch(Exception ex) {
+        } catch(Throwable t) {
             println "Error heating the plugin cache"
-            ex.printStackTrace()
+            t.printStackTrace()
         }
     }
 }

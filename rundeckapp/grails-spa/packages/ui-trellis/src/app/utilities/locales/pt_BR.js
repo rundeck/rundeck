@@ -237,6 +237,8 @@ const messages = {
   refresh: "atualizar",
   "save.filter.ellipsis": "Salvar filtro",
   "search.ellipsis": "Search\u2026",
+  "ScheduledExecution.page.edit.title": "Editar job",
+  "ScheduledExecution.page.create.title": "Criar novo job",
   "scheduledExecution.property.defaultTab.label": "Aba padr\u00e3o",
   "scheduledExecution.property.defaultTab.description":
     "Aba padr\u00e3o para apresentar quando est\u00e1 monitorando uma execu\u00e7\u00e3o",

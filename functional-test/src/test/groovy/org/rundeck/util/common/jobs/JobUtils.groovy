@@ -343,6 +343,8 @@ class JobUtils {
      *                 - "dispatch-rank-order": Dispatch rank order (default: "ascending")
      *                 - "opt1-required": Is job option 1 required (default: "true")
      *                 - "opt2-required": Is job option 2 required (default: "true")
+     *                 - "queue-enabled": Is job queue enabled (default: "false")
+     *                 - "queue-size": Job queue max size (default: "0")
      * @return The path of the updated temporary XML file.
      */
     static def updateJobFileToImport = (String fileName, String projectName, Map argsOverrides = [:]) -> {
@@ -361,7 +363,9 @@ class JobUtils {
                 "ode-filter-exclude": "",
                 "dispatch-rank-order": "ascending",
                 "opt1-required": "true",
-                "opt2-required": "true"
+                "opt2-required": "true",
+                "queue-enabled": "false",
+                "queue-size": "0"
         ].asImmutable()
 
         // Overrides defaults

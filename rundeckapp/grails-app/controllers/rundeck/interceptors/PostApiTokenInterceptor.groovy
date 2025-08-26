@@ -16,6 +16,7 @@ class PostApiTokenInterceptor {
             session.user=null
             request.subject=null
             session.subject=null
+            session.invalidate()
         }
         return true
     }

@@ -17,7 +17,7 @@ class ImportProjectSpec extends SeleniumBase {
      */
     def "import project no file selected"() {
         given:
-        def projectName = "noFileImportProject"
+        def projectName = generateProjectName(specificationContext.currentIteration.name)
         setupProject(projectName)
         LoginPage loginPage = page LoginPage
         HomePage homePage = page HomePage
@@ -38,7 +38,7 @@ class ImportProjectSpec extends SeleniumBase {
 
     def "import a simple project file"() {
         given:
-        def projectName = "fileImportProject"
+        def projectName = generateProjectName(specificationContext.currentIteration.name)
         setupProject(projectName)
         updateConfigurationProject(projectName, [
                 "project.gui.readme.display": "projectList,projectHome",
@@ -76,7 +76,7 @@ class ImportProjectSpec extends SeleniumBase {
     @Unroll
     def "import invalid files as archive should fail: #archiveName"() {
         given:
-        def projectName = "fileImportProject"
+        def projectName = generateProjectName(specificationContext.currentIteration.name)
         setupProject(projectName)
         LoginPage loginPage = page LoginPage
         HomePage homePage = page HomePage

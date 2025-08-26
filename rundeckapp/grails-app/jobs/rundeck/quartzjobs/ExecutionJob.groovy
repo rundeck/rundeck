@@ -40,6 +40,7 @@ import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
+import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.execution.ThresholdValue
 import rundeck.services.logging.LoggingThreshold
 
@@ -108,39 +109,31 @@ class ExecutionJob implements InterruptableJob {
         }
     }
 
-    private int asInt(def value) {
-        if(value instanceof String){
-            return value.toInteger()
-        }else if(value instanceof Integer){
-            return value
-        }else{
-            throw new IllegalArgumentException("Not able to convert to integer, value: ${value}")
-        }
-    }
-
     void execute_internal(JobExecutionContext context) {
         boolean success=false
         RunContext initMap
-        try{
+        try {
             initMap= initialize(context,context.jobDetail.jobDataMap)
         } catch (ExecutionServiceException es) {
-            markStartExecutionFailure(context)
             if (es.code == 'conflict') {
+                meterStartExecutionFailure(context, 'Conflict')
                 log.error("Unable to start Job execution: ${es.message ?: 'no message'}")
                 return
             } else {
-                throw new ExecutionServiceException("Unable to start Job execution", es)
+                meterStartExecutionFailure(context)
+                throw new ExecutionServiceException("Unable to start Job execution: ${es.message}", es)
             }
-        }catch(MissingScheduledExecutionException e){
+        } catch(MissingScheduledExecutionException e){
+            meterStartExecutionFailure(context, 'Missing')
             throw e
-        }
-        catch(Throwable t){
-            markStartExecutionFailure(context)
+        } catch(Throwable t){
+            meterStartExecutionFailure(context)
             log.error("Unable to start Job execution: ${t.message?t.message:'no message'}",t)
             throw t
         }
         executionId = initMap.executionId ?: initMap.execution?.id
         if(initMap.jobShouldNotRun){
+            meterStartExecutionFailure(context, 'NotRun')
             log.info(initMap.jobShouldNotRun)
             return
         }
@@ -152,18 +145,28 @@ class ExecutionJob implements InterruptableJob {
                 initMap.authContext
         )
         if (beforeExec == JobScheduleManager.BeforeExecutionBehavior.skip) {
+            meterStartExecutionFailure(context, 'Skipped')
             return
         }
         RunResult result = null
         def statusString=null
         try {
             if(!wasInterrupted){
-                result = executeCommand(initMap)
-                success=result.success
-                statusString=Execution.isCustomStatusString(result.result?.statusString)?result.result?.statusString:null
+                result = executeCommand(initMap, context)
+                success=result?.success
+                statusString=Execution.isCustomStatusString(result?.result?.statusString)?result?.result?.statusString:null
             }
-        }catch(Throwable t){
+        } catch (Throwable t) {
             log.error("Failed execution ${initMap.execution.id} : ${t.message?t.message:'no message'}",t)
+        }
+        if(!result){
+            //failed to start
+        }else if (success) {
+            meterExecutionSuccess(context)
+        } else if (wasInterrupted) {
+            meterExecutionInterrupted(context)
+        } else {
+            meterExecutionFailure(context)
         }
         saveState(
                 context.jobDetail.jobDataMap,
@@ -181,11 +184,38 @@ class ExecutionJob implements InterruptableJob {
         initMap.jobSchedulerService.afterExecution(initMap.execution.asReference(), context.mergedJobDataMap, initMap.authContext)
     }
 
-    private void markStartExecutionFailure(JobExecutionContext context) {
-        MetricRegistry metricRegistry=context.jobDetail.jobDataMap.get('metricRegistry')
-        if(metricRegistry) {
-            metricRegistry.meter(MetricRegistry.name(ExecutionService.name, 'executionJobStartFailedMeter')).mark()
+
+    private void markMeter(JobExecutionContext context, String name) {
+        MetricRegistry metricRegistry = context.jobDetail?.jobDataMap?.get('metricRegistry')
+        if (metricRegistry) {
+            metricRegistry.meter(MetricRegistry.name(ExecutionService.name, name)).mark()
         }
+    }
+
+    private void meterStartExecutionFailure(JobExecutionContext context, String additional=null) {
+        if(additional){
+            markMeter(context, "executionJobStartFailed${additional}Meter")
+        }
+        markMeter(context, 'executionJobStartFailedMeter')
+    }
+    private void meterStartExecutionSucceeded(JobExecutionContext context, boolean isjob) {
+        markMeter(context, 'executionJobStartSucceededMeter')
+        //note: legacy meter
+        markMeter(context, 'executionStartMeter')
+        if (isjob) {
+            markMeter(context, 'executionJobStartMeter')
+        } else {
+            markMeter(context, 'executionAdhocStartMeter')
+        }
+    }
+    private void meterExecutionFailure(JobExecutionContext context) {
+        markMeter(context, 'executionJobRunFailedMeter')
+    }
+    private void meterExecutionInterrupted(JobExecutionContext context) {
+        markMeter(context, 'executionJobRunInterruptedMeter')
+    }
+    private void meterExecutionSuccess(JobExecutionContext context) {
+        markMeter(context, 'executionJobRunSucceededMeter')
     }
 
     public void interrupt(){
@@ -304,12 +334,14 @@ class ExecutionJob implements InterruptableJob {
                     }else{
                         initMap.jobShouldNotRun="Job ${initMap.scheduledExecution.extid} will run on server ID ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this server (${serverUUID})."
                     }
+                    log.info("Deleting job ${context.jobDetail.key} for reason: ${initMap.jobShouldNotRun}")
                     context.getScheduler().deleteJob(context.jobDetail.key)
                     return initMap
                 }else{
                     //verify run on this node but scheduled disabled
                     if(!initMap.jobSchedulesService.shouldScheduleExecution(initMap.scheduledExecution.uuid)){
                         initMap.jobShouldNotRun = "Job ${initMap.scheduledExecution.extid} schedule has been disabled, removing schedule on this server (${serverUUID})."
+                        log.info("Deleting job ${context.jobDetail.key} for reason: ${initMap.jobShouldNotRun}")
                         context.getScheduler().deleteJob(context.jobDetail.key)
                         return initMap
                     }
@@ -367,7 +399,7 @@ class ExecutionJob implements InterruptableJob {
         WorkflowExecutionResult result
     }
     @CompileStatic
-    RunResult executeCommand(RunContext runContext) {
+    RunResult executeCommand(RunContext runContext, JobExecutionContext jobExecutionContext) {
         def success = true
         ExecutionService.AsyncStarted execmap
         try {
@@ -379,15 +411,17 @@ class ExecutionJob implements InterruptableJob {
                 runContext.secureOpts,
                 runContext.secureOptsExposed
             )
-
+            if (!execmap) {
+                //failed to start
+                meterStartExecutionFailure(jobExecutionContext)
+                return null
+            }
         } catch (Exception e) {
             log.error("Execution ${runContext.execution.id} failed to start: " + e.getMessage(), e)
+            meterStartExecutionFailure(jobExecutionContext)
             throw e
         }
-        if (!execmap) {
-            //failed to start
-            return new RunResult(success: false)
-        }
+        meterStartExecutionSucceeded(jobExecutionContext, runContext.scheduledExecution?true:false)
         def timeoutms = 1000 * runContext.timeout
         def shouldCheckTimeout = timeoutms > 0
         long startTime = System.currentTimeMillis()
@@ -596,8 +630,9 @@ class ExecutionJob implements InterruptableJob {
                 retryAttempt     : jobDataMap?.get("retryAttempt"),
                 timeout          : jobDataMap?.get("timeout"),
         ]
+        ExecutionCompleteEvent executionCompleteEvent
         Closure action={
-            executionService.saveExecutionState(
+            executionCompleteEvent = executionService.saveExecutionState_newTransaction(
                     scheduledExecutionId,
                     execution.id,
                     resultMap,
@@ -619,9 +654,26 @@ class ExecutionJob implements InterruptableJob {
             if (!saveStateComplete) {
                 execution.refresh()
                 log.error("ExecutionJob: Failed to save execution state for ${execution.id}, after retrying ${finalizeRetryMax} times: ${retried.caught}")
+            } else if(executionCompleteEvent){
+                Retried notificationRetried = withRetry(
+                        finalizeRetryMax,
+                        finalizeRetryDelay,
+                        "Execution ${execution.id} trigger job complete notifications:",
+                        executionService.&isApplicationShutdown,
+                        {
+                            executionService.triggerJobCompleteNotifications(execmap, executionCompleteEvent)
+                            true
+                        }
+                )
+                if (!notificationRetried.complete) {
+                    log.error("ExecutionJob: Failed to trigger job complete notifications for ${execution.id}, after retrying ${finalizeRetryMax} times: ${notificationRetried.caught}")
+                }
             }
         }else{
             action.call()
+            if(executionCompleteEvent){
+                executionService.triggerJobCompleteNotifications(execmap, executionCompleteEvent)
+            }
         }
         if (!isTemp && scheduledExecutionId && success) {
             //update ScheduledExecution statistics for successful execution

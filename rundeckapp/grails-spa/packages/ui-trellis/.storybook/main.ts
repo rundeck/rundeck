@@ -6,11 +6,16 @@ const config: StorybookConfig = {
     "../src/library/components/primeVue/**/*.mdx",
     "../src/library/components/primeVue/**/*.stories.@(js|jsx|mjs|ts|tsx)",
   ],
+  staticDirs: [],
   addons: [
     "@storybook/addon-webpack5-compiler-swc",
-    "@storybook/addon-links",
-    "@storybook/addon-essentials",
     "storybook-dark-mode",
+    {
+      name: "@storybook/addon-essentials",
+      options: {
+        backgrounds: false,
+      },
+    },
     {
       name: "@storybook/addon-styling-webpack",
       options: {
@@ -68,8 +73,8 @@ const config: StorybookConfig = {
     name: "@storybook/vue3-webpack5",
     options: {},
   },
-  docs: {
-    autodocs: "tag",
+  features: {
+    backgroundsStoryGlobals: true,
   },
 };
 export default config;

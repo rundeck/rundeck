@@ -30,6 +30,10 @@ function init() {
   const rootStore = getRundeckContext().rootStore;
   const uiMeta = loadJsonData("pageUiMeta");
   const uiType = uiMeta?.uiType || "current";
+
+  const jobTreeMeta = loadJsonData("jobTreeUiMeta");
+  const showActions = !jobTreeMeta?.hideActions;
+  const showHeader = !jobTreeMeta?.hideHeader;
   rootStore.ui.addItems([
     {
       section: "theme-select",
@@ -84,7 +88,7 @@ function init() {
     {
       section: "main-content",
       location: "before",
-      visible: true,
+      visible: showHeader,
       widget: markRaw(
         defineComponent({
           name: "JobsPageHeaderWrap",
@@ -115,7 +119,7 @@ function init() {
             provide(JobPageStoreInjectionKey, jobPageStore);
           },
           template: `
-          <JobListPage />`,
+          <JobListPage v-bind="itemData" />`,
         }),
       ),
     },
@@ -136,7 +140,7 @@ function init() {
       section: "job-browse-item",
       location: "before-job-name",
       order: 1,
-      visible: true,
+      visible: showActions,
       widget: markRaw(JobRunButton),
     },
     {
@@ -149,7 +153,7 @@ function init() {
     {
       section: "job-browse-item",
       location: "after-job-name",
-      visible: true,
+      visible: showActions,
       order: 1000,
       widget: markRaw(JobActionsMenu),
     },

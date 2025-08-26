@@ -289,14 +289,12 @@ Since: v21''',
             )
         ),
         responses=[
-            @ApiResponse(
-                ref = '#/paths/~1user~1info/get/responses/403'
-            ),
-            @ApiResponse(
-                ref = '#/paths/~1user~1info/get/responses/404'
-            ),
-            @ApiResponse(
-                ref = '#/paths/~1user~1info/get/responses/200'
+            @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
+            @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
+            @ApiResponse(responseCode='200',description = 'User Profile Data',
+                content=@Content(
+                        mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object')
+                )
             )
         ]
 
@@ -324,14 +322,12 @@ Since: v21''',
             )
         ),
         responses=[
-            @ApiResponse(
-                ref = '#/paths/~1user~1info/get/responses/403'
-            ),
-            @ApiResponse(
-                ref = '#/paths/~1user~1info/get/responses/404'
-            ),
-            @ApiResponse(
-                ref = '#/paths/~1user~1info/get/responses/200'
+            @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
+            @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
+            @ApiResponse(responseCode='200',description = 'User Profile Data',
+                    content=@Content(
+                            mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object')
+                    )
             )
         ]
 
@@ -385,14 +381,12 @@ Since: v21''',
             )
         ],
         responses=[
-            @ApiResponse(
-                ref = '#/paths/~1user~1info/get/responses/403'
-            ),
-            @ApiResponse(
-                ref = '#/paths/~1user~1info/get/responses/404'
-            ),
-            @ApiResponse(
-                ref = '#/paths/~1user~1info/get/responses/200'
+            @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
+            @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
+            @ApiResponse(responseCode='200',description = 'User Profile Data',
+                    content=@Content(
+                            mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object')
+                    )
             )
         ]
     )
@@ -484,7 +478,7 @@ Since: v21''',
         description = '''Get a list of the authenticated user's roles.
 
 Since: v30''',
-        tags = ['user', 'authorization'],
+        tags = ['user'],
         responses = [
             @ApiResponse(
                 responseCode = '200',
@@ -546,6 +540,8 @@ For APIv27+, the results will contain additional fields:
 * `updated` updated date
 * `lastJob` last job execution
 * `tokens` number of API tokens
+For APIv53+, the results will also include: 
+* `lastLogin` last login time
 ''',
                 content = @Content(
                     mediaType = MediaType.APPLICATION_JSON,
@@ -557,6 +553,7 @@ For APIv27+, the results will contain additional fields:
     "email":"user@server.com",
     "created": "2017-10-01T09:00:20Z",
     "updated": "2018-08-24T13:53:02Z",
+    "last_login": "2024-03-01T17:00:00Z",
     "lastJob": "2018-08-28T13:31:00Z",
     "tokens": 1
 },
@@ -567,6 +564,7 @@ For APIv27+, the results will contain additional fields:
     "email":"admin@server.com",
     "created": "2016-07-17T18:42:00Z",
     "updated": "2018-08-24T13:53:00Z",
+    "last_login": "2024-03-01T17:00:00Z",
     "lastJob": "2018-08-28T13:31:00Z",
     "tokens": 6
 }]''')
@@ -602,6 +600,9 @@ For APIv27+, the results will contain additional fields:
                 obj.email = it.email
                 obj.created = it.dateCreated
                 obj.updated = it.lastUpdated
+               if(request.api_version >= ApiVersions.V53){
+                    obj.lastLogin = it.lastLogin
+                }
                 def lastExec = Execution.lastExecutionByUser(it.login).list()
                 if(lastExec?.size()>0){
                     obj.lastJob = lastExec.get(0).dateStarted
@@ -627,6 +628,9 @@ For APIv27+, the results will contain additional fields:
                             if(request.api_version >= ApiVersions.V27){
                                 created(u.created)
                                 updated(u.updated)
+                                if(request.api_version >= ApiVersions.V53){
+                                    lastLogin(u.lastLogin)
+                                }
                                 lastJob(u.lastJob)
                                 tokens(u.tokens)
                             }
@@ -638,8 +642,20 @@ For APIv27+, the results will contain additional fields:
                     users.each {
                         def u
                         if(request.api_version >= ApiVersions.V27){
-                            u = it
-                        }else{
+                            u = [
+                                    login: it.login,
+                                    firstName: it.firstName,
+                                    lastName: it.lastName,
+                                    email: it.email,
+                                    created: it.created,
+                                    updated: it.updated,
+                                    lastJob: it.lastJob,
+                                    tokens: it.tokens
+                            ]
+                            if (request.api_version >= ApiVersions.V53) {
+                                u.lastLogin = it.lastLogin
+                            }
+                        } else {
                             u = [login: it.login, firstName: it.firstName, lastName: it.lastName, email: it.email]
                         }
                         element(u)

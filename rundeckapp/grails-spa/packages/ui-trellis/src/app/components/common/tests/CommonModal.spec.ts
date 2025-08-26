@@ -12,9 +12,6 @@ const createWrapper = async (
       ...propsData,
     },
     global: {
-      mocks: {
-        $t: (msg: string) => msg,
-      },
       components: {
         Modal,
       },

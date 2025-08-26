@@ -16,8 +16,13 @@
 
 <template>
   <div>
-    <select v-model="value" class="form-control">
-      <option v-for="project in projects" :key="project" :value="project">
+    <select v-model="value" class="form-control" data-testid="project-select">
+      <option
+        v-for="project in projects"
+        :key="project"
+        :value="project"
+        data-testid="project-option"
+      >
         {{ project }}
       </option>
     </select>

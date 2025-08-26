@@ -40,6 +40,37 @@ class ExecutionUtils {
             }
         }
 
+        /**
+         * Checks if executions were executed sequentially, meaning the execution at a position `n`
+         * has ended before the execution at position `n+1` has started.
+         *
+         * @param executions is the list of executions to verify sorted from first executed to last executed.
+         * @return boolean
+         */
+        static final haveExecutedSequentially(List<Execution> executions) {
+            executions.collate(2, 1, false)
+                    .every { executionsPair -> executionsPair[0].endedBeforeExecution(executionsPair[1]) }
+        }
+
+        /**
+         * Checks if all executions overlapped, meaning each execution from the first list`
+         * has an execution from the second list that overlapped in execution times.
+         *
+         * @param executions is the list of executions to verify sorted from first executed to last executed.
+         * @return boolean
+         */
+        static final haveExecutionsOverlapped(List<Execution> executions, List<Execution> overlappingExecutions) {
+            if (executions.size() != overlappingExecutions.size()) {
+                return false
+            }
+
+            return executions.indices.every { i ->
+                def currExecution = executions[i]
+                def currOverlappingExecution = overlappingExecutions[i]
+
+                return currExecution.overlappedWithExecution(currOverlappingExecution)
+            }
+        }
     }
 
     static class Retrievers {
@@ -64,6 +95,16 @@ class ExecutionUtils {
          * @return a closure that lists all executions for the project
          */
         static final Supplier<List<Execution>> executionsForProject(RdClient client, String projectName, String queryString = null) {
+            return executionsForProjectClosure(client, projectName, queryString) as Supplier
+        }
+        /**
+         * Returns a closure that retrieves executions for a project.
+         * @param client
+         * @param projectName name of the project or * for all projects
+         * @param queryString query string to append to the request
+         * @return a closure that lists all executions for the project
+         */
+        static final Closure<List<Execution>> executionsForProjectClosure(RdClient client, String projectName, String queryString = null) {
             { ->
                 def execsResponse = client.doGetAcceptAll("/project/${projectName}/executions" + (queryString ? "?${queryString}" : ""))
                 JobExecutionsResponse parsedResponse = OBJECT_MAPPER.readValue(execsResponse.body().string(), JobExecutionsResponse.class)

@@ -14,6 +14,7 @@
   - limitations under the License.
   --}%
 
+<g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
 <%@ page import="org.rundeck.core.auth.AuthConstants" %>
 
     <g:render template="/common/errorFragment"/>
@@ -24,22 +25,29 @@
             controller="scheduledExecution" action="save" params="[project: params.project]"
             class="form-horizontal">
         <div class="card">
-        <div class="card-header" data-ko-bind="jobeditor">
-            <div class="row">
-                <h4 class="col-sm-10 card-title">
-                    <span data-bind="css: {'text-secondary colon-after': jobName}"><g:message code="ScheduledExecution.page.create.title" /></span>
-                    <span data-bind="text: jobName, attr: {title: groupPath}, bootstrapTooltip: groupPath"></span>
-                </h4>
-                <div class="col-sm-2 ">
-                    <g:link controller="scheduledExecution" action="upload"
-                            params="[project: params.project?:request.project]"
-                            class="btn btn-default btn-sm pull-right">
-                        <i class="glyphicon glyphicon-upload"></i>
-                        <g:message code="upload.definition.button.label"/>
-                    </g:link>
+        <g:if test="${uiType=='next'}">
+            <div class="card-header job-editor-header-vue" id="job-editor-header-vue">
+                <header-section />
+            </div>
+        </g:if>
+        <g:else>
+            <div class="card-header" data-ko-bind="jobeditor">
+                <div class="row">
+                    <h4 class="col-sm-10 card-title">
+                        <span data-bind="css: {'text-secondary colon-after': jobName}"><g:message code="ScheduledExecution.page.create.title" /></span>
+                        <span data-bind="text: jobName, attr: {title: groupPath}, bootstrapTooltip: groupPath"></span>
+                    </h4>
+                    <div class="col-sm-2 ">
+                        <g:link controller="scheduledExecution" action="upload"
+                                params="[project: params.project?:request.project]"
+                                class="btn btn-default btn-sm pull-right">
+                            <i class="glyphicon glyphicon-upload"></i>
+                            <g:message code="upload.definition.button.label"/>
+                        </g:link>
+                    </div>
                 </div>
             </div>
-        </div>
+        </g:else>
         <div class="card-content">
             <tmpl:tabsEdit scheduledExecution="${scheduledExecution}" crontab="${crontab}" authorized="${authorized}"
                            command="${command}" jobComponents="${jobComponents}"/>

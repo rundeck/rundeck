@@ -1,6 +1,5 @@
 package com.dtolabs.rundeck.server.plugins
 
-
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
@@ -8,19 +7,14 @@ import com.dtolabs.rundeck.core.common.PropertyRetriever
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.plugins.*
-import com.dtolabs.rundeck.core.plugins.configuration.Configurable
-import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
-import com.dtolabs.rundeck.core.plugins.configuration.Describable
-import com.dtolabs.rundeck.core.plugins.configuration.Description
-import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterImpl
-import com.dtolabs.rundeck.core.plugins.configuration.Property
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.plugins.configuration.*
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.plugins.config.ConfiguredBy
 import com.dtolabs.rundeck.plugins.config.Group
 import com.dtolabs.rundeck.plugins.config.PluginGroup
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
+import com.dtolabs.rundeck.plugins.descriptions.SelectValues
 import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
@@ -770,6 +764,125 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
             [prop2:'other']               |false
             provider = 'aplugin'
     }
+
+    @Unroll
+    def "validate plugin by name list field"() {
+        given:
+            def description = DescriptionBuilder
+                .builder()
+                .name(provider)
+                .property(PropertyBuilder.builder().options('prop1').values("a", "b").required(false).build())
+                .build()
+            def testPlugin = new TestPlugin2Fields()
+            testPlugin.description = description
+            def beanBuilder = new Test2Builder(instance: testPlugin)
+            defineBeans {
+                testBeanBuilder(InstanceFactoryBean, beanBuilder)
+            }
+            def sut = new RundeckPluginRegistry()
+            sut.pluginDirectory = File.createTempDir('test', 'dir')
+            sut.applicationContext = applicationContext
+            sut.pluginRegistryMap = ['aplugin': 'testBeanBuilder']
+            sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+
+            def svc = Mock(PluggableProviderService) {
+                getName() >> 'TestSvc'
+            }
+        when:
+            def result = sut.validatePluginByName('aplugin', svc, iprops)
+        then:
+            result
+            result.valid == valid
+
+        where:
+            iprops           | valid
+            [prop1: 'a']     | true
+            [prop1: 'b']     | true
+            [prop1: '']      | true
+            [prop1: 'a,b']   | true
+            [prop1: 'a,b,c'] | false
+            [:]              | true
+            [prop2: 'other'] | true
+            provider = 'aplugin'
+    }
+
+    @Unroll
+    def "configure plugin by name list field"() {
+        given:
+            def description = DescriptionBuilder
+                .builder()
+                .name(provider)
+                .property(PropertyBuilder.builder().options('prop1').values("a", "b").required(false).build())
+                .build()
+            def testPlugin = new TestPlugin2Fields()
+            testPlugin.description = description
+            def beanBuilder = new Test2Builder(instance: testPlugin)
+            defineBeans {
+                testBeanBuilder(InstanceFactoryBean, beanBuilder)
+            }
+            def sut = new RundeckPluginRegistry()
+            sut.pluginDirectory = File.createTempDir('test', 'dir')
+            sut.applicationContext = applicationContext
+            sut.pluginRegistryMap = ['aplugin': 'testBeanBuilder']
+            sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+
+            def svc = Mock(PluggableProviderService) {
+                getName() >> 'TestSvc'
+            }
+            sut.rundeckPluginAdapter = new PluginAdapterImpl()
+        when:
+            def result = sut.configurePluginByName('aplugin', svc, iprops)
+        then:
+            noExceptionThrown()
+            assert result
+            assert result.instance != null
+            assert result.instance instanceof TestPlugin2Fields
+            TestPlugin2Fields plugin = result.instance
+            assert plugin.prop1 == expect
+        where:
+            iprops           | expect     | iserror
+            [prop1: 'a']     | ['a']      | false
+            [prop1: 'b']     | ['b']      | false
+            [prop1: '']      | []         | false
+            [prop1: 'a,b']   | ['a', 'b'] | false
+            [:]              | null       | false
+            [prop2: 'other'] | null       | false
+            provider = 'aplugin'
+    }
+
+    @Unroll
+    def "configure plugin by name list field invalid value"() {
+        given:
+            def description = DescriptionBuilder
+                .builder()
+                .name(provider)
+                .property(PropertyBuilder.builder().options('prop1').values("a", "b").required(false).build())
+                .build()
+            def testPlugin = new TestPlugin2Fields()
+            testPlugin.description = description
+            def beanBuilder = new Test2Builder(instance: testPlugin)
+            defineBeans {
+                testBeanBuilder(InstanceFactoryBean, beanBuilder)
+            }
+            def sut = new RundeckPluginRegistry()
+            sut.pluginDirectory = File.createTempDir('test', 'dir')
+            sut.applicationContext = applicationContext
+            sut.pluginRegistryMap = ['aplugin': 'testBeanBuilder']
+            sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+
+            def svc = Mock(PluggableProviderService) {
+                getName() >> 'TestSvc'
+            }
+            sut.rundeckPluginAdapter = new PluginAdapterImpl()
+        when:
+            def result = sut.configurePluginByName('aplugin', svc, iprops)
+        then:
+            thrown(RuntimeException)
+        where:
+            iprops           | expect | iserror
+            [prop1: 'a,b,c'] | []     | true
+            provider = 'aplugin'
+    }
     @Unroll
     def "validate plugin by name instance data with ignored scope"() {
         given:
@@ -1044,6 +1157,35 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         @Override
         void configure(final Properties configuration) throws ConfigurationException {
             this.configuration = configuration
+        }
+    }
+
+    static class TestPlugin2Fields implements Describable {
+        Description description
+
+        @PluginProperty(
+            title = "Test Property",
+            description = "Test Property Description",
+            required = true,
+            defaultValue = "default",
+            scope = PropertyScope.Instance
+        )
+        @SelectValues(values = ['a', 'b', 'c'])
+        List<String> prop1;
+    }
+
+    static class Test2Builder implements PluginBuilder<TestPlugin2Fields> {
+        TestPlugin2Fields instance
+
+        @Override
+        TestPlugin2Fields buildPlugin() {
+            return instance
+        }
+
+
+        @Override
+        Class<TestPlugin2Fields> getPluginClass() {
+            TestPlugin2Fields
         }
     }
 

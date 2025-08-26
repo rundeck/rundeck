@@ -1,0 +1,52 @@
+import { Meta, Subtitle, Title, Canvas, Controls, Description, Stories, Markdown } from "@storybook/blocks";
+import * as ToggleSwitchStories from './ToggleSwitch.stories'
+
+<Meta of={ToggleSwitchStories} />
+
+<Title />
+
+<Subtitle />
+[Component reference on primevue](https://primevue.org/toggleswitch/)
+
+## Import
+
+```ts
+import ToggleSwitch from "primevue/toggleswitch";
+```
+
+## Playground
+
+{/* Make sure your stories file has an export for playground, otherwise storybook will break */}
+
+<Canvas of={ToggleSwitchStories.Playground} sourceState="shown" />
+<Controls of={ToggleSwitchStories.Playground} />
+
+## How to use
+
+{/* Add a note here about the relevant props to change appearance of component */}
+
+
+<Description of={ToggleSwitchStories} />
+
+<Stories title='' includePrimary={false} />
+
+
+## Accessibility
+
+### Screen Reader
+ToggleSwitch component uses a hidden native checkbox element with `switch` role internally that is only visible to screen readers. Value to describe the component can either be provided via `label` tag combined with `id` prop or using `aria-labelledby`, `aria-label` props.
+
+### Keyboard Support
+
+Key	Function
+tab	Moves focus to the switch.
+space	Toggles the checked state.
+
+<Markdown>
+    {`
+| Key         | Function                   |
+| ----------- | -------------------------- |
+| tab         | Moves focus to the switch. |
+| space       | Toggles the checked state. |
+`}
+</Markdown>

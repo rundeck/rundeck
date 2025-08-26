@@ -343,6 +343,30 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
 
     }
 
+    def "getUserId returns correct id for existing user"() {
+        setup:
+        String login = "testuser"
+        User user = new User(login: login)
+        user.save(flush: true)
+
+        when:
+        def result = service.getUserId(login)
+
+        then:
+        result == user.id.toString()
+    }
+
+    def "getUserId returns null for non-existent user"() {
+        setup:
+        String login = "nonexistentuser"
+
+        when:
+        def result = service.getUserId(login)
+
+        then:
+        result == null
+    }
+
     def "findWithFilters no user found with logged only"() {
         given:
         def userToSearch = 'admin'

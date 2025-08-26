@@ -1,5 +1,5 @@
 <template>
-  <JobBulkEditControls />
+  <JobBulkEditControls v-if="showBulkEdit" />
   <Browser
     v-if="loaded"
     :path="jobPageStore.browsePath"
@@ -10,11 +10,14 @@
     @root-browse="rootBrowse"
   >
     <ui-socket section="job-list-page" location="empty-splash">
-      <div class="empty-splash">
+      <div v-if="showCreateButton" class="empty-splash">
         <create-new-job-button btn-type="cta">
           {{ $t("job.create.button") }}
         </create-new-job-button>
         <upload-job-button></upload-job-button>
+      </div>
+      <div v-else>
+        <p>{{ $t("no.jobs.in.this.project") }}</p>
       </div>
     </ui-socket>
   </Browser>
@@ -37,6 +40,7 @@ import {
 import { defineComponent, inject, ref } from "vue";
 import Browser from "./tree/Browser.vue";
 const eventBus = getRundeckContext().eventBus;
+const currentProject = getRundeckContext().projectName;
 export default defineComponent({
   name: "JobListPage",
   components: {
@@ -46,8 +50,29 @@ export default defineComponent({
     JobBulkEditControls,
     Browser,
   },
+  provide() {
+    return {
+      allowFolderNavigation: this.allowFolderNavigation,
+    };
+  },
   props: {
     path: {
+      type: String,
+      default: "",
+    },
+    showBulkEdit: {
+      type: Boolean,
+      default: true,
+    },
+    showCreateButton: {
+      type: Boolean,
+      default: true,
+    },
+    allowFolderNavigation: {
+      type: Boolean,
+      default: true,
+    },
+    projectToDisplay: {
       type: String,
       default: "",
     },
@@ -98,7 +123,22 @@ export default defineComponent({
         this.rootBrowse(event.state.browsePath || "", null);
       }
     };
-    await this.jobPageStore.load();
+    let projectToLoad = currentProject;
+
+    if (this.projectToDisplay.length > 0) {
+      projectToLoad = this.projectToDisplay;
+
+      // if a project name was passed as a prop, and it's not currently stored in the jobPageStore
+      // we want to force the jobBrowserStore to reload in order to fetch the jobs for the project name provided
+      if (
+        this.jobBrowserStore.loaded &&
+        projectToLoad !== this.jobPageStore.getProject()
+      ) {
+        await this.jobBrowserStore.reload();
+      }
+    }
+
+    await this.jobPageStore.load(projectToLoad);
     this.loaded = true;
   },
   methods: {

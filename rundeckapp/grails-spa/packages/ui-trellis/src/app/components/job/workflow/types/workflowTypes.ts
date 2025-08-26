@@ -58,7 +58,6 @@ export interface CommandExecPluginConfig {
 }
 export interface JobRefDefinition {
   group: string;
-
   name: string;
   project?: string;
   uuid?: string;
@@ -67,6 +66,7 @@ export interface JobRefDefinition {
   childNodes?: boolean;
   importOptions?: boolean;
   ignoreNotifications?: boolean;
+  nodeStep?: boolean;
   nodefilters?: {
     filter: string;
     dispatch?: {
@@ -79,8 +79,9 @@ export interface JobRefDefinition {
   };
 }
 export interface JobRefData {
+  description?: string;
+  keepgoingOnSuccess?: boolean;
   jobref?: JobRefDefinition;
-  nodeStep?: boolean;
 }
 export interface PluginStepData {
   type?: string;
@@ -96,13 +97,37 @@ export interface BasicData {
   keepgoing: boolean;
 }
 
-export interface StrategyData {
+export interface WorkflowStrategyPluginConfig {
+  WorkflowStrategy?: { [key: string]: any };
+}
+
+export interface WorkflowLogFilterConfig {
+  LogFilter?: PluginConfig[];
+}
+
+export interface WorkflowPluginConfig {
+  pluginConfig?: WorkflowStrategyPluginConfig & WorkflowLogFilterConfig & any;
+}
+
+export interface StrategyConfig {
   strategy?: string;
-  strategyConfig?: any;
+}
+
+export interface ErrorHandlerDefinition {
+  config: any;
+  keepgoingOnSuccess?: boolean;
+  nodeStep: boolean;
+  jobref?: JobRefDefinition;
+  type: string;
+  id: string;
+}
+export interface ErrorHandlerData {
+  errorhandler?: ErrorHandlerDefinition
 }
 
 export interface GlobalLogFiltersData {
   filters?: PluginConfig[];
+  LogFilter?: PluginConfig[];
 }
 
 export type StepData = CommandData &
@@ -110,7 +135,9 @@ export type StepData = CommandData &
   PluginStepData &
   ScriptFileData &
   ScriptInlineData &
-  CommandExecData;
+  CommandExecData &
+  ErrorHandlerData;
+
 export interface StepsData {
   commands: StepData[];
 }
@@ -118,33 +145,50 @@ export interface CommandEditData extends PluginConfig {
   nodeStep: boolean;
   description?: string;
   jobref?: JobRefDefinition;
+  errorhandler?: ErrorHandlerDefinition;
   //simply to provide a unique id for each step on client side
   id: string;
-  filters: PluginConfig[];
+  filters?: PluginConfig[];
 }
-export type EditStepData = CommandEditData & JobRefData;
+export type EditStepData = CommandEditData;
 export interface StepsEditData {
   commands: EditStepData[];
 }
 
 export interface WorkflowData
   extends BasicData,
-    StrategyData,
-    GlobalLogFiltersData,
+    StrategyConfig,
+    WorkflowPluginConfig,
     StepsData {}
 
 export function createBasicData({ keepgoing }): BasicData {
   return { keepgoing: !!keepgoing };
 }
 
-export function createStrategyData(
-  { strategy },
-  evalFunc: (val: string) => string = undefined,
-): StrategyData {
-  return { strategy: evalFunc ? evalFunc(strategy) : strategy };
+export function createStrategyData(workflowData: WorkflowData): PluginConfig {
+  const type = workflowData.strategy;
+  const strategyObj = workflowData.pluginConfig?.WorkflowStrategy;
+  const config = strategyObj ? strategyObj[type] : {};
+  return { type, config };
 }
-export function createLogFiltersData({ logFilters }): GlobalLogFiltersData {
-  return { filters: logFilters || [] };
+
+export function exportPluginData(
+  strategy: PluginConfig,
+  logFilters: GlobalLogFiltersData,
+): any {
+  const obj = {
+    pluginConfig: {
+      WorkflowStrategy: { [strategy.type]: strategy.config },
+    },
+    strategy: strategy.type,
+  };
+  if (logFilters && logFilters.LogFilter && logFilters.LogFilter.length > 0) {
+    obj.pluginConfig["LogFilter"] = logFilters.LogFilter;
+  }
+  return obj;
+}
+export function createLogFiltersData({ pluginConfig }): GlobalLogFiltersData {
+  return { LogFilter: pluginConfig?.LogFilter || [] };
 }
 export function createStepsData({ commands }): StepsData {
   return { commands: commands || [] };

@@ -14,6 +14,8 @@ orbs:
   trigger: rundeck/trigger-pipeline@0.0.5
   slack: circleci/slack@4.4.0
   browser-tools: circleci/browser-tools@1.4.8
+  snyk: snyk/snyk@2.2 # https://circleci.com/developer/orbs/orb/snyk/snyk
+  git: pagerduty/git@0.1.0 # https://circleci.com/developer/orbs/orb/pagerduty/git (public PD orb)
 
 # Slack notifier
 slack-fail-post-step: &slack-fail-post-step
@@ -257,6 +259,10 @@ jobs:
     executor:
       name: docker-builder
       resource_class: large
+    parameters:
+      jreVersion:
+        type: string
+        default: "openjdk-11-jre-headless"
     steps:
       - setup_docker:
           docker_layer_caching: true
@@ -269,7 +275,7 @@ jobs:
       - run-build-step:
           step-name: Build And Push Docker Images
           command: |
-            rundeck_docker_build
+            rundeck_docker_build << parameters.jreVersion >>
             rundeck_docker_push
       - run-build-step:
           step-name: Verify Build
@@ -309,6 +315,22 @@ jobs:
           command: rundeck_gradle_tests
       - collect-gradle-tests
       - save-build-cache
+
+  # Run UI Tests
+  test-gui:
+    <<: *job-defaults
+    executor:
+      name: docker-builder
+    steps:
+      - setup_docker
+      - checkout
+      - install-node
+      - attach_workspace:
+          at: ~/workspace
+      - run-build-step:
+          step-name: Run GUI Tests
+          command: rundeck_gui_tests
+      - collect-gradle-tests
 
   # WizCLI Image Scan
   wizcli-scan:
@@ -350,6 +372,43 @@ jobs:
           step-name: Run Redocly OpenAPI Linting
           command: openapi_tests
 
+  #Snyk tests
+  test-snyk:
+    <<: *job-defaults
+    executor:
+      name: docker-builder
+      resource_class: large
+    steps:
+      - setup_docker:
+          docker_layer_caching: true
+      - checkout
+      - restore-build-cache
+      - install-build-dependencies
+      - run-build-step:
+          step-name: Assemble rundeck
+          command: rundeck_assemble_build
+      - snyk/install
+      - run-build-step:
+          step-name: Configure Snyk
+          # this will need to be updated if the project changes owners
+          command: snyk config set org='rundeck-core-mtgfa3XPaKGbFtHj9aRXhg'
+      - run-build-step:
+          step-name: Run Snyk monitors to track vulnerabilities
+          # Run monitor first to push results to webui
+          command: |
+            if [ "$CIRCLE_BRANCH" = "main" ]; then
+              snyk monitor --all-projects --detection-depth=10 --scan-all-unmanaged
+            else
+              echo "Skipping monitor for non-main branch - no data sent to dashboard"
+            fi
+      - run:
+          name: Run Snyk test (ignoring scan results)
+          # Don't fail the build giving the Core team some time to clean the repo using the monitors
+          no_output_timeout: 30m
+          command: |
+            source scripts/circleci/setup.sh
+            snyk test --severity-threshold=medium --all-projects --detection-depth=10 --scan-all-unmanaged || true
+
   # Trigger pipeline in the enterprise repo
   trigger-enterprise:
     executor:
@@ -371,7 +430,10 @@ jobs:
     <<: *job-defaults
     executor:
       name: docker-builder
-
+    parameters:
+      jreVersion:
+        type: string
+        default: "openjdk-11-jre-headless"
     steps:
       - setup_docker
       - checkout
@@ -381,7 +443,7 @@ jobs:
           at: ~/workspace
       - run-build-step:
           step-name: Build Docker Images
-          command: rundeck_docker_build
+          command: rundeck_docker_build << parameters.jreVersion >>
       - run-build-step:
           step-name: Publish Docker Images
           command: rundeck_docker_publish
@@ -396,6 +458,7 @@ jobs:
       - setup_docker
       - checkout
       - install-packaging-dependencies
+      - install-node
       - restore-build-cache
       - attach_workspace:
           at: ~/workspace
@@ -470,8 +533,6 @@ jobs:
       - save-build-cache
       - store_artifacts:
           path: ~/workspace/packaging/packaging/build/distributions
-
-
 
   # Run Testdeck job on docker executor.
   test-docker:
@@ -583,6 +644,10 @@ require-build: &require-build
   requires:
     - Build
 
+require-build-jre-17: &require-build-jre-17
+  requires:
+    - Build with Docker image using JRE 17
+
 filters:
   all: &filter-default
     filters:
@@ -643,6 +708,9 @@ workflows:
       - test-gradle:
           name: T Unit Gradle
           <<: *slack-defaults
+      - test-gui:
+          name: T Unit UI
+          <<: *slack-defaults
       - trigger-enterprise:
           name: Enterprise Snapshot
           <<: *require-build
@@ -656,6 +724,11 @@ workflows:
           name: T Packaging
           <<: *require-build
           <<: *slack-defaults
+      - test-snyk:
+          name: Snyk Security Scan
+          context:
+            - Snyk
+            - Cloudsmith
       - wizcli-scan:
           name: WizCLI Scan Preview
           <<: *require-build
@@ -742,3 +815,78 @@ workflows:
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/alphaUi/**/*{.groovy,.java}"
           <<: *require-build
           <<: *slack-defaults
+
+  build_and_test_with_jre_17:
+    triggers:
+      - schedule:
+          cron: "0 23 * * *"
+          filters:
+            branches:
+              only:
+                - main
+    when:
+      or:
+        - matches:
+            pattern: release/5\..*
+            value: << pipeline.git.branch >>
+        - equal: [ main, << pipeline.git.branch >> ]
+    jobs:
+      - build-rundeck:
+          name: Build with Docker image using JRE 17
+          jreVersion: "openjdk-17-jre-headless"
+      - test-docker:
+          name: T Docker running JRE 17
+          command: bash test/run-docker-tests.sh
+          <<: *require-build-jre-17
+      - test-docker:
+          name: T Integration SSL running JRE 17
+          command: bash test/run-docker-ssl-tests.sh
+          <<: *require-build-jre-17
+      - test-docker:
+          name: T Integration Ansible running JRE 17
+          command: bash test/run-docker-ansible-tests.sh
+          <<: *require-build-jre-17
+      - test-machine:
+          name: T Integration LDAP running JRE 17
+          command: bash test/run-docker-ldap-tests.sh
+          <<: *require-build-jre-17
+      - test-machine:
+          name: T Integration LDAP Bind running JRE 17
+          command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
+          <<: *require-build-jre-17
+      - test-docker:
+          name: T Integration PAM running JRE 17
+          command: bash test/run-docker-pam-tests.sh
+          <<: *require-build-jre-17
+      - test-gradle-functional:
+          name: T Selenium running JRE 17
+          gradle-task: seleniumCoreTest
+          parallelism: 3
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/**/*{.groovy,.java}"
+          <<: *require-build-jre-17
+      - test-gradle-functional:
+          name: T Functional API running JRE 17
+          gradle-task: apiTest
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/**/*{.groovy,.java}"
+          parallelism: 3
+          <<: *require-build-jre-17
+      - test-gradle-functional:
+          name: T Functional Plugin Blocklist running JRE 17
+          gradle-task: pluginBlocklistTest
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/integration/**/*{.groovy,.java}"
+          <<: *require-build-jre-17
+      - test-gradle-functional:
+          name: T Feature NewLocalExec running JRE 17
+          gradle-task: apiTestNewLocal
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/execution/ExecutionOutputSpec.groovy"
+          <<: *require-build-jre-17
+      - test-gradle-functional:
+          name: T Feature NodeExecutorSecureInput running JRE 17
+          gradle-task: apiTestNodeExecutorSecureInput
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/job/input/*.groovy"
+          <<: *require-build-jre-17
+      - test-gradle-functional:
+          name: T Selenium Alpha UI running JRE 17
+          gradle-task: alphaUiSeleniumCoreTest
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/alphaUi/**/*{.groovy,.java}"
+          <<: *require-build-jre-17

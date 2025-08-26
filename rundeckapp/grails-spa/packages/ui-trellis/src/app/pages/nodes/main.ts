@@ -9,7 +9,6 @@ const rundeckContext = getRundeckContext();
 const FilterInputComp = defineComponent({
   name: "NodeFilter",
   components: { NodeFilterInput },
-  inject: ["addUiMessages"],
   props: ["itemData", "extraAttrs"],
   data() {
     return {
@@ -30,6 +29,15 @@ const FilterInputComp = defineComponent({
       return !!this.extraAttrs.nodeFilterStore;
     },
   },
+  watch: {
+    isNodeStoreAvailable(val) {
+      if (val) {
+        if (this.extraAttrs.nodeFilterStore.selectedFilter) {
+          this.filterValue = this.extraAttrs.nodeFilterStore.selectedFilter;
+        }
+      }
+    },
+  },
   beforeUnmount() {
     //note: this removes subscriptions from knockout observable
     //@ts-ignore
@@ -38,7 +46,9 @@ const FilterInputComp = defineComponent({
   mounted() {
     this.attachKnockout(5);
     if (this.isNodeStoreAvailable) {
-      this.filterValue = this.extraAttrs.nodeFilterStore.selectedFilter;
+      if (this.extraAttrs.nodeFilterStore.selectedFilter) {
+        this.filterValue = this.extraAttrs.nodeFilterStore.selectedFilter;
+      }
     }
   },
   methods: {
@@ -93,14 +103,14 @@ const FilterInputComp = defineComponent({
   },
   template: `
           <node-filter-input :project="project"
-                             v-model="filterValue"
+                             :value="filterValue"
                              :show-title="showInputTitle"
                              :autofocus="autofocus"
                              :filterFieldName="filterFieldName"
                              :filter-field-id="filterFieldId"
                              :query-field-placeholder-text="queryFieldPlaceholderText"
                              search-btn-type="cta"
-                             @update:model-value="updatedValue"
+                             @update:value="updatedValue"
                              @filter="filterClicked"
                              v-bind="extraAttrs"
           />
@@ -147,7 +157,11 @@ function init() {
           methods: {
             updateNodeFilter(val: any) {
               const filterName = val && val.filter ? val.filter : val;
-              this.nodeFilterStore.setSelectedFilter(filterName);
+              if(filterName ===".*" || this.nodeFilterStore.filter === ".*") {
+                this.nodeFilterStore.setSelectedFilter(filterName);
+              } else {
+                this.nodeFilterStore.setSelectedFilter([this.nodeFilterStore.filter, filterName].join(" "));
+              }
             },
           },
           template: `
@@ -156,7 +170,8 @@ function init() {
                         </div>
                         <div style="margin-bottom:20px">
                           <filter-input-comp
-                              v-model="nodeFilterStore.selectedFilter"
+                              :value="nodeFilterStore.selectedFilter"
+                              @update:value="nodeFilterStore.selectedFilter"
                               :project="project"
                               :item-data="itemData"
                               :extra-attrs="{'class':'subtitle-head-item','style':'margin-bottom:0;', 'nodeFilterStore': nodeFilterStore}"
@@ -238,7 +253,7 @@ function init() {
             };
           },
           template: `
-                      <filter-input-comp :project="project" :item-data="itemData"/>
+                      <filter-input-comp :project="project" :item-data="itemData" :extra-attrs="itemData.extraAttrs"/>
                     `,
         }),
       ),

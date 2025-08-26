@@ -1,39 +1,35 @@
 import { mount } from "@vue/test-utils";
 import CopyBox from "./CopyBox.vue";
+import { CopyToClipboard } from "../../../utilities/Clipboard";
+jest.mock("../../../utilities/Clipboard");
+
+const mockedCopyToClipboard = CopyToClipboard as jest.MockedFunction<
+  typeof CopyToClipboard
+>;
 
 describe("CopyBox", () => {
-  test("should copy text to clipboard when clicked", async () => {
-    const wrapper = mount(CopyBox, { props: { content: "text" } });
-
-    // Mock the "execCommand" method of document to simulate copying
-    document.execCommand = jest.fn();
-
-    // Simulate a click event on the component
-    await wrapper.trigger("click");
-
-    // Verify that the "execCommand" method was called with the expected argument
-    expect(document.execCommand).toHaveBeenCalledWith("copy");
+  beforeEach(() => {
+    console.error = jest.fn();
   });
 
-  test("should display success message after successful copy", async () => {
-    const wrapper = mount(CopyBox, { props: { content: "text" } });
+  afterEach(() => jest.clearAllMocks());
 
-    // Mock the "execCommand" method to return true, indicating successful copy
-    document.execCommand = jest.fn().mockReturnValue(true);
+  test("should copy text to clipboard when clicked", async () => {
+    mockedCopyToClipboard.mockResolvedValueOnce(true);
+    const wrapper = mount(CopyBox, {
+      props: { content: "text" },
+    });
 
     // Simulate a click event on the component
     await wrapper.trigger("click");
     await wrapper.vm.$nextTick();
 
-    // Verify that the success message is displayed
     expect(wrapper.text()).toContain("Copied to clipboard!");
   });
 
   test("should display error message after failed copy", async () => {
+    mockedCopyToClipboard.mockRejectedValueOnce(false);
     const wrapper = mount(CopyBox, { props: { content: "text" } });
-
-    // Mock the "execCommand" method to return false, indicating failed copy
-    document.execCommand = jest.fn().mockReturnValue(false);
 
     // Simulate a click event on the component
     await wrapper.trigger("click");

@@ -25,7 +25,7 @@ package org.rundeck.plugins.jsch.net;
 
 import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.NodeEntryImpl;
-import com.dtolabs.rundeck.core.utils.SSHAgentProcess;
+import com.dtolabs.rundeck.core.utils.SSHAgent;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 
 import junit.framework.TestCase;
@@ -71,7 +71,7 @@ public class TestSSHTaskBuilder extends TestCase {
         private Map<String,String> sshConfig;
         private InputStream sshKeyData;
         private Boolean enableSSHAgent;
-        private SSHAgentProcess sshAgentProcess;
+        private SSHAgent sshAgentProcess;
         private Integer ttlSSHAgent;
         private String bindAddress;
 
@@ -181,7 +181,7 @@ public class TestSSHTaskBuilder extends TestCase {
             this.userInfo = userInfo;
         }
 
-        public SSHAgentProcess getSSHAgentProcess() {
+        public SSHAgent getSSHAgentProcess() {
             return sshAgentProcess;
         }
 
@@ -196,7 +196,7 @@ public class TestSSHTaskBuilder extends TestCase {
     		}
 
     		@Override
-    		public void setSSHAgentProcess(SSHAgentProcess sshAgentProcess) {
+    		public void setSSHAgentProcess(SSHAgent sshAgentProcess) {
     			this.sshAgentProcess = sshAgentProcess;
     		}
 

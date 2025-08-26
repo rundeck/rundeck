@@ -1,11 +1,10 @@
-import { RootStore } from "./RootStore";
-import { HttpOperationResponse } from "@azure/ms-rest-js/es/lib/httpOperationResponse";
-import { v4 as uuidv4 } from "uuid";
-
 import { RundeckClient } from "@rundeck/client";
-
-import { ServiceType, Plugin } from "./Plugins";
+import { v4 as uuidv4 } from "uuid";
 import { reactive } from "vue";
+import { api } from "../services/api";
+
+import { Plugin, ServiceType } from "./Plugins";
+import { RootStore } from "./RootStore";
 
 export const webhookui = reactive({
   activeTab: 0,
@@ -36,16 +35,10 @@ export class WebhookStore {
   async refresh(project: string): Promise<void> {
     const [_, resp] = await Promise.all([
       this.root.plugins.load(ServiceType.WebhookEvent),
-      this.client.apiRequest({
-        method: "GET",
-        pathTemplate: "api/40/project/{project}/webhooks",
-        pathParameters: {
-          project: project,
-        },
-      }),
+      api.get(`project/${project}/webhooks`),
     ]);
 
-    resp.parsedBody.forEach((json: any) => {
+    resp.data.forEach((json: any) => {
       return this.addFromApi(json);
     });
   }
@@ -96,50 +89,48 @@ export class WebhookStore {
     return webhook;
   }
 
-  async save(webhook: Webhook): Promise<HttpOperationResponse> {
-    const resp = await this.client.apiRequest({
-      method: "POST",
-      pathTemplate: "api/40/project/{project}/webhook/{webhookId}",
-      pathParameters: {
-        project: webhook.project,
-        webhookId: webhook.id.toString(),
-      },
-      body: webhook.toApi(),
-    });
+  async save(webhook: Webhook): Promise<any> {
+    const resp = await api.post(
+      `project/${webhook.project}/webhook/${webhook.id.toString()}`,
+      webhook.toApi(),
+    );
 
-    if (resp.status == 200) {
-      webhook.new = false;
-      this.add(webhook);
+    if (resp.status !== 200) {
+      return {
+        data: resp.data,
+      };
+    }
+    webhook.new = false;
+    this.add(webhook);
+
+    return resp;
+  }
+
+  async create(webhook: Webhook): Promise<any> {
+    const resp = await api.post(
+      `project/${webhook.project}/webhook`,
+      webhook.toApi(),
+    );
+    if (resp.status !== 200) {
+      return {
+        data: resp.data,
+      };
     }
 
     return resp;
   }
 
-  async create(webhook: Webhook): Promise<HttpOperationResponse> {
-    const resp = await this.client.apiRequest({
-      method: "POST",
-      pathTemplate: "api/40/project/{project}/webhook",
-      pathParameters: {
-        project: webhook.project,
-      },
-      body: webhook.toApi(),
-    });
+  async delete(webhook: Webhook): Promise<any> {
+    const resp = await api.delete(
+      `project/${webhook.project}/webhook/${webhook.id.toString()}`,
+    );
 
-    return resp;
-  }
-
-  async delete(webhook: Webhook): Promise<HttpOperationResponse> {
-    const resp = await this.client.apiRequest({
-      method: "DELETE",
-      pathTemplate: "api/40/project/{project}/webhook/{webhookId}",
-      pathParameters: {
-        project: webhook.project,
-        webhookId: webhook.id.toString(),
-      },
-    });
-    if (resp.status == 200) {
-      this.remove(webhook);
+    if (resp.status !== 200) {
+      return {
+        data: resp.data,
+      };
     }
+    this.remove(webhook);
 
     return resp;
   }

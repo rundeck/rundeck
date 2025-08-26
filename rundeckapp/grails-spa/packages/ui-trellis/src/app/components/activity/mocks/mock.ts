@@ -3,11 +3,8 @@ import { NavItem } from "../../../../library/stores/NavBar";
 import { RootStore } from "../../../../library/stores/RootStore";
 
 export const i18nMocks = {
-  $t: (msg) => {
-    return messages[msg] || msg;
-  },
-  $tc: (msg, count) => {
-    const translations = {
+  $t: (msg: string, count: number): string => {
+    const translations: { [key: string]: string } = {
       execution: count === 1 ? "execution" : "executions",
       "info.newexecutions.since.0":
         count > 1
@@ -16,7 +13,7 @@ export const i18nMocks = {
       "In the last Day": "In the last Day",
       "error.message": "An Error Occurred",
     };
-    return translations[msg] || msg;
+    return translations[msg] || messages[msg] || msg;
   },
 };
 export const mockEventBus = {

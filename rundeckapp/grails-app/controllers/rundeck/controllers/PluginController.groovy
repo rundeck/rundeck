@@ -199,6 +199,8 @@ Since: v33
                         pluginVersion: p.pluginVersion,
                         title: p.title,
                         description: p.description,
+                        isHighlighted: p.isHighlighted,
+                        highlightedOrder: p.highlightedOrder,
                         author: p.pluginAuthor,
                         iconUrl: p.iconUrl,
                         providerMetadata: p.providerMetadata,

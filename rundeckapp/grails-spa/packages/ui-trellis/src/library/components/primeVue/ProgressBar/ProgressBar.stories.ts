@@ -45,6 +45,7 @@ type Story = StoryObj<typeof ProgressBar>;
 
 export const Playground: Story = {
   name: "Playground",
+  tags: ["!dev"],
   render: (args) => ({
     components: { ProgressBar },
     setup: () => ({ args }),

@@ -361,7 +361,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import { _genUrl } from "../../../utilities/genUrl";
+import { _genUrl } from "../../../../library/utilities/genUrl";
 import { getAppLinks } from "../../../../library";
 import NodeDetailsSimple from "./NodeDetailsSimple.vue";
 import NodeRemoteEdit from "./NodeRemoteEdit.vue";
@@ -533,8 +533,8 @@ export default defineComponent({
     },
 
     triggerNodeRemoteEdit(node: Node) {
-      if (node.attributes["remoteUrl"]) {
-        this.remoteUrl = node.attributes["remoteUrl"];
+      if (node.attributes && node.attributes["remoteUrl"]) {
+        this.remoteUrl = node.attributes["remoteUrl"]!;
         this.remoteEditNodename = node.nodename;
       }
     },

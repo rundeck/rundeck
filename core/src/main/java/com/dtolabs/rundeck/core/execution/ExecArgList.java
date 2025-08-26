@@ -174,26 +174,50 @@ public class ExecArgList {
         return commandList;
     }
 
+    /**
+     * Generate the quoted and expanded argument list, by expanding property values given the data context, and quoting
+     * for the given OS or escaping characters when the command interpreter is specified as CMD.
+     *
+     * @param sharedContext       property value data context
+     * @param nodeName            node name
+     * @param osFamily            OS family to determine quoting
+     * @param commandInterpreter  command interpreter to use for quoting
+     *
+     * @return list of strings
+     */
     public ArrayList<String> buildCommandForNode(
             MultiDataContext<ContextView, DataContext> sharedContext,
-            String nodeName, String osFamily
+            String nodeName, String osFamily, String commandInterpreter
     )
     {
-        return buildCommandForNode(this, sharedContext, nodeName, osFamily);
+        return buildCommandForNode(this, sharedContext, nodeName, osFamily, commandInterpreter);
     }
 
+    /**
+     * Generate the quoted and expanded argument list, by expanding property values given the data context, and quoting
+     * for the given OS or escaping characters when the command interpreter is specified as CMD.
+     *
+     * @param command             ExecArgList to build
+     * @param sharedContext       property value data context
+     * @param nodeName            node name
+     * @param osFamily            OS family to determine quoting
+     * @param commandInterpreter  command interpreter to use for quoting
+     *
+     * @return list of strings
+     */
     private static ArrayList<String> buildCommandForNode(
             ExecArgList command,
             MultiDataContext<ContextView, DataContext> sharedContext,
             String nodeName,
-            String osFamily
+            String osFamily,
+            String commandInterpreter
     )
     {
 
         final ArrayList<String> commandList = new ArrayList<>();
         CommandVisitor visiter = new CommandVisitor(
                 commandList,
-                CLIUtils.argumentQuoteForOperatingSystem(osFamily),
+                CLIUtils.argumentQuoteForOperatingSystem(osFamily, commandInterpreter),
                 str -> SharedDataContextUtils.replaceDataReferences(
                         str,
                         sharedContext,

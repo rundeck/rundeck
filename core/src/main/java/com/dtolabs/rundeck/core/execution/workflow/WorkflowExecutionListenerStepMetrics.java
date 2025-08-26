@@ -52,7 +52,7 @@ public class WorkflowExecutionListenerStepMetrics implements WorkflowExecutionLi
 
     @Override
     public void finishStepExecution(StepExecutor executor, StatusResult result, StepExecutionContext context, StepExecutionItem item) {
-        if(result.isSuccess()) {
+        if(result != null && result.isSuccess()) {
             workflowMetricsWriter.markMeterStepMetric(this.getClass().getName(), "finishWorkflowStepSucceededMeter");
         } else {
             workflowMetricsWriter.markMeterStepMetric(this.getClass().getName(), "finishWorkflowStepFailedMeter");

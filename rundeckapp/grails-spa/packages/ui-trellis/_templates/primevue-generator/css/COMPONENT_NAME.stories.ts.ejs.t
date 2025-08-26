@@ -11,9 +11,7 @@ const meta: Meta<typeof <%=componentName%>> = {
   title: "<%=componentName%>",
   component: <%=componentName%>,
   parameters: {
-    docs: {
-        componentSubtitle: "A brief description of the <%=componentName%> component",
-    },
+    componentSubtitle: "A brief description of the <%=componentName%> component",
     actions: {
       disable: true,
     },
@@ -46,10 +44,11 @@ type Story = StoryObj<typeof <%=componentName%>>;
 // TODO: manually wire the props to the component name, so that the source will update correctly in the story
 export const Playground: Story = {
   name: "Playground",
+  tags: ["!dev"],
   render: (args) => ({
       components: { <%=componentName%> },
       setup: () => ({ args }),
-      template: <<%=componentName%>  />,
+      template: `<<%=componentName%>></<%=componentName%>>`,
     }),
 };
 

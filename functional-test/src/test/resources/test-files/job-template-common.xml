@@ -5,6 +5,8 @@
         <group>xml-job-group-name</group>
         <description>xml-job-description-name</description>
         <loglevel>INFO</loglevel>
+        <jobQueueEnabled>xml-queue-enabled</jobQueueEnabled>
+        <jobQueueSizeLimit>xml-queue-size</jobQueueSizeLimit>
         <context>
             <project>xml-project-name</project>
             <options>

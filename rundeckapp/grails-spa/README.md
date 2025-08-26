@@ -30,8 +30,8 @@ nvm use
 
 ### Setup
 
-* In the `rundeck-runtime/server/config/rundeck-config.properties` file
-add `grails.cors.enabled=true` to allow Storybook access to the API.
+
+* In the [`rundeck-runtime/server/config/rundeck-config.properties`](../rundeck-runtime/server/config/rundeck-config.properties) file add `grails.cors.enabled=true` to allow Storybook access to the API.
 * Start Rundeck in development mode.
 * Enter the `./packages/ui-trellis` directory; this will be your workdir.
 * Copy `.env.dist` to `.env` and replace the values to match your environment:  

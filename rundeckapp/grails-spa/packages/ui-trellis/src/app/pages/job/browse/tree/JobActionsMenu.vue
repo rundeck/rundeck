@@ -1,12 +1,13 @@
 <template>
   <dropdown
     v-if="authz"
-    class="btn-group pull-right visibility-hidden"
-    menu-right
+    class="btn-group"
+    :class="{ 'pull-right': pullRight, 'visibility-hidden': showOnHover }"
+    :menu-right="pullRight"
     append-to-body
   >
     <btn size="xs" class="dropdown-toggle" :data-job-id="job.id">
-      {{ $t("actions") }}
+      <template v-if="showButtonTitle">{{ $t("actions") }}</template>
       <span class="caret"></span>
     </btn>
     <template #dropdown>
@@ -19,7 +20,7 @@
           {{ $t("scheduledExecution.action.edit.button.label") }}
         </a>
       </li>
-      <li v-if="authz['read'] && authz['create']">
+      <li v-if="authz['read'] && authz['create'] && authProjJobCreate">
         <a
           :title="$t('scheduledExecution.action.duplicate.button.tooltip')"
           :href="duplicateHref"
@@ -42,7 +43,7 @@
       </li>
 
       <li class="divider"></li>
-      <li v-if="authz['delete']">
+      <li v-if="authz['delete'] && authProjJobDelete">
         <a
           :title="$t('delete.this.job')"
           :href="deleteHref"
@@ -125,6 +126,15 @@
           </a>
         </li>
       </template>
+      <template v-if="authProjEventRead && authz['read']">
+        <li class="divider"></li>
+        <li>
+          <a :href="activityPageHref()">
+            <b class="fas fa-history"></b>
+            {{ $t("scheduledExecution.action.activity.button.label") }}
+          </a>
+        </li>
+      </template>
       <job-scm-actions :job="job"></job-scm-actions>
       <ui-socket
         location="job-actions-menu"
@@ -140,8 +150,12 @@
 import JobScmActions from "@/app/pages/job/browse/tree/JobScmActions.vue";
 import { getRundeckContext } from "@/library";
 import UiSocket from "@/library/components/utils/UiSocket.vue";
+import {
+  JobPageStore,
+  JobPageStoreInjectionKey,
+} from "@/library/stores/JobPageStore";
 import { JobBrowseItem, JobBrowseMeta } from "@/library/types/jobs/JobBrowse";
-import { defineComponent } from "vue";
+import { defineComponent, inject } from "vue";
 const context = getRundeckContext();
 export default defineComponent({
   name: "JobActionsMenu",
@@ -151,6 +165,24 @@ export default defineComponent({
       type: Object,
       default: () => {},
     },
+    showButtonTitle: {
+      type: Boolean,
+      default: true,
+    },
+    showOnHover: {
+      type: Boolean,
+      default: true,
+    },
+    pullRight: {
+      type: Boolean,
+      default: true,
+    },
+  },
+
+  setup() {
+    return {
+      jobPageStore: inject(JobPageStoreInjectionKey) as JobPageStore,
+    };
   },
   computed: {
     job(): JobBrowseItem {
@@ -168,8 +200,17 @@ export default defineComponent({
       const schedule = this.findJobMeta("schedule");
       return schedule && schedule.executionEnabled;
     },
-    authz(): Object | undefined {
+    authz(): object | undefined {
       return this.findJobMeta("authz");
+    },
+    authProjEventRead(): boolean {
+      return this.jobPageStore.projTypesAuthz?.event?.read || false;
+    },
+    authProjJobDelete(): boolean {
+      return this.jobPageStore.projTypesAuthz?.job?.delete || false;
+    },
+    authProjJobCreate(): boolean {
+      return this.jobPageStore.projTypesAuthz?.job?.create || false;
     },
     editHref() {
       return `${context.rdBase}project/${context.projectName}/job/edit/${this.job.id}`;
@@ -201,9 +242,11 @@ export default defineComponent({
       return this.job?.meta?.find((meta: JobBrowseMeta) => meta.name === key)
         ?.data;
     },
-
     downloadFormatHref(format: string) {
-      return `${context.rdBase}project/${context.projectName}/job/show/${this.job.id}?format=${format}`;
+      return `${context.rdBase}project/${context.projectName}/job/show/${this.job.id}?format=${encodeURIComponent(format)}`;
+    },
+    activityPageHref() {
+      return `${context.rdBase}project/${context.projectName}/activity?jobIdFilter=${encodeURIComponent(this.job.id)}`;
     },
     action(name: string) {
       context.eventBus.emit(`job-action-single`, { name, job: this.job });
@@ -212,4 +255,8 @@ export default defineComponent({
 });
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.btn-group {
+  margin-right: var(--spacing-2);
+}
+</style>

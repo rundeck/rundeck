@@ -8,11 +8,6 @@ const mountOptionUsagePreview = async (
     props: {
       ...options,
     },
-    global: {
-      mocks: {
-        $t: (msg: string) => msg,
-      },
-    },
     components: {},
   });
 

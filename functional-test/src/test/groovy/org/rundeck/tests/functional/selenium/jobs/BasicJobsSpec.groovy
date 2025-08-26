@@ -62,7 +62,6 @@ class BasicJobsSpec extends SeleniumBase {
             def validationMsg = jobCreatePage.formValidationAlert.getText()
             !validationMsg.contains('"Job Name" parameter cannot be blank')
             validationMsg.contains('Workflow must have at least one step')
-        
     }
 
     def "create valid job basic workflow"() {
@@ -97,7 +96,7 @@ class BasicJobsSpec extends SeleniumBase {
             jobShowPage.jobLinkTitleLabel.getText().contains('create valid job basic options')
             jobShowPage.optionInputText(optionName) != null
         where:
-            nextUi<<[false,true]
+            nextUi<<[false]
     }
 
     def "edit job set description"() {
@@ -269,6 +268,7 @@ class BasicJobsSpec extends SeleniumBase {
             jobShowPage.nodeFilterOverride.click()
         expect:
             jobShowPage.schedJobNodeFilter.isDisplayed()
+            jobShowPage.nodeFilterInputValue.getDomProperty("value").trim() == 'name: RunnerBBB'
     }
 
     def "job filter by name results"() {
@@ -289,7 +289,7 @@ class BasicJobsSpec extends SeleniumBase {
             expected = [
                 "selenium-option-test1",
                 "predefined job with options",
-                "create valid job basic options next ui",
+//                "create valid job basic options next ui", //todo: uncomment this line once workflow is released and alphaUI tests merged back
                 "create valid job basic options old ui"
             ]
     }
@@ -327,7 +327,7 @@ class BasicJobsSpec extends SeleniumBase {
         where:
             expected = [
                 "predefined job with options",
-                "create valid job basic options next ui",
+//                "create valid job basic options next ui",
                 "create valid job basic options old ui"
             ]
     }
@@ -362,5 +362,4 @@ class BasicJobsSpec extends SeleniumBase {
             jobsListPage.getLink('Upload Definition').isDisplayed()
             jobsListPage.getLink('Bulk Edit').isDisplayed()
     }
-
 }

@@ -24,6 +24,7 @@ import { ScmTextUtilities } from "@/library/utilities/scm/scmTextUtilities";
 
 export default defineComponent({
   name: "JobScmStatus",
+  inheritAttrs: false,
   props: {
     itemData: {
       type: Object,

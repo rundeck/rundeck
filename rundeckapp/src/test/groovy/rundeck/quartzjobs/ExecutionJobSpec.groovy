@@ -143,7 +143,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
         then:
             1 * jobSchedulerService.beforeExecution(_, _, _) >> JobScheduleManager.BeforeExecutionBehavior.proceed
             1 * jobSchedulerService.afterExecution(_, _, _)
-            1 * es.saveExecutionState(se.uuid, e.id, { it.status == 'failed' }, null, !null)
+            1 * es.saveExecutionState_newTransaction(se.uuid, e.id, { it.status == 'failed' }, null, !null)
             job.executionId == e.id
     }
 
@@ -775,7 +775,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
         )
         when:
 
-        def result=executionJob.executeCommand(runContext)
+        def result=executionJob.executeCommand(runContext, Mock(JobExecutionContext))
 
         then:
         1 * es.avgDurationExceeded(_, content) >> {

@@ -2890,7 +2890,7 @@ Note: the JSON schema also supports a basic JSON array
         method = "GET",
         summary = "Execution Query",
         description = """Query for Executions based on Job or Execution details.""",
-        tags = ["execution","project"],
+        tags = ["execution"],
         parameters = [
             @Parameter(in=ParameterIn.PATH,name="project",description="Project name",schema=@Schema(type="string"),required = true),
             @Parameter(in=ParameterIn.QUERY,name="statusFilter",description="Execution status",schema=@Schema(type="string",allowableValues = ["running","succeeded", "failed" , "aborted"])),

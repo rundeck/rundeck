@@ -26,6 +26,7 @@
     <asset:javascript src="menu/jobs.next.js"/>
     <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
     <asset:javascript src="static/pages/job/browse.js" defer="defer"/>
+    <asset:javascript src="static/pages/nodes.js" defer="defer"/>
     <asset:stylesheet href="static/css/pages/job/browse.css" />
 
     <g:jsMessages code="Node,Node.plural,job.starting.execution,job.scheduling.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text,option.select.choose.text"/>
@@ -236,6 +237,7 @@
 })
     </g:javascript>
     <g:embedJSON id="pageQueryParams" data="${[queryParams:params]}"/>
+    <g:embedJSON id="pageParams" data="${[project: params.project?:request.project]}"/>
 </head>
 
 <body>

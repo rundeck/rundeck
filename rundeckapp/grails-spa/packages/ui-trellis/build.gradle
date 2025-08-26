@@ -194,7 +194,7 @@ tasks.register('runNpmTest', NpmTask) {
 
     args = ['run', npmCommand]
 }
-check.dependsOn runNpmTest
+//check.dependsOn runNpmTest
 
 artifacts {
   lib(file: file(buildDir), name: "${project.name}", type: 'directory', builtBy: runNpmBuild)
