@@ -107,6 +107,33 @@ class ExportImportSpec extends SeleniumBase {
         jobCreatePage.optDetails.size() == 1
         jobCreatePage.options.size() == 1
     }
+    def "import job with skip should show skip message"() {
+        setup:
+        def jobCreatePage = go JobCreatePage, SELENIUM_EXPORT_IMPORT_PROJECT
+        def jobShowPage = page JobShowPage
+        def jobListPage = page JobListPage
+        def jobUploadPage = page JobUploadPage
+        def sideBarPage = page SideBarPage
+        def jobName = 'ImportJobWithSkip'
+        when: "create basic job"
+        jobCreatePage.fillBasicJob jobName
+        jobCreatePage.createJobButton.click()
+        then: "job created"
+        jobShowPage.validatePage()
+        jobShowPage.getLink "Action" click()
+        jobShowPage.getLink "Download Job definition in YAML" click()
+        !jobListPage.jobList.isEmpty()
+        when: "upload job with dupe option skip"
+        jobListPage.getLink "Upload a Job definition" click()
+        jobUploadPage.loadPathToUploadPage SELENIUM_EXPORT_IMPORT_PROJECT
+        jobUploadPage.validatePage()
+        jobUploadPage.fileInputElement().sendKeys("${downloadFolder}${getSeparator()}${jobName}.yaml")
+        jobUploadPage.dupeOptionSkip().click()
+        jobUploadPage.fileUploadButtonElement().click()
+        then:
+        jobUploadPage.headerTextInfo.text.contains("1 Job was skipped")
+
+    }
 
     def cleanup() {
         deleteProject(SELENIUM_EXPORT_IMPORT_PROJECT)
