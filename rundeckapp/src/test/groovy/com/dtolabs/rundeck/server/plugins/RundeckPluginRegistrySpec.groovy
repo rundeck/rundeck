@@ -1072,7 +1072,7 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
                 .name('plugin3')
                 .property(PropertyBuilder.builder().string('prop1').build())
                 .property(PropertyBuilder.builder().string('prop2').build())
-                .metadata(ExecutionEnvironmentConstants.EXCLUDE_PROVIDER_LIST_KEY, "true")
+                .metadata(ExecutionEnvironmentConstants.INTERNAL_USE_ONLY, "true")
                 .build()
 
         def testPlugin1 = new TestPluginWithAnnotation()

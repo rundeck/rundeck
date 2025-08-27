@@ -695,8 +695,8 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                     Map<String, String> describedMeta = desc?.metadata ?: [:]
 
                     boolean exclude = false
-                    if(describedMeta?.containsKey(ExecutionEnvironmentConstants.EXCLUDE_PROVIDER_LIST_KEY) ) {
-                        exclude = Boolean.parseBoolean(describedMeta[ExecutionEnvironmentConstants.EXCLUDE_PROVIDER_LIST_KEY])
+                    if(describedMeta?.containsKey(ExecutionEnvironmentConstants.INTERNAL_USE_ONLY) ) {
+                        exclude = Boolean.parseBoolean(describedMeta[ExecutionEnvironmentConstants.INTERNAL_USE_ONLY])
                     }
 
                     if(exclude) {
