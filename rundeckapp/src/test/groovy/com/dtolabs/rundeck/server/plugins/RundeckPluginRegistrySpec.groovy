@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.execution.service.NodeExecutor
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.plugins.*
 import com.dtolabs.rundeck.core.plugins.configuration.*
+import com.dtolabs.rundeck.plugins.ExecutionEnvironmentConstants
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.plugins.config.ConfiguredBy
@@ -1050,6 +1051,68 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         def actual = registry.loadBeanDescriptor("mystreamingreader","StreamingLogReader")
         then:
         actual
+
+    }
+
+    def "list plugin, one plugin exclude by using metadata EXCLUDE_PROVIDER_LIST_KEY "(){
+        given:
+        def description1 = DescriptionBuilder.builder()
+                .name('plugin1')
+                .property(PropertyBuilder.builder().string('prop1').build())
+                .property(PropertyBuilder.builder().string('prop2').build())
+                .build()
+
+        def description2 = DescriptionBuilder.builder()
+                .name('plugin2')
+                .property(PropertyBuilder.builder().string('prop1').build())
+                .property(PropertyBuilder.builder().string('prop2').build())
+                .build()
+
+        def description3 = DescriptionBuilder.builder()
+                .name('plugin3')
+                .property(PropertyBuilder.builder().string('prop1').build())
+                .property(PropertyBuilder.builder().string('prop2').build())
+                .metadata(ExecutionEnvironmentConstants.EXCLUDE_PROVIDER_LIST_KEY, "true")
+                .build()
+
+        def testPlugin1 = new TestPluginWithAnnotation()
+        testPlugin1.description = description1
+
+        def testPlugin2 = new TestPluginWithAnnotation2()
+        testPlugin2.description = description2
+
+        def testPlugin3 = new TestPluginWithAnnotation2()
+        testPlugin3.description = description3
+
+        def beanBuilder1 = new TestBuilder2(instance: testPlugin1)
+        def beanBuilder2 = new TestBuilder3(instance: testPlugin2)
+        def beanBuilder3 = new TestBuilder3(instance: testPlugin3)
+
+        defineBeans {
+            testBeanBuilder(InstanceFactoryBean, beanBuilder1)
+            testBeanBuilder2(InstanceFactoryBean, beanBuilder2)
+            testBeanBuilder3(InstanceFactoryBean, beanBuilder3)
+        }
+        def sut = new RundeckPluginRegistry()
+        sut.pluginDirectory = File.createTempDir('test', 'dir')
+        sut.applicationContext = applicationContext
+        sut.pluginRegistryMap = ['aservicename:plugin1': 'testBeanBuilder', 'otherservice:plugin2': 'testBeanBuilder2', 'otherservice:plugin3': 'testBeanBuilder3']
+        sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+        FileReader reader = Mock(FileReader)
+        sut.rundeckPluginBlocklist = Mock(RundeckPluginBlocklist){
+        }
+        def svc = Mock(PluggableProviderService){
+            getName() >> "otherservice"
+        }
+
+        when:
+        def result = sut.listPluginDescriptors(APluginType, svc)
+
+        then:
+        result.size() == 1
+        result["plugin1"] == null
+        result["plugin2"].description == description2
+        result["plugin3"] == null
 
     }
 
