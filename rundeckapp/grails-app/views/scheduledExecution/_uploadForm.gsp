@@ -95,35 +95,38 @@
     <g:if test="${skipjobs}">
       <div class="row">
         <div class="col-sm-12">
-          <div class="batchresset">
-            <span class="prompt info"><g:enc>${skipjobs.size()}</g:enc> <g:message code="domain.ScheduledExecution.title"/><g:enc>${skipjobs.size()==1?' was':'s were'}</g:enc> skipped due to existing jobs with the same name</span>
-            <div class="presentation">
+          <div class="card">
+            <div class="card-header text-info">
+              <g:icon name="info-sign"/> <g:enc>${skipjobs.size()}</g:enc> <g:message code="domain.ScheduledExecution.title"/><g:enc>${skipjobs.size()==1?' was':'s were'}</g:enc> skipped due to existing jobs with the same name
+            </div>
+            <div class="card-content">
               <g:if test="${skipjobs.size()>0}">
-                <table cellpadding="0" cellspacing="0" style="width: 700px;" class="jobsList">
+                <div>
                   <% def j=0 %>
                   <g:each in="${skipjobs}" var="entry">
                     <g:set var="scheduledExecution" value="${entry.scheduledExecution}"/>
                     <g:set var="entrynum" value="${entry.entrynum}"/>
-                    <tr class=" ${j%2==1?'alternateRow':'normalRow'}">
-                      <td>#<g:enc>${entrynum}</g:enc>:</td>
-                      <td class="jobname" >
+                    <div class="flex-container flex-justify-space-between flex-align-items-stretch">
+                      <div>#<g:enc>${entrynum}</g:enc>:
+                      <span class="jobname" >
                           <g:enc>${scheduledExecution.jobName}</g:enc>
-                      </td>
-                      <td class="jobdesc" style=""><g:enc>${scheduledExecution.description?.size()>100?scheduledExecution.description.substring(0,100):scheduledExecution.description}</g:enc></td>
-                      <td class="sepL">
+                      </span>
+                      <span class="jobdesc" style=""><g:enc>${scheduledExecution.description?.size()>100?scheduledExecution.description.substring(0,100):scheduledExecution.description}</g:enc></span>
+                      <span class="sepL">
                           Existing:
-                      </td>
-                      <td class="jobname">
+                      </span>
+                      <span class="jobname">
                           <g:if test="${scheduledExecution.id}">
                               <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.extid}"><g:enc>${scheduledExecution.jobName}</g:enc></g:link >
                           </g:if>
-                      </td>
-                      <td class="jobdesc">
-                          <g:enc>${scheduledExecution.origDescription.size()>100?scheduledExecution.origDescription.substring(0,100):scheduledExecution.origDescription}</g:enc>
-                      </td>
-                    </tr>
+                      </span>
+                      <span class="jobdesc">
+                          <g:enc>${scheduledExecution.description.size()>100?scheduledExecution.description.substring(0,100):scheduledExecution.description}</g:enc>
+                      </span>
+                    </div>
+                    </div>
                   </g:each>
-                </table>
+                </div>
               </g:if>
             </div>
           </div>
