@@ -1,12 +1,21 @@
 <script lang="ts">
+import JobBulkEditControls from '@/app/pages/job/browse/JobBulkEditControls.vue'
+import {getRundeckContext} from '@/library'
+import {JobPageStore, JobPageStoreInjectionKey} from '@/library/stores/JobPageStore'
 import { JobBrowseItem } from "@/library/types/jobs/JobBrowse";
 import BrowserJobItem from "../browse/tree/BrowserJobItem.vue";
-import { defineComponent } from "vue";
-import { api } from "../../../../library/services/api";
+import {defineComponent, inject} from 'vue'
 import { RecycleScroller } from "vue-virtual-scroller";
+
+const rootStore = getRundeckContext().rootStore;
 export default defineComponent({
   name: "JobUploadPage",
-  components: { RecycleScroller, BrowserJobItem },
+  components: {JobBulkEditControls, RecycleScroller, BrowserJobItem },
+  setup() {
+    return {
+      jobPageStore: inject(JobPageStoreInjectionKey) as JobPageStore,
+    }
+  },
   data() {
     return {
       fileformat: "xml",
@@ -35,6 +44,9 @@ export default defineComponent({
         id: job.id,
       }));
     },
+  },
+  async mounted(){
+    await this.jobPageStore.loadProjAuthz();
   },
   created() {
     // Fallback to RD_PROJECT if available
@@ -121,7 +133,9 @@ export default defineComponent({
         if (response.data.skipped) {
           this.skipjobs = response.data.skipped;
         }
+
         //clear the file input
+        this.selectedFile = null;
         const fileInput = document.getElementById(
           "xmlBatch",
         ) as HTMLInputElement;
@@ -137,6 +151,12 @@ export default defineComponent({
         }
       } finally {
         this.uploading = false;
+      }
+    },
+    bulkActionPerformed(info:any){
+      debugger
+      if(info.action==='delete'){
+        this.jobs = this.jobs.filter(job=>!info.jobs.find((j)=>j.id===job.id));
       }
     },
     setError(message: string) {
@@ -261,6 +281,7 @@ export default defineComponent({
             >
           </div>
           <div class="card-content">
+            <JobBulkEditControls :show-controls="false" @bulk-action-complete="bulkActionPerformed"/>
             <ul class="list-unstyled">
               <RecycleScroller
                 ref="scroller"
@@ -275,7 +296,7 @@ export default defineComponent({
                 <browser-job-item
                   v-if="item.id"
                   :job="item"
-                  :load-meta="true"
+                  :auto-load-meta="true"
                 />
               </RecycleScroller>
             </ul>
@@ -555,7 +576,4 @@ export default defineComponent({
   margin-bottom: 0.5rem;
 }
 
-.mt-2 {
-  margin-top: 1rem;
-}
 </style>
