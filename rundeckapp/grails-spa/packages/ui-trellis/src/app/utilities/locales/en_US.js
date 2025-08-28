@@ -1106,6 +1106,7 @@ const messages = {
     button: {
       cancel: "Cancel",
       upload: "Upload",
+      uploadAnother: "Upload Another Job Definition File...",
     },
     uploadingFile: "Uploading File...",
     jobs: "Job | Jobs",
