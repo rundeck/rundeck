@@ -56,6 +56,7 @@ module.exports = {
     "pages/job/editor": { entry: "./src/app/pages/job/editor/main.js" },
     "pages/nodes": { entry: "./src/app/pages/nodes/main.ts" },
     "pages/job/browse": { entry: "./src/app/pages/job/browse/main.ts" },
+    "pages/job/upload": { entry: "./src/app/pages/job/upload/main.ts" },
     "pages/home": { entry: "./src/app/pages/home/main.ts" },
     "pages/job/head/scm-action-buttons": {
       entry: "./src/app/pages/job/head/scm/scm-action-buttons.ts",
