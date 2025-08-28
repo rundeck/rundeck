@@ -565,7 +565,6 @@ export default defineComponent({
         53;
 
       const resp = await this.rundeckContext.rundeckClient.sendRequest({
-        // ✅ new project-scoped API route (matches the @Post you added)
         pathTemplate: `/api/${apiVersion}/project/${encodeURIComponent(project)}/plugins/save`,
         baseUrl: this.rdBase,
         method: "POST",
