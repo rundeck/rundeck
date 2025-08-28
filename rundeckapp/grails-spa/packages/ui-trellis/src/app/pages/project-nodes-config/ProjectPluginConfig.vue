@@ -513,14 +513,21 @@ export default defineComponent({
         if (result.success) {
           this.didSave(true);
           this.notifySuccess("Success", "Configuration Saved");
-          this.configOrig = result.data.plugins;
-          //copy
-          this.pluginConfigs = this.configOrig.map(this.createConfigEntry);
+
+          // only use server-returned plugins if it's a real array;
+          // otherwise keep what you already have (prevents clearing the list)
+          const nextPlugins = Array.isArray(result?.data?.plugins)
+            ? result.data.plugins
+            : this.configOrig;
+
+          this.configOrig = nextPlugins;
+          this.pluginConfigs = nextPlugins.map(this.createConfigEntry);
+
           this.pluginConfigsModifiedReset();
           this.$emit("saved", result);
         }
       } catch (error) {
-        //@ts-ignore
+        // @ts-ignore
         this.notifyError(error.message, []);
       }
     },
