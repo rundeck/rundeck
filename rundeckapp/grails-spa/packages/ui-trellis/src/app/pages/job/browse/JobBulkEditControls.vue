@@ -220,6 +220,7 @@ export default defineComponent({
       default: true,
     },
   },
+  emits: ["bulk-action-complete"],
   setup(props) {
     const jobBrowserStore: JobBrowserStore = inject(
       JobBrowserStoreInjectionKey,
@@ -262,6 +263,10 @@ export default defineComponent({
           content: this.$t(`job.bulk.${this.bulkConfirmAction}.success`, [
             this.jobPageStore.selectedJobs.length,
           ]),
+        });
+        this.$emit("bulk-action-complete", {
+          action: this.bulkConfirmAction,
+          jobs: this.jobPageStore.selectedJobs,
         });
       } catch (e) {
         Notification.notify({
