@@ -509,6 +509,7 @@ export default defineComponent({
                   type="submit"
                   name="Upload"
                   class="btn btn-cta"
+                  :disabled="!selectedFile"
                 >
                   {{ $t("jobUpload.button.upload") }}
                 </button>
