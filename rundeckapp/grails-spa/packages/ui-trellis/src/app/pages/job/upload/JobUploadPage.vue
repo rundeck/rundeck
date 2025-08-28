@@ -185,14 +185,15 @@ export default defineComponent({
             {{ $t("jobUpload.results.error.definitionErrors") }}
           </div>
           <div class="card-content">
-            <div
+            <ul
               v-for="(job, index) in errjobs"
               :key="index"
-              class="flex-container flex-justify-space-between flex-align-items-stretch"
+              class="list-unstyled "
             >
-              <div>
-                #{{ job.index }}:
+              <li class="flow-h">
+
                 <span class="jobname">
+                #{{ job.index }}:
                   <a v-if="job.id" :href="job.permalink">{{
                     job.name || "(Name missing)"
                   }}</a>
@@ -203,11 +204,11 @@ export default defineComponent({
                     ? job.description.substring(0, 100)
                     : job.description
                 }}</span>
-              </div>
-              <div class="errors">
-                <template v-if="job.error">{{ job.error }}</template>
-              </div>
-            </div>
+                <div class="errors">
+                  <template v-if="job.error">{{ job.error }}</template>
+                </div>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
@@ -228,32 +229,31 @@ export default defineComponent({
             {{ $t("jobUpload.results.skipped.skippedMessage") }}
           </div>
           <div class="card-content">
-            <div
+            <li
               v-for="(job, index) in skipjobs"
               :key="index"
-              class="flex-container flex-justify-space-between flex-align-items-stretch"
+              class="list-unstyled "
             >
-              <div>
-                #{{ job.index }}:
-                <span class="jobname">{{ job.name }}</span>
+              <li class="flow-h">
+
+                <span class="jobname">#{{ job.index }}: {{ job.name }}</span>
                 <span class="jobdesc" style="">{{
-                  job.description && job.description.length > 100
-                    ? job.description.substring(0, 100)
-                    : job.description
-                }}</span>
+                    job.description && job.description.length > 100
+                      ? job.description.substring(0, 100)
+                      : job.description
+                  }}</span>
                 <span class="sepL">{{
-                  $t("jobUpload.results.skipped.existing")
-                }}</span>
+                    $t('jobUpload.results.skipped.existing')
+                  }}</span>
                 <span class="jobname">
-                  <a v-if="job.id" :href="job.permalink">{{ job.name }}</a>
-                </span>
+                <a v-if="job.id" :href="job.permalink">{{ job.name }}</a>
+              </span>
                 <span class="jobdesc">{{
-                  job.description && job.description.length > 100
-                    ? job.description.substring(0, 100)
-                    : job.description
-                }}</span>
-              </div>
-            </div>
+                    job.description && job.description.length > 100
+                      ? job.description.substring(0, 100)
+                      : job.description
+                  }}</span></li>
+            </li>
           </div>
         </div>
       </div>
@@ -521,7 +521,7 @@ export default defineComponent({
                 <i class="fas fa-spinner fa-spin"></i>
                 {{ $t("jobUpload.uploadingFile") }}
               </div>
-              <div v-if="error" class="alert alert-danger mt-2">
+              <div v-if="error" class="alert alert-danger ">
                 {{ error }}
               </div>
             </div>
@@ -533,42 +533,10 @@ export default defineComponent({
 </template>
 
 <style scoped lang="scss">
-.card {
-  margin-bottom: 1rem;
-}
 
-.card-header {
-  font-weight: bold;
-  padding: 0.75rem 1rem;
-}
 
-.card-content {
-  padding: 1rem;
-}
-
-.card-footer {
-  padding: 0.75rem 1rem;
-}
-
-.flex-container {
-  display: flex;
-}
-
-.flex-justify-space-between {
-  justify-content: space-between;
-}
-
-.flex-align-items-stretch {
-  align-items: stretch;
-}
-
-.radio {
-  margin-bottom: 0.5rem;
-}
-
-.text-form-label {
-  font-weight: bold;
-  margin-bottom: 0.5rem;
+.flow-h > * + * {
+  margin-left: var(--spacing-2);
 }
 
 </style>
