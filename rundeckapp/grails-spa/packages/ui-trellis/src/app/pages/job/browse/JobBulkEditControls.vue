@@ -4,7 +4,7 @@
       <ui-socket section="job-list-page" location="card-header" />
     </div>
     <div class="flex col flex-justify-end">
-      <div class="bulk_edit_controls">
+      <div v-if="showControls" class="bulk_edit_controls">
         <ui-socket section="job-list-page" location="status-item" />
 
         <job-list-scm-status class="status-item" />
@@ -213,6 +213,12 @@ export default defineComponent({
     UiSocket,
     JobListScmActions,
     Notification,
+  },
+  props: {
+    showControls: {
+      type: Boolean,
+      default: true,
+    },
   },
   setup(props) {
     const jobBrowserStore: JobBrowserStore = inject(
