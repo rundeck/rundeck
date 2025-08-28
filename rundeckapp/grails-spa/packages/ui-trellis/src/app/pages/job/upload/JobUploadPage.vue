@@ -17,7 +17,7 @@ export default defineComponent({
       uploading: false,
       selectedFile: null,
       // Response data
-      messages: [],
+      errors: [],
       errjobs: [],
       skipjobs: [],
       jobs: [],
@@ -61,7 +61,7 @@ export default defineComponent({
       }
 
       this.uploading = true;
-      this.error = null;
+      this.errors = [];
       this.messages = [];
       this.errjobs = [];
       this.skipjobs = [];
@@ -84,6 +84,18 @@ export default defineComponent({
             },
           },
         );
+        if (response.status !== 200) {
+          if (
+            response.status === 400 &&
+            response.data &&
+            response.data.message
+          ) {
+            this.setError(response.data.message);
+            return;
+          }
+          this.setError(`Unexpected response status: ${response.status}`);
+          return;
+        }
 
         // Process the response
         this.didupload = true;
@@ -93,6 +105,18 @@ export default defineComponent({
         }
         if (response.data.failed) {
           this.errjobs = response.data.failed;
+          if (this.errjobs.length > 0) {
+            this.setError(
+              `${this.errjobs.length} ${this.$tc(
+                "jobUpload.jobs",
+                this.errjobs.length,
+              )} ${
+                this.errjobs.length === 1
+                  ? this.$t("jobUpload.wasWere.singular")
+                  : this.$t("jobUpload.wasWere.plural")
+              } ${this.$t("jobUpload.results.error.notProcessed")}`,
+            );
+          }
         }
         if (response.data.skipped) {
           this.skipjobs = response.data.skipped;
@@ -107,13 +131,16 @@ export default defineComponent({
       } catch (error: any) {
         console.error("Error uploading jobs:", error);
         if (error.response?.data?.message) {
-          this.error = error.response.data.message;
+          this.setError(error.response.data.message);
         } else {
-          this.error = "An error occurred while uploading the file";
+          this.setError("An error occurred while uploading the file");
         }
       } finally {
         this.uploading = false;
       }
+    },
+    setError(message: string) {
+      this.errors.push(message);
     },
     cancel() {
       // Redirect to jobs list
@@ -125,11 +152,11 @@ export default defineComponent({
 
 <template>
   <div class="container-fluid">
-    <!-- Display messages if any -->
-    <div v-if="messages && messages.length" class="row">
+    <!-- Display errors if any -->
+    <div v-if="errors && errors.length" class="row">
       <div class="col-sm-12">
-        <div class="alert alert-info">
-          <div v-for="(msg, index) in messages" :key="index">{{ msg }}</div>
+        <div class="alert alert-danger">
+          <div v-for="(msg, index) in errors" :key="index">{{ msg }}</div>
         </div>
       </div>
     </div>
@@ -137,18 +164,6 @@ export default defineComponent({
     <!-- Display error jobs if any -->
     <div v-if="errjobs && errjobs.length" class="row">
       <div class="col-sm-12">
-        <div class="alert alert-danger">
-          <span class="prompt errors"
-            >{{ errjobs.length }}
-            {{ $tc("jobUpload.jobs", errjobs.length) }}
-            {{
-              errjobs.length === 1
-                ? $t("jobUpload.wasWere.singular")
-                : $t("jobUpload.wasWere.plural")
-            }}
-            {{ $t("jobUpload.results.error.notProcessed") }}</span
-          >
-        </div>
         <div class="card">
           <div class="card-header text-danger">
             <i class="glyphicon glyphicon-warning-sign"></i>
