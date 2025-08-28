@@ -44,13 +44,13 @@ function init() {
       visible: true,
       widget: markRaw(BulkSelectCheckbox),
     },
-    {
-      section: "job-browse-item",
-      location: "before-job-name",
-      order: 1,
-      visible: true,
-      widget: markRaw(JobRunButton),
-    },
+    // {
+    //   section: "job-browse-item",
+    //   location: "before-job-name",
+    //   order: 1,
+    //   visible: true,
+    //   widget: markRaw(JobRunButton),
+    // },
     {
       section: "job-browse-item",
       location: "before-job-name",
