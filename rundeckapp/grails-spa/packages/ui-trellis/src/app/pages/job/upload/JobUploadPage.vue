@@ -87,14 +87,9 @@ export default defineComponent({
         formData.append("uuidOption", this.uuidOption);
         formData.append("validateJobref", this.validateJobref);
 
-        const response = await api.post(
+        const response = await rootStore.api().post(
           `/project/${this.project}/jobs/import`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          },
+          formData
         );
         if (response.status !== 200) {
           if (
