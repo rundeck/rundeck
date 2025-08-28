@@ -259,7 +259,6 @@ dependencies {
     runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc:9.4.0.jre8'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
     runtimeOnly 'org.postgresql:postgresql:42.7.2'
-    runtimeOnly 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
 
     runtimeOnly "org.apache.tomcat:tomcat-jdbc:9.0.89"
     runtimeOnly "org.springframework:spring-jcl:${springVersion}"
@@ -609,7 +608,7 @@ publishing {
                  }
                  scm {
                      connection = 'scm:git:git@github.com/rundeck/rundeck.git'
-                     developerConnection = 'scm:git:git@github.com:rundeck/rundeck.git'
+                     developerConnection = 'scm:git:git@github.com/rundeck/rundeck.git'
                      url = 'https://github.com/rundeck/rundeck'
                  }
              }
