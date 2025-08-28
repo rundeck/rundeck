@@ -96,7 +96,7 @@ export default defineComponent({
   },
   computed: {
     loadedJob() {
-      if (this.loadMeta && this.loaded && this.loadedMeta.length > 0) {
+      if (this.loaded && this.loadedMeta.length > 0) {
         return {
           ...this.job,
           meta: this.loadedMeta,
