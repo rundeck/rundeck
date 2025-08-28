@@ -303,7 +303,19 @@ export default defineComponent({
     <!-- Upload form -->
     <div class="row">
       <div class="col-xs-12">
-        <div class="card">
+        <div v-if="didupload" class="card" >
+          <div class="card-content">
+            <button
+              id="uploadAnotherButton"
+              type="button"
+              class="btn btn-cta"
+              @click="didupload = false; error = null; errors = []"
+            >
+              {{ $t("jobUpload.button.uploadAnother") }}
+            </button>
+          </div>
+        </div>
+        <div v-if="!didupload" class="card" >
           <form class="form" role="form" @submit.prevent="submitForm">
             <div class="card-header">
               <h3 class="card-title">
