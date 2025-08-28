@@ -1600,7 +1600,7 @@ Since: v23""",
     )
     def saveProjectPluginsAjax(String project, String serviceName, String configPrefix) {
         // Require API context and minimum version, like other API endpoints here
-        if (!apiService.requireApi(request, response, ApiVersions.V23)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V55)) {
             return
         }
 

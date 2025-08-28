@@ -288,6 +288,7 @@ import PluginConfig from "../../../library/components/plugins/pluginConfig.vue";
 import pluginService from "../../../library/modules/pluginService";
 import PluginValidation from "../../../library/interfaces/PluginValidation";
 import UiSocket from "../../../library/components/utils/UiSocket.vue";
+import { api } from "@/library/services/api";
 
 interface PluginConf {
   readonly type: string;
@@ -558,56 +559,52 @@ export default defineComponent({
       data: ProjectPluginConfigEntry[],
       removedData: ProjectPluginConfigEntry[],
     ) {
-      // Grab API version from the page (fallback to 53)
-      const apiVersion =
-        (window as any)._rundeck?.apiVersion ??
-        (this as any).rundeckContext?.apiVersion ??
-        53;
+      try {
+        const res = await api.post(
+          `/project/${encodeURIComponent(project)}/plugins/save`,
+          {
+            plugins: (data ?? []).map(this.serializeConfigEntry),
+            removedPlugins: (removedData ?? []).map(this.serializeConfigEntry),
+          },
+          {
+            // keep using component fields like before
+            params: {
+              configPrefix: this.configPrefix,
+              serviceName: this.serviceName,
+              format: "json",
+            },
+          },
+        );
 
-      const resp = await this.rundeckContext.rundeckClient.sendRequest({
-        pathTemplate: `/api/${apiVersion}/project/${encodeURIComponent(project)}/plugins/save`,
-        baseUrl: this.rdBase,
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        // project is in the path now; the others stay as query params
-        queryParameters: {
-          serviceName,
-          configPrefix,
-          // only include this if your controller still checks request.format == 'json'
-          // format: "json",
-        },
-        body: {
-          plugins: data.map((e) => this.serializeConfigEntry(e)),
-          removedPlugins: removedData.map((e) => this.serializeConfigEntry(e)),
-        },
-      });
-
-      if (resp && resp.status >= 200 && resp.status < 300) {
-        return { success: true, data: resp.parsedBody };
-      }
-      if (resp && resp.status === 422) {
-        if (resp.parsedBody && resp.parsedBody.errors instanceof Array) {
-          this.errors = resp.parsedBody.errors;
-          if (resp.parsedBody.reports) {
-            const reports = resp.parsedBody.reports as { [key: string]: any };
-            this.pluginConfigs.forEach((plugin, index) => {
-              if (reports[`${index}`] !== undefined) {
-                plugin.validation = {
-                  valid: false,
-                  errors: reports[`${index}`],
-                };
-              }
-            });
+        return { success: true, data: res.data };
+      } catch (err: any) {
+        const resp = err?.response;
+        if (resp && resp.status === 422) {
+          // look for validation
+          if (resp.data && Array.isArray(resp.data.errors)) {
+            this.errors = resp.data.errors;
+            if (resp.data.reports) {
+              const reports = resp.data.reports as { [key: string]: any };
+              // console.log("reports ", resp.data.reports)
+              this.pluginConfigs.forEach((plugin, index) => {
+                if (reports[`${index}`] !== undefined) {
+                  plugin.validation = {
+                    valid: false,
+                    errors: reports[`${index}`],
+                  };
+                }
+              });
+            }
+            return { success: false };
           }
-          return { success: false };
         }
+
+        throw new Error(
+          `Error saving project configuration for ${serviceName}: Response status: ${
+            resp ? resp.status : "None"
+          }`,
+        );
       }
-      throw new Error(
-        `Error saving project configuration for ${serviceName}: Response status: ${resp ? resp.status : "None"}`,
-      );
     },
     cancelAction() {
       this.pluginConfigs = this.configOrig.map(this.createConfigEntry);

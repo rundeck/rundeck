@@ -41,6 +41,8 @@ class ApiVersions {
     public static final int V51 = 51
     public static final int V52 = 52
     public static final int V53 = 53
+    public static final int V54 = 54
+    public static final int V55 = 55
 
     // ^^^ New version is to be added above this line. ^^^
     // Ensure the constant name follows the API_VERSION_VARIABLE_NAME_PATTERN pattern.
@@ -50,9 +52,9 @@ class ApiVersions {
      * Current API version Configuration
      */
     // References the current API version
-    public final static int API_CURRENT_VERSION = V53
+    public final static int API_CURRENT_VERSION = V55
     // Hardcoded inline string constant for the current version used in API doc generation
-    public final static String API_CURRENT_VERSION_STR = "53"
+    public final static String API_CURRENT_VERSION_STR = "55"
 
     /**
      * Version span configurations

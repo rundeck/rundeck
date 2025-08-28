@@ -146,6 +146,10 @@ class UrlMappings {
         "/api/$api_version/project/$project/export"(controller: 'project', action: 'apiProjectExport') {
             async = false
         }
+
+        "/api/$api_version/project/$project/plugins/save"(controller: 'framework') {
+            action = [POST: 'saveProjectPluginsAjax']
+        }
         "/api/$api_version/project/$project/export/async"(controller: 'project', action: 'apiProjectExport') {
             async = true
         }
@@ -294,6 +298,9 @@ class UrlMappings {
             action = [GET: 'createProject', POST: 'createProjectPost']
         }
         "/resources/$action?/$id?"(controller: 'framework')
+        "/project/$project/plugins/save"(controller: 'framework') {
+            action = [POST: 'saveProjectPluginsAjax']
+        }
         "/project/$project/events/$action?/$id?(.$format)?"(controller: 'reports')
         "/project/$project/configure"(controller: 'framework', action: 'editProject')
         "/project/$project/nodes/sources"(controller: 'framework', action: 'projectNodeSources')
