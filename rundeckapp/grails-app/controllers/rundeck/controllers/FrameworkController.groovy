@@ -1536,60 +1536,109 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )
     }
 
+    @Post(uri = "/project/{project}/plugins/save")
+    @Operation(
+            method = "POST",
+            summary = "Save list-style plugin configurations for a project",
+            description = """Create/update list-based plugin configurations (e.g. Resource Model Sources).
+Authorization required: `configure` on the project.
+Since: v23""",
+            tags = ["project", "configuration"],
+            parameters = [
+                    @Parameter(
+                            name = "project",
+                            description = "Project name",
+                            required = true,
+                            in = ParameterIn.PATH,
+                            schema = @Schema(type = "string")
+                    ),
+                    @Parameter(
+                            name = "serviceName",
+                            description = "Plugin service name (e.g. `ResourceModelSource`)",
+                            required = true,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string")
+                    ),
+                    @Parameter(
+                            name = "configPrefix",
+                            description = "Property prefix (e.g. `resources.source`)",
+                            required = true,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string")
+                    )
+            ],
+            requestBody = @RequestBody(
+                    required = true,
+                    description = "Plugins payload",
+                    content = @Content(
+                            mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                            schema = @Schema(type = "object"),
+                            examples = @ExampleObject(value = """
+{
+  "plugins": [
+    { "type": "file", "config": { "file": "/path/resources.yml" }, "extra": {}, "origIndex": 0 }
+  ],
+  "removedPlugins": [
+    { "type": "stub", "origIndex": 2 }
+  ]
+}
+""")
+                    )
+            ),
+            responses = [
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Saved",
+                            content = @Content(mediaType = io.micronaut.http.MediaType.APPLICATION_JSON)
+                    ),
+                    @ApiResponse(
+                            responseCode = "422",
+                            description = "Validation errors",
+                            content = @Content(mediaType = io.micronaut.http.MediaType.APPLICATION_JSON)
+                    )
+            ]
+    )
     def saveProjectPluginsAjax(String project, String serviceName, String configPrefix) {
-        boolean valid = false
-        withForm {
-            valid = true
-            g.refreshFormTokensHeader()
-        }.invalidToken {
-            return apiService.renderErrorFormat(
-                    response, [
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    code  : 'request.error.invalidtoken.message',
-            ]
-            )
-        }
-        if (!valid) {
+        // Require API context and minimum version, like other API endpoints here
+        if (!apiService.requireApi(request, response, ApiVersions.V23)) {
             return
         }
 
-        if (request.format != 'json') {
-            return apiService.renderErrorFormat(
-                    response, [
-                    status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code  : 'api.error.item.unsupported-format',
-                    args  : [request.format]
-            ]
-            )
+        // Validate required bits
+        if (!apiService.requireParameters(params, response, ['serviceName', 'configPrefix'])) {
+            return
+        }
+        if (!apiService.requireExists(
+                response,
+                frameworkService.existsFrameworkProject(project),
+                ['project', project]
+        )) {
+            return
         }
 
-        if (!project) {
-            return renderErrorView("Project parameter is required")
-        }
-        if (!serviceName) {
-            return renderErrorView("serviceName parameter is required")
-        }
-        if (!configPrefix) {
-            return renderErrorView("configPrefix parameter is required")
-        }
-        def plugins = request.JSON.plugins
-        List removedPlugins = request.JSON.removedPlugins as List
-
+        // Authorization
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if (unauthorizedResponse(
-            rundeckAuthContextProcessor.authorizeProjectConfigure(authContext, project),
-            AuthConstants.ACTION_CONFIGURE, 'Project',project)) {
+        if (!apiService.requireAuthorized(
+                rundeckAuthContextProcessor.authorizeProjectConfigure(authContext, project),
+                response,
+                [AuthConstants.ACTION_CONFIGURE, 'Project', project]
+        )) {
             return
         }
 
-        if(removedPlugins)
+        // Parse body
+        def plugins = request.JSON?.plugins ?: []
+        List removedPlugins = (request.JSON?.removedPlugins ?: []) as List
+
+        if (removedPlugins) {
             notifyRemovedPlugins(project, removedPlugins)
+        }
 
         def errors = []
         def reports = [:]
         List<ExtPluginConfiguration> configs = []
-
         def mappedConfigs = []
+
         plugins.eachWithIndex { pluginDef, int ndx ->
             def confData = new HashMap<>(pluginDef.config ?: [:])
             mappedConfigs << [
@@ -1601,9 +1650,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     newIndex: ndx
             ]
         }
+
         final pluginDescriptions = pluginService.listPluginDescriptions(serviceName)
 
-        //replace obscured values with original values
+        // Restore obscured/secret values from session before validating
         obscurePasswordFieldsService.untrack(
                 "${project}/${serviceName}/${configPrefix}",
                 mappedConfigs,
@@ -1611,25 +1661,21 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )
 
         mappedConfigs.eachWithIndex { pluginDef, int ndx ->
-
             String type = pluginDef.type
             if (!type) {
                 errors << "[$ndx]: missing type"
                 return
             }
-
             if (!(type =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
                 errors << "[$ndx]: Invalid provider type name"
                 return
             }
-
             def described = pluginService.getPluginDescriptor(type, serviceName)
             if (!described) {
                 errors << "[$ndx]: $serviceName provider was not found: ${type}"
                 return
             }
 
-            //validate
             Map<String, Object> configMap = pluginDef.props
             ValidatedPlugin validated = pluginService.validatePluginConfig(serviceName, type, configMap)
             if (!validated.valid) {
@@ -1637,10 +1683,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 reports["$ndx"] = validated.report.errors
                 return
             }
+
             Map<String, Object> extraMap = pluginDef.extra ?: [:]
-
-
-            configs <<  SimplePluginConfiguration.builder()
+            configs << SimplePluginConfiguration.builder()
                     .service(serviceName)
                     .provider(type)
                     .configuration(configMap)
@@ -1649,9 +1694,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
         if (!errors) {
-
             Properties projProps = ProjectNodeSupport.serializePluginConfigurations(configPrefix, configs, true)
-            def result = frameworkService.updateFrameworkProjectConfig(project, projProps, [configPrefix+'.'].toSet())
+            def result = frameworkService.updateFrameworkProjectConfig(
+                    project,
+                    projProps,
+                    [(configPrefix + '.')] as Set
+            )
             if (!result.success) {
                 errors << result.error
             }
@@ -1659,16 +1707,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         if (errors) {
             return respond(
-                    formats: ['json'],
-                    status: HttpStatus.UNPROCESSABLE_ENTITY.value(),
-                    [
-                            errors : errors,
-                            reports: reports
-                    ]
+                    [errors: errors, reports: reports],
+                    [formats: ['json'], status: HttpStatus.UNPROCESSABLE_ENTITY.value()]
             )
         }
 
-
+        // Track obscured/secret values again after a successful save
         obscurePasswordFieldsService.resetTrack(
                 "${project}/${serviceName}/${configPrefix}",
                 configs,
@@ -1676,13 +1720,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )
 
         respond(
-                formats: ['json'],
                 [
                         project: project,
                         plugins: configs.collect { ExtPluginConfiguration conf ->
                             [type: conf.provider, config: conf.configuration, service: conf.service, extra: conf.extra]
-                        },
-                ]
+                        }
+                ],
+                [formats: ['json']]
         )
     }
 

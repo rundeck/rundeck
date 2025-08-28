@@ -206,8 +206,8 @@
         <div v-if="mode === 'edit' && editFocus === -1" class="card-footer">
           <btn
             type="primary"
-            @click="modalAddOpen = true"
             data-test-id="project-plugin-config-add-modal-open-button"
+            @click="modalAddOpen = true"
           >
             {{
               (pluginLabels && pluginLabels.addButton) ||
@@ -218,15 +218,15 @@
           </btn>
 
           <modal
+            id="add-new-modal"
+            ref="modal"
             v-model="modalAddOpen"
             :title="
               (pluginLabels && pluginLabels.addButton) ||
               addButtonText ||
               serviceName
             "
-            ref="modal"
             size="lg"
-            id="add-new-modal"
             append-to-body
           >
             <div class="list-group">
@@ -318,6 +318,31 @@ export default defineComponent({
     Expandable,
     UiSocket,
   },
+  props: {
+    editMode: {
+      type: Boolean,
+      default: false,
+    },
+    modeToggle: {
+      type: Boolean,
+      default: true,
+    },
+    showEmpty: {
+      type: Boolean,
+      default: true,
+    },
+    serviceName: String,
+    addButtonText: String,
+    title: {
+      required: false,
+      type: String,
+    },
+    configPrefix: String,
+    additionalProps: { required: false, type: Object },
+    help: { required: false, type: String },
+    editButtonText: { required: false, type: String },
+    eventBus: { type: Object as PropType<typeof EventBus>, required: false },
+  },
   emits: [
     "saved",
     "reset",
@@ -345,30 +370,45 @@ export default defineComponent({
       pluginStorageAccess: [] as any[],
     };
   },
-  props: {
-    editMode: {
-      type: Boolean,
-      default: false,
-    },
-    modeToggle: {
-      type: Boolean,
-      default: true,
-    },
-    showEmpty: {
-      type: Boolean,
-      default: true,
-    },
-    serviceName: String,
-    addButtonText: String,
-    title: {
-      required: false,
-      type: String,
-    },
-    configPrefix: String,
-    additionalProps: { required: false, type: Object },
-    help: { required: false, type: String },
-    editButtonText: { required: false, type: String },
-    eventBus: { type: Object as PropType<typeof EventBus>, required: false },
+  mounted() {
+    this.rundeckContext = getRundeckContext();
+    this.notifyPluginConfigs();
+    if (
+      window._rundeck &&
+      window._rundeck.rdBase &&
+      window._rundeck.projectName
+    ) {
+      this.rdBase = window._rundeck.rdBase;
+      this.project = window._rundeck.projectName;
+
+      this.loadProjectPluginConfig(
+        window._rundeck.projectName,
+        this.configPrefix,
+        this.serviceName,
+      )
+        .then((pluginConfigs) => {
+          this.configOrig = pluginConfigs;
+          //copy
+          this.pluginConfigs = pluginConfigs.map((val: any, index: number) =>
+            this.createConfigEntry(val, index),
+          );
+          this.loaded = true;
+          this.notifyPluginConfigs();
+        })
+        .catch((error) => console.error(error));
+
+      pluginService
+        .getPluginProvidersForService(this.serviceName)
+        .then((data) => {
+          if (data.service) {
+            this.pluginProviders = data.descriptions;
+            this.pluginLabels = data.labels;
+          }
+        })
+        .catch((error) => console.error(error));
+    }
+
+    this.eventBus?.on("resource-model-extra-config", this.setExtraConfig);
   },
   methods: {
     notifyError(msg: string, args: any[]) {
@@ -518,31 +558,42 @@ export default defineComponent({
       data: ProjectPluginConfigEntry[],
       removedData: ProjectPluginConfigEntry[],
     ) {
+      // Grab API version from the page (fallback to 53)
+      const apiVersion =
+        (window as any)._rundeck?.apiVersion ??
+        (this as any).rundeckContext?.apiVersion ??
+        53;
+
       const resp = await this.rundeckContext.rundeckClient.sendRequest({
-        pathTemplate: `/framework/saveProjectPluginsAjax`,
+        // ✅ new project-scoped API route (matches the @Post you added)
+        pathTemplate: `/api/${apiVersion}/project/${encodeURIComponent(project)}/plugins/save`,
         baseUrl: this.rdBase,
         method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        // project is in the path now; the others stay as query params
         queryParameters: {
-          project: `${window._rundeck.projectName}`,
-          configPrefix: this.configPrefix,
-          serviceName: this.serviceName,
+          serviceName,
+          configPrefix,
+          // only include this if your controller still checks request.format == 'json'
+          // format: "json",
         },
         body: {
-          plugins: data.map(this.serializeConfigEntry),
-          removedPlugins: removedData.map(this.serializeConfigEntry),
+          plugins: data.map((e) => this.serializeConfigEntry(e)),
+          removedPlugins: removedData.map((e) => this.serializeConfigEntry(e)),
         },
       });
 
       if (resp && resp.status >= 200 && resp.status < 300) {
         return { success: true, data: resp.parsedBody };
       }
-      if (resp && resp.status == 422) {
-        //look for validation
+      if (resp && resp.status === 422) {
         if (resp.parsedBody && resp.parsedBody.errors instanceof Array) {
           this.errors = resp.parsedBody.errors;
           if (resp.parsedBody.reports) {
             const reports = resp.parsedBody.reports as { [key: string]: any };
-            //console.log("reports ",resp.parsedBody.reports)
             this.pluginConfigs.forEach((plugin, index) => {
               if (reports[`${index}`] !== undefined) {
                 plugin.validation = {
@@ -556,9 +607,7 @@ export default defineComponent({
         }
       }
       throw new Error(
-        `Error saving project configuration for ${serviceName}: Response status: ${
-          resp ? resp.status : "None"
-        }`,
+        `Error saving project configuration for ${serviceName}: Response status: ${resp ? resp.status : "None"}`,
       );
     },
     cancelAction() {
@@ -614,46 +663,6 @@ export default defineComponent({
         };
       }
     },
-  },
-  mounted() {
-    this.rundeckContext = getRundeckContext();
-    this.notifyPluginConfigs();
-    if (
-      window._rundeck &&
-      window._rundeck.rdBase &&
-      window._rundeck.projectName
-    ) {
-      this.rdBase = window._rundeck.rdBase;
-      this.project = window._rundeck.projectName;
-
-      this.loadProjectPluginConfig(
-        window._rundeck.projectName,
-        this.configPrefix,
-        this.serviceName,
-      )
-        .then((pluginConfigs) => {
-          this.configOrig = pluginConfigs;
-          //copy
-          this.pluginConfigs = pluginConfigs.map((val: any, index: number) =>
-            this.createConfigEntry(val, index),
-          );
-          this.loaded = true;
-          this.notifyPluginConfigs();
-        })
-        .catch((error) => console.error(error));
-
-      pluginService
-        .getPluginProvidersForService(this.serviceName)
-        .then((data) => {
-          if (data.service) {
-            this.pluginProviders = data.descriptions;
-            this.pluginLabels = data.labels;
-          }
-        })
-        .catch((error) => console.error(error));
-    }
-
-    this.eventBus?.on("resource-model-extra-config", this.setExtraConfig);
   },
 });
 </script>
