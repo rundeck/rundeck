@@ -252,8 +252,6 @@ dependencies {
     implementation "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
     implementation "io.micronaut:micronaut-core:${micronautVersion}"
 
-    runtimeOnly 'org.aspectj:aspectjweaver:1.9.7'
-
     // Database drivers
     runtimeOnly "com.h2database:h2:2.2.220"
     runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc:9.4.0.jre8'
@@ -281,7 +279,6 @@ dependencies {
     testRuntimeOnly "org.seleniumhq.selenium:selenium-remote-driver"
     testRuntimeOnly "org.seleniumhq.selenium:selenium-api"
     testRuntimeOnly 'org.jetbrains.kotlin:kotlin-stdlib:1.3.70'
-    testRuntimeOnly 'org.aspectj:aspectjweaver:1.9.7'
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
     // transitive dependencies constraints.
     constraints {
