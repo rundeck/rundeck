@@ -276,10 +276,10 @@ dependencies {
     testImplementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
     testImplementation( "org.hibernate:hibernate-jcache:${hibernateVersion}")
 
-    testRuntimeOnly "org.seleniumhq.selenium:selenium-chrome-driver"
-    testRuntimeOnly "org.seleniumhq.selenium:selenium-firefox-driver"
-    testRuntimeOnly "org.seleniumhq.selenium:selenium-remote-driver"
-    testRuntimeOnly "org.seleniumhq.selenium:selenium-api"
+    testRuntimeOnly "org.seleniumhq.selenium:selenium-chrome-driver:${seleniumJavaVersion}"
+    testRuntimeOnly "org.seleniumhq.selenium:selenium-firefox-driver:${seleniumJavaVersion}"
+    testRuntimeOnly "org.seleniumhq.selenium:selenium-remote-driver:${seleniumJavaVersion}"
+    testRuntimeOnly "org.seleniumhq.selenium:selenium-api:${seleniumJavaVersion}"
     testRuntimeOnly 'org.jetbrains.kotlin:kotlin-stdlib:1.3.70'
     testRuntimeOnly 'org.aspectj:aspectjweaver:1.9.7'
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
