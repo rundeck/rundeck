@@ -1,5 +1,6 @@
 import type { StorybookConfig } from "@storybook/vue3-webpack5";
 import remarkGfm from "remark-gfm";
+import Path from "path";
 
 const config: StorybookConfig = {
   stories: [
@@ -7,8 +8,8 @@ const config: StorybookConfig = {
     "../src/library/components/primeVue/**/*.stories.@(js|jsx|mjs|ts|tsx)",
   ],
   staticDirs: [
-      {from: '../../../../grails-app/assets', to: "public"},
-      {from: '../src/library/theme/images', to: "public"},
+    { from: "../../../../grails-app/assets", to: "public" },
+    { from: "../src/library/theme/images", to: "public" },
   ],
   addons: [
     "@storybook/addon-webpack5-compiler-swc",
@@ -71,6 +72,8 @@ const config: StorybookConfig = {
         },
       },
     },
+    "storybook-addon-cookie",
+    "storybook-addon-mock",
   ],
   framework: {
     name: "@storybook/vue3-webpack5",
@@ -78,6 +81,14 @@ const config: StorybookConfig = {
   },
   features: {
     backgroundsStoryGlobals: true,
+  },
+  webpackFinal: async (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@": Path.resolve(__dirname, "../src"),
+    };
+
+    return config;
   },
 };
 export default config;

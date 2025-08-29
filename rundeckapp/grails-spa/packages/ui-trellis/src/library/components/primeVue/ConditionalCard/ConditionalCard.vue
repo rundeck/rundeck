@@ -5,10 +5,10 @@
         <div>
           <div>
             <plugin-info
-                :detail="{
-                  iconUrl: 'public/images/icon-condition.png',
-                  title: 'For each Linux node',
-                }"
+              :detail="{
+                iconUrl: 'public/images/icon-condition.png',
+                title: 'For each Linux node',
+              }"
               :show-description="false"
               :show-extended="false"
             />
@@ -20,9 +20,27 @@
           </div>
         </div>
         <div class="conditionalCard--header-buttons">
-          <PtButton icon="glyphicon glyphicon-trash" aria-label="Delete" v-tooltip.top="'Delete this step'" />
-          <PtButton icon="fa fa-ellipsis-h" />
-          <Menu ref="menu" id="overlay_menu" :model="[]" :popup="true" />
+          <PtButton
+            outlined
+            severity="secondary"
+            icon="glyphicon glyphicon-trash"
+            aria-label="Delete"
+            v-tooltip.top="'Delete this step'"
+          />
+          <PtButton
+            outlined
+            severity="secondary"
+            icon="fa fa-ellipsis-h"
+            aria-haspopup="true"
+            aria-controls="overlay_menu"
+            @click="handleMoreActions"
+          />
+          <Menu
+            ref="menu"
+            id="overlay_menu"
+            :model="[{ label: 'Duplicate' }]"
+            popup
+          />
         </div>
       </div>
     </template>
@@ -32,26 +50,39 @@
           <AccordionPanel value="0">
             <AccordionHeader>
               <plugin-info
-                  class="conditionalCard--step-description"
-                  :detail="test"
-                  :show-description="false"
-                  :show-title="false"
-                  :show-extended="false"
+                class="conditionalCard--step-description"
+                :detail="test"
+                :show-description="false"
+                :show-title="false"
+                :show-extended="false"
               >
                 <template #titleprefix>
-                  <span @click.stop="yolo">Run command to stop crowdstrike agent</span>
+                  <span @click.stop="yolo"
+                    >Run command to stop crowdstrike agent</span
+                  >
                 </template>
               </plugin-info>
             </AccordionHeader>
             <AccordionContent>
               <div>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-                enim ad minim veniam, quis nostrud exercitation ullamco laboris
-                nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
-                in reprehenderit in voluptate velit esse cillum dolore eu fugiat
-                nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-                sunt in culpa qui officia deserunt mollit anim id est laborum.
+                <plugin-config
+                  serviceName="WorkflowStep"
+                  provider="jira-create-issue"
+                  :config="jiraStep.config"
+                  :readOnly="true"
+                  :showTitle="false"
+                  :showIcon="false"
+                  :showDescription="false"
+                  mode="show"
+                />
+
+<!--                <log-filters-->
+<!--                  :model-value="[]"-->
+<!--                  subtitle=""-->
+<!--                  mode="inline"-->
+<!--                  title=""-->
+<!--                />-->
+                <error-handler-step :step="jiraStep" />
               </div>
             </AccordionContent>
           </AccordionPanel>
@@ -105,41 +136,47 @@
                             <Accordion multiple>
                               <AccordionPanel value="0">
                                 <AccordionHeader
-                                ><span class="conditionalCard--step-description"
-                                >Stop the existing crowdstrike agent</span
-                                ></AccordionHeader
+                                  ><span
+                                    class="conditionalCard--step-description"
+                                    >Stop the existing crowdstrike agent</span
+                                  ></AccordionHeader
                                 >
                                 <AccordionContent>
                                   <div>
-                                    Lorem ipsum dolor sit amet, consectetur adipiscing
-                                    elit, sed do eiusmod tempor incididunt ut labore et
-                                    dolore magna aliqua. Ut enim ad minim veniam, quis
-                                    nostrud exercitation ullamco laboris nisi ut aliquip
-                                    ex ea commodo consequat. Duis aute irure dolor in
-                                    reprehenderit in voluptate velit esse cillum dolore eu
-                                    fugiat nulla pariatur. Excepteur sint occaecat
-                                    cupidatat non proident, sunt in culpa qui officia
-                                    deserunt mollit anim id est laborum.
+                                    Lorem ipsum dolor sit amet, consectetur
+                                    adipiscing elit, sed do eiusmod tempor
+                                    incididunt ut labore et dolore magna aliqua.
+                                    Ut enim ad minim veniam, quis nostrud
+                                    exercitation ullamco laboris nisi ut aliquip
+                                    ex ea commodo consequat. Duis aute irure
+                                    dolor in reprehenderit in voluptate velit
+                                    esse cillum dolore eu fugiat nulla pariatur.
+                                    Excepteur sint occaecat cupidatat non
+                                    proident, sunt in culpa qui officia deserunt
+                                    mollit anim id est laborum.
                                   </div>
                                 </AccordionContent>
                               </AccordionPanel>
                               <AccordionPanel value="1">
                                 <AccordionHeader
-                                ><span class="conditionalCard--step-description"
-                                >Stop the existing crowdstrike agent</span
-                                ></AccordionHeader
+                                  ><span
+                                    class="conditionalCard--step-description"
+                                    >Stop the existing crowdstrike agent</span
+                                  ></AccordionHeader
                                 >
                                 <AccordionContent>
                                   <div>
-                                    Lorem ipsum dolor sit amet, consectetur adipiscing
-                                    elit, sed do eiusmod tempor incididunt ut labore et
-                                    dolore magna aliqua. Ut enim ad minim veniam, quis
-                                    nostrud exercitation ullamco laboris nisi ut aliquip
-                                    ex ea commodo consequat. Duis aute irure dolor in
-                                    reprehenderit in voluptate velit esse cillum dolore eu
-                                    fugiat nulla pariatur. Excepteur sint occaecat
-                                    cupidatat non proident, sunt in culpa qui officia
-                                    deserunt mollit anim id est laborum.
+                                    Lorem ipsum dolor sit amet, consectetur
+                                    adipiscing elit, sed do eiusmod tempor
+                                    incididunt ut labore et dolore magna aliqua.
+                                    Ut enim ad minim veniam, quis nostrud
+                                    exercitation ullamco laboris nisi ut aliquip
+                                    ex ea commodo consequat. Duis aute irure
+                                    dolor in reprehenderit in voluptate velit
+                                    esse cillum dolore eu fugiat nulla pariatur.
+                                    Excepteur sint occaecat cupidatat non
+                                    proident, sunt in culpa qui officia deserunt
+                                    mollit anim id est laborum.
                                   </div>
                                 </AccordionContent>
                               </AccordionPanel>
@@ -251,17 +288,20 @@ import Menu from "primevue/menu";
 import Button from "primevue/button";
 import Conditional from "./Conditional.vue";
 import PluginInfo from "../../plugins/PluginInfo.vue";
+import PluginConfig from "../../plugins/pluginConfig.vue";
 import PtButton from "../PtButton/PtButton.vue";
-
-
 
 import "../Tag/tag.scss";
 import "../Tooltip/tooltip.scss";
-
+import LogFilters from "@/app/components/job/workflow/LogFilters.vue";
+import ErrorHandlerStep from "@/app/components/job/workflow/ErrorHandlerStep.vue";
 
 export default defineComponent({
   name: "ConditionalCard",
   components: {
+    ErrorHandlerStep,
+    LogFilters,
+    PluginConfig,
     PtButton,
     PluginInfo,
     Conditional,
@@ -277,14 +317,64 @@ export default defineComponent({
   props: {},
   data() {
     return {
-      test: {"iconUrl":"http://localhost:4440/plugin/icon/WorkflowNodeStep/exec-command","title":"Command","builtin":false,"id":"4ca0a4eec11b","providerMetadata":null,"service":"WorkflowNodeStep","highlightedOrder":0,"artifactName":"Script Node Step Plugin","pluginVersion":"5.15.0-SNAPSHOT","description":"Execute a remote command","isHighlighted":true,"name":"exec-command","author":"Rundeck, Inc."}
-    }
+      test: {
+        iconUrl:
+          "http://localhost:4440/plugin/icon/WorkflowNodeStep/exec-command",
+        title: "Command",
+        builtin: false,
+        id: "4ca0a4eec11b",
+        providerMetadata: null,
+        service: "WorkflowNodeStep",
+        highlightedOrder: 0,
+        artifactName: "Script Node Step Plugin",
+        pluginVersion: "5.15.0-SNAPSHOT",
+        description: "Execute a remote command",
+        isHighlighted: true,
+        name: "exec-command",
+        author: "Rundeck, Inc.",
+      },
+      jiraStep: {
+        description: null,
+        id: "4wy1dg",
+        filters: [],
+        type: "jira-create-issue",
+        config: {
+          customFieldsUserInput: "[]",
+          description:
+              "${option.jira-description}  GitHub Link: ${option.github-url}",
+          project: "${option.jira-project}",
+          summary: "${option.jira-summary}",
+          type: "Task",
+        },
+        nodeStep: true,
+        errorhandler: {
+          description: null,
+          jobref: null,
+          id:"s6jvwa",
+          filters:[],
+          type:"jira-create-issue",
+          nodeStep:false,
+          keepgoingOnSuccess:true,
+          config: {
+            customFieldsUserInput: "[]",
+            description:
+                "${option.jira-description}  GitHub Link: ${option.github-url}",
+            project: "${option.jira-project}",
+            summary: "${option.jira-summary}",
+            type: "Task",
+          },
+        }
+      }
+    };
   },
   methods: {
     yolo() {
-      alert('yo')
-    }
-  }
+      alert("yo");
+    },
+    handleMoreActions(event) {
+      this.$refs.menu.toggle(event);
+    },
+  },
 });
 </script>
 
@@ -295,7 +385,9 @@ export default defineComponent({
   border-radius: var(--radii-md);
   border: 1px solid var(--colors-gray-300);
 
-  p, a, span:not(.glyphicon, .fa), {
+  p,
+  a,
+  span:not(.glyphicon, .fa) {
     font-family: Inter, var(--fonts-body) !important;
   }
 
@@ -323,7 +415,7 @@ export default defineComponent({
     &-buttons {
       align-items: flex-start;
       display: flex;
-      gap: var(--sizes-1);
+      gap: var(--sizes-2);
     }
   }
 
@@ -338,5 +430,10 @@ export default defineComponent({
   .p-card-body {
     padding: var(--sizes-4);
   }
+}
+
+.p-menu-list {
+  margin: 0;
+  padding: 0.25rem 0.25rem;
 }
 </style>
