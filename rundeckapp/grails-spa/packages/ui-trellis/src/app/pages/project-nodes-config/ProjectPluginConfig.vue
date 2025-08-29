@@ -559,52 +559,43 @@ export default defineComponent({
       data: ProjectPluginConfigEntry[],
       removedData: ProjectPluginConfigEntry[],
     ) {
-      try {
-        const res = await api.post(
-          `/project/${encodeURIComponent(project)}/plugins/save`,
-          {
-            plugins: (data ?? []).map(this.serializeConfigEntry),
-            removedPlugins: (removedData ?? []).map(this.serializeConfigEntry),
-          },
-          {
-            // keep using component fields like before
-            params: {
-              configPrefix: this.configPrefix,
-              serviceName: this.serviceName,
-              format: "json",
-            },
-          },
-        );
+      const url = `/project/${encodeURIComponent(project)}/plugins/save`;
 
-        return { success: true, data: res.data };
-      } catch (err: any) {
-        const resp = err?.response;
-        if (resp && resp.status === 422) {
-          // look for validation
-          if (resp.data && Array.isArray(resp.data.errors)) {
-            this.errors = resp.data.errors;
-            if (resp.data.reports) {
-              const reports = resp.data.reports as { [key: string]: any };
-              // console.log("reports ", resp.data.reports)
-              this.pluginConfigs.forEach((plugin, index) => {
-                if (reports[`${index}`] !== undefined) {
-                  plugin.validation = {
-                    valid: false,
-                    errors: reports[`${index}`],
-                  };
-                }
-              });
-            }
-            return { success: false };
-          }
-        }
+      // body must be { plugins, removedPlugins }
+      const body = {
+        plugins: data.map(this.serializeConfigEntry),
+        removedPlugins: (removedData || []).map(this.serializeConfigEntry),
+      };
 
-        throw new Error(
-          `Error saving project configuration for ${serviceName}: Response status: ${
-            resp ? resp.status : "None"
-          }`,
-        );
+      // query params: ?serviceName=&configPrefix=
+      const resp = await api.post(url, body, {
+        params: { serviceName, configPrefix },
+      });
+
+      // keep the same return contract the caller expects
+      if (resp && resp.status >= 200 && resp.status < 300) {
+        return { success: true, data: resp.data };
       }
+      if (resp && resp.status === 422) {
+        if (resp.data && Array.isArray(resp.data.errors)) {
+          this.errors = resp.data.errors;
+          if (resp.data.reports) {
+            const reports = resp.data.reports as { [key: string]: any };
+            this.pluginConfigs.forEach((plugin, index) => {
+              if (reports[`${index}`] !== undefined) {
+                plugin.validation = {
+                  valid: false,
+                  errors: reports[`${index}`],
+                };
+              }
+            });
+          }
+          return { success: false };
+        }
+      }
+      throw new Error(
+        `Error saving project configuration for ${serviceName}: Response status: ${resp ? resp.status : "None"}`,
+      );
     },
     cancelAction() {
       this.pluginConfigs = this.configOrig.map(this.createConfigEntry);
