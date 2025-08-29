@@ -513,16 +513,9 @@ export default defineComponent({
         if (result.success) {
           this.didSave(true);
           this.notifySuccess("Success", "Configuration Saved");
-
-          // only use server-returned plugins if it's a real array;
-          // otherwise keep what you already have (prevents clearing the list)
-          const nextPlugins = Array.isArray(result?.data?.plugins)
-            ? result.data.plugins
-            : this.configOrig;
-
-          this.configOrig = nextPlugins;
-          this.pluginConfigs = nextPlugins.map(this.createConfigEntry);
-
+          this.configOrig = result.data.plugins;
+          //copy
+          this.pluginConfigs = this.configOrig.map(this.createConfigEntry);
           this.pluginConfigsModifiedReset();
           this.$emit("saved", result);
         }
