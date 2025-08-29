@@ -6,7 +6,10 @@ const config: StorybookConfig = {
     "../src/library/components/primeVue/**/*.mdx",
     "../src/library/components/primeVue/**/*.stories.@(js|jsx|mjs|ts|tsx)",
   ],
-  staticDirs: [],
+  staticDirs: [
+      {from: '../../../../grails-app/assets', to: "public"},
+      {from: '../src/library/theme/images', to: "public"},
+  ],
   addons: [
     "@storybook/addon-webpack5-compiler-swc",
     "storybook-dark-mode",

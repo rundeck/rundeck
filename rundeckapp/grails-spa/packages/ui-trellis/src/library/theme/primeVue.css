@@ -1,4 +1,10 @@
 /*To do review inter font */
 .p-component {
-    font-family: Inter, var(--fonts-body);
+    font-family: Inter, var(--fonts-body) !important;
+}
+
+.p-link {
+    color: var(--colors-blue-500);
+    font-weight: var(--fontWeights-medium);
+
 }

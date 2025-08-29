@@ -4,6 +4,7 @@
     --colors-blue-600:  #1248BD;
     --colors-gray-100: #FAFAFA;
     --colors-gray-300: #E4E4E7;
+    --colors-gray-400: #D4D4D8;
     --colors-gray-500: #A1A1AA;
     --colors-gray-600: #71717A;
     --colors-gray-900:  #18181B;
@@ -14,4 +15,5 @@
     --colors-red-100: #FADCDC;
     --colors-red-500: #DE3434;
     --colors-red-600: #C12121;
+    --colors-cardNumber: #EDF2F7;
 }
