@@ -347,8 +347,16 @@ class JobCreatePage extends BasePage {
         el lastNodeInList
     }
 
+    WebElement getNodeInListSpan(int idx) {
+        el By.cssSelector(".col-xs-6:nth-child(${idx}) span:nth-child(2)")
+    }
+
     WebElement getSelectNodeArrowElement(){
         el selectNode
+    }
+
+    WebElement selectTabAddFilterByName(String tabName){
+        el(By.xpath("//span[contains(text(), \"${tabName}\")]//*[@class='glyphicon glyphicon-plus text-success']"))
     }
 
     WebElement getNodeFilterInput(){

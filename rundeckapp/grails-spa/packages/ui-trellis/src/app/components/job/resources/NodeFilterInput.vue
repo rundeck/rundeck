@@ -252,9 +252,10 @@ export default defineComponent({
   },
   inheritAttrs: false,
   props: {
-    modelValue: {
-      type: [String, null] as PropType<string | null>,
+    value: {
+      type: String,
       required: true,
+
     },
     showTitle: {
       type: Boolean,
@@ -307,7 +308,7 @@ export default defineComponent({
       description: "if true, allow setting/removing default filter"
     },
   },
-  emits: ["filters-updated", "filter", "update:modelValue"],
+  emits: ["filters-updated", "filter", "update:value"],
   setup() {
     const outputValue = ref("");
     const selectedFilterName = ref("");
@@ -387,18 +388,18 @@ export default defineComponent({
     },
   },
   watch: {
-    modelValue() {
-      if (this.modelValue) {
-        this.outputValue = this.modelValue;
-      }
-      if (
-        this.selectedFilterName &&
-        this.selectedFilterName !== this.matchedFilter
-      ) {
-        this.selectedFilterName = "";
-      } else if (this.matchedFilter) {
-        this.selectedFilterName = this.matchedFilter;
-      }
+    value: {
+      handler(newValue) {
+        if (newValue) {
+          this.outputValue = newValue;
+        }
+        if (this.selectedFilterName && this.selectedFilterName !== this.matchedFilter) {
+          this.selectedFilterName = "";
+        } else if (this.matchedFilter) {
+          this.selectedFilterName = this.matchedFilter;
+        }
+      },
+      immediate: true
     },
     filterName() {
       this.selectedFilterName = this.filterName;
@@ -461,7 +462,7 @@ export default defineComponent({
       ) {
         this.selectedFilterName = "";
       }
-      this.$emit("update:modelValue", this.outputValue);
+      this.$emit("update:value", this.outputValue);
     },
     handleNodefilter(val: any) {
       if (val.filterName) {
@@ -484,8 +485,8 @@ export default defineComponent({
       this.setDefaultFilterValue(".*");
     },
     async onMount() {
-      if (this.modelValue) {
-        this.outputValue = this.modelValue;
+      if (this.value) {
+        this.outputValue = this.value;
       }
       if (
         this.selectedFilterName &&

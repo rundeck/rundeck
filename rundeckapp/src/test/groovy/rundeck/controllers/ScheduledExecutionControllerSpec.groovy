@@ -64,6 +64,7 @@ import rundeck.codecs.URIComponentCodec
 import org.rundeck.app.jobs.options.ApiTokenReporter
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
+import rundeck.data.job.query.RdJobQueryInput
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
 import rundeck.services.optionvalues.OptionValuesService
@@ -4687,6 +4688,71 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             "array filter"          | "\$.array[1]"      | false       | 2
             "non-existent path"     | "\$.nonexistent"   | true        | null
             "invalid filter syntax" | "invalid[syntax"   | true        | null
+    }
+
+    def "apiJobBrowse respects max parameter"() {
+        given:
+        controller.apiService = Mock(ApiService) {
+            requireApi(_, _) >> true
+            requireApi(_, _, 54) >> true
+            requireExists(_, _, _) >> true
+            0 * _(*_)
+        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
+        }
+        
+        def query = new RdJobQueryInput()
+        params.project = 'test'
+        params.max = 5
+        request.method = 'GET'
+        request.api_version = 54
+        request.subject=new Subject()
+        session.subject=new Subject()
+        
+        when:
+        controller.apiJobBrowse('test', null, null, null, 5, query)
+        
+        then:
+        1 * controller.apiService.requireApi(_,_,46) >> true
+        1 * controller.apiService.requireApi(_,_,54) >> true
+        1 * controller.scheduledExecutionService.basicQueryJobs('test', _, _) >> { project, q, auth ->
+            assert q.max == 5
+            return []
+        }
+    }
+
+    def "apiJobBrowse defaults max parameter when not specified"() {
+        given:
+        controller.apiService = Mock(ApiService) {
+            requireApi(_, _) >> true
+            requireApi(_, _, 54) >> true
+            requireExists(_, _, _) >> true
+            0 * _(*_)
+        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
+        }
+        
+        def query = new RdJobQueryInput()
+        params.project = 'test'
+        request.method = 'GET'
+        request.api_version = 54
+        request.subject=new Subject()
+        session.subject=new Subject()
+        
+        when:
+        controller.apiJobBrowse('test', null, null, null, null, query)
+        
+        then:
+        1 * controller.apiService.requireApi(_,_,46) >> true
+        1 * controller.apiService.requireApi(_,_,54) >> true
+        1 * controller.scheduledExecutionService.basicQueryJobs('test', _, _) >> { project, q, auth ->
+            assert q.max == -1
+            return []
+        }
     }
 
 }

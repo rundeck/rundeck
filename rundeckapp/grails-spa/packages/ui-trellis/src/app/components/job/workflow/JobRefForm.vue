@@ -317,7 +317,7 @@
 
           <div class="col-sm-10 vue-ui-socket">
             <node-filter-input
-              :model-value="editModel.jobref.nodefilters.filter"
+              :value="editModel.jobref.nodefilters.filter"
               :project="currentProject"
               filter-field-name="nodeFilter"
               :filter-field-id="`nodeFilterField${rkey}`"
@@ -325,7 +325,7 @@
               emit-filter-on-blur
               search-btn-type="cta"
               class="nodefilters"
-              @update:model-value="updatedValue"
+              @update:value="updatedValue"
               @filter="filterClicked"
             />
           </div>

@@ -2142,7 +2142,13 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         ]
     )
     @ApiResponse(
-        ref = '#/paths/~1jobs~1delete/post/responses/200'
+        responseCode='200',
+        description = """Summary of bulk delete results""",
+        content=[@Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = DeleteBulkResponse)
+        )]
+
     )
     protected def apiJobDeleteBulk_docs2(){}
 
@@ -5032,7 +5038,7 @@ Authorization required: `delete` for the job.''',
         method = 'DELETE',
         summary = 'Delete all Executions for a Job',
         description = '''Delete all executions for a Job.''',
-        tags = ['jobs', 'execution'],
+        tags = ['jobs'],
         parameters = [
             @Parameter(name = 'id', description = 'Job ID', in = ParameterIn
                 .PATH, required = true, schema = @Schema(type = 'string'))
@@ -5639,7 +5645,7 @@ Since: v14''',
 
 Authorizations required: `read` or `view` for the Job, and `read` for the project resource type `execution`.
 ''',
-        tags = ['jobs', 'execution'],
+        tags = ['jobs'],
         parameters = [
             @Parameter(name = 'id', description = 'Job ID', in = ParameterIn
                 .PATH, required = true, schema = @Schema(type = 'string')),
@@ -5837,7 +5843,7 @@ Alternately, specify one or more job IDs to takeover certain Jobs' schedules.
 Authorization required: `ops_admin` for resource type `job`
 
 Since: v14''',
-        tags=['cluster','scheduler'],
+        tags=['scheduler'],
         requestBody = @RequestBody(
             description='''Takeover Request.
 
@@ -6279,6 +6285,12 @@ Since: v46''',
 breakpoint are available, no metadata will be loaded''',
             schema = @Schema(type = 'integer')
         ) Integer breakpoint,
+        @Parameter(
+            name = 'max',
+            in = ParameterIn.QUERY,
+            description = 'Since v54: Maximum number of jobs to retrieve. If not specified, all jobs will be returned.',
+            schema = @Schema(type = 'integer')
+        ) Integer max,
         @Parameter(hidden = true) RdJobQueryInput query
     ) {
         if (!apiService.requireApi(request, response, ApiVersions.V46)) {
@@ -6287,6 +6299,10 @@ breakpoint are available, no metadata will be loaded''',
         query.groupPath = path
         query.projFilter = project
         query.inputParamMap = params
+        if(apiService.requireApi(request, response, ApiVersions.V54)) {
+            query.max = max ?: -1
+        }
+
         List<JobBrowseItem> result = scheduledExecutionService.basicQueryJobs(
             project,
             query,

@@ -107,4 +107,31 @@ class JobEditSpec extends SeleniumBase{
         jobCreatePage.nodeFilterInput.getAttribute("value").split(":")[1].trim() != null
         jobCreatePage.nodeFilterInput.getAttribute("value").split(":")[1].trim().contains("test-node2")
     }
+
+    def "Filter nodes while editing a job combining two values"(){
+        given:
+        def projectName = "filter-nodes-job-edit-test"
+        setupProjectArchiveDirectoryResource(projectName, "/projects-import/resourcesTest")
+        LoginPage loginPage = page LoginPage
+        HomePage homePage = page HomePage
+        JobCreatePage jobCreatePage = page JobCreatePage
+
+        when:
+        loginPage.go()
+        loginPage.login(TEST_USER, TEST_PASS)
+        homePage.validatePage()
+        go JobCreatePage, projectName
+        jobCreatePage.tab JobTab.NODES click()
+        jobCreatePage.nodeDispatchTrueCheck.click()
+        jobCreatePage.refreshNodesButton.click()
+        jobCreatePage.lastNodeInListSpan.click()
+        jobCreatePage.selectTabAddFilterByName("testBoth").click()
+        jobCreatePage.getNodeInListSpan(1).click()
+        jobCreatePage.selectTabAddFilterByName("test").click()
+
+
+
+        then:
+        jobCreatePage.nodeFilterInput.getAttribute("value") == " tags: \"testBoth\" tags: \"test\""
+    }
 }

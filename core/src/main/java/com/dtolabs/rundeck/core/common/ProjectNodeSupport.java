@@ -60,7 +60,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     private ResourceModelSourceService                                             resourceModelSourceService;
     private NodeSourceLoader     nodeSourceLoader;
     private boolean                                                                sourcesOpened;
-    private File varDir;
 
     /**
      * @param projectConfig
@@ -68,14 +67,11 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * @param nodeSourceLoader model source provider
      */
     public ProjectNodeSupport(
-            final File varDir,
-            final IRundeckProjectConfig projectConfig,
-            final ResourceFormatGeneratorService resourceFormatGeneratorService,
-            final ResourceModelSourceService resourceModelSourceService,
-            final NodeSourceLoader nodeSourceLoader
-    )
-    {
-        this.varDir = varDir;
+        final IRundeckProjectConfig projectConfig,
+        final ResourceFormatGeneratorService resourceFormatGeneratorService,
+        final ResourceModelSourceService resourceModelSourceService,
+        final NodeSourceLoader     nodeSourceLoader
+    ) {
         this.projectConfig = projectConfig;
         this.resourceFormatGeneratorService = resourceFormatGeneratorService;
         this.resourceModelSourceService = resourceModelSourceService;
@@ -85,15 +81,13 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     /**
      * @param projectConfig
      * @param resourceFormatGeneratorService
-     * @deprecated use {@link #ProjectNodeSupport(File, IRundeckProjectConfig, ResourceFormatGeneratorService, ResourceModelSourceService, NodeSourceLoader)}
+     * @deprecated use {@link #ProjectNodeSupport(IRundeckProjectConfig, ResourceFormatGeneratorService, ResourceModelSourceService, Function)}
      */
     public ProjectNodeSupport(
-        final File varDir,
         final IRundeckProjectConfig projectConfig,
         final ResourceFormatGeneratorService resourceFormatGeneratorService,
         final ResourceModelSourceService resourceModelSourceService
     ) {
-        this.varDir = varDir;
         this.projectConfig = projectConfig;
         this.resourceFormatGeneratorService = resourceFormatGeneratorService;
         this.resourceModelSourceService = resourceModelSourceService;
@@ -319,6 +313,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
 
 
     private File getResourceModelSourceFileCacheForType(String ident) {
+        String varDir = projectConfig.getProperty("framework.var.dir");
         File file = new File(varDir, "resourceModelSourceCache/" + projectConfig.getName() + "/" + ident + ".xml");
         if (!file.getParentFile().exists() && !file.getParentFile().mkdirs()) {
             logger.warn("Failed to create cache dirs for source file cache");
