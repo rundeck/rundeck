@@ -78,7 +78,7 @@ class WaitUtils  {
     @TypeChecked
     static <RID, R> Map<RID, R> waitForAllResources(Collection<RID> resourceIdentifiers,
                                                     Function<RID, R> resourceRetriever,
-                                                    Function<R, Boolean> resourceAcceptanceEvaluator = { it ? true : false  },
+                                                    Function<R, Boolean> resourceAcceptanceEvaluator = { it ? true : false },
                                                     Duration timeout = WaitingTime.MODERATE,
                                                     Duration checkPeriod = WaitingTime.LOW,
                                                     Function<RID, String> acceptanceFailureOutputProducer = { RID id -> "" }) {
