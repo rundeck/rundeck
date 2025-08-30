@@ -1735,10 +1735,12 @@ Since: v55""",
         }
 
         if (errors) {
-            return respond(
-                    [errors: errors, reports: reports],
-                    [formats: ['json'], status: HttpStatus.UNPROCESSABLE_ENTITY.value()]
+            render(
+                    contentType: 'application/json',
+                    status: HttpStatus.UNPROCESSABLE_ENTITY.value(),
+                    text: ([errors: errors, reports: reports] as grails.converters.JSON) as String
             )
+            return
         }
 
         // Track obscured/secret values again after a successful save
