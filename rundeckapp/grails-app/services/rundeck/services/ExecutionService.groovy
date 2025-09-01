@@ -1240,7 +1240,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     periodicCheck     : checkpoint
             )
         } catch(Throwable e) {
-            log.error("Failed while starting execution: ${execution.id}", t)
+            log.error("Failed while starting execution: ${execution.id}", e)
             loghandler.logError('Failed to start execution: ' + e.getClass().getName() + ": " + e.message)
             if(logsInstalled) {
                 sysThreadBoundOut.removeThreadStream()?.close()
