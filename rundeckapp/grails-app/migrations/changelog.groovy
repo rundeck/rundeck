@@ -118,5 +118,6 @@ databaseChangeLog = {
         include file: 'core/BaseReportSpi.groovy'
         include file: 'core/RemoveFilters-5.0.groovy'
         include file: 'core/StoredEventIndexes.groovy'
+        include file: 'core/ExecutionIndexes.groovy'
 
 }
