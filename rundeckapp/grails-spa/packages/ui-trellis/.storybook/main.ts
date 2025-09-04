@@ -9,6 +9,7 @@ const config: StorybookConfig = {
   ],
   staticDirs: [
     { from: "../../../../grails-app/assets", to: "public" },
+    { from: "../../../../grails-spa/gradle-build/spa/provided", to: "public/provided" },
     { from: "../src/library/theme/images", to: "public/library/theme/images" },
   ],
   addons: [
