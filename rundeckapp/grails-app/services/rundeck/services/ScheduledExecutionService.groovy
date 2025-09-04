@@ -812,6 +812,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def scheduledExecutions = timer("takeover query ") {
                 jobSchedulesService.getSchedulesJobToClaim(toServerUUID, queryFromServerUUID, selectAll, queryProject, jobids)
             }
+
+            def scheduledExecutionsLater = timer("takeover job execution later query ") {
+                getSchedulesExecutionLater(toServerUUID, queryFromServerUUID, selectAll, queryProject, jobids)
+            }
+
+            if (scheduledExecutionsLater) {
+                scheduledExecutions = (scheduledExecutions ?: []) + scheduledExecutionsLater
+            }
+
             scheduledExecutions.each { ScheduledExecution se ->
                 def orig = se.serverNodeUUID
                 if (!claimed[se.extid]) {
@@ -1067,7 +1076,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         def scheduledExecutionsLater = timer("takeover job execution later query ") {
-            jobSchedulesService.getSchedulesExecutionLater(toServerUuid, null, true, null)
+            getSchedulesExecutionLater(toServerUuid, null, true, null, null)
         }
 
         if (scheduledExecutionsLater) {
@@ -4703,7 +4712,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     /*
     Search for jobs with scheduled later triggered
      */
-    List getSchedulesExecutionLater(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter) {
+    List getSchedulesExecutionLater(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids) {
         List<Long> executionRunLater = Execution.createCriteria().listDistinct {
             projections {
                 property('scheduledExecution.id')
@@ -4711,6 +4720,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             eq('status', 'scheduled')
             isNull('dateCompleted')
             gt('dateStarted', new Date())
+
+            if(jobids){
+                'in'('scheduledExecution.id', jobids)
+            }
 
             if (projectFilter) {
                 eq('project', projectFilter)
