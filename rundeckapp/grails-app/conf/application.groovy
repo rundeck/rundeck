@@ -89,7 +89,7 @@ environments {
                 timeBetweenEvictionRunsMillis= 5000
                 minEvictableIdleTimeMillis= 60000
                 connectionTestQuery= "SELECT 1"
-                validationTimeout= 3000
+                validationTimeout= 3000 // HikariCP: value is in milliseconds (3000ms = 3s, same as previous 3s)
                 validationInterval= 15000
                 testOnBorrow= true
                 testWhileIdle= true
