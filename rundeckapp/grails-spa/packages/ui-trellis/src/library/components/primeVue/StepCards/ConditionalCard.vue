@@ -19,7 +19,7 @@
                 :show-extended="false"
               >
                 <template #titleprefix>
-                  <span @click.stop="yolo">
+                  <span class="link-step-plugin" @click.stop="yolo">
                     Run command to stop crowdstrike agent
                   </span>
                 </template>
@@ -39,7 +39,7 @@
                 :show-extended="false"
               >
                 <template #titleprefix>
-                  <span @click.stop="yolo">
+                  <span class="link-step-plugin" @click.stop="yolo">
                     Run command to delete crowdstrike agent
                   </span>
                 </template>
@@ -72,7 +72,7 @@
                           :show-extended="false"
                         >
                           <template #titleprefix>
-                            <span @click.stop="yolo">
+                            <span class="link-step-plugin" @click.stop="yolo">
                               Run command to install the crowdstrike agent
                             </span>
                           </template>
@@ -98,12 +98,25 @@
                           <Conditional>
                             <Accordion multiple>
                               <AccordionPanel value="0">
-                                <AccordionHeader
-                                  ><span
+                                <AccordionHeader>
+                                  <plugin-info
                                     class="conditionalCard--step-description"
-                                    >Stop the existing crowdstrike agent</span
-                                  ></AccordionHeader
-                                >
+                                    :detail="test"
+                                    :show-description="false"
+                                    :show-title="false"
+                                    :show-extended="false"
+                                  >
+                                    <template #titleprefix>
+                                      <span
+                                        class="link-step-plugin"
+                                        @click.stop="yolo"
+                                      >
+                                        Run command to install the crowdstrike
+                                        agent
+                                      </span>
+                                    </template>
+                                  </plugin-info>
+                                </AccordionHeader>
                                 <AccordionContent>
                                   <div>
                                     Lorem ipsum dolor sit amet, consectetur
@@ -121,12 +134,25 @@
                                 </AccordionContent>
                               </AccordionPanel>
                               <AccordionPanel value="1">
-                                <AccordionHeader
-                                  ><span
+                                <AccordionHeader>
+                                  <plugin-info
                                     class="conditionalCard--step-description"
-                                    >Stop the existing crowdstrike agent</span
-                                  ></AccordionHeader
-                                >
+                                    :detail="test"
+                                    :show-description="false"
+                                    :show-title="false"
+                                    :show-extended="false"
+                                  >
+                                    <template #titleprefix>
+                                      <span
+                                        class="link-step-plugin"
+                                        @click.stop="yolo"
+                                      >
+                                        Run command to install the crowdstrike
+                                        agent
+                                      </span>
+                                    </template>
+                                  </plugin-info>
+                                </AccordionHeader>
                                 <AccordionContent>
                                   <div>
                                     Lorem ipsum dolor sit amet, consectetur
@@ -160,9 +186,19 @@
                   <Accordion multiple>
                     <AccordionPanel value="0">
                       <AccordionHeader>
-                        <span class="conditionalCard--step-description">
-                          Stop the existing crowdstrike agent
-                        </span>
+                        <plugin-info
+                          class="conditionalCard--step-description"
+                          :detail="test"
+                          :show-description="false"
+                          :show-title="false"
+                          :show-extended="false"
+                        >
+                          <template #titleprefix>
+                            <span class="link-step-plugin" @click.stop="yolo">
+                              Run command to install the crowdstrike agent
+                            </span>
+                          </template>
+                        </plugin-info>
                       </AccordionHeader>
                       <AccordionContent>
                         <div>
@@ -180,9 +216,19 @@
                     </AccordionPanel>
                     <AccordionPanel value="1">
                       <AccordionHeader>
-                        <span class="conditionalCard--step-description">
-                          Stop the existing crowdstrike agent
-                        </span>
+                        <plugin-info
+                          class="conditionalCard--step-description"
+                          :detail="test"
+                          :show-description="false"
+                          :show-title="false"
+                          :show-extended="false"
+                        >
+                          <template #titleprefix>
+                            <span class="link-step-plugin" @click.stop="yolo">
+                              Run command to install the crowdstrike agent
+                            </span>
+                          </template>
+                        </plugin-info>
                       </AccordionHeader>
                       <AccordionContent>
                         <div>
@@ -209,11 +255,21 @@
                 <Conditional>
                   <Accordion multiple>
                     <AccordionPanel value="0">
-                      <AccordionHeader
-                        ><span class="conditionalCard--step-description"
-                          >Stop the existing crowdstrike agent</span
-                        ></AccordionHeader
-                      >
+                      <AccordionHeader>
+                        <plugin-info
+                          class="conditionalCard--step-description"
+                          :detail="test"
+                          :show-description="false"
+                          :show-title="false"
+                          :show-extended="false"
+                        >
+                          <template #titleprefix>
+                            <span class="link-step-plugin" @click.stop="yolo">
+                              Run command to install the crowdstrike agent
+                            </span>
+                          </template>
+                        </plugin-info>
+                      </AccordionHeader>
                       <AccordionContent>
                         <div>
                           Lorem ipsum dolor sit amet, consectetur adipiscing
@@ -292,8 +348,7 @@ export default defineComponent({
         iconUrl: "public/images/icon-condition.png",
       },
       test: {
-        iconUrl:
-          "public/images/icon-shell.png",
+        iconUrl: "public/images/icon-shell.png",
         title: "Command",
         builtin: false,
         id: "4ca0a4eec11b",
@@ -404,7 +459,7 @@ export default defineComponent({
   }
 
   .p-accordioncontent-content {
-      background: var(--colors-gray-50);
+    background: var(--colors-gray-50);
   }
 }
 

@@ -15,6 +15,7 @@ ul[data-testid='draggable-container']{
     top: 1rem;
   }
 }
+
 .item-container {
   position: relative;
 }
@@ -26,7 +27,8 @@ i.glyphicon-menu-hamburger {
 }
 
 .link-button,
-.link-title {
+.link-title,
+.link-step-plugin {
   all: unset;
   color: #0052CC;
   cursor: pointer;
@@ -38,6 +40,11 @@ i.glyphicon-menu-hamburger {
   font-size: 16px;
 }
 
+.link-step-plugin {
+  //color:#003F9C;
+  font-size: 14px;
+}
+
 .p-menu-item {
   color: var(--colors-menuitem-color);
   background: transparent;
@@ -45,4 +52,12 @@ i.glyphicon-menu-hamburger {
   &-link {
     color: inherit !important;
   }
+}
+
+div[data-test='options_undo_redo'] {
+  align-self: flex-end;
+}
+
+.ready {
+  align-self: center;
 }

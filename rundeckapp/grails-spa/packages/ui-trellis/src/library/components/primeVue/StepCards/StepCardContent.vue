@@ -32,7 +32,7 @@
           :show-description="false"
           :show-extended="false"
           :show-icon="false"
-          titleCss="link-title"
+          titleCss="link-step-plugin"
         />
       </template>
       <template #extra v-if="errorHandler.length >= 1">

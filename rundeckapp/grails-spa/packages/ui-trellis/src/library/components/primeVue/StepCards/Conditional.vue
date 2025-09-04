@@ -80,6 +80,7 @@ export default defineComponent({
       &:last-child {
         padding-bottom: 0;
         border: none;
+        cursor: default;
       }
     }
 
