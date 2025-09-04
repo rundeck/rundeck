@@ -1,0 +1,22 @@
+ol[data-testid='draggable-container']{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: relative;
+}
+.item-container {
+  position: relative;
+}
+.item-container:before {
+  display: block;
+  position: absolute;
+  content: '☰';
+  top: 15px;
+  left: 0;
+}
+
+i.glyphicon-menu-hamburger {
+  position: absolute;
+  left: -40px;
+  top:  18px;
+}

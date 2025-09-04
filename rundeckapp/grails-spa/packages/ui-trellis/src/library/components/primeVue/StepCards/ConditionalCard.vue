@@ -1,48 +1,7 @@
 <template>
   <Card class="conditionalCard">
     <template #header>
-      <div class="conditionalCard--header">
-        <div>
-          <div>
-            <plugin-info
-              :detail="{
-                iconUrl: 'public/images/icon-condition.png',
-                title: 'For each Linux node',
-              }"
-              :show-description="false"
-              :show-extended="false"
-            />
-          </div>
-          <div class="conditionalCard--header-description">
-            <Tag class="tag-node" value="Node Step" />
-            <p>Conditional Logic on Node Step</p>
-            <i class="fa fa-info-circle" v-tooltip="{ value: 'aaaaaaa' }"></i>
-          </div>
-        </div>
-        <div class="conditionalCard--header-buttons">
-          <PtButton
-            outlined
-            severity="secondary"
-            icon="glyphicon glyphicon-trash"
-            aria-label="Delete"
-            v-tooltip.top="'Delete this step'"
-          />
-          <PtButton
-            outlined
-            severity="secondary"
-            icon="fa fa-ellipsis-h"
-            aria-haspopup="true"
-            aria-controls="overlay_menu"
-            @click="handleMoreActions"
-          />
-          <Menu
-            ref="menu"
-            id="overlay_menu"
-            :model="[{ label: 'Duplicate' }]"
-            popup
-          />
-        </div>
-      </div>
+      <StepCardHeader :handle-more-actions="handleMoreActions"/>
     </template>
     <template #content>
       <Conditional>
@@ -57,9 +16,9 @@
                 :show-extended="false"
               >
                 <template #titleprefix>
-                  <span @click.stop="yolo"
-                    >Run command to stop crowdstrike agent</span
-                  >
+                  <span @click.stop="yolo">
+                    Run command to stop crowdstrike agent
+                  </span>
                 </template>
               </plugin-info>
             </AccordionHeader>
@@ -277,7 +236,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import {defineComponent} from "vue";
 import Card from "primevue/card";
 import Accordion from "primevue/accordion";
 import AccordionPanel from "primevue/accordionpanel";
@@ -295,10 +254,12 @@ import "../Tag/tag.scss";
 import "../Tooltip/tooltip.scss";
 import LogFilters from "@/app/components/job/workflow/LogFilters.vue";
 import ErrorHandlerStep from "@/app/components/job/workflow/ErrorHandlerStep.vue";
+import StepCardHeader from "@/library/components/primeVue/StepCards/StepCardHeader.vue";
 
 export default defineComponent({
   name: "ConditionalCard",
   components: {
+    StepCardHeader,
     ErrorHandlerStep,
     LogFilters,
     PluginConfig,
@@ -369,7 +330,7 @@ export default defineComponent({
   },
   methods: {
     yolo() {
-      alert("yo");
+      alert("edit mode");
     },
     handleMoreActions(event) {
       this.$refs.menu.toggle(event);

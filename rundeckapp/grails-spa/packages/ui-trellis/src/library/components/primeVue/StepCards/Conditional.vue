@@ -4,7 +4,7 @@
       If
       <Tag class="tag-code" value="node.os-family"></Tag>
       <span class="conditional--equality">equals</span>
-      <span class="bold">Windows</span>
+      <span class="bold">Linux</span>
     </p>
     <div class="conditional--do">
       <div class="conditional--connector"></div>
