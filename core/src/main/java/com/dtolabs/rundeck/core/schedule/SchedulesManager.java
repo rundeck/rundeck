@@ -100,6 +100,14 @@ public interface SchedulesManager {
     List getSchedulesJobToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids);
 
 
+    /**
+     * Gets a list of jobs that has a schedule for execution later than now
+     * @param toServerUUID
+     * @param fromServerUUID
+     * @param selectAll
+     * @param projectFilter
+     * @return List
+     */
     List getSchedulesExecutionLater(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter);
 
     /**
