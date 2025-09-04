@@ -8,48 +8,50 @@
       <slot name="header">
         <transition name="inline-button-fade">
           <button
-              v-if="modelValue.length === 0 && !hideWhenSingle"
-              @click="handleAdd"
-              class="inline-button"
+            v-if="modelValue.length === 0"
+            @click="handleAdd"
+            class="inline-button link-button"
           >
-            + add
+            + Add
           </button>
         </transition>
       </slot>
     </div>
-    <slot name="extra">
-      <transition name="chips-slide" mode="out-in">
+
+    <transition name="chips-slide" mode="out-in">
+      <slot name="extra">
         <div v-if="modelValue.length > 0" class="chips-row">
           <transition-group name="chip-list" tag="div" class="chips-container">
             <Chip
-                v-for="(element, index) in modelValue"
-                :key="element.name || index"
-                :label="element.title"
-                removable
-                @remove="handleRemove(index)"
+              v-for="(element, index) in modelValue"
+              :key="element.name || index"
+              :label="element.title"
+              :icon="`fa fa-${element.providerMetadata.faicon}`"
+              removable
+              @remove="handleRemove(index)"
             />
           </transition-group>
           <button
-              v-if="!hideWhenSingle"
-              v-show="!hideWhenSingle || modelValue.length !== 1"
-              @click="handleAdd"
+            v-if="!hideWhenSingle"
+            v-show="!hideWhenSingle || modelValue.length !== 1"
+            @click="handleAdd"
+            class="link-button"
           >
-            + add
+            + Add
           </button>
         </div>
-      </transition>
-    </slot>
+      </slot>
+    </transition>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import Chip from 'primevue/chip';
-
+import Chip from "primevue/chip";
 
 export default defineComponent({
   name: "ConfigSection",
-  components: {Chip},
+  components: { Chip },
   props: {
     title: {
       type: String,
@@ -86,26 +88,26 @@ export default defineComponent({
 .config-section {
   border-bottom: 1px solid var(--p-accordion-panel-border-color);
   padding: var(--sizes-4) 0;
-  
+
   .header-row {
     display: flex;
     align-items: center;
     margin-bottom: 0;
-    
+
     p {
       margin: 0;
       font-family: Inter, var(--fonts-body) !important;
-      
+
       i {
         width: auto;
       }
     }
-    
+
     .inline-button {
       margin-left: var(--sizes-2);
     }
   }
-  
+
   .chips-row {
     display: flex;
     align-items: center;
@@ -113,13 +115,21 @@ export default defineComponent({
     margin-top: var(--sizes-2);
     flex-wrap: wrap;
   }
-  
+
   .chips-container {
     display: flex;
     gap: var(--sizes-1);
     flex-wrap: wrap;
   }
-  
+
+  .p-chip {
+    background-color: var(--colors-surface-200);
+    font-size: 12px;
+    height: 26px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
   &.has-chips .header-row {
     margin-bottom: 0;
   }
@@ -169,5 +179,10 @@ export default defineComponent({
 .inline-button-fade-enter-from,
 .inline-button-fade-leave-to {
   opacity: 0;
+}
+</style>
+<style>
+.p-chip-icon.fa.fa-volume-off {
+  width: auto !important;
 }
 </style>

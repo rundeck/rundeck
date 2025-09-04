@@ -1,7 +1,10 @@
 <template>
   <Card class="conditionalCard">
     <template #header>
-      <StepCardHeader :plugin-details="conditionalHeaderConfig" :config="jiraStep" />
+      <StepCardHeader
+        :plugin-details="conditionalHeaderConfig"
+        :config="jiraStep"
+      />
     </template>
     <template #content>
       <Conditional>
@@ -41,9 +44,19 @@
           </AccordionPanel>
           <AccordionPanel value="1">
             <AccordionHeader>
-              <span class="conditionalCard--step-description"
-                >Stop the existing crowdstrike agent</span
+              <plugin-info
+                class="conditionalCard--step-description"
+                :detail="test"
+                :show-description="false"
+                :show-title="false"
+                :show-extended="false"
               >
+                <template #titleprefix>
+                  <span @click.stop="yolo">
+                    Run command to delete crowdstrike agent
+                  </span>
+                </template>
+              </plugin-info>
             </AccordionHeader>
             <AccordionContent>
               <p class="m-0">
@@ -64,9 +77,19 @@
                   <Accordion multiple>
                     <AccordionPanel value="0">
                       <AccordionHeader>
-                        <span class="conditionalCard--step-description">
-                          Stop the existing crowdstrike agent
-                        </span>
+                        <plugin-info
+                          class="conditionalCard--step-description"
+                          :detail="test"
+                          :show-description="false"
+                          :show-title="false"
+                          :show-extended="false"
+                        >
+                          <template #titleprefix>
+                            <span @click.stop="yolo">
+                              Run command to install the crowdstrike agent
+                            </span>
+                          </template>
+                        </plugin-info>
                       </AccordionHeader>
                       <AccordionContent>
                         <div>
@@ -230,7 +253,7 @@
 </template>
 
 <script lang="ts">
-import {defineComponent} from "vue";
+import { defineComponent } from "vue";
 import Card from "primevue/card";
 import Accordion from "primevue/accordion";
 import AccordionPanel from "primevue/accordionpanel";
@@ -274,10 +297,10 @@ export default defineComponent({
     return {
       conditionalHeaderConfig: {
         nodeStep: true,
-        description: 'For each Linux node',
-        title: 'Conditional Logic on Node Step',
-        tooltip: 'Only linux nodes will execute the following steps',
-        iconUrl: 'public/images/icon-condition.png'
+        description: "For each Linux node",
+        title: "Conditional Logic on Node Step",
+        tooltip: "Only linux nodes will execute the following steps",
+        iconUrl: "public/images/icon-condition.png",
       },
       test: {
         iconUrl:
@@ -303,7 +326,7 @@ export default defineComponent({
         config: {
           customFieldsUserInput: "[]",
           description:
-              "${option.jira-description}  GitHub Link: ${option.github-url}",
+            "${option.jira-description}  GitHub Link: ${option.github-url}",
           project: "${option.jira-project}",
           summary: "${option.jira-summary}",
           type: "Task",
@@ -312,21 +335,21 @@ export default defineComponent({
         errorhandler: {
           description: null,
           jobref: null,
-          id:"s6jvwa",
-          filters:[],
-          type:"jira-create-issue",
-          nodeStep:true,
-          keepgoingOnSuccess:true,
+          id: "s6jvwa",
+          filters: [],
+          type: "jira-create-issue",
+          nodeStep: true,
+          keepgoingOnSuccess: true,
           config: {
             customFieldsUserInput: "[]",
             description:
-                "${option.jira-description}  GitHub Link: ${option.github-url}",
+              "${option.jira-description}  GitHub Link: ${option.github-url}",
             project: "${option.jira-project}",
             summary: "${option.jira-summary}",
             type: "Task",
           },
-        }
-      }
+        },
+      },
     };
   },
   methods: {

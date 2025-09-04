@@ -3,13 +3,21 @@
     <div>
       <div>
         <plugin-info
-          :detail="{...config, ...pluginDetails, title: config.description || pluginDetails.description }"
+          :detail="{
+            ...config,
+            ...pluginDetails,
+            title: config.description || pluginDetails.description,
+          }"
           :show-description="false"
           :show-extended="false"
+          titleCss="link-title"
         />
       </div>
       <div class="conditionalCard--header-description">
-        <Tag :class="[config.nodeStep? 'tag-node': 'tag-workflow']" :value="`${config.nodeStep ? 'Node' : 'Workflow'} Step`" />
+        <Tag
+          :class="[config.nodeStep ? 'tag-node' : 'tag-workflow']"
+          :value="`${config.nodeStep ? 'Node' : 'Workflow'} Step`"
+        />
         <p>{{ pluginDetails.title }}</p>
         <i
           class="fa fa-info-circle"
@@ -57,22 +65,22 @@ export default {
     pluginDetails: {
       type: Object,
       default: () => ({
-        iconUrl: 'public/images/icon-condition.png',
-        title: 'For each Linux node',
-        description: 'Conditional Logic on Node Step',
-        tooltip: 'Only linux nodes will execute the following steps'
-      })
+        iconUrl: "public/images/icon-condition.png",
+        title: "For each Linux node",
+        description: "Conditional Logic on Node Step",
+        tooltip: "Only linux nodes will execute the following steps",
+      }),
     },
     config: {
       type: Object,
-      required: true
-    }
+      required: true,
+    },
   },
   methods: {
     handleMoreActions(event) {
       this.$refs.menu.toggle(event);
     },
-  }
+  },
 };
 </script>
 

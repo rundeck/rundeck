@@ -18,18 +18,41 @@
       />
       <ConfigSection
         title="Log Filters"
-        tooltip="Only linux nodes will execute the following steps"
+        tooltip="Filters that will affect the logs produces by these steps"
         v-model="logFilters"
         @addElement="handleAddElement"
       />
       <ConfigSection
         title="Error Handler"
-        tooltip="Only linux nodes will execute the following steps"
+        tooltip="In case of error, the following step will be run"
         v-model="errorHandler"
-        @addElement="handleAddElement"
+        @addElement="handleAddErrorHandler"
         hideWhenSingle
+        class="error-handler"
       >
-        <template #header> test </template>
+        <template #header v-if="errorHandler.length >= 1">
+          <plugin-info
+            :detail="{ title: 'Command' }"
+            :show-description="false"
+            :show-extended="false"
+            :show-icon="false"
+            titleCss="link-title"
+          />
+        </template>
+        <template #extra v-if="errorHandler.length >= 1">
+          <plugin-config
+            class="plugin-config-section"
+            serviceName="WorkflowNodeStep"
+            provider="exec-command"
+            :config="{ adhocRemoteString: 'echo error happened' }"
+            :readOnly="true"
+            :showTitle="false"
+            :showIcon="false"
+            :showDescription="false"
+            mode="show"
+            allowCopy
+          />
+        </template>
       </ConfigSection>
     </template>
   </Card>
@@ -41,10 +64,12 @@ import Card from "primevue/card";
 import StepCardHeader from "@/library/components/primeVue/StepCards/StepCardHeader.vue";
 import ConfigSection from "@/library/components/primeVue/StepCards/ConfigSection.vue";
 import PluginConfig from "@/library/components/plugins/pluginConfig.vue";
+import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
 
 export default defineComponent({
   name: "StepCard",
   components: {
+    PluginInfo,
     PluginConfig,
     Card,
     StepCardHeader,
@@ -79,8 +104,22 @@ export default defineComponent({
     };
   },
   methods: {
-    handleMoreActions() {
-      // Handle more actions logic
+    handleAddErrorHandler() {
+      this.errorHandler.push({
+        config: {
+          dedupe_key: "test",
+          event_action: "trigger",
+          images:
+            "https://www.rundeck.com/hubfs/rundeck-app-assets/rundeck-by-pagerduty-icon.png",
+          payload_severity: "info",
+          payload_source: "${job.name}",
+          payload_summary:
+            "${job.name} [${job.project}] run by ${job.username} (type: ${job.executionType}) ",
+          service_key: "keys/pagerduty-integration-key",
+        },
+        nodeStep: false,
+        type: "pd-sent-event-step",
+      });
     },
     handleAddElement() {
       this.logFilters.push({
@@ -115,6 +154,12 @@ export default defineComponent({
   .plugin-config-section {
     border-bottom: 1px solid var(--p-accordion-panel-border-color);
     padding-bottom: var(--sizes-2);
+
+    &:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+      margin-top: var(--sizes-2);
+    }
   }
 
   .configpair {

@@ -5,12 +5,8 @@ ul[data-testid='draggable-container']{
     list-style: none;
     position: relative;
     counter-reset: list;
-}
-.item-container {
-  position: relative;
-}
 
-li:before {
+  li:before {
     counter-increment: list;
     content: counter(list)'.';
     display: block;
@@ -18,10 +14,35 @@ li:before {
     position: absolute;
     top: 1rem;
   }
-
+}
+.item-container {
+  position: relative;
+}
 
 i.glyphicon-menu-hamburger {
   position: absolute;
   left: -40px;
   top: 17px;
+}
+
+.link-button,
+.link-title {
+  all: unset;
+  color: #0052CC;
+  cursor: pointer;
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.link-title {
+  font-size: 16px;
+}
+
+.p-menu-item {
+  color: var(--colors-menuitem-color);
+  background: transparent;
+
+  &-link {
+    color: inherit !important;
+  }
 }
