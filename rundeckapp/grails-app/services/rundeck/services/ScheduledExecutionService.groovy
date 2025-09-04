@@ -4722,7 +4722,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             gt('dateStarted', new Date())
 
             if(jobids){
-                'in'('scheduledExecution.id', jobids)
+                createAlias('scheduledExecution', 'se')
+                'in'('se.uuid', jobids)
             }
 
             if (projectFilter) {
