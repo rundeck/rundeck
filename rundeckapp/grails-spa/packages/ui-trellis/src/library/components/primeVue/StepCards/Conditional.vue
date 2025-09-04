@@ -71,7 +71,6 @@ export default defineComponent({
     gap: var(--sizes-2);
     justify-content: flex-start;
     margin-left: var(--sizes-8);
-    //padding: 0;
     padding-left: 0;
     z-index: 1;
 

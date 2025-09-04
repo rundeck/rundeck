@@ -26,20 +26,7 @@
               </plugin-info>
             </AccordionHeader>
             <AccordionContent>
-              <div>
-                <plugin-config
-                  serviceName="WorkflowNodeStep"
-                  provider="jira-create-issue"
-                  :config="jiraStep.config"
-                  :readOnly="true"
-                  :showTitle="false"
-                  :showIcon="false"
-                  :showDescription="false"
-                  mode="show"
-                  allowCopy
-                />
-                <error-handler-step :step="jiraStep" />
-              </div>
+              <StepCardContent />
             </AccordionContent>
           </AccordionPanel>
           <AccordionPanel value="1">
@@ -272,10 +259,12 @@ import "../Tooltip/tooltip.scss";
 import LogFilters from "@/app/components/job/workflow/LogFilters.vue";
 import ErrorHandlerStep from "@/app/components/job/workflow/ErrorHandlerStep.vue";
 import StepCardHeader from "@/library/components/primeVue/StepCards/StepCardHeader.vue";
+import StepCardContent from "@/library/components/primeVue/StepCards/StepCardContent.vue";
 
 export default defineComponent({
   name: "ConditionalCard",
   components: {
+    StepCardContent,
     StepCardHeader,
     ErrorHandlerStep,
     LogFilters,
@@ -403,14 +392,19 @@ export default defineComponent({
 
   &--step {
     &-description {
-      flex: 1 1 auto;
+      align-items: center;
       display: flex;
+      flex: 1 1 auto;
       gap: var(--sizes-2);
     }
   }
 
   .p-card-body {
     padding: var(--sizes-4);
+  }
+
+  .p-accordioncontent-content {
+      background: var(--colors-gray-50);
   }
 }
 
