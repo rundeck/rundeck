@@ -293,7 +293,7 @@ export default defineComponent({
       },
       test: {
         iconUrl:
-          "http://localhost:4440/plugin/icon/WorkflowNodeStep/exec-command",
+          "public/images/icon-shell.png",
         title: "Command",
         builtin: false,
         id: "4ca0a4eec11b",
