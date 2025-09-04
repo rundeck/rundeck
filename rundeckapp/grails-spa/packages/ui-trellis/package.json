@@ -79,7 +79,7 @@
     "@storybook/addon-essentials": "^8.4.5",
     "@storybook/addon-interactions": "^8.4.5",
     "@storybook/addon-styling-webpack": "^1.0.1",
-    "@storybook/addon-webpack5-compiler-swc": "^1.0.6",
+    "@storybook/addon-webpack5-compiler-swc": "1.0.4",
     "@storybook/blocks": "^8.4.5",
     "@storybook/test": "^8.4.5",
     "@storybook/vue3": "^8.4.5",
