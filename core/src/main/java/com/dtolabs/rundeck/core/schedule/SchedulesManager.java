@@ -99,6 +99,9 @@ public interface SchedulesManager {
      */
     List getSchedulesJobToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids);
 
+
+    List getSchedulesExecutionLater(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter);
+
     /**
      * Gets a list of scheduled jobs with adhoc scheduled executions
      * @param toServerUUID

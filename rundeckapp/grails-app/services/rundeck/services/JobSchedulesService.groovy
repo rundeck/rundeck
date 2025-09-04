@@ -55,6 +55,11 @@ class JobSchedulesService implements SchedulesManager {
     }
 
     @Override
+    List getSchedulesExecutionLater(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter) {
+        return rundeckJobSchedulesManager.getSchedulesExecutionLater(toServerUUID, fromServerUUID, selectAll, projectFilter)
+    }
+
+    @Override
     List getJobsWithAdhocScheduledExecutionsToClaim(
         final String toServerUUID,
         final String fromServerUUID,
@@ -122,6 +127,11 @@ class LocalJobSchedulesManager implements SchedulesManager {
     @Override
     List getSchedulesJobToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids) {
         return scheduledExecutionService.getSchedulesJobToClaim(toServerUUID, fromServerUUID, selectAll, projectFilter, jobids)
+    }
+
+    @Override
+    List getSchedulesExecutionLater(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter) {
+        return scheduledExecutionService.getSchedulesExecutionLater(toServerUUID, fromServerUUID, selectAll, projectFilter)
     }
 
     @Override
