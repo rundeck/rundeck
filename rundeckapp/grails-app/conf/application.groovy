@@ -88,8 +88,8 @@ environments {
                 maxAge= 600000
                 timeBetweenEvictionRunsMillis= 5000
                 minEvictableIdleTimeMillis= 60000
-                validationQuery= "SELECT 1"
-                validationQueryTimeout= 3
+                connectionTestQuery= "SELECT 1"
+                validationTimeout= 3000
                 validationInterval= 15000
                 testOnBorrow= true
                 testWhileIdle= true
