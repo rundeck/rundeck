@@ -65,7 +65,7 @@ export default {
     pluginDetails: {
       type: Object,
       default: () => ({
-        iconUrl: "./public/images/icon-condition.png",
+        iconUrl: "./public/library/theme/images/icon-condition.png",
         title: "For each Linux node",
         description: "Conditional Logic on Node Step",
         tooltip: "Only linux nodes will execute the following steps",

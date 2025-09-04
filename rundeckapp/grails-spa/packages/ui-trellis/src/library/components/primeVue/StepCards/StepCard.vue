@@ -28,7 +28,7 @@ export default defineComponent({
       pluginDetails: {
         title: "PagerDuty / User / Create",
         description: "Create a user",
-        iconUrl: "./public/images/icon-pagerduty.png",
+        iconUrl: "./public/library/theme/images/icon-pagerduty.png",
       },
       pdStep: {
         description: "Add new responder in PD",

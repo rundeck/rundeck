@@ -345,10 +345,10 @@ export default defineComponent({
         description: "For each Linux node",
         title: "Conditional Logic on Node Step",
         tooltip: "Only linux nodes will execute the following steps",
-        iconUrl: "./public/images/icon-condition.png",
+        iconUrl: "./public/library/theme/images/icon-condition.png",
       },
       test: {
-        iconUrl: "./public/images/icon-shell.png",
+        iconUrl: "./public/library/theme/images/icon-shell.png",
         title: "Command",
         builtin: false,
         id: "4ca0a4eec11b",

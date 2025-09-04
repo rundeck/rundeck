@@ -9,7 +9,7 @@ const config: StorybookConfig = {
   ],
   staticDirs: [
     { from: "../../../../grails-app/assets", to: "public" },
-    { from: "../src/library/theme/images", to: "public" },
+    { from: "../src/library/theme/images", to: "public/library/theme/images" },
   ],
   addons: [
     "@storybook/addon-webpack5-compiler-swc",
