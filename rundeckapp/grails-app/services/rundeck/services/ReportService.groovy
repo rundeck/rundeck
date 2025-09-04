@@ -441,13 +441,12 @@ class ReportService  {
         def seUuid = se?.uuid?: null
 
         //TO DO: Move to execution provider when possible
-        def execUuids = []
+        def execIds = []
         if (query.execProjects && seUuid) {
-            execUuids = referencedExecutionDataProvider.getExecutionUuidsByJobUuid(seUuid)
+            execIds = referencedExecutionDataProvider.getExecutionIdsByJobUuid(seUuid)
         }
 
-
-        def runlist = execReportDataProvider.getExecutionReports(query, isJobs, seUuid, execUuids)
+        def runlist = execReportDataProvider.getExecutionReports(query, isJobs, seUuid, execIds)
 
         def executions=[]
         def lastDate = -1
@@ -457,7 +456,7 @@ class ReportService  {
                 lastDate = it.dateCompleted.time
             }
         }
-        def total = execReportDataProvider.countExecutionReportsWithTransaction(query, isJobs, seUuid, execUuids)
+        def total = execReportDataProvider.countExecutionReportsWithTransaction(query, isJobs, seUuid, execIds)
 
         filters.putAll(specialfilters)
 

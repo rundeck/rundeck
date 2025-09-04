@@ -268,7 +268,7 @@ class ReportServiceSpec extends Specification implements ServiceUnitTest<ReportS
         def result = service.getExecutionReports(query, true)
         then:
         result.reports.size() == 1
-        1 * service.execReportDataProvider.getExecutionReports(_, _, _, [e1.uuid]) >> [new ExecReport(executionId: e1.id, dateCompleted: new Date())]
+        1 * service.execReportDataProvider.getExecutionReports(_, _, _, [e1.id]) >> [new ExecReport(executionId: e1.id, dateCompleted: new Date())]
     }
 
 

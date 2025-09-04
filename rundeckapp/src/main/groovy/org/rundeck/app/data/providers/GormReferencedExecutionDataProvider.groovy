@@ -40,7 +40,7 @@ class GormReferencedExecutionDataProvider implements ReferencedExecutionDataProv
     }
 
     @Override
-    List getExecutionUuidsByJobUuid(String jobUuid) {
+    List<Long> getExecutionIdsByJobUuid(String jobUuid) {
         return ReferencedExecution.createCriteria().list {
             eq('jobUuid', jobUuid)
             projections {

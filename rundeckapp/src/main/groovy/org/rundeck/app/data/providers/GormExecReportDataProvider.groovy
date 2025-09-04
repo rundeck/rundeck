@@ -89,15 +89,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
     }
 
     @Override
-    int countExecutionReportsWithTransaction(RdExecQuery query, boolean isJobs, String jobId) {
-        return ExecReport.withTransaction {
-            ExecReport.createCriteria().count {
-                applyExecutionCriteria(query, delegate, isJobs, jobId, [])
-            }
-        }
-    }
-
-    int countExecutionReportsWithTransaction(RdExecQuery query, boolean isJobs, String jobId, execsId) {
+    int countExecutionReportsWithTransaction(RdExecQuery query, boolean isJobs, String jobId, List<Long> execsId) {
         return ExecReport.withTransaction {
             ExecReport.createCriteria().count {
                 applyExecutionCriteria(query, delegate, isJobs, jobId, execsId)
@@ -125,7 +117,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
     }
 
     @Override
-    List<RdExecReport> getExecutionReports(RdExecQuery query, boolean isJobs, String jobId, List<String> execUuids) {
+    List<RdExecReport> getExecutionReports(RdExecQuery query, boolean isJobs, String jobId, List<Long> execUuids) {
         def eqfilters = [
                 stat: 'status',
                 reportId: 'reportId',
@@ -265,7 +257,10 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
                     or {
                         if(execsId && execsId.size() > 0){
                             and{
-                                'in'('executionId', execsId)
+                                List execsIdPartitioned = Lists.partition(execsId, 1000)
+                                for(def execIdPartition : execsIdPartitioned){
+                                    'in'('executionId', execIdPartition)
+                                }
                                 List execProjectsPartitioned = Lists.partition(query.execProjects, 1000)
                                 or{
                                     for(def partition : execProjectsPartitioned){
