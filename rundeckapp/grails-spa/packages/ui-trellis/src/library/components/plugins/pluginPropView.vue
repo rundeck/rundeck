@@ -10,21 +10,29 @@
         <span :title="prop.desc">{{ prop.title }}: </span>
         <span
           v-if="innerValue === 'true'"
-          :class="
+          :class="[
             (prop.options && prop.options['booleanTrueDisplayValueClass']) ||
-            'text-success'
-          "
+            'text-success',
+            'copiable-text'
+          ]"
+          @click="copyText(innerValue)"
+          :title="allowCopy ? 'Click to copy' : ''"
         >
           <plugin-prop-val :prop="prop" :value="innerValue" />
+          <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
         </span>
         <span
           v-else-if="innerValue === 'false'"
-          :class="
+          :class="[
             (prop.options && prop.options['booleanFalseDisplayValueClass']) ||
-            'text-success'
-          "
+            'text-success',
+            'copiable-text'
+          ]"
+          @click="copyText(innerValue)"
+          :title="allowCopy ? 'Click to copy' : ''"
         >
           <plugin-prop-val :prop="prop" :value="innerValue" />
+          <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
         </span>
       </template>
     </span>
@@ -45,8 +53,13 @@
     >
       <span :title="prop.desc">{{ prop.title }}:</span>
       <template v-if="prop.type !== 'Options'">
-        <span class="text-success">
+        <span
+          class="text-success copiable-text"
+          @click="copyText(innerValue)"
+          :title="allowCopy ? 'Click to copy' : ''"
+        >
           <plugin-prop-val :prop="prop" :value="innerValue" />
+          <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
         </span>
       </template>
       <template v-else>
@@ -54,22 +67,32 @@
           <span
             v-for="optval in innerValue.split(/, */)"
             :key="optval"
-            class="text-success"
+            class="text-success copiable-text"
+            @click="copyText(optval)"
+            :title="allowCopy ? 'Click to copy' : ''"
           >
             <i
               v-if="!(prop.options && prop.options['valueDisplayType'])"
               class="glyphicon glyphicon-ok-circle"
             ></i>
             <plugin-prop-val :prop="prop" :value="optval" />
+            <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
           </span>
         </span>
         <span v-else-if="typeof value !== 'string' && innerValue.length > 0">
-          <span v-for="optval in innerValue" :key="optval" class="text-success">
+          <span
+            v-for="optval in innerValue"
+            :key="optval"
+            class="text-success copiable-text"
+            @click="copyText(optval)"
+            :title="allowCopy ? 'Click to copy' : ''"
+          >
             <i
               v-if="!(prop.options && prop.options['valueDisplayType'])"
               class="glyphicon glyphicon-ok-circle"
             ></i>
             <plugin-prop-val :prop="prop" :value="optval" />
+            <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
           </span>
         </span>
       </template>
@@ -124,17 +147,36 @@
           data-testid="configpair"
         >
           <span title="">{{ custom.label }}:</span>
-          <span class="text-success"> {{ custom.value }}</span>
+          <span
+            class="text-success copiable-text"
+            @click="copyText(custom.value)"
+            :title="allowCopy ? 'Click to copy' : ''"
+          >
+            {{ custom.value }}
+            <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
+          </span>
         </span>
       </template>
       <span v-else>
         <span :title="prop.desc">{{ prop.title }}:</span>
         <span
           v-if="prop.options && prop.options['displayType'] === 'PASSWORD'"
-          class="text-success"
-          >&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span
+          class="text-success copiable-text"
+          @click="copyText(innerValue)"
+          :title="allowCopy ? 'Click to copy password' : ''"
         >
-        <span v-else class="text-success">{{ innerValue }}</span>
+          &bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;
+          <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
+        </span>
+        <span
+          v-else
+          class="text-success copiable-text"
+          @click="copyText(innerValue)"
+          :title="allowCopy ? 'Click to copy' : ''"
+        >
+          {{ innerValue }}
+          <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
+        </span>
       </span>
     </span>
   </span>
@@ -144,6 +186,7 @@ import { defineComponent } from "vue";
 import Expandable from "../utils/Expandable.vue";
 import AceEditor from "../utils/AceEditor.vue";
 import PluginPropVal from "./pluginPropVal.vue";
+import { CopyToClipboard } from "../../utilities/Clipboard";
 export default defineComponent({
   components: {
     Expandable,
@@ -160,6 +203,10 @@ export default defineComponent({
       type: Object,
       required: true,
     },
+    allowCopy: {
+      type: Boolean,
+      default: false
+    }
   },
   data() {
     return {
@@ -173,6 +220,13 @@ export default defineComponent({
       }
       return [];
     },
+    async copyText(text: string) {
+      try {
+        await CopyToClipboard(text);
+      } catch (error) {
+        console.error('Failed to copy text:', error);
+      }
+    },
   },
 });
 </script>
@@ -181,5 +235,35 @@ export default defineComponent({
   border-bottom: 1px solid #eeeeee;
   margin-top: 10px;
   margin-bottom: 10px;
+}
+
+.copiable-text {
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.copiable-text:hover {
+  background-color: rgba(0, 123, 255, 0.1);
+  border-radius: 3px;
+  padding: 2px 4px;
+  margin: -2px -4px;
+}
+
+.copy-icon {
+  opacity: 0;
+  margin-left: 8px;
+  font-size: 12px;
+  color: #6c757d;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.copiable-text:hover .copy-icon {
+  opacity: 1;
+}
+
+.copiable-text:active {
+  background-color: rgba(40, 167, 69, 0.2);
 }
 </style>

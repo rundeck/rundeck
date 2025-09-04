@@ -1,7 +1,7 @@
 <template>
   <Card class="conditionalCard">
     <template #header>
-      <StepCardHeader :handle-more-actions="handleMoreActions"/>
+      <StepCardHeader />
     </template>
     <template #content>
       <Conditional>
@@ -33,14 +33,8 @@
                   :showIcon="false"
                   :showDescription="false"
                   mode="show"
+                  allowCopy
                 />
-
-<!--                <log-filters-->
-<!--                  :model-value="[]"-->
-<!--                  subtitle=""-->
-<!--                  mode="inline"-->
-<!--                  title=""-->
-<!--                />-->
                 <error-handler-step :step="jiraStep" />
               </div>
             </AccordionContent>
@@ -331,9 +325,6 @@ export default defineComponent({
   methods: {
     yolo() {
       alert("edit mode");
-    },
-    handleMoreActions(event) {
-      this.$refs.menu.toggle(event);
     },
   },
 });

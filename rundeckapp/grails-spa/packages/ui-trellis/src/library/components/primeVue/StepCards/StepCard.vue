@@ -1,9 +1,12 @@
 <template>
   <Card class="stepCard">
     <template #header>
-      <StepCardHeader :handle-more-actions="handleMoreActions"/>
+      <StepCardHeader />
     </template>
     <template #content>
+<!--      <plugin-config-->
+
+<!--      />-->
       <ConfigSection
         title="Log Filters"
         tooltip="Only linux nodes will execute the following steps"
@@ -30,10 +33,12 @@ import { defineComponent } from "vue";
 import Card from "primevue/card";
 import StepCardHeader from "@/library/components/primeVue/StepCards/StepCardHeader.vue";
 import ConfigSection from "@/library/components/primeVue/StepCards/ConfigSection.vue";
+import PluginConfig from "@/library/components/plugins/pluginConfig.vue";
 
 export default defineComponent({
   name: "StepCard",
   components: {
+    PluginConfig,
     Card,
     StepCardHeader,
     ConfigSection,
