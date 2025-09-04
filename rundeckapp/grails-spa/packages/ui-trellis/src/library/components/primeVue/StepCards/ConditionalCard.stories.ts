@@ -5,8 +5,8 @@ import mitt from "mitt";
 import { RootStore } from "../../../stores/RootStore";
 import { RundeckToken } from "../../../interfaces/rundeckWindow";
 import CommonUndoRedoDraggableList from "@/app/components/common/CommonUndoRedoDraggableList.vue";
-import "./stories.scss"
-import { Btn, Dropdown, Modal, Notification } from "uiv";
+import "./stories.scss";
+import { Btn } from "uiv";
 
 const eventBus = mitt();
 
@@ -43,7 +43,7 @@ const meta: Meta<typeof ConditionalCard> = {
     window._rundeck = {
       rdBase: "http://localhost:4440",
       apiVersion: "52",
-      projectName: "Conditional steps POC",
+      projectName: "TestProject.rdproject",
       appMeta: {},
       token: {} as RundeckToken,
       tokens: {},
@@ -291,6 +291,65 @@ export const Default: Story = {
           dynamicDefaults: null,
         },
       },
+      {
+        url: "api/52/plugin/detail/ExecutionLifecycle/Send%20Incident%20Output%20to%20Pagerduty?project=:project",
+        method: "GET",
+        status: 200,
+        response: {
+          title: "Send Incident Output to PagerDuty",
+          targetHostCompatibility: "all",
+          ver: null,
+          id: "aa3f4298d613",
+          providerMetadata: {},
+          dynamicProps: null,
+          thirdPartyDependencies: null,
+          name: "Send Incident Output to Pagerduty",
+          desc: null,
+          iconUrl:
+            "/plugin/icon/ExecutionLifecycle/Send%20Incident%20Output%20to%20Pagerduty",
+          projectMapping: {},
+          vueConfigComponent: null,
+          props: [
+            {
+              allowed: null,
+              defaultValue: null,
+              desc: "Outbound proxy host",
+              name: "proxy_host",
+              options: {
+                displayType: "SINGLE_LINE",
+              },
+              required: false,
+              scope: "Project",
+              selectLabels: null,
+              staticTextDefaultValue: "",
+              title: "Proxy host",
+              type: "String",
+            },
+            {
+              allowed: null,
+              defaultValue: null,
+              desc: "Outbound proxy port",
+              name: "proxy_port",
+              options: null,
+              required: false,
+              scope: "Project",
+              selectLabels: null,
+              staticTextDefaultValue: "",
+              title: "Proxy port",
+              type: "Integer",
+            },
+          ],
+          rundeckCompatibilityVersion: "3.1.0+",
+          license: "Apache 2.0",
+          pluginVersion: "5.16.0-SNAPSHOT",
+          description:
+            "If enabled, all Incident Output captured during a job will be sent to PagerDuty Incident Response.",
+          sourceLink:
+            "https://github.com/rundeck-plugins/pagerduty-notification",
+          fwkMapping: {},
+          dynamicDefaults: null,
+        },
+      },
     ],
   },
 };
@@ -302,23 +361,23 @@ export const DragNDrop: Story = {
     setup() {
       return { args };
     },
-      data() {
-        return {
-            list: [{}, {}]
-        }
-      },
+    data() {
+      return {
+        list: [{ conditional: true }, { conditional: false}],
+      };
+    },
     template: `<div>
           <common-undo-redo-draggable-list
               ref="historyControls"
               v-model="list"
               revert-all-enabled
-              draggable-tag="ol"
+              draggable-tag="ul"
               item-key="id"
           >
             <template #item="{ item: { element, index } }">
               <li>
                 <i class="glyphicon glyphicon-menu-hamburger dragHandle"></i>
-                <conditional-card v-if="index === 0" />
+                <conditional-card v-if="element.conditional" />
                 <step-card v-else />
               </li>
             </template>
@@ -329,7 +388,7 @@ export const DragNDrop: Story = {
   parameters: {
     mockData: [
       {
-        url: "api/52/plugin/detail/WorkflowStep/jira-create-issue?project=:project",
+        url: "/api/52/plugin/detail/WorkflowNodeStep/jira-create-issue?project=:project",
         method: "GET",
         status: 200,
         response: {
@@ -528,6 +587,165 @@ export const DragNDrop: Story = {
             url: "jira.url",
           },
           dynamicDefaults: null,
+        },
+      },
+      {
+        url: "/api/52/plugin/detail/WorkflowStep/pagerduty-create-user?project=:project",
+        method: "GET",
+        status: 200,
+        response: {
+            "title": "PagerDuty / User / Create",
+            "targetHostCompatibility": "all",
+            "ver": null,
+            "id": "aa3f4298d613",
+            "providerMetadata": {},
+            "dynamicProps": null,
+            "thirdPartyDependencies": null,
+            "name": "pagerduty-create-user",
+            "desc": null,
+            "iconUrl": "/plugin/icon/WorkflowStep/pagerduty-create-user",
+            "projectMapping": {},
+            "vueConfigComponent": null,
+            "props": [
+                {
+                    "allowed": null,
+                    "defaultValue": null,
+                    "desc": "Proxy port",
+                    "name": "port",
+                    "options": null,
+                    "required": false,
+                    "scope": "Project",
+                    "selectLabels": null,
+                    "staticTextDefaultValue": "",
+                    "title": "Port",
+                    "type": "String"
+                },
+                {
+                    "allowed": null,
+                    "defaultValue": null,
+                    "desc": "The user's email address.",
+                    "name": "email",
+                    "options": null,
+                    "required": false,
+                    "scope": null,
+                    "selectLabels": null,
+                    "staticTextDefaultValue": "",
+                    "title": "Email",
+                    "type": "String"
+                },
+                {
+                    "allowed": null,
+                    "defaultValue": null,
+                    "desc": "The name of the user.",
+                    "name": "name",
+                    "options": null,
+                    "required": true,
+                    "scope": null,
+                    "selectLabels": null,
+                    "staticTextDefaultValue": "",
+                    "title": "Name",
+                    "type": "String"
+                },
+                {
+                    "allowed": null,
+                    "defaultValue": null,
+                    "desc": "The schedule color",
+                    "name": "color",
+                    "options": null,
+                    "required": false,
+                    "scope": null,
+                    "selectLabels": null,
+                    "staticTextDefaultValue": "",
+                    "title": "Color",
+                    "type": "String"
+                },
+                {
+                    "allowed": [
+                        "admin",
+                        "limited_user",
+                        "observer",
+                        "owner",
+                        "read_only_user",
+                        "restricted_access",
+                        "read_only_limited_user",
+                        "user"
+                    ],
+                    "defaultValue": null,
+                    "desc": "The user role. Account must have the read_only_users ability to set a user as a read_only_user or a read_only_limited_user, and must have advanced permissions abilities to set a user as observer or restricted_access",
+                    "name": "role",
+                    "options": null,
+                    "required": false,
+                    "scope": null,
+                    "selectLabels": null,
+                    "staticTextDefaultValue": "",
+                    "title": "Role",
+                    "type": "FreeSelect"
+                },
+                {
+                    "allowed": null,
+                    "defaultValue": null,
+                    "desc": "The user's title.",
+                    "name": "title",
+                    "options": null,
+                    "required": false,
+                    "scope": null,
+                    "selectLabels": null,
+                    "staticTextDefaultValue": "",
+                    "title": "Title",
+                    "type": "String"
+                },
+                {
+                    "allowed": null,
+                    "defaultValue": null,
+                    "desc": "The user's bio.",
+                    "name": "description",
+                    "options": null,
+                    "required": false,
+                    "scope": null,
+                    "selectLabels": null,
+                    "staticTextDefaultValue": "",
+                    "title": "Description",
+                    "type": "String"
+                },
+                {
+                    "allowed": null,
+                    "defaultValue": null,
+                    "desc": "Proxy host",
+                    "name": "host",
+                    "options": null,
+                    "required": false,
+                    "scope": "Project",
+                    "selectLabels": null,
+                    "staticTextDefaultValue": "",
+                    "title": "Host",
+                    "type": "FreeSelect"
+                },
+                {
+                    "allowed": null,
+                    "defaultValue": null,
+                    "desc": "The API key for the account containing the user (required)",
+                    "name": "apiKey",
+                    "options": {
+                        "storage-file-meta-filter": "Rundeck-data-type=password",
+                        "groupName": "Connection",
+                        "selectionAccessor": "STORAGE_PATH",
+                        "storage-path-root": "keys"
+                    },
+                    "required": false,
+                    "scope": "Instance",
+                    "selectLabels": null,
+                    "staticTextDefaultValue": "",
+                    "title": "API Key",
+                    "type": "String"
+                }
+            ],
+            "rundeckCompatibilityVersion": "3.1.0+",
+            "license": "Apache 2.0",
+            "pluginVersion": "5.16.0-SNAPSHOT",
+            "description": "Create a user",
+            "sourceLink": "https://github.com/rundeck-plugins/pagerduty-notification",
+            "fwkMapping": {},
+            "dynamicDefaults": null
         },
       },
     ],

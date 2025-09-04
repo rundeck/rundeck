@@ -84,7 +84,7 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 .config-section {
-  border-bottom: 1px solid red;
+  border-bottom: 1px solid var(--p-accordion-panel-border-color);
   padding: var(--sizes-4) 0;
   
   .header-row {

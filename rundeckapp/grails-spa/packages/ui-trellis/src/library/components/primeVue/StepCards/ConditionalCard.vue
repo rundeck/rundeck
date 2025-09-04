@@ -1,7 +1,7 @@
 <template>
   <Card class="conditionalCard">
     <template #header>
-      <StepCardHeader />
+      <StepCardHeader :plugin-details="conditionalHeaderConfig" :config="jiraStep" />
     </template>
     <template #content>
       <Conditional>
@@ -25,7 +25,7 @@
             <AccordionContent>
               <div>
                 <plugin-config
-                  serviceName="WorkflowStep"
+                  serviceName="WorkflowNodeStep"
                   provider="jira-create-issue"
                   :config="jiraStep.config"
                   :readOnly="true"
@@ -272,6 +272,13 @@ export default defineComponent({
   props: {},
   data() {
     return {
+      conditionalHeaderConfig: {
+        nodeStep: true,
+        description: 'For each Linux node',
+        title: 'Conditional Logic on Node Step',
+        tooltip: 'Only linux nodes will execute the following steps',
+        iconUrl: 'public/images/icon-condition.png'
+      },
       test: {
         iconUrl:
           "http://localhost:4440/plugin/icon/WorkflowNodeStep/exec-command",
@@ -308,7 +315,7 @@ export default defineComponent({
           id:"s6jvwa",
           filters:[],
           type:"jira-create-issue",
-          nodeStep:false,
+          nodeStep:true,
           keepgoingOnSuccess:true,
           config: {
             customFieldsUserInput: "[]",

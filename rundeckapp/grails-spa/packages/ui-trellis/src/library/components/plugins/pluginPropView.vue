@@ -12,11 +12,10 @@
           v-if="innerValue === 'true'"
           :class="[
             (prop.options && prop.options['booleanTrueDisplayValueClass']) ||
-            'text-success',
-            'copiable-text'
+              'text-success',
+            'copiable-text',
           ]"
           @click="copyText(innerValue)"
-          :title="allowCopy ? 'Click to copy' : ''"
         >
           <plugin-prop-val :prop="prop" :value="innerValue" />
           <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
@@ -25,11 +24,10 @@
           v-else-if="innerValue === 'false'"
           :class="[
             (prop.options && prop.options['booleanFalseDisplayValueClass']) ||
-            'text-success',
-            'copiable-text'
+              'text-success',
+            'copiable-text',
           ]"
           @click="copyText(innerValue)"
-          :title="allowCopy ? 'Click to copy' : ''"
         >
           <plugin-prop-val :prop="prop" :value="innerValue" />
           <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
@@ -51,51 +49,48 @@
       v-else-if="['Options', 'Select', 'FreeSelect'].indexOf(prop.type) >= 0"
       class="configpair"
     >
-      <span :title="prop.desc">{{ prop.title }}:</span>
-      <template v-if="prop.type !== 'Options'">
-        <span
-          class="text-success copiable-text"
-          @click="copyText(innerValue)"
-          :title="allowCopy ? 'Click to copy' : ''"
-        >
-          <plugin-prop-val :prop="prop" :value="innerValue" />
-          <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
-        </span>
-      </template>
-      <template v-else>
-        <span v-if="typeof value === 'string'">
-          <span
-            v-for="optval in innerValue.split(/, */)"
-            :key="optval"
-            class="text-success copiable-text"
-            @click="copyText(optval)"
-            :title="allowCopy ? 'Click to copy' : ''"
-          >
-            <i
-              v-if="!(prop.options && prop.options['valueDisplayType'])"
-              class="glyphicon glyphicon-ok-circle"
-            ></i>
-            <plugin-prop-val :prop="prop" :value="optval" />
+      <span>
+        <span :title="prop.desc">{{ prop.title }}:</span>
+        <template v-if="prop.type !== 'Options'">
+          <span class="text-success copiable-text" @click="copyText(innerValue)">
+            <plugin-prop-val :prop="prop" :value="innerValue" />
             <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
           </span>
-        </span>
-        <span v-else-if="typeof value !== 'string' && innerValue.length > 0">
-          <span
-            v-for="optval in innerValue"
-            :key="optval"
-            class="text-success copiable-text"
-            @click="copyText(optval)"
-            :title="allowCopy ? 'Click to copy' : ''"
-          >
-            <i
-              v-if="!(prop.options && prop.options['valueDisplayType'])"
-              class="glyphicon glyphicon-ok-circle"
-            ></i>
-            <plugin-prop-val :prop="prop" :value="optval" />
-            <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
+        </template>
+        <template v-else>
+          <span v-if="typeof value === 'string'">
+            <span
+                v-for="optval in innerValue.split(/, */)"
+                :key="optval"
+                class="text-success copiable-text"
+                @click="copyText(optval)"
+            >
+              <i
+                  v-if="!(prop.options && prop.options['valueDisplayType'])"
+                  class="glyphicon glyphicon-ok-circle"
+              ></i>
+              <plugin-prop-val :prop="prop" :value="optval" />
+              <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
+            </span>
           </span>
-        </span>
-      </template>
+          <span v-else-if="typeof value !== 'string' && innerValue.length > 0">
+            <span
+                v-for="optval in innerValue"
+                :key="optval"
+                class="text-success copiable-text"
+                @click="copyText(optval)"
+            >
+              <i
+                  v-if="!(prop.options && prop.options['valueDisplayType'])"
+                  class="glyphicon glyphicon-ok-circle"
+              ></i>
+              <plugin-prop-val :prop="prop" :value="optval" />
+              <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
+            </span>
+          </span>
+        </template>
+      </span>
+
     </span>
     <span v-else class="configpair">
       <template v-if="prop.options && prop.options['displayType'] === 'CODE'">
@@ -150,14 +145,13 @@
           <span
             class="text-success copiable-text"
             @click="copyText(custom.value)"
-            :title="allowCopy ? 'Click to copy' : ''"
           >
             {{ custom.value }}
             <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
           </span>
         </span>
       </template>
-      <span v-else>
+      <span class="" v-else>
         <span :title="prop.desc">{{ prop.title }}:</span>
         <span
           v-if="prop.options && prop.options['displayType'] === 'PASSWORD'"
@@ -172,7 +166,6 @@
           v-else
           class="text-success copiable-text"
           @click="copyText(innerValue)"
-          :title="allowCopy ? 'Click to copy' : ''"
         >
           {{ innerValue }}
           <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
@@ -205,8 +198,8 @@ export default defineComponent({
     },
     allowCopy: {
       type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
   data() {
     return {
@@ -224,7 +217,7 @@ export default defineComponent({
       try {
         await CopyToClipboard(text);
       } catch (error) {
-        console.error('Failed to copy text:', error);
+        console.error("Failed to copy text:", error);
       }
     },
   },
@@ -240,21 +233,20 @@ export default defineComponent({
 .copiable-text {
   position: relative;
   cursor: pointer;
+  font-weight: 400 !important;
   transition: background-color 0.2s ease;
 }
 
 .copiable-text:hover {
-  background-color: rgba(0, 123, 255, 0.1);
-  border-radius: 3px;
+  background-color: var(--colors-cardHoverBackgroundOnLight);
   padding: 2px 4px;
   margin: -2px -4px;
 }
 
 .copy-icon {
   opacity: 0;
-  margin-left: 8px;
   font-size: 12px;
-  color: #6c757d;
+  color: var(--colors-gray-800);
   transition: opacity 0.2s ease;
   pointer-events: none;
 }

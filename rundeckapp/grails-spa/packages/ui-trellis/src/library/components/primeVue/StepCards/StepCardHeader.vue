@@ -3,21 +3,18 @@
     <div>
       <div>
         <plugin-info
-          :detail="{
-            iconUrl: 'public/images/icon-condition.png',
-            title: 'For each Linux node',
-          }"
+          :detail="{...config, ...pluginDetails, title: config.description || pluginDetails.description }"
           :show-description="false"
           :show-extended="false"
         />
       </div>
       <div class="conditionalCard--header-description">
-        <Tag class="tag-node" value="Node Step" />
-        <p>Conditional Logic on Node Step</p>
+        <Tag :class="[config.nodeStep? 'tag-node': 'tag-workflow']" :value="`${config.nodeStep ? 'Node' : 'Workflow'} Step`" />
+        <p>{{ pluginDetails.title }}</p>
         <i
           class="fa fa-info-circle"
           v-tooltip="{
-            value: 'Only linux nodes will execute the following steps',
+            value: pluginDetails.tooltip || pluginDetails.description,
           }"
         ></i>
       </div>
@@ -56,6 +53,21 @@ import Tag from "primevue/tag";
 export default {
   name: "StepCardHeader",
   components: { Menu, PluginInfo, PtButton, Tag },
+  props: {
+    pluginDetails: {
+      type: Object,
+      default: () => ({
+        iconUrl: 'public/images/icon-condition.png',
+        title: 'For each Linux node',
+        description: 'Conditional Logic on Node Step',
+        tooltip: 'Only linux nodes will execute the following steps'
+      })
+    },
+    config: {
+      type: Object,
+      required: true
+    }
+  },
   methods: {
     handleMoreActions(event) {
       this.$refs.menu.toggle(event);
@@ -70,6 +82,16 @@ export default {
   a,
   span:not(.glyphicon, .fa) {
     font-family: Inter, var(--fonts-body) !important;
+  }
+
+  .plugin {
+    &-info {
+      display: flex;
+      align-items: center;
+    }
+    &-icon {
+      height: 16px !important;
+    }
   }
 
   background-color: var(--colors-secondaryBackgroundOnLight);

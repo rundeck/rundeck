@@ -1,22 +1,27 @@
-ol[data-testid='draggable-container']{
+ul[data-testid='draggable-container']{
     display: flex;
     flex-direction: column;
     gap: 20px;
+    list-style: none;
     position: relative;
+    counter-reset: list;
 }
 .item-container {
   position: relative;
 }
-.item-container:before {
-  display: block;
-  position: absolute;
-  content: '☰';
-  top: 15px;
-  left: 0;
-}
+
+li:before {
+    counter-increment: list;
+    content: counter(list)'.';
+    display: block;
+    left: -18px;
+    position: absolute;
+    top: 1rem;
+  }
+
 
 i.glyphicon-menu-hamburger {
   position: absolute;
   left: -40px;
-  top:  18px;
+  top: 17px;
 }
