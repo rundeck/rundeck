@@ -15,8 +15,11 @@
           tooltip="Only linux nodes will execute the following steps"
           v-model="errorHandler"
           @addElement="handleAddElement"
+          hideWhenSingle
       >
-        test
+        <template #header>
+          test
+        </template>
       </ConfigSection>
     </template>
   </Card>

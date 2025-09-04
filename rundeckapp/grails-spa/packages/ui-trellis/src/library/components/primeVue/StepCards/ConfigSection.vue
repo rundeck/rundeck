@@ -5,16 +5,19 @@
         {{ title }}
         <i class="fa fa-info-circle" v-tooltip="{ value: tooltip }"></i>:
       </p>
-      <button
-        v-if="modelValue.length === 0 && !hideWhenSingle"
-        v-show="!hideWhenSingle"
-        @click="handleAdd"
-        class="inline-button"
-      >
-        + add
-      </button>
+      <slot name="header">
+        <transition name="inline-button-fade">
+          <button
+              v-if="modelValue.length === 0 && !hideWhenSingle"
+              @click="handleAdd"
+              class="inline-button"
+          >
+            + add
+          </button>
+        </transition>
+      </slot>
     </div>
-    <slot>
+    <slot name="extra">
       <transition name="chips-slide" mode="out-in">
         <div v-if="modelValue.length > 0" class="chips-row">
           <transition-group name="chip-list" tag="div" class="chips-container">
@@ -37,7 +40,6 @@
       </transition>
     </slot>
   </div>
-  <slot name="extra"></slot>
 </template>
 
 <script lang="ts">
@@ -157,5 +159,15 @@ export default defineComponent({
 
 .chip-list-move {
   transition: transform 0.2s ease-out;
+}
+
+.inline-button-fade-enter-active,
+.inline-button-fade-leave-active {
+  transition: all 0.25s ease-out;
+}
+
+.inline-button-fade-enter-from,
+.inline-button-fade-leave-to {
+  opacity: 0;
 }
 </style>
