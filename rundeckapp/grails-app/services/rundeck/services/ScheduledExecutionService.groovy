@@ -4726,10 +4726,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     isNull('serverNodeUUID')
                 }
             }
-        } as List<Execution> as List<Long>
+        } as List<Long>
 
         def scheduledExecutionRunLater = [] as List<ScheduledExecution>
-        if (executionRunLater && executionRunLater.size() > 0) {
+        if (executionRunLater) {
             scheduledExecutionRunLater = ScheduledExecution.createCriteria().listDistinct {
                 inList('id', executionRunLater)
             }
