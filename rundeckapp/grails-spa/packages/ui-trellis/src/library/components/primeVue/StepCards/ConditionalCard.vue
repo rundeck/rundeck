@@ -309,13 +309,13 @@ import Conditional from "./Conditional.vue";
 import PluginInfo from "../../plugins/PluginInfo.vue";
 import PluginConfig from "../../plugins/pluginConfig.vue";
 import PtButton from "../PtButton/PtButton.vue";
-
-import "../Tag/tag.scss";
-import "../Tooltip/tooltip.scss";
 import LogFilters from "@/app/components/job/workflow/LogFilters.vue";
 import ErrorHandlerStep from "@/app/components/job/workflow/ErrorHandlerStep.vue";
 import StepCardHeader from "@/library/components/primeVue/StepCards/StepCardHeader.vue";
 import StepCardContent from "@/library/components/primeVue/StepCards/StepCardContent.vue";
+
+import "../Tag/tag.scss";
+import "../Tooltip/tooltip.scss";
 
 export default defineComponent({
   name: "ConditionalCard",
@@ -345,10 +345,10 @@ export default defineComponent({
         description: "For each Linux node",
         title: "Conditional Logic on Node Step",
         tooltip: "Only linux nodes will execute the following steps",
-        iconUrl: "public/images/icon-condition.png",
+        iconUrl: "./public/images/icon-condition.png",
       },
       test: {
-        iconUrl: "public/images/icon-shell.png",
+        iconUrl: "./public/images/icon-shell.png",
         title: "Command",
         builtin: false,
         id: "4ca0a4eec11b",

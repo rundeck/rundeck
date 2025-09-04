@@ -103,7 +103,7 @@ export const Default: Story = {
           thirdPartyDependencies: null,
           name: "jira-create-issue",
           desc: null,
-          iconUrl: "/plugin/icon/WorkflowStep/jira-create-issue",
+          iconUrl: "./plugin/icon/WorkflowStep/jira-create-issue",
           projectMapping: {
             project: "project.jira.default_project",
           },
@@ -306,7 +306,7 @@ export const Default: Story = {
           name: "Send Incident Output to Pagerduty",
           desc: null,
           iconUrl:
-            "/plugin/icon/ExecutionLifecycle/Send%20Incident%20Output%20to%20Pagerduty",
+            "./plugin/icon/ExecutionLifecycle/Send%20Incident%20Output%20to%20Pagerduty",
           projectMapping: {},
           vueConfigComponent: null,
           props: [
@@ -401,7 +401,7 @@ export const DragNDrop: Story = {
           thirdPartyDependencies: null,
           name: "jira-create-issue",
           desc: null,
-          iconUrl: "/plugin/icon/WorkflowStep/jira-create-issue",
+          iconUrl: "./plugin/icon/WorkflowStep/jira-create-issue",
           projectMapping: {
             project: "project.jira.default_project",
           },
@@ -603,7 +603,7 @@ export const DragNDrop: Story = {
           thirdPartyDependencies: null,
           name: "pagerduty-create-user",
           desc: null,
-          iconUrl: "/plugin/icon/WorkflowStep/pagerduty-create-user",
+          iconUrl: "./plugin/icon/WorkflowStep/pagerduty-create-user",
           projectMapping: {},
           vueConfigComponent: null,
           props: [
@@ -763,7 +763,7 @@ export const DragNDrop: Story = {
           thirdPartyDependencies: null,
           name: "exec-command",
           desc: null,
-          iconUrl: "/plugin/icon/WorkflowNodeStep/exec-command",
+          iconUrl: "./plugin/icon/WorkflowNodeStep/exec-command",
           projectMapping: {},
           vueConfigComponent: null,
           props: [
