@@ -8,7 +8,7 @@
       <span class="operator--and">and</span>
       <Tag class="tag-code" value="node.os-family"></Tag>
       <span class="conditional--equality">equals</span>
-      <span class="bold">Linux</span>
+      <span class="bold">Windows</span>
     </p>
     <div class="conditional--do">
       <div v-if="complex" class="conditional--complex">
@@ -57,7 +57,7 @@ export default defineComponent({
     complex: {
       type: Boolean,
       default: false
-    }
+    },
   },
 });
 </script>
