@@ -812,6 +812,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def scheduledExecutions = timer("takeover query ") {
                 jobSchedulesService.getSchedulesJobToClaim(toServerUUID, queryFromServerUUID, selectAll, queryProject, jobids)
             }
+
+            def scheduledExecutionsLater = timer("takeover job execution later query ") {
+                getSchedulesExecutionLater(toServerUUID, queryFromServerUUID, selectAll, queryProject, jobids)
+            }
+
+            if (scheduledExecutionsLater) {
+                scheduledExecutions = (scheduledExecutions ?: []) + scheduledExecutionsLater
+            }
+
             scheduledExecutions.each { ScheduledExecution se ->
                 def orig = se.serverNodeUUID
                 if (!claimed[se.extid]) {
@@ -1064,6 +1073,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         Map claimed = [:]
         def scheduledExecutions = timer("takeover query ") {
             jobSchedulesService.getSchedulesJobToClaim(toServerUuid, null, true, null, null)
+        }
+
+        def scheduledExecutionsLater = timer("takeover job execution later query ") {
+            getSchedulesExecutionLater(toServerUuid, null, true, null, null)
+        }
+
+        if (scheduledExecutionsLater) {
+            scheduledExecutions = (scheduledExecutions ?: []) + scheduledExecutionsLater
         }
 
         scheduledExecutions.each { ScheduledExecution se ->
@@ -4690,6 +4707,51 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 eq('project', projectFilter)
             }
         }
+    }
+
+    /*
+    Search for jobs with scheduled later triggered
+     */
+    List getSchedulesExecutionLater(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids) {
+        List<Long> executionRunLater = Execution.createCriteria().listDistinct {
+            projections {
+                property('scheduledExecution.id')
+            }
+            eq('status', 'scheduled')
+            isNull('dateCompleted')
+            gt('dateStarted', new Date())
+
+            if(jobids){
+                createAlias('scheduledExecution', 'se')
+                'in'('se.uuid', jobids)
+            }
+
+            if (projectFilter) {
+                eq('project', projectFilter)
+            }
+
+            if (selectAll) {
+                or {
+                    isNull('serverNodeUUID')
+                    ne('serverNodeUUID', toServerUUID)
+                }
+            } else {
+                if (fromServerUUID) {
+                    eq('serverNodeUUID', fromServerUUID)
+                } else {
+                    isNull('serverNodeUUID')
+                }
+            }
+        } as List<Long>
+
+        def scheduledExecutionRunLater = [] as List<ScheduledExecution>
+        if (executionRunLater) {
+            scheduledExecutionRunLater = ScheduledExecution.createCriteria().listDistinct {
+                inList('id', executionRunLater)
+            }
+        }
+
+        return scheduledExecutionRunLater
     }
 
     /**
