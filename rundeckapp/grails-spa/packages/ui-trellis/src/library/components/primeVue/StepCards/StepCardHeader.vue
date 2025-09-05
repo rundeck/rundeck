@@ -11,7 +11,11 @@
           :show-description="false"
           :show-extended="false"
           titleCss="link-title"
-        />
+        >
+          <template #descriptionprefix>
+            <i class="pi pi-pencil"/>
+          </template>
+        </plugin-info>
       </div>
       <div class="conditionalCard--header-description">
         <Tag
@@ -20,7 +24,7 @@
         />
         <p>{{ pluginDetails.title }}</p>
         <i
-          class="fa fa-info-circle"
+          class="pi pi-info-circle"
           v-tooltip="{
             value: pluginDetails.tooltip || pluginDetails.description,
           }"
@@ -31,14 +35,14 @@
       <PtButton
         outlined
         severity="secondary"
-        icon="glyphicon glyphicon-trash"
+        icon="pi pi-trash"
         aria-label="Delete"
         v-tooltip.top="'Delete this step'"
       />
       <PtButton
         outlined
         severity="secondary"
-        icon="fa fa-ellipsis-h"
+        icon="pi pi-ellipsis-h"
         aria-haspopup="true"
         aria-controls="overlay_menu"
         @click="handleMoreActions"

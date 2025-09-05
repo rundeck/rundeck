@@ -60,7 +60,7 @@ export default defineComponent({
 
   p,
   a,
-  span:not(.glyphicon, .fa) {
+  span:not(.glyphicon, .fa, .pi) {
     font-family: Inter, var(--fonts-body) !important;
   }
 

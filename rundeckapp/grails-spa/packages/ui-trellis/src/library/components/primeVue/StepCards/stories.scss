@@ -10,6 +10,7 @@ ul[data-testid='draggable-container']{
     counter-increment: list;
     content: counter(list)'.';
     display: block;
+    font-size: 16px;
     left: -18px;
     position: absolute;
     top: 1rem;
@@ -20,11 +21,17 @@ ul[data-testid='draggable-container']{
   position: relative;
 }
 
-i.glyphicon-menu-hamburger {
+i.pi-bars {
   position: absolute;
-  left: -40px;
-  top: 17px;
+  cursor: grab;
+  left: -45px;
+  top: 19px;
 }
+
+.dragging * {
+  cursor: grabbing !important;
+}
+
 
 .link-button,
 .link-title,
@@ -34,6 +41,21 @@ i.glyphicon-menu-hamburger {
   cursor: pointer;
   font-weight: 400;
   font-size: 12px;
+
+  + .pi,
+  .pi {
+    color: #0052CC;
+    display: none;
+    margin-left: 5px;
+  }
+
+  &:hover {
+    text-decoration: underline;
+
+    + .pi {
+      display: inline;
+    }
+  }
 }
 
 .link-title {
@@ -41,7 +63,6 @@ i.glyphicon-menu-hamburger {
 }
 
 .link-step-plugin {
-  //color:#003F9C;
   font-size: 14px;
 }
 

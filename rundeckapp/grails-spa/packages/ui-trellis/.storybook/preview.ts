@@ -6,6 +6,7 @@ import Lara from "@primeuix/themes/lara";
 import "../src/library/theme/tokens.css";
 import "../src/library/theme/primeVue.css";
 import "../src/library/theme/tokens-rundeck.css";
+import 'primeicons/primeicons.css'
 import "./storybook.css";
 import {initI18n} from "../src/app/utilities/i18n";
 

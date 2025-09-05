@@ -3,7 +3,7 @@
     <div class="header-row">
       <p>
         {{ title }}
-        <i class="fa fa-info-circle" v-tooltip="{ value: tooltip }"></i>:
+        <i class="pi pi-info-circle" v-tooltip="{ value: tooltip }"></i>:
       </p>
       <slot name="header">
         <transition name="inline-button-fade">

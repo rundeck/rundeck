@@ -5,9 +5,40 @@
       <Tag class="tag-code" value="node.os-family"></Tag>
       <span class="conditional--equality">equals</span>
       <span class="bold">Linux</span>
+      <span class="operator--and">and</span>
+      <Tag class="tag-code" value="node.os-family"></Tag>
+      <span class="conditional--equality">equals</span>
+      <span class="bold">Linux</span>
     </p>
     <div class="conditional--do">
-      <div class="conditional--connector"></div>
+      <div v-if="complex" class="conditional--complex">
+        <p class="conditional--or">
+          <span>OR</span><span class="conditional--divider" />
+        </p>
+        <p class="conditional--if">
+          <Tag class="tag-code" value="node.os-family"></Tag>
+          <span class="conditional--equality">equals</span>
+          <span class="bold">Linux</span>
+          <span class="operator--and">and</span>
+          <Tag class="tag-code" value="node.os-family"></Tag>
+          <span class="conditional--equality">equals</span>
+          <span class="bold">Linux</span>
+        </p>
+        <p class="conditional--or">
+          <span>OR</span><span class="conditional--divider" />
+        </p>
+        <p class="conditional--if">
+          <Tag class="tag-code" value="node.os-family"></Tag>
+          <span class="conditional--equality">equals</span>
+          <span class="bold">Linux</span>
+          <span class="operator--and">and</span>
+          <Tag class="tag-code" value="node.os-family"></Tag>
+          <span class="conditional--equality">equals</span>
+          <span class="bold">Linux</span>
+        </p>
+        <div class="conditional--connector"></div>
+      </div>
+      <div v-else class="conditional--connector"></div>
       <slot></slot>
     </div>
   </div>
@@ -22,7 +53,12 @@ export default defineComponent({
   components: {
     Tag,
   },
-  props: {},
+  props: {
+    complex: {
+      type: Boolean,
+      default: false
+    }
+  },
 });
 </script>
 
@@ -36,11 +72,13 @@ export default defineComponent({
     display: flex;
     gap: 5px;
     margin: 0;
+
+    .operator--and {
+      color: var(--colors-cyan-700);
+    }
   }
 
   &--do {
-    //padding-left: var(--sizes-1);
-    //padding-top: 15px;
     padding-left: 30px;
     position: relative;
   }
@@ -55,6 +93,39 @@ export default defineComponent({
     height: 25px;
     //width: 25px;
     width: 23px;
+  }
+
+  &--complex {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin-top: var(--sizes-3);
+    margin-left: -15px;
+
+    .conditional--or {
+      align-items: center;
+      color: var(--colors-pink-600);
+      display: flex;
+      font-weight: var(--fontWeights-semibold);
+      gap: 10px;
+    }
+
+    .conditional--if {
+      margin-bottom: var(--sizes-3);
+    }
+
+    .conditional--divider{
+      background: var(--colors-gray-300);
+      display: flex;
+      height: 1px;
+      width: 100%;
+      //margin-right: var(--sizes-3);
+    }
+
+    .conditional--connector {
+      height: calc(100% + 25px);
+      left: -13px;
+    }
   }
 
   .bold {

@@ -946,21 +946,24 @@ export const DragNDrop: Story = {
     },
     data() {
       return {
-        list: [{ conditional: true }, { conditional: false }],
+        list: [{ conditional: true }, { conditional: true, complex: true }, { conditional: false }],
+          dragging: false
       };
     },
-    template: `<div>
+    template: `<div :class="{'dragging': dragging}">
           <common-undo-redo-draggable-list
               ref="historyControls"
               v-model="list"
               revert-all-enabled
               draggable-tag="ul"
               item-key="id"
+              @start="dragging = true"
+              @end="dragging = false"
           >
             <template #item="{ item: { element, index } }">
               <li>
-                <i class="glyphicon glyphicon-menu-hamburger dragHandle"></i>
-                <conditional-card v-if="element.conditional" />
+                <i class="pi pi-bars dragHandle"></i>
+                <conditional-card :complex="element.complex" v-if="element.conditional" />
                 <step-card v-else />
               </li>
             </template>

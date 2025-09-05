@@ -23,7 +23,7 @@
     "storybook": "storybook dev -p 6006 -- --debug-webpack",
     "clean": "cp -a ./lib/src/library/. ./lib && rm -rf ./lib/src && exit 0",
     "lint": "eslint src --fix",
-    "build-storybook": "storybook build",
+    "build-storybook": "npm run build:app && storybook build",
     "create-wrapper": "npx hygen primevue-generator wrapper --componentName",
     "create-css": "npx hygen primevue-generator css --componentName",
     "storybook-docs": "storybook dev --docs"
@@ -56,6 +56,7 @@
     "npm": "^10.2.2",
     "perfect-scrollbar": "^1.5.0",
     "pinia": "^2.3.1",
+    "primeicons": "^7.0.0",
     "primevue": "4.2.0",
     "uiv": "^2.0.6",
     "vue": "^3.5.16",

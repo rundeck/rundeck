@@ -1,5 +1,5 @@
 <template>
-  <Card class="conditionalCard">
+  <Card class="conditionalCard" :class="{'complex': complex}">
     <template #header>
       <StepCardHeader
         :plugin-details="conditionalHeaderConfig"
@@ -7,9 +7,9 @@
       />
     </template>
     <template #content>
-      <Conditional>
-        <Accordion multiple>
-          <AccordionPanel value="0">
+      <Conditional :complex="complex">
+        <Accordion multiple expandIcon="pi pi-chevron-down" collapseIcon="pi pi-chevron-up">
+          <AccordionPanel value="1">
             <AccordionHeader>
               <plugin-info
                 class="conditionalCard--step-description"
@@ -22,6 +22,7 @@
                   <span class="link-step-plugin" @click.stop="yolo">
                     Run command to stop crowdstrike agent
                   </span>
+                  <i class="pi pi-pencil"/>
                 </template>
               </plugin-info>
             </AccordionHeader>
@@ -29,7 +30,7 @@
               <StepCardContent />
             </AccordionContent>
           </AccordionPanel>
-          <AccordionPanel value="1">
+          <AccordionPanel value="2">
             <AccordionHeader>
               <plugin-info
                 class="conditionalCard--step-description"
@@ -42,6 +43,7 @@
                   <span class="link-step-plugin" @click.stop="yolo">
                     Run command to delete crowdstrike agent
                   </span>
+                  <i class="pi pi-pencil"/>
                 </template>
               </plugin-info>
             </AccordionHeader>
@@ -57,12 +59,12 @@
               </p>
             </AccordionContent>
           </AccordionPanel>
-          <AccordionPanel value="2" class="align-start">
+          <AccordionPanel v-if="!complex" value="3" class="align-start">
             <AccordionHeader asChild>
               <div class="p-accordionheader nested">
                 <Conditional>
-                  <Accordion multiple>
-                    <AccordionPanel value="0">
+                  <Accordion multiple expandIcon="pi pi-chevron-down" collapseIcon="pi pi-chevron-up">
+                    <AccordionPanel value="1">
                       <AccordionHeader>
                         <plugin-info
                           class="conditionalCard--step-description"
@@ -75,6 +77,7 @@
                             <span class="link-step-plugin" @click.stop="yolo">
                               Run command to install the crowdstrike agent
                             </span>
+                            <i class="pi pi-pencil"/>
                           </template>
                         </plugin-info>
                       </AccordionHeader>
@@ -92,11 +95,11 @@
                         </div>
                       </AccordionContent>
                     </AccordionPanel>
-                    <AccordionPanel value="1">
+                    <AccordionPanel value="2">
                       <AccordionHeader asChild>
                         <div class="p-accordionheader nested inner-child">
                           <Conditional>
-                            <Accordion multiple>
+                            <Accordion multiple expandIcon="pi pi-chevron-down" collapseIcon="pi pi-chevron-up">
                               <AccordionPanel value="0">
                                 <AccordionHeader>
                                   <plugin-info
@@ -114,6 +117,7 @@
                                         Run command to install the crowdstrike
                                         agent
                                       </span>
+                                      <i class="pi pi-pencil"/>
                                     </template>
                                   </plugin-info>
                                 </AccordionHeader>
@@ -150,6 +154,7 @@
                                         Run command to install the crowdstrike
                                         agent
                                       </span>
+                                      <i class="pi pi-pencil"/>
                                     </template>
                                   </plugin-info>
                                 </AccordionHeader>
@@ -179,11 +184,11 @@
               </div>
             </AccordionHeader>
           </AccordionPanel>
-          <AccordionPanel value="3" class="align-start">
+          <AccordionPanel v-if="!complex" value="4" class="align-start">
             <AccordionHeader asChild>
               <div class="p-accordionheader nested">
                 <Conditional>
-                  <Accordion multiple>
+                  <Accordion multiple expandIcon="pi pi-chevron-down" collapseIcon="pi pi-chevron-up">
                     <AccordionPanel value="0">
                       <AccordionHeader>
                         <plugin-info
@@ -197,6 +202,7 @@
                             <span class="link-step-plugin" @click.stop="yolo">
                               Run command to install the crowdstrike agent
                             </span>
+                            <i class="pi pi-pencil"/>
                           </template>
                         </plugin-info>
                       </AccordionHeader>
@@ -227,6 +233,7 @@
                             <span class="link-step-plugin" @click.stop="yolo">
                               Run command to install the crowdstrike agent
                             </span>
+                            <i class="pi pi-pencil"/>
                           </template>
                         </plugin-info>
                       </AccordionHeader>
@@ -249,11 +256,11 @@
               </div>
             </AccordionHeader>
           </AccordionPanel>
-          <AccordionPanel value="4" class="align-start">
+          <AccordionPanel v-if="!complex" value="5" class="align-start">
             <AccordionHeader asChild>
               <div class="p-accordionheader nested">
                 <Conditional>
-                  <Accordion multiple>
+                  <Accordion multiple expandIcon="pi pi-chevron-down" collapseIcon="pi pi-chevron-up">
                     <AccordionPanel value="0">
                       <AccordionHeader>
                         <plugin-info
@@ -267,6 +274,7 @@
                             <span class="link-step-plugin" @click.stop="yolo">
                               Run command to install the crowdstrike agent
                             </span>
+                            <i class="pi pi-pencil"/>
                           </template>
                         </plugin-info>
                       </AccordionHeader>
@@ -337,7 +345,12 @@ export default defineComponent({
     Menu,
     Tag,
   },
-  props: {},
+  props: {
+    complex: {
+      type: Boolean,
+      default: false
+    }
+  },
   data() {
     return {
       conditionalHeaderConfig: {
@@ -413,7 +426,7 @@ export default defineComponent({
 
   p,
   a,
-  span:not(.glyphicon, .fa) {
+  span:not(.glyphicon, .fa, .pi) {
     font-family: Inter, var(--fonts-body) !important;
   }
 
@@ -436,6 +449,10 @@ export default defineComponent({
         font-size: var(--fontSizes-md);
         margin: 0;
       }
+
+      .pi {
+        margin-left: 0;
+      }
     }
 
     &-buttons {
@@ -456,6 +473,12 @@ export default defineComponent({
 
   .p-card-body {
     padding: var(--sizes-4);
+  }
+
+  &.complex {
+    .p-card-body {
+      padding: var(--sizes-8);
+    }
   }
 
   .p-accordioncontent-content {
