@@ -84,7 +84,7 @@ class ReportServiceIntegrationSpec extends Specification {
         def result = service.getExecutionReports(query, true)
         then:
         result.reports.size() == 1
-        1 * service.execReportDataProvider.getExecutionReports(_, _, _, [e1.id]) >> [new ExecReport(executionId: e1.id, dateCompleted: new Date())]
+        1 * service.execReportDataProvider.getExecutionReportsByExecsIds(_, _, _, [e1.id]) >> [new ExecReport(executionId: e1.id, dateCompleted: new Date())]
     }
 
 }
