@@ -158,10 +158,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return false
     }
 
-    @CompileStatic
-    public boolean isAllowXml() {
-        return true
-    }
 
     def list() {
         def results = index(params)
@@ -2717,9 +2713,6 @@ Since: V18''',
         if(jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid)){
             extra.nextScheduledExecution=scheduledExecutionService.nextExecutionTime(scheduledExecution)
         }
-        if (scheduledExecution.dateCreated) {
-            extra.created = scheduledExecution.dateCreated
-        }
 
 
 
@@ -2746,7 +2739,7 @@ Since: V18''',
                         group(scheduledExecution.groupPath)
                         project(scheduledExecution.project)
                         description(scheduledExecution.description)
-                        if (request.api_version >= ApiVersions.V54) {
+                        if (request.api_version >= ApiVersions.V55 && scheduledExecution.dateCreated) {
                             created(apiService.w3cDateValue(scheduledExecution.dateCreated))
                         }
                         if (extra.nextScheduledExecution) {
@@ -3022,7 +3015,7 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                                 group(se.groupPath)
                                 project(se.project)
                                 description(se.description)
-                                if (request.api_version >= ApiVersions.V54) {
+                                if (request.api_version >= ApiVersions.V55) {
                                     created(apiService.w3cDateValue(se.dateCreated))
                                 }
                             }

@@ -95,9 +95,9 @@ class JobInfo {
 
     /**
      * NEW: Job creation timestamp (from ScheduledExecution.dateCreated).
-     * Exposed starting in API v54 to avoid surprising older clients.
+     * Exposed starting in API v55 to avoid surprising older clients.
      */
-    @ApiVersion(54)
+    @ApiVersion(55)
     @Ignore(onlyIfNull = true)
     @XmlAttribute
     String created
@@ -138,8 +138,7 @@ class JobInfo {
                         'nextScheduledExecution',
                         'futureScheduledExecutions',
                         'projectDisableExecutions',
-                        'projectDisableSchedule',
-                        'created'
+                        'projectDisableSchedule'
                 )
         )
     }
