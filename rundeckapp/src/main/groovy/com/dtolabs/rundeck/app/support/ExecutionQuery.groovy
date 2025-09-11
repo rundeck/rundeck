@@ -167,7 +167,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
       def excludeTxtFilters = ['excludeJob': 'jobName']
       def excludeEqFilters = ['excludeJobExact': 'jobName']
 
-      def jobqueryfilters = ['jobListFilter', 'jobIdListFilter', 'excludeJobListFilter', 'excludeJobIdListFilter', 'jobFilter', 'jobExactFilter', 'groupPath', 'groupPathExact', 'descFilter', 'excludeGroupPath', 'excludeGroupPathExact', 'excludeJobFilter', 'excludeJobExactFilter']
+      def jobqueryfilters = ['jobListFilter', 'excludeJobListFilter', 'excludeJobIdListFilter', 'jobFilter', 'jobExactFilter', 'groupPath', 'groupPathExact', 'descFilter', 'excludeGroupPath', 'excludeGroupPathExact', 'excludeJobFilter', 'excludeJobExactFilter']
 
       def convertids = { String s ->
         try {
