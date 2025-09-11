@@ -191,4 +191,19 @@ databaseChangeLog = {
             column(name: "job_uuid")
         }
     }
+
+    changeSet(author: "rundeckdev", id: "execution-project-date-index") {
+        preConditions(onFail: "MARK_RAN"){
+            not {
+                indexExists(indexName: "execution_project_date_idx", tableName: "execution")
+            }
+        }
+
+        createIndex(indexName: "execution_project_date_idx", tableName: "execution") {
+            column(name: "project")
+            column(name: "date_completed")
+            column(name: "date_started")
+        }
+    }
+
 }
