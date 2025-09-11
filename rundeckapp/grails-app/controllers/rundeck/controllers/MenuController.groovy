@@ -158,6 +158,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return false
     }
 
+
     def list() {
         def results = index(params)
         render(view:"index",model:results)
@@ -2655,9 +2656,14 @@ Since: V18''',
             )
         )
     )
-    /**
-     * API: get job info: /api/18/job/{id}/info
-     */
+
+/**
+ * API: get job info: /api/18/job/{id}/info
+ * Returns job metadata in XML or JSON with consistent date formatting.
+ *
+ * @return Job metadata for the given job ID.
+ * @since API v18
+ */
     @RdAuthorizeJob(RundeckAccess.Job.AUTH_APP_READ_OR_VIEW)
     def apiJobDetail() {
         if (!apiService.requireApi(request, response, ApiVersions.V18)) {
@@ -2707,17 +2713,53 @@ Since: V18''',
         if(jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid)){
             extra.nextScheduledExecution=scheduledExecutionService.nextExecutionTime(scheduledExecution)
         }
-        respond(
 
-                JobInfo.from(
-                        scheduledExecution,
-                        apiService.apiHrefForJob(scheduledExecution),
-                        apiService.guiHrefForJob(scheduledExecution),
-                        extra
-                ),
 
-                [formats: responseFormats]
-        )
+
+        withFormat {
+            xml {
+                return apiService.renderSuccessXml(request, response) {
+                    def jobparams = [
+                            id: scheduledExecution.extid,
+                            href: apiService.apiHrefForJob(scheduledExecution),
+                            permalink: apiService.guiHrefForJob(scheduledExecution),
+                            scheduled: scheduledExecution.scheduled,
+                            scheduleEnabled: scheduledExecution.scheduleEnabled,
+                            enabled: scheduledExecution.executionEnabled
+                    ]
+                    if (clusterModeEnabled && scheduledExecution.scheduled) {
+                        jobparams.serverNodeUUID = scheduledExecution.serverNodeUUID
+                        jobparams.serverOwner = jobparams.serverNodeUUID == serverNodeUUID
+                    }
+                    if (extra.averageDuration) {
+                        jobparams.averageDuration = extra.averageDuration
+                    }
+                    job(jobparams) {
+                        name(scheduledExecution.jobName)
+                        group(scheduledExecution.groupPath)
+                        project(scheduledExecution.project)
+                        description(scheduledExecution.description)
+                        if (request.api_version >= ApiVersions.V55 && scheduledExecution.dateCreated) {
+                            created(apiService.w3cDateValue(scheduledExecution.dateCreated))
+                        }
+                        if (extra.nextScheduledExecution) {
+                            nextScheduledExecution(extra.nextScheduledExecution)
+                        }
+                    }
+                }
+            }
+            json {
+                respond(
+                        JobInfo.from(
+                                scheduledExecution,
+                                apiService.apiHrefForJob(scheduledExecution),
+                                apiService.guiHrefForJob(scheduledExecution),
+                                extra
+                        ),
+                        [formats: ['json']]
+                )
+            }
+        }
     }
 
 
@@ -2973,6 +3015,9 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                                 group(se.groupPath)
                                 project(se.project)
                                 description(se.description)
+                                if (request.api_version >= ApiVersions.V55) {
+                                    created(apiService.w3cDateValue(se.dateCreated))
+                                }
                             }
                         }
                     }
