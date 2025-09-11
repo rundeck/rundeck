@@ -21,6 +21,8 @@ class JobUploadPage extends BasePage {
     By formUploadButton = By.id(formUploadButtonId)
     By jobUploadInfoDiv = By.xpath("//div[@class='${jobUploadInfoSelectors}']")
     By headerTextSuccessBy = By.cssSelector(".card-header.text-success")
+    By headerTextInfoBy = By.cssSelector(".card-header.text-info")
+    By dupeOptionSkip = By.cssSelector("input[type=radio][name=dupeOption][value=skip]")
 
     JobUploadPage(final SeleniumContext context) {
         super(context)
@@ -34,6 +36,10 @@ class JobUploadPage extends BasePage {
         if (!driver.currentUrl.contains(loadPath)) {
             throw new IllegalStateException("Not on job upload page: " + driver.currentUrl)
         }
+    }
+
+    WebElement dupeOptionSkip(){
+        el dupeOptionSkip
     }
 
     WebElement fileInputElement(){
@@ -50,6 +56,10 @@ class JobUploadPage extends BasePage {
 
     WebElement getHeaderTextSuccess(){
         waitForElementVisible headerTextSuccessBy
+        el headerTextSuccessBy
+    }
+    WebElement getHeaderTextInfo(){
+        waitForElementVisible headerTextInfoBy
         el headerTextSuccessBy
     }
 
