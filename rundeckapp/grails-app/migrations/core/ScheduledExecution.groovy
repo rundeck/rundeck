@@ -298,4 +298,16 @@ databaseChangeLog = {
         }
     }
 
+    changeSet(author: "rundeckuser (generated)", id: "4.16.0-add-last-modified-by-column") {
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                columnExists(tableName: "scheduled_execution", columnName: "last_modified_by")
+            }
+        }
+
+        addColumn(tableName: "scheduled_execution") {
+            column(name: "last_modified_by", type: '${varchar255.type}')
+        }
+    }
+
 }

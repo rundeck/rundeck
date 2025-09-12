@@ -111,6 +111,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
 
     String maxMultipleExecutions
     String pluginConfig
+    String lastModifiedBy
 
     static transients = ['userRoles', 'adhocExecutionType', 'notifySuccessRecipients', 'notifyFailureRecipients',
                          'notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl',
@@ -142,6 +143,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         orchestrator(nullable:true)
         crontabString(bindable: true,nullable: true)
         pluginConfig(nullable: true)
+        lastModifiedBy(nullable: true, blank: false)
     }
 
     static mapping = {
@@ -175,6 +177,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         notifyAvgDurationThreshold(type: 'text')
         serverNodeUUID(type: 'string')
         pluginConfig(type: 'text')
+        lastModifiedBy(type: 'string')
 
         DomainIndexHelper.generate(delegate) {
             index 'JOB_IDX_PROJECT', ['project']

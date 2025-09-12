@@ -3704,6 +3704,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             )
         }
 
+        // Set lastModifiedBy for job updates to track who modified the job
+        if (authContext?.username) {
+            scheduledExecution.lastModifiedBy = authContext.username
+        }
+
         if (!(resultFromPlugin.success && !failed && scheduledExecution.save(flush: true))) {
             scheduledExecution.discard()
             return [success: false, scheduledExecution: scheduledExecution]
@@ -3808,6 +3813,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     "A component returned an error: " + result2.error
             )
         }
+
+        // Set user for new job creation to track who created the job
+        if (!scheduledExecution.user && authContext?.username) {
+            scheduledExecution.user = authContext.username
+        }
+
         if (!(resultFromPlugin.success && !failed && scheduledExecution.save(flush: true))) {
             scheduledExecution.discard()
             return [success: false, scheduledExecution: scheduledExecution]
