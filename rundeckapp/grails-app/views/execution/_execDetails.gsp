@@ -409,6 +409,41 @@
         </tr>
     </g:if>
 
+    <!-- Audit Information: Job Creator and Last Modifier -->
+    <g:if test="${execdata instanceof ScheduledExecution}">
+        <tr>
+            <td>
+                <g:message code="job.audit.created.label" default="Created by" />
+            </td>
+            <td>
+                <g:if test="${execdata.user}">
+                    <span class="text-info"><g:enc>${execdata.user}</g:enc></span>
+                    <g:message code="job.audit.on" default="on" />
+                    <span class="dateCreated" title="${execdata.dateCreated}">
+                        <g:relativeDate elapsed="${execdata.dateCreated}" />
+                    </span>
+                </g:if>
+                <g:else>
+                    <span class="text-muted"><g:message code="job.audit.unknown" default="Unknown" /></span>
+                </g:else>
+            </td>
+        </tr>
+        <g:if test="${execdata.lastModifiedBy && execdata.lastUpdated != execdata.dateCreated}">
+            <tr>
+                <td>
+                    <g:message code="job.audit.modified.label" default="Last modified by" />
+                </td>
+                <td>
+                    <span class="text-info"><g:enc>${execdata.lastModifiedBy}</g:enc></span>
+                    <g:message code="job.audit.on" default="on" />
+                    <span class="lastUpdated" title="${execdata.lastUpdated}">
+                        <g:relativeDate elapsed="${execdata.lastUpdated}" />
+                    </span>
+                </td>
+            </tr>
+        </g:if>
+    </g:if>
+
 </table>
 </div>
 </div>

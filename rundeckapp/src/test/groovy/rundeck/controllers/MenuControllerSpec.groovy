@@ -3334,6 +3334,304 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         'json' |  43
     }
 
+    // ===== Job Audit API Integration Tests =====
+
+    @Unroll
+    def "api job detail includes audit fields for api version #apiVersion"() {
+        given:
+        def testUUID = UUID.randomUUID().toString()
+        def testUUID2 = UUID.randomUUID().toString()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        
+        def createdDate = new Date() - 10
+        def lastUpdated = new Date() - 1
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(
+            jobName: 'job1',
+            uuid: testUUID,
+            user: 'creator',
+            lastModifiedBy: 'modifier'
+        ))
+        job1.serverNodeUUID = testUUID2
+        job1.totalTime = 200 * 1000
+        job1.execCount = 100
+        job1.dateCreated = createdDate
+        job1.lastUpdated = lastUpdated
+        job1.save()
+
+        def jobSchedulesService = Mock(JobSchedulesService) {
+            shouldScheduleExecution(_) >> job1.shouldScheduleExecution()
+        }
+        controller.jobSchedulesService = jobSchedulesService
+        controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
+        controller.executionService = new ExecutionService()
+        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
+
+        when:
+        params.id = testUUID
+        request.api_version = apiVersion
+        response.format = 'json'
+        def result = controller.apiJobDetail()
+
+        then:
+        1 * controller.apiService.requireApi(_, _, 18) >> true
+        1 * controller.apiService.requireParameters(_, _, ['id']) >> true
+        1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
+        1 * controller.apiService.requireExists(_, job1, _) >> true
+        1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
+        1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
+
+        response.json != null
+        response.json.id == testUUID
+        response.json.name == 'job1'
+        
+        if (shouldIncludeAudit) {
+            assert response.json.createdBy == 'creator'
+            assert response.json.lastModifiedBy == 'modifier'
+            assert response.json.lastModified != null
+        } else {
+            assert response.json.createdBy == null
+            assert response.json.lastModifiedBy == null  
+            assert response.json.lastModified == null
+        }
+
+        where:
+        apiVersion | shouldIncludeAudit
+        54         | false
+        55         | true
+        56         | true
+    }
+
+    @Unroll
+    def "api job detail XML includes audit fields for api version #apiVersion"() {
+        given:
+        def testUUID = UUID.randomUUID().toString()
+        def testUUID2 = UUID.randomUUID().toString()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(
+            jobName: 'job1',
+            uuid: testUUID,
+            user: 'xmlcreator',
+            lastModifiedBy: 'xmlmodifier'
+        ))
+        job1.serverNodeUUID = testUUID2
+        job1.totalTime = 200 * 1000
+        job1.execCount = 100
+        job1.save()
+
+        def jobSchedulesService = Mock(JobSchedulesService) {
+            shouldScheduleExecution(_) >> job1.shouldScheduleExecution()
+        }
+        controller.jobSchedulesService = jobSchedulesService
+        controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
+        controller.executionService = new ExecutionService()
+        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
+
+        when:
+        params.id = testUUID
+        request.api_version = apiVersion
+        response.format = 'xml'
+        def result = controller.apiJobDetail()
+
+        then:
+        1 * controller.apiService.requireApi(_, _, 18) >> true
+        1 * controller.apiService.requireParameters(_, _, ['id']) >> true
+        1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
+        1 * controller.apiService.requireExists(_, job1, _) >> true
+        1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
+        1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
+
+        response.xml != null
+        response.xml.@id.text() == testUUID
+        response.xml.@name.text() == 'job1'
+
+        if (shouldIncludeAudit) {
+            assert response.xml.@createdBy.text() == 'xmlcreator'
+            assert response.xml.@lastModifiedBy.text() == 'xmlmodifier'
+            assert response.xml.@lastModified.text() != ''
+        } else {
+            assert response.xml.@createdBy.text() == ''
+            assert response.xml.@lastModifiedBy.text() == ''
+            assert response.xml.@lastModified.text() == ''
+        }
+
+        where:
+        apiVersion | shouldIncludeAudit
+        54         | false
+        55         | true
+        56         | true
+    }
+
+    def "api job forecast includes audit fields for api v55+"() {
+        given:
+        def testUUID = UUID.randomUUID().toString()
+        def testUUID2 = UUID.randomUUID().toString()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject('AProject') >> Mock(IRundeckProject) {
+                getProjectProperties() >> ["project.disable.executions": "false", "project.disable.schedule": "false"]
+            }
+        }
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(
+            jobName: 'job1',
+            uuid: testUUID,
+            user: 'forecastcreator',
+            lastModifiedBy: 'forecastmodifier'
+        ))
+        job1.serverNodeUUID = testUUID2
+        job1.totalTime = 200 * 1000
+        job1.execCount = 100
+        job1.scheduled = true
+        job1.save()
+
+        def jobSchedulesService = Mock(JobSchedulesService) {
+            shouldScheduleExecution(_) >> job1.shouldScheduleExecution()
+        }
+        controller.jobSchedulesService = jobSchedulesService
+        controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
+        controller.executionService = new ExecutionService()
+        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
+
+        when:
+        request.api_version = 55
+        params.id = testUUID
+        response.format = 'json'
+        def result = controller.apiJobForecast()
+
+        then:
+        1 * controller.apiService.requireApi(_, _, 31) >> true
+        1 * controller.apiService.requireParameters(_, _, ['id']) >> true
+        1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
+        1 * controller.apiService.requireExists(_, job1, _) >> true
+        1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
+        1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
+        1 * controller.scheduledExecutionService.nextExecutions(_, _, false) >> [new Date()]
+
+        response.json != null
+        response.json.id == testUUID
+        response.json.createdBy == 'forecastcreator'
+        response.json.lastModifiedBy == 'forecastmodifier'
+        response.json.lastModified != null
+    }
+
+    def "api job detail audit fields handle null values gracefully"() {
+        given:
+        def testUUID = UUID.randomUUID().toString()
+        def testUUID2 = UUID.randomUUID().toString()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        
+        // Job with null audit fields (legacy job)
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(
+            jobName: 'legacy-job',
+            uuid: testUUID
+            // user and lastModifiedBy intentionally not set (null)
+        ))
+        job1.serverNodeUUID = testUUID2
+        job1.totalTime = 200 * 1000
+        job1.execCount = 100
+        job1.save()
+
+        def jobSchedulesService = Mock(JobSchedulesService) {
+            shouldScheduleExecution(_) >> job1.shouldScheduleExecution()
+        }
+        controller.jobSchedulesService = jobSchedulesService
+        controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
+        controller.executionService = new ExecutionService()
+        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
+
+        when:
+        params.id = testUUID
+        request.api_version = 55
+        response.format = 'json'
+        def result = controller.apiJobDetail()
+
+        then:
+        1 * controller.apiService.requireApi(_, _, 18) >> true
+        1 * controller.apiService.requireParameters(_, _, ['id']) >> true
+        1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
+        1 * controller.apiService.requireExists(_, job1, _) >> true
+        1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
+        1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
+
+        response.json != null
+        response.json.id == testUUID
+        response.json.name == 'legacy-job'
+        // Null values should not appear in JSON response due to @Ignore(onlyIfNull = true)
+        !response.json.containsKey('createdBy')
+        !response.json.containsKey('lastModifiedBy')
+        response.json.containsKey('lastModified') // dateCreated should always be present
+    }
+
+    def "jobsAjax includes audit information in job metadata for api v55+"() {
+        given:
+        def testUUID = UUID.randomUUID().toString()
+        def testUUID2 = UUID.randomUUID().toString()
+        controller.configurationService = Mock(ConfigurationService)
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.executionService = new ExecutionService()
+        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
+        
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(
+            jobName: 'job1',
+            uuid: testUUID,
+            user: 'ajaxcreator',
+            lastModifiedBy: 'ajaxmodifier'
+        ))
+        job1.serverNodeUUID = testUUID2
+        job1.totalTime = 200 * 1000
+        job1.execCount = 100
+        job1.save()
+        request.addHeader('x-rundeck-ajax', 'true')
+
+        when:
+        params.id = testUUID
+        params.project = 'AProject'
+        request.api_version = 55
+        response.format = 'json'
+        def result = controller.jobsAjax()
+
+        then:
+        1 * controller.rundeckAuthContextProcessor.authResourceForJob(_) >>
+            [authorized: true, action: AuthConstants.ACTION_READ, resource: job1]
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, _, _) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+                                                                                             action: AuthConstants.ACTION_READ,
+                                                                                             resource: [group: job1.groupPath, name: job1.jobName]]]
+        1 * controller.frameworkService.existsFrameworkProject('AProject') >> true
+        1 * controller.apiService.requireExists(_, true, ['project', 'AProject']) >> true
+        1 * controller.scheduledExecutionService.listWorkflows(_, _) >> [schedlist: [job1]]
+        1 * controller.scheduledExecutionService.finishquery(_, _, _) >> [max: 20,
+                                                                          offset: 0,
+                                                                          paginateParams: [:],
+                                                                          displayParams: [:]]
+        1 * controller.scheduledExecutionService.nextExecutionTimes(_) >> [(job1.id): new Date()]
+
+        response.json != null
+        response.json.count == 1
+        response.json.jobs
+        response.json.jobs[0].name == 'job1'
+        // Audit fields should be included for API v55+
+        response.json.jobs[0].createdBy == 'ajaxcreator'
+        response.json.jobs[0].lastModifiedBy == 'ajaxmodifier'
+        response.json.jobs[0].lastModified != null
+    }
+
     private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {
         artefactInstance.getClass().getDeclaredMethods().find { it.name == name }.getAnnotation(clazz)
     }
