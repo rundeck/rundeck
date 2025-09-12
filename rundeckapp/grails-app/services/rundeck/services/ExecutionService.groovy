@@ -3248,7 +3248,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         } as Execution
 
         //just replacing the value for the received from ExecutionJob because the status is not saved yet
-        if(executionLoad.orchestrator){
+        if(executionLoad && executionLoad.orchestrator){
             execution.orchestrator = executionLoad.orchestrator
         }
 
