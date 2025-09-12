@@ -3247,7 +3247,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             fetchMode('orchestrator', FetchMode.JOIN)
         } as Execution
 
-        //just replacing the value for the recived from ExecutionJob because the status is not saved yet
+        //just replacing the value for the received from ExecutionJob because the status is not saved yet
         if(executionLoad.orchestrator){
             execution.orchestrator = executionLoad.orchestrator
         }
