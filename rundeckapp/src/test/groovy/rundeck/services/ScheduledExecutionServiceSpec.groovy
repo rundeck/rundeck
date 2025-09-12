@@ -6543,5 +6543,101 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             ['1', '2', '3', '4', '5'] | ['4', '5']   | ['some/path/test1', 'some/path/test2', 'some/path/test3']
 
     }
+
+    // ===== Job Audit Functionality Tests =====
+
+    def "job creation should set user from authContext"() {
+        given: "a new job and auth context with username"
+        setupDoUpdate()
+        def job = new ScheduledExecution(createJobParams())
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'testuser'
+            getRoles() >> new HashSet<String>(['test'])
+        }
+
+        when: "the job is saved"
+        def result = service._dosave(job, auth)
+
+        then: "the user field should be set to the current username"
+        result.success
+        result.scheduledExecution.user == 'testuser'
+    }
+
+    def "job update should set lastModifiedBy from authContext"() {
+        given: "an existing job and auth context with username"
+        setupDoUpdate()
+        def existingJob = new ScheduledExecution(createJobParams(user: 'originaluser')).save()
+        def updateJob = new ScheduledExecution(createJobParams(description: 'updated'))
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'modifier'
+            getRoles() >> new HashSet<String>(['test'])
+        }
+
+        when: "the job is updated"
+        def result = service._doupdateJob(existingJob.id, 
+            new RundeckJobDefinitionManager.ImportedJobDefinition(job: updateJob, associations: [:]), auth)
+
+        then: "lastModifiedBy should be set to current username"
+        result.success
+        result.scheduledExecution.user == 'originaluser' // Original creator preserved
+        result.scheduledExecution.lastModifiedBy == 'modifier' // Last modifier updated
+    }
+
+    def "job creation without user in authContext should handle gracefully"() {
+        given: "a new job and auth context without username"
+        setupDoUpdate()
+        def job = new ScheduledExecution(createJobParams())
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> null
+            getRoles() >> new HashSet<String>(['test'])
+        }
+
+        when: "the job is saved"
+        def result = service._dosave(job, auth)
+
+        then: "the job should still save successfully"
+        result.success
+        result.scheduledExecution.user == null // No user set when username is null
+    }
+
+    def "job update without user in authContext should not set lastModifiedBy"() {
+        given: "an existing job and auth context without username"
+        setupDoUpdate()
+        def existingJob = new ScheduledExecution(createJobParams(user: 'originaluser')).save()
+        def updateJob = new ScheduledExecution(createJobParams(description: 'updated'))
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> null
+            getRoles() >> new HashSet<String>(['test'])
+        }
+
+        when: "the job is updated"
+        def result = service._doupdateJob(existingJob.id, 
+            new RundeckJobDefinitionManager.ImportedJobDefinition(job: updateJob, associations: [:]), auth)
+
+        then: "lastModifiedBy should remain null"
+        result.success
+        result.scheduledExecution.user == 'originaluser' // Original creator preserved
+        result.scheduledExecution.lastModifiedBy == null // No modifier set when username is null
+    }
+
+    def "job update should preserve original user when not set"() {
+        given: "an existing job without user and update with auth context"
+        setupDoUpdate()
+        def existingJob = new ScheduledExecution(createJobParams()).save()
+        def updateJob = new ScheduledExecution(createJobParams(description: 'updated'))
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'newuser'
+            getRoles() >> new HashSet<String>(['test'])
+        }
+
+        when: "the job is updated"
+        def result = service._doupdateJob(existingJob.id, 
+            new RundeckJobDefinitionManager.ImportedJobDefinition(job: updateJob, associations: [:]), auth)
+
+        then: "user should remain unchanged and lastModifiedBy should be set"
+        result.success
+        result.scheduledExecution.user == null // Original user (null) preserved  
+        result.scheduledExecution.lastModifiedBy == 'newuser'
+    }
 }
 
