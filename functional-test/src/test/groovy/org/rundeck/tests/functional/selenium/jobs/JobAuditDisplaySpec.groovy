@@ -100,7 +100,7 @@ class JobAuditDisplaySpec extends SeleniumBase {
    </job>
 </joblist>'''
 
-        def updateResponse = doPost("/api/48/job/${jobUuid}", [
+        def updateResponse = doPost("/api/55/job/${jobUuid}", [
             'Content-Type': 'application/xml'
         ], jobUpdateXml)
         assert updateResponse.successful
