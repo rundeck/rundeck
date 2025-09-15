@@ -428,7 +428,7 @@
                 </g:else>
             </td>
         </tr>
-        <g:if test="${execdata.lastModifiedBy && execdata.lastUpdated != execdata.dateCreated}">
+        <g:if test="${execdata.lastModifiedBy && execdata.lastModifiedBy != execdata.user}">
             <tr>
                 <td>
                     <g:message code="job.audit.modified.label" default="Last modified by" />
