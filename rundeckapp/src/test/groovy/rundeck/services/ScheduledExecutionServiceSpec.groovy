@@ -1736,6 +1736,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.messageSource = Mock(MessageSource) {
             getMessage(_, _) >> { it[0].toString() }
         }
+        service.jobSchedulesService = Mock(JobSchedulesService) {
+            isScheduled(_) >> false
+        }
         uuid
     }
 
