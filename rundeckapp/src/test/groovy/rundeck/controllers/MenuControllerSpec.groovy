@@ -3383,7 +3383,6 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
 
-        response.json != null
         response.json.id == testUUID
         response.json.name == 'job1'
         
@@ -3447,7 +3446,6 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
 
-        response.xml != null
         response.xml.@id.text() == testUUID
         response.xml.@name.text() == 'job1'
 
@@ -3516,7 +3514,6 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
         1 * controller.scheduledExecutionService.nextExecutions(_, _, false) >> [new Date()]
 
-        response.json != null
         response.json.id == testUUID
         response.json.createdBy == 'forecastcreator'
         response.json.lastModifiedBy == 'forecastmodifier'
@@ -3565,7 +3562,6 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
 
-        response.json != null
         response.json.id == testUUID
         response.json.name == 'legacy-job'
         // Null values should not appear in JSON response due to @Ignore(onlyIfNull = true)
@@ -3622,9 +3618,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
                                                                           displayParams: [:]]
         1 * controller.scheduledExecutionService.nextExecutionTimes(_) >> [(job1.id): new Date()]
 
-        response.json != null
         response.json.count == 1
-        response.json.jobs
+        response.json.jobs != null
         response.json.jobs[0].name == 'job1'
         // Audit fields should be included for API v55+
         response.json.jobs[0].createdBy == 'ajaxcreator'
