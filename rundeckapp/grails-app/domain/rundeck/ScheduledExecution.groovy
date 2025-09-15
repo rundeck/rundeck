@@ -143,7 +143,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         orchestrator(nullable:true)
         crontabString(bindable: true,nullable: true)
         pluginConfig(nullable: true)
-        lastModifiedBy(nullable: true, blank: false)
+        lastModifiedBy(nullable: true, blank: true)
     }
 
     static mapping = {
