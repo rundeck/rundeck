@@ -3390,11 +3390,11 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         if (shouldIncludeAudit) {
             assert response.json.createdBy == 'creator'
             assert response.json.lastModifiedBy == 'modifier'
-            assert response.json.lastModified != null
+            assert response.json.lastModified.matches('\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*')
         } else {
-            assert response.json.createdBy == null
-            assert response.json.lastModifiedBy == null  
-            assert response.json.lastModified == null
+            assert !response.json.containsKey('createdBy')
+            assert !response.json.containsKey('lastModifiedBy')  
+            assert response.json.containsKey('lastModified') // dateCreated should always be present
         }
 
         where:
@@ -3454,11 +3454,11 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         if (shouldIncludeAudit) {
             assert response.xml.@createdBy.text() == 'xmlcreator'
             assert response.xml.@lastModifiedBy.text() == 'xmlmodifier'
-            assert response.xml.@lastModified.text() != ''
+            assert response.xml.@lastModified.text().matches('\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*')
         } else {
-            assert response.xml.@createdBy.text() == ''
-            assert response.xml.@lastModifiedBy.text() == ''
-            assert response.xml.@lastModified.text() == ''
+            assert response.xml.@createdBy.size() == 0
+            assert response.xml.@lastModifiedBy.size() == 0
+            assert response.xml.@lastModified.size() == 1 // dateCreated should always be present
         }
 
         where:
@@ -3520,7 +3520,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         response.json.id == testUUID
         response.json.createdBy == 'forecastcreator'
         response.json.lastModifiedBy == 'forecastmodifier'
-        response.json.lastModified != null
+        response.json.lastModified.matches('\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*')
     }
 
     def "api job detail audit fields handle null values gracefully"() {
@@ -3629,7 +3629,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         // Audit fields should be included for API v55+
         response.json.jobs[0].createdBy == 'ajaxcreator'
         response.json.jobs[0].lastModifiedBy == 'ajaxmodifier'
-        response.json.jobs[0].lastModified != null
+        response.json.jobs[0].lastModified.matches('\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*')
     }
 
     private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {
