@@ -3393,7 +3393,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         } else {
             assert !response.json.containsKey('createdBy')
             assert !response.json.containsKey('lastModifiedBy')  
-            assert response.json.containsKey('lastModified') // dateCreated should always be present
+            assert response.json.containsKey('lastModified') // lastModified should always be present
         }
 
         where:
