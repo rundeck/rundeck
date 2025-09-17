@@ -4,7 +4,7 @@
       <ui-socket section="job-list-page" location="card-header" />
     </div>
     <div class="flex col flex-justify-end">
-      <div class="bulk_edit_controls">
+      <div v-if="showControls" class="bulk_edit_controls">
         <ui-socket section="job-list-page" location="status-item" />
 
         <job-list-scm-status class="status-item" />
@@ -214,6 +214,13 @@ export default defineComponent({
     JobListScmActions,
     Notification,
   },
+  props: {
+    showControls: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  emits: ["bulk-action-complete"],
   setup(props) {
     const jobBrowserStore: JobBrowserStore = inject(
       JobBrowserStoreInjectionKey,
@@ -256,6 +263,10 @@ export default defineComponent({
           content: this.$t(`job.bulk.${this.bulkConfirmAction}.success`, [
             this.jobPageStore.selectedJobs.length,
           ]),
+        });
+        this.$emit("bulk-action-complete", {
+          action: this.bulkConfirmAction,
+          jobs: this.jobPageStore.selectedJobs,
         });
       } catch (e) {
         Notification.notify({
