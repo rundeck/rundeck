@@ -4068,6 +4068,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
 
+    List<Execution> queryExecutionsRetryList(Execution execution){
+        Execution.findAllByRetryExecution(execution)
+    }
+
+
     /**
      * Count executions per project
      * @param project
