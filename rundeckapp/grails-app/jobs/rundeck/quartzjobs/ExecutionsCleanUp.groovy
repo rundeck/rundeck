@@ -63,7 +63,7 @@ class ExecutionsCleanUp implements InterruptableJob {
                             minimumExecutionToKeep ? Integer.parseInt(minimumExecutionToKeep) : 0,
                             maximumDeletionSize ? Integer.parseInt(maximumDeletionSize) : 500)
                     log.info("Executions to delete: ${execIdsToExclude.size()}")
-                    deleteByExecutionList(execIdsToExclude, fileUploadService, logFileStorageService, referencedExecutionDataProvider, reportService)
+                    deleteByExecutionList(execIdsToExclude, fileUploadService, logFileStorageService, referencedExecutionDataProvider, reportService, executionService)
                     log.info("Finished cleaner execution history job from server ${uuid}")
                 }
             )
@@ -92,10 +92,11 @@ class ExecutionsCleanUp implements InterruptableJob {
 
     @CompileDynamic
     private DeleteExecutionResult deleteExecution(Execution execution,
-                                                         FileUploadService fileUploadService,
-                                                         LogFileStorageService logFileStorageService,
-                                                         ReferencedExecutionDataProvider referencedExecutionDataProvider,
-                                                         ReportService reportService){
+                                                 FileUploadService fileUploadService,
+                                                 LogFileStorageService logFileStorageService,
+                                                 ReferencedExecutionDataProvider referencedExecutionDataProvider,
+                                                 ReportService reportService,
+                                                 ExecutionService executionService){
         try {
             if (execution.dateCompleted == null && execution.dateStarted != null) {
                 return DeleteExecutionResult.failure('running', "Failed to delete execution {{Execution ${execution.id}}}: The execution is currently running", execution.id)
@@ -125,7 +126,7 @@ class ExecutionsCleanUp implements InterruptableJob {
             fileUploadService.deleteRecordsForExecution(execution)
             log.debug("${files.size()} files from execution will be deleted")
             //find an execution that this is a retry for
-            List<Execution> retryExecutions = Execution.findAllByRetryExecution(execution)
+            List<Execution> retryExecutions = executionService.queryExecutionsRetryList(execution)
             retryExecutions.each { Execution e2 ->
                 e2.retryExecution = null
             }
@@ -237,12 +238,13 @@ class ExecutionsCleanUp implements InterruptableJob {
                                       FileUploadService fileUploadService,
                                       LogFileStorageService logFileStorageService,
                                       ReferencedExecutionDataProvider referencedExecutionDataProvider,
-                                      ReportService reportService) {
+                                      ReportService reportService,
+                                      ExecutionService executionService) {
         log.info("Start to delete ${collectedExecutions.size()} executions")
         int count = 0
         if (collectedExecutions.size() > 0) {
             for (Execution exec : collectedExecutions) {
-                DeleteExecutionResult result = deleteExecution(exec, fileUploadService, logFileStorageService, referencedExecutionDataProvider, reportService)
+                DeleteExecutionResult result = deleteExecution(exec, fileUploadService, logFileStorageService, referencedExecutionDataProvider, reportService, executionService)
                 if (!result.success) {
                     log.error(result.message as String)
                 } else {
