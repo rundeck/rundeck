@@ -76,6 +76,7 @@ class ExecutionsCleanUp implements InterruptableJob {
         }
     }
 
+    @CompileDynamic
     private DeleteExecutionResult deleteExecution(Execution execution,
                                                          FileUploadService fileUploadService,
                                                          LogFileStorageService logFileStorageService,
