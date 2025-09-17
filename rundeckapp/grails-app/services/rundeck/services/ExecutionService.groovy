@@ -4070,8 +4070,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     /**
      * Count executions per project
-     * @param jobUuid job UUID
-     * @return average duration in milliseconds
+     * @param project
+     * @return number of executions for the project
      */
     int totalExecutionsProject(String project){
         ExecutionQuery query = new ExecutionQuery(projFilter: project)

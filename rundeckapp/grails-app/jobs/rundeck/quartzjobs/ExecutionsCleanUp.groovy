@@ -110,7 +110,7 @@ class ExecutionsCleanUp implements InterruptableJob {
             fileUploadService.deleteRecordsForExecution(execution)
             log.debug("${files.size()} files from execution will be deleted")
             //find an execution that this is a retry for
-            List<Execution> retryExecutions = Execution.findAll("from Execution where retryExecution = :exec", [exec: execution])
+            List<Execution> retryExecutions = Execution.findAllByRetryExecution(execution)
             retryExecutions.each { Execution e2 ->
                 e2.retryExecution = null
             }
@@ -214,9 +214,7 @@ class ExecutionsCleanUp implements InterruptableJob {
                 ne('status', ExecutionService.EXECUTION_QUEUED)
             }
             maxResults(maxDetetionSize)
-            and {
-                order('dateCompleted', 'asc')
-            }
+            order('dateCompleted', 'asc')
         }
     }
 
