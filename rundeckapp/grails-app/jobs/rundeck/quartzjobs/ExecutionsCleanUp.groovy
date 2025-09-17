@@ -5,6 +5,7 @@ import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
+import org.grails.plugins.metricsweb.MetricService
 import org.quartz.InterruptableJob
 import org.quartz.JobExecutionContext
 import org.quartz.JobExecutionException
@@ -12,6 +13,9 @@ import org.quartz.UnableToInterruptJobException
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import rundeck.Execution
 import rundeck.services.*
+import com.codahale.metrics.Timer
+
+import java.util.concurrent.Callable
 
 @CompileStatic
 @Slf4j
@@ -25,6 +29,10 @@ class ExecutionsCleanUp implements InterruptableJob {
     void execute(JobExecutionContext context) throws JobExecutionException {
         FrameworkService frameworkService = fetchFrameworkService(context.jobDetail.jobDataMap)
         ReportService reportService = fetchReportService(context.jobDetail.jobDataMap)
+        MetricService metricService = fetchMetricService(context.jobDetail.jobDataMap)
+
+        Timer timer = metricService.timer("rundeck.quartzjobs.ExecutionsCleanUp", "executionCleanup")
+
         String project = context.jobDetail.jobDataMap.get('project')
         String uuid = frameworkService.getServerUUID()
 
@@ -45,14 +53,20 @@ class ExecutionsCleanUp implements InterruptableJob {
         ReferencedExecutionDataProvider referencedExecutionDataProvider = fetchReferencedExecutionDataProvider(context.jobDetail.jobDataMap)
 
         if(!wasInterrupted) {
-            List<Execution> execIdsToExclude = searchExecutions(
-                    executionService,
-                    project,
-                    maxDaysToKeep ? Integer.parseInt(maxDaysToKeep) : 0,
-                    minimumExecutionToKeep ? Integer.parseInt(minimumExecutionToKeep) : 0,
-                    maximumDeletionSize ? Integer.parseInt(maximumDeletionSize) : 500)
-            log.info("Executions to delete: ${execIdsToExclude.size()}")
-            deleteByExecutionList(execIdsToExclude, fileUploadService, logFileStorageService, referencedExecutionDataProvider, reportService)
+
+            timer.time(
+                (Callable) {
+                    List<Execution> execIdsToExclude = searchExecutions(
+                            executionService,
+                            project,
+                            maxDaysToKeep ? Integer.parseInt(maxDaysToKeep) : 0,
+                            minimumExecutionToKeep ? Integer.parseInt(minimumExecutionToKeep) : 0,
+                            maximumDeletionSize ? Integer.parseInt(maximumDeletionSize) : 500)
+                    log.info("Executions to delete: ${execIdsToExclude.size()}")
+                    deleteByExecutionList(execIdsToExclude, fileUploadService, logFileStorageService, referencedExecutionDataProvider, reportService)
+                    log.info("Finished cleaner execution history job from server ${uuid}")
+                }
+            )
         }
     }
 
@@ -314,5 +328,17 @@ class ExecutionsCleanUp implements InterruptableJob {
             throw new RuntimeException("JobDataMap contained invalid ReferencedExecutionDataProvider type: " + referencedExecutionDataProvider.getClass().getName())
         }
         return (ReferencedExecutionDataProvider)referencedExecutionDataProvider
+    }
+
+    @CompileDynamic
+    private MetricService fetchMetricService(def jobDataMap) {
+        def metricService = jobDataMap.get("metricService")
+        if (metricService==null) {
+            throw new RuntimeException("metricService could not be retrieved from JobDataMap!")
+        }
+        if (! (metricService instanceof MetricService)) {
+            throw new RuntimeException("JobDataMap contained invalid MetricService type: " + metricService.getClass().getName())
+        }
+        return (MetricService)metricService
     }
 }
