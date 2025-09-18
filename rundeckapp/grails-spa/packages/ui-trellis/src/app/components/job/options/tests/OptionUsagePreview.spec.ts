@@ -52,6 +52,21 @@ describe("OptionUsagePreview", () => {
     expect(sect.html()).toContain(`@option.test_name@`);
     expect(sect.html()).toContain(`$RD_OPTION_TEST_NAME`);
   });
+  it.each([{ name: "test_name", type: "multiline" }])(
+    "multiline option shows quoted variables",
+    async (option: any) => {
+      const wrapper = await mountOptionUsagePreview({
+        option,
+        validationErrors: {},
+      });
+      const sect = wrapper.get("section");
+      expect(sect.html()).toContain(`"\${option.test_name}"`);
+      expect(sect.html()).toContain(`"\${unquotedoption.test_name}"`);
+      expect(sect.html()).toContain(`@option.test_name@`);
+      expect(sect.html()).toContain(`END_HEREDOC`);
+      expect(sect.html()).toContain(`"$RD_OPTION_TEST_NAME"`);
+    },
+  );
   it("plain secure option does not show variables", async () => {
     const wrapper = await mountOptionUsagePreview({
       option: {

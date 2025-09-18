@@ -679,6 +679,8 @@ const messages = {
   "no.options.message": "No Options",
   "the.option.values.will.be.available.to.scripts.in.these.forms":
     "The option values will be available to scripts in these forms:",
+  "option.usage.multiline.note":
+    "Multiline Text option values will likely need to be quoted when used in scripts or commandline arguments:",
   "form.option.date.label": "Date",
   "form.option.enforcedType.label": "Restrictions",
   "form.option.usage.file.fileName.preview.description":
@@ -740,7 +742,12 @@ const messages = {
     "Query Parameter",
   "form.option.create.title": "Save the new option",
   "form.option.regex.label": "Match Regular Expression",
+  "form.option.regex.description.md":
+    "Enter a Regular Expression, in the [Java Pattern](https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html) format.",
+  "form.option.regex.multiline.description.md":
+    "For Multiline Text options, use `(?s)` to match across all lines.",
   "form.option.optionType.file.label": "File",
+  "form.option.optionType.multiline.label": "Multiline Text",
   "form.option.valuesDelimiter.label": "List Delimiter",
   "form.option.cancel.title": "Cancel adding new option",
   "form.option.values.label": "Allowed Values",
@@ -826,7 +833,7 @@ const messages = {
   "option.view.enforced.placeholder": "Strict",
   "option.view.regex.info.note": "Values must match the regular expression:",
   "option.view.notenforced.title": "No restrictions on input value",
-  "option.view.notenforced.placeholder": "None",
+  "option.view.notenforced.placeholder": "No restrictions",
   "option.view.action.delete.title": "Delete this Option",
   "option.view.action.edit.title": "Edit this Option",
   "option.view.action.duplicate.title": "Duplicate this Option",

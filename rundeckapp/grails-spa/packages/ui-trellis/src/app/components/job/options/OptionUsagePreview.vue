@@ -1,15 +1,17 @@
 <template>
   <!-- preview (text)  -->
   <section
+    v-if="option.name && option.type !== 'file' && !validationErrors['name']"
     id="option_preview"
     class="section-separator-solo"
-    v-if="option.name && option.type !== 'file' && !validationErrors['name']"
   >
     <div class="row">
       <label class="col-sm-2 control-label">{{ $t("usage") }}</label>
       <div
+        v-if="
+          (!option.secure || option.valueExposed) && option.type !== 'multiline'
+        "
         class="col-sm-10 opt_sec_nexp_disabled"
-        v-if="!option.secure || option.valueExposed"
       >
         <span class="text-strong">{{
           $t("the.option.values.will.be.available.to.scripts.in.these.forms")
@@ -31,7 +33,31 @@
           <code>@option.{{ option.name }}@</code>
         </div>
       </div>
-      <div class="col-sm-10 opt_sec_nexp_enabled" v-else>
+      <div v-if="option.type === 'multiline'" class="col-sm-10 col-sm-offset-2">
+        <span class="text-strong">{{ $t("option.usage.multiline.note") }}</span>
+        <div>
+          {{ $t("bash.prompt") }} <code>"${{ bashVarPreview }}"</code>
+        </div>
+        <div>
+          {{ $t("commandline.arguments.prompt") }}
+          <code>"${option.{{ option.name }}}"</code>
+        </div>
+        <div>
+          {{ $t("commandline.arguments.prompt.unquoted") }}
+          <code>"${unquotedoption.{{ option.name }}}"</code>
+          {{ $t("commandline.arguments.prompt.unquoted.warning") }}
+        </div>
+        <div>
+          {{ $t("script.content.prompt") }}
+          <pre><code>
+OPTION_VALUE=$(cat &lt;&lt;'END_HEREDOC'
+@option.{{ option.name }}@
+END_HEREDOC
+)
+          </code></pre>
+        </div>
+      </div>
+      <div v-else class="col-sm-10 opt_sec_nexp_enabled">
         <span class="warn note">{{
           $t("form.option.usage.secureAuth.message")
         }}</span>
@@ -40,8 +66,8 @@
   </section>
   <!-- preview (file) -->
   <section
-    id="file_option_preview"
     v-if="option.name && option.type === 'file' && !validationErrors['name']"
+    id="file_option_preview"
     class="section-separator-solo"
   >
     <div class="row">
@@ -101,6 +127,7 @@ import { defineComponent, PropType } from "vue";
 
 const BashVarPrefix = "RD_";
 export default defineComponent({
+  components: {},
   props: {
     option: {
       type: Object as PropType<JobOption>,
@@ -111,7 +138,6 @@ export default defineComponent({
       required: true,
     },
   },
-  components: {},
   computed: {
     bashVarPreview() {
       return this.option.name ? this.tobashvar(this.option.name) : "";
