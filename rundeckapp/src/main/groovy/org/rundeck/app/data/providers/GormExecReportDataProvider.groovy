@@ -89,10 +89,10 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
     }
 
     @Override
-    int countExecutionReportsWithTransaction(RdExecQuery query, boolean isJobs, String jobId) {
+    int countExecutionReportsWithTransaction(RdExecQuery query, boolean isJobs, String jobId, List<Long> execsId) {
         return ExecReport.withTransaction {
             ExecReport.createCriteria().count {
-                applyExecutionCriteria(query, delegate, isJobs, jobId, [])
+                applyExecutionCriteria(query, delegate, isJobs, jobId, execsId)
             }
         }
     }
@@ -117,7 +117,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
     }
 
     @Override
-    List<RdExecReport> getExecutionReports(RdExecQuery query, boolean isJobs, String jobId, List<String> execUuids) {
+    List<RdExecReport> getExecutionReports(RdExecQuery query, boolean isJobs, String jobId, List<Long> execUuids) {
         def eqfilters = [
                 stat: 'status',
                 reportId: 'reportId',
@@ -188,7 +188,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
         }
     }
 
-    def applyExecutionCriteria(RdExecQuery query, delegate, boolean isJobs=true, String seId=null, List<String> execUuids=[]){
+    def applyExecutionCriteria(RdExecQuery query, delegate, boolean isJobs=true, String seId=null, List execsId=[]){
         def eqfilters = [
                 stat: 'status',
                 reportId: 'reportId',
@@ -255,9 +255,12 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
 
                 if (query.execProjects && seId) {
                     or {
-                        if(execUuids && execUuids.size() > 0){
+                        if(execsId && execsId.size() > 0){
                             and{
-                                'in'('executionUuid', execUuids)
+                                List execsIdPartitioned = Lists.partition(execsId, 1000)
+                                for(def execIdPartition : execsIdPartitioned){
+                                    'in'('executionId', execIdPartition)
+                                }
                                 List execProjectsPartitioned = Lists.partition(query.execProjects, 1000)
                                 or{
                                     for(def partition : execProjectsPartitioned){
