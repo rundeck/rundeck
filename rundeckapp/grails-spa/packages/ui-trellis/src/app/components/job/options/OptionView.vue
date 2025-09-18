@@ -7,6 +7,9 @@
       <template v-if="option.type == 'file'">
         <i class="glyphicon glyphicon-file"></i>
       </template>
+      <template v-if="option.type == 'multiline'">
+        <i class="far fa-list-alt"></i>
+      </template>
       <span
         class="optdetail_name"
         :class="{ required: option.required }"
@@ -61,21 +64,21 @@
     </template>
 
     <template v-if="option.enforced">
-      <span class="enforceSet">
+      <span class="enforceSet" data-test-enforced="enforced">
         <span class="enforced" :title="$t('option.view.enforced.title')">
           >{{ $t("option.view.enforced.placeholder") }}</span
         >
       </span>
     </template>
     <template v-else-if="option.regex">
-      <span class="enforceSet">
+      <span class="enforceSet" data-test-enforced="regex">
         <code :title="$t('option.view.regex.info.note')">{{
           option.regex
         }}</code>
       </span>
     </template>
     <template v-else>
-      <span class="enforceSet">
+      <span class="enforceSet" data-test-enforced="none">
         <span
           class="text-secondary"
           :title="$t('option.view.notenforced.title')"

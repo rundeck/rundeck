@@ -1,5 +1,5 @@
 <template>
-  <div class="optEditForm">
+  <div>
     <div v-if="error" class="alert alert-danger">
       {{ error }}
     </div>
@@ -30,6 +30,9 @@
             value="file"
           >
             {{ $t("form.option.optionType.file.label") }}
+          </option>
+          <option v-if="multilineJobOptionsEnabled" value="multiline">
+            {{ $t("form.option.optionType.multiline.label") }}
           </option>
         </select>
       </div>
@@ -163,11 +166,13 @@
         data-test="option.value"
         :class="{ 'has-error': hasError('value') }"
       >
-        <label class="col-sm-2 control-label">{{
+        <label class="col-sm-2 control-label" for="opt_defaultValue">{{
           $t("form.option.defaultValue.label")
         }}</label>
         <div class="col-sm-10">
           <input
+            v-if="!isMultilineType"
+            id="opt_defaultValue"
             v-model="option.value"
             type="text"
             class="form-control"
@@ -175,6 +180,17 @@
             size="40"
             :placeholder="$t('form.option.defaultValue.label')"
           />
+
+          <textarea
+            v-if="isMultilineType"
+            id="opt_defaultValue"
+            v-model="option.value"
+            class="form-control"
+            name="defaultValue"
+            rows="4"
+            cols="40"
+            :placeholder="$t('form.option.defaultValue.label')"
+          ></textarea>
           <div v-if="validationErrors['value']" class="help-block">
             <ErrorsList :errors="validationErrors['value']" />
           </div>
@@ -227,7 +243,7 @@
       </div>
 
       <!-- input type -->
-      <div class="form-group">
+      <div v-if="showInputType" class="form-group" data-test="option.inputType">
         <label class="col-sm-2 control-label">{{
           $t("form.option.inputType.label")
         }}</label>
@@ -320,7 +336,11 @@
           </div>
         </div>
       </div>
-      <div v-if="!isSecureInput" class="form-group">
+      <div
+        v-if="showAllowedValues"
+        class="form-group"
+        data-test="option.valuesType"
+      >
         <label class="col-sm-2 control-label">{{
           $t("form.option.values.label")
         }}</label>
@@ -430,7 +450,11 @@
         </div>
       </div>
       <!-- sort values -->
-      <div class="form-group">
+      <div
+        v-if="showAllowedValues"
+        class="form-group"
+        data-test="option.sortValues"
+      >
         <label class="col-sm-2 control-label">{{
           $t("form.option.sort.label")
         }}</label>
@@ -514,7 +538,7 @@
               }}</span>
             </label>
           </div>
-          <div class="radio">
+          <div v-if="!isMultilineType" class="radio">
             <input
               id="enforcedType_enforced"
               v-model="enforcedType"
@@ -550,6 +574,17 @@
             size="40"
             :placeholder="$t('form.option.regex.placeholder')"
           />
+          <span class="help-block">
+            <VMarkdownView
+              class="markdown-body"
+              :content="$t(`form.option.regex.description.md`)"
+            />
+            <VMarkdownView
+              v-if="isMultilineType"
+              class="markdown-body"
+              :content="$t(`form.option.regex.multiline.description.md`)"
+            />
+          </span>
           <div v-if="validationErrors['regex']" class="help-block">
             <ErrorsList :errors="validationErrors['regex']" />
           </div>
@@ -653,7 +688,7 @@
 
     <!-- multivalue (text) -->
     <div
-      v-if="option.type !== 'file'"
+      v-if="!isFileType && !isMultilineType"
       class="form-group"
       data-test="option.delimiter"
       :class="{ 'has-error': hasError('multivalued') || hasError('delimiter') }"
@@ -843,6 +878,15 @@ export default defineComponent({
           : this.modelValue.valuesUrl
             ? "url"
             : "list",
+        // inputType: this.modelValue.isMultiline //use isMultiline
+        //   ? "multiline"
+        //   : this.modelValue.isDate
+        //     ? "date"
+        //     : this.modelValue.secure
+        //       ? this.modelValue.valueExposed
+        //         ? "secureExposed"
+        //         : "secure"
+        //       : "plain",
         inputType: this.modelValue.isDate
           ? "date"
           : this.modelValue.secure
@@ -860,17 +904,32 @@ export default defineComponent({
     fileUploadPluginEnabled() {
       return this.features["fileUploadPlugin"];
     },
+    multilineJobOptionsEnabled() {
+      return this.features["multilineJobOptions"];
+    },
     isDate() {
       return this.option.isDate;
     },
     isSecureInput() {
       return this.option.secure;
     },
+    isFileType() {
+      return this.option.type === "file";
+    },
+    isMultilineType() {
+      return this.option.type === "multiline";
+    },
     showDefaultValue() {
       return !this.isSecureInput;
     },
     shouldShowDefaultStorage() {
       return !this.showDefaultValue;
+    },
+    showInputType() {
+      return !this.isMultilineType;
+    },
+    showAllowedValues() {
+      return !this.isSecureInput && !this.isMultilineType;
     },
     valuesList: {
       get() {
@@ -921,6 +980,7 @@ export default defineComponent({
   },
   watch: {
     "option.inputType"(val: string) {
+      // this.option.isMultiline = val === "multiline";
       this.option.isDate = val === "date";
       this.option.secure = val === "secure" || val === "secureExposed";
       this.option.valueExposed = val === "secureExposed";
@@ -1023,7 +1083,7 @@ export default defineComponent({
         if (!this.validateRegex(field, validationConfig.regex)) {
           pass = false;
           this.addError(
-            "name",
+            field,
             this.$t(`form.option.regex.validation.error`, [
               validationConfig.regex,
             ]),
