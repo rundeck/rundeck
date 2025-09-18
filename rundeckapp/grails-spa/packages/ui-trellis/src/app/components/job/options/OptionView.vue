@@ -69,18 +69,18 @@
     </template>
     <template v-else-if="option.regex">
       <span class="enforceSet">
-        <popover>
-          <span class="regex" data-role="trigger">{{ option.regex }}</span>
-          <div class="info note">{{ $t("option.view.regex.info.note") }}</div>
-          <code>{{ option.regex }}</code>
-        </popover>
+        <code :title="$t('option.view.regex.info.note')">{{
+          option.regex
+        }}</code>
       </span>
     </template>
     <template v-else>
       <span class="enforceSet">
-        <span class="any" :title="$t('option.view.notenforced.title')">{{
-          $t("option.view.notenforced.placeholder")
-        }}</span>
+        <span
+          class="text-secondary"
+          :title="$t('option.view.notenforced.title')"
+          >{{ $t("option.view.notenforced.placeholder") }}</span
+        >
       </span>
     </template>
   </span>
