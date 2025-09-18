@@ -328,10 +328,10 @@ export default defineComponent({
   margin-top: 10px;
   border: 1px solid var(--gray-input-outline);
   &.alternate {
-    background-color: var(--background-color-accent-lvl2);
+    background-color: var(--background-color);
   }
 
-  padding: 10px 4px;
+  padding: 10px;
 }
 
 .note {
