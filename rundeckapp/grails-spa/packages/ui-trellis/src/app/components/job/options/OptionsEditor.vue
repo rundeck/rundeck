@@ -47,7 +47,11 @@
           </div>
         </template>
         <template #footer>
-          <template v-if="createMode">
+          <div
+            v-if="createMode"
+            class="edit-option-item"
+            :class="{ alternate: intOptions.length % 2 === 1 }"
+          >
             <option-edit
               id="optitem_new"
               :ui-features="{ next: false }"
@@ -61,7 +65,7 @@
               @update:model-value="saveNewOption"
               @cancel="doCancel"
             />
-          </template>
+          </div>
         </template>
       </draggable>
 
