@@ -4058,6 +4058,35 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return [result:result,total:total]
     }
 
+    /**
+     * Query executions using a criteria closure
+     * @param criteriaClosure criteriaClos
+     * @return result List<Execution>
+     */
+    List<Execution> queryExecutionsList(Closure criteriaClos){
+        return Execution.createCriteria().list(criteriaClos) as List<Execution>
+    }
+
+
+    List<Execution> queryExecutionsRetryList(Execution execution){
+        Execution.findAllByRetryExecution(execution)
+    }
+
+
+    /**
+     * Count executions per project
+     * @param project
+     * @return number of executions for the project
+     */
+    int totalExecutionsProject(String project){
+        ExecutionQuery query = new ExecutionQuery(projFilter: project)
+        def total = Execution.createCriteria().count{
+            def queryCriteria = query.createCriteria(delegate)
+            queryCriteria()
+        }
+        return null != total ? total : 0
+    }
+
   /**
    * Query executions
    * @param query query

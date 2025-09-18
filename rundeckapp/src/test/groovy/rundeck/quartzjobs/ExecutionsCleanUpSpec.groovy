@@ -59,12 +59,18 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         def exec = createExecution(se, execDate, execDate)
 
         def executionService = Mock(ExecutionService) {
-            queryExecutions(*_) >> {
+            queryExecutionsList(*_) >> {
                 if(execDate.before(query.endbeforeFilter)){
-                    return [result: [exec.id], total: 1]
+                    return [exec]
                 }
 
-                [result: [], total: 0]
+                []
+            }
+            totalExecutionsProject(_) >> {
+                if(execDate.before(query.endbeforeFilter)){
+                    return 1
+                }
+                return 0
             }
         }
 
@@ -127,12 +133,18 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         def exec = createExecution(se, execDate, execDate)
 
         def executionService = Mock(ExecutionService) {
-            queryExecutions(*_) >> {
+            queryExecutionsList(*_) >> {
                 if(execDate.before(query.endbeforeFilter)){
-                    return [result: [exec], total: 1]
+                    return [exec]
                 }
 
-                [result: [], total: 0]
+                []
+            }
+            totalExecutionsProject(_) >> {
+                if(execDate.before(query.endbeforeFilter)){
+                    return 1
+                }
+                return 0
             }
         }
 
@@ -175,7 +187,7 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         job.execute(context)
 
         then:
-        1*executionService.queryExecutions(_)
+        1*executionService.queryExecutionsList(_)
 
     }
 
@@ -188,12 +200,6 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         Date execDate = new Date(2015 - 1900, 02, 03)
 
         def se = createJob()
-        def frameworkService = Mock(FrameworkService) {
-            isClusterModeEnabled() >> {
-                false
-            }
-        }
-        def jobSchedulerService = Mock(JobSchedulerService)
 
         ExecutionsCleanUp job = new ExecutionsCleanUp()
         def daysToKeep = 60
@@ -212,13 +218,16 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         }
 
         def executionService = Mock(ExecutionService) {
-            queryExecutions(*_) >> {
-                return [result: executionList, total: totalExecutions.size()]
+            queryExecutionsList(*_) >> {
+                return executionList
+            }
+            totalExecutionsProject(_) >> {
+                return totalExecutions.size()
             }
         }
 
 
-        def result = job.searchExecutions(frameworkService, executionService, jobSchedulerService, projectName, daysToKeep, minimumExecutionToKeep , maximumDeletionSize)
+        def result = job.searchExecutions(executionService, projectName, daysToKeep, minimumExecutionToKeep , maximumDeletionSize)
 
         then:
         executionsToRemove == result.size()
