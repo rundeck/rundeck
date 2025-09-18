@@ -56,7 +56,13 @@
                 </span>
             </g:if>
             <g:else>
-                <code class="optvalue"><g:enc>${entry.value}</g:enc></code>
+                <g:if test="${entry.value.indexOf('\n')>-1}">
+                    <pre style="max-height: 8em; overflow-y: auto"><code><g:enc>${entry.value}</g:enc></code></pre>
+                </g:if>
+                <g:else>
+                    <code class="optvalue"><g:enc>${entry.value}</g:enc></code>
+                </g:else>
+
             </g:else>
         </g:if>
     </g:each>
