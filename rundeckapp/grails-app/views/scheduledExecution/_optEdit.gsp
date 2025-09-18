@@ -63,37 +63,27 @@ form.option.valuesType.url.authType.bearerToken.label
             </label>
 
             <div class="col-sm-10">
-                <feature:enabled name="fileUploadPlugin">
+                <g:set var="fileUploadEnabled" value="${feature.isEnabled(name:'fileUploadPlugin')}" />
+                <g:set var="multilineJobOptionsEnabled" value="${feature.isEnabled(name:'multilineJobOptions')}" />
+
+                <g:set var="optionTypeOptions" value="${[[key:'',value:message(code:'form.option.optionType.text.label')]]}"/>
+                <g:if test="${fileUploadEnabled}">
+                    <g:set var="optionTypeOptions" value="${optionTypeOptions + [[key:'file',value:message(code:'form.option.optionType.file.label')]]}" />
+                </g:if>
+                <g:if test="${multilineJobOptionsEnabled}">
+                    <g:set var="optionTypeOptions" value="${optionTypeOptions + [[key:'multiline',value:message(code:'form.option.optionType.multiline.label')]]}" />
+                </g:if>
+
                 <g:select
-                        data-bind="value: optionType"
-                        name="optionType"
-                        class="form-control "
-                        value="${option?.optionType}"
-                        optionKey="key"
-                        optionValue="value"
-                    from="${[
-                    [key:'',value:message(code:'form.option.optionType.text.label')],
-                    [key:'file',value:message(code:'form.option.optionType.file.label')],
-                    ]
-                    }"
-                        id="opttype_${rkey}">
+                    data-bind="value: optionType"
+                    name="optionType"
+                    class="form-control "
+                    value="${option?.optionType}"
+                    optionKey="key"
+                    optionValue="value"
+                    from="${optionTypeOptions}"
+                    id="opttype_${rkey}">
                 </g:select>
-                </feature:enabled>
-                <feature:disabled name="fileUploadPlugin">
-                    <g:select
-                            data-bind="value: optionType"
-                            name="optionType"
-                            class="form-control "
-                            value="${option?.optionType}"
-                            optionKey="key"
-                            optionValue="value"
-                            from="${[
-                                    [key:'',value:message(code:'form.option.optionType.text.label')],
-                            ]
-                            }"
-                            id="opttype_${rkey}">
-                    </g:select>
-                </feature:disabled>
             </div>
         </div>
 
@@ -212,6 +202,16 @@ form.option.valuesType.url.authType.bearerToken.label
                 code="form.option.defaultValue.label" /></label>
 
             <div class="col-sm-10">
+                <!-- ko if: isMultilineType() -->
+                <textarea
+                       class="form-control"
+                       name="defaultValue"
+                       id="opt_defaultValue_multiline"
+                       rows="4"
+                       placeholder="Default value"
+                       data-bind="value: defaultValue"></textarea>
+                <!-- /ko -->
+                <!-- ko ifnot: isMultilineType() -->
                 <input type="text"
                        class="form-control"
                        name="defaultValue"
@@ -219,6 +219,7 @@ form.option.valuesType.url.authType.bearerToken.label
                        size="40"
                        placeholder="Default value"
                        data-bind="value: defaultValue"/>
+                <!-- /ko -->
             </div>
         </div>
 
@@ -273,6 +274,7 @@ form.option.valuesType.url.authType.bearerToken.label
             </div>
         </div>
 
+        <!-- ko if: !isMultilineType() -->
         <div class="form-group">
 
             <label class="col-sm-2 control-label"><g:message code="form.option.inputType.label"/></label>
@@ -389,6 +391,8 @@ form.option.valuesType.url.authType.bearerToken.label
             </wdgt:eventHandler>
 
         </div>
+        <!-- /ko -->
+        <!-- ko if: !isMultilineType() -->
         <div class="form-group opt_keystorage_disabled" data-bind="visible: isNonSecure">
             <label class="col-sm-2 control-label"><g:message code="form.option.values.label" /></label>
             <div class="col-sm-3">
@@ -713,6 +717,8 @@ form.option.valuesType.url.authType.bearerToken.label
                 </wdgt:eventHandler>
             </div>
         </div>
+        <!-- /ko -->
+        <!-- ko if: !isMultilineType() -->
         <div class="form-group">
 
             <label class="col-sm-2 control-label"><g:message code="form.option.sort.label" /></label>
@@ -752,6 +758,7 @@ form.option.valuesType.url.authType.bearerToken.label
                 <g:message code="form.option.valuesDelimiter.description"/>
             </span>
         </div>
+        <!-- /ko -->
         <div class="form-group opt_keystorage_disabled" data-bind="visible: isNonSecure">
             <label class="col-sm-2 control-label"><g:message code="form.option.enforcedType.label" /></label>
             <div class="col-sm-10">
@@ -764,6 +771,7 @@ form.option.valuesType.url.authType.bearerToken.label
                     </label>
                     <span class="text-strong"><g:message code="form.option.enforcedType.none.label" /></span>
                 </div>
+                <!-- ko if: !isMultilineType() -->
                 <div class="radio">
                     <g:radio name="enforcedType" value="enforced" checked="${option?.enforced?true:false}"
                             id="enforcedType_enforced"
@@ -773,6 +781,7 @@ form.option.valuesType.url.authType.bearerToken.label
                         <g:message code="form.option.enforced.label" />
                     </label>
                 </div>
+                <!-- /ko -->
                 <div class="radio">
                     <g:radio name="enforcedType" value="regex" checked="${option?.regex?true:false}" id="etregex_${enc(attr:rkey)}"
                             data-bind="checked: enforceType"/>
@@ -837,7 +846,7 @@ form.option.valuesType.url.authType.bearerToken.label
                 </div>
             </div>
         </div>
-        <!-- ko if: !isFileType() -->
+        <!-- ko if: !isFileType() && !isMultilineType() -->
         <div class="form-group">
             <label class="col-sm-2 control-label ${hasErrors(bean: option, field: 'multivalued', 'has-error')}">
                 <g:message code="form.option.multivalued.label" />
@@ -919,6 +928,19 @@ form.option.valuesType.url.authType.bearerToken.label
         <div  class="row">
             <label class="col-sm-2 control-label"><g:message code="usage" /></label>
             <div class="col-sm-10 opt_sec_nexp_disabled" style="${wdgt.styleVisible(unless: option?.secureInput && !option?.secureExposed)}">
+                <!-- ko if: isMultilineType() -->
+                <span class="text-strong"><g:message code="option.usage.multiline.note" /></span>
+                <div>
+                    <g:message code="bash.prompt" /> <code>$<span data-bind="text: bashVarPreview"></span></code>
+                </div>
+                <div>
+                    <g:message code="commandline.arguments.prompt" /> <code>"$<!-- -->{option.<span data-bind="text: name"></span>}"</code>
+                </div>
+                <div>
+                    <g:message code="script.content.prompt" /> <code>"@option.<span data-bind="text: name"></span>@"</code>
+                </div>
+                <!-- /ko -->
+                <!-- ko if: !isMultilineType() -->
                 <span class="text-strong"><g:message code="the.option.values.will.be.available.to.scripts.in.these.forms" /></span>
                 <div>
                     <g:message code="bash.prompt" /> <code>$<span data-bind="text: bashVarPreview"></span></code>
@@ -933,6 +955,7 @@ form.option.valuesType.url.authType.bearerToken.label
                 <div>
                     <g:message code="script.content.prompt" /> <code>@option.<span data-bind="text: name"></span>@</code>
                 </div>
+                <!-- /ko -->
             </div>
 
             <div class="col-sm-10 opt_sec_nexp_enabled" style="${wdgt.styleVisible(if: option?.secureInput && !option?.secureExposed)}">

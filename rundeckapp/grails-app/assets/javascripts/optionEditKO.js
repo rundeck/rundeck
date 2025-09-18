@@ -63,6 +63,10 @@ function OptionEditor(data) {
         return "file" === self.optionType();
     });
 
+    self.isMultilineType = ko.computed(function () {
+        return "multiline" === self.optionType();
+    });
+
     self.isRegexEnforceType = ko.computed(function () {
         return self.enforceType() === "regex";
     });
