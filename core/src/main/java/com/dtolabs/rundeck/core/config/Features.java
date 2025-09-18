@@ -46,7 +46,8 @@ public enum Features implements FeaturesDefinition{
     NEW_LOCAL_NODE_EXECUTOR("newLocalNodeExecutor"),
     NODE_EXECUTOR_SECURE_INPUT("nodeExecutorSecureInput"),
     PUBLIC_KEYS_DOWNLOAD("publicKeysDownload"),
-    GUI_HIDE_ROI_INSTRUCTIONS("guiHideRoiInstructions")
+    GUI_HIDE_ROI_INSTRUCTIONS("guiHideRoiInstructions"),
+    MULTILINE_JOB_OPTIONS("multilineJobOptions")
     ;
 
     private final String propertyName;
