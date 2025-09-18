@@ -931,7 +931,7 @@ form.option.valuesType.url.authType.bearerToken.label
                 <!-- ko if: isMultilineType() -->
                 <span class="text-strong"><g:message code="option.usage.multiline.note" /></span>
                 <div>
-                    <g:message code="bash.prompt" /> <code>$<span data-bind="text: bashVarPreview"></span></code>
+                    <g:message code="bash.prompt" /> <code>"$<span data-bind="text: bashVarPreview">"</span></code>
                 </div>
                 <div>
                     <g:message code="commandline.arguments.prompt" /> <code>"$<!-- -->{option.<span data-bind="text: name"></span>}"</code>
