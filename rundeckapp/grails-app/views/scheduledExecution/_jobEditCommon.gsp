@@ -148,6 +148,7 @@
                      features:[
                              fileUploadPlugin:feature.isEnabled(name:'fileUploadPlugin'),
                              optionValuesPlugin:feature.isEnabled(name:'optionValuesPlugin'),
+                             multilineJobOptions:feature.isEnabled(name:'multilineJobOptions'),
                      ],
                      jobWasScheduled: scheduledExecution?.scheduled?:false,
              ]}"/>
