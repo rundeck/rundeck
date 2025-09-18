@@ -11,7 +11,7 @@ trait WaitBehaviour {
 
     /** Waits for the resource to be in the expected state by retrieving it and evaluating its acceptance as many times as needed.
      * @param retryableResourceRetriever executed multiple times to retrieve the current state of the R resource.
-     * @param resourceAcceptanceEvaluator evaluates the state of the resource and and returns true if the resource is accepted.
+     * @param resourceAcceptanceEvaluator evaluates the state of the resource and and returns true if the resource is accepted. Defaults to the R resource truthy value.
      * @param timeout max duration to wait for the resource to reach the expected state.
      * @param checkPeriod time to wait between each check.
      * @return the resource that met the acceptance criteria.
@@ -22,7 +22,7 @@ trait WaitBehaviour {
      */
     final  <R> R waitFor(
             Supplier<R> retryableResourceRetriever,
-            Function<R, Boolean> resourceAcceptanceEvaluator = { it != null },
+            Function<R, Boolean> resourceAcceptanceEvaluator = { it ? true : false },
             Duration timeout = WaitingTime.MODERATE,
             Duration checkPeriod = WaitingTime.LOW) {
         WaitUtils.waitFor(retryableResourceRetriever, resourceAcceptanceEvaluator, timeout, checkPeriod)
