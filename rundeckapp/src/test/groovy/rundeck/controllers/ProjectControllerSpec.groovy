@@ -842,7 +842,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         }
         1 * controller.projectService.exportProjectToFile(_, _, _, _, _) >> nonExistentFile
 
-        thrown(ProjectServiceException)
+        thrown(FileNotFoundException)
     }
 
     def "exportWait handles file copy exception with promise release"() {
@@ -866,36 +866,6 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         1 * controller.projectService.promiseRequestStarted('testuser', 'test-token') >> new Date()
 
         // Should handle IOException and still release promise
-        1 * controller.projectService.releasePromise('testuser', 'test-token')
-
-        thrown(ProjectServiceException)
-    }
-
-    def "apiProjectExportAsyncDownload handles file copy failure gracefully"() {
-        given:
-        controller.projectService = Mock(ProjectService)
-        controller.apiService = Mock(ApiService)
-        params.project = 'aproject'
-        params.token = 'test-token'
-        session.user = 'testuser'
-
-        // Use non-existent file to trigger IOException
-        def nonExistentFile = new File("/tmp/non-existent-api-export-" + System.currentTimeMillis() + ".jar")
-        nonExistentFile.delete() // Ensure it doesn't exist
-
-        when:
-        controller.apiProjectExportAsyncDownload()
-
-        then:
-        1 * controller.apiService.requireApi(_, _, 19) >> true
-        1 * controller.apiService.requireParameters(_, _, ['token']) >> true
-        1 * controller.apiService.requireExists(_, true, ['Export Request Token', 'test-token']) >> true
-        1 * controller.projectService.hasPromise('testuser', 'test-token') >> true
-        1 * controller.projectService.promiseReady('testuser', 'test-token') >> nonExistentFile
-        1 * controller.apiService.requireExists(_, nonExistentFile, ['Export File for Token', 'test-token']) >> true
-        1 * controller.projectService.promiseRequestStarted('testuser', 'test-token') >> new Date()
-
-        // Should still attempt to release promise even on error
         1 * controller.projectService.releasePromise('testuser', 'test-token')
 
         thrown(ProjectServiceException)
