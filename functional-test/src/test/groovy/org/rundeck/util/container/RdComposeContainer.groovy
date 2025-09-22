@@ -44,9 +44,10 @@ class RdComposeContainer extends ComposeContainer implements ClientProvider {
         withEnv("TEST_RUNDECK_GRAILS_URL", TEST_RUNDECK_GRAILS_URL)
         withEnv("TEST_TARGET_PLATFORM", TEST_TARGET_PLATFORM)
         withEnv("TEST_RUNDECK_FEATURE_NAME", featureName ?: 'placeholderFeatureName')
+        withEnv("MANAGEMENT_ENDPOINT_HEALTH_ENABLED", 'true')
         withLogConsumer(DEFAULT_SERVICE_TO_EXPOSE, new Slf4jLogConsumer(log))
         waitingFor(DEFAULT_SERVICE_TO_EXPOSE,
-            Wait.forHttp("${CONTEXT_PATH}/api/14/system/info")
+            Wait.forHttp("${CONTEXT_PATH}/health/readiness")
                 .forPort(DEFAULT_PORT)
                 .forStatusCodeMatching(it -> it >= 200 && it < 500 && it != 404)
                 .withStartupTimeout(Duration.ofMinutes(10))
