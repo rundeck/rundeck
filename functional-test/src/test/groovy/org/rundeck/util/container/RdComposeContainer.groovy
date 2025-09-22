@@ -47,7 +47,7 @@ class RdComposeContainer extends ComposeContainer implements ClientProvider {
         withEnv("MANAGEMENT_ENDPOINT_HEALTH_ENABLED", 'true')
         withLogConsumer(DEFAULT_SERVICE_TO_EXPOSE, new Slf4jLogConsumer(log))
         waitingFor(DEFAULT_SERVICE_TO_EXPOSE,
-            Wait.forHttp("${CONTEXT_PATH}/health/readiness")
+            Wait.forHttp("${CONTEXT_PATH}/actuator/health/readiness")
                 .forPort(DEFAULT_PORT)
                 .forStatusCodeMatching(it -> it >= 200 && it < 500 && it != 404)
                 .withStartupTimeout(Duration.ofMinutes(10))
