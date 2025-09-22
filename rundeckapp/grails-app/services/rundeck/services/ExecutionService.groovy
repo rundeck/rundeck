@@ -4066,12 +4066,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return Execution.createCriteria().list(criteriaClos) as List<Execution>
     }
 
-
-    List<Execution> queryExecutionsRetryList(Execution execution){
-        Execution.findAllByRetryExecution(execution)
-    }
-
-
     /**
      * Count executions per project
      * @param project
