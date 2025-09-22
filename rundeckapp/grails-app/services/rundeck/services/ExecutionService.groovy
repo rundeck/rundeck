@@ -19,7 +19,6 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
-import org.springframework.dao.DataAccessException
 import rundeck.data.util.ExecReportUtil
 import rundeck.services.workflow.WorkflowMetricsWriterImpl
 import rundeck.support.filters.BaseNodeFilters
@@ -4508,5 +4507,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                      context  : contextBuilder.build()]
             )
         }
+    }
+
+
+    /*
+    Delete an execution as part of cleanup, removing from archive if needed
+    @param e execution to delete
+    @return map with keys:
+        success: boolean
+        message: String
+        error: String
+     */
+    @Transactional
+    Map deleteExecutionFromCleanup(Execution e) {
+        deleteExecutionAuthorized(e, "admin")
     }
 }

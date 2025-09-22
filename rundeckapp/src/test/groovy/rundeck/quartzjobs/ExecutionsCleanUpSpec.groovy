@@ -16,8 +16,10 @@
 
 package rundeck.quartzjobs
 
+import com.codahale.metrics.Timer
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import grails.testing.gorm.DataTest
+import org.grails.plugins.metricsweb.MetricService
 import org.quartz.JobDataMap
 import org.quartz.JobDetail
 import org.quartz.JobExecutionContext
@@ -79,22 +81,18 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
                 false
             }
         }
-        def fileUploadService = Mock(FileUploadService)
-        def logFileStorageService = Mock(LogFileStorageService)
-        def jobSchedulerService = Mock(JobSchedulerService)
-        def reportService = Mock(ReportService)
-        def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
+        def metricService = Mock(MetricService)
+
+        def timer = new Timer()
+
+        metricService.timer(_,_)>> timer
 
         def datamap = new JobDataMap([
                 project: 'projectTest',
                 maxDaysToKeep: daysToKeep,
                 executionService : executionService,
                 frameworkService : frameworkService,
-                fileUploadService: fileUploadService,
-                logFileStorageService: logFileStorageService,
-                jobSchedulerService: jobSchedulerService,
-                referencedExecutionDataProvider: referencedExecutionDataProvider,
-                reportService: reportService
+                metricService: metricService
         ])
 
         ExecutionsCleanUp job = new ExecutionsCleanUp()
@@ -107,12 +105,12 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         job.execute(context)
 
         then:
-        executionsRemoved == Execution.findAll()?.size()
+        expectedDeleteExecutions * executionService.deleteExecutionFromCleanup(_) >> [success:true]
 
         where:
-        daysToKeep              | executionsRemoved
-        10                      | 1
-        4                       | 0
+        daysToKeep              | expectedDeleteExecutions
+        10                      | 0
+        4                       | 1
     }
 
 
@@ -161,7 +159,9 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         def jobSchedulerService = Mock(JobSchedulerService)
         def reportService = Mock(ReportService)
         def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
-
+        def metricService = Mock(MetricService){
+            timer(_ , _)>> new Timer()
+        }
 
         def datamap = new JobDataMap([
                 project: 'projectTest',
@@ -172,7 +172,8 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
                 logFileStorageService: logFileStorageService,
                 jobSchedulerService: jobSchedulerService,
                 referencedExecutionDataProvider: referencedExecutionDataProvider,
-                reportService: reportService
+                reportService: reportService,
+                metricService: metricService
 
         ])
 
