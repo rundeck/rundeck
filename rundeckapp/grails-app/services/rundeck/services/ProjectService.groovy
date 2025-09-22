@@ -668,7 +668,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         outfile.withOutputStream { output ->
             exportProjectToOutputStream(project, framework, output, listener, options, authContext)
         }
-        outfile.deleteOnExit()
         outfile
     }
 
