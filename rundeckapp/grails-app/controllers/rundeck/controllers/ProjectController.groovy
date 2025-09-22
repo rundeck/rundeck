@@ -147,7 +147,11 @@ class ProjectController extends ControllerBase{
             throw new ProjectServiceException("Failed to deliver export file: ${e.message}", e)
         } finally {
             if (outfile?.exists()) {
-                outfile.delete()
+                try {
+                    outfile.delete()
+                } catch (Exception deleteEx) {
+                    log.warn("Failed to delete temporary export file: ${deleteEx.message}", deleteEx)
+                }
             }
         }
     }
@@ -373,7 +377,11 @@ class ProjectController extends ControllerBase{
                 log.error("Error copying export file: ${e.message}", e)
                 throw new ProjectServiceException("Failed to deliver export file: ${e.message}", e)
             } finally {
-                projectService.releasePromise(session.user, token)
+                try {
+                    projectService.releasePromise(session.user, token)
+                } catch (Exception releaseEx) {
+                    log.warn("Failed to release export promise for token ${token}: ${releaseEx.message}", releaseEx)
+                }
             }
         }else {
             def percentage = projectService.promiseSummary(session.user, token).percent()
@@ -3161,7 +3169,11 @@ Since: v19""",
             log.error("Error copying export file: ${e.message}", e)
             throw new ProjectServiceException("Failed to deliver export file: ${e.message}", e)
         } finally {
-            projectService.releasePromise(session.user, token)
+            try {
+                projectService.releasePromise(session.user, token)
+            } catch (Exception releaseEx) {
+                log.warn("Failed to release export promise for token ${token}: ${releaseEx.message}", releaseEx)
+            }
         }
     }
 
