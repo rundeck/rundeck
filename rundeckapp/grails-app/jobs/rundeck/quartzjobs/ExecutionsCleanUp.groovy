@@ -4,13 +4,11 @@ import com.dtolabs.rundeck.app.support.ExecutionQuery
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import org.apache.commons.io.FileUtils
 import org.grails.plugins.metricsweb.MetricService
 import org.quartz.InterruptableJob
 import org.quartz.JobExecutionContext
 import org.quartz.JobExecutionException
 import org.quartz.UnableToInterruptJobException
-import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import rundeck.Execution
 import rundeck.services.*
 import com.codahale.metrics.Timer
@@ -28,8 +26,8 @@ class ExecutionsCleanUp implements InterruptableJob {
 
     void execute(JobExecutionContext context) throws JobExecutionException {
         FrameworkService frameworkService = fetchFrameworkService(context.jobDetail.jobDataMap)
-        ReportService reportService = fetchReportService(context.jobDetail.jobDataMap)
         MetricService metricService = fetchMetricService(context.jobDetail.jobDataMap)
+        ExecutionService executionService = fetchExecutionService(context.jobDetail.jobDataMap)
 
         Timer timer = metricService.timer("rundeck.quartzjobs.ExecutionsCleanUp", "executionCleanup")
 
@@ -47,10 +45,6 @@ class ExecutionsCleanUp implements InterruptableJob {
         log.info("Minimum executions to keep: ${minimumExecutionToKeep}")
         log.info("Maximum size of deletions: ${maximumDeletionSize ?: '500 (default)'}")
 
-        ExecutionService executionService = fetchExecutionService(context.jobDetail.jobDataMap)
-        FileUploadService fileUploadService = fetchFileUploadService(context.jobDetail.jobDataMap)
-        LogFileStorageService logFileStorageService = fetchLogFileStorageService(context.jobDetail.jobDataMap)
-        ReferencedExecutionDataProvider referencedExecutionDataProvider = fetchReferencedExecutionDataProvider(context.jobDetail.jobDataMap)
 
         if(!wasInterrupted) {
 
@@ -63,90 +57,13 @@ class ExecutionsCleanUp implements InterruptableJob {
                             minimumExecutionToKeep ? Integer.parseInt(minimumExecutionToKeep) : 0,
                             maximumDeletionSize ? Integer.parseInt(maximumDeletionSize) : 500)
                     log.info("Executions to delete: ${execIdsToExclude.size()}")
-                    deleteByExecutionList(execIdsToExclude, fileUploadService, logFileStorageService, referencedExecutionDataProvider, reportService, executionService)
+                    deleteByExecutionList(execIdsToExclude, executionService)
                     log.info("Finished cleaner execution history job from server ${uuid}")
                 }
             )
         }
     }
 
-    private static class DeleteExecutionResult {
-        boolean success
-        String error
-        String message
-        Long executionId
-
-        DeleteExecutionResult(boolean success, String error, String message, Long executionId) {
-            this.success = success
-            this.error = error
-            this.message = message
-            this.executionId = executionId
-        }
-        static DeleteExecutionResult success(Long executionId) {
-            return new DeleteExecutionResult(true, null, null, executionId)
-        }
-        static DeleteExecutionResult failure(String error, String message, Long executionId) {
-            return new DeleteExecutionResult(false, error, message, executionId)
-        }
-    }
-
-    @CompileDynamic
-    private DeleteExecutionResult deleteExecution(Execution execution,
-                                                 FileUploadService fileUploadService,
-                                                 LogFileStorageService logFileStorageService,
-                                                 ReferencedExecutionDataProvider referencedExecutionDataProvider,
-                                                 ReportService reportService,
-                                                 ExecutionService executionService){
-        try {
-            if (execution.dateCompleted == null && execution.dateStarted != null) {
-                return DeleteExecutionResult.failure('running', "Failed to delete execution {{Execution ${execution.id}}}: The execution is currently running", execution.id)
-            }
-
-            referencedExecutionDataProvider.deleteByExecutionId(execution.id)
-            reportService.deleteByExecution(execution)
-            def executionFiles = logFileStorageService.getExecutionFiles(execution, [], false)
-
-            List<File> files = []
-            def execs = []
-            execs << execution
-            executionFiles.each { ftype, executionFile ->
-                def localFile = logFileStorageService.getFileForExecutionFiletype(execution, ftype, false, false)
-                if (null != localFile && localFile.exists()) {
-                    files << localFile
-                }
-                def partialFile = logFileStorageService.getFileForExecutionFiletype(execution, ftype, false, true)
-                if (null != partialFile && partialFile.exists()) {
-                    files << partialFile
-                }
-                def resultDeleteRemote = logFileStorageService.removeRemoteLogFile(execution, ftype)
-                if(!resultDeleteRemote.started){
-                    log.debug(String.valueOf(resultDeleteRemote.error))
-                }
-            }
-            fileUploadService.deleteRecordsForExecution(execution)
-            log.debug("${files.size()} files from execution will be deleted")
-            //find an execution that this is a retry for
-            List<Execution> retryExecutions = executionService.queryExecutionsRetryList(execution)
-            retryExecutions.each { Execution e2 ->
-                e2.retryExecution = null
-            }
-            execution.delete(flush: true)
-            def deletedfiles = 0
-            files.each { file ->
-                if (!FileUtils.deleteQuietly(file)) {
-                    log.warn("Failed to delete file while deleting execution ${execution.id}: ${file.absolutePath}")
-                } else {
-                    deletedfiles++
-                }
-            }
-            log.debug("${deletedfiles} files removed")
-            log.info("Deleted execution: ${execution.id}")
-            return DeleteExecutionResult.success(execution.id)
-        } catch (Exception ex) {
-            log.error("Failed to delete execution ${execution?.id}", ex)
-            return DeleteExecutionResult.failure('failure', "Failed to delete execution {{Execution ${execution?.id}}}: ${ex.message}", execution?.id)
-        }
-    }
 
     private List<Execution> searchExecutions(ExecutionService executionService,
                                              String project,
@@ -235,16 +152,12 @@ class ExecutionsCleanUp implements InterruptableJob {
     }
 
     private int deleteByExecutionList(List<Execution> collectedExecutions,
-                                      FileUploadService fileUploadService,
-                                      LogFileStorageService logFileStorageService,
-                                      ReferencedExecutionDataProvider referencedExecutionDataProvider,
-                                      ReportService reportService,
                                       ExecutionService executionService) {
         log.info("Start to delete ${collectedExecutions.size()} executions")
         int count = 0
         if (collectedExecutions.size() > 0) {
             for (Execution exec : collectedExecutions) {
-                DeleteExecutionResult result = deleteExecution(exec, fileUploadService, logFileStorageService, referencedExecutionDataProvider, reportService, executionService)
+                Map result = executionService.deleteExecutionFromCleanup(exec)
                 if (!result.success) {
                     log.error(result.message as String)
                 } else {
@@ -274,30 +187,6 @@ class ExecutionsCleanUp implements InterruptableJob {
     }
 
     @CompileDynamic
-    private FileUploadService fetchFileUploadService(def jobDataMap) {
-        def fu = jobDataMap.get("fileUploadService")
-        if (fu==null) {
-            throw new RuntimeException("FileUploadService could not be retrieved from JobDataMap!")
-        }
-        if (! (fu instanceof FileUploadService)) {
-            throw new RuntimeException("JobDataMap contained invalid FileUploadService type: " + fu.getClass().getName())
-        }
-        return (FileUploadService)fu
-    }
-
-    @CompileDynamic
-    private LogFileStorageService fetchLogFileStorageService(def jobDataMap) {
-        def lfs = jobDataMap.get("logFileStorageService")
-        if (lfs==null) {
-            throw new RuntimeException("logFileStorageService could not be retrieved from JobDataMap!")
-        }
-        if (! (lfs instanceof LogFileStorageService)) {
-            throw new RuntimeException("JobDataMap contained invalid LogFileStorageService type: " + lfs.getClass().getName())
-        }
-        return (LogFileStorageService)lfs
-    }
-
-    @CompileDynamic
     private FrameworkService fetchFrameworkService(def jobDataMap) {
         def fws = jobDataMap.get("frameworkService")
         if (fws==null) {
@@ -321,17 +210,6 @@ class ExecutionsCleanUp implements InterruptableJob {
         return (ReportService)fws
     }
 
-    @CompileDynamic
-    private ReferencedExecutionDataProvider fetchReferencedExecutionDataProvider(def jobDataMap){
-        def referencedExecutionDataProvider = jobDataMap.get("referencedExecutionDataProvider")
-        if (referencedExecutionDataProvider==null) {
-            throw new RuntimeException("referencedExecutionDataProvider could not be retrieved from JobDataMap!")
-        }
-        if (! (referencedExecutionDataProvider instanceof ReferencedExecutionDataProvider)) {
-            throw new RuntimeException("JobDataMap contained invalid ReferencedExecutionDataProvider type: " + referencedExecutionDataProvider.getClass().getName())
-        }
-        return (ReferencedExecutionDataProvider)referencedExecutionDataProvider
-    }
 
     @CompileDynamic
     private MetricService fetchMetricService(def jobDataMap) {
