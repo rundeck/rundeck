@@ -134,26 +134,10 @@ class ProjectController extends ControllerBase{
         response.setContentType("application/zip")
         response.setHeader("Content-Disposition", "attachment; filename=\"${project}-${dateStamp}.rdproject.jar\"")
 
-        try {
-            if (outfile && outfile.exists() && outfile.canRead()) {
-                outfile.withInputStream { instream ->
-                    Streams.copy(instream, response.outputStream, false)
-                }
-            } else {
-                throw new ProjectServiceException("Export file not available or readable")
-            }
-        } catch (Exception e) {
-            log.error("Error copying export file: ${e.message}", e)
-            throw new ProjectServiceException("Failed to deliver export file: ${e.message}", e)
-        } finally {
-            if (outfile?.exists()) {
-                try {
-                    outfile.delete()
-                } catch (Exception deleteEx) {
-                    log.warn("Failed to delete temporary export file: ${deleteEx.message}", deleteEx)
-                }
-            }
+        outfile.withInputStream {instream->
+            Streams.copy(instream,response.outputStream,false)
         }
+        outfile.delete()
     }
     /**
      * Async version of export, acquires a token and redirects to exportWait
@@ -366,22 +350,13 @@ class ProjectController extends ControllerBase{
             response.setHeader("Content-Disposition", "attachment; filename=\"${params.project}-${dateStamp}.rdproject.jar\"")
 
             try {
-                if (outfile && outfile.exists() && outfile.canRead()) {
-                    outfile.withInputStream { instream ->
-                        Streams.copy(instream, response.outputStream, false)
-                    }
-                } else {
-                    throw new ProjectServiceException("Export file not available or readable")
+                outfile.withInputStream { instream ->
+                    Streams.copy(instream, response.outputStream, false)
                 }
             } catch (Exception e) {
-                log.error("Error copying export file: ${e.message}", e)
                 throw new ProjectServiceException("Failed to deliver export file: ${e.message}", e)
             } finally {
-                try {
-                    projectService.releasePromise(session.user, token)
-                } catch (Exception releaseEx) {
-                    log.warn("Failed to release export promise for token ${token}: ${releaseEx.message}", releaseEx)
-                }
+                projectService.releasePromise(session.user, token)
             }
         }else {
             def percentage = projectService.promiseSummary(session.user, token).percent()
@@ -3157,24 +3132,10 @@ Since: v19""",
                 "attachment; filename=\"${params.project}-${dateStamp}.rdproject.jar\""
         )
 
-        try {
-            if (outfile && outfile.exists() && outfile.canRead()) {
-                outfile.withInputStream { instream ->
-                    Streams.copy(instream, response.outputStream, false)
-                }
-            } else {
-                throw new ProjectServiceException("Export file not available or readable")
-            }
-        } catch (Exception e) {
-            log.error("Error copying export file: ${e.message}", e)
-            throw new ProjectServiceException("Failed to deliver export file: ${e.message}", e)
-        } finally {
-            try {
-                projectService.releasePromise(session.user, token)
-            } catch (Exception releaseEx) {
-                log.warn("Failed to release export promise for token ${token}: ${releaseEx.message}", releaseEx)
-            }
+        outfile.withInputStream { instream ->
+            Streams.copy(instream, response.outputStream, false)
         }
+        projectService.releasePromise(session.user, token)
     }
 
     @Put('/project/{project}/import')
