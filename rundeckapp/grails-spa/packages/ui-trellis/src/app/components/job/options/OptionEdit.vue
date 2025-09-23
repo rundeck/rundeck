@@ -779,10 +779,7 @@
     </div>
 
     <!-- preview (text)  -->
-    <option-usage-preview
-      :option="option"
-      :validation-errors="validationErrors"
-    />
+    <option-usage-preview v-if="!validationErrors['name']" :option="option" />
     <div class="flow-h" style="margin: 10px 0">
       <template v-if="newOption">
         <btn
