@@ -1,0 +1,19 @@
+import { Meta, Subtitle, Title, Canvas, Controls, Description, Stories } from "@storybook/blocks";
+import * as OptionUsagePreviewStories from './OptionUsagePreview.stories.ts'
+
+<Meta of={OptionUsagePreviewStories} />
+
+<Title />
+
+<Subtitle />
+
+## Import
+
+```ts
+import OptionUsagePreview from '@app/components/job/options/OptionUsagePreview.vue';
+```
+
+## Playground
+
+<Canvas of={OptionUsagePreviewStories.Playground} sourceState="shown" />
+<Controls of={OptionUsagePreviewStories.Playground} />
