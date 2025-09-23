@@ -828,7 +828,8 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         }
 
         // Create a file that doesn't exist to trigger IOException
-        def nonExistentFile = new File("/tmp/non-existent-file-" + System.currentTimeMillis() + ".jar")
+        def tempDir = System.getProperty('java.io.tmpdir')
+        def nonExistentFile = new File(tempDir, "non-existent-file-" + System.currentTimeMillis() + ".jar")
         // Ensure it doesn't exist
         nonExistentFile.delete()
 
