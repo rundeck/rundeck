@@ -60,7 +60,7 @@ END_HEREDOC
 )</code></pre>
         </div>
       </div>
-      <div v-else class="col-sm-10 opt_sec_nexp_enabled">
+      <div v-if="option.secure && !option.valueExposed" class="col-sm-10">
         <span class="warn note">{{
           $t("form.option.usage.secureAuth.message")
         }}</span>
