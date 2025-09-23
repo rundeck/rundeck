@@ -1,12 +1,18 @@
 import type { StorybookConfig } from "@storybook/vue3-webpack5";
 import remarkGfm from "remark-gfm";
-
+import Path from "path";
 const config: StorybookConfig = {
   stories: [
     "../src/library/components/primeVue/**/*.mdx",
     "../src/library/components/primeVue/**/*.stories.@(js|jsx|mjs|ts|tsx)",
+    "../src/app/**/*.mdx",
+    "../src/app/**/*.stories.@(js|jsx|mjs|ts|tsx)",
   ],
-  staticDirs: [],
+  staticDirs: [
+    { from: "../../../../grails-app/assets", to: "public" },
+    { from: "../../../../grails-spa/gradle-build/spa/provided", to: "public/provided" },
+    { from: "../src/library/theme/images", to: "public/library/theme/images" },
+  ],
   addons: [
     "@storybook/addon-webpack5-compiler-swc",
     "storybook-dark-mode",
@@ -68,6 +74,8 @@ const config: StorybookConfig = {
         },
       },
     },
+    "storybook-addon-cookie",
+    "storybook-addon-mock",
   ],
   framework: {
     name: "@storybook/vue3-webpack5",
@@ -75,6 +83,14 @@ const config: StorybookConfig = {
   },
   features: {
     backgroundsStoryGlobals: true,
+  },
+  webpackFinal: async (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@": Path.resolve(__dirname, "../src"),
+    };
+
+    return config;
   },
 };
 export default config;
