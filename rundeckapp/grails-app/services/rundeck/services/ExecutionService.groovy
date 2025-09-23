@@ -2025,7 +2025,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Execution.findAllByRetryExecution(e).each{e2->
                 e2.retryExecution=null
             }
-            e.delete()
+            e.delete(flush: true)
             //delete all files
             def deletedfiles = 0
             files.each { file ->
@@ -4512,7 +4512,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         message: String
         error: String
      */
-    @Transactional
     Map deleteExecutionFromCleanup(Execution e) {
         deleteExecutionAuthorized(e, "admin")
     }
