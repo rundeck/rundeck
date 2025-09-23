@@ -79,7 +79,7 @@ class JobYAMLFormat implements JobFormat {
         } else if (val instanceof String) {
             //set multiline strings to use unix line endings
             // Don't trim spaces for delimiter values to preserve meaningful whitespace
-            if(trimSpacesFromLines && currentKey != 'delimiter') {
+            if(trimSpacesFromLines && !['delimiter', 'valuesListDelimiter'].contains(currentKey)) {
                 return BuilderUtil.trimAllLinesAndReplaceLineEndings(val, DumperOptions.LineBreak.UNIX.getString())
             }
             return BuilderUtil.replaceLineEndings(val, DumperOptions.LineBreak.UNIX.getString())
