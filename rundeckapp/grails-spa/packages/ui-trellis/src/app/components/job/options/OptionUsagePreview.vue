@@ -1,7 +1,7 @@
 <template>
   <!-- preview (text)  -->
   <section
-    v-if="option.name && option.type !== 'file' && !validationErrors['name']"
+    v-if="option.name && option.type !== 'file'"
     id="option_preview"
     class="section-separator-solo"
   >
@@ -69,7 +69,7 @@ END_HEREDOC
   </section>
   <!-- preview (file) -->
   <section
-    v-if="option.name && option.type === 'file' && !validationErrors['name']"
+    v-if="option.name && option.type === 'file'"
     id="file_option_preview"
     class="section-separator-solo"
   >
@@ -135,10 +135,6 @@ export default defineComponent({
   props: {
     option: {
       type: Object as PropType<JobOption>,
-      required: true,
-    },
-    validationErrors: {
-      type: Object as PropType<Record<string, any>>,
       required: true,
     },
   },
