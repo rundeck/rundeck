@@ -49,12 +49,15 @@
         </div>
         <div>
           {{ $t("script.content.prompt") }}
-          <pre><code>
-OPTION_VALUE=$(cat &lt;&lt;'END_HEREDOC'
+          <VMarkdownView
+            class="markdown-body"
+            mode=""
+            :content="$t(`script.content.multiline.prompt.warning`)"
+          />
+          <pre><code>OPTION_VALUE=$(cat &lt;&lt;'END_HEREDOC'
 @option.{{ option.name }}@
 END_HEREDOC
-)
-          </code></pre>
+)</code></pre>
         </div>
       </div>
       <div v-else class="col-sm-10 opt_sec_nexp_enabled">

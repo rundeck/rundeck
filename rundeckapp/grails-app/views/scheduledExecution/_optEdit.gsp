@@ -931,19 +931,18 @@ form.option.valuesType.url.authType.bearerToken.label
                 <!-- ko if: isMultilineType() -->
                 <span class="text-strong"><g:message code="option.usage.multiline.note" /></span>
                 <div>
-                    <g:message code="bash.prompt" /> <code>"$<span data-bind="text: bashVarPreview">"</span></code>
+                    <g:message code="bash.prompt" /> <code>"$<span data-bind="text: bashVarPreview"></span>"</code>
                 </div>
                 <div>
                     <g:message code="commandline.arguments.prompt" /> <code>"$<!-- -->{option.<span data-bind="text: name"></span>}"</code>
                 </div>
                 <div>
                     <g:message code="script.content.prompt" />
-                    <pre><code>
-OPTION_VALUE=$(cat &lt;&lt;'END_HEREDOC'
+                    <g:message code="script.content.multiline.prompt.warning" />
+                    <pre><code>OPTION_VALUE=$(cat &lt;&lt;'END_HEREDOC'
 @option.<span data-bind="text: name"></span>@
 END_HEREDOC
-)
-                    </code></pre>
+)</code></pre>
                 </div>
                 <!-- /ko -->
                 <!-- ko if: !isMultilineType() -->
