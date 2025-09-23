@@ -21,12 +21,6 @@ const meta: Meta<typeof OptionUsagePreview> = {
       },
       description: "Option object",
     },
-    validationErrors: {
-      control: {
-        type: "object",
-      },
-      description: "Validation Errors object",
-    },
   },
   args: {
     option: {
@@ -34,7 +28,6 @@ const meta: Meta<typeof OptionUsagePreview> = {
       regex: "asdf",
       description: "bob's your uncle",
     },
-    validationErrors: {},
   },
   async beforeEach() {},
 };
