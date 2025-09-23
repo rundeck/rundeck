@@ -161,6 +161,33 @@ class JobYAMLFormatSpec extends Specification {
             'a,bc' | '- a: \'a,bc\'\n'
     }
 
+    @Unroll
+    def "trimSpaces should preserve delimiter values"() {
+        given:
+            def sut = new JobYAMLFormat(trimSpacesFromLines: trimSpaces)
+            def writer = new StringWriter()
+            def data = [[
+                options: [
+                    [
+                        delimiter: delimiter,
+                        multivalued: true,
+                        name: 'op1'
+                    ]
+                ]
+            ]]
+            def options = JobFormat.options(false, null, (String) null)
+        when:
+            sut.encode(data, options, writer)
+        then:
+            writer.toString().contains("delimiter: '${expectedDelimiter}'")
+        where:
+            delimiter | trimSpaces | expectedDelimiter
+            ' '       | false      | ' '
+            ' '       | true       | ' '
+            ','       | false      | ','
+            ','       | true       | ','
+    }
+
     def "should return false on multiple notifs of same type in same trigger"(){
         given:
         Map notifMap
