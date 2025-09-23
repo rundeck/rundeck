@@ -45,8 +45,8 @@ class NodesSpec extends SeleniumBase {
             loginPage.login(TEST_USER, TEST_PASS)
             menuPage.validatePage()
             menuPage.goProjectHome(SELENIUM_BASIC_PROJECT)
-            nodeSourcePage.loadPath = "/project/${SELENIUM_BASIC_PROJECT}/nodes/sources"
-            nodeSourcePage.go("/project/${SELENIUM_BASIC_PROJECT}/nodes/sources")
+            nodeSourcePage.forProject(SELENIUM_BASIC_PROJECT)
+            nodeSourcePage.go()
 
         then: "Add a new node source"
             nodeSourcePage.waitForElementVisible nodeSourcePage.newNodeSourceButton
