@@ -77,9 +77,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
 
         when:
         List execIdsToExclude = job.searchExecutions(
-                frameworkService,
                 new ExecutionService(),
-                new JobSchedulerService(),
                 projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize)
         then:
         execIdsToExclude.size() == 0
@@ -94,8 +92,6 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         int maxDaysToKeep = 4
         int minimumExecutionsToKeep = 0
         int maximumDeletionSize = 500
-        def logFileStorageService = Mock(LogFileStorageService)
-        def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
 
         Date startDate = new Date(2015 - 1900, 2, 8)
         Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d", startDate)
@@ -105,22 +101,26 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         Date execDate = new Date(2015 - 1900, 02, 03)
         ScheduledExecution se = setupJob(projName)
         ExecutionsCleanUp job = new ExecutionsCleanUp()
+        def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
+        def logFileStorageService = Mock(LogFileStorageService)
 
-        def executionFile = Mock(ExecutionFile)
+        def executionService = new ExecutionService()
+        executionService.referencedExecutionDataProvider = referencedExecutionDataProvider
+        executionService.reportService = reportService
+        executionService.logFileStorageService  = logFileStorageService
+        executionService.fileUploadService = new FileUploadService()
+
 
         FrameworkService frameworkService = initNonClusterFrameworkService()
         Execution execution = setupExecution(se, projName, execDate, execDate, frameworkService.getServerUUID())
         when:
-        List execIds = job.searchExecutions(frameworkService,
-                new ExecutionService(), new JobSchedulerService(), projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize )
-
-
+        List execIds = job.searchExecutions(executionService, projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize )
 
         then:
         execIds.size() > 0
 
         when:
-        int sucessTotal = job.deleteByExecutionList(execIds, new FileUploadService(), logFileStorageService, referencedExecutionDataProvider, reportService)
+        int sucessTotal = job.deleteByExecutionList(execIds, executionService)
 
         then:
         execIds.size() == sucessTotal
@@ -168,11 +168,10 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
 
 
         when:
-        List execIdsToExclude = job.searchExecutions(mockfs,
-                new ExecutionService(), mockjs, projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
+        List execIdsToExclude = job.searchExecutions(new ExecutionService(), projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
         then:
         execIdsToExclude.size() ==1
-        execIdsToExclude.contains(execution.id)
+        execIdsToExclude.contains(execution)
         1 == Execution.countByProject(projName)
         1 == ExecReport.countByProject(projName)
 
