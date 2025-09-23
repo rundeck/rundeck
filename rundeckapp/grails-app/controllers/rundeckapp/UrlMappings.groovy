@@ -148,7 +148,7 @@ class UrlMappings {
         }
 
         "/api/$api_version/project/$project/plugins/save"(controller: 'framework') {
-            action = [POST: 'saveProjectPluginsAjax']
+            action = [POST: 'saveProjectPlugins']
         }
         "/api/$api_version/project/$project/export/async"(controller: 'project', action: 'apiProjectExport') {
             async = true
@@ -299,7 +299,7 @@ class UrlMappings {
         }
         "/resources/$action?/$id?"(controller: 'framework')
         "/project/$project/plugins/save"(controller: 'framework') {
-            action = [POST: 'saveProjectPluginsAjax']
+            action = [POST: 'saveProjectPlugins']
         }
         "/project/$project/events/$action?/$id?(.$format)?"(controller: 'reports')
         "/project/$project/configure"(controller: 'framework', action: 'editProject')

@@ -152,7 +152,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         saveProject              : 'POST',
         saveProjectNodeSources   : 'POST',
         saveProjectNodeSourceFile: 'POST',
-        saveProjectPluginsAjax   : 'POST',
+        saveProjectPlugins       : 'POST',
         getProjectConfigurable   : 'GET',
         saveProjectConfigurable  : 'POST',
     ]
@@ -1633,7 +1633,7 @@ Since: v55""",
                     )
             ]
     )
-    def saveProjectPluginsAjax(String project, String serviceName, String configPrefix) {
+    def saveProjectPlugins(String project, String serviceName, String configPrefix) {
         // Require API (use your current bumped version)
         if (!apiService.requireApi(request, response, ApiVersions.V55)) {
             return

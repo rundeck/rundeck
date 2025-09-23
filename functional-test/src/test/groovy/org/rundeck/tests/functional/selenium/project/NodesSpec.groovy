@@ -31,4 +31,36 @@ class NodesSpec extends SeleniumBase {
             nodeSourcePage.newNodeSourceButton.getText().contains("Source")
     }
 
+    /**
+     * Minimal flow: create a node source (Local), then press page-level Save.
+     * Consider it a success if either a success toast appears OR the sources API responds OK.
+     */
+    def "create node source and press save"() {
+        setup:
+            def loginPage      = go LoginPage
+            def nodeSourcePage = page NodeSourcePage
+            def menuPage       = page HomePage
+
+        when: "navigate to Nodes → Sources"
+            loginPage.login(TEST_USER, TEST_PASS)
+            menuPage.validatePage()
+            menuPage.goProjectHome(SELENIUM_BASIC_PROJECT)
+            nodeSourcePage.loadPath = "/project/${SELENIUM_BASIC_PROJECT}/nodes/sources"
+            nodeSourcePage.go("/project/${SELENIUM_BASIC_PROJECT}/nodes/sources")
+
+        then: "Add a new node source"
+            nodeSourcePage.waitForElementVisible nodeSourcePage.newNodeSourceButton
+            nodeSourcePage.clickAddNewNodeSource()
+
+        when: "Choose zero-config provider (Local) and close picker if needed"
+            nodeSourcePage.chooseProviderPreferLocal()
+            nodeSourcePage.clickInlineSaveIfVisible()
+
+        and: "Click the page-level Save"
+            nodeSourcePage.clickSaveNodeSources()
+
+        then: "Either a toast appears or the backend confirms via /sources"
+            nodeSourcePage.waitForSaveToastOrSourcesAPI(SELENIUM_BASIC_PROJECT)
+            nodeSourcePage.waitForElementVisible nodeSourcePage.newNodeSourceButton
+    }
 }

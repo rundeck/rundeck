@@ -1882,7 +1882,7 @@ project.label=A Label
         setupFormTokens(params)
 
         when:
-        controller.saveProjectPluginsAjax(project, serviceName, configPrefix)
+        controller.saveProjectPlugins(project, serviceName, configPrefix)
 
         then:
         response.status == 200
@@ -1953,7 +1953,7 @@ project.label=A Label
         setupFormTokens(params)
 
         when:
-        controller.saveProjectPluginsAjax(project, serviceName, configPrefix)
+        controller.saveProjectPlugins(project, serviceName, configPrefix)
 
         then:
         response.status == 422
@@ -2019,7 +2019,7 @@ project.label=A Label
 
         setupFormTokens(params)
         when:
-        controller.saveProjectPluginsAjax(project, serviceName, configPrefix)
+        controller.saveProjectPlugins(project, serviceName, configPrefix)
 
         then:
         response.status == 422
@@ -2087,7 +2087,7 @@ project.label=A Label
         setupFormTokens(params)
 
         when:
-        controller.saveProjectPluginsAjax(project, serviceName, configPrefix)
+        controller.saveProjectPlugins(project, serviceName, configPrefix)
 
         then:
         response.status == 422
@@ -2155,7 +2155,7 @@ project.label=A Label
 
         setupFormTokens(params)
         when:
-        controller.saveProjectPluginsAjax(project, serviceName, configPrefix)
+        controller.saveProjectPlugins(project, serviceName, configPrefix)
 
         then:
         response.status == 422
