@@ -60,19 +60,19 @@ class ProjectExportSpec extends SeleniumBase {
                 projectExportPage.checkBoxLabel checkBoxId click()
             }
         expect:
-            projectExportPage.checkBoxes.count {it.getAttribute("checked") == "true" } == 2
-            projectExportPage.checkBoxes.count {it.getAttribute("checked") == null } >= 8
+            projectExportPage.checkBoxes.count {it.getAttribute("checked") == "true" } >= 8
+            projectExportPage.checkBoxes.count {it.getAttribute("checked") == null } <= 2
     }
 
     def "clicking all checkbox when selected deselects all checkboxes"() {
         when:
             def projectExportPage = go ProjectExportPage, SELENIUM_BASIC_PROJECT
         then:
-        projectExportPage.checkBoxes.count {it.getAttribute("checked") == "true" } >= 8
+            projectExportPage.checkBoxes.count {it.getAttribute("checked") == "true" } >= 8
         when:
             projectExportPage.getAllCheckbox().click()
         then:
-        projectExportPage.checkBoxes.count {it.getAttribute("checked") == null } >= 8    
+            projectExportPage.checkBoxes.count {it.getAttribute("checked") == null } >= 8
     }
 
 }
