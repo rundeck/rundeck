@@ -72,7 +72,7 @@ class ProjectExportSpec extends SeleniumBase {
         when:
             projectExportPage.getAllCheckbox().click()
         then:
-        projectExportPage.checkBoxes.count {it.getAttribute("checked") == null } >=8    
+        projectExportPage.checkBoxes.count {it.getAttribute("checked") == null } >= 8    
     }
 
 }
