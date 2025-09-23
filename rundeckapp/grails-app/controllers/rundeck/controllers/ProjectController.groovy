@@ -349,10 +349,15 @@ class ProjectController extends ControllerBase{
             response.setContentType("application/zip")
             response.setHeader("Content-Disposition", "attachment; filename=\"${params.project}-${dateStamp}.rdproject.jar\"")
 
-            outfile.withInputStream {instream->
-                Streams.copy(instream,response.outputStream,false)
+            try {
+                outfile.withInputStream { instream ->
+                    Streams.copy(instream, response.outputStream, false)
+                }
+            } catch (Exception e) {
+                throw new ProjectServiceException("Failed to deliver export file: ${e.message}", e)
+            } finally {
+                projectService.releasePromise(session.user, token)
             }
-            projectService.releasePromise(session.user,token)
         }else {
             def percentage = projectService.promiseSummary(session.user, token).percent()
 

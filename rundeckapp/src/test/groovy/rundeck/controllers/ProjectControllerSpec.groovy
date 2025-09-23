@@ -50,6 +50,7 @@ import rundeck.services.FrameworkService
 import rundeck.services.ImportResponse
 import rundeck.services.ProgressSummary
 import rundeck.services.ProjectService
+import rundeck.services.ProjectServiceException
 import rundeck.services.asyncimport.AsyncImportException
 import rundeck.services.asyncimport.AsyncImportMilestone
 import rundeck.services.asyncimport.AsyncImportService
@@ -759,6 +760,118 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         response.getContentType() == 'application/zip'
 
     }
+
+    def "export success with file cleanup"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer)
+        params.project = 'aproject'
+        def mockProject = Mock(IRundeckProject) {
+            getName() >> 'aproject'
+        }
+        // Create a real temp file for the test
+        def tempFile = File.createTempFile("test-export", ".jar")
+        tempFile.text = 'test content'
+        tempFile.deleteOnExit() // Ensure cleanup after test
+
+        when:
+        controller.export()
+
+        then:
+        1 * controller.rundeckAppAuthorizer.project(_, _) >> Mock(AuthorizingProject) {
+            getResource() >> mockProject
+            getAuthContext() >> Mock(UserAndRolesAuthContext)
+        }
+        1 * controller.projectService.exportProjectToFile(_, _, _, _, _) >> tempFile
+
+        // File should be deleted by controller
+        !tempFile.exists()
+        response.contentType == 'application/zip'
+        response.getHeader('Content-Disposition') != null
+    }
+
+    def "export handles ProjectServiceException from service"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer)
+        params.project = 'aproject'
+        def mockProject = Mock(IRundeckProject) {
+            getName() >> 'aproject'
+        }
+
+        when:
+        controller.export()
+
+        then:
+        1 * controller.rundeckAppAuthorizer.project(_, _) >> Mock(AuthorizingProject) {
+            getResource() >> mockProject
+            getAuthContext() >> Mock(UserAndRolesAuthContext)
+        }
+        1 * controller.projectService.exportProjectToFile(_, _, _, _, _) >> {
+            throw new ProjectServiceException("Export failed")
+        }
+
+        // Should render error view
+        view == '/common/error'
+    }
+
+    def "export handles IOException during file copy"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer)
+        params.project = 'aproject'
+        def mockProject = Mock(IRundeckProject) {
+            getName() >> 'aproject'
+        }
+
+        // Create a file that doesn't exist to trigger IOException
+        def tempDir = System.getProperty('java.io.tmpdir')
+        def nonExistentFile = new File(tempDir, "non-existent-file-" + System.currentTimeMillis() + ".jar")
+        // Ensure it doesn't exist
+        nonExistentFile.delete()
+
+        when:
+        controller.export()
+
+        then:
+        1 * controller.rundeckAppAuthorizer.project(_, _) >> Mock(AuthorizingProject) {
+            getResource() >> mockProject
+            getAuthContext() >> Mock(UserAndRolesAuthContext)
+        }
+        1 * controller.projectService.exportProjectToFile(_, _, _, _, _) >> nonExistentFile
+
+        thrown(FileNotFoundException)
+    }
+
+    def "exportWait handles file copy exception with promise release"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        params.token = 'test-token'
+        params.download = 'true'
+        session.user = 'testuser'
+
+        // Use non-existent file to trigger IOException
+        def nonExistentFile = new File(System.getProperty('java.io.tmpdir')+"/non-existent-export-" + System.currentTimeMillis() + ".jar")
+        nonExistentFile.delete() // Ensure it doesn't exist
+
+        when:
+        controller.exportWait()
+
+        then:
+        1 * controller.projectService.hasPromise('testuser', 'test-token') >> true
+        1 * controller.projectService.promiseError('testuser', 'test-token') >> null
+        1 * controller.projectService.promiseReady('testuser', 'test-token') >> nonExistentFile
+        1 * controller.projectService.promiseRequestStarted('testuser', 'test-token') >> new Date()
+
+        // Should handle IOException and still release promise
+        1 * controller.projectService.releasePromise('testuser', 'test-token')
+
+        thrown(ProjectServiceException)
+    }
+
     def "project file readme get not project param"(){
         given:
         params.filename="readme.md"
