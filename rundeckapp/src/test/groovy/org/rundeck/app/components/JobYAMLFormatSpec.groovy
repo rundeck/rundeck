@@ -170,6 +170,7 @@ class JobYAMLFormatSpec extends Specification {
                 options: [
                     [
                         delimiter: delimiter,
+                        valuesListDelimiter: valuesListDelimiter,
                         multivalued: true,
                         name: 'op1'
                     ]
@@ -180,12 +181,13 @@ class JobYAMLFormatSpec extends Specification {
             sut.encode(data, options, writer)
         then:
             writer.toString().contains("delimiter: '${expectedDelimiter}'")
+            writer.toString().contains("valuesListDelimiter: '${expectedValuesListDelimiter}'")
         where:
-            delimiter | trimSpaces | expectedDelimiter
-            ' '       | false      | ' '
-            ' '       | true       | ' '
-            ','       | false      | ','
-            ','       | true       | ','
+            delimiter | valuesListDelimiter | trimSpaces | expectedDelimiter | expectedValuesListDelimiter
+            ' '       | ' '                 | false      | ' '               | ' '
+            ' '       | ' '                 | true       | ' '               | ' '
+            ','       | ','                 | false      | ','               | ','
+            ','       | ','                 | true       | ','               | ','
     }
 
     def "should return false on multiple notifs of same type in same trigger"(){
