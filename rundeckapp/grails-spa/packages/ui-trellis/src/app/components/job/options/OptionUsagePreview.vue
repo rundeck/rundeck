@@ -11,7 +11,7 @@
         v-if="
           (!option.secure || option.valueExposed) && option.type !== 'multiline'
         "
-        class="col-sm-10 opt_sec_nexp_disabled"
+        class="col-sm-10"
       >
         <span class="text-strong">{{
           $t("the.option.values.will.be.available.to.scripts.in.these.forms")
@@ -127,10 +127,11 @@ END_HEREDOC
 <script lang="ts">
 import { JobOption } from "@/library/types/jobs/JobEdit";
 import { defineComponent, PropType } from "vue";
+import { VMarkdownView } from "vue3-markdown";
 
 const BashVarPrefix = "RD_";
 export default defineComponent({
-  components: {},
+  components: { VMarkdownView },
   props: {
     option: {
       type: Object as PropType<JobOption>,
