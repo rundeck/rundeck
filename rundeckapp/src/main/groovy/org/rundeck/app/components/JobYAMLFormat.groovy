@@ -73,12 +73,15 @@ class JobYAMLFormat implements JobFormat {
         }
     }
 
-    static Object canonicalValue(Object val, boolean trimSpacesFromLines = false) {
+    static Object canonicalValue(Object val, boolean trimSpacesFromLines = false, String currentKey = null) {
         if (val instanceof Map) {
             return canonicalMap(val,trimSpacesFromLines)
         } else if (val instanceof String) {
             //set multiline strings to use unix line endings
-            if(trimSpacesFromLines) return BuilderUtil.trimAllLinesAndReplaceLineEndings(val, DumperOptions.LineBreak.UNIX.getString())
+            // Don't trim spaces for delimiter values to preserve meaningful whitespace
+            if(trimSpacesFromLines && currentKey != 'delimiter') {
+                return BuilderUtil.trimAllLinesAndReplaceLineEndings(val, DumperOptions.LineBreak.UNIX.getString())
+            }
             return BuilderUtil.replaceLineEndings(val, DumperOptions.LineBreak.UNIX.getString())
         } else if (val instanceof List) {
             return val.collect { canonicalValue(it,trimSpacesFromLines) }
@@ -90,7 +93,7 @@ class JobYAMLFormat implements JobFormat {
         def result = [:]//linked hash map has ordered keys
         input.keySet().sort().each {
             def val = input[it]
-            result[it] = canonicalValue(val,trimSpacesFromLines)
+            result[it] = canonicalValue(val,trimSpacesFromLines, it as String)
         }
         result
     }
