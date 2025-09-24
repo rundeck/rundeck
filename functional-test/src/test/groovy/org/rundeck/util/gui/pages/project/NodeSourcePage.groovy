@@ -1,16 +1,14 @@
 package org.rundeck.util.gui.pages.project
 
 import groovy.transform.CompileStatic
-import org.openqa.selenium.*
+import org.openqa.selenium.By
+import org.openqa.selenium.TimeoutException
+import org.openqa.selenium.WebElement
+import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.container.SeleniumContext
 import org.rundeck.util.gui.pages.BasePage
 
-import java.nio.charset.StandardCharsets
-
-import org.openqa.selenium.interactions.Actions
-import org.openqa.selenium.interactions.MoveTargetOutOfBoundsException
-import org.openqa.selenium.support.ui.ExpectedConditions
-import org.openqa.selenium.support.ui.WebDriverWait
 import java.time.Duration
 
 @CompileStatic
@@ -19,212 +17,124 @@ class NodeSourcePage extends BasePage {
     String loadPath = ""
 
     // ---------- Core locators ----------
-    By newNodeSource               = By.xpath("//button[contains(.,'Add a new Node Source')]")
-    By saveNodeSourceConfigBy      = By.cssSelector(".btn.btn-cta.btn-xs")     // small inline save
-    By saveButtonBy                = By.cssSelector(".btn.btn-cta")            // page-level Save (primary CTA)
-    By nodesEditTabBy              = By.xpath("//div[contains(text(),'Edit')]")
-    By modifyBy                    = By.linkText("Modify")
-    By nodeSourcesListBy = By.cssSelector("[data-testid='node-sources-list']")
+    By newNodeSource          = By.xpath("//button[contains(.,'Add a new Node Source')]")
+    By saveNodeSourceConfigBy = By.cssSelector(".btn.btn-cta.btn-xs")  // inline Save
+    By saveButtonBy           = By.cssSelector(".btn.btn-cta")         // page-level Save
+    By nodesEditTabBy         = By.xpath("//div[contains(text(),'Edit')]")
+    By modifyBy               = By.linkText("Modify")
 
-    // Success toast/text
+    // Wrapper that exists on the list view
+    By nodeSourcesListBy      = By.cssSelector("[data-testid='node-sources-list']")
+
+    // Success feedback (class-based toast, allow text fallback)
+    By toastSuccessBy = By.cssSelector(".p-toast-message-success, .rdk-toast--success")
     By configurationSavedPopUpBy = By.xpath(
             "//*[contains(translate(normalize-space(.),'SAVED','saved'),'configuration saved') " +
                     "or contains(translate(normalize-space(.),'SAVED','saved'),'configurations saved')]"
     )
-    By toastSuccessBy = By.cssSelector(".p-toast-message-success, .rdk-toast--success")
 
-    // ---------- Provider picker (testids + fallbacks) ----------
-    By providerPickerByTestId   = By.cssSelector("[data-testid='provider-picker']")
-    By providerPickerModal      = By.cssSelector(".modal.show")
-    By providerPickerListGroup  = By.cssSelector(".provider-list, .list-group")
+    // ---------- Provider picker (stable data-testids + minimal fallback) ----------
+    By providerPickerByTestId  = By.cssSelector("[data-testid='provider-picker']")
+    By providerPickerModal     = By.cssSelector(".modal.show, .modal.in")
+    By providerPickerListGroup = By.cssSelector(".provider-list, .list-group")
 
-    // Preferred “Local” hooks
-    By providerLocalByTestId    = By.cssSelector("[data-testid='provider-local']")
-    By providerLocalByAttrs     = By.cssSelector("[data-provider='local'], [data-provider-id='local'], a[href*='local' i]")
+    // “Local” provider hooks
+    By providerLocalByTestId   = By.cssSelector("[data-testid='provider-local']")
+    By providerLocalByAttrs    = By.cssSelector("[data-provider='local'], [data-provider-id='local'], a[href*='local' i]")
 
     NodeSourcePage(final SeleniumContext context) { super(context) }
 
-    WebElement getNewNodeSourceButton() { el newNodeSource }
-
-    void validatePage() {
-        new WebDriverWait(context.driver, Duration.ofSeconds(30))
-                .until(ExpectedConditions.urlContains(loadPath))
-    }
+    WebElement getNewNodeSourceButton() { byAndWait(newNodeSource) }
 
     void forProject(String projectName) {
         this.loadPath = "/project/${projectName}/nodes/sources"
     }
 
-    // ---------- Simple clicks ----------
-    void clickSaveNodeSourceConfig(){ (el saveNodeSourceConfigBy).click() }
-    def  clickNodesEditTab()       { (el nodesEditTabBy).click() }
-    def  clickModifyButton()       { (el modifyBy).click() }
-
-    // ---------- Hardened actions for the current test flow ----------
+    // ---------- Simple clicks using BasePage waits ----------
+    void clickSaveNodeSourceConfig() { byAndWaitClickable(saveNodeSourceConfigBy).click() }
+    def  clickNodesEditTab()         { byAndWaitClickable(nodesEditTabBy).click() }
+    def  clickModifyButton()         { byAndWaitClickable(modifyBy).click() }
 
     void clickAddNewNodeSource() {
-        safeClick(newNodeSource)              // instead of locating + jsClick
+        byAndWaitClickable(newNodeSource).click()
     }
 
     void chooseProviderPreferLocal() {
-        WebDriverWait wait = new WebDriverWait(context.driver, Duration.ofSeconds(15))
-
-        // 0) Briefly wait for the modal to appear (id or visible modal)
+        // After clicking the CTA, wait for ANY of: data-testid picker, a visible modal (.show or .in),
+        // or the list-group itself. Use presence-of-element to be tolerant of animation timing.
+        def wait = new WebDriverWait(driver, Duration.ofSeconds(10))
         try {
             wait.until(ExpectedConditions.or(
-                    ExpectedConditions.presenceOfElementLocated(By.cssSelector("#add-new-modal")),
-                    ExpectedConditions.presenceOfElementLocated(By.cssSelector(".modal.show"))
+                    ExpectedConditions.presenceOfElementLocated(providerPickerByTestId),
+                    ExpectedConditions.presenceOfElementLocated(providerPickerModal),
+                    ExpectedConditions.presenceOfElementLocated(providerPickerListGroup)
             ))
-        } catch (Throwable ignored) { /* modal might be non-blocking; continue */ }
-
-        // 1) Fast path: find the Local provider by its test id globally (covers append-to-body)
-        try {
-            WebElement choice = wait.until(ExpectedConditions.visibilityOfElementLocated(
-                    By.cssSelector("[data-testid='provider-local']")
+        } catch (Throwable firstTry) {
+            // The click might not have registered if the page was mid-render.
+            // Click "Add a new Node Source" again, then wait once more.
+            byAndWaitClickable(newNodeSource).click()
+            wait.until(ExpectedConditions.or(
+                    ExpectedConditions.presenceOfElementLocated(providerPickerByTestId),
+                    ExpectedConditions.presenceOfElementLocated(providerPickerModal),
+                    ExpectedConditions.presenceOfElementLocated(providerPickerListGroup)
             ))
-            jsScroll(choice)
-            jsClick(choice)
-            sleepQuiet(100)
-            return
-        } catch (TimeoutException ignored) {
-            // fall through to scoped fallbacks
         }
 
-        // 2) Scoped fallbacks: locate the picker container, then look inside it
-        WebElement picker = null
-        try {
-            picker = wait.until(ExpectedConditions.presenceOfElementLocated(
-                    By.cssSelector("[data-testid='provider-picker']")))
-        } catch (TimeoutException ignored) {
-            try {
-                picker = wait.until(ExpectedConditions.presenceOfElementLocated(
-                        By.cssSelector(".modal.show")))
-            } catch (TimeoutException ignored2) {
-                picker = wait.until(ExpectedConditions.presenceOfElementLocated(
-                        By.cssSelector(".provider-list, .list-group")))
-            }
-        }
+        // Prefer the stable testid for Local
+        List<WebElement> locals = els(providerLocalByTestId)
+        WebElement choice = locals.find { it.displayed && it.enabled }
 
-        WebElement choice = findFirstVisibleWithin(picker,
-                By.cssSelector("[data-testid='provider-local']"))
-        if (choice == null) {
-            choice = findFirstVisibleWithin(picker,
-                    By.cssSelector("[data-provider='local'], [data-provider-id='local'], a[href*='local' i]"))
-        }
-        if (choice == null) {
-            WebElement textNode = findFirstVisibleWithin(picker,
-                    By.xpath(".//*[contains(translate(normalize-space(.),'LOCAL','local'),'local')]"))
-            if (textNode != null) {
-                try {
-                    choice = textNode.findElement(By.xpath("ancestor::*[self::a or self::button][1]"))
-                } catch (NoSuchElementException ignored) { }
-            }
+        // Fallback: attribute-based hooks that still identify "local"
+        if (!choice) {
+            def fallback = els(providerLocalByAttrs)
+            choice = fallback.find { it.displayed && it.enabled }
         }
 
         assert choice != null : "No 'Local' provider option found"
-        jsScroll(choice)
-        safeClick(choice)
-        sleepQuiet(100)
+        waitIgnoringForElementToBeClickable(choice).click()
     }
-
 
 
     void clickSaveNodeSources() {
-        safeClick(saveButtonBy)
+        byAndWaitClickable(saveButtonBy).click()
     }
 
+    /**
+     * Wait for a success toast; if none appears, refresh/navigate and wait for the page
+     * to be ready using BasePage utilities.
+     */
     void waitForSaveToastOrRefresh() {
-        if (waitForAnySuccessToast(10)) return
+        if (waitForToast(10)) return
 
-        WebDriverWait wait = new WebDriverWait(context.driver, Duration.ofSeconds(30))
-        try {
-            wait.until(ExpectedConditions.invisibilityOfElementLocated(
-                    By.cssSelector(".modal.show, .modal.in")
-            ))
-        } catch (Throwable ignored) {}
-
-        try {
-            this.go(loadPath)   // hard navigate to the route
-        } catch (Throwable ignored) {
-            context.driver.navigate().refresh()
-        }
-
-        // URL contains the route, then page ready (list or CTA)
-        wait.until(ExpectedConditions.urlContains(loadPath))
+        // Ensure no modal is covering, then reload and wait for ready state
+        try { waitForModal(0, providerPickerModal) } catch (Throwable ignored) {}
+        go(loadPath)  // uses BasePage.go + validatePage()
         waitForPageReady()
-        try { Thread.sleep(200) } catch (ignored) {}
     }
 
+    /**
+     * Page is ready when either the wrapper is present or the CTA is visible.
+     */
+    void waitForPageReady() {
+        try { waitForModal(0, providerPickerModal) } catch (Throwable ignored) {}
+        new WebDriverWait(driver, Duration.ofSeconds(30))
+                .until(ExpectedConditions.or(
+                        ExpectedConditions.presenceOfElementLocated(nodeSourcesListBy),
+                        ExpectedConditions.visibilityOfElementLocated(newNodeSource)
+                ))
+    }
 
-    private boolean waitForAnySuccessToast(int seconds) {
-        def wait = new WebDriverWait(context.driver, Duration.ofSeconds(seconds))
+    // ---------- small helpers (reuse BasePage waits) ----------
+    private boolean waitForToast(int seconds) {
+        def wait = new WebDriverWait(driver, Duration.ofSeconds(seconds))
         try {
             wait.until(ExpectedConditions.or(
                     ExpectedConditions.visibilityOfElementLocated(toastSuccessBy),
                     ExpectedConditions.visibilityOfElementLocated(configurationSavedPopUpBy)
             ))
             return true
-        } catch (Throwable ignored) {
+        } catch (TimeoutException ignored) {
             return false
         }
-    }
-
-    // ---------- helpers ----------
-    private static WebElement findFirstVisibleWithin(WebElement root, By by) {
-        if (root == null) return null
-        def list = root.findElements(by)
-        if (!list) return null
-        for (WebElement e: list) {
-            if (e != null && e.isDisplayed() && e.isEnabled()) return e
-        }
-        return null
-    }
-
-    private void jsClick(WebElement el) {
-        ((JavascriptExecutor) context.driver).executeScript("arguments[0].click();", el)
-    }
-
-    private void jsScroll(WebElement el) {
-        ((JavascriptExecutor) context.driver).executeScript("arguments[0].scrollIntoView({block:'center'});", el)
-    }
-
-    private static void sleepQuiet(long ms){
-        try { Thread.sleep(ms) } catch(ignore){}
-    }
-
-    private void safeClick(By by) {
-        WebDriverWait wait = new WebDriverWait(context.driver, Duration.ofSeconds(15))
-        WebElement element = wait.until(ExpectedConditions.elementToBeClickable(by))
-        safeClick(element)
-    }
-
-    private void safeClick(WebElement element) {
-        jsScroll(element)
-        try {
-            element.click() // prefer native click
-        } catch (ElementClickInterceptedException | ElementNotInteractableException | MoveTargetOutOfBoundsException ignored) {
-            // try Actions click
-            try {
-                new Actions(context.driver).moveToElement(element, 1, 1).click().perform()
-            } catch (Throwable ignored2) {
-                // final fallback: JS click
-                jsClick(element)
-            }
-        }
-    }
-    void waitForPageReady() {
-        WebDriverWait wait = new WebDriverWait(context.driver, Duration.ofSeconds(30))
-        // make sure no modal is covering
-        try {
-            wait.until(ExpectedConditions.invisibilityOfElementLocated(
-                    By.cssSelector(".modal.show, .modal.in")
-            ))
-        } catch (Throwable ignored) {}
-
-        // Either the list wrapper is present OR the CTA button is visible
-        wait.until(ExpectedConditions.or(
-                ExpectedConditions.presenceOfElementLocated(nodeSourcesListBy),
-                ExpectedConditions.visibilityOfElementLocated(newNodeSource)
-        ))
     }
 }
