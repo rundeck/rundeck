@@ -134,7 +134,7 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.optionButton.click()
         jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
         jobCreatePage.waitForElementVisible jobCreatePage.usageSection
-        jobCreatePage.sessionSectionLabel.isDisplayed()
+        jobCreatePage.usageSection.isDisplayed()
         jobCreatePage.secureInputTypeRadio.click()
         jobCreatePage.optionOpenKeyStorageButton.click()
         jobCreatePage.optionCloseKeyStorageButton.click()
@@ -155,14 +155,14 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.optionButton.click()
         jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
         jobCreatePage.waitForElementVisible jobCreatePage.usageSection
-        jobCreatePage.sessionSectionLabel.isDisplayed()
+        jobCreatePage.usageSection.isDisplayed()
         jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
         jobCreatePage.saveOptionButton.click()
         jobCreatePage.waitFotOptLi 0
         jobCreatePage.optionButton.click()
         jobCreatePage.optionNameNew(1) sendKeys 'seleniumOption2'
         jobCreatePage.waitForElementVisible jobCreatePage.usageSection
-        jobCreatePage.sessionSectionLabel.isDisplayed()
+        jobCreatePage.usageSection.isDisplayed()
         jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
         jobCreatePage.saveOptionButton.click()
         jobCreatePage.waitFotOptLi 1
@@ -182,7 +182,7 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.optionButton.click()
         jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
         jobCreatePage.waitForElementVisible jobCreatePage.usageSection
-        jobCreatePage.sessionSectionLabel.isDisplayed()
+        jobCreatePage.usageSection.isDisplayed()
         jobCreatePage.secureInputTypeRadio.click()
         jobCreatePage.storagePathInput.sendKeys("test")
         jobCreatePage.secureInputTypeRadio.click()
@@ -199,14 +199,14 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.optionButton.click()
         jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
         jobCreatePage.waitForElementVisible jobCreatePage.usageSection
-        jobCreatePage.sessionSectionLabel.isDisplayed()
+        jobCreatePage.usageSection.isDisplayed()
         jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
         jobCreatePage.saveOptionButton.click()
         jobCreatePage.waitFotOptLi 0
         jobCreatePage.optionButton.click()
         jobCreatePage.optionNameNew(1) sendKeys 'seleniumOption2'
         jobCreatePage.waitForElementVisible jobCreatePage.usageSection
-        jobCreatePage.sessionSectionLabel.isDisplayed()
+        jobCreatePage.usageSection.isDisplayed()
         jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
         jobCreatePage.saveOptionButton.click()
         jobCreatePage.waitFotOptLi 1
@@ -229,14 +229,14 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.optionButton.click()
         jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
         jobCreatePage.waitForElementVisible jobCreatePage.usageSection
-        jobCreatePage.sessionSectionLabel.isDisplayed()
+        jobCreatePage.usageSection.isDisplayed()
         jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
         jobCreatePage.saveOptionButton.click()
         jobCreatePage.waitFotOptLi 0
         jobCreatePage.optionButton.click()
         jobCreatePage.optionNameNew(1) sendKeys 'seleniumOption2'
         jobCreatePage.waitForElementVisible jobCreatePage.usageSection
-        jobCreatePage.sessionSectionLabel.isDisplayed()
+        jobCreatePage.usageSection.isDisplayed()
         jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
         jobCreatePage.saveOptionButton.click()
         jobCreatePage.waitFotOptLi 1
