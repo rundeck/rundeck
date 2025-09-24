@@ -937,12 +937,13 @@ form.option.valuesType.url.authType.bearerToken.label
                     <g:message code="commandline.arguments.prompt" /> <code>"$<!-- -->{option.<span data-bind="text: name"></span>}"</code>
                 </div>
                 <div>
+                    <g:message code="commandline.arguments.prompt.unquoted" /> <code>"$<!-- -->{unquotedoption.<span data-bind="text: name"></span>}"</code>
+                    <g:message code="commandline.arguments.prompt.unquoted.warning" />
+                </div>
+                <div>
                     <g:message code="script.content.prompt" />
+                    <code>@option.<span data-bind="text: name"></span>@</code>
                     <g:message code="script.content.multiline.prompt.warning" />
-                    <pre><code>OPTION_VALUE=$(cat &lt;&lt;'END_HEREDOC'
-@option.<span data-bind="text: name"></span>@
-END_HEREDOC
-)</code></pre>
                 </div>
                 <!-- /ko -->
                 <!-- ko if: !isMultilineType() -->

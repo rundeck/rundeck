@@ -1,17 +1,17 @@
 <template>
   <!-- preview (text)  -->
-  <section
+  <div
     v-if="option.name && option.type !== 'file'"
     id="option_preview"
     class="section-separator-solo"
   >
-    <div class="row">
+    <div class="form-group">
       <label class="col-sm-2 control-label">{{ $t("usage") }}</label>
       <div
         v-if="
           (!option.secure || option.valueExposed) && option.type !== 'multiline'
         "
-        class="col-sm-10"
+        class="col-sm-10 form-control-static"
       >
         <span class="text-strong">{{
           $t("the.option.values.will.be.available.to.scripts.in.these.forms")
@@ -33,7 +33,10 @@
           <code>@option.{{ option.name }}@</code>
         </div>
       </div>
-      <div v-if="option.type === 'multiline'" class="col-sm-10 col-sm-offset-2">
+      <div
+        v-if="option.type === 'multiline'"
+        class="col-sm-10 col-sm-offset-2 form-control-static"
+      >
         <span class="text-strong">{{ $t("option.usage.multiline.note") }}</span>
         <div>
           {{ $t("bash.prompt") }} <code>"${{ bashVarPreview }}"</code>
@@ -49,15 +52,8 @@
         </div>
         <div>
           {{ $t("script.content.prompt") }}
-          <VMarkdownView
-            class="markdown-body"
-            mode=""
-            :content="$t(`script.content.multiline.prompt.warning`)"
-          />
-          <pre><code>OPTION_VALUE=$(cat &lt;&lt;'END_HEREDOC'
-@option.{{ option.name }}@
-END_HEREDOC
-)</code></pre>
+          <code>@option.{{ option.name }}@</code>
+          {{ $t("script.content.multiline.prompt.warning") }}
         </div>
       </div>
       <div v-if="option.secure && !option.valueExposed" class="col-sm-10">
@@ -66,7 +62,7 @@ END_HEREDOC
         }}</span>
       </div>
     </div>
-  </section>
+  </div>
   <!-- preview (file) -->
   <section
     v-if="option.name && option.type === 'file'"
