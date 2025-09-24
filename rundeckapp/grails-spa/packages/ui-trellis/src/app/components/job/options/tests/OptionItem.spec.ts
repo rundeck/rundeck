@@ -43,7 +43,7 @@ describe("OptionItem", () => {
       editable: true,
     });
 
-    let findAll = wrapper.findAll(".btn");
+    const findAll = wrapper.findAll(".btn");
     expect(findAll.length).toBe(6);
     expect(wrapper.findAll(".btn-group").length).toBe(2);
     console.log(findAll[0].attributes());
@@ -68,7 +68,9 @@ describe("OptionItem", () => {
         editable: true,
       });
 
-      let item = wrapper.find(".btn[title='option.view.action.moveUp.title']");
+      const item = wrapper.find(
+        ".btn[title='option.view.action.moveUp.title']",
+      );
       expect(item).toBeTruthy();
       if (canMoveUp) {
         expect(item.attributes().disabled).toBeUndefined();
@@ -87,7 +89,7 @@ describe("OptionItem", () => {
         editable: true,
       });
 
-      let item = wrapper.find(
+      const item = wrapper.find(
         ".btn[title='option.view.action.moveDown.title']",
       );
       expect(item).toBeTruthy();
@@ -106,7 +108,7 @@ describe("OptionItem", () => {
       editable: true,
     });
 
-    let item = wrapper.find(".dragHandle");
+    const item = wrapper.find(".dragHandle");
     expect(item).toBeTruthy();
     expect(item.attributes().disabled).not.toBeNull();
   });
@@ -124,7 +126,7 @@ describe("OptionItem", () => {
         editable: true,
       });
 
-      let item = wrapper.find(".dragHandle");
+      const item = wrapper.find(".dragHandle");
       expect(item).toBeTruthy();
       expect(item.attributes().disabled).toBeUndefined();
     },
@@ -132,14 +134,14 @@ describe("OptionItem", () => {
   it.each(["edit", "duplicate", "delete", "moveUp", "moveDown"])(
     "emits %p event when button is clicked",
     async (action: string) => {
-      let option = { name: "a_test_option" };
+      const option = { name: "a_test_option" };
       const wrapper = await mountOptionItem({
         option,
         canMoveUp: true,
         canMoveDown: true,
         editable: true,
       });
-      let editBtn = wrapper.findAll(
+      const editBtn = wrapper.findAll(
         `.btn[title='option.view.action.${action}.title']`,
       );
       expect(editBtn.length).toBe(1);
@@ -149,12 +151,12 @@ describe("OptionItem", () => {
     },
   );
   it("emits edit event when item view is clicked", async () => {
-    let option = { name: "a_test_option" };
+    const option = { name: "a_test_option" };
     const wrapper = await mountOptionItem({
       option,
       editable: true,
     });
-    let content = wrapper.findAll(`.option-item-content`);
+    const content = wrapper.findAll(`.option-item-content`);
     expect(content.length).toBe(1);
     await content[0].trigger("click");
     expect(wrapper.emitted("edit")).toBeTruthy();
