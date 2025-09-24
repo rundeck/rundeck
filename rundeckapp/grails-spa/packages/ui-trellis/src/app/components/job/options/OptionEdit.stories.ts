@@ -2,20 +2,11 @@ import { Story } from "@storybook/blocks";
 import type { Meta, StoryObj } from "@storybook/vue3";
 import { setup } from "@storybook/vue3";
 import { ref } from "vue";
-import { cloneDeep } from "lodash";
 import { RundeckToken } from "../../../../library/interfaces/rundeckWindow";
 import { RootStore } from "../../../../library/stores/RootStore";
 import OptionEdit from "./OptionEdit.vue";
-import {
-  JobOptionEdit,
-  OptionPrototype,
-} from "../../../../library/types/jobs/JobEdit";
+import { JobOption } from "../../../../library/types/jobs/JobEdit";
 import * as uiv from "uiv";
-
-// Helper function to create a properly formatted option for the stories
-const createOption = (overrides: Partial<JobOptionEdit>): JobOptionEdit => {
-  return Object.assign({}, cloneDeep(OptionPrototype), overrides);
-};
 
 setup((app) => {
   app.use(uiv);
@@ -211,18 +202,22 @@ A comprehensive form component for creating and editing job options in Rundeck. 
     },
   },
   args: {
-    modelValue: createOption({
+    modelValue: {
       name: "exampleOption",
       description: "An example job option",
-      inputType: "plain",
       required: false,
       enforced: false,
-      valuesType: "list",
       values: ["option1", "option2", "option3"],
       value: "option1",
       sortValues: false,
       type: "text",
-    }),
+      secure: false,
+      valueExposed: false,
+      isDate: false,
+      hidden: false,
+      multivalued: false,
+      multivalueAllSelected: false,
+    } as JobOption,
     newOption: true,
     features: {
       multilineJobOptions: true,
@@ -243,25 +238,6 @@ A comprehensive form component for creating and editing job options in Rundeck. 
 export default meta;
 
 type Story = StoryObj<typeof OptionEdit>;
-
-const generateTemplate = (args: Record<string, any>) => {
-  return `
-  <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
-    <OptionEdit
-      v-model="optionData"
-      :error="args.error"
-      :newOption="args.newOption"
-      :features="args.features"
-      :fileUploadPluginType="args.fileUploadPluginType"
-      :errors="args.errors"
-      :optionValuesPlugins="args.optionValuesPlugins"
-      :uiFeatures="args.uiFeatures"
-      :jobWasScheduled="args.jobWasScheduled"
-      @save="onSave"
-      @cancel="onCancel"
-    />
-  </div>`;
-};
 
 export const Playground: Story = {
   parameters: {
@@ -316,16 +292,21 @@ export const NewTextOption: Story = {
   render: (args) => ({
     components: { OptionEdit },
     setup() {
-      const optionData = ref(
-        createOption({
-          name: "textOption",
-          description: "A plain text option",
-          inputType: "plain",
-          required: false,
-          enforced: false,
-          type: "text",
-        }),
-      );
+      const optionData = ref({
+        name: "textOption",
+        description: "A plain text option",
+        required: false,
+        enforced: false,
+        type: "text",
+        secure: false,
+        valueExposed: false,
+        isDate: false,
+        hidden: false,
+        multivalued: false,
+        multivalueAllSelected: false,
+        sortValues: false,
+        value: "",
+      } as JobOption);
 
       const onSave = () => {
         console.log("Save clicked", optionData.value);
@@ -360,18 +341,22 @@ export const EditSecureOption: Story = {
   render: (args) => ({
     components: { OptionEdit },
     setup() {
-      const optionData = ref(
-        createOption({
-          name: "secureOption",
-          description: "A secure input option that's hidden in logs",
-          inputType: "secure",
-          required: true,
-          enforced: true,
-          secure: true,
-          storagePath: "keys/secure/mypassword",
-          type: "text",
-        }),
-      );
+      const optionData = ref({
+        name: "secureOption",
+        description: "A secure input option that's hidden in logs",
+        required: true,
+        enforced: true,
+        secure: true,
+        valueExposed: false,
+        storagePath: "keys/secure/mypassword",
+        type: "text",
+        isDate: false,
+        hidden: false,
+        multivalued: false,
+        multivalueAllSelected: false,
+        sortValues: false,
+        value: "",
+      } as JobOption);
 
       const onSave = () => {
         console.log("Save clicked", optionData.value);
@@ -406,17 +391,22 @@ export const MultilineOption: Story = {
   render: (args) => ({
     components: { OptionEdit },
     setup() {
-      const optionData = ref(
-        createOption({
-          name: "multilineOption",
-          description: "A multiline text option",
-          type: "multiline",
-          inputType: "plain",
-          required: false,
-          enforced: false,
-          value: "Line 1\nLine 2\nLine 3",
-        }),
-      );
+      const optionData = ref({
+        name: "multilineOption",
+        description: "A multiline text option",
+        type: "multiline",
+        required: false,
+        enforced: false,
+        value: "Line 1\nLine 2\nLine 3",
+        isMultiline: true,
+        secure: false,
+        valueExposed: false,
+        isDate: false,
+        hidden: false,
+        multivalued: false,
+        multivalueAllSelected: false,
+        sortValues: false,
+      } as JobOption);
 
       const onSave = () => {
         console.log("Save clicked", optionData.value);
@@ -454,15 +444,20 @@ export const FileUploadOption: Story = {
   render: (args) => ({
     components: { OptionEdit },
     setup() {
-      const optionData = ref(
-        createOption({
-          name: "fileOption",
-          description: "A file upload option",
-          type: "file",
-          inputType: "plain",
-          required: false,
-        }),
-      );
+      const optionData = ref({
+        name: "fileOption",
+        description: "A file upload option",
+        type: "file",
+        required: false,
+        secure: false,
+        valueExposed: false,
+        isDate: false,
+        hidden: false,
+        multivalued: false,
+        multivalueAllSelected: false,
+        sortValues: false,
+        value: "",
+      } as JobOption);
 
       const onSave = () => {
         console.log("Save clicked", optionData.value);
@@ -501,15 +496,20 @@ export const OptionWithValidationErrors: Story = {
   render: (args) => ({
     components: { OptionEdit },
     setup() {
-      const optionData = ref(
-        createOption({
-          name: "invalid#Option",
-          description: "An option with validation errors",
-          inputType: "plain",
-          type: "text",
-          required: true,
-        }),
-      );
+      const optionData = ref({
+        name: "invalid#Option",
+        description: "An option with validation errors",
+        type: "text",
+        required: true,
+        secure: false,
+        valueExposed: false,
+        isDate: false,
+        hidden: false,
+        multivalued: false,
+        multivalueAllSelected: false,
+        sortValues: false,
+        value: "",
+      } as JobOption);
 
       const onSave = () => {
         console.log("Save clicked", optionData.value);
@@ -555,20 +555,22 @@ export const OptionWithAllowedValues: Story = {
   render: (args) => ({
     components: { OptionEdit },
     setup() {
-      const optionData = ref(
-        createOption({
-          name: "selectOption",
-          description: "An option with allowed values",
-          inputType: "plain",
-          type: "text",
-          required: false,
-          enforced: true,
-          valuesType: "list",
-          values: ["red", "green", "blue", "yellow", "purple"],
-          value: "green",
-          sortValues: true,
-        }),
-      );
+      const optionData = ref({
+        name: "selectOption",
+        description: "An option with allowed values",
+        type: "text",
+        required: false,
+        enforced: true,
+        values: ["red", "green", "blue", "yellow", "purple"],
+        value: "green",
+        sortValues: true,
+        secure: false,
+        valueExposed: false,
+        isDate: false,
+        hidden: false,
+        multivalued: false,
+        multivalueAllSelected: false,
+      } as JobOption);
 
       const onSave = () => {
         console.log("Save clicked", optionData.value);
@@ -603,19 +605,22 @@ export const OptionWithRemoteValues: Story = {
   render: (args) => ({
     components: { OptionEdit },
     setup() {
-      const optionData = ref(
-        createOption({
-          name: "remoteOption",
-          description: "An option with remote URL values",
-          inputType: "plain",
-          type: "text",
-          required: false,
-          enforced: true,
-          valuesType: "url",
-          valuesUrl: "https://example.com/api/options",
-          value: "",
-        }),
-      );
+      const optionData = ref({
+        name: "remoteOption",
+        description: "An option with remote URL values",
+        type: "text",
+        required: false,
+        enforced: true,
+        valuesUrl: "https://example.com/api/options",
+        value: "",
+        secure: false,
+        valueExposed: false,
+        isDate: false,
+        hidden: false,
+        multivalued: false,
+        multivalueAllSelected: false,
+        sortValues: false,
+      } as JobOption);
 
       const onSave = () => {
         console.log("Save clicked", optionData.value);
@@ -650,19 +655,22 @@ export const OptionWithPluginValues: Story = {
   render: (args) => ({
     components: { OptionEdit },
     setup() {
-      const optionData = ref(
-        createOption({
-          name: "pluginOption",
-          description: "An option with plugin-provided values",
-          inputType: "plain",
-          type: "text",
-          required: false,
-          enforced: true,
-          valuesType: "option-provider-1",
-          optionValuesPluginType: "option-provider-1",
-          value: "",
-        }),
-      );
+      const optionData = ref({
+        name: "pluginOption",
+        description: "An option with plugin-provided values",
+        type: "text",
+        required: false,
+        enforced: true,
+        optionValuesPluginType: "option-provider-1",
+        value: "",
+        secure: false,
+        valueExposed: false,
+        isDate: false,
+        hidden: false,
+        multivalued: false,
+        multivalueAllSelected: false,
+        sortValues: false,
+      } as JobOption);
 
       const onSave = () => {
         console.log("Save clicked", optionData.value);
@@ -707,18 +715,22 @@ export const DateOption: Story = {
   render: (args) => ({
     components: { OptionEdit },
     setup() {
-      const optionData = ref(
-        createOption({
-          name: "dateOption",
-          description: "A date input option",
-          type: "text",
-          inputType: "date",
-          isDate: true,
-          dateFormat: "yyyy-MM-dd HH:mm:ss",
-          required: false,
-          enforced: false,
-        }),
-      );
+      const optionData = ref({
+        name: "dateOption",
+        description: "A date input option",
+        type: "text",
+        isDate: true,
+        dateFormat: "yyyy-MM-dd HH:mm:ss",
+        required: false,
+        enforced: false,
+        secure: false,
+        valueExposed: false,
+        hidden: false,
+        multivalued: false,
+        multivalueAllSelected: false,
+        sortValues: false,
+        value: "",
+      } as JobOption);
 
       const onSave = () => {
         console.log("Save clicked", optionData.value);
