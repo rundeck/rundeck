@@ -83,16 +83,83 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
 
     @Override
     int countExecutionReports(RdExecQuery execQuery) {
+        // Handle optionFilter BEFORE the main count query (same logic as getExecutionReports)
+        def optionFilterExecutionIds = []
+        if(execQuery?.optionFilter){
+            def searchTerm = execQuery.optionFilter.toString().trim()
+
+            def optionPairs = []
+            def tokens = searchTerm.split(/\s+/)
+
+            for (int i = 0; i < tokens.length - 1; i++) {
+                if (tokens[i].startsWith('-') && !tokens[i + 1].startsWith('-')) {
+                    optionPairs << "${tokens[i]} ${tokens[i + 1]}"
+                    i++
+                }
+            }
+
+            if (optionPairs.empty) {
+                optionPairs << searchTerm
+            }
+
+            try {
+                optionFilterExecutionIds = rundeck.Execution.createCriteria().list {
+                    projections {
+                        property('id')
+                    }
+                    optionPairs.each { pair ->
+                        ilike('argString', "%${pair}%")
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Error querying executions for optionFilter: ${e.message}")
+                optionFilterExecutionIds = []
+            }
+        }
+
         return ExecReport.createCriteria().count {
-            applyExecutionCriteria(execQuery, delegate)
+            applyExecutionCriteria(execQuery, delegate, true, null, [], optionFilterExecutionIds)
         }
     }
 
     @Override
     int countExecutionReportsWithTransaction(RdExecQuery query, boolean isJobs, String jobId) {
         return ExecReport.withTransaction {
+            def optionFilterExecutionIds = []
+            if(query?.optionFilter){
+                def searchTerm = query.optionFilter.toString().trim()
+
+                def optionPairs = []
+                def tokens = searchTerm.split(/\s+/)
+
+                for (int i = 0; i < tokens.length - 1; i++) {
+                    if (tokens[i].startsWith('-') && !tokens[i + 1].startsWith('-')) {
+                        optionPairs << "${tokens[i]} ${tokens[i + 1]}"
+                        i++
+                    }
+                }
+
+                if (optionPairs.empty) {
+                    optionPairs << searchTerm
+                }
+
+                try {
+                    optionFilterExecutionIds = rundeck.Execution.createCriteria().list {
+                        projections {
+                            property('id')
+                        }
+                        optionPairs.each { pair ->
+                            ilike('argString', "%${pair}%")
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("Error querying executions for optionFilter: ${e.message}")
+                    optionFilterExecutionIds = []
+                }
+            }
+
             ExecReport.createCriteria().count {
-                applyExecutionCriteria(query, delegate, isJobs, jobId, [])
+                applyExecutionCriteria(query, delegate, isJobs, jobId, [], optionFilterExecutionIds)
             }
         }
     }
@@ -145,6 +212,45 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
         filters.putAll(txtfilters)
         filters.putAll(eqfilters)
 
+        // Handle optionFilter BEFORE the main criteria query
+        def optionFilterExecutionIds = []
+        if(query?.optionFilter){
+            // Two-step approach supporting order-independent matching
+            def searchTerm = query.optionFilter.toString().trim()
+
+            // Parse multiple options: "-app myapp -env prod" -> ["-app myapp", "-env prod"]
+            def optionPairs = []
+            def tokens = searchTerm.split(/\s+/)
+
+            for (int i = 0; i < tokens.length - 1; i++) {
+                if (tokens[i].startsWith('-') && !tokens[i + 1].startsWith('-')) {
+                    optionPairs << "${tokens[i]} ${tokens[i + 1]}"
+                    i++ // Skip the value token
+                }
+            }
+
+            if (optionPairs.empty) {
+                // Fallback to simple search if no valid pairs found
+                optionPairs << searchTerm
+            }
+
+            // Query Execution table for argString matches
+            try {
+                optionFilterExecutionIds = rundeck.Execution.createCriteria().list {
+                    projections {
+                        property('id')
+                    }
+                    // Each option pair must be found somewhere in argString
+                    optionPairs.each { pair ->
+                        ilike('argString', "%${pair}%")
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Error querying executions for optionFilter: ${e.message}")
+                optionFilterExecutionIds = []
+            }
+        }
+
         return ExecReport.createCriteria().list {
 
             if (query?.max) {
@@ -155,7 +261,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
             if (query?.offset) {
                 firstResult(query.offset.toInteger())
             }
-            applyExecutionCriteria(query, delegate,isJobs, jobId, execsIds)
+            applyExecutionCriteria(query, delegate,isJobs, jobId, execsIds, optionFilterExecutionIds)
 
             if (query && query.sortBy && filters[query.sortBy]) {
                 order(filters[query.sortBy], query.sortOrder == 'ascending' ? 'asc' : 'desc')
@@ -197,7 +303,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
         }
     }
 
-    def applyExecutionCriteria(RdExecQuery query, delegate, boolean isJobs=true, String seId=null, List<Long> execsIds=[]){
+    def applyExecutionCriteria(RdExecQuery query, delegate, boolean isJobs=true, String seId=null, List<Long> execsIds=[], List<Long> optionFilterExecutionIds=[]){
         def eqfilters = [
                 stat: 'status',
                 reportId: 'reportId',
@@ -396,6 +502,16 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
                     ilike("filterApplied", '%' + query.execnodeFilter + '%')
                 }
 
+            }
+
+            // Handle optionFilter results from pre-query
+            if(query?.optionFilter){
+                if (optionFilterExecutionIds && !optionFilterExecutionIds.empty) {
+                    'in'('executionId', optionFilterExecutionIds)
+                } else {
+                    // No matches found - return empty result
+                    eq('id', -1L) // Impossible condition
+                }
             }
         }
         if(fixCancel){

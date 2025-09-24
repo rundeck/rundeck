@@ -58,6 +58,7 @@ class ReportQuery extends BaseQuery implements Validateable{
     String tagsFilter
     String abortedByFilter
     String execnodeFilter
+    String optionFilter
 
     public static final ArrayList<String> exportProps = [
              'startafterFilter',
@@ -87,6 +88,7 @@ class ReportQuery extends BaseQuery implements Validateable{
              'tagsFilter',
              'abortedByFilter',
              'execnodeFilter',
+             'optionFilter',
     ]
 
     def Map toMap(){
