@@ -45,7 +45,7 @@ describe("OptionItem", () => {
 
     const findAll = wrapper.findAll(".btn");
     expect(findAll.length).toBe(6);
-    expect(wrapper.findAll(".btn-group").length).toBe(2);
+    expect(wrapper.findAll("btn-group").length).toBe(2);
     console.log(findAll[0].attributes());
     expect(
       wrapper.findAll(".btn[title='option.view.action.edit.title']").length,

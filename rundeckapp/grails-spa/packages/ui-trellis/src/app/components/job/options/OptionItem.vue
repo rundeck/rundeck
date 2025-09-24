@@ -11,7 +11,7 @@
         <i class="glyphicon glyphicon-resize-vertical"></i>
       </btn>
 
-      <btn-group class="btn-group">
+      <btn-group>
         <btn
           size="xs"
           :disabled="!canMoveUp"
