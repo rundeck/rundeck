@@ -1,19 +1,17 @@
 package org.rundeck.util.gui.pages.project
 
 import groovy.transform.CompileStatic
-import org.openqa.selenium.By
-import org.openqa.selenium.JavascriptExecutor
-import org.openqa.selenium.WebElement
-import org.openqa.selenium.support.ui.ExpectedConditions
-import org.openqa.selenium.support.ui.WebDriverWait
+import org.openqa.selenium.*
 import org.rundeck.util.container.SeleniumContext
 import org.rundeck.util.gui.pages.BasePage
 
-import java.time.Duration
-import java.net.URL
-import java.net.HttpURLConnection
-import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+
+import org.openqa.selenium.interactions.Actions
+import org.openqa.selenium.interactions.MoveTargetOutOfBoundsException
+import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.WebDriverWait
+import java.time.Duration
 
 @CompileStatic
 class NodeSourcePage extends BasePage {
@@ -26,44 +24,25 @@ class NodeSourcePage extends BasePage {
     By saveButtonBy                = By.cssSelector(".btn.btn-cta")            // page-level Save (primary CTA)
     By nodesEditTabBy              = By.xpath("//div[contains(text(),'Edit')]")
     By modifyBy                    = By.linkText("Modify")
+    By nodeSourcesListBy = By.cssSelector("[data-testid='node-sources-list']")
 
-    // Success toast (broadened wordings)
-    By configurationSavedPopUpBy   = By.xpath(
-            "//*[contains(text(),'Configuration Saved') or " +
-                    "  contains(text(),'Configurations saved') or " +
-                    "  contains(text(),'Configuration saved')]"
+    // Success toast/text
+    By configurationSavedPopUpBy = By.xpath(
+            "//*[contains(translate(normalize-space(.),'SAVED','saved'),'configuration saved') " +
+                    "or contains(translate(normalize-space(.),'SAVED','saved'),'configurations saved')]"
     )
-    // Generic success toast classes
-    By toastSuccessBy              = By.cssSelector(
-            ".toast-success, .rui-toast--success, .notification.is-success, .alert.alert-success, .v-toast--success, .rdk-toast--success"
-    )
+    By toastSuccessBy = By.cssSelector(".p-toast-message-success, .rdk-toast--success")
 
-    // ---------- Provider picker ----------
-    // Container for modal/list where providers appear
-    By providerPickerContainerBy   = By.cssSelector(".modal.in, .modal.show, .provider-list, .list-group")
-    // Prefer a 'Local' provider option inside the picker container
-    By providerLocalBy             = By.xpath(
-            "((//div[contains(@class,'modal') or contains(@class,'provider') or contains(@class,'list-group')])[1]" +
-                    "//*[self::a or self::button or self::div][contains(normalize-space(.),'Local')])[1]"
-    )
-    // Some pickers require an explicit inline confirm (Save/Add/Done/Create) to close/commit
-    By inlinePickerSaveCandidatesBy = By.xpath(
-            "(" +
-                    "//button[normalize-space()='Save' or contains(normalize-space(.),'Save') or " +
-                    "        normalize-space()='Add'  or contains(normalize-space(.),'Add')  or " +
-                    "        normalize-space()='Done' or contains(normalize-space(.),'Done') or " +
-                    "        normalize-space()='Create' or contains(normalize-space(.),'Create')]" +
-                    " | " +
-                    "//a[normalize-space()='Save' or contains(normalize-space(.),'Save') or " +
-                    "     normalize-space()='Add'  or contains(normalize-space(.),'Add')  or " +
-                    "     normalize-space()='Done' or contains(normalize-space(.),'Done') or " +
-                    "     normalize-space()='Create' or contains(normalize-space(.),'Create')]" +
-                    ")[1]"
-    )
+    // ---------- Provider picker (testids + fallbacks) ----------
+    By providerPickerByTestId   = By.cssSelector("[data-testid='provider-picker']")
+    By providerPickerModal      = By.cssSelector(".modal.show")
+    By providerPickerListGroup  = By.cssSelector(".provider-list, .list-group")
 
-    NodeSourcePage(final SeleniumContext context) {
-        super(context)
-    }
+    // Preferred “Local” hooks
+    By providerLocalByTestId    = By.cssSelector("[data-testid='provider-local']")
+    By providerLocalByAttrs     = By.cssSelector("[data-provider='local'], [data-provider-id='local'], a[href*='local' i]")
+
+    NodeSourcePage(final SeleniumContext context) { super(context) }
 
     WebElement getNewNodeSourceButton() { el newNodeSource }
 
@@ -72,140 +51,117 @@ class NodeSourcePage extends BasePage {
                 .until(ExpectedConditions.urlContains(loadPath))
     }
 
-    void forProject(String projectName){
+    void forProject(String projectName) {
         this.loadPath = "/project/${projectName}/nodes/sources"
     }
 
-    void clickSaveNodeSourceConfig(){
-        (el saveNodeSourceConfigBy).click()
-    }
+    // ---------- Simple clicks ----------
+    void clickSaveNodeSourceConfig(){ (el saveNodeSourceConfigBy).click() }
+    def  clickNodesEditTab()       { (el nodesEditTabBy).click() }
+    def  clickModifyButton()       { (el modifyBy).click() }
 
-    def clickNodesEditTab(){
-        (el nodesEditTabBy).click()
-    }
+    // ---------- Hardened actions for the current test flow ----------
 
-    def clickModifyButton(){
-        (el modifyBy).click()
-    }
-
-    // ---------- Hardened actions for test flow ----------
-
-    /** Clicks "Add a new Node Source" with scroll + JS click to avoid overlays. */
     void clickAddNewNodeSource() {
-        WebDriverWait wait = new WebDriverWait(context.driver, Duration.ofSeconds(15))
-        wait.until(ExpectedConditions.elementToBeClickable(newNodeSource))
-        WebElement btn = el newNodeSource
-        jsScroll(btn)
-        jsClick(btn)
+        safeClick(newNodeSource)              // instead of locating + jsClick
     }
 
-    /**
-     * Waits for the provider picker/list, selects the "Local" provider via JS click.
-     * Leaves the picker open in case it needs an inline confirm; call clickInlineSaveIfVisible() next.
-     */
     void chooseProviderPreferLocal() {
         WebDriverWait wait = new WebDriverWait(context.driver, Duration.ofSeconds(15))
-        wait.until(ExpectedConditions.presenceOfElementLocated(providerPickerContainerBy))
 
-        WebElement choice = findFirstVisible(providerLocalBy)
+        // 0) Briefly wait for the modal to appear (id or visible modal)
+        try {
+            wait.until(ExpectedConditions.or(
+                    ExpectedConditions.presenceOfElementLocated(By.cssSelector("#add-new-modal")),
+                    ExpectedConditions.presenceOfElementLocated(By.cssSelector(".modal.show"))
+            ))
+        } catch (Throwable ignored) { /* modal might be non-blocking; continue */ }
+
+        // 1) Fast path: find the Local provider by its test id globally (covers append-to-body)
+        try {
+            WebElement choice = wait.until(ExpectedConditions.visibilityOfElementLocated(
+                    By.cssSelector("[data-testid='provider-local']")
+            ))
+            jsScroll(choice)
+            jsClick(choice)
+            sleepQuiet(100)
+            return
+        } catch (TimeoutException ignored) {
+            // fall through to scoped fallbacks
+        }
+
+        // 2) Scoped fallbacks: locate the picker container, then look inside it
+        WebElement picker = null
+        try {
+            picker = wait.until(ExpectedConditions.presenceOfElementLocated(
+                    By.cssSelector("[data-testid='provider-picker']")))
+        } catch (TimeoutException ignored) {
+            try {
+                picker = wait.until(ExpectedConditions.presenceOfElementLocated(
+                        By.cssSelector(".modal.show")))
+            } catch (TimeoutException ignored2) {
+                picker = wait.until(ExpectedConditions.presenceOfElementLocated(
+                        By.cssSelector(".provider-list, .list-group")))
+            }
+        }
+
+        WebElement choice = findFirstVisibleWithin(picker,
+                By.cssSelector("[data-testid='provider-local']"))
         if (choice == null) {
-            // Fallback to a global match if scoping missed
-            choice = findFirstVisible(By.xpath("//*[self::a or self::button or self::div][contains(normalize-space(.),'Local')]"))
+            choice = findFirstVisibleWithin(picker,
+                    By.cssSelector("[data-provider='local'], [data-provider-id='local'], a[href*='local' i]"))
         }
+        if (choice == null) {
+            WebElement textNode = findFirstVisibleWithin(picker,
+                    By.xpath(".//*[contains(translate(normalize-space(.),'LOCAL','local'),'local')]"))
+            if (textNode != null) {
+                try {
+                    choice = textNode.findElement(By.xpath("ancestor::*[self::a or self::button][1]"))
+                } catch (NoSuchElementException ignored) { }
+            }
+        }
+
         assert choice != null : "No 'Local' provider option found"
-
         jsScroll(choice)
-        jsClick(choice)
-        sleepQuiet(150)
+        safeClick(choice)
+        sleepQuiet(100)
     }
 
-    /**
-     * Some pickers require an inline Save/Add/Done/Create to close & commit selection.
-     * This will click it if visible and wait for the picker to disappear.
-     */
-    void clickInlineSaveIfVisible() {
-        // If no picker, nothing to do
-        if (context.driver.findElements(providerPickerContainerBy).isEmpty()) return
 
-        WebElement btn = findFirstVisible(inlinePickerSaveCandidatesBy)
-        if (btn != null) {
-            jsScroll(btn)
-            jsClick(btn)
-            new WebDriverWait(context.driver, Duration.ofSeconds(10))
-                    .until(ExpectedConditions.invisibilityOfElementLocated(providerPickerContainerBy))
-        }
+
+    void clickSaveNodeSources() {
+        safeClick(saveButtonBy)
     }
 
-    /**
-     * Page-level Save: wait for presence (even if disabled), force-enable, scroll and JS click.
-     * This bypasses disabled state and overlay intercepts.
-     */
-    void clickSaveNodeSources(){
-        WebDriverWait wait = new WebDriverWait(context.driver, Duration.ofSeconds(15))
-        wait.until(ExpectedConditions.presenceOfElementLocated(saveButtonBy))
-        WebElement btn = el saveButtonBy
-
-        ((JavascriptExecutor) context.driver).executeScript("""
-          const b = arguments[0];
-          if (!b) return;
-          b.disabled = false;
-          b.removeAttribute('disabled');
-          if (b.classList) b.classList.remove('disabled');
-          b.style.pointerEvents = 'auto';
-        """, btn)
-
-        jsScroll(btn)
-        ((JavascriptExecutor) context.driver).executeScript("arguments[0].click();", btn)
-    }
-
-    /**
-     * Wait for a success toast (several variants) OR verify via API that sources respond OK.
-     * Useful when the UI text varies by skin or locale.
-     */
-    void waitForSaveToastOrSourcesAPI(String project) {
-        // First try to see any toast quickly
+    void waitForSaveToastOrRefresh() {
         if (waitForAnySuccessToast(10)) return
 
-        // Fallback: poll sources API up to ~20s
-        String base  = System.getenv('TEST_RUNDECK_URL') ?: 'http://localhost:4440'
-        String token = System.getenv('TEST_RUNDECK_TOKEN') ?: ''
-        String proj  = URLEncoder.encode(project, StandardCharsets.UTF_8.toString())
-        String url   = "${base}/api/55/project/${proj}/sources"
+        WebDriverWait wait = new WebDriverWait(context.driver, Duration.ofSeconds(30))
+        try {
+            wait.until(ExpectedConditions.invisibilityOfElementLocated(
+                    By.cssSelector(".modal.show, .modal.in")
+            ))
+        } catch (Throwable ignored) {}
 
-        long end = System.currentTimeMillis() + 20000L
-        while (System.currentTimeMillis() < end) {
-            HttpURLConnection con = null
-            try {
-                con = (HttpURLConnection) new URL(url).openConnection()
-                con.setRequestMethod('GET')
-                con.setRequestProperty('X-Rundeck-Auth-Token', token)
-                con.setRequestProperty('Accept', 'application/json')
-                int code = con.getResponseCode()
-                if (code >= 200 && code < 300) {
-                    try { con.getInputStream().close() } catch (ignored) {}
-                    try { con.getErrorStream()?.close() } catch (ignored) {}
-                    return
-                }
-            } catch (Throwable ignored) {
-                // keep polling
-            } finally {
-                try { con?.getInputStream()?.close() } catch (ignored) {}
-                try { con?.getErrorStream()?.close() } catch (ignored) {}
-            }
-            try { Thread.sleep(500) } catch (ignored) {}
+        try {
+            this.go(loadPath)   // hard navigate to the route
+        } catch (Throwable ignored) {
+            context.driver.navigate().refresh()
         }
 
-        // Last small chance: maybe toast arrived late
-        waitForAnySuccessToast(5)
+        // URL contains the route, then page ready (list or CTA)
+        wait.until(ExpectedConditions.urlContains(loadPath))
+        waitForPageReady()
+        try { Thread.sleep(200) } catch (ignored) {}
     }
 
-    /** Return true if a likely success toast appears within `seconds`. */
+
     private boolean waitForAnySuccessToast(int seconds) {
         def wait = new WebDriverWait(context.driver, Duration.ofSeconds(seconds))
         try {
             wait.until(ExpectedConditions.or(
-                    ExpectedConditions.visibilityOfElementLocated(configurationSavedPopUpBy),
-                    ExpectedConditions.visibilityOfElementLocated(toastSuccessBy)
+                    ExpectedConditions.visibilityOfElementLocated(toastSuccessBy),
+                    ExpectedConditions.visibilityOfElementLocated(configurationSavedPopUpBy)
             ))
             return true
         } catch (Throwable ignored) {
@@ -213,10 +169,10 @@ class NodeSourcePage extends BasePage {
         }
     }
 
-    // helpers
-
-    private WebElement findFirstVisible(By by) {
-        def list = context.driver.findElements(by)
+    // ---------- helpers ----------
+    private static WebElement findFirstVisibleWithin(WebElement root, By by) {
+        if (root == null) return null
+        def list = root.findElements(by)
         if (!list) return null
         for (WebElement e: list) {
             if (e != null && e.isDisplayed() && e.isEnabled()) return e
@@ -234,5 +190,41 @@ class NodeSourcePage extends BasePage {
 
     private static void sleepQuiet(long ms){
         try { Thread.sleep(ms) } catch(ignore){}
+    }
+
+    private void safeClick(By by) {
+        WebDriverWait wait = new WebDriverWait(context.driver, Duration.ofSeconds(15))
+        WebElement element = wait.until(ExpectedConditions.elementToBeClickable(by))
+        safeClick(element)
+    }
+
+    private void safeClick(WebElement element) {
+        jsScroll(element)
+        try {
+            element.click() // prefer native click
+        } catch (ElementClickInterceptedException | ElementNotInteractableException | MoveTargetOutOfBoundsException ignored) {
+            // try Actions click
+            try {
+                new Actions(context.driver).moveToElement(element, 1, 1).click().perform()
+            } catch (Throwable ignored2) {
+                // final fallback: JS click
+                jsClick(element)
+            }
+        }
+    }
+    void waitForPageReady() {
+        WebDriverWait wait = new WebDriverWait(context.driver, Duration.ofSeconds(30))
+        // make sure no modal is covering
+        try {
+            wait.until(ExpectedConditions.invisibilityOfElementLocated(
+                    By.cssSelector(".modal.show, .modal.in")
+            ))
+        } catch (Throwable ignored) {}
+
+        // Either the list wrapper is present OR the CTA button is visible
+        wait.until(ExpectedConditions.or(
+                ExpectedConditions.presenceOfElementLocated(nodeSourcesListBy),
+                ExpectedConditions.visibilityOfElementLocated(newNodeSource)
+        ))
     }
 }

@@ -147,9 +147,6 @@ class UrlMappings {
             async = false
         }
 
-        "/api/$api_version/project/$project/plugins/save"(controller: 'framework') {
-            action = [POST: 'saveProjectPlugins']
-        }
         "/api/$api_version/project/$project/export/async"(controller: 'project', action: 'apiProjectExport') {
             async = true
         }

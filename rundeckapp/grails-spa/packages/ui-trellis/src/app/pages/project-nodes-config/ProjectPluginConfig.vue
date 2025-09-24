@@ -33,7 +33,7 @@
         </a>
         <div v-if="help" class="help-block">{{ help }}</div>
 
-        <div class="list-group">
+        <div class="list-group" data-testid="node-sources-list">
           <div
             v-for="(plugin, index) in pluginConfigs"
             :key="'pluginStorageAccessplugin_' + index"
@@ -229,12 +229,15 @@
             size="lg"
             append-to-body
           >
-            <div class="list-group">
+            <div class="list-group" data-testid="provider-picker">
               <a
                 v-for="plugin in pluginProviders"
                 :key="plugin.name"
                 href="#"
                 class="list-group-item"
+                :data-testid="`provider-${String(plugin.name)
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]+/g, '-')}`"
                 @click="addPlugin(plugin.name)"
               >
                 <plugin-info

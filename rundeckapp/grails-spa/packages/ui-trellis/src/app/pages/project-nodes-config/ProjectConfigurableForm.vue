@@ -156,8 +156,6 @@ export default defineComponent({
         }
       } catch (err) {
         console.error("Full error object:", err);
-        console.error("Error type:", typeof err);
-        console.error("Error keys:", Object.keys(err));
         this.notifyError(
           "Error saving config: " +
             (err.message || err.toString() || "Unknown error"),

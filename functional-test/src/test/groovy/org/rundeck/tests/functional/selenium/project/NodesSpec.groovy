@@ -48,19 +48,18 @@ class NodesSpec extends SeleniumBase {
             nodeSourcePage.forProject(SELENIUM_BASIC_PROJECT)
             nodeSourcePage.go()
 
-        then: "Add a new node source"
+        then: "open picker"
             nodeSourcePage.waitForElementVisible nodeSourcePage.newNodeSourceButton
             nodeSourcePage.clickAddNewNodeSource()
 
-        when: "Choose zero-config provider (Local) and close picker if needed"
+        when: "choose Local provider"
             nodeSourcePage.chooseProviderPreferLocal()
-            nodeSourcePage.clickInlineSaveIfVisible()
 
-        and: "Click the page-level Save"
+        and: "click page-level Save"
             nodeSourcePage.clickSaveNodeSources()
 
-        then: "Either a toast appears or the backend confirms via /sources"
-            nodeSourcePage.waitForSaveToastOrSourcesAPI(SELENIUM_BASIC_PROJECT)
-            nodeSourcePage.waitForElementVisible nodeSourcePage.newNodeSourceButton
+        then: "toast or API confirms"
+            nodeSourcePage.waitForSaveToastOrRefresh()
+            nodeSourcePage.waitForPageReady()
     }
 }
