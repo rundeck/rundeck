@@ -388,6 +388,16 @@ describe("OptionEdit", () => {
       expect(errorslist.attributes()["errors"]).toContain(msg);
     },
   );
+  it("hides usage section if name field is invalid", async () => {
+    const wrapper = await mountOptionEdit({
+      modelValue: { name: "asdf", type: "text" },
+      editable: true,
+    });
+    expect(wrapper.find("option-usage-preview").exists()).toBeTruthy();
+    wrapper.vm.addError("name", "error1");
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find("option-usage-preview").exists()).toBeFalsy();
+  });
   it.each([
     ["option.label", "#opt_label", 255],
     ["option.name", "#optname_", 255],
