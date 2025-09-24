@@ -92,11 +92,14 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
     }
 
     static mapping = {
+        logFileStorageRequest fetch: 'join'
+        workflow fetch: 'join'
+        scheduledExecution fetch: 'join'
+        orchestrator fetch: 'join'
 
         //mapping overrides superclass, so we need to relist these
         user column: "rduser"
         argString type: 'text'
-
         failedNodeList type: 'text'
         succeededNodeList type: 'text'
         outputfilepath type: 'text'
@@ -573,4 +576,3 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
     }
 
 }
-
