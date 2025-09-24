@@ -668,7 +668,7 @@ const messages = {
   "bash.prompt": "Bash:",
   "script.content.prompt": "Script Content:",
   "script.content.multiline.prompt.warning":
-    "WARNING: this usage can be UNSAFE.  You can avoid user input escaping the HEREDOC value by also enforcing a Regular Expression pattern such as `(?s)^((?!END_HEREDOC).)*$` which will disallow the END_HEREDOC sequence in input.",
+    "WARNING: this usage can be UNSAFE. See the documentation for details.",
   "rundeck.user.guide.option.model.provider":
     "Rundeck User Guide - Option model provider",
   save: "Save",
