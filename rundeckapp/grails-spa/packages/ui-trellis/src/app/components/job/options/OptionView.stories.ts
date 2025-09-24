@@ -1,7 +1,12 @@
 import { Story } from "@storybook/blocks";
 import type { Meta, StoryObj } from "@storybook/vue3";
 import OptionView from "./OptionView.vue";
+import { setup } from "@storybook/vue3";
+import * as uiv from "uiv";
 
+setup((app) => {
+  app.use(uiv);
+});
 const meta: Meta<typeof OptionView> = {
   title: "App/JobEdit/Options/OptionView",
   component: OptionView,
