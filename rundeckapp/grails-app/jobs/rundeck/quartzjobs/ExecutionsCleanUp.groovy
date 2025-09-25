@@ -50,7 +50,7 @@ class ExecutionsCleanUp implements InterruptableJob {
 
             timer.time(
                 (Callable) {
-                    List<Execution> execIdsToExclude = searchExecutions(
+                    List<Long> execIdsToExclude = searchExecutions(
                             executionService,
                             project,
                             maxDaysToKeep ? Integer.parseInt(maxDaysToKeep) : 0,
@@ -142,12 +142,12 @@ class ExecutionsCleanUp implements InterruptableJob {
         }
     }
 
-    private List<Execution> searchExecutions(ExecutionService executionService,
+    private List<Long> searchExecutions(ExecutionService executionService,
                                              String project,
                                              Integer maxDaysToKeep,
                                              Integer minimumExecutionToKeep,
                                              Integer maximumDeletionSize = 500){
-        List<Execution> collectedExecutions= []
+        List<Long> collectedExecutions= []
 
         log.info("Searching All Executions")
 
@@ -164,6 +164,13 @@ class ExecutionsCleanUp implements InterruptableJob {
             ],
             [max: maximumDeletionSize]
         )
+        List<Long> result = executionService.queryExecutionsList(
+                getExecutionsQueryCriteria(
+                        project,
+                        maxDaysToKeep,
+                        maximumDeletionSize
+                )
+        ) as List<Long>
 
         if(null != jobList && 0 != jobList.size()) {
             List result = jobList
@@ -227,13 +234,13 @@ class ExecutionsCleanUp implements InterruptableJob {
     }
 
 
-    private int deleteByExecutionList(List<Execution> collectedExecutions,
+    private int deleteByExecutionList(List<Long> collectedExecutions,
                                       ExecutionService executionService) {
         log.info("Start to delete ${collectedExecutions.size()} executions")
         int count = 0
         if (collectedExecutions.size() > 0) {
-            for (Execution exec : collectedExecutions) {
-                Map result = executionService.deleteExecutionFromCleanup(exec)
+            for (Long execId : collectedExecutions) {
+                Map result = executionService.deleteExecutionFromCleanup(execId)
                 if (!result.success) {
                     log.error(result.message as String)
                 } else {
@@ -241,6 +248,7 @@ class ExecutionsCleanUp implements InterruptableJob {
                 }
             }
             log.info("Deleted ${count} of ${collectedExecutions.size()} executions")
+
             if (count < collectedExecutions.size()) {
                 log.error("Some executions weren't deleted")
             }
@@ -273,19 +281,6 @@ class ExecutionsCleanUp implements InterruptableJob {
         }
         return (FrameworkService)fws
     }
-
-    @CompileDynamic
-    private ReportService fetchReportService(def jobDataMap) {
-        def fws = jobDataMap.get("reportService")
-        if (fws==null) {
-            throw new RuntimeException("reportService could not be retrieved from JobDataMap!")
-        }
-        if (! (fws instanceof ReportService)) {
-            throw new RuntimeException("JobDataMap contained invalid ReportService type: " + fws.getClass().getName())
-        }
-        return (ReportService)fws
-    }
-
 
     @CompileDynamic
     private MetricService fetchMetricService(def jobDataMap) {

@@ -162,16 +162,16 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         List execIdsToExclude = job.searchExecutions(new ExecutionService(), projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
         then:
         execIdsToExclude.size() ==1
-        execIdsToExclude.contains(execution)
+        execIdsToExclude.contains(execution.getId())
         1 == Execution.countByProject(projName)
         1 == ExecReport.countByProject(projName)
 
     }
 
     private Execution setupExecution(ScheduledExecution se, String projName, Date startDate, Date finishDate, String serverUUID = null) {
-        Execution e
-        Execution.withTransaction {
-            e = new Execution(
+
+        Execution.withNewTransaction {
+            Execution e = new Execution(
                     project: projName,
                     user: 'bob',
                     status: 'success',
@@ -188,17 +188,17 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
             if(serverUUID){
                 e.serverNodeUUID = serverUUID
             }
-            e.save()
+            e.save(flush:true)
             def er=ExecReport.fromExec(e)
-            er.save()
+            er.save(flush:true)
+            Execution.withSession { it.flush() }
+            return e
         }
-
-        return e
     }
 
 
     private ScheduledExecution setupJob(String projName, Closure extra=null) {
-        ScheduledExecution.withTransaction {
+        ScheduledExecution.withNewTransaction {
             ScheduledExecution se = new ScheduledExecution(
                     jobName: 'blue',
                     project: projName,
@@ -218,7 +218,8 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
                 extra.call(se)
             }
             se.workflow.save()
-            se.save()
+            se.save(flush: true)
+            return se
         }
     }
 }

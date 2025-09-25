@@ -2025,7 +2025,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Execution.findAllByRetryExecution(e).each{e2->
                 e2.retryExecution=null
             }
-            e.delete(flush: true)
+            e.delete()
             //delete all files
             def deletedfiles = 0
             files.each { file ->
@@ -4058,15 +4058,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     * Query executions using a criteria closure
-     * @param criteriaClosure criteriaClos
-     * @return result List<Execution>
-     */
-    List<Execution> queryExecutionsList(Closure criteriaClos){
-        return Execution.createCriteria().list(criteriaClos) as List<Execution>
-    }
-
-    /**
      * Count executions per project
      * @param project
      * @return number of executions for the project
@@ -4503,16 +4494,35 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
-
-    /*
-    Delete an execution as part of cleanup, removing from archive if needed
-    @param e execution to delete
-    @return map with keys:
-        success: boolean
-        message: String
-        error: String
+    /**
+     * Query executions using a criteria closure
+     * @param criteriaClosure criteriaClos
+     * @return result List
      */
-    Map deleteExecutionFromCleanup(Execution e) {
-        deleteExecutionAuthorized(e, "admin")
+    List queryExecutionsList(Closure criteriaClos){
+        return Execution.createCriteria().list(criteriaClos) as List
+    }
+
+    /**
+     * Delete an execution by id as part of cleanup. This fetches a fresh Execution instance in a new transaction
+     * and delegates to deleteExecutionAuthorized. Using id-based deletion avoids holding long-lived Hibernate
+     * entities returned by earlier queries and reduces locking on the executions table.
+     * @param id execution id
+     * @return map with keys: success:boolean, message:String, error:String
+     */
+    Map deleteExecutionFromCleanup(Long id) {
+        try {
+            return Execution.withNewTransaction {
+                Execution e = Execution.get(id)
+                if (!e) {
+                    return [success: false, error: 'notfound', message: "Execution Not found: ${id}"]
+                }
+                // delegate to existing deletion implementation
+                return deleteExecutionAuthorized(e, "admin")
+            }
+        } catch (Exception ex) {
+            log.error("Failed to delete execution ${id} from cleanup", ex)
+            return [success: false, error: 'failure', message: ex.message]
+        }
     }
 }
