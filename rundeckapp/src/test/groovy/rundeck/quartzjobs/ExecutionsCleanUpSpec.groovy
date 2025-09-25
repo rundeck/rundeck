@@ -63,7 +63,7 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         def executionService = Mock(ExecutionService) {
             queryExecutionsList(*_) >> {
                 if(execDate.before(query.endbeforeFilter)){
-                    return [exec]
+                    return [exec.id]
                 }
 
                 []
@@ -133,7 +133,7 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         def executionService = Mock(ExecutionService) {
             queryExecutionsList(*_) >> {
                 if(execDate.before(query.endbeforeFilter)){
-                    return [exec]
+                    return [exec.id]
                 }
 
                 []
