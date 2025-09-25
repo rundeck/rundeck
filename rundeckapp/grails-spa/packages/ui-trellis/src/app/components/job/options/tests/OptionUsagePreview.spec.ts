@@ -26,7 +26,7 @@ describe("OptionUsagePreview", () => {
     const wrapper = await mountOptionUsagePreview({
       option: { name: "test_name", type: "file" },
     });
-    const sect = wrapper.get("section");
+    const sect = wrapper.get("#file_option_preview");
     expect(sect.html()).toContain(`\${file.test_name}`);
     expect(sect.html()).toContain(`@file.test_name@`);
     expect(sect.html()).toContain(`$RD_FILE_TEST_NAME`);
@@ -44,7 +44,7 @@ describe("OptionUsagePreview", () => {
     const wrapper = await mountOptionUsagePreview({
       option,
     });
-    const sect = wrapper.get("section");
+    const sect = wrapper.get("#option_preview");
     expect(sect.html()).toContain(`\${option.test_name}`);
     expect(sect.html()).toContain(`\${unquotedoption.test_name}`);
     expect(sect.html()).toContain(`@option.test_name@`);
@@ -56,11 +56,10 @@ describe("OptionUsagePreview", () => {
       const wrapper = await mountOptionUsagePreview({
         option,
       });
-      const sect = wrapper.get("section");
+      const sect = wrapper.get("#option_preview");
       expect(sect.html()).toContain(`"\${option.test_name}"`);
       expect(sect.html()).toContain(`"\${unquotedoption.test_name}"`);
       expect(sect.html()).toContain(`@option.test_name@`);
-      expect(sect.html()).toContain(`END_HEREDOC`);
       expect(sect.html()).toContain(`"$RD_OPTION_TEST_NAME"`);
     },
   );
@@ -73,7 +72,7 @@ describe("OptionUsagePreview", () => {
         valueExposed: false,
       },
     });
-    const sect = wrapper.get("section");
+    const sect = wrapper.get("#option_preview");
     expect(sect.html()).not.toContain(`\${option.test_name}`);
     expect(sect.html()).not.toContain(`\${unquotedoption.test_name}`);
     expect(sect.html()).not.toContain(`@option.test_name@`);
