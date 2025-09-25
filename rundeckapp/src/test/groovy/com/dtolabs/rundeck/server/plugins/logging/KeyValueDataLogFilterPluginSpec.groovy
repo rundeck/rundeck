@@ -22,7 +22,6 @@ import com.dtolabs.rundeck.core.logging.LogEventControl
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.PluginLoggingContext
 import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
-import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -30,11 +29,11 @@ import spock.lang.Unroll
  * @author greg
  * @since 5/17/17
  */
-class SimpleDataFilterPluginSpec extends Specification {
+class KeyValueDataLogFilterPluginSpec extends Specification {
     @Unroll
     def "test"() {
         given:
-        def plugin = new SimpleDataFilterPlugin()
+        def plugin = new KeyValueDataLogFilterPlugin()
         plugin.regex = regex
         plugin.logData = dolog
         plugin.invalidKeyPattern = null
@@ -70,24 +69,24 @@ class SimpleDataFilterPluginSpec extends Specification {
 
         where:
         dolog | regex                          | lines                           | expect
-        true  | SimpleDataFilterPlugin.PATTERN | ['.*']                          | [:]
-        true  | SimpleDataFilterPlugin.PATTERN | ['RUNDECK:DATA:wimple=zangief'] | [wimple: 'zangief']
-        false | SimpleDataFilterPlugin.PATTERN | ['RUNDECK:DATA:wimple=zangief'] | [wimple: 'zangief']
-        true  | SimpleDataFilterPlugin.PATTERN | ['blah', 'blee']                | [:]
-        true  | SimpleDataFilterPlugin.PATTERN | ['RUNDECK:DATA:wimple=']        | [:]
-        true  | SimpleDataFilterPlugin.PATTERN | ['RUNDECK:DATA:=asdf']          | [:]
-        false  | SimpleDataFilterPlugin.PATTERN |
-                [
+            true  | KeyValueDataLogFilterPlugin.PATTERN  | ['.*']                               | [:]
+            true  | KeyValueDataLogFilterPlugin.PATTERN  | ['RUNDECK:DATA:wimple=zangief']      | [wimple: 'zangief']
+            false | KeyValueDataLogFilterPlugin.PATTERN  | ['RUNDECK:DATA:wimple=zangief']      | [wimple: 'zangief']
+            true  | KeyValueDataLogFilterPlugin.PATTERN  | ['blah', 'blee']                     | [:]
+            true  | KeyValueDataLogFilterPlugin.PATTERN  | ['RUNDECK:DATA:wimple=']             | [:]
+            true  | KeyValueDataLogFilterPlugin.PATTERN  | ['RUNDECK:DATA:=asdf']               | [:]
+            false  | KeyValueDataLogFilterPlugin.PATTERN |
+            [
                         'RUNDECK:DATA:awayward wingling samzait = bogarting: sailboat heathen',
                         'RUNDECK:DATA:simple digital salad : = ::djkjdf= ',
-                ]                                                                |
-                [:]
+                ]                                                                               |
+            [:]
     }
 
     @Unroll
     def "The plugin supports empty values"() {
         given:
-        def plugin = new SimpleDataFilterPlugin()
+        def plugin = new KeyValueDataLogFilterPlugin()
         plugin.regex = regex
         plugin.logData = dolog
         plugin.invalidKeyPattern = null
@@ -122,8 +121,8 @@ class SimpleDataFilterPluginSpec extends Specification {
     @Unroll
     def "only filter NORMAL log level"() {
         given:
-        def plugin = new SimpleDataFilterPlugin()
-        plugin.regex = SimpleDataFilterPlugin.PATTERN
+        def plugin = new KeyValueDataLogFilterPlugin()
+        plugin.regex = KeyValueDataLogFilterPlugin.PATTERN
         def sharedoutput = new DataOutput(ContextView.global())
         def context = Mock(PluginLoggingContext) {
             getOutputContext() >> sharedoutput
@@ -158,7 +157,7 @@ class SimpleDataFilterPluginSpec extends Specification {
     @Unroll
     def "named capture test"() {
         given:
-        def plugin = new SimpleDataFilterPlugin()
+        def plugin = new KeyValueDataLogFilterPlugin()
         plugin.regex = regex
         plugin.logData = dolog
         plugin.name = name
@@ -211,7 +210,7 @@ class SimpleDataFilterPluginSpec extends Specification {
     @Unroll
     def "named capture test invalid key characters"() {
         given:
-        def plugin = new SimpleDataFilterPlugin()
+        def plugin = new KeyValueDataLogFilterPlugin()
         plugin.regex = regex
         plugin.logData = false
         plugin.name = name
@@ -262,7 +261,7 @@ class SimpleDataFilterPluginSpec extends Specification {
     @Unroll
     def "invalid characters replaced by custom character"() {
         given:
-        def plugin = new SimpleDataFilterPlugin()
+        def plugin = new KeyValueDataLogFilterPlugin()
         plugin.regex = regex
         plugin.logData = false
         plugin.name = name
@@ -302,10 +301,10 @@ class SimpleDataFilterPluginSpec extends Specification {
     @Unroll
     def "Test good parameters"() {
 
-        SimpleDataFilterPlugin.NamePropertyValidator simpleDataFilterPluginValidator = new SimpleDataFilterPlugin.NamePropertyValidator()
+        KeyValueDataLogFilterPlugin.NamePropertyValidator validator = new KeyValueDataLogFilterPlugin.NamePropertyValidator()
 
         expect:
-        simpleDataFilterPluginValidator.isValid(regexValue, props)
+        validator.isValid(regexValue, props)
 
         where:
         regexValue                             |            props              | expectedResult
@@ -316,10 +315,10 @@ class SimpleDataFilterPluginSpec extends Specification {
     @Unroll
     def "Test failing parameters"() {
 
-        SimpleDataFilterPlugin.NamePropertyValidator simpleDataFilterPluginValidator = new SimpleDataFilterPlugin.NamePropertyValidator()
+        KeyValueDataLogFilterPlugin.NamePropertyValidator validator = new KeyValueDataLogFilterPlugin.NamePropertyValidator()
 
         when:
-        simpleDataFilterPluginValidator.isValid(regexValue, props)
+        validator.isValid(regexValue, props)
 
         then:
         def error = thrown(expectedException)
