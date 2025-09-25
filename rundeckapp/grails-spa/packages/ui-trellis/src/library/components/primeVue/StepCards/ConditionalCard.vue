@@ -241,10 +241,10 @@ export default defineComponent({
     padding: var(--sizes-4);
 
     &-description {
-      align-items: baseline;
+      align-items: center;
       display: flex;
       flex-direction: row;
-      gap: var(--sizes-1);
+      gap: 4px;
       margin-top: var(--sizes-3);
 
       p {
@@ -276,12 +276,6 @@ export default defineComponent({
 
   .p-card-body {
     padding: var(--sizes-4);
-  }
-
-  &.complex {
-    .p-card-body {
-      padding: var(--sizes-8);
-    }
   }
 
   .p-accordioncontent-content {

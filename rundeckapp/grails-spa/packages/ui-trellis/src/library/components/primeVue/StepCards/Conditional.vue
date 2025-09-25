@@ -70,7 +70,7 @@ export default defineComponent({
   &--if {
     align-items: baseline;
     display: flex;
-    gap: 5px;
+    gap: 6px;
     margin: 0;
 
     .operator--and {

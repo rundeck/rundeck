@@ -18,7 +18,7 @@
           @click="copyText(innerValue)"
         >
           <plugin-prop-val :prop="prop" :value="innerValue" />
-          <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
+          <i v-if="allowCopy" class="pi pi-copy copy-icon"></i>
         </span>
         <span
           v-else-if="innerValue === 'false'"
@@ -30,7 +30,7 @@
           @click="copyText(innerValue)"
         >
           <plugin-prop-val :prop="prop" :value="innerValue" />
-          <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
+          <i v-if="allowCopy" class="pi pi-copy copy-icon"></i>
         </span>
       </template>
     </span>
@@ -54,7 +54,7 @@
         <template v-if="prop.type !== 'Options'">
           <span class="text-success copiable-text" @click="copyText(innerValue)">
             <plugin-prop-val :prop="prop" :value="innerValue" />
-            <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
+            <i v-if="allowCopy" class="pi pi-copy copy-icon"></i>
           </span>
         </template>
         <template v-else>
@@ -70,7 +70,7 @@
                   class="glyphicon glyphicon-ok-circle"
               ></i>
               <plugin-prop-val :prop="prop" :value="optval" />
-              <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
+              <i v-if="allowCopy" class="pi pi-copy copy-icon"></i>
             </span>
           </span>
           <span v-else-if="typeof value !== 'string' && innerValue.length > 0">
@@ -85,7 +85,7 @@
                   class="glyphicon glyphicon-ok-circle"
               ></i>
               <plugin-prop-val :prop="prop" :value="optval" />
-              <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
+              <i v-if="allowCopy" class="pi pi-copy copy-icon"></i>
             </span>
           </span>
         </template>
@@ -147,7 +147,7 @@
             @click="copyText(custom.value)"
           >
             {{ custom.value }}
-            <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
+            <i v-if="allowCopy" class="pi pi-copy copy-icon"></i>
           </span>
         </span>
       </template>
@@ -160,7 +160,7 @@
           :title="allowCopy ? 'Click to copy password' : ''"
         >
           &bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;
-          <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
+          <i v-if="allowCopy" class="pi pi-copy copy-icon"></i>
         </span>
         <span
           v-else
@@ -168,7 +168,7 @@
           @click="copyText(innerValue)"
         >
           {{ innerValue }}
-          <i v-if="allowCopy" class="fa fa-copy copy-icon"></i>
+          <i v-if="allowCopy" class="pi pi-copy copy-icon"></i>
         </span>
       </span>
     </span>
@@ -231,10 +231,13 @@ export default defineComponent({
 }
 
 .copiable-text {
-  position: relative;
+  align-items: center;
   cursor: pointer;
+  display: flex;
+  gap: 2px;
   font-weight: 400 !important;
   transition: background-color 0.2s ease;
+  position: relative;
 }
 
 .copiable-text:hover {

@@ -3,7 +3,7 @@
     <div class="header-row">
       <p>
         {{ title }}
-        <i class="pi pi-info-circle" v-tooltip="{ value: tooltip }"></i>:
+        <i class="pi pi-info-circle" v-tooltip="{ value: tooltip }"></i> :
       </p>
       <slot name="header">
         <transition name="inline-button-fade">
@@ -181,8 +181,10 @@ export default defineComponent({
   opacity: 0;
 }
 </style>
+
 <style>
 .p-chip-icon.fa.fa-volume-off {
   width: auto !important;
+  height: auto !important;
 }
 </style>

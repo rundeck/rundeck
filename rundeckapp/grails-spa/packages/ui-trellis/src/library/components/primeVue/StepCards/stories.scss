@@ -11,6 +11,7 @@ ul[data-testid='draggable-container']{
     content: counter(list)'.';
     display: block;
     font-size: 16px;
+    font-family: Inter, var(--fonts-body) !important;
     left: -18px;
     position: absolute;
     top: 1rem;
