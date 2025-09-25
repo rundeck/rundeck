@@ -6,6 +6,7 @@ import { RundeckToken } from "../../../../library/interfaces/rundeckWindow";
 import { RootStore } from "../../../../library/stores/RootStore";
 import OptionEdit from "./OptionEdit.vue";
 import { JobOption } from "../../../../library/types/jobs/JobEdit";
+import { EventBus } from "../../../../library/utilities/vueEventBus";
 import * as uiv from "uiv";
 
 setup((app) => {
@@ -82,6 +83,10 @@ A comprehensive form component for creating and editing job options in Rundeck. 
         feature: {},
         data: {},
         rootStore: rootStore,
+        eventBus: {} as typeof EventBus,
+        activeTour: "",
+        activeTourStep: "",
+        rundeckClient: null,
       };
     },
   },
@@ -166,7 +171,7 @@ A comprehensive form component for creating and editing job options in Rundeck. 
     },
     optionValuesPlugins: {
       control: {
-        type: "array",
+        type: "object",
       },
       description:
         "Available option values plugins that can provide dynamic option choices.",
