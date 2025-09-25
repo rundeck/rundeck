@@ -56,6 +56,7 @@ class ApiVersions {
     // Hardcoded inline string constant for the current version used in API doc generation
     public final static String API_CURRENT_VERSION_STR = "55"
 
+
     /**
      * Version span configurations
      */
