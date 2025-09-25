@@ -22,12 +22,13 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
 
     def setupSpec() {
         mockDomains(Execution, ExecReport, Workflow, CommandExec, PluginStep, JobExec, ScheduledExecution)
-
+    }
+    
     def setup() {
         provider.configurationService = Mock(rundeck.services.ConfigurationService) {
             getInteger("pagination.default.max", 20) >> 20
         }
-    }
+
 
     def "CreateReportFromExecution"() {
         given:
