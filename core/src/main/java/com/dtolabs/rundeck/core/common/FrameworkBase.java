@@ -283,6 +283,28 @@ public class FrameworkBase implements IFramework{
         return null;
     }
 
+    /**
+     * Retrieves the global properties defined for the framework (framework.globals.*) The prefix (xxx.globals.) will be
+     * stripped from the property name.
+     *
+     * @return Map with global variables.
+     */
+    public Map<String, String> getFrameworkGlobals() {
+        Map<String, String> globalsMap = new HashMap<>();
+        final Map<?,?> propertiesMap = getPropertyLookup().getPropertiesMap();
+        final Set<?> set = propertiesMap.keySet();
+        set.stream().filter(key -> key.toString().startsWith(FRAMEWORK_GLOBALS_PROP))
+           .forEach(key -> {
+                        String skey = key.toString();
+                        String varName = skey.substring(FRAMEWORK_GLOBALS_PROP.length());
+                        if (varName.isEmpty()) {
+                            return;
+                        }
+                        globalsMap.put(varName, propertiesMap.get(key).toString());
+                    }
+           );
+        return globalsMap;
+    }
 
     /**
     * Retrieves the global properties defined for the specified project.
@@ -298,7 +320,7 @@ public class FrameworkBase implements IFramework{
     public Map<String, String> getProjectGlobals(final String project) {
 
         // Final property map.
-        Map<String, String> projectGlobalsMap = new HashMap<>();
+        Map<String, String> projectGlobalsMap = getFrameworkGlobals();
 
         // Transitional map for project global variables.
         Map<String, String> projectGlobs = new HashMap<>();
@@ -312,12 +334,7 @@ public class FrameworkBase implements IFramework{
             Map<String, String> curMap;
             String varName;
 
-            if(propEntry.getKey().startsWith(FRAMEWORK_GLOBALS_PROP)) {
-                // Search for framework globals and extract var name.
-                curMap = projectGlobalsMap;
-                varName = propEntry.getKey().substring(FRAMEWORK_GLOBALS_PROP.length());
-            }
-            else if(propEntry.getKey().startsWith(PROJECT_GLOBALS_PROP)) {
+            if (propEntry.getKey().startsWith(PROJECT_GLOBALS_PROP)) {
                 // Search for project globals and extract var name.
                 curMap = projectGlobs;
                 varName = propEntry.getKey().substring(PROJECT_GLOBALS_PROP.length());
