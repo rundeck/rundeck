@@ -317,12 +317,6 @@ div.progressContainer div.progressContent{
             </table>
 
                     </td>
-                    <g:if test="${scheduledExecution && renderJobStats}">
-                        <td style="vertical-align:top;" class="toolbar small">
-                            <g:render template="/scheduledExecution/renderJobStats"
-                                      model="${[scheduledExecution: scheduledExecution]}"/>
-                        </td>
-                    </g:if>
                 </tr>
             </table>
         </div>
