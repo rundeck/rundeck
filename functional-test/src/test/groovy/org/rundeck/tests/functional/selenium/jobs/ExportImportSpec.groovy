@@ -130,8 +130,10 @@ class ExportImportSpec extends SeleniumBase {
         jobUploadPage.fileInputElement().sendKeys("${downloadFolder}${getSeparator()}${jobName}.yaml")
         jobUploadPage.dupeOptionSkip().click()
         jobUploadPage.fileUploadButtonElement().click()
+        jobUploadPage.implicitlyWait(2000)
         then:
-        jobUploadPage.headerTextInfo.text.contains("1 Job was skipped")
+
+        jobUploadPage.headerTextInfo.text.contains("skipped due to existing jobs")
 
     }
 
