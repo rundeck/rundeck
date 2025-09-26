@@ -18,7 +18,7 @@ class ExportImportSpec extends SeleniumBase {
     @Shared String SELENIUM_EXPORT_IMPORT_PROJECT
 
     def setup() {
-        SELENIUM_EXPORT_IMPORT_PROJECT = specificationContext.currentIteration.name.tokenize().collect { it.capitalize() }.join()
+        SELENIUM_EXPORT_IMPORT_PROJECT = generateProjectName(specificationContext.currentIteration.name)
         setupProject(SELENIUM_EXPORT_IMPORT_PROJECT)
         def loginPage = go LoginPage
         loginPage.login(TEST_USER, TEST_PASS)
@@ -66,6 +66,7 @@ class ExportImportSpec extends SeleniumBase {
         def jobShowPage = page JobShowPage
         def jobListPage = page JobListPage
         def jobUploadPage = page JobUploadPage
+        jobUploadPage.nextUi = nextUi
         def sideBarPage = page SideBarPage
         def jobName = "jobWithOptionsToExport"
         def optName = "firstOption"
@@ -106,6 +107,40 @@ class ExportImportSpec extends SeleniumBase {
         then:
         jobCreatePage.optDetails.size() == 1
         jobCreatePage.options.size() == 1
+        where:
+        nextUi<<[true,false]
+    }
+    def "import job with skip should show skip message"() {
+        setup:
+        def jobCreatePage = go JobCreatePage, SELENIUM_EXPORT_IMPORT_PROJECT
+        def jobShowPage = page JobShowPage
+        def jobUploadPage = page JobUploadPage
+        jobUploadPage.nextUi = nextUi
+        def jobName = 'ImportJobWithSkip'
+
+        when: "create basic job"
+        jobCreatePage.fillBasicJob jobName
+        jobCreatePage.createJobButton.click()
+
+        then: "job created"
+        jobShowPage.validatePage()
+        jobShowPage.getLink "Action" click()
+        jobShowPage.getLink "Download Job definition in YAML" click()
+
+        when: "upload job with dupe option skip"
+
+        jobUploadPage.loadPathToUploadPage SELENIUM_EXPORT_IMPORT_PROJECT
+        jobUploadPage.go()
+        jobUploadPage.fileInputElement().sendKeys("${downloadFolder}${getSeparator()}${jobName}.yaml")
+        jobUploadPage.dupeOptionSkip().click()
+        jobUploadPage.fileUploadButtonElement().click()
+        jobUploadPage.implicitlyWait(2000)
+        then:
+
+        jobUploadPage.headerTextInfo.text.contains("skipped due to existing jobs")
+        where:
+        nextUi<<[true,false]
+
     }
 
     def cleanup() {
