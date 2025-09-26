@@ -60,7 +60,7 @@ class JobUploadPage extends BasePage {
     }
     WebElement getHeaderTextInfo(){
         waitForElementVisible headerTextInfoBy
-        el headerTextSuccessBy
+        el headerTextInfoBy
     }
 
 }
