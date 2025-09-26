@@ -290,4 +290,38 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
         results.size() == 1
         results[0].executionId == exec1.id
     }
+
+    def "getExecutionReports with optionFilter - handles empty and null values"() {
+        given:
+        def exec1 = TestDomainFactory.createExecution(
+            argString: "-APPLICATION_NAME app1",
+            status: 'succeeded',
+            dateCompleted: new Date()
+        )
+        provider.saveReport(ExecReportUtil.buildSaveReportRequest(exec1))
+
+        when: "empty optionFilter"
+        def query1 = new ExecQuery()
+        query1.optionFilter = ""
+        def results1 = provider.getExecutionReports(query1, true, null, [])
+
+        then: "should return all results"
+        results1.size() == 1
+
+        when: "null optionFilter"
+        def query2 = new ExecQuery()
+        query2.optionFilter = null
+        def results2 = provider.getExecutionReports(query2, true, null, [])
+
+        then: "should return all results"
+        results2.size() == 1
+
+        when: "whitespace only optionFilter"
+        def query3 = new ExecQuery()
+        query3.optionFilter = "   "
+        def results3 = provider.getExecutionReports(query3, true, null, [])
+
+        then: "should return all results"
+        results3.size() == 1
+    }
 }
