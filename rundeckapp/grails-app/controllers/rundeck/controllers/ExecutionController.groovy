@@ -3120,6 +3120,8 @@ if executed in cluster mode.""",
         def resOffset = params.offset ? params.int('offset') : 0
         def resMax = params.max ? params.int('max') : configurationService.getInteger('pagination.default.max',20)
 
+        def summarize = params.boolean('summarize', true)
+
         def results
         try {
             results = executionService.queryExecutions(query, resOffset, resMax)
@@ -3143,7 +3145,7 @@ if executed in cluster mode.""",
         def controller = this
         withFormat {
             '*' {
-                return executionService.respondExecutionsJson(request, response, filtered, [total: total, offset: resOffset, max: resMax])
+                return executionService.respondExecutionsJson(request, response, filtered, [total: total, offset: resOffset, max: resMax, summarize: summarize])
             }
             if (controller.isAllowXml()) {
                 xml {

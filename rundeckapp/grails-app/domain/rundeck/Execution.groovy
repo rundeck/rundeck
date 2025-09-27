@@ -217,10 +217,6 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         )
     }
 
-    public String toString() {
-        return "Workflow execution: ${workflow}"
-    }
-
     Map getExtraMetadataMap() {
         extraMetadata ? asJsonMap(extraMetadata) : [:]
     }

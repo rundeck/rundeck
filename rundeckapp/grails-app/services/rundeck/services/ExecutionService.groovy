@@ -272,6 +272,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             data
         }, paging)
     }
+
     public def respondExecutionsJson(HttpServletRequest request,HttpServletResponse response, List<Execution> executions, paging = [:]) {
         return apiService.respondExecutionsJson(request,response,executions.collect { Execution e ->
                 def data=[
@@ -279,7 +280,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         permalink: apiService.guiHrefForExecution(e),
                         href: apiService.apiHrefForExecution(e),
                         status: getExecutionState(e),
-                        summary: ExecReportUtil.summarizeJob(e)
+                        summary: ExecReportUtil.summarizeJob(e, paging.summarize)
                 ]
             if(e.customStatusString){
                 data.customStatus=e.customStatusString
