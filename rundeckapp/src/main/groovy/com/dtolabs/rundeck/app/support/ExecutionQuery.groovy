@@ -167,7 +167,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
       def excludeTxtFilters = ['excludeJob': 'jobName']
       def excludeEqFilters = ['excludeJobExact': 'jobName']
 
-      def jobqueryfilters = ['jobListFilter', 'jobIdListFilter', 'excludeJobListFilter', 'excludeJobIdListFilter', 'jobFilter', 'jobExactFilter', 'groupPath', 'groupPathExact', 'descFilter', 'excludeGroupPath', 'excludeGroupPathExact', 'excludeJobFilter', 'excludeJobExactFilter']
+      def jobqueryfilters = ['jobListFilter', 'excludeJobListFilter', 'excludeJobIdListFilter', 'jobFilter', 'jobExactFilter', 'groupPath', 'groupPathExact', 'descFilter', 'excludeGroupPath', 'excludeGroupPathExact', 'excludeJobFilter', 'excludeJobExactFilter']
 
       def convertids = { String s ->
         try {
@@ -376,6 +376,23 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
             //end related ScheduledExecution query
           }
         }
+          if(query.jobIdListFilter){
+              List jobIdListPartitioned = Lists.partition(query.jobIdListFilter, 1000)
+              or {
+                  for (def partition : jobIdListPartitioned) {
+                      'in'('jobUuid', partition)
+                  }
+              }
+          }
+          if (query.excludeJobIdListFilter) {
+              not {
+                  query.excludeJobIdListFilter.each { theid ->
+                      if (theid instanceof Long) {
+                          eq("uuid", theid)
+                      }
+                  }
+              }
+          }
         if(query.projFilter) {
           eq('project', query.projFilter)
         }
