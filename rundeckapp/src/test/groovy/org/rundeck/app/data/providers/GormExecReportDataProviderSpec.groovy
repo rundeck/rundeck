@@ -13,6 +13,7 @@ import rundeck.Workflow
 import rundeck.data.report.SaveReportRequestImpl
 import rundeck.data.util.ExecReportUtil
 import spock.lang.Specification
+import spock.lang.Unroll
 import testhelper.TestDomainFactory
 
 import javax.persistence.EntityNotFoundException
@@ -92,236 +93,115 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
 
     }
 
-    def "getExecutionReports with optionFilter - single option"() {
-        given:
-        // Create executions with different argStrings
-        def exec1 = TestDomainFactory.createExecution(
-            argString: "-APPLICATION_NAME app1 -ENV production",
-            status: 'succeeded',
-            dateCompleted: new Date()
-        )
-        def exec2 = TestDomainFactory.createExecution(
-            argString: "-APPLICATION_NAME app2 -ENV staging",
-            status: 'succeeded',
-            dateCompleted: new Date()
-        )
-        def exec3 = TestDomainFactory.createExecution(
-            argString: "-OTHER_OPTION value -ENVIRONMENT test",
-            status: 'succeeded',
-            dateCompleted: new Date()
-        )
-
-        // Create corresponding ExecReports
-        provider.saveReport(ExecReportUtil.buildSaveReportRequest(exec1))
-        provider.saveReport(ExecReportUtil.buildSaveReportRequest(exec2))
-        provider.saveReport(ExecReportUtil.buildSaveReportRequest(exec3))
+    @Unroll
+    def "getExecutionReports with optionFilter - #description"() {
+        given: "standard test executions with different argStrings"
+        def executionData = setupExecutions()
+        executionData.each { execData ->
+            provider.saveReport(ExecReportUtil.buildSaveReportRequest(execData.execution))
+        }
 
         when:
         def query = new ExecQuery()
-        query.optionFilter = "-APPLICATION_NAME app1"
+        query.optionFilter = searchTerm
         def results = provider.getExecutionReports(query, true, null, [])
 
         then:
-        results.size() == 1
-        results[0].executionId == exec1.id
+        results.size() == expectedCount
+        if (expectedExecutionIds) {
+            results.collect { it.executionId }.sort() == expectedExecutionIds.call(executionData).sort()
+        }
+
+        where:
+        description                | searchTerm                    | expectedCount | expectedExecutionIds
+        "single exact match"       | "-APP otherapp"               | 1            | { data -> [data[1].execution.id] }
+        "single partial match"     | "-SLEEP"                      | 3            | { data -> [data[0].execution.id, data[2].execution.id, data[3].execution.id] }
+        "no matches"              | "-NONEXISTENT_OPTION value"   | 0            | null
+        "case insensitive match"   | "-app otherapp"               | 1            | { data -> [data[1].execution.id] }
+        "value only match"         | "otherapp"                    | 1            | { data -> [data[1].execution.id] }
     }
 
-    def "getExecutionReports with optionFilter - multiple options order independent"() {
-        given:
-        def exec1 = TestDomainFactory.createExecution(
-            argString: "-APPLICATION_NAME app1 -ENV production -VERBOSE true",
-            status: 'succeeded',
-            dateCompleted: new Date()
-        )
-        def exec2 = TestDomainFactory.createExecution(
-            argString: "-ENV production -APPLICATION_NAME app2 -DEBUG false",
-            status: 'succeeded',
-            dateCompleted: new Date()
-        )
-        def exec3 = TestDomainFactory.createExecution(
-            argString: "-APPLICATION_NAME app1 -ENV staging",
-            status: 'succeeded',
-            dateCompleted: new Date()
-        )
-
-        provider.saveReport(ExecReportUtil.buildSaveReportRequest(exec1))
-        provider.saveReport(ExecReportUtil.buildSaveReportRequest(exec2))
-        provider.saveReport(ExecReportUtil.buildSaveReportRequest(exec3))
+    @Unroll
+    def "getExecutionReports with optionFilter OR logic - #description"() {
+        given: "executions with varying option combinations"
+        def executionData = setupExecutions()
+        executionData.each { execData ->
+            provider.saveReport(ExecReportUtil.buildSaveReportRequest(execData.execution))
+        }
 
         when:
         def query = new ExecQuery()
-        query.optionFilter = "-APPLICATION_NAME app1 -ENV production"  // Multiple options
+        query.optionFilter = searchTerm
         def results = provider.getExecutionReports(query, true, null, [])
 
         then:
-        results.size() == 1
-        results[0].executionId == exec1.id
+        results.size() == expectedCount
+        if (expectedMatches) {
+            def actualIds = results.collect { it.executionId }.sort()
+            def expectedIds = expectedMatches.call(executionData).sort()
+            actualIds == expectedIds
+        }
+
+        where:
+        description                              | searchTerm                        | expectedCount | expectedMatches
+        "multiple options - all match with OR"  | "-APP myapp -ENV production"      | 4            | { data -> [data[0].execution.id, data[1].execution.id, data[2].execution.id, data[3].execution.id] }
+        "exact option-value pair"               | "-SLEEP 10"                       | 2            | { data -> [data[0].execution.id, data[2].execution.id] }
+        "option name only"                      | "-SLEEP"                          | 3            | { data -> [data[0].execution.id, data[2].execution.id, data[3].execution.id] }
+        "argument order independent"            | "-FIRST value1 -SECOND value2"    | 2            | { data -> [data[1].execution.id, data[2].execution.id] }
     }
 
-    def "getExecutionReports with optionFilter - exact option value search"() {
-        given:
-        def exec1 = TestDomainFactory.createExecution(
-            argString: "-SLEEP 10 -ENV production -VERBOSE true",
-            status: 'succeeded',
-            dateCompleted: new Date()
-        )
-        def exec2 = TestDomainFactory.createExecution(
-            argString: "-SLEEP 5 -ENV production -DEBUG false",
-            status: 'succeeded',
-            dateCompleted: new Date()
-        )
-        def exec3 = TestDomainFactory.createExecution(
-            argString: "-OTHER option -SLEEP 10 -MORE stuff",
-            status: 'succeeded',
-            dateCompleted: new Date()
-        )
-
-        provider.saveReport(ExecReportUtil.buildSaveReportRequest(exec1))
-        provider.saveReport(ExecReportUtil.buildSaveReportRequest(exec2))
-        provider.saveReport(ExecReportUtil.buildSaveReportRequest(exec3))
-
-        when:
-        def query = new ExecQuery()
-        query.optionFilter = "-SLEEP 10"
-        def results = provider.getExecutionReports(query, true, null, [])
-
-        then:
-        results.size() == 2
-        results.collect { it.executionId }.sort() == [exec1.id, exec3.id].sort()
-    }
-
-    def "getExecutionReports with optionFilter - no matches"() {
-        given:
-        def exec1 = TestDomainFactory.createExecution(
-            argString: "-APPLICATION_NAME app1 -ENV production",
-            status: 'succeeded',
-            dateCompleted: new Date()
-        )
-
-        provider.saveReport(ExecReportUtil.buildSaveReportRequest(exec1))
-
-        when:
-        def query = new ExecQuery()
-        query.optionFilter = "-NONEXISTENT_OPTION value"
-        def results = provider.getExecutionReports(query, true, null, [])
-
-        then:
-        results.size() == 0
-    }
-
-
-    def "getExecutionReports with optionFilter - case insensitive matching"() {
-        given:
-        def exec1 = TestDomainFactory.createExecution(
-            argString: "-APPLICATION_NAME MyApp -ENV Production",
-            status: 'succeeded',
-            dateCompleted: new Date()
-        )
-
-        provider.saveReport(ExecReportUtil.buildSaveReportRequest(exec1))
-
-        when:
-        def query = new ExecQuery()
-        query.optionFilter = "-APPLICATION_NAME myapp"
-        def results = provider.getExecutionReports(query, true, null, [])
-
-        then:
-        results.size() == 1
-        results[0].executionId == exec1.id
-    }
-
-    def "getExecutionReports with optionFilter - different argument order matches"() {
-        given:
-        def exec1 = TestDomainFactory.createExecution(
-            argString: "-FIRST value1 -SECOND value2 -THIRD value3",
-            status: 'succeeded',
-            dateCompleted: new Date()
-        )
-        def exec2 = TestDomainFactory.createExecution(
-            argString: "-SECOND value2 -THIRD different -FIRST value1",
-            status: 'succeeded',
-            dateCompleted: new Date()
-        )
-        def exec3 = TestDomainFactory.createExecution(
-            argString: "-FIRST value1 -THIRD different",  // Missing SECOND value2
-            status: 'succeeded',
-            dateCompleted: new Date()
-        )
-
-        provider.saveReport(ExecReportUtil.buildSaveReportRequest(exec1))
-        provider.saveReport(ExecReportUtil.buildSaveReportRequest(exec2))
-        provider.saveReport(ExecReportUtil.buildSaveReportRequest(exec3))
-
-        when:
-        def query = new ExecQuery()
-        query.optionFilter = "-FIRST value1 -SECOND value2"  // Search for both options
-        def results = provider.getExecutionReports(query, true, null, [])
-
-        then:
-        results.size() == 2  // Should match exec1 and exec2, not exec3
-        results.collect { it.executionId }.sort() == [exec1.id, exec2.id].sort()
+    private List setupExecutions() {
+        return [
+            [execution: TestDomainFactory.createExecution(argString: "-APP myapp -ENV production -SLEEP 10", status: 'succeeded', dateCompleted: new Date())],
+            [execution: TestDomainFactory.createExecution(argString: "-APP otherapp -ENV production -FIRST value1 -SECOND value2", status: 'succeeded', dateCompleted: new Date())],
+            [execution: TestDomainFactory.createExecution(argString: "-APP myapp -ENV staging -SLEEP 10 -SECOND value2 -FIRST value1", status: 'succeeded', dateCompleted: new Date())],
+            [execution: TestDomainFactory.createExecution(argString: "-ENV production -OTHER option -DIFFERENT value -SLEEP 30", status: 'succeeded', dateCompleted: new Date())]
+        ]
     }
 
     def "getExecutionReports with optionFilter - combined with other filters"() {
         given:
-        def exec1 = TestDomainFactory.createExecution(
-            argString: "-APPLICATION_NAME app1 -ENV production",
-            status: 'succeeded',
-            dateCompleted: new Date(),
-            user: 'testuser'
-        )
-        def exec2 = TestDomainFactory.createExecution(
-            argString: "-APPLICATION_NAME app1 -ENV staging",
-            status: 'succeeded',
-            dateCompleted: new Date(),
-            user: 'otheruser'
-        )
+        def executionData = setupExecutions()
+        // Add user field to first two executions for testing
+        executionData[0].execution.user = 'testuser'
+        executionData[1].execution.user = 'otheruser'
 
-        provider.saveReport(ExecReportUtil.buildSaveReportRequest(exec1))
-        provider.saveReport(ExecReportUtil.buildSaveReportRequest(exec2))
+        executionData.each { execData ->
+            provider.saveReport(ExecReportUtil.buildSaveReportRequest(execData.execution))
+        }
 
         when:
         def query = new ExecQuery()
-        query.optionFilter = "-APPLICATION_NAME app1"
+        query.optionFilter = "-APP myapp"
         query.userFilter = "testuser"
         def results = provider.getExecutionReports(query, true, null, [])
 
         then:
         results.size() == 1
-        results[0].executionId == exec1.id
+        results[0].executionId == executionData[0].execution.id
     }
 
-    def "getExecutionReports with optionFilter - handles empty and null values"() {
+
+    @Unroll
+    def "getExecutionReports with optionFilter - edge cases: #description"() {
         given:
-        def exec1 = TestDomainFactory.createExecution(
-            argString: "-APPLICATION_NAME app1",
-            status: 'succeeded',
-            dateCompleted: new Date()
-        )
-        provider.saveReport(ExecReportUtil.buildSaveReportRequest(exec1))
+        def executionData = setupExecutions()
+        executionData.each { execData ->
+            provider.saveReport(ExecReportUtil.buildSaveReportRequest(execData.execution))
+        }
 
-        when: "empty optionFilter"
-        def query1 = new ExecQuery()
-        query1.optionFilter = ""
-        def results1 = provider.getExecutionReports(query1, true, null, [])
+        when:
+        def query = new ExecQuery()
+        query.optionFilter = filterValue
+        def results = provider.getExecutionReports(query, true, null, [])
 
-        then: "should return all results"
-        results1.size() == 1
+        then: "should return all results without filtering"
+        results.size() == 4
 
-        when: "null optionFilter"
-        def query2 = new ExecQuery()
-        query2.optionFilter = null
-        def results2 = provider.getExecutionReports(query2, true, null, [])
-
-        then: "should return all results"
-        results2.size() == 1
-
-        when: "whitespace only optionFilter"
-        def query3 = new ExecQuery()
-        query3.optionFilter = "   "
-        def results3 = provider.getExecutionReports(query3, true, null, [])
-
-        then: "should return all results"
-        results3.size() == 1
+        where:
+        description        | filterValue
+        "empty string"     | ""
+        "null value"       | null
+        "whitespace only"  | "   "
     }
 }

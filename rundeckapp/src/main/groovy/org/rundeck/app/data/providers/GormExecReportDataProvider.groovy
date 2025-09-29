@@ -88,18 +88,18 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
         if(execQuery?.optionFilter){
             def searchTerm = execQuery.optionFilter.toString().trim()
 
-            def optionPairs = []
+            def massagedOptions = []
             def tokens = searchTerm.split(/\s+/)
 
             for (int i = 0; i < tokens.length - 1; i++) {
                 if (tokens[i].startsWith('-') && !tokens[i + 1].startsWith('-')) {
-                    optionPairs << "${tokens[i]} ${tokens[i + 1]}"
+                    massagedOptions << "${tokens[i]} ${tokens[i + 1]}"
                     i++
                 }
             }
 
-            if (optionPairs.empty) {
-                optionPairs << searchTerm
+            if (massagedOptions.empty) {
+                massagedOptions << searchTerm
             }
 
             try {
@@ -107,8 +107,10 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
                     projections {
                         property('id')
                     }
-                    optionPairs.each { pair ->
-                        ilike('argString', "%${pair}%")
+                    or {
+                        massagedOptions.each { option ->
+                            ilike('argString', "%${option}%")
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -129,18 +131,18 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
             if(query?.optionFilter){
                 def searchTerm = query.optionFilter.toString().trim()
 
-                def optionPairs = []
+                def massagedOptions = []
                 def tokens = searchTerm.split(/\s+/)
 
                 for (int i = 0; i < tokens.length - 1; i++) {
                     if (tokens[i].startsWith('-') && !tokens[i + 1].startsWith('-')) {
-                        optionPairs << "${tokens[i]} ${tokens[i + 1]}"
+                        massagedOptions << "${tokens[i]} ${tokens[i + 1]}"
                         i++
                     }
                 }
 
-                if (optionPairs.empty) {
-                    optionPairs << searchTerm
+                if (massagedOptions.empty) {
+                    massagedOptions << searchTerm
                 }
 
                 try {
@@ -148,8 +150,10 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
                         projections {
                             property('id')
                         }
-                        optionPairs.each { pair ->
-                            ilike('argString', "%${pair}%")
+                        or {
+                            massagedOptions.each { option ->
+                                ilike('argString', "%${option}%")
+                            }
                         }
                     }
                 } catch (Exception e) {
@@ -219,19 +223,19 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
             def searchTerm = query.optionFilter.toString().trim()
 
             // Parse multiple options: "-app myapp -env prod" -> ["-app myapp", "-env prod"]
-            def optionPairs = []
+            def massagedOptions = []
             def tokens = searchTerm.split(/\s+/)
 
             for (int i = 0; i < tokens.length - 1; i++) {
                 if (tokens[i].startsWith('-') && !tokens[i + 1].startsWith('-')) {
-                    optionPairs << "${tokens[i]} ${tokens[i + 1]}"
+                    massagedOptions << "${tokens[i]} ${tokens[i + 1]}"
                     i++ // Skip the value token
                 }
             }
 
-            if (optionPairs.empty) {
+            if (massagedOptions.empty) {
                 // Fallback to simple search if no valid pairs found
-                optionPairs << searchTerm
+                massagedOptions << searchTerm
             }
 
             // Query Execution table for argString matches
@@ -240,9 +244,10 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
                     projections {
                         property('id')
                     }
-                    // Each option pair must be found somewhere in argString
-                    optionPairs.each { pair ->
-                        ilike('argString', "%${pair}%")
+                    or {
+                        massagedOptions.each { option ->
+                            ilike('argString', "%${option}%")
+                        }
                     }
                 }
             } catch (Exception e) {
