@@ -4,6 +4,7 @@ import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Specification
+import spock.lang.Unroll
 import rundeck.services.ReportService
 import com.dtolabs.rundeck.app.support.ExecQuery
 
@@ -124,54 +125,51 @@ class OptionFilterIntegrationSpec extends Specification {
             maprefUri: exec3.argString
         ).save(flush: true, failOnError: true)
 
-        when: "searching with single option filter"
-        def query1 = new ExecQuery()
-        query1.projFilter = 'testproject'
-        query1.optionFilter = '-APPLICATION_NAME myapp'
-        def result1 = reportService.getExecutionReports(query1, true)
+        expect: "optionFilter searches work as expected"
+        def testScenarios = [
+            [
+                description: "single option exact match",
+                searchTerm: "-APPLICATION_NAME myapp",
+                expectedCount: 1,
+                expectedExecutions: [exec1]
+            ],
+            [
+                description: "multiple options with OR logic",
+                searchTerm: "-APPLICATION_NAME myapp -ENV production",
+                expectedCount: 2,
+                expectedExecutions: [exec1, exec3]
+            ],
+            [
+                description: "different job option match",
+                searchTerm: "-SERVICE_NAME backend",
+                expectedCount: 1,
+                expectedExecutions: [exec3]
+            ],
+            [
+                description: "non-existent option",
+                searchTerm: "-NONEXISTENT value",
+                expectedCount: 0,
+                expectedExecutions: []
+            ],
+            [
+                description: "case insensitive match",
+                searchTerm: "-APPLICATION_NAME MYAPP",
+                expectedCount: 1,
+                expectedExecutions: [exec1]
+            ]
+        ]
 
-        then: "should find only executions with matching APPLICATION_NAME"
-        result1.reports.size() == 1
-        result1.reports[0].executionId == exec1.id
+        testScenarios.each { scenario ->
+            def query = new ExecQuery()
+            query.projFilter = 'testproject'
+            query.optionFilter = scenario.searchTerm
+            def result = reportService.getExecutionReports(query, true)
 
-        when: "searching with multiple option filter"
-        def query2 = new ExecQuery()
-        query2.projFilter = 'testproject'
-        query2.optionFilter = '-APPLICATION_NAME myapp -ENV production'
-        def result2 = reportService.getExecutionReports(query2, true)
-
-        then: "should find only executions matching both options"
-        result2.reports.size() == 1
-        result2.reports[0].executionId == exec1.id
-
-        when: "searching with different option"
-        def query3 = new ExecQuery()
-        query3.projFilter = 'testproject'
-        query3.optionFilter = '-SERVICE_NAME backend'
-        def result3 = reportService.getExecutionReports(query3, true)
-
-        then: "should find execution with different job"
-        result3.reports.size() == 1
-        result3.reports[0].executionId == exec3.id
-
-        when: "searching with non-existent option"
-        def query4 = new ExecQuery()
-        query4.projFilter = 'testproject'
-        query4.optionFilter = '-NONEXISTENT value'
-        def result4 = reportService.getExecutionReports(query4, true)
-
-        then: "should find no results"
-        result4.reports.size() == 0
-
-        when: "searching with case insensitive match"
-        def query5 = new ExecQuery()
-        query5.projFilter = 'testproject'
-        query5.optionFilter = '-APPLICATION_NAME MYAPP'  // uppercase
-        def result5 = reportService.getExecutionReports(query5, true)
-
-        then: "should find case insensitive match"
-        result5.reports.size() == 1
-        result5.reports[0].executionId == exec1.id
+            assert result.reports.size() == scenario.expectedCount
+            if (scenario.expectedExecutions) {
+                assert result.reports.collect { it.executionId }.sort() == scenario.expectedExecutions.collect { it.id }.sort()
+            }
+        }
 
         when: "combining optionFilter with other filters"
         def query6 = new ExecQuery()
@@ -185,7 +183,8 @@ class OptionFilterIntegrationSpec extends Specification {
         result6.reports.collect { it.executionId }.sort() == [exec1.id, exec3.id].sort()
     }
 
-    def "optionFilter handles edge cases gracefully"() {
+    @Unroll
+    def "optionFilter handles edge cases gracefully - #description"() {
         given: "execution with options"
         def job = new ScheduledExecution(
             jobName: 'edge-case-job',
@@ -225,31 +224,19 @@ class OptionFilterIntegrationSpec extends Specification {
             maprefUri: exec.argString
         ).save(flush: true, failOnError: true)
 
-        when: "optionFilter is empty string"
-        def query1 = new ExecQuery()
-        query1.projFilter = 'testproject2'
-        query1.optionFilter = ''
-        def result1 = reportService.getExecutionReports(query1, true)
-
-        then: "should return all results"
-        result1.reports.size() >= 1  // At least our test execution
-
-        when: "optionFilter is null"
-        def query2 = new ExecQuery()
-        query2.projFilter = 'testproject2'
-        query2.optionFilter = null
-        def result2 = reportService.getExecutionReports(query2, true)
+        when:
+        def query = new ExecQuery()
+        query.projFilter = 'testproject2'
+        query.optionFilter = filterValue
+        def result = reportService.getExecutionReports(query, true)
 
         then: "should return all results without error"
-        result2.reports.size() >= 1
+        result.reports.size() >= 1  // At least our test execution
 
-        when: "optionFilter is whitespace only"
-        def query3 = new ExecQuery()
-        query3.projFilter = 'testproject2'
-        query3.optionFilter = '   '
-        def result3 = reportService.getExecutionReports(query3, true)
-
-        then: "should return all results without error"
-        result3.reports.size() >= 1
+        where:
+        description        | filterValue
+        "empty string"     | ''
+        "null value"       | null
+        "whitespace only"  | '   '
     }
 }
