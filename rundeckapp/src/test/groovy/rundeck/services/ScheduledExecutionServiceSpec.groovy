@@ -1541,23 +1541,27 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         null | 'val3'    | false    | 'http://test.com/test3' | 'name'
         'test1' | 'val3' | false    | 'hzzp://test.com/test3' | 'valuesUrlLong'
     }
-    def "validate options multivalued with multiple defaults"() {
+
+    @Unroll
+    def "validate options multivalued with multiple defaults using delimiter '#delimiter'"() {
         given:
         setupDoValidate()
         def params = baseJobParams()+[
-                      options: [
-                              "options[0]":
-                                      [
-                                              name: 'test3',
-                                              defaultValue: 'val1,val2',
-                                              enforced: true,
-                                              multivalued:true,
-                                              delimiter: ',',
-                                              valuesList: 'val1,val2,val3'
-                                      ]
-                      ]
+                options: [
+                        "options[0]":
+                                [
+                                        name: 'test3',
+                                        defaultValue: "val1${delimiter}val2",
+                                        enforced: true,
+                                        multivalued:true,
+                                        delimiter: delimiter,
+                                        valuesList: "val1${delimiter}val2${delimiter}val3",
+                                        valuesListDelimiter: delimiter
+                                ]
+                ]
         ]
         service.fileUploadService = Mock(FileUploadService)
+
         when:
         def results = service._dovalidate(params, mockAuth())
 
@@ -1565,29 +1569,38 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         !results.failed
         results.scheduledExecution.options.size()==1
         results.scheduledExecution.options[0].name == 'test3'
-        results.scheduledExecution.options[0].defaultValue == 'val1,val2'
+        results.scheduledExecution.options[0].defaultValue == "val1${delimiter}val2"
         results.scheduledExecution.options[0].enforced
         results.scheduledExecution.options[0].multivalued
-        results.scheduledExecution.options[0].delimiter==','
-        results.scheduledExecution.options[0].optionValues==['val1','val2','val3'] as List
+        results.scheduledExecution.options[0].delimiter == delimiter
+        results.scheduledExecution.options[0].optionValues == ['val1','val2','val3'] as List
+        results.scheduledExecution.options[0].valuesList == "val1${delimiter}val2${delimiter}val3"
+
+
+        where:
+        delimiter << [',', '-', '/']
     }
-    def "validate options json multivalued with multiple defaults"() {
+
+    @Unroll
+    def "validate options json multivalued with multiple defaults using delimiter '#delimiter'"() {
         given:
         mockCodec(JSONCodec)
         setupDoValidate()
         def params = baseJobParams()+[
-                      jobOptionsJson: [
-                          [
-                                  name: 'test3',
-                                  value: 'val1,val2',
-                                  enforced: true,
-                                  multivalued:true,
-                                  delimiter: ',',
-                                  values: ['val1','val2','val3']
-                          ]
-                      ].encodeAsJSON().toString()
+                jobOptionsJson: [
+                        [
+                                name: 'test3',
+                                value: "val1${delimiter}val2",
+                                enforced: true,
+                                multivalued:true,
+                                delimiter: delimiter,
+                                values: ['val1','val2','val3'],
+                                valuesListDelimiter: delimiter
+                        ]
+                ].encodeAsJSON().toString()
         ]
         service.fileUploadService = Mock(FileUploadService)
+
         when:
         def results = service._dovalidate(params, mockAuth())
 
@@ -1595,12 +1608,18 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         !results.failed
         results.scheduledExecution.options.size()==1
         results.scheduledExecution.options[0].name == 'test3'
-        results.scheduledExecution.options[0].defaultValue == 'val1,val2'
+        results.scheduledExecution.options[0].defaultValue == "val1${delimiter}val2"
         results.scheduledExecution.options[0].enforced
         results.scheduledExecution.options[0].multivalued
-        results.scheduledExecution.options[0].delimiter==','
-        results.scheduledExecution.options[0].optionValues==['val1','val2','val3'] as List
+        results.scheduledExecution.options[0].delimiter == delimiter
+        results.scheduledExecution.options[0].valuesListDelimiter == delimiter
+        results.scheduledExecution.options[0].valuesList == "val1${delimiter}val2${delimiter}val3"
+        results.scheduledExecution.options[0].optionValues == ['val1','val2','val3'] as List
+
+        where:
+        delimiter << ['-', ',', '/']
     }
+
     def "invalid options multivalued"() {
         given:
         setupDoValidate()
