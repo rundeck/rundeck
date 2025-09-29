@@ -325,7 +325,7 @@ public class Option implements Comparable, OptionData {
         if(optionValues) {
             valuesList = optionValues.join(valuesListDelimiter)
         }else{
-            return ''
+            return null
         }
     }
 
