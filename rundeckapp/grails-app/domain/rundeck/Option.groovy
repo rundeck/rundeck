@@ -280,7 +280,7 @@ public class Option implements Comparable, OptionData {
                 data.valuesListDelimiter=DEFAULT_DELIMITER
             }
             data.optionValues=new ArrayList<String>(values);
-            data.valuesList =values
+            data.valuesList = values
         }
 
         def multivalued = data.remove('multivalued')
@@ -311,6 +311,7 @@ public class Option implements Comparable, OptionData {
         }
 
         DataBindingUtils.bindObjectToInstance opt, data, [], [], null
+        opt.valuesList = opt.produceValuesList()
         return opt
     }
     /**
