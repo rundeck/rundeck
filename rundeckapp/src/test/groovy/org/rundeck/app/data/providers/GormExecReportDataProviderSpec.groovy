@@ -143,11 +143,11 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
         }
 
         where:
-        description                              | searchTerm                        | expectedCount | expectedMatches
-        "multiple options - all match with OR"  | "-APP myapp -ENV production"      | 4            | { data -> [data[0].execution.id, data[1].execution.id, data[2].execution.id, data[3].execution.id] }
-        "exact option-value pair"               | "-SLEEP 10"                       | 2            | { data -> [data[0].execution.id, data[2].execution.id] }
-        "option name only"                      | "-SLEEP"                          | 3            | { data -> [data[0].execution.id, data[2].execution.id, data[3].execution.id] }
-        "argument order independent"            | "-FIRST value1 -SECOND value2"    | 2            | { data -> [data[1].execution.id, data[2].execution.id] }
+        description                                     | searchTerm                        | expectedCount | expectedMatches
+        "multiple options, everything match due to OR"  | "-APP myapp -ENV production"      | 4            | { data -> [data[0].execution.id, data[1].execution.id, data[2].execution.id, data[3].execution.id] }
+        "exact option-value pair"                       | "-SLEEP 10"                       | 2            | { data -> [data[0].execution.id, data[2].execution.id] }
+        "option name only, partial match"               | "-ENV"                            | 5            | { data -> [data[0].execution.id, data[1].execution.id, data[2].execution.id, data[3].execution.id, data[4].execution.id] }
+        "multiple options, independent of order"        | "-FIRST value1 -SECOND value2"    | 2            | { data -> [data[1].execution.id, data[2].execution.id] }
     }
 
     private List setupExecutions() {
@@ -155,7 +155,8 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
             [execution: TestDomainFactory.createExecution(argString: "-APP myapp -ENV production -SLEEP 10", status: 'succeeded', dateCompleted: new Date())],
             [execution: TestDomainFactory.createExecution(argString: "-APP otherapp -ENV production -FIRST value1 -SECOND value2", status: 'succeeded', dateCompleted: new Date())],
             [execution: TestDomainFactory.createExecution(argString: "-APP myapp -ENV staging -SLEEP 10 -SECOND value2 -FIRST value1", status: 'succeeded', dateCompleted: new Date())],
-            [execution: TestDomainFactory.createExecution(argString: "-ENV production -OTHER option -DIFFERENT value -SLEEP 30", status: 'succeeded', dateCompleted: new Date())]
+            [execution: TestDomainFactory.createExecution(argString: "-ENV production -OTHER option -DIFFERENT value -SLEEP 30", status: 'succeeded', dateCompleted: new Date())],
+            [execution: TestDomainFactory.createExecution(argString: "-ENVIRONMENT staging", status: 'succeeded', dateCompleted: new Date())]
         ]
     }
 
@@ -196,7 +197,7 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
         def results = provider.getExecutionReports(query, true, null, [])
 
         then: "should return all results without filtering"
-        results.size() == 4
+        results.size() == 5
 
         where:
         description        | filterValue
