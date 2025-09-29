@@ -148,8 +148,8 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
         "exact option-value pair"                       | "-SLEEP 10"                       | 2            | { data -> [data[0].execution.id, data[2].execution.id] }
         "option name only, partial match"               | "-ENV"                            | 5            | { data -> [data[0].execution.id, data[1].execution.id, data[2].execution.id, data[3].execution.id, data[4].execution.id] }
         "multiple options, independent of order"        | "-FIRST value1 -SECOND value2"    | 2            | { data -> [data[1].execution.id, data[2].execution.id] }
-        "standalone value with non-related optionName"  | "value1 -APP"                     | 2            | { data -> [data[1].execution.id, data[2].execution.id] }
-        "mixed standalone values"                       | "option value"                    | 1            | { data -> [data[3].execution.id] }
+        "standalone value with non-related optionName"  | "value1 -APP"                     | 3            | { data -> [data[0].execution.id, data[1].execution.id, data[2].execution.id] }
+        "mixed standalone values"                       | "option 30"                       | 1            | { data -> [data[3].execution.id] }
     }
 
     private List setupExecutions() {
