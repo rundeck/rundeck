@@ -211,6 +211,8 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
                 } else {
                     massagedOptions << tokens[i]
                 }
+            } else {
+                massagedOptions << tokens[i]
             }
         }
 
