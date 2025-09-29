@@ -215,7 +215,7 @@
         </div>
         <div class="base-filters">
           <div class="row">
-            <div class="col-xs-12 col-sm-4">
+            <div class="col-xs-12 col-sm-12">
               <div class="form-group">
                 <label for="optionFilter" class="sr-only">
                   {{ $t("jobquery.title.optionFilter") }}
@@ -225,9 +225,8 @@
                     type="text"
                     name="optionFilter"
                     class="form-control"
-                    :placeholder="$t('jobquery.title.optionFilter')"
+                    :placeholder="$t('jobquery.title.optionFilter.label')"
                     data-test-id="option-filter"
-                    title="Search job options. Single: -sleep 10, Multiple: -app myapp -env prod (order independent)"
                 />
               </div>
             </div>
