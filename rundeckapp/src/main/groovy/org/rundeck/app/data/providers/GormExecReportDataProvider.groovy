@@ -446,7 +446,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
             }
 
             // Handle optionFilter results from pre-query
-            if(query?.optionFilter){
+            if(query?.optionFilter?.trim()){
                 if (optionFilterExecutionIds && !optionFilterExecutionIds.empty) {
                     'in'('executionId', optionFilterExecutionIds)
                 } else {
