@@ -20,15 +20,14 @@
         <span class="job-stats-value" id="jobstat_execcount_total" data-execcount="${execCount}">
             <g:formatNumber number="${execCount}"/>
         </span>
-        <span class="text-table-header"><g:message code="Execution.plural"/></span>
+        <span class="text-table-header"><g:message code="Execution${execCount!=1?'.plural':''}"/></span>
 
 
     </div>
-    <g:if test="${lastrun || reflastrun}">
+    <g:if test="${successrate>-1}">
 
         <div class="col-xs-12 col-sm-4 job-stats-item">
 
-            <g:set var="successrate" value="${params.float('success') ?: successrate}"/>
             <g:set var="ratecolors"
                    value="${['text-success', 'text-info', 'text-warning', 'text-danger']}"/>
             <g:set var="ratelevels" value="${[0.9f, 0.75f, 0.5f]}"/>
@@ -49,10 +48,6 @@
 
 
         <div class="col-xs-12 col-sm-4 job-stats-item">
-            <g:set var="executionService" bean="${rundeck.services.ExecutionService}"/>
-            <g:set var="avgduration" value="${executionService.getAverageDuration(scheduledExecution.uuid)}"/>
-
-
             <span class="job-stats-value" data-avgduration="${avgduration}">
                 <g:if test="${avgduration>0}">
                     <g:timeDuration time="${avgduration}"/>
