@@ -1,5 +1,5 @@
 databaseChangeLog = {
-    changeSet(author: "cfranco", id: "5.15.0-1754578206", dbms: "oracle") {
+    changeSet(author: "cfranco", id: "5.15.0-1754578206", dbms: "oracle,postgresql") {
         preConditions(onFail: "MARK_RAN") {
             not {
                 indexExists(tableName: "execution", indexName: "EXECUTION_RETRY_EXEC_ID_IDX")
