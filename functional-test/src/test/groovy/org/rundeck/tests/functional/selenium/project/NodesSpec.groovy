@@ -11,7 +11,7 @@ class NodesSpec extends SeleniumBase {
 
     /**
      * Use an isolated project copied from SELENIUM_BASIC_PROJECT, so other suites can't
-     * modify the same project during CI. You can override via NODES_TEST_PROJECT env var.
+     * modify the same project during CI.
      */
     static final String NODES_TEST_PROJECT =
             (System.getenv('NODES_TEST_PROJECT') ?: "${SELENIUM_BASIC_PROJECT}-Nodes-${System.currentTimeMillis()}")
