@@ -295,12 +295,12 @@ function Option(data) {
             );
     });
     self.hasTextfield = ko.computed(function () {
-        return !self.enforced()
+        return !self.isMultilineType() && ( !self.enforced()
             && (
                 !self.multivalued()
                 || (self.hasError() && !self.hasExtended())
             )
-            || self.secureInput();
+            || self.secureInput());
     });
     self.showDefaultButton = ko.computed(function () {
         return !self.enforced()
@@ -316,6 +316,10 @@ function Option(data) {
 
     self.isFileType=ko.computed(function () {
         return self.optionType() == 'file';
+    });
+
+    self.isMultilineType = ko.computed(function () {
+        return self.optionType() === 'multiline';
     });
     /**
      * Return the array of option objects to use for displaying the Select input for this option

@@ -1,0 +1,45 @@
+import { Meta, Subtitle, Title, Canvas, Controls, Description, Stories } from "@storybook/blocks";
+import * as OptionEditStories from './OptionEdit.stories.ts'
+
+<Meta of={OptionEditStories} />
+
+<Title />
+
+<Subtitle />
+
+## Import
+
+```ts
+import OptionEdit from '@app/components/job/options/OptionEdit.vue';
+```
+
+## Playground
+
+<Canvas of={OptionEditStories.Playground} sourceState="shown" />
+<Controls of={OptionEditStories.Playground} />
+
+## Examples
+
+### Basic Options
+
+<Canvas of={OptionEditStories.NewTextOption} />
+
+### Secure Options
+
+<Canvas of={OptionEditStories.EditSecureOption} />
+
+### Special Option Types
+
+<Canvas of={OptionEditStories.MultilineOption} />
+<Canvas of={OptionEditStories.FileUploadOption} />
+<Canvas of={OptionEditStories.DateOption} />
+
+### Options with Allowed Values
+
+<Canvas of={OptionEditStories.OptionWithAllowedValues} />
+<Canvas of={OptionEditStories.OptionWithRemoteValues} />
+<Canvas of={OptionEditStories.OptionWithPluginValues} />
+
+### Validation
+
+<Canvas of={OptionEditStories.OptionWithValidationErrors} />
