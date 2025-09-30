@@ -1,225 +1,281 @@
 package org.rundeck.tests.functional.selenium.jobs
 
-import org.rundeck.util.annotations.SeleniumCoreTest
-import org.rundeck.util.common.jobs.JobUtils
-import org.rundeck.util.container.SeleniumBase
-import org.rundeck.util.gui.pages.jobs.JobShowPage
-import org.rundeck.util.gui.pages.login.LoginPage
 import org.openqa.selenium.By
-import org.openqa.selenium.WebElement
+import org.openqa.selenium.JavascriptExecutor
+import org.rundeck.util.annotations.SeleniumCoreTest
+import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.gui.pages.jobs.JobCreatePage
+import org.rundeck.util.gui.pages.jobs.JobShowPage
+import org.rundeck.util.gui.pages.jobs.JobTab
+import org.rundeck.util.gui.pages.login.LoginPage
 
 @SeleniumCoreTest
-class JobAuditDisplaySpec extends SeleniumBase {
+class JobAuditSpec extends SeleniumBase {
 
-    def setup() {
-        go(LoginPage).login(TEST_USER, TEST_PASS)
-    }
+    static def projectName = "auditUserTrackingProject"
+    static def jobName = "audit-test-job"
 
-    def "job show displays audit information for jobs with creator"() {
-        given: "a project and job with audit information"
-        String projectName = "auditTestProject"
+    def setupSpec() {
         setupProject(projectName)
-        
-        // Import job with specific creator information
-        def jobXml = '''
-<joblist>
-   <job>
-      <id>audit-test-job</id>
-      <name>Audit Test Job</name>
-      <description>A job to test audit display functionality</description>
-      <loglevel>INFO</loglevel>
-      <context>
-          <project>''' + projectName + '''</project>
-      </context>
-      <dispatch>
-        <threadcount>1</threadcount>
-        <keepgoing>false</keepgoing>
-      </dispatch>
-      <sequence>
-        <command>
-            <exec>echo "Hello World"</exec>
-        </command>
-      </sequence>
-   </job>
-</joblist>
-'''
-        
-        // Create a temporary job file and import it
-        def tempFile = File.createTempFile("test-job", ".xml")
-        tempFile.text = jobXml
-        tempFile.deleteOnExit()
-        
-        String jobUuid = JobUtils.jobImportFile(projectName, tempFile.absolutePath, client).succeeded.first().id
-
-        when: "visiting the job show page"
-        JobShowPage jobShowPage = page(JobShowPage, projectName).forJob(jobUuid)
-        jobShowPage.go()
-
-        then: "the job audit information should be displayed"
-        // Verify the job details table is visible
-        jobShowPage.jobAuditTable.displayed
-        
-        // Check for "Created by" information using page object
-        def createdByInfo = jobShowPage.jobCreatedBy
-        createdByInfo != null
-        createdByInfo.text.contains(TEST_USER) || createdByInfo.text.toLowerCase().contains('admin')
-
-        cleanup:
-        deleteProject(projectName)
-        if (tempFile?.exists()) {
-            tempFile.delete()
-        }
     }
 
-    def "job show displays last modified information after job update"() {
-        given: "a project and job"
-        String projectName = "auditModifyProject" 
-        setupProject(projectName)
-        String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/test.xml', client).succeeded.first().id
+    def "cross-user audit tracking: admin creates, jaya edits"() {
+        given:
+        def loginPage = page LoginPage
+        def jobCreatePage = page JobCreatePage
+        def jobShowPage = page JobShowPage
+        def jobUuid
 
-        when: "the job is modified via API"
-        // Update job description via API to trigger lastModifiedBy
-        def jobUpdateXml = '''<?xml version="1.0" encoding="UTF-8"?>
-<joblist>
-   <job>
-      <name>Modified Test Job</name>
-      <description>Updated description for audit testing</description>
-      <loglevel>INFO</loglevel>
-      <context>
-          <project>''' + projectName + '''</project>
-      </context>
-      <dispatch>
-        <threadcount>1</threadcount>
-        <keepgoing>false</keepgoing>
-      </dispatch>
-      <sequence>
-        <command>
-            <exec>echo "Modified job content"</exec>
-        </command>
-      </sequence>
-   </job>
-</joblist>'''
+        when: "admin logs in and creates a job"
+        loginPage.go()
+        loginPage.login(TEST_USER, TEST_PASS)
 
-        def updateResponse = doPost("/api/55/job/${jobUuid}", [
-            'Content-Type': 'application/xml'
-        ], jobUpdateXml)
-        assert updateResponse.successful
+        jobCreatePage.go("/project/${projectName}/job/create")
+        jobCreatePage.validatePage()
 
-        and: "visiting the job show page"
-        JobShowPage jobShowPage = page(JobShowPage, projectName).forJob(jobUuid)
-        jobShowPage.go()
+        // Fill job details
+        jobCreatePage.jobNameInput.clear()
+        jobCreatePage.jobNameInput.sendKeys(jobName)
+        jobCreatePage.descriptionTextarea.clear()
+        jobCreatePage.descriptionTextarea.sendKeys("job created by admin")
 
-        then: "both created and modified audit information should be displayed"
-        // Verify audit information using page object methods
-        def createdByInfo = jobShowPage.jobCreatedBy
-        def modifiedByInfo = jobShowPage.jobLastModifiedBy
-        
-        // Verify creation audit information is present
-        createdByInfo != null
-        createdByInfo.text.contains(TEST_USER) || createdByInfo.text.toLowerCase().contains('admin')
-        
-        // Modified info should be present after update
-        modifiedByInfo != null
-        modifiedByInfo.text.contains(TEST_USER) || modifiedByInfo.text.toLowerCase().contains('admin')
+        // Add workflow step
+        jobCreatePage.tab(JobTab.WORKFLOW).click()
+        jobCreatePage.addSimpleCommandStep("echo hello from admin", 0)
+        jobCreatePage.createJobButton.click()
 
-        cleanup:
-        deleteProject(projectName)
-    }
-
-    def "job show handles jobs without audit information gracefully"() {
-        given: "a project and legacy job without audit fields"
-        String projectName = "legacyAuditProject"
-        setupProject(projectName) 
-        String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/test.xml', client).succeeded.first().id
-
-        when: "visiting the job show page"
-        JobShowPage jobShowPage = page(JobShowPage, projectName).forJob(jobUuid)
-        jobShowPage.go()
-
-        then: "the page should load without errors even if audit info is missing"
-        // Verify the page loads successfully
+        then: "job is created successfully"
+        jobShowPage.waitForElementToBeClickable(jobShowPage.jobLinkTitleLabel)
         jobShowPage.validatePage()
-        
-        // The page should contain basic job information
-        jobShowPage.jobAuditTable.displayed
-        
-        // Audit fields may or may not be present for legacy jobs, but page should not error
-        // This test ensures backward compatibility - page object methods handle missing elements gracefully
-        noExceptionThrown()
+        jobShowPage.jobLinkTitleLabel.getText() == jobName
 
-        cleanup:
-        deleteProject(projectName)
-    }
+        when: "extract job UUID and check initial audit info"
+        def currentUrl = driver.getCurrentUrl()
+        jobUuid = currentUrl.split('/').last()
+        println "Job created with UUID: ${jobUuid}"
 
-    def "job audit information displays with correct formatting"() {
-        given: "a project and job"
-        String projectName = "auditFormattingProject"
-        setupProject(projectName)
-        String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/test.xml', client).succeeded.first().id
+        jobShowPage.jobDefinitionModalButton.click()
 
-        when: "visiting the job show page"
-        JobShowPage jobShowPage = page(JobShowPage, projectName).forJob(jobUuid)
-        jobShowPage.go()
+        then: "initial audit information shows created by admin"
+        def modalContent = jobShowPage.jobDefinitionModalContent
+        modalContent.getText().contains("CREATED BY")
+        modalContent.getText().contains("admin")
+        modalContent.getText().contains("LAST MODIFIED BY")
+        modalContent.getText().contains("admin")
+        println "✓ Initial audit verified: Created by admin, Last modified by admin"
 
-        then: "audit information should be properly formatted with timestamps"
-        // Verify audit table is present and visible
-        jobShowPage.jobAuditTable.displayed
-        
-        // Check if audit information exists using page object methods
-        if (jobShowPage.hasAuditInformation()) {
-            def createdByInfo = jobShowPage.jobCreatedBy
-            if (createdByInfo != null) {
-                assert createdByInfo.text.trim() != ""
-                assert createdByInfo.text.contains(TEST_USER) || 
-                       createdByInfo.text.toLowerCase().contains('admin') ||
-                       createdByInfo.text.matches(".*\\d.*") // Contains date/time info
+        when: "admin logs out"
+        jobShowPage.closeDefinitionModalButton.click()
+
+        // Simple logout
+        def userDropdown = driver.findElement(By.cssSelector("a.dropdown-toggle[id='userLabel']"))
+        userDropdown.click()
+        Thread.sleep(500)
+        def logoutLink = driver.findElement(By.cssSelector("a[href='/user/logout']"))
+        logoutLink.click()
+
+        // Wait for logout and clear session completely
+        Thread.sleep(2000)
+
+        // Clear all browser data to ensure clean session for jaya
+        driver.manage().deleteAllCookies()
+
+        // Clear browser storage
+        def js = driver as JavascriptExecutor
+        js.executeScript("window.localStorage.clear();")
+        js.executeScript("window.sessionStorage.clear();")
+
+        println "✓ Admin logged out and session cleared"
+
+        and: "jaya logs in with clean session"
+        loginPage.go()
+
+        // Wait for clean login page
+        Thread.sleep(1000)
+
+        // Clear any pre-filled credentials and enter jaya's credentials
+        def usernameField = driver.findElement(By.name("j_username"))
+        def passwordField = driver.findElement(By.name("j_password"))
+
+        usernameField.clear()
+        usernameField.sendKeys("jaya")
+
+        passwordField.clear()
+        passwordField.sendKeys("jaya123")
+
+        // Submit login
+        def loginButton = driver.findElement(By.id("btn-login"))
+        loginButton.click()
+
+        Thread.sleep(2000)
+        println "✓ Jaya logged in with clean credentials"
+
+        and: "jaya navigates to the job and edits it"
+        jobShowPage.go("/project/${projectName}/job/show/${jobUuid}")
+        jobShowPage.validatePage()
+
+        // Wait for page to fully load, then use JobEditSpec pattern
+        Thread.sleep(2000)
+
+        // Use direct selectors based on the actual HTML structure
+        def actionButton = driver.findElement(By.cssSelector(".job-action-button .btn.dropdown-toggle"))
+        actionButton.click()
+        println "✓ Action dropdown clicked"
+
+        // Wait for dropdown to expand and become visible
+        Thread.sleep(1000)
+
+        // Try to find and click the edit link with better error handling
+        try {
+            // Wait for dropdown menu to be visible
+            def dropdownMenu = driver.findElement(By.cssSelector(".dropdown-menu.dropdown-menu-right"))
+            println "Dropdown menu found: ${dropdownMenu.isDisplayed()}"
+
+            // Try multiple selectors for the edit link
+            def editLink
+            try {
+                editLink = driver.findElement(By.cssSelector("a[title='Edit this Job']"))
+                println "Found edit link by title"
+            } catch (Exception e1) {
+                try {
+                    editLink = driver.findElement(By.xpath("//a[contains(@href, '/job/edit/') and contains(text(), 'Edit this Job')]"))
+                    println "Found edit link by href and text"
+                } catch (Exception e2) {
+                    try {
+                        editLink = driver.findElement(By.cssSelector("ul.dropdown-menu li:first-child a"))
+                        println "Found edit link as first dropdown item"
+                    } catch (Exception e3) {
+                        println "Could not find edit link with any selector"
+                        println "Available dropdown items:"
+                        def dropdownItems = driver.findElements(By.cssSelector(".dropdown-menu li a"))
+                        dropdownItems.eachWithIndex { item, index ->
+                            println "Item ${index}: ${item.getText()} - href: ${item.getAttribute('href')}"
+                        }
+                        throw new RuntimeException("Edit link not found")
+                    }
+                }
             }
-            
-            def modifiedByInfo = jobShowPage.jobLastModifiedBy  
-            if (modifiedByInfo != null) {
-                assert modifiedByInfo.text.trim() != ""
-                assert modifiedByInfo.text.contains(TEST_USER) ||
-                       modifiedByInfo.text.toLowerCase().contains('admin') ||
-                       modifiedByInfo.text.matches(".*\\d.*") // Contains date/time info
+
+            if (editLink.isDisplayed() && editLink.isEnabled()) {
+                editLink.click()
+                println "✓ Edit link clicked successfully"
+            } else {
+                println "Edit link found but not clickable: displayed=${editLink.isDisplayed()}, enabled=${editLink.isEnabled()}"
+
+                // Try to make the dropdown fully visible and clickable
+                def jsExecutor = driver as JavascriptExecutor
+
+                // Scroll the element into view
+                jsExecutor.executeScript("arguments[0].scrollIntoView(true);", editLink)
+                Thread.sleep(500)
+
+                // Try JavaScript click as fallback
+                try {
+                    jsExecutor.executeScript("arguments[0].click();", editLink)
+                    println "✓ Edit link clicked via JavaScript"
+                } catch (Exception jsError) {
+                    println "JavaScript click failed: ${jsError.message}"
+
+                    // Last resort: navigate directly to edit URL
+                    def editUrl = editLink.getDomProperty("href")
+                    if (editUrl) {
+                        driver.get(editUrl)
+                        println "✓ Navigated directly to edit URL: ${editUrl}"
+                    } else {
+                        throw new RuntimeException("Could not click edit link or get edit URL")
+                    }
+                }
             }
+
+        } catch (Exception e) {
+            println "Error clicking edit link: ${e.message}"
+            throw e
         }
 
-        cleanup:
-        deleteProject(projectName)
-    }
+        // Wait for edit page to fully load
+        Thread.sleep(2000)
 
-    def "job audit section is accessible and visible"() {
-        given: "a project and job"  
-        String projectName = "auditVisibilityProject"
-        setupProject(projectName)
-        String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/test.xml', client).succeeded.first().id
-
-        when: "visiting the job show page"
-        JobShowPage jobShowPage = page(JobShowPage, projectName).forJob(jobUuid)
-        jobShowPage.go()
-
-        then: "audit information should be visible in the details section"
-        // Verify the job details table is visible using page object
-        jobShowPage.jobAuditTable.displayed
-        
-        // Verify audit information accessibility using page object methods
-        if (jobShowPage.hasAuditInformation()) {
-            def createdByInfo = jobShowPage.jobCreatedBy
-            def modifiedByInfo = jobShowPage.jobLastModifiedBy
-            
-            if (createdByInfo != null) {
-                assert createdByInfo.displayed
-            }
-            
-            if (modifiedByInfo != null) {
-                assert modifiedByInfo.displayed  
-            }
+        try {
+            jobCreatePage.validatePage()
+            println "✓ Edit page loaded"
+        } catch (Exception e) {
+            println "Edit page validation failed: ${e.message}"
+            println "Current URL: ${driver.getCurrentUrl()}"
+            println "Page title: ${driver.getTitle()}"
         }
-        
-        // Page should load without errors regardless of audit data presence
-        noExceptionThrown()
 
-        cleanup:
-        deleteProject(projectName)
+        // Wait and click workflow tab with debugging
+        try {
+            println "Looking for WORKFLOW tab..."
+            Thread.sleep(1000)
+
+            def workflowTab = jobCreatePage.tab(JobTab.WORKFLOW)
+            println "WORKFLOW tab found: ${workflowTab != null}"
+
+            if (workflowTab.isDisplayed() && workflowTab.isEnabled()) {
+                workflowTab.click()
+                println "✓ WORKFLOW tab clicked"
+            } else {
+                println "WORKFLOW tab not clickable: displayed=${workflowTab.isDisplayed()}, enabled=${workflowTab.isEnabled()}"
+                // Try JavaScript click on tab
+                def jsExecutor = driver as JavascriptExecutor
+                jsExecutor.executeScript("arguments[0].click();", workflowTab)
+                println "✓ WORKFLOW tab clicked via JavaScript"
+            }
+
+            Thread.sleep(1000)
+
+        } catch (Exception tabError) {
+            println "WORKFLOW tab click failed: ${tabError.message}"
+            // Let's try DETAILS tab instead since we're editing description anyway
+            println "Trying DETAILS tab as fallback..."
+            def detailsTab = jobCreatePage.tab(JobTab.DETAILS)
+            detailsTab.click()
+            println "✓ DETAILS tab clicked as fallback"
+        }
+
+        // Edit the job description
+        try {
+            jobCreatePage.descriptionTextarea.clear()
+            jobCreatePage.descriptionTextarea.sendKeys("job created by admin - edited by jaya!")
+            println "✓ Description updated"
+        } catch (Exception descError) {
+            println "Description update failed: ${descError.message}"
+        }
+
+        jobCreatePage.getUpdateJobButton().click()
+        println "✓ Update button clicked"
+
+        // Wait for redirect back to job show page
+        Thread.sleep(3000)
+
+        then: "job is updated successfully"
+        // Check if we're redirected to show page, if not navigate manually
+        def urlAfterUpdate = driver.getCurrentUrl()
+        println "Current URL after update: ${urlAfterUpdate}"
+
+        if (urlAfterUpdate.contains("/job/edit/")) {
+            println "Still on edit page, navigating to show page manually..."
+            jobShowPage.go("/project/${projectName}/job/show/${jobUuid}")
+            Thread.sleep(2000)
+        }
+
+        jobShowPage.validatePage()
+        println "✓ Job updated by jaya"
+
+        when: "check final audit info"
+        jobShowPage.jobDefinitionModalButton.click()
+
+        then: "audit information shows cross-user tracking"
+        def finalModalContent = jobShowPage.jobDefinitionModalContent
+        finalModalContent.getText().contains("CREATED BY")
+        finalModalContent.getText().contains("admin")
+        finalModalContent.getText().contains("LAST MODIFIED BY")
+        finalModalContent.getText().contains("jaya")
+        println "✓ Final audit verified: Created by admin, Last modified by jaya"
+
+        cleanup: "close the modal"
+        jobShowPage.closeDefinitionModalButton.click()
+        println "✓ Cross-user audit tracking test completed successfully!"
     }
 }
