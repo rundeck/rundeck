@@ -57,7 +57,7 @@ Use regex groups to only highlight grouped sections:
 
 See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html) documentation.''',
             required = false,
-            validatorClass = SimpleDataFilterPlugin.RegexValidator
+            validatorClass = KeyValueDataLogFilterPlugin.RegexValidator
     )
     String regex
 
