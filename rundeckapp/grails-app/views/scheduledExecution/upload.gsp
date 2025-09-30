@@ -21,9 +21,9 @@
 
 <g:appTitle/> - <g:message code="upload.job.page.title" /></title>
 
-    <g:set var="uiType" value="${params.nextUi ? 'next' : params.legacyUi ? 'legacy' : 'current'}"/>
+    <g:set var="uiType" value="${params.ui ?: 'current'}"/>
 
-    <g:if test="${uiType == 'next'}">
+    <g:if test="${uiType != 'legacy'}">
         <asset:javascript src="static/pages/job/upload.js" defer="defer"/>
         <asset:stylesheet src="static/pages/job/upload.css"/>
     </g:if>
@@ -53,7 +53,7 @@
 <body>
 <div class="content">
 <div id="layoutBody">
-    <g:if test="${uiType == 'next'}">
+    <g:if test="${uiType != 'legacy'}">
         <div class="vue-ui-socket">
             <ui-socket section="job-upload-page" location="main"></ui-socket>
         </div>
