@@ -7,7 +7,8 @@ import BrowserJobItem from "../browse/tree/BrowserJobItem.vue";
 import {defineComponent, inject} from 'vue'
 import { RecycleScroller } from "vue-virtual-scroller";
 
-const rootStore = getRundeckContext().rootStore;
+const rundeckContext = getRundeckContext()
+const rootStore = rundeckContext.rootStore;
 export default defineComponent({
   name: "JobUploadPage",
   components: {JobBulkEditControls, RecycleScroller, BrowserJobItem },
@@ -49,7 +50,6 @@ export default defineComponent({
     await this.jobPageStore.loadProjAuthz();
   },
   created() {
-    // Fallback to RD_PROJECT if available
     this.project = (window as any)._rundeck?.projectName || "";
   },
   methods: {
@@ -159,7 +159,7 @@ export default defineComponent({
     },
     cancel() {
       // Redirect to jobs list
-      this.$router.push({ path: `/project/${this.project}/jobs` });
+      window.location.replace(`${rundeckContext.rdBase}/project/${this.project}/jobs`)
     },
   },
 });
