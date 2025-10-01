@@ -25,7 +25,7 @@
 
     <g:if test="${uiType != 'legacy'}">
         <asset:javascript src="static/pages/job/upload.js" defer="defer"/>
-        <asset:stylesheet src="static/pages/job/upload.css"/>
+        <asset:stylesheet src="static/css/pages/job/upload.css"/>
     </g:if>
     <g:else>
     <script type="text/javascript">
