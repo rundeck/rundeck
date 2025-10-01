@@ -53,19 +53,17 @@ class ExecReportUtil {
 
     }
 
-    static String summarizeJob(ExecutionData exec, boolean summarize = true){
+    static String summarizeJob(ExecutionData exec){
         StringBuffer sb = new StringBuffer()
-        if(summarize){
-            final def wfsize = exec?.workflow?.steps?.size() ?: 0
+        final def wfsize = exec?.workflow?.steps?.size() ?: 0
 
-            if(wfsize>0){
-                sb<<WorkflowStepUtil.summarize(exec.workflow.steps[0])
-            }else{
-                sb<< "[Empty workflow]"
-            }
-            if(wfsize>1){
-                sb << " [... ${wfsize} steps]"
-            }
+        if(wfsize>0){
+            sb<<WorkflowStepUtil.summarize(exec.workflow.steps[0])
+        }else{
+            sb<< "[Empty workflow]"
+        }
+        if(wfsize>1){
+            sb << " [... ${wfsize} steps]"
         }
         return sb.toString()
     }

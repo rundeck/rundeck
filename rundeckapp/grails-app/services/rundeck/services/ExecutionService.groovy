@@ -280,7 +280,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         permalink: apiService.guiHrefForExecution(e),
                         href: apiService.apiHrefForExecution(e),
                         status: getExecutionState(e),
-                        summary: ExecReportUtil.summarizeJob(e, paging.summarize)
+                        summary: ExecReportUtil.summarizeJob(e)
                 ]
             if(e.customStatusString){
                 data.customStatus=e.customStatusString
