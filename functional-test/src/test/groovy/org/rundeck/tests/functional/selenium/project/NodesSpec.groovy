@@ -57,7 +57,7 @@ class NodesSpec extends SeleniumBase {
             nodeSourcePage.clickAddNewNodeSource()
 
         when: "choose Local provider"
-            nodeSourcePage.chooseProviderPreferLocal()
+            nodeSourcePage.chooseProviderByName("Local")
 
         and: "click page-level Save"
             nodeSourcePage.clickSaveNodeSources()

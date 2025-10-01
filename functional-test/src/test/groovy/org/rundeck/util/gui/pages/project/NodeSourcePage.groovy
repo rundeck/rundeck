@@ -2,6 +2,8 @@ package org.rundeck.util.gui.pages.project
 
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
+import org.openqa.selenium.ElementClickInterceptedException
+import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.TimeoutException
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.support.ui.ExpectedConditions
@@ -61,35 +63,27 @@ class NodeSourcePage extends BasePage {
         byAndWaitClickable(newNodeSource).click()
     }
 
-    void chooseProviderPreferLocal() {
+    void chooseProviderByName(String providerName) {
+        // make sure the modal/list is present
         def wait = new WebDriverWait(driver, Duration.ofSeconds(10))
+        wait.until(ExpectedConditions.or(
+                ExpectedConditions.presenceOfElementLocated(providerPickerByTestId),
+                ExpectedConditions.presenceOfElementLocated(providerPickerModal),
+                ExpectedConditions.presenceOfElementLocated(providerPickerListGroup)
+        ))
+
+        // find the exact testid the UI renders
+        By choiceBy = providerByTestId(providerName)
+
+        WebElement toScroll = el(choiceBy)
+        executeScript("arguments[0].scrollIntoView(true);", toScroll)
+
+        WebElement choice = waitForElementVisible(choiceBy)
         try {
-            wait.until(ExpectedConditions.or(
-                    ExpectedConditions.presenceOfElementLocated(providerPickerByTestId),
-                    ExpectedConditions.presenceOfElementLocated(providerPickerModal),
-                    ExpectedConditions.presenceOfElementLocated(providerPickerListGroup)
-            ))
-        } catch (Throwable ignored) {
-            byAndWaitClickable(newNodeSource).click()
-            wait.until(ExpectedConditions.or(
-                    ExpectedConditions.presenceOfElementLocated(providerPickerByTestId),
-                    ExpectedConditions.presenceOfElementLocated(providerPickerModal),
-                    ExpectedConditions.presenceOfElementLocated(providerPickerListGroup)
-            ))
+            waitIgnoringForElementToBeClickable(choice).click()
+        } catch (ElementClickInterceptedException ignored) {
+            executeScript("arguments[0].click();", choice)
         }
-
-        // Prefer the stable testid for Local
-        List<WebElement> locals = els(providerLocalByTestId)
-        WebElement choice = locals.find { it.displayed && it.enabled }
-
-        // Fallback: attribute-based hooks that still identify "local"
-        if (!choice) {
-            def fallback = els(providerLocalByAttrs)
-            choice = fallback.find { it.displayed && it.enabled }
-        }
-
-        assert choice != null : "No 'Local' provider option found"
-        waitIgnoringForElementToBeClickable(choice).click()
     }
 
     void clickSaveNodeSources() {
@@ -103,7 +97,6 @@ class NodeSourcePage extends BasePage {
      * 3) If still flaky, refresh once and ensure the banner is gone (and page ready).
      */
     void waitForSavedState() {
-        if (waitForToast(6)) return
 
         if (waitForUnsavedBannerToDisappear(12)) return
 
@@ -126,19 +119,6 @@ class NodeSourcePage extends BasePage {
                 ))
     }
 
-    // ---------- small helpers (reuse BasePage waits) ----------
-    private boolean waitForToast(int seconds) {
-        def wait = new WebDriverWait(driver, Duration.ofSeconds(seconds))
-        try {
-            wait.until(ExpectedConditions.or(
-                    ExpectedConditions.visibilityOfElementLocated(toastSuccessBy),
-                    ExpectedConditions.visibilityOfElementLocated(configurationSavedPopUpBy)
-            ))
-            return true
-        } catch (TimeoutException ignored) {
-            return false
-        }
-    }
 
     private boolean waitForUnsavedBannerToDisappear(int seconds) {
         def wait = new WebDriverWait(driver, Duration.ofSeconds(seconds))
@@ -148,5 +128,14 @@ class NodeSourcePage extends BasePage {
         } catch (TimeoutException ignored) {
             return false
         }
+    }
+    private static String slugify(String text) {
+        if (text == null) return ""
+        return text.toLowerCase()
+                .replaceAll(/[^a-z0-9]+/, "-")
+                .replaceAll(/(^-|-$)/, "")
+    }
+    private static By providerByTestId(String providerName) {
+        return By.cssSelector("[data-testid='provider-" + slugify(providerName) + "']")
     }
 }
