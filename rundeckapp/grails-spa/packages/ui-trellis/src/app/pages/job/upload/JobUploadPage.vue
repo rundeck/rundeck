@@ -149,9 +149,8 @@ export default defineComponent({
       }
     },
     bulkActionPerformed(info:any){
-      debugger
-      if(info.action==='delete'){
-        this.jobs = this.jobs.filter(job=>!info.jobs.find((j)=>j.id===job.id));
+      if (info.action === 'delete') {
+        this.jobs = this.jobs.filter(job => !info.jobs.find((j) => j.id === job.id))
       }
     },
     setError(message: string) {
