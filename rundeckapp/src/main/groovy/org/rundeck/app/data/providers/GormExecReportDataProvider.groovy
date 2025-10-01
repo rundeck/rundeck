@@ -267,8 +267,10 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
                         if(execsIds && execsIds.size() > 0){
                             and{
                                 List execsIdPartitioned = Lists.partition(execsIds, 10000)
-                                for(def execIdPartition : execsIdPartitioned){
-                                    'in'('executionId', execIdPartition)
+                                or {
+                                    for (def execIdPartition : execsIdPartitioned) {
+                                        'in'('executionId', execIdPartition)
+                                    }
                                 }
                                 List execProjectsPartitioned = Lists.partition(query.execProjects, 1000)
                                 or{
