@@ -3,7 +3,6 @@ package org.rundeck.util.gui.pages.project
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
 import org.openqa.selenium.ElementClickInterceptedException
-import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.TimeoutException
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.support.ui.ExpectedConditions
@@ -18,23 +17,16 @@ class NodeSourcePage extends BasePage {
 
     String loadPath = ""
 
-    // ---------- Core locators ----------
-    By newNodeSource          = By.xpath("//button[contains(.,'Add a new Node Source')]")
-    By saveNodeSourceConfigBy = By.cssSelector(".btn.btn-cta.btn-xs")  // inline Save
-    By saveButtonBy           = By.cssSelector(".btn.btn-cta")         // page-level Save
-    By nodesEditTabBy         = By.xpath("//div[contains(text(),'Edit')]")
-    By modifyBy               = By.linkText("Modify")
+    By newNodeSource = By.xpath("//button[contains(.,'Add a new Node Source')]")
+    By saveNodeSourceConfigBy = By.cssSelector(".btn.btn-cta.btn-xs")
+    By saveButtonBy = By.cssSelector(".btn.btn-cta")
+    By nodesEditTabBy = By.xpath("//div[contains(text(),'Edit')]")
+    By modifyBy = By.linkText("Modify")
+    By configurationSavedPopUpBy = By.xpath("//*[contains(text(),'Configuration Saved')]")
 
     // Wrapper that exists on the list view
     By nodeSourcesListBy      = By.cssSelector("[data-testid='node-sources-list']")
-
-    // Success feedback (class-based toast, allow text fallback)
-    By toastSuccessBy = By.cssSelector(".p-toast-message-success, .rdk-toast--success")
-    By configurationSavedPopUpBy = By.xpath(
-            "//*[contains(translate(normalize-space(.),'SAVED','saved'),'configuration saved') " +
-                    "or contains(translate(normalize-space(.),'SAVED','saved'),'configurations saved')]"
-    )
-
+    // Save state banner
     By unsavedChangesBannerBy = By.xpath("//span[contains(text(),'Changes have not been saved.')]")
 
     // ---------- Provider picker (stable data-testids + minimal fallback) ----------
