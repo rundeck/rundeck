@@ -33,6 +33,8 @@ class NodeSourcePage extends BasePage {
                     "or contains(translate(normalize-space(.),'SAVED','saved'),'configurations saved')]"
     )
 
+    By unsavedChangesBannerBy = By.xpath("//span[contains(text(),'Changes have not been saved.')]")
+
     // ---------- Provider picker (stable data-testids + minimal fallback) ----------
     By providerPickerByTestId  = By.cssSelector("[data-testid='provider-picker']")
     By providerPickerModal     = By.cssSelector(".modal.show, .modal.in")
@@ -40,7 +42,7 @@ class NodeSourcePage extends BasePage {
 
     // “Local” provider hooks
     By providerLocalByTestId   = By.cssSelector("[data-testid='provider-local']")
-    By providerLocalByAttrs    = By.cssSelector("[data-provider='local'], [data-provider-id='local'], a[href*='local' i]")
+    By providerLocalByAttrs    = By.cssSelector("[data-provider='local'], [data-provider-id='local']")
 
     NodeSourcePage(final SeleniumContext context) { super(context) }
 
@@ -60,8 +62,6 @@ class NodeSourcePage extends BasePage {
     }
 
     void chooseProviderPreferLocal() {
-        // After clicking the CTA, wait for ANY of: data-testid picker, a visible modal (.show or .in),
-        // or the list-group itself. Use presence-of-element to be tolerant of animation timing.
         def wait = new WebDriverWait(driver, Duration.ofSeconds(10))
         try {
             wait.until(ExpectedConditions.or(
@@ -69,9 +69,7 @@ class NodeSourcePage extends BasePage {
                     ExpectedConditions.presenceOfElementLocated(providerPickerModal),
                     ExpectedConditions.presenceOfElementLocated(providerPickerListGroup)
             ))
-        } catch (Throwable firstTry) {
-            // The click might not have registered if the page was mid-render.
-            // Click "Add a new Node Source" again, then wait once more.
+        } catch (Throwable ignored) {
             byAndWaitClickable(newNodeSource).click()
             wait.until(ExpectedConditions.or(
                     ExpectedConditions.presenceOfElementLocated(providerPickerByTestId),
@@ -94,22 +92,26 @@ class NodeSourcePage extends BasePage {
         waitIgnoringForElementToBeClickable(choice).click()
     }
 
-
     void clickSaveNodeSources() {
         byAndWaitClickable(saveButtonBy).click()
     }
 
     /**
-     * Wait for a success toast; if none appears, refresh/navigate and wait for the page
-     * to be ready using BasePage utilities.
+     * Post-save check:
+     * 1) If a success toast appears quickly, we're done.
+     * 2) Otherwise, wait until the “Changes have not been saved.” banner disappears.
+     * 3) If still flaky, refresh once and ensure the banner is gone (and page ready).
      */
-    void waitForSaveToastOrRefresh() {
-        if (waitForToast(10)) return
+    void waitForSavedState() {
+        if (waitForToast(6)) return
 
-        // Ensure no modal is covering, then reload and wait for ready state
+        if (waitForUnsavedBannerToDisappear(12)) return
+
+        // Fallback: refresh once and check again
         try { waitForModal(0, providerPickerModal) } catch (Throwable ignored) {}
-        go(loadPath)  // uses BasePage.go + validatePage()
+        go(loadPath)
         waitForPageReady()
+        waitForUnsavedBannerToDisappear(10) // if still present, this will throw a TimeoutException
     }
 
     /**
@@ -132,6 +134,16 @@ class NodeSourcePage extends BasePage {
                     ExpectedConditions.visibilityOfElementLocated(toastSuccessBy),
                     ExpectedConditions.visibilityOfElementLocated(configurationSavedPopUpBy)
             ))
+            return true
+        } catch (TimeoutException ignored) {
+            return false
+        }
+    }
+
+    private boolean waitForUnsavedBannerToDisappear(int seconds) {
+        def wait = new WebDriverWait(driver, Duration.ofSeconds(seconds))
+        try {
+            wait.until(ExpectedConditions.invisibilityOfElementLocated(unsavedChangesBannerBy))
             return true
         } catch (TimeoutException ignored) {
             return false

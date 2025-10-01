@@ -62,8 +62,8 @@ class NodesSpec extends SeleniumBase {
         and: "click page-level Save"
             nodeSourcePage.clickSaveNodeSources()
 
-        then: "toast or API confirms"
-            nodeSourcePage.waitForSaveToastOrRefresh()
+        then: "either toast shows OR the unsaved banner disappears"
+            nodeSourcePage.waitForSavedState()
             nodeSourcePage.waitForPageReady()
     }
 }
