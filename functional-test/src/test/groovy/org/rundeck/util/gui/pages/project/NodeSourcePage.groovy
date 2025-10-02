@@ -2,6 +2,7 @@ package org.rundeck.util.gui.pages.project
 
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
+import org.openqa.selenium.ElementClickInterceptedException
 import org.openqa.selenium.TimeoutException
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.support.ui.ExpectedConditions
@@ -16,22 +17,17 @@ class NodeSourcePage extends BasePage {
 
     String loadPath = ""
 
-    // ---------- Core locators ----------
-    By newNodeSource          = By.xpath("//button[contains(.,'Add a new Node Source')]")
-    By saveNodeSourceConfigBy = By.cssSelector(".btn.btn-cta.btn-xs")  // inline Save
-    By saveButtonBy           = By.cssSelector(".btn.btn-cta")         // page-level Save
-    By nodesEditTabBy         = By.xpath("//div[contains(text(),'Edit')]")
-    By modifyBy               = By.linkText("Modify")
+    By newNodeSource = By.xpath("//button[contains(.,'Add a new Node Source')]")
+    By saveNodeSourceConfigBy = By.cssSelector(".btn.btn-cta.btn-xs")
+    By saveButtonBy = By.cssSelector(".btn.btn-cta")
+    By nodesEditTabBy = By.xpath("//div[contains(text(),'Edit')]")
+    By modifyBy = By.linkText("Modify")
+    By configurationSavedPopUpBy = By.xpath("//*[contains(text(),'Configuration Saved')]")
 
     // Wrapper that exists on the list view
     By nodeSourcesListBy      = By.cssSelector("[data-testid='node-sources-list']")
-
-    // Success feedback (class-based toast, allow text fallback)
-    By toastSuccessBy = By.cssSelector(".p-toast-message-success, .rdk-toast--success")
-    By configurationSavedPopUpBy = By.xpath(
-            "//*[contains(translate(normalize-space(.),'SAVED','saved'),'configuration saved') " +
-                    "or contains(translate(normalize-space(.),'SAVED','saved'),'configurations saved')]"
-    )
+    // Save state banner
+    By unsavedChangesBannerBy = By.xpath("//span[contains(text(),'Changes have not been saved.')]")
 
     // ---------- Provider picker (stable data-testids + minimal fallback) ----------
     By providerPickerByTestId  = By.cssSelector("[data-testid='provider-picker']")
@@ -40,7 +36,7 @@ class NodeSourcePage extends BasePage {
 
     // “Local” provider hooks
     By providerLocalByTestId   = By.cssSelector("[data-testid='provider-local']")
-    By providerLocalByAttrs    = By.cssSelector("[data-provider='local'], [data-provider-id='local'], a[href*='local' i]")
+    By providerLocalByAttrs    = By.cssSelector("[data-provider='local'], [data-provider-id='local']")
 
     NodeSourcePage(final SeleniumContext context) { super(context) }
 
@@ -59,57 +55,48 @@ class NodeSourcePage extends BasePage {
         byAndWaitClickable(newNodeSource).click()
     }
 
-    void chooseProviderPreferLocal() {
-        // After clicking the CTA, wait for ANY of: data-testid picker, a visible modal (.show or .in),
-        // or the list-group itself. Use presence-of-element to be tolerant of animation timing.
+    void chooseProviderByName(String providerName) {
+        // make sure the modal/list is present
         def wait = new WebDriverWait(driver, Duration.ofSeconds(10))
+        wait.until(ExpectedConditions.or(
+                ExpectedConditions.presenceOfElementLocated(providerPickerByTestId),
+                ExpectedConditions.presenceOfElementLocated(providerPickerModal),
+                ExpectedConditions.presenceOfElementLocated(providerPickerListGroup)
+        ))
+
+        // find the exact testid the UI renders
+        By choiceBy = providerByTestId(providerName)
+
+        WebElement toScroll = el(choiceBy)
+        executeScript("arguments[0].scrollIntoView(true);", toScroll)
+
+        WebElement choice = waitForElementVisible(choiceBy)
         try {
-            wait.until(ExpectedConditions.or(
-                    ExpectedConditions.presenceOfElementLocated(providerPickerByTestId),
-                    ExpectedConditions.presenceOfElementLocated(providerPickerModal),
-                    ExpectedConditions.presenceOfElementLocated(providerPickerListGroup)
-            ))
-        } catch (Throwable firstTry) {
-            // The click might not have registered if the page was mid-render.
-            // Click "Add a new Node Source" again, then wait once more.
-            byAndWaitClickable(newNodeSource).click()
-            wait.until(ExpectedConditions.or(
-                    ExpectedConditions.presenceOfElementLocated(providerPickerByTestId),
-                    ExpectedConditions.presenceOfElementLocated(providerPickerModal),
-                    ExpectedConditions.presenceOfElementLocated(providerPickerListGroup)
-            ))
+            waitIgnoringForElementToBeClickable(choice).click()
+        } catch (ElementClickInterceptedException ignored) {
+            executeScript("arguments[0].click();", choice)
         }
-
-        // Prefer the stable testid for Local
-        List<WebElement> locals = els(providerLocalByTestId)
-        WebElement choice = locals.find { it.displayed && it.enabled }
-
-        // Fallback: attribute-based hooks that still identify "local"
-        if (!choice) {
-            def fallback = els(providerLocalByAttrs)
-            choice = fallback.find { it.displayed && it.enabled }
-        }
-
-        assert choice != null : "No 'Local' provider option found"
-        waitIgnoringForElementToBeClickable(choice).click()
     }
-
 
     void clickSaveNodeSources() {
         byAndWaitClickable(saveButtonBy).click()
     }
 
     /**
-     * Wait for a success toast; if none appears, refresh/navigate and wait for the page
-     * to be ready using BasePage utilities.
+     * Post-save check:
+     * 1) If a success toast appears quickly, we're done.
+     * 2) Otherwise, wait until the “Changes have not been saved.” banner disappears.
+     * 3) If still flaky, refresh once and ensure the banner is gone (and page ready).
      */
-    void waitForSaveToastOrRefresh() {
-        if (waitForToast(10)) return
+    void waitForSavedState() {
 
-        // Ensure no modal is covering, then reload and wait for ready state
+        if (waitForUnsavedBannerToDisappear(12)) return
+
+        // Fallback: refresh once and check again
         try { waitForModal(0, providerPickerModal) } catch (Throwable ignored) {}
-        go(loadPath)  // uses BasePage.go + validatePage()
+        go(loadPath)
         waitForPageReady()
+        waitForUnsavedBannerToDisappear(10) // if still present, this will throw a TimeoutException
     }
 
     /**
@@ -124,17 +111,23 @@ class NodeSourcePage extends BasePage {
                 ))
     }
 
-    // ---------- small helpers (reuse BasePage waits) ----------
-    private boolean waitForToast(int seconds) {
+
+    private boolean waitForUnsavedBannerToDisappear(int seconds) {
         def wait = new WebDriverWait(driver, Duration.ofSeconds(seconds))
         try {
-            wait.until(ExpectedConditions.or(
-                    ExpectedConditions.visibilityOfElementLocated(toastSuccessBy),
-                    ExpectedConditions.visibilityOfElementLocated(configurationSavedPopUpBy)
-            ))
+            wait.until(ExpectedConditions.invisibilityOfElementLocated(unsavedChangesBannerBy))
             return true
         } catch (TimeoutException ignored) {
             return false
         }
+    }
+    private static String slugify(String text) {
+        if (text == null) return ""
+        return text.toLowerCase()
+                .replaceAll(/[^a-z0-9]+/, "-")
+                .replaceAll(/(^-|-$)/, "")
+    }
+    private static By providerByTestId(String providerName) {
+        return By.cssSelector("[data-testid='provider-" + slugify(providerName) + "']")
     }
 }
