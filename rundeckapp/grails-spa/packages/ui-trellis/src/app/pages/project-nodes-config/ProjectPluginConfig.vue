@@ -33,7 +33,7 @@
         </a>
         <div v-if="help" class="help-block">{{ help }}</div>
 
-        <div class="list-group" data-testid="node-sources-list">
+        <div class="list-group">
           <div
             v-for="(plugin, index) in pluginConfigs"
             :key="'pluginStorageAccessplugin_' + index"
@@ -206,8 +206,8 @@
         <div v-if="mode === 'edit' && editFocus === -1" class="card-footer">
           <btn
             type="primary"
-            data-test-id="project-plugin-config-add-modal-open-button"
             @click="modalAddOpen = true"
+            data-test-id="project-plugin-config-add-modal-open-button"
           >
             {{
               (pluginLabels && pluginLabels.addButton) ||
@@ -218,26 +218,23 @@
           </btn>
 
           <modal
-            id="add-new-modal"
-            ref="modal"
             v-model="modalAddOpen"
             :title="
               (pluginLabels && pluginLabels.addButton) ||
               addButtonText ||
               serviceName
             "
+            ref="modal"
             size="lg"
+            id="add-new-modal"
             append-to-body
           >
-            <div class="list-group" data-testid="provider-picker">
+            <div class="list-group">
               <a
                 v-for="plugin in pluginProviders"
                 :key="plugin.name"
                 href="#"
                 class="list-group-item"
-                :data-testid="`provider-${String(plugin.name)
-                  .toLowerCase()
-                  .replace(/[^a-z0-9]+/g, '-')}`"
                 @click="addPlugin(plugin.name)"
               >
                 <plugin-info
@@ -291,7 +288,6 @@ import PluginConfig from "../../../library/components/plugins/pluginConfig.vue";
 import pluginService from "../../../library/modules/pluginService";
 import PluginValidation from "../../../library/interfaces/PluginValidation";
 import UiSocket from "../../../library/components/utils/UiSocket.vue";
-import { api } from "@/library/services/api";
 
 interface PluginConf {
   readonly type: string;
@@ -322,31 +318,6 @@ export default defineComponent({
     Expandable,
     UiSocket,
   },
-  props: {
-    editMode: {
-      type: Boolean,
-      default: false,
-    },
-    modeToggle: {
-      type: Boolean,
-      default: true,
-    },
-    showEmpty: {
-      type: Boolean,
-      default: true,
-    },
-    serviceName: String,
-    addButtonText: String,
-    title: {
-      required: false,
-      type: String,
-    },
-    configPrefix: String,
-    additionalProps: { required: false, type: Object },
-    help: { required: false, type: String },
-    editButtonText: { required: false, type: String },
-    eventBus: { type: Object as PropType<typeof EventBus>, required: false },
-  },
   emits: [
     "saved",
     "reset",
@@ -374,45 +345,30 @@ export default defineComponent({
       pluginStorageAccess: [] as any[],
     };
   },
-  mounted() {
-    this.rundeckContext = getRundeckContext();
-    this.notifyPluginConfigs();
-    if (
-      window._rundeck &&
-      window._rundeck.rdBase &&
-      window._rundeck.projectName
-    ) {
-      this.rdBase = window._rundeck.rdBase;
-      this.project = window._rundeck.projectName;
-
-      this.loadProjectPluginConfig(
-        window._rundeck.projectName,
-        this.configPrefix,
-        this.serviceName,
-      )
-        .then((pluginConfigs) => {
-          this.configOrig = pluginConfigs;
-          //copy
-          this.pluginConfigs = pluginConfigs.map((val: any, index: number) =>
-            this.createConfigEntry(val, index),
-          );
-          this.loaded = true;
-          this.notifyPluginConfigs();
-        })
-        .catch((error) => console.error(error));
-
-      pluginService
-        .getPluginProvidersForService(this.serviceName)
-        .then((data) => {
-          if (data.service) {
-            this.pluginProviders = data.descriptions;
-            this.pluginLabels = data.labels;
-          }
-        })
-        .catch((error) => console.error(error));
-    }
-
-    this.eventBus?.on("resource-model-extra-config", this.setExtraConfig);
+  props: {
+    editMode: {
+      type: Boolean,
+      default: false,
+    },
+    modeToggle: {
+      type: Boolean,
+      default: true,
+    },
+    showEmpty: {
+      type: Boolean,
+      default: true,
+    },
+    serviceName: String,
+    addButtonText: String,
+    title: {
+      required: false,
+      type: String,
+    },
+    configPrefix: String,
+    additionalProps: { required: false, type: Object },
+    help: { required: false, type: String },
+    editButtonText: { required: false, type: String },
+    eventBus: { type: Object as PropType<typeof EventBus>, required: false },
   },
   methods: {
     notifyError(msg: string, args: any[]) {
@@ -523,7 +479,7 @@ export default defineComponent({
           this.$emit("saved", result);
         }
       } catch (error) {
-        // @ts-ignore
+        //@ts-ignore
         this.notifyError(error.message, []);
       }
     },
@@ -562,28 +518,31 @@ export default defineComponent({
       data: ProjectPluginConfigEntry[],
       removedData: ProjectPluginConfigEntry[],
     ) {
-      const url = `/project/${encodeURIComponent(project)}/plugins/save`;
-
-      // body must be { plugins, removedPlugins }
-      const body = {
-        plugins: data.map(this.serializeConfigEntry),
-        removedPlugins: (removedData || []).map(this.serializeConfigEntry),
-      };
-
-      // query params: ?serviceName=&configPrefix=
-      const resp = await api.post(url, body, {
-        params: { serviceName, configPrefix },
+      const resp = await this.rundeckContext.rundeckClient.sendRequest({
+        pathTemplate: `/framework/saveProjectPluginsAjax`,
+        baseUrl: this.rdBase,
+        method: "POST",
+        queryParameters: {
+          project: `${window._rundeck.projectName}`,
+          configPrefix: this.configPrefix,
+          serviceName: this.serviceName,
+        },
+        body: {
+          plugins: data.map(this.serializeConfigEntry),
+          removedPlugins: removedData.map(this.serializeConfigEntry),
+        },
       });
 
-      // keep the same return contract the caller expects
       if (resp && resp.status >= 200 && resp.status < 300) {
-        return { success: true, data: resp.data };
+        return { success: true, data: resp.parsedBody };
       }
-      if (resp && resp.status === 422) {
-        if (resp.data && Array.isArray(resp.data.errors)) {
-          this.errors = resp.data.errors;
-          if (resp.data.reports) {
-            const reports = resp.data.reports as { [key: string]: any };
+      if (resp && resp.status == 422) {
+        //look for validation
+        if (resp.parsedBody && resp.parsedBody.errors instanceof Array) {
+          this.errors = resp.parsedBody.errors;
+          if (resp.parsedBody.reports) {
+            const reports = resp.parsedBody.reports as { [key: string]: any };
+            //console.log("reports ",resp.parsedBody.reports)
             this.pluginConfigs.forEach((plugin, index) => {
               if (reports[`${index}`] !== undefined) {
                 plugin.validation = {
@@ -597,7 +556,9 @@ export default defineComponent({
         }
       }
       throw new Error(
-        `Error saving project configuration for ${serviceName}: Response status: ${resp ? resp.status : "None"}`,
+        `Error saving project configuration for ${serviceName}: Response status: ${
+          resp ? resp.status : "None"
+        }`,
       );
     },
     cancelAction() {
@@ -653,6 +614,46 @@ export default defineComponent({
         };
       }
     },
+  },
+  mounted() {
+    this.rundeckContext = getRundeckContext();
+    this.notifyPluginConfigs();
+    if (
+      window._rundeck &&
+      window._rundeck.rdBase &&
+      window._rundeck.projectName
+    ) {
+      this.rdBase = window._rundeck.rdBase;
+      this.project = window._rundeck.projectName;
+
+      this.loadProjectPluginConfig(
+        window._rundeck.projectName,
+        this.configPrefix,
+        this.serviceName,
+      )
+        .then((pluginConfigs) => {
+          this.configOrig = pluginConfigs;
+          //copy
+          this.pluginConfigs = pluginConfigs.map((val: any, index: number) =>
+            this.createConfigEntry(val, index),
+          );
+          this.loaded = true;
+          this.notifyPluginConfigs();
+        })
+        .catch((error) => console.error(error));
+
+      pluginService
+        .getPluginProvidersForService(this.serviceName)
+        .then((data) => {
+          if (data.service) {
+            this.pluginProviders = data.descriptions;
+            this.pluginLabels = data.labels;
+          }
+        })
+        .catch((error) => console.error(error));
+    }
+
+    this.eventBus?.on("resource-model-extra-config", this.setExtraConfig);
   },
 });
 </script>

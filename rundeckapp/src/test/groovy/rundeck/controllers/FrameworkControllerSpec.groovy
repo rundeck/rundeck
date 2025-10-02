@@ -52,6 +52,7 @@ import rundeck.services.*
 import rundeck.services.feature.FeatureService
 import spock.lang.Specification
 import spock.lang.Unroll
+
 import static org.rundeck.core.auth.AuthConstants.*
 
 /**
@@ -1845,342 +1846,337 @@ project.label=A Label
 
     def "save project plugins ajax ok"() {
         given:
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
-        def utilTagLib = mockTagLib(UtilityTagLib)
-        def project = "aProject"
-        def serviceName = "SomeService"
-        def configPrefix = "xyz"
 
-        controller.frameworkService = Mock(FrameworkService)
-        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
-        controller.pluginService = Mock(PluginService)
-        controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
-        controller.featureService = Mock(FeatureService)
+            grailsApplication.config.clear()
+            grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+            def utilTagLib = mockTagLib(UtilityTagLib)
+            def project = "aProject"
+            def serviceName = "SomeService"
+            def configPrefix = "xyz"
+            controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
 
-        controller.apiService = Mock(ApiService) {
-            1 * requireApi(_, _, _) >> true
-            1 * requireParameters(_, _, ['serviceName', 'configPrefix']) >> true
-            1 * requireExists(_, _, ['project', project]) >> true
-            1 * requireAuthorized(_, _, ['configure', 'Project', project]) >> true
-        }
+            controller.pluginService = Mock(PluginService)
+            controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
+            controller.featureService = Mock(FeatureService)
+            def expectData = [
+                    plugins: [
+                            [type   : '1type',
+                             config : [bongo: 'asdf'],
+                             extra  : [:],
+                             service: 'SomeService'
+                            ],
 
-        def expectData = [
-                plugins: [
-                        [type: '1type', config: [bongo: 'asdf'], extra: [:], service: 'SomeService'],
-                        [type: '2type', config: [zingo: 'azsdf'], extra: [asdf: 'jfkdjkf', zjiji: 'dkdkd'], service: 'SomeService']
-                ]
-        ]
-        def inputData = [
-                plugins: [
-                        [type: '1type', config: [bongo: 'asdf'], origIndex: 1],
-                        [type: '2type', config: [zingo: 'azsdf'], extra: [asdf: 'jfkdjkf', zjiji: 'dkdkd'], origIndex: 2]
-                ]
-        ]
-        request.json = inputData
-        request.method = 'POST'
-        setupFormTokens(params)
+                            [type   : '2type',
+                             config : [zingo: 'azsdf'],
+                             extra  : [asdf: 'jfkdjkf', zjiji: 'dkdkd'],
+                             service: 'SomeService'
+                            ]
+                    ]
+            ]
+            def inputData = [
+                    plugins: [
+                            [type     : '1type',
+                             config   : [bongo: 'asdf'],
+                             origIndex: 1
+                            ],
 
+                            [type     : '2type',
+                             config   : [zingo: 'azsdf'],
+                             extra    : [asdf: 'jfkdjkf', zjiji: 'dkdkd'],
+                             origIndex: 2
+                            ]
+                    ]
+            ]
+            request.json = inputData
+            request.method = 'POST'
+
+            setupFormTokens(params)
         when:
-        controller.saveProjectPlugins(project, serviceName, configPrefix)
+            controller.saveProjectPluginsAjax(project, serviceName, configPrefix)
 
         then:
-        response.status == 200
+            response.status == 200
+            1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_, project) >> true
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
+            new DescribedPlugin(null, null, '1type', null, null)
+            1 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf']) >>
+            new ValidatedPlugin(valid: true)
+            1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
+            new DescribedPlugin(null, null, '2type', null, null)
+            1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
+            new ValidatedPlugin(valid: true)
 
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_, project) >> true
+            1 * controller.obscurePasswordFieldsService.untrack('aProject/SomeService/xyz', {
+                it.size()==2 &&
+                        it[0].type=='1type' &&
+                        it[0].index==1 &&
+                        (it[0].props==[bongo:'asdf']) &&
+                        it[1].type=='2type' &&
+                        it[1].index==2 &&
+                        it[1].props==[zingo:'azsdf']
+            }, _)
+            1 * controller.obscurePasswordFieldsService.resetTrack('aProject/SomeService/xyz', _, _)
+            1 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ['xyz.'].toSet()) >>
+            [success: true]
 
-        // NOTE: wildcard second arg to tolerate name vs object
-        1 * controller.pluginService.getPluginDescriptor('1type', _) >>
-                new DescribedPlugin(null, null, '1type', null, null)
-        1 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf']) >>
-                new ValidatedPlugin(valid: true)
-
-        1 * controller.pluginService.getPluginDescriptor('2type', _) >>
-                new DescribedPlugin(null, null, '2type', null, null)
-        1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
-                new ValidatedPlugin(valid: true)
-
-        1 * controller.obscurePasswordFieldsService.untrack('aProject/SomeService/xyz', {
-            it.size() == 2 &&
-                    it[0].type == '1type' &&
-                    it[0].index == 1 &&
-                    it[0].props == [bongo:'asdf'] &&
-                    it[1].type == '2type' &&
-                    it[1].index == 2 &&
-                    it[1].props == [zingo:'azsdf']
-        }, _)
-
-        1 * controller.obscurePasswordFieldsService.resetTrack('aProject/SomeService/xyz', _, _)
-
-        1 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ['xyz.'].toSet()) >>
-                [success: true]
-
-        response.json == ([project: project] + expectData)
+            response.json == ([project: project] + expectData)
     }
-
-
 
     def "save project plugins ajax error  type name"() {
         given:
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
-        def utilTagLib = mockTagLib(UtilityTagLib)
-        def project = "aProject"
-        def serviceName = "SomeService"
-        def configPrefix = "xyz"
-        controller.frameworkService = Mock(FrameworkService)
-        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
 
-        controller.pluginService = Mock(PluginService)
-        controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
+            grailsApplication.config.clear()
+            grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+            def utilTagLib = mockTagLib(UtilityTagLib)
+            def project = "aProject"
+            def serviceName = "SomeService"
+            def configPrefix = "xyz"
+            controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
 
-        controller.apiService = Mock(ApiService) {
-            1 * requireApi(_, _, _) >> true
-            1 * requireParameters(_, _, ['serviceName', 'configPrefix']) >> true
-            1 * requireExists(_, _, ['project', project]) >> true
-            1 * requireAuthorized(_, _, ['configure', 'Project', project]) >> true
-        }
+            controller.pluginService = Mock(PluginService)
+            controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
+            def inputData = [
+                    plugins: [
+                            [
+                                    type  : type,
+                                    config: [bongo: 'asdf']
+                            ],
 
-        def inputData = [
-                plugins: [
-                        [ type: type, config: [bongo: 'asdf'] ],
-                        [ type: '2type', config: [zingo: 'azsdf'], extra: [asdf: 'jfkdjkf', zjiji: 'dkdkd'] ]
-                ]
-        ]
-        request.json = inputData
-        request.method = 'POST'
-        setupFormTokens(params)
+                            [type  : '2type',
+                             config: [zingo: 'azsdf'],
+                             extra : [asdf: 'jfkdjkf', zjiji: 'dkdkd']
+                            ]
+                    ]
+            ]
+            request.json = inputData
+            request.method = 'POST'
 
+            setupFormTokens(params)
         when:
-        controller.saveProjectPlugins(project, serviceName, configPrefix)
+            controller.saveProjectPluginsAjax(project, serviceName, configPrefix)
 
         then:
-        response.status == 422
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_, project) >> true
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            response.status == 422
+            1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_, project) >> true
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
 
-        // first plugin has invalid type: should NOT attempt descriptor/validation
-        0 * controller.pluginService.getPluginDescriptor('1type', _)
-        0 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf'])
+            0 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
+            new DescribedPlugin(null, null, '1type', null, null)
+            0 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf'])
 
-        // second plugin is valid: descriptor + validation should happen
-        1 * controller.pluginService.getPluginDescriptor('2type', _) >>
-                new DescribedPlugin(null, null, '2type', null, null)
-        1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
-                new ValidatedPlugin(valid: true)
+            1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
+            new DescribedPlugin(null, null, '2type', null, null)
+            1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
+            new ValidatedPlugin(valid: true)
 
-        // no project save attempted on validation error
-        0 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ['xyz.'].toSet()) >>
-                [success: true]
+            0 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ['xyz.'].toSet()) >>
+            [success: true]
 
-        response.json == [
-                reports: [:],
-                errors : [ msg ]
-        ]
+            response.json == [
+                    reports: [:],
+                    errors : [
+                            msg
+                    ]
+            ]
 
         where:
-        type        | msg
-        null        | '[0]: missing type'
-        'asdf asdf' | '[0]: Invalid provider type name'
+            type        | msg
+            null        | '[0]: missing type'
+            'asdf asdf' | '[0]: Invalid provider type name'
     }
-
 
     def "save project plugins ajax error missing plugin"() {
         given:
 
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
-        def utilTagLib = mockTagLib(UtilityTagLib)
-        def project = "aProject"
-        def serviceName = "SomeService"
-        def configPrefix = "xyz"
-        controller.frameworkService = Mock(FrameworkService)
-        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+            grailsApplication.config.clear()
+            grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+            def utilTagLib = mockTagLib(UtilityTagLib)
+            def project = "aProject"
+            def serviceName = "SomeService"
+            def configPrefix = "xyz"
+            controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
 
-        controller.pluginService = Mock(PluginService)
-        controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
+            controller.pluginService = Mock(PluginService)
+            controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
+            def inputData = [
+                    plugins: [
+                            [
+                                    type  : '1type',
+                                    config: [bongo: 'asdf']
+                            ],
 
-        controller.apiService = Mock(ApiService) {
-            1 * requireApi(_, _, _) >> true
-            1 * requireParameters(_, _, ['serviceName', 'configPrefix']) >> true
-            1 * requireExists(_, _, ['project', project]) >> true
-            1 * requireAuthorized(_, _, ['configure', 'Project', project]) >> true
-        }
+                            [type  : '2type',
+                             config: [zingo: 'azsdf'],
+                             extra : [asdf: 'jfkdjkf', zjiji: 'dkdkd']
+                            ]
+                    ]
+            ]
+            request.json = inputData
+            request.method = 'POST'
 
-        def inputData = [
-                plugins: [
-                        [type: '1type', config: [bongo: 'asdf']],
-                        [type: '2type', config: [zingo: 'azsdf'], extra: [asdf: 'jfkdjkf', zjiji: 'dkdkd']]
-                ]
-        ]
-        request.json = inputData
-        request.method = 'POST'
-
-        setupFormTokens(params)
+            setupFormTokens(params)
         when:
-        controller.saveProjectPlugins(project, serviceName, configPrefix)
+            controller.saveProjectPluginsAjax(project, serviceName, configPrefix)
 
         then:
-        response.status == 422
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_, project) >> true
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            response.status == 422
+            1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_, project) >> true
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
 
-        // first plugin: descriptor not found -> no validation
-        1 * controller.pluginService.getPluginDescriptor('1type', _) >> null
-        0 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf'])
+            1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >> null
+            0 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf'])
 
-        // second plugin: descriptor + validation ok
-        1 * controller.pluginService.getPluginDescriptor('2type', _) >>
-                new DescribedPlugin(null, null, '2type', null, null)
-        1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
-                new ValidatedPlugin(valid: true)
+            1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
+            new DescribedPlugin(null, null, '2type', null, null)
+            1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
+            new ValidatedPlugin(valid: true)
 
-        // no project save on error
-        0 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ['xyz.'].toSet()) >>
-                [success: true]
+            0 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ['xyz.'].toSet()) >>
+            [success: true]
 
-        response.json == [
-                reports: [:],
-                errors : [ msg ]
-        ]
+            response.json == [
+                    reports: [:],
+                    errors : [
+                            msg
+                    ]
+            ]
 
         where:
-        msg = '[0]: SomeService provider was not found: 1type'
+            msg = '[0]: SomeService provider was not found: 1type'
     }
-
 
     def "save project plugins ajax error plugin validation"() {
         given:
 
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
-        def utilTagLib = mockTagLib(UtilityTagLib)
-        def project = "aProject"
-        def serviceName = "SomeService"
-        def configPrefix = "xyz"
-        controller.frameworkService = Mock(FrameworkService)
-        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+            grailsApplication.config.clear()
+            grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+            def utilTagLib = mockTagLib(UtilityTagLib)
+            def project = "aProject"
+            def serviceName = "SomeService"
+            def configPrefix = "xyz"
+            controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
 
-        controller.pluginService = Mock(PluginService)
-        controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
+            controller.pluginService = Mock(PluginService)
+            controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
+            def inputData = [
+                    plugins: [
+                            [
+                                    type  : '1type',
+                                    config: [bongo: 'asdf']
+                            ],
 
-        controller.apiService = Mock(ApiService) {
-            1 * requireApi(_, _, _) >> true
-            1 * requireParameters(_, _, ['serviceName', 'configPrefix']) >> true
-            1 * requireExists(_, _, ['project', project]) >> true
-            1 * requireAuthorized(_, _, ['configure', 'Project', project]) >> true
-        }
+                            [type  : '2type',
+                             config: [zingo: 'azsdf'],
+                             extra : [asdf: 'jfkdjkf', zjiji: 'dkdkd']
+                            ]
+                    ]
+            ]
+            request.json = inputData
+            request.method = 'POST'
+            def report = new Validator.Report()
+            report.errors['bongo'] = 'Invalid value'
 
-        def inputData = [
-                plugins: [
-                        [ type: '1type', config: [bongo: 'asdf'] ],
-                        [ type: '2type', config: [zingo: 'azsdf'], extra: [asdf: 'jfkdjkf', zjiji: 'dkdkd'] ]
-                ]
-        ]
-        request.json = inputData
-        request.method = 'POST'
 
-        def report = new Validator.Report()
-        report.errors['bongo'] = 'Invalid value'
-
-        setupFormTokens(params)
-
+            setupFormTokens(params)
         when:
-        controller.saveProjectPlugins(project, serviceName, configPrefix)
+            controller.saveProjectPluginsAjax(project, serviceName, configPrefix)
 
         then:
-        response.status == 422
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_, project) >> true
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            response.status == 422
+            1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_, project) >> true
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
 
-        // first plugin: descriptor ok, validation fails
-        1 * controller.pluginService.getPluginDescriptor('1type', _) >>
-                new DescribedPlugin(null, null, '1type', null, null)
-        1 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf']) >>
-                new ValidatedPlugin(valid: false, report: report)
+            1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
+            new DescribedPlugin(null, null, '1type', null, null)
+            1 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf']) >>
+            new ValidatedPlugin(valid: false, report: report)
 
-        // second plugin: descriptor + validation ok
-        1 * controller.pluginService.getPluginDescriptor('2type', _) >>
-                new DescribedPlugin(null, null, '2type', null, null)
-        1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
-                new ValidatedPlugin(valid: true)
+            1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
+            new DescribedPlugin(null, null, '2type', null, null)
+            1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
+            new ValidatedPlugin(valid: true)
 
-        // no project save attempted on validation error
-        0 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ['xyz.'].toSet()) >>
-                [success: true]
+            0 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ['xyz.'].toSet()) >>
+            [success: true]
 
-        response.json == [
-                reports: ['0': [bongo: 'Invalid value']],
-                errors : [ msg ]
-        ]
+            response.json == [
+                    reports: ['0': [bongo: 'Invalid value']],
+                    errors : [
+                            msg
+                    ]
+            ]
 
         where:
-        msg = '[0]: configuration was invalid: Property validation FAILED. errors={bongo=Invalid value}'
+            msg = '[0]: configuration was invalid: Property validation FAILED. errors={bongo=Invalid value}'
     }
 
     def "save project plugins ajax error saving config"() {
         given:
 
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
-        def utilTagLib = mockTagLib(UtilityTagLib)
-        def project = "aProject"
-        def serviceName = "SomeService"
-        def configPrefix = "xyz"
-        controller.frameworkService = Mock(FrameworkService)
-        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+            grailsApplication.config.clear()
+            grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+            def utilTagLib = mockTagLib(UtilityTagLib)
+            def project = "aProject"
+            def serviceName = "SomeService"
+            def configPrefix = "xyz"
+            controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
 
-        controller.pluginService = Mock(PluginService)
-        controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
+            controller.pluginService = Mock(PluginService)
+            controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
+            def inputData = [
+                    plugins: [
+                            [
+                                    type  : '1type',
+                                    config: [bongo: 'asdf']
+                            ],
 
-        controller.apiService = Mock(ApiService) {
-            1 * requireApi(_, _, _) >> true
-            1 * requireParameters(_, _, ['serviceName', 'configPrefix']) >> true
-            1 * requireExists(_, _, ['project', project]) >> true
-            1 * requireAuthorized(_, _, ['configure', 'Project', project]) >> true
-        }
+                            [type  : '2type',
+                             config: [zingo: 'azsdf'],
+                             extra : [asdf: 'jfkdjkf', zjiji: 'dkdkd']
+                            ]
+                    ]
+            ]
+            request.json = inputData
+            request.method = 'POST'
+            def report = new Validator.Report()
+            report.errors['bongo'] = 'Invalid value'
 
-        def inputData = [
-                plugins: [
-                        [ type: '1type', config: [bongo: 'asdf'] ],
-                        [ type: '2type', config: [zingo: 'azsdf'], extra: [asdf: 'jfkdjkf', zjiji: 'dkdkd'] ]
-                ]
-        ]
-        request.json = inputData
-        request.method = 'POST'
 
-        def report = new Validator.Report()
-        report.errors['bongo'] = 'Invalid value'
-
-        setupFormTokens(params)
+            setupFormTokens(params)
         when:
-        controller.saveProjectPlugins(project, serviceName, configPrefix)
+            controller.saveProjectPluginsAjax(project, serviceName, configPrefix)
 
         then:
-        response.status == 422
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_, project) >> true
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            response.status == 422
+            1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_, project) >> true
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
 
-        // descriptor lookups: wildcard 2nd arg (service name/object)
-        1 * controller.pluginService.getPluginDescriptor('1type', _) >>
-                new DescribedPlugin(null, null, '1type', null, null)
-        1 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf']) >>
-                new ValidatedPlugin(valid: true)
+            1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
+            new DescribedPlugin(null, null, '1type', null, null)
+            1 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf']) >>
+            new ValidatedPlugin(valid: true)
 
-        1 * controller.pluginService.getPluginDescriptor('2type', _) >>
-                new DescribedPlugin(null, null, '2type', null, null)
-        1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
-                new ValidatedPlugin(valid: true)
+            1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
+            new DescribedPlugin(null, null, '2type', null, null)
+            1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
+            new ValidatedPlugin(valid: true)
 
-        // update fails -> return 422 with error message
-        1 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ['xyz.'].toSet()) >>
-                [success: false, error: 'Project does not exist']
+            1 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ['xyz.'].toSet()) >>
+            [success: false, error: 'Project does not exist']
 
-        response.json == [
-                reports: [:],
-                errors : ['Project does not exist']
-        ]
+            response.json == [
+                    reports: [:],
+                    errors : [
+                            'Project does not exist'
+                    ]
+            ]
+
     }
     def "save node source file, catch IOException"() {
 

@@ -155,11 +155,8 @@ export default defineComponent({
           await this.loadConfig();
         }
       } catch (err) {
-        console.error("Full error object:", err);
-        this.notifyError(
-          "Error saving config: " +
-            (err.message || err.toString() || "Unknown error"),
-        );
+        console.error(err);
+        this.notifyError("Error saving config: " + err.message);
       }
     },
     convertMapNumbersToStrings(obj: any): any {

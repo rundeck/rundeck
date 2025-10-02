@@ -152,7 +152,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         saveProject              : 'POST',
         saveProjectNodeSources   : 'POST',
         saveProjectNodeSourceFile: 'POST',
-        saveProjectPlugins       : 'POST',
+        saveProjectPluginsAjax   : 'POST',
         getProjectConfigurable   : 'GET',
         saveProjectConfigurable  : 'POST',
     ]
@@ -1536,145 +1536,60 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )
     }
 
-    @Post(uri = "/project/{project}/plugins/save")
-    @Operation(
-            method = "POST",
-            summary = "Save list-style plugin configurations for a project",
-            description = """Create/update list-based plugin configurations (e.g. Resource Model Sources).
-Authorization required: `configure` on the project.
-Since: v55""",
-            tags = ["project", "configuration"],
-            parameters = [
-                    @Parameter(
-                            name = "project",
-                            description = "Project name",
-                            required = true,
-                            in = ParameterIn.PATH,
-                            schema = @Schema(type = "string")
-                    ),
-                    @Parameter(
-                            name = "serviceName",
-                            description = "Plugin service name (e.g. `ResourceModelSource`)",
-                            required = true,
-                            in = ParameterIn.QUERY,
-                            schema = @Schema(type = "string")
-                    ),
-                    @Parameter(
-                            name = "configPrefix",
-                            description = "Property prefix (e.g. `resources.source`)",
-                            required = true,
-                            in = ParameterIn.QUERY,
-                            schema = @Schema(type = "string")
-                    )
-            ],
-            requestBody = @RequestBody(
-                    required = true,
-                    description = "Plugins payload",
-                    content = @Content(
-                            mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
-                            schema = @Schema(type = "object"),
-                            examples = @ExampleObject(value = """
-{
-  "plugins": [
-    { "type": "file", "config": { "file": "/path/resources.yml" }, "extra": {}, "origIndex": 0 }
-  ],
-  "removedPlugins": [
-    { "type": "stub", "origIndex": 2 }
-  ]
-}
-""")
-                    )
-            ),
-            responses = [
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Saved. Returns the saved plugins.",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(value = """
-{
-  "project": "Ansible-resource-model-error",
-  "plugins": [
-    {
-      "type": "file",
-      "service": "ResourceModelSource",
-      "config": { "file": "/path/to/nodes.yml" },
-      "extra": {}
-    }
-  ]
-}
-""")
-                            )
-                    ),
-                    @ApiResponse(
-                            responseCode = "400",
-                            description = "Bad request (missing/invalid body or parameters).",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(value = """{ "errors": ["plugins and removedPlugins must be arrays"] }""")
-                            )
-                    ),
-                    @ApiResponse(
-                            responseCode = "403",
-                            description = "Forbidden (user lacks 'configure' on the project)."
-                    ),
-                    @ApiResponse(
-                            responseCode = "422",
-                            description = "Validation errors.",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(value = """
-{
-  "errors": ["[0]: configuration was invalid: ..."],
-  "reports": { "0": [ { "key": "file", "msg": "is required" } ] }
-}
-""")
-                            )
-                    )
+    def saveProjectPluginsAjax(String project, String serviceName, String configPrefix) {
+        boolean valid = false
+        withForm {
+            valid = true
+            g.refreshFormTokensHeader()
+        }.invalidToken {
+            return apiService.renderErrorFormat(
+                    response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'request.error.invalidtoken.message',
             ]
-    )
-    def saveProjectPlugins(String project, String serviceName, String configPrefix) {
-        // Require API (use your current bumped version)
-        if (!apiService.requireApi(request, response, ApiVersions.V55)) {
+            )
+        }
+        if (!valid) {
             return
         }
 
-        // Required params & project existence
-        if (!apiService.requireParameters(params, response, ['serviceName', 'configPrefix'])) {
-            return
-        }
-        if (!apiService.requireExists(
-                response,
-                frameworkService.existsFrameworkProject(project),
-                ['project', project]
-        )) {
-            return
+        if (request.format != 'json') {
+            return apiService.renderErrorFormat(
+                    response, [
+                    status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code  : 'api.error.item.unsupported-format',
+                    args  : [request.format]
+            ]
+            )
         }
 
-        // AuthZ
+        if (!project) {
+            return renderErrorView("Project parameter is required")
+        }
+        if (!serviceName) {
+            return renderErrorView("serviceName parameter is required")
+        }
+        if (!configPrefix) {
+            return renderErrorView("configPrefix parameter is required")
+        }
+        def plugins = request.JSON.plugins
+        List removedPlugins = request.JSON.removedPlugins as List
+
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if (!apiService.requireAuthorized(
-                rundeckAuthContextProcessor.authorizeProjectConfigure(authContext, project),
-                response,
-                [AuthConstants.ACTION_CONFIGURE, 'Project', project]
-        )) {
+        if (unauthorizedResponse(
+            rundeckAuthContextProcessor.authorizeProjectConfigure(authContext, project),
+            AuthConstants.ACTION_CONFIGURE, 'Project',project)) {
             return
         }
 
-        // Parse body
-        def body = request.JSON
-        List plugins = (body?.plugins ?: []) as List
-        List removedPlugins = (body?.removedPlugins ?: []) as List
-
-        if (removedPlugins) {
+        if(removedPlugins)
             notifyRemovedPlugins(project, removedPlugins)
-        }
 
         def errors = []
         def reports = [:]
         List<ExtPluginConfiguration> configs = []
-        def mappedConfigs = []
 
+        def mappedConfigs = []
         plugins.eachWithIndex { pluginDef, int ndx ->
             def confData = new HashMap<>(pluginDef.config ?: [:])
             mappedConfigs << [
@@ -1686,10 +1601,9 @@ Since: v55""",
                     newIndex: ndx
             ]
         }
-
         final pluginDescriptions = pluginService.listPluginDescriptions(serviceName)
 
-        // Restore obscured values
+        //replace obscured values with original values
         obscurePasswordFieldsService.untrack(
                 "${project}/${serviceName}/${configPrefix}",
                 mappedConfigs,
@@ -1697,24 +1611,36 @@ Since: v55""",
         )
 
         mappedConfigs.eachWithIndex { pluginDef, int ndx ->
-            String type = pluginDef.type
-            if (!type) { errors << "[$ndx]: missing type"; return }
-            if (!(type =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
-                errors << "[$ndx]: Invalid provider type name"; return
-            }
-            def described = pluginService.getPluginDescriptor(type, serviceName)
-            if (!described) { errors << "[$ndx]: $serviceName provider was not found: ${type}"; return }
 
-            Map<String,Object> configMap = (pluginDef.props ?: [:]) as Map<String,Object>
+            String type = pluginDef.type
+            if (!type) {
+                errors << "[$ndx]: missing type"
+                return
+            }
+
+            if (!(type =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
+                errors << "[$ndx]: Invalid provider type name"
+                return
+            }
+
+            def described = pluginService.getPluginDescriptor(type, serviceName)
+            if (!described) {
+                errors << "[$ndx]: $serviceName provider was not found: ${type}"
+                return
+            }
+
+            //validate
+            Map<String, Object> configMap = pluginDef.props
             ValidatedPlugin validated = pluginService.validatePluginConfig(serviceName, type, configMap)
             if (!validated.valid) {
                 errors << "[$ndx]: configuration was invalid: $validated.report"
                 reports["$ndx"] = validated.report.errors
                 return
             }
+            Map<String, Object> extraMap = pluginDef.extra ?: [:]
 
-            Map<String,Object> extraMap = (pluginDef.extra ?: [:]) as Map<String,Object>
-            configs << SimplePluginConfiguration.builder()
+
+            configs <<  SimplePluginConfiguration.builder()
                     .service(serviceName)
                     .provider(type)
                     .configuration(configMap)
@@ -1723,53 +1649,42 @@ Since: v55""",
         }
 
         if (!errors) {
+
             Properties projProps = ProjectNodeSupport.serializePluginConfigurations(configPrefix, configs, true)
-            def result = frameworkService.updateFrameworkProjectConfig(
-                    project,
-                    projProps,
-                    [(configPrefix + '.')] as Set
-            )
+            def result = frameworkService.updateFrameworkProjectConfig(project, projProps, [configPrefix+'.'].toSet())
             if (!result.success) {
                 errors << result.error
             }
         }
 
         if (errors) {
-            render(
-                    contentType: 'application/json',
+            return respond(
+                    formats: ['json'],
                     status: HttpStatus.UNPROCESSABLE_ENTITY.value(),
-                    text: ([errors: errors, reports: reports] as grails.converters.JSON) as String
+                    [
+                            errors : errors,
+                            reports: reports
+                    ]
             )
-            return
         }
 
-        // Track obscured/secret values again after a successful save
+
         obscurePasswordFieldsService.resetTrack(
                 "${project}/${serviceName}/${configPrefix}",
                 configs,
                 pluginDescriptions
         )
 
-        // === Success: always return { project, plugins: [...] } ===
-        def responsePlugins = (configs ?: []).collect { ExtPluginConfiguration conf ->
-            [
-                    type   : conf.provider,
-                    service: conf.service,
-                    config : conf.configuration ?: [:],
-                    extra  : conf.extra ?: [:]
-            ]
-        }
-
-        render(
-                contentType: 'application/json',
-                status: 200,
-                text: ([
+        respond(
+                formats: ['json'],
+                [
                         project: project,
-                        plugins: responsePlugins
-                ] as grails.converters.JSON) as String
+                        plugins: configs.collect { ExtPluginConfiguration conf ->
+                            [type: conf.provider, config: conf.configuration, service: conf.service, extra: conf.extra]
+                        },
+                ]
         )
     }
-
 
     def projectNodeSources() {
         if (!params.project) {
