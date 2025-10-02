@@ -406,7 +406,7 @@
         <tr>
             <td><g:message code="job.audit.created.label" default="Created by" /></td>
             <td>
-                <span class="text-info"><g:enc>${execdata.user ?: 'unknown'}</g:enc></span>
+                <span class="text-info"><g:enc>${execdata.user ?: g.message(code:'job.audit.unknown', default:'Unknown')}</g:enc></span>
                 <g:message code="job.audit.on" default="on" />
 
                 <% def created = execdata.dateCreated %>
@@ -441,7 +441,7 @@
                 <td><g:message code="job.audit.modified.label" default="Last modified by" /></td>
                 <td>
                     <span class="text-info">
-                        <g:enc>${execdata.lastModifiedBy ?: execdata.user ?: 'unknown'}</g:enc>
+                        <g:enc>${execdata.lastModifiedBy ?: execdata.user ?: g.message(code:'job.audit.unknown', default:'Unknown')}</g:enc>
                     </span>
                     <g:message code="job.audit.on" default="on" />
 
