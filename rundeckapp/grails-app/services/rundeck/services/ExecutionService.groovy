@@ -19,7 +19,6 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
-import org.springframework.dao.DataAccessException
 import rundeck.data.util.ExecReportUtil
 import rundeck.services.workflow.WorkflowMetricsWriterImpl
 import rundeck.support.filters.BaseNodeFilters
@@ -4058,6 +4057,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return [result:result,total:total]
     }
 
+    /**
+     * Count executions per project
+     * @param project
+     * @return number of executions for the project
+     */
+    int totalExecutionsProject(String project){
+        ExecutionQuery query = new ExecutionQuery(projFilter: project)
+        def total = Execution.createCriteria().count{
+            def queryCriteria = query.createCriteria(delegate)
+            queryCriteria()
+        }
+        return null != total ? total : 0
+    }
+
   /**
    * Query executions
    * @param query query
@@ -4478,6 +4491,38 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     [execution: missed,
                      context  : contextBuilder.build()]
             )
+        }
+    }
+
+    /**
+     * Query executions using a criteria closure
+     * @param criteriaClosure criteriaClos
+     * @return result List
+     */
+    List queryExecutionsList(Closure criteriaClos){
+        return Execution.createCriteria().list(criteriaClos) as List
+    }
+
+    /**
+     * Delete an execution by id as part of cleanup. This fetches a fresh Execution instance in a new transaction
+     * and delegates to deleteExecutionAuthorized. Using id-based deletion avoids holding long-lived Hibernate
+     * entities returned by earlier queries and reduces locking on the executions table.
+     * @param id execution id
+     * @return map with keys: success:boolean, message:String, error:String
+     */
+    Map deleteExecutionFromCleanup(Long id) {
+        try {
+            return Execution.withNewTransaction {
+                Execution e = Execution.get(id)
+                if (!e) {
+                    return [success: false, error: 'notfound', message: "Execution Not found: ${id}"]
+                }
+                // delegate to existing deletion implementation
+                return deleteExecutionAuthorized(e, "admin")
+            }
+        } catch (Exception ex) {
+            log.error("Failed to delete execution ${id} from cleanup", ex)
+            return [success: false, error: 'failure', message: ex.message]
         }
     }
 }
