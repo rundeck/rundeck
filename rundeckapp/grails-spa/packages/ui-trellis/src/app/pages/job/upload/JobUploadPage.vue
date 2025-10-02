@@ -158,7 +158,7 @@ export default defineComponent({
     },
     cancel() {
       // Redirect to jobs list
-      window.location.replace(`${rundeckContext.rdBase}/project/${this.project}/jobs`)
+      window.location.assign(`${rundeckContext.rdBase}/project/${this.project}/jobs`)
     },
   },
 });
