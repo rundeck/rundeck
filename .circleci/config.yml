@@ -91,7 +91,7 @@ executors:
   # Machine executor
   machine-builder:
     machine:
-      image: ubuntu-2204:current
+      image: ubuntu-2204:2024.11.1
       docker_layer_caching: << parameters.docker_layer_caching >>
     parameters:
       resource_class:
