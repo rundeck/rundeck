@@ -117,9 +117,9 @@ public class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
                 if (i > 0) {
                     sb.append('|');
                 }
-                sb.append(backslashEscape(key,"=|}"));
+                appendEscaped(sb, key, "=|}");
                 sb.append('=');
-                sb.append(backslashEscape(entry.getMetadata().get(key),"=|}"));
+                appendEscaped(sb, entry.getMetadata().get(key), "=|}");
             }
 
             sb.append('}');
@@ -127,7 +127,7 @@ public class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
 
         sb.append("|");
         //mesg
-        sb.append(backslashEscape(dMesg, DELIM));
+        appendEscaped(sb, dMesg, DELIM);
         //end
         sb.append(DELIM);
 
@@ -135,7 +135,26 @@ public class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
     }
 
     static String backslashEscape(String dMesg, String chars) {
-        return dMesg != null ? dMesg.replaceAll("([\\\\" + chars + "])", "\\\\$1") : "";
+        StringBuffer sb = new StringBuffer();
+        appendEscaped(sb, dMesg, chars);
+        return sb.toString();
+    }
+
+    /**
+     * Append the string to the buffer, escaping any of the characters in chars or backslash with a backslash
+     * @param sb buffer
+     * @param dMesg string to append
+     * @param chars characters to escape
+     */
+    static void appendEscaped(StringBuffer sb, String dMesg, String chars) {
+        if (dMesg != null) {
+            for (char c : dMesg.toCharArray()) {
+                if (chars.indexOf(c) >= 0 || c == BACKSLASH) {
+                    sb.append(BACKSLASH);
+                }
+                sb.append(c);
+            }
+        }
     }
 
     public static class RDFormatItem implements LineLogFormat.FormatItem {
