@@ -250,7 +250,7 @@ job-defaults: &job-defaults
     GRADLE_OPTS: -XX:MaxRAMPercentage=80.0
     JAVA_OPTS: -XX:MaxRAMPercentage=80.0
     JAVA_HOME: /usr/lib/jvm/zulu11
-    SELENIUM_BROWSER_VERSION: "75"
+    SELENIUM_BROWSER_VERSION: "131"
 
 jobs:
 
