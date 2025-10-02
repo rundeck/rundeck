@@ -85,8 +85,7 @@ ext.exportedProjects = [
         ":rundeck-storage:rundeck-storage-api",
         ":rundeck-storage:rundeck-storage-data",
         ":rundeck-storage:rundeck-storage-filesys",
-        ":rundeck-storage:rundeck-storage-conf",
-        ":rundeck-data-models"
+        ":rundeck-storage:rundeck-storage-conf"
 ]
 /** Detect if this is being bootRun: typically by the grails cli **/
 def isRunning = project.gradle.startParameter.taskNames.any {

@@ -45,16 +45,6 @@ class GormReferencedExecutionDataProvider implements ReferencedExecutionDataProv
     }
 
     @Override
-    List<Long> getExecutionsIdsByJobUuid(String jobUuid) {
-        return ReferencedExecution.createCriteria().list {
-            eq('jobUuid', jobUuid)
-            projections {
-                property('execution.id')
-            }
-        }
-    }
-
-    @Override
     void deleteByExecutionId(Long id) {
         def execution = Execution.findById(id)
         ReferencedExecution.findAllByExecution(execution).each{ re ->

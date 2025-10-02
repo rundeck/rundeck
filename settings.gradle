@@ -59,8 +59,7 @@ include	'rundeck-storage',
     'docker',
     'functional-test',
     'grails-job-kill-handler',
-    'plugins:jsch-plugin',
-    'rundeck-data-models'
+    'plugins:jsch-plugin'
 
 def projectFeatureEnabled = { String feature, Boolean defaultVal ->
     try {
