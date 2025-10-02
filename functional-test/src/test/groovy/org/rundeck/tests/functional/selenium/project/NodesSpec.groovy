@@ -9,16 +9,8 @@ import org.rundeck.util.container.SeleniumBase
 @SeleniumCoreTest
 class NodesSpec extends SeleniumBase {
 
-    /**
-     * Use an isolated project copied from SELENIUM_BASIC_PROJECT, so other suites can't
-     * modify the same project during CI.
-     */
-    static final String NODES_TEST_PROJECT =
-            (System.getenv('NODES_TEST_PROJECT') ?: "${SELENIUM_BASIC_PROJECT}-Nodes-${System.currentTimeMillis()}")
-
     def setupSpec() {
-        // Copy/seed from the standard archive used elsewhere
-        setupProjectArchiveDirectoryResource(NODES_TEST_PROJECT, "/projects-import/${SELENIUM_BASIC_PROJECT}")
+        setupProjectArchiveDirectoryResource(SELENIUM_BASIC_PROJECT, "/projects-import/${SELENIUM_BASIC_PROJECT}")
     }
 
     def "go to edit nodes"() {
@@ -29,9 +21,9 @@ class NodesSpec extends SeleniumBase {
         when:
             loginPage.login(TEST_USER, TEST_PASS)
             menuPage.validatePage()
-            menuPage.goProjectHome(NODES_TEST_PROJECT)
-            nodeSourcePage.loadPath = "/project/${NODES_TEST_PROJECT}/nodes/sources"
-            nodeSourcePage.go("/project/${NODES_TEST_PROJECT}/nodes/sources")
+            menuPage.goProjectHome(SELENIUM_BASIC_PROJECT)
+            nodeSourcePage.loadPath = "/project/${SELENIUM_BASIC_PROJECT}/nodes/sources"
+            nodeSourcePage.go("/project/${SELENIUM_BASIC_PROJECT}/nodes/sources")
 
         then:
             nodeSourcePage.waitForElementVisible nodeSourcePage.newNodeSourceButton
@@ -39,6 +31,10 @@ class NodesSpec extends SeleniumBase {
             nodeSourcePage.newNodeSourceButton.getText().contains("Source")
     }
 
+    /**
+     * Minimal flow: create a node source (Local), then press page-level Save.
+     * Consider it a success if either a success toast appears OR the sources API responds OK.
+     */
     def "create node source and press save"() {
         setup:
             def loginPage      = go LoginPage
@@ -48,8 +44,8 @@ class NodesSpec extends SeleniumBase {
         when: "navigate to Nodes → Sources"
             loginPage.login(TEST_USER, TEST_PASS)
             menuPage.validatePage()
-            menuPage.goProjectHome(NODES_TEST_PROJECT)
-            nodeSourcePage.forProject(NODES_TEST_PROJECT)
+            menuPage.goProjectHome(SELENIUM_BASIC_PROJECT)
+            nodeSourcePage.forProject(SELENIUM_BASIC_PROJECT)
             nodeSourcePage.go()
 
         then: "open picker"
@@ -57,13 +53,13 @@ class NodesSpec extends SeleniumBase {
             nodeSourcePage.clickAddNewNodeSource()
 
         when: "choose Local provider"
-            nodeSourcePage.chooseProviderByName("Local")
+            nodeSourcePage.chooseProviderPreferLocal()
 
         and: "click page-level Save"
             nodeSourcePage.clickSaveNodeSources()
 
-        then: "either toast shows OR the unsaved banner disappears"
-            nodeSourcePage.waitForSavedState()
+        then: "toast or API confirms"
+            nodeSourcePage.waitForSaveToastOrRefresh()
             nodeSourcePage.waitForPageReady()
     }
 }
