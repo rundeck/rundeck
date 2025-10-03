@@ -20,7 +20,7 @@ class CreateProjectSpec extends SeleniumBase {
             loginPage.login(TEST_USER, TEST_PASS)
             homePage.createProjectButton()
         expect:
-            currentUrl.contains("/resources/createProject")
+            projectCreatePage.waitForUrlToContain("/resources/createProject")
             projectCreatePage.projectNameInput
             projectCreatePage.labelInput
             projectCreatePage.descriptionInput
@@ -39,7 +39,7 @@ class CreateProjectSpec extends SeleniumBase {
         when:
         loginPage.login(TEST_USER, TEST_PASS)
         homePage.createProjectButton()
-        currentUrl.contains("/resources/createProject")
+        projectCreatePage.waitForUrlToContain("/resources/createProject")
         projectCreatePage.createField.click()
 
         then:
@@ -63,7 +63,7 @@ class CreateProjectSpec extends SeleniumBase {
         when:
         loginPage.login(TEST_USER, TEST_PASS)
         homePage.createProjectButton()
-        currentUrl.contains("/resources/createProject")
+        projectCreatePage.waitForUrlToContain("/resources/createProject")
         projectCreatePage.projectNameInput.sendKeys(projectName)
         projectCreatePage.createField.click()
 
@@ -89,7 +89,7 @@ class CreateProjectSpec extends SeleniumBase {
         when:
         loginPage.login(TEST_USER, TEST_PASS)
         homePage.createProjectButton()
-        currentUrl.contains("/resources/createProject")
+        projectCreatePage.waitForUrlToContain("/resources/createProject")
         projectCreatePage.projectNameInput.sendKeys(projectName)
         projectCreatePage.projectDescriptionInput.sendKeys("a description")
         projectCreatePage.labelInput.sendKeys("label")
@@ -115,7 +115,7 @@ class CreateProjectSpec extends SeleniumBase {
         when: "IC in desc"
         loginPage.login(TEST_USER, TEST_PASS)
         homePage.createProjectButton()
-        currentUrl.contains("/resources/createProject")
+        projectCreatePage.waitForUrlToContain("/resources/createProject")
         projectCreatePage.projectNameInput.sendKeys("name")
         projectCreatePage.descriptionInput.sendKeys("!\$%&")
         projectCreatePage.createField.click()

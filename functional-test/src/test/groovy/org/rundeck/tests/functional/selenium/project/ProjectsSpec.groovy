@@ -26,7 +26,7 @@ class ProjectsSpec extends SeleniumBase {
             homePage.validatePage()
 
             verifyAll {
-                driver.currentUrl.contains('nextUi=true')
+                homePage.waitForUrlToContain('nextUi=true')
                 driver.pageSource.contains('ui-type-next')
             }
 
@@ -45,7 +45,7 @@ class ProjectsSpec extends SeleniumBase {
             homePage.validatePage()
 
             verifyAll {
-                driver.currentUrl.contains('nextUi=true')
+                homePage.waitForUrlToContain('nextUi=true')
                 driver.pageSource.contains('ui-type-next')
             }
 

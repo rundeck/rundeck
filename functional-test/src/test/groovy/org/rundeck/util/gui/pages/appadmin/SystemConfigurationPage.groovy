@@ -10,16 +10,10 @@ import org.rundeck.util.gui.pages.BasePage
 @CompileStatic
 class SystemConfigurationPage extends BasePage {
 
-    String loadPath = ""
+    String loadPath = "config"
 
     SystemConfigurationPage(final SeleniumContext context) {
         super(context)
-    }
-
-    void validatePage() {
-        if (!driver.currentUrl.containsIgnoreCase("config")) {
-            throw new IllegalStateException("Not on key system configuration page: " + driver.currentUrl)
-        }
     }
 
 }

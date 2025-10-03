@@ -342,7 +342,7 @@ class BasicJobsSpec extends SeleniumBase {
             jobsListPage.go()
 
             verifyAll {
-                driver.currentUrl.contains('nextUi=true')
+                jobsListPage.waitForUrlToContain('nextUi=true')
                 driver.pageSource.contains('ui-type-next')
             }
 

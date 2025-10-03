@@ -56,7 +56,7 @@ class ExecutionShowAuthSpec extends SeleniumBase {
         given: "specific user logs in with limited authorization"
             def loginPage = go LoginPage
             loginPage.login(AUTH_USERS[authorization], AUTH_USER_PASS)
-            assert !driver.currentUrl.contains('/user/error')
+            loginPage.waitForUrlToContain('/menu/home')
         when: "view execution page for given execution"
             def showPage = page ExecutionShowPage, executionPath
             showPage.go()

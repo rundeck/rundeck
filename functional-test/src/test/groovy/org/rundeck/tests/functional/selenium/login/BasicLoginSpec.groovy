@@ -17,7 +17,7 @@ class BasicLoginSpec extends SeleniumBase {
             def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
         then:
-            currentUrl.contains("/menu/home")
+            loginPage.waitForUrlToContain("/menu/home")
             pageSource =~ /Projects/
     }
 
@@ -27,7 +27,7 @@ class BasicLoginSpec extends SeleniumBase {
             def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS + ":nope,wrong-password")
         then:
-            currentUrl.contains("/user/error")
+            loginPage.waitForUrlToContain("/user/error")
             loginPage.error.text == "Invalid username and password."
     }
 
@@ -37,7 +37,7 @@ class BasicLoginSpec extends SeleniumBase {
             def loginPage = go LoginPage
             loginPage.login(TEST_USER, "")
         then:
-            currentUrl.contains("/user/error")
+            loginPage.waitForUrlToContain("/user/error")
             loginPage.error.text == "Invalid username and password."
     }
 
@@ -46,7 +46,7 @@ class BasicLoginSpec extends SeleniumBase {
         def loginPage = go LoginPage
         loginPage.login(TEST_USER, TEST_PASS)
         then:
-        currentUrl.contains("/menu/home")
+        loginPage.waitForUrlToContain("/menu/home")
         pageSource =~ /Projects/
         cleanup:
         def topMenuPage = page TopMenuPage
@@ -58,7 +58,7 @@ class BasicLoginSpec extends SeleniumBase {
         def loginPage = go LoginPage
         loginPage.login(TEST_USER + ":nope,wrong-user", TEST_PASS)
         then:
-        currentUrl.contains("/user/error")
+        loginPage.waitForUrlToContain("/user/error")
         loginPage.error.text == "Invalid username and password."
     }
 

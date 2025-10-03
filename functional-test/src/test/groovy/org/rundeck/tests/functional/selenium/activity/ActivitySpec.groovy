@@ -25,7 +25,7 @@ class ActivitySpec extends SeleniumBase {
         given: "specific user logs in with limited authorization"
             def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
-            assert !driver.currentUrl.contains('/user/error')
+            loginPage.waitForUrlToContain('/menu/home')
         when: "view activity page"
             def activityPage = go ActivityPage, TEST_PROJECT
             activityPage
@@ -39,7 +39,7 @@ class ActivitySpec extends SeleniumBase {
         given: "specific user logs in with limited authorization"
             def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
-            assert !driver.currentUrl.contains('/user/error')
+            loginPage.waitForUrlToContain('/menu/home')
         when: "view activity page"
             def activityPage = page ActivityPage
             activityPage.params = "?max=${max}"
