@@ -250,8 +250,6 @@ job-defaults: &job-defaults
     GRADLE_OPTS: -XX:MaxRAMPercentage=80.0
     JAVA_OPTS: -XX:MaxRAMPercentage=80.0
     JAVA_HOME: /usr/lib/jvm/zulu11
-    SELENIUM_BROWSER_VERSION: "131"
-
 jobs:
 
   # Build rundeck War
@@ -613,6 +611,8 @@ jobs:
       - checkout
       - restore-build-cache
       - install-base-dependencies
+      - browser-tools/install_chrome_for_testing:
+            version: "139.0.7258.154"
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
