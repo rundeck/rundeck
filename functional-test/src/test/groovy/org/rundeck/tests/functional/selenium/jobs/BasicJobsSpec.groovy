@@ -112,6 +112,7 @@ class BasicJobsSpec extends SeleniumBase {
             jobCreatePage.descriptionTextarea.sendKeys 'a new job description'
             jobCreatePage.updateJobButton.click()
         expect:
+            jobShowPage.waitForElementVisible(nextUi ? jobShowPage.NextUi.descriptionText : jobShowPage.descriptionText)
             'a new job description' == jobShowPage.descriptionTextLabel.getText()
         where:
             nextUi<<[false,true]
@@ -236,6 +237,7 @@ class BasicJobsSpec extends SeleniumBase {
         expect:
             jobShowPage.cronLabel.size() == 2
             jobShowPage.scheduleTimeLabel.isDisplayed()
+            jobShowPage.waitForElementVisible(jobShowPage.multipleExecBy)
             jobShowPage.multipleExecField.isDisplayed()
             jobShowPage.multipleExecYesField.getText() == 'Yes'
             jobShowPage.notificationDefinition.getText() == 'mail to: test@rundeck.com'

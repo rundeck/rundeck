@@ -751,7 +751,7 @@ class JobsSpec extends SeleniumBase {
         jobShowPage.go()
         jobShowPage.getRunJobBtn().click()
         then:
-        jobShowPage.currentUrl().contains("invalidInputsProject/job/index")
+        jobShowPage.waitForUrlToContain("invalidInputsProject/job/index")
         jobShowPage.getJobOptionAlertBy().getText().contains("Option 'myOption' is required")
         cleanup:
         deleteProject(projectName)

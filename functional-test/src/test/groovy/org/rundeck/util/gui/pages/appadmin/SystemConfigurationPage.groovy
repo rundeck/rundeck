@@ -10,7 +10,7 @@ import org.rundeck.util.gui.pages.BasePage
 @CompileStatic
 class SystemConfigurationPage extends BasePage {
 
-    String loadPath = "config"
+    String loadPath = "systemConfig"
 
     SystemConfigurationPage(final SeleniumContext context) {
         super(context)

@@ -96,6 +96,7 @@ class ProjectEditPage extends BasePage {
     }
 
     def clickEditConfigurationFile(){
+        waitForElementToBeClickable editConfigurationFile
         (el editConfigurationFile).click()
     }
 
