@@ -138,8 +138,13 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     }
 
     void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
-            throw new IllegalStateException("Not on job show selected page: " + driver.currentUrl)
+        try {
+            waitForUrlToContain(loadPath)
+        } catch (Exception e) {
+            throw new IllegalStateException(
+                "Not on job show selected page. Expected URL to contain '${loadPath}' but got: ${driver.currentUrl}",
+                e
+            )
         }
     }
 
