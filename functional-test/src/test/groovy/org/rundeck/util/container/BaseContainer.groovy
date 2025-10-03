@@ -37,7 +37,6 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     public static final String PROJECT_NAME = 'test'
     private static final Object CLIENT_PROVIDER_LOCK = new Object()
     private static ClientProvider CLIENT_PROVIDER
-    private static final String DEFAULT_DOCKERFILE_LOCATION = System.getenv("DEFAULT_DOCKERFILE_LOCATION") ?: System.getProperty("DEFAULT_DOCKERFILE_LOCATION")
     protected static final String TEST_RUNDECK_URL = System.getenv("TEST_RUNDECK_URL") ?: System.getProperty("TEST_RUNDECK_URL")
     protected static final String TEST_RUNDECK_TOKEN = System.getenv("TEST_RUNDECK_TOKEN") ?: System.getProperty("TEST_RUNDECK_TOKEN", "admintoken")
     protected static final ObjectMapper MAPPER = new ObjectMapper()
@@ -66,12 +65,6 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
                         return RdClient.create(TEST_RUNDECK_URL, token)
                     }
                 }
-
-            } else if (DEFAULT_DOCKERFILE_LOCATION != null && !DEFAULT_DOCKERFILE_LOCATION.isBlank()) {
-                RdDockerContainer rdDockerContainer = new RdDockerContainer(getClass().getClassLoader().getResource(DEFAULT_DOCKERFILE_LOCATION).toURI())
-                rdDockerContainer.start()
-                CLIENT_PROVIDER = rdDockerContainer
-                RUNDECK_CONTAINER_ID = rdDockerContainer.containerId
 
             } else if (getCustomDockerComposeLocation() != null && !getCustomDockerComposeLocation().isBlank()) {
                 // Override default timeout values to accommodate slow container startups

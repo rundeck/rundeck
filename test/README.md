@@ -43,17 +43,6 @@ bash test/run-docker-pam-tests.sh
 bash test/run-docker-ssl-tests.sh
 ```
 
-## Tomcat 8 API Test
-```shell
-# Run tests test/api/test-*.sh in tomcat 8 environment
-bash test/run-docker-tomcat-tests.sh 8-jdk11
-```
-
-## Tomcat 9 API Test
-```shell
-# Run tests test/api/test-*.sh in tomcat 9 environment
-bash test/run-docker-tomcat-tests.sh 9-jdk11
-```
 
 ## Blocklist Test
 ```shell
