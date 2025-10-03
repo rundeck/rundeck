@@ -56,7 +56,14 @@ abstract class BasePage {
      */
     void validatePage() {
         if (loadPath && !loadPath.empty) {
-            waitForUrlToContain(loadPath)
+            try {
+                waitForUrlToContain(loadPath)
+            } catch (Exception e) {
+                throw new IllegalStateException(
+                    "Not on expected page. Expected URL to contain '${loadPath}' but got: ${driver.currentUrl}",
+                    e
+                )
+            }
         }
     }
 

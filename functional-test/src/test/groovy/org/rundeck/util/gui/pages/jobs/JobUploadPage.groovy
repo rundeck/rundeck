@@ -30,12 +30,6 @@ class JobUploadPage extends BasePage {
         loadPath = "/project/${projectName}/job/upload"
     }
 
-    void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
-            throw new IllegalStateException("Not on job upload page: " + driver.currentUrl)
-        }
-    }
-
     WebElement fileInputElement(){
         el fileInput
     }

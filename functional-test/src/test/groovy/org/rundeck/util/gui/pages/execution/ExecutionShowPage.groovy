@@ -63,12 +63,6 @@ class ExecutionShowPage extends BasePage  implements ActivityListTrait{
         this.loadPath=loadPath
     }
 
-    void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
-            throw new IllegalStateException("Not on execution show page: " + driver.currentUrl)
-        }
-    }
-
     WebElement getExecutionStateDisplayLabel() {
         el executionStateDisplayBy
     }

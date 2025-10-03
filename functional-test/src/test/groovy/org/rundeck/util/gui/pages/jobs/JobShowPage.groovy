@@ -137,16 +137,6 @@ class JobShowPage extends BasePage implements ActivityListTrait {
         driver.findElements(By.xpath("//input[contains(@name, 'extra.option.')]"))
     }
 
-    void validatePage() {
-        try {
-            waitForUrlToContain(loadPath)
-        } catch (Exception e) {
-            throw new IllegalStateException(
-                "Not on job show selected page. Expected URL to contain '${loadPath}' but got: ${driver.currentUrl}",
-                e
-            )
-        }
-    }
 
     WebElement getJobExecutionDisabledIcon(){
         el jobExecutionDisabledIconBy

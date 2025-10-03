@@ -21,10 +21,4 @@ class LoggedOutPage extends BasePage {
         el loginAgainFieldBy
     }
 
-    void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
-            throw new IllegalStateException("Not on logged out  page: " + driver.currentUrl)
-        }
-    }
-
 }
