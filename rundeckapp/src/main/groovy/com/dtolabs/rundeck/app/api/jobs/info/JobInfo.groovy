@@ -102,6 +102,33 @@ class JobInfo {
     @XmlAttribute
     String created
 
+    /**
+     * NEW: User who created the job (from ScheduledExecution.user).
+     * Exposed starting in API v55 to provide audit information.
+     */
+    @ApiVersion(55)
+    @Ignore(onlyIfNull = true)
+    @XmlAttribute
+    String createdBy
+
+    /**
+     * NEW: Job last modification timestamp (from ScheduledExecution.lastUpdated).
+     * Exposed starting in API v55 to provide audit information.
+     */
+    @ApiVersion(55)
+    @Ignore(onlyIfNull = true)
+    @XmlAttribute
+    String lastModified
+
+    /**
+     * NEW: User who last modified the job (from ScheduledExecution.lastModifiedBy).
+     * Exposed starting in API v55 to provide audit information.
+     */
+    @ApiVersion(55)
+    @Ignore(onlyIfNull = true)
+    @XmlAttribute
+    String lastModifiedBy
+
 //    Map blah=[
 //            z:'x'
 //    ]
@@ -117,6 +144,8 @@ class JobInfo {
         // Format as UTC ISO-8601 with trailing 'Z'
         String createdIso = se?.dateCreated ?
                 se.dateCreated.format("yyyy-MM-dd'T'HH:mm:ss'Z'", TimeZone.getTimeZone('UTC')) : null
+        String lastModifiedIso = se?.lastUpdated ?
+                se.lastUpdated.format("yyyy-MM-dd'T'HH:mm:ss'Z'", TimeZone.getTimeZone('UTC')) : null
 
         new JobInfo(
                 [
@@ -130,7 +159,10 @@ class JobInfo {
                         scheduled      : se.scheduled,
                         scheduleEnabled: se.scheduleEnabled,
                         enabled        : se.executionEnabled,
-                        created        : createdIso
+                        created        : createdIso,
+                        createdBy      : se.user,
+                        lastModified   : lastModifiedIso,
+                        lastModifiedBy : se.lastModifiedBy
                 ] + extra?.subMap(
                         'serverNodeUUID',
                         'serverOwner',

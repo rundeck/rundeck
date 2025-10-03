@@ -23,6 +23,8 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By jobUuidBy = By.xpath("//*[@class='rd-copybox__content']")
     By stepsInJobDefinitionBy = By.cssSelector(".pflowitem.wfctrlholder")
     By jobDefinitionModalBy = By.cssSelector('a[href="#job-definition-modal"]')
+    By jobDefinitionModalButtonBy = By.cssSelector('a[href="#job-definition-modal"][data-toggle="modal"]')
+    By jobDefinitionModalContentBy = By.id("job-definition-modal")
     By notificationDefinitionBy = By.cssSelector('#detailtable.tab-pane > div.row > div.col-sm-12.table-responsive > table.table.item_details> tbody > tr > td.container > div.row > div.col-sm-12 > div.overflowx')
     By closeJobDefinitionModalBy = By.xpath("//*[contains(@id,'job-definition-modal_footer')]//*[@type='submit']")
     By jobInfoGroupBy = By.cssSelector('div.jobInfoSection a.text-secondary')
@@ -91,6 +93,9 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By jobStatsBy = By.cssSelector(".col-xs-12.col-sm-4.job-stats-item")
     By optionInputBy = By.cssSelector(".optionvaluesfield")
     By jobOptionAlertBy = By.cssSelector(".alert.alert-danger")
+    By jobCreatedByBy = By.xpath("//td[contains(text(),'Created by')]/following-sibling::td")
+    By jobLastModifiedByBy = By.xpath("//td[contains(text(),'Last modified by')]/following-sibling::td")
+    By jobAuditTableBy = By.cssSelector("table.item_details, #detailtable table")
 
     static class NextUi {
         static By descriptionText = By
@@ -149,6 +154,15 @@ class JobShowPage extends BasePage implements ActivityListTrait {
 
     WebElement getJobDefinitionModal(){
         el jobDefinitionModalBy
+    }
+
+    WebElement getJobDefinitionModalButton(){
+        el jobDefinitionModalButtonBy
+    }
+
+    WebElement getJobDefinitionModalContent(){
+        waitForElementVisible jobDefinitionModalContentBy
+        el jobDefinitionModalContentBy
     }
 
     WebElement getNotificationDefinition(){
@@ -463,5 +477,41 @@ class JobShowPage extends BasePage implements ActivityListTrait {
 
     WebElement getJobOptionAlertBy(){
         el jobOptionAlertBy
+    }
+
+    /**
+     * Get audit table element
+     */
+    WebElement getJobAuditTable(){
+        el jobAuditTableBy
+    }
+
+    /**
+     * Get "Created by" audit information
+     */
+    WebElement getJobCreatedBy(){
+        try {
+            el jobCreatedByBy
+        } catch (Exception e) {
+            return null // Element may not exist for jobs without audit data
+        }
+    }
+
+    /**
+     * Get "Last modified by" audit information  
+     */
+    WebElement getJobLastModifiedBy(){
+        try {
+            el jobLastModifiedByBy
+        } catch (Exception e) {
+            return null // Element may not exist for jobs without modification history
+        }
+    }
+
+    /**
+     * Check if audit information is present
+     */
+    boolean hasAuditInformation(){
+        return getJobCreatedBy() != null || getJobLastModifiedBy() != null
     }
 }

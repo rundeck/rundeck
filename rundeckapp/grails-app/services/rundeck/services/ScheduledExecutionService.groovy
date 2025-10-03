@@ -3517,9 +3517,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }else{
             deleteExistingOptions(scheduledExecution)
             deleteExistingNotification(scheduledExecution)
+            // Exclude audit/system fields to prevent imported jobs from overwriting creator/dates
+            def EXCLUDED_AUDIT_FIELDS = ['user', 'dateCreated', 'lastModifiedBy', 'lastUpdated', 'uuid', 'id']
             final Collection foundprops = input.properties.keySet().findAll {
-                it != 'lastUpdated' &&
-                it != 'dateCreated' &&
+                !(it in EXCLUDED_AUDIT_FIELDS) &&
                 !it.startsWith( 'nodeInclude') &&//deprecating these
                 !it.startsWith( 'nodeExclude') &&
                 (
@@ -3617,7 +3618,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     ) {
 
         def scheduledExecution = importedJob.job
-        scheduledExecution.user = authContext.username
+        // Do NOT overwrite original creator (scheduledExecution.user) during updates
         scheduledExecution.userRoles = authContext.roles as List<String>
         Map validation=[:]
         def failed = !validateJobDefinition(importedJob, authContext, params, validation, validateJobref)
@@ -3704,6 +3705,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             )
         }
 
+        // Set lastModifiedBy for job updates to track who modified the job
+        if (authContext?.username) {
+            scheduledExecution.lastModifiedBy = authContext.username
+        }
+
         if (!(resultFromPlugin.success && !failed && scheduledExecution.save(flush: true))) {
             scheduledExecution.discard()
             return [success: false, scheduledExecution: scheduledExecution]
@@ -3759,7 +3765,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     ) {
 
         def scheduledExecution = importedJob.job
-        scheduledExecution.user = authContext.username
+        // Do NOT set user here - only set during creation check below
         scheduledExecution.userRoles = authContext.roles as List<String>
 
         Map validation = [:]
@@ -3808,6 +3814,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     "A component returned an error: " + result2.error
             )
         }
+
+        // Set user for new job creation to track who created the job
+        if (!scheduledExecution.user && authContext?.username) {
+            scheduledExecution.user = authContext.username
+        }
+        // Optional: initialize lastModifiedBy to creator (keeps API/UI non-null until first edit)
+        if (!scheduledExecution.lastModifiedBy && authContext?.username) {
+            scheduledExecution.lastModifiedBy = authContext.username
+        }
+
         if (!(resultFromPlugin.success && !failed && scheduledExecution.save(flush: true))) {
             scheduledExecution.discard()
             return [success: false, scheduledExecution: scheduledExecution]
