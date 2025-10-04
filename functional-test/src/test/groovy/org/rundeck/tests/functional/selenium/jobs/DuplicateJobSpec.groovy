@@ -32,7 +32,7 @@ class DuplicateJobSpec extends SeleniumBase{
         jobShowPage.setLoadPath("/job/show")
         then:
         jobShowPage.validatePage()
-        !jobCreatePage.waitForUrlToContain(jobUuid)
+        !jobShowPage.currentUrl().contains(jobUuid)
         cleanup:
         deleteProject(projectName)
     }

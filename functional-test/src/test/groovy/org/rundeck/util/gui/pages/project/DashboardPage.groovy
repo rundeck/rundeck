@@ -49,6 +49,7 @@ class DashboardPage extends BasePage {
     }
 
     def getCheckReadme() {
+        waitForElementVisible(readmeMarkDownBy)
         (el readmeMarkDownBy).getText()
     }
 

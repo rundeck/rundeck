@@ -234,6 +234,7 @@ class BasicJobsSpec extends SeleniumBase {
         then:
             jobListPage.go()
             jobShowPage.jobDefinitionModal.click()
+            jobShowPage.waitForModal(1)
         expect:
             jobShowPage.cronLabel.size() == 2
             jobShowPage.scheduleTimeLabel.isDisplayed()
