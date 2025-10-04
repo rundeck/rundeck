@@ -29,10 +29,19 @@ class SideBarPage extends BasePage {
         if (navLink.projectConfig) {
             projectSettingsField.click()
             waitForNavVisible()
-        } else if (!(el navIdBy).isDisplayed() && overflowFields.size() == 1) {
-            overflowField.click()
-            waitForAttributeContains overflowField, 'class', 'active'
+        } else {
+            def isVisible = false
+            try {
+                isVisible = (el navIdBy).isDisplayed()
+            } catch (org.openqa.selenium.StaleElementReferenceException ignored) {
+                // Element is stale, treat as not visible
+            }
+            if (!isVisible && overflowFields.size() == 1) {
+                overflowField.click()
+                waitForAttributeContains overflowField, 'class', 'active'
+            }
         }
+        waitForElementToBeClickable navIdBy
         el navIdBy click()
     }
 

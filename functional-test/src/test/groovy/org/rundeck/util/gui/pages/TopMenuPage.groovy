@@ -42,7 +42,13 @@ class TopMenuPage extends BasePage {
     }
 
     void clickHomeButton(){
-        (el divHome).findElement(By.tagName("i")).click()
+        waitForElementToBeClickable divHome
+        try {
+            (el divHome).findElement(By.tagName("i")).click()
+        } catch (org.openqa.selenium.StaleElementReferenceException e) {
+            // Retry once if stale
+            (el divHome).findElement(By.tagName("i")).click()
+        }
     }
 
     void navigateToUserProfile() {

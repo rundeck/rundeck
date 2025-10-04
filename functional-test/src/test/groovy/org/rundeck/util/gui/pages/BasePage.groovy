@@ -39,6 +39,7 @@ abstract class BasePage {
     void go() {
         if (loadPath && !loadPath.empty) {
             implicitlyWait 2000
+            waitForPageReady()
             driver.get(context.client.baseUrl + loadPath)
             validatePage()
         }
@@ -47,8 +48,15 @@ abstract class BasePage {
     void go(String loadPath) {
         if (loadPath && !loadPath.empty) {
             implicitlyWait 2000
+            waitForPageReady()
             driver.get(context.client.baseUrl + loadPath)
             validatePage()
+        }
+    }
+
+    void waitForPageReady() {
+        new WebDriverWait(context.driver, Duration.ofSeconds(30)).until { driver ->
+            ((JavascriptExecutor) driver).executeScript("return document.readyState") == "complete"
         }
     }
     /**
