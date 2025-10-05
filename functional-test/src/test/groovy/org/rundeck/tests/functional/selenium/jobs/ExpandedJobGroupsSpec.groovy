@@ -76,7 +76,7 @@ class ExpandedJobGroupsSpec extends SeleniumBase {
         then: "Job groups expanded"
         jobListPage.getExpandedJobGroupsContainerChildren().size() < 2
 
-        when: "We change teh expand level to 2"
+        when: "We change the expand level to 2"
         projectEditPage.go()
         projectEditPage.clickEditConfigurationFile()
         projectEditPage.replaceConfiguration("${expandedGroupsProp}1","${expandedGroupsProp}2")
