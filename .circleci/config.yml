@@ -700,15 +700,11 @@ workflows:
               value: << pipeline.git.branch >>
 
     jobs:
-      - build-rundeck:
-          name: Build
-          <<: *slack-defaults
       - test-gradle-functional:
           name: T Selenium
           gradle-task: seleniumCoreTest
           parallelism: 3
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/**/*{.groovy,.java}"
-          <<: *require-build
           <<: *slack-defaults
 
   build_and_test_with_jre_17:
