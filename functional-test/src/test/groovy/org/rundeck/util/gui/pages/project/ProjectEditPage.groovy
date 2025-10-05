@@ -95,15 +95,6 @@ class ProjectEditPage extends BasePage {
         (el saveButton).click()
     }
 
-    def waitForSaveComplete(){
-        waitForPageReady()
-        // Additional wait to ensure any redirects or AJAX updates complete
-        new WebDriverWait(driver, Duration.ofSeconds(5)).until { driver ->
-            ((JavascriptExecutor) driver).executeScript("return document.readyState") == "complete" &&
-            ((JavascriptExecutor) driver).executeScript("return jQuery.active == 0")
-        }
-    }
-
     def clickEditConfigurationFile(){
         waitForElementVisible editConfigurationFile
         (el editConfigurationFile).click()

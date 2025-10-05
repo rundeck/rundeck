@@ -40,7 +40,6 @@ abstract class BasePage {
         if (loadPath && !loadPath.empty) {
             implicitlyWait 2000
             driver.get(context.client.baseUrl + loadPath)
-            waitForPageReady()
             validatePage()
         }
     }
@@ -49,16 +48,10 @@ abstract class BasePage {
         if (loadPath && !loadPath.empty) {
             implicitlyWait 2000
             driver.get(context.client.baseUrl + loadPath)
-            waitForPageReady()
             validatePage()
         }
     }
 
-    void waitForPageReady() {
-        new WebDriverWait(context.driver, Duration.ofSeconds(30)).until { driver ->
-            ((JavascriptExecutor) driver).executeScript("return document.readyState") == "complete"
-        }
-    }
     /**
      * Validate the page is loaded
      */
@@ -161,7 +154,7 @@ abstract class BasePage {
     }
 
     boolean waitForUrlToContain(String text) {
-        new WebDriverWait(context.driver, Duration.ofSeconds(30))
+        new WebDriverWait(context.driver, Duration.ofSeconds(45))
                 .until(ExpectedConditions.urlContains(text))
     }
 

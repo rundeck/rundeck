@@ -152,6 +152,7 @@ class BasicJobsSpec extends SeleniumBase {
     def "edit job and set schedules tab"() {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
+            def jobShowPage = page JobShowPage
         then:
             jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
             jobCreatePage.go()
@@ -234,7 +235,7 @@ class BasicJobsSpec extends SeleniumBase {
         then:
             jobListPage.go()
             jobShowPage.jobDefinitionModal.click()
-            jobShowPage.waitForModal(1)
+            jobShowPage.waitForModal(1, By.cssSelector(".modal.in"))
         expect:
             jobShowPage.cronLabel.size() == 2
             jobShowPage.scheduleTimeLabel.isDisplayed()
