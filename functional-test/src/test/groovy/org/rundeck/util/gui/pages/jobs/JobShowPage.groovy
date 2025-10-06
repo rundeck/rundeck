@@ -93,9 +93,7 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By jobStatsBy = By.cssSelector(".col-xs-12.col-sm-4.job-stats-item")
     By optionInputBy = By.cssSelector(".optionvaluesfield")
     By jobOptionAlertBy = By.cssSelector(".alert.alert-danger")
-    By jobCreatedByBy = By.xpath("//td[contains(text(),'Created by')]/following-sibling::td")
-    By jobLastModifiedByBy = By.xpath("//td[contains(text(),'Last modified by')]/following-sibling::td")
-    By jobAuditTableBy = By.cssSelector("table.item_details, #detailtable table")
+
 
     static class NextUi {
         static By descriptionText = By
@@ -477,41 +475,5 @@ class JobShowPage extends BasePage implements ActivityListTrait {
 
     WebElement getJobOptionAlertBy(){
         el jobOptionAlertBy
-    }
-
-    /**
-     * Get audit table element
-     */
-    WebElement getJobAuditTable(){
-        el jobAuditTableBy
-    }
-
-    /**
-     * Get "Created by" audit information
-     */
-    WebElement getJobCreatedBy(){
-        try {
-            el jobCreatedByBy
-        } catch (Exception e) {
-            return null // Element may not exist for jobs without audit data
-        }
-    }
-
-    /**
-     * Get "Last modified by" audit information  
-     */
-    WebElement getJobLastModifiedBy(){
-        try {
-            el jobLastModifiedByBy
-        } catch (Exception e) {
-            return null // Element may not exist for jobs without modification history
-        }
-    }
-
-    /**
-     * Check if audit information is present
-     */
-    boolean hasAuditInformation(){
-        return getJobCreatedBy() != null || getJobLastModifiedBy() != null
     }
 }
