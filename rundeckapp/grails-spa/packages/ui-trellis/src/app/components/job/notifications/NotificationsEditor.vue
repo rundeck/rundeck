@@ -192,7 +192,7 @@
           <div class="form-group">
             <label class="col-sm-2 control-label"> Notification Type </label>
             <div class="col-sm-10 form-control-static">
-              <dropdown id="notification-edit-type-dropdown" ref="dropdown">
+              <dropdown :disabled="sortedProviders.length === 0" id="notification-edit-type-dropdown" ref="dropdown">
                 <btn
                   type="simple"
                   class="btn-simple btn-hover btn-secondary dropdown-toggle"
@@ -216,29 +216,34 @@
                   <span v-else> Select a Notification </span>
                 </btn>
                 <template #dropdown>
-                  <li v-for="plugin in sortedProviders" :key="plugin.name">
+                  <li v-for="(plugin, index) in sortedProviders" :key="`notificationPlugin${index}`">
                     <a
                       role="button"
                       :data-plugin-type="plugin.name"
                       @click="setEditNotificationType(plugin.name)"
                     >
                       <plugin-info
+                          v-if="plugin"
                         :detail="plugin"
                         :show-description="true"
                         :show-extended="false"
                         description-css="help-block"
                       >
+                        <template #description="{}">
+                          <p></p>
+                        </template>
                       </plugin-info>
                     </a>
                   </li>
                 </template>
               </dropdown>
               <div
-                v-if="
-                  editNotification.type && getProviderFor(editNotification.type)
-                "
+
               >
                 <plugin-info
+                    v-if="
+                  editNotification.type && getProviderFor(editNotification.type).length
+                "
                   :detail="getProviderFor(editNotification.type)"
                   :show-description="true"
                   :show-extended="false"
@@ -340,7 +345,9 @@ export default defineComponent({
       },
       notifications: [],
       editNotificationTrigger: null,
-      editNotification: {},
+      editNotification: {
+        name: ''
+      },
       editValidation: null,
       editError: null,
       editIndex: -1,
@@ -353,11 +360,14 @@ export default defineComponent({
   },
   computed: {
     sortedProviders() {
-      const prov = [this.getProviderFor("email"), this.getProviderFor("url")];
-      const other = this.pluginProviders.filter(
-        (x) => x.name !== "email" && x.name !== "url",
-      );
-      return prov.concat(other);
+      if(this.pluginProviders.length > 0) {
+        const prov = [this.getProviderFor("email"), this.getProviderFor("url")];
+        const other = this.pluginProviders.filter(
+            (x) => x.name !== "email" && x.name !== "url",
+        );
+        return prov.concat(other);
+      }
+      return []
     },
     groupedNotifications() {
       const grouped = {};
@@ -542,7 +552,11 @@ export default defineComponent({
       this.editNotification = {};
     },
     getProviderFor(name) {
-      return this.pluginProviders.find((p) => p.name === name);
+      if(this.pluginProviders.length > 0) {
+        return this.pluginProviders.find((p) => p.name === name);
+      } else {
+        return ''
+      }
     },
     getNotificationsForTrigger(trigger) {
       return this.notifications.filter((s) => s.trigger === trigger);
