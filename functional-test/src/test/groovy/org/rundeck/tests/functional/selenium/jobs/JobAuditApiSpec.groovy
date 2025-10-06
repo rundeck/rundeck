@@ -10,12 +10,15 @@ import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.jobs.JobShowPage
 import java.time.Duration
+import okhttp3.RequestBody
+import okhttp3.MediaType
+import okhttp3.Request
 
 /**
  * Tests audit tracking (createdBy and lastModifiedBy) for jobs using API + Selenium hybrid approach.
- * Uses API to create jobs and simulate modifications, Selenium to verify UI display.
+ * Uses API to create and modify jobs, Selenium to verify UI display of audit information.
  * Works in CI/CD environments by using only existing realm users (admin).
- * Simulates cross-user modifications via API calls rather than requiring multiple user logins.
+ * Verifies that audit fields are properly set during job creation and modification.
  */
 @SeleniumCoreTest
 class JobAuditApiSpec extends SeleniumBase {
@@ -27,7 +30,7 @@ class JobAuditApiSpec extends SeleniumBase {
         setupProject(projectName)
     }
 
-    def "audit test: simulate cross-user modification and verify audit fields"() {
+    def "audit test: verify job creation and modification tracking"() {
         given: "a job created by admin and page objects initialized"
         def loginPage = page LoginPage
         def jobShowPage = page JobShowPage
@@ -40,16 +43,36 @@ class JobAuditApiSpec extends SeleniumBase {
         assert jobUuid, "Failed to create job via API"
         println "✓ Job created by admin (UUID: ${jobUuid})"
 
-        when: "we update the job via API v55 to test audit tracking"
+        when: "we update the job via API to test audit tracking"
         // Step 2: Update job via API call (authenticated as admin)
-        // This tests that lastModifiedBy field gets updated based on authContext.username
-        def updatePayload = [
-            name: jobName,
-            description: "Job edited via API for audit test",
-            project: projectName
-        ]
+        // This tests that lastModifiedBy field gets updated when job is modified
+        def updatedJobXml = "<joblist>\n" +
+                "   <job>\n" +
+                "      <name>${jobName}</name>\n" +
+                "      <group>api-test</group>\n" +
+                "      <description>Job edited via API for audit test</description>\n" +
+                "      <loglevel>INFO</loglevel>\n" +
+                "      <multipleExecutions>true</multipleExecutions>\n" +
+                "      <dispatch>\n" +
+                "        <threadcount>1</threadcount>\n" +
+                "        <keepgoing>true</keepgoing>\n" +
+                "      </dispatch>\n" +
+                "      <sequence>\n" +
+                "        <command>\n" +
+                "        <exec>echo hello there - updated by admin</exec>\n" +
+                "        </command>\n" +
+                "      </sequence>\n" +
+                "   </job>\n" +
+                "</joblist>"
 
-        def response = client.doPutWithJsonBody("/api/55/job/${jobUuid}", updatePayload)
+        // Use standard API call to update the job
+        RequestBody requestBody = RequestBody.create(updatedJobXml, MediaType.parse("application/xml"))
+        Request request = new Request.Builder()
+                .url(client.baseUrl + "/api/${client.apiVersion}/job/${jobUuid}")
+                .method("PUT", requestBody)
+                .header("Accept", "application/json")
+                .build()
+        def response = client.httpClient.newCall(request).execute()
         println "✓ Job updated via API v55, response code: ${response.code()}"
 
         then: "the API update should succeed"
@@ -96,10 +119,10 @@ class JobAuditApiSpec extends SeleniumBase {
         assert createdBy.equalsIgnoreCase("admin"),
             "Expected creator to be 'admin' but found: ${createdBy}"
 
-        // Verify last modifier shows admin (since API call is authenticated as admin)
-        // This tests that lastModifiedBy field is properly set based on authContext.username
+        // Verify last modifier shows admin (who performed the API update)
+        // This tests that lastModifiedBy field is properly set based on the authenticated user
         assert lastModifiedBy.equalsIgnoreCase("admin"),
-            "Expected last modifier to be 'admin' (API auth user) but found: ${lastModifiedBy}"
+            "Expected last modifier to be 'admin' (API authenticated user) but found: ${lastModifiedBy}"
 
         println "✓ SUCCESS: Audit tracking verified - Created By: ${createdBy}, Last Modified By: ${lastModifiedBy}"
         println "✓ Audit field updates working correctly - both creation and modification tracking functional"
