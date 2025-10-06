@@ -216,6 +216,7 @@ class BasicJobsSpec extends SeleniumBase {
             jobCreatePage.go()
             jobCreatePage.tab JobTab.NOTIFICATIONS click()
             jobCreatePage.addNotificationButtonByType NotificationEvent.START click()
+            jobCreatePage.waitNotificationModal 1
             jobCreatePage.notificationDropDown.click()
             jobCreatePage.notificationByType NotificationType.MAIL click()
             jobCreatePage.notificationConfigByPropName "recipients" sendKeys 'test@rundeck.com'

@@ -88,7 +88,6 @@ class JobCreatePage extends BasePage {
         static By strategyPluginParallelMsgBy = By.xpath('//*[@id="strategyPluginparallel"]/span')
         static By numberOfStepsBy = By.cssSelector("[data-test='edit-step-item']")
         static By deleteStepBy = By.cssSelector('button[data-test="remove-step"]')
-        static By groupNameOption = By.xpath("//span[contains(@class, \'jobgroupexpand\') and contains(text(), ' test ')]")
     }
 
     By separatorOptionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
@@ -416,9 +415,6 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getGroupNameOption() {
-        if(nextUi) {
-            el NextUi.groupNameOption
-        }
         el groupNameOption
     }
 
