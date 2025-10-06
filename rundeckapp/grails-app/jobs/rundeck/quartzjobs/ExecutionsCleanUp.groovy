@@ -150,24 +150,33 @@ class ExecutionsCleanUp implements InterruptableJob {
 
         logger.info("Searching All Executions")
 
-        Map jobList = executionService.queryExecutions(
-            getExecutionsQueryCriteria(
-                project,
-                maxDaysToKeep,
-                maximumDeletionSize
-            )
+        Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d")
+
+        List<Long> jobList = Execution.executeQuery(
+            """select e.id from Execution e 
+               where e.project = :project 
+               and e.dateCompleted <= :endDate 
+               and e.dateCompleted is not null 
+               and e.status not in (:excludedStatuses)
+               order by e.dateCompleted asc""",
+            [
+                project: project,
+                endDate: endDate,
+                excludedStatuses: [ExecutionService.EXECUTION_SCHEDULED, ExecutionService.EXECUTION_QUEUED]
+            ],
+            [max: maximumDeletionSize]
         )
 
-        if(null != jobList && null != jobList.get("total")) {
-            List result = (List)jobList.get("result")
-            Integer totalFound = (Integer) jobList.get("total")
+        if(null != jobList && 0 != jobList.size()) {
+            List result = jobList
+            Integer totalFound = jobList.size()
             Integer totalToExclude = result.size()
 
             logger.info("found ${totalFound} executions")
             if(totalToExclude >0) {
                 if (minimumExecutionToKeep > 0) {
 
-                    int totalExecutions = this.totalAllExecutions(executionService, project)
+                    int totalExecutions = this.totalAllExecutions(project)
                     int sub = totalExecutions - totalToExclude
 
                     logger.info("minimum executions to keep: ${minimumExecutionToKeep}")
@@ -211,41 +220,14 @@ class ExecutionsCleanUp implements InterruptableJob {
         return collectedExecutions
     }
 
-    private int totalAllExecutions(ExecutionService executionService, String project){
-        ExecutionQuery query = new ExecutionQuery(projFilter: project)
-        def total = Execution.createCriteria().count{
-            def queryCriteria = query.createCriteria(delegate)
-            queryCriteria()
-        }
+    private int totalAllExecutions(String project){
+        Integer total = Execution.executeQuery(
+                "select count(e.id) from Execution e where e.project = :project",
+                [project: project]
+        )[0]
         return null != total ? total : 0
     }
 
-    private Closure getExecutionsQueryCriteria(String project, Integer maxDaysToKeep = 0, Integer maxDetetionSize = 500){
-        Date endDate=ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d")
-        return {isCount ->
-            if(!isCount){
-                projections {
-                    //just return the ID on the select
-                    property('id')
-                }
-            }
-
-            eq('project', project)
-            le('dateCompleted', endDate)
-            //remove running execution
-            isNotNull('dateCompleted')
-            and{
-                ne('status',ExecutionService.EXECUTION_SCHEDULED)
-                ne('status', ExecutionService.EXECUTION_QUEUED)
-            }
-            maxResults(maxDetetionSize)
-            if (!isCount) {
-                and {
-                    order('dateCompleted', 'asc')
-                }
-            }
-        }
-    }
 
     private int deleteByExecutionList(List<Long> collectedExecutions, FileUploadService fileUploadService, LogFileStorageService logFileStorageService,referencedExecutionDataProvider, ReportService reportService) {
         logger.info("Start to delete ${collectedExecutions.size()} executions")
