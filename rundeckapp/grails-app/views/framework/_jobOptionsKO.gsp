@@ -113,7 +113,7 @@ data for configuring remote option cascading/dependencies
                        data-toggle="tooltip" data-placement="right">
                     <span data-bind="if: hasRemote()">
                         <span data-bind="if: loading()">
-                            <g:img class="loading-spinner" file="spinner-gray.gif" width="16px" height="16px"/>
+                            <i class="fas fa-spinner fa-spin"></i>
                         </span>
                         <span class="remotestatus"
                               data-bind="css: {ok: !remoteError() && remoteValues().length>0 && remoteValues, error: remoteError()}">

@@ -47,7 +47,11 @@
           </div>
         </template>
         <template #footer>
-          <template v-if="createMode">
+          <div
+            v-if="createMode"
+            class="edit-option-item"
+            :class="{ alternate: intOptions.length % 2 === 1 }"
+          >
             <option-edit
               id="optitem_new"
               :ui-features="{ next: false }"
@@ -61,7 +65,7 @@
               @update:model-value="saveNewOption"
               @cancel="doCancel"
             />
-          </template>
+          </div>
         </template>
       </draggable>
 
@@ -324,10 +328,10 @@ export default defineComponent({
   margin-top: 10px;
   border: 1px solid var(--gray-input-outline);
   &.alternate {
-    background-color: var(--background-color-accent-lvl2);
+    background-color: var(--background-color);
   }
 
-  padding: 10px 4px;
+  padding: 10px;
 }
 
 .note {
