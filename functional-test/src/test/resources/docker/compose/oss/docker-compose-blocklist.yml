@@ -9,7 +9,7 @@ services:
       RUNDECK_MULTIURL_ENABLED: "true"
       RUNDECK_METRICS_ENABLED: "true"
       MANAGEMENT_ENDPOINT_HEALTH_ENABLED: "true"
-      MANAGEMENT_ENDPOINT_HEALTH_GROUP_READINESS_INCLUDE: "readinessState,rundeckDataSourceHeathIndicator"
+      MANAGEMENT_ENDPOINT_HEALTH_GROUP_READINESS_INCLUDE: "readinessState,rundeckDataSourceHealthIndicator"
       RUNDECK_PLUGINS_PROVIDERBLOCKLISTFILE: /home/rundeck/blocklist.yaml
     ports:
       - "4440:4440"
