@@ -949,8 +949,8 @@ beans={
     }
 
 
-    // Activate Spring Actuator DataSourceHealthIndicator with a Rundeck specific bean name `rundeckDataSourceHeathIndicator`
-    rundeckDataSourceHeathIndicator(DataSourceHealthIndicator) {
+    // Activate Spring Actuator DataSourceHealthIndicator with a Rundeck specific bean name `rundeckDataSourceHealthIndicator`
+    rundeckDataSourceHealthIndicator(DataSourceHealthIndicator) {
         dataSource = ref("dataSource")
         // Get the validation query from config, if not provided the Spring DataSourceHealthIndicator will use the Connection.isValid() to test the database connection.
         query = grailsApplication.config.getProperty("rundeck.health.databaseValidationQuery")
