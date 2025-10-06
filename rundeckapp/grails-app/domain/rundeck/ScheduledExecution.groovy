@@ -372,6 +372,12 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         if (config) {
             map.plugins = config
         }
+
+        // Include user field for proper serialization during job import/export
+        if (user) {
+            map.user = user
+        }
+
         return map
     }
     static ScheduledExecution fromMap(Map data){
@@ -574,6 +580,12 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         if (data.plugins instanceof Map) {
             se.pluginConfigMap = data.plugins
         }
+
+        // Restore user field during deserialization
+        if (data.user) {
+            se.user = data.user
+        }
+
         return se
     }
 
