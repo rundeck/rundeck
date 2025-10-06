@@ -38,16 +38,18 @@ abstract class BasePage {
      */
     void go() {
         if (loadPath && !loadPath.empty) {
-            driver.get(context.client.baseUrl + loadPath)
             implicitlyWait 2000
+            driver.get(context.client.baseUrl + loadPath)
+            implicitlyWait 1000
             validatePage()
         }
     }
 
     void go(String loadPath) {
         if (loadPath && !loadPath.empty) {
-            driver.get(context.client.baseUrl + loadPath)
             implicitlyWait 2000
+            driver.get(context.client.baseUrl + loadPath)
+            implicitlyWait 1000
             validatePage()
         }
     }
