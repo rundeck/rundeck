@@ -297,7 +297,7 @@ databaseChangeLog = {
             column(name: "workflow_id")
         }
     }
-    changeSet(author: "jaya", id: "add-last-modified-by-column-v2") {
+    changeSet(author: "rundeckuser (generated)", id: "4.16.0-add-last-modified-by-column") {
         preConditions(onFail: "MARK_RAN") {
             not {
                 columnExists(tableName: "scheduled_execution", columnName: "last_modified_by")
