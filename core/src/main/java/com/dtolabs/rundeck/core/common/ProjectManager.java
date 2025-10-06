@@ -50,6 +50,12 @@ public interface ProjectManager {
      */
     IRundeckProject getFrameworkProject(String name);
 
+    /**
+     * Load the project config, without caching, ONLY USE IF NECESSARY. It is preferable
+     * to use the {@link #getFrameworkProject(String)} method which will improve performance by using a cached project and config.
+     * @param project project name
+     * @return the project config
+     */
     IRundeckProjectConfig loadProjectConfig(final String project);
 
     /**
