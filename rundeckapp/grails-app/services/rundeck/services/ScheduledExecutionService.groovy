@@ -3518,7 +3518,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             deleteExistingOptions(scheduledExecution)
             deleteExistingNotification(scheduledExecution)
             // Exclude audit/system fields to prevent imported jobs from overwriting creator/dates
-            def EXCLUDED_AUDIT_FIELDS = ['user', 'dateCreated', 'lastModifiedBy', 'lastUpdated', 'uuid', 'id']
+            def EXCLUDED_AUDIT_FIELDS = ['user', 'dateCreated', 'lastModifiedBy', 'lastUpdated', 'id']
             final Collection foundprops = input.properties.keySet().findAll {
                 !(it in EXCLUDED_AUDIT_FIELDS) &&
                 !it.startsWith( 'nodeInclude') &&//deprecating these
