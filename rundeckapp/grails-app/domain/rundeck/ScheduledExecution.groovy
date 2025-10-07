@@ -111,6 +111,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
 
     String maxMultipleExecutions
     String pluginConfig
+    String lastModifiedBy
 
     static transients = ['userRoles', 'adhocExecutionType', 'notifySuccessRecipients', 'notifyFailureRecipients',
                          'notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl',
@@ -142,6 +143,8 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         orchestrator(nullable:true)
         crontabString(bindable: true,nullable: true)
         pluginConfig(nullable: true)
+        user(nullable: true, blank: true)
+        lastModifiedBy(nullable: true, blank: true)
     }
 
     static mapping = {
@@ -175,6 +178,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         notifyAvgDurationThreshold(type: 'text')
         serverNodeUUID(type: 'string')
         pluginConfig(type: 'text')
+        lastModifiedBy(type: 'string')
 
         DomainIndexHelper.generate(delegate) {
             index 'JOB_IDX_PROJECT', ['project']
@@ -368,6 +372,12 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         if (config) {
             map.plugins = config
         }
+
+        // Include user field for proper serialization during job import/export
+        if (user) {
+            map.user = user
+        }
+
         return map
     }
     static ScheduledExecution fromMap(Map data){
@@ -570,6 +580,12 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         if (data.plugins instanceof Map) {
             se.pluginConfigMap = data.plugins
         }
+
+        // Restore user field during deserialization
+        if (data.user) {
+            se.user = data.user
+        }
+
         return se
     }
 
