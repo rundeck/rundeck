@@ -1,6 +1,7 @@
 package org.rundeck.tests.functional.selenium.jobs
 
 import org.openqa.selenium.By
+import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.rundeck.util.annotations.SeleniumCoreTest
@@ -30,11 +31,9 @@ class JobAuditApiSpec extends SeleniumBase {
         given: "a job exists (created via API)"
         def loginPage = page LoginPage
         def jobShowPage = page JobShowPage
-        def wait = new WebDriverWait(driver, Duration.ofSeconds(15))
+        def wait = new WebDriverWait(driver, Duration.ofSeconds(8))
 
-        // Use admin user for modification (CircleCI compatible)
-        def modifyingUser = "admin"
-        def modifyingPassword = "admin"
+        // Will use TEST_USER/TEST_PASS from SeleniumBase (admin/admin123)
 
         // Create job via API for reliable test setup
         def jobXml = JobUtils.generateScheduledExecutionXml(jobName)
@@ -42,22 +41,38 @@ class JobAuditApiSpec extends SeleniumBase {
         def jobUuid = jobCreatedResponse.succeeded[0]?.id
         assert jobUuid, "Failed to create job via API"
 
-        when: "${modifyingUser} logs in and goes directly to edit page"
-        loginPage.go()
-        loginPage.login(modifyingUser, modifyingPassword)
+        when: "admin logs in using standard Selenium pattern"
+        loginPage = go LoginPage
+        loginPage.login(TEST_USER, TEST_PASS)
 
-        // Go directly to edit page with #workflow fragment for efficiency
-        driver.get(client.baseUrl + "/project/${projectName}/job/edit/${jobUuid}#workflow")
+        // Wait for successful login - follow Rundeck pattern
+        wait.until(ExpectedConditions.urlContains("/menu/home"))
+        println "✓ Successfully logged in as ${TEST_USER}"
 
-        and: "${modifyingUser} submits job update form"
+        and: "navigate to job edit page"
+        // Navigate to job edit page after confirmed login
+        driver.get(client.baseUrl + "/project/${projectName}/job/edit/${jobUuid}")
+
+        // Wait for edit page to load
+        wait.until(ExpectedConditions.or(
+            ExpectedConditions.presenceOfElementLocated(By.id("jobUpdateSaveButton")),
+            ExpectedConditions.presenceOfElementLocated(By.className("job-edit-form"))
+        ))
+
+
+        and: "admin submits job update form"
         def saveButton = wait.until(ExpectedConditions.elementToBeClickable(By.id("jobUpdateSaveButton")))
         saveButton.click()
 
-        // Check if form submitted, if not use JavaScript fallback
-        Thread.sleep(2000)
-        if (driver.currentUrl.contains("/job/edit/")) {
-            driver.executeScript("document.getElementById('jobUpdateSaveButton').closest('form').submit();")
-            Thread.sleep(2000)
+        // Smart wait for form submission instead of fixed sleep
+        try {
+            wait.until(ExpectedConditions.not(ExpectedConditions.urlContains("/job/edit/")))
+        } catch (Exception e) {
+            // Fallback: force submit if still on edit page after timeout
+            if (driver.currentUrl.contains("/job/edit/")) {
+                ((JavascriptExecutor) driver).executeScript("document.getElementById('jobUpdateSaveButton').closest('form').submit();")
+                wait.until(ExpectedConditions.not(ExpectedConditions.urlContains("/job/edit/")))
+            }
         }
 
         and: "wait for redirect to show page"
@@ -66,8 +81,9 @@ class JobAuditApiSpec extends SeleniumBase {
         and: "open definition modal to check audit information"
         jobShowPage.jobDefinitionModalButton.click()
 
+
         and: "ensure modal opens reliably"
-        driver.executeScript("jQuery('#job-definition-modal').modal('show');")
+        ((JavascriptExecutor) driver).executeScript("jQuery('#job-definition-modal').modal('show');")
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("job-definition-modal")))
 
         then: "modal displays audit tracking information"
@@ -99,7 +115,6 @@ class JobAuditApiSpec extends SeleniumBase {
         println "✓ Audit field functionality working correctly - both creation and modification tracking functional"
     }
 
-    def cleanupSpec() {
-        deleteProject(projectName)
-    }
+
+
 }
