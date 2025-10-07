@@ -85,7 +85,7 @@ public class FileCopierService
     public String getDefaultProviderNameForNodeAndProject(INodeEntry node, String project) {
         return getProviderNameForNode(
                 framework.isLocalNode(node),
-                framework.getProjectManager().loadProjectConfig(project)
+                framework.getProjectManager().getFrameworkProject(project)
         );
     }
 
