@@ -3333,8 +3333,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         'json' |  14
         'json' |  43
     }
-
     private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {
         artefactInstance.getClass().getDeclaredMethods().find { it.name == name }.getAnnotation(clazz)
     }
+
 }

@@ -23,6 +23,8 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By jobUuidBy = By.xpath("//*[@class='rd-copybox__content']")
     By stepsInJobDefinitionBy = By.cssSelector(".pflowitem.wfctrlholder")
     By jobDefinitionModalBy = By.cssSelector('a[href="#job-definition-modal"]')
+    By jobDefinitionModalButtonBy = By.cssSelector('a[href="#job-definition-modal"][data-toggle="modal"]')
+    By jobDefinitionModalContentBy = By.id("job-definition-modal")
     By notificationDefinitionBy = By.cssSelector('#detailtable.tab-pane > div.row > div.col-sm-12.table-responsive > table.table.item_details> tbody > tr > td.container > div.row > div.col-sm-12 > div.overflowx')
     By closeJobDefinitionModalBy = By.xpath("//*[contains(@id,'job-definition-modal_footer')]//*[@type='submit']")
     By jobInfoGroupBy = By.cssSelector('div.jobInfoSection a.text-secondary')
@@ -92,6 +94,7 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By optionInputBy = By.cssSelector(".optionvaluesfield")
     By jobOptionAlertBy = By.cssSelector(".alert.alert-danger")
 
+
     static class NextUi {
         static By descriptionText = By
                 .xpath("//*[@class=\"markdown-body\"]")
@@ -149,6 +152,15 @@ class JobShowPage extends BasePage implements ActivityListTrait {
 
     WebElement getJobDefinitionModal(){
         el jobDefinitionModalBy
+    }
+
+    WebElement getJobDefinitionModalButton(){
+        el jobDefinitionModalButtonBy
+    }
+
+    WebElement getJobDefinitionModalContent(){
+        waitForElementVisible jobDefinitionModalContentBy
+        el jobDefinitionModalContentBy
     }
 
     WebElement getNotificationDefinition(){

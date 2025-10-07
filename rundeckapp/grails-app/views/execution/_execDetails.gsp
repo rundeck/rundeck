@@ -397,17 +397,94 @@
                 <span class="jobuuid desc" title="${message(code:"scheduledExecution.property.uuid.description")}"><g:enc>${scheduledExecution.uuid}</g:enc></span>
             </td>
         </tr>
+    </g:if>
+
+<%-- ===== AUDIT: Created by / Last modified by (UTC + relative in tooltip) ===== --%>
+    <g:if test="${execdata instanceof ScheduledExecution}">
+        <% def now = new Date() %>
+
         <tr>
-            <td >
-                <g:message code="scheduledExecution.property.datecreated.prompt" />
-            </td>
-            <td >
-                <span class="when">
-                    <g:relativeDate elapsed="${scheduledExecution.dateCreated}"/>
+            <td><g:message code="job.audit.created.label" default="Created by" /></td>
+            <td>
+                <span class="text-info"><g:enc>${execdata.user ?: g.message(code:'job.audit.unknown', default:'Unknown')}</g:enc></span>
+                <g:message code="job.audit.on" default="on" />
+
+                <% def created = execdata.dateCreated %>
+                <g:set var="createdIso"
+                       value="${created ? g.formatDate(date: created, format: "yyyy-MM-dd'T'HH:mm:ss'Z'", timeZone: 'UTC') : ''}"/>
+                <% Integer createdDiffMin = created ? ((now.time - created.time) / 60000 as int) : null %>
+
+                <span class="dateCreated has_tooltip"
+                      title="${createdIso}"
+                      data-toggle="tooltip"
+                      data-placement="bottom"
+                      data-container="body"
+                      data-trigger="hover focus">
+                    <g:if test="${created && createdDiffMin != null && createdDiffMin < 180}">
+                        ${createdDiffMin}m ago
+                    </g:if>
+                    <g:elseif test="${created && createdDiffMin != null && createdDiffMin < 1440}">
+                        Today at <g:formatDate date="${created}" format="h:mm a" />
+                    </g:elseif>
+                    <g:elseif test="${created && createdDiffMin != null && createdDiffMin < 2880}">
+                        Yesterday at <g:formatDate date="${created}" format="h:mm a" />
+                    </g:elseif>
+                    <g:else>
+                        <g:relativeDate elapsed="${created}" />
+                    </g:else>
                 </span>
             </td>
         </tr>
+
+        <g:if test="${execdata.lastUpdated}">
+            <tr>
+                <td><g:message code="job.audit.modified.label" default="Last modified by" /></td>
+                <td>
+                    <span class="text-info">
+                        <g:enc>${execdata.lastModifiedBy ?: execdata.user ?: g.message(code:'job.audit.unknown', default:'Unknown')}</g:enc>
+                    </span>
+                    <g:message code="job.audit.on" default="on" />
+
+                    <% def lastUpd = execdata.lastUpdated %>
+                    <g:set var="lastIso"
+                           value="${lastUpd ? g.formatDate(date: lastUpd, format: "yyyy-MM-dd'T'HH:mm:ss'Z'", timeZone: 'UTC') : ''}"/>
+                    <% Integer lastDiffMin = lastUpd ? ((now.time - lastUpd.time) / 60000 as int) : null %>
+
+                    <span class="lastUpdated has_tooltip"
+                          title="${lastIso}"
+                          data-toggle="tooltip"
+                          data-placement="bottom"
+                          data-container="body"
+                          data-trigger="hover focus">
+                        <g:if test="${lastUpd && lastDiffMin != null && lastDiffMin < 180}">
+                            ${lastDiffMin}m ago
+                        </g:if>
+                        <g:elseif test="${lastUpd && lastDiffMin != null && lastDiffMin < 1440}">
+                            Today at <g:formatDate date="${lastUpd}" format="h:mm a" />
+                        </g:elseif>
+                        <g:elseif test="${lastUpd && lastDiffMin != null && lastDiffMin < 2880}">
+                            Yesterday at <g:formatDate date="${lastUpd}" format="h:mm a" />
+                        </g:elseif>
+                        <g:else>
+                            <g:relativeDate elapsed="${lastUpd}" />
+                        </g:else>
+                    </span>
+                </td>
+            </tr>
+        </g:if>
     </g:if>
+
+    <g:javascript>
+        jQuery(function(){
+            jQuery('.dateCreated.has_tooltip, .lastUpdated.has_tooltip').tooltip({
+                html: false,
+                container: 'body',
+                placement: 'bottom',
+                trigger: 'hover focus',
+                delay: { show: 100, hide: 300 }
+            });
+        });
+    </g:javascript>
 
 </table>
 </div>
