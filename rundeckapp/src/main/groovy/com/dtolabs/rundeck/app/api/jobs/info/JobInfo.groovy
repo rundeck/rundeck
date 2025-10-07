@@ -95,36 +95,36 @@ class JobInfo {
 
     /**
      * NEW: Job creation timestamp (from ScheduledExecution.dateCreated).
-     * Exposed starting in API v55 to avoid surprising older clients.
+     * Exposed starting in API v56 to avoid surprising older clients.
      */
-    @ApiVersion(55)
+    @ApiVersion(56)
     @Ignore(onlyIfNull = true)
     @XmlAttribute
     String created
 
     /**
      * NEW: User who created the job (from ScheduledExecution.user).
-     * Exposed starting in API v55 to provide audit information.
+     * Exposed starting in API v56 to provide audit information.
      */
-    @ApiVersion(55)
+    @ApiVersion(56)
     @Ignore(onlyIfNull = true)
     @XmlAttribute
     String createdBy
 
     /**
      * NEW: Job last modification timestamp (from ScheduledExecution.lastUpdated).
-     * Exposed starting in API v55 to provide audit information.
+     * Exposed starting in API v56 to provide audit information.
      */
-    @ApiVersion(55)
+    @ApiVersion(56)
     @Ignore(onlyIfNull = true)
     @XmlAttribute
     String lastModified
 
     /**
      * NEW: User who last modified the job (from ScheduledExecution.lastModifiedBy).
-     * Exposed starting in API v55 to provide audit information.
+     * Exposed starting in API v56 to provide audit information.
      */
-    @ApiVersion(55)
+    @ApiVersion(56)
     @Ignore(onlyIfNull = true)
     @XmlAttribute
     String lastModifiedBy

@@ -2739,10 +2739,10 @@ Since: V18''',
                         group(scheduledExecution.groupPath)
                         project(scheduledExecution.project)
                         description(scheduledExecution.description)
-                        if (request.api_version >= ApiVersions.V55 && scheduledExecution.dateCreated) {
+                        if (request.api_version >= ApiVersions.V56 && scheduledExecution.dateCreated) {
                             created(apiService.w3cDateValue(scheduledExecution.dateCreated))
                         }
-                        if (request.api_version >= ApiVersions.V55) {
+                        if (request.api_version >= ApiVersions.V56) {
                             if (scheduledExecution.user) {
                                 createdBy(scheduledExecution.user)
                             }
@@ -3026,10 +3026,10 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                                 group(se.groupPath)
                                 project(se.project)
                                 description(se.description)
-                                if (request.api_version >= ApiVersions.V55) {
+                                if (request.api_version >= ApiVersions.V56) {
                                     created(apiService.w3cDateValue(se.dateCreated))
                                 }
-                                if (request.api_version >= ApiVersions.V55) {
+                                if (request.api_version >= ApiVersions.V56) {
                                     if (se.user) {
                                         createdBy(se.user)
                                     }

@@ -415,7 +415,7 @@
                 <% Integer createdDiffMin = created ? ((now.time - created.time) / 60000 as int) : null %>
 
                 <span class="dateCreated has_tooltip"
-                      title="${createdIso} ${g.relativeDate(elapsed: created).replaceAll('<[^>]*>', '')}"
+                      title="${createdIso}"
                       data-toggle="tooltip"
                       data-placement="bottom"
                       data-container="body"
@@ -451,7 +451,7 @@
                     <% Integer lastDiffMin = lastUpd ? ((now.time - lastUpd.time) / 60000 as int) : null %>
 
                     <span class="lastUpdated has_tooltip"
-                          title="${lastIso} ${g.relativeDate(elapsed: lastUpd).replaceAll('<[^>]*>', '')}"
+                          title="${lastIso}"
                           data-toggle="tooltip"
                           data-placement="bottom"
                           data-container="body"
