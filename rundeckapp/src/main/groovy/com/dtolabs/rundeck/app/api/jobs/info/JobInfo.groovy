@@ -94,8 +94,7 @@ class JobInfo {
     Boolean projectDisableSchedule
 
     /**
-     * NEW: Job creation timestamp (from ScheduledExecution.dateCreated).
-     * Exposed starting in API v56 to avoid surprising older clients.
+     * Job creation timestamp.
      */
     @ApiVersion(56)
     @Ignore(onlyIfNull = true)
@@ -103,8 +102,7 @@ class JobInfo {
     String created
 
     /**
-     * NEW: User who created the job (from ScheduledExecution.user).
-     * Exposed starting in API v56 to provide audit information.
+     * User who created the job.
      */
     @ApiVersion(56)
     @Ignore(onlyIfNull = true)
@@ -112,8 +110,7 @@ class JobInfo {
     String createdBy
 
     /**
-     * NEW: Job last modification timestamp (from ScheduledExecution.lastUpdated).
-     * Exposed starting in API v56 to provide audit information.
+     * Job last modification timestamp.
      */
     @ApiVersion(56)
     @Ignore(onlyIfNull = true)
@@ -121,8 +118,7 @@ class JobInfo {
     String lastModified
 
     /**
-     * NEW: User who last modified the job (from ScheduledExecution.lastModifiedBy).
-     * Exposed starting in API v56 to provide audit information.
+     * User who last modified the job.
      */
     @ApiVersion(56)
     @Ignore(onlyIfNull = true)

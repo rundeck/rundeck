@@ -2,6 +2,7 @@ package org.rundeck.tests.functional.selenium.jobs
 
 import org.openqa.selenium.By
 import org.openqa.selenium.JavascriptExecutor
+import org.openqa.selenium.NoSuchElementException
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.rundeck.util.annotations.SeleniumCoreTest
@@ -33,9 +34,9 @@ class JobAuditApiSpec extends SeleniumBase {
         def jobShowPage = page JobShowPage
         def wait = new WebDriverWait(driver, Duration.ofSeconds(8))
 
-        // Will use TEST_USER/TEST_PASS from SeleniumBase (admin/admin123)
+        // Use test credentials from SeleniumBase
 
-        // Create job via API for reliable test setup
+        // Create job via API for test setup
         def jobXml = JobUtils.generateScheduledExecutionXml(jobName)
         def jobCreatedResponse = JobUtils.createJob(projectName, jobXml, client)
         def jobUuid = jobCreatedResponse.succeeded[0]?.id
@@ -45,15 +46,15 @@ class JobAuditApiSpec extends SeleniumBase {
         loginPage = go LoginPage
         loginPage.login(TEST_USER, TEST_PASS)
 
-        // Wait for successful login - follow Rundeck pattern
+        // Wait for successful login
         wait.until(ExpectedConditions.urlContains("/menu/home"))
         println "✓ Successfully logged in as ${TEST_USER}"
 
         and: "navigate to job edit page"
-        // Navigate to job edit page after confirmed login
+        // Navigate to job edit page
         driver.get(client.baseUrl + "/project/${projectName}/job/edit/${jobUuid}")
 
-        // Wait for edit page to load
+        // Wait for page to load
         wait.until(ExpectedConditions.or(
             ExpectedConditions.presenceOfElementLocated(By.id("jobUpdateSaveButton")),
             ExpectedConditions.presenceOfElementLocated(By.className("job-edit-form"))
@@ -64,11 +65,11 @@ class JobAuditApiSpec extends SeleniumBase {
         def saveButton = wait.until(ExpectedConditions.elementToBeClickable(By.id("jobUpdateSaveButton")))
         saveButton.click()
 
-        // Smart wait for form submission instead of fixed sleep
+        // Wait for form submission
         try {
             wait.until(ExpectedConditions.not(ExpectedConditions.urlContains("/job/edit/")))
         } catch (Exception e) {
-            // Fallback: force submit if still on edit page after timeout
+            // Force submit if needed
             if (driver.currentUrl.contains("/job/edit/")) {
                 ((JavascriptExecutor) driver).executeScript("document.getElementById('jobUpdateSaveButton').closest('form').submit();")
                 wait.until(ExpectedConditions.not(ExpectedConditions.urlContains("/job/edit/")))
@@ -90,23 +91,40 @@ class JobAuditApiSpec extends SeleniumBase {
         def modalContent = jobShowPage.jobDefinitionModalContent
         def modalText = modalContent.getText()
 
-        // Verify modal content loaded successfully (prevent false positives)
+        // Verify modal content loaded
         assert modalText?.trim()?.length() > 0, "Job definition modal failed to load content"
 
-        // Extract actual audit information for verification
-        def createdByMatch = (modalText =~ /(?i)created\s+by\s+(\w+)/)
-        def lastModifiedByMatch = (modalText =~ /(?i)last\s+modified\s+by\s+(\w+)/)
+        // Hybrid approach: try CSS selectors first, fall back to regex for compatibility
+        def createdBy, lastModifiedBy
 
-        assert createdByMatch.find(), "Failed to find 'Created By' information in modal text: ${modalText}"
-        assert lastModifiedByMatch.find(), "Failed to find 'Last Modified By' information in modal text: ${modalText}"
+        try {
+            // Try robust CSS selectors first (preferred method)
+            def createdByElem = modalContent.findElement(By.cssSelector("[data-testid='created-by']"))
+            def lastModifiedByElem = modalContent.findElement(By.cssSelector("[data-testid='last-modified-by']"))
 
-        def createdBy = createdByMatch.group(1)
-        def lastModifiedBy = lastModifiedByMatch.group(1)
+            createdBy = createdByElem.getText()
+            lastModifiedBy = lastModifiedByElem.getText()
 
-        // Verify audit tracking functionality - fields should be populated correctly
-        // Creator can vary by environment (dan locally, admin in CI), but should be consistent
+            println "✓ Using CSS selector approach for audit extraction"
+        } catch (NoSuchElementException e) {
+            // Fallback to regex pattern matching for compatibility
+            println "⚠ CSS selectors not found, falling back to regex pattern matching"
+
+            def createdByMatch = (modalText =~ /(?i)created\s+by\s+(\w+)/)
+            def lastModifiedByMatch = (modalText =~ /(?i)last\s+modified\s+by\s+(\w+)/)
+
+            assert createdByMatch.find(), "Failed to find 'Created By' information in modal text: ${modalText}"
+            assert lastModifiedByMatch.find(), "Failed to find 'Last Modified By' information in modal text: ${modalText}"
+
+            createdBy = createdByMatch.group(1)
+            lastModifiedBy = lastModifiedByMatch.group(1)
+
+            println "✓ Using regex pattern approach for audit extraction"
+        }
+
+        // Verify audit fields populated (works with both extraction methods)
         assert createdBy?.trim()?.length() > 0, "Created By field should be populated but found: '${createdBy}'"
-        assert lastModifiedBy.equalsIgnoreCase("admin"),
+        assert lastModifiedBy?.trim()?.toLowerCase() == "admin",
             "Expected last modifier to be 'admin' (UI user) but found: ${lastModifiedBy}"
 
         println "✓ Created By: '${createdBy}' (API user) - Last Modified By: '${lastModifiedBy}' (UI user)"

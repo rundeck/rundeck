@@ -3618,7 +3618,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     ) {
 
         def scheduledExecution = importedJob.job
-        // Do NOT overwrite original creator (scheduledExecution.user) during updates
+        // Preserve original creator during updates
         scheduledExecution.userRoles = authContext.roles as List<String>
         Map validation=[:]
         def failed = !validateJobDefinition(importedJob, authContext, params, validation, validateJobref)
@@ -3705,7 +3705,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             )
         }
 
-        // Set lastModifiedBy for job updates to track who modified the job
+        // Set lastModifiedBy for job updates
         if (authContext?.username) {
             scheduledExecution.lastModifiedBy = authContext.username
         }
@@ -3765,7 +3765,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     ) {
 
         def scheduledExecution = importedJob.job
-        // Do NOT set user here - only set during creation check below
+        // Set user for new job creation only
         scheduledExecution.userRoles = authContext.roles as List<String>
 
         Map validation = [:]
@@ -3815,7 +3815,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             )
         }
 
-        // Set user for new job creation to track who created the job
+        // Set user for new job creation
         if (!scheduledExecution.user && authContext?.username) {
             scheduledExecution.user = authContext.username
         }
