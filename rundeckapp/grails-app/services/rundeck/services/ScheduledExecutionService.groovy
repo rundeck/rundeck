@@ -3618,7 +3618,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     ) {
 
         def scheduledExecution = importedJob.job
-        // Preserve original creator during updates
+        // Don't overwrite creator, but fix execution if missing
+        if (!scheduledExecution.user && authContext?.username) {
+            scheduledExecution.user = authContext.username
+        }
         scheduledExecution.userRoles = authContext.roles as List<String>
         Map validation=[:]
         def failed = !validateJobDefinition(importedJob, authContext, params, validation, validateJobref)
