@@ -109,10 +109,10 @@ import com.dtolabs.rundeck.app.api.ApiVersions
 
 @Controller
 class FrameworkController extends ControllerBase implements ApplicationContextAware {
-    public static final Integer MAX_DAYS_TO_KEEP = 60
+    public static final Integer MAX_DAYS_TO_KEEP = 7
     public static final Integer MINIMUM_EXECUTION_TO_KEEP = 50
-    public static final Integer MAXIMUM_DELETION_SIZE = 500
-    public static final String SCHEDULE_DEFAULT = "0 0 0 1/1 * ? *"
+    public static final Integer MAXIMUM_DELETION_SIZE = 2000
+    public static final String SCHEDULE_DEFAULT = "0 0 0/6 1/1 * ? *"
     static final String PROJECT_PLUGINS_REMOVED_EVENT = 'project.plugins.removed'
     public static final Map CRON_MODELS_SELECT_VALUES = [
             "0 0 0 1/1 * ? *"    : "Daily at 00:00",
@@ -651,6 +651,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
         boolean cleanerHistoryEnabled = params.cleanerHistory == 'on'
+
+        if(featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE)){
+           cleanerHistoryEnabled = true
+        }
         projProps['project.execution.history.cleanup.enabled'] = cleanerHistoryEnabled.toString()
 
         if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, true) && cleanerHistoryEnabled) {
@@ -875,7 +879,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             prefixKey:prefixKey,
             extraConfig:extraConfig,
             cronModelValues: CRON_MODELS_SELECT_VALUES,
-            cronValues: [:]
+            cronValues: [:],
+            enableCleanHistory: featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE)
         ]
     }
 
@@ -2347,7 +2352,7 @@ List of config values, each value contains:
             cleanerHistoryPeriod:fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.days") ?: MAX_DAYS_TO_KEEP,
             minimumExecutionToKeep:fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.minimum") ?: MINIMUM_EXECUTION_TO_KEEP,
             maximumDeletionSize:fwkProject.getProjectProperties().get("project.execution.history.cleanup.batch") ?: MAXIMUM_DELETION_SIZE,
-            enableCleanHistory:["true", true].contains(fwkProject.getProjectProperties().get("project.execution.history.cleanup.enabled")),
+            enableCleanHistory:["true", true].contains(fwkProject.getProjectProperties().get("project.execution.history.cleanup.enabled"))?:featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE) ,
             cronExression:fwkProject.getProjectProperties().get("project.execution.history.cleanup.schedule") ?: SCHEDULE_DEFAULT,
             nodeexecconfig:nodeConfig,
             fcopyconfig:filecopyConfig,
