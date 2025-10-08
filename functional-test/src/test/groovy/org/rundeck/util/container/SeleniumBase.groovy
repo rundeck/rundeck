@@ -41,7 +41,8 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
             LoggingPreferences logPrefs = new LoggingPreferences()
             logPrefs.enable(LogType.BROWSER, Level.ALL)
 
-            ChromeOptions options = new ChromeOptions()
+            ChromeOptions options = new ChromeOptions();
+            options.setBrowserVersion("140.0.7339.185"); //to do: move this with other constants
             options.setCapability("goog:loggingPrefs", logPrefs);
             options.setImplicitWaitTimeout(Duration.ofSeconds(5))
             options.setExperimentalOption("prefs", prefs)
