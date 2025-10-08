@@ -15,7 +15,6 @@
  */
 package com.dtolabs.rundeck.core.config;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
 import lombok.Data;
 
@@ -461,7 +460,7 @@ public class RundeckConfigBase {
         Enabled enhancedJobTakeoverQuery = new Enabled();
         Enabled publicKeysDownload = new Enabled();
         Enabled guiHideRoiInstructions = new Enabled();
-        Enabled executionCleanupEnable = new Enabled();
+        Enabled defaultExecutionCleanup = new Enabled();
 
 
         @Data
