@@ -138,8 +138,8 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     }
 
     void validatePage() {
-        if (!driver.getCurrentUrl().contains(loadPath)) {
-            throw new IllegalStateException("Not on job show selected page: " + driver.getCurrentUrl())
+        if (!driver.currentUrl.contains(loadPath)) {
+            throw new IllegalStateException("Not on job show selected page: " + driver.currentUrl)
         }
     }
 

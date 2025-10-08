@@ -135,8 +135,8 @@ class JobListPage extends BasePage implements ActivityListTrait {
     }
 
     void validatePage() {
-        if (!driver.getCurrentUrl().contains(loadPath)) {
-            throw new IllegalStateException("Not on job list page: " + driver.getCurrentUrl())
+        if (!driver.currentUrl.contains(loadPath)) {
+            throw new IllegalStateException("Not on job list page: " + driver.currentUrl)
         }
     }
 

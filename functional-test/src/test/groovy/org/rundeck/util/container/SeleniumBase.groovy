@@ -28,6 +28,7 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
     public static final String SELENIUM_BASIC_PROJECT = "SeleniumBasic"
     public static final String downloadFolder = System.getProperty("user.dir") + "/src/test/resources" + getSeparator() +"downloads";
     public static final boolean TEST_SELENIUM_HEADLESS_MODE = (System.getenv("TEST_SELENIUM_HEADLESS_MODE") ?: "true").toBoolean()
+    public static final String CI_BINARY_LOCATION = "/usr/local/bin"
 
     /**
      * Create a driver
@@ -42,6 +43,7 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
             logPrefs.enable(LogType.BROWSER, Level.ALL)
 
             ChromeOptions options = new ChromeOptions()
+            options.setBinary(CI_BINARY_LOCATION);
             options.setBrowserVersion("140.0.7339.185");
             options.setCapability("goog:loggingPrefs", logPrefs);
             options.setImplicitWaitTimeout(Duration.ofSeconds(5))

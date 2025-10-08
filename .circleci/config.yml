@@ -13,6 +13,7 @@ orbs:
   node: circleci/node@6.3.0
   trigger: rundeck/trigger-pipeline@0.0.5
   slack: circleci/slack@4.4.0
+  browser-tools: circleci/browser-tools@2.3.1
   snyk: snyk/snyk@2.2 # https://circleci.com/developer/orbs/orb/snyk/snyk
   git: pagerduty/git@0.1.0 # https://circleci.com/developer/orbs/orb/pagerduty/git (public PD orb)
 
@@ -90,7 +91,7 @@ executors:
   # Machine executor
   machine-builder:
     machine:
-      image: ubuntu-2204:current
+      image: ubuntu-2204:2024.11.1
       docker_layer_caching: << parameters.docker_layer_caching >>
     parameters:
       resource_class:
@@ -611,6 +612,8 @@ jobs:
       - checkout
       - restore-build-cache
       - install-base-dependencies
+      - browser-tools/install_chrome_for_testing:
+            version: "140.0.7339.185"
       - attach_workspace:
           at: ~/workspace
       - run-build-step:

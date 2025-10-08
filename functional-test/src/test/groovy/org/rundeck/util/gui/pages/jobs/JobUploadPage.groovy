@@ -31,8 +31,8 @@ class JobUploadPage extends BasePage {
     }
 
     void validatePage() {
-        if (!driver.getCurrentUrl().contains(loadPath)) {
-            throw new IllegalStateException("Not on job upload page: " + driver.getCurrentUrl())
+        if (!driver.currentUrl.contains(loadPath)) {
+            throw new IllegalStateException("Not on job upload page: " + driver.currentUrl)
         }
     }
 
