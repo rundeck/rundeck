@@ -148,12 +148,12 @@ public class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
      */
     static void appendEscaped(StringBuffer sb, String dMesg, String chars) {
         if (dMesg != null) {
-            for (char c : dMesg.toCharArray()) {
-                if (chars.indexOf(c) >= 0 || c == BACKSLASH) {
+            dMesg.chars().forEach(c -> {
+                if (chars.indexOf((char)c) >= 0 || c == BACKSLASH) {
                     sb.append(BACKSLASH);
                 }
-                sb.append(c);
-            }
+                sb.append((char)c);
+            });
         }
     }
 
