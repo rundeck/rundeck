@@ -47,7 +47,7 @@ public enum Features implements FeaturesDefinition{
     NODE_EXECUTOR_SECURE_INPUT("nodeExecutorSecureInput"),
     PUBLIC_KEYS_DOWNLOAD("publicKeysDownload"),
     GUI_HIDE_ROI_INSTRUCTIONS("guiHideRoiInstructions"),
-    EXECUTION_CLEANUP_ENABLE("executionCleanupEnable")
+    EXECUTION_CLEANUP_ENABLE("defaultExecutionCleanup")
     ;
 
     private final String propertyName;

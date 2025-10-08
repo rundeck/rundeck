@@ -651,10 +651,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
         boolean cleanerHistoryEnabled = params.cleanerHistory == 'on'
-
-        if(featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE)){
-           cleanerHistoryEnabled = true
-        }
         projProps['project.execution.history.cleanup.enabled'] = cleanerHistoryEnabled.toString()
 
         if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, true) && cleanerHistoryEnabled) {
@@ -880,7 +876,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             extraConfig:extraConfig,
             cronModelValues: CRON_MODELS_SELECT_VALUES,
             cronValues: [:],
-            enableCleanHistory: featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE)
+            enableCleanHistory: featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE),
+            cleanerHistoryPeriod: MAX_DAYS_TO_KEEP,
+            minimumExecutionToKeep: MINIMUM_EXECUTION_TO_KEEP,
+            maximumDeletionSize: MAXIMUM_DELETION_SIZE,
+            cronExression: SCHEDULE_DEFAULT
         ]
     }
 
@@ -2352,7 +2352,14 @@ List of config values, each value contains:
             cleanerHistoryPeriod:fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.days") ?: MAX_DAYS_TO_KEEP,
             minimumExecutionToKeep:fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.minimum") ?: MINIMUM_EXECUTION_TO_KEEP,
             maximumDeletionSize:fwkProject.getProjectProperties().get("project.execution.history.cleanup.batch") ?: MAXIMUM_DELETION_SIZE,
-            enableCleanHistory:["true", true].contains(fwkProject.getProjectProperties().get("project.execution.history.cleanup.enabled"))?:featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE) ,
+            enableCleanHistory: {
+                def propertyValue = fwkProject.getProjectProperties().get("project.execution.history.cleanup.enabled")
+                if (propertyValue != null) {
+                    return ["true", true].contains(propertyValue)
+                } else {
+                    return featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE)
+                }
+            }(),
             cronExression:fwkProject.getProjectProperties().get("project.execution.history.cleanup.schedule") ?: SCHEDULE_DEFAULT,
             nodeexecconfig:nodeConfig,
             fcopyconfig:filecopyConfig,
