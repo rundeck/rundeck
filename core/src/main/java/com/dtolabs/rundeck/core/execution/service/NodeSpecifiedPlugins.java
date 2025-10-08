@@ -23,7 +23,7 @@ public class NodeSpecifiedPlugins
                     copiername =
                     FileCopierService.getProviderNameForNode(
                             getFrameworkNodes().isLocalNode(node),
-                            getProjectManager().loadProjectConfig(project)
+                            getProjectManager().getFrameworkProject(project)
                     );
             String providerAttr = FileCopierService.getNodeAttributeForProvider(getFrameworkNodes().isLocalNode(node));
             //look up node's attribute if it exists
@@ -36,7 +36,7 @@ public class NodeSpecifiedPlugins
                     copiername =
                     nodeExecutorService.getProviderNameForNode(
                             getFrameworkNodes().isLocalNode(node),
-                            getProjectManager().loadProjectConfig(project)
+                            getProjectManager().getFrameworkProject(project)
                     );
             String
                     providerAttr =
