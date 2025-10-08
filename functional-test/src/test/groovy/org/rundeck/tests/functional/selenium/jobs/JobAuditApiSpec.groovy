@@ -16,7 +16,6 @@ import java.time.Duration
  * Uses API to create jobs, Selenium UI to modify and verify audit information display.
  * Works in all environments (local, CI/CD) by using standard test user (admin).
  * Validates that audit fields are properly populated during job creation and modification.
- * Follows senior engineer pattern: API creation -> direct UUID navigation -> UI validation.
  */
 @SeleniumCoreTest
 class JobAuditApiSpec extends SeleniumBase {
