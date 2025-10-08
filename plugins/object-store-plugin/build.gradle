@@ -33,7 +33,10 @@ dependencies {
         exclude(group: 'com.fasterxml.jackson.core')
         exclude(group: 'com.google.guava', module: 'guava')
         exclude(group: 'commons-io', module: 'commons-io')
+        exclude(group: 'com.squareup.okhttp3', module: 'okhttp')
     }
+    // Force compatible OkHttp 4.x version for Kotlin 1.3.70 compatibility
+    pluginLibs("com.squareup.okhttp3:okhttp:${okhttpVersion}")
 
     implementation "org.apache.commons:commons-compress:${commonsCompressVersion}"
 
