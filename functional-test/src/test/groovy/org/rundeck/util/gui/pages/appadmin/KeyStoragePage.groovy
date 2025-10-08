@@ -28,8 +28,8 @@ class KeyStoragePage extends BasePage {
     }
 
     void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
-            throw new IllegalStateException("Not on key storage page: " + driver.currentUrl)
+        if (!driver.getCurrentUrl().contains(loadPath)) {
+            throw new IllegalStateException("Not on key storage page: " + driver.getCurrentUrl())
         }
     }
 

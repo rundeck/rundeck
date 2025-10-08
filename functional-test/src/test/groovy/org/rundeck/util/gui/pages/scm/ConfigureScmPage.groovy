@@ -24,8 +24,8 @@ class ConfigureScmPage extends BasePage{
     void validatePage() {
         if(!loadPath)
             throw new IllegalStateException("Load path not set")
-        if (!driver.currentUrl.endsWith(loadPath)) {
-            throw new IllegalStateException("Couldn't browse Configure SCM Page. Expected: ${loadPath} Actual: ${driver.currentUrl}")
+        if (!driver.getCurrentUrl().endsWith(loadPath)) {
+            throw new IllegalStateException("Couldn't browse Configure SCM Page. Expected: ${loadPath} Actual: ${driver.getCurrentUrl()}")
         }
     }
 

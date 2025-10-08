@@ -78,8 +78,8 @@ class WebhooksPage extends BasePage{
     }
 
     void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
-            throw new IllegalStateException("Not on execution show page: " + driver.currentUrl)
+        if (!driver.getCurrentUrl().contains(loadPath)) {
+            throw new IllegalStateException("Not on execution show page: " + driver.getCurrentUrl())
         }
     }
 

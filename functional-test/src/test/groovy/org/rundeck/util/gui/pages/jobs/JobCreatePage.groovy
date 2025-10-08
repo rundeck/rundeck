@@ -326,14 +326,14 @@ class JobCreatePage extends BasePage {
     }
 
     void validatePage() {
-        if (!driver.currentUrl.endsWith(getLoadPath())) {
-            throw new IllegalStateException("Not on job create page: " + driver.currentUrl)
+        if (!driver.getCurrentUrl().endsWith(getLoadPath())) {
+            throw new IllegalStateException("Not on job create page: " + driver.getCurrentUrl())
         }
     }
 
     void validateCopyPage() {
-        if (!driver.currentUrl.contains(copyPath)) {
-            throw new IllegalStateException("Not on job copy page: " + driver.currentUrl)
+        if (!driver.getCurrentUrl().contains(copyPath)) {
+            throw new IllegalStateException("Not on job copy page: " + driver.getCurrentUrl())
         }
     }
 
