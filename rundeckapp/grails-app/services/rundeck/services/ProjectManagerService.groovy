@@ -752,7 +752,8 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
 
     /**
-     * Load the project config and node support
+     * Load the project config, without caching, ONLY USE IF NECESSARY. It is preferable
+     * to use the {@link #getFrameworkProject(String)} method which will improve performance by using a cached project and config.
      * @param project
      * @return
      */
