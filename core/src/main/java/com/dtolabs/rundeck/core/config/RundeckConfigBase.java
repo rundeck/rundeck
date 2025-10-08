@@ -461,6 +461,7 @@ public class RundeckConfigBase {
         Enabled enhancedJobTakeoverQuery = new Enabled();
         Enabled publicKeysDownload = new Enabled();
         Enabled guiHideRoiInstructions = new Enabled();
+        Enabled executionCleanupEnable = new Enabled();
 
 
         @Data
