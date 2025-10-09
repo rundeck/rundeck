@@ -6019,7 +6019,7 @@ void testDecodeBasic__no_group(){
     @Test
     public void "import a job from xml where valueListDelimiter is a |"() {
 
-        given: "a job with 3 values and a wrong valueListDelimiter"
+        given: "a job with 3 values and a valueListDelimiter that is a special character"
         Map job
 
 
