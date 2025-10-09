@@ -6055,9 +6055,6 @@ void testDecodeBasic__no_group(){
                         ]
                 ]
         ])
-
-
-
         when: "the job is imported using a ( | ) as jobXmlValueListDelimiter"
         job = JobsXMLCodec.convertXMapToJobMap(linkedHashMap, "|")
 
