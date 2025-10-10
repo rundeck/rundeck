@@ -83,16 +83,20 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
 
     @Override
     int countExecutionReports(RdExecQuery execQuery) {
+        def optionFilterExecutionIds = parseOptionFilterAndGetExecutionIds(execQuery?.optionFilter)
+
         return ExecReport.createCriteria().count {
-            applyExecutionCriteria(execQuery, delegate)
+            applyExecutionCriteria(execQuery, delegate, true, null, [], optionFilterExecutionIds)
         }
     }
 
     @Override
     int countExecutionReportsWithTransaction(RdExecQuery query, boolean isJobs, String jobId) {
         return ExecReport.withTransaction {
+            def optionFilterExecutionIds = parseOptionFilterAndGetExecutionIds(query?.optionFilter)
+
             ExecReport.createCriteria().count {
-                applyExecutionCriteria(query, delegate, isJobs, jobId, [])
+                applyExecutionCriteria(query, delegate, isJobs, jobId, [], optionFilterExecutionIds)
             }
         }
     }
@@ -145,6 +149,8 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
         filters.putAll(txtfilters)
         filters.putAll(eqfilters)
 
+        def optionFilterExecutionIds = parseOptionFilterAndGetExecutionIds(query?.optionFilter)
+
         return ExecReport.createCriteria().list {
 
             if (query?.max) {
@@ -155,7 +161,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
             if (query?.offset) {
                 firstResult(query.offset.toInteger())
             }
-            applyExecutionCriteria(query, delegate,isJobs, jobId, execsIds)
+            applyExecutionCriteria(query, delegate,isJobs, jobId, execsIds, optionFilterExecutionIds)
 
             if (query && query.sortBy && filters[query.sortBy]) {
                 order(filters[query.sortBy], query.sortOrder == 'ascending' ? 'asc' : 'desc')
@@ -197,7 +203,50 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
         }
     }
 
-    def applyExecutionCriteria(RdExecQuery query, delegate, boolean isJobs=true, String seId=null, List<Long> execsIds=[]){
+    private List<Long> parseOptionFilterAndGetExecutionIds(String optionFilter) {
+        if (!optionFilter?.trim()) {
+            return []
+        }
+
+        def searchTerm = optionFilter.toString().trim()
+        def massagedOptions = []
+        def tokens = searchTerm.split(/\s+/)
+
+        for (int i = 0; i < tokens.length; i++) {
+            if (tokens[i].startsWith('-')) {
+                if (i + 1 < tokens.length && !tokens[i + 1].startsWith('-')) {
+                    massagedOptions << "${tokens[i]} ${tokens[i + 1]}"
+                    i++
+                } else {
+                    massagedOptions << tokens[i]
+                }
+            } else {
+                massagedOptions << tokens[i]
+            }
+        }
+
+        if (massagedOptions.empty) {
+            massagedOptions << searchTerm
+        }
+
+        try {
+            return rundeck.Execution.createCriteria().list {
+                projections {
+                    property('id')
+                }
+                or {
+                    massagedOptions.each { option ->
+                        ilike('argString', "%${option}%")
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Error querying executions for optionFilter: ${e.message}")
+            return []
+        }
+    }
+
+    def applyExecutionCriteria(RdExecQuery query, delegate, boolean isJobs=true, String seId=null, List<Long> execsIds=[], List<Long> optionFilterExecutionIds=[]){
         def eqfilters = [
                 stat: 'status',
                 reportId: 'reportId',
@@ -396,6 +445,16 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
                     ilike("filterApplied", '%' + query.execnodeFilter + '%')
                 }
 
+            }
+
+            // Handle optionFilter results from pre-query
+            if(query?.optionFilter?.trim()){
+                if (optionFilterExecutionIds && !optionFilterExecutionIds.empty) {
+                    'in'('executionId', optionFilterExecutionIds)
+                } else {
+                    // No matches found - return empty result
+                    eq('id', -1L) // Impossible condition
+                }
             }
         }
         if(fixCancel){
