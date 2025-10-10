@@ -98,6 +98,11 @@
             <div class="text-warning"><g:enc>${projectDescriptionError}</g:enc></div>
         </g:if>
     </div>
+    <g:if test="${enableCleanHistory}">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> <g:message code="project.execution.cleanup.default.enabled" default="Execution cleanup is enabled by default for new projects"/>
+        </div>
+    </g:if>
   </div>
 <feature:enabled name="cleanExecutionsHistoryJob">
   <div class="tab-pane" id="tab_history">
