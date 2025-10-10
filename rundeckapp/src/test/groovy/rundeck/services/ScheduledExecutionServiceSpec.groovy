@@ -1736,6 +1736,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.messageSource = Mock(MessageSource) {
             getMessage(_, _) >> { it[0].toString() }
         }
+        service.jobSchedulesService = Mock(JobSchedulesService) {
+            isScheduled(_) >> false
+            shouldScheduleExecution(_) >> true
+        }
         uuid
     }
 
@@ -3092,10 +3096,12 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         //scm update setup
         service.rundeckAuthContextProcessor.authorizeProjectJobAny(_,_,_,project) >> true
         def  uuid=UUID.randomUUID().toString()
-        def orig = new ScheduledExecution(createJobParams(jobName:'job1',groupPath:'path1',project:'AProject')+[uuid:uuid]).save()
+        def orig = new ScheduledExecution(createJobParams(jobName:'job1',groupPath:'path1',project:'AProject')+[uuid:uuid, user: 'test', lastModifiedBy: 'test']).save(flush: true)
         def upload = new ScheduledExecution(
                 createJobParams(jobName:name,groupPath:group,project:project,scheduled:false)
         )
+        upload.user = 'test'
+        upload.lastModifiedBy = 'test'
         upload = new RundeckJobDefinitionManager.ImportedJobDefinition(job:upload, associations: [:])
 
         service.rundeckJobDefinitionManager.validateImportedJob(upload)>>true
@@ -6543,5 +6549,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             ['1', '2', '3', '4', '5'] | ['4', '5']   | ['some/path/test1', 'some/path/test2', 'some/path/test3']
 
     }
+
+
 }
 
