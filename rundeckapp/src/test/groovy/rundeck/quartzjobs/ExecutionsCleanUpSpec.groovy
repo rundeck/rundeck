@@ -16,8 +16,10 @@
 
 package rundeck.quartzjobs
 
+import com.codahale.metrics.Timer
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import grails.testing.gorm.DataTest
+import org.grails.plugins.metricsweb.MetricService
 import org.quartz.JobDataMap
 import org.quartz.JobDetail
 import org.quartz.JobExecutionContext
@@ -59,12 +61,18 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         def exec = createExecution(se, execDate, execDate)
 
         def executionService = Mock(ExecutionService) {
-            queryExecutions(*_) >> {
+            queryExecutionsList(*_) >> {
                 if(execDate.before(query.endbeforeFilter)){
-                    return [result: [exec.id], total: 1]
+                    return [exec.id]
                 }
 
-                [result: [], total: 0]
+                []
+            }
+            totalExecutionsProject(_) >> {
+                if(execDate.before(query.endbeforeFilter)){
+                    return 1
+                }
+                return 0
             }
         }
 
@@ -73,22 +81,18 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
                 false
             }
         }
-        def fileUploadService = Mock(FileUploadService)
-        def logFileStorageService = Mock(LogFileStorageService)
-        def jobSchedulerService = Mock(JobSchedulerService)
-        def reportService = Mock(ReportService)
-        def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
+        def metricService = Mock(MetricService)
+
+        def timer = new Timer()
+
+        metricService.timer(_,_)>> timer
 
         def datamap = new JobDataMap([
                 project: 'projectTest',
                 maxDaysToKeep: daysToKeep,
                 executionService : executionService,
                 frameworkService : frameworkService,
-                fileUploadService: fileUploadService,
-                logFileStorageService: logFileStorageService,
-                jobSchedulerService: jobSchedulerService,
-                referencedExecutionDataProvider: referencedExecutionDataProvider,
-                reportService: reportService
+                metricService: metricService
         ])
 
         ExecutionsCleanUp job = new ExecutionsCleanUp()
@@ -101,12 +105,12 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         job.execute(context)
 
         then:
-        executionsRemoved == Execution.findAll()?.size()
+        expectedDeleteExecutions * executionService.deleteExecutionFromCleanup(_) >> [success:true]
 
         where:
-        daysToKeep              | executionsRemoved
-        10                      | 1
-        4                       | 0
+        daysToKeep              | expectedDeleteExecutions
+        10                      | 0
+        4                       | 1
     }
 
 
@@ -127,12 +131,18 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         def exec = createExecution(se, execDate, execDate)
 
         def executionService = Mock(ExecutionService) {
-            queryExecutions(*_) >> {
+            queryExecutionsList(*_) >> {
                 if(execDate.before(query.endbeforeFilter)){
-                    return [result: [exec], total: 1]
+                    return [exec.id]
                 }
 
-                [result: [], total: 0]
+                []
+            }
+            totalExecutionsProject(_) >> {
+                if(execDate.before(query.endbeforeFilter)){
+                    return 1
+                }
+                return 0
             }
         }
 
@@ -149,7 +159,9 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         def jobSchedulerService = Mock(JobSchedulerService)
         def reportService = Mock(ReportService)
         def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
-
+        def metricService = Mock(MetricService){
+            timer(_ , _)>> new Timer()
+        }
 
         def datamap = new JobDataMap([
                 project: 'projectTest',
@@ -160,7 +172,8 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
                 logFileStorageService: logFileStorageService,
                 jobSchedulerService: jobSchedulerService,
                 referencedExecutionDataProvider: referencedExecutionDataProvider,
-                reportService: reportService
+                reportService: reportService,
+                metricService: metricService
 
         ])
 
@@ -175,7 +188,7 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         job.execute(context)
 
         then:
-        1*executionService.queryExecutions(_)
+        1*executionService.queryExecutionsList(_)
 
     }
 
@@ -188,12 +201,6 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         Date execDate = new Date(2015 - 1900, 02, 03)
 
         def se = createJob()
-        def frameworkService = Mock(FrameworkService) {
-            isClusterModeEnabled() >> {
-                false
-            }
-        }
-        def jobSchedulerService = Mock(JobSchedulerService)
 
         ExecutionsCleanUp job = new ExecutionsCleanUp()
         def daysToKeep = 60
@@ -212,13 +219,16 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         }
 
         def executionService = Mock(ExecutionService) {
-            queryExecutions(*_) >> {
-                return [result: executionList, total: totalExecutions.size()]
+            queryExecutionsList(*_) >> {
+                return executionList
+            }
+            totalExecutionsProject(_) >> {
+                return totalExecutions.size()
             }
         }
 
 
-        def result = job.searchExecutions(frameworkService, executionService, jobSchedulerService, projectName, daysToKeep, minimumExecutionToKeep , maximumDeletionSize)
+        def result = job.searchExecutions(executionService, projectName, daysToKeep, minimumExecutionToKeep , maximumDeletionSize)
 
         then:
         executionsToRemove == result.size()
