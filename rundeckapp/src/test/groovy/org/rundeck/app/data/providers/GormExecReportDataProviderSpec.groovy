@@ -104,7 +104,7 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
         when:
         def query = new ExecQuery()
         query.optionFilter = searchTerm
-        def results = provider.getExecutionReports(query, true, null, [])
+        def results = provider.getExecutionReportsByExecsIds(query, true, null, [])
 
         then:
         results.size() == expectedCount
@@ -132,7 +132,7 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
         when:
         def query = new ExecQuery()
         query.optionFilter = searchTerm
-        def results = provider.getExecutionReports(query, true, null, [])
+        def results = provider.getExecutionReportsByExecsIds(query, true, null, [])
 
         then:
         results.size() == expectedCount
@@ -177,7 +177,7 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
         def query = new ExecQuery()
         query.optionFilter = "-APP myapp"
         query.userFilter = "testuser"
-        def results = provider.getExecutionReports(query, true, null, [])
+        def results = provider.getExecutionReportsByExecsIds(query, true, null, [])
 
         then:
         results.size() == 1
@@ -196,7 +196,7 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
         when:
         def query = new ExecQuery()
         query.optionFilter = filterValue
-        def results = provider.getExecutionReports(query, true, null, [])
+        def results = provider.getExecutionReportsByExecsIds(query, true, null, [])
 
         then: "should return all results without filtering"
         results.size() == 5
