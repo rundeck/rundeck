@@ -156,13 +156,10 @@ class ExecutionsCleanUp implements InterruptableJob {
             """select e.id from Execution e 
                where e.project = :project 
                and e.dateCompleted <= :endDate 
-               and e.dateCompleted is not null 
-               and e.status not in (:excludedStatuses)
                order by e.dateCompleted asc""",
             [
                 project: project,
-                endDate: endDate,
-                excludedStatuses: [ExecutionService.EXECUTION_SCHEDULED, ExecutionService.EXECUTION_QUEUED]
+                endDate: endDate
             ],
             [max: maximumDeletionSize]
         )
