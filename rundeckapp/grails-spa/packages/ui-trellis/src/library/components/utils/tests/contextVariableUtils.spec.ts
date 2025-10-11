@@ -619,9 +619,9 @@ describe("contextVariableUtils", () => {
             );
           });
 
-          it("returns non-environment variable varables=", () => {
+          it("does not return brace varables", () => {
             expect(
-              variables.some(
+              !variables.some(
                 (variable) =>
                   variable.name !== variable.name.toUpperCase() &&
                   !startsWithEnvPrefix.test(variable.name) &&
@@ -641,9 +641,9 @@ describe("contextVariableUtils", () => {
             ).toBe(true);
           });
 
-          it("returns environment variables wrapped with '@'", () => {
+          it("does not return environment variables wrapped with '@'", () => {
             expect(
-              variables.some(
+              !variables.some(
                 (variable) =>
                   variable.name === variable.name.toUpperCase() &&
                   startsWithEnvPrefix.test(variable.name) &&
@@ -793,9 +793,9 @@ describe("contextVariableUtils", () => {
             ).toBe(false);
           });
 
-          it("returns non-environment variable varables", () => {
+          it("does not return brace variables", () => {
             expect(
-              variables.some(
+              !variables.some(
                 (variable) =>
                   variable.name !== variable.name.toUpperCase() &&
                   !startsWithEnvPrefix.test(variable.name) &&
@@ -815,9 +815,9 @@ describe("contextVariableUtils", () => {
             ).toBe(true);
           });
 
-          it("returns environment variables wrapped with '@'", () => {
+          it("does not return environment variables wrapped with '@'", () => {
             expect(
-              variables.some(
+              !variables.some(
                 (variable) =>
                   variable.name === variable.name.toUpperCase() &&
                   startsWithEnvPrefix.test(variable.name) &&
@@ -972,9 +972,9 @@ describe("contextVariableUtils", () => {
             ).toBe(true);
           });
 
-          it("returns non-environment variable varables", () => {
+          it("does not return brace variables", () => {
             expect(
-              variables.some(
+              !variables.some(
                 (variable) =>
                   variable.name !== variable.name.toUpperCase() &&
                   !startsWithEnvPrefix.test(variable.name) &&
@@ -994,9 +994,9 @@ describe("contextVariableUtils", () => {
             ).toBe(true);
           });
 
-          it("returns environment variables wrapped with '@'", () => {
+          it("does not return environment variables wrapped with '@'", () => {
             expect(
-              variables.some(
+              !variables.some(
                 (variable) =>
                   variable.name === variable.name.toUpperCase() &&
                   startsWithEnvPrefix.test(variable.name) &&

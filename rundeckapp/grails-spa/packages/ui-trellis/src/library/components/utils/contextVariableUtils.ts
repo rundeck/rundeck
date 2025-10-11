@@ -57,10 +57,10 @@ const formatVars = (
   include_env_vars: boolean,
 ): ContextVariable[] => {
   return [
-    ...formatWithDelimiters(variables),
-    ...(include_at_symbol_vars ? formatWithDelimiters(variables, "@") : []),
+    ...(include_at_symbol_vars
+      ? formatWithDelimiters(variables, "@")
+      : formatWithDelimiters(variables)),
     ...(include_env_vars ? formatAsEnvVars(variables) : []),
-    ...(include_at_symbol_vars ? formatAsEnvVars(variables, "@") : []),
   ];
 };
 
