@@ -34,12 +34,13 @@ export const getContextVariables = (
   }
 };
 
-const transformVariables = (
+export const transformVariables = (
   fieldType: FieldType,
   variables: ContextVariable[],
   pluginType?: string,
 ): ContextVariable[] => {
-  const include_at_symbol_vars = pluginType === "script-inline" && fieldType === "script";
+  const include_at_symbol_vars =
+    pluginType === "script-inline" && fieldType === "script";
   const include_env_vars = fieldType === "script";
   return formatVars(variables, include_at_symbol_vars, include_env_vars);
 };
