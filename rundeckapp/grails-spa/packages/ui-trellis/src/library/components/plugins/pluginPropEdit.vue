@@ -216,7 +216,8 @@
               :name="`${rkey}prop_` + pindex"
               :lang="prop.options['codeSyntaxMode']"
               :code-syntax-selectable="
-                prop.options['codeSyntaxSelectable'] === 'true' && !renderReadOnly
+                prop.options['codeSyntaxSelectable'] === 'true' &&
+                !renderReadOnly
               "
               height="200"
               width="100%"
@@ -414,6 +415,7 @@
   </div>
 </template>
 <script lang="ts">
+import { ContextVariable } from "@/library/stores/contextVariables";
 import { defineComponent } from "vue";
 import JobConfigPicker from "./JobConfigPicker.vue";
 import KeyStorageSelector from "./KeyStorageSelector.vue";
@@ -431,6 +433,7 @@ import PtAutoComplete from "../primeVue/PtAutoComplete/PtAutoComplete.vue";
 import {
   getContextVariables,
   isAutoCompleteField,
+  transformVariables,
   WorkflowStepType,
 } from "../utils/contextVariableUtils";
 
@@ -530,6 +533,11 @@ export default defineComponent({
       required: false,
       default: null,
     },
+    extraAutocompleteVars: {
+      type: Array as PropType<ContextVariable[]>,
+      required: false,
+      default: () => [],
+    },
   },
   emits: ["update:modelValue", "pluginPropsMounted"],
   data() {
@@ -559,11 +567,25 @@ export default defineComponent({
     },
     inputTypeContextVariables(): any {
       if (!this.isAutoCompleteField) return [];
-      return getContextVariables("input", this.stepType, this.pluginType);
+      return [
+        ...getContextVariables("input", this.stepType, this.pluginType),
+        ...transformVariables(
+          "input",
+          this.extraAutocompleteVars,
+          this.pluginType,
+        ),
+      ];
     },
     scriptTypeContextVariables(): any {
       if (!this.isAutoCompleteField) return [];
-      return getContextVariables("script", this.stepType, this.pluginType);
+      return [
+        ...getContextVariables("script", this.stepType, this.pluginType),
+        ...transformVariables(
+          "script",
+          this.extraAutocompleteVars,
+          this.pluginType,
+        ),
+      ];
     },
   },
   watch: {
