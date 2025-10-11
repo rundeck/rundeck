@@ -48,7 +48,7 @@ export const transformVariables = (
 const getVariablesByTypes = (types: ContextVariable["type"][]): Array<ContextVariable> => {
   const contextVariables =
     (useJobStore().contextVariables as Record<string, ContextVariable[]>) || [];
-  return [...types, "options"].flatMap((type) => contextVariables[type]);
+  return [...types].flatMap((type) => contextVariables[type]);
 };
 
 const formatVars = (

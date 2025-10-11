@@ -1,5 +1,8 @@
 import { contextVariables } from "../../../stores/contextVariables";
-import { isAutoCompleteField, getContextVariables } from "../contextVariableUtils";
+import {
+  isAutoCompleteField,
+  getContextVariables,
+} from "../contextVariableUtils";
 
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
@@ -13,7 +16,8 @@ jest.mock("@/library/rundeckService", () => ({
           {
             name: "a_custom_variable",
             label: "a custom variable",
-            description: "a variable representing something not supplied by rundeck by default",
+            description:
+              "a variable representing something not supplied by rundeck by default",
           },
         ],
       },
@@ -63,41 +67,62 @@ describe("contextVariableUtils", () => {
       describe("when supplied stepType is 'WorkflowNodeStep'", () => {
         describe("when pluginType is not supplied", () => {
           const variables = getContextVariables("input", "WorkflowNodeStep");
-
+          debugger;
+          it("returns a populated array", () => {
+            expect(variables).not.toEqual([]);
+          });
           it("returns a populated array", () => {
             expect(variables.length).toBeGreaterThan(0);
           });
 
           it("returns only variables of type 'job' or 'node'", () => {
             expect(
-              variables.every((variable) => ["node", "job", "option"].includes(variable.type)),
+              variables.every((variable) =>
+                ["node", "job"].includes(variable.type),
+              ),
             ).toBe(true);
-            expect(variables.some((variable) => variable.type === "job")).toBe(true);
-            expect(variables.some((variable) => variable.type === "option")).toBe(true);
-            expect(variables.some((variable) => variable.type === "node")).toBe(true);
+            expect(variables.some((variable) => variable.type === "job")).toBe(
+              true,
+            );
+            expect(
+              variables.some((variable) => variable.type === "option"),
+            ).toBe(false);
+            expect(variables.some((variable) => variable.type === "node")).toBe(
+              true,
+            );
           });
 
           it("returns all variables wrapped in braces", () => {
-            expect(variables.every((variable) => wrappedInBracesRegex.test(variable.name))).toBe(
-              true,
-            );
+            expect(
+              variables.every((variable) =>
+                wrappedInBracesRegex.test(variable.name),
+              ),
+            ).toBe(true);
           });
 
           it("returns no variables in uppercase (in the ENV style)", () => {
             expect(
-              variables.every((variable) => variable.name !== variable.name.toUpperCase()),
+              variables.every(
+                (variable) => variable.name !== variable.name.toUpperCase(),
+              ),
             ).toBe(true);
           });
 
           it("is not prefixed with env prefix 'RD_'", () => {
-            expect(variables.every((variable) => !startsWithEnvPrefix.test(variable.name))).toBe(
-              true,
-            );
+            expect(
+              variables.every(
+                (variable) => !startsWithEnvPrefix.test(variable.name),
+              ),
+            ).toBe(true);
           });
         });
 
         describe("when pluginType is 'script-inline'", () => {
-          const variables = getContextVariables("input", "WorkflowNodeStep", "script-inline");
+          const variables = getContextVariables(
+            "input",
+            "WorkflowNodeStep",
+            "script-inline",
+          );
 
           it("returns a populated array", () => {
             expect(variables.length).toBeGreaterThan(0);
@@ -105,34 +130,52 @@ describe("contextVariableUtils", () => {
 
           it("returns only variables of type 'job' or 'node'", () => {
             expect(
-              variables.every((variable) => ["node", "job", "option"].includes(variable.type)),
+              variables.every((variable) =>
+                ["node", "job"].includes(variable.type),
+              ),
             ).toBe(true);
-            expect(variables.some((variable) => variable.type === "job")).toBe(true);
-            expect(variables.some((variable) => variable.type === "option")).toBe(true);
-            expect(variables.some((variable) => variable.type === "node")).toBe(true);
+            expect(variables.some((variable) => variable.type === "job")).toBe(
+              true,
+            );
+            expect(
+              variables.some((variable) => variable.type === "option"),
+            ).toBe(false);
+            expect(variables.some((variable) => variable.type === "node")).toBe(
+              true,
+            );
           });
 
           it("returns all variables wrapped in braces", () => {
-            expect(variables.every((variable) => wrappedInBracesRegex.test(variable.name))).toBe(
-              true,
-            );
+            expect(
+              variables.every((variable) =>
+                wrappedInBracesRegex.test(variable.name),
+              ),
+            ).toBe(true);
           });
 
           it("returns no variables in uppercase (in the ENV style)", () => {
             expect(
-              variables.every((variable) => variable.name !== variable.name.toUpperCase()),
+              variables.every(
+                (variable) => variable.name !== variable.name.toUpperCase(),
+              ),
             ).toBe(true);
           });
 
           it("is not prefixed with env prefix 'RD_'", () => {
-            expect(variables.every((variable) => !startsWithEnvPrefix.test(variable.name))).toBe(
-              true,
-            );
+            expect(
+              variables.every(
+                (variable) => !startsWithEnvPrefix.test(variable.name),
+              ),
+            ).toBe(true);
           });
         });
 
         describe("when pluginType is supplied but not 'script-inline", () => {
-          const variables = getContextVariables("input", "WorkflowNodeStep", "foobar");
+          const variables = getContextVariables(
+            "input",
+            "WorkflowNodeStep",
+            "foobar",
+          );
 
           it("returns a populated array", () => {
             expect(variables.length).toBeGreaterThan(0);
@@ -140,29 +183,43 @@ describe("contextVariableUtils", () => {
 
           it("returns only variables of type 'job' or 'node'", () => {
             expect(
-              variables.every((variable) => ["node", "job", "option"].includes(variable.type)),
+              variables.every((variable) =>
+                ["node", "job"].includes(variable.type),
+              ),
             ).toBe(true);
-            expect(variables.some((variable) => variable.type === "job")).toBe(true);
-            expect(variables.some((variable) => variable.type === "option")).toBe(true);
-            expect(variables.some((variable) => variable.type === "node")).toBe(true);
+            expect(variables.some((variable) => variable.type === "job")).toBe(
+              true,
+            );
+            expect(
+              variables.some((variable) => variable.type === "option"),
+            ).toBe(false);
+            expect(variables.some((variable) => variable.type === "node")).toBe(
+              true,
+            );
           });
 
           it("returns all variables wrapped in braces", () => {
-            expect(variables.every((variable) => wrappedInBracesRegex.test(variable.name))).toBe(
-              true,
-            );
+            expect(
+              variables.every((variable) =>
+                wrappedInBracesRegex.test(variable.name),
+              ),
+            ).toBe(true);
           });
 
           it("returns no variables in uppercase (in the ENV style)", () => {
             expect(
-              variables.every((variable) => variable.name !== variable.name.toUpperCase()),
+              variables.every(
+                (variable) => variable.name !== variable.name.toUpperCase(),
+              ),
             ).toBe(true);
           });
 
           it("is not prefixed with env prefix 'RD_'", () => {
-            expect(variables.every((variable) => !startsWithEnvPrefix.test(variable.name))).toBe(
-              true,
-            );
+            expect(
+              variables.every(
+                (variable) => !startsWithEnvPrefix.test(variable.name),
+              ),
+            ).toBe(true);
           });
         });
       });
@@ -176,97 +233,135 @@ describe("contextVariableUtils", () => {
           });
 
           it("returns only variables of type 'job' and 'option", () => {
-            expect(variables.every((variable) => ["job", "option"].includes(variable.type))).toBe(
+            expect(
+              variables.every((variable) => ["job"].includes(variable.type)),
+            ).toBe(true);
+            expect(variables.some((variable) => variable.type === "job")).toBe(
               true,
             );
-            expect(variables.some((variable) => variable.type === "job")).toBe(true);
-            expect(variables.some((variable) => variable.type === "option")).toBe(true);
+            expect(
+              variables.some((variable) => variable.type === "option"),
+            ).toBe(false);
           });
 
           it("returns all variables wrapped in braces", () => {
-            expect(variables.every((variable) => wrappedInBracesRegex.test(variable.name))).toBe(
-              true,
-            );
+            expect(
+              variables.every((variable) =>
+                wrappedInBracesRegex.test(variable.name),
+              ),
+            ).toBe(true);
           });
 
           it("returns no variables in uppercase (in the ENV style)", () => {
             expect(
-              variables.every((variable) => variable.name !== variable.name.toUpperCase()),
+              variables.every(
+                (variable) => variable.name !== variable.name.toUpperCase(),
+              ),
             ).toBe(true);
           });
 
           it("is not prefixed with env prefix 'RD_'", () => {
-            expect(variables.every((variable) => !startsWithEnvPrefix.test(variable.name))).toBe(
-              true,
-            );
+            expect(
+              variables.every(
+                (variable) => !startsWithEnvPrefix.test(variable.name),
+              ),
+            ).toBe(true);
           });
         });
 
         describe("when pluginType is 'script-inline'", () => {
-          const variables = getContextVariables("input", "WorkflowStep", "script-inline");
+          const variables = getContextVariables(
+            "input",
+            "WorkflowStep",
+            "script-inline",
+          );
 
           it("returns a populated array", () => {
             expect(variables.length).toBeGreaterThan(0);
           });
 
           it("returns only variables of type 'job' and 'option", () => {
-            expect(variables.every((variable) => ["job", "option"].includes(variable.type))).toBe(
+            expect(
+              variables.every((variable) => ["job"].includes(variable.type)),
+            ).toBe(true);
+            expect(variables.some((variable) => variable.type === "job")).toBe(
               true,
             );
-            expect(variables.some((variable) => variable.type === "job")).toBe(true);
-            expect(variables.some((variable) => variable.type === "option")).toBe(true);
+            expect(
+              variables.some((variable) => variable.type === "option"),
+            ).toBe(false);
           });
 
           it("returns all variables wrapped in braces", () => {
-            expect(variables.every((variable) => wrappedInBracesRegex.test(variable.name))).toBe(
-              true,
-            );
+            expect(
+              variables.every((variable) =>
+                wrappedInBracesRegex.test(variable.name),
+              ),
+            ).toBe(true);
           });
 
           it("returns no variables in uppercase (in the ENV style)", () => {
             expect(
-              variables.every((variable) => variable.name !== variable.name.toUpperCase()),
+              variables.every(
+                (variable) => variable.name !== variable.name.toUpperCase(),
+              ),
             ).toBe(true);
           });
 
           it("is not prefixed with env prefix 'RD_'", () => {
-            expect(variables.every((variable) => !startsWithEnvPrefix.test(variable.name))).toBe(
-              true,
-            );
+            expect(
+              variables.every(
+                (variable) => !startsWithEnvPrefix.test(variable.name),
+              ),
+            ).toBe(true);
           });
         });
 
         describe("when pluginType is supplied but not 'script-inline", () => {
-          const variables = getContextVariables("input", "WorkflowStep", "foobar");
+          const variables = getContextVariables(
+            "input",
+            "WorkflowStep",
+            "foobar",
+          );
 
           it("returns a populated array", () => {
             expect(variables.length).toBeGreaterThan(0);
           });
 
           it("returns only variables of type 'job' and 'option", () => {
-            expect(variables.every((variable) => ["job", "option"].includes(variable.type))).toBe(
+            expect(
+              variables.every((variable) => ["job"].includes(variable.type)),
+            ).toBe(true);
+            expect(variables.some((variable) => variable.type === "job")).toBe(
               true,
             );
-            expect(variables.some((variable) => variable.type === "job")).toBe(true);
-            expect(variables.some((variable) => variable.type === "option")).toBe(true);
+            expect(
+              variables.some((variable) => variable.type === "option"),
+            ).toBe(false);
           });
 
           it("returns all variables wrapped in braces", () => {
-            expect(variables.every((variable) => wrappedInBracesRegex.test(variable.name))).toBe(
-              true,
-            );
+            expect(
+              variables.every((variable) =>
+                wrappedInBracesRegex.test(variable.name),
+              ),
+            ).toBe(true);
           });
 
           it("returns no variables in uppercase (in the ENV style)", () => {
             expect(
-              variables.every((variable) => variable.name !== variable.name.toUpperCase()),
+              variables.every(
+                (variable) => variable.name !== variable.name.toUpperCase(),
+              ),
             ).toBe(true);
           });
 
           it("is not prefixed with env prefix 'RD_'", () => {
-            expect(variables.every((variable) => !startsWithEnvPrefix.test(variable.name))).toBe(
-              true,
-            );
+            expect(
+              variables.every(
+                (variable) => !startsWithEnvPrefix.test(variable.name),
+              ),
+            ).toBe(true);
           });
         });
 
@@ -281,35 +376,51 @@ describe("contextVariableUtils", () => {
             it("returns only variables of type 'job' and 'execution'", () => {
               expect(
                 variables.every((variable) =>
-                  ["execution", "job", "option"].includes(variable.type),
+                  ["execution", "job"].includes(variable.type),
                 ),
               ).toBe(true);
-              expect(variables.some((variable) => variable.type === "job")).toBe(true);
-              expect(variables.some((variable) => variable.type === "option")).toBe(true);
-              expect(variables.some((variable) => variable.type === "execution")).toBe(true);
+              expect(
+                variables.some((variable) => variable.type === "job"),
+              ).toBe(true);
+              expect(
+                variables.some((variable) => variable.type === "option"),
+              ).toBe(false);
+              expect(
+                variables.some((variable) => variable.type === "execution"),
+              ).toBe(true);
             });
 
             it("returns all variables wrapped in braces", () => {
-              expect(variables.every((variable) => wrappedInBracesRegex.test(variable.name))).toBe(
-                true,
-              );
+              expect(
+                variables.every((variable) =>
+                  wrappedInBracesRegex.test(variable.name),
+                ),
+              ).toBe(true);
             });
 
             it("returns no variables in uppercase (in the ENV style)", () => {
               expect(
-                variables.every((variable) => variable.name !== variable.name.toUpperCase()),
+                variables.every(
+                  (variable) => variable.name !== variable.name.toUpperCase(),
+                ),
               ).toBe(true);
             });
 
             it("is not prefixed with env prefix 'RD_'", () => {
-              expect(variables.every((variable) => !startsWithEnvPrefix.test(variable.name))).toBe(
-                true,
-              );
+              expect(
+                variables.every(
+                  (variable) => !startsWithEnvPrefix.test(variable.name),
+                ),
+              ).toBe(true);
             });
           });
 
           describe("when pluginType is 'script-inline'", () => {
-            const variables = getContextVariables("input", "Notification", "script-inline");
+            const variables = getContextVariables(
+              "input",
+              "Notification",
+              "script-inline",
+            );
 
             it("returns a populated array", () => {
               expect(variables.length).toBeGreaterThan(0);
@@ -318,35 +429,51 @@ describe("contextVariableUtils", () => {
             it("returns only variables of type 'job' and 'execution'", () => {
               expect(
                 variables.every((variable) =>
-                  ["execution", "job", "option"].includes(variable.type),
+                  ["execution", "job"].includes(variable.type),
                 ),
               ).toBe(true);
-              expect(variables.some((variable) => variable.type === "job")).toBe(true);
-              expect(variables.some((variable) => variable.type === "option")).toBe(true);
-              expect(variables.some((variable) => variable.type === "execution")).toBe(true);
+              expect(
+                variables.some((variable) => variable.type === "job"),
+              ).toBe(true);
+              expect(
+                variables.some((variable) => variable.type === "option"),
+              ).toBe(false);
+              expect(
+                variables.some((variable) => variable.type === "execution"),
+              ).toBe(true);
             });
 
             it("returns all variables wrapped in braces", () => {
-              expect(variables.every((variable) => wrappedInBracesRegex.test(variable.name))).toBe(
-                true,
-              );
+              expect(
+                variables.every((variable) =>
+                  wrappedInBracesRegex.test(variable.name),
+                ),
+              ).toBe(true);
             });
 
             it("returns no variables in uppercase (in the ENV style)", () => {
               expect(
-                variables.every((variable) => variable.name !== variable.name.toUpperCase()),
+                variables.every(
+                  (variable) => variable.name !== variable.name.toUpperCase(),
+                ),
               ).toBe(true);
             });
 
             it("is not prefixed with env prefix 'RD_'", () => {
-              expect(variables.every((variable) => !startsWithEnvPrefix.test(variable.name))).toBe(
-                true,
-              );
+              expect(
+                variables.every(
+                  (variable) => !startsWithEnvPrefix.test(variable.name),
+                ),
+              ).toBe(true);
             });
           });
 
           describe("when pluginType is supplied but not 'script-inline", () => {
-            const variables = getContextVariables("input", "Notification", "foobar");
+            const variables = getContextVariables(
+              "input",
+              "Notification",
+              "foobar",
+            );
 
             it("returns a populated array", () => {
               expect(variables.length).toBeGreaterThan(0);
@@ -355,30 +482,42 @@ describe("contextVariableUtils", () => {
             it("returns only variables of type 'job' and 'execution'", () => {
               expect(
                 variables.every((variable) =>
-                  ["execution", "job", "option"].includes(variable.type),
+                  ["execution", "job"].includes(variable.type),
                 ),
               ).toBe(true);
-              expect(variables.some((variable) => variable.type === "job")).toBe(true);
-              expect(variables.some((variable) => variable.type === "option")).toBe(true);
-              expect(variables.some((variable) => variable.type === "execution")).toBe(true);
+              expect(
+                variables.some((variable) => variable.type === "job"),
+              ).toBe(true);
+              expect(
+                variables.some((variable) => variable.type === "option"),
+              ).toBe(false);
+              expect(
+                variables.some((variable) => variable.type === "execution"),
+              ).toBe(true);
             });
 
             it("returns all variables wrapped in braces", () => {
-              expect(variables.every((variable) => wrappedInBracesRegex.test(variable.name))).toBe(
-                true,
-              );
+              expect(
+                variables.every((variable) =>
+                  wrappedInBracesRegex.test(variable.name),
+                ),
+              ).toBe(true);
             });
 
             it("returns no variables in uppercase (in the ENV style)", () => {
               expect(
-                variables.every((variable) => variable.name !== variable.name.toUpperCase()),
+                variables.every(
+                  (variable) => variable.name !== variable.name.toUpperCase(),
+                ),
               ).toBe(true);
             });
 
             it("is not prefixed with env prefix 'RD_'", () => {
-              expect(variables.every((variable) => !startsWithEnvPrefix.test(variable.name))).toBe(
-                true,
-              );
+              expect(
+                variables.every(
+                  (variable) => !startsWithEnvPrefix.test(variable.name),
+                ),
+              ).toBe(true);
             });
           });
         });
@@ -403,11 +542,19 @@ describe("contextVariableUtils", () => {
 
           it("returns only variables of type 'job' or 'node'", () => {
             expect(
-              variables.every((variable) => ["node", "job", "option"].includes(variable.type)),
+              variables.every((variable) =>
+                ["node", "job"].includes(variable.type),
+              ),
             ).toBe(true);
-            expect(variables.some((variable) => variable.type === "job")).toBe(true);
-            expect(variables.some((variable) => variable.type === "option")).toBe(true);
-            expect(variables.some((variable) => variable.type === "node")).toBe(true);
+            expect(variables.some((variable) => variable.type === "job")).toBe(
+              true,
+            );
+            expect(
+              variables.some((variable) => variable.type === "option"),
+            ).toBe(false);
+            expect(variables.some((variable) => variable.type === "node")).toBe(
+              true,
+            );
           });
 
           it("returns non-environment variable varables=", () => {
@@ -445,7 +592,11 @@ describe("contextVariableUtils", () => {
         });
 
         describe("when pluginType is 'script-inline'", () => {
-          const variables = getContextVariables("script", "WorkflowNodeStep", "script-inline");
+          const variables = getContextVariables(
+            "script",
+            "WorkflowNodeStep",
+            "script-inline",
+          );
 
           it("returns a populated array", () => {
             expect(variables.length).toBeGreaterThan(0);
@@ -453,11 +604,19 @@ describe("contextVariableUtils", () => {
 
           it("returns only variables of type 'job' or 'node'", () => {
             expect(
-              variables.every((variable) => ["node", "job", "option"].includes(variable.type)),
+              variables.every((variable) =>
+                ["node", "job"].includes(variable.type),
+              ),
             ).toBe(true);
-            expect(variables.some((variable) => variable.type === "job")).toBe(true);
-            expect(variables.some((variable) => variable.type === "option")).toBe(true);
-            expect(variables.some((variable) => variable.type === "node")).toBe(true);
+            expect(variables.some((variable) => variable.type === "job")).toBe(
+              true,
+            );
+            expect(
+              variables.some((variable) => variable.type === "option"),
+            ).toBe(false);
+            expect(variables.some((variable) => variable.type === "node")).toBe(
+              true,
+            );
           });
 
           it("returns non-environment variable varables=", () => {
@@ -495,7 +654,11 @@ describe("contextVariableUtils", () => {
         });
 
         describe("when pluginType is supplied but not 'script-inline", () => {
-          const variables = getContextVariables("script", "WorkflowNodeStep", "foobar");
+          const variables = getContextVariables(
+            "script",
+            "WorkflowNodeStep",
+            "foobar",
+          );
 
           it("returns a populated array", () => {
             expect(variables.length).toBeGreaterThan(0);
@@ -503,11 +666,19 @@ describe("contextVariableUtils", () => {
 
           it("returns only variables of type 'job' or 'node'", () => {
             expect(
-              variables.every((variable) => ["node", "job", "option"].includes(variable.type)),
+              variables.every((variable) =>
+                ["node", "job"].includes(variable.type),
+              ),
             ).toBe(true);
-            expect(variables.some((variable) => variable.type === "job")).toBe(true);
-            expect(variables.some((variable) => variable.type === "option")).toBe(true);
-            expect(variables.some((variable) => variable.type === "node")).toBe(true);
+            expect(variables.some((variable) => variable.type === "job")).toBe(
+              true,
+            );
+            expect(
+              variables.some((variable) => variable.type === "option"),
+            ).toBe(false);
+            expect(variables.some((variable) => variable.type === "node")).toBe(
+              true,
+            );
           });
 
           it("returns non-environment variable varables=", () => {
@@ -554,11 +725,15 @@ describe("contextVariableUtils", () => {
           });
 
           it("returns only variables of type 'job' or 'option'", () => {
-            expect(variables.every((variable) => ["job", "option"].includes(variable.type))).toBe(
+            expect(
+              variables.every((variable) => ["job"].includes(variable.type)),
+            ).toBe(true);
+            expect(variables.some((variable) => variable.type === "job")).toBe(
               true,
             );
-            expect(variables.some((variable) => variable.type === "job")).toBe(true);
-            expect(variables.some((variable) => variable.type === "option")).toBe(true);
+            expect(
+              variables.some((variable) => variable.type === "option"),
+            ).toBe(false);
           });
 
           it("returns non-environment variable varables=", () => {
@@ -596,18 +771,26 @@ describe("contextVariableUtils", () => {
         });
 
         describe("when pluginType is 'script-inline'", () => {
-          const variables = getContextVariables("script", "WorkflowStep", "script-inline");
+          const variables = getContextVariables(
+            "script",
+            "WorkflowStep",
+            "script-inline",
+          );
 
           it("returns a populated array", () => {
             expect(variables.length).toBeGreaterThan(0);
           });
 
           it("returns only variables of type 'job' or 'option'", () => {
-            expect(variables.every((variable) => ["job", "option"].includes(variable.type))).toBe(
+            expect(
+              variables.every((variable) => ["job"].includes(variable.type)),
+            ).toBe(true);
+            expect(variables.some((variable) => variable.type === "job")).toBe(
               true,
             );
-            expect(variables.some((variable) => variable.type === "job")).toBe(true);
-            expect(variables.some((variable) => variable.type === "option")).toBe(true);
+            expect(
+              variables.some((variable) => variable.type === "option"),
+            ).toBe(false);
           });
 
           it("returns non-environment variable varables", () => {
@@ -645,18 +828,26 @@ describe("contextVariableUtils", () => {
         });
 
         describe("when pluginType is supplied but not 'script-inline", () => {
-          const variables = getContextVariables("script", "WorkflowStep", "foobar");
+          const variables = getContextVariables(
+            "script",
+            "WorkflowStep",
+            "foobar",
+          );
 
           it("returns a populated array", () => {
             expect(variables.length).toBeGreaterThan(0);
           });
 
           it("returns only variables of type 'job' or 'option'", () => {
-            expect(variables.every((variable) => ["job", "option"].includes(variable.type))).toBe(
+            expect(
+              variables.every((variable) => ["job"].includes(variable.type)),
+            ).toBe(true);
+            expect(variables.some((variable) => variable.type === "job")).toBe(
               true,
             );
-            expect(variables.some((variable) => variable.type === "job")).toBe(true);
-            expect(variables.some((variable) => variable.type === "option")).toBe(true);
+            expect(
+              variables.some((variable) => variable.type === "option"),
+            ).toBe(false);
           });
 
           it("returns non-environment variable varables=", () => {
@@ -704,11 +895,19 @@ describe("contextVariableUtils", () => {
 
           it("returns only variables of type 'job' or 'execution'", () => {
             expect(
-              variables.every((variable) => ["execution", "job", "option"].includes(variable.type)),
+              variables.every((variable) =>
+                ["execution", "job"].includes(variable.type),
+              ),
             ).toBe(true);
-            expect(variables.some((variable) => variable.type === "job")).toBe(true);
-            expect(variables.some((variable) => variable.type === "option")).toBe(true);
-            expect(variables.some((variable) => variable.type === "execution")).toBe(true);
+            expect(variables.some((variable) => variable.type === "job")).toBe(
+              true,
+            );
+            expect(
+              variables.some((variable) => variable.type === "option"),
+            ).toBe(false);
+            expect(
+              variables.some((variable) => variable.type === "execution"),
+            ).toBe(true);
           });
 
           it("returns non-environment variable varables=", () => {
@@ -746,7 +945,11 @@ describe("contextVariableUtils", () => {
         });
 
         describe("when pluginType is 'script-inline'", () => {
-          const variables = getContextVariables("script", "Notification", "script-inline");
+          const variables = getContextVariables(
+            "script",
+            "Notification",
+            "script-inline",
+          );
 
           it("returns a populated array", () => {
             expect(variables.length).toBeGreaterThan(0);
@@ -754,11 +957,19 @@ describe("contextVariableUtils", () => {
 
           it("returns only variables of type 'job' or 'execution'", () => {
             expect(
-              variables.every((variable) => ["execution", "job", "option"].includes(variable.type)),
+              variables.every((variable) =>
+                ["execution", "job"].includes(variable.type),
+              ),
             ).toBe(true);
-            expect(variables.some((variable) => variable.type === "job")).toBe(true);
-            expect(variables.some((variable) => variable.type === "option")).toBe(true);
-            expect(variables.some((variable) => variable.type === "execution")).toBe(true);
+            expect(variables.some((variable) => variable.type === "job")).toBe(
+              true,
+            );
+            expect(
+              variables.some((variable) => variable.type === "option"),
+            ).toBe(false);
+            expect(
+              variables.some((variable) => variable.type === "execution"),
+            ).toBe(true);
           });
 
           it("returns non-environment variable varables", () => {
@@ -796,7 +1007,11 @@ describe("contextVariableUtils", () => {
         });
 
         describe("when pluginType is supplied but not 'script-inline", () => {
-          const variables = getContextVariables("script", "Notification", "foobar");
+          const variables = getContextVariables(
+            "script",
+            "Notification",
+            "foobar",
+          );
 
           it("returns a populated array", () => {
             expect(variables.length).toBeGreaterThan(0);
@@ -804,11 +1019,19 @@ describe("contextVariableUtils", () => {
 
           it("returns only variables of type 'job' or 'execution'", () => {
             expect(
-              variables.every((variable) => ["execution", "job", "option"].includes(variable.type)),
+              variables.every((variable) =>
+                ["execution", "job"].includes(variable.type),
+              ),
             ).toBe(true);
-            expect(variables.some((variable) => variable.type === "job")).toBe(true);
-            expect(variables.some((variable) => variable.type === "option")).toBe(true);
-            expect(variables.some((variable) => variable.type === "execution")).toBe(true);
+            expect(variables.some((variable) => variable.type === "job")).toBe(
+              true,
+            );
+            expect(
+              variables.some((variable) => variable.type === "option"),
+            ).toBe(false);
+            expect(
+              variables.some((variable) => variable.type === "execution"),
+            ).toBe(true);
           });
 
           it("returns non-environment variable varables=", () => {
