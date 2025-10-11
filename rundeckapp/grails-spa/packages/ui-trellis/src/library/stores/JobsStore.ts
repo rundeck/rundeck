@@ -21,6 +21,9 @@ export const useJobStore = defineStore("jobs", {
       if (!jobId) {
         jobId = job.id;
       }
+      if (!jobId) {
+        jobId = this.activeId;
+      }
       const existingJobDefinition: JobDefinition = this.jobs[jobId];
       if (existingJobDefinition) {
         this.jobs[jobId] = {
@@ -30,6 +33,10 @@ export const useJobStore = defineStore("jobs", {
       } else {
         this.jobs[jobId] = job;
       }
+    },
+    async setActiveId(activeId: string): Promise<void> {
+      this.activeId = activeId || "!new";
+      await this.updateJobDefinition({}, this.activeId);
     },
     async fetchJobDefinition(jobId: string, setJobAsActive: boolean = true) {
       try {
