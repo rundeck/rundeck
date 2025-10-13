@@ -52,7 +52,6 @@ class ExecutionsCleanUpSpec extends Specification {
     def "execute cleaner job"() {
         setup:
         Date startDate = new Date(2015 - 1900, 2, 8)
-        Date endDate = ExecutionQuery.parseRelativeDate("${daysToKeep}d", startDate)
         Date executionCompletionDate = ExecutionQuery.parseRelativeDate("${daysForExecutionCompletion}d", new Date())
         Date execDate = new Date(2015 - 1900, 02, 03)
 
