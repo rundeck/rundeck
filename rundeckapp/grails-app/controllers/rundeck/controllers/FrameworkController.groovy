@@ -876,11 +876,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             extraConfig:extraConfig,
             cronModelValues: CRON_MODELS_SELECT_VALUES,
             cronValues: [:],
-            enableCleanHistory: featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE),
-            cleanerHistoryPeriod: MAX_DAYS_TO_KEEP,
-            minimumExecutionToKeep: MINIMUM_EXECUTION_TO_KEEP,
-            maximumDeletionSize: MAXIMUM_DELETION_SIZE,
-            cronExression: SCHEDULE_DEFAULT
+            enableCleanHistory: featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE)
         ]
     }
 
