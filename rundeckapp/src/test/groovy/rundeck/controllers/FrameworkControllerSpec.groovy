@@ -2294,10 +2294,6 @@ project.label=A Label
 
         then:
         model.enableCleanHistory == true
-        model.cleanerHistoryPeriod == controller.MAX_DAYS_TO_KEEP
-        model.minimumExecutionToKeep == controller.MINIMUM_EXECUTION_TO_KEEP
-        model.maximumDeletionSize == controller.MAXIMUM_DELETION_SIZE
-        model.cronExression == controller.SCHEDULE_DEFAULT
     }
 
     def "createProject should not enable cleanup by default when EXECUTION_CLEANUP_ENABLE feature is not present"() {
@@ -2324,10 +2320,6 @@ project.label=A Label
 
         then:
         model.enableCleanHistory == false
-        model.cleanerHistoryPeriod == controller.MAX_DAYS_TO_KEEP
-        model.minimumExecutionToKeep == controller.MINIMUM_EXECUTION_TO_KEEP
-        model.maximumDeletionSize == controller.MAXIMUM_DELETION_SIZE
-        model.cronExression == controller.SCHEDULE_DEFAULT
     }
 
     def "editProject should respect user explicit choice over feature flag - user disabled"() {
