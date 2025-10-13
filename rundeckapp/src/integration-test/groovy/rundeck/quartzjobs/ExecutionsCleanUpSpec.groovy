@@ -43,12 +43,6 @@ class ExecutionsCleanUpSpec extends Specification {
     def projectName = 'projectTest'
     def jobUuid = '123'
 
-    def cleanup() {
-        // Clean up all test data after each test
-        Execution.deleteAll(Execution.list())
-        ScheduledExecution.deleteAll(ScheduledExecution.list())
-    }
-
     def "execute cleaner job"() {
         setup:
         Date startDate = new Date(2015 - 1900, 2, 8)
