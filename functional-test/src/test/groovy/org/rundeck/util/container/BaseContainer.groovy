@@ -13,6 +13,7 @@ import org.rundeck.util.common.WaitBehaviour
 import org.rundeck.util.common.WaitUtils
 import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.jobs.JobUtils
+import org.testcontainers.containers.ComposeContainer
 import spock.lang.Specification
 
 import java.nio.file.Files
@@ -89,6 +90,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
                         featureName,
                         clientConfig
                 )
+                composeContainer(rundeckComposeContainer)
                 rundeckComposeContainer.start()
                 CLIENT_PROVIDER = rundeckComposeContainer
                 RUNDECK_CONTAINER_ID = rundeckComposeContainer.getRundeckContainerId()
@@ -117,6 +119,15 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
             return CLIENT_PROVIDER
         }
     }
+
+    /**
+     * Customize the compose container if needed, will be called after creation but before start
+     * @param composeContainer
+     */
+    void composeContainer(ComposeContainer composeContainer){
+
+    }
+
 
     void setupProject() {
         setupProject(PROJECT_NAME)
