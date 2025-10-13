@@ -17,7 +17,8 @@
 package rundeck.quartzjobs
 
 import com.dtolabs.rundeck.app.support.ExecutionQuery
-import grails.testing.gorm.DataTest
+import grails.testing.mixin.integration.Integration
+import grails.gorm.transactions.Rollback
 import org.quartz.JobDataMap
 import org.quartz.JobDetail
 import org.quartz.JobExecutionContext
@@ -32,55 +33,52 @@ import rundeck.services.ReportService
 import spock.lang.Specification
 
 /**
- * Created by greg on 4/12/16.
+ * Integration test for ExecutionsCleanUp
  */
-class ExecutionsCleanUpSpec extends Specification implements DataTest{
+@Integration
+@Rollback
+class ExecutionsCleanUpSpec extends Specification {
     def jobName = 'abc'
     def groupPath = 'elf'
     def projectName = 'projectTest'
     def jobUuid = '123'
 
-    def setup(){
-        mockDomains(Execution, ScheduledExecution, ReferencedExecution, ExecReport,Workflow,CommandExec)
+    def cleanup() {
+        // Clean up all test data after each test
+        Execution.deleteAll(Execution.list())
+        ScheduledExecution.deleteAll(ScheduledExecution.list())
     }
 
     def "execute cleaner job"() {
-
         setup:
         Date startDate = new Date(2015 - 1900, 2, 8)
         Date endDate = ExecutionQuery.parseRelativeDate("${daysToKeep}d", startDate)
+        Date executionCompletionDate = ExecutionQuery.parseRelativeDate("${daysForExecutionCompletion}d", new Date())
         Date execDate = new Date(2015 - 1900, 02, 03)
-        ExecutionQuery query = new ExecutionQuery(projFilter: projectName)
-        if(null != endDate){
-            query.endbeforeFilter = endDate
-            query.doendbeforeFilter = true
-        }
+
         def se = createJob()
-        def exec = createExecution(se, execDate, execDate)
+        def exec = createExecution(se, execDate, executionCompletionDate)
 
-        def executionService = Mock(ExecutionService) {
-            queryExecutions(*_) >> {
-                if(execDate.before(query.endbeforeFilter)){
-                    return [result: [exec.id], total: 1]
-                }
-
-                [result: [], total: 0]
-            }
-        }
+        def executionService = Mock(ExecutionService)
 
         def frameworkService = Mock(FrameworkService) {
             isClusterModeEnabled() >> {
                 false
             }
+            getServerUUID() >> {
+                "test-server-uuid"
+            }
         }
         def fileUploadService = Mock(FileUploadService)
-        def logFileStorageService = Mock(LogFileStorageService)
+        def logFileStorageService = Mock(LogFileStorageService) {
+            getExecutionFiles(*_) >> [:]
+        }
         def jobSchedulerService = Mock(JobSchedulerService)
         def reportService = Mock(ReportService)
         def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
 
         def datamap = new JobDataMap([
-                project: 'projectTest',
+                project: projectName,
                 maxDaysToKeep: daysToKeep,
                 executionService : executionService,
                 frameworkService : frameworkService,
@@ -97,6 +95,7 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
                 getJobDataMap() >> datamap
             }
         }
+
         when:
         job.execute(context)
 
@@ -104,17 +103,17 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         executionsRemoved == Execution.findAll()?.size()
 
         where:
-        daysToKeep              | executionsRemoved
-        10                      | 1
-        4                       | 0
+        daysToKeep  | executionsRemoved | daysForExecutionCompletion
+        10          | 1                 | 9
+        4           | 0                 | 5
     }
 
 
     def "execute cleaner job cluster with null on the list of deadMembers"() {
-
+        given:
         def daysToKeep = 10
 
-        setup:
+        and:
         Date startDate = new Date(2015 - 1900, 2, 8)
         Date endDate = ExecutionQuery.parseRelativeDate("${daysToKeep}d", startDate)
         Date execDate = new Date(2015 - 1900, 02, 03)
@@ -126,21 +125,11 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         def se = createJob()
         def exec = createExecution(se, execDate, execDate)
 
-        def executionService = Mock(ExecutionService) {
-            queryExecutions(*_) >> {
-                if(execDate.before(query.endbeforeFilter)){
-                    return [result: [exec], total: 1]
-                }
-
-                [result: [], total: 0]
-            }
-        }
-
         def frameworkService = Mock(FrameworkService) {
             isClusterModeEnabled() >> {
                 true
             }
-            getServerUUID()>>{
+            getServerUUID() >> {
                 "aaaa"
             }
         }
@@ -149,10 +138,10 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         def jobSchedulerService = Mock(JobSchedulerService)
         def reportService = Mock(ReportService)
         def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
-
+        def executionService = Mock(ExecutionService)
 
         def datamap = new JobDataMap([
-                project: 'projectTest',
+                project: projectName,
                 maxDaysToKeep: daysToKeep,
                 executionService : executionService,
                 frameworkService : frameworkService,
@@ -161,7 +150,6 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
                 jobSchedulerService: jobSchedulerService,
                 referencedExecutionDataProvider: referencedExecutionDataProvider,
                 reportService: reportService
-
         ])
 
         ExecutionsCleanUp job = new ExecutionsCleanUp()
@@ -175,18 +163,15 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         job.execute(context)
 
         then:
-        1*executionService.queryExecutions(_)
-
+        1 * referencedExecutionDataProvider.deleteByExecutionId(_)
+        1 * logFileStorageService.getExecutionFiles(*_)
+        1 * fileUploadService.deleteRecordsForExecution(_)
     }
 
 
-    def "num execution to remove "() {
-        def projectName = 'projectTest'
-
-        setup:
-
+    def "num execution to remove"() {
+        given:
         Date execDate = new Date(2015 - 1900, 02, 03)
-
         def se = createJob()
         def frameworkService = Mock(FrameworkService) {
             isClusterModeEnabled() >> {
@@ -199,7 +184,6 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         def daysToKeep = 60
 
         when:
-
         def executionList = []
         def totalExecutions = []
 
@@ -217,18 +201,17 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
             }
         }
 
-
         def result = job.searchExecutions(frameworkService, executionService, jobSchedulerService, projectName, daysToKeep, minimumExecutionToKeep , maximumDeletionSize)
 
         then:
         executionsToRemove == result.size()
 
         where:
-        numExecutions | minimumExecutionToKeep |     maximumDeletionSize  | executionsToRemove
-        50            | 5                      |     15                   | 15
-        50            | 40                     |     100                  | 10
-        30            | 50                     |     200                  | 0
-        20            | 20                     |     20                   | 0
+        numExecutions | minimumExecutionToKeep | maximumDeletionSize | executionsToRemove
+        50            | 5                      | 15                  | 15
+        50            | 40                     | 100                 | 10
+        30            | 50                     | 200                 | 0
+        20            | 20                     | 20                  | 0
     }
 
 
@@ -239,7 +222,7 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
                 project: projectName,
                 uuid: jobUuid,
                 workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
-        ).save()
+        ).save(flush: true)
 
         se
     }
@@ -254,8 +237,9 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
                 status: 'success',
                 project: projectName,
                 scheduleNodeUUID: "aaaa"
-        ).save()
+        ).save(flush: true)
 
         exec
     }
 }
+
