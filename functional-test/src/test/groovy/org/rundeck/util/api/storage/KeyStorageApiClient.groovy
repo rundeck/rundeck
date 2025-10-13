@@ -14,6 +14,28 @@ class KeyStorageApiClient {
     }
 
     Response callUploadKey(String path, String keyType, String keyValue){
-        return client.doPostWithRawText("${STORAGE_BASE_URL}/${path}", keyContentTypes[keyType.toLowerCase()], keyValue)
+        //test key exists
+        boolean exists = false
+        try (def testexists = client.doGet("${STORAGE_BASE_URL}/${path}")) {
+            exists = testexists.successful
+        }
+        Response resp = exists ? client.doPutWithRawText(
+            "${STORAGE_BASE_URL}/${path}",
+            keyContentTypes[keyType.toLowerCase()],
+            keyValue
+        ) : client.doPostWithRawText(
+            "${STORAGE_BASE_URL}/${path}",
+            keyContentTypes[keyType.toLowerCase()],
+            keyValue
+        )
+        try (def response = resp) {
+            if (!response.successful) {
+                throw new IOException(
+                    "Failed to ${exists ? 'update' : 'create'} key to rundeck: ${resp.code()} ${resp.body().string()}"
+                )
+            }
+            return resp
+        }
+
     }
 }

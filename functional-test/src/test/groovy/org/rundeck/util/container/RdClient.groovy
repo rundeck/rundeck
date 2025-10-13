@@ -129,7 +129,9 @@ class RdClient {
     }
 
     <T> T get(final String path, Class<T> clazz) {
-        mapper.readValue(doGet(path).body().byteStream(), clazz)
+        try (def resp = doGet(path)) {
+            return mapper.readValue(resp.body().byteStream(), clazz)
+        }
     }
 
     Response doPost(final String path, final Object body = null) {
@@ -189,6 +191,22 @@ class RdClient {
                 .method("POST", body)
                 .build()
         httpClient.newCall(request).execute()
+    }
+    /**
+     * Sends a POST request to a specified path with a file and its content type, and returns successfully if the request is successful.
+     * This method is designed to transmit files, such as images or documents, to a server.
+     *
+     * @param path The endpoint URL path where the file is to be posted.
+     * @param file The file to be sent in the request body. This should be a valid {@link File} object pointing to the file intended for upload.
+     * @param contentType The MIME type of the file being sent, e.g., "image/jpeg" for JPEG images. This string must correspond to the file's actual content type.
+     * @throws IOException If an error occurs during the network request. This includes file read errors, network connectivity issues, and server response errors. Callers should handle this exception.
+     */
+    void post(final String path, final File file, final String contentType) {
+        try (def resp = doPost(path, file, contentType)) {
+            if (!resp.isSuccessful()) {
+                throw new IOException("Failed to post file to rundeck: " + resp.code() + " " + resp.body().string())
+            }
+        }
     }
 
     /**
@@ -254,6 +272,15 @@ class RdClient {
                 .build()
         httpClient.newCall(request).execute()
     }
+    Response doPutWithRawText(final String path, final String contentType, final String rawBody) {
+        ByteBuffer byteBuffer = StandardCharsets.UTF_8.encode(CharBuffer.wrap( rawBody.toCharArray()))
+        RequestBody body = RequestBody.create(Arrays.copyOfRange(byteBuffer.array(), byteBuffer.position(), byteBuffer.limit()), MediaType.parse(contentType))
+        Request request = new Request.Builder()
+                .url(apiUrl(path))
+                .method("PUT", body)
+                .build()
+        httpClient.newCall(request).execute()
+    }
 
     Response doPostWithoutBody(final String path) {
         RequestBody body = RequestBody.create(null, new byte[]{});
@@ -307,7 +334,9 @@ class RdClient {
     }
 
     <T> T jsonValue(ResponseBody body, Class<T> clazz) {
-        mapper.readValue(body.byteStream(), clazz)
+        try (def b = body.byteStream()) {
+            mapper.readValue(b, clazz)
+        }
     }
 
 
