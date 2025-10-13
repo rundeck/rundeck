@@ -104,7 +104,7 @@ class ExecutionsCleanUpSpec extends Specification {
         where:
         daysToKeep  | executionsRemoved | daysForExecutionCompletion
         10          | 1                 | 9
-        4           | 0                 | 5
+        4           | 0                 | 6
     }
 
 
