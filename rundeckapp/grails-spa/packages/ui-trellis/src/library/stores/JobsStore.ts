@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { getJobDefinition, postJobDefinition } from "../services/jobEdit";
-import { JobDefinition } from "../types/jobs/JobDefinition";
+import { JobDefinition, LogLevel } from "../types/jobs/JobDefinition";
 import { JobStore } from "../types/stores/JobsStoreTypes";
 import { contextVariables, ContextVariablesByType } from "./contextVariables";
 
@@ -17,13 +17,7 @@ export const useJobStore = defineStore("jobs", {
       state.activeId ? state.jobs[state.activeId] : undefined,
   },
   actions: {
-    updateJobDefinition(job: JobDefinition, jobId?: string) {
-      if (!jobId) {
-        jobId = job.id;
-      }
-      if (!jobId) {
-        jobId = this.activeId;
-      }
+    updateJobDefinition(job: JobDefinition, jobId: string) {
       const existingJobDefinition: JobDefinition = this.jobs[jobId];
       if (existingJobDefinition) {
         this.jobs[jobId] = {
@@ -36,7 +30,18 @@ export const useJobStore = defineStore("jobs", {
     },
     async setActiveId(activeId: string): Promise<void> {
       this.activeId = activeId || "!new";
-      await this.updateJobDefinition({}, this.activeId);
+      await this.updateJobDefinition(
+        {
+          id: this.activeId,
+          loglevel: LogLevel.Info,
+          nodeFilterEditable: false,
+          nodesSelectedByDefault: true,
+          name: "",
+          scheduleEnabled: true,
+          executionEnabled: true,
+        },
+        this.activeId,
+      );
     },
     async fetchJobDefinition(jobId: string, setJobAsActive: boolean = true) {
       try {
@@ -56,11 +61,14 @@ export const useJobStore = defineStore("jobs", {
         const resp = await postJobDefinition([job], options);
         if (resp.succeeded && resp.succeeded.length === 1) {
           const savedJob = resp.succeeded[0];
-          this.updateJobDefinition({
-            ...job,
-            id: savedJob.id!,
-            uuid: savedJob.id!,
-          });
+          this.updateJobDefinition(
+            {
+              ...job,
+              id: savedJob.id,
+              uuid: savedJob.id,
+            },
+            savedJob.id,
+          );
         }
       } catch (e) {
         console.warn(e);
