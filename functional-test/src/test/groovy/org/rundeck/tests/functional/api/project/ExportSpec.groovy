@@ -1,6 +1,5 @@
 package org.rundeck.tests.functional.api.project
 
-import org.apache.commons.compress.utils.IOUtils
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.container.BaseContainer
 
@@ -15,7 +14,7 @@ class ExportSpec extends BaseContainer {
     def "test-project-export"(){
         when:
             def exportResponse = client.doGetAcceptAll("/project/${PROJECT_NAME}/export")
-            def archiveBytes = IOUtils.toByteArray(exportResponse.body().byteStream()).length
+            def archiveBytes = exportResponse.body().bytes().length
             assert exportResponse.successful
 
         then:
