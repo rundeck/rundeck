@@ -135,6 +135,9 @@ class RdClient {
     }
 
     Response doPost(final String path, final Object body = null) {
+        doReq(path, "POST", body)
+    }
+    Response doReq(final String path, String method, final Object body = null) {
         RequestBody requestBuilder
         if (body) {
             requestBuilder = RequestBody.create(
@@ -151,6 +154,14 @@ class RdClient {
         httpClient.newCall(
                 builder.build()
         ).execute()
+    }
+
+    void put(final String path, final File file, final String contentType) {
+        try(def response = doPut(path, file, contentType)) {
+            if (!response.isSuccessful()) {
+                throw new IOException("Failed to put file to rundeck: " + response.code() + " " + response.body().string())
+            }
+        }
     }
 
     Response doPut(final String path, final File file, final String contentType='application/zip') {
@@ -330,7 +341,10 @@ class RdClient {
     }
 
     <T> T post(final String path, final Object body = null, Class<T> clazz = Map) {
-        jsonValue(doPost(path, body).body(), clazz)
+        jsonValue(doReq(path,'POST', body).body(), clazz)
+    }
+    <T> T put(final String path, final Object body = null, Class<T> clazz = Map) {
+        jsonValue(doReq(path, 'PUT', body).body(), clazz)
     }
 
     <T> T jsonValue(ResponseBody body, Class<T> clazz) {

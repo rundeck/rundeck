@@ -216,8 +216,8 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     def loadKeysForNodes(String baseKeyPath, String project, String nodeKeyPassPhrase, String nodeUserPassword, String userVaultPassword) {
-        client.post("/storage/keys/project/$project/ssh-node.key", new File("${baseKeyPath}/id_rsa"), "application/octet-stream")
-        client.post("/storage/keys/project/$project/ssh-node-passphrase.key", new File("${baseKeyPath}/id_rsa_passphrase"), "application/octet-stream")
+        loadKeyFile("project/$project/ssh-node.key", new File("${baseKeyPath}/id_rsa"), "privateKey")
+        loadKeyFile("project/$project/ssh-node-passphrase.key", new File("${baseKeyPath}/id_rsa_passphrase"), "privateKey")
         if (nodeKeyPassPhrase) loadKey("project/$project/ssh-node-passphrase.pass", nodeKeyPassPhrase, "password")
         if (nodeUserPassword) loadKey("project/$project/ssh-node.pass", nodeUserPassword, "password")
         if (userVaultPassword) loadKey("project/$project/vault-user.pass", userVaultPassword, "password")
@@ -227,6 +227,10 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     def loadKey(String path, String dbPass, String keyType) {
         KeyStorageApiClient keyStorageApiClient = new KeyStorageApiClient(clientProvider)
         keyStorageApiClient.callUploadKey(path, keyType, dbPass)
+    }
+    def loadKeyFile(String path, File file, String keyType) {
+        KeyStorageApiClient keyStorageApiClient = new KeyStorageApiClient(clientProvider)
+        keyStorageApiClient.callUploadKeyFile(path, keyType, file)
     }
 
     /**
