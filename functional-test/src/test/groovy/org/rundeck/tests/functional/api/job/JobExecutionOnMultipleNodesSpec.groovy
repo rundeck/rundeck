@@ -9,7 +9,7 @@ import org.rundeck.util.container.BaseContainer
 @APITest
 class JobExecutionOnMultipleNodesSpec extends BaseContainer {
 
-    public static final String TEST_PROJECT = "core-jsch-executor-test"
+    public static final String TEST_PROJECT = "JobExecutionOnMultipleNodesSpec"
     public static final String TEST_SSH_ARCHIVE_DIR = "/projects-import/core-jsch-executor-test"
     public static final String NODE_KEY_PASSPHRASE = "testpassphrase123"
     public static final String NODE_USER_PASSWORD = "testpassword123"
@@ -30,6 +30,9 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
                  "jobUuidOption"     : "preserve"])
         //wait for ansible node to be available
         waitingResourceEnabled(TEST_PROJECT, "ssh-node")
+    }
+    def cleanupSpec(){
+        deleteProject(TEST_PROJECT)
     }
 
     def "Create a job that executes on all nodes"() {

@@ -9,7 +9,7 @@ import org.rundeck.util.gui.pages.login.LoginPage
 @SeleniumCoreTest
 class CommandOnMultipleNodesSpec extends SeleniumBase{
 
-    public static final String TEST_PROJECT = "core-jsch-executor-test"
+    public static final String TEST_PROJECT = "CommandOnMultipleNodesSpec"
     public static final String TEST_SSH_ARCHIVE_DIR = "/projects-import/core-jsch-executor-test"
     public static final String NODE_KEY_PASSPHRASE = "testpassphrase123"
     public static final String NODE_USER_PASSWORD  = "testpassword123"
@@ -32,6 +32,9 @@ class CommandOnMultipleNodesSpec extends SeleniumBase{
                 ]
         )
         waitingResourceEnabled(TEST_PROJECT, "ssh-node")
+    }
+    def cleanupSpec(){
+        deleteProject(TEST_PROJECT)
     }
 
     def setup() {
