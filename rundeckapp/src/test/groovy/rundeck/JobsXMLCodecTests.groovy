@@ -6013,7 +6013,54 @@ void testDecodeBasic__no_group(){
 
 
         then: "job should keep same options values quantity as the original xml"
-        job.options.getAt("OPTION").getAt("values").size() == 3
+        assertEquals(3,job.options.getAt("OPTION").getAt("values").size())
+    }
+
+    @Test
+    public void "import a job from xml where valueListDelimiter is a |"() {
+
+        given: "a job with 3 values and a valueListDelimiter that is a special character"
+        Map job
+
+
+        def linkedHashMap = new LinkedHashMap([
+                context           : [
+                        options: [
+                                preserveOrder: true,
+                                option       : [
+                                        enforcedvalues       : true,
+                                        multivalueAllSelected: true,
+                                        multivalued          : true,
+                                        name                 : 'OPTION',
+                                        required             : true,
+                                        values               : 'one|two|three',
+                                        valuesListDelimiter  : '|'
+                                ]
+                        ]
+                ],
+                description       : 'test descrip',
+                executionEnabled  : true,
+                loglevel          : 'INFO',
+                name              : 'test job 1',
+                nodeFilterEditable: false,
+                scheduleEnabled   : true,
+                sequence          : [
+                        keepgoing: true,
+                        strategy : 'node-first',
+                        command  : [
+                                jobref: [
+                                        group: '/some/path',
+                                        name : 'a Job'
+                                ]
+                        ]
+                ]
+        ])
+        when: "the job is imported using a ( | ) as jobXmlValueListDelimiter"
+        job = JobsXMLCodec.convertXMapToJobMap(linkedHashMap, "|")
+
+
+        then: "job should keep same options values quantity as the original xml"
+        assertEquals(3,job.options.getAt("OPTION").getAt("values").size())
     }
 
     @Test

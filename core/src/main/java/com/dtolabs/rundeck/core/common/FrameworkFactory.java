@@ -79,6 +79,7 @@ public class FrameworkFactory {
             public IProjectNodes getNodes(final String name) {
 
                 return new ProjectNodeSupport(
+                        new File(filesystemFramework.getBaseDir(), "var"),
                         loadFrameworkProjectConfig(
                                 name,
                                 new File(filesystemFramework.getFrameworkProjectsBaseDir(), name),
