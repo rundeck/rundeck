@@ -582,6 +582,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         }
 
         // Restore user field during deserialization
+        // Note: 'user' field represents the job creator (stored in DB column 'rduser')
         if (data.user) {
             se.user = data.user
         }

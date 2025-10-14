@@ -156,6 +156,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public static final String CONF_PROJECT_DISABLE_EXECUTION = 'project.disable.executions'
     public static final String CONF_PROJECT_DISABLE_SCHEDULE = 'project.disable.schedule'
 
+    private static final List<String> EXCLUDED_AUDIT_FIELDS = [
+        'user', 'dateCreated', 'lastModifiedBy', 'lastUpdated', 'id'
+    ]
+
     def JobScheduleManager rundeckJobScheduleManager
     ScmService scmService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
@@ -3518,7 +3522,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             deleteExistingOptions(scheduledExecution)
             deleteExistingNotification(scheduledExecution)
             // Exclude audit/system fields to prevent imported jobs from overwriting creator/dates
-            def EXCLUDED_AUDIT_FIELDS = ['user', 'dateCreated', 'lastModifiedBy', 'lastUpdated', 'id']
             final Collection foundprops = input.properties.keySet().findAll {
                 !(it in EXCLUDED_AUDIT_FIELDS) &&
                 !it.startsWith( 'nodeInclude') &&//deprecating these
@@ -3618,7 +3621,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     ) {
 
         def scheduledExecution = importedJob.job
-        // Don't overwrite creator, but fix execution if missing
+        // Don't overwrite creator, but fix if missing. AuthContext may be null during
+        // job imports, SCM sync, or background tasks without authenticated user context.
         if (!scheduledExecution.user && authContext?.username) {
             scheduledExecution.user = authContext.username
         }
@@ -3708,7 +3712,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             )
         }
 
-        // Set lastModifiedBy for job updates
+        // Update lastModifiedBy to current user on job modifications
+        // Skip if no authenticated user (imports, SCM operations, etc.)
         if (authContext?.username) {
             scheduledExecution.lastModifiedBy = authContext.username
         }
@@ -3818,11 +3823,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             )
         }
 
-        // Set user for new job creation
+        // Set user for new job creation. AuthContext may be null during
+        // job imports, SCM sync, or background tasks without authenticated user context.
         if (!scheduledExecution.user && authContext?.username) {
             scheduledExecution.user = authContext.username
         }
-        // Optional: initialize lastModifiedBy to creator (keeps API/UI non-null until first edit)
+        // Set initial lastModifiedBy if not already set
+        // Skip if no authenticated user available
         if (!scheduledExecution.lastModifiedBy && authContext?.username) {
             scheduledExecution.lastModifiedBy = authContext.username
         }
