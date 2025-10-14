@@ -150,7 +150,7 @@ class ExecutionsCleanUp implements InterruptableJob {
 
         logger.info("Searching All Executions")
 
-        Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d")
+        Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d", null)
 
         List<Long> jobList = Execution.executeQuery(
             """select e.id from Execution e 

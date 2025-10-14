@@ -58,18 +58,15 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         int maxDaysToKeep = 10
         int minimumExecutionsToKeep = 0
         int maximumDeletionSize = 500
-        Date startDate = new Date(2015 - 1900, 2, 8)
-        Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d", startDate)
-        ExecutionQuery.metaClass.static.parseRelativeDate = { String recentFilter ->
-            endDate
-        }
+
         Date execDate = new Date(2015 - 1900, 02, 03)
+        Date executionCompletionDate = ExecutionQuery.parseRelativeDate("5d", new Date())
         FrameworkService frameworkService = initNonClusterFrameworkService()
 
         ScheduledExecution se = setupJob(projName)
         ExecutionsCleanUp job = new ExecutionsCleanUp()
         when:
-        Execution execution = setupExecution(se, projName, execDate, execDate, frameworkService.getServerUUID())
+        Execution execution = setupExecution(se, projName, execDate, executionCompletionDate, frameworkService.getServerUUID())
         then:
         1 == Execution.countByProject(projName)
         1 == ExecReport.countByProject(projName)
@@ -81,6 +78,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
                 new ExecutionService(),
                 new JobSchedulerService(),
                 projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize)
+
         then:
         execIdsToExclude.size() == 0
         1 == Execution.countByProject(projName)
@@ -97,11 +95,6 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         def logFileStorageService = Mock(LogFileStorageService)
         def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
 
-        Date startDate = new Date(2015 - 1900, 2, 8)
-        Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d", startDate)
-        ExecutionQuery.metaClass.static.parseRelativeDate = { String recentFilter ->
-            endDate
-        }
         Date execDate = new Date(2015 - 1900, 02, 03)
         ScheduledExecution se = setupJob(projName)
         ExecutionsCleanUp job = new ExecutionsCleanUp()
@@ -146,9 +139,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
 
         Date startDate = new Date(2015 - 1900, 2, 8)
         Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d", startDate)
-        ExecutionQuery.metaClass.static.parseRelativeDate = { String recentFilter ->
-            endDate
-        }
+
         Date execDate = new Date(2015 - 1900, 02, 03)
         ScheduledExecution se = setupJob(projName)
         def mockfs=Mock(FrameworkService){

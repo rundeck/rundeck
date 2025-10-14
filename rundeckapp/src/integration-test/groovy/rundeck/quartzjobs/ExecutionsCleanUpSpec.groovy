@@ -40,17 +40,14 @@ import spock.lang.Specification
 class ExecutionsCleanUpSpec extends Specification {
     def jobName = 'abc'
     def groupPath = 'elf'
-    def projectName = 'projectTest'
-    def jobUuid = '123'
 
     def "execute cleaner job"() {
         setup:
-        Date startDate = new Date(2015 - 1900, 2, 8)
         Date executionCompletionDate = ExecutionQuery.parseRelativeDate("${daysForExecutionCompletion}d", new Date())
         Date execDate = new Date(2015 - 1900, 02, 03)
 
-        def se = createJob()
-        def exec = createExecution(se, execDate, executionCompletionDate)
+        def se = createJob(projectName)
+        def exec = createExecution(se, execDate, executionCompletionDate, projectName)
 
         def executionService = Mock(ExecutionService)
 
@@ -91,20 +88,81 @@ class ExecutionsCleanUpSpec extends Specification {
 
         when:
         job.execute(context)
+        def remainingExecs = Execution.findAllByProject(projectName)
+
 
         then:
-        executionsRemoved == Execution.findAll()?.size()
+        expectedRemainingExecs == remainingExecs.size()
+
 
         where:
-        daysToKeep  | executionsRemoved | daysForExecutionCompletion
-        10          | 1                 | 9
-        4           | 0                 | 6
+        daysToKeep  | expectedRemainingExecs    | daysForExecutionCompletion    | projectName
+        10          | 1                         | 9                             | 'cleanupA'
+    }
+
+    def "execute cleaner job with delete"() {
+        setup:
+        Date executionCompletionDate = ExecutionQuery.parseRelativeDate("${daysForExecutionCompletion}d", new Date())
+        Date execDate = new Date(2015 - 1900, 02, 03)
+
+        def se = createJob(projectName)
+        def exec = createExecution(se, execDate, executionCompletionDate, projectName)
+
+        def executionService = Mock(ExecutionService)
+
+        def frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> {
+                false
+            }
+            getServerUUID() >> {
+                "test-server-uuid"
+            }
+        }
+        def fileUploadService = Mock(FileUploadService)
+        def logFileStorageService = Mock(LogFileStorageService) {
+            getExecutionFiles(*_) >> [:]
+        }
+        def jobSchedulerService = Mock(JobSchedulerService)
+        def reportService = Mock(ReportService)
+        def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
+
+        def datamap = new JobDataMap([
+                project: projectName,
+                maxDaysToKeep: daysToKeep,
+                executionService : executionService,
+                frameworkService : frameworkService,
+                fileUploadService: fileUploadService,
+                logFileStorageService: logFileStorageService,
+                jobSchedulerService: jobSchedulerService,
+                referencedExecutionDataProvider: referencedExecutionDataProvider,
+                reportService: reportService,
+                fromCleanupB: true
+        ])
+
+        ExecutionsCleanUp job = new ExecutionsCleanUp()
+        def context = Mock(JobExecutionContext) {
+            getJobDetail() >> Mock(JobDetail) {
+                getJobDataMap() >> datamap
+            }
+        }
+
+        when:
+        job.execute(context)
+        def remainingExecs = Execution.findAllByProject(projectName)
+
+        then:
+        expectedRemainingExecs == remainingExecs.size()
+
+        where:
+        daysToKeep  | expectedRemainingExecs    | daysForExecutionCompletion    | projectName
+        4           | 0                         | 6                             | 'cleanupB'
     }
 
 
     def "execute cleaner job cluster with null on the list of deadMembers"() {
         given:
         def daysToKeep = 10
+        def projectName = "someProjectName"
 
         and:
         Date startDate = new Date(2015 - 1900, 2, 8)
@@ -115,8 +173,8 @@ class ExecutionsCleanUpSpec extends Specification {
             query.endbeforeFilter = endDate
             query.doendbeforeFilter = true
         }
-        def se = createJob()
-        def exec = createExecution(se, execDate, execDate)
+        def se = createJob(projectName)
+        def exec = createExecution(se, execDate, execDate, projectName)
 
         def frameworkService = Mock(FrameworkService) {
             isClusterModeEnabled() >> {
@@ -154,6 +212,7 @@ class ExecutionsCleanUpSpec extends Specification {
 
         when:
         job.execute(context)
+        def remainingExecs = Execution.withNewTransaction {Execution.findAll()}
 
         then:
         1 * referencedExecutionDataProvider.deleteByExecutionId(_)
@@ -165,7 +224,7 @@ class ExecutionsCleanUpSpec extends Specification {
     def "num execution to remove"() {
         given:
         Date execDate = new Date(2015 - 1900, 02, 03)
-        def se = createJob()
+        def se = createJob(projectName)
         def frameworkService = Mock(FrameworkService) {
             isClusterModeEnabled() >> {
                 false
@@ -181,7 +240,7 @@ class ExecutionsCleanUpSpec extends Specification {
         def totalExecutions = []
 
         for(int i=0;  i < numExecutions; i++){
-            def exec = createExecution(se, execDate, execDate)
+            def exec = createExecution(se, execDate, execDate, projectName)
             if(i < maximumDeletionSize){
                 executionList.add(exec.id)
             }
@@ -200,39 +259,43 @@ class ExecutionsCleanUpSpec extends Specification {
         executionsToRemove == result.size()
 
         where:
-        numExecutions | minimumExecutionToKeep | maximumDeletionSize | executionsToRemove
-        50            | 5                      | 15                  | 15
-        50            | 40                     | 100                 | 10
-        30            | 50                     | 200                 | 0
-        20            | 20                     | 20                  | 0
+        numExecutions | minimumExecutionToKeep | maximumDeletionSize | executionsToRemove   | projectName
+        50            | 5                      | 15                  | 15                   | 'w'
+        50            | 40                     | 100                 | 10                   | 'x'
+        30            | 50                     | 200                 | 0                    | 'y'
+        20            | 20                     | 20                  | 0                    | 'z'
     }
 
 
-    def createJob(){
-        def se = new ScheduledExecution(
-                jobName: jobName,
-                groupPath: groupPath,
-                project: projectName,
-                uuid: jobUuid,
-                workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
-        ).save(flush: true)
+    def createJob(String projectName){
+        ScheduledExecution.withNewTransaction {
+            def se = new ScheduledExecution(
+                    jobName: jobName,
+                    groupPath: groupPath,
+                    project: projectName,
+                    uuid: UUID.randomUUID().toString(),
+                    workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
+            ).save(flush: true)
 
-        se
+            return se
+        }
     }
 
 
-    def createExecution(ScheduledExecution se , def dateStarted, def dateCompleted ){
-        def exec = new Execution(
-                scheduledExecution: se,
-                dateStarted: dateStarted,
-                dateCompleted: dateCompleted,
-                user:'user',
-                status: 'success',
-                project: projectName,
-                scheduleNodeUUID: "aaaa"
-        ).save(flush: true)
+    def createExecution(ScheduledExecution se , def dateStarted, def dateCompleted, String projectName){
+        Execution.withNewTransaction {
+            def exec = new Execution(
+                    scheduledExecution: se,
+                    dateStarted: dateStarted,
+                    dateCompleted: dateCompleted,
+                    user:'user',
+                    status: 'success',
+                    project: projectName,
+                    scheduleNodeUUID: "aaaa"
+            ).save(flush: true)
 
-        exec
+            return exec
+        }
     }
 }
 
