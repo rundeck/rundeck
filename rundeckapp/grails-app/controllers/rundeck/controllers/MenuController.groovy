@@ -2739,8 +2739,19 @@ Since: V18''',
                         group(scheduledExecution.groupPath)
                         project(scheduledExecution.project)
                         description(scheduledExecution.description)
-                        if (request.api_version >= ApiVersions.V55 && scheduledExecution.dateCreated) {
-                            created(apiService.w3cDateValue(scheduledExecution.dateCreated))
+                        if (request.api_version >= ApiVersions.V56) {
+                            if (scheduledExecution.dateCreated) {
+                                created(apiService.w3cDateValue(scheduledExecution.dateCreated))
+                            }
+                            if (scheduledExecution.user) {
+                                createdBy(scheduledExecution.user)
+                            }
+                            if (scheduledExecution.lastUpdated) {
+                                lastModified(apiService.w3cDateValue(scheduledExecution.lastUpdated))
+                            }
+                            if (scheduledExecution.lastModifiedBy) {
+                                lastModifiedBy(scheduledExecution.lastModifiedBy)
+                            }
                         }
                         if (extra.nextScheduledExecution) {
                             nextScheduledExecution(extra.nextScheduledExecution)
@@ -3015,8 +3026,17 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                                 group(se.groupPath)
                                 project(se.project)
                                 description(se.description)
-                                if (request.api_version >= ApiVersions.V55) {
+                                if (request.api_version >= ApiVersions.V56) {
                                     created(apiService.w3cDateValue(se.dateCreated))
+                                    if (se.user) {
+                                        createdBy(se.user)
+                                    }
+                                    if (se.lastUpdated) {
+                                        lastModified(apiService.w3cDateValue(se.lastUpdated))
+                                    }
+                                    if (se.lastModifiedBy) {
+                                        lastModifiedBy(se.lastModifiedBy)
+                                    }
                                 }
                             }
                         }

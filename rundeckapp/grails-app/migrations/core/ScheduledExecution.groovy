@@ -246,7 +246,7 @@ databaseChangeLog = {
             }
         }
     }
-    
+
     changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "4.6.0-4", dbms: "h2") {
         comment { 'rename minute to MINUTE' }
         preConditions(onFail: "CONTINUE"){
@@ -297,5 +297,17 @@ databaseChangeLog = {
             column(name: "workflow_id")
         }
     }
+    changeSet(author: "rundeckuser (generated)", id: "5.17.0-add-last-modified-by-column") {
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                columnExists(tableName: "scheduled_execution", columnName: "last_modified_by")
+            }
+        }
 
+        addColumn(tableName: "scheduled_execution") {
+            column(name: "last_modified_by", type: '${varchar255.type}') {
+                constraints(nullable: "true")
+            }
+        }
+    }
 }

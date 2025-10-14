@@ -156,6 +156,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public static final String CONF_PROJECT_DISABLE_EXECUTION = 'project.disable.executions'
     public static final String CONF_PROJECT_DISABLE_SCHEDULE = 'project.disable.schedule'
 
+    private static final List<String> EXCLUDED_AUDIT_FIELDS = [
+        'user', 'dateCreated', 'lastModifiedBy', 'lastUpdated', 'id'
+    ]
+
     def JobScheduleManager rundeckJobScheduleManager
     ScmService scmService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
@@ -3517,9 +3521,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }else{
             deleteExistingOptions(scheduledExecution)
             deleteExistingNotification(scheduledExecution)
+            // Exclude audit/system fields to prevent imported jobs from overwriting creator/dates
             final Collection foundprops = input.properties.keySet().findAll {
-                it != 'lastUpdated' &&
-                it != 'dateCreated' &&
+                !(it in EXCLUDED_AUDIT_FIELDS) &&
                 !it.startsWith( 'nodeInclude') &&//deprecating these
                 !it.startsWith( 'nodeExclude') &&
                 (
@@ -3617,7 +3621,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     ) {
 
         def scheduledExecution = importedJob.job
-        scheduledExecution.user = authContext.username
+        // Don't overwrite creator, but fix if missing. AuthContext may be null during
+        // job imports, SCM sync, or background tasks without authenticated user context.
+        if (!scheduledExecution.user && authContext?.username) {
+            scheduledExecution.user = authContext.username
+        }
         scheduledExecution.userRoles = authContext.roles as List<String>
         Map validation=[:]
         def failed = !validateJobDefinition(importedJob, authContext, params, validation, validateJobref)
@@ -3704,6 +3712,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             )
         }
 
+        // Update lastModifiedBy to current user on job modifications
+        // Skip if no authenticated user (imports, SCM operations, etc.)
+        if (authContext?.username) {
+            scheduledExecution.lastModifiedBy = authContext.username
+        }
+
         if (!(resultFromPlugin.success && !failed && scheduledExecution.save(flush: true))) {
             scheduledExecution.discard()
             return [success: false, scheduledExecution: scheduledExecution]
@@ -3759,7 +3773,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     ) {
 
         def scheduledExecution = importedJob.job
-        scheduledExecution.user = authContext.username
+        // Set user for new job creation only
         scheduledExecution.userRoles = authContext.roles as List<String>
 
         Map validation = [:]
@@ -3808,6 +3822,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     "A component returned an error: " + result2.error
             )
         }
+
+        // Set user for new job creation. AuthContext may be null during
+        // job imports, SCM sync, or background tasks without authenticated user context.
+        if (!scheduledExecution.user && authContext?.username) {
+            scheduledExecution.user = authContext.username
+        }
+        // Set initial lastModifiedBy if not already set
+        // Skip if no authenticated user available
+        if (!scheduledExecution.lastModifiedBy && authContext?.username) {
+            scheduledExecution.lastModifiedBy = authContext.username
+        }
+
         if (!(resultFromPlugin.success && !failed && scheduledExecution.save(flush: true))) {
             scheduledExecution.discard()
             return [success: false, scheduledExecution: scheduledExecution]

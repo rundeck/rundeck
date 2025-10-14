@@ -94,13 +94,36 @@ class JobInfo {
     Boolean projectDisableSchedule
 
     /**
-     * NEW: Job creation timestamp (from ScheduledExecution.dateCreated).
-     * Exposed starting in API v55 to avoid surprising older clients.
+     * Job creation timestamp.
      */
-    @ApiVersion(55)
+    @ApiVersion(56)
     @Ignore(onlyIfNull = true)
     @XmlAttribute
     String created
+
+    /**
+     * User who created the job.
+     */
+    @ApiVersion(56)
+    @Ignore(onlyIfNull = true)
+    @XmlAttribute
+    String createdBy
+
+    /**
+     * Job last modification timestamp.
+     */
+    @ApiVersion(56)
+    @Ignore(onlyIfNull = true)
+    @XmlAttribute
+    String lastModified
+
+    /**
+     * User who last modified the job.
+     */
+    @ApiVersion(56)
+    @Ignore(onlyIfNull = true)
+    @XmlAttribute
+    String lastModifiedBy
 
 //    Map blah=[
 //            z:'x'
@@ -117,6 +140,8 @@ class JobInfo {
         // Format as UTC ISO-8601 with trailing 'Z'
         String createdIso = se?.dateCreated ?
                 se.dateCreated.format("yyyy-MM-dd'T'HH:mm:ss'Z'", TimeZone.getTimeZone('UTC')) : null
+        String lastModifiedIso = se?.lastUpdated ?
+                se.lastUpdated.format("yyyy-MM-dd'T'HH:mm:ss'Z'", TimeZone.getTimeZone('UTC')) : null
 
         new JobInfo(
                 [
@@ -130,7 +155,10 @@ class JobInfo {
                         scheduled      : se.scheduled,
                         scheduleEnabled: se.scheduleEnabled,
                         enabled        : se.executionEnabled,
-                        created        : createdIso
+                        created        : createdIso,
+                        createdBy      : se.user,
+                        lastModified   : lastModifiedIso,
+                        lastModifiedBy : se.lastModifiedBy
                 ] + extra?.subMap(
                         'serverNodeUUID',
                         'serverOwner',

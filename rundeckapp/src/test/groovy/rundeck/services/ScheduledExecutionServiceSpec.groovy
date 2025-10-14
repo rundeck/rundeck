@@ -1692,6 +1692,8 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             authorizeProjectResourceAll(*_)>>true
             authorizeProjectResourceAny(*_)>>true
             authorizeProjectJobAny(_,_,['update'],_)>>true
+            authorizeProjectJobAny(_,_,['create'],_)>>true
+            authorizeProjectResourceAny(_,AuthConstants.RESOURCE_TYPE_JOB,['create'],_)>>true
             getAuthContextWithProject(_,_)>>{args->
                 return args[0]
             }
@@ -1735,6 +1737,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         service.messageSource = Mock(MessageSource) {
             getMessage(_, _) >> { it[0].toString() }
+        }
+        service.jobSchedulesService = Mock(JobSchedulesService) {
+            isScheduled(_) >> false
+            shouldScheduleExecution(_) >> true
         }
         uuid
     }
@@ -3092,10 +3098,12 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         //scm update setup
         service.rundeckAuthContextProcessor.authorizeProjectJobAny(_,_,_,project) >> true
         def  uuid=UUID.randomUUID().toString()
-        def orig = new ScheduledExecution(createJobParams(jobName:'job1',groupPath:'path1',project:'AProject')+[uuid:uuid]).save()
+        def orig = new ScheduledExecution(createJobParams(jobName:'job1',groupPath:'path1',project:'AProject')+[uuid:uuid, user: 'test', lastModifiedBy: 'test']).save(flush: true)
         def upload = new ScheduledExecution(
                 createJobParams(jobName:name,groupPath:group,project:project,scheduled:false)
         )
+        upload.user = 'test'
+        upload.lastModifiedBy = 'test'
         upload = new RundeckJobDefinitionManager.ImportedJobDefinition(job:upload, associations: [:])
 
         service.rundeckJobDefinitionManager.validateImportedJob(upload)>>true
@@ -5129,6 +5137,33 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             'groupPath' | null  | null
     }
 
+    def "job definition basic excludes audit fields from imported job"() {
+        given: "existing job and imported job with audit fields set"
+            def existingJob = new ScheduledExecution(createJobParams([
+                user: 'original_creator',
+                lastModifiedBy: 'original_modifier',
+                description: 'original description'
+            ]))
+            def importedJob = new ScheduledExecution(createJobParams([
+                user: 'malicious_user',
+                lastModifiedBy: 'bad_modifier',
+                dateCreated: new Date(),
+                lastUpdated: new Date(),
+                description: 'updated description'
+            ]))
+            def auth = Mock(UserAndRolesAuthContext) {
+                getUsername() >> 'current_user'
+            }
+
+        when: "processing imported job through jobDefinitionBasic"
+            service.jobDefinitionBasic(existingJob, importedJob, [:], auth)
+
+        then: "audit fields are excluded but regular fields are updated"
+            existingJob.user == 'original_creator'        // audit field preserved
+            existingJob.lastModifiedBy == 'original_modifier' // audit field preserved
+            existingJob.description == 'updated description' // regular field updated
+    }
+
     def "job definition workflow should have not null workflow"() {
         given: "new job"
             def job = new ScheduledExecution()
@@ -6543,5 +6578,188 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             ['1', '2', '3', '4', '5'] | ['4', '5']   | ['some/path/test1', 'some/path/test2', 'some/path/test3']
 
     }
+
+    def "imported job does not overwrite audit fields during update"() {
+        given: "proper service setup for job import"
+            setupDoUpdate()
+
+        and: "an existing job with audit fields already set"
+            def existingJob = new ScheduledExecution(createJobParams([
+                jobName: 'AuditTestJob',
+                project: 'AProject',
+                groupPath: 'test/group',
+                user: 'original_creator',
+                lastModifiedBy: 'original_modifier',
+                description: 'original description'
+            ])).save(flush: true)
+
+            // Capture the original audit values
+            def originalId = existingJob.id
+            def originalDateCreated = existingJob.dateCreated
+            def originalUser = existingJob.user
+            def originalLastModifiedBy = existingJob.lastModifiedBy
+
+        and: "an imported job with same identity but different audit and regular fields"
+            def importedJobData = new ScheduledExecution(createJobParams([
+                jobName: 'AuditTestJob',     // Same name - will trigger update
+                project: 'AProject',      // Same project - will trigger update
+                groupPath: 'test/group',     // Same group - will trigger update
+                user: 'malicious_importer',  // Should NOT overwrite original_creator
+                lastModifiedBy: 'bad_modifier', // Should NOT overwrite original_modifier
+                description: 'UPDATED description'  // Should be updated
+            ]))
+
+            def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(
+                job: importedJobData,
+                associations: [:]
+            )
+
+            def authContext = Mock(UserAndRolesAuthContext) {
+                getUsername() >> 'test_admin'
+                getRoles() >> ['admin']
+            }
+
+        when: "importing the job using update option"
+            def result = service.loadImportedJobs([importedJob], 'update', null, [:], authContext)
+
+        then: "import succeeds and finds existing job"
+            result.jobs.size() == 1
+            result.errjobs.size() == 0
+            result.skipjobs.size() == 0
+
+        and: "the same job instance was updated (not replaced)"
+            def updatedJob = result.jobs[0]
+            updatedJob.id == originalId  // Critical: same job ID proves it was updated, not replaced
+
+        and: "audit fields behave correctly"
+            updatedJob.user == originalUser            // creator unchanged
+            updatedJob.lastModifiedBy == 'test_admin'  // updated to current user
+            updatedJob.dateCreated == originalDateCreated // creation date unchanged
+
+        and: "non-audit fields are properly updated"
+            updatedJob.description == 'UPDATED description'     // content updated
+            updatedJob.jobName == 'AuditTestJob'               // name unchanged
+            updatedJob.project == 'AProject'
+            updatedJob.groupPath == 'test/group'
+
+        and: "database reflects same values"
+            def dbJob = ScheduledExecution.get(originalId)
+            dbJob.user == originalUser
+            dbJob.lastModifiedBy == 'test_admin'
+            dbJob.dateCreated == originalDateCreated
+            dbJob.description == 'UPDATED description'
+    }
+
+    def "imported job with missing audit fields gets them set from authContext"() {
+        given: "proper service setup"
+            setupDoUpdate()
+            // Setup auth for job creation operations
+            service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+                authorizeProjectJobAll(*_) >> true
+                authorizeProjectResourceAll(*_) >> true
+                authorizeProjectResourceAny(*_) >> true
+                authorizeProjectJobAny(_, _, ['update'], _) >> true
+                authorizeProjectJobAny(_, _, ['create'], _) >> true
+                authorizeProjectResourceAny(_, AuthConstants.RESOURCE_TYPE_JOB, ['create'], _) >> true
+                getAuthContextWithProject(_, _) >> { args -> args[0] }
+            }
+
+        and: "a new job to import with missing audit fields"
+            def importedJobData = new ScheduledExecution(createJobParams([
+                jobName: 'NewAuditJob',
+                project: 'AProject',
+                groupPath: 'new/group',
+                user: null,                 // Missing - should be set from authContext
+                lastModifiedBy: null,       // Missing - should be set from authContext
+                description: 'new job description'
+            ]))
+
+            def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(
+                job: importedJobData,
+                associations: [:]
+            )
+
+            def authContext = Mock(UserAndRolesAuthContext) {
+                getUsername() >> 'creating_admin'
+                getRoles() >> ['admin']
+            }
+
+        when: "importing the new job"
+            def result = service.loadImportedJobs([importedJob], 'create', null, [:], authContext)
+
+        then: "job is created successfully"
+            result.jobs.size() == 1
+            result.errjobs.size() == 0
+
+        and: "missing audit fields are set from authContext"
+            def createdJob = result.jobs[0]
+            createdJob.user == 'creating_admin'        // Populated from current user
+            createdJob.lastModifiedBy == 'creating_admin' // Populated from current user
+            createdJob.dateCreated != null             // Automatically set by Grails
+            createdJob.description == 'new job description' // Regular fields preserved
+
+        and: "database reflects the same values"
+            def dbJob = ScheduledExecution.get(createdJob.id)
+            dbJob.user == 'creating_admin'
+            dbJob.lastModifiedBy == 'creating_admin'
+            dbJob.description == 'new job description'
+    }
+
+    def "imported job with existing audit fields gets them set to current user during creation"() {
+        given: "proper service setup"
+            setupDoUpdate()
+            // Setup auth for job creation operations
+            service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+                authorizeProjectJobAll(*_) >> true
+                authorizeProjectResourceAll(*_) >> true
+                authorizeProjectResourceAny(*_) >> true
+                authorizeProjectJobAny(_, _, ['update'], _) >> true
+                authorizeProjectJobAny(_, _, ['create'], _) >> true
+                authorizeProjectResourceAny(_, AuthConstants.RESOURCE_TYPE_JOB, ['create'], _) >> true
+                getAuthContextWithProject(_, _) >> { args -> args[0] }
+            }
+
+        and: "a new job to import with existing audit fields"
+            def importedJobData = new ScheduledExecution(createJobParams([
+                jobName: 'NewJobWithAudit',
+                project: 'AProject',
+                groupPath: 'new/group',
+                user: 'original_importer',      // Gets set to current user
+                lastModifiedBy: 'original_modifier', // Gets set to current user
+                description: 'new job with audit'
+            ]))
+
+            def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(
+                job: importedJobData,
+                associations: [:]
+            )
+
+            def authContext = Mock(UserAndRolesAuthContext) {
+                getUsername() >> 'creating_admin'
+                getRoles() >> ['admin']
+            }
+
+        when: "importing the new job"
+            def result = service.loadImportedJobs([importedJob], 'create', null, [:], authContext)
+
+        then: "job is created successfully"
+            result.jobs.size() == 1
+            result.errjobs.size() == 0
+
+        and: "audit fields are set to current user"
+            def createdJob = result.jobs[0]
+            createdJob.user == 'creating_admin'        // Set to current user
+            createdJob.lastModifiedBy == 'creating_admin' // Set to current user
+            createdJob.dateCreated != null             // Automatically set by Grails
+            createdJob.description == 'new job with audit' // Regular fields preserved
+
+        and: "database reflects the updated values"
+            def dbJob = ScheduledExecution.get(createdJob.id)
+            dbJob.user == 'creating_admin'
+            dbJob.lastModifiedBy == 'creating_admin'
+            dbJob.description == 'new job with audit'
+    }
+
+
 }
 
