@@ -14,6 +14,8 @@ import org.rundeck.util.common.WaitBehaviour
 import org.rundeck.util.common.WaitUtils
 import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.jobs.JobUtils
+import org.slf4j.LoggerFactory
+import org.slf4j.bridge.SLF4JBridgeHandler
 import org.testcontainers.containers.ComposeContainer
 import spock.lang.Specification
 
@@ -27,11 +29,8 @@ import java.util.function.Function
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
-
-import org.slf4j.LoggerFactory
-
 import java.util.logging.Level
-import java.util.logging.Logger;
+import java.util.logging.Logger
 
 /**
  * Base class for tests, starts a shared static container for all tests
@@ -47,6 +46,11 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     protected static final String TEST_RUNDECK_TOKEN = System.getenv("TEST_RUNDECK_TOKEN") ?: System.getProperty("TEST_RUNDECK_TOKEN", "admintoken")
     protected static final ObjectMapper MAPPER = new ObjectMapper()
     private static String RUNDECK_CONTAINER_ID
+    static {
+        SLF4JBridgeHandler.removeHandlersForRootLogger()
+
+        SLF4JBridgeHandler.install()
+    }
 
     String getCustomDockerComposeLocation(){
         return null
