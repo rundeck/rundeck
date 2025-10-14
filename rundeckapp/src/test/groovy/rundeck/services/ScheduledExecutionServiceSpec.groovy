@@ -5137,6 +5137,33 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             'groupPath' | null  | null
     }
 
+    def "job definition basic excludes audit fields from imported job"() {
+        given: "existing job and imported job with audit fields set"
+            def existingJob = new ScheduledExecution(createJobParams([
+                user: 'original_creator',
+                lastModifiedBy: 'original_modifier',
+                description: 'original description'
+            ]))
+            def importedJob = new ScheduledExecution(createJobParams([
+                user: 'malicious_user',
+                lastModifiedBy: 'bad_modifier',
+                dateCreated: new Date(),
+                lastUpdated: new Date(),
+                description: 'updated description'
+            ]))
+            def auth = Mock(UserAndRolesAuthContext) {
+                getUsername() >> 'current_user'
+            }
+
+        when: "processing imported job through jobDefinitionBasic"
+            service.jobDefinitionBasic(existingJob, importedJob, [:], auth)
+
+        then: "audit fields are excluded but regular fields are updated"
+            existingJob.user == 'original_creator'        // audit field preserved
+            existingJob.lastModifiedBy == 'original_modifier' // audit field preserved
+            existingJob.description == 'updated description' // regular field updated
+    }
+
     def "job definition workflow should have not null workflow"() {
         given: "new job"
             def job = new ScheduledExecution()
