@@ -23,8 +23,8 @@ class KeyStorageApiClient {
     Response callUploadKeyFile(String path, String keyType, File content) {
         return callUploadKey(path) {
             it ?
-            client.put("${STORAGE_BASE_URL}/${path}", content, keyContentTypes[keyType.toLowerCase()]) :
-            client.post("${STORAGE_BASE_URL}/${path}", content, keyContentTypes[keyType.toLowerCase()])
+            client.doPut("${STORAGE_BASE_URL}/${path}", content, keyContentTypes[keyType.toLowerCase()]) :
+            client.doPost("${STORAGE_BASE_URL}/${path}", content, keyContentTypes[keyType.toLowerCase()])
         }
     }
     Response callUploadKey(String path, String keyType, String keyValue){
