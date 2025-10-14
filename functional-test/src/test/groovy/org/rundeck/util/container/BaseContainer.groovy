@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.jcraft.jsch.JSch
 import com.jcraft.jsch.KeyPair
 import groovy.util.logging.Slf4j
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
@@ -27,7 +28,10 @@ import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
 
-import org.slf4j.LoggerFactory;
+import org.slf4j.LoggerFactory
+
+import java.util.logging.Level
+import java.util.logging.Logger;
 
 /**
  * Base class for tests, starts a shared static container for all tests
@@ -54,6 +58,8 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
             if (CLIENT_PROVIDER != null) {
                 return CLIENT_PROVIDER
             }
+            //fine logging for http client closeable leaks
+            Logger.getLogger(OkHttpClient.name).setLevel(Level.FINE)
 
             if (TEST_RUNDECK_URL != null) {
                 CLIENT_PROVIDER = new ClientProvider() {
