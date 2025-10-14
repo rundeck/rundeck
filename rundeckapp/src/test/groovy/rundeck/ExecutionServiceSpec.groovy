@@ -2767,6 +2767,10 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             receivedAbortEvent = true
         }
 
+        def myCriteria = new Expando();
+        myCriteria.get = {Closure cls -> return null}
+        Execution.metaClass.static.createCriteria = {myCriteria }
+
         when:
         def result = service.abortExecution(job, e, user, auth, asuser, forced)
 
