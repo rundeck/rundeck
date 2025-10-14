@@ -144,14 +144,12 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     void setupProject(String name) {
-        def getProject = client.doGet("/project/${name}")
-        if (getProject.code() == 404) {
-            def post = client.doPost("/projects", [name: name])
-            if (!post.successful) {
-                throw new RuntimeException("Failed to create project: ${post.body().string()}")
+        try(def getProject = client.doGet("/project/${name}")) {
+            if (getProject.code() == 404) {
+                def result = client.post("/projects", [name: name])
+            } else if (!getProject.successful) {
+                throw new RuntimeException("Failed to access project: ${getProject.body().string()}")
             }
-        } else if (!getProject.successful) {
-            throw new RuntimeException("Failed to access project: ${getProject.body().string()}")
         }
     }
 
@@ -161,18 +159,18 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
      * @param aclPath acl path within the system
      */
     void importSystemAcls(String resourcePathName, String aclPath){
-        def getAcl = client.doGet("/system/acl/${aclPath}")
-        def aclFile = new File(getClass().getResource(resourcePathName).getPath())
-        def resp
-        if (getAcl.code() == 404) {
-            //POST
-            resp = client.doPost("/system/acl/${aclPath}", aclFile, 'application/yaml')
-        }else{
-            //PUT
-            resp = client.doPut("/system/acl/${aclPath}", aclFile, 'application/yaml')
-        }
-        if (!resp.successful) {
-            throw new RuntimeException("Failed to create System ACL: ${resp.body().string()}")
+        try(def getAcl = client.doGet("/system/acl/${aclPath}")) {
+            def aclFile = new File(getClass().getResource(resourcePathName).getPath())
+            try (
+                def resp = getAcl.code() == 404 ?
+                           client.doPost("/system/acl/${aclPath}", aclFile, 'application/yaml') :
+                           client.doPut("/system/acl/${aclPath}", aclFile, 'application/yaml')
+            ) {
+
+                if (!resp.successful) {
+                    throw new RuntimeException("Failed to create System ACL: ${resp.body().string()}")
+                }
+            }
         }
     }
 
@@ -182,9 +180,10 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
      * @param aclPath acl path within the system
      */
     void deleteSystemAcl(String aclPath){
-        def resp = client.doDelete("/system/acl/${aclPath}")
-        if (!(resp.code() in [204, 404])) {
-            throw new RuntimeException("Failed to delete System ACL: ${resp.body().string()}")
+        try(def resp = client.doDelete("/system/acl/${aclPath}")) {
+            if (!(resp.code() in [204, 404])) {
+                throw new RuntimeException("Failed to delete System ACL: ${resp.body().string()}")
+            }
         }
     }
 
@@ -374,16 +373,16 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     def waitingResourceEnabled(String project, String nodename) {
         def client = clientProvider.client
         def response = client.doGet("/project/$project/resources")
-        Map<String, Map> nodeList = safelyMap(response, Map.class, { [:] })
+        Map<String, Map> nodeList = safelyMap(response, Map.class, { it.close(); [:] })
         println(nodeList)
         def count = 0
 
         waitFor(
                 {
                     //force refresh project
-                    client.doPutWithJsonBody("/project/$project/config/time", ["time": System.currentTimeMillis()])
+                    client.putWithJsonBody("/project/$project/config/time", ["time": System.currentTimeMillis()])
                     response = client.doGet("/project/$project/resources")
-                    safelyMap(response, Map.class, { [:] })
+                    safelyMap(response, Map.class, { it.close(); [:] })
                 },
                 { it.get(nodename) != null },
                 WaitingTime.EXCESSIVE
@@ -461,12 +460,14 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
      */
     @Deprecated
     Map runJobAndWait(String jobId, Object body = null) {
-        def r = JobUtils.executeJobWithOptions(jobId, client, body)
-        if (!r.successful) {
-            throw new RuntimeException("Failed to run job: ${r}")
-        }
+        Execution execution
+        try (def r = JobUtils.executeJobWithOptions(jobId, client, body)) {
+            if (!r.successful) {
+                throw new RuntimeException("Failed to run job: ${r}")
+            }
 
-        Execution execution = MAPPER.readValue(r.body().string(), Execution.class)
+            execution = jsonValue(r.body(), Execution.class)
+        }
         waitForExecutionFinish(execution.id as String, WaitingTime.EXCESSIVE)
 
         // Maintains the data contract for the Map return type
@@ -538,10 +539,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
      *         The exception contains a detailed message obtained from the server's response.
      */
     void updateConfigurationProject(String projectName, Map body) {
-        def responseDisable = client.doPutWithJsonBody("/project/${projectName}/config", body)
-        if (!responseDisable.successful) {
-            throw new RuntimeException("Failed to disable scheduled execution: ${responseDisable.body().string()}")
-        }
+        def result = client.putWithJsonBody("/project/${projectName}/config", body)
     }
 
     def setupSpec() {
@@ -586,12 +584,9 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
      */
     def addExtraProjectConfig(String project, Map<String, String> configure) {
         configure.forEach { key, value ->
-            Response response = client.doPutWithJsonBody("/project/$project/config/$key",
+            Map result = client.putWithJsonBody("/project/$project/config/$key",
                 ["key": key, "value": value]
             )
-            if (!response.successful) {
-                throw new RuntimeException("Failed to add configuration options to a project: ${response.body().string()}")
-            }
         }
     }
 

@@ -173,6 +173,14 @@ class RdClient {
         httpClient.newCall(request).execute()
     }
 
+    <T> T putWithJsonBody(final String path, final Object body, Class<T> clazz = Map) {
+        try (def resp = doPutWithJsonBody(path, body)) {
+            if(!resp.isSuccessful()) {
+                throw new IOException("Failed to put json to rundeck: " + resp.code() + " " + resp.body().string())
+            }
+            return jsonValue(resp.body(), clazz)
+        }
+    }
     Response doPutWithJsonBody(final String path, final Object body) {
         RequestBody requestBody = RequestBody.create(
                 mapper.writeValueAsBytes(body),
