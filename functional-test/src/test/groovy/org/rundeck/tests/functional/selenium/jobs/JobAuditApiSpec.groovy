@@ -33,8 +33,6 @@ class JobAuditApiSpec extends SeleniumBase {
         def jobShowPage = page JobShowPage
         def wait = new WebDriverWait(driver, Duration.ofSeconds(8))
 
-        // Use test credentials from SeleniumBase
-
         // Create job via API for test setup
         def jobXml = JobUtils.generateScheduledExecutionXml(jobName)
         def jobCreatedResponse = JobUtils.createJob(projectName, jobXml, client)
@@ -47,7 +45,6 @@ class JobAuditApiSpec extends SeleniumBase {
 
         // Wait for successful login
         wait.until(ExpectedConditions.urlContains("/menu/home"))
-        println "✓ Successfully logged in as ${TEST_USER}"
 
         and: "navigate to job edit page"
         // Navigate to job edit page
@@ -103,11 +100,8 @@ class JobAuditApiSpec extends SeleniumBase {
 
             createdBy = createdByElem.getText()
             lastModifiedBy = lastModifiedByElem.getText()
-
-            println "✓ Using CSS selector approach for audit extraction"
         } catch (NoSuchElementException e) {
             // Fallback to regex pattern matching for compatibility
-            println "⚠ CSS selectors not found, falling back to regex pattern matching"
 
             def createdByMatch = (modalText =~ /(?i)created\s+by\s+(\w+)/)
             def lastModifiedByMatch = (modalText =~ /(?i)last\s+modified\s+by\s+(\w+)/)
@@ -117,19 +111,12 @@ class JobAuditApiSpec extends SeleniumBase {
 
             createdBy = createdByMatch.group(1)
             lastModifiedBy = lastModifiedByMatch.group(1)
-
-            println "✓ Using regex pattern approach for audit extraction"
         }
 
         // Verify audit fields populated (works with both extraction methods)
         assert createdBy?.trim()?.length() > 0, "Created By field should be populated but found: '${createdBy}'"
         assert lastModifiedBy?.trim()?.toLowerCase() == "admin",
             "Expected last modifier to be 'admin' (UI user) but found: ${lastModifiedBy}"
-
-        println "✓ Created By: '${createdBy}' (API user) - Last Modified By: '${lastModifiedBy}' (UI user)"
-
-        println "✓ SUCCESS: Audit tracking verified - Created By: ${createdBy}, Last Modified By: ${lastModifiedBy}"
-        println "✓ Audit field functionality working correctly - both creation and modification tracking functional"
     }
 
 
