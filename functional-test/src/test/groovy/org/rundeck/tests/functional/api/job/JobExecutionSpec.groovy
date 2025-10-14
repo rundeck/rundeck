@@ -451,6 +451,7 @@ class JobExecutionSpec extends BaseContainer {
 
         when: "we do the request api response code is 405 and exec should fail"
         def response = JobUtils.executeJobWithArgsInvalidMethod(job1Id, client, argString)
+        response.close()
 
         then:
         !response.successful
@@ -544,7 +545,7 @@ class JobExecutionSpec extends BaseContainer {
                 "-opt2+a",
                 runtime2.string
         )
-
+        runLaterExecResponse2.close()
         then: "OK"
         !runLaterExecResponse2.successful
 
@@ -556,6 +557,7 @@ class JobExecutionSpec extends BaseContainer {
                 "-opt2+a",
                 invalidRuntime
         )
+        runLaterExecResponse3.close()
 
         then: "OK"
         !runLaterExecResponse3.successful
@@ -697,6 +699,7 @@ class JobExecutionSpec extends BaseContainer {
         when: "TEST: GET job/id/run should fail 405"
         def response5 = JobUtils.executeJobWithArgsInvalidMethod(jobId1, client, "-opt+a")
         assert !response5.successful
+        response5.close()
 
         then:
         response5.code() == 405

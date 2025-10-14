@@ -67,11 +67,10 @@ class ConfigSpec extends BaseContainer{
         def updatedValueForProp2 = "A better value2"
         def updatedBodyForProp2 = [ "key":"test.property2", "value":updatedValueForProp2 ]
 
-        def updated1 = client.doPutWithJsonBody("/project/${projectName}/config/test.property", updatedBodyForProp1)
-        assert updated1.successful
+        def updated1 = client.putWithJsonBody("/project/${projectName}/config/test.property", updatedBodyForProp1)
 
-        def updated2 = client.doPutWithJsonBody("/project/${projectName}/config/test.property2", updatedBodyForProp2)
-        assert updated2.successful
+
+        def updated2 = client.putWithJsonBody("/project/${projectName}/config/test.property2", updatedBodyForProp2)
 
         def responseForUpdatedProp1 = doGet("/project/${projectName}/config/test.property")
         assert responseForUpdatedProp1.successful
@@ -94,8 +93,8 @@ class ConfigSpec extends BaseContainer{
         def updatedValueForProp3 = "A better value3"
         def updatedBodyForProp3 = [ "key":"test.property3", "value":updatedValueForProp3 ]
 
-        def updated3 = client.doPutWithJsonBody("/project/${projectName}/config/test.property3", updatedBodyForProp3)
-        assert updated3.successful
+        def updated3 = client.putWithJsonBody("/project/${projectName}/config/test.property3", updatedBodyForProp3)
+
 
         def responseForUpdatedProp3 = doGet("/project/${projectName}/config/test.property3")
         assert responseForUpdatedProp3.successful
@@ -172,8 +171,7 @@ class ConfigSpec extends BaseContainer{
                 "test.property":"updated value 1",
                 "test.property3":"created value 3"
         ]
-        def updatedResponse = client.doPutWithJsonBody("/project/${projectName}/config", updatedProps)
-        Map<String, Object> parsedUpdatedProps = MAPPER.readValue(updatedResponse.body().string(), HashMap<String, Object>.class)
+        Map<String, Object> parsedUpdatedProps = client.putWithJsonBody("/project/${projectName}/config", updatedProps)
 
         then:
         parsedUpdatedProps."test.property" == "updated value 1"

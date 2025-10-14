@@ -84,16 +84,17 @@ class JobUtils {
             String contentType = 'application/xml',
             Consumer<CreateJobResponse> failedJobsHandler = { List<Object> failedJobs -> throw new IllegalArgumentException("Some jobs failed on import: " + failedJobs) } ) {
         final String CREATE_JOB_ENDPOINT = "/project/${project}/jobs/import"
-        Response responseImport = client.doPostWithRawText(CREATE_JOB_ENDPOINT, contentType, jobDefinition)
+        try (Response responseImport = client.doPostWithRawText(CREATE_JOB_ENDPOINT, contentType, jobDefinition)){
 
-        // Throws an exception if the import failed
-        if (responseImport.code() != 200) {
-            throw new IllegalArgumentException("Job import failed: ${responseImport} with body: ${responseImport?.body()?.string()}");
+            // Throws an exception if the import failed
+            if (responseImport.code() != 200) {
+                throw new IllegalArgumentException("Job import failed: ${responseImport} with body: ${responseImport?.body()?.string()}");
+            }
+
+            def data = OBJECT_MAPPER.readValue(responseImport.body().string(), CreateJobResponse.class)
+            validateJobsImportAllSuccess(data, failedJobsHandler)
+            return data
         }
-
-        def data = OBJECT_MAPPER.readValue(responseImport.body().string(), CreateJobResponse.class)
-        validateJobsImportAllSuccess(data, failedJobsHandler)
-        return data
     }
 
     static def generateScheduledExecutionXml(String jobName){
@@ -431,16 +432,17 @@ class JobUtils {
         String dupeOption = DUPE_OPTION_DEFAULT,
         String contentType = CONTENT_TYPE_DEFAULT
     ) {
-        def responseImport = client.doPost("/project/${projectName}/jobs/import?dupeOption=${dupeOption}", resourceFileWithPath, contentType);
-
-        // Check if the import was successful and return the response body as a Map
-        if (responseImport.code() != 200) {
-            // Throw an exception if the import failed
-            throw new IllegalArgumentException("Job import failed: ${responseImport} with body: ${responseImport?.body()?.string()}");
+        try (def responseImport = client
+            .doPost("/project/${projectName}/jobs/import?dupeOption=${dupeOption}", resourceFileWithPath, contentType)) {
+            // Check if the import was successful and return the response body as a Map
+            if (responseImport.code() != 200) {
+                // Throw an exception if the import failed
+                throw new IllegalArgumentException("Job import failed: ${responseImport} with body: ${responseImport?.body()?.string()}");
+            }
+            def data = OBJECT_MAPPER.readValue(responseImport.body().string(), Map.class)
+            validateJobsImportAllSuccess(data)
+            return data
         }
-        def data = OBJECT_MAPPER.readValue(responseImport.body().string(), Map.class)
-        validateJobsImportAllSuccess(data)
-        return data
     }
 
     /**
