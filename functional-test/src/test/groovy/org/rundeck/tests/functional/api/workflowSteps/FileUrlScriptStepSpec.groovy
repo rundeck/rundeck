@@ -10,7 +10,7 @@ import org.rundeck.util.container.BaseContainer
 @APITest
 class FileUrlScriptStepSpec extends BaseContainer{
 
-    public static final String TEST_PROJECT = "FileUrlScriptStepSpec"
+    public static final String TEST_PROJECT = "core-jsch-executor-test"
     public static final String TEST_SSH_ARCHIVE_DIR = "/projects-import/core-jsch-executor-test"
     public static final String NODE_KEY_PASSPHRASE = "testpassphrase123"
     public static final String NODE_USER_PASSWORD  = "testpassword123"
