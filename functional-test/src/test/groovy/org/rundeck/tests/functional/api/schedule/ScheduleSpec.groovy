@@ -82,8 +82,7 @@ class ScheduleSpec extends BaseContainer{
         exportedData.schedule?.weekday != null
 
         when:
-        def disableSchedulesResponse = client.doPostWithoutBody("/job/${job1Id}/schedule/disable")
-        assert disableSchedulesResponse.successful
+        def disableSchedulesResponse = post("/job/${job1Id}/schedule/disable")
         def exportedDataAfterDisable = getExportedData()
 
         then:
@@ -94,8 +93,7 @@ class ScheduleSpec extends BaseContainer{
         exportedDataAfterDisable.schedule?.weekday != null
 
         when:
-        def enableSchedulesResponse = client.doPostWithoutBody("/job/${job1Id}/schedule/enable")
-        assert enableSchedulesResponse.successful
+        def enableSchedulesResponse = post("/job/${job1Id}/schedule/enable")
         def exportedDataAfterEnable = getExportedData()
 
         then:
