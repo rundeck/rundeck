@@ -17,6 +17,8 @@ import org.rundeck.util.common.jobs.JobUtils
 import org.slf4j.LoggerFactory
 import org.slf4j.bridge.SLF4JBridgeHandler
 import org.testcontainers.containers.ComposeContainer
+import spock.lang.AutoCleanup
+import spock.lang.Shared
 import spock.lang.Specification
 
 import java.nio.file.Files
@@ -53,6 +55,28 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         //fine logging for http client closeable leaks
         Logger.getLogger(OkHttpClient.name).setLevel(Level.FINEST)
     }
+
+    @Shared
+    @AutoCleanup
+    Set<Closeable> toClose = new ClosingSet<>()
+    static class ClosingSet<T> extends HashSet<T> implements Closeable {
+        @Override
+        void close() throws IOException {
+            if(size()>0){
+                System.err.println("AutoClosing ${size()} responses")
+            }
+            this.each {
+                if(it instanceof Closeable){
+                    try{
+                        (it as Closeable).close()
+                    } catch (IOException e){
+                        //ignore
+                    }
+                }
+            }
+        }
+    }
+
 
     String getCustomDockerComposeLocation(){
         return null
@@ -375,7 +399,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     def waitingResourceEnabled(String project, String nodename) {
         def client = clientProvider.client
         def response = client.doGet("/project/$project/resources")
-        Map<String, Map> nodeList = safelyMap(response, Map.class, { it.close(); [:] })
+        Map<String, Map> nodeList = safelyMap(response, Map.class, { [:] })
         println(nodeList)
         def count = 0
 
@@ -389,7 +413,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         waitFor(
                 {
                     response = client.doGet("/project/$project/resources")
-                    safelyMap(response, Map.class, { it.close(); [:] })
+                    safelyMap(response, Map.class, {  [:] })
                 },
                 { it.get(nodename) != null },
                 WaitingTime.EXCESSIVE
@@ -423,17 +447,27 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         getClientProvider()
     }
 
+    /**
+     * Save a response to be closed later
+     * @param response
+     * @return
+     */
+    private Response closeLater(Response response) {
+        toClose << response
+        return response
+    }
+
     //client helpers
     Response doGet(String path) {
-        return client.doGet(path)
+        closeLater(client.doGet(path))
     }
 
     Response doDelete(String path) {
-        return client.doDelete(path)
+        closeLater client.doDelete(path)
     }
 
     Response request(String path, Consumer<Request.Builder> consumer) {
-        return client.request(path, consumer)
+        closeLater client.request(path, consumer)
     }
 
     Map jsonValue(ResponseBody body) {
@@ -449,7 +483,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     Response doPost(String path, Object body = null) {
-        return client.doPost(path, body)
+        closeLater client.doPost(path, body)
     }
 
     <T> T post(String path, Object body = null, Class<T> clazz) {
@@ -508,7 +542,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
      *         The exception contains a detailed message obtained from the server's response.
      */
     void deleteProject(String projectName) {
-        def response = client.doDelete("/project/${projectName}")
+        def response = closeLater client.doDelete("/project/${projectName}")
         if (!response.successful) {
             throw new RuntimeException("Failed to delete project: ${response.body().string()}")
         }
@@ -525,7 +559,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
      *         The exception contains a detailed message obtained from the server's response.
      */
     void deleteProjectKey(String projectName, String keyPath) {
-        def response = client.doDelete("/storage/keys/project/${projectName}/${keyPath}")
+        def response = closeLater client.doDelete("/storage/keys/project/${projectName}/${keyPath}")
         if (!response.successful) {
             throw new RuntimeException("Failed to delete project key: ${response.body().string()}")
         }
@@ -606,8 +640,8 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
      * @param unsuccessfulResponseHandler a closure that receives a response object to handle. If omitted, returns a null.
      * @return
      */
-    static <T> T safelyMap(Response response, Class<T> valueType, Closure<T> unsuccessfulResponseHandler = { null }) {
-        response.successful ? MAPPER.readValue(response.body().string(), valueType) :  unsuccessfulResponseHandler(response)
+    <T> T safelyMap(Response response, Class<T> valueType, Closure<T> unsuccessfulResponseHandler = { null }) {
+        response.successful ? MAPPER.readValue(response.body().string(), valueType) :  unsuccessfulResponseHandler(closeLater(response))
     }
 
 
@@ -630,7 +664,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
 
         def checkIsRundeckApiResponding = {
             try {
-                def response = client.doGet("/system/info")
+                def response = closeLater client.doGet("/system/info")
                 return (response != null && response.code() == 200)
             } catch (Exception e) {
                 LoggerFactory.getLogger(BaseContainer.class).info(e.getMessage())
