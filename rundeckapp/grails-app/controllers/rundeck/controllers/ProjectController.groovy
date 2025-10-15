@@ -2472,7 +2472,7 @@ Authorization required: `configure` access for `project` resource type or `admin
                                             @ExampleObject(
                                                     name = 'set-project-config',
                                                     summary = "Replace an individual config settings",
-                                                    value = '''{ "[KEY]" : "key value" }'''
+                                                    value = '''{ "value" : "key value" }'''
                                             )
                                     ]
                             ),
