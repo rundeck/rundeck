@@ -50,6 +50,8 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         SLF4JBridgeHandler.removeHandlersForRootLogger()
 
         SLF4JBridgeHandler.install()
+        //fine logging for http client closeable leaks
+        Logger.getLogger(OkHttpClient.name).setLevel(Level.FINEST)
     }
 
     String getCustomDockerComposeLocation(){
@@ -58,14 +60,12 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
 
     ClientProvider getClientProvider() {
         //fine logging for http client closeable leaks
-//        Logger.getLogger(OkHttpClient.name).setLevel(Level.FINEST)
+        Logger.getLogger(OkHttpClient.name).setLevel(Level.FINEST)
         synchronized (CLIENT_PROVIDER_LOCK) {
 
             if (CLIENT_PROVIDER != null) {
                 return CLIENT_PROVIDER
             }
-            //fine logging for http client closeable leaks
-            Logger.getLogger(OkHttpClient.name).setLevel(Level.FINE)
 
             if (TEST_RUNDECK_URL != null) {
                 CLIENT_PROVIDER = new ClientProvider() {
