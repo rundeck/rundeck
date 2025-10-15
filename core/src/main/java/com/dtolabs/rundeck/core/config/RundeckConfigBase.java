@@ -461,6 +461,10 @@ public class RundeckConfigBase {
         Enabled publicKeysDownload = new Enabled();
         Enabled guiHideRoiInstructions = new Enabled();
         Enabled defaultExecutionCleanup = new Enabled();
+        Integer defaultExecutionDaysToKeep;
+        Integer defaultMinimumExecutionToKeep;
+        Integer defaultExecutionMaximumDeletionSize;
+        String defaultExecutionCleanupScheduleCron;
 
 
         @Data
