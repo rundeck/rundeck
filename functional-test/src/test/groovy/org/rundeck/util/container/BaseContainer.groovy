@@ -57,6 +57,8 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     ClientProvider getClientProvider() {
+        //fine logging for http client closeable leaks
+//        Logger.getLogger(OkHttpClient.name).setLevel(Level.FINEST)
         synchronized (CLIENT_PROVIDER_LOCK) {
 
             if (CLIENT_PROVIDER != null) {
