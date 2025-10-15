@@ -91,4 +91,16 @@ class FeatureService implements com.dtolabs.rundeck.core.config.FeatureService {
     def void toggleFeature(String name, boolean enable) {
         configurationService.setBoolean("feature.${name}.enabled", enable)
     }
+
+    String getFeatureStringValue(String name) {
+        String defaultValue =  configurationService.getString("feature.${name}.defaultValue", null)
+        return configurationService.getString("feature.${name}", defaultValue)
+    }
+
+
+    Integer getFeatureIntegerValue(String name) {
+        Integer defaultValue = configurationService.getInteger("feature.${name}.defaultValue", null)
+        return configurationService.getInteger("feature.${name}", defaultValue)
+    }
+
 }
