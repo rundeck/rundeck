@@ -377,10 +377,15 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         println(nodeList)
         def count = 0
 
+        //force refresh project
+        Map res = client.putWithJsonBody(
+            "/project/$project/config/time",
+            ["value": System.currentTimeMillis().toString()]
+        )
+        assert res.value != null
+
         waitFor(
                 {
-                    //force refresh project
-                    client.putWithJsonBody("/project/$project/config/time", ["time": System.currentTimeMillis()])
                     response = client.doGet("/project/$project/resources")
                     safelyMap(response, Map.class, { it.close(); [:] })
                 },
