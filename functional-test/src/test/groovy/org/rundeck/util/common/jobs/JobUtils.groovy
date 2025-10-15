@@ -36,31 +36,31 @@ class JobUtils {
 
     static final String CONTENT_TYPE_DEFAULT = "application/xml"
 
-    static def executeJobWithArgs = (String jobId, RdClient client, String args) -> {
-        return client.doPostWithoutBody("/job/${jobId}/run?argString=${args}")
+    static def executeJobWithArgs (String jobId, RdClient client, String args) {
+        return client.doPost("/job/${jobId}/run?argString=${args}")
     }
 
-    static executeJobWithArgsInvalidMethod = (String jobId, RdClient client, String args) -> {
+    static executeJobWithArgsInvalidMethod (String jobId, RdClient client, String args) {
         return client.doGetAcceptAll("/job/${jobId}/run?argString=${args}")
     }
 
-    static executeJobLaterWithArgsAndRuntime = (
+    static executeJobLaterWithArgsAndRuntime(
             String jobId,
             RdClient client,
             String args,
-            String runtime) -> {
-        return client.doPostWithoutBody("/job/${jobId}/run?argString=${args}&runAtTime=${runtime}")
+            String runtime) {
+        return client.doPost("/job/${jobId}/run?argString=${args}&runAtTime=${runtime}")
     }
 
     static def executeJobWithOptions = (jobId, RdClient client, Object options) -> {
         return client.doPost("/job/${jobId}/run", options)
     }
 
-    static executeJobLaterWithArgsInvalidMethod = (
+    static executeJobLaterWithArgsInvalidMethod (
             String jobId,
             RdClient client,
             String args,
-            String runtime) -> {
+            String runtime){
         return client.doGetAcceptAll("/job/${jobId}/run?argString=${args}&runAtTime=${runtime}")
     }
 
