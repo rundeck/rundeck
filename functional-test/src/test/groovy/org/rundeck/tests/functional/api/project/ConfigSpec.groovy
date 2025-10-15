@@ -507,7 +507,6 @@ class ConfigSpec extends BaseContainer{
         ]
         // Create test project with resources
         def createResponse = createSampleProject(projectMapJson)
-        assert createResponse.successful
         setupProjectArchiveDirectoryResource(projectName, "/projects-import/resourcesTest")
 
         //Extract local nodename
@@ -569,7 +568,6 @@ class ConfigSpec extends BaseContainer{
         ]
         // Create test project with resources
         def createResponse = createSampleProject(projectMapJson)
-        assert createResponse.successful
         setupProjectArchiveDirectoryResource(projectName, "/projects-import/resourcesTest")
 
         //Extract local nodename
@@ -689,7 +687,6 @@ class ConfigSpec extends BaseContainer{
         ]
 
         def responseProject = createSampleProject(projectJsonMap)
-        assert responseProject.successful
 
         //Extract local nodename
         def systemInfoResponse = doGet("/system/info")
@@ -811,7 +808,6 @@ class ConfigSpec extends BaseContainer{
         ]
 
         def responseProject = createSampleProject(projectJsonMap)
-        assert responseProject.successful
 
         when: "We request source 1"
         def allSourcesResponse = client.doGetAcceptAll("/project/$projectName/sources")
@@ -832,8 +828,8 @@ class ConfigSpec extends BaseContainer{
         deleteProject(projectName)
     }
 
-    def createSampleProject = (Object projectJsonMap) -> {
-        return client.doPost("/projects", projectJsonMap)
+    def createSampleProject (Object projectJsonMap) {
+        return client.post("/projects", projectJsonMap)
     }
 
     boolean isYamlValid(String yamlString) {
