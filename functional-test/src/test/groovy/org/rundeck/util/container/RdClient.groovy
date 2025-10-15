@@ -219,6 +219,8 @@ class RdClient {
         )
         Request request = new Request.Builder()
                 .url(apiUrl(path))
+                .header('Content-Type', 'application/json')
+                .header('Accept', 'application/json')
                 .method("PUT", requestBody)
                 .build()
         httpClient.newCall(request).execute()
