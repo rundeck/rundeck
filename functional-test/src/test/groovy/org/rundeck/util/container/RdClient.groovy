@@ -13,12 +13,14 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.Response
 import okhttp3.ResponseBody
+import okio.Buffer
 import org.jetbrains.annotations.NotNull
 
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 
 @CompileStatic
@@ -32,13 +34,14 @@ class RdClient {
     final ObjectMapper mapper = new ObjectMapper()
     String baseUrl
     OkHttpClient httpClient
+    private AtomicBoolean logNextRequest = new AtomicBoolean()
 
     // Api version used by this client
     int apiVersion = API_CURRENT_VERSION
 
-    RdClient(String baseUrl, OkHttpClient httpClient) {
+    RdClient(String baseUrl, OkHttpClient.Builder builder) {
         this.baseUrl = baseUrl
-        this.httpClient = httpClient
+        this.httpClient = builder.addInterceptor (new TempLogInterceptor(logNextRequest)).build()
     }
 
     static RdClient create(final String baseUrl, final String apiToken, Map<String, Integer> config = Collections.emptyMap() ) {
@@ -49,9 +52,37 @@ class RdClient {
                         connectTimeout(config.getOrDefault("connectTimeout", 25), TimeUnit.SECONDS).
                         readTimeout(config.getOrDefault("readTimeout", 25), TimeUnit.SECONDS).
                         writeTimeout(config.getOrDefault("writeTimeout", 25), TimeUnit.SECONDS).
-                        connectionPool(new ConnectionPool(2, 25, TimeUnit.SECONDS)).
-                        build()
+                        connectionPool(new ConnectionPool(2, 25, TimeUnit.SECONDS))
         )
+    }
+    static class TempLogInterceptor implements Interceptor{
+        AtomicBoolean logNextRequest
+        TempLogInterceptor(AtomicBoolean logNextRequest){
+            this.logNextRequest=logNextRequest
+        }
+        @Override
+        Response intercept(@NotNull Chain chain) throws IOException {
+            def request = chain.request()
+            if(logNextRequest.getAndSet(false)){
+                println("---- REQUEST ----")
+                println("${request.method()} ${request.url()}")
+                request.headers().toMultimap().each { key, value ->
+                    println("$key: $value")
+                }
+                if(request.body() != null){
+                    def buffer = new Buffer()
+                    request.body().writeTo(buffer)
+                    println()
+                    println(buffer.readUtf8())
+                }
+                println("---- /REQUEST ----")
+            }
+            return chain.proceed(request)
+        }
+    }
+    RdClient logNextRequest(){
+        logNextRequest.set(true)
+        return this
     }
 
     Response doGet(final String path) {
