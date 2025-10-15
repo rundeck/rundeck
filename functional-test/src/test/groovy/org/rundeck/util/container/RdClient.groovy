@@ -334,17 +334,8 @@ class RdClient {
         httpClient.newCall(request).execute()
     }
 
-    Response doPostWithoutBody(final String path) {
-        RequestBody body = RequestBody.create(null, new byte[]{});
-        Request request = new Request.Builder()
-                .url(apiUrl(path))
-                .method("POST", body)
-                .build()
-        httpClient.newCall(request).execute()
-    }
-
     Response doPostWithContentTypeWithoutBody(final String path,String  contentType) {
-        RequestBody body = RequestBody.create(null, new byte[]{});
+        RequestBody body = RequestBody.create(new byte[]{});
         Request request = new Request.Builder()
                 .url(apiUrl(path))
                 .method("POST", body)
@@ -381,13 +372,33 @@ class RdClient {
                 ).build()
     }
 
+    /**
+     * Performs a POST request to the specified path with an optional body and maps the JSON response to the specified class type.
+     * @param path
+     * @param body
+     * @param clazz
+     * @return
+     */
     <T> T post(final String path, final Object body = null, Class<T> clazz = Map) {
         jsonValue(doReq(path,'POST', body).body(), clazz)
     }
+    /**
+     * Performs a PUT request to the specified path with an optional body and maps the JSON response to the specified class type.
+     * @param path
+     * @param body
+     * @param clazz
+     * @return
+     */
     <T> T put(final String path, final Object body = null, Class<T> clazz = Map) {
         jsonValue(doReq(path, 'PUT', body).body(), clazz)
     }
 
+    /**
+     * Maps the JSON response body to the specified class type, closes the underlying response stream.
+     * @param body
+     * @param clazz
+     * @return
+     */
     <T> T jsonValue(ResponseBody body, Class<T> clazz) {
         try (def b = body.byteStream()) {
             mapper.readValue(b, clazz)
