@@ -206,7 +206,6 @@ class JobExecutionSpec extends BaseContainer {
         ]
 
         def responseProject = createSampleProject(projectJsonMap)
-        assert responseProject.successful
 
         def longRunXml = (String project, String stepArgs) -> {
             return "<joblist>\n" +
@@ -320,7 +319,6 @@ class JobExecutionSpec extends BaseContainer {
         ]
 
         def responseProject = createSampleProject(projectJsonMap)
-        assert responseProject.successful
 
         def jobRetry = (String args) -> {
             return "<joblist>\n" +
@@ -416,7 +414,6 @@ class JobExecutionSpec extends BaseContainer {
         ]
 
         def responseProject = createSampleProject(projectJsonMap)
-        assert responseProject.successful
 
         def jobXml = (String project, String args) -> "<joblist>\n" +
                 "   <job>\n" +
@@ -536,6 +533,7 @@ class JobExecutionSpec extends BaseContainer {
         then: "OK"
         !runLaterExecResponse1.successful
         runLaterExecResponse1.code() == 405
+        runLaterExecResponse1.close()
 
         when: "TEST: POST job/id/run with scheduled time in the past should fail"
         def runtime2 = generateRuntime(-1000) // Generates a past runtime string
@@ -1089,7 +1087,6 @@ class JobExecutionSpec extends BaseContainer {
                 "name": projectName
         ]
         def responseProject = createSampleProject(projectJsonMap)
-        assert responseProject.successful
 
         when: "TEST: execution of job with keepgoing=true, errorhandler step succeeds"
         def stepOutfile = "/tmp/error-handler-out.txt"
@@ -1117,9 +1114,7 @@ class JobExecutionSpec extends BaseContainer {
 
         // We read the output file
         def execArgs = "cat $stepOutfile"
-        def readResponse = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs}")
-        def readResponseBody = readResponse.body().string()
-        def parsedReadBody = MAPPER.readValue(readResponseBody, RunCommand.class)
+        def parsedReadBody = post("/project/$projectName/run/command?exec=${execArgs}",RunCommand)
         String readExecId = parsedReadBody.execution.id
 
         assert JobUtils.waitForExecution(
@@ -1165,9 +1160,7 @@ class JobExecutionSpec extends BaseContainer {
 
         // So we read the output file
         def execArgs2 = "cat $stepOutfile2"
-        def readResponse2 = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs2}")
-        def readResponseBody2 = readResponse2.body().string()
-        def parsedReadBody2 = MAPPER.readValue(readResponseBody2, RunCommand.class)
+        def parsedReadBody2 = post("/project/$projectName/run/command?exec=${execArgs2}", RunCommand)
         String readExecId2 = parsedReadBody2.execution.id
 
         assert JobUtils.waitForExecution(
@@ -1213,9 +1206,7 @@ class JobExecutionSpec extends BaseContainer {
 
         // So we read the output file
         def execArgs3 = "cat $stepOutfile3"
-        def readResponse3 = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs3}")
-        def readResponseBody3 = readResponse3.body().string()
-        def parsedReadBody3 = MAPPER.readValue(readResponseBody3, RunCommand.class)
+        def parsedReadBody3 = post("/project/$projectName/run/command?exec=${execArgs3}", RunCommand)
         String readExecId3 = parsedReadBody3.execution.id
 
         assert JobUtils.waitForExecution(
@@ -1260,9 +1251,7 @@ class JobExecutionSpec extends BaseContainer {
 
         // So we read the output file
         def execArgs4 = "cat $stepOutfile4"
-        def readResponse4 = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs4}")
-        def readResponseBody4 = readResponse4.body().string()
-        def parsedReadBody4 = MAPPER.readValue(readResponseBody4, RunCommand.class)
+        def readResponseBody4 = post("/project/$projectName/run/command?exec=${execArgs4}", RunCommand)
         String readExecId4 = parsedReadBody4.execution.id
 
         assert JobUtils.waitForExecution(
@@ -1307,9 +1296,7 @@ class JobExecutionSpec extends BaseContainer {
 
         // So we read the output file
         def execArgs5 = "cat $stepOutfile5"
-        def readResponse5 = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs5}")
-        def readResponseBody5 = readResponse5.body().string()
-        def parsedReadBody5 = MAPPER.readValue(readResponseBody5, RunCommand.class)
+        def readResponseBody5 = post("/project/$projectName/run/command?exec=${execArgs5}", RunCommand)
         String readExecId5 = parsedReadBody5.execution.id
 
         assert JobUtils.waitForExecution(
@@ -1398,7 +1385,6 @@ class JobExecutionSpec extends BaseContainer {
         ]
 
         def responseProject = createSampleProject(projectJsonMap)
-        assert responseProject.successful
 
         // Note how the name of the child job iin the ref s Child-2.
         // This simulates the renaming of the child job.
@@ -1496,7 +1482,6 @@ class JobExecutionSpec extends BaseContainer {
         ]
 
         def responseProject = createSampleProject(projectJsonMap)
-        assert responseProject.successful
 
         String childJobId = "a472767a-6575-46f1-8ab4-6cd2b289f1f3"
         def testXml = """
@@ -1625,7 +1610,6 @@ class JobExecutionSpec extends BaseContainer {
         ]
 
         def responseProject = createSampleProject(projectJsonMap)
-        assert responseProject.successful
 
         String childJobId = "bd4f1bb3-67d0-45ba-b12f-6d2efac55bc6"
         String grandChildJobId = "59f0156b-a584-4a4e-9004-24d8605361bc"
@@ -1752,8 +1736,8 @@ class JobExecutionSpec extends BaseContainer {
         return [string: iso8601Format.format(cal.time), date: cal.time]
     }
 
-    def createSampleProject = (Object projectJsonMap) -> {
-        return client.doPost("/projects", projectJsonMap)
+    def createSampleProject(Object projectJsonMap) {
+        return client.post("/projects", projectJsonMap)
     }
 
     def "multiple executions job"(){
@@ -1779,7 +1763,12 @@ class JobExecutionSpec extends BaseContainer {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        try(def resp=client.doPostWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)){
+            if(!resp.successful){
+                throw new RuntimeException("Failed to import job: ${resp.code()} : ${resp.body().string()}")
+            }
+        }
+
         when:
         def jobExecResponseFor1 = JobUtils.executeJob(jobUuid, client)
         def jobExecResponseFor2 = JobUtils.executeJob(jobUuid, client)
