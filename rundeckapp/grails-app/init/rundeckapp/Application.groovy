@@ -71,6 +71,7 @@ import java.nio.file.Paths
         @Tag(name = "Health", description = "Health check operations"),
         @Tag(name = "History", description = "Execution history operations"),
         @Tag(name = "Jobs", description = "Job management operations"),
+        @Tag(name = "Job Executions", description = "Job execution operations"),
         @Tag(name = "Key Storage", description = "Key storage operations"),
         @Tag(name = "License", description = "License management operations"),
         @Tag(name = "Log Storage", description = "Log storage operations"),
