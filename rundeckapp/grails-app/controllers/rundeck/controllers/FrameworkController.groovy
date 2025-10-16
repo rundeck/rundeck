@@ -3826,7 +3826,7 @@ Since: v52''',
 Authorization required: `delete` or `admin` or `app_admin` access for `system_acl` resource type 
 
 Since: v14""",
-        tags=['ACLs'],
+        tags=['ACL'],
         parameters = [
             @Parameter(
                 name = 'path',
@@ -3867,7 +3867,7 @@ Since: v14""",
 Authorization required: `update` or `admin` or `app_admin` access for `system_acl` resource type 
 
 Since: v14""",
-        tags=['ACLs'],
+        tags=['ACL'],
         parameters = [
             @Parameter(
                 name = 'path',
@@ -3965,7 +3965,7 @@ Because each ACLPOLICY document can contain multiple Yaml documents, each will b
 Authorization required: `create` or `admin` or `app_admin` access for `system_acl` resource type 
 
 Since: v14""",
-        tags=['ACLs'],
+        tags=['ACL'],
         parameters = [
             @Parameter(
                 name = 'path',
@@ -4091,7 +4091,7 @@ Otherwise if XML or JSON is requested, the YAML text will be wrapped within that
 Authorization required: `read` or `admin` or `app_admin` access for `system_acl` resource type 
 
 Since: v14""",
-        tags=['ACLs'],
+        tags=['ACL'],
         parameters = [
             @Parameter(
                 name = 'path',
