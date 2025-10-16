@@ -746,7 +746,7 @@ Authorization required: `read` access for `project` resource type to get basic p
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -986,7 +986,7 @@ Authorization required: `delete` access for `project` resource type or `admin` o
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -1115,7 +1115,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -1209,7 +1209,7 @@ Since: v14""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="ACL")
             ]
     )
     @ApiResponse(
@@ -1324,7 +1324,7 @@ by:
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="ACL")
             ]
     )
     @ApiResponse(
@@ -1448,7 +1448,7 @@ by:
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="ACL")
             ]
     )
     @ApiResponse(
@@ -1524,7 +1524,7 @@ Since: v14""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="ACL")
             ]
     )
     @ApiResponse(
@@ -1865,7 +1865,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2015,7 +2015,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2110,7 +2110,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2204,7 +2204,7 @@ key2=value'''
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2352,7 +2352,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2518,7 +2518,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2698,7 +2698,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2774,7 +2774,7 @@ Requires `export` authorization for the project resource.""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2929,7 +2929,7 @@ Requires `export` authorization for the project resource.""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2991,7 +2991,7 @@ Since: v19""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -3081,7 +3081,7 @@ Since: v19""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -3190,7 +3190,7 @@ Import schedules definitions:
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -3476,7 +3476,7 @@ Since: v46"""
     )
     @Tags(
         [
-            @Tag(name="project")
+            @Tag(name="Project")
         ]
     )
     @ApiResponse(

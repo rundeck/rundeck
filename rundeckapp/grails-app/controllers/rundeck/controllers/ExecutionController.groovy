@@ -1126,7 +1126,7 @@ this Log Entry.""")
             )
         ]
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Execution')
     /**
      * API: /api/execution/{id}/output, version 5
      */
@@ -1168,7 +1168,7 @@ this Log Entry.""")
         responseCode = '200',
         description = """Log Output Response. This endpoint response is the same as the Execution Output `/execution/{id}/output` response using the `nodename` parameter."""
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Execution')
     /**
      * API: /api/execution/{id}/output/node/{nodename}, version 5
      */
@@ -1209,7 +1209,7 @@ this Log Entry.""")
         responseCode = '200',
         description = """Log Output Response. This endpoint response is the same as the Execution Output `/execution/{id}/output` response using the `nodename` and `stepctx` parameters."""
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Execution')
     /**
      * API: /api/execution/{id}/output/node/{nodename}/step/{stepctx}, version 5
      */
@@ -1243,7 +1243,7 @@ this Log Entry.""")
         responseCode = '200',
         description = """Log Output Response. This endpoint response is the same as the Execution Output `/execution/{id}/output` response using the `stepctx` parameter."""
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Execution')
     /**
      * API: /api/execution/{id}/output/step/{stepctx}, version 5
      */
@@ -1467,7 +1467,7 @@ JSON response requires API v14.
     - `nodeend` finishing of execution of a node for the given step
 * metadata about the entry may be included in the entry"""
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Execution')
     /**
      * API: /api/execution/{id}/output/state, version ?
      */
@@ -2134,7 +2134,7 @@ JSON response requires API v14.
             )
         ]
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Execution')
     @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def apiExecution(){
         if (!apiService.requireApi(request, response)) {
@@ -2418,7 +2418,7 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
             )
         ]
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Execution')
     /**
      * API: /api/execution/{id}/state , version 11
      */
@@ -2599,7 +2599,7 @@ Authorization required:
             )
         ]
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Execution')
     /**
      * API: /api/execution/{id}/abort, version 1
      */
@@ -2710,7 +2710,7 @@ See: [Administration - Access Control Policy - Application Scope Resources and A
         responseCode = '204',
         description = "No Content"
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Execution')
     /**
      * DELETE /api/14/execution/[ID]
      * @return
@@ -2819,7 +2819,7 @@ Note: the JSON schema also supports a basic JSON array
         )]
 
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Execution')
     /**
      * Delete bulk API action
      * @return
@@ -3380,7 +3380,7 @@ Since: v14
             )
         ]
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Execution')
     /**
      * List input files for an execution
      */
@@ -3514,7 +3514,7 @@ Note: This endpoint has the same query parameters and response as the `/executio
             )
         ]
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Execution')
     /**
      * Placeholder method to annotate for openapi spec generation.
      * Note: this method will never be used.

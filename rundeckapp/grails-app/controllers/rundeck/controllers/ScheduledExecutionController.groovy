@@ -3822,7 +3822,7 @@ Each job entry contains:
             )
         ]
     )
-    @Tag(name = "jobs")
+    @Tag(name = "Jobs")
     /**
      * API: /api/14/project/NAME/jobs/import
      */
@@ -3993,7 +3993,7 @@ Authorization required: `read` for the Job.''',
             )
         ]
     )
-    @Tag(name = "jobs")
+    @Tag(name = "Jobs")
 
     /**
      * API: export job definition: /job/{id}, version 1
