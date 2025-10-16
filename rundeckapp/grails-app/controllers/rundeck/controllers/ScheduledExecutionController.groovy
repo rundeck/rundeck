@@ -5849,7 +5849,7 @@ Alternately, specify one or more job IDs to takeover certain Jobs' schedules.
 Authorization required: `ops_admin` for resource type `job`
 
 Since: v14''',
-        tags=['Scheduler'],
+        tags=['Cluster'],
         requestBody = @RequestBody(
             description='''Takeover Request.
 
