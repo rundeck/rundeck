@@ -23,6 +23,10 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 
+/**
+ * Simple Rundeck API client, in general methods that start with "do*" return the raw okhttp3 Response object, without checking succes status or
+ * consuming the response body, and other methods such as get/post/put will check for success status and map the json body to a class.
+ */
 @CompileStatic
 class RdClient {
 
@@ -80,11 +84,20 @@ class RdClient {
             return chain.proceed(request)
         }
     }
+    /**
+     * Log the next request made by this client
+     * @return
+     */
     RdClient logNextRequest(){
         logNextRequest.set(true)
         return this
     }
 
+    /**
+     * Perform a GET request to the specified path
+     * @param path The API path, starting with /
+     * @return The raw Response object
+     */
     Response doGet(final String path) {
         httpClient.newCall(
                 new Request.Builder().
@@ -95,6 +108,12 @@ class RdClient {
         ).execute()
     }
 
+    /**
+     * Perform a GET request to the specified path with additional headers
+     * @param path The API path, starting with /
+     * @param headers Additional headers to include in the request
+     * @return The raw Response object
+     */
     Response doGetAddHeaders(final String path, Headers headers) {
         httpClient.newCall(
                 new Request.Builder().
@@ -105,6 +124,11 @@ class RdClient {
         ).execute()
     }
 
+    /**
+     * Perform a GET request to the specified path with Accept: "*&#47;*"
+     * @param path The API path, starting with /
+     * @return The raw Response object
+     */
     Response doGetAcceptAll(final String path) {
         httpClient.newCall(
                 new Request.Builder().
