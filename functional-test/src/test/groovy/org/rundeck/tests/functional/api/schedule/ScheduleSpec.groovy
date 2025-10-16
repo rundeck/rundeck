@@ -82,7 +82,7 @@ class ScheduleSpec extends BaseContainer{
         exportedData.schedule?.weekday != null
 
         when:
-        def disableSchedulesResponse = post("/job/${job1Id}/schedule/disable")
+        def disableSchedulesResponse = post("/job/${job1Id}/schedule/disable", Map)
         def exportedDataAfterDisable = getExportedData()
 
         then:
@@ -93,7 +93,7 @@ class ScheduleSpec extends BaseContainer{
         exportedDataAfterDisable.schedule?.weekday != null
 
         when:
-        def enableSchedulesResponse = post("/job/${job1Id}/schedule/enable")
+        def enableSchedulesResponse = post("/job/${job1Id}/schedule/enable", Map)
         def exportedDataAfterEnable = getExportedData()
 
         then:
