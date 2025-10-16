@@ -129,7 +129,7 @@ class EditProjectController {
 
 Since: v34
 """,
-        tags = ['Project'],
+        tags = ['Execution Mode'],
         requestBody = @RequestBody(
             required = true,
             description = """Enable Schedule or Executions.
@@ -170,11 +170,6 @@ The request must contain a `value` with a "Time duration expression". (See reque
             schema = @Schema(implementation = ModeLaterResponse),
             examples = @ExampleObject('{"saved":false,"msg":"Project Execution Mode Later saved"}')
         )
-    )
-    @Tags(
-        [
-            @Tag(name="project execution mode"),
-        ]
     )
     def apiProjectEnableLater(String project) {
         if (!requireAuth(project)) {
@@ -265,7 +260,7 @@ The request must contain a `value` with a "Time duration expression". (See reque
 
 Since: v34
 """,
-        tags = ['Project'],
+        tags = ['Execution Mode'],
         requestBody = @RequestBody(
             required = true,
             description = """Disable Schedule or Executions.
@@ -306,11 +301,6 @@ The request must contain a `value` with a "Time duration expression". (See reque
             schema = @Schema(implementation = ModeLaterResponse),
             examples = @ExampleObject('{"saved":false,"msg":"Project Execution Mode Later saved"}')
         )
-    )
-    @Tags(
-        [
-            @Tag(name="project execution mode"),
-        ]
     )
     def apiProjectDisableLater(String project){
 

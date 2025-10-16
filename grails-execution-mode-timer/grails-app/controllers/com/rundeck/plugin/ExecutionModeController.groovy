@@ -111,7 +111,7 @@ class ExecutionModeController {
 
 Since: v34
 """,
-        tags = ['System'],
+        tags = ['Execution Mode'],
         requestBody = @RequestBody(
             required = true,
             description = """Enable Executions.
@@ -143,11 +143,6 @@ Specify a `value` with a time duration expression. (See request schema for synta
             schema = @Schema(implementation = ModeLaterResponse),
             examples = @ExampleObject('{"saved":false,"msg":"Project Execution Mode Later saved"}')
         )
-    )
-    @Tags(
-       [
-           @Tag(name="system execution mode")
-       ]
     )
     def apiExecutionModeLaterActive(){
 
@@ -201,7 +196,7 @@ Specify a `value` with a time duration expression. (See request schema for synta
 
 Since: v34
 """,
-        tags = ['System'],
+        tags = ['Execution Mode'],
         requestBody = @RequestBody(
             required = true,
             description = """Disable Executions.
@@ -233,11 +228,6 @@ Specify a `value` with a time duration expression. (See request schema for synta
             schema = @Schema(implementation = ModeLaterResponse),
             examples = @ExampleObject('{"saved":false,"msg":"Project Execution Mode Later saved"}')
         )
-    )
-    @Tags(
-        [
-            @Tag(name="system execution mode")
-        ]
     )
     def apiExecutionModeLaterPassive(){
 
