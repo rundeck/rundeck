@@ -10,7 +10,7 @@ import java.time.Duration
 class ScmGiteaUtil {
     static void composeContainer(final ComposeContainer composeContainer, Logger log) {
         composeContainer
-            .withLogConsumer("gitea", new Slf4jLogConsumer(log))
+            .withLogConsumer("gitea", new Slf4jLogConsumer(log, true).withPrefix("gitea"))
             .waitingFor(
                 "gitea",
                 Wait.forHttp("/api/healthz")
