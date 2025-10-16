@@ -14,6 +14,7 @@ import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.httpbody.ScmJobStatusResponse
 import org.rundeck.util.common.WaitUtils
 import org.rundeck.util.common.WaitingTime
+import org.rundeck.util.common.execution.ExecutionStatus
 import org.rundeck.util.common.execution.ExecutionUtils
 import org.rundeck.util.container.RdClient
 
@@ -170,7 +171,37 @@ class JobUtils {
         Duration timeout = WaitingTime.MODERATE,
         Duration checkPeriod = WaitingTime.LOW
     ) {
+        if (state == ExecutionStatus.SUCCEEDED.state) {
+            return waitForSuccess(executionId, client, timeout, checkPeriod)
+        }
         return waitForExecution([state], executionId, client, timeout, checkPeriod)
+    }
+
+    /**
+     * Waits for the execution to succeed, rejects early if the execution completes without success.
+     *
+     * @param expectedStates The expected state.
+     * @param executionId The execution ID to query.
+     * @param client The RdClient instance to perform the HTTP request.
+     * @param timeout The maximum duration to wait for the execution to reach the expected state.
+     * @param checkPeriod The time to wait between each check.
+     * @return The Execution object representing the execution status.
+     * @throws InterruptedException if the timeout is reached before the execution reaches the expected state.
+     */
+    static Execution waitForSuccess(
+        String executionId,
+        RdClient client,
+        Duration timeout = WaitingTime.MODERATE,
+        Duration checkPeriod = WaitingTime.LOW
+    ) {
+        return waitForExecution(
+            [ExecutionStatus.SUCCEEDED.state],
+            { it.dateEnded != null } as Function<Execution, Boolean>,
+            executionId,
+            client,
+            timeout,
+            checkPeriod
+        )
     }
 
     /**
@@ -192,19 +223,49 @@ class JobUtils {
         Duration timeout = WaitingTime.MODERATE,
         Duration checkPeriod = WaitingTime.LOW
     ) {
-        Function<Execution, Boolean> resourceAcceptanceEvaluator = { Execution e -> expectedStates.contains(e?.status) }
-
+        return waitForExecution(
+            expectedStates,
+            null,
+            executionId,
+            client,
+            timeout,
+            checkPeriod
+        )
+    }
+    /**
+     * Waits for the execution to be in one of the expected states.
+     *
+     * @param expectedStates A list of expected states.
+     * @param executionId The execution ID to query.
+     * @param client The RdClient instance to perform the HTTP request.
+     * @param timeout The maximum duration to wait for the execution to reach the expected state.
+     * @param checkPeriod The time to wait between each check.
+     * @return The Execution object representing the execution status.
+     * @throws InterruptedException if the timeout is reached before the execution reaches the expected state.
+     */
+    @TypeChecked
+    static Execution waitForExecution(
+        Collection<String> expectedStates,
+        Function<Execution, Boolean> rejectionCondition,
+        String executionId,
+        RdClient client,
+        Duration timeout = WaitingTime.MODERATE,
+        Duration checkPeriod = WaitingTime.LOW
+    ) {
         Closure<String> acceptanceFailureOutputProducer = { String id ->
             def execOutput = callSilently { getExecutionOutputText(id, client) }
             return "Execution output was: \n${execOutput}\n".toString()
         }
 
-        return WaitUtils.waitForResource(executionId,
-                { String id -> ExecutionUtils.Retrievers.executionById(client, id).get() },
-                resourceAcceptanceEvaluator,
-                acceptanceFailureOutputProducer,
-                timeout,
-                checkPeriod)
+        return WaitUtils.waitForResourceOrReject(
+            executionId,
+            { String id -> ExecutionUtils.Retrievers.executionById(client, id).get() },
+            { Execution e -> expectedStates.contains(e?.status) } as Function<Execution, Boolean>,
+            rejectionCondition,
+            acceptanceFailureOutputProducer,
+            timeout,
+            checkPeriod
+        )
     }
 
     /**
