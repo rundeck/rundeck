@@ -129,6 +129,7 @@ class EditProjectController {
 
 Since: v34
 """,
+        tags = ['Project'],
         requestBody = @RequestBody(
             required = true,
             description = """Enable Schedule or Executions.
@@ -264,6 +265,7 @@ The request must contain a `value` with a "Time duration expression". (See reque
 
 Since: v34
 """,
+        tags = ['Project'],
         requestBody = @RequestBody(
             required = true,
             description = """Disable Schedule or Executions.

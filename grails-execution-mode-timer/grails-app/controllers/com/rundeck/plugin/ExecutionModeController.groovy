@@ -111,6 +111,7 @@ class ExecutionModeController {
 
 Since: v34
 """,
+        tags = ['System'],
         requestBody = @RequestBody(
             required = true,
             description = """Enable Executions.
@@ -200,6 +201,7 @@ Specify a `value` with a time duration expression. (See request schema for synta
 
 Since: v34
 """,
+        tags = ['System'],
         requestBody = @RequestBody(
             required = true,
             description = """Disable Executions.

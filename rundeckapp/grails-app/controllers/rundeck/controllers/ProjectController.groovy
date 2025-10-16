@@ -654,7 +654,7 @@ class ProjectController extends ControllerBase{
 
 Authorization required: `read` for project resource
 ''',
-        tags = ['project'],
+        tags = ['Project'],
         parameters = [
                 @Parameter(
                         name = 'meta',
@@ -789,7 +789,7 @@ Authorization required: `read` access for `project` resource type to get basic p
 
 Authorization required: `create` for resource type `project`
 ''',
-        tags = ['project'],
+        tags = ['Project'],
         requestBody = @RequestBody(
             description='Project Create contains a name, and configuration values',
             content = @Content(

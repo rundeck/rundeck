@@ -2210,7 +2210,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
 Since: V45
 ''',
-            tags=["execution"],
+            tags=["Execution"],
             responses = @ApiResponse(
                     responseCode = "200",
                     description = '''Success response, with summary information.
@@ -2299,7 +2299,7 @@ Authorization required: `read` for `system` resource
 
 Since: V17
 ''',
-        tags=["logstorage"],
+        tags=["Log Storage"],
         responses = @ApiResponse(
             responseCode = "200",
             description = '''Success response, with log storage info and stats.
@@ -2413,7 +2413,7 @@ Fields:
 Authorization required: `read` for `system` resource
 
 Since: V17''',
-        tags=["logstorage"],
+        tags=["Log Storage"],
         responses = @ApiResponse(
             responseCode = "200",
             description = '''
@@ -2588,7 +2588,7 @@ Since: V17''',
 Authorization required: `ops_admin` for `system` resource
 
 Since: V17''',
-        tags=["logstorage"],
+        tags=["Log Storage"],
         responses = @ApiResponse(
             responseCode = "200",
             description = '''Resumed response''',
@@ -2639,7 +2639,7 @@ Since: V17''',
 Authorization required: `read` or `view` for the job.
 
 Since: V18''',
-        tags=['jobs'],
+        tags=['Jobs'],
         parameters = @Parameter(
             name = "id",
             description = "Job ID",
@@ -2784,7 +2784,7 @@ Since: V18''',
 Authorization required: `read` or `view` for the Job
 
 Since: V31''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         parameters = [
             @Parameter(
                 name = 'id',
@@ -3080,7 +3080,7 @@ Format is a string like `2d1h4n5s` using the following characters for time units
 Authorization required: `read` or `view` for each job resource
 
 Since: v17''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         responses = @ApiResponse(
             responseCode='200',
             description='Job List',
@@ -3104,7 +3104,7 @@ Since: v17''',
 Authorization required: `read` or `view` for each job resource
 
 Since: v17''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         responses = @ApiResponse(
                 responseCode='200',
                 description='Job List',
@@ -3190,7 +3190,7 @@ Since: v17''',
 
 Authorization required: `view` or `read` for each Job resource.
 ''',
-        tags=['jobs'],
+        tags=['Jobs'],
         parameters=[
             @Parameter(
                 name='project',
@@ -3304,7 +3304,7 @@ Authorization required: `read` for each job resource.
 
 Since: v14
 ''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         parameters=[
             @Parameter(
                 name = 'project',
@@ -3432,7 +3432,7 @@ Since: v14
 
 Authorization required: `read` for project resource type `event`
 ''',
-        tags = ['execution'],
+        tags = ['Execution'],
         parameters = [
             @Parameter(
                 name = 'project',

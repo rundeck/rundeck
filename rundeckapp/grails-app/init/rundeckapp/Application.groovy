@@ -14,6 +14,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.security.SecurityScheme
 import io.swagger.v3.oas.annotations.servers.Server
 import io.swagger.v3.oas.annotations.servers.ServerVariable
+import io.swagger.v3.oas.annotations.tags.Tag
+import io.swagger.v3.oas.annotations.tags.Tag
 import liquibase.exception.LockException
 import org.rundeck.app.bootstrap.PreBootstrap
 import org.springframework.boot.ApplicationArguments
@@ -33,31 +35,27 @@ import rundeckapp.init.prebootstrap.InitializeRundeckPreboostrap
 import java.nio.file.Files
 import java.nio.file.Paths
 
+import io.swagger.v3.oas.annotations.OpenAPIDefinition
+import io.swagger.v3.oas.annotations.info.Info
+import io.swagger.v3.oas.annotations.tags.Tag
+
 @OpenAPIDefinition(
     info = @Info(
-        title = "Rundeck",
-        version = ApiVersions.API_CURRENT_VERSION_STR,
-        description = "Rundeck provides a Web API for use with your applications.",
-        license = @License(name = "Apache 2.0", url = "https://www.apache.org/licenses/LICENSE-2.0.html")
+        title = "Rundeck API",
+        version = "1.0.0"
     ),
-    externalDocs = @ExternalDocumentation(
-        description = 'Original Rundeck API Documentation',
-        url = 'https://docs.rundeck.com/docs/api/rundeck-api.html'
-    ),
-    security = @SecurityRequirement(name = "rundeckApiToken"),
-    servers = @Server(
-        url = '{host}/api/{apiversion}',
-        variables = [
-            @ServerVariable(
-                name = 'apiversion',
-                defaultValue = '44' //NB: spec generation doesn't seem to accept a constant string :(
-            ),
-            @ServerVariable(
-                name = 'host',
-                defaultValue = 'http://localhost:4440'
-            )
-        ]
-    )
+    tags = [
+        @Tag(name = "Execution", description = "Job execution operations"),
+        @Tag(name = "History", description = "Execution history operations"),
+        @Tag(name = "Jobs", description = "Job management operations"),
+        @Tag(name = "Key Storage", description = "Key storage operations"),
+        @Tag(name = "Log Storage", description = "Log storage operations"),
+        @Tag(name = "Plugins", description = "Plugin management operations"),
+        @Tag(name = "Project", description = "Project management operations"),
+        @Tag(name = "System", description = "System operations"),
+        @Tag(name = "User", description = "User management operations"),
+        @Tag(name = "Webhook", description = "Webhook operations")
+    ]
 )
 @SecurityScheme(
     name = "rundeckApiToken",

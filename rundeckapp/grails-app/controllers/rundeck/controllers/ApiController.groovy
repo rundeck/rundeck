@@ -88,10 +88,12 @@ class ApiController extends ControllerBase{
     @Operation(
         method = 'GET',
         summary = 'Get API Information',
-        description = '''Return basic information about the Rundeck API.
+        description = '''Returns basic information about the Rundeck API including the current API version and base URL.
 
-Includes current latest API Version, and base API URL.''',
-        tags = ['general'],
+This endpoint provides essential API metadata that clients can use to determine available functionality and construct properly formatted API requests. The response includes the highest supported API version number and the base URL for making subsequent API calls.
+
+Use this endpoint to verify API connectivity and determine the correct API version to use for your integration.''',
+        tags = ['General'],
         responses = @ApiResponse(
             responseCode = '200',
             description = 'API Information',

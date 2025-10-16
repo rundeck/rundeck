@@ -379,9 +379,15 @@ class ScheduledExecutionController  extends ControllerBase{
     @Get(uri = "/job/{id}/components")
     @Operation(
             method = 'GET',
-            summary = 'Get Job Definition Components Values',
-            description = '''Get the values for job definition components for a job. Since: v53''',
-            tags = ['jobs'],
+            summary = 'Get Job Definition Component Values',
+            description = '''Retrieves the current values for configurable job definition components for a specific job.
+
+Job definition components are modular configuration elements such as schedules, node selectors, and other job-specific settings that can be dynamically configured. This endpoint returns the serialized JSON values for each component, allowing clients to understand the current job configuration and potentially modify it through other API endpoints.
+
+The response includes component-specific JSON data that can be used to reconstruct the job's configuration or display current settings in a user interface.
+
+Since: v53''',
+            tags = ['Jobs'],
             parameters = [
                     @Parameter(
                             name = 'id',
@@ -423,7 +429,7 @@ class ScheduledExecutionController  extends ControllerBase{
             method = 'GET',
             summary = 'Get Job Definition Components',
             description = '''Get job definition components properties. Since: v53''',
-            tags = ['jobs'],
+            tags = ['Jobs'],
             responses = @ApiResponse(
                     responseCode = '200',
                     description = '''Job Definition Components response.
@@ -688,7 +694,7 @@ The authorization level affects the response data.
 * `view` - basic information and description is included for each step
 
 Since: v34''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         parameters = [
             @Parameter(
                 name = 'id',
@@ -1242,7 +1248,7 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
 Authorization required: `toggle_execution` action for a job.
 
 Since: V14''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
 
         parameters = @Parameter(
             name = "id",
@@ -1272,7 +1278,7 @@ Since: V14''',
 Authorization required: `toggle_execution` action for a job.
 
 Since: V14''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
 
         parameters = @Parameter(
             name = "id",
@@ -1356,7 +1362,7 @@ Since: V14''',
 Authorization required: `toggle_schedule` action for a job.
 
 Since: V14''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
 
         parameters = @Parameter(
             name = "id",
@@ -1386,7 +1392,7 @@ Since: V14''',
 Authorization required: `toggle_schedule` action for a job.
 
 Since: V14''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
 
         parameters = @Parameter(
             name = "id",
@@ -1678,7 +1684,7 @@ Since: V14''',
 Authorization required: `toggle_execution` action for each job.
 
 Since: v16''',
-        tags=['jobs'],
+        tags=['Jobs'],
         parameters=[
             @Parameter(
                 name='ids',
@@ -1747,7 +1753,7 @@ Failed results will contain:
 Authorization required: `toggle_execution` action for each job.
 
 Since: v16''',
-        tags=['jobs'],
+        tags=['Jobs'],
         parameters=[
             @Parameter(
                 name='ids',
@@ -1897,7 +1903,7 @@ Failed results will contain:
 Authorization required: `toggle_schedule` action for each job.
 
 Since: v16''',
-        tags=['jobs'],
+        tags=['Jobs'],
         parameters=[
             @Parameter(
                 name='ids',
@@ -1966,7 +1972,7 @@ Failed results will contain:
 Authorization required: `toggle_schedule` action for each job.
 
 Since: v16''',
-        tags=['jobs'],
+        tags=['Jobs'],
         parameters=[
             @Parameter(
                 name='ids',
@@ -2123,7 +2129,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         method="DELETE",
         summary=API_DOC_JOB_DELETE_TITLE,
         description = API_DOC_JOB_DELETE_DESC,
-        tags=['jobs'],
+        tags=['Jobs'],
         parameters = [
             @Parameter(
                 name = "ids",
@@ -2157,7 +2163,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         method = "POST",
         summary = API_DOC_JOB_DELETE_TITLE,
         description = API_DOC_JOB_DELETE_DESC,
-        tags = ['jobs']
+        tags = ['Jobs']
     )
     @ApiResponse(
         responseCode='200',
@@ -3691,7 +3697,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
 
 
 Since: v14''',
-        tags=['jobs'],
+        tags=['Jobs'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -4060,7 +4066,7 @@ Parameters can be specified in the request body, instead of as query parameters
 
 Authorization required: `run` for the Job resource.
 ''',
-        tags=['jobs'],
+        tags=['Jobs'],
         requestBody = @RequestBody(
             description = '''Parameters can be specified in the request body, instead of as query parameters.
 
@@ -4338,7 +4344,7 @@ Authorization required: `run` for the Job resource, and `read` or `view` for the
 
 Since: v24
 ''',
-        tags=['jobs'],
+        tags=['Jobs'],
         requestBody = @RequestBody(
             description = '''Parameters can be specified in the request body, instead of as query parameters.
 
@@ -4532,7 +4538,7 @@ For multiple files, use a Multi-part request.  For each file, specify the field 
 is the option name. The filename is specified normally within the multi-part request.
 
 Since: v19''',
-        tags=['jobs'],
+        tags=['Jobs'],
         parameters=[
             @Parameter(
                 name = "id",
@@ -4573,7 +4579,7 @@ Each uploaded file is assigned a unique "file key" identifier.
 You can then Run the Job using the "file key" as the option value.
 
 Since: v19''',
-        tags=['jobs'],
+        tags=['Jobs'],
         parameters=[
             @Parameter(
                 name = "id",
@@ -4792,7 +4798,7 @@ Since: v19''',
         method = "GET",
         summary = 'Get Info About an Uploaded File',
         description = '''Get info about an uploaded file given its ID.''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         parameters = @Parameter(
             name = "id",
             description = "File ID",
@@ -4946,7 +4952,7 @@ Since: v19''',
         description = '''Delete a single job definition.
 
 Authorization required: `delete` for the job.''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         parameters = [
             @Parameter(
                 name = "id",
@@ -5038,7 +5044,7 @@ Authorization required: `delete` for the job.''',
         method = 'DELETE',
         summary = 'Delete all Executions for a Job',
         description = '''Delete all executions for a Job.''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         parameters = [
             @Parameter(name = 'id', description = 'Job ID', in = ParameterIn
                 .PATH, required = true, schema = @Schema(type = 'string'))
@@ -5098,7 +5104,7 @@ Authorization required: `delete` for the job.''',
 Authorization required: `run` for project resource type `adhoc`, as well as `runAs` if the runAs parameter is used
 
 Since: v14''',
-        tags = ['adhoc'],
+        tags = ['Ad Hoc'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -5234,7 +5240,7 @@ Since: v14''',
 Authorization required: `run` for project resource type `adhoc`, as well as `runAs` if the runAs parameter is used
 
 Since: v14''',
-        tags = ['adhoc'],
+        tags = ['Ad Hoc'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -5487,7 +5493,7 @@ For Content-Type: `multipart/form-data`
 Authorization required: `run` for project resource type `adhoc`, as well as `runAs` if the runAs parameter is used
 
 Since: v14''',
-        tags = ['adhoc'],
+        tags = ['Ad Hoc'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -5645,7 +5651,7 @@ Since: v14''',
 
 Authorizations required: `read` or `view` for the Job, and `read` for the project resource type `execution`.
 ''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         parameters = [
             @Parameter(name = 'id', description = 'Job ID', in = ParameterIn
                 .PATH, required = true, schema = @Schema(type = 'string')),
@@ -5843,7 +5849,7 @@ Alternately, specify one or more job IDs to takeover certain Jobs' schedules.
 Authorization required: `ops_admin` for resource type `job`
 
 Since: v14''',
-        tags=['scheduler'],
+        tags=['Scheduler'],
         requestBody = @RequestBody(
             description='''Takeover Request.
 
@@ -6171,7 +6177,7 @@ Since: v14''',
 Authorization required: `read` or `view` for the Job.
 
 Since: v46''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         parameters = [
 
         ],
@@ -6229,7 +6235,7 @@ and the names of job Groups starting at that path.
 Authorization required: `read` or `view` for the Jobs.
 
 Since: v46''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         requestBody = @RequestBody(
             description = '''Query parameters''',
             content = [
@@ -6340,7 +6346,7 @@ breakpoint are available, no metadata will be loaded''',
 Authorization required: `read` or `view` for the Job.
 
 Since: v46''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         responses = [
             @ApiResponse(
                 responseCode = '200',
