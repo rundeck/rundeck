@@ -74,18 +74,19 @@ import java.nio.file.Paths
         @Tag(name = "History", description = "Execution history operations"),
         @Tag(name = "Jobs", description = "Job management operations"),
         @Tag(name = "Key Storage", description = "Key storage operations"),
+        @Tag(name = "License", description = "License management operations"),
         @Tag(name = "Log Storage", description = "Log storage operations"),
         @Tag(name = "Metrics", description = "Metrics and monitoring operations"),
-        @Tag(name = "Notification", description = "Notification operations"),
         @Tag(name = "Plugins", description = "Plugin management operations"),
         @Tag(name = "Project", description = "Project management operations"),
         @Tag(name = "ROI", description = "Return on Investment metrics operations"),
         @Tag(name = "Runner", description = "Runner management operations"),
         @Tag(name = "SCM", description = "Source Control Management operations"),
         @Tag(name = "System", description = "System operations"),
-        @Tag(name = "Token", description = "API token operations"),
+        @Tag(name = "Tokens", description = "API token operations"),
         @Tag(name = "Tours", description = "User interface tour operations"),
         @Tag(name = "User", description = "User management operations"),
+        @Tag(name = "User Class", description = "User Class management operations"),
         @Tag(name = "Webhook", description = "Webhook operations")
     ]
 )

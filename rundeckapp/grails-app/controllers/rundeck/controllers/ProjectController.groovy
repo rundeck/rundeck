@@ -3176,7 +3176,7 @@ If no auth token info was included with the webhook, it will be generated (defau
                     @Parameter(name = 'importNodesSources', required = false, in = ParameterIn.QUERY, description = '''In APIv38 or later: If true, import Node Resources Source defined on project properties. 
 If false, do not import the nodes sources.''', schema = @Schema(implementation = Boolean.class)),
                     @Parameter(name = 'importComponents.NAME', required = false, in = ParameterIn.QUERY, description = '''Enable a component for import.
-Project archives may contain "components" which can be imported, beyond the base set of contents. This includes some data used by Process Automation (Rundeck Enterprise) features.
+Project archives may contain "components" which can be imported, beyond the base set of contents. This includes some data used by Runbook Automation (prev. Rundeck Enterprise) features.
 
 For example, to enable Webhook import, you could use `importWebhooks` and `whkRegenAuthTokens` params, but those are simply shortcuts for the following parameters:
 
