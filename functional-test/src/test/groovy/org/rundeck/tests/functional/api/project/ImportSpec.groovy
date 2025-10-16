@@ -82,7 +82,8 @@ class ImportSpec extends BaseContainer {
         when: "we import the test zip to project $projectName"
         def responseImport1 = client.put(
                 "/project/${projectName}/import?jobUuidOption=preserve",
-                tmpjar)
+                tmpjar,
+                'application/zip')
 
         then: "we must have 3 jobs and 6 execs"
         assertJobCountForProject(
@@ -101,7 +102,8 @@ class ImportSpec extends BaseContainer {
         when: "We import the archive to test project 2"
         Map parsedResponse = client.put(
                 "/project/${projectName1}/import?jobUuidOption=preserve",
-                tmpjar)
+                tmpjar,
+                'application/zip')
 
         then: "Won't succeed because the jobUuidOption, no jobs imported"
         parsedResponse.import_status == "failed"
@@ -122,7 +124,8 @@ class ImportSpec extends BaseContainer {
         when: "We import the archive to test project 2 with valid jobUuidOption"
         Map parsedResponse1 = client.put(
             "/project/${projectName1}/import?jobUuidOption=remove",
-            tmpjar)
+            tmpjar,
+            'application/zip')
 
         then: "Jobs imported, executions duplicated"
         parsedResponse1.import_status == "successful"
@@ -143,7 +146,8 @@ class ImportSpec extends BaseContainer {
         when: "We import the archive to test project 2 without import execs"
         Map parsedResponse2 = client.put(
                 "/project/${projectName1}/import?importExecutions=false&jobUuidOption=remove",
-                tmpjar)
+                tmpjar,
+                'application/zip')
 
         then: "Import succeeds"
         parsedResponse2.import_status == "successful"
