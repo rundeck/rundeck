@@ -466,8 +466,17 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         closeLater client.doDelete(path)
     }
 
-    Response request(String path, Consumer<Request.Builder> consumer) {
-        closeLater client.request(path, consumer)
+    Response doRequest(String path, Consumer<Request.Builder> consumer) {
+        closeLater client.doRequest(path, consumer)
+    }
+
+    <T> T request(String path, Class<T> clazz = Map, Consumer<Request.Builder> consumer) {
+        def response = client.doRequest(path, consumer)
+        if(!response.successful){
+            throw new RuntimeException("Request failed: ${response.body().string()}")
+        }
+        closeLater response
+        jsonValue(response.body(), clazz)
     }
 
     Map jsonValue(ResponseBody body) {

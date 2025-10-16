@@ -169,29 +169,29 @@ line 4 final'''
         then:
         status == 'succeeded'
         when:
-        def resp = request("/execution/${execid}/output?lastlines=1") {
+        def resp = request("/execution/${execid}/output?lastlines=1", String) {
             it.header 'Accept', 'text/plain'
         }
         then:
-        resp.body().string() == 'line 4 final\n'
+        resp == 'line 4 final\n'
         when:
-        resp = request("/execution/${execid}/output?lastlines=2") {
+        resp = request("/execution/${execid}/output?lastlines=2", String) {
             it.header 'Accept', 'text/plain'
         }
         then:
-        resp.body().string() == "line 3\nline 4 final\n"
+        resp == "line 3\nline 4 final\n"
         when:
-        resp = request("/execution/${execid}/output?lastlines=3") {
+        resp = request("/execution/${execid}/output?lastlines=3", String) {
             it.header 'Accept', 'text/plain'
         }
         then:
-        resp.body().string() == "line 2\nline 3\nline 4 final\n"
+        resp == "line 2\nline 3\nline 4 final\n"
         when:
-        resp = request("/execution/${execid}/output?lastlines=4") {
+        resp = request("/execution/${execid}/output?lastlines=4", String) {
             it.header 'Accept', 'text/plain'
         }
         then:
-        resp.body().string() == "testing execution output api1 line 1\nline 2\nline 3\nline 4 final\n"
+        resp == "testing execution output api1 line 1\nline 2\nline 3\nline 4 final\n"
     }
 
     private String waitForExec(def execid, long maxwait = 10000) {
@@ -219,7 +219,7 @@ line 4 final'''
         def max = 20
         while (!logging.done && count < max) {
             def params = paramGen.apply(logging)
-            def resp = request("/execution/${execid}/output?${params}") {
+            def resp = doRequest("/execution/${execid}/output?${params}") {
                 it.header 'Accept', 'text/plain'
             }
             def text = resp.body().string()
