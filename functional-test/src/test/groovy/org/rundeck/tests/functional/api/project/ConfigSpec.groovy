@@ -26,7 +26,7 @@ class ConfigSpec extends BaseContainer{
         ]
 
         when:
-        def response = client.doPost(
+        def response = doPost(
                 "/projects",
                 testProperties
         )
@@ -133,7 +133,7 @@ class ConfigSpec extends BaseContainer{
         ]
 
         when:
-        def response = client.doPost(
+        def response = doPost(
                 "/projects",
                 testProperties
         )
@@ -196,7 +196,7 @@ class ConfigSpec extends BaseContainer{
         ]
 
         when:
-        def response = client.doPost(
+        def response = doPost(
                 "/projects",
                 testProperties
         )
@@ -233,7 +233,7 @@ class ConfigSpec extends BaseContainer{
         ]
 
         when: "TEST: POST /api/14/projects"
-        def response = client.doPost(
+        def response = doPost(
                 "/projects",
                 testProperties
         )
@@ -250,7 +250,7 @@ class ConfigSpec extends BaseContainer{
         parsedResponse.config."test.property" == "test value"
 
         when: "TEST: POST /api/14/projects (existing project results in conflict)"
-        def conflictedResponse = client.doPost(
+        def conflictedResponse = doPost(
                 "/projects",
                 testProperties
         )
@@ -277,7 +277,7 @@ class ConfigSpec extends BaseContainer{
         ]
 
         when: "TEST: POST /api/14/projects"
-        def response = client.doPost(
+        def response = doPost(
                 "/projects",
                 testProperties
         )
@@ -313,7 +313,7 @@ class ConfigSpec extends BaseContainer{
         ]
 
         when: "TEST: POST /api/14/projects"
-        def response = client.doPost(
+        def response = doPost(
                 "/projects",
                 testProperties
         )
@@ -341,8 +341,8 @@ class ConfigSpec extends BaseContainer{
         def projectName = "RhetoricalMiscalculationElephant"
 
         when:
-        def response = client.doGet("/project/$projectName")
-        def parsedBody = MAPPER.readValue(response.body().string(), Object.class)
+        def response = doGet("/project/$projectName")
+        def parsedBody = jsonValue(response.body(), Map)
 
         then:
         response.code() == 404
@@ -357,7 +357,7 @@ class ConfigSpec extends BaseContainer{
         def projectName = "RhetoricalMiscalculationElephant"
 
         when: "We check only the format of the response, regardless of the content"
-        def jsonResponseBody = client.doGet("/project/$projectName")
+        def jsonResponseBody = doGet("/project/$projectName")
         def responseString = jsonResponseBody.body().string()
         def validJsonParse = MAPPER.readValue(responseString, Object.class)
 
@@ -374,7 +374,7 @@ class ConfigSpec extends BaseContainer{
         def projectName = "RhetoricalMiscalculationElephant"
 
         when:
-        def jsonResponseBody = client.doGet("/project/$projectName/resources")
+        def jsonResponseBody = doGet("/project/$projectName/resources")
 
         then:
         !jsonResponseBody.successful
@@ -387,7 +387,7 @@ class ConfigSpec extends BaseContainer{
         def client = getClient()
 
         when:
-        def jsonResponseBody = client.doGet("/project/someProject/resources")
+        def jsonResponseBody = doGet("/project/someProject/resources")
         def validJsonParse = MAPPER.readValue(jsonResponseBody.body().string(), Object.class)
 
         then:
@@ -412,7 +412,7 @@ class ConfigSpec extends BaseContainer{
         ]
 
         when:
-        def response = client.doPost(
+        def response = doPost(
                 "/projects",
                 testProperties
         )
@@ -428,7 +428,7 @@ class ConfigSpec extends BaseContainer{
         def client = getClient()
 
         when: "YAML"
-        def yamlResponse = client.doGet("/project/$PROJECT_NAME/resources?format=yaml")
+        def yamlResponse = doGet("/project/$PROJECT_NAME/resources?format=yaml")
         def responseBody = yamlResponse.body().string()
         MAPPER.readValue(responseBody, Object.class)
 
@@ -443,7 +443,7 @@ class ConfigSpec extends BaseContainer{
         yaml != null
 
         when:
-        def jsonResponse = client.doGet("/project/$PROJECT_NAME/resources?format=json")
+        def jsonResponse = doGet("/project/$PROJECT_NAME/resources?format=json")
         def responseJsonBody = jsonResponse.body().string()
         def json = MAPPER.readValue(responseJsonBody, Object.class)
 
@@ -754,7 +754,7 @@ class ConfigSpec extends BaseContainer{
 
 
         when: "Update the first source with adding a new node"
-        def nodeUpdateResponse = client.doPost("/project/$projectName/source/1/resources", [
+        def nodeUpdateResponse = doPost("/project/$projectName/source/1/resources", [
             "mynode1": [
                 "nodename"   : "mynode1",
                 "description": "Updated node",
