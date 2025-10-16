@@ -34,18 +34,22 @@ class ImportSpec extends BaseContainer {
         )
 
         when: "We try to read readme content"
-        def readmeResponse = client.doGetAcceptAll("/project/${projectName}/readme.md")
-        assert readmeResponse.successful
-        String readmeContent = readmeResponse.body().string()
+        String readmeContent
+        try(def readmeResponse = client.doGetAcceptAll("/project/${projectName}/readme.md")) {
+            assert readmeResponse.successful
+            readmeContent = readmeResponse.body().string()
+        }
 
         then: "The content: "
         readmeContent != null
         readmeContent.contains("this is a readme file")
 
         when: "We try to read motd content"
-        def motdResponse = client.doGetAcceptAll("/project/${projectName}/motd.md")
-        assert motdResponse.successful
-        String motdContent = motdResponse.body().string()
+        String motdContent
+        try(def motdResponse = client.doGetAcceptAll("/project/${projectName}/motd.md")) {
+            assert motdResponse.successful
+            motdContent = motdResponse.body().string()
+        }
 
         then: "The content: "
         motdContent != null
