@@ -1296,7 +1296,7 @@ class JobExecutionSpec extends BaseContainer {
 
         // So we read the output file
         def execArgs5 = "cat $stepOutfile5"
-        def readResponseBody5 = post("/project/$projectName/run/command?exec=${execArgs5}", RunCommand)
+        def parsedReadBody5 = post("/project/$projectName/run/command?exec=${execArgs5}", RunCommand)
         String readExecId5 = parsedReadBody5.execution.id
 
         assert JobUtils.waitForExecution(
