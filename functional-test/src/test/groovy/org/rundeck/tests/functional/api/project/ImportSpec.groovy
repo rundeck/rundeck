@@ -27,9 +27,11 @@ class ImportSpec extends BaseContainer {
                 getClass().getResource(RESOURCE_ARCHIVE_TEST_README_DIR).getPath()
             )
         )
-        def responseImport = client.put(
-                "/project/${projectName}/import?jobUuidOption=remove&importConfig=true",
-                archiveJar)
+        client.put(
+            "/project/${projectName}/import?jobUuidOption=remove&importConfig=true",
+            archiveJar,
+            'application/zip'
+        )
 
         when: "We try to read readme content"
         def readmeResponse = client.doGetAcceptAll("/project/${projectName}/readme.md")
