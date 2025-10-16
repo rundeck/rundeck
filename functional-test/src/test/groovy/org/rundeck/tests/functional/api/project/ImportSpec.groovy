@@ -63,7 +63,6 @@ class ImportSpec extends BaseContainer {
         given:
         File tmpjar = createArchiveJarFile(projectName, new File(getClass().getResource(RESOURCE_ARCHIVE_TEST_DIR).getPath()))
         def mapper = new ObjectMapper()
-        def client = getClient()
 
         String projectName = "APIImportTest"
         Object projectJsonMap = [
@@ -77,8 +76,8 @@ class ImportSpec extends BaseContainer {
                 "description": "APIImportTest1",
         ]
 
-        def responseProject = client.post("/projects", projectJsonMap)
-        def responseProject1 = client.post("/projects", projectJsonMap1)
+        def responseProject = post("/projects", projectJsonMap, Map)
+        def responseProject1 = post("/projects", projectJsonMap1, Map)
 
         when: "we import the test zip to project $projectName"
         def responseImport1 = client.put(
