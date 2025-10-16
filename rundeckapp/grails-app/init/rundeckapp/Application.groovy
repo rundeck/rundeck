@@ -41,9 +41,22 @@ import io.swagger.v3.oas.annotations.tags.Tag
 
 @OpenAPIDefinition(
     info = @Info(
-        title = "Rundeck API",
-        version = "1.0.0"
+        title = "Rundeck / Runbook Automation API",
+        version = "1.0.0",
+        description = "Rundeck / Runbook Automation REST API for job automation, execution management, and system administration"
     ),
+    servers = [
+        @Server(
+            url = "{protocol}://{host}:{port}/api/{version}",
+            description = "Rundeck / Runbook Automation Server",
+            variables = [
+                @ServerVariable(name = "protocol", defaultValue = "https", allowableValues = ["http", "https"], description = "Protocol (http or https)"),
+                @ServerVariable(name = "host", defaultValue = "localhost", description = "Server hostname or IP address"),
+                @ServerVariable(name = "port", defaultValue = "4440", description = "Server port number"),
+                @ServerVariable(name = "version", defaultValue = "44", description = "API version number")
+            ]
+        )
+    ],
     tags = [
         @Tag(name = "Execution", description = "Job execution operations"),
         @Tag(name = "History", description = "Execution history operations"),
