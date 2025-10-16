@@ -2890,7 +2890,7 @@ Note: the JSON schema also supports a basic JSON array
         method = "GET",
         summary = "Execution Query",
         description = """Query for Executions based on Job or Execution details.""",
-        tags = ["Execution"],
+        tags = ["Job Executions"],
         parameters = [
             @Parameter(in=ParameterIn.PATH,name="project",description="Project name",schema=@Schema(type="string"),required = true),
             @Parameter(in=ParameterIn.QUERY,name="statusFilter",description="Execution status",schema=@Schema(type="string",allowableValues = ["running","succeeded", "failed" , "aborted"])),
@@ -3414,7 +3414,7 @@ Since: v14
         method = "GET",
         summary = "Execution Query Metrics",
         description = """Obtain metrics over the result set of an execution query.""",
-        tags = "Execution",
+        tags = "Job Executions",
         parameters = [
             @Parameter(in=ParameterIn.QUERY,name="project",description="Project name",schema=@Schema(type="string")),
             @Parameter(in=ParameterIn.QUERY,name="statusFilter",description="Execution status",schema=@Schema(type="string",allowableValues = ["running","succeeded", "failed" , "aborted"])),
@@ -3499,7 +3499,7 @@ So a value of `2w` would return executions that completed within the last two we
 
 Note: This endpoint has the same query parameters and response as the `/executions/metrics` endpoint.
 """,
-        tags = "Execution",
+        tags = "Job Executions",
         parameters = [
             @Parameter(in=ParameterIn.PATH,name="project",description="Project name",schema=@Schema(type="string"),required = true)
         ]

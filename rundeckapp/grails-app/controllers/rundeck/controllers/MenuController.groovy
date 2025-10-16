@@ -2210,7 +2210,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
 Since: V45
 ''',
-            tags=["Execution"],
+            tags=["Job Executions"],
             responses = @ApiResponse(
                     responseCode = "200",
                     description = '''Success response, with summary information.
@@ -3432,7 +3432,7 @@ Since: v14
 
 Authorization required: `read` for project resource type `event`
 ''',
-        tags = ['Execution'],
+        tags = ['Job Executions'],
         parameters = [
             @Parameter(
                 name = 'project',
