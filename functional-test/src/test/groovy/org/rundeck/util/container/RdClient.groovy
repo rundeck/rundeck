@@ -180,7 +180,7 @@ class RdClient {
         def builder = new Request.Builder()
                 .url(apiUrl(path))
                 .header('Accept', 'application/json')
-                .method("POST", requestBuilder)
+                .method(method, requestBuilder)
 
         httpClient.newCall(
                 builder.build()
