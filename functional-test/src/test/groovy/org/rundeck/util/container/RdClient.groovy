@@ -188,7 +188,7 @@ class RdClient {
             if(!resp.successful){
                 throw new Exception("GET request failed: " + resp.code() + " " + resp.body().string())
             }
-            return mapper.readValue(resp.body().byteStream(), clazz)
+            return jsonValue(resp.body(), clazz)
         }
     }
 
@@ -214,11 +214,12 @@ class RdClient {
         ).execute()
     }
 
-    void put(final String path, final File file, final String contentType) {
+    <T> T put(final String path, final File file, final String contentType, Class<T> clazz=Map) {
         try(def response = doPut(path, file, contentType)) {
             if (!response.isSuccessful()) {
                 throw new IOException("Failed to put file to rundeck: " + response.code() + " " + response.body().string())
             }
+            return jsonValue(response.body(),clazz)
         }
     }
 
@@ -280,11 +281,12 @@ class RdClient {
      * @param contentType The MIME type of the file being sent, e.g., "image/jpeg" for JPEG images. This string must correspond to the file's actual content type.
      * @throws IOException If an error occurs during the network request. This includes file read errors, network connectivity issues, and server response errors. Callers should handle this exception.
      */
-    void post(final String path, final File file, final String contentType) {
+    <T> T post(final String path, final File file, final String contentType, Class<T> clazz = Map) {
         try (def resp = doPost(path, file, contentType)) {
             if (!resp.isSuccessful()) {
                 throw new IOException("Failed to post file to rundeck: " + resp.code() + " " + resp.body().string())
             }
+            return jsonValue(resp.body(), clazz)
         }
     }
 
