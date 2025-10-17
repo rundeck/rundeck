@@ -401,6 +401,9 @@ const messages = {
   "jobquery.title.adhocRemoteStringFilter": "Shell Command",
   "jobquery.title.adhocFilepathFilter": "Script File Path",
   "jobquery.title.argStringFilter": "Script File Arguments",
+  "jobquery.title.optionFilter": "Options",
+  "jobquery.title.optionFilter.label":
+    "Job Options by pair, name or value (e.g. -sleep 10 or -debug 1 -env prod or -debug)",
   "page.unsaved.changes": "You have unsaved changes",
   "edit.nodes.file": "Edit Nodes File",
   "project.node.file.source.label": "Source",

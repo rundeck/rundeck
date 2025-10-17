@@ -73,4 +73,29 @@ class ExecQuerySpec extends Specification {
         'qq54q51y'      | _
         'wrong &lt;' | _
     }
+
+    def "optionFilter field can be set and retrieved"() {
+        given:
+        def query = new ExecQuery()
+
+        when:
+        query.optionFilter = "-APPLICATION_NAME app1"
+
+        then:
+        query.optionFilter == "-APPLICATION_NAME app1"
+        !query.hasErrors()
+    }
+
+    def "optionFilter field can be null"() {
+        given:
+        def query = new ExecQuery()
+
+        when:
+        query.optionFilter = null
+        query.validate()
+
+        then:
+        query.optionFilter == null
+        !query.hasErrors()
+    }
 }

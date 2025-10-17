@@ -44,6 +44,7 @@
             'userFilter',
             'statFilter',
             'filter',
+            'optionFilter',
             'recentFilter',
             'startbeforeFilter',
             'startafterFilter',
@@ -62,6 +63,7 @@ jobquery.title.jobIdFilter
 jobquery.title.userFilter
 jobquery.title.statFilter
 jobquery.title.filter
+jobquery.title.optionFilter
 jobquery.title.recentFilter
 jobquery.title.startbeforeFilter
 jobquery.title.startafterFilter
