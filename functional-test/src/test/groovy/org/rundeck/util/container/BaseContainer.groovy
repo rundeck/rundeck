@@ -453,6 +453,9 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
      * @return
      */
     private Response closeLater(Response response) {
+        if(response == null){
+            return null
+        }
         toClose << response
         return response
     }
@@ -673,10 +676,10 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
 
         def checkIsRundeckApiResponding = {
             try {
-                def response = closeLater client.doGet("/system/info")
+                def response = closeLater(client.doGet("/system/info"))
                 return (response != null && response.code() == 200)
             } catch (Exception e) {
-                LoggerFactory.getLogger(BaseContainer.class).info(e.getMessage())
+                LoggerFactory.getLogger(BaseContainer.class).info(e.getMessage(), e)
                 return false
             }
         }
@@ -686,7 +689,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
                 {
                     it
                 },
-                WaitingTime.XTRA_EXCESSIVE,
+                WaitingTime.ABSURDLY_EXCESSIVE,
                 WaitingTime.LOW
 
         )
