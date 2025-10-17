@@ -9,7 +9,7 @@ import org.rundeck.util.container.BaseContainer
 @APITest
 class JobExecutionOnMultipleNodesSpec extends BaseContainer {
 
-    public static final String TEST_PROJECT = "JobExecutionOnMultipleNodesSpec"
+    public static final String TEST_PROJECT = "core-jsch-executor-test"
     public static final String TEST_SSH_ARCHIVE_DIR = "/projects-import/core-jsch-executor-test"
     public static final String NODE_KEY_PASSPHRASE = "testpassphrase123"
     public static final String NODE_USER_PASSWORD = "testpassword123"
@@ -121,6 +121,6 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
     }
 
     private static List<String> getOrderedNodesListExecutedOn(Map completedJob) {
-        completedJob.entries.inject([], { result, x -> result.add(x.node); return result })
+        completedJob.entries.inject(new HashSet<String>(), { result, x -> result.add(x.node); return result }).toList()
     }
 }
