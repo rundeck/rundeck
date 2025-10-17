@@ -6,13 +6,13 @@ set -e
 
 test_status(){
 	echo "test_status"
-	service rundeckd status | grep 'is running' || { echo "FAILED" ; exit 2 ; }
+	/etc/rc.d/init.d/rundeckd status | grep 'is running' || { echo "FAILED" ; exit 2 ; }
 	echo "OK"
 }
 
 test_start_twice(){
 	echo "test_start_twice"
-	service rundeckd start | grep 'Already started' || { echo "FAILED" ; exit 2 ; }
+	/etc/rc.d/init.d/rundeckd start | grep 'Already started' || { echo "FAILED" ; exit 2 ; }
 
 	echo "OK"
 }

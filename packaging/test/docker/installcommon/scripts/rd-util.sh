@@ -43,7 +43,7 @@ wait_for_start(){
 	        exit 1
 	    }
 	    #tail -n 5 "$LOGFILE"
-	    service rundeckd status || {
+	    /etc/rc.d/init.d/rundeckd status || {
 	        echo >&2 "FAIL: rundeckd is not running. Exiting."
 		cat "${LOGFILE}"
 	        exit 1
@@ -56,7 +56,7 @@ wait_for_start(){
 }
 entry_start(){
 	if [ "$1" != "-skipstart" ]; then
-		service rundeckd start
+		/etc/rc.d/init.d/rundeckd start
 		wait_for_start /var/log/rundeck/service.log
 	else
 		shift
