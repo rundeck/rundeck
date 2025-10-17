@@ -26,6 +26,6 @@ run(){
 		echo $DEB
 		cp -pv "$DEB" "$DIR/rundeck.${PACKAGE_TYPE}"
 		docker build --no-cache "$DIR" -t "$TAG":latest
-		docker run -it -e "PACKAGE=/rundeck/rundeck.${PACKAGE_TYPE}" "$TAG":latest -test
+		docker run --rm -v /sys/fs/cgroup:/sys/fs/cgroup:ro -e "PACKAGE=/rundeck/rundeck.${PACKAGE_TYPE}" "$TAG":latest -test
 	done
 }
