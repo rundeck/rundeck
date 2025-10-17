@@ -46,7 +46,12 @@ public enum Features implements FeaturesDefinition{
     NEW_LOCAL_NODE_EXECUTOR("newLocalNodeExecutor"),
     NODE_EXECUTOR_SECURE_INPUT("nodeExecutorSecureInput"),
     PUBLIC_KEYS_DOWNLOAD("publicKeysDownload"),
-    GUI_HIDE_ROI_INSTRUCTIONS("guiHideRoiInstructions")
+    GUI_HIDE_ROI_INSTRUCTIONS("guiHideRoiInstructions"),
+    EXECUTION_CLEANUP_ENABLE("defaultExecutionCleanup"),
+    EXECUTION_CLEANUP_DAYS_TO_KEEP("defaultExecutionDaysToKeep"),
+    EXECUTION_CLEANUP_MINIMUM_TO_KEEP("defaultExecutionMinimumToKeep"),
+    EXECUTION_CLEANUP_MAXIMUM_DELETION_SIZE("defaultExecutionMaximumDeletionSize"),
+    EXECUTION_CLEANUP_SCHEDULE_CRON("defaultExecutionCleanupScheduleCron")
     ;
 
     private final String propertyName;

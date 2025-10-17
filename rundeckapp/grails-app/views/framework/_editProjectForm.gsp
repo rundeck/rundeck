@@ -98,6 +98,11 @@
             <div class="text-warning"><g:enc>${projectDescriptionError}</g:enc></div>
         </g:if>
     </div>
+    <g:if test="${enableCleanHistory}">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> <g:message code="project.execution.cleanup.default.enabled" default="Execution cleanup is enabled by default for new projects"/>
+        </div>
+    </g:if>
   </div>
 <feature:enabled name="cleanExecutionsHistoryJob">
   <div class="tab-pane" id="tab_history">
@@ -151,7 +156,8 @@
         <div class="form-group">
             %{--<div class="panel panel-default panel-tab-pane crontab tabtarget"  >--}%
             <div class="${labelColSize}  control-label text-form-label">
-                <g:message code="execution.history.cleanup.schedule" default="Schedule clean history job (Cron expression). Default: 0 0 0 1/1 * ? * (Every days on 12:00 AM)"/>
+            <g:message code="execution.history.cleanup.schedule" default="Schedule clean history job (Cron expression).
+            Default: 0 0 0 1/1 * ? * (Every days on 12:00 AM)"/>
             </div>
             <div class="row">
                 <div class="col-sm-8">
