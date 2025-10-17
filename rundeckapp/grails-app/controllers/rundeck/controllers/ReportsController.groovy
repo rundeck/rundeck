@@ -355,7 +355,7 @@ class ReportsController extends ControllerBase{
         summary = 'Listing History',
         description = '''
 List the event history for a project.''',
-        tags = ['history'],
+        tags = ['History'],
         parameters = [
             @Parameter(
                 name = 'project',
