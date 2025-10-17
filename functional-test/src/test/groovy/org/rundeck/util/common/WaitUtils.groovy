@@ -34,6 +34,43 @@ class WaitUtils  {
         }
         return r
     }
+    /** Waits for the resource to be in the expected state by retrieving it and evaluating its acceptance as many times as needed.
+     *  Resource can be rejected early if the resourceRejectionEvaluator returns true.
+     * @param retryableResourceRetriever executed multiple times to retrieve the current state of the R resource.
+     * @param resourceAcceptanceEvaluator evaluates the state of the resource and and returns true if the resource is accepted. Defaults to the R resource truthy value.
+     * @param resourceRejectionEvaluator evaluates the state of the resource and and returns true if the resource is rejected early. Defaults to false.
+     * @param timeout max duration to wait for the resource to reach the expected state.
+     * @param checkPeriod time to wait between each check.
+     * @return the resource that met the acceptance criteria.
+     * @throws ResourceAcceptanceTimeoutException if the timeout is reached waiting for the resource to reach the expected state.
+     */
+    @TypeChecked
+    static <R> R waitForOrReject(
+            Supplier<R> retryableResourceRetriever,
+            Function<R, Boolean> resourceAcceptanceEvaluator = { it ? true : false },
+            Function<R, Boolean> resourceRejectionEvaluator = { false },
+            Duration timeout = WaitingTime.MODERATE,
+            Duration checkPeriod = WaitingTime.LOW) {
+        R r = retryableResourceRetriever()
+        Boolean acceptanceResult = resourceAcceptanceEvaluator(r)
+        Boolean rejected = resourceRejectionEvaluator?resourceRejectionEvaluator(r):false
+        long initTime = System.currentTimeMillis()
+        while (!acceptanceResult && !rejected) {
+            Thread.sleep(Math.min(checkPeriod.toMillis(), timeout.toMillis()))
+            if ((System.currentTimeMillis() - initTime) >= timeout.toMillis()) {
+                throw new ResourceAcceptanceTimeoutException("Timeout reached (${timeout.toSeconds()} seconds) waiting for ${r} to reach the desired state")
+            }
+            r = retryableResourceRetriever.get()
+            acceptanceResult = resourceAcceptanceEvaluator.apply(r)
+            if(!acceptanceResult && resourceRejectionEvaluator) {
+                rejected = resourceRejectionEvaluator(r)
+            }
+        }
+        if(rejected && !acceptanceResult){
+            throw new ResourceAcceptanceTimeoutException("Resource ${r} reached a rejected state")
+        }
+        return r
+    }
 
     /** Waits for the resource to be in the expected state by retrieving it by its identifier and evaluating its acceptance as many times as needed.
      * @param resourceId resource identifier that is passable into the resourceRetriever as an input argument.
@@ -52,9 +89,37 @@ class WaitUtils  {
                                       Function<RID, String> acceptanceFailureOutputProducer = { RID id -> "" },
                                       Duration timeout = WaitingTime.MODERATE,
                                       Duration checkPeriod = WaitingTime.LOW) {
+        return waitForResourceOrReject(resourceId,
+                resourceRetriever,
+                resourceAcceptanceEvaluator,
+                null,
+                acceptanceFailureOutputProducer,
+                timeout,
+                checkPeriod)
+    }
+
+    /** Waits for the resource to be in the expected state by retrieving it by its identifier and evaluating its acceptance as many times as needed.
+     * @param resourceId resource identifier that is passable into the resourceRetriever as an input argument.
+     * @param resourceRetriever Function that takes the RID resourceId and returns the current state of the R resource.
+     * @param resourceAcceptanceEvaluator Function that evaluates the state of the resource by taking a R resource and returning true of the resource is accepted. Defaults to the R resource truthy value.
+     * @param acceptanceFailureOutputProducer Function that produces a string output when the resource acceptance evaluator returns false to be included in the exception message.
+     * @param timeout max duration to wait for the resource to reach the expected state.
+     * @param checkPeriod time to wait between each check.
+     * @return the resource that met the acceptance criteria.
+     * @throws ResourceAcceptanceTimeoutException if the timeout is reached waiting for the resource to reach the expected state.
+     */
+    @TypeChecked
+    static <RID, R> R waitForResourceOrReject(RID resourceId,
+                                      Function<RID, R> resourceRetriever,
+                                      Function<R, Boolean> resourceAcceptanceEvaluator = { it ? true : false },
+                                      Function<R, Boolean> rejectResourceEvaluator = { false },
+                                      Function<RID, String> acceptanceFailureOutputProducer = { RID id -> "" },
+                                      Duration timeout = WaitingTime.MODERATE,
+                                      Duration checkPeriod = WaitingTime.LOW) {
         try {
-            return waitFor( { resourceRetriever.apply(resourceId) },
+            return waitForOrReject( { resourceRetriever.apply(resourceId) },
                     resourceAcceptanceEvaluator,
+                    rejectResourceEvaluator,
                     timeout,
                     checkPeriod)
         } catch (ResourceAcceptanceTimeoutException e) {

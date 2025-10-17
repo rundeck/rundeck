@@ -13,7 +13,7 @@ import org.rundeck.util.common.scm.ScmIntegration
 import org.rundeck.util.container.BaseContainer
 
 @APITest
-class ScmPluginImportScheduledJobSpec extends BaseContainer {
+class ScmPluginImportScheduledJobSpec extends ScmBaseContainer {
 
     static final String PROJECT_NAME = UUID.randomUUID().toString()
     static final GiteaApiRemoteRepo remoteRepo = new GiteaApiRemoteRepo("repo-${UUID.randomUUID()}")

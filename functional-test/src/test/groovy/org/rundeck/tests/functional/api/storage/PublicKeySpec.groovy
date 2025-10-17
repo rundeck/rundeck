@@ -29,6 +29,8 @@ class PublicKeySpec extends BaseContainer {
             response.code() == 201
             response.message() == "Created"
         }
+        cleanup:
+        response.close()
     }
 
     def "test GET storage/keys"() {

@@ -20,32 +20,36 @@ class ImportSpec extends BaseContainer {
         Object projectJsonMap = [
                 "name": projectName
         ]
-        def responseProject = client.doPost("/projects", projectJsonMap)
-        assert responseProject.successful
+        def responseProject = client.post("/projects", projectJsonMap)
         def archiveJar = createArchiveJarFile(
             projectName,
             new File(
                 getClass().getResource(RESOURCE_ARCHIVE_TEST_README_DIR).getPath()
             )
         )
-        def responseImport = client.doPut(
-                "/project/${projectName}/import?jobUuidOption=remove&importConfig=true",
-                archiveJar)
-        responseImport.successful
+        client.put(
+            "/project/${projectName}/import?jobUuidOption=remove&importConfig=true",
+            archiveJar,
+            'application/zip'
+        )
 
         when: "We try to read readme content"
-        def readmeResponse = client.doGetAcceptAll("/project/${projectName}/readme.md")
-        assert readmeResponse.successful
-        String readmeContent = readmeResponse.body().string()
+        String readmeContent
+        try(def readmeResponse = client.doGetAcceptAll("/project/${projectName}/readme.md")) {
+            assert readmeResponse.successful
+            readmeContent = readmeResponse.body().string()
+        }
 
         then: "The content: "
         readmeContent != null
         readmeContent.contains("this is a readme file")
 
         when: "We try to read motd content"
-        def motdResponse = client.doGetAcceptAll("/project/${projectName}/motd.md")
-        assert motdResponse.successful
-        String motdContent = motdResponse.body().string()
+        String motdContent
+        try(def motdResponse = client.doGetAcceptAll("/project/${projectName}/motd.md")) {
+            assert motdResponse.successful
+            motdContent = motdResponse.body().string()
+        }
 
         then: "The content: "
         motdContent != null
@@ -59,7 +63,6 @@ class ImportSpec extends BaseContainer {
         given:
         File tmpjar = createArchiveJarFile(projectName, new File(getClass().getResource(RESOURCE_ARCHIVE_TEST_DIR).getPath()))
         def mapper = new ObjectMapper()
-        def client = getClient()
 
         String projectName = "APIImportTest"
         Object projectJsonMap = [
@@ -73,17 +76,14 @@ class ImportSpec extends BaseContainer {
                 "description": "APIImportTest1",
         ]
 
-        def responseProject = client.doPost("/projects", projectJsonMap)
-        def responseProject1 = client.doPost("/projects", projectJsonMap1)
-
-        assert responseProject.successful
-        assert responseProject1.successful
+        def responseProject = post("/projects", projectJsonMap, Map)
+        def responseProject1 = post("/projects", projectJsonMap1, Map)
 
         when: "we import the test zip to project $projectName"
-        def responseImport1 = client.doPut(
+        def responseImport1 = client.put(
                 "/project/${projectName}/import?jobUuidOption=preserve",
-                tmpjar)
-        responseImport1.successful
+                tmpjar,
+                'application/zip')
 
         then: "we must have 3 jobs and 6 execs"
         assertJobCountForProject(
@@ -100,12 +100,12 @@ class ImportSpec extends BaseContainer {
         )
 
         when: "We import the archive to test project 2"
-        def responseImport2 = client.doPut(
+        Map parsedResponse = client.put(
                 "/project/${projectName1}/import?jobUuidOption=preserve",
-                tmpjar)
+                tmpjar,
+                'application/zip')
 
         then: "Won't succeed because the jobUuidOption, no jobs imported"
-        Object parsedResponse = mapper.readValue(responseImport2.body().string(), Object.class)
         parsedResponse.import_status == "failed"
         !parsedResponse.successful
         assertJobCountForProject(
@@ -122,12 +122,12 @@ class ImportSpec extends BaseContainer {
         )
 
         when: "We import the archive to test project 2 with valid jobUuidOption"
-        def responseImport3 = client.doPut(
+        Map parsedResponse1 = client.put(
             "/project/${projectName1}/import?jobUuidOption=remove",
-            tmpjar)
+            tmpjar,
+            'application/zip')
 
         then: "Jobs imported, executions duplicated"
-        Object parsedResponse1 = mapper.readValue(responseImport3.body().string(), Object.class)
         parsedResponse1.import_status == "successful"
         parsedResponse1.successful
         assertJobCountForProject(
@@ -144,12 +144,12 @@ class ImportSpec extends BaseContainer {
         )
 
         when: "We import the archive to test project 2 without import execs"
-        def responseImport4 = client.doPut(
+        Map parsedResponse2 = client.put(
                 "/project/${projectName1}/import?importExecutions=false&jobUuidOption=remove",
-                tmpjar)
+                tmpjar,
+                'application/zip')
 
         then: "Import succeeds"
-        Object parsedResponse2 = mapper.readValue(responseImport4.body().string(), Object.class)
         parsedResponse2.import_status == "successful"
         parsedResponse2.successful
         assertJobCountForProject(

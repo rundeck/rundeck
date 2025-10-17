@@ -31,6 +31,9 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
         //wait for ansible node to be available
         waitingResourceEnabled(TEST_PROJECT, "ssh-node")
     }
+    def cleanupSpec(){
+        deleteProject(TEST_PROJECT)
+    }
 
     def "Create a job that executes on all nodes"() {
         given:
@@ -118,6 +121,6 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
     }
 
     private static List<String> getOrderedNodesListExecutedOn(Map completedJob) {
-        completedJob.entries.inject([], { result, x -> result.add(x.node); return result })
+        completedJob.entries.inject(new HashSet<String>(), { result, x -> result.add(x.node); return result }).toList()
     }
 }

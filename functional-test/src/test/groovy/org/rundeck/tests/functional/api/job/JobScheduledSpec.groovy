@@ -128,7 +128,6 @@ class JobScheduledSpec extends BaseContainer {
         ]
 
         def responseProject = createSampleProject(projectJsonMap)
-        assert responseProject.successful
 
         def jobName1 = "scheduledJob1"
         def jobXml1 = JobUtils.generateScheduledJobsXml(jobName1)
@@ -143,7 +142,7 @@ class JobScheduledSpec extends BaseContainer {
         job1Detail?.scheduleEnabled
 
         when: "TEST: when schedule is on, job does execute"
-        def disableSchedulesResponse = client.doPostWithoutBody("/job/${job1Id}/schedule/disable")
+        def disableSchedulesResponse = doPost("/job/${job1Id}/schedule/disable")
         assert disableSchedulesResponse.successful
         def job1DetailAfterDisable = JobUtils.getJobDetailsById(job1Id as String, MAPPER, client)
 
@@ -151,7 +150,7 @@ class JobScheduledSpec extends BaseContainer {
         !job1DetailAfterDisable?.scheduleEnabled
 
         when: "TEST: bulk job schedule enable"
-        def enableSchedulesResponse = client.doPostWithoutBody("/job/${job1Id}/schedule/enable")
+        def enableSchedulesResponse = doPost("/job/${job1Id}/schedule/enable")
         assert enableSchedulesResponse.successful
         def job1DetailAfterEnable = JobUtils.getJobDetailsById(job1Id as String, MAPPER, client)
 
@@ -176,7 +175,6 @@ class JobScheduledSpec extends BaseContainer {
         ]
 
         def responseProject = createSampleProject(projectJsonMap)
-        assert responseProject.successful
 
         def jobName1 = "scheduledJob1"
         def jobXml1 = JobUtils.generateScheduledJobsXml(jobName1)
@@ -247,7 +245,6 @@ class JobScheduledSpec extends BaseContainer {
         ]
 
         def responseProject = createSampleProject(projectJsonMap)
-        assert responseProject.successful
 
         def jobName1 = "xmljob"
         def jobXml1 = JobUtils.generateScheduledExecutionXml(jobName1)
@@ -276,7 +273,7 @@ class JobScheduledSpec extends BaseContainer {
         parsedExecutionsResponseForExecution1AfterExec.executions.size() == 1
 
         when: "TEST: when execution is off, job doesn't execute"
-        def disabledJobsResponse = client.doPostWithoutBody("/job/${job1Id}/execution/disable")
+        def disabledJobsResponse = doPost("/job/${job1Id}/execution/disable")
         assert disabledJobsResponse.successful
 
         def jobExecResponseFor1AfterDisable = JobUtils.executeJob(job1Id, client)
@@ -289,7 +286,7 @@ class JobScheduledSpec extends BaseContainer {
         parsedExecutionsResponseForExecution1AfterDisable.executions.size() == 1
 
         when: "TEST: when execution is off and then on again, job does execute"
-        def enabledJobsResponse = client.doPostWithoutBody("/job/${job1Id}/execution/enable")
+        def enabledJobsResponse = doPost("/job/${job1Id}/execution/enable")
         assert enabledJobsResponse.successful
 
         // Necessary since the api needs to breathe after enable execs
@@ -323,7 +320,6 @@ class JobScheduledSpec extends BaseContainer {
         ]
 
         def responseProject = createSampleProject(projectJsonMap)
-        assert responseProject.successful
 
         def jobName1 = "xmljob"
         def jobXml1 = JobUtils.generateScheduledExecutionXml(jobName1)
@@ -460,7 +456,7 @@ class JobScheduledSpec extends BaseContainer {
     }
 
     private def createSampleProject(Object projectJsonMap) {
-        return client.doPost("/projects", projectJsonMap)
+        return client.post("/projects", projectJsonMap)
     }
 
     private def createTempFile(String content) {

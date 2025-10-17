@@ -33,6 +33,9 @@ class CommandOnMultipleNodesSpec extends SeleniumBase{
         )
         waitingResourceEnabled(TEST_PROJECT, "ssh-node")
     }
+    def cleanupSpec(){
+        deleteProject(TEST_PROJECT)
+    }
 
     def setup() {
         def loginPage = go LoginPage

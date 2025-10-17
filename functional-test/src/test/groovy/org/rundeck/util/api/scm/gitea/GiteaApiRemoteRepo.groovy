@@ -50,12 +50,21 @@ class GiteaApiRemoteRepo {
          *  Assuming the race condition, wait and retry is being introduced with a generous wait allowance.
          *  If the failures continue, it would be reasonable to assume the permanent unhealthy state and evaluate alternative fixes.
          */
-        def repoCreate = { doPost(CREATE_REPO_ENDPOINT, new CreateRepoRequest(name: this.repoName)) }
-        def repoCreateSuccessVerify = { Response r ->
-            if (!r.isSuccessful()) {
-                log.warn("Failed to create repository: " + this.repoName + " " + r.code() + " " + r.body().string())
+        def repoCreate = {
+            try{
+                return doPost(CREATE_REPO_ENDPOINT, new CreateRepoRequest(name: this.repoName))
+            } catch (IOException e){
+                log.warn("IOException during Gitea repo create attempt: " + e.getMessage(), e)
             }
-            r.isSuccessful()
+            return null
+        }
+        def repoCreateSuccessVerify = { Response r ->
+            if (r==null || !r.isSuccessful()) {
+                log.warn("Failed to create repository: " + this.repoName + " " + r?.code() + " " + r?.body()?.string())
+            }else {
+                r.close()
+                return r.isSuccessful()
+            }
         }
 
         try {
