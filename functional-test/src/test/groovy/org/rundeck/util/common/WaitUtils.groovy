@@ -53,7 +53,7 @@ class WaitUtils  {
             Duration checkPeriod = WaitingTime.LOW) {
         R r = retryableResourceRetriever()
         Boolean acceptanceResult = resourceAcceptanceEvaluator(r)
-        Boolean rejected = resourceRejectionEvaluator(r)
+        Boolean rejected = resourceRejectionEvaluator?resourceRejectionEvaluator(r):false
         long initTime = System.currentTimeMillis()
         while (!acceptanceResult && !rejected) {
             Thread.sleep(Math.min(checkPeriod.toMillis(), timeout.toMillis()))
@@ -62,7 +62,7 @@ class WaitUtils  {
             }
             r = retryableResourceRetriever.get()
             acceptanceResult = resourceAcceptanceEvaluator.apply(r)
-            if(!acceptanceResult) {
+            if(!acceptanceResult && resourceRejectionEvaluator) {
                 rejected = resourceRejectionEvaluator(r)
             }
         }
