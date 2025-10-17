@@ -27,6 +27,9 @@
         <g:if test="${option.optionType=='file'}">
             <g:icon name="file"/>
         </g:if>
+        <g:if test="${option.optionType=='multiline'}">
+            <i class="far fa-list-alt"></i>
+        </g:if>
         <span class=" ${option?.required ? 'required' : ''}" title="${enc(attr:option?.description)}${option?.required ? ' (Required)' : ''}"><g:enc>${option.name}</g:enc></span>
         <span class="">
             <g:truncate max="20" showtitle="true"><g:enc>${option.secureInput && option.defaultValue?'****':option.defaultValue}</g:enc></g:truncate><g:enc>${option.multivalued?'(+)':''}</g:enc>
