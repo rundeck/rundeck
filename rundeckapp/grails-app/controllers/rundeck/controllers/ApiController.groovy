@@ -88,10 +88,12 @@ class ApiController extends ControllerBase{
     @Operation(
         method = 'GET',
         summary = 'Get API Information',
-        description = '''Return basic information about the Rundeck API.
+        description = '''Returns basic information about the Rundeck API including the current API version and base URL.
 
-Includes current latest API Version, and base API URL.''',
-        tags = ['general'],
+This endpoint provides essential API metadata that clients can use to determine available functionality and construct properly formatted API requests. The response includes the highest supported API version number and the base URL for making subsequent API calls.
+
+Use this endpoint to verify API connectivity and determine the correct API version to use for your integration.''',
+        tags = ['API'],
         responses = @ApiResponse(
             responseCode = '200',
             description = 'API Information',
@@ -190,7 +192,7 @@ Includes current latest API Version, and base API URL.''',
             examples = @ExampleObject('{"error":true,"errorCode":"api.error.code","message":"not ok","apiversion":41}')
         )
     )
-    @Tag(name = "system")
+    @Tag(name = "Metrics")
     def apiMetrics(String name) {
         if (!apiService.requireVersion(request, response, ApiVersions.V25)) {
             return
@@ -237,7 +239,7 @@ Includes current latest API Version, and base API URL.''',
 
 
 
-    @Tag(name = "system")
+    @Tag(name = "System")
     /**
      * API endpoint to query system features' toggle status: True/False for On/Off
      *
@@ -288,7 +290,7 @@ Includes current latest API Version, and base API URL.''',
 
     }
 
-    @Tag(name = "system")
+    @Tag(name = "System")
     /**
      * API endpoint to query all system features' toggle status: True/False for On/Off
      *
@@ -390,7 +392,7 @@ Includes current latest API Version, and base API URL.''',
 
         ]
     )
-    @Tag(name = "tokens")
+    @Tag(name = "Tokens")
     @CompileStatic
     def apiTokenGet(String tokenid) {
         AuthenticationToken oldtoken = validateTokenRequest(tokenid)
@@ -459,7 +461,7 @@ Includes current latest API Version, and base API URL.''',
             )
         ]
     )
-    @Tag(name = "tokens")
+    @Tag(name = "Tokens")
     @CompileStatic
     def apiTokenDelete(String tokenid) {
         AuthenticationToken oldtoken = validateTokenRequest(tokenid)
@@ -501,7 +503,7 @@ Includes current latest API Version, and base API URL.''',
 
         ]
     )
-    @Tag(name = "tokens")
+    @Tag(name = "Tokens")
     /**
      * GET /api/11/tokens/$user?
      */
@@ -615,7 +617,7 @@ Since: v11
             )
         ]
     )
-    @Tag(name = "tokens")
+    @Tag(name = "Tokens")
     /**
      * POST /api/11/tokens/$user?
      * @return
@@ -760,7 +762,7 @@ Since: v11
 
         ]
     )
-    @Tag(name = "tokens")
+    @Tag(name = "Tokens")
     /**
      * /api/19/tokens/$user/removeExpired
      */
@@ -812,7 +814,7 @@ Since: v11
     )
     @ApiResponse(responseCode = "200", description = "System info response", content = @Content(mediaType = "application/json",
             schema = @Schema(implementation= SystemInfoModel.class)))
-    @Tag(name = "system")
+    @Tag(name = "System")
     def apiSystemInfo(){
         if (!apiService.requireApi(request, response)) {
             return

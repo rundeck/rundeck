@@ -171,7 +171,7 @@ class PluginController extends ControllerBase {
 
 Since: v33
 ''',
-        tags = ['plugins'],
+        tags = ['Plugins'],
         responses = @ApiResponse(
             responseCode = '200',
             description = 'List of Plugins',
@@ -248,7 +248,7 @@ Since: v33
         description = '''Get detailed information about a plugin provide.
 
 Since: v49''',
-        tags = ['plugins'],
+        tags = ['Plugins'],
         responses = @ApiResponse(
             responseCode = '200',
             description = 'Plugin Provider detail',

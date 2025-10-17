@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.security.SecurityScheme
 import io.swagger.v3.oas.annotations.servers.Server
 import io.swagger.v3.oas.annotations.servers.ServerVariable
+import io.swagger.v3.oas.annotations.tags.Tag
 import liquibase.exception.LockException
 import org.rundeck.app.bootstrap.PreBootstrap
 import org.springframework.boot.ApplicationArguments
@@ -35,29 +36,58 @@ import java.nio.file.Paths
 
 @OpenAPIDefinition(
     info = @Info(
-        title = "Rundeck",
+        title = "Rundeck / Runbook Automation API",
         version = ApiVersions.API_CURRENT_VERSION_STR,
-        description = "Rundeck provides a Web API for use with your applications.",
-        license = @License(name = "Apache 2.0", url = "https://www.apache.org/licenses/LICENSE-2.0.html")
+        description = "Rundeck / Runbook Automation REST API for job automation, execution management, and system administration"
     ),
     externalDocs = @ExternalDocumentation(
         description = 'Original Rundeck API Documentation',
         url = 'https://docs.rundeck.com/docs/api/rundeck-api.html'
     ),
-    security = @SecurityRequirement(name = "rundeckApiToken"),
-    servers = @Server(
-        url = '{host}/api/{apiversion}',
-        variables = [
-            @ServerVariable(
-                name = 'apiversion',
-                defaultValue = '44' //NB: spec generation doesn't seem to accept a constant string :(
-            ),
-            @ServerVariable(
-                name = 'host',
-                defaultValue = 'http://localhost:4440'
-            )
-        ]
-    )
+    servers = [
+        @Server(
+            url = "{protocol}://{host}:{port}/api/{version}",
+            description = "Rundeck / Runbook Automation Server",
+            variables = [
+                @ServerVariable(name = "protocol", defaultValue = "https", allowableValues = ["http", "https"], description = "Protocol (http or https)"),
+                @ServerVariable(name = "host", defaultValue = "localhost", description = "Server hostname or IP address"),
+                @ServerVariable(name = "port", defaultValue = "4440", description = "Server port number"),
+                @ServerVariable(name = "version", defaultValue = "44", description = "API version number")
+            ]
+        )
+    ],
+    security = [
+        @SecurityRequirement(name = "rundeckApiToken")
+    ],
+    tags = [
+        @Tag(name = "ACL", description = "Access Control List operations"),
+        @Tag(name = "Ad Hoc", description = "Ad-hoc command execution operations"),
+        @Tag(name = "API", description = "API information and utilities"),
+        @Tag(name = "Authorization", description = "Check User Authorization operations"),
+        @Tag(name = "Calendars", description = "Calendar management operations"),
+        @Tag(name = "Cluster", description = "Cluster management operations"),
+        @Tag(name = "Configuration", description = "Configuration management"),
+        @Tag(name = "Execution Mode", description = "Execution Mode operations"),
+        @Tag(name = "Health", description = "Health check operations"),
+        @Tag(name = "History", description = "Execution history operations"),
+        @Tag(name = "Jobs", description = "Job management operations"),
+        @Tag(name = "Job Executions", description = "Job execution operations"),
+        @Tag(name = "Key Storage", description = "Key storage operations"),
+        @Tag(name = "License", description = "License management operations"),
+        @Tag(name = "Log Storage", description = "Log storage operations"),
+        @Tag(name = "Metrics", description = "Metrics and monitoring operations"),
+        @Tag(name = "Plugins", description = "Plugin management operations"),
+        @Tag(name = "Project", description = "Project management operations"),
+        @Tag(name = "ROI", description = "Return on Investment metrics operations"),
+        @Tag(name = "Runner", description = "Runner management operations"),
+        @Tag(name = "SCM", description = "Source Control Management operations"),
+        @Tag(name = "System", description = "System operations"),
+        @Tag(name = "Tokens", description = "API token operations"),
+        @Tag(name = "Tours", description = "User interface tour operations"),
+        @Tag(name = "User", description = "User management operations"),
+        @Tag(name = "User Class", description = "User Class management operations"),
+        @Tag(name = "Webhook", description = "Webhook operations")
+    ]
 )
 @SecurityScheme(
     name = "rundeckApiToken",

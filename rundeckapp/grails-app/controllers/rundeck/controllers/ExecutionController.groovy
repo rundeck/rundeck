@@ -1126,7 +1126,7 @@ this Log Entry.""")
             )
         ]
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Job Executions')
     /**
      * API: /api/execution/{id}/output, version 5
      */
@@ -1168,7 +1168,7 @@ this Log Entry.""")
         responseCode = '200',
         description = """Log Output Response. This endpoint response is the same as the Execution Output `/execution/{id}/output` response using the `nodename` parameter."""
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Job Executions')
     /**
      * API: /api/execution/{id}/output/node/{nodename}, version 5
      */
@@ -1209,7 +1209,7 @@ this Log Entry.""")
         responseCode = '200',
         description = """Log Output Response. This endpoint response is the same as the Execution Output `/execution/{id}/output` response using the `nodename` and `stepctx` parameters."""
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Job Executions')
     /**
      * API: /api/execution/{id}/output/node/{nodename}/step/{stepctx}, version 5
      */
@@ -1243,7 +1243,7 @@ this Log Entry.""")
         responseCode = '200',
         description = """Log Output Response. This endpoint response is the same as the Execution Output `/execution/{id}/output` response using the `stepctx` parameter."""
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Job Executions')
     /**
      * API: /api/execution/{id}/output/step/{stepctx}, version 5
      */
@@ -1467,7 +1467,7 @@ JSON response requires API v14.
     - `nodeend` finishing of execution of a node for the given step
 * metadata about the entry may be included in the entry"""
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Job Executions')
     /**
      * API: /api/execution/{id}/output/state, version ?
      */
@@ -2134,7 +2134,7 @@ JSON response requires API v14.
             )
         ]
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Job Executions')
     @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def apiExecution(){
         if (!apiService.requireApi(request, response)) {
@@ -2418,7 +2418,7 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
             )
         ]
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Job Executions')
     /**
      * API: /api/execution/{id}/state , version 11
      */
@@ -2599,7 +2599,7 @@ Authorization required:
             )
         ]
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Job Executions')
     /**
      * API: /api/execution/{id}/abort, version 1
      */
@@ -2710,7 +2710,7 @@ See: [Administration - Access Control Policy - Application Scope Resources and A
         responseCode = '204',
         description = "No Content"
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Job Executions')
     /**
      * DELETE /api/14/execution/[ID]
      * @return
@@ -2819,7 +2819,7 @@ Note: the JSON schema also supports a basic JSON array
         )]
 
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Job Executions')
     /**
      * Delete bulk API action
      * @return
@@ -2890,7 +2890,7 @@ Note: the JSON schema also supports a basic JSON array
         method = "GET",
         summary = "Execution Query",
         description = """Query for Executions based on Job or Execution details.""",
-        tags = ["execution"],
+        tags = ["Job Executions"],
         parameters = [
             @Parameter(in=ParameterIn.PATH,name="project",description="Project name",schema=@Schema(type="string"),required = true),
             @Parameter(in=ParameterIn.QUERY,name="statusFilter",description="Execution status",schema=@Schema(type="string",allowableValues = ["running","succeeded", "failed" , "aborted"])),
@@ -3171,7 +3171,7 @@ Authorization Required: `read` for `system` resource
 
 Since: V32
 """,
-        tags = "system",
+        tags = "System",
         parameters = @Parameter(
             name="passiveAs503",
             description="if true, return 503 response when execution mode is passive. Since: v36",
@@ -3260,7 +3260,7 @@ Authorization Required: `enable_executions` on `system` resource.
 
 Since: v14
 """,
-        tags = "system",
+        tags = "System",
         responses = @ApiResponse(
             responseCode = "200",
             description = "Execution Mode Status",
@@ -3295,7 +3295,7 @@ Authorization Required: `disable_executions` on `system` resource.
 
 Since: v14
 """,
-        tags = "system",
+        tags = "System",
         responses = @ApiResponse(
             responseCode = "200",
             description = "Execution Mode Status",
@@ -3380,7 +3380,7 @@ Since: v14
             )
         ]
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Job Executions')
     /**
      * List input files for an execution
      */
@@ -3414,7 +3414,7 @@ Since: v14
         method = "GET",
         summary = "Execution Query Metrics",
         description = """Obtain metrics over the result set of an execution query.""",
-        tags = "execution",
+        tags = "Job Executions",
         parameters = [
             @Parameter(in=ParameterIn.QUERY,name="project",description="Project name",schema=@Schema(type="string")),
             @Parameter(in=ParameterIn.QUERY,name="statusFilter",description="Execution status",schema=@Schema(type="string",allowableValues = ["running","succeeded", "failed" , "aborted"])),
@@ -3499,7 +3499,7 @@ So a value of `2w` would return executions that completed within the last two we
 
 Note: This endpoint has the same query parameters and response as the `/executions/metrics` endpoint.
 """,
-        tags = "execution",
+        tags = "Job Executions",
         parameters = [
             @Parameter(in=ParameterIn.PATH,name="project",description="Project name",schema=@Schema(type="string"),required = true)
         ]
@@ -3514,7 +3514,7 @@ Note: This endpoint has the same query parameters and response as the `/executio
             )
         ]
     )
-    @Tag(name = 'execution')
+    @Tag(name = 'Job Executions')
     /**
      * Placeholder method to annotate for openapi spec generation.
      * Note: this method will never be used.
