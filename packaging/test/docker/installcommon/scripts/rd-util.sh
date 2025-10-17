@@ -56,6 +56,8 @@ wait_for_start(){
 }
 entry_start(){
 	if [ "$1" != "-skipstart" ]; then
+	# Add Java options to disable problematic cgroup v2 metrics
+        export JAVA_OPTS="${JAVA_OPTS:+$JAVA_OPTS }-Dmanagement.metrics.export.simple.enabled=false -Dmanagement.metrics.enable.process.cpu=false -Dmanagement.metrics.enable.system.cpu=false"
 		service rundeckd start
 		wait_for_start /var/log/rundeck/service.log
 	else
