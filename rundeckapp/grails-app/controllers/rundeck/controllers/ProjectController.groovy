@@ -652,7 +652,7 @@ class ProjectController extends ControllerBase{
         summary = 'List Projects',
         description = '''List the existing projects on the server.
 
-Authorization required: `read` for project resource
+Authorization required: `read` for each project resource. Only authorized projects will be included in the response.
 ''',
         tags = ['Project'],
         parameters = [
@@ -963,7 +963,7 @@ Authorization required: `create` for resource type `project`
     @Operation(
             method = "Delete",
             summary = "Delete a project",
-            description = """Delete an existing projects on the server.
+            description = """Delete an existing projects on the server.  The action cannot be undone.
 
 Authorization required: `delete` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
             parameters = [
@@ -1119,24 +1119,34 @@ Authorization required: `configure` access for `project` resource type or `admin
             ]
     )
     @ApiResponse(
-            responseCode = "200",
-            description = "Project details",
-            content = [
-                    @Content(
-                            mediaType = "application/text",
-                            schema=@Schema(type='string'),
-                            examples = @ExampleObject('''key=value
-key2=value''')
-                    ),
-                    @Content(
-                            mediaType = "application/json",
-                            schema=@Schema(type='object'),
-                            examples = @ExampleObject('''{
-    "key":"value",
-    "key2":"value2..."
-}''')
-                    )
-            ]
+    responseCode = "200",
+    description = "Project configuration retrieved successfully",
+    content = @Content(
+        mediaType = MediaType.APPLICATION_JSON,
+        schema = @Schema(implementation = Map),
+        examples = @ExampleObject(
+            name = "projectConfig",
+            summary = "Example project configuration",
+            value = '''{
+            "project.description": "My Project Description",
+            "project.label": "My Project",
+            "project.disable.executions": "false",
+            "project.disable.schedule": "false",
+            "project.execution.history.cleanup.enabled": "true",
+            "project.execution.history.cleanup.retention.days": "60",
+            "project.execution.history.cleanup.retention.minimum": "50",
+            "project.execution.history.cleanup.batch": "500",
+            "project.execution.history.cleanup.schedule": "0 0 0 1/1 * ? *",
+            "project.jobs.gui.groupExpandLevel": "1",
+            "resources.source.1.type": "file",
+            "resources.source.1.config.file": "/var/rundeck/projects/myproject/etc/resources.xml",
+            "resources.source.1.config.generateFileAutomatically": "true",
+            "resources.source.1.config.includeServerNode": "true",
+            "service.NodeExecutor.default.provider": "jsch-ssh",
+            "service.FileCopier.default.provider": "jsch-scp"
+            }'''
+            )
+        )
     )
     @GrailsCompileStatic
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
@@ -2159,7 +2169,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     @Operation(
             method = "PUT",
             summary = "Modify a project config",
-            description = """Replaces all configuration data with the submitted values.
+            description = """Replaces all configuration data with the submitted values. Any existing configuration properties not included in the request will be removed.
 The response, based on `Accept` header, can be returned in the Text, XML or Json format.
 
 Authorization required: `configure` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
@@ -2729,7 +2739,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     @Operation(
             method = "GET",
             summary = "Export a zip archive of the project.",
-            description = """Performs the export to a zip archive of the project synchronously. 
+            description = """Performs the export to a zip archive of the project synchronously.  _For large projects, consider using the async export endpoint instead._
 Optional parameters:
 
 * executionIds a list (comma-separated) of execution IDs. If this is specified then the archive will contain only executions that are specified, and will not contain Jobs, ACLs, or project configuration/readme files.
@@ -3162,11 +3172,11 @@ If preserve (default) then imported job UUIDs will not be modified, and may conf
 If remove then all job UUIDs will be removed before importing.''', schema = @Schema(implementation = String.class)),
                     @Parameter(name = 'importExecutions', required = false, in = ParameterIn.QUERY, description = '''If true, import all executions and logs from the archive (default). 
 If false, do not import executions or logs.''', schema = @Schema(implementation = Boolean.class)),
-                    @Parameter(name = 'importConfig ', required = false, in = ParameterIn.QUERY, description = '''If true, import the project configuration from the archive. 
+                    @Parameter(name = 'importConfig', required = false, in = ParameterIn.QUERY, description = '''If true, import the project configuration from the archive. 
 If false, do not import the project configuration (default).''', schema = @Schema(implementation = Boolean.class)),
-                    @Parameter(name = 'importACL ', required = false, in = ParameterIn.QUERY, description = '''If true, import all of the ACL Policies from the archive. 
+                    @Parameter(name = 'importACL', required = false, in = ParameterIn.QUERY, description = '''If true, import all of the ACL Policies from the archive. 
 If false, do not import the ACL Policies (default).''', schema = @Schema(implementation = Boolean.class)),
-                    @Parameter(name = 'importScm ', required = false, in = ParameterIn.QUERY, description = '''If true, import SCM configuration from the archive. 
+                    @Parameter(name = 'importScm', required = false, in = ParameterIn.QUERY, description = '''If true, import SCM configuration from the archive. 
 If false, do not import the SCM configuration (default).''', schema = @Schema(implementation = Boolean.class)),
                     @Parameter(name = 'importWebhooks', required = false, in = ParameterIn.QUERY, description = '''In APIv34 or later: If true, import the webhooks in the archive. 
 If false, do not import webhooks (default).''', schema = @Schema(implementation = Boolean.class)),
