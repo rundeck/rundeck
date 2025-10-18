@@ -54,7 +54,7 @@ All API endpoints require authentication via API token, password session, or JWT
 API version must be specified in the URL path (e.g., /api/${ApiVersions.API_CURRENT_VERSION_STR}/...).
 
 For detailed documentation, see: https://docs.rundeck.com/docs/api/"""
-)
+    ),
     externalDocs = @ExternalDocumentation(
         description = 'Original Rundeck API Documentation',
         url = 'https://docs.rundeck.com/docs/api/'
