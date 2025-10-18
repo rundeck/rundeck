@@ -38,22 +38,19 @@ import java.nio.file.Paths
     info = @Info(
     title = "Rundeck / Runbook Automation API",
     version = ApiVersions.API_CURRENT_VERSION_STR,
-    description = """Rundeck / Runbook Automation REST API for job automation, execution management, and system administration.
-
-The Rundeck API provides comprehensive access to:
-- Job management (create, update, delete, execute jobs)
-- Execution monitoring and control
-- Project and resource management
-- Node filtering and resource queries
-- System configuration and administration
-- SCM integration (Git and other version control)
-- Authentication token management
-- Metrics and health monitoring
-
-All API endpoints require authentication via API token, password session, or JWT token (Enterprise). 
-API version must be specified in the URL path (e.g., /api/${ApiVersions.API_CURRENT_VERSION_STR}/...).
-
-For detailed documentation, see: https://docs.rundeck.com/docs/api/"""
+    description = "Rundeck / Runbook Automation REST API for job automation, execution management, and system administration.\n\n" +
+              "The Rundeck API provides comprehensive access to:\n" +
+              "- Job management (create, update, delete, execute jobs)\n" +
+              "- Execution monitoring and control\n" +
+              "- Project and resource management\n" +
+              "- Node filtering and resource queries\n" +
+              "- System configuration and administration\n" +
+              "- SCM integration (Git and other version control)\n" +
+              "- Authentication token management\n" +
+              "- Metrics and health monitoring\n\n" +
+              "All API endpoints require authentication via API token, password session, or JWT token (Enterprise).\n" +
+              "API version must be specified in the URL path (e.g., /api/46/...).\n\n" +
+              "For detailed documentation, see: [Rundeck API Docs](https://docs.rundeck.com/docs/api/)",
     ),
     externalDocs = @ExternalDocumentation(
         description = 'Original Rundeck API Documentation',
