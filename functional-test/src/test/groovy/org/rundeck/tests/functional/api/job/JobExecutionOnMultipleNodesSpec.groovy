@@ -93,7 +93,9 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
         def jobId = response.getSucceeded().get(0).id
         Object optionsJson = ["options": [opt1: "z", opt2: "a"]]
         def completedJob = runJobAndWait(jobId, optionsJson)
-
+            completedJob.entries.each{
+                println("entry: "+ it)
+            }
         then:
         getOrderedNodesListExecutedOn(completedJob) == NODE_LIST
 
@@ -115,6 +117,9 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
         def jobId = response.getSucceeded().get(0).id
         Object optionsJson = ["options": [opt1: "z", opt2: "a"]]
         def completedJob = runJobAndWait(jobId, optionsJson)
+        completedJob.entries.each{
+            println("entry: "+ it)
+        }
 
         then:
         getOrderedNodesListExecutedOn(completedJob) == NODE_LIST.reverse()
