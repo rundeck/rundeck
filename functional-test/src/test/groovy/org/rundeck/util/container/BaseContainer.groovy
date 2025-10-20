@@ -111,46 +111,34 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
                 CLIENT_PROVIDER = rdDockerContainer
                 RUNDECK_CONTAINER_ID = rdDockerContainer.containerId
 
-            } else if (getCustomDockerComposeLocation() != null && !getCustomDockerComposeLocation().isBlank()) {
+            } else {
+                URI resource
+                if (getCustomDockerComposeLocation() != null && !getCustomDockerComposeLocation().isBlank()) {
+                    resource = getClass().getClassLoader().getResource(getCustomDockerComposeLocation()).toURI()
+                } else {
+                    resource = getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI()
+                }
+
                 // Override default timeout values to accommodate slow container startups
                 Map<String, Integer> clientConfig = Map.of(
                         "readTimeout", 60,
                 )
                 String featureName = System.getProperty("TEST_FEATURE_ENABLED_NAME")
 
-                log.info("Starting testcontainer: ${getClass().getClassLoader().getResource(getCustomDockerComposeLocation()).toURI()}")
+                log.info("Starting testcontainer: ${resource}")
                 log.info("Starting testcontainer: RUNDECK_IMAGE: ${RdComposeContainer.RUNDECK_IMAGE}")
                 log.info("Starting testcontainer: LICENSE_LOCATION: ${RdComposeContainer.LICENSE_LOCATION}")
                 log.info("Starting testcontainer: TEST_RUNDECK_GRAILS_URL: ${RdComposeContainer.TEST_RUNDECK_GRAILS_URL}")
                 var rundeckComposeContainer = new RdComposeContainer(
-                        getClass().getClassLoader().getResource(getCustomDockerComposeLocation()).toURI(),
-                        featureName,
-                        clientConfig
+                    resource,
+                    featureName,
+                    clientConfig
                 )
                 composeContainer(rundeckComposeContainer)
                 rundeckComposeContainer.start()
                 CLIENT_PROVIDER = rundeckComposeContainer
                 RUNDECK_CONTAINER_ID = rundeckComposeContainer.getRundeckContainerId()
 
-            } else {
-                // Override default timeout values to accommodate slow container startups
-                Map<String, Integer> clientConfig = Map.of(
-                    "readTimeout", 60,
-                )
-
-                String featureName = System.getProperty("TEST_FEATURE_ENABLED_NAME")
-                log.info("Starting testcontainer: ${getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI()}")
-                log.info("Starting testcontainer: RUNDECK_IMAGE: ${RdComposeContainer.RUNDECK_IMAGE}")
-                log.info("Starting testcontainer: LICENSE_LOCATION: ${RdComposeContainer.LICENSE_LOCATION}")
-                log.info("Starting testcontainer: TEST_RUNDECK_GRAILS_URL: ${RdComposeContainer.TEST_RUNDECK_GRAILS_URL}")
-                var rundeckComposeContainer = new RdComposeContainer(
-                    getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI(),
-                    featureName,
-                    clientConfig
-                )
-                rundeckComposeContainer.start()
-                CLIENT_PROVIDER = rundeckComposeContainer
-                RUNDECK_CONTAINER_ID = rundeckComposeContainer.getRundeckContainerId()
             }
 
             return CLIENT_PROVIDER
@@ -701,10 +689,18 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     void waitForRundeckAppToBeResponsive(){
 
         def checkIsRundeckApiResponding = {
-            try (def response = client.doGet("/system/info")){
-                return (response != null && response.code() == 200)
+            //use httpClient directly to invoke a non-api path
+            try (def response =
+                client.httpClient.newCall(
+                    new Request.Builder().
+                        url("/actuator/health/readiness").
+                        header('Accept', 'application/json').
+                        get().
+                        build()
+                ).execute()){
+                return response.successful
             } catch (Exception e) {
-                LoggerFactory.getLogger(BaseContainer.class).info(e.getMessage(), e)
+                LoggerFactory.getLogger(BaseContainer.class).info(e.getMessage())
                 return false
             }
         }
