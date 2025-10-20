@@ -693,7 +693,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
             try (def response =
                 client.httpClient.newCall(
                     new Request.Builder().
-                        url("/actuator/health/readiness").
+                        url("${client.baseUrl}/actuator/health/readiness").
                         header('Accept', 'application/json').
                         get().
                         build()
