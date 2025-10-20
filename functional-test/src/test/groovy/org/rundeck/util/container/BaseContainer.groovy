@@ -9,6 +9,7 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
 import org.rundeck.util.api.responses.execution.Execution
+import org.rundeck.util.api.responses.execution.ExecutionOutput
 import org.rundeck.util.api.storage.KeyStorageApiClient
 import org.rundeck.util.common.WaitBehaviour
 import org.rundeck.util.common.WaitUtils
@@ -508,7 +509,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
      * @param jobId The job UUID to run.
      * @param body An object representing the job run request options. Must be serializable to JSON.
      * @return The output of the execution.
-     * @deprecated Use JobUtils.executeJobWithOptions(),
+     * @deprecated Use {@link #runJobGetOutput(java.lang.String)} or JobUtils.executeJobWithOptions(),
      * JobUtils.waitForExecutionFinish() instead, and JobUtils.getExecutionOutput() instead.
      */
     @Deprecated
@@ -525,6 +526,31 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
 
         // Maintains the data contract for the Map return type
         return client.get("/execution/${execution.id}/output", Map)
+    }
+
+    /**
+     * Runs a job and wait for it to finish. Returning the execution and output.
+     *
+     * @param jobId The job UUID to run.
+     * @param body An object representing the job run request options. Must be serializable to JSON.
+     * @return A wrapper containing the final execution and the output of the execution.
+     */
+    RunJobOutput runJobGetOutput(String jobId, Object body = null) {
+        Execution execution
+        try (def r = JobUtils.executeJobWithOptions(jobId, client, body)) {
+            if (!r.successful) {
+                throw new RuntimeException("Failed to run job: ${r}")
+            }
+
+            execution = jsonValue(r.body(), Execution.class)
+        }
+        execution = waitForExecutionFinish(execution.id as String, WaitingTime.EXCESSIVE)
+        def output=JobUtils.getExecutionOutput(execution.id, client)
+        return new RunJobOutput(execution: execution, output: output)
+    }
+    static class RunJobOutput{
+        Execution execution
+        ExecutionOutput output
     }
 
     /**
