@@ -121,6 +121,6 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
     }
 
     private static List<String> getOrderedNodesListExecutedOn(Map completedJob) {
-        completedJob.entries.inject(new HashSet<String>(), { result, x -> result.add(x.node); return result }).toList()
+        completedJob.entries.inject(new ArrayList<String>(), { result, x -> result.add(x.node); return result })
     }
 }
