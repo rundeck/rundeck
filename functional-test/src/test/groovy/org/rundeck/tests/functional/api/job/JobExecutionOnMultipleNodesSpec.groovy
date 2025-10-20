@@ -2,7 +2,7 @@ package org.rundeck.tests.functional.api.job
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.util.annotations.APITest
-import org.rundeck.util.api.responses.jobs.CreateJobResponse
+import org.rundeck.util.api.responses.execution.ExecutionOutput
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.BaseContainer
 
@@ -47,13 +47,13 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
 
         when:
         def response = JobUtils.createJob(TEST_PROJECT, new File(path).text, client)
-        def jobId = response.getSucceeded().get(0).id
-        Object optionsJson = ["options": [opt1: "z", opt2: "a"]]
-        def completedJob = runJobAndWait(jobId, optionsJson)
+        def jobId = response.getSucceeded().get(0).id.toString()
+        def runJob = runJobGetOutput(jobId, ["options": [opt1: "z", opt2: "a"]])
 
         then:
+        runJob.execution.status == 'succeeded'
         // Ensure it was ran on the local node and two nodes added by the setup
-        getOrderedNodesListExecutedOn(completedJob).size() == (NODE_LIST.size()+1)
+        getOrderedNodesListExecutedOn(runJob.output).size() == (NODE_LIST.size()+1)
     }
 
     def "Create a job that executes on nodes that were not excluded"() {
@@ -68,13 +68,13 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
 
         when:
         def response = JobUtils.createJob(TEST_PROJECT, new File(path).text, client)
-        def jobId = response.getSucceeded().get(0).id
-        Object optionsJson = ["options": [opt1: "z", opt2: "a"]]
-        def completedJob = runJobAndWait(jobId, optionsJson)
+        def jobId = response.getSucceeded().get(0).id.toString()
+        def runJob = runJobGetOutput(jobId, ["options": [opt1: "z", opt2: "a"]])
 
         then:
+        runJob.execution.status == 'succeeded'
         // Should run the local node only since the filter excluded the nodes added by the setup
-        getOrderedNodesListExecutedOn(completedJob).size() == 1
+        getOrderedNodesListExecutedOn(runJob.output).size() == 1
     }
 
     def "Create a job that executes on nodes in the descending order"() {
@@ -90,16 +90,17 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
 
         when:
         def response = JobUtils.createJob(TEST_PROJECT, new File(path).text, client)
-        def jobId = response.getSucceeded().get(0).id
-        Object optionsJson = ["options": [opt1: "z", opt2: "a"]]
-        def completedJob = runJobAndWait(jobId, optionsJson)
-            completedJob.entries.each{
-                println("entry: "+ it)
-            }
+        def jobId = response.getSucceeded().get(0).id.toString()
+        def runJob = runJobGetOutput(jobId, ["options": [opt1: "z", opt2: "a"]])
+        runJob.output.entries.each{
+            println("entry: "+ it)
+        }
         then:
-        getOrderedNodesListExecutedOn(completedJob) == NODE_LIST
+        runJob.execution.status == 'succeeded'
+        getOrderedNodesListExecutedOn(runJob.output) == NODE_LIST
 
     }
+
 
     def "Create a job that executes on nodes in the ascending order"() {
         given:
@@ -114,18 +115,18 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
 
         when:
         def response = JobUtils.createJob(TEST_PROJECT, new File(path).text, client)
-        def jobId = response.getSucceeded().get(0).id
-        Object optionsJson = ["options": [opt1: "z", opt2: "a"]]
-        def completedJob = runJobAndWait(jobId, optionsJson)
-        completedJob.entries.each{
+        def jobId = response.getSucceeded().get(0).id.toString()
+        def runJob = runJobGetOutput(jobId, ["options": [opt1: "z", opt2: "a"]])
+        runJob.output.entries.each{
             println("entry: "+ it)
         }
 
         then:
-        getOrderedNodesListExecutedOn(completedJob) == NODE_LIST.reverse()
+        runJob.execution.status == 'succeeded'
+        getOrderedNodesListExecutedOn(runJob.output) == NODE_LIST.reverse()
     }
 
-    private static List<String> getOrderedNodesListExecutedOn(Map completedJob) {
+    private static List<String> getOrderedNodesListExecutedOn(ExecutionOutput completedJob) {
         completedJob.entries.inject(new ArrayList<String>(), { result, x -> result.add(x.node); return result })
     }
 }
