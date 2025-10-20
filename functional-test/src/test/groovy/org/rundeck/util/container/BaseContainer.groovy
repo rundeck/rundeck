@@ -701,8 +701,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     void waitForRundeckAppToBeResponsive(){
 
         def checkIsRundeckApiResponding = {
-            try {
-                def response = closeLater(client.doGet("/system/info"))
+            try (def response = client.doGet("/system/info")){
                 return (response != null && response.code() == 200)
             } catch (Exception e) {
                 LoggerFactory.getLogger(BaseContainer.class).info(e.getMessage(), e)
