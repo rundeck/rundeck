@@ -51,8 +51,8 @@ class GiteaApiRemoteRepo {
          *  If the failures continue, it would be reasonable to assume the permanent unhealthy state and evaluate alternative fixes.
          */
         def repoCreate = {
-            try{
-                return doPost(CREATE_REPO_ENDPOINT, new CreateRepoRequest(name: this.repoName))
+            try(def response=doPost(CREATE_REPO_ENDPOINT, new CreateRepoRequest(name: this.repoName))){
+                return response
             } catch (IOException e){
                 log.warn("IOException during Gitea repo create attempt: " + e.getMessage(), e)
             }
@@ -62,7 +62,6 @@ class GiteaApiRemoteRepo {
             if (r==null || !r.isSuccessful()) {
                 log.warn("Failed to create repository: " + this.repoName + " " + r?.code() + " " + r?.body()?.string())
             }else {
-                r.close()
                 return r.isSuccessful()
             }
         }
