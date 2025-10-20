@@ -74,7 +74,6 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
 
         when:
         List execIdsToExclude = job.searchExecutions(
-                new ExecutionService(),
                 projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize)
 
         then:
@@ -107,7 +106,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         FrameworkService frameworkService = initNonClusterFrameworkService()
         Execution execution = setupExecution(se, projName, execDate, execDate, frameworkService.getServerUUID())
         when:
-        List execIds = job.searchExecutions(executionService, projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize )
+        List execIds = job.searchExecutions(projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize )
 
         then:
         execIds.size() > 0
@@ -159,7 +158,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
 
 
         when:
-        List execIdsToExclude = job.searchExecutions(new ExecutionService(), projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
+        List execIdsToExclude = job.searchExecutions( projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
         then:
         execIdsToExclude.size() ==1
         execIdsToExclude.contains(execution.getId())
