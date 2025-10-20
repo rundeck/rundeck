@@ -53,11 +53,11 @@ class JobUtils {
         return client.doPost("/job/${jobId}/run?argString=${args}&runAtTime=${runtime}")
     }
 
-    static def executeJobWithOptions = (jobId, RdClient client, Object options) -> {
+    static Response executeJobWithOptions (jobId, RdClient client, Object options){
         return client.doPost("/job/${jobId}/run", options)
     }
 
-    static executeJobLaterWithArgsInvalidMethod (
+    static Response executeJobLaterWithArgsInvalidMethod (
             String jobId,
             RdClient client,
             String args,
@@ -65,7 +65,7 @@ class JobUtils {
         return client.doGetAcceptAll("/job/${jobId}/run?argString=${args}&runAtTime=${runtime}")
     }
 
-    static def executeJob = (jobId, RdClient client) -> {
+    static Response executeJob (jobId, RdClient client) {
         return client.doPost("/job/${jobId}/run", "{}")
     }
 
