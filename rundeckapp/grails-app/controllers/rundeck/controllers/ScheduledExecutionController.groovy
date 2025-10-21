@@ -977,8 +977,6 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
      *
      */
     static Object getRemoteJSON(HttpClientCreator clientCreator, String url, JobOptionConfigRemoteUrl configRemoteUrl, int timeout, int contimeout, int retry=5,boolean disableRemoteOptionJsonCheck=false){
-        logger.error("DEBUG: https.proxyHost=" + System.getProperty('https.proxyHost'))
-        logger.error("DEBUG: http.proxyHost=" + System.getProperty('http.proxyHost'))
         logger.debug("getRemoteJSON: "+url+", timeout: "+timeout+", retry: "+retry)
 
         //attempt to get the URL JSON data
