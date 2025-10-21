@@ -426,11 +426,12 @@ class RdClient {
      * @return
      */
     <T> T post(final String path, final Object body = null, Class<T> clazz = Map) {
-        def req = doReq(path, 'POST', body)
-        if(!req.successful){
-            throw new Exception("POST request failed: " + req.code() + " " + req.body().string())
+        try (def req = doReq(path, 'POST', body)) {
+            if (!req.successful) {
+                throw new Exception("POST request failed: " + req.code() + " " + req.body().string())
+            }
+            return jsonValue(req.body(), clazz)
         }
-        jsonValue(req.body(), clazz)
     }
     /**
      * Performs a PUT request to the specified path with an optional body and maps the JSON response to the specified class type.
@@ -440,11 +441,12 @@ class RdClient {
      * @return
      */
     <T> T put(final String path, final Object body = null, Class<T> clazz = Map) {
-        def req = doReq(path, 'PUT', body)
-        if(!req.successful){
-            throw new Exception("PUT request failed: " + req.code() + " " + req.body().string())
+        try (def req = doReq(path, 'PUT', body)) {
+            if (!req.successful) {
+                throw new Exception("PUT request failed: " + req.code() + " " + req.body().string())
+            }
+            return jsonValue(req.body(), clazz)
         }
-        jsonValue(req.body(), clazz)
     }
 
     /**
