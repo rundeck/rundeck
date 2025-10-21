@@ -14,37 +14,43 @@ class RunCommandSpec extends BaseContainer {
         setupProject()
     }
 
-    def "test-run-command"() {
+    def "run command"() {
         given:
-        def client = getClient()
-        def mapper = new ObjectMapper()
-        def projectName = PROJECT_NAME
-        def execArgs = "echo 'this is a test of /api/run/command'"
+            def execArgs = "echo 'this is a test of /api/run/command'"
 
         when:
-        def parsedResponseBody = post("/project/$projectName/run/command?exec=${execArgs}", RunCommand)
-        String newExecId = parsedResponseBody.execution.id
+            def parsedResponseBody = post("/project/$PROJECT_NAME/run/command?exec=${execArgs}", null, RunCommand)
+            String newExecId = parsedResponseBody.execution.id
+            def completedExecution = waitForExecutionFinish(newExecId)
+
+        then:
+            noExceptionThrown()
+            completedExecution.status != "failed"
+    }
+
+    def "run command with node filter"() {
+        given:
+            def execArgs = "echo 'this is a test of /api/run/command'"
+
+        when:
+            def nodeFilter = ".*"
+            def parsedResponseBody = post("/project/$PROJECT_NAME/run/command?exec=${execArgs}&filter=${nodeFilter}", null, RunCommand)
+            def newExecId = parsedResponseBody.execution.id
+            def completedExecution = waitForExecutionFinish(newExecId)
+
+        then:
+            noExceptionThrown()
+            completedExecution.status != "failed"
+    }
+
+    def "run command with not matching filter"(){
+        given:
+            def execArgs = "echo 'this is a test of /api/run/command'"
+        when:
+        def nodeFilter = "not-matching-node-filter"
+        def parsedResponseBody = post("/project/$PROJECT_NAME/run/command?exec=${execArgs}&filter=${nodeFilter}", null, RunCommand)
+        def newExecId = parsedResponseBody.execution.id
         def completedExecution = waitForExecutionFinish(newExecId)
-
-        then:
-        noExceptionThrown()
-        completedExecution.status != "failed"
-
-        when:
-        def nodeFilter = ".*"
-        parsedResponseBody = post("/project/$projectName/run/command?exec=${execArgs};filter=${nodeFilter}",RunCommand)
-        newExecId = parsedResponseBody.execution.id
-        completedExecution = waitForExecutionFinish(newExecId)
-
-        then:
-        noExceptionThrown()
-        completedExecution.status != "failed"
-
-        when:
-        nodeFilter = "not-matching-node-filter"
-        parsedResponseBody = post("/project/$projectName/run/command?exec=${execArgs}&filter=${nodeFilter}",RunCommand)
-        newExecId = parsedResponseBody.execution.id
-        completedExecution = waitForExecutionFinish(newExecId)
 
         then:
         noExceptionThrown()
