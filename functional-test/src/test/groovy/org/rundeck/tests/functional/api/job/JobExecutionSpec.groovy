@@ -1763,11 +1763,7 @@ class JobExecutionSpec extends BaseContainer {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        try(def resp=client.doPostWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)){
-            if(!resp.successful){
-                throw new RuntimeException("Failed to import job: ${resp.code()} : ${resp.body().string()}")
-            }
-        }
+        def resp=client.postWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
 
         when:
         def jobExecResponseFor1 = JobUtils.executeJob(jobUuid, client)
