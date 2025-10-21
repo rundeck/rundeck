@@ -1766,13 +1766,13 @@ class JobExecutionSpec extends BaseContainer {
         def resp=client.postWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
 
         when:
-        def jobExecResponseFor1 = JobUtils.executeJob(jobUuid, client)
-        def jobExecResponseFor2 = JobUtils.executeJob(jobUuid, client)
-        def jobExecResponseFor3 = JobUtils.executeJob(jobUuid, client)
+        def jobExecResponseFor1 = JobUtils.runExecuteJob(jobUuid, client)
+        def jobExecResponseFor2 = JobUtils.runExecuteJob(jobUuid, client)
+        def jobExecResponseFor3 = JobUtils.runExecuteJob(jobUuid, client)
         then:
-        assert jobExecResponseFor1.successful
-        assert jobExecResponseFor2.successful
-        assert jobExecResponseFor3.successful
+        assert jobExecResponseFor1.id!=null
+        assert jobExecResponseFor2.id!=null
+        assert jobExecResponseFor3.id!=null
         cleanup:
         // This is to allow the executions to finish
         waitFor(ExecutionUtils.Retrievers.executionsForJobId(client, jobUuid),

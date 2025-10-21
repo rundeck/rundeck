@@ -278,6 +278,7 @@ class JobScheduledSpec extends BaseContainer {
 
         def jobExecResponseFor1AfterDisable = JobUtils.executeJob(job1Id, client)
         assert jobExecResponseFor1AfterDisable.code() == 400 // bc execs are disabled
+        jobExecResponseFor1AfterDisable.close()
 
         def executionsForJob1AfterDisable = doGet("/job/${job1Id}/executions")
         JobExecutionsResponse parsedExecutionsResponseForExecution1AfterDisable = MAPPER.readValue(executionsForJob1AfterDisable.body().string(), JobExecutionsResponse.class)

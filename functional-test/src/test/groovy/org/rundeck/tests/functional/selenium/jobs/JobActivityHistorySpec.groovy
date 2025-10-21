@@ -26,7 +26,7 @@ class JobActivityHistorySpec extends SeleniumBase {
         def client = getClient()
         def response = JobUtils.createJob(SELENIUM_BASIC_PROJECT, jobDefinition, client)
         jobId = response.succeeded[0].id
-        assert JobUtils.executeJob(jobId, client).isSuccessful()
+        JobUtils.runExecuteJob(jobId, client)
     }
 
     def setup() {
