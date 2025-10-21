@@ -313,6 +313,23 @@ class RdClient {
     }
 
     /**
+     * Performs a POST request with multipart content, converts the expected JSON response to the specified class type.
+     *
+     * @param path The path of the resource to which the request will be sent.
+     * @param multipartBody The multipart request body.
+     * @return The response of the request.
+     * @throws IOException If an error occurs during the execution of the request.
+     * @throws Exception If the response is not successful.
+     */
+    <T> T postWithMultipart(final String path, MultipartBody multipartBody, Class<T> clazz = Map) {
+        try(def resp = doPostWithMultipart(path, multipartBody)) {
+            if(!resp.isSuccessful()){
+                throw new Exception("POST request failed: " + resp.code() + " " + resp.body().string())
+            }
+            return jsonValue(resp.body(), clazz)
+        }
+    }
+    /**
      * Performs a POST request with multipart content.
      *
      * @param path The path of the resource to which the request will be sent.
