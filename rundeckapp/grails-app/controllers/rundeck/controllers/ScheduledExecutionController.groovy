@@ -84,7 +84,6 @@ import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeJob
 import org.rundeck.util.HttpClientCreator
-import org.rundeck.util.SystemProxyHttpClient
 import org.rundeck.util.Toposort
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

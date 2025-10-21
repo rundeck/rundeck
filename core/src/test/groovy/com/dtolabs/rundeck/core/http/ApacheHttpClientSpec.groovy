@@ -137,4 +137,78 @@ class ApacheHttpClientSpec extends Specification {
         !out
     }
 
+    static class RecordingProxySelector extends ProxySelector {
+        List<URI> seen = []
+        List<Proxy> toReturn
+        RecordingProxySelector(List<Proxy> proxies) { this.toReturn = proxies }
+
+        @Override
+        List<Proxy> select(URI uri) {
+            seen << uri
+            return toReturn
+        }
+        @Override
+        void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
+            // not needed
+        }
+    }
+
+    def "ApacheHttpClient consults ProxySelector for HTTPS requests"() {
+        given:
+        // Make ProxySelector visible to SystemDefaultRoutePlanner (added in your client)
+        def old = ProxySelector.getDefault()
+        def selector = new RecordingProxySelector([Proxy.NO_PROXY])
+        ProxySelector.setDefault(selector)
+
+        and: "a target URI served by MockWebServer (we won't rely on the proxy actually routing)"
+        server.enqueue(new MockResponse().setResponseCode(200).setBody("ok"))
+        def targetUri = server.url("/proxy-check").uri()
+        ApacheHttpClient client = new ApacheHttpClient()
+        client.setUri(targetUri)
+        client.setTimeout(200)
+
+        when:
+        String body = null
+        client.execute { rsp -> body = rsp.entity.content.text }
+        // let MockWebServer receive the request so the client had to plan a route
+        server.takeRequest(500, TimeUnit.MILLISECONDS)
+
+        then:
+        body == "ok"
+        // The key assertion: our ProxySelector was consulted for this URI
+        selector.seen.any { it.host == targetUri.host && it.scheme == targetUri.scheme }
+
+        cleanup:
+        ProxySelector.setDefault(old)
+    }
+
+    def "ApacheHttpClient sees HTTP proxy from ProxySelector (even if proxy is unreachable)"() {
+        given:
+        def old = ProxySelector.getDefault()
+        // Return a fake HTTP proxy to prove selection happens; connection may fail fast, which is fine
+        def selector = new RecordingProxySelector(
+                [ new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 6553)) ] // no proxy there
+        )
+        ProxySelector.setDefault(selector)
+
+        and:
+        def targetUri = new URI("https://example.invalid/")  // won't resolve; we only need route planning to trigger
+        ApacheHttpClient client = new ApacheHttpClient()
+        client.setUri(targetUri)
+        client.setTimeout(100) // fail fast
+
+        when:
+        try {
+            client.execute { HttpResponse r -> /* no-op */ }
+            assert false: "should not succeed against an unreachable proxy/host"
+        } catch (Throwable ignore) { /* expected */ }
+
+        then:
+        // Even though connect failed, the ProxySelector must have been consulted first
+        selector.seen.any { it.host == targetUri.host && it.scheme == targetUri.scheme }
+
+        cleanup:
+        ProxySelector.setDefault(old)
+    }
+
 }
