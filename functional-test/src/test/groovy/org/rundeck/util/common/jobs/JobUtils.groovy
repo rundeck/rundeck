@@ -65,8 +65,25 @@ class JobUtils {
         return client.doGetAcceptAll("/job/${jobId}/run?argString=${args}&runAtTime=${runtime}")
     }
 
+    /**
+     * Execute job, return HTTP response
+     * TODO: this should be renamed to "doExecuteJob" beacuse it does not handle the response
+     * @param jobId
+     * @param client
+     * @return
+     */
     static Response executeJob (jobId, RdClient client) {
         return client.doPost("/job/${jobId}/run", "{}")
+    }
+
+    /**
+     * Execute the job and return response Execution, fail if job request is not succesful
+     * @param jobId
+     * @param client
+     * @return
+     */
+    static Execution runExecuteJob (jobId, RdClient client) {
+        return client.post("/job/${jobId}/run", "{}", Execution)
     }
 
     /**
