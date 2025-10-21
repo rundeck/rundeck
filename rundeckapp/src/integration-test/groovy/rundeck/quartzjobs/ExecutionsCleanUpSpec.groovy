@@ -19,6 +19,7 @@ package rundeck.quartzjobs
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import grails.testing.mixin.integration.Integration
 import grails.gorm.transactions.Rollback
+import org.grails.plugins.metricsweb.MetricService
 import org.quartz.JobDataMap
 import org.quartz.JobDetail
 import org.quartz.JobExecutionContext
@@ -31,6 +32,7 @@ import rundeck.services.JobSchedulerService
 import rundeck.services.LogFileStorageService
 import rundeck.services.ReportService
 import spock.lang.Specification
+import com.codahale.metrics.Timer
 
 /**
  * Integration test for ExecutionsCleanUp
@@ -49,8 +51,6 @@ class ExecutionsCleanUpSpec extends Specification {
         def se = createJob(projectName)
         def exec = createExecution(se, execDate, executionCompletionDate, projectName)
 
-        def executionService = Mock(ExecutionService)
-
         def frameworkService = Mock(FrameworkService) {
             isClusterModeEnabled() >> {
                 false
@@ -66,6 +66,16 @@ class ExecutionsCleanUpSpec extends Specification {
         def jobSchedulerService = Mock(JobSchedulerService)
         def reportService = Mock(ReportService)
         def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
+        Timer timerMock =  new Timer()
+        def metricService = Mock(MetricService){
+            timer("rundeck.quartzjobs.ExecutionsCleanUp", "executionCleanup") >> timerMock
+        }
+
+        def executionService = new ExecutionService()
+        executionService.referencedExecutionDataProvider = referencedExecutionDataProvider
+        executionService.reportService = reportService
+        executionService.fileUploadService = fileUploadService
+        executionService.logFileStorageService = logFileStorageService
 
         def datamap = new JobDataMap([
                 project: projectName,
@@ -76,7 +86,8 @@ class ExecutionsCleanUpSpec extends Specification {
                 logFileStorageService: logFileStorageService,
                 jobSchedulerService: jobSchedulerService,
                 referencedExecutionDataProvider: referencedExecutionDataProvider,
-                reportService: reportService
+                reportService: reportService,
+                metricService: metricService
         ])
 
         ExecutionsCleanUp job = new ExecutionsCleanUp()
@@ -108,8 +119,6 @@ class ExecutionsCleanUpSpec extends Specification {
         def se = createJob(projectName)
         def exec = createExecution(se, execDate, executionCompletionDate, projectName)
 
-        def executionService = Mock(ExecutionService)
-
         def frameworkService = Mock(FrameworkService) {
             isClusterModeEnabled() >> {
                 false
@@ -126,6 +135,17 @@ class ExecutionsCleanUpSpec extends Specification {
         def reportService = Mock(ReportService)
         def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
 
+        def executionService = new ExecutionService()
+        executionService.referencedExecutionDataProvider = referencedExecutionDataProvider
+        executionService.reportService = reportService
+        executionService.fileUploadService = fileUploadService
+        executionService.logFileStorageService = logFileStorageService
+
+        Timer timerMock =  new Timer()
+        def metricService = Mock(MetricService){
+            timer("rundeck.quartzjobs.ExecutionsCleanUp", "executionCleanup") >> timerMock
+        }
+
         def datamap = new JobDataMap([
                 project: projectName,
                 maxDaysToKeep: daysToKeep,
@@ -136,6 +156,7 @@ class ExecutionsCleanUpSpec extends Specification {
                 jobSchedulerService: jobSchedulerService,
                 referencedExecutionDataProvider: referencedExecutionDataProvider,
                 reportService: reportService,
+                metricService: metricService,
                 fromCleanupB: true
         ])
 
@@ -189,7 +210,16 @@ class ExecutionsCleanUpSpec extends Specification {
         def jobSchedulerService = Mock(JobSchedulerService)
         def reportService = Mock(ReportService)
         def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
-        def executionService = Mock(ExecutionService)
+        def executionService = new ExecutionService()
+        executionService.referencedExecutionDataProvider = referencedExecutionDataProvider
+        executionService.reportService = reportService
+        executionService.fileUploadService = fileUploadService
+        executionService.logFileStorageService = logFileStorageService
+
+        Timer timerMock =  new Timer()
+        def metricService = Mock(MetricService){
+            timer("rundeck.quartzjobs.ExecutionsCleanUp", "executionCleanup") >> timerMock
+        }
 
         def datamap = new JobDataMap([
                 project: projectName,
@@ -200,7 +230,8 @@ class ExecutionsCleanUpSpec extends Specification {
                 logFileStorageService: logFileStorageService,
                 jobSchedulerService: jobSchedulerService,
                 referencedExecutionDataProvider: referencedExecutionDataProvider,
-                reportService: reportService
+                reportService: reportService,
+                metricService: metricService
         ])
 
         ExecutionsCleanUp job = new ExecutionsCleanUp()
@@ -253,7 +284,7 @@ class ExecutionsCleanUpSpec extends Specification {
             }
         }
 
-        def result = job.searchExecutions(frameworkService, executionService, jobSchedulerService, projectName, daysToKeep, minimumExecutionToKeep , maximumDeletionSize)
+        def result = job.searchExecutions(projectName, daysToKeep, minimumExecutionToKeep , maximumDeletionSize)
 
         then:
         executionsToRemove == result.size()

@@ -394,8 +394,8 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
                                 frameworkService      : this,
                                 jobSchedulerService   : jobSchedulerService,
                                 referencedExecutionDataProvider: referencedExecutionDataProvider,
-                                reportService         : reportService
-                                
+                                reportService         : reportService,
+                                metricService         : metricService
                         ])
             }
         }

@@ -74,9 +74,6 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
 
         when:
         List execIdsToExclude = job.searchExecutions(
-                frameworkService,
-                new ExecutionService(),
-                new JobSchedulerService(),
                 projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize)
 
         then:
@@ -92,28 +89,30 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         int maxDaysToKeep = 4
         int minimumExecutionsToKeep = 0
         int maximumDeletionSize = 500
-        def logFileStorageService = Mock(LogFileStorageService)
-        def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
 
         Date execDate = new Date(2015 - 1900, 02, 03)
         ScheduledExecution se = setupJob(projName)
         ExecutionsCleanUp job = new ExecutionsCleanUp()
+        def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
+        def logFileStorageService = Mock(LogFileStorageService)
 
-        def executionFile = Mock(ExecutionFile)
+        def executionService = new ExecutionService()
+        executionService.referencedExecutionDataProvider = referencedExecutionDataProvider
+        executionService.reportService = reportService
+        executionService.logFileStorageService  = logFileStorageService
+        executionService.fileUploadService = new FileUploadService()
+
 
         FrameworkService frameworkService = initNonClusterFrameworkService()
         Execution execution = setupExecution(se, projName, execDate, execDate, frameworkService.getServerUUID())
         when:
-        List execIds = job.searchExecutions(frameworkService,
-                new ExecutionService(), new JobSchedulerService(), projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize )
-
-
+        List execIds = job.searchExecutions(projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize )
 
         then:
         execIds.size() > 0
 
         when:
-        int sucessTotal = job.deleteByExecutionList(execIds, new FileUploadService(), logFileStorageService, referencedExecutionDataProvider, reportService)
+        int sucessTotal = job.deleteByExecutionList(execIds, executionService)
 
         then:
         execIds.size() == sucessTotal
@@ -159,20 +158,19 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
 
 
         when:
-        List execIdsToExclude = job.searchExecutions(mockfs,
-                new ExecutionService(), mockjs, projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
+        List execIdsToExclude = job.searchExecutions( projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
         then:
         execIdsToExclude.size() ==1
-        execIdsToExclude.contains(execution.id)
+        execIdsToExclude.contains(execution.getId())
         1 == Execution.countByProject(projName)
         1 == ExecReport.countByProject(projName)
 
     }
 
     private Execution setupExecution(ScheduledExecution se, String projName, Date startDate, Date finishDate, String serverUUID = null) {
-        Execution e
-        Execution.withTransaction {
-            e = new Execution(
+
+        Execution.withNewTransaction {
+            Execution e = new Execution(
                     project: projName,
                     user: 'bob',
                     status: 'success',
@@ -189,17 +187,17 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
             if(serverUUID){
                 e.serverNodeUUID = serverUUID
             }
-            e.save()
+            e.save(flush:true)
             def er=ExecReport.fromExec(e)
-            er.save()
+            er.save(flush:true)
+            Execution.withSession { it.flush() }
+            return e
         }
-
-        return e
     }
 
 
     private ScheduledExecution setupJob(String projName, Closure extra=null) {
-        ScheduledExecution.withTransaction {
+        ScheduledExecution.withNewTransaction {
             ScheduledExecution se = new ScheduledExecution(
                     jobName: 'blue',
                     project: projName,
@@ -219,7 +217,8 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
                 extra.call(se)
             }
             se.workflow.save()
-            se.save()
+            se.save(flush: true)
+            return se
         }
     }
 }
