@@ -161,7 +161,7 @@ class ExecutionsCleanUp implements InterruptableJob {
 
     private int totalAllExecutions(String project){
         Integer total = Execution.executeQuery(
-                "select count(e.id) from Execution e where e.project = :project",
+                "select count(*) from Execution e where e.project = :project",
                 [project: project]
         )[0]
         return null != total ? total : 0
