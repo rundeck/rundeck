@@ -158,10 +158,10 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         setupProject(PROJECT_NAME)
     }
 
-    void setupProject(String name) {
-        try(def getProject = client.doGet("/project/${name}")) {
+    void setupProject(String name, Map config = [:]) {
+        try (def getProject = client.doGet("/project/${name}")) {
             if (getProject.code() == 404) {
-                def result = client.post("/projects", [name: name])
+                def result = client.post("/projects", config + [name: name])
             } else if (!getProject.successful) {
                 throw new RuntimeException("Failed to access project: ${getProject.body().string()}")
             }
@@ -610,6 +610,11 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     def setupSpec() {
+        setupPrivateSSHKeys()
+        startEnvironment()
+    }
+
+    void setupPrivateSSHKeys() {
         def tempKeyDir = ".build/tmp/keys"
 
         def ossResource = getClass().getClassLoader().getResource("docker/compose/oss")
@@ -622,7 +627,6 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         generatePrivateKey(tempKeyDir, "id_rsa_passphrase", "testpassphrase123")
         copyKeyToDestinations(tempKeyDir, "id_rsa", [ossKeyPath, proKeyPath].findAll { it })
         copyKeyToDestinations(tempKeyDir, "id_rsa_passphrase", [ossKeyPath, proKeyPath].findAll { it })
-        startEnvironment()
     }
 
     /**
