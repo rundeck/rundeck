@@ -19,7 +19,6 @@ import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
 import org.junit.Test
 import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
-import rundeck.ExecReport
 import rundeck.BaseReport
 import rundeck.ScheduledExecution
 import rundeck.services.ReportService
@@ -41,7 +40,7 @@ class ReportServiceTests extends GroovyTestCase {
     private BaseReport proto(props=[:]){
         def repprops=[author: 'bob', project: 'proj1', status: 'succeed', actionType: 'succeed', dateCompleted: new Date(), dateStarted:new Date(),
         message:'message',title:'title']
-        return new ExecReport(repprops+props)
+        return new BaseReport(repprops+props)
     }
     @Test
     void testGetExecReportsReportIdFilter(){
@@ -62,7 +61,7 @@ class ReportServiceTests extends GroovyTestCase {
         r1 = r1.refresh()
         r2 = r2.refresh()
         r3 = r3.refresh()
-        assertEquals(3, ExecReport.count())
+        assertEquals(3, BaseReport.count())
         def query = new ExecQuery(reportIdFilter: 'blah')
 
         def result = reportService.getExecutionReports(query, true)
@@ -100,7 +99,7 @@ class ReportServiceTests extends GroovyTestCase {
         r2=r2.refresh()
         r3=r3.refresh()
         r4=r4.refresh()
-        assertEquals(4,ExecReport.count())
+        assertEquals(4,BaseReport.count())
         def query = new ExecQuery(execnodeFilter: 'name: test')
 
         def result=reportService.getExecutionReports(query,true)
@@ -138,7 +137,7 @@ class ReportServiceTests extends GroovyTestCase {
         r1=r1.refresh()
         r2=r2.refresh()
         r3=r3.refresh()
-        assertEquals(3,ExecReport.count())
+        assertEquals(3,BaseReport.count())
         def query = new ExecQuery(projFilter: 'abcdef')
 
         def result=reportService.getExecutionReports(query,true)
@@ -255,7 +254,7 @@ class ReportServiceTests extends GroovyTestCase {
         r1 = r1.refresh()
         r2 = r2.refresh()
         r3 = r3.refresh()
-        assertEquals(3, ExecReport.count())
+        assertEquals(3, BaseReport.count())
         def query = new ExecQuery(statFilter: 'fail')
 
         def result = reportService.getExecutionReports(query, true)
@@ -288,7 +287,7 @@ class ReportServiceTests extends GroovyTestCase {
         r1=r1.refresh()
         r2=r2.refresh()
         r3=r3.refresh()
-        assertEquals(3,ExecReport.count())
+        assertEquals(3,BaseReport.count())
         def query = new ExecQuery(statFilter: 'cancel')
 
         def result=reportService.getExecutionReports(query,true)

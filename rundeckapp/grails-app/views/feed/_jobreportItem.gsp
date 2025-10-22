@@ -15,7 +15,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="rundeck.Execution; rundeck.ScheduledExecution; rundeck.ExecReport" %>
+<%@ page import="rundeck.Execution; rundeck.ScheduledExecution; rundeck.BaseReport" %>
 <g:set var="rkey" value="${g.rkey()}"/>
 <g:set var="options" value="[summary:true]"/>
 <%
@@ -44,7 +44,7 @@
         <i class="exec-status icon ${statusIcon}"></i>
     </span>
     <g:set var="vals" value="${['?','?','?']}"/>
-    <g:if test="${rpt instanceof ExecReport}">
+    <g:if test="${rpt instanceof BaseReport}">
         <g:if test="${rpt?.node=~/^\d+\/\d+\/\d+$/}">
             <g:set var="vals" value="${rpt.node.split('/') as List}"/>
         </g:if>

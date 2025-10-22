@@ -22,7 +22,7 @@ import spock.lang.Specification
 /**
  * Created by greg on 6/13/15.
  */
-class ExecReportSpec extends Specification implements DataTest {
+class BaseReportSpec extends Specification implements DataTest {
 
     def setupSpec() { mockDomains Execution,Workflow,CommandExec,JobExec }
 
@@ -42,7 +42,7 @@ class ExecReportSpec extends Specification implements DataTest {
 
 
         when:
-        def report = ExecReport.fromExec(exec)
+        def report = BaseReport.fromExec(exec)
 
         then:
         exec!=null
@@ -69,7 +69,7 @@ class ExecReportSpec extends Specification implements DataTest {
 
 
         when:
-        def report = ExecReport.fromExec(exec)
+        def report = BaseReport.fromExec(exec)
 
         then:
         exec!=null
@@ -97,7 +97,7 @@ class ExecReportSpec extends Specification implements DataTest {
 
 
         when:
-        def report = ExecReport.fromExec(exec)
+        def report = BaseReport.fromExec(exec)
 
         then:
         exec!=null
@@ -125,7 +125,7 @@ class ExecReportSpec extends Specification implements DataTest {
 
 
         when:
-        def report = ExecReport.fromExec(exec)
+        def report = BaseReport.fromExec(exec)
 
         then:
         exec!=null
@@ -165,7 +165,7 @@ class ExecReportSpec extends Specification implements DataTest {
 
 
         when:
-        def report = ExecReport.fromExec(exec)
+        def report = BaseReport.fromExec(exec)
 
         then:
         exec!=null

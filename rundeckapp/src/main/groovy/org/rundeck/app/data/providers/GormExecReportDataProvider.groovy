@@ -14,7 +14,6 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.MessageSource
 import org.springframework.transaction.TransactionStatus
 import rundeck.BaseReport
-import rundeck.ExecReport
 import rundeck.services.ConfigurationService
 import javax.sql.DataSource
 
@@ -29,73 +28,73 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
 
     @Override
     RdExecReport get(Long id){
-        return ExecReport.get(id)
+        return BaseReport.get(id)
     }
 
     @Override
     SaveReportResponse saveReport(SaveReportRequest saveReportRequest) {
-        ExecReport execReport = new ExecReport()
-        execReport.executionId = saveReportRequest.executionId
-        execReport.jobId = saveReportRequest.jobId
-        execReport.adhocExecution = saveReportRequest.adhocExecution
-        execReport.adhocScript = saveReportRequest.adhocScript
-        execReport.abortedByUser = saveReportRequest.abortedByUser
-        execReport.succeededNodeList = saveReportRequest.succeededNodeList
-        execReport.failedNodeList = saveReportRequest.failedNodeList
-        execReport.filterApplied = saveReportRequest.filterApplied
-        execReport.node = saveReportRequest.node
-        execReport.title = saveReportRequest.title
-        execReport.status = saveReportRequest.status
-        execReport.actionType = saveReportRequest.status
-        execReport.project = saveReportRequest.project
-        execReport.reportId = saveReportRequest.reportId
-        execReport.tags = saveReportRequest.tags
-        execReport.author = saveReportRequest.author
-        execReport.message = saveReportRequest.message
-        execReport.dateStarted = saveReportRequest.dateStarted
-        execReport.dateCompleted = saveReportRequest.dateCompleted
-        execReport.jobUuid = saveReportRequest.jobUuid
-        execReport.executionUuid = saveReportRequest.executionUuid
-        boolean isUpdated = execReport.save(flush: true)
-        String errors = execReport.errors.hasErrors() ? execReport.errors.allErrors.collect {
+        BaseReport baseReport = new BaseReport()
+        baseReport.executionId = saveReportRequest.executionId
+        baseReport.jobId = saveReportRequest.jobId
+        baseReport.adhocExecution = saveReportRequest.adhocExecution
+        baseReport.adhocScript = saveReportRequest.adhocScript
+        baseReport.abortedByUser = saveReportRequest.abortedByUser
+        baseReport.succeededNodeList = saveReportRequest.succeededNodeList
+        baseReport.failedNodeList = saveReportRequest.failedNodeList
+        baseReport.filterApplied = saveReportRequest.filterApplied
+        baseReport.node = saveReportRequest.node
+        baseReport.title = saveReportRequest.title
+        baseReport.status = saveReportRequest.status
+        baseReport.actionType = saveReportRequest.status
+        baseReport.project = saveReportRequest.project
+        baseReport.reportId = saveReportRequest.reportId
+        baseReport.tags = saveReportRequest.tags
+        baseReport.author = saveReportRequest.author
+        baseReport.message = saveReportRequest.message
+        baseReport.dateStarted = saveReportRequest.dateStarted
+        baseReport.dateCompleted = saveReportRequest.dateCompleted
+        baseReport.jobUuid = saveReportRequest.jobUuid
+        baseReport.executionUuid = saveReportRequest.executionUuid
+        boolean isUpdated = baseReport.save(flush: true)
+        String errors = baseReport.errors.hasErrors() ? baseReport.errors.allErrors.collect {
             messageSource.getMessage(it,null) }.join(",") : null
-        return new SaveReportResponseImpl(report: execReport, isSaved: isUpdated, errors: errors)
+        return new SaveReportResponseImpl(report: baseReport, isSaved: isUpdated, errors: errors)
     }
 
     @Override
     List<RdExecReport> findAllByProject(String projectName) {
-        return ExecReport.findAllByProject(projectName)
+        return BaseReport.findAllByProject(projectName)
     }
 
     @Override
     List<RdExecReport> findAllByStatus(String status) {
-        return ExecReport.findAllByStatus(status)
+        return BaseReport.findAllByStatus(status)
     }
     @Override
     List<RdExecReport> findAllByProjectAndExecutionUuidInList(String projectName, List<String> execUuids) {
-        return ExecReport.findAllByProjectAndExecutionUuidInList(projectName, execUuids)
+        return BaseReport.findAllByProjectAndExecutionUuidInList(projectName, execUuids)
     }
 
     @Override
     int countByProject(String projectName) {
-        return ExecReport.countByProject(projectName)
+        return BaseReport.countByProject(projectName)
     }
 
     @Override
     int countExecutionReports(RdExecQuery execQuery) {
         def optionFilterExecutionIds = parseOptionFilterAndGetExecutionIds(execQuery?.optionFilter)
 
-        return ExecReport.createCriteria().count {
+        return BaseReport.createCriteria().count {
             applyExecutionCriteria(execQuery, delegate, true, null, [], optionFilterExecutionIds)
         }
     }
 
     @Override
     int countExecutionReportsWithTransaction(RdExecQuery query, boolean isJobs, String jobId) {
-        return ExecReport.withTransaction {
+        return BaseReport.withTransaction {
             def optionFilterExecutionIds = parseOptionFilterAndGetExecutionIds(query?.optionFilter)
 
-            ExecReport.createCriteria().count {
+            BaseReport.createCriteria().count {
                 applyExecutionCriteria(query, delegate, isJobs, jobId, [], optionFilterExecutionIds)
             }
         }
@@ -103,8 +102,8 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
 
     @Override
     int countExecutionReportsWithTransaction(RdExecQuery query, boolean isJobs, String jobId, List<Long> execsId) {
-        return ExecReport.withTransaction {
-            ExecReport.createCriteria().count {
+        return BaseReport.withTransaction {
+            BaseReport.createCriteria().count {
                 applyExecutionCriteria(query, delegate, isJobs, jobId, execsId)
             }
         }
@@ -113,13 +112,13 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
     @Override
     int countAndSaveByStatus() {
         int count=0
-        ExecReport.findAllByStatus("succeeded").each{
+        BaseReport.findAllByStatus("succeeded").each{
             it.status='succeed'
             it.actionType='succeed'
             it.save()
             count++
         }
-        ExecReport.findAllByStatus("failed").each{
+        BaseReport.findAllByStatus("failed").each{
             it.status='fail'
             it.actionType='fail'
             it.save()
@@ -151,7 +150,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
 
         def optionFilterExecutionIds = parseOptionFilterAndGetExecutionIds(query?.optionFilter)
 
-        return ExecReport.createCriteria().list {
+        return BaseReport.createCriteria().list {
 
             if (query?.max) {
                 maxResults(query?.max.toInteger())
@@ -173,7 +172,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
 
     @Override
     void deleteByProject(String projectName) {
-        ExecReport.deleteByProject(projectName)
+        BaseReport.deleteByProject(projectName)
     }
 
     @Override
@@ -181,7 +180,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
         BaseReport.withTransaction { TransactionStatus status ->
             try {
                 BaseReport.deleteByProject(projectName)
-                ExecReport.deleteByProject(projectName)
+                BaseReport.deleteByProject(projectName)
             } catch (Exception e){
                 status.setRollbackOnly()
                 throw e
@@ -191,14 +190,14 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
 
     @Override
     void deleteAllByExecutionUuid(String executionUuid) {
-        ExecReport.findAllByExecutionUuid(executionUuid).each { rpt ->
+        BaseReport.findAllByExecutionUuid(executionUuid).each { rpt ->
             rpt.delete()
         }
     }
 
     @Override
     void deleteAllByExecutionId(Long id) {
-        ExecReport.findAllByExecutionId(id).each { rpt ->
+        BaseReport.findAllByExecutionId(id).each { rpt ->
             rpt.delete()
         }
     }
