@@ -245,9 +245,7 @@ export default defineComponent({
                     ? job.description.substring(0, 100)
                     : job.description
                 }}</span>
-                <span class="sepL">{{
-                  $t("jobUpload.results.skipped.existing")
-                }}</span>
+                <span>{{ $t("jobUpload.results.skipped.existing") }}</span>
                 <span class="jobname">
                   <a v-if="job.id" :href="job.permalink">{{ job.name }}</a>
                 </span>
