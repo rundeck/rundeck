@@ -16,7 +16,7 @@ class JobUploadPage extends BasePage {
     private static final String formUploadButtonId = "uploadFormUpload"
     private static final String jobUploadInfoSelectors = 'alert alert-info'
 
-    boolean nextUi = false
+    boolean legacyUi = false
     String loadPath
     By fileInput = By.name(fileInputName)
     By formUploadButton = By.id(formUploadButtonId)
@@ -30,7 +30,7 @@ class JobUploadPage extends BasePage {
     }
 
     void loadPathToUploadPage(String projectName) {
-        loadPath = "/project/${projectName}/job/upload${nextUi?'?nextUi=true':''}"
+        loadPath = "/project/${projectName}/job/upload${legacyUi ? '?legacyUi=true' : ''}"
     }
 
     void validatePage() {

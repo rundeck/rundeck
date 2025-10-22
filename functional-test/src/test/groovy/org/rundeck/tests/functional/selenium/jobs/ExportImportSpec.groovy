@@ -69,9 +69,9 @@ class ExportImportSpec extends SeleniumBase {
         def jobListPage = page JobListPage
         def jobUploadPage = page JobUploadPage
         jobUploadPage.loadPathToUploadPage SELENIUM_EXPORT_IMPORT_PROJECT
-        jobUploadPage.nextUi = nextUi
+        jobUploadPage.legacyUi = legacyUi
         def sideBarPage = page SideBarPage
-        def jobName = "jobWithOptionsToExport-nextui-${nextUi}"
+        def jobName = "jobWithOptionsToExport-nextui-${legacyUi}"
         def optName = "firstOption"
         when:
         jobCreatePage.fillBasicJob jobName
@@ -112,7 +112,7 @@ class ExportImportSpec extends SeleniumBase {
         jobCreatePage.optDetails.size() == 1
         jobCreatePage.options.size() == 1
         where:
-        nextUi<<[true,false]
+        legacyUi<< [true, false]
     }
     def "import job with skip should show skip message"() {
         setup:
@@ -120,8 +120,8 @@ class ExportImportSpec extends SeleniumBase {
         def jobShowPage = page JobShowPage
         def jobUploadPage = page JobUploadPage
         jobUploadPage.loadPathToUploadPage SELENIUM_EXPORT_IMPORT_PROJECT
-        jobUploadPage.nextUi = nextUi
-        def jobName = 'ImportJobWithSkip-nextui-'+nextUi
+        jobUploadPage.legacyUi = legacyUi
+        def jobName = 'ImportJobWithSkip-nextui-'+ legacyUi
 
         when: "create basic job"
         jobCreatePage.fillBasicJob jobName
@@ -144,7 +144,7 @@ class ExportImportSpec extends SeleniumBase {
 
         jobUploadPage.headerTextInfo.text.contains("skipped due to existing jobs")
         where:
-        nextUi<<[true,false]
+        legacyUi<< [true, false]
 
     }
 
