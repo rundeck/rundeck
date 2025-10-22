@@ -1,21 +1,24 @@
 <script lang="ts">
-import JobBulkEditControls from '@/app/pages/job/browse/JobBulkEditControls.vue'
-import {getRundeckContext} from '@/library'
-import {JobPageStore, JobPageStoreInjectionKey} from '@/library/stores/JobPageStore'
+import JobBulkEditControls from "@/app/pages/job/browse/JobBulkEditControls.vue";
+import { getRundeckContext } from "@/library";
+import {
+  JobPageStore,
+  JobPageStoreInjectionKey,
+} from "@/library/stores/JobPageStore";
 import { JobBrowseItem } from "@/library/types/jobs/JobBrowse";
 import BrowserJobItem from "../browse/tree/BrowserJobItem.vue";
-import {defineComponent, inject} from 'vue'
+import { defineComponent, inject } from "vue";
 import { RecycleScroller } from "vue-virtual-scroller";
 
-const rundeckContext = getRundeckContext()
+const rundeckContext = getRundeckContext();
 const rootStore = rundeckContext.rootStore;
 export default defineComponent({
   name: "JobUploadPage",
-  components: {JobBulkEditControls, RecycleScroller, BrowserJobItem },
+  components: { JobBulkEditControls, RecycleScroller, BrowserJobItem },
   setup() {
     return {
       jobPageStore: inject(JobPageStoreInjectionKey) as JobPageStore,
-    }
+    };
   },
   data() {
     return {
@@ -46,7 +49,7 @@ export default defineComponent({
       }));
     },
   },
-  async mounted(){
+  async mounted() {
     await this.jobPageStore.loadProjAuthz();
   },
   created() {
@@ -87,10 +90,9 @@ export default defineComponent({
         formData.append("uuidOption", this.uuidOption);
         formData.append("validateJobref", this.validateJobref);
 
-        const response = await rootStore.api().post(
-          `/project/${this.project}/jobs/import`,
-          formData
-        );
+        const response = await rootStore
+          .api()
+          .post(`/project/${this.project}/jobs/import`, formData);
         if (response.status !== 200) {
           if (
             response.status === 400 &&
@@ -148,9 +150,11 @@ export default defineComponent({
         this.uploading = false;
       }
     },
-    bulkActionPerformed(info:any){
-      if (info.action === 'delete') {
-        this.jobs = this.jobs.filter(job => !info.jobs.find((j) => j.id === job.id))
+    bulkActionPerformed(info: any) {
+      if (info.action === "delete") {
+        this.jobs = this.jobs.filter(
+          (job) => !info.jobs.find((j) => j.id === job.id),
+        );
       }
     },
     setError(message: string) {
@@ -158,7 +162,9 @@ export default defineComponent({
     },
     cancel() {
       // Redirect to jobs list
-      window.location.assign(`${rundeckContext.rdBase}/project/${this.project}/jobs`)
+      window.location.assign(
+        `${rundeckContext.rdBase}/project/${this.project}/jobs`,
+      );
     },
   },
 });
@@ -187,12 +193,11 @@ export default defineComponent({
             <ul
               v-for="(job, index) in errjobs"
               :key="index"
-              class="list-unstyled "
+              class="list-unstyled"
             >
               <li class="flow-h">
-
                 <span class="jobname">
-                #{{ job.index }}:
+                  #{{ job.index }}:
                   <a v-if="job.id" :href="job.permalink">{{
                     job.name || "(Name missing)"
                   }}</a>
@@ -231,27 +236,27 @@ export default defineComponent({
             <ul
               v-for="(job, index) in skipjobs"
               :key="index"
-              class="list-unstyled "
+              class="list-unstyled"
             >
               <li class="flow-h">
-
                 <span class="jobname">#{{ job.index }}: {{ job.name }}</span>
                 <span class="jobdesc" style="">{{
-                    job.description && job.description.length > 100
-                      ? job.description.substring(0, 100)
-                      : job.description
-                  }}</span>
+                  job.description && job.description.length > 100
+                    ? job.description.substring(0, 100)
+                    : job.description
+                }}</span>
                 <span class="sepL">{{
-                    $t('jobUpload.results.skipped.existing')
-                  }}</span>
+                  $t("jobUpload.results.skipped.existing")
+                }}</span>
                 <span class="jobname">
-                <a v-if="job.id" :href="job.permalink">{{ job.name }}</a>
-              </span>
+                  <a v-if="job.id" :href="job.permalink">{{ job.name }}</a>
+                </span>
                 <span class="jobdesc">{{
-                    job.description && job.description.length > 100
-                      ? job.description.substring(0, 100)
-                      : job.description
-                  }}</span></li>
+                  job.description && job.description.length > 100
+                    ? job.description.substring(0, 100)
+                    : job.description
+                }}</span>
+              </li>
             </ul>
           </div>
         </div>
@@ -275,7 +280,10 @@ export default defineComponent({
             >
           </div>
           <div class="card-content">
-            <JobBulkEditControls :show-controls="false" @bulk-action-complete="bulkActionPerformed"/>
+            <JobBulkEditControls
+              :show-controls="false"
+              @bulk-action-complete="bulkActionPerformed"
+            />
             <ul class="list-unstyled">
               <RecycleScroller
                 ref="scroller"
@@ -302,7 +310,7 @@ export default defineComponent({
     <!-- Upload form -->
     <div class="row">
       <div class="col-xs-12">
-        <div  class="card" >
+        <div class="card">
           <form class="form" role="form" @submit.prevent="submitForm">
             <div class="card-header">
               <h3 class="card-title">
@@ -521,7 +529,7 @@ export default defineComponent({
                 <i class="fas fa-spinner fa-spin"></i>
                 {{ $t("jobUpload.uploadingFile") }}
               </div>
-              <div v-if="error" class="alert alert-danger ">
+              <div v-if="error" class="alert alert-danger">
                 {{ error }}
               </div>
             </div>
@@ -533,10 +541,7 @@ export default defineComponent({
 </template>
 
 <style scoped lang="scss">
-
-
 .flow-h > * + * {
   margin-left: var(--spacing-2);
 }
-
 </style>
