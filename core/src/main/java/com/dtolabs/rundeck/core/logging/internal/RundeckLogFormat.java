@@ -95,7 +95,7 @@ public class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
         while (dMesg.endsWith("\\r")) {
             dMesg = dMesg.substring(0, dMesg.length() - 1);
         }
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append(DELIM);
         //date
         sb.append(date).append('|');
@@ -135,7 +135,7 @@ public class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
     }
 
     static String backslashEscape(String dMesg, String chars) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         appendEscaped(sb, dMesg, chars);
         return sb.toString();
     }
@@ -146,7 +146,7 @@ public class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
      * @param dMesg string to append
      * @param chars characters to escape
      */
-    static void appendEscaped(StringBuffer sb, String dMesg, String chars) {
+    static void appendEscaped(StringBuilder sb, String dMesg, String chars) {
         if (dMesg != null) {
             dMesg.chars().forEach(c -> {
                 if (chars.indexOf((char)c) >= 0 || c == BACKSLASH) {
