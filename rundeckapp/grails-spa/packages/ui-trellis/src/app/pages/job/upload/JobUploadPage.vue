@@ -219,7 +219,7 @@ export default defineComponent({
         <div class="card">
           <div class="card-header text-info">
             <i class="glyphicon glyphicon-info-sign"></i>
-            {{ skipjobs.length }} {{ $tc("jobUpload.jobs", skipjobs.length)
+            {{ skipjobs.length }} {{ $t("jobUpload.jobs", skipjobs.length)
             }}{{
               skipjobs.length === 1
                 ? $t("jobUpload.wasWere.singular")
