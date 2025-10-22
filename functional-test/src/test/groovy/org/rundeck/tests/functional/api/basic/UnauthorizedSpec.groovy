@@ -17,8 +17,7 @@ class UnauthorizedSpec extends BaseContainer {
             def client = clientProvider.client
             client = new RdClient(
                     client.baseUrl,
-                    new OkHttpClient.Builder().
-                            build()
+                    new OkHttpClient.Builder()
             )
         when:
             def result = client.doGet("/projects")
@@ -52,8 +51,7 @@ class UnauthorizedSpec extends BaseContainer {
             def client = clientProvider.client
             client = new RdClient(
                     client.baseUrl,
-                    new OkHttpClient.Builder().
-                            build()
+                    new OkHttpClient.Builder()
             )
         when:
             def result = client.doGet("/projects?authtoken=invalidtoken")

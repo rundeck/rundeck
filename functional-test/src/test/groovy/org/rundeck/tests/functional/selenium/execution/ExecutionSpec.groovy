@@ -77,7 +77,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         then:
         jobShowPage.go()
         jobShowPage.runJobBtn.click()
@@ -191,7 +191,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         jobShowPage.go()
         jobShowPage.runJobBtn.click()
@@ -287,7 +287,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         jobShowPage.go()
         jobShowPage.runJobBtn.click()
@@ -342,7 +342,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         jobShowPage.go()
         jobShowPage.validatePage()
@@ -402,7 +402,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         jobShowPage.go()
         jobShowPage.runJobBtn.click()
@@ -462,7 +462,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         jobShowPage.go()
         jobShowPage.runJobBtn.click()
@@ -523,7 +523,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         jobShowPage.go()
         jobShowPage.runJobBtn.click()
@@ -595,7 +595,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         commandPage.runCommandAndWaitToBe("echo 'Hello world'", "SUCCEEDED")
         sideBarPage.goTo NavLinkTypes.ACTIVITY

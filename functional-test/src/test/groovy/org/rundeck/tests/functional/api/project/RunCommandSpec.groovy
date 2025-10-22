@@ -22,9 +22,7 @@ class RunCommandSpec extends BaseContainer {
         def execArgs = "echo 'this is a test of /api/run/command'"
 
         when:
-        def runResponse = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs}")
-        def runResponseBody = runResponse.body().string()
-        def parsedResponseBody = mapper.readValue(runResponseBody, RunCommand.class)
+        def parsedResponseBody = post("/project/$projectName/run/command?exec=${execArgs}", RunCommand)
         String newExecId = parsedResponseBody.execution.id
         def completedExecution = waitForExecutionFinish(newExecId)
 
@@ -34,9 +32,7 @@ class RunCommandSpec extends BaseContainer {
 
         when:
         def nodeFilter = ".*"
-        runResponse = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs};filter=${nodeFilter}")
-        runResponseBody = runResponse.body().string()
-        parsedResponseBody = mapper.readValue(runResponseBody, RunCommand.class)
+        parsedResponseBody = post("/project/$projectName/run/command?exec=${execArgs};filter=${nodeFilter}",RunCommand)
         newExecId = parsedResponseBody.execution.id
         completedExecution = waitForExecutionFinish(newExecId)
 
@@ -46,9 +42,7 @@ class RunCommandSpec extends BaseContainer {
 
         when:
         nodeFilter = "not-matching-node-filter"
-        runResponse = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs}&filter=${nodeFilter}")
-        runResponseBody = runResponse.body().string()
-        parsedResponseBody = mapper.readValue(runResponseBody, RunCommand.class)
+        parsedResponseBody = post("/project/$projectName/run/command?exec=${execArgs}&filter=${nodeFilter}",RunCommand)
         newExecId = parsedResponseBody.execution.id
         completedExecution = waitForExecutionFinish(newExecId)
 

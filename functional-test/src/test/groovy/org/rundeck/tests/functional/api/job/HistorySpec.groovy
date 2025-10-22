@@ -52,22 +52,16 @@ class HistorySpec extends BaseContainer {
 
     def "/api/history using valid \"end\" date format parameter"() {
         when:
-            def history = doGet("/project/${PROJECT_NAME}/history?end=2011-02-04T21:38:02Z")
+            def history = get("/project/${PROJECT_NAME}/history?end=2011-02-04T21:38:02Z", Map)
         then:
-            verifyAll {
-                history.successful
-                history.code() == 200
-            }
+            history != null
     }
 
     def "/api/history using valid \"begin\" date format parameter"() {
         when:
-            def history = doGet("/project/${PROJECT_NAME}/history?begin=2011-02-04T21:38:02Z")
+            def history = get("/project/${PROJECT_NAME}/history?begin=2011-02-04T21:38:02Z", Map)
         then:
-            verifyAll {
-                history.successful
-                history.code() == 200
-            }
+            history != null
     }
 
 }

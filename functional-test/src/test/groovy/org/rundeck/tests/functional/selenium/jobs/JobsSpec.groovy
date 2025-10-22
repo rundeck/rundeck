@@ -481,9 +481,7 @@ class JobsSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        def response = client.doPostWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
-        assert response.successful
-        def createdJob = mapper.readValue(response.body().string(), CreateJobResponse.class)
+        def createdJob = client.postWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody,CreateJobResponse)
         def jobUuid = createdJob.succeeded[0]?.id
         jobShowPage.goToJob(jobUuid as String)
         jobShowPage.validatePage()

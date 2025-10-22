@@ -123,10 +123,10 @@ class JobsSpec extends BaseContainer {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(path2).name, RequestBody.create(new File(path2), MultipartBody.FORM))
                 .build()
-        [client.doPostWithMultipart("/project/${newProject}/jobs/import?format=yaml&dupeOption=skip", multipartBody),
-        client.doPostWithMultipart("/project/${newProject}/jobs/import?format=yaml&dupeOption=skip", multipartBody1),
-        client.doPostWithMultipart("/project/${newProject}/jobs/import?format=yaml&dupeOption=skip", multipartBody2)].collect {
-             MAPPER.readValue(it.body().string(), Map).succeeded[0].id as String
+        [client.postWithMultipart("/project/${newProject}/jobs/import?format=yaml&dupeOption=skip", multipartBody),
+        client.postWithMultipart("/project/${newProject}/jobs/import?format=yaml&dupeOption=skip", multipartBody1),
+        client.postWithMultipart("/project/${newProject}/jobs/import?format=yaml&dupeOption=skip", multipartBody2)].collect {
+             it.succeeded[0].id as String
         }
     }
 }
