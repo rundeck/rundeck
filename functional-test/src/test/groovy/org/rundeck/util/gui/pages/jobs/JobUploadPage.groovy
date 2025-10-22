@@ -30,7 +30,7 @@ class JobUploadPage extends BasePage {
     }
 
     void loadPathToUploadPage(String projectName) {
-        loadPath = "/project/${projectName}/job/upload${legacyUi ? '?legacyUi=true' : ''}"
+        loadPath = "/project/${projectName}/job/upload${legacyUi ? '?ui=legacy' : ''}"
     }
 
     void validatePage() {
