@@ -1085,7 +1085,7 @@ const messages = {
   // Job Upload Page messages
   jobUpload: {
     title: "Upload Job Definition to project",
-    fileSelectLabel: "Select a Jobs definition file.",
+    fileSelectLabel: "Select a Job definition file.",
     formatRadioLabel: {
       xml: "XML format",
       yaml: "YAML format",
@@ -1115,7 +1115,7 @@ const messages = {
     jobs: "Job | Jobs",
     wasWere: {
       singular: " was",
-      plural: "s were",
+      plural: "were",
     },
     results: {
       error: {

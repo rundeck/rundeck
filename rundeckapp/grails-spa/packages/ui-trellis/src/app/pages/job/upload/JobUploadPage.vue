@@ -116,7 +116,7 @@ export default defineComponent({
           this.errjobs = response.data.failed;
           if (this.errjobs.length > 0) {
             this.setError(
-              `${this.errjobs.length} ${this.$tc(
+              `${this.errjobs.length} ${this.$t(
                 "jobUpload.jobs",
                 this.errjobs.length,
               )} ${
@@ -268,7 +268,7 @@ export default defineComponent({
           <div class="card-header text-success">
             <i class="glyphicon glyphicon-check"></i>
             <span class="text-success"
-              >{{ jobs.length }} {{ $tc("jobUpload.jobs", jobs.length)
+              >{{ jobs.length }} {{ $t("jobUpload.jobs", jobs.length)
               }}{{
                 jobs.length === 1
                   ? $t("jobUpload.wasWere.singular")
