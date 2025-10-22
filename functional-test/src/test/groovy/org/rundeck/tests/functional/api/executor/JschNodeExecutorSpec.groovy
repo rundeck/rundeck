@@ -2,10 +2,13 @@ package org.rundeck.tests.functional.api.executor
 
 
 import org.rundeck.util.annotations.APITest
+import org.rundeck.util.api.responses.execution.Execution
+import org.rundeck.util.api.responses.execution.ExecutionOutput
 import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.execution.ExecutionStatus
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.BaseContainer
+import org.rundeck.util.api.responses.execution.RunCommand
 
 @APITest
 class JschNodeExecutorSpec extends BaseContainer{
@@ -88,6 +91,71 @@ class JschNodeExecutorSpec extends BaseContainer{
         )
         then:
         exec.status==ExecutionStatus.SUCCEEDED.state
+    }
 
+    def "execute command on remote node using SSH key from key storage"() {
+        given: "A project that uses storage key for SSH authentication"
+        // Note: Setup of this project with storage key nodes happens in setupSpec()
+
+        and: "a command to execute"
+        def execCommand = "whoami"
+
+        when: "we execute the command on a node that uses storage key authentication"
+        def parsedResponseBody = client.post("/project/${TEST_PROJECT}/run/command?exec=${execCommand}&filter=name:ssh-node-stored-key", null, RunCommand)
+        String newExecId = parsedResponseBody.execution.id
+
+        and: "wait for it to complete"
+        def exec = JobUtils.waitForExecution(
+            ExecutionStatus.SUCCEEDED.state,
+            newExecId,
+            client,
+            WaitingTime.EXCESSIVE
+        )
+
+        then: "verify the execution succeeded"
+        exec.status == ExecutionStatus.SUCCEEDED.state
+
+        and: "fetch the output to verify it worked"
+        def output = get("/execution/${newExecId}/output", ExecutionOutput)
+        def outputLines = output.entries.findAll { it.log }.collect { it.log }
+
+        and: "verify the output is not empty"
+        !outputLines.isEmpty()
+    }
+
+    def "execute command with node filtering by tags"() {
+        given: "A project with tagged nodes"
+        // Note: Setup of this project with tagged nodes happens in setupSpec()
+
+        and: "a command to execute"
+        def execCommand = "uname -n"
+
+        when: "we execute the command on nodes filtered by tag"
+        def parsedResponseBody = client.post("/project/${TEST_PROJECT}/run/command?exec=${execCommand}&filter=tags:remote", null, RunCommand)
+        String newExecId = parsedResponseBody.execution.id
+
+        and: "wait for it to complete"
+        def exec = JobUtils.waitForExecution(
+            ExecutionStatus.SUCCEEDED.state,
+            newExecId,
+            client,
+            WaitingTime.EXCESSIVE
+        )
+
+        then: "verify the execution succeeded"
+        exec.status == ExecutionStatus.SUCCEEDED.state
+
+        and: "fetch the output and execution details"
+        def output = get("/execution/${newExecId}/output", ExecutionOutput)
+        def execution = get("/execution/${newExecId}", Execution)
+        def nodesList = execution.successfulNodes
+
+        and: "verify we executed on nodes with the 'remote' tag"
+        nodesList.size() > 0
+        output.entries.size() > 0
+
+        and: "verify the output contains the hostname for each node"
+        def outputLines = output.entries.findAll { it.log }.collect { it.log }
+        !outputLines.isEmpty()
     }
 }
