@@ -8,10 +8,10 @@
       :key="'before/' + job.id"
       section="job-browse-item"
       location="before-job-name"
-      :socket-data="{ job }"
+      :socket-data="{ job: loadedJob }"
     />
     <ui-socket
-      v-for="meta in job.meta"
+      v-for="meta in loadedJob.meta"
       :key="'before/' + job.id + '/' + meta.name"
       :location="`before-job-name:meta:${meta.name}`"
       section="job-browse-item"
@@ -37,7 +37,7 @@
       {{ shortDescription }}
     </span>
     <ui-socket
-      v-for="meta in job.meta"
+      v-for="meta in loadedJob.meta"
       :key="'after/' + job.id + '/' + meta.name"
       :location="`after-job-name:meta:${meta.name}`"
       section="job-browse-item"
@@ -47,7 +47,7 @@
       :key="'after/' + job.id"
       location="after-job-name"
       section="job-browse-item"
-      :socket-data="{ job }"
+      :socket-data="{ job: loadedJob }"
     />
   </div>
 </template>
@@ -59,8 +59,8 @@ import {
   JobPageStore,
   JobPageStoreInjectionKey,
 } from "@/library/stores/JobPageStore";
-import { JobBrowseItem } from "@/library/types/jobs/JobBrowse";
-import { defineComponent, PropType, inject } from "vue";
+import { JobBrowseItem, JobBrowseMeta } from "@/library/types/jobs/JobBrowse";
+import { defineComponent, PropType, inject, ref } from "vue";
 
 const context = getRundeckContext();
 const eventBus = context.eventBus;
@@ -82,13 +82,29 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    autoLoadMeta: {
+      type: Boolean,
+      default: false,
+    },
   },
   setup() {
     return {
       jobPageStore: inject(JobPageStoreInjectionKey) as JobPageStore,
+      loadedMeta: ref([] as JobBrowseMeta[]),
+      loaded: ref(false),
     };
   },
   computed: {
+    loadedJob() {
+      if (this.loaded && this.loadedMeta.length > 0) {
+        return {
+          ...this.job,
+          meta: this.loadedMeta,
+        };
+      } else {
+        return this.job;
+      }
+    },
     shortDescription() {
       if (!this.job.description) {
         return "";
@@ -98,6 +114,14 @@ export default defineComponent({
       }
       return this.job.description;
     },
+  },
+  async mounted() {
+    if (this.autoLoadMeta && !this.job.meta) {
+      this.loadedMeta = await this.jobPageStore
+        .getJobBrowser()
+        .loadJobMeta(this.job.id);
+      this.loaded = true;
+    }
   },
   methods: {
     jobLinkHref(job: JobBrowseItem) {
@@ -129,7 +153,7 @@ export default defineComponent({
         //only emit if the click was not within a button,input or link
         eventBus.emit(`browser-job-item-click:${this.job.id}`, this.job);
         if (this.loadMeta && !this.job.meta) {
-          this.job.meta = await this.jobPageStore
+          this.loadedMeta = await this.jobPageStore
             .getJobBrowser()
             .loadJobMeta(this.job.id);
         }
