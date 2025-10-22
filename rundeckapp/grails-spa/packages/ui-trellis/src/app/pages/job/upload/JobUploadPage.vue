@@ -228,7 +228,7 @@ export default defineComponent({
             {{ $t("jobUpload.results.skipped.skippedMessage") }}
           </div>
           <div class="card-content">
-            <li
+            <ul
               v-for="(job, index) in skipjobs"
               :key="index"
               class="list-unstyled "
@@ -252,7 +252,7 @@ export default defineComponent({
                       ? job.description.substring(0, 100)
                       : job.description
                   }}</span></li>
-            </li>
+            </ul>
           </div>
         </div>
       </div>
