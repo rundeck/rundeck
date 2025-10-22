@@ -12,7 +12,7 @@
   - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   - See the License for the specific language governing permissions and
   - limitations under the License.
-  --}%<%@ page import="rundeck.Execution; java.text.SimpleDateFormat; rundeck.ExecReport" contentType="text/xml;charset=UTF-8" %><%--
+  --}%<%@ page import="rundeck.Execution; java.text.SimpleDateFormat; rundeck.BaseReport" contentType="text/xml;charset=UTF-8" %><%--
 --%><g:set var="feedTitle" value="Rundeck History: ${paginateParams.projFilter}"/><%--
 --%><g:set var="feedLink" value="${createLink(controller:'reports',action:'index',params:paginateParams)}"/><%--
 --%><g:set var="feedDescription" value="${feedTitle}"/><%--

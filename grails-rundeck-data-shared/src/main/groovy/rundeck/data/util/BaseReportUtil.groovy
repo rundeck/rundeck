@@ -6,7 +6,7 @@ import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
 import rundeck.data.constants.WorkflowStepConstants
 import rundeck.data.report.SaveReportRequestImpl
 
-class ExecReportUtil {
+class BaseReportUtil {
     static SaveReportRequest buildSaveReportRequest(ExecutionData exec, JobData job = null) {
         def failedCount = exec.failedNodeList ? exec.failedNodeList.split(',').size() : 0
         def successCount = exec.succeededNodeList ? exec.succeededNodeList.split(',').size() : 0;

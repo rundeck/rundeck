@@ -92,7 +92,7 @@ import java.time.temporal.ChronoUnit
 class ExecutionServiceSpec extends Specification implements ServiceUnitTest<ExecutionService>, DataTest, AutowiredTest {
 
     Class[] getDomainClassesToMock() {
-        [Execution, User, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution, ScheduledExecutionStats, Notification]
+        [Execution, User, ScheduledExecution, Workflow, CommandExec, Option, BaseReport, LogFileStorageRequest, ReferencedExecution, ScheduledExecutionStats, Notification]
     }
 
     def setup(){
@@ -6034,7 +6034,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         when:
         service.createMissedExecution(job,"201365e7-2222-433d-a4d9-0d7712df0f84",scheduledTime)
         Execution execution = Execution.findByScheduledExecution(job)
-        ExecReport execReport = ExecReport.findByJobUuid(job.uuid.toString())
+        BaseReport baseReport = BaseReport.findByJobUuid(job.uuid.toString())
 
         then:
         triggerNotificationCalled * service.notificationService.triggerJobNotification(_,_,_)
@@ -6044,7 +6044,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         execution.dateStarted == scheduledTime
         execution.dateCompleted > execution.dateStarted
         execution.executionState == "missed"
-        execReport.status == "missed"
+        baseReport.status == "missed"
 
         where:
         triggerNotificationCalled | notification

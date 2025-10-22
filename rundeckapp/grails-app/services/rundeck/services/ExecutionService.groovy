@@ -20,7 +20,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
 import org.hibernate.sql.JoinType
-import rundeck.data.util.ExecReportUtil
+import rundeck.data.util.BaseReportUtil
 import rundeck.services.workflow.WorkflowMetricsWriterImpl
 import rundeck.support.filters.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ExecutionContext
@@ -254,7 +254,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     execution: e,
                     href: apiService.apiHrefForExecution(e),
                     status: getExecutionState(e),
-                    summary: ExecReportUtil.summarizeJob(e),
+                    summary: BaseReportUtil.summarizeJob(e),
                     permalink: apiService.guiHrefForExecution(e)
             ]
 
@@ -279,7 +279,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         permalink: apiService.guiHrefForExecution(e),
                         href: apiService.apiHrefForExecution(e),
                         status: getExecutionState(e),
-                        summary: ExecReportUtil.summarizeJob(e)
+                        summary: BaseReportUtil.summarizeJob(e)
                 ]
             if(e.customStatusString){
                 data.customStatus=e.customStatusString
@@ -3175,7 +3175,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def jobname="adhoc"
         def jobid=null
         def jobUuid=null
-        def summary= ExecReportUtil.summarizeJob(execution)
+        def summary= BaseReportUtil.summarizeJob(execution)
         if (scheduledExecution) {
             jobname = scheduledExecution.groupPath ? scheduledExecution.generateFullName() : scheduledExecution.jobName
             jobid = scheduledExecution.id
@@ -4470,7 +4470,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         missed.status = 'missed'
         missed.save()
 
-        execReportDataProvider.saveReport(ExecReportUtil.buildSaveReportRequest(missed, scheduledExecution))
+        execReportDataProvider.saveReport(BaseReportUtil.buildSaveReportRequest(missed, scheduledExecution))
 
         if(scheduledExecution.notifications) {
             AuthContext authContext = rundeckAuthContextProcessor.

@@ -29,7 +29,7 @@ import spock.lang.Unroll
 class ExecutionServiceParseJobOptsSpec extends Specification implements ServiceUnitTest<ExecutionService>, DataTest, AutowiredTest {
 
     Class[] getDomainClassesToMock() {
-        [Execution, User, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution, ScheduledExecutionStats]
+        [Execution, User, ScheduledExecution, Workflow, CommandExec, Option, BaseReport, LogFileStorageRequest, ReferencedExecution, ScheduledExecutionStats]
     }
 
     def setup(){

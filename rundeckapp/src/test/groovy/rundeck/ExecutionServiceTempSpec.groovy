@@ -30,7 +30,7 @@ import spock.lang.Specification
  */
 class ExecutionServiceTempSpec extends Specification implements DataTest {
 
-    def setupSpec() { mockDomains Execution, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution }
+    def setupSpec() { mockDomains Execution, ScheduledExecution, Workflow, CommandExec, Option, BaseReport, LogFileStorageRequest, ReferencedExecution }
 
     ExecutionService service
     def setup(){

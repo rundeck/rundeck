@@ -26,7 +26,7 @@ import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.services.ExecutionFile
 import rundeck.CommandExec
-import rundeck.ExecReport
+import rundeck.BaseReport
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
@@ -69,7 +69,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         Execution execution = setupExecution(se, projName, execDate, executionCompletionDate, frameworkService.getServerUUID())
         then:
         1 == Execution.countByProject(projName)
-        1 == ExecReport.countByProject(projName)
+        1 == BaseReport.countByProject(projName)
 
 
         when:
@@ -82,7 +82,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         then:
         execIdsToExclude.size() == 0
         1 == Execution.countByProject(projName)
-        1 == ExecReport.countByProject(projName)
+        1 == BaseReport.countByProject(projName)
     }
 
     def testExecuteJobCleanerWithExecutionsToDelete(){
@@ -118,7 +118,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         then:
         execIds.size() == sucessTotal
         0 == Execution.countByProject(projName)
-        0 == ExecReport.countByProject(projName)
+        0 == BaseReport.countByProject(projName)
     }
 
     private FrameworkService initNonClusterFrameworkService() {
@@ -154,7 +154,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
 
         then:
         1 == Execution.countByProject(projName)
-        1 == ExecReport.countByProject(projName)
+        1 == BaseReport.countByProject(projName)
 
 
 
@@ -165,7 +165,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         execIdsToExclude.size() ==1
         execIdsToExclude.contains(execution.id)
         1 == Execution.countByProject(projName)
-        1 == ExecReport.countByProject(projName)
+        1 == BaseReport.countByProject(projName)
 
     }
 
@@ -190,7 +190,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
                 e.serverNodeUUID = serverUUID
             }
             e.save()
-            def er=ExecReport.fromExec(e)
+            def er=BaseReport.fromExec(e)
             er.save()
         }
 

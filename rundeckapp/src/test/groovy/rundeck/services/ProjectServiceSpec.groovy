@@ -90,7 +90,6 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     void setupSpec() {
         mockDomain Project
         mockDomain BaseReport
-        mockDomain ExecReport
         mockDomain ScheduledExecution
         mockDomain Execution
         mockDomain CommandExec
@@ -1494,7 +1493,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                 scheduledExecution: se
             )
             assertNotNull exec.save()
-            ExecReport er = ExecReport.fromExec(exec).save()
+            BaseReport er = BaseReport.fromExec(exec).save()
             assert null!=er
 
             def project = Mock(IRundeckProject){
@@ -2818,7 +2817,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             outwriter.flush()
         }
         def zip = zipmock.proxyInstance()
-        ExecReport exec = new ExecReport(
+        BaseReport exec = new BaseReport(
             executionId:123L,
             jobId: oldJobId.toString(),
             node:'1/0/0',
@@ -2893,7 +2892,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def oldUuid= 'test-job-uuid'
 
         when:
-        def ExecReport result = service.loadHistoryReport(rptxml,[:],[(oldUuid):se],'test')
+        def BaseReport result = service.loadHistoryReport(rptxml,[:],[(oldUuid):se],'test')
         then:
         assertNull result
         where:
@@ -2914,7 +2913,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             outwriter.flush()
         }
         def zip = zipmock.proxyInstance()
-        ExecReport exec = new ExecReport(
+        BaseReport exec = new BaseReport(
             ctxController: 'ct',
             executionId: 123,
             jobId: '321',
@@ -2979,7 +2978,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
         def zip = zipmock.proxyInstance()
 
-        ExecReport exec = new ExecReport(
+        BaseReport exec = new BaseReport(
                 executionId:123L,
                 jobId: oldJobId.toString(),
                 node:'1/0/0',
@@ -3000,7 +2999,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         when:
         service.exportHistoryReport(zip, exec, outfilename)
         then:
-        def report = ExecReport.get(exec.id)
+        def report = BaseReport.get(exec.id)
         assertNotNull report
         assertEquals report.jobUuid, exec.jobUuid
         assertEquals report.executionUuid, exec.executionUuid
