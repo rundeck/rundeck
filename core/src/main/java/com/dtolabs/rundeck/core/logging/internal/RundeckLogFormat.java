@@ -134,12 +134,6 @@ public class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
         return sb.toString();
     }
 
-    static String backslashEscape(String dMesg, String chars) {
-        StringBuilder sb = new StringBuilder();
-        appendEscaped(sb, dMesg, chars);
-        return sb.toString();
-    }
-
     /**
      * Append the string to the buffer, escaping any of the characters in chars or backslash with a backslash
      * @param sb buffer
