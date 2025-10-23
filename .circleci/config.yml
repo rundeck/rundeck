@@ -474,7 +474,6 @@ jobs:
       resource_class: medium
 
     steps:
-      - setup_docker
       - checkout
       - install-packaging-dependencies
       - restore-build-cache
