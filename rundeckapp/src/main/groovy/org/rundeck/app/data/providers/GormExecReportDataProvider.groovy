@@ -422,6 +422,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
                 }
             }
 
+            /*
             if (isJobs) {
                 or {
                     isNotNull("jobId")
@@ -431,6 +432,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
                 isNull("jobId")
                 isNull("executionId")
             }
+             */
 
             if(query.execnodeFilter){
                 if(query.execnodeFilter.startsWith('name:') || !(query.execnodeFilter.contains(":") || query.execnodeFilter.contains(".*"))){
