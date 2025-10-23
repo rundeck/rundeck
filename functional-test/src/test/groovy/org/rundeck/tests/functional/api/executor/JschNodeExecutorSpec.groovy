@@ -1,14 +1,13 @@
 package org.rundeck.tests.functional.api.executor
 
-
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.api.responses.execution.ExecutionOutput
+import org.rundeck.util.api.responses.execution.RunCommand
 import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.execution.ExecutionStatus
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.BaseContainer
-import org.rundeck.util.api.responses.execution.RunCommand
 
 @APITest
 class JschNodeExecutorSpec extends BaseContainer{
@@ -104,7 +103,7 @@ class JschNodeExecutorSpec extends BaseContainer{
 
         def filter = "name:ssh-node"
         def parsedResponseBody = client.post(
-            "/project/${TEST_PROJECT}/run/command?exec=${execCommand}&filter=" + URLEncoder.encode(filter,null), null, RunCommand)
+            "/project/${TEST_PROJECT}/run/command?exec=${execCommand}&filter=" + URLEncoder.encode(filter,'UTF-8'), null, RunCommand)
         String newExecId = parsedResponseBody.execution.id
 
         and: "wait for it to complete"
@@ -137,12 +136,11 @@ class JschNodeExecutorSpec extends BaseContainer{
 
         def filter = "tags:executor-test"
         def parsedResponseBody = client.post(
-            "/project/${TEST_PROJECT}/run/command?exec=${execCommand}&filter=" + URLEncoder.encode(filter,null), null, RunCommand)
+            "/project/${TEST_PROJECT}/run/command?exec=${execCommand}&filter=" + URLEncoder.encode(filter,'UTF-8'), null, RunCommand)
         String newExecId = parsedResponseBody.execution.id
 
         and: "wait for it to complete"
-        def exec = JobUtils.waitForExecution(
-            ExecutionStatus.SUCCEEDED.state,
+        def exec = JobUtils.waitForSuccess(
             newExecId,
             client,
             WaitingTime.EXCESSIVE
@@ -165,5 +163,205 @@ class JschNodeExecutorSpec extends BaseContainer{
         and: "verify the output contains the hostname for each node"
         def outputLines = output.entries.findAll { it.log }.collect { it.log }
         !outputLines.isEmpty()
+    }
+
+    def "execute basic script on remote nodes"() {
+        given: "A project that uses storage key for SSH authentication"
+        // Note: Setup of this project with storage key nodes happens in setupSpec()
+
+        and: "a script to execute"
+        def scriptPath = getClass().getClassLoader().getResource("test-files/test-dispatch-script.sh").getPath()
+        File scriptFile = new File(scriptPath)
+        scriptFile.setExecutable(true)
+
+        when: "we execute the script on a node that uses storage key authentication"
+        def filter = "name:ssh-node"
+        def scriptRunResponse = client.doPostWithFormData(
+            "/project/${TEST_PROJECT}/run/script?filter=" + URLEncoder.encode(filter, 'UTF-8'),
+            "scriptFile",
+            scriptFile
+        )
+        assert scriptRunResponse.successful
+        def runScriptJson = client.jsonValue(scriptRunResponse.body(), Map)
+        String newExecId = runScriptJson.execution.id
+
+        and: "wait for it to complete"
+        def exec = JobUtils.waitForSuccess(
+            newExecId,
+            client,
+            WaitingTime.EXCESSIVE
+        )
+
+        then: "verify the execution succeeded"
+        exec.status == ExecutionStatus.SUCCEEDED.state
+
+        and: "fetch the output to verify it worked"
+        def output = get("/execution/${newExecId}/output", ExecutionOutput)
+        def outputLines = output.entries.findAll { it.log }.collect { it.log }
+
+        and: "verify the output contains expected script output"
+        outputLines.find { it.contains("This is test-dispatch-script.sh") }
+        outputLines.find { it.contains("On node ssh-node ssh-node") }
+        outputLines.find { it.contains("With tags:") }
+        outputLines.find { it == ("With args: ") }
+    }
+
+    def "execute script with command-line arguments"() {
+        given: "A project that uses storage key for SSH authentication"
+        // Note: Setup of this project with storage key nodes happens in setupSpec()
+
+        and: "a script to execute with arguments"
+        def scriptPath = getClass().getClassLoader().getResource("test-files/test-dispatch-script.sh").getPath()
+        File scriptFile = new File(scriptPath)
+        scriptFile.setExecutable(true)
+        def args = "arg1 arg2"
+
+        when: "we execute the script with arguments on the remote node"
+        def filter = "name:ssh-node"
+        def scriptRunResponse = client.doPostWithFormData(
+            "/project/${TEST_PROJECT}/run/script?filter=" + URLEncoder.encode(filter, 'UTF-8') + "&argString=" + URLEncoder.encode(args, 'UTF-8'),
+            "scriptFile",
+            scriptFile
+        )
+        assert scriptRunResponse.successful
+        def runScriptJson = client.jsonValue(scriptRunResponse.body(), Map)
+        String newExecId = runScriptJson.execution.id
+
+        and: "wait for it to complete"
+        def exec = JobUtils.waitForSuccess(
+            newExecId,
+            client,
+            WaitingTime.EXCESSIVE
+        )
+
+        then: "verify the execution succeeded"
+        exec.status == ExecutionStatus.SUCCEEDED.state
+
+        and: "fetch the output to verify it worked"
+        def output = get("/execution/${newExecId}/output", ExecutionOutput)
+        def outputLines = output.entries.findAll { it.log }.collect { it.log }
+
+        and: "verify the output contains expected script output with arguments"
+        outputLines.find { it.contains("This is test-dispatch-script.sh") }
+        outputLines.find { it.equals("With args: arg1 arg2") }
+    }
+
+    def "execute script with different line ending formats (DOS/Windows style)"() {
+        given: "A project that uses storage key for SSH authentication"
+        // Note: Setup of this project with storage key nodes happens in setupSpec()
+
+        and: "a script with DOS/Windows style line endings to execute"
+        def scriptPath = getClass().getClassLoader().getResource("test-files/test-dispatch-script-dos.sh").getPath()
+        File scriptFile = new File(scriptPath)
+        scriptFile.setExecutable(true)
+
+        when: "we execute the DOS-formatted script on the remote node"
+        def filter = "name:ssh-node"
+        def scriptRunResponse = client.doPostWithFormData(
+            "/project/${TEST_PROJECT}/run/script?filter=" + URLEncoder.encode(filter, 'UTF-8'),
+            "scriptFile",
+            scriptFile
+        )
+        assert scriptRunResponse.successful
+        def runScriptJson = client.jsonValue(scriptRunResponse.body(), Map)
+        String newExecId = runScriptJson.execution.id
+
+        and: "wait for it to complete"
+        def exec = JobUtils.waitForSuccess(
+            newExecId,
+            client,
+            WaitingTime.EXCESSIVE
+        )
+
+        then: "verify the execution succeeded despite DOS/Windows line endings"
+        exec.status == ExecutionStatus.SUCCEEDED.state
+
+        and: "fetch the output to verify it worked"
+        def output = get("/execution/${newExecId}/output", ExecutionOutput)
+        def outputLines = output.entries.findAll { it.log }.collect { it.log }
+
+        and: "verify the output contains expected script output"
+        outputLines.find { it.contains("This is test-dispatch-script-dos.sh") }
+        outputLines.find { it.contains("On node ssh-node ssh-node") }
+        outputLines.find { it.contains("With tags:") }
+        outputLines.find { it.equals("With args: ") }
+    }
+
+    def "execute script with UTF-8 character encoding"() {
+        given: "A project that uses storage key for SSH authentication"
+        // Note: Setup of this project with storage key nodes happens in setupSpec()
+
+        and: "a script with UTF-8 encoded characters"
+        def scriptPath = getClass().getClassLoader().getResource("test-files/test-dispatch-script-utf8.sh").getPath()
+        File scriptFile = new File(scriptPath)
+        scriptFile.setExecutable(true)
+
+        when: "we execute the UTF-8 encoded script on the remote node"
+        def filter = "name:ssh-node"
+        def scriptRunResponse = client.doPostWithFormData(
+            "/project/${TEST_PROJECT}/run/script?filter=" + URLEncoder.encode(filter, 'UTF-8'),
+            "scriptFile",
+            scriptFile
+        )
+        assert scriptRunResponse.successful
+        def runScriptJson = client.jsonValue(scriptRunResponse.body(), Map)
+        String newExecId = runScriptJson.execution.id
+
+        and: "wait for it to complete"
+        def exec = JobUtils.waitForSuccess(
+            newExecId,
+            client,
+            WaitingTime.EXCESSIVE
+        )
+
+        then: "verify the execution succeeded with UTF-8 encoded content"
+        exec.status == ExecutionStatus.SUCCEEDED.state
+
+        and: "fetch the output to verify it worked"
+        def output = get("/execution/${newExecId}/output", ExecutionOutput)
+        def outputLines = output.entries.findAll { it.log }.collect { it.log }
+
+        and: "verify the output contains expected UTF-8 encoded text"
+        outputLines.find { it.contains("This is test-dispatch-script-utf8.sh") }
+        outputLines.find { it.contains("UTF-8 Text: 你好") }
+    }
+
+    def "execute script with node environment variable access"() {
+        given: "A project that uses storage key for SSH authentication"
+        // Note: Setup of this project with storage key nodes happens in setupSpec()
+
+        and: "a script that accesses node environment variables"
+        def scriptPath = getClass().getClassLoader().getResource("test-files/test-dispatch-script-env.sh").getPath()
+        File scriptFile = new File(scriptPath)
+        scriptFile.setExecutable(true)
+
+        when: "we execute the script on the remote node"
+        def filter = "name:ssh-node"
+        def scriptRunResponse = client.doPostWithFormData(
+            "/project/${TEST_PROJECT}/run/script?filter=" + URLEncoder.encode(filter, 'UTF-8'),
+            "scriptFile",
+            scriptFile
+        )
+        assert scriptRunResponse.successful
+        def runScriptJson = client.jsonValue(scriptRunResponse.body(), Map)
+        String newExecId = runScriptJson.execution.id
+
+        and: "wait for it to complete"
+        def exec = JobUtils.waitForSuccess(
+            newExecId,
+            client,
+            WaitingTime.EXCESSIVE
+        )
+
+        then: "verify the execution succeeded"
+        exec.status == ExecutionStatus.SUCCEEDED.state
+
+        and: "fetch the output to verify node environment variables were accessible"
+        def output = get("/execution/${newExecId}/output", ExecutionOutput)
+        def outputLines = output.entries.findAll { it.log }.collect { it.log }
+
+        and: "verify the script could access node environment variables like RD_NODE_NAME and RD_NODE_TAGS"
+        outputLines.find { it.equals("On node ssh-node") }
+        outputLines.find { it.contains("With tags:") && it.contains("executor-test") }
     }
 }
