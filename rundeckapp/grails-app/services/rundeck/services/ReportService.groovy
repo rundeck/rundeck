@@ -376,6 +376,7 @@ class ReportService  {
                 }
             }
 
+            /*
             if (isJobs) {
                 or {
                     isNotNull("jobId")
@@ -385,6 +386,7 @@ class ReportService  {
                 isNull("jobId")
                 isNull("executionId")
             }
+             */
 
             if(query.execnodeFilter){
                 if(query.execnodeFilter.startsWith('name:') || !(query.execnodeFilter.contains(":") || query.execnodeFilter.contains(".*"))){
