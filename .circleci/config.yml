@@ -470,7 +470,8 @@ jobs:
   packaging-publish:
     <<: *job-defaults
     executor:
-      name: docker-builder
+      name: machine-builder  # Change from docker-builder
+      resource_class: medium
 
     steps:
       - setup_docker
