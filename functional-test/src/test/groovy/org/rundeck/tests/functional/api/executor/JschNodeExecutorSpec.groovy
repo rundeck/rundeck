@@ -101,7 +101,10 @@ class JschNodeExecutorSpec extends BaseContainer{
         def execCommand = "whoami"
 
         when: "we execute the command on a node that uses storage key authentication"
-        def parsedResponseBody = client.post("/project/${TEST_PROJECT}/run/command?exec=${execCommand}&filter=name:ssh-node-stored-key", null, RunCommand)
+
+        def filter = "name:ssh-node"
+        def parsedResponseBody = client.post(
+            "/project/${TEST_PROJECT}/run/command?exec=${execCommand}&filter=" + URLEncoder.encode(filter,null), null, RunCommand)
         String newExecId = parsedResponseBody.execution.id
 
         and: "wait for it to complete"
@@ -131,7 +134,10 @@ class JschNodeExecutorSpec extends BaseContainer{
         def execCommand = "uname -n"
 
         when: "we execute the command on nodes filtered by tag"
-        def parsedResponseBody = client.post("/project/${TEST_PROJECT}/run/command?exec=${execCommand}&filter=tags:remote", null, RunCommand)
+
+        def filter = "tags:executor-test"
+        def parsedResponseBody = client.post(
+            "/project/${TEST_PROJECT}/run/command?exec=${execCommand}&filter=" + URLEncoder.encode(filter,null), null, RunCommand)
         String newExecId = parsedResponseBody.execution.id
 
         and: "wait for it to complete"
@@ -150,9 +156,11 @@ class JschNodeExecutorSpec extends BaseContainer{
         def execution = get("/execution/${newExecId}", Execution)
         def nodesList = execution.successfulNodes
 
-        and: "verify we executed on nodes with the 'remote' tag"
+        and: "verify we executed on nodes with the 'executor-test' tag"
         nodesList.size() > 0
+        nodesList.size() == 4
         output.entries.size() > 0
+        output.entries.size() == 4
 
         and: "verify the output contains the hostname for each node"
         def outputLines = output.entries.findAll { it.log }.collect { it.log }
