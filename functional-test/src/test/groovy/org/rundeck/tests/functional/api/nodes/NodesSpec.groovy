@@ -1,9 +1,11 @@
 package org.rundeck.tests.functional.api.nodes
 
+import org.rundeck.util.annotations.APITest
 import org.rundeck.util.container.BaseContainer
 
 import java.nio.charset.Charset
 
+@APITest
 class NodesSpec extends BaseContainer {
 
     public static final String PROJECT = 'NodesSpec'
