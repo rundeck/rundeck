@@ -9,7 +9,7 @@ class NodesSpec extends BaseContainer {
     public static final String PROJECT = 'NodesSpec'
 
     def setupSpec() {
-        super.setupSpec()
+        startEnvironment()
         setupProject(
             PROJECT,
             [
