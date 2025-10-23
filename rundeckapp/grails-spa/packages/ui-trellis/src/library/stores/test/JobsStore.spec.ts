@@ -17,7 +17,7 @@ const mockedGetJobDefinition = getJobDefinition as jest.MockedFunction<
   typeof getJobDefinition
 >;
 
-describe("Counter Store", () => {
+describe("Jobs Store", () => {
   beforeEach(() => {
     // creates a fresh pinia and makes it active
     // so it's automatically picked up by any useStore() call
@@ -40,7 +40,7 @@ describe("Counter Store", () => {
     expect(jobStore.contextVariables).toHaveProperty("job")
     expect(jobStore.contextVariables).toHaveProperty("node")
     expect(jobStore.contextVariables).toHaveProperty("execution")
-    expect(jobStore.contextVariables).toHaveProperty("options")
+    expect(jobStore.contextVariables).not.toHaveProperty("options")
   });
 
   it("fetches a job definition and set it as active", async () => {
