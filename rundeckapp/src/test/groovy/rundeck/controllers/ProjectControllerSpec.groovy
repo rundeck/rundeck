@@ -690,7 +690,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         params.async = true
 
         when:
-        def result = controller.apiProjectExport()
+        controller.apiProjectExport()
 
         then:
         1 * controller.apiService.requireApi(_, _) >> true
@@ -719,7 +719,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         params.async = true
 
         when:
-        def result = controller.apiProjectExportAsyncStatus()
+        controller.apiProjectExportAsyncStatus()
 
         then:
         1 * controller.apiService.requireApi(_, _, 19) >> true
@@ -745,7 +745,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
 
 
         when:
-        def result = controller.apiProjectExportAsyncDownload()
+        controller.apiProjectExportAsyncDownload()
 
         then:
         1 * controller.apiService.requireApi(_, _, 19) >> true
@@ -759,6 +759,37 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         response.getHeader('content-disposition') != null
         response.getContentType() == 'application/zip'
 
+    }
+
+    def "api export async download with stream exception should release promise"()
+    {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        params.project = 'aproject'
+        params.token = 'atoken'
+        params.async = true
+        def tempDir = System.getProperty('java.io.tmpdir')
+        def nonExistentFile = new File(tempDir, "non-existent-export-test-" + System.currentTimeMillis() + ".jar")
+        nonExistentFile.delete()
+
+        when:
+        controller.apiProjectExportAsyncDownload()
+
+        then:
+        1 * controller.apiService.requireApi(_, _, 19) >> true
+        1 * controller.apiService.requireParameters(_, _, ['token']) >> true
+        1 * controller.apiService.requireExists(_, true, ['Export Request Token', 'atoken']) >> true
+        1 * controller.projectService.hasPromise(_, 'atoken') >> true
+        1 * controller.projectService.promiseReady(_, 'atoken') >> nonExistentFile
+        1 * controller.apiService.requireExists(_, nonExistentFile, ['Export File for Token', 'atoken']) >> true
+        1 * controller.projectService.promiseRequestStarted(_, 'atoken') >> new Date()
+        1 * controller.projectService.releasePromise(_, 'atoken')
+
+        def exception = thrown(ProjectServiceException)
+        exception.message.contains("Failed to deliver export file")
+        exception.cause instanceof FileNotFoundException
     }
 
     def "export success with file cleanup"() {
