@@ -492,6 +492,15 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     /**
+     * encode url parameters and return the parameter string without the ?
+     * @param params
+     * @return
+     */
+    static String urlParams(Map<String,Object> params){
+        return params.collect{ k,v -> "${URLEncoder.encode(k,'UTF-8')}=${URLEncoder.encode(v.toString(),'UTF-8')}"}.join("&")
+    }
+
+    /**
      * Runs a job and wait for it to finish. Returning the output of the execution.
      *
      * @param jobId The job UUID to run.
