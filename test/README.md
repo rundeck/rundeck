@@ -18,11 +18,6 @@ Before running any test, export the following variable to prevent scripts from s
 export DEBUG_RD_SERVER=true
 ```
 
-## Docker Test
-```shell
-bash test/run-docker-tests.sh
-```
-
 ## LDAP Bind Test
 ```shell
 DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
