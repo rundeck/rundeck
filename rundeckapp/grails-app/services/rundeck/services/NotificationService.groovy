@@ -16,7 +16,7 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
@@ -50,10 +50,8 @@ import org.apache.commons.codec.digest.DigestUtils
 import org.apache.http.HttpResponse
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.rundeck.app.AppConstants
-import org.rundeck.app.data.model.v1.execution.ExecutionData
 import org.rundeck.app.data.providers.v1.user.UserDataProvider
 import org.rundeck.app.data.providers.v1.execution.ExecutionDataProvider
-import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
 import org.springframework.context.ApplicationContext
@@ -63,7 +61,7 @@ import rundeck.Notification
 import rundeck.ScheduledExecution
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.data.notification.SendNotificationEvent
-import rundeck.data.util.ExecReportUtil
+import rundeck.data.util.BaseReportUtil
 
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
@@ -631,7 +629,7 @@ public class NotificationService implements ApplicationContextAware{
                 href: grailsLinkGenerator.link(controller: 'execution', action: 'show', id: e.id, absolute: true,
                         params: [project: e.project]),
                 status: e.executionState,
-                summary: ExecReportUtil.summarizeJob(e)
+                summary: BaseReportUtil.summarizeJob(e)
             ]
         },paging,delegate)
     }
@@ -645,7 +643,7 @@ public class NotificationService implements ApplicationContextAware{
                     href: grailsLinkGenerator.link(controller: 'execution', action: 'show', id: e.id, absolute: true,
                                                    params: [project: e.project]),
                     status: e.executionState,
-                    summary: ExecReportUtil.summarizeJob(e)
+                    summary: BaseReportUtil.summarizeJob(e)
             ]
         },paging,delegate)
     }

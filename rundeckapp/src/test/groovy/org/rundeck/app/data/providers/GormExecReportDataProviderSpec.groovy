@@ -3,26 +3,24 @@ package org.rundeck.app.data.providers
 import com.dtolabs.rundeck.app.support.ExecQuery
 import grails.testing.gorm.DataTest
 import org.springframework.context.MessageSource
+import rundeck.BaseReport
 import rundeck.CommandExec
-import rundeck.ExecReport
 import rundeck.Execution
 import rundeck.JobExec
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.data.report.SaveReportRequestImpl
-import rundeck.data.util.ExecReportUtil
+import rundeck.data.util.BaseReportUtil
 import spock.lang.Specification
 import spock.lang.Unroll
 import testhelper.TestDomainFactory
-
-import javax.persistence.EntityNotFoundException
 
 class GormExecReportDataProviderSpec extends Specification implements DataTest {
     GormExecReportDataProvider provider = new GormExecReportDataProvider()
 
     def setupSpec() {
-        mockDomains(Execution, ExecReport, Workflow, CommandExec, PluginStep, JobExec, ScheduledExecution)
+        mockDomains(Execution, BaseReport, Workflow, CommandExec, PluginStep, JobExec, ScheduledExecution)
     }
     
     def setup() {
@@ -37,7 +35,7 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
         Execution e = TestDomainFactory.createExecution(uuid: uuid, status: 'succeeded', dateCompleted: new Date())
 
         when:
-        def actual = provider.saveReport(ExecReportUtil.buildSaveReportRequest(e))
+        def actual = provider.saveReport(BaseReportUtil.buildSaveReportRequest(e))
         def created = provider.get(actual.report.id)
 
         then:
@@ -65,7 +63,7 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
         given:
         String uuid = UUID.randomUUID().toString()
         Execution e = TestDomainFactory.createExecution(uuid: uuid, status: 'succeeded', dateCompleted: new Date())
-        def report = provider.saveReport(ExecReportUtil.buildSaveReportRequest(e))
+        def report = provider.saveReport(BaseReportUtil.buildSaveReportRequest(e))
 
         when:
         def created = provider.get(report.report.id)
@@ -80,7 +78,7 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
     def "deleteAllByExecutionId should delete exec reports by execution id"() {
         given:
         Execution e = TestDomainFactory.createExecution(uuid: null, status: 'succeeded', dateCompleted: new Date())
-        def report = provider.saveReport(ExecReportUtil.buildSaveReportRequest(e))
+        def report = provider.saveReport(BaseReportUtil.buildSaveReportRequest(e))
 
         when:
         def created = provider.get(report.report.id)
@@ -98,7 +96,7 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
         given: "standard test executions with different argStrings"
         def executionData = setupExecutions()
         executionData.each { execData ->
-            provider.saveReport(ExecReportUtil.buildSaveReportRequest(execData.execution))
+            provider.saveReport(BaseReportUtil.buildSaveReportRequest(execData.execution))
         }
 
         when:
@@ -126,7 +124,7 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
         given: "executions with varying option combinations"
         def executionData = setupExecutions()
         executionData.each { execData ->
-            provider.saveReport(ExecReportUtil.buildSaveReportRequest(execData.execution))
+            provider.saveReport(BaseReportUtil.buildSaveReportRequest(execData.execution))
         }
 
         when:
@@ -170,7 +168,7 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
         executionData[1].execution.user = 'otheruser'
 
         executionData.each { execData ->
-            provider.saveReport(ExecReportUtil.buildSaveReportRequest(execData.execution))
+            provider.saveReport(BaseReportUtil.buildSaveReportRequest(execData.execution))
         }
 
         when:
@@ -190,7 +188,7 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
         given:
         def executionData = setupExecutions()
         executionData.each { execData ->
-            provider.saveReport(ExecReportUtil.buildSaveReportRequest(execData.execution))
+            provider.saveReport(BaseReportUtil.buildSaveReportRequest(execData.execution))
         }
 
         when:
