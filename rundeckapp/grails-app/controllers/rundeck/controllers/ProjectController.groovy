@@ -3132,10 +3132,15 @@ Since: v19""",
                 "attachment; filename=\"${params.project}-${dateStamp}.rdproject.jar\""
         )
 
-        outfile.withInputStream { instream ->
-            Streams.copy(instream, response.outputStream, false)
+        try {
+            outfile.withInputStream { instream ->
+                Streams.copy(instream, response.outputStream, false)
+            }
+        } catch (Exception e) {
+            throw new ProjectServiceException("Failed to deliver export file: ${e.message}", e)
+        } finally {
+            projectService.releasePromise(session.user, token)
         }
-        projectService.releasePromise(session.user, token)
     }
 
     @Put('/project/{project}/import')
