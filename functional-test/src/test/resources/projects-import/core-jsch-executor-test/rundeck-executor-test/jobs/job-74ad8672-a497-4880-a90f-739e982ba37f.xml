@@ -1,0 +1,43 @@
+<joblist>
+  <job>
+    <defaultTab>nodes</defaultTab>
+    <description>Run basic remote steps on nodes using ssh passphrase input option. Node filter will be specified at execution time.</description>
+    <dispatch>
+      <excludePrecedence>true</excludePrecedence>
+      <keepgoing>false</keepgoing>
+      <rankOrder>ascending</rankOrder>
+      <successOnEmptyNodeFilter>false</successOnEmptyNodeFilter>
+      <threadcount>1</threadcount>
+    </dispatch>
+    <executionEnabled>true</executionEnabled>
+    <id>74ad8672-a497-4880-a90f-739e982ba37f</id>
+    <loglevel>INFO</loglevel>
+    <name>Job using passphrase option</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <nodefilters>
+      <filter>tags: NOT_FOUND </filter>
+    </nodefilters>
+    <nodesSelectedByDefault>true</nodesSelectedByDefault>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <schedules />
+    <context>
+      <options preserveOrder='true'>
+        <option name='sshKeyPassphrase' required='true' secure="true" />
+      </options>
+    </context>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>echo "hello there"</exec>
+      </command>
+      <command>
+        <exec>uname -a</exec>
+      </command>
+      <command>
+        <script><![CDATA[#!/bin/bash
+          echo "Hello, World!"]]></script>
+      </command>
+    </sequence>
+    <uuid>74ad8672-a497-4880-a90f-739e982ba37f</uuid>
+  </job>
+</joblist>
