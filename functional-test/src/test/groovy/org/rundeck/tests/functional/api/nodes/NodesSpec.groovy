@@ -18,6 +18,7 @@ class NodesSpec extends BaseContainer {
                 "config": [
                     "resources.source.1.type"         : "local",
                     "resources.source.2.config.count" : "2",
+                    "resources.source.2.config.prefix": "NodesSpec-",
                     "resources.source.2.config.tags"  : "test,demo",
                     "resources.source.2.config.attrs" : "foo=bar",
                     "resources.source.2.type"         : "stub",
@@ -30,6 +31,7 @@ class NodesSpec extends BaseContainer {
                     "resources.source.4.config.tags"  : "xyz,common",
                     "resources.source.4.type"         : "stub",
                     "resources.source.5.config.count" : "3",
+                    "resources.source.5.config.prefix": "blah-",
                     "resources.source.5.config.attrs" : "blah=blahblah,foo=bar",
                     "resources.source.5.config.tags"  : "hijk",
                     "resources.source.5.type"         : "stub",
