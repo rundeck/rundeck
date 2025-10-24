@@ -422,17 +422,11 @@ class GormExecReportDataProvider implements ExecReportDataProvider, DBExecReport
                 }
             }
 
-            /*
             if (isJobs) {
-                or {
-                    isNotNull("jobId")
-                    isNotNull("executionId")
-                }
+                eq("adhocExecution", false)
             } else {
-                isNull("jobId")
-                isNull("executionId")
+                eq("adhocExecution", true)
             }
-             */
 
             if(query.execnodeFilter){
                 if(query.execnodeFilter.startsWith('name:') || !(query.execnodeFilter.contains(":") || query.execnodeFilter.contains(".*"))){
