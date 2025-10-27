@@ -128,7 +128,7 @@ class JschNodeExecutorSpec extends BaseContainer{
 
         when: "we execute the command"
 
-        def filter = "tags:$tags"
+        def filter = 'tags:' + tags
         def parsedResponseBody = client.post(
             "/project/${TEST_PROJECT}/run/command?exec=${execCommand}&filter=" + URLEncoder.encode(filter,'UTF-8'), null, RunCommand)
         String newExecId = parsedResponseBody.execution.id
@@ -151,12 +151,12 @@ class JschNodeExecutorSpec extends BaseContainer{
         !outputLines.isEmpty()
         where:
             tags << [
-                "auth-method-key",
-                "auth-method-password",
-                "auth-method-key-agent",
-                "auth-method-key-passphrase",
-                "auth-method-key-file",
-                "auth-method-key-file-passphrase"
+                'auth-method-key',
+                'auth-method-password',
+                'auth-method-key-agent',
+                'auth-method-key-passphrase',
+                'auth-method-key-file',
+                'auth-method-key-file-passphrase'
             ]
     }
 
@@ -166,8 +166,8 @@ class JschNodeExecutorSpec extends BaseContainer{
         given: "job that runs basic steps and expects a node filter"
             def jobId = "501de248-31a3-4720-8558-aa0c30ef9cdd"
             def jobConfig = [
-                "loglevel": "DEBUG",
-                filter: "tags:$tags"
+                loglevel: 'DEBUG',
+                filter: 'tags:' + tags
             ]
 
         when: "run the job"
@@ -185,12 +185,12 @@ class JschNodeExecutorSpec extends BaseContainer{
             exec.successfulNodes.size() == 1
         where:
             tags << [
-                "auth-method-key",
-                "auth-method-password",
-                "auth-method-key-agent",
-                "auth-method-key-passphrase",
-                "auth-method-key-file",
-                "auth-method-key-file-passphrase"
+                'auth-method-key',
+                'auth-method-password',
+                'auth-method-key-agent',
+                'auth-method-key-passphrase',
+                'auth-method-key-file',
+                'auth-method-key-file-passphrase'
             ]
     }
 
@@ -200,9 +200,9 @@ class JschNodeExecutorSpec extends BaseContainer{
             def jobId = "74ad8672-a497-4880-a90f-739e982ba37f"
             def jobConfig = [
                 "loglevel": "DEBUG",
-                filter: "tags:$tags",
+                filter: 'tags:' + tags,
                 options:[
-                    "sshKeyPassphrase": NODE_KEY_PASSPHRASE
+                    sshKeyPassphrase: NODE_KEY_PASSPHRASE
                 ]
             ]
 
@@ -221,8 +221,8 @@ class JschNodeExecutorSpec extends BaseContainer{
             exec.successfulNodes.size() == 1
         where:
             tags << [
-                "auth-method-key-file-option-passphrase",
-                "auth-method-key-option-passphrase"
+                'auth-method-key-file-option-passphrase',
+                'auth-method-key-option-passphrase'
             ]
     }
 
