@@ -144,18 +144,30 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def PluginService pluginService
 
     private Integer getDefaultDaysToKeep() {
+        if (!featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE)) {
+            return MAX_DAYS_TO_KEEP
+        }
         return configurationService.getInteger("feature.defaultExecutionDaysToKeep", MAX_DAYS_TO_KEEP)
     }
 
     private Integer getDefaultMinimumToKeep() {
+        if (!featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE)) {
+            return MINIMUM_EXECUTION_TO_KEEP
+        }
         return configurationService.getInteger("feature.defaultExecutionMinimumToKeep", MINIMUM_EXECUTION_TO_KEEP)
     }
 
     private Integer getDefaultMaximumDeletionSize() {
+        if (!featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE)) {
+            return MAXIMUM_DELETION_SIZE
+        }
         return configurationService.getInteger("feature.defaultExecutionMaximumDeletionSize", MAXIMUM_DELETION_SIZE)
     }
 
     private String getDefaultCleanupSchedule() {
+        if (!featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE)) {
+            return SCHEDULE_DEFAULT
+        }
         return  configurationService.getString("feature.defaultExecutionCleanupScheduleCron", SCHEDULE_DEFAULT)
     }
 
