@@ -294,7 +294,7 @@ class JschNodeExecutorSpec extends BaseContainer{
         )
 
         then: "verify the execution succeeded"
-        exec.status == ExecutionStatus.SUCCEEDED.state
+        exec.successfulNodes == ["ssh-node"]
 
         and: "fetch the output to verify it worked"
         def output = get("/execution/${newExecId}/output", ExecutionOutput)
@@ -439,7 +439,7 @@ class JschNodeExecutorSpec extends BaseContainer{
         when: "we execute the script on the remote node"
         def filter = "name:ssh-node"
         def scriptRunResponse = client.doPostWithFormData(
-            "/project/${TEST_PROJECT}/run/script?filter=" + URLEncoder.encode(filter, 'UTF-8'),
+            "/project/${TEST_PROJECT}/run/script?" + urlParams([filter:filter]) ,
             "scriptFile",
             scriptFile
         )
