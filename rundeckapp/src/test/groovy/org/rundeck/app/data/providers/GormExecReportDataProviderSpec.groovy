@@ -94,9 +94,12 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
     @Unroll
     def "getExecutionReports with optionFilter - #description"() {
         given: "standard test executions with different argStrings"
-        def executionData = setupExecutions()
+        def job = new ScheduledExecution(uuid: UUID.randomUUID().toString(), jobName: "test job", groupPath: "testgroup", project:"test")
+        job.save(failOnError: true)
+
+        def executionData = setupExecutions(job)
         executionData.each { execData ->
-            provider.saveReport(BaseReportUtil.buildSaveReportRequest(execData.execution))
+            provider.saveReport(BaseReportUtil.buildSaveReportRequest(execData.execution, job))
         }
 
         when:
@@ -122,9 +125,10 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
     @Unroll
     def "getExecutionReports with optionFilter OR logic - #description"() {
         given: "executions with varying option combinations"
-        def executionData = setupExecutions()
+        def job = new ScheduledExecution(uuid: UUID.randomUUID().toString(), jobName: "test job", groupPath: "testgroup", project:"test")
+        def executionData = setupExecutions(job)
         executionData.each { execData ->
-            provider.saveReport(BaseReportUtil.buildSaveReportRequest(execData.execution))
+            provider.saveReport(BaseReportUtil.buildSaveReportRequest(execData.execution,job))
         }
 
         when:
@@ -150,25 +154,26 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
         "mixed standalone values"                       | "option 30"                       | 1            | { data -> [data[3].execution.id] }
     }
 
-    private List setupExecutions() {
+    private List setupExecutions(ScheduledExecution scheduledExecution ) {
         return [
-            [execution: TestDomainFactory.createExecution(argString: "-APP myapp -ENV production -SLEEP 10", status: 'succeeded', dateCompleted: new Date())],
-            [execution: TestDomainFactory.createExecution(argString: "-APP otherapp -ENV production -FIRST value1 -SECOND value2", status: 'succeeded', dateCompleted: new Date())],
-            [execution: TestDomainFactory.createExecution(argString: "-APP myapp -ENV staging -SLEEP 10 -SECOND value2 -FIRST value1", status: 'succeeded', dateCompleted: new Date())],
-            [execution: TestDomainFactory.createExecution(argString: "-ENV production -OTHER option -DIFFERENT value -SLEEP 30", status: 'succeeded', dateCompleted: new Date())],
-            [execution: TestDomainFactory.createExecution(argString: "-ENVIRONMENT staging", status: 'succeeded', dateCompleted: new Date())]
+            [execution: TestDomainFactory.createExecutionWithJob(argString: "-APP myapp -ENV production -SLEEP 10", status: 'succeeded', dateCompleted: new Date(), scheduledExecution)],
+            [execution: TestDomainFactory.createExecutionWithJob(argString: "-APP otherapp -ENV production -FIRST value1 -SECOND value2", status: 'succeeded', dateCompleted: new Date(),scheduledExecution)],
+            [execution: TestDomainFactory.createExecutionWithJob(argString: "-APP myapp -ENV staging -SLEEP 10 -SECOND value2 -FIRST value1", status: 'succeeded', dateCompleted: new Date(),scheduledExecution)],
+            [execution: TestDomainFactory.createExecutionWithJob(argString: "-ENV production -OTHER option -DIFFERENT value -SLEEP 30", status: 'succeeded', dateCompleted: new Date(),scheduledExecution)],
+            [execution: TestDomainFactory.createExecutionWithJob(argString: "-ENVIRONMENT staging", status: 'succeeded', dateCompleted: new Date(),scheduledExecution)]
         ]
     }
 
     def "getExecutionReports with optionFilter - combined with other filters"() {
         given:
-        def executionData = setupExecutions()
+        def job = new ScheduledExecution(uuid: UUID.randomUUID().toString(), jobName: "test job", groupPath: "testgroup", project:"test")
+        def executionData = setupExecutions(job)
         // Add user field to first two executions for testing
         executionData[0].execution.user = 'testuser'
         executionData[1].execution.user = 'otheruser'
 
         executionData.each { execData ->
-            provider.saveReport(BaseReportUtil.buildSaveReportRequest(execData.execution))
+            provider.saveReport(BaseReportUtil.buildSaveReportRequest(execData.execution,job))
         }
 
         when:
@@ -186,9 +191,10 @@ class GormExecReportDataProviderSpec extends Specification implements DataTest {
     @Unroll
     def "getExecutionReports with optionFilter - edge cases: #description"() {
         given:
-        def executionData = setupExecutions()
+        def job = new ScheduledExecution(uuid: UUID.randomUUID().toString(), jobName: "test job", groupPath: "testgroup", project:"test")
+        def executionData = setupExecutions(job)
         executionData.each { execData ->
-            provider.saveReport(BaseReportUtil.buildSaveReportRequest(execData.execution))
+            provider.saveReport(BaseReportUtil.buildSaveReportRequest(execData.execution,job))
         }
 
         when:
