@@ -87,6 +87,14 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
     )
     Boolean logData
 
+    @PluginProperty(
+            title = "Match Substrings",
+            description = '''If enabled, the plugin will use Java's `find()` method instead of `matches()` 
+when applying the regular expression. This allows substring matches instead of requiring the entire line to match.''',
+            defaultValue = "false"
+    )
+    Boolean matchSubstrings
+
 
     @PluginProperty(
             title = "Invalid Character Pattern",
@@ -192,7 +200,8 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
     void handleEvent(final PluginLoggingContext context, final LogEventControl event) {
         if (event.eventType == 'log' && event.loglevel == LogLevel.NORMAL && event.message?.length() > 0) {
             Matcher match = dataPattern.matcher(event.message)
-            if (match.matches()) {
+            boolean isMatch = matchSubstrings ? match.find() : match.matches()
+            if (isMatch) {
                 def key,value
                 if(match.groupCount()==1 && name){
                     key = name
