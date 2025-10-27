@@ -33,7 +33,7 @@
     v-if="selectedPlugin"
     :key="selectedPlugin.name"
     v-model="editStrategyPlugin"
-    :mode="'edit'"
+    :mode="mode"
     :service-name="'WorkflowStrategy'"
     :show-title="false"
     :show-description="false"
@@ -69,6 +69,7 @@ export default defineComponent({
   data() {
     return {
       model: {} as PluginConfig,
+      mode: "create",
       pluginProviders: [],
       pluginLabels: [],
       loaded: false,
@@ -86,7 +87,10 @@ export default defineComponent({
   },
   watch: {
     model: {
-      handler() {
+      handler(newVal, oldVal) {
+        if (newVal.type !== oldVal.type) {
+          this.mode = "create";
+        }
         this.editStrategyPlugin.type = this.model.type;
         this.editStrategyPlugin.config = this.model.config || {};
         this.$emit("update:modelValue", this.model);
@@ -108,7 +112,7 @@ export default defineComponent({
     };
     this.editStrategyPlugin.type = this.model.type;
     this.editStrategyPlugin.config = this.model.config || {};
-
+    this.mode = this.model.type ? "edit" : "create";
     await this.getStrategyPlugins();
     this.loaded = true;
   },
