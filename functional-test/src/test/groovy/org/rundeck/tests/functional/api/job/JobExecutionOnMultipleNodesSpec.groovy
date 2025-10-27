@@ -14,7 +14,7 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
     public static final String NODE_KEY_PASSPHRASE = "testpassphrase123"
     public static final String NODE_USER_PASSWORD = "testpassword123"
     public static final String USER_VAULT_PASSWORD = "vault123"
-    public static final List<String> NODE_LIST = ["ssh-node-passphrase", "ssh-node", "ssh-agent-node", "password-node"]
+    public static final List<String> NODE_LIST = ["ssh-node-passphrase", "ssh-node-file-passphrase", "ssh-node-file", "ssh-node", "ssh-agent-node", "password-node"]
     private static final MAPPER = new ObjectMapper()
 
     def setupSpec() {
@@ -42,7 +42,7 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
                 TEST_PROJECT,
                 ["job-name"           : jobName,
                  "args"               : "echo 0",
-                 "node-filter-include": ".*",
+                 "node-filter-include": "tags: \"executor-test\"",
                 ])
 
         when:
@@ -63,7 +63,7 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
                 TEST_PROJECT,
                 ["job-name"           : jobName,
                  "args"               : "echo 0",
-                 "node-filter-exclude": "tags: \"executor-test\"",
+                 "node-filter-exclude": "tags: \"executor-test,option-test\"",
                 ])
 
         when:
