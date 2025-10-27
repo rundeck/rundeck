@@ -21,4 +21,9 @@ RUN mkdir -p /home/rundeck/privatekeys
 RUN chown -R rundeck /home/rundeck/privatekeys
 RUN chmod 770 /home/rundeck/privatekeys
 
+COPY --chown=rundeck:root entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 USER rundeck
+
+ENTRYPOINT [ "/tini", "--", "/entrypoint.sh" ]
