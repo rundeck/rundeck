@@ -35,7 +35,6 @@ services:
       - "../../../test-files/saved_searches-C.json:/home/option3/saved_searches.json"
       - "../../../test-files/saved_searches-D.json:/home/option4/saved_searches.json"
       - "../../../test-files/copyfile-test-files:/home/rundeck/copyfile-test-files"
-      - "./keys:/home/rundeck/privatekeys:rw"
       - "./executor:/home/rundeck/executor:rw"
       - "./mock-scripts:/home/rundeck/mock-scripts:rw"
     ports:

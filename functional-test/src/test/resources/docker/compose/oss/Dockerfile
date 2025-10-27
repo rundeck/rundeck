@@ -1,6 +1,5 @@
 ARG IMAGE
 FROM ${IMAGE}
-VOLUME /home/rundeck/privatekeys
 USER root
 
 RUN apt-get update && \
@@ -17,13 +16,8 @@ RUN apt-get update && \
 
 RUN pip3 install ansible==9.6.1
 
-RUN mkdir -p /home/rundeck/privatekeys
+COPY --chown=rundeck:root keys /home/rundeck/privatekeys
 RUN chown -R rundeck /home/rundeck/privatekeys
 RUN chmod 770 /home/rundeck/privatekeys
 
-COPY --chown=rundeck:root entrypoint.sh /home/rundeck/new-entrypoint.sh
-RUN chmod +x /home/rundeck/new-entrypoint.sh
-
 USER rundeck
-
-ENTRYPOINT [ "/tini", "--", "/home/rundeck/new-entrypoint.sh" ]
