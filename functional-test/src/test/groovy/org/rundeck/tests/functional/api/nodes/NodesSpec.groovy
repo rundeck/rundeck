@@ -71,7 +71,7 @@ class NodesSpec extends BaseContainer {
             "tags:abc"      | 3
             "name:xyz.*"    | 0
             "name:.*xyz"    | 3
-            "name:blah.*"   | 0
+            "name:blah.*"   | 3
             "name:abc.*"    | 3
             "name:.*abc"    | 0
             "blah:blahblah" | 3

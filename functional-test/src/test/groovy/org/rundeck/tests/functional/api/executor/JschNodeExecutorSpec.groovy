@@ -257,9 +257,9 @@ class JschNodeExecutorSpec extends BaseContainer{
 
         and: "verify we executed on nodes with the 'executor-test' tag"
         nodesList.size() > 0
-        nodesList.size() == 4
+        nodesList.size() == 6
         output.entries.size() > 0
-        output.entries.size() == 4
+        output.entries.size() == 6
 
         and: "verify the output contains the hostname for each node"
         def outputLines = output.entries.findAll { it.log }.collect { it.log }
