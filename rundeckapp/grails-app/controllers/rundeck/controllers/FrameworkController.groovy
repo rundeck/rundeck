@@ -143,6 +143,22 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def MenuService menuService
     def PluginService pluginService
 
+    private Integer getDefaultDaysToKeep() {
+        return configurationService.getInteger("feature.defaultExecutionDaysToKeep", MAX_DAYS_TO_KEEP)
+    }
+
+    private Integer getDefaultMinimumToKeep() {
+        return configurationService.getInteger("feature.defaultExecutionMinimumToKeep", MINIMUM_EXECUTION_TO_KEEP)
+    }
+
+    private Integer getDefaultMaximumDeletionSize() {
+        return configurationService.getInteger("feature.defaultExecutionMaximumDeletionSize", MAXIMUM_DELETION_SIZE)
+    }
+
+    private String getDefaultCleanupSchedule() {
+        return  configurationService.getString("feature.defaultExecutionCleanupScheduleCron", SCHEDULE_DEFAULT)
+    }
+
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
@@ -654,15 +670,15 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         projProps['project.execution.history.cleanup.enabled'] = cleanerHistoryEnabled.toString()
 
         if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, true) && cleanerHistoryEnabled) {
-            projProps['project.execution.history.cleanup.retention.days'] = params.cleanperiod ?: MAX_DAYS_TO_KEEP.toString()
-            projProps['project.execution.history.cleanup.retention.minimum'] = params.minimumtokeep ?: MINIMUM_EXECUTION_TO_KEEP.toString()
-            projProps['project.execution.history.cleanup.batch'] = params.maximumdeletionsize ?: MAXIMUM_DELETION_SIZE.toString()
-            projProps['project.execution.history.cleanup.schedule'] = params.crontabString ?: SCHEDULE_DEFAULT
+            projProps['project.execution.history.cleanup.retention.days'] = params.cleanperiod ?: getDefaultDaysToKeep().toString()
+            projProps['project.execution.history.cleanup.retention.minimum'] = params.minimumtokeep ?: getDefaultMinimumToKeep().toString()
+            projProps['project.execution.history.cleanup.batch'] = params.maximumdeletionsize ?: getDefaultMaximumDeletionSize().toString()
+            projProps['project.execution.history.cleanup.schedule'] = params.crontabString ?: getDefaultCleanupSchedule()
         }else{
-            projProps['project.execution.history.cleanup.retention.days'] = MAX_DAYS_TO_KEEP.toString()
-            projProps['project.execution.history.cleanup.retention.minimum'] = MINIMUM_EXECUTION_TO_KEEP.toString()
-            projProps['project.execution.history.cleanup.batch'] = MAXIMUM_DELETION_SIZE.toString()
-            projProps['project.execution.history.cleanup.schedule'] = SCHEDULE_DEFAULT
+            projProps['project.execution.history.cleanup.retention.days'] = getDefaultDaysToKeep().toString()
+            projProps['project.execution.history.cleanup.retention.minimum'] = getDefaultMinimumToKeep().toString()
+            projProps['project.execution.history.cleanup.batch'] = getDefaultMaximumDeletionSize().toString()
+            projProps['project.execution.history.cleanup.schedule'] = getDefaultCleanupSchedule()
         }
         def errors = []
         def configs
@@ -875,7 +891,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             prefixKey:prefixKey,
             extraConfig:extraConfig,
             cronModelValues: CRON_MODELS_SELECT_VALUES,
-            cronValues: [:]
+            cronValues: [:],
+            enableCleanHistory: featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE),
+            cleanerHistoryPeriod: getDefaultDaysToKeep(),
+            minimumExecutionToKeep: getDefaultMinimumToKeep(),
+            maximumDeletionSize: getDefaultMaximumDeletionSize(),
+            cronExression: getDefaultCleanupSchedule()
         ]
     }
 
@@ -1186,15 +1207,15 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }
 
             if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, true) && cleanerHistoryEnabled) {
-                projProps['project.execution.history.cleanup.retention.days'] = params.cleanperiod ?: MAX_DAYS_TO_KEEP.toString()
-                projProps['project.execution.history.cleanup.retention.minimum'] = params.minimumtokeep ?: MINIMUM_EXECUTION_TO_KEEP.toString()
-                projProps['project.execution.history.cleanup.batch'] = params.maximumdeletionsize ?: MAXIMUM_DELETION_SIZE.toString()
-                projProps['project.execution.history.cleanup.schedule'] = params.crontabString ?: SCHEDULE_DEFAULT
+                projProps['project.execution.history.cleanup.retention.days'] = params.cleanperiod ?: getDefaultDaysToKeep().toString()
+                projProps['project.execution.history.cleanup.retention.minimum'] = params.minimumtokeep ?: getDefaultMinimumToKeep().toString()
+                projProps['project.execution.history.cleanup.batch'] = params.maximumdeletionsize ?: getDefaultMaximumDeletionSize().toString()
+                projProps['project.execution.history.cleanup.schedule'] = params.crontabString ?: getDefaultCleanupSchedule()
             }else{
-                projProps['project.execution.history.cleanup.retention.days'] = MAX_DAYS_TO_KEEP.toString()
-                projProps['project.execution.history.cleanup.retention.minimum'] = MINIMUM_EXECUTION_TO_KEEP.toString()
-                projProps['project.execution.history.cleanup.batch'] = MAXIMUM_DELETION_SIZE.toString()
-                projProps['project.execution.history.cleanup.schedule'] = SCHEDULE_DEFAULT
+                projProps['project.execution.history.cleanup.retention.days'] = getDefaultDaysToKeep().toString()
+                projProps['project.execution.history.cleanup.retention.minimum'] = getDefaultMinimumToKeep().toString()
+                projProps['project.execution.history.cleanup.batch'] = getDefaultMaximumDeletionSize().toString()
+                projProps['project.execution.history.cleanup.schedule'] = getDefaultCleanupSchedule()
             }
 
             def Set<String> removePrefixes=[]
@@ -1339,15 +1360,15 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                         ExecutionCleanerConfigImpl.build {
                             enabled(cleanerHistoryEnabled)
                             maxDaysToKeep(
-                                FrameworkService.tryParseInt(params.cleanperiod).orElse(MAX_DAYS_TO_KEEP)
+                                FrameworkService.tryParseInt(params.cleanperiod).orElse(getDefaultDaysToKeep())
                             )
                             minimumExecutionToKeep(
-                                FrameworkService.tryParseInt(params.minimumtokeep).orElse(MINIMUM_EXECUTION_TO_KEEP)
+                                FrameworkService.tryParseInt(params.minimumtokeep).orElse(getDefaultMinimumToKeep())
                             )
                             maximumDeletionSize(
-                                FrameworkService.tryParseInt(params.maximumdeletionsize).orElse(MAXIMUM_DELETION_SIZE)
+                                FrameworkService.tryParseInt(params.maximumdeletionsize).orElse(getDefaultMaximumDeletionSize())
                             )
-                            cronExpression(params.crontabString ?: SCHEDULE_DEFAULT)
+                            cronExpression(params.crontabString ?: getDefaultCleanupSchedule())
                         }
                     )
                 }
@@ -2344,11 +2365,18 @@ List of config values, each value contains:
             project: project,
             projectDescription:projectDescription?:fwkProject.getProjectProperties().get("project.description"),
             projectLabel:fwkProject.getProjectProperties().get("project.label"),
-            cleanerHistoryPeriod:fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.days") ?: MAX_DAYS_TO_KEEP,
-            minimumExecutionToKeep:fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.minimum") ?: MINIMUM_EXECUTION_TO_KEEP,
-            maximumDeletionSize:fwkProject.getProjectProperties().get("project.execution.history.cleanup.batch") ?: MAXIMUM_DELETION_SIZE,
-            enableCleanHistory:["true", true].contains(fwkProject.getProjectProperties().get("project.execution.history.cleanup.enabled")),
-            cronExression:fwkProject.getProjectProperties().get("project.execution.history.cleanup.schedule") ?: SCHEDULE_DEFAULT,
+            cleanerHistoryPeriod:fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.days") ?: getDefaultDaysToKeep(),
+            minimumExecutionToKeep:fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.minimum") ?: getDefaultMinimumToKeep(),
+            maximumDeletionSize:fwkProject.getProjectProperties().get("project.execution.history.cleanup.batch") ?: getDefaultMaximumDeletionSize(),
+            enableCleanHistory: {
+                def propertyValue = fwkProject.getProjectProperties().get("project.execution.history.cleanup.enabled")
+                if (propertyValue != null) {
+                    return ["true", true].contains(propertyValue)
+                } else {
+                    return featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE)
+                }
+            }(),
+            cronExression:fwkProject.getProjectProperties().get("project.execution.history.cleanup.schedule") ?: getDefaultCleanupSchedule(),
             nodeexecconfig:nodeConfig,
             fcopyconfig:filecopyConfig,
             pluginGroupConfig: pluginGroupConfig,
