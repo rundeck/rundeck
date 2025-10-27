@@ -1,6 +1,6 @@
 ARG IMAGE
 FROM ${IMAGE}
-
+VOLUME /home/rundeck/privatekeys
 USER root
 
 RUN apt-get update && \
@@ -16,5 +16,9 @@ RUN apt-get update && \
     pip3 install --upgrade pip
 
 RUN pip3 install ansible==9.6.1
+
+RUN mkdir -p /home/rundeck/privatekeys
+RUN chown rundeck /home/rundeck/privatekeys
+RUN chmod 770 /home/rundeck/privatekeys
 
 USER rundeck
