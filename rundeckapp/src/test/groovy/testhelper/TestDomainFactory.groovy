@@ -25,6 +25,18 @@ class TestDomainFactory {
         return e.save(failOnError: true)
     }
 
+    static Execution createExecutionWithJob(Map<String,Object> params = [:], ScheduledExecution job) {
+        Execution e = new Execution()
+        e.project = "test"
+        e.user = "tester"
+        e.dateStarted = new Date()
+        e.status = 'running'
+        e.workflow = createWorkflow()
+        e.scheduledExecution = job
+        params.each { k, v -> e[k] = v }
+        return e.save(failOnError: true)
+    }
+
     static Workflow createWorkflow(Map<String, Object> params = [:]) {
         def w = new Workflow(commands: [new CommandExec(adhocRemoteString: "echo hello")])
         params.each { k, v -> w[k] = v }
