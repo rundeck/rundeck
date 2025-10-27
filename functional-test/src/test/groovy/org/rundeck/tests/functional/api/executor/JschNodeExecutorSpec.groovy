@@ -47,22 +47,14 @@ class JschNodeExecutorSpec extends BaseContainer{
         ]
 
         when:
-        def response = doPost("/job/${jobId}/executions",jobConfig)
+        def json = post("/job/${jobId}/executions",jobConfig, Map)
+        assert json.id != null
         then:
-        verifyAll {
-            response != null
-            response.successful
-        }
-        when:
-
-        def json = client.jsonValue(response.body(), Map)
-        def exec= JobUtils.waitForExecution(
-                ExecutionStatus.SUCCEEDED.state,
+        def exec= JobUtils.waitForSuccess(
                 json.id as String,
                 client,
                 WaitingTime.EXCESSIVE
         )
-        then:
         exec.status==ExecutionStatus.SUCCEEDED.state
 
     }
