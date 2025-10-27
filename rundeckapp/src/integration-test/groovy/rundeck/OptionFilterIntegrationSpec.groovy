@@ -84,7 +84,8 @@ class OptionFilterIntegrationSpec extends Specification {
             dateCompleted: exec1.dateCompleted,
             node: 'localhost',
             message: 'Test execution completed',
-            maprefUri: exec1.argString
+            maprefUri: exec1.argString,
+            adhocExecution:false
         ).save(flush: true, failOnError: true)
 
         def report2 = new BaseReport(
@@ -103,7 +104,8 @@ class OptionFilterIntegrationSpec extends Specification {
             dateCompleted: exec2.dateCompleted,
             node: 'localhost',
             message: 'Test execution completed',
-            maprefUri: exec2.argString
+            maprefUri: exec2.argString,
+            adhocExecution:false
         ).save(flush: true, failOnError: true)
 
         def report3 = new BaseReport(
@@ -122,7 +124,8 @@ class OptionFilterIntegrationSpec extends Specification {
             dateCompleted: exec3.dateCompleted,
             node: 'localhost',
             message: 'Test execution completed',
-            maprefUri: exec3.argString
+            maprefUri: exec3.argString,
+            adhocExecution:false
         ).save(flush: true, failOnError: true)
 
         expect: "optionFilter searches work as expected"
@@ -221,7 +224,8 @@ class OptionFilterIntegrationSpec extends Specification {
             dateCompleted: exec.dateCompleted,
             node: 'localhost',
             message: 'Test execution completed',
-            maprefUri: exec.argString
+            maprefUri: exec.argString,
+            adhocExecution:false
         ).save(flush: true, failOnError: true)
 
         when:
