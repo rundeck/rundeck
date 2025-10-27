@@ -155,19 +155,17 @@ export default defineComponent({
   border-color: transparent;
   cursor: pointer;
   display: flex;
-  align-content: flex-start;
   flex-wrap: nowrap;
   gap: var(--spacing-2);
   .job-name,
   .job-description {
-    flex: 1 2 auto;
+    flex: 1 2 200px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .job-name {
-    min-width: 300px;
-    flex: 1 1 auto;
+  .job-name:has(+ .job-description) {
+    flex: 0 1 auto;
   }
   .btn.btn-xs {
     margin-right: 0;
