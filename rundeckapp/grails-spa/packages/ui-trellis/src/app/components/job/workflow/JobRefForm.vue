@@ -613,7 +613,7 @@ import { useNodesStore } from "@/library/stores/NodesStorePinia";
 import NodeFilterInput from "@/app/components/job/resources/NodeFilterInput.vue";
 import ErrorsList from "@/app/components/job/options/ErrorsList.vue";
 import PtAutoComplete from "../../../../library/components/primeVue/PtAutoComplete/PtAutoComplete.vue";
-import { getContextVariables } from "@/library/components/utils/contextVariableUtils";
+import { getContextVariables, transformVariables } from "@/library/components/utils/contextVariableUtils";
 
 const rundeckContext = getRundeckContext();
 const eventBus = rundeckContext.eventBus;
@@ -641,6 +641,11 @@ export default defineComponent({
     modalActive: {
       type: Boolean,
       default: true,
+    },
+    extraAutocompleteVars: {
+      type: Array as PropType<ContextVariable[]>,
+      required: false,
+      default: () => [],
     },
   },
   emits: ["update:modelValue", "update:modalActive", "save", "cancel"],
@@ -694,12 +699,20 @@ export default defineComponent({
       errorMessage: "",
       showRequired: false,
       eventBus: eventBus,
-      inputTypeContextVariables: getContextVariables("input", "WorkflowStep"),
     };
   },
   computed: {
     hasFilter() {
       return Boolean(this.editModel.jobref.nodefilters.filter);
+    },
+    inputTypeContextVariables() {
+      return [
+        ...getContextVariables("input", "WorkflowStep"),
+        ...transformVariables(
+            "input",
+            this.extraAutocompleteVars,
+        ),
+      ];
     },
     ...mapState(useNodesStore, ["total", "nodeFilterStore", "currentNodes", "lastCountFetched", "isResultsTruncated"]),
   },
