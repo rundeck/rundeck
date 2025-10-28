@@ -91,12 +91,12 @@ class NodesSpec extends SeleniumBase {
         nodesPage.els(NodesPage.nodesTableNodeFilterLinkByResolver("executor-test")).first().click()
         then:
         nodesPage.getDisplayedNodesCount() == NODE_LIST.size()
-        nodesPage.el(nodesPage.searchNodeInputBy).getDomAttribute("value") == "tags: \"executor-test\""
+        nodesPage.el(nodesPage.searchNodeInputBy).getDomProperty("value") == "tags: \"executor-test\""
         when:
         nodesPage.els(NodesPage.nodesTableNodeFilterLinkByResolver("ssh-node")).first().click()
         then:
         nodesPage.getDisplayedNodesCount() == NODE_LIST.size()
-        nodesPage.el(nodesPage.searchNodeInputBy).getDomAttribute("value") == "tags: \"executor-test\" tags: \"ssh-node\""
+        nodesPage.el(nodesPage.searchNodeInputBy).getDomProperty("value") == "tags: \"executor-test\" tags: \"ssh-node\""
     }
 
     def "nodes list displays appropriate node attributes"() {
