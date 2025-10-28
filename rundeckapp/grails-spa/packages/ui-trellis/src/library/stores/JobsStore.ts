@@ -15,6 +15,11 @@ export const useJobStore = defineStore("jobs", {
   getters: {
     jobDefinition: (state): JobDefinition | undefined =>
       state.activeId ? state.jobs[state.activeId] : undefined,
+    hasJob:
+      (state) =>
+      (jobId: string): boolean => {
+        return !!state.jobs[jobId];
+      },
   },
   actions: {
     updateJobDefinition(job: JobDefinition, jobId: string) {
@@ -28,11 +33,10 @@ export const useJobStore = defineStore("jobs", {
         this.jobs[jobId] = job;
       }
     },
-    async setActiveId(activeId: string): Promise<void> {
-      this.activeId = activeId || "!new";
-      await this.updateJobDefinition(
+    initializeJobPlaceholder() {
+      this.updateJobDefinition(
         {
-          id: this.activeId,
+          id: "!new",
           loglevel: LogLevel.Info,
           nodeFilterEditable: false,
           nodesSelectedByDefault: true,
@@ -40,8 +44,11 @@ export const useJobStore = defineStore("jobs", {
           scheduleEnabled: true,
           executionEnabled: true,
         },
-        this.activeId,
+        "!new",
       );
+    },
+    setActiveId(activeId: string): void {
+      this.activeId = activeId || "!new";
     },
     async fetchJobDefinition(jobId: string, setJobAsActive: boolean = true) {
       try {
@@ -49,7 +56,7 @@ export const useJobStore = defineStore("jobs", {
         if (jobDefinition.length > 0) {
           this.updateJobDefinition(jobDefinition[0], jobId);
           if (setJobAsActive) {
-            this.activeId = jobId;
+            this.setActiveId(jobId);
           }
         }
       } catch (e) {
@@ -69,6 +76,10 @@ export const useJobStore = defineStore("jobs", {
             },
             savedJob.id,
           );
+
+          if (this.activeId === "!new") {
+            this.initializeJobPlaceholder();
+          }
         }
       } catch (e) {
         console.warn(e);
