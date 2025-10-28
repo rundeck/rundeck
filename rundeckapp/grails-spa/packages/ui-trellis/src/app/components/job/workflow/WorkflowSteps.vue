@@ -322,6 +322,9 @@ export default defineComponent({
           "data-test-id": "jobref-modal",
           modalActive: this.editJobRefModal,
           "onUpdate:modalActive": this.toggleModalActive,
+          extraAutocompleteVars: createOptionVariables(
+              this.jobDefinition?.options || [],
+          ),
         };
       }
       return {};

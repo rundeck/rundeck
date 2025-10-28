@@ -10,7 +10,7 @@
 import { useJobStore } from "@/library/stores/JobsStore";
 import { cloneDeep } from "lodash";
 import * as _ from "lodash";
-import { mapActions } from "pinia";
+import { mapActions, mapState } from "pinia";
 import OptionsEditor from "../../../components/job/options/OptionsEditor.vue";
 import JsonEmbed from "./JsonEmbed.vue";
 import { defineComponent } from "vue";
@@ -36,7 +36,7 @@ export default defineComponent({
   },
   async mounted() {
     if (getRundeckContext() && getRundeckContext().data) {
-      this.uuid = getRundeckContext().data.otherData?.uuid;
+      this.uuid = getRundeckContext().data.otherData?.uuid || "!new";
 
       this.optionsData = getRundeckContext().data.optionsData;
       this.updatedData = this.optionsData;
@@ -46,6 +46,10 @@ export default defineComponent({
           this.optionsData.jobWasScheduled = data.scheduled;
         },
       );
+      if (!this.hasJob(this.uuid)) {
+        this.initializeJobPlaceholder();
+      }
+
       await this.updateStore();
     }
   },
@@ -54,6 +58,9 @@ export default defineComponent({
       "job-edit-schedules-changed",
       this.subs["job-edit-schedules-changed"],
     );
+  },
+  computed: {
+    ...mapState(useJobStore, ["hasJob"]),
   },
   methods: {
     async updateStore() {
@@ -81,7 +88,11 @@ export default defineComponent({
         }
       }
     },
-    ...mapActions(useJobStore, ["updateJobDefinition", "setActiveId"]),
+    ...mapActions(useJobStore, [
+      "updateJobDefinition",
+      "setActiveId",
+      "initializeJobPlaceholder",
+    ]),
   },
 });
 </script>
