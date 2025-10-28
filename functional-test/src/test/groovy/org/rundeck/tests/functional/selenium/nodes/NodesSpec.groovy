@@ -179,7 +179,7 @@ class NodesSpec extends SeleniumBase {
 
         then: "Ensure the filtered nodes appear on the page"
         commandPage.waitForUrlToContain("command/run")
-        commandPage.byAndWaitClickable(By.partialLinkText("executor-test"))
+        commandPage.byAndWaitClickable(By.partialLinkText(NODE_LIST.first()))
 
         commandPage.expectPartialTextToExist("${size} Nodes Matched")
         NODE_LIST.each{name->
@@ -202,7 +202,7 @@ class NodesSpec extends SeleniumBase {
 
         then: "Ensure the filtered nodes appear on the page"
         jobCreatePage.waitForUrlToContain("job/create")
-        jobCreatePage.byAndWaitClickable(By.partialLinkText("executor-test"))
+        jobCreatePage.byAndWaitClickable(By.partialLinkText(NODE_LIST.first()))
 
         jobCreatePage.expectPartialTextToExist("${size} Nodes Matched")
         NODE_LIST.each{name->
