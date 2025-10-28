@@ -36,7 +36,7 @@ export default defineComponent({
   },
   async mounted() {
     if (getRundeckContext() && getRundeckContext().data) {
-      this.uuid = getRundeckContext().data.otherData?.uuid;
+      this.uuid = getRundeckContext().data.otherData?.uuid || "!new";
 
       this.optionsData = getRundeckContext().data.optionsData;
       this.updatedData = this.optionsData;
