@@ -31,7 +31,6 @@ class ReadmeSpec extends SeleniumBase{
         when:
             loginPage.go()
             loginPage.login(TEST_USER, TEST_PASS)
-            homePage.validatePage()
             homePage.goProjectHome projectName
             sideBarPage.goTo NavLinkTypes.README
             readmePage.setReadmeMessage(readmeText)

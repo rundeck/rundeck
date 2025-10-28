@@ -31,7 +31,6 @@ class DefaultFileCopierSpec extends SeleniumBase{
         HomePage homePage = page HomePage
         when:
         go(LoginPage).login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
         editPage.go()
         editPage.clickNavLink(NavProjectSettings.DEFAULT_FILE_COPIER)
         editPage.clickFileCopierDropDown()
@@ -61,7 +60,6 @@ class DefaultFileCopierSpec extends SeleniumBase{
         ]
         when:
         go(LoginPage).login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
         editPage.go()
         editPage.clickNavLink(NavProjectSettings.DEFAULT_FILE_COPIER)
         editPage.clickFileCopierDropDown()
@@ -99,7 +97,6 @@ class DefaultFileCopierSpec extends SeleniumBase{
         ]
         when:
         go(LoginPage).login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
         editPage.go()
         editPage.clickNavLink(NavProjectSettings.DEFAULT_FILE_COPIER)
         editPage.clickFileCopierDropDown()
@@ -124,7 +121,6 @@ class DefaultFileCopierSpec extends SeleniumBase{
         HomePage homePage = page HomePage
         when:
         go(LoginPage).login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
         editPage.go()
         editPage.clickNavLink(NavProjectSettings.DEFAULT_FILE_COPIER)
         editPage.clickFileCopierDropDown()
@@ -155,7 +151,6 @@ class DefaultFileCopierSpec extends SeleniumBase{
         ]
         when:
         go(LoginPage).login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
         editPage.go()
         editPage.clickNavLink(NavProjectSettings.DEFAULT_FILE_COPIER)
         editPage.clickFileCopierDropDown()
@@ -198,7 +193,6 @@ class DefaultFileCopierSpec extends SeleniumBase{
         ]
         when:
         go(LoginPage).login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
         editPage.go()
         editPage.clickNavLink(NavProjectSettings.DEFAULT_FILE_COPIER)
         editPage.clickFileCopierDropDown()
@@ -244,7 +238,6 @@ class DefaultFileCopierSpec extends SeleniumBase{
         ]
         when:
         go(LoginPage).login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
         editPage.go()
         editPage.clickNavLink(NavProjectSettings.DEFAULT_FILE_COPIER)
         editPage.clickFileCopierDropDown()

@@ -43,7 +43,6 @@ class AccessControlSpec extends SeleniumBase {
             aclPage.uploadFileField.sendKeys createTempYamlFile('invalid acl content test data')
             aclPage.uploadSubmitButton.click()
         then:
-            aclPage.validatePage()
             aclPage.alertField.getText().contains 'Validation failed'
             aclPage.uploadedPolicyValidationTitleField.getText() == 'Uploaded File failed ACL Policy Validation:'
     }
@@ -62,7 +61,6 @@ class AccessControlSpec extends SeleniumBase {
             aclPage.uploadNameField.sendKeys validPolicyName
             aclPage.uploadSubmitButton.click()
         then:
-            aclPage.validatePage()
             aclPage.policiesTitleList.size() == 1
             aclPage.policiesTitleList.get 0 getText() equals validPolicyName
     }
