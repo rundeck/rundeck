@@ -34,12 +34,6 @@ class AccessControlPage extends BasePage {
         super(context)
     }
 
-    void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
-            throw new IllegalStateException("Not on access control page: " + driver.currentUrl + " loadPath: " + loadPath)
-        }
-    }
-
     WebElement getUploadButton() {
         el uploadBy
     }

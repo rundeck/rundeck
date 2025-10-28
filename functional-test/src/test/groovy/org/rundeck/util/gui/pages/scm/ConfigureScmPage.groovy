@@ -20,15 +20,6 @@ class ConfigureScmPage extends BasePage{
         loadPath = "/project/${project}/scm"
     }
 
-    @Override
-    void validatePage() {
-        if(!loadPath)
-            throw new IllegalStateException("Load path not set")
-        if (!driver.currentUrl.endsWith(loadPath)) {
-            throw new IllegalStateException("Couldn't browse Configure SCM Page. Expected: ${loadPath} Actual: ${driver.currentUrl}")
-        }
-    }
-
     void disableScmExport() {
         toggleSCM(false, true)
     }

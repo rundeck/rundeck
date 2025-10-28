@@ -134,12 +134,6 @@ class JobListPage extends BasePage implements ActivityListTrait {
         loadPath = "/project/${projectName}/job/show/${jobId}"
     }
 
-    void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
-            throw new IllegalStateException("Not on job list page: " + driver.currentUrl)
-        }
-    }
-
     /**
      * It validates this by looking for the run job button to be disabled
      */

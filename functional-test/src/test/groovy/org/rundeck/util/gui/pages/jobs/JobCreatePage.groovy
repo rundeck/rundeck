@@ -325,12 +325,6 @@ class JobCreatePage extends BasePage {
         stepLink 'exec-command', StepType.NODE displayed
     }
 
-    void validatePage() {
-        if (!driver.currentUrl.endsWith(getLoadPath())) {
-            throw new IllegalStateException("Not on job create page: " + driver.currentUrl)
-        }
-    }
-
     void validateCopyPage() {
         if (!driver.currentUrl.contains(copyPath)) {
             throw new IllegalStateException("Not on job copy page: " + driver.currentUrl)
