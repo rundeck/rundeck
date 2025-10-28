@@ -33,12 +33,6 @@ class JobUploadPage extends BasePage {
         loadPath = "/project/${projectName}/job/upload${legacyUi ? '?ui=legacy' : ''}"
     }
 
-    void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
-            throw new IllegalStateException("Not on job upload page: " + driver.currentUrl)
-        }
-    }
-
     WebElement dupeOptionSkip(){
         el dupeOptionSkip
     }
