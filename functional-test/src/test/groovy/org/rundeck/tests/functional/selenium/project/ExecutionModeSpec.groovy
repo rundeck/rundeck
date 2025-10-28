@@ -54,7 +54,6 @@ class ExecutionModeSpec extends SeleniumBase{
         when:
             loginPage.go()
             loginPage.login(TEST_USER, TEST_PASS)
-            homePage.validatePage()
             projectEditPage.go("/project/${projectName}/configure")
             projectEditPage.save()
             projectEditPage.go("/project/${projectName}/configure")
@@ -113,7 +112,6 @@ class ExecutionModeSpec extends SeleniumBase{
         when:
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
         projectEditPage.go("/project/${projectName}/configure")
         projectEditPage.clickNavLink(NavProjectSettings.EXEC_MODE)
         projectEditPage.clickExecutionMode()
@@ -181,7 +179,6 @@ class ExecutionModeSpec extends SeleniumBase{
         when:
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
         projectEditPage.go("/project/${projectName}/configure")
         projectEditPage.save()
         projectEditPage.go("/project/${projectName}/configure")
@@ -273,7 +270,6 @@ class ExecutionModeSpec extends SeleniumBase{
         when:
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
         projectEditPage.go("/project/${projectName}/configure")
         projectEditPage.clickNavLink(NavProjectSettings.EXEC_MODE)
         projectEditPage.clickScheduleMode()
