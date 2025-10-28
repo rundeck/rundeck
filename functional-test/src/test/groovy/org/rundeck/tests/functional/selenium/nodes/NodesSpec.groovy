@@ -95,7 +95,7 @@ class NodesSpec extends SeleniumBase {
         when:
         nodesPage.els(NodesPage.nodesTableNodeFilterLinkByResolver("ssh-node")).first().click()
         then:
-        nodesPage.getDisplayedNodesCount() == NODE_LIST.size()
+        nodesPage.getDisplayedNodesCount() == ALL_NODE_LIST.size()
         nodesPage.el(nodesPage.searchNodeInputBy).getDomProperty("value") == "tags: \"executor-test\" tags: \"ssh-node\""
     }
 
