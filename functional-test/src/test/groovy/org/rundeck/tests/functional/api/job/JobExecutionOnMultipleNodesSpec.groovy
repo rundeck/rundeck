@@ -52,8 +52,8 @@ class JobExecutionOnMultipleNodesSpec extends BaseContainer {
 
         then:
         runJob.execution.status == 'succeeded'
-        // Ensure it was ran on the local node and two nodes added by the setup
-        getOrderedNodesListExecutedOn(runJob.output).size() == (NODE_LIST.size()+1)
+        // Ensure it was ran on only the expected nodes
+        getOrderedNodesListExecutedOn(runJob.output).size() == (NODE_LIST.size())
     }
 
     def "Create a job that executes on nodes that were not excluded"() {
