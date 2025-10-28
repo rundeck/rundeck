@@ -14,6 +14,7 @@ import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.httpbody.ScmJobStatusResponse
 import org.rundeck.util.common.WaitUtils
 import org.rundeck.util.common.WaitingTime
+import org.rundeck.util.common.execution.ExecutionStatus
 import org.rundeck.util.common.execution.ExecutionUtils
 import org.rundeck.util.container.RdClient
 
@@ -36,36 +37,53 @@ class JobUtils {
 
     static final String CONTENT_TYPE_DEFAULT = "application/xml"
 
-    static def executeJobWithArgs = (String jobId, RdClient client, String args) -> {
-        return client.doPostWithoutBody("/job/${jobId}/run?argString=${args}")
+    static def executeJobWithArgs (String jobId, RdClient client, String args) {
+        return client.doPost("/job/${jobId}/run?argString=${args}")
     }
 
-    static executeJobWithArgsInvalidMethod = (String jobId, RdClient client, String args) -> {
+    static executeJobWithArgsInvalidMethod (String jobId, RdClient client, String args) {
         return client.doGetAcceptAll("/job/${jobId}/run?argString=${args}")
     }
 
-    static executeJobLaterWithArgsAndRuntime = (
+    static executeJobLaterWithArgsAndRuntime(
             String jobId,
             RdClient client,
             String args,
-            String runtime) -> {
-        return client.doPostWithoutBody("/job/${jobId}/run?argString=${args}&runAtTime=${runtime}")
+            String runtime) {
+        return client.doPost("/job/${jobId}/run?argString=${args}&runAtTime=${runtime}")
     }
 
-    static def executeJobWithOptions = (jobId, RdClient client, Object options) -> {
+    static Response executeJobWithOptions (jobId, RdClient client, Object options){
         return client.doPost("/job/${jobId}/run", options)
     }
 
-    static executeJobLaterWithArgsInvalidMethod = (
+    static Response executeJobLaterWithArgsInvalidMethod (
             String jobId,
             RdClient client,
             String args,
-            String runtime) -> {
+            String runtime){
         return client.doGetAcceptAll("/job/${jobId}/run?argString=${args}&runAtTime=${runtime}")
     }
 
-    static def executeJob = (jobId, RdClient client) -> {
+    /**
+     * Execute job, return HTTP response
+     * TODO: this should be renamed to "doExecuteJob" beacuse it does not handle the response
+     * @param jobId
+     * @param client
+     * @return
+     */
+    static Response executeJob (jobId, RdClient client) {
         return client.doPost("/job/${jobId}/run", "{}")
+    }
+
+    /**
+     * Execute the job and return response Execution, fail if job request is not succesful
+     * @param jobId
+     * @param client
+     * @return
+     */
+    static Execution runExecuteJob (jobId, RdClient client) {
+        return client.post("/job/${jobId}/run", "{}", Execution)
     }
 
     /**
@@ -84,16 +102,17 @@ class JobUtils {
             String contentType = 'application/xml',
             Consumer<CreateJobResponse> failedJobsHandler = { List<Object> failedJobs -> throw new IllegalArgumentException("Some jobs failed on import: " + failedJobs) } ) {
         final String CREATE_JOB_ENDPOINT = "/project/${project}/jobs/import"
-        Response responseImport = client.doPostWithRawText(CREATE_JOB_ENDPOINT, contentType, jobDefinition)
+        try (Response responseImport = client.doPostWithRawText(CREATE_JOB_ENDPOINT, contentType, jobDefinition)){
 
-        // Throws an exception if the import failed
-        if (responseImport.code() != 200) {
-            throw new IllegalArgumentException("Job import failed: ${responseImport} with body: ${responseImport?.body()?.string()}");
+            // Throws an exception if the import failed
+            if (responseImport.code() != 200) {
+                throw new IllegalArgumentException("Job import failed: ${responseImport} with body: ${responseImport?.body()?.string()}");
+            }
+
+            def data = OBJECT_MAPPER.readValue(responseImport.body().string(), CreateJobResponse.class)
+            validateJobsImportAllSuccess(data, failedJobsHandler)
+            return data
         }
-
-        def data = OBJECT_MAPPER.readValue(responseImport.body().string(), CreateJobResponse.class)
-        validateJobsImportAllSuccess(data, failedJobsHandler)
-        return data
     }
 
     static def generateScheduledExecutionXml(String jobName){
@@ -169,7 +188,37 @@ class JobUtils {
         Duration timeout = WaitingTime.MODERATE,
         Duration checkPeriod = WaitingTime.LOW
     ) {
+        if (state == ExecutionStatus.SUCCEEDED.state) {
+            return waitForSuccess(executionId, client, timeout, checkPeriod)
+        }
         return waitForExecution([state], executionId, client, timeout, checkPeriod)
+    }
+
+    /**
+     * Waits for the execution to succeed, rejects early if the execution completes without success.
+     *
+     * @param expectedStates The expected state.
+     * @param executionId The execution ID to query.
+     * @param client The RdClient instance to perform the HTTP request.
+     * @param timeout The maximum duration to wait for the execution to reach the expected state.
+     * @param checkPeriod The time to wait between each check.
+     * @return The Execution object representing the execution status.
+     * @throws InterruptedException if the timeout is reached before the execution reaches the expected state.
+     */
+    static Execution waitForSuccess(
+        String executionId,
+        RdClient client,
+        Duration timeout = WaitingTime.MODERATE,
+        Duration checkPeriod = WaitingTime.LOW
+    ) {
+        return waitForExecution(
+            [ExecutionStatus.SUCCEEDED.state],
+            { it.dateEnded != null } as Function<Execution, Boolean>,
+            executionId,
+            client,
+            timeout,
+            checkPeriod
+        )
     }
 
     /**
@@ -191,19 +240,49 @@ class JobUtils {
         Duration timeout = WaitingTime.MODERATE,
         Duration checkPeriod = WaitingTime.LOW
     ) {
-        Function<Execution, Boolean> resourceAcceptanceEvaluator = { Execution e -> expectedStates.contains(e?.status) }
-
+        return waitForExecution(
+            expectedStates,
+            null,
+            executionId,
+            client,
+            timeout,
+            checkPeriod
+        )
+    }
+    /**
+     * Waits for the execution to be in one of the expected states.
+     *
+     * @param expectedStates A list of expected states.
+     * @param executionId The execution ID to query.
+     * @param client The RdClient instance to perform the HTTP request.
+     * @param timeout The maximum duration to wait for the execution to reach the expected state.
+     * @param checkPeriod The time to wait between each check.
+     * @return The Execution object representing the execution status.
+     * @throws InterruptedException if the timeout is reached before the execution reaches the expected state.
+     */
+    @TypeChecked
+    static Execution waitForExecution(
+        Collection<String> expectedStates,
+        Function<Execution, Boolean> rejectionCondition,
+        String executionId,
+        RdClient client,
+        Duration timeout = WaitingTime.MODERATE,
+        Duration checkPeriod = WaitingTime.LOW
+    ) {
         Closure<String> acceptanceFailureOutputProducer = { String id ->
             def execOutput = callSilently { getExecutionOutputText(id, client) }
             return "Execution output was: \n${execOutput}\n".toString()
         }
 
-        return WaitUtils.waitForResource(executionId,
-                { String id -> ExecutionUtils.Retrievers.executionById(client, id).get() },
-                resourceAcceptanceEvaluator,
-                acceptanceFailureOutputProducer,
-                timeout,
-                checkPeriod)
+        return WaitUtils.waitForResourceOrReject(
+            executionId,
+            { String id -> ExecutionUtils.Retrievers.executionById(client, id).get() },
+            { Execution e -> expectedStates.contains(e?.status) } as Function<Execution, Boolean>,
+            rejectionCondition,
+            acceptanceFailureOutputProducer,
+            timeout,
+            checkPeriod
+        )
     }
 
     /**
@@ -431,16 +510,17 @@ class JobUtils {
         String dupeOption = DUPE_OPTION_DEFAULT,
         String contentType = CONTENT_TYPE_DEFAULT
     ) {
-        def responseImport = client.doPost("/project/${projectName}/jobs/import?dupeOption=${dupeOption}", resourceFileWithPath, contentType);
-
-        // Check if the import was successful and return the response body as a Map
-        if (responseImport.code() != 200) {
-            // Throw an exception if the import failed
-            throw new IllegalArgumentException("Job import failed: ${responseImport} with body: ${responseImport?.body()?.string()}");
+        try (def responseImport = client
+            .doPost("/project/${projectName}/jobs/import?dupeOption=${dupeOption}", resourceFileWithPath, contentType)) {
+            // Check if the import was successful and return the response body as a Map
+            if (responseImport.code() != 200) {
+                // Throw an exception if the import failed
+                throw new IllegalArgumentException("Job import failed: ${responseImport} with body: ${responseImport?.body()?.string()}");
+            }
+            def data = OBJECT_MAPPER.readValue(responseImport.body().string(), Map.class)
+            validateJobsImportAllSuccess(data)
+            return data
         }
-        def data = OBJECT_MAPPER.readValue(responseImport.body().string(), Map.class)
-        validateJobsImportAllSuccess(data)
-        return data
     }
 
     /**

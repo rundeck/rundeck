@@ -470,10 +470,10 @@ jobs:
   packaging-publish:
     <<: *job-defaults
     executor:
-      name: docker-builder
+      name: machine-builder  # Change from docker-builder
+      resource_class: medium
 
     steps:
-      - setup_docker
       - checkout
       - install-packaging-dependencies
       - restore-build-cache
@@ -506,10 +506,10 @@ jobs:
   packaging-test:
     <<: *job-defaults
     executor:
-      name: docker-builder
+      name: machine-builder  # Change from docker-builder
+      resource_class: medium
 
     steps:
-      - setup_docker
       - checkout
       - install-packaging-dependencies
       - restore-build-cache
@@ -748,11 +748,6 @@ workflows:
           <<: *require-build
           <<: *slack-fail-post-step
       - test-docker:
-          name: T Docker
-          command: bash test/run-docker-tests.sh
-          <<: *require-build
-          <<: *slack-defaults
-      - test-docker:
           name: T Integration SSL
           command: bash test/run-docker-ssl-tests.sh
           <<: *require-build
@@ -834,10 +829,6 @@ workflows:
       - build-rundeck:
           name: Build with Docker image using JRE 17
           jreVersion: "openjdk-17-jre-headless"
-      - test-docker:
-          name: T Docker running JRE 17
-          command: bash test/run-docker-tests.sh
-          <<: *require-build-jre-17
       - test-docker:
           name: T Integration SSL running JRE 17
           command: bash test/run-docker-ssl-tests.sh

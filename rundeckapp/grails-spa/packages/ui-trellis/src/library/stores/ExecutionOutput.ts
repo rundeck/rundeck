@@ -272,7 +272,7 @@ export class ExecutionOutputEntry {
     const entry = new ExecutionOutputEntry(executionOutput);
 
     entry.time = resp.time!;
-    entry.absoluteTime = resp.absoluteTime!;
+    entry.absoluteTime = resp.absolute_time!;
     entry.log = resp.log;
     entry.level = resp.level;
     entry.logHtml = resp.loghtml;

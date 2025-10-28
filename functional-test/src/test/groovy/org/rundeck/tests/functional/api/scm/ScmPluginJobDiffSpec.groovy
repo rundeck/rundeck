@@ -14,7 +14,7 @@ import org.rundeck.util.container.BaseContainer
 
 @APITest
 @ExcludePro
-class ScmPluginJobDiffSpec extends BaseContainer {
+class ScmPluginJobDiffSpec extends ScmBaseContainer {
 
     static final String PROJECT_NAME = "ScmPluginJobActionsInput-project"
     final String DUMMY_JOB_ID = "383d0599-3ea3-4fa6-ac3a-75a53d6b0000"

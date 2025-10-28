@@ -34,12 +34,15 @@ class AuthorizationsController extends ControllerBase {
     @Get(uri='/authorizations/application/{kind}', produces = io.micronaut.http.MediaType.APPLICATION_JSON)
     @Operation(
             method='GET',
-            summary = "Get authorizations for an application resource kind",
-            description='''Get authorizations for the supplied set of actions for the subject executing the API call. 
-Evaluation is made in the context of the application for the supplied resource kind.
+            summary = "Check authorization for application resource kind",
+            description='''Evaluates whether the current user has authorization to perform specific actions on resources of a given kind within the application context.
+
+This endpoint checks permissions for a resource type (kind) such as "job", "project", "system", etc., and returns authorization results for each requested action. The evaluation is performed using the application's access control policies and the authenticated user's permissions.
+
+Useful for UI components that need to conditionally display features or for applications that need to verify permissions before attempting operations.
 
 **INCUBATING**: This endpoint is in "incubating" status, and may change.''',
-            tags=['authorization'],
+            tags=['Authorization'],
             parameters = [
                     @Parameter(name = 'kind', description = 'Resource Kind', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
                     @Parameter(name = 'actions', description = 'Actions to check authorization for', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(type = 'string')))
@@ -79,7 +82,7 @@ Evaluation is made in the context of the application for the supplied resource k
 Evaluation is made in the context of the application for the supplied type and specifier.
 
 **INCUBATING**: This endpoint is in "incubating" status, and may change.''',
-            tags=['authorization'],
+            tags=['Authorization'],
             parameters = [
                     @Parameter(name = 'type', description = 'Resource Type', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
                     @Parameter(name = 'specifier', description = 'Resource specifier', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
@@ -120,7 +123,7 @@ Evaluation is made in the context of the application for the supplied type and s
 Evaluation is made in the context of the project for the supplied resource kind.
 
 **INCUBATING**: This endpoint is in "incubating" status, and may change.''',
-            tags=['authorization'],
+            tags=['Authorization'],
             parameters = [
                     @Parameter(name = 'project', description = 'Project Name', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
                     @Parameter(name = 'kind', description = 'Resource Kind', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
@@ -161,7 +164,7 @@ Evaluation is made in the context of the project for the supplied resource kind.
 Evaluation is made in the context of the project for the supplied job.
 
 **INCUBATING**: This endpoint is in "incubating" status, and may change.''',
-            tags=['authorization'],
+            tags=['Authorization'],
             parameters = [
                     @Parameter(name = 'project', description = 'Project Name', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
                     @Parameter(name = 'specifier', description = 'Job Id', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
@@ -212,7 +215,7 @@ Evaluation is made in the context of the project for the supplied job.
 Evaluation is made in the context of the project for the type with a specifier.
 
 **INCUBATING**: This endpoint is in "incubating" status, and may change.''',
-            tags=['authorization'],
+            tags=['Authorization'],
             parameters = [
                     @Parameter(name = 'project', description = 'Project Name', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
                     @Parameter(name = 'type', description = 'Resource Type', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),

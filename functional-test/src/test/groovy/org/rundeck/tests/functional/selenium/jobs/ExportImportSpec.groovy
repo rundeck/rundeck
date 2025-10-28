@@ -17,9 +17,11 @@ class ExportImportSpec extends SeleniumBase {
 
     @Shared String SELENIUM_EXPORT_IMPORT_PROJECT
 
-    def setup() {
-        SELENIUM_EXPORT_IMPORT_PROJECT = specificationContext.currentIteration.name.tokenize().collect { it.capitalize() }.join()
+    def setupSpec() {
+        SELENIUM_EXPORT_IMPORT_PROJECT = "ExportImportSpec-" + System.currentTimeMillis()
         setupProject(SELENIUM_EXPORT_IMPORT_PROJECT)
+    }
+    def setup(){
         def loginPage = go LoginPage
         loginPage.login(TEST_USER, TEST_PASS)
     }
@@ -66,8 +68,10 @@ class ExportImportSpec extends SeleniumBase {
         def jobShowPage = page JobShowPage
         def jobListPage = page JobListPage
         def jobUploadPage = page JobUploadPage
+        jobUploadPage.loadPathToUploadPage SELENIUM_EXPORT_IMPORT_PROJECT
+        jobUploadPage.legacyUi = legacyUi
         def sideBarPage = page SideBarPage
-        def jobName = "jobWithOptionsToExport"
+        def jobName = "jobWithOptionsToExport-nextui-${legacyUi}"
         def optName = "firstOption"
         when:
         jobCreatePage.fillBasicJob jobName
@@ -77,6 +81,7 @@ class ExportImportSpec extends SeleniumBase {
         jobCreatePage.saveOptionButton.click()
         jobCreatePage.waitFotOptLi 0
         jobCreatePage.createJobButton.click()
+        jobUploadPage.implicitlyWait(2000)
         then:
         jobShowPage.validatePage()
         jobShowPage.getLink "Action" click()
@@ -84,12 +89,12 @@ class ExportImportSpec extends SeleniumBase {
         jobShowPage.getLink "Action" click()
         jobShowPage.getLink "Delete this Job" click()
         jobShowPage.deleteJobBtn.click()
+        jobUploadPage.implicitlyWait(2000)
         jobListPage.jobList.isEmpty()
         jobListPage.alertInfo.text.contains("Job was successfully deleted")
         when:
-        jobListPage.getLink "Upload a Job definition" click()
-        jobUploadPage.loadPathToUploadPage SELENIUM_EXPORT_IMPORT_PROJECT
-        jobUploadPage.validatePage()
+        jobUploadPage.go()
+        jobUploadPage.implicitlyWait(2000)
         jobUploadPage.fileInputElement().sendKeys("${downloadFolder}${getSeparator()}${jobName}.yaml")
         jobUploadPage.fileUploadButtonElement().click()
         then:
@@ -106,17 +111,22 @@ class ExportImportSpec extends SeleniumBase {
         then:
         jobCreatePage.optDetails.size() == 1
         jobCreatePage.options.size() == 1
+        where:
+        legacyUi<< [true, false]
     }
     def "import job with skip should show skip message"() {
         setup:
         def jobCreatePage = go JobCreatePage, SELENIUM_EXPORT_IMPORT_PROJECT
         def jobShowPage = page JobShowPage
         def jobUploadPage = page JobUploadPage
-        def jobName = 'ImportJobWithSkip'
+        jobUploadPage.loadPathToUploadPage SELENIUM_EXPORT_IMPORT_PROJECT
+        jobUploadPage.legacyUi = legacyUi
+        def jobName = 'ImportJobWithSkip-nextui-'+ legacyUi
 
         when: "create basic job"
         jobCreatePage.fillBasicJob jobName
         jobCreatePage.createJobButton.click()
+        jobUploadPage.implicitlyWait(2000)
 
         then: "job created"
         jobShowPage.validatePage()
@@ -124,9 +134,8 @@ class ExportImportSpec extends SeleniumBase {
         jobShowPage.getLink "Download Job definition in YAML" click()
 
         when: "upload job with dupe option skip"
-
-        jobUploadPage.loadPathToUploadPage SELENIUM_EXPORT_IMPORT_PROJECT
         jobUploadPage.go()
+        jobUploadPage.implicitlyWait(2000)
         jobUploadPage.fileInputElement().sendKeys("${downloadFolder}${getSeparator()}${jobName}.yaml")
         jobUploadPage.dupeOptionSkip().click()
         jobUploadPage.fileUploadButtonElement().click()
@@ -134,10 +143,12 @@ class ExportImportSpec extends SeleniumBase {
         then:
 
         jobUploadPage.headerTextInfo.text.contains("skipped due to existing jobs")
+        where:
+        legacyUi<< [true, false]
 
     }
 
-    def cleanup() {
+    def cleanupSpec() {
         deleteProject(SELENIUM_EXPORT_IMPORT_PROJECT)
     }
 

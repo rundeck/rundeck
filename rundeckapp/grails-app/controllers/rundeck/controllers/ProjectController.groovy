@@ -654,7 +654,7 @@ class ProjectController extends ControllerBase{
 
 Authorization required: `read` for project resource
 ''',
-        tags = ['project'],
+        tags = ['Project'],
         parameters = [
                 @Parameter(
                         name = 'meta',
@@ -746,7 +746,7 @@ Authorization required: `read` access for `project` resource type to get basic p
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -789,7 +789,7 @@ Authorization required: `read` access for `project` resource type to get basic p
 
 Authorization required: `create` for resource type `project`
 ''',
-        tags = ['project'],
+        tags = ['Project'],
         requestBody = @RequestBody(
             description='Project Create contains a name, and configuration values',
             content = @Content(
@@ -986,7 +986,7 @@ Authorization required: `delete` access for `project` resource type or `admin` o
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -1115,7 +1115,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -1209,7 +1209,7 @@ Since: v14""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="ACL")
             ]
     )
     @ApiResponse(
@@ -1324,7 +1324,7 @@ by:
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="ACL")
             ]
     )
     @ApiResponse(
@@ -1448,7 +1448,7 @@ by:
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="ACL")
             ]
     )
     @ApiResponse(
@@ -1524,7 +1524,7 @@ Since: v14""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="ACL")
             ]
     )
     @ApiResponse(
@@ -1865,7 +1865,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2015,7 +2015,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2110,7 +2110,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2204,7 +2204,7 @@ key2=value'''
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2352,7 +2352,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2472,7 +2472,7 @@ Authorization required: `configure` access for `project` resource type or `admin
                                             @ExampleObject(
                                                     name = 'set-project-config',
                                                     summary = "Replace an individual config settings",
-                                                    value = '''{ "[KEY]" : "key value" }'''
+                                                    value = '''{ "value" : "key value" }'''
                                             )
                                     ]
                             ),
@@ -2518,7 +2518,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2698,7 +2698,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2774,7 +2774,7 @@ Requires `export` authorization for the project resource.""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2929,7 +2929,7 @@ Requires `export` authorization for the project resource.""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2991,7 +2991,7 @@ Since: v19""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -3081,7 +3081,7 @@ Since: v19""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -3132,10 +3132,15 @@ Since: v19""",
                 "attachment; filename=\"${params.project}-${dateStamp}.rdproject.jar\""
         )
 
-        outfile.withInputStream { instream ->
-            Streams.copy(instream, response.outputStream, false)
+        try {
+            outfile.withInputStream { instream ->
+                Streams.copy(instream, response.outputStream, false)
+            }
+        } catch (Exception e) {
+            throw new ProjectServiceException("Failed to deliver export file: ${e.message}", e)
+        } finally {
+            projectService.releasePromise(session.user, token)
         }
-        projectService.releasePromise(session.user, token)
     }
 
     @Put('/project/{project}/import')
@@ -3176,7 +3181,7 @@ If no auth token info was included with the webhook, it will be generated (defau
                     @Parameter(name = 'importNodesSources', required = false, in = ParameterIn.QUERY, description = '''In APIv38 or later: If true, import Node Resources Source defined on project properties. 
 If false, do not import the nodes sources.''', schema = @Schema(implementation = Boolean.class)),
                     @Parameter(name = 'importComponents.NAME', required = false, in = ParameterIn.QUERY, description = '''Enable a component for import.
-Project archives may contain "components" which can be imported, beyond the base set of contents. This includes some data used by Process Automation (Rundeck Enterprise) features.
+Project archives may contain "components" which can be imported, beyond the base set of contents. This includes some data used by Runbook Automation (prev. Rundeck Enterprise) features.
 
 For example, to enable Webhook import, you could use `importWebhooks` and `whkRegenAuthTokens` params, but those are simply shortcuts for the following parameters:
 
@@ -3190,7 +3195,7 @@ Import schedules definitions:
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -3476,7 +3481,7 @@ Since: v46"""
     )
     @Tags(
         [
-            @Tag(name="project")
+            @Tag(name="Project")
         ]
     )
     @ApiResponse(

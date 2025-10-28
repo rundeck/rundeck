@@ -1,5 +1,6 @@
 package org.rundeck.tests.functional.selenium.scm
 
+import groovy.util.logging.Slf4j
 import org.rundeck.util.common.scm.ScmIntegration
 import org.rundeck.util.gui.scm.ScmStatusBadge
 import org.rundeck.util.gui.pages.jobs.JobShowPage
@@ -10,11 +11,10 @@ import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.gitea.GiteaApiRemoteRepo
 import org.rundeck.util.api.storage.KeyStorageApiClient
-import org.rundeck.util.container.SeleniumBase
 import spock.lang.Ignore
 
 @SeleniumCoreTest
-class ScmStatusBadgeSpec extends SeleniumBase {
+class ScmStatusBadgeSpec extends ScmSeleniumBase {
 
     private static String REPO_NAME = "statusBadgeTest"
     private static String PROJECT_LOCATION = "/projects-import/scm/PScmStatusBadgeTest.rdproject"

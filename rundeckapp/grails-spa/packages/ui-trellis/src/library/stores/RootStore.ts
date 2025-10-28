@@ -76,4 +76,7 @@ export class RootStore {
   invalidatePath(path: string) {
     delete this.requestCache[path];
   }
+  api() {
+    return api;
+  }
 }

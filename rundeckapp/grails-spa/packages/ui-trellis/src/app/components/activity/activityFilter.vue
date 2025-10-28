@@ -213,6 +213,25 @@
             </div>
           </div>
         </div>
+        <div class="base-filters">
+          <div class="row">
+            <div class="col-xs-12 col-sm-12">
+              <div class="form-group">
+                <label for="optionFilter" class="sr-only">
+                  {{ $t("jobquery.title.optionFilter") }}
+                </label>
+                <input
+                    v-model="query.optionFilter"
+                    type="text"
+                    name="optionFilter"
+                    class="form-control"
+                    :placeholder="$t('jobquery.title.optionFilter.label')"
+                    data-test-id="option-filter"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <template #footer>
         <btn @click="filterOpen = false">{{ $t("cancel") }}</btn>
@@ -282,6 +301,7 @@ export default defineComponent({
         "execnodeFilter",
         "titleFilter",
         "statFilter",
+        "optionFilter",
         "startafterFilter",
         "startbeforeFilter",
         "endafterFilter",
@@ -324,6 +344,7 @@ export default defineComponent({
         execnodeFilter: "",
         titleFilter: "",
         statFilter: "",
+        optionFilter: "",
         recentFilter: "",
         startafterFilter: "",
         startbeforeFilter: "",

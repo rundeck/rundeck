@@ -19,7 +19,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
-import org.springframework.dao.DataAccessException
+import org.hibernate.sql.JoinType
 import rundeck.data.util.ExecReportUtil
 import rundeck.services.workflow.WorkflowMetricsWriterImpl
 import rundeck.support.filters.BaseNodeFilters
@@ -3239,6 +3239,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public def triggerJobCompleteNotifications(AsyncStarted execRun, ExecutionCompleteEvent event) {
         def context = execRun?.thread?.context
         def execution = event.execution
+        def executionId = event.execution.id
+
+        //load stored execution to get the orchestrator data
+        Execution executionLoad = Execution.createCriteria().get() {
+            createAlias('orchestrator', 'o', JoinType.LEFT_OUTER_JOIN)
+            eq('id', executionId)
+        } as Execution
+
+        //just replacing the value for the received from ExecutionJob because the status is not saved yet
+        if(executionLoad && executionLoad.orchestrator){
+            execution.orchestrator = executionLoad.orchestrator
+        }
+
         def export = execRun?.thread?.resultObject?.getSharedContext()?.consolidate()?.getData(ContextView.global())
 
         notificationService.asyncTriggerJobNotification(

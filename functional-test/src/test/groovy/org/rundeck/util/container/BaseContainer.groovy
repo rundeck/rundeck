@@ -4,15 +4,22 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.jcraft.jsch.JSch
 import com.jcraft.jsch.KeyPair
 import groovy.util.logging.Slf4j
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
 import org.rundeck.util.api.responses.execution.Execution
+import org.rundeck.util.api.responses.execution.ExecutionOutput
 import org.rundeck.util.api.storage.KeyStorageApiClient
 import org.rundeck.util.common.WaitBehaviour
 import org.rundeck.util.common.WaitUtils
 import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.jobs.JobUtils
+import org.slf4j.LoggerFactory
+import org.slf4j.bridge.SLF4JBridgeHandler
+import org.testcontainers.containers.ComposeContainer
+import spock.lang.AutoCleanup
+import spock.lang.Shared
 import spock.lang.Specification
 
 import java.nio.file.Files
@@ -25,8 +32,8 @@ import java.util.function.Function
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
-
-import org.slf4j.LoggerFactory;
+import java.util.logging.Level
+import java.util.logging.Logger
 
 /**
  * Base class for tests, starts a shared static container for all tests
@@ -42,12 +49,43 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     protected static final String TEST_RUNDECK_TOKEN = System.getenv("TEST_RUNDECK_TOKEN") ?: System.getProperty("TEST_RUNDECK_TOKEN", "admintoken")
     protected static final ObjectMapper MAPPER = new ObjectMapper()
     private static String RUNDECK_CONTAINER_ID
+    static {
+        SLF4JBridgeHandler.removeHandlersForRootLogger()
+
+        SLF4JBridgeHandler.install()
+        //fine logging for http client closeable leaks
+        Logger.getLogger(OkHttpClient.name).setLevel(Level.FINEST)
+    }
+
+    @Shared
+    @AutoCleanup
+    Set<Closeable> toClose = new ClosingSet<>()
+    static class ClosingSet<T> extends HashSet<T> implements Closeable {
+        @Override
+        void close() throws IOException {
+            if(size()>0){
+                System.err.println("AutoClosing ${size()} responses")
+            }
+            this.each {
+                if(it instanceof Closeable){
+                    try{
+                        (it as Closeable).close()
+                    } catch (IOException e){
+                        //ignore
+                    }
+                }
+            }
+        }
+    }
+
 
     String getCustomDockerComposeLocation(){
         return null
     }
 
     ClientProvider getClientProvider() {
+        //fine logging for http client closeable leaks
+        Logger.getLogger(OkHttpClient.name).setLevel(Level.FINEST)
         synchronized (CLIENT_PROVIDER_LOCK) {
 
             if (CLIENT_PROVIDER != null) {
@@ -73,64 +111,60 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
                 CLIENT_PROVIDER = rdDockerContainer
                 RUNDECK_CONTAINER_ID = rdDockerContainer.containerId
 
-            } else if (getCustomDockerComposeLocation() != null && !getCustomDockerComposeLocation().isBlank()) {
+            } else {
+                URI resource
+                if (getCustomDockerComposeLocation() != null && !getCustomDockerComposeLocation().isBlank()) {
+                    resource = getClass().getClassLoader().getResource(getCustomDockerComposeLocation()).toURI()
+                } else {
+                    resource = getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI()
+                }
+
                 // Override default timeout values to accommodate slow container startups
                 Map<String, Integer> clientConfig = Map.of(
                         "readTimeout", 60,
                 )
                 String featureName = System.getProperty("TEST_FEATURE_ENABLED_NAME")
 
-                log.info("Starting testcontainer: ${getClass().getClassLoader().getResource(getCustomDockerComposeLocation()).toURI()}")
+                log.info("Starting testcontainer: ${resource}")
                 log.info("Starting testcontainer: RUNDECK_IMAGE: ${RdComposeContainer.RUNDECK_IMAGE}")
                 log.info("Starting testcontainer: LICENSE_LOCATION: ${RdComposeContainer.LICENSE_LOCATION}")
                 log.info("Starting testcontainer: TEST_RUNDECK_GRAILS_URL: ${RdComposeContainer.TEST_RUNDECK_GRAILS_URL}")
                 var rundeckComposeContainer = new RdComposeContainer(
-                        getClass().getClassLoader().getResource(getCustomDockerComposeLocation()).toURI(),
-                        featureName,
-                        clientConfig
-                )
-                rundeckComposeContainer.start()
-                CLIENT_PROVIDER = rundeckComposeContainer
-                RUNDECK_CONTAINER_ID = rundeckComposeContainer.getRundeckContainerId()
-
-            } else {
-                // Override default timeout values to accommodate slow container startups
-                Map<String, Integer> clientConfig = Map.of(
-                    "readTimeout", 60,
-                )
-
-                String featureName = System.getProperty("TEST_FEATURE_ENABLED_NAME")
-                log.info("Starting testcontainer: ${getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI()}")
-                log.info("Starting testcontainer: RUNDECK_IMAGE: ${RdComposeContainer.RUNDECK_IMAGE}")
-                log.info("Starting testcontainer: LICENSE_LOCATION: ${RdComposeContainer.LICENSE_LOCATION}")
-                log.info("Starting testcontainer: TEST_RUNDECK_GRAILS_URL: ${RdComposeContainer.TEST_RUNDECK_GRAILS_URL}")
-                var rundeckComposeContainer = new RdComposeContainer(
-                    getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI(),
+                    resource,
                     featureName,
                     clientConfig
                 )
+                composeContainer(rundeckComposeContainer)
                 rundeckComposeContainer.start()
                 CLIENT_PROVIDER = rundeckComposeContainer
                 RUNDECK_CONTAINER_ID = rundeckComposeContainer.getRundeckContainerId()
+
             }
 
             return CLIENT_PROVIDER
         }
     }
 
+    /**
+     * Customize the compose container if needed, will be called after creation but before start
+     * @param composeContainer
+     */
+    void composeContainer(ComposeContainer composeContainer){
+
+    }
+
+
     void setupProject() {
         setupProject(PROJECT_NAME)
     }
 
     void setupProject(String name) {
-        def getProject = client.doGet("/project/${name}")
-        if (getProject.code() == 404) {
-            def post = client.doPost("/projects", [name: name])
-            if (!post.successful) {
-                throw new RuntimeException("Failed to create project: ${post.body().string()}")
+        try(def getProject = client.doGet("/project/${name}")) {
+            if (getProject.code() == 404) {
+                def result = client.post("/projects", [name: name])
+            } else if (!getProject.successful) {
+                throw new RuntimeException("Failed to access project: ${getProject.body().string()}")
             }
-        } else if (!getProject.successful) {
-            throw new RuntimeException("Failed to access project: ${getProject.body().string()}")
         }
     }
 
@@ -140,18 +174,18 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
      * @param aclPath acl path within the system
      */
     void importSystemAcls(String resourcePathName, String aclPath){
-        def getAcl = client.doGet("/system/acl/${aclPath}")
-        def aclFile = new File(getClass().getResource(resourcePathName).getPath())
-        def resp
-        if (getAcl.code() == 404) {
-            //POST
-            resp = client.doPost("/system/acl/${aclPath}", aclFile, 'application/yaml')
-        }else{
-            //PUT
-            resp = client.doPut("/system/acl/${aclPath}", aclFile, 'application/yaml')
-        }
-        if (!resp.successful) {
-            throw new RuntimeException("Failed to create System ACL: ${resp.body().string()}")
+        try(def getAcl = client.doGet("/system/acl/${aclPath}")) {
+            def aclFile = new File(getClass().getResource(resourcePathName).getPath())
+            try (
+                def resp = getAcl.code() == 404 ?
+                           client.doPost("/system/acl/${aclPath}", aclFile, 'application/yaml') :
+                           client.doPut("/system/acl/${aclPath}", aclFile, 'application/yaml')
+            ) {
+
+                if (!resp.successful) {
+                    throw new RuntimeException("Failed to create System ACL: ${resp.body().string()}")
+                }
+            }
         }
     }
 
@@ -161,9 +195,10 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
      * @param aclPath acl path within the system
      */
     void deleteSystemAcl(String aclPath){
-        def resp = client.doDelete("/system/acl/${aclPath}")
-        if (!(resp.code() in [204, 404])) {
-            throw new RuntimeException("Failed to delete System ACL: ${resp.body().string()}")
+        try(def resp = client.doDelete("/system/acl/${aclPath}")) {
+            if (!(resp.code() in [204, 404])) {
+                throw new RuntimeException("Failed to delete System ACL: ${resp.body().string()}")
+            }
         }
     }
 
@@ -205,8 +240,8 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     def loadKeysForNodes(String baseKeyPath, String project, String nodeKeyPassPhrase, String nodeUserPassword, String userVaultPassword) {
-        client.doPost("/storage/keys/project/$project/ssh-node.key", new File("${baseKeyPath}/id_rsa"), "application/octet-stream")
-        client.doPost("/storage/keys/project/$project/ssh-node-passphrase.key", new File("${baseKeyPath}/id_rsa_passphrase"), "application/octet-stream")
+        loadKeyFile("project/$project/ssh-node.key", new File("${baseKeyPath}/id_rsa"), "privateKey")
+        loadKeyFile("project/$project/ssh-node-passphrase.key", new File("${baseKeyPath}/id_rsa_passphrase"), "privateKey")
         if (nodeKeyPassPhrase) loadKey("project/$project/ssh-node-passphrase.pass", nodeKeyPassPhrase, "password")
         if (nodeUserPassword) loadKey("project/$project/ssh-node.pass", nodeUserPassword, "password")
         if (userVaultPassword) loadKey("project/$project/vault-user.pass", userVaultPassword, "password")
@@ -216,6 +251,10 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     def loadKey(String path, String dbPass, String keyType) {
         KeyStorageApiClient keyStorageApiClient = new KeyStorageApiClient(clientProvider)
         keyStorageApiClient.callUploadKey(path, keyType, dbPass)
+    }
+    def loadKeyFile(String path, File file, String keyType) {
+        KeyStorageApiClient keyStorageApiClient = new KeyStorageApiClient(clientProvider)
+        keyStorageApiClient.callUploadKeyFile(path, keyType, file)
     }
 
     /**
@@ -353,12 +392,17 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         println(nodeList)
         def count = 0
 
+        //force refresh project
+        Map res = client.putWithJsonBody(
+            "/project/$project/config/time",
+            ["value": System.currentTimeMillis().toString()]
+        )
+        assert res.value != null
+
         waitFor(
                 {
-                    //force refresh project
-                    client.doPutWithJsonBody("/project/$project/config/time", ["time": System.currentTimeMillis()])
                     response = client.doGet("/project/$project/resources")
-                    safelyMap(response, Map.class, { [:] })
+                    safelyMap(response, Map.class, {  [:] })
                 },
                 { it.get(nodename) != null },
                 WaitingTime.EXCESSIVE
@@ -392,17 +436,39 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         getClientProvider()
     }
 
+    /**
+     * Save a response to be closed later
+     * @param response
+     * @return
+     */
+    private Response closeLater(Response response) {
+        if(response == null){
+            return null
+        }
+        toClose << response
+        return response
+    }
+
     //client helpers
     Response doGet(String path) {
-        return client.doGet(path)
+        closeLater(client.doGet(path))
     }
 
     Response doDelete(String path) {
-        return client.doDelete(path)
+        closeLater client.doDelete(path)
     }
 
-    Response request(String path, Consumer<Request.Builder> consumer) {
-        return client.request(path, consumer)
+    Response doRequest(String path, Consumer<Request.Builder> consumer) {
+        closeLater client.doRequest(path, consumer)
+    }
+
+    <T> T request(String path, Class<T> clazz = Map, Consumer<Request.Builder> consumer) {
+        def response = client.doRequest(path, consumer)
+        if(!response.successful){
+            throw new RuntimeException("Request failed: ${response.body().string()}")
+        }
+        closeLater response
+        jsonValue(response.body(), clazz)
     }
 
     Map jsonValue(ResponseBody body) {
@@ -418,7 +484,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     Response doPost(String path, Object body = null) {
-        return client.doPost(path, body)
+        closeLater client.doPost(path, body)
     }
 
     <T> T post(String path, Object body = null, Class<T> clazz) {
@@ -431,21 +497,48 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
      * @param jobId The job UUID to run.
      * @param body An object representing the job run request options. Must be serializable to JSON.
      * @return The output of the execution.
-     * @deprecated Use JobUtils.executeJobWithOptions(),
+     * @deprecated Use {@link #runJobGetOutput(java.lang.String)} or JobUtils.executeJobWithOptions(),
      * JobUtils.waitForExecutionFinish() instead, and JobUtils.getExecutionOutput() instead.
      */
     @Deprecated
     Map runJobAndWait(String jobId, Object body = null) {
-        def r = JobUtils.executeJobWithOptions(jobId, client, body)
-        if (!r.successful) {
-            throw new RuntimeException("Failed to run job: ${r}")
-        }
+        Execution execution
+        try (def r = JobUtils.executeJobWithOptions(jobId, client, body)) {
+            if (!r.successful) {
+                throw new RuntimeException("Failed to run job: ${r}")
+            }
 
-        Execution execution = MAPPER.readValue(r.body().string(), Execution.class)
+            execution = jsonValue(r.body(), Execution.class)
+        }
         waitForExecutionFinish(execution.id as String, WaitingTime.EXCESSIVE)
 
         // Maintains the data contract for the Map return type
         return client.get("/execution/${execution.id}/output", Map)
+    }
+
+    /**
+     * Runs a job and wait for it to finish. Returning the execution and output.
+     *
+     * @param jobId The job UUID to run.
+     * @param body An object representing the job run request options. Must be serializable to JSON.
+     * @return A wrapper containing the final execution and the output of the execution.
+     */
+    RunJobOutput runJobGetOutput(String jobId, Object body = null) {
+        Execution execution
+        try (def r = JobUtils.executeJobWithOptions(jobId, client, body)) {
+            if (!r.successful) {
+                throw new RuntimeException("Failed to run job: ${r}")
+            }
+
+            execution = jsonValue(r.body(), Execution.class)
+        }
+        execution = waitForExecutionFinish(execution.id as String, WaitingTime.EXCESSIVE)
+        def output=JobUtils.getExecutionOutput(execution.id, client)
+        return new RunJobOutput(execution: execution, output: output)
+    }
+    static class RunJobOutput{
+        Execution execution
+        ExecutionOutput output
     }
 
     /**
@@ -475,7 +568,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
      *         The exception contains a detailed message obtained from the server's response.
      */
     void deleteProject(String projectName) {
-        def response = client.doDelete("/project/${projectName}")
+        def response = closeLater client.doDelete("/project/${projectName}")
         if (!response.successful) {
             throw new RuntimeException("Failed to delete project: ${response.body().string()}")
         }
@@ -492,7 +585,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
      *         The exception contains a detailed message obtained from the server's response.
      */
     void deleteProjectKey(String projectName, String keyPath) {
-        def response = client.doDelete("/storage/keys/project/${projectName}/${keyPath}")
+        def response = closeLater client.doDelete("/storage/keys/project/${projectName}/${keyPath}")
         if (!response.successful) {
             throw new RuntimeException("Failed to delete project key: ${response.body().string()}")
         }
@@ -513,10 +606,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
      *         The exception contains a detailed message obtained from the server's response.
      */
     void updateConfigurationProject(String projectName, Map body) {
-        def responseDisable = client.doPutWithJsonBody("/project/${projectName}/config", body)
-        if (!responseDisable.successful) {
-            throw new RuntimeException("Failed to disable scheduled execution: ${responseDisable.body().string()}")
-        }
+        def result = client.putWithJsonBody("/project/${projectName}/config", body)
     }
 
     def setupSpec() {
@@ -561,12 +651,9 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
      */
     def addExtraProjectConfig(String project, Map<String, String> configure) {
         configure.forEach { key, value ->
-            Response response = client.doPutWithJsonBody("/project/$project/config/$key",
+            Map result = client.putWithJsonBody("/project/$project/config/$key",
                 ["key": key, "value": value]
             )
-            if (!response.successful) {
-                throw new RuntimeException("Failed to add configuration options to a project: ${response.body().string()}")
-            }
         }
     }
 
@@ -579,8 +666,8 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
      * @param unsuccessfulResponseHandler a closure that receives a response object to handle. If omitted, returns a null.
      * @return
      */
-    static <T> T safelyMap(Response response, Class<T> valueType, Closure<T> unsuccessfulResponseHandler = { null }) {
-        response.successful ? MAPPER.readValue(response.body().string(), valueType) :  unsuccessfulResponseHandler(response)
+    <T> T safelyMap(Response response, Class<T> valueType, Closure<T> unsuccessfulResponseHandler = { null }) {
+        response.successful ? MAPPER.readValue(response.body().string(), valueType) :  unsuccessfulResponseHandler(closeLater(response))
     }
 
 
@@ -602,9 +689,16 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     void waitForRundeckAppToBeResponsive(){
 
         def checkIsRundeckApiResponding = {
-            try {
-                def response = client.doGet("/system/info")
-                return (response != null && response.code() == 200)
+            //use httpClient directly to invoke a non-api path
+            try (def response =
+                client.httpClient.newCall(
+                    new Request.Builder().
+                        url("${client.baseUrl}/actuator/health/readiness").
+                        header('Accept', 'application/json').
+                        get().
+                        build()
+                ).execute()){
+                return response.successful
             } catch (Exception e) {
                 LoggerFactory.getLogger(BaseContainer.class).info(e.getMessage())
                 return false
@@ -616,7 +710,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
                 {
                     it
                 },
-                WaitingTime.XTRA_EXCESSIVE,
+                WaitingTime.ABSURDLY_EXCESSIVE,
                 WaitingTime.LOW
 
         )

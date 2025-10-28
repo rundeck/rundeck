@@ -68,7 +68,7 @@ management:
                 readiness:
                     include:
                         - readinessState
-                        - rundeckDataSourceHeathIndicator
+                        - rundeckDataSourceHealthIndicator
 
 ---
 

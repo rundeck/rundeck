@@ -44,13 +44,24 @@ class RundeckLogFormatSpec extends Specification {
         expectLineEnd = "^"
     }
 
-    def "test backslash escape"(){
+    static String backslashEscape(String dMesg, String chars) {
+        StringBuilder sb = new StringBuilder();
+        RundeckLogFormat.appendEscaped(sb, dMesg, chars);
+        return sb.toString();
+    }
+
+    def "test backslash escape"() {
         expect:
-        "monkey \\^\\^\\^ blah \\\\ elf \\\\\\\\" == RundeckLogFormat.backslashEscape("monkey ^^^ blah \\ elf \\\\",'^')
+            expected == backslashEscape(string, chars)
+        where:
+            string                                    | chars    || expected
+            "monkey ^^^\$\$\$***&&& blah \\ elf \\\\" | '^'      || "monkey \\^\\^\\^\$\$\$***&&& blah \\\\ elf \\\\\\\\"
+            "monkey ^^^\$\$\$***&&& blah \\ elf \\\\" | '^$'     || "monkey \\^\\^\\^\\\$\\\$\\\$***&&& blah \\\\ elf \\\\\\\\"
+            "monkey ^^^\$\$\$***&&& blah \\ elf \\\\" | '^$*&'   || "monkey \\^\\^\\^\\\$\\\$\\\$\\*\\*\\*\\&\\&\\& blah \\\\ elf \\\\\\\\"
     }
     def "test backslash escape null"(){
         expect:
-        '' == RundeckLogFormat.backslashEscape(null,'^')
+        '' == backslashEscape(null,'^')
     }
 
     def "test start and end markers"() {

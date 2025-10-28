@@ -85,10 +85,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style scoped lang="scss">
-.btn,
-span {
-  margin-right: var(--spacing-2);
-}
-</style>

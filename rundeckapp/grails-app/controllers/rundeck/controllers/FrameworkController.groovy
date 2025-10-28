@@ -1543,7 +1543,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             description = """Create/update list-based plugin configurations (e.g. Resource Model Sources).
 Authorization required: `configure` on the project.
 Since: v55""",
-            tags = ["project", "configuration"],
+            tags = ["Project", "Configuration"],
             parameters = [
                     @Parameter(
                             name = "project",
@@ -1811,7 +1811,7 @@ Since: v55""",
             method = 'GET',
             summary = 'Get Project Configurations Using Mapping defined in ProjectConfigurable beans',
             description = 'Get Project Configurable configs and properties.',
-            tags = ['project'],
+            tags = ['Project'],
             responses = [
                     @ApiResponse(
                             responseCode = '200',
@@ -1898,7 +1898,7 @@ Since: v55""",
             method = 'POST',
             summary = 'Create or Update Configurations Using Mapping defined in ProjectConfigurable beans',
             description = 'Create or update configs and properties.',
-            tags = ['project'],
+            tags = ['Project'],
             requestBody = @RequestBody(
                     required = true,
                     description = '''Update Config Request.
@@ -2877,7 +2877,7 @@ whether it is `writeable`.  The `href` indicates the URL for `/project/{project}
 Authorization required: `configure` for project resource
 
 Since: v23''',
-        tags=['project'],
+        tags=['Project'],
         parameters = @Parameter(
             name = 'project',
             description = 'Project Name',
@@ -2999,7 +2999,7 @@ Since: v23''',
 Authorization required: `configure` for project resource
 
 Since: v23''',
-        tags = ['project'],
+        tags = ['Project'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -3229,7 +3229,7 @@ whether it is `writeable`.  The `href` indicates the URL for `/project/{project}
 Authorization required: `configure` for project resource
 
 Since: v23''',
-        tags=['project'],
+        tags=['Project'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -3367,7 +3367,7 @@ Since: v23''',
 Authorization required: `configure` for project resource
 
 Since: v23''',
-        tags=['project'],
+        tags=['Project'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -3462,7 +3462,7 @@ Since: v23''',
 Authorization required: `read` for project resource type `node`, as well as `read` for the Node 
 
 Since: v14''',
-        tags=['project'],
+        tags=['Project'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -3581,7 +3581,7 @@ Custom attributes can also be used.
 Authorization required: `read` for project resource type `node`, as well as `read` for each Node resource
 
 Since: v14''',
-        tags=['project'],
+        tags=['Project'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -3688,7 +3688,7 @@ Since: v14''',
             description='''List tags for project nodes.
 
 Since: v52''',
-            tags=['project'],
+            tags=['Project'],
             parameters = [
                     @Parameter(name = 'project', description = 'Project Name', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string'))
             ])
@@ -3826,7 +3826,7 @@ Since: v52''',
 Authorization required: `delete` or `admin` or `app_admin` access for `system_acl` resource type 
 
 Since: v14""",
-        tags=['acls'],
+        tags=['ACL'],
         parameters = [
             @Parameter(
                 name = 'path',
@@ -3867,7 +3867,7 @@ Since: v14""",
 Authorization required: `update` or `admin` or `app_admin` access for `system_acl` resource type 
 
 Since: v14""",
-        tags=['acls'],
+        tags=['ACL'],
         parameters = [
             @Parameter(
                 name = 'path',
@@ -3965,7 +3965,7 @@ Because each ACLPOLICY document can contain multiple Yaml documents, each will b
 Authorization required: `create` or `admin` or `app_admin` access for `system_acl` resource type 
 
 Since: v14""",
-        tags=['acls'],
+        tags=['ACL'],
         parameters = [
             @Parameter(
                 name = 'path',
@@ -4091,7 +4091,7 @@ Otherwise if XML or JSON is requested, the YAML text will be wrapped within that
 Authorization required: `read` or `admin` or `app_admin` access for `system_acl` resource type 
 
 Since: v14""",
-        tags=['acls'],
+        tags=['ACL'],
         parameters = [
             @Parameter(
                 name = 'path',
