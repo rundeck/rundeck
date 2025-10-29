@@ -6,7 +6,7 @@ import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import spock.lang.Specification
 
-class ExecReportUtilSpec extends Specification {
+class BaseReportUtilSpec extends Specification {
 
     def "test buildSaveReportRequest method"() {
         given:
@@ -36,7 +36,7 @@ class ExecReportUtilSpec extends Specification {
         }
         job.metaClass.getId = { -> 1 }
         when:
-        def request = ExecReportUtil.buildSaveReportRequest(exec, job)
+        def request = BaseReportUtil.buildSaveReportRequest(exec, job)
         then:
         request.executionId == 1
         request.jobId == "uuidJob"
@@ -71,7 +71,7 @@ class ExecReportUtilSpec extends Specification {
             }
         }
         when:
-        def summary = ExecReportUtil.summarizeJob(exec)
+        def summary = BaseReportUtil.summarizeJob(exec)
         then:
         summary == "Plugin[builtin-script, nodeStep: true] [... 3 steps]"
     }

@@ -68,7 +68,7 @@ class OptionFilterIntegrationSpec extends Specification {
         ).save(flush: true, failOnError: true)
 
         // Create corresponding ExecReports
-        def report1 = new ExecReport(
+        def report1 = new BaseReport(
             jcJobId: job1.uuid,
             jcExecId: exec1.id,
             executionUuid: exec1.uuid,
@@ -84,10 +84,11 @@ class OptionFilterIntegrationSpec extends Specification {
             dateCompleted: exec1.dateCompleted,
             node: 'localhost',
             message: 'Test execution completed',
-            maprefUri: exec1.argString
+            maprefUri: exec1.argString,
+            adhocExecution:false
         ).save(flush: true, failOnError: true)
 
-        def report2 = new ExecReport(
+        def report2 = new BaseReport(
             jcJobId: job1.uuid,
             jcExecId: exec2.id,
             executionUuid: exec2.uuid,
@@ -103,10 +104,11 @@ class OptionFilterIntegrationSpec extends Specification {
             dateCompleted: exec2.dateCompleted,
             node: 'localhost',
             message: 'Test execution completed',
-            maprefUri: exec2.argString
+            maprefUri: exec2.argString,
+            adhocExecution:false
         ).save(flush: true, failOnError: true)
 
-        def report3 = new ExecReport(
+        def report3 = new BaseReport(
             jcJobId: job2.uuid,
             jcExecId: exec3.id,
             executionUuid: exec3.uuid,
@@ -122,7 +124,8 @@ class OptionFilterIntegrationSpec extends Specification {
             dateCompleted: exec3.dateCompleted,
             node: 'localhost',
             message: 'Test execution completed',
-            maprefUri: exec3.argString
+            maprefUri: exec3.argString,
+            adhocExecution:false
         ).save(flush: true, failOnError: true)
 
         expect: "optionFilter searches work as expected"
@@ -205,7 +208,7 @@ class OptionFilterIntegrationSpec extends Specification {
             argString: '-TEST_OPTION value'
         ).save(flush: true, failOnError: true)
 
-        def report = new ExecReport(
+        def report = new BaseReport(
             jcJobId: job.uuid,
             jcExecId: exec.id,
             executionUuid: exec.uuid,
@@ -221,7 +224,8 @@ class OptionFilterIntegrationSpec extends Specification {
             dateCompleted: exec.dateCompleted,
             node: 'localhost',
             message: 'Test execution completed',
-            maprefUri: exec.argString
+            maprefUri: exec.argString,
+            adhocExecution:false
         ).save(flush: true, failOnError: true)
 
         when:
