@@ -27,13 +27,22 @@ class SideBarPage extends BasePage {
     void goTo(NavLinkTypes navLink) {
         def navIdBy = By.id(navLink.id)
         if (navLink.projectConfig) {
-            projectSettingsField.click()
+            byAndWaitClickable(projectSettings).click()
             waitForNavVisible()
-        } else if (!(el navIdBy).isDisplayed() && overflowFields.size() == 1) {
-            overflowField.click()
-            waitForAttributeContains overflowField, 'class', 'active'
+        } else if (overflowFields.size() == 1) {
+            // Check if element is visible using a try-catch to handle staleness
+            try {
+                if (!(el navIdBy).isDisplayed()) {
+                    byAndWaitClickable(isOverflow).click()
+                    waitForAttributeContains overflowField, 'class', 'active'
+                }
+            } catch (Exception e) {
+                // Element might be stale, click overflow anyway
+                byAndWaitClickable(isOverflow).click()
+                waitForAttributeContains overflowField, 'class', 'active'
+            }
         }
-        el navIdBy click()
+        byAndWaitClickable(navIdBy).click()
     }
 
     WebElement waitForNavVisible() {
