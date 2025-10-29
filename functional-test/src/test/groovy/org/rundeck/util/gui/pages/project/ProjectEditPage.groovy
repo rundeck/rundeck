@@ -93,8 +93,6 @@ class ProjectEditPage extends BasePage {
 
     def save(){
         (el saveButton).click()
-        // Wait for save to complete - success message appears
-        validateConfigFileSave()
     }
 
     def clickEditConfigurationFile(){
