@@ -862,7 +862,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         output.user == null
         output.creator == null
         output.roles == null
-        output.authToken == null
+        output.authToken == "abc123"
     }
 
     def "getWebhookForProjectWithAuth returns null for wrong project"() {
