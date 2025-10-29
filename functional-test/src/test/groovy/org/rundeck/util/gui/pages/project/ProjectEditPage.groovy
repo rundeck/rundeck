@@ -93,9 +93,12 @@ class ProjectEditPage extends BasePage {
 
     def save(){
         (el saveButton).click()
+        // Wait for save to complete - button becomes stale after form submission
+        waitForUrlToNotContain("/configure")
     }
 
     def clickEditConfigurationFile(){
+        waitForElementToBeClickable(editConfigurationFile)
         (el editConfigurationFile).click()
     }
 
