@@ -1,0 +1,8 @@
+by:
+  urn: project:copy-file-test
+for:
+  storage:
+    - match:
+        path: 'keys/project/copyfile-test/.*'
+      allow: [read]
+description: Allow access to key storage
