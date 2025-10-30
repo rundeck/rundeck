@@ -868,7 +868,13 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         } else {
             def total = 0
             if (isExportExecutions) {
-                total += 3 * Execution.countByProject(projectName) + execReportDataProvider.countByProject(projectName)
+                total += 3 * Execution.createCriteria().get {
+                    eq('project', projectName)
+                    projections {
+                        rowCount()
+                    }
+                }
+                + execReportDataProvider.countByProject(projectName)
             }
             if (isExportJobs) {
                 total += ScheduledExecution.countByProject(projectName)
@@ -916,15 +922,25 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                 execIds << Long.parseLong(it)
                             }
                         }
-                        execs = Execution.findAllByProjectAndIdInList(projectName, execIds)
+                        execs = Execution.createCriteria().list {
+                            eq('project', projectName)
+                            'in'('id', execIds)
+                        }
                         reports = execReportDataProvider.findAllByProjectAndExecutionUuidInList(projectName, execs.collect{it.uuid})
                     } else if (isExportExecutions) {
-                        execs = Execution.findAllByProject(projectName)
+                        execs = Execution.createCriteria().list {
+                            eq('project', projectName)
+                        }
                         reports = execReportDataProvider.findAllByProject(projectName)
                     }
                     List<JobFileRecord> jobfilerecords = []
 
                     if (execs) {
+                        // Optimize: get all JobFileRecords in single query instead of N+1 queries
+                        jobfilerecords = JobFileRecord.createCriteria().list {
+                            'in'('execution', execs)
+                        }
+
                         dir('executions/') {
                             //export executions
                             //export execution logs
@@ -934,8 +950,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                     remotePathTemplate = logFileStorageService.getStorePathTemplateForExecution(exec)
 
                                 exportExecution zip, exec, "execution-${exec.id}.xml", remotePathTemplate
-
-                                jobfilerecords.addAll JobFileRecord.findAllByExecution(exec)
 
                                 listener?.inc('export', 3)
                             }
