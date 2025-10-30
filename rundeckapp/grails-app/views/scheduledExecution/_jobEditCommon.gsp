@@ -141,15 +141,17 @@
              data="${ [notifications:scheduledExecution.notifications?.collect{it.toNormalizedMap()}?:[],
                        notifyAvgDurationThreshold:scheduledExecution?.notifyAvgDurationThreshold,
              ]}"/>
+<g:set var="featuresMap" value="${[
+        fileUploadPlugin:feature.isEnabled(name:'fileUploadPlugin'),
+        optionValuesPlugin:feature.isEnabled(name:'optionValuesPlugin'),
+        multilineJobOptions:feature.isEnabled(name:'multilineJobOptions'),
+]}"/>
+<g:embedJSON id="featuresMapJSON" data="${ featuresMap}"/>
 <g:embedJSON id="jobOptionsJSON"
              data="${ [
                      options:scheduledExecution.options?.collect{it.toMap()}?:[],
                      fileUploadPluginType:fileUploadPluginType?:'',
-                     features:[
-                             fileUploadPlugin:feature.isEnabled(name:'fileUploadPlugin'),
-                             optionValuesPlugin:feature.isEnabled(name:'optionValuesPlugin'),
-                             multilineJobOptions:feature.isEnabled(name:'multilineJobOptions'),
-                     ],
+                     features: featuresMap,
                      jobWasScheduled: scheduledExecution?.scheduled?:false,
              ]}"/>
 <g:embedJSON id="jobResourcesJSON"
@@ -229,7 +231,8 @@
             executionData: loadJsonData('jobExecutionPluginsJSON'),
             otherData: loadJsonData('jobOtherJSON'),
             workflowData: loadJsonData('jobWorkflowJSON'),
-            nodeData: loadJsonData('jobNodeDataJSON')
+            nodeData: loadJsonData('jobNodeDataJSON'),
+            features: loadJsonData('featuresMapJSON'),
         }
     })
     var workflowEditor = new WorkflowEditor();

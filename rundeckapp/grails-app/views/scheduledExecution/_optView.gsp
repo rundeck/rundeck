@@ -27,7 +27,7 @@
         <g:if test="${option.optionType=='file'}">
             <g:icon name="file"/>
         </g:if>
-        <g:if test="${option.optionType=='multiline'}">
+        <g:if test="${option.optionType=='multiline' && feature.isEnabled(name:'multilineJobOptions')}">
             <i class="far fa-list-alt"></i>
         </g:if>
         <span class=" ${option?.required ? 'required' : ''}" title="${enc(attr:option?.description)}${option?.required ? ' (Required)' : ''}"><g:enc>${option.name}</g:enc></span>
