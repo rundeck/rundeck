@@ -9,7 +9,7 @@
       <label class="col-sm-2 control-label">{{ $t("usage") }}</label>
       <div
         v-if="
-          (!option.secure || option.valueExposed) && option.type !== 'multiline'
+          (!option.secure || option.valueExposed) && !(option.type === 'multiline' && features.multilineJobOptions)
         "
         class="col-sm-10 form-control-static"
       >
@@ -34,7 +34,7 @@
         </div>
       </div>
       <div
-        v-if="option.type === 'multiline'"
+        v-if="option.type === 'multiline' && features.multilineJobOptions"
         class="col-sm-10 col-sm-offset-2 form-control-static"
       >
         <span class="text-strong">{{ $t("option.usage.multiline.note") }}</span>
@@ -132,6 +132,10 @@ export default defineComponent({
     option: {
       type: Object as PropType<JobOption>,
       required: true,
+    },
+    features: {
+      type: Object,
+      default: () => ({}),
     },
   },
   computed: {
