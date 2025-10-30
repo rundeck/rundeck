@@ -7,7 +7,7 @@
       <template v-if="option.type == 'file'">
         <i class="glyphicon glyphicon-file"></i>
       </template>
-      <template v-if="option.type == 'multiline'">
+      <template v-if="option.type == 'multiline' && multilineEnabled">
         <i class="far fa-list-alt"></i>
       </template>
       <span
@@ -104,8 +104,15 @@ export default defineComponent({
       type: Boolean,
       default: true,
     },
+    features: {
+      type: Object,
+      default: () => ({}),
+    },
   },
   computed: {
+    multilineEnabled() {
+      return !!this.features["multilineJobOptions"];
+    },
     displayDefaultValue() {
       return this.option.secure
         ? ""

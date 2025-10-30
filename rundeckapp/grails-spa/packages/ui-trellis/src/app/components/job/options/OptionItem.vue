@@ -32,7 +32,7 @@
       </btn-group>
     </template>
     <span class="option-item-content" @click="$emit('edit', option)">
-      <option-view :option="option" :editable="editable" />
+      <option-view :option="option" :editable="editable" :features="features" />
     </span>
     <template v-if="editable">
       <btn-group class="pull-right">
@@ -88,6 +88,11 @@ export default defineComponent({
     canMoveDown: {
       type: Boolean,
       default: false,
+    },
+    features: {
+      type: Object as PropType<any>,
+      required: false,
+      default: () => ({}),
     },
   },
   emits: ["edit", "duplicate", "moveUp", "moveDown", "delete"],

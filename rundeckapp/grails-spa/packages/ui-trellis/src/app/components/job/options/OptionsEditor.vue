@@ -38,6 +38,7 @@
               :can-move-down="index < intOptions.length - 1"
               :can-move-up="index > 0"
               :option="element"
+              :features="features"
               @move-up="doMoveUp(index)"
               @move-down="doMoveDown(index)"
               @edit="doEdit(index)"
@@ -122,6 +123,11 @@ export default defineComponent({
       type: Object as PropType<JobOptionsData>,
       required: true,
     },
+    features: {
+      type: Object as PropType<any>,
+      required: false,
+      default: () => ({}),
+    },
     edit: {
       type: Boolean,
       default: true,
@@ -138,7 +144,6 @@ export default defineComponent({
       intOptions: [] as JobOption[],
       createOption: null,
       fileUploadPluginType: "",
-      features: {},
       providers: [],
       providerLabels: {},
     };
@@ -148,7 +153,6 @@ export default defineComponent({
     this.intOptions = cloneDeep(this.optionsData.options);
     this.updateIndexes();
     this.fileUploadPluginType = this.optionsData.fileUploadPluginType;
-    this.features = this.optionsData.features;
     pluginService.getPluginProvidersForService("OptionValues").then((data) => {
       if (data.service) {
         this.providers = data.descriptions;
