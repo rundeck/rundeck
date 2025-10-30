@@ -329,4 +329,78 @@ class KeyValueDataLogFilterPluginSpec extends Specification {
             '.*'     | [name: "TestValue"]           | ValidationException    |  'Pattern must have at least one group'
            '(.*)'    | [:]                           | ValidationException    |  'The Name field must be defined when only one capture group is specified'
     }
+    @Unroll
+    def "matchSubstrings toggle controls partial vs full-line matching"() {
+        given:
+        def plugin = new KeyValueDataLogFilterPlugin()
+        plugin.regex = regex
+        plugin.logData = false
+        plugin.invalidKeyPattern = null
+        plugin.name = "CNUM"                 // single capture group => Name Data required
+        plugin.matchSubstrings = matchSubstrings
+
+        def sharedoutput = new DataOutput(ContextView.global())
+        def context = Mock(PluginLoggingContext) {
+            getOutputContext() >> sharedoutput
+        }
+        def event = Mock(LogEventControl) {
+            getMessage() >> "PHVGBT.C0437390.FIN7.BTOY125"
+            getEventType() >> 'log'
+            getLoglevel() >> LogLevel.NORMAL
+        }
+
+        when:
+        plugin.init(context)
+        plugin.handleEvent(context, event)
+        plugin.complete(context)
+
+        then:
+        sharedoutput.getSharedContext().getData(ContextView.global())?.getData() ==
+                (expect ? ['data': expect] : null)
+
+        where:
+        matchSubstrings | regex                                         | expect
+        // default  mode (matches()): substring-only pattern -> no match
+        false           | '^.*\\.[A-Z]([0-9]+)\\.'                      | null
+        // substring mode ON (find()): substring-only pattern -> match works
+        true            | '^.*\\.[A-Z]([0-9]+)\\.'                      | [CNUM: '0437390']
+        // default mode with full-line pattern -> match works
+        false           | '^.*\\.[A-Z]([0-9]+)\\..*$'                   | [CNUM: '0437390']
+        // substring mode with full-line pattern -> still works
+        true            | '^.*\\.[A-Z]([0-9]+)\\..*$'                   | [CNUM: '0437390']
+    }
+    @Unroll
+    def "first character extraction remains stable across modes"() {
+        given:
+        def plugin = new KeyValueDataLogFilterPlugin()
+        plugin.regex = '^(.).*$'
+        plugin.logData = false
+        plugin.invalidKeyPattern = null
+        plugin.name = "FIRSTCHAR"
+        plugin.matchSubstrings = matchSubstrings
+
+        def sharedoutput = new DataOutput(ContextView.global())
+        def context = Mock(PluginLoggingContext) {
+            getOutputContext() >> sharedoutput
+        }
+        def event = Mock(LogEventControl) {
+            getMessage() >> "Hello"
+            getEventType() >> 'log'
+            getLoglevel() >> LogLevel.NORMAL
+        }
+
+        when:
+        plugin.init(context)
+        plugin.handleEvent(context, event)
+        plugin.complete(context)
+
+        then:
+        sharedoutput.getSharedContext().getData(ContextView.global())?.getData() ==
+                ['data': [FIRSTCHAR: 'H']]
+
+        where:
+        matchSubstrings << [false, true]
+    }
+
+
 }
