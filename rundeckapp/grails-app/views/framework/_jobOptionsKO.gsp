@@ -86,7 +86,10 @@ used by _editOptions.gsp template
                                               valuesFromPlugin   : optionSelect.parseOptionValueList(),
                                               hidden     : !!optionSelect.hidden
                                       ]
-                                  }
+                                  },
+                                  features:[
+                                          multilineJobOptions:feature.isEnabled(name:'multilineJobOptions'),
+                                  ],
     ]}" id="jobOptionData"/>
 <%--
 data for configuring remote option cascading/dependencies
