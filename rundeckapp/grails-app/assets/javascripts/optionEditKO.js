@@ -29,6 +29,7 @@ function OptionEditor(data) {
     self.bashVarPrefix= data.bashVarPrefix? data.bashVarPrefix:'';
     self.enforceType = ko.observable(data.enforceType);
     self.originalIsNonSecure = data.showDefaultValue;
+    self.multilineJobOptionsEnabled = ko.observable(data.multilineJobOptionsEnabled);
 
     self.remoteUrlAuthenticationList  = ko.observableArray([
         new RemoteOptionValues("BASIC", message('form.option.valuesType.url.authType.basic.label')),
@@ -64,7 +65,7 @@ function OptionEditor(data) {
     });
 
     self.isMultilineType = ko.computed(function () {
-        return "multiline" === self.optionType();
+        return "multiline" === self.optionType() && self.multilineJobOptionsEnabled();
     });
 
     self.isRegexEnforceType = ko.computed(function () {

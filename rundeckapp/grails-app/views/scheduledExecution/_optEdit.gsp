@@ -21,7 +21,7 @@ form.option.valuesType.url.authType.basic.label
 form.option.valuesType.url.authType.apiKey.label
 form.option.valuesType.url.authType.bearerToken.label
 "/>
-
+<g:set var="multilineJobOptionsEnabled" value="${feature.isEnabled(name:'multilineJobOptions')}"/>
 <%--
    _optEdit.gsp
 
@@ -64,7 +64,11 @@ form.option.valuesType.url.authType.bearerToken.label
 
             <div class="col-sm-10">
                 <g:set var="fileUploadEnabled" value="${feature.isEnabled(name:'fileUploadPlugin')}" />
-                <g:set var="multilineJobOptionsEnabled" value="${feature.isEnabled(name:'multilineJobOptions')}" />
+                %{-- Convert multiline type to text when feature flag is disabled, but preserve original --}%
+                <g:set var="optionType" value="${option?.optionType}" />
+                <g:if test="${!multilineJobOptionsEnabled && optionType == 'multiline'}">
+                    <g:set var="optionType" value="${''}" />
+                </g:if>
 
                 <g:set var="optionTypeOptions" value="${[[key:'',value:message(code:'form.option.optionType.text.label')]]}"/>
                 <g:if test="${fileUploadEnabled}">
@@ -1047,6 +1051,7 @@ form.option.valuesType.url.authType.bearerToken.label
           } else if(isRegex) {
               currentEnforceType = "regex";
           }
+          var multilineJobOptionsEnabled = !!loadJsonData('featuresMapJSON').multilineJobOptions;
 
           var editor=new OptionEditor({name:"${option?.name}",
           bashVarPrefix:'${DataContextUtils.ENV_VAR_PREFIX}',
@@ -1054,6 +1059,7 @@ form.option.valuesType.url.authType.bearerToken.label
           enforceType:currentEnforceType,
           defaultValue:"${option?.defaultValue}",
           showDefaultValue:"${!option?.secureInput && !option?.isDate}",
+          multilineJobOptionsEnabled: multilineJobOptionsEnabled,
           valuesList:"${listvalue ? listvalue : listjoin ? listjoin.join(',') : ''}",
           valuesUrl:"${option?.getRealValuesUrl()?.toString()}",
           remoteUrlAuthenticationType:"${option?.configRemoteUrl?.authenticationType}"
