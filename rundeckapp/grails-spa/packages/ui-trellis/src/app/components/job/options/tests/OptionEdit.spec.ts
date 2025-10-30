@@ -84,6 +84,118 @@ describe("OptionEdit", () => {
   });
 
   it.each([
+    [false, false],
+    [true, true],
+  ])(
+    "multiline option type presence if feature flag %p expect %p",
+    async (enabled: boolean, expected: boolean) => {
+      const wrapper = await shallowMountOptionEdit({
+        features: { multilineJobOptions: enabled },
+      });
+
+      const sel = wrapper.get("#opttype_");
+      expect(sel.findAll("option").length).toBe(expected ? 2 : 1);
+      expect(sel.findAll("option[value=text]").length).toBe(1);
+      expect(sel.findAll("option[value=multiline]").length).toBe(
+        expected ? 1 : 0,
+      );
+    },
+  );
+
+  it("converts multiline option to text when feature flag is disabled", async () => {
+    // First create with feature flag enabled
+    const wrapper = await mountOptionEdit({
+      modelValue: { name: "test", type: "multiline" },
+      features: { multilineJobOptions: false },
+      editable: true,
+    });
+
+    // Verify type is not multiline
+    expect(wrapper.vm.option.type).toBe("text");
+  });
+  it("resets values and fields when option type is multiline", async () => {
+    // First create with feature flag enabled
+    const wrapper = await mountOptionEdit({
+      modelValue: {
+        name: "test",
+        type: "multiline",
+        values: ["asdf", "dingo"],
+        secure: true,
+        enforced: true,
+        isDate: true,
+        valueExposed: true,
+      },
+      features: { multilineJobOptions: true },
+      editable: true,
+    });
+
+    // Verify type is multiline and values are cleared
+    expect(wrapper.vm.option.type).toBe("multiline");
+    expect(wrapper.vm.valuesList).toBe("");
+    expect(wrapper.vm.option.values).toBeNull();
+    expect(wrapper.vm.option.isDate).toBeFalsy();
+    expect(wrapper.vm.option.secure).toBeFalsy();
+    expect(wrapper.vm.option.valueExposed).toBeFalsy();
+    expect(wrapper.vm.option.enforced).toBeFalsy();
+  });
+  it("does not convert multiline option to text when feature flag is enabled", async () => {
+    // First create with feature flag enabled
+    const wrapper = await mountOptionEdit({
+      modelValue: { name: "test", type: "multiline" },
+      features: { multilineJobOptions: true },
+      editable: true,
+    });
+
+    // Verify type is multiline
+    expect(wrapper.vm.option.type).toBe("multiline");
+  });
+  it.each([
+    ["default value input field", "[data-test=option.value] input[type=text]"],
+    ["inputType", "[data-test=option.inputType]"],
+    ["allowed values", "[data-test=option.valuesType]"],
+    ["sort values", "[data-test=option.sortValues]"],
+    ["multivalue delimiter", "[data-test=option.delimiter]"],
+    [
+      "restricted radio button",
+      "[data-test=option.regex] input[type=radio][value=restricted]",
+    ],
+  ])(
+    "multiline option type hides %p section",
+    async (name: string, selector: string) => {
+      const wrapper = await mountOptionEdit({
+        modelValue: { name: "a_test_option", type: "multiline" },
+        editable: true,
+        features: { multilineJobOptions: true },
+      });
+
+      const textarea = wrapper.find(selector);
+      expect(textarea.exists()).toBeFalsy();
+    },
+  );
+  it.each([
+    ["default value textarea", "[data-test=option.value] textarea"],
+    [
+      "regex restriction radio button",
+      "[data-test=option.regex] input[type=radio][value=regex]",
+    ],
+    [
+      "none restriction radio button",
+      "[data-test=option.regex] input[type=radio][value=none]",
+    ],
+  ])(
+    "multiline option type shows %p section via selector %p",
+    async (name: string, selector: string) => {
+      const wrapper = await mountOptionEdit({
+        modelValue: { name: "a_test_option", type: "multiline" },
+        editable: true,
+        features: { multilineJobOptions: true },
+      });
+
+      const textarea = wrapper.find(selector);
+      expect(textarea.exists()).toBeTruthy();
+    },
+  );
+  it.each([
     [false, "pluginType", false],
     [true, null, false],
     [true, "", false],
@@ -110,8 +222,8 @@ describe("OptionEdit", () => {
       fileUploadPluginType: "pluginType",
     });
 
-    let element = wrapper.get(
-      ".form-group plugin-config[servicename=FileUpload][provider=pluginType]",
+    const element = wrapper.get(
+      ".form-group plugin-config[service-name=FileUpload][provider=pluginType]",
     );
   });
   it.each([
@@ -129,7 +241,7 @@ describe("OptionEdit", () => {
       });
       //check all radio buttons
       inputtypes.forEach((type) => {
-        let inputRadio = wrapper.get(`input[type=radio][value=${type}]`);
+        const inputRadio = wrapper.get(`input[type=radio][value=${type}]`);
         expect((inputRadio.element as VueNode<HTMLInputElement>).checked).toBe(
           type === field,
         );
@@ -158,17 +270,17 @@ describe("OptionEdit", () => {
         editable: true,
       });
 
-      let plainType = wrapper.get(selector);
+      const plainType = wrapper.get(selector);
       await plainType.setValue();
       //save
       await wrapper.vm.$nextTick();
       await wrapper.vm.doSave();
       expect(wrapper.vm.hasFormErrors).toBeFalsy();
       //test emitted
-      let actual = wrapper.emitted();
+      const actual = wrapper.emitted();
       expect(actual["update:modelValue"]).toBeTruthy();
       expect(actual["update:modelValue"].length).toBe(1);
-      let emittedOption = actual["update:modelValue"][0][0];
+      const emittedOption = actual["update:modelValue"][0][0];
       expect(emittedOption).toEqual({
         name: "test",
         type: "text",
@@ -218,17 +330,17 @@ describe("OptionEdit", () => {
         editable: true,
       });
 
-      let valuesTypeRadio = wrapper.get(selector);
+      const valuesTypeRadio = wrapper.get(selector);
       await valuesTypeRadio.setValue();
       //save
       await wrapper.vm.$nextTick();
       await wrapper.vm.doSave();
       expect(wrapper.vm.hasFormErrors).toBeFalsy();
       //test emitted
-      let actual = wrapper.emitted();
+      const actual = wrapper.emitted();
       expect(actual["update:modelValue"]).toBeTruthy();
       expect(actual["update:modelValue"].length).toBe(1);
-      let emittedOption = actual["update:modelValue"][0][0];
+      const emittedOption = actual["update:modelValue"][0][0];
       expect(emittedOption).toEqual(
         Object.assign(
           {
@@ -314,16 +426,26 @@ describe("OptionEdit", () => {
         modelValue: { name: "", type: "text" },
         editable: true,
       });
-      let optname = wrapper.get("#optname_");
+      const optname = wrapper.get("#optname_");
       await optname.setValue(value);
       await optname.trigger("blur");
       await wrapper.vm.$nextTick();
-      let section = wrapper.get("[data-test=option.name]");
+      const section = wrapper.get("[data-test=option.name]");
       expect(section.classes()).toContain(cls);
-      let errorslist = section.get("div.help-block errorslist");
+      const errorslist = section.get("div.help-block errorslist");
       expect(errorslist.attributes()["errors"]).toContain(msg);
     },
   );
+  it("hides usage section if name field is invalid", async () => {
+    const wrapper = await mountOptionEdit({
+      modelValue: { name: "asdf", type: "text" },
+      editable: true,
+    });
+    expect(wrapper.find("option-usage-preview").exists()).toBeTruthy();
+    wrapper.vm.addError("name", "error1");
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find("option-usage-preview").exists()).toBeFalsy();
+  });
   it.each([
     ["option.label", "#opt_label", 255],
     ["option.name", "#optname_", 255],
@@ -334,12 +456,12 @@ describe("OptionEdit", () => {
         modelValue: { name: "aname", type: "text" },
         editable: true,
       });
-      let field = wrapper.get(id);
+      const field = wrapper.get(id);
       //set to max length
       await field.setValue("a".repeat(len));
       await field.trigger("blur");
       await wrapper.vm.$nextTick();
-      let section = wrapper.get(`[data-test=${sectionName}]`);
+      const section = wrapper.get(`[data-test=${sectionName}]`);
       expect(section.classes()).not.toContain("has-error");
       expect(section.find("div.help-block errorslist").exists()).toBeFalsy();
 
@@ -349,7 +471,7 @@ describe("OptionEdit", () => {
       await wrapper.vm.$nextTick();
 
       expect(section.classes()).toContain("has-error");
-      let errorslist = section.get("div.help-block errorslist");
+      const errorslist = section.get("div.help-block errorslist");
       expect(errorslist.attributes()["errors"]).toContain(
         "form.field.too.long.message",
       );
@@ -376,9 +498,9 @@ describe("OptionEdit", () => {
       });
       wrapper.vm.addError(errorName || fieldName, "error1");
       await wrapper.vm.$nextTick();
-      let section = wrapper.get(`[data-test=option.${fieldName}]`);
+      const section = wrapper.get(`[data-test=option.${fieldName}]`);
       expect(section.classes()).toContain("has-error");
-      let errorslist = section.get("div.help-block errorslist");
+      const errorslist = section.get("div.help-block errorslist");
       expect(errorslist.attributes()["errors"]).toContain("error1");
     },
   );

@@ -11,12 +11,12 @@
         <i class="glyphicon glyphicon-resize-vertical"></i>
       </btn>
 
-      <div class="btn-group">
+      <btn-group>
         <btn
           size="xs"
           :disabled="!canMoveUp"
-          @click="$emit('moveUp', option)"
           :title="$t('option.view.action.moveUp.title')"
+          @click="$emit('moveUp', option)"
         >
           <i class="glyphicon glyphicon-arrow-up"></i>
         </btn>
@@ -24,33 +24,32 @@
         <btn
           size="xs"
           :disabled="!canMoveDown"
-          @click="$emit('moveDown', option)"
           :title="$t('option.view.action.moveDown.title')"
+          @click="$emit('moveDown', option)"
         >
           <i class="glyphicon glyphicon-arrow-down"></i>
         </btn>
-      </div>
+      </btn-group>
     </template>
     <span class="option-item-content" @click="$emit('edit', option)">
-      <option-view :option="option" :editable="editable" />
+      <option-view :option="option" :editable="editable" :features="features" />
     </span>
     <template v-if="editable">
-      <span class="btn-group pull-right">
+      <btn-group class="pull-right">
         <btn
           size="xs"
-          @click="$emit('edit', option)"
           :title="$t('option.view.action.edit.title')"
+          @click="$emit('edit', option)"
         >
           <i class="glyphicon glyphicon-edit"></i>
           {{ $t("edit") }}
         </btn>
         <btn
           size="xs"
-          @click="$emit('duplicate', option)"
           :title="$t('option.view.action.duplicate.title')"
+          @click="$emit('duplicate', option)"
         >
           <i class="glyphicon glyphicon-duplicate"></i>
-          {{ $t("duplicate") }}
         </btn>
         <btn
           size="xs"
@@ -60,7 +59,7 @@
         >
           <i class="glyphicon glyphicon-remove"></i>
         </btn>
-      </span>
+      </btn-group>
     </template>
   </div>
 </template>
@@ -68,11 +67,11 @@
 import { JobOption } from "@/library/types/jobs/JobEdit";
 import OptionView from "./OptionView.vue";
 import { defineComponent, PropType } from "vue";
+import { Btn, BtnGroup } from "uiv";
 
 export default defineComponent({
   name: "OptionItem",
-  components: { OptionView },
-  emits: ["edit", "duplicate", "moveUp", "moveDown", "delete"],
+  components: { OptionView, Btn, BtnGroup },
   props: {
     option: {
       type: Object as () => PropType<JobOption>,
@@ -90,7 +89,13 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    features: {
+      type: Object as PropType<any>,
+      required: false,
+      default: () => ({}),
+    },
   },
+  emits: ["edit", "duplicate", "moveUp", "moveDown", "delete"],
 });
 </script>
 

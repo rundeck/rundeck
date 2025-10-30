@@ -38,6 +38,7 @@
               :can-move-down="index < intOptions.length - 1"
               :can-move-up="index > 0"
               :option="element"
+              :features="features"
               @move-up="doMoveUp(index)"
               @move-down="doMoveDown(index)"
               @edit="doEdit(index)"
@@ -47,7 +48,11 @@
           </div>
         </template>
         <template #footer>
-          <template v-if="createMode">
+          <div
+            v-if="createMode"
+            class="edit-option-item"
+            :class="{ alternate: intOptions.length % 2 === 1 }"
+          >
             <option-edit
               id="optitem_new"
               :ui-features="{ next: false }"
@@ -61,7 +66,7 @@
               @update:model-value="saveNewOption"
               @cancel="doCancel"
             />
-          </template>
+          </div>
         </template>
       </draggable>
 
@@ -118,6 +123,11 @@ export default defineComponent({
       type: Object as PropType<JobOptionsData>,
       required: true,
     },
+    features: {
+      type: Object as PropType<any>,
+      required: false,
+      default: () => ({}),
+    },
     edit: {
       type: Boolean,
       default: true,
@@ -134,7 +144,6 @@ export default defineComponent({
       intOptions: [] as JobOption[],
       createOption: null,
       fileUploadPluginType: "",
-      features: {},
       providers: [],
       providerLabels: {},
     };
@@ -144,7 +153,6 @@ export default defineComponent({
     this.intOptions = cloneDeep(this.optionsData.options);
     this.updateIndexes();
     this.fileUploadPluginType = this.optionsData.fileUploadPluginType;
-    this.features = this.optionsData.features;
     pluginService.getPluginProvidersForService("OptionValues").then((data) => {
       if (data.service) {
         this.providers = data.descriptions;
@@ -220,7 +228,6 @@ export default defineComponent({
       });
     },
     updateOption(index: number, data: any) {
-      console.log(data);
       const value = cloneDeep(data);
       const orig = this.operation(Operation.Modify, { index, value });
       this.changeEvent({
@@ -324,10 +331,10 @@ export default defineComponent({
   margin-top: 10px;
   border: 1px solid var(--gray-input-outline);
   &.alternate {
-    background-color: var(--background-color-accent-lvl2);
+    background-color: var(--background-color);
   }
 
-  padding: 10px 4px;
+  padding: 10px;
 }
 
 .note {

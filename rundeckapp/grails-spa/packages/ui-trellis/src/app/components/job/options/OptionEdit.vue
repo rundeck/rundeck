@@ -1,9 +1,9 @@
 <template>
-  <div class="optEditForm">
-    <div class="alert alert-danger" v-if="error">
+  <div>
+    <div v-if="error" class="alert alert-danger">
       {{ error }}
     </div>
-    <div class="row" v-if="newOption">
+    <div v-if="newOption" class="row">
       <div class="col-sm-12">
         <span class="h4">{{ $t("add.new.option") }}</span>
       </div>
@@ -17,32 +17,35 @@
       </label>
       <div class="col-sm-10">
         <select
+          id="opttype_"
           v-model="option.type"
           name="optionType"
           class="form-control"
-          id="opttype_"
         >
           <option value="text">
             {{ $t("form.option.optionType.text.label") }}
           </option>
           <option
-            value="file"
             v-if="fileUploadPluginEnabled && fileUploadPluginType"
+            value="file"
           >
             {{ $t("form.option.optionType.file.label") }}
+          </option>
+          <option v-if="multilineJobOptionsEnabled" value="multiline">
+            {{ $t("form.option.optionType.multiline.label") }}
           </option>
         </select>
       </div>
     </div>
 
     <!-- file input (file) -->
-    <div class="form-group" v-if="option.type === 'file'">
+    <div v-if="option.type === 'file'" class="form-group">
       <div class="col-sm-10 col-sm-offset-2">
         <div v-if="fileUploadPluginEnabled && fileUploadPluginType">
           <plugin-config
-            :mode="'edit'"
-            :serviceName="'FileUpload'"
             v-model="option.configMap"
+            :mode="'edit'"
+            :service-name="'FileUpload'"
             :provider="fileUploadPluginType"
             :show-title="false"
             :show-description="false"
@@ -71,21 +74,21 @@
 
       <div class="col-sm-10">
         <input
-          type="text"
+          id="optname_"
           v-model="option.name"
-          @input="validateOptionName"
-          @blur="validateOptionName"
+          type="text"
           name="name"
           class="form-control"
           size="40"
           :placeholder="$t('form.option.name.label')"
-          id="optname_"
           maxlength="255"
+          @input="validateOptionName"
+          @blur="validateOptionName"
         />
-        <div class="help-block" v-if="validationErrors['name']">
+        <div v-if="validationErrors['name']" class="help-block">
           <ErrorsList :errors="validationErrors['name']" />
         </div>
-        <div class="help-block" v-if="validationWarnings['name']">
+        <div v-if="validationWarnings['name']" class="help-block">
           <ErrorsList :errors="validationWarnings['name']" />
         </div>
       </div>
@@ -103,18 +106,18 @@
 
       <div class="col-sm-10">
         <input
+          id="opt_label"
+          v-model="option.label"
           type="text"
           class="form-control"
           name="label"
-          id="opt_label"
-          v-model="option.label"
-          @input="validateOptionLabel"
-          @blur="validateOptionLabel"
           size="40"
           :placeholder="$t('form.option.label.label')"
           maxlength="255"
+          @input="validateOptionLabel"
+          @blur="validateOptionLabel"
         />
-        <div class="help-block" v-if="validationErrors['label']">
+        <div v-if="validationErrors['label']" class="help-block">
           <ErrorsList :errors="validationErrors['label']" />
         </div>
       </div>
@@ -136,9 +139,9 @@
           height="120px"
           width="100%"
           lang="markdown"
-          :readOnly="false"
+          :read-only="false"
         />
-        <div class="help-block" v-if="validationErrors['description']">
+        <div v-if="validationErrors['description']" class="help-block">
           <ErrorsList :errors="validationErrors['description']" />
         </div>
         <div class="help-block">
@@ -158,24 +161,37 @@
     <div v-if="option.type !== 'file'">
       <!-- default -->
       <div
+        v-if="showDefaultValue"
         class="form-group"
         data-test="option.value"
         :class="{ 'has-error': hasError('value') }"
-        v-if="showDefaultValue"
       >
-        <label class="col-sm-2 control-label">{{
+        <label class="col-sm-2 control-label" for="opt_defaultValue">{{
           $t("form.option.defaultValue.label")
         }}</label>
         <div class="col-sm-10">
           <input
+            v-if="!isMultilineType"
+            id="opt_defaultValue"
+            v-model="option.value"
             type="text"
             class="form-control"
             name="defaultValue"
             size="40"
             :placeholder="$t('form.option.defaultValue.label')"
-            v-model="option.value"
           />
-          <div class="help-block" v-if="validationErrors['value']">
+
+          <textarea
+            v-if="isMultilineType"
+            id="opt_defaultValue"
+            v-model="option.value"
+            class="form-control"
+            name="defaultValue"
+            rows="4"
+            cols="40"
+            :placeholder="$t('form.option.defaultValue.label')"
+          ></textarea>
+          <div v-if="validationErrors['value']" class="help-block">
             <ErrorsList :errors="validationErrors['value']" />
           </div>
         </div>
@@ -183,10 +199,10 @@
 
       <!-- default key -->
       <div
+        v-if="shouldShowDefaultStorage"
         class="opt_sec_enabled form-group"
         data-test="option.storagePath"
         :class="{ 'has-error': hasError('storagePath') }"
-        v-if="shouldShowDefaultStorage"
       >
         <label class="col-sm-2 control-label">
           {{ $t("form.option.defaultStoragePath.label") }}
@@ -202,11 +218,11 @@
             </span>
 
             <input
+              id="storagePath_"
+              v-model="option.storagePath"
               type="text"
               class="form-control"
-              id="storagePath_"
               name="storagePath"
-              v-model="option.storagePath"
               size="40"
               :placeholder="$t('form.option.defaultStoragePath.description')"
             />
@@ -220,25 +236,25 @@
               />
             </span>
           </div>
-          <div class="help-block" v-if="validationErrors['storagePath']">
+          <div v-if="validationErrors['storagePath']" class="help-block">
             <ErrorsList :errors="validationErrors['storagePath']" />
           </div>
         </div>
       </div>
 
       <!-- input type -->
-      <div class="form-group">
+      <div v-if="showInputType" class="form-group" data-test="option.inputType">
         <label class="col-sm-2 control-label">{{
           $t("form.option.inputType.label")
         }}</label>
         <div class="col-sm-10">
           <div class="radio">
             <input
+              id="inputplain_"
+              v-model="option.inputType"
               type="radio"
               name="inputType"
               value="plain"
-              v-model="option.inputType"
-              id="inputplain_"
             />
             <label for="inputplain_">
               {{ $t("form.option.secureInput.false.label") }}
@@ -247,11 +263,11 @@
 
           <div class="radio">
             <input
+              id="inputdate_"
+              v-model="option.inputType"
               type="radio"
               name="inputType"
               value="date"
-              v-model="option.inputType"
-              id="inputdate_"
             />
             <label for="inputdate_">
               {{ $t("form.option.date.label") }}
@@ -264,10 +280,10 @@
             <label>
               {{ $t("form.option.dateFormat.title") }}
               <input
+                v-model="option.dateFormat"
                 type="text"
                 name="dateFormat"
                 class="form-control"
-                v-model="option.dateFormat"
                 size="60"
                 placeholder="MM/DD/YYYY hh:mm a"
               />
@@ -283,11 +299,11 @@
 
           <div class="radio">
             <input
+              id="sectrue_"
+              v-model="option.inputType"
               type="radio"
               name="inputType"
               value="secureExposed"
-              v-model="option.inputType"
-              id="sectrue_"
             />
             <label for="sectrue_">
               {{ $t("form.option.secureExposed.true.label") }}
@@ -300,11 +316,11 @@
 
           <div class="radio">
             <input
+              id="secexpfalse_"
+              v-model="option.inputType"
               type="radio"
               name="inputType"
               value="secure"
-              v-model="option.inputType"
-              id="secexpfalse_"
             />
             <label for="secexpfalse_">
               {{ $t("form.option.secureExposed.false.label") }}
@@ -320,7 +336,11 @@
           </div>
         </div>
       </div>
-      <div class="form-group" v-if="!isSecureInput">
+      <div
+        v-if="showAllowedValues"
+        class="form-group"
+        data-test="option.valuesType"
+      >
         <label class="col-sm-2 control-label">{{
           $t("form.option.values.label")
         }}</label>
@@ -328,11 +348,11 @@
           <div>
             <div class="radio">
               <input
+                id="vtrlist_"
+                v-model="option.valuesType"
                 type="radio"
                 name="valuesType"
                 value="list"
-                v-model="option.valuesType"
-                id="vtrlist_"
               />
               <label
                 for="vtrlist_"
@@ -344,11 +364,11 @@
 
             <div class="radio">
               <input
+                id="vtrurl_"
+                v-model="option.valuesType"
                 type="radio"
                 name="valuesType"
                 value="url"
-                v-model="option.valuesType"
-                id="vtrurl_"
               />
               <label
                 for="vtrurl_"
@@ -362,11 +382,11 @@
               <template v-for="optionValPlugin in optionValuesPlugins">
                 <div class="radio">
                   <input
+                    :id="'optvalplugin_' + optionValPlugin.name"
+                    v-model="option.valuesType"
                     type="radio"
                     name="valuesType"
-                    v-model="option.valuesType"
                     :value="optionValPlugin.name"
-                    :id="'optvalplugin_' + optionValPlugin.name"
                   />
                   <label
                     :for="'optvalplugin_' + optionValPlugin.name"
@@ -374,8 +394,8 @@
                     :title="optionValPlugin.description"
                   >
                     <img
-                      :src="optionValPlugin.iconUrl"
                       v-if="optionValPlugin.iconUrl"
+                      :src="optionValPlugin.iconUrl"
                       style="width: 16px; height: 16px; margin-right: 5px"
                     />
                     {{ optionValPlugin.title || optionValPlugin.name }}
@@ -387,21 +407,21 @@
         </div>
         <div class="col-sm-7">
           <div
+            v-if="option.valuesType === 'list'"
             id="vlist_section"
             data-test="option.values"
-            v-if="option.valuesType === 'list'"
             :class="{ 'has-error': hasError('values') }"
           >
             <input
+              v-model="valuesList"
               type="text"
               name="valuesList"
               class="form-control"
-              v-model="valuesList"
               size="60"
               :placeholder="$t('form.option.valuesList.placeholder')"
             />
 
-            <div class="help-block" v-if="validationErrors['values']">
+            <div v-if="validationErrors['values']" class="help-block">
               <ErrorsList :errors="validationErrors['values']" />
             </div>
           </div>
@@ -430,7 +450,11 @@
         </div>
       </div>
       <!-- sort values -->
-      <div class="form-group">
+      <div
+        v-if="showAllowedValues"
+        class="form-group"
+        data-test="option.sortValues"
+      >
         <label class="col-sm-2 control-label">{{
           $t("form.option.sort.label")
         }}</label>
@@ -438,10 +462,10 @@
         <div class="col-sm-3">
           <div class="radio radio-inline">
             <input
+              v-model="option.sortValues"
               type="radio"
               name="sortValues"
               :value="false"
-              v-model="option.sortValues"
             />
             <label for="option-sort-values-no">
               {{ $t("no") }}
@@ -449,10 +473,10 @@
           </div>
           <div class="radio radio-inline">
             <input
+              v-model="option.sortValues"
               type="radio"
               name="sortValues"
               :value="true"
-              v-model="option.sortValues"
             />
             <label for="option-sort-values-yes">
               {{ $t("yes") }}
@@ -472,15 +496,15 @@
             {{ $t("form.option.valuesDelimiter.label") }}
           </div>
           <input
+            v-model="option.valuesListDelimiter"
             type="text"
             name="valuesListDelimiter"
-            v-model="option.valuesListDelimiter"
             size="5"
             class="form-control"
           />
           <div
-            class="help-block"
             v-if="validationErrors['valuesListDelimiter']"
+            class="help-block"
           >
             <ErrorsList :errors="validationErrors['valuesListDelimiter']" />
           </div>
@@ -491,10 +515,10 @@
       </div>
       <!-- enforced -->
       <div
+        v-if="!isSecureInput"
         class="form-group opt_keystorage_disabled"
         data-test="option.regex"
         :class="{ 'has-error': hasError('regex') }"
-        v-if="!isSecureInput"
       >
         <label class="col-sm-2 control-label">{{
           $t("form.option.enforcedType.label")
@@ -502,10 +526,10 @@
         <div class="col-sm-10">
           <div class="radio">
             <input
-              type="radio"
-              v-model="enforcedType"
-              value="none"
               id="enforcedType_none"
+              v-model="enforcedType"
+              type="radio"
+              value="none"
             />
             <label for="enforcedType_none">
               {{ $t("none") }}
@@ -514,12 +538,12 @@
               }}</span>
             </label>
           </div>
-          <div class="radio">
+          <div v-if="!isMultilineType" class="radio">
             <input
-              type="radio"
-              v-model="enforcedType"
-              value="enforced"
               id="enforcedType_enforced"
+              v-model="enforcedType"
+              type="radio"
+              value="enforced"
             />
             <label
               for="enforcedType_enforced"
@@ -530,27 +554,38 @@
           </div>
           <div class="radio">
             <input
-              type="radio"
-              v-model="enforcedType"
-              value="regex"
               id="etregex_"
+              v-model="enforcedType"
+              type="radio"
+              value="regex"
             />
             <label for="etregex_">
               {{ $t("form.option.regex.label") }}
             </label>
           </div>
         </div>
-        <div class="col-sm-10 col-sm-offset-2" v-if="enforcedType === 'regex'">
+        <div v-if="enforcedType === 'regex'" class="col-sm-10 col-sm-offset-2">
           <input
+            id="vregex_"
+            v-model="option.regex"
             type="text"
             name="regex"
             class="form-control"
-            v-model="option.regex"
             size="40"
             :placeholder="$t('form.option.regex.placeholder')"
-            id="vregex_"
           />
-          <div class="help-block" v-if="validationErrors['regex']">
+          <span class="help-block">
+            <VMarkdownView
+              class="markdown-body"
+              :content="$t(`form.option.regex.description.md`)"
+            />
+            <VMarkdownView
+              v-if="isMultilineType"
+              class="markdown-body"
+              :content="$t(`form.option.regex.multiline.description.md`)"
+            />
+          </span>
+          <div v-if="validationErrors['regex']" class="help-block">
             <ErrorsList :errors="validationErrors['regex']" />
           </div>
           <template v-if="validationErrors['regexError']">
@@ -575,11 +610,11 @@
       <div class="col-sm-10">
         <div class="radio radio-inline">
           <input
-            type="radio"
             id="option-required-no"
+            v-model="option.required"
+            type="radio"
             name="required"
             :value="false"
-            v-model="option.required"
           />
           <label for="option-required-no">
             {{ $t("no") }}
@@ -587,11 +622,11 @@
         </div>
         <div class="radio radio-inline">
           <input
-            type="radio"
             id="option-required-yes"
+            v-model="option.required"
+            type="radio"
             name="required"
             :value="true"
-            v-model="option.required"
           />
           <label for="option-required-yes">
             {{ $t("yes") }}
@@ -600,7 +635,7 @@
         <div class="help-block">
           {{ $t("Option.required.description") }}
         </div>
-        <div class="help-block" v-if="validationErrors['required']">
+        <div v-if="validationErrors['required']" class="help-block">
           <ErrorsList :errors="validationErrors['required']" />
         </div>
       </div>
@@ -608,8 +643,8 @@
 
     <!-- hidden (text) -->
     <div
-      class="form-group"
       v-if="option.type !== 'file'"
+      class="form-group"
       data-test="option.hidden"
       :class="{ 'has-error': hasError('hidden') }"
     >
@@ -619,11 +654,11 @@
       <div class="col-sm-10">
         <div class="radio radio-inline">
           <input
-            type="radio"
             id="option-hidden-no"
+            v-model="option.hidden"
+            type="radio"
             name="hidden"
             :value="false"
-            v-model="option.hidden"
           />
           <label for="option-hidden-no">
             {{ $t("no") }}
@@ -631,11 +666,11 @@
         </div>
         <div class="radio radio-inline">
           <input
-            type="radio"
             id="option-hidden-yes"
+            v-model="option.hidden"
+            type="radio"
             name="hidden"
             :value="true"
-            v-model="option.hidden"
           />
           <label for="option-hidden-yes">
             {{ $t("yes") }}
@@ -645,7 +680,7 @@
           {{ $t("Option.hidden.description") }}
         </div>
 
-        <div class="help-block" v-if="validationErrors['hidden']">
+        <div v-if="validationErrors['hidden']" class="help-block">
           <ErrorsList :errors="validationErrors['hidden']" />
         </div>
       </div>
@@ -653,8 +688,8 @@
 
     <!-- multivalue (text) -->
     <div
+      v-if="!isFileType && !isMultilineType"
       class="form-group"
-      v-if="option.type !== 'file'"
       data-test="option.delimiter"
       :class="{ 'has-error': hasError('multivalued') || hasError('delimiter') }"
     >
@@ -662,14 +697,14 @@
         {{ $t("form.option.multivalued.label") }}
       </label>
       <div class="col-sm-10">
-        <div class="opt_sec_disabled" v-if="!isSecureInput">
+        <div v-if="!isSecureInput" class="opt_sec_disabled">
           <div class="radio radio-inline">
             <input
+              id="mvfalse_"
+              v-model="option.multivalued"
               type="radio"
               name="multivalued"
               :value="false"
-              v-model="option.multivalued"
-              id="mvfalse_"
             />
             <label for="mvfalse_">
               {{ $t("no") }}
@@ -677,18 +712,18 @@
           </div>
           <div class="radio radio-inline">
             <input
+              id="cdelimiter_"
+              v-model="option.multivalued"
               type="radio"
               name="multivalued"
               :value="true"
-              v-model="option.multivalued"
-              id="cdelimiter_"
             />
             <label for="cdelimiter_">
               {{ $t("yes") }}
             </label>
           </div>
 
-          <div class="help-block" v-if="!option.multivalued">
+          <div v-if="!option.multivalued" class="help-block">
             {{ $t("form.option.multivalued.description") }}
           </div>
           <div v-else>
@@ -700,15 +735,15 @@
                 {{ $t("form.option.delimiter.label") }}
               </div>
               <input
+                id="vdelimiter_"
+                v-model="option.delimiter"
                 type="text"
                 name="delimiter"
-                v-model="option.delimiter"
                 size="5"
                 class="form-control"
-                id="vdelimiter_"
               />
             </div>
-            <div class="help-block" v-if="validationErrors['delimiter']">
+            <div v-if="validationErrors['delimiter']" class="help-block">
               <ErrorsList :errors="validationErrors['delimiter']" />
             </div>
             <span class="help-block">
@@ -719,11 +754,11 @@
             <div :class="{ 'has-error': hasError('multivalueAllSelected') }">
               <div class="checkbox">
                 <input
+                  id="mvalltrue_"
+                  v-model="option.multivalueAllSelected"
                   type="checkbox"
                   name="multivalueAllSelected"
                   :value="true"
-                  v-model="option.multivalueAllSelected"
-                  id="mvalltrue_"
                 />
                 <label
                   for="mvalltrue_"
@@ -735,7 +770,7 @@
             </div>
           </div>
         </div>
-        <div class="presentation" id="mvsecnote" v-if="isSecureInput">
+        <div v-if="isSecureInput" id="mvsecnote" class="presentation">
           <span class="warn note">
             {{ $t("form.option.multivalued.secure-conflict.message") }}
           </span>
@@ -745,45 +780,46 @@
 
     <!-- preview (text)  -->
     <option-usage-preview
+      v-if="!validationErrors['name']"
       :option="option"
-      :validation-errors="validationErrors"
+      :features="features"
     />
     <div class="flow-h" style="margin: 10px 0">
       <template v-if="newOption">
         <btn
           size="sm"
-          @click="$emit('cancel')"
           :title="$t('form.option.cancel.title')"
+          @click="$emit('cancel')"
           >{{ $t("cancel") }}
         </btn>
 
         <btn
           size="sm"
           type="cta"
-          @click="doSave"
           :title="$t('form.option.create.title')"
+          @click="doSave"
           >{{ $t("save") }}
         </btn>
       </template>
       <template v-else>
         <btn
           size="sm"
-          @click="$emit('cancel')"
           :title="$t('form.option.discard.title')"
+          @click="$emit('cancel')"
           >{{ $t("discard") }}
         </btn>
         <btn
           size="sm"
           type="cta"
-          @click="doSave"
           :title="$t('form.option.save.title')"
+          @click="doSave"
           >{{ $t("save") }}
         </btn>
       </template>
       <span class="text-warning cancelsavemsg" style="display: none">
         {{ $t("scheduledExecution.option.unsaved.warning") }}
       </span>
-      <span class="text-danger" v-if="hasFormErrors">
+      <span v-if="hasFormErrors" class="text-danger">
         {{ $t("form.option.validation.errors.message") }}
       </span>
     </div>
@@ -823,7 +859,6 @@ export default defineComponent({
     OptionUsagePreview,
     OptionRemoteUrlConfig,
   },
-  emits: ["update:modelValue", "cancel", "save"],
   props: {
     error: String,
     newOption: { type: Boolean, default: false },
@@ -835,6 +870,7 @@ export default defineComponent({
     uiFeatures: { type: Object, default: () => ({}) },
     jobWasScheduled: { type: Boolean, default: false },
   },
+  emits: ["update:modelValue", "cancel", "save"],
   data() {
     return {
       option: Object.assign({}, OptionPrototype, cloneDeep(this.modelValue), {
@@ -843,6 +879,15 @@ export default defineComponent({
           : this.modelValue.valuesUrl
             ? "url"
             : "list",
+        // inputType: this.modelValue.isMultiline //use isMultiline
+        //   ? "multiline"
+        //   : this.modelValue.isDate
+        //     ? "date"
+        //     : this.modelValue.secure
+        //       ? this.modelValue.valueExposed
+        //         ? "secureExposed"
+        //         : "secure"
+        //       : "plain",
         inputType: this.modelValue.isDate
           ? "date"
           : this.modelValue.secure
@@ -856,34 +901,12 @@ export default defineComponent({
       validationWarnings: {},
     };
   },
-  watch: {
-    "option.inputType"(val: string) {
-      this.option.isDate = val === "date";
-      this.option.secure = val === "secure" || val === "secureExposed";
-      this.option.valueExposed = val === "secureExposed";
-      if (this.option.secure) {
-        this.option.multivalued = false;
-      } else {
-        delete this.option.storagePath;
-      }
-    },
-    "option.valuesType"(val: string) {
-      delete this.option.optionValuesPluginType;
-      delete this.option.valuesUrl;
-      delete this.option.remoteUrlAuthenticationType;
-      delete this.option.configRemoteUrl;
-      if (val === "url") {
-        this.option.valuesUrl = "";
-        this.option.remoteUrlAuthenticationType = "";
-        this.option.configRemoteUrl = {};
-      } else if (val !== "list") {
-        this.option.optionValuesPluginType = val;
-      }
-    },
-  },
   computed: {
     fileUploadPluginEnabled() {
       return this.features["fileUploadPlugin"];
+    },
+    multilineJobOptionsEnabled() {
+      return this.features["multilineJobOptions"];
     },
     isDate() {
       return this.option.isDate;
@@ -891,11 +914,25 @@ export default defineComponent({
     isSecureInput() {
       return this.option.secure;
     },
+    isFileType() {
+      return this.option.type === "file";
+    },
+    isMultilineType() {
+      return (
+        this.option.type === "multiline" && this.multilineJobOptionsEnabled
+      );
+    },
     showDefaultValue() {
       return !this.isSecureInput;
     },
     shouldShowDefaultStorage() {
       return !this.showDefaultValue;
+    },
+    showInputType() {
+      return !this.isMultilineType;
+    },
+    showAllowedValues() {
+      return !this.isSecureInput && !this.isMultilineType;
     },
     valuesList: {
       get() {
@@ -944,7 +981,56 @@ export default defineComponent({
       );
     },
   },
+  watch: {
+    "option.type"() {
+      this.reset();
+    },
+    "option.inputType"(val: string) {
+      // this.option.isMultiline = val === "multiline";
+      this.option.isDate = val === "date";
+      this.option.secure = val === "secure" || val === "secureExposed";
+      this.option.valueExposed = val === "secureExposed";
+      if (this.option.secure) {
+        this.option.multivalued = false;
+      } else {
+        delete this.option.storagePath;
+      }
+    },
+    "option.valuesType"(val: string) {
+      delete this.option.optionValuesPluginType;
+      delete this.option.valuesUrl;
+      delete this.option.remoteUrlAuthenticationType;
+      delete this.option.configRemoteUrl;
+      if (val === "url") {
+        this.option.valuesUrl = "";
+        this.option.remoteUrlAuthenticationType = "";
+        this.option.configRemoteUrl = {};
+      } else if (val !== "list") {
+        this.option.optionValuesPluginType = val;
+      }
+    },
+  },
+  async mounted() {
+    this.reset();
+  },
   methods: {
+    reset() {
+      if (
+        this.modelValue.type === "multiline" &&
+        !this.multilineJobOptionsEnabled
+      ) {
+        this.option.type = "text";
+      } else if (!this.modelValue.type) {
+        this.option.type = "text";
+      }
+      if (this.option.type === "multiline" && this.multilineJobOptionsEnabled) {
+        this.option.isDate = false;
+        this.option.secure = false;
+        this.option.valueExposed = false;
+        this.option.enforced = false;
+        this.valuesList = null;
+      }
+    },
     async doSave() {
       this.validationErrors = {};
       this.validationWarnings = {};
@@ -990,7 +1076,7 @@ export default defineComponent({
       return !(this.option[field] && this.option[field].length > max);
     },
     validateRegex(field: string, regex: string): boolean {
-      let testRegex = new RegExp(regex);
+      const testRegex = new RegExp(regex);
       return testRegex.test(this.option[field]);
     },
     validateFieldName(field: string): boolean {
@@ -1023,7 +1109,7 @@ export default defineComponent({
         if (!this.validateRegex(field, validationConfig.regex)) {
           pass = false;
           this.addError(
-            "name",
+            field,
             this.$t(`form.option.regex.validation.error`, [
               validationConfig.regex,
             ]),
@@ -1045,7 +1131,7 @@ export default defineComponent({
       }
     },
     async validateOption() {
-      let res = await validateJobOption(
+      const res = await validateJobOption(
         getRundeckContext().projectName,
         this.jobWasScheduled,
         {

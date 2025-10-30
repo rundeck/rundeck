@@ -116,6 +116,7 @@ import org.rundeck.app.components.JobJSONFormat
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
+import org.rundeck.app.config.FeatureFlagConfigurable
 import org.rundeck.app.data.job.metadata.JobAuthorizationMetadataComponent
 import org.rundeck.app.data.job.metadata.JobScheduleMetadataComponent
 import org.rundeck.app.data.job.metadata.JobScmMetadataComponent
@@ -1003,4 +1004,7 @@ beans={
     projectConfigMetadataComponent(ProjectConfigMetadataComponent)
     projectScmMetadataComponent(ProjectScmMetadataComponent)
     projectExecutionMetadataComponent(ProjectMessageMetadataComponent)
+
+    //defines feature flag metadata for system configuration
+    rundeckFeatureFlagConfigurable(FeatureFlagConfigurable)
 }
