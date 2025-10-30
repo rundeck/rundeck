@@ -872,8 +872,16 @@ export default defineComponent({
   },
   emits: ["update:modelValue", "cancel", "save"],
   data() {
+    // If multiline type but feature is disabled, change to text type
+    const updatedType =
+      this.modelValue.type === "multiline" &&
+      !this.features["multilineJobOptions"]
+        ? "text"
+        : this.modelValue.type;
+
     return {
       option: Object.assign({}, OptionPrototype, cloneDeep(this.modelValue), {
+        type: updatedType,
         valuesType: this.modelValue.optionValuesPluginType
           ? this.modelValue.optionValuesPluginType
           : this.modelValue.valuesUrl
@@ -918,7 +926,9 @@ export default defineComponent({
       return this.option.type === "file";
     },
     isMultilineType() {
-      return this.option.type === "multiline";
+      return (
+        this.option.type === "multiline" && this.multilineJobOptionsEnabled
+      );
     },
     showDefaultValue() {
       return !this.isSecureInput;
