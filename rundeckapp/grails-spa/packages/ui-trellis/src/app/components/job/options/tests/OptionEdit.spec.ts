@@ -110,8 +110,33 @@ describe("OptionEdit", () => {
       editable: true,
     });
 
-    // Verify type is multiline
+    // Verify type is not multiline
     expect(wrapper.vm.option.type).toBe("text");
+  });
+  it("resets values and fields when option type is multiline", async () => {
+    // First create with feature flag enabled
+    const wrapper = await mountOptionEdit({
+      modelValue: {
+        name: "test",
+        type: "multiline",
+        values: ["asdf", "dingo"],
+        secure: true,
+        enforced: true,
+        isDate: true,
+        valueExposed: true,
+      },
+      features: { multilineJobOptions: true },
+      editable: true,
+    });
+
+    // Verify type is multiline and values are cleared
+    expect(wrapper.vm.option.type).toBe("multiline");
+    expect(wrapper.vm.valuesList).toBe("");
+    expect(wrapper.vm.option.values).toBeNull();
+    expect(wrapper.vm.option.isDate).toBeFalsy();
+    expect(wrapper.vm.option.secure).toBeFalsy();
+    expect(wrapper.vm.option.valueExposed).toBeFalsy();
+    expect(wrapper.vm.option.enforced).toBeFalsy();
   });
   it("does not convert multiline option to text when feature flag is enabled", async () => {
     // First create with feature flag enabled
