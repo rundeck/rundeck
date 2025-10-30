@@ -2270,4 +2270,78 @@ project.label=A Label
         flash.error == "archive.import.importNodesSource.failed.message"
     }
 
+    def "createProject should enable cleanup by default based on EXECUTION_CLEANUP_ENABLE feature"() {
+        setup:
+        controller.featureService = Mock(FeatureService) {
+            featurePresent(Features.EXECUTION_CLEANUP_ENABLE) >>
+                    featureEnabled
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            listDescriptions() >> [[], [], []]
+            loadProjectConfigurableInput(_, _) >> [:]
+        }
+        controller.configurationService = Mock(ConfigurationService) {
+            getString("project.defaults.nodeExecutor", "sshj-ssh") >>
+                    "sshj-ssh"
+            getString("project.defaults.fileCopier", "sshj-scp") >> "sshj-scp"
+            getBoolean("project.defaults.sshKeypath.enabled", false) >> false
+        }
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        {
+            authorizeApplicationResourceTypeAll(_, 'project', _) >> true
+            getAuthContextForSubject(_) >> Mock(UserAndRolesAuthContext)
+        }
+
+        when:
+        def model = controller.createProject()
+
+        then:
+        model.enableCleanHistory == expectedResult
+
+        where:
+        featureEnabled | expectedResult
+        true           | true
+        false          | false
+    }
+
+    def "editProject should respect user explicit choice over feature flag - user disabled"() {
+        setup:
+        def projectProps = [
+                "project.execution.history.cleanup.enabled": "false",
+                "project.execution.history.cleanup.retention.days": "30"
+        ]
+        controller.featureService = Mock(FeatureService) {
+            _ * featurePresent(Features.EXECUTION_CLEANUP_ENABLE)
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getFrameworkProject("testProject") >> Mock(IRundeckProject) {
+                getProjectProperties() >> projectProps
+            }
+            1 * listDescriptions() >> [[], [], []]
+            1 * loadProjectConfigurableInput(_, _) >> [:]
+            1 * getDefaultNodeExecutorService("testProject") >> "local"
+            1 * getDefaultFileCopyService("testProject") >> "local"
+            1 * getNodeExecConfigurationForType("local", "testProject") >> [:]
+            1 * getFileCopyConfigurationForType("local", "testProject") >> [:]
+        }
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            1 * authorizeProjectConfigure(_, "testProject") >> true
+            1 * getAuthContextForSubject(_) >> Mock(UserAndRolesAuthContext)
+        }
+        controller.execPasswordFieldsService = Mock(PasswordFieldsService) {}
+        controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService) {}
+        controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService) {}
+        controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.pluginService = Mock(PluginService) {
+            getPluginDescriptor(_, _) >> Mock(DescribedPlugin)
+        }
+        params.project = "testProject"
+        when:
+        def model = controller.editProject()
+        then:
+        model.enableCleanHistory == false
+    }
+
+
+
 }
