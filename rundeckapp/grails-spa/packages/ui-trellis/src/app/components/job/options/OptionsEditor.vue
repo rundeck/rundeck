@@ -228,7 +228,6 @@ export default defineComponent({
       });
     },
     updateOption(index: number, data: any) {
-      console.log(data);
       const value = cloneDeep(data);
       const orig = this.operation(Operation.Modify, { index, value });
       this.changeEvent({
