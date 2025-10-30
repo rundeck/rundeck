@@ -111,6 +111,8 @@ const messages = {
   message_getUpdate: "Get Update",
   message_dismissMessage:
     "To dismiss this notification until the next release, please click here.",
+  "success.rate": "Success Rate",
+  "average.duration": "Avg duration",
   message_close: "Close",
   "bulk.edit": "Bulk Edit",
   "in.of": "in",
