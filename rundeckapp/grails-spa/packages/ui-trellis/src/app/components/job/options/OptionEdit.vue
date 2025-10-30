@@ -872,16 +872,8 @@ export default defineComponent({
   },
   emits: ["update:modelValue", "cancel", "save"],
   data() {
-    // If multiline type but feature is disabled, change to text type
-    const updatedType =
-      this.modelValue.type === "multiline" &&
-      !this.features["multilineJobOptions"]
-        ? "text"
-        : this.modelValue.type;
-
     return {
       option: Object.assign({}, OptionPrototype, cloneDeep(this.modelValue), {
-        type: updatedType,
         valuesType: this.modelValue.optionValuesPluginType
           ? this.modelValue.optionValuesPluginType
           : this.modelValue.valuesUrl
@@ -990,6 +982,9 @@ export default defineComponent({
     },
   },
   watch: {
+    "option.type"() {
+      this.reset();
+    },
     "option.inputType"(val: string) {
       // this.option.isMultiline = val === "multiline";
       this.option.isDate = val === "date";
@@ -1015,7 +1010,27 @@ export default defineComponent({
       }
     },
   },
+  async mounted() {
+    this.reset();
+  },
   methods: {
+    reset() {
+      if (
+        this.modelValue.type === "multiline" &&
+        !this.multilineJobOptionsEnabled
+      ) {
+        this.option.type = "text";
+      } else if (!this.modelValue.type) {
+        this.option.type = "text";
+      }
+      if (this.option.type === "multiline" && this.multilineJobOptionsEnabled) {
+        this.option.isDate = false;
+        this.option.secure = false;
+        this.option.valueExposed = false;
+        this.option.enforced = false;
+        this.valuesList = null;
+      }
+    },
     async doSave() {
       this.validationErrors = {};
       this.validationWarnings = {};
