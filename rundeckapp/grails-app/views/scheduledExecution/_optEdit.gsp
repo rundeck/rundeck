@@ -396,6 +396,10 @@ form.option.valuesType.url.authType.bearerToken.label
 
         </div>
         <!-- /ko -->
+        <!-- ko if: isMultilineType() -->
+        <input type="hidden" name="valuesList" value=" "/>
+        <input type="hidden" name="valuesUrl" value=""/>
+        <!-- /ko -->
         <!-- ko if: !isMultilineType() -->
         <div class="form-group opt_keystorage_disabled" data-bind="visible: isNonSecure">
             <label class="col-sm-2 control-label"><g:message code="form.option.values.label" /></label>

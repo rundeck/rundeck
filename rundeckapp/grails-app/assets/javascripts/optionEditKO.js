@@ -91,6 +91,12 @@ function OptionEditor(data) {
     });
     var subscription = this.optionType.subscribe(function(newValue) {
         self.showDefaultValue(self.originalIsNonSecure);
+        if (newValue === 'multiline' && self.multilineJobOptionsEnabled()) {
+            self.enforceType('none');
+            self.valuesList('');
+            self.valuesUrl('');
+            self.remoteUrlAuthenticationType('');
+        }
     });
 
     self.isRemoteUrlUserAuth = ko.computed(function () {
