@@ -9,20 +9,29 @@ import groovy.transform.CompileStatic
 @CompileStatic
 class FeatureFlagConfigurable implements SystemConfigurable {
     List<SysConfigProp> systemConfigProps = [
+        featureConfig(
+            Features.MULTILINE_JOB_OPTIONS,
+            "Multiline Job Options (Beta)",
+            "(Beta Feature) Enable support for multiline job options in job definitions and the GUI.",
+            'app_admin'
+        ),
+        //TODO: include additional feature flags here
+    ]
+
+    private static SysConfigProp featureConfig(Features feature, String label, String description, String auth) {
         SystemConfig.builder().with {
-            key("rundeck.feature.${Features.MULTILINE_JOB_OPTIONS.propertyName}.enabled")
+            key("rundeck.feature.${feature.propertyName}.enabled")
                 .datatype("Boolean")
-                .label("Multiline Job Options (Beta)")
-                .description("(Beta Feature) Enable support for multiline job options in job definitions and the GUI.")
+                .label(label)
+                .description(description)
                 .defaultValue("false")
                 .category("Feature")
                 .visibility("Advanced")
                 .strata("default")
                 .required(false)
                 .restart(false)
-                .authRequired('app_admin')
+                .authRequired(auth)
                 .build()
-        } as SysConfigProp,
-        //TODO: include additional feature flags here
-    ]
+        } as SysConfigProp
+    }
 }
