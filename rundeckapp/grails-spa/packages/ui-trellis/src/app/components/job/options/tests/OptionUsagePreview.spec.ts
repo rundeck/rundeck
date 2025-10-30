@@ -55,6 +55,7 @@ describe("OptionUsagePreview", () => {
     async (option: any) => {
       const wrapper = await mountOptionUsagePreview({
         option,
+        features: { multilineJobOptions: true },
       });
       const sect = wrapper.get("#option_preview");
       expect(sect.html()).toContain(`"\${option.test_name}"`);
