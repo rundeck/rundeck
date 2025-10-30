@@ -101,6 +101,29 @@ describe("OptionEdit", () => {
       );
     },
   );
+
+  it("converts multiline option to text when feature flag is disabled", async () => {
+    // First create with feature flag enabled
+    const wrapper = await mountOptionEdit({
+      modelValue: { name: "test", type: "multiline" },
+      features: { multilineJobOptions: false },
+      editable: true,
+    });
+
+    // Verify type is multiline
+    expect(wrapper.vm.option.type).toBe("text");
+  });
+  it("does not convert multiline option to text when feature flag is enabled", async () => {
+    // First create with feature flag enabled
+    const wrapper = await mountOptionEdit({
+      modelValue: { name: "test", type: "multiline" },
+      features: { multilineJobOptions: true },
+      editable: true,
+    });
+
+    // Verify type is multiline
+    expect(wrapper.vm.option.type).toBe("multiline");
+  });
   it.each([
     ["default value input field", "[data-test=option.value] input[type=text]"],
     ["inputType", "[data-test=option.inputType]"],
