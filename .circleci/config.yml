@@ -266,7 +266,8 @@ jobs:
     steps:
       - setup_docker:
           docker_layer_caching: true
-      - checkout
+      - checkout:
+          method: blobless
       - restore-build-cache
       - install-build-dependencies
       - run-build-step:
@@ -305,7 +306,8 @@ jobs:
       name: docker-builder
     steps:
       - setup_docker
-      - checkout
+      - checkout:
+          method: blobless
       - install-build-dependencies
       - restore-build-cache
       - attach_workspace:
@@ -323,7 +325,8 @@ jobs:
       name: docker-builder
     steps:
       - setup_docker
-      - checkout
+      - checkout:
+          method: blobless
       - install-node
       - attach_workspace:
           at: ~/workspace
@@ -344,7 +347,8 @@ jobs:
         default: false
     steps:
       - setup_docker
-      - checkout
+      - checkout:
+          method: blobless
       - run-build-step:
           step-name: Install WizCLI
           command: wizcli_install
@@ -364,7 +368,8 @@ jobs:
     executor:
       name: docker-builder
     steps:
-      - checkout
+      - checkout:
+          method: blobless
       - install-build-dependencies
       - attach_workspace:
           at: ~/workspace
@@ -381,7 +386,8 @@ jobs:
     steps:
       - setup_docker:
           docker_layer_caching: true
-      - checkout
+      - checkout:
+          method: blobless
       - restore-build-cache
       - install-build-dependencies
       - run-build-step:
@@ -436,7 +442,8 @@ jobs:
         default: "openjdk-11-jre-headless"
     steps:
       - setup_docker
-      - checkout
+      - checkout:
+          method: blobless
       - install-base-dependencies
       - restore-build-cache
       - attach_workspace:
@@ -456,7 +463,8 @@ jobs:
 
     steps:
       - setup_docker
-      - checkout
+      - checkout:
+          method: blobless
       - install-packaging-dependencies
       - install-node
       - restore-build-cache
@@ -474,7 +482,8 @@ jobs:
       resource_class: medium
 
     steps:
-      - checkout
+      - checkout:
+          method: blobless
       - install-packaging-dependencies
       - restore-build-cache
       - attach_workspace:
@@ -510,7 +519,8 @@ jobs:
       resource_class: medium
 
     steps:
-      - checkout
+      - checkout:
+          method: blobless
       - install-packaging-dependencies
       - restore-build-cache
       - attach_workspace:
@@ -546,7 +556,8 @@ jobs:
         type: string
     steps:
       - setup_docker
-      - checkout
+      - checkout:
+          method: blobless
       - install-testdeck-dependencies
       - attach_workspace:
           at: ~/workspace
@@ -574,7 +585,8 @@ jobs:
         type: string
     steps:
 
-      - checkout
+      - checkout:
+          method: blobless
       - install-testdeck-dependencies
       - attach_workspace:
           at: ~/workspace
@@ -609,7 +621,8 @@ jobs:
       test_file_pattern:
         type: string
     steps:
-      - checkout
+      - checkout:
+          method: blobless
       - restore-build-cache
       - install-base-dependencies
       - attach_workspace:
