@@ -868,7 +868,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         } else {
             def total = 0
             if (isExportExecutions) {
-                total += 3 * Execution.countByProject(projectName) + execReportDataProvider.countByProject(projectName)
+                total += 3 * Execution.executeQuery("SELECT count(e) FROM Execution e WHERE e.project = :project", [project: projectName])[0]
+                + execReportDataProvider.countByProject(projectName)
             }
             if (isExportJobs) {
                 total += ScheduledExecution.countByProject(projectName)
@@ -916,10 +917,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                 execIds << Long.parseLong(it)
                             }
                         }
-                        execs = Execution.findAllByProjectAndIdInList(projectName, execIds)
+                        execs =   Execution.executeQuery("SELECT e FROM Execution e WHERE e.project = :project AND e.id IN (:execIds)"
+                                , [project: projectName, execIds: execIds])
                         reports = execReportDataProvider.findAllByProjectAndExecutionUuidInList(projectName, execs.collect{it.uuid})
                     } else if (isExportExecutions) {
-                        execs = Execution.findAllByProject(projectName)
+                        execs = Execution.executeQuery("SELECT e FROM Execution e WHERE e.project = :project", [project: projectName])
                         reports = execReportDataProvider.findAllByProject(projectName)
                     }
                     List<JobFileRecord> jobfilerecords = []
