@@ -48,13 +48,19 @@ abstract class BasePage {
         if (loadPath && !loadPath.empty) {
             implicitlyWait 2000
             driver.get(context.client.baseUrl + loadPath)
-            validatePage()
+            validatePage(loadPath)
         }
     }
     /**
      * Validate the page is loaded
      */
     void validatePage() {
+        if (loadPath && !loadPath.empty) {
+            waitForUrlToContain(loadPath)
+        }
+    }
+
+    void validatePage(String loadPath) {
         if (loadPath && !loadPath.empty) {
             waitForUrlToContain(loadPath)
         }
