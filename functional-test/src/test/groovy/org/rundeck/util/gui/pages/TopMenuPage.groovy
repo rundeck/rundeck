@@ -42,7 +42,7 @@ class TopMenuPage extends BasePage {
     }
 
     void clickHomeButton(){
-        (el divHome).findElement(By.tagName("i")).click()
+        byAndWaitClickable((el divHome).findElement(By.tagName("i")) click()
     }
 
     void navigateToUserProfile() {
