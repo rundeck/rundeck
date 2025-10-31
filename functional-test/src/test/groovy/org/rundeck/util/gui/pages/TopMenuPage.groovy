@@ -16,7 +16,7 @@ class TopMenuPage extends BasePage {
     By systemConfigurationMenuBy = By.linkText("System Configuration")
     By appUserButtonBy = By.id("appUser")
     By logOutMenuBy = By.linkText("Logout")
-    By divHome = By.id("nav-rd-home")
+    By divHomeIconTag = By.cssSelector("#nav-rd-home i")
 
     TopMenuPage(final SeleniumContext context) {
         super(context)
@@ -42,7 +42,7 @@ class TopMenuPage extends BasePage {
     }
 
     void clickHomeButton(){
-        byAndWaitClickable((el divHome).findElement(By.tagName("i")) click()
+        byAndWaitClickable divHomeIconTag click()
     }
 
     void navigateToUserProfile() {
