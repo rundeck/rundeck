@@ -203,6 +203,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @throws ProjectServiceException
      */
     def exportExecution(ZipBuilder zip, Execution exec, String name, String remotePathTemplate = null) throws ProjectServiceException {
+        log.info("PROJECT_EXPORT: exporting execution")
         File logfile = loggingService.getLogFileForExecution(exec)
         String logfilepath = null
         if (logfile && logfile.isFile()) {
@@ -823,6 +824,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             ProjectArchiveExportRequest options,
             AuthContext authContext
     ) throws ProjectServiceException {
+        log.info("PROJECT_EXPORT: beginning export for project ${project.name}")
         ZipBuilder zip = new ZipBuilder(output)
 //        zip.debug = true
         String projectName = project.name
@@ -868,12 +870,14 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         } else {
             def total = 0
             if (isExportExecutions) {
+                log.info("PROJECT_EXPORT: counting executions for project ${projectName}")
                 total += 3 * Execution.createCriteria().get {
                     eq('project', projectName)
                     projections {
                         rowCount()
                     }
                 }
+                log.info("PROJECT_EXPORT:total executions to export for project ${projectName}: ${total / 3}")
                 + execReportDataProvider.countByProject(projectName)
             }
             if (isExportJobs) {
@@ -922,12 +926,14 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                 execIds << Long.parseLong(it)
                             }
                         }
+                        log.info("PROJECT_EXPORT: exporting specified executions for project ${projectName}")
                         execs = Execution.createCriteria().list {
                             eq('project', projectName)
                             'in'('id', execIds)
                         }
                         reports = execReportDataProvider.findAllByProjectAndExecutionUuidInList(projectName, execs.collect{it.uuid})
                     } else if (isExportExecutions) {
+                        log.info("PROJECT_EXPORT: exporting all executions for project ${projectName}")
                         execs = Execution.createCriteria().list {
                             eq('project', projectName)
                         }
@@ -937,6 +943,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
                     if (execs) {
                         // Optimize: get all JobFileRecords in single query instead of N+1 queries
+                        log.info("PROJECT_EXPORT get all JobFileRecords in single query instead of N+1 queries")
                         jobfilerecords = JobFileRecord.createCriteria().list {
                             'in'('execution', execs)
                         }
