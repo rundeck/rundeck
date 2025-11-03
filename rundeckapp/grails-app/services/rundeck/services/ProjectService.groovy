@@ -222,6 +222,138 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
     }
 
+
+    /**
+     * Get log file path for execution (helper method for batched export)
+     */
+    private String getLogFilePathForExecution(Execution exec, String remotePathTemplate) {
+        File logfile = loggingService.getLogFileForExecution(exec)
+        if (logfile && logfile.isFile()) {
+            return "output-${exec.id}.rdlog"
+        } else if (remotePathTemplate != null) {
+            return "ext:${exec.getExecIdForLogStore()}:${exec.isRemoteOutputfilepath() ? exec.outputfilepath : logFileStorageService.getRemotePathForExecutionFromPathTemplate(exec, remotePathTemplate)}"
+        }
+        return null
+    }
+
+    /**
+     * Export executions for a project using batched processing to avoid memory issues
+     * @param zip ZipBuilder instance
+     * @param projectName project name
+     * @param listener progress listener
+     * @param specificExecutionIds optional list of execution IDs to export (if null, exports all)
+     */
+    private void exportExecutionsBatched(ZipBuilder zip, String projectName, ProgressListener listener, List<Long> specificExecutionIds = null) {
+        def batchSize = 100000
+        def offset = 0
+        def hasMoreData = true
+        String remotePathTemplate = null
+
+        log.info("PROJECT_EXPORT: Starting batched export with batch size: ${batchSize}${specificExecutionIds ? " for ${specificExecutionIds.size()} specific executions" : " for all executions"}")
+
+        // Create directories once at the beginning
+        zip.dir('executions/') {}
+        zip.dir('jobfiles/') {}
+        zip.dir('reports/') {}
+
+        while (hasMoreData) {
+            log.debug("PROJECT_EXPORT: Processing batch starting at offset ${offset}")
+
+            // Get batch of executions - either from specific IDs or all executions
+            List<Execution> execsBatch
+            if (specificExecutionIds) {
+                // For specific executions, get a batch from the ID list
+                def endIndex = Math.min(offset + batchSize, specificExecutionIds.size())
+                if (offset >= specificExecutionIds.size()) {
+                    hasMoreData = false
+                    break
+                }
+                def batchIds = specificExecutionIds.subList(offset, endIndex)
+                execsBatch = Execution.createCriteria().list {
+                    eq('project', projectName)
+                    'in'('id', batchIds)
+                    order('id', 'asc')
+                }
+            } else {
+                // For all executions, use offset-based pagination
+                execsBatch = Execution.createCriteria().list(max: batchSize, offset: offset) {
+                    eq('project', projectName)
+                    order('id', 'asc') // Ensure consistent ordering
+                }
+            }
+
+            if (!execsBatch || execsBatch.isEmpty()) {
+                hasMoreData = false
+                break
+            }
+
+            // Get remotePathTemplate from first execution if not set
+            if (remotePathTemplate == null && execsBatch.size() > 0) {
+                remotePathTemplate = logFileStorageService.getStorePathTemplateForExecution(execsBatch[0])
+            }
+
+            // Get related reports and job file records for this batch
+            List<String> executionUuids = execsBatch.collect { it.uuid }
+            List<RdExecReport> reportsBatch = execReportDataProvider.findAllByProjectAndExecutionUuidInList(projectName, executionUuids)
+            List<JobFileRecord> jobfilerecordsBatch = JobFileRecord.createCriteria().list {
+                'in'('execution', execsBatch)
+            }
+
+            // Export executions directly
+            execsBatch.each { Execution exec ->
+                // Export execution XML
+                zip.file("executions/execution-${exec.id}.xml") { Writer writer ->
+                    executionUtilService.exportExecutionXml(exec, writer,
+                        getLogFilePathForExecution(exec, remotePathTemplate))
+                }
+
+                // Export log file if exists
+                File logfile = loggingService.getLogFileForExecution(exec)
+                if (logfile && logfile.isFile()) {
+                    zip.file("executions/output-${exec.id}.rdlog", logfile)
+                }
+
+                // Export state file if exists
+                File statefile = workflowService.getStateFileForExecution(exec)
+                if (statefile && statefile.isFile()) {
+                    zip.file("executions/state-${exec.id}.state.json", statefile)
+                }
+
+                listener?.inc('export', 3)
+            }
+
+            // Export job file records directly
+            jobfilerecordsBatch.each { JobFileRecord record ->
+                exportFileRecord(zip, record, "jobfiles/filerecord-${record.id}.xml")
+            }
+
+            // Export reports directly
+            reportsBatch.each { RdExecReport report ->
+                exportHistoryReport(zip, report, "reports/report-${report.id}.xml")
+                listener?.inc('export', 1)
+            }
+
+            offset += batchSize
+
+            // Check if we've processed all data
+            if (specificExecutionIds) {
+                // For specific executions, check if we've reached the end of the ID list
+                if (offset >= specificExecutionIds.size()) {
+                    hasMoreData = false
+                }
+            } else {
+                // For all executions, check if we got fewer results than batch size (last batch)
+                if (execsBatch.size() < batchSize) {
+                    hasMoreData = false
+                }
+            }
+
+            log.debug("PROJECT_EXPORT: Completed batch with ${execsBatch.size()} executions")
+        }
+
+        log.info("PROJECT_EXPORT: Completed batched export of ${specificExecutionIds ? "specific" : "all"} executions")
+    }
+
     /**
      * Parse XML and return a ExecReport/BaseReport object
      * @param xmlinput xml source
@@ -914,8 +1046,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         }
                     }
                 } else if (compName == BuiltinExportComponents.executions.name()) {
-                    List<Execution> execs = []
-                    List<RdExecReport> reports = []
                     if (options.executionsOnly) {
                         //find execs
                         List<Long> execIds = []
@@ -926,56 +1056,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                 execIds << Long.parseLong(it)
                             }
                         }
-                        log.info("PROJECT_EXPORT: exporting specified executions for project ${projectName}")
-                        execs = Execution.createCriteria().list {
-                            eq('project', projectName)
-                            'in'('id', execIds)
-                        }
-                        reports = execReportDataProvider.findAllByProjectAndExecutionUuidInList(projectName, execs.collect{it.uuid})
+                        log.info("PROJECT_EXPORT: exporting specified executions for project ${projectName} using batched processing")
+                        exportExecutionsBatched(zip, projectName, listener, execIds)
                     } else if (isExportExecutions) {
-                        log.info("PROJECT_EXPORT: exporting all executions for project ${projectName}")
-                        execs = Execution.createCriteria().list {
-                            eq('project', projectName)
-                        }
-                        reports = execReportDataProvider.findAllByProject(projectName)
-                    }
-                    List<JobFileRecord> jobfilerecords = []
-
-                    if (execs) {
-                        // Optimize: get all JobFileRecords in single query instead of N+1 queries
-                        log.info("PROJECT_EXPORT get all JobFileRecords in single query instead of N+1 queries")
-                        jobfilerecords = JobFileRecord.createCriteria().list {
-                            'in'('execution', execs)
-                        }
-
-                        dir('executions/') {
-                            //export executions
-                            //export execution logs
-                            String remotePathTemplate = null
-                            execs.each { Execution exec ->
-                                if(remotePathTemplate == null)
-                                    remotePathTemplate = logFileStorageService.getStorePathTemplateForExecution(exec)
-
-                                exportExecution zip, exec, "execution-${exec.id}.xml", remotePathTemplate
-
-                                listener?.inc('export', 3)
-                            }
-                        }
-
-                        dir('jobfiles/') {
-                            jobfilerecords.each { JobFileRecord record ->
-                                exportFileRecord zip, record, "filerecord-${record.id}.xml"
-                            }
-                        }
-                        //export history
-
-                        dir('reports/') {
-                            reports.each { RdExecReport report ->
-                                exportHistoryReport zip, report, "report-${report.id}.xml"
-                                def a = report.toMap()
-                                listener?.inc('export', 1)
-                            }
-                        }
+                        log.info("PROJECT_EXPORT: exporting all executions for project ${projectName} using batched processing")
+                        exportExecutionsBatched(zip, projectName, listener)
                     }
 
                 } else if (compName == BuiltinExportComponents.config.name()) {
