@@ -43,6 +43,7 @@ import grails.async.Promises
 import grails.compiler.GrailsCompileStatic
 import grails.events.EventPublisher
 import grails.gorm.transactions.Transactional
+import org.springframework.transaction.annotation.Propagation
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
 import groovy.transform.TypeCheckingMode
@@ -237,6 +238,61 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     }
 
     /**
+     * Process a single batch in a new transaction to avoid connection timeouts
+     * @param zip ZipBuilder instance
+     * @param execsBatch list of executions in this batch
+     * @param reportsBatch list of reports in this batch
+     * @param jobfilerecordsBatch list of job file records in this batch
+     * @param listener progress listener
+     * @param remotePathTemplate template for remote path
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    private void processBatchInNewTransaction(ZipBuilder zip, List<Execution> execsBatch, List<RdExecReport> reportsBatch, List<JobFileRecord> jobfilerecordsBatch, ProgressListener listener, String remotePathTemplate) {
+        try {
+            log.debug("Processing batch of ${execsBatch.size()} executions in new transaction")
+
+            // Export executions directly
+            execsBatch.each { Execution exec ->
+                // Export execution XML
+                zip.file("executions/execution-${exec.id}.xml") { Writer writer ->
+                    executionUtilService.exportExecutionXml(exec, writer,
+                        getLogFilePathForExecution(exec, remotePathTemplate))
+                }
+
+                // Export log file if exists
+                File logfile = loggingService.getLogFileForExecution(exec)
+                if (logfile && logfile.isFile()) {
+                    zip.file("executions/output-${exec.id}.rdlog", logfile)
+                }
+
+                // Export state file if exists
+                File statefile = workflowService.getStateFileForExecution(exec)
+                if (statefile && statefile.isFile()) {
+                    zip.file("executions/state-${exec.id}.state.json", statefile)
+                }
+
+                listener?.inc('export', 3)
+            }
+
+            // Export job file records directly
+            jobfilerecordsBatch.each { JobFileRecord record ->
+                exportFileRecord(zip, record, "jobfiles/filerecord-${record.id}.xml")
+            }
+
+            // Export reports directly
+            reportsBatch.each { RdExecReport report ->
+                exportHistoryReport(zip, report, "reports/report-${report.id}.xml")
+                listener?.inc('export', 1)
+            }
+
+            log.debug("Completed batch processing in new transaction")
+        } catch (Exception e) {
+            log.error("Error processing batch in new transaction: ${e.message}", e)
+            throw e
+        }
+    }
+
+    /**
      * Export executions for a project using batched processing to avoid memory issues
      * @param zip ZipBuilder instance
      * @param projectName project name
@@ -244,7 +300,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param specificExecutionIds optional list of execution IDs to export (if null, exports all)
      */
     private void exportExecutionsBatched(ZipBuilder zip, String projectName, ProgressListener listener, List<Long> specificExecutionIds = null) {
-        def batchSize = 100000
+        def batchSize = 10000
         def offset = 0
         def hasMoreData = true
         String remotePathTemplate = null
@@ -299,39 +355,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 'in'('execution', execsBatch)
             }
 
-            // Export executions directly
-            execsBatch.each { Execution exec ->
-                // Export execution XML
-                zip.file("executions/execution-${exec.id}.xml") { Writer writer ->
-                    executionUtilService.exportExecutionXml(exec, writer,
-                        getLogFilePathForExecution(exec, remotePathTemplate))
-                }
-
-                // Export log file if exists
-                File logfile = loggingService.getLogFileForExecution(exec)
-                if (logfile && logfile.isFile()) {
-                    zip.file("executions/output-${exec.id}.rdlog", logfile)
-                }
-
-                // Export state file if exists
-                File statefile = workflowService.getStateFileForExecution(exec)
-                if (statefile && statefile.isFile()) {
-                    zip.file("executions/state-${exec.id}.state.json", statefile)
-                }
-
-                listener?.inc('export', 3)
-            }
-
-            // Export job file records directly
-            jobfilerecordsBatch.each { JobFileRecord record ->
-                exportFileRecord(zip, record, "jobfiles/filerecord-${record.id}.xml")
-            }
-
-            // Export reports directly
-            reportsBatch.each { RdExecReport report ->
-                exportHistoryReport(zip, report, "reports/report-${report.id}.xml")
-                listener?.inc('export', 1)
-            }
+            // Process this batch in a new transaction to avoid connection timeouts
+            processBatchInNewTransaction(zip, execsBatch, reportsBatch, jobfilerecordsBatch, listener, remotePathTemplate)
 
             offset += batchSize
 
