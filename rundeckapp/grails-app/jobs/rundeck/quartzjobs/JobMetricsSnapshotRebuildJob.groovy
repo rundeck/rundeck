@@ -1,17 +1,18 @@
 package rundeck.quartzjobs
 
-import com.dtolabs.rundeck.server.jobs.NonConcurrentJob
 import org.quartz.InterruptableJob
 import org.quartz.JobExecutionContext
 import org.quartz.JobExecutionException
-import org.quartz.UnschedulableException
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * Quartz job that triggers nightly rebuild of job metrics snapshots.
  * Runs at 2:00 AM every day.
  */
-class JobMetricsSnapshotRebuildJob implements InterruptableJob, NonConcurrentJob {
+class JobMetricsSnapshotRebuildJob implements InterruptableJob {
 
+    static Logger logger = LoggerFactory.getLogger(JobMetricsSnapshotRebuildJob)
     def jobMetricsSnapshotService
 
     static triggers = {
@@ -20,12 +21,12 @@ class JobMetricsSnapshotRebuildJob implements InterruptableJob, NonConcurrentJob
     }
 
     void execute(JobExecutionContext context) throws JobExecutionException {
-        log.info("[METRICS-SNAPSHOT-JOB] Starting scheduled nightly rebuild")
+        logger.info("[METRICS-SNAPSHOT-JOB] Starting scheduled nightly rebuild")
 
         try {
             def result = jobMetricsSnapshotService.rebuildAllSnapshots()
 
-            log.info("[METRICS-SNAPSHOT-JOB] Nightly rebuild completed successfully: " +
+            logger.info("[METRICS-SNAPSHOT-JOB] Nightly rebuild completed successfully: " +
                      "${result.processed} jobs processed, ${result.errors} errors, " +
                      "${result.duration}ms total")
 
@@ -33,7 +34,7 @@ class JobMetricsSnapshotRebuildJob implements InterruptableJob, NonConcurrentJob
             // TODO: Alert if errors > threshold
 
         } catch (Exception e) {
-            log.error("[METRICS-SNAPSHOT-JOB] Nightly rebuild failed", e)
+            logger.error("[METRICS-SNAPSHOT-JOB] Nightly rebuild failed", e)
 
             // TODO: Send alert to ops team
             throw new JobExecutionException("Nightly snapshot rebuild failed", e)
@@ -41,7 +42,7 @@ class JobMetricsSnapshotRebuildJob implements InterruptableJob, NonConcurrentJob
     }
 
     void interrupt() {
-        log.warn("[METRICS-SNAPSHOT-JOB] Job interrupted")
+        logger.warn("[METRICS-SNAPSHOT-JOB] Job interrupted")
         // Graceful shutdown if possible
     }
 }

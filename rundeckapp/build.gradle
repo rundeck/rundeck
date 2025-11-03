@@ -565,6 +565,10 @@ tasks.withType(War).configureEach { War war ->
     war.dependsOn compileGroovyPages
 }
 
+springBoot {
+    mainClass = 'rundeckapp.Application'
+}
+
 bootWar {
     enabled=true
     it.dependsOn copyPluginLibs

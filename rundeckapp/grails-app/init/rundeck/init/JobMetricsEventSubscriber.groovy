@@ -1,7 +1,7 @@
 package rundeck.init
 
-import com.dtolabs.rundeck.core.execution.ExecutionLifecycleComponentService
 import grails.events.annotation.Subscriber
+import groovy.util.logging.Slf4j
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.Execution
 import rundeck.services.JobMetricsSnapshotService
@@ -10,6 +10,7 @@ import rundeck.services.JobMetricsSnapshotService
  * Event subscribers for job metrics snapshot updates.
  * Subscribes to execution completion events and queues updates.
  */
+@Slf4j
 class JobMetricsEventSubscriber {
 
     @Autowired

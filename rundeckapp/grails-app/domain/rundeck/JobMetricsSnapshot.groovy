@@ -58,6 +58,8 @@ class JobMetricsSnapshot {
         cache usage: 'read-write'  // Enable second-level cache
     }
 
+    static transients = ['hourlyHeatmapData', 'dailyBreakdownData', 'todayHourlyData']
+
     // ============================================================
     // HELPER METHODS - JSON PARSING
     // ============================================================
