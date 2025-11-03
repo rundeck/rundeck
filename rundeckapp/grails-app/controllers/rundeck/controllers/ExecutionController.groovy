@@ -77,8 +77,10 @@ import org.rundeck.util.Sizes
 import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
 import rundeck.Execution
+import rundeck.JobMetricsSnapshot
 import rundeck.ScheduledExecution
 import rundeck.services.*
+import rundeck.services.JobMetricsSnapshotService
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.workflow.StateMapping
 
@@ -98,6 +100,7 @@ class ExecutionController extends ControllerBase{
     WorkflowService workflowService
     FileUploadService fileUploadService
     PluginService pluginService
+    JobMetricsSnapshotService jobMetricsSnapshotService  // RUN-3768
     ConfigurationService configurationService
 
     static allowedMethods = [
@@ -3610,21 +3613,58 @@ Note: This endpoint has the same query parameters and response as the `/executio
         }
 
 
+        // RUN-3768: Try to use snapshot-based metrics first
         def metrics
-        try {
-            // Get metric data
-            metrics = executionService.queryExecutionMetrics(query)
+        def startTime = System.currentTimeMillis()
+
+        // Check if snapshot-based metrics are enabled (feature flag)
+        def useSnapshot = grailsApplication.config.getProperty(
+            'rundeck.metrics.snapshot.enabled',
+            Boolean,
+            false
+        )
+
+        // Parse job ID from query
+        def jobId = query.jobIdListFilter?.first()
+
+        if (useSnapshot && jobId) {
+            log.debug("[METRICS-API] Using snapshot for job ${jobId}")
+            metrics = getMetricsFromSnapshot(jobId)
+
+            // Fallback to execution table if snapshot missing
+            if (!metrics) {
+                log.warn("[METRICS-API] Snapshot not found for job ${jobId}, falling back to execution query")
+                try {
+                    metrics = executionService.queryExecutionMetrics(query)
+                } catch (ExecutionQueryException e) {
+                    return apiService.renderErrorFormat(
+                        response,
+                        [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code  : 'api.error.parameter.error',
+                            args  : [message(code: e.getErrorMessageCode())]
+                        ]
+                    )
+                }
+            }
+        } else {
+            log.debug("[METRICS-API] Snapshot disabled or no job ID, using execution query")
+            try {
+                metrics = executionService.queryExecutionMetrics(query)
+            } catch (ExecutionQueryException e) {
+                return apiService.renderErrorFormat(
+                    response,
+                    [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.parameter.error',
+                        args  : [message(code: e.getErrorMessageCode())]
+                    ]
+                )
+            }
         }
-        catch (ExecutionQueryException e) {
-            return apiService.renderErrorFormat(
-                response,
-                [
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    code  : 'api.error.parameter.error',
-                    args  : [message(code: e.getErrorMessageCode())]
-                ]
-            )
-        }
+
+        def duration = System.currentTimeMillis() - startTime
+        log.debug("[METRICS-API] Metrics retrieved${jobId ? ' for job ' + jobId : ''} in ${duration}ms")
 
         // Format times to be human readable.
         metricsOutputFormatTimeNumberAsString(metrics.duration, [
@@ -3662,6 +3702,45 @@ Note: This endpoint has the same query parameters and response as the `/executio
         }
 
 
+    }
+
+    /**
+     * Get metrics from snapshot table (fast) - RUN-3768.
+     * Returns null if snapshot doesn't exist.
+     */
+    private Map getMetricsFromSnapshot(String jobUuid) {
+        try {
+            // Find job by UUID
+            def job = ScheduledExecution.findByUuid(jobUuid)
+            if (!job) {
+                log.warn("[METRICS-API] Job not found: ${jobUuid}")
+                return null
+            }
+
+            // Get snapshot
+            def snapshot = JobMetricsSnapshot.get(job.id)
+            if (!snapshot) {
+                log.debug("[METRICS-API] No snapshot found for job ${job.id}")
+                return null
+            }
+
+            // Return metrics in same format as ExecutionService.queryExecutionMetrics()
+            def combined = snapshot.getCombinedMetrics()
+
+            return [
+                total: combined.total,
+                succeeded: combined.succeeded,
+                failed: combined.failed,
+                aborted: combined.aborted,
+                timedout: combined.timedout,
+                successRate: combined.successRate,
+                duration: combined.duration
+            ]
+
+        } catch (Exception e) {
+            log.error("[METRICS-API] Error retrieving snapshot for job ${jobUuid}", e)
+            return null  // Fallback to execution query
+        }
     }
 
     /**
