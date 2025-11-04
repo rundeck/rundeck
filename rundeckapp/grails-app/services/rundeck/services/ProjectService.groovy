@@ -313,7 +313,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         zip.dir('reports/') {}
 
         while (hasMoreData) {
-            log.debug("PROJECT_EXPORT: Processing batch starting at offset ${offset}")
+            log.info("PROJECT_EXPORT: Processing batch starting at offset ${offset} (batchSize: ${batchSize})")
 
             // Get batch of executions - either from specific IDs or all executions
             List<Execution> execsBatch
@@ -321,10 +321,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 // For specific executions, get a batch from the ID list
                 def endIndex = Math.min(offset + batchSize, specificExecutionIds.size())
                 if (offset >= specificExecutionIds.size()) {
+                    log.info("PROJECT_EXPORT: Reached end of specific execution IDs list")
                     hasMoreData = false
                     break
                 }
                 def batchIds = specificExecutionIds.subList(offset, endIndex)
+                log.info("PROJECT_EXPORT: Fetching ${batchIds.size()} specific executions from database")
                 execsBatch = Execution.createCriteria().list {
                     eq('project', projectName)
                     'in'('id', batchIds)
@@ -332,6 +334,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 }
             } else {
                 // For all executions, use offset-based pagination
+                log.info("PROJECT_EXPORT: Fetching executions from database (offset: ${offset}, max: ${batchSize})")
                 execsBatch = Execution.createCriteria().list(max: batchSize, offset: offset) {
                     eq('project', projectName)
                     order('id', 'asc') // Ensure consistent ordering
@@ -339,6 +342,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             }
 
             if (!execsBatch || execsBatch.isEmpty()) {
+                log.info("PROJECT_EXPORT: No more executions found, finishing export")
                 hasMoreData = false
                 break
             }
@@ -346,16 +350,18 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             // Get remotePathTemplate from first execution if not set
             if (remotePathTemplate == null && execsBatch.size() > 0) {
                 remotePathTemplate = logFileStorageService.getStorePathTemplateForExecution(execsBatch[0])
+                log.debug("PROJECT_EXPORT: Set remotePathTemplate: ${remotePathTemplate}")
             }
 
             // Get related reports and job file records for this batch
+            log.info("PROJECT_EXPORT: Fetching related data (reports and job file records)")
             List<String> executionUuids = execsBatch.collect { it.uuid }
             List<RdExecReport> reportsBatch = execReportDataProvider.findAllByProjectAndExecutionUuidInList(projectName, executionUuids)
             List<JobFileRecord> jobfilerecordsBatch = JobFileRecord.createCriteria().list {
                 'in'('execution', execsBatch)
             }
-
             // Process this batch in a new transaction to avoid connection timeouts
+            log.info("PROJECT_EXPORT: Processing batch in new transaction")
             processBatchInNewTransaction(zip, execsBatch, reportsBatch, jobfilerecordsBatch, listener, remotePathTemplate)
 
             offset += batchSize
@@ -364,16 +370,18 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             if (specificExecutionIds) {
                 // For specific executions, check if we've reached the end of the ID list
                 if (offset >= specificExecutionIds.size()) {
+                    log.info("PROJECT_EXPORT: Processed all specific executions (${specificExecutionIds.size()} total)")
                     hasMoreData = false
                 }
             } else {
                 // For all executions, check if we got fewer results than batch size (last batch)
                 if (execsBatch.size() < batchSize) {
+                    log.info("PROJECT_EXPORT: Reached final batch (${execsBatch.size()} < ${batchSize})")
                     hasMoreData = false
                 }
             }
 
-            log.debug("PROJECT_EXPORT: Completed batch with ${execsBatch.size()} executions")
+            log.info("PROJECT_EXPORT: Completed batch with ${execsBatch.size()} executions (offset now: ${offset})")
         }
 
         log.info("PROJECT_EXPORT: Completed batched export of ${specificExecutionIds ? "specific" : "all"} executions")
