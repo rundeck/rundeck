@@ -151,7 +151,9 @@ function init() {
           data() {
             return {
               project: rundeckContext.projectName,
-              nodeFilterStore: new NodeFilterStore(),
+              nodeFilterStore: new NodeFilterStore({
+                filter: this.itemData.filter,
+              }),
             };
           },
           methods: {

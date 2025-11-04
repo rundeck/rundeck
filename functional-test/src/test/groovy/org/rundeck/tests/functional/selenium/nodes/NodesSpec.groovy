@@ -112,6 +112,22 @@ class NodesSpec extends SeleniumBase {
         nodesPage.expectLinkTextToExist("ssh-node")
     }
 
+    def "filter url parameter loads as node filter input"() {
+        when:
+        nodesPage.loadPath = NodesPage.projectNodesPathResolver(TEST_PROJECT) + "?filter=name:password-node"
+        nodesPage.go()
+        then: "node filter input is populated"
+        nodesPage.el(nodesPage.searchNodeInputBy).getDomProperty("value") == "name:password-node"
+        then: "nodes are filtered appropriately"
+        nodesPage.waitForNumberOfElementsToBeOne(nodesPage.nodeListTrBy)
+        then: "node name link is shown"
+        nodesPage.expectLinkTextToExist("password-node")
+        then: "tag links are shown"
+        nodesPage.expectLinkTextToExist("auth-method-password")
+        nodesPage.partialLinkTextIsPresent("rundeck")
+        nodesPage.expectLinkTextToExist("ssh-node")
+    }
+
     def "appropriate node attributes displayed when a node is expanded"() {
         given:
         nodesPage.setNodeInputText("name: password-node")
