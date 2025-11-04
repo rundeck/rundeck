@@ -25,7 +25,7 @@
                 </span>
 
                 <div>
-                    <a class="btn btn-default btn-sm" href="#output"
+                    <a class="btn btn-secondary btn-sm" href="#output"
                        data-bind="click: activeTab('output')"><g:message
                             code="button.action.view.log.output"/></a>
                 </div>

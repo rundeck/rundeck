@@ -20,7 +20,7 @@
             <div class="row">
                 <g:form action="saveProjectFile" method="post" params="${[project:params.project]}" useToken="true" onsubmit="" class="form">
                     <g:hiddenField name="filename" value="${filename}"/>
-                    <div class="col-xs-12">
+                    <div class="col-12">
                         <div class="card"  id="createform">
                             <div class="card-header">
                                 <h3 class="card-title">
@@ -41,7 +41,7 @@
                                 <textarea name="fileText" class="form-control code apply_ace" data-ace-autofocus='true' data-ace-session-mode="markdown" data-ace-height="500px" data-ace-control-soft-wrap="true">${fileText}</textarea>
                             </div>
                             <div class="card-footer">
-                                <g:submitButton name="cancel" value="${g.message(code: 'button.action.Cancel', default: 'Cancel')}" class="btn btn-default reset_page_confirm"/>
+                                <g:submitButton name="cancel" value="${g.message(code: 'button.action.Cancel', default: 'Cancel')}" class="btn btn-secondary reset_page_confirm"/>
                                 <g:submitButton name="save" value="${g.message(code: 'button.action.Save', default: 'Save')}" class="btn btn-cta reset_page_confirm"/>
                                 <g:if test="${displayConfig?.contains('none')}">
                                     <span class="text-warning text-right">

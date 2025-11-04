@@ -7,7 +7,7 @@
       >
         <div id="search" class="omnisearch-box">
           <div class="row">
-            <div class="col-xs-12">
+            <div class="col-12">
               <div class="omnisearch-search">
                 <div class="omnisearch-search--bar">
                   <ais-search-box
@@ -23,7 +23,7 @@
             </div>
           </div>
           <div class="row">
-            <div class="col-xs-12">
+            <div class="col-12">
               <div class="omnisearch-filter card">
                 <!-- <div class="omnisearch-filter--header" @click="toggleFilter()">
                 FILTER <font-awesome-icon :icon="[ 'fa', 'chevron-down' ]" class="chevron" :class="{ 'active': showFilter }" />
@@ -107,13 +107,13 @@
                             <a
                               :href="`https://online.rundeck.com/plugins/${item.post_slug}`"
                               target="_blank"
-                              class="btn btn-sm btn-default pull-right"
+                              class="btn btn-sm btn-secondary float-right"
                               >Docs</a
                             >
                             <!-- <a
                         :href="item.source_link"
                         target="_blank"
-                        class="btn btn-sm btn-default pull-right"
+                        class="btn btn-sm btn-secondary float-right"
                             >Source</a>-->
                           </div>
                         </div>

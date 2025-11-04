@@ -85,13 +85,13 @@
             <div class="col-sm-12">
                 <h3>
                     <g:message code="userController.page.profile.heading.userTokens.label"/>
-                    <a class="btn btn-default btn-xs"
+                    <a class="btn btn-secondary btn-sm"
                        data-toggle="modal"
                        href="#gentokenmodal">
                         <g:icon name="plus"/>
                     </a>
 
-                <span class="pull-right">
+                <span class="float-right">
                     <g:if test="${!tokenAdmin}">
 
                         <g:form controller="user" action="removeExpiredTokens" useToken="true">
@@ -153,7 +153,7 @@
                             <g:hiddenField name="tokenPagingMax" value="${params.max}"></g:hiddenField>
                             <g:hiddenField name="tokenPagingOffset" value="${params.offset}"></g:hiddenField>
                             <g:hiddenField name="login" value="${user.login}"/>
-                            <button type="button" class="btn btn-default" data-dismiss="modal"><g:message
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal"><g:message
                                     code="button.action.Cancel"/></button>
                             <input type="submit" class="btn btn-danger " value="Delete"
                                    name="${message(code: 'button.action.Delete')}"/>

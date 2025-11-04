@@ -42,7 +42,7 @@
         data-testid="activity-list-filter-button"
       ></activity-filter>
 
-      <div class="pull-right">
+      <div class="float-right">
         <span v-if="runningOpts.allowAutoRefresh" class="pr-2">
           <input
             id="auto-refresh"
@@ -65,11 +65,11 @@
               {{ $t("bulk.selected.count") }}
               <strong>{{ bulkSelectedIds.length }}</strong>
             </span>
-            <span class="btn btn-default btn-xs" @click="bulkEditSelectAll">
+            <span class="btn btn-secondary btn-sm" @click="bulkEditSelectAll">
               {{ $t("select.all") }}
             </span>
             <span
-              class="btn btn-default btn-xs"
+              class="btn btn-secondary btn-sm"
               @click="showBulkEditCleanSelections = true"
             >
               {{ $t("select.none") }}
@@ -85,7 +85,7 @@
             >
               {{ $t("delete.selected.executions") }}
             </btn>
-            <span class="btn btn-default btn-xs" @click="bulkEditMode = false">
+            <span class="btn btn-secondary btn-sm" @click="bulkEditMode = false">
               {{ $t("cancel.bulk.delete") }}
             </span>
           </span>
@@ -121,7 +121,7 @@
           </btn>
           <button
             type="submit"
-            class="btn btn-default"
+            class="btn btn-secondary"
             data-dismiss="modal"
             @click="bulkEditDeselectAll"
           >

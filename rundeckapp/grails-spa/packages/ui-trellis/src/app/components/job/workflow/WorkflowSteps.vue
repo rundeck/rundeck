@@ -104,7 +104,7 @@
                 </div>
 
                 <span
-                  class="btn btn-xs dragHandle"
+                  class="btn btn-sm dragHandle"
                   :title="$t('Workflow.dragToReorder')"
                 >
                   <i class="glyphicon glyphicon-resize-vertical" />

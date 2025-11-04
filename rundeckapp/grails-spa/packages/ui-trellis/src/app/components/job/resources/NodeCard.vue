@@ -41,11 +41,11 @@
             </li>
           </ul>
         </div>
-        <span v-if="allCount !== null" class="pull-right">
+        <span v-if="allCount !== null" class="float-right">
           <span class="tabs-sibling tabs-sibling-compact">
-            <div class="btn-group pull-right">
+            <div class="btn-group float-right">
               <button
-                class="btn btn-default btn-sm dropdown-toggle"
+                class="btn btn-secondary btn-sm dropdown-toggle"
                 data-toggle="dropdown"
                 data-testid="nc-actions-dropdown-toggle"
               >
@@ -137,7 +137,7 @@
           :class="{ active: !nodeFilterStore.filter }"
         >
           <div class="row">
-            <div class="col-xs-6">
+            <div class="col-6">
               <h5 class="column-title text-uppercase text-strong">
                 {{ $t("resource.metadata.entity.tags") }}
               </h5>
@@ -167,7 +167,7 @@
               </div>
             </div>
 
-            <div class="col-xs-6">
+            <div class="col-6">
               <h5 class="column-title text-uppercase text-strong">
                 {{ $t("filters") }}
               </h5>

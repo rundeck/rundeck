@@ -115,7 +115,7 @@
                   />
 
                   <span class="input-group-btn">
-                      <span class="btn btn-default"
+                      <span class="btn btn-secondary"
                             data-toggle="modal"
                             data-target="#groupChooseModal"
                             title="${message(code:"job.edit.groupPath.choose.text")}"
@@ -163,8 +163,8 @@
                                   data-ace-resize-max="30"
                       />
                   </div>
-                  <div class="tab-pane panel panel-default panel-tab-content" id="descpreview">
-                      <div class="panel-body" id="descpreview_content"></div>
+                  <div class="tab-pane card panel-tab-content" id="descpreview">
+                      <div class="card-body" id="descpreview_content"></div>
                   </div>
               </div>
               <g:hasErrors bean="${scheduledExecution}" field="description">

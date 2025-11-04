@@ -68,8 +68,8 @@
 <g:if test="${rundoctext}">
     <div class="row">
         <div class="col-sm-12">
-            <div id="rundoc" class="panel panel-default">
-                <div class="panel-body">
+            <div id="rundoc" class="card">
+                <div class="card-body">
                     <div class="markdeep">${rundoctext.replaceAll('\\Q[[run]]\\E', '<div id="inlinerun"></div>')}</div>
                     <g:javascript>
                         jQuery(function () {

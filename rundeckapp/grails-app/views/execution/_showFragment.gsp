@@ -22,7 +22,7 @@
 
 <g:if test="${inlineView}">
   <div class="card-header">
-    <div class="executionshow panel-heading-affix" data-affix="top" data-affix-padding-top="8" id="jobInfo_${execution.id}" >
+    <div class="executionshow card-header-affix" data-affix="top" data-affix-padding-top="8" id="jobInfo_${execution.id}" >
 
       <div class="row">
         <div class="col-xs-12 col-sm-6">
@@ -39,7 +39,7 @@
                       action="execute"
                       id="${scheduledExecution.extid}"
                       params="${[retryExecId: execution.id, project: execution.project]}"
-                      class="btn btn-default btn-xs"
+                      class="btn btn-secondary btn-sm"
                       data-bind="visible: completed() "
                       title="${g.message(code: 'execution.job.action.runAgain')}">
                 <i class="glyphicon glyphicon-play"></i>
@@ -53,7 +53,7 @@
                       controller="scheduledExecution"
                       action="createFromExecution"
                       params="${[executionId: execution.id, project: execution.project]}"
-                      class="btn btn-default btn-xs"
+                      class="btn btn-secondary btn-sm"
                       data-bind="visible: completed() "
                       title="${g.message(code: 'execution.action.saveAsJob', default: 'Save as Job')}">
                 <g:message code="execution.action.saveAsJob" default="Save as Job"/>
@@ -67,7 +67,7 @@
 
               <span data-bind="visible: !completed() " class="spacer">
                 <!-- ko if: !killRequested() || killStatusFailed() -->
-                <span class="btn btn-danger btn-xs" data-bind="click: killExecAction">
+                <span class="btn btn-danger btn-sm" data-bind="click: killExecAction">
                   <g:message code="button.action.kill.job"/>
                   <i class="glyphicon glyphicon-remove"></i>
                 </span>
@@ -126,11 +126,11 @@
         </div>
         <span class="flex-item-auto"></span>
 
-          <span class="btn-xs btn btn-simple btn-default pull-right" data-bind="click: logoutput().pauseLoading, if: logoutput().running() && !logoutput().paused()">
+          <span class="btn-sm btn btn-simple btn-secondary float-right" data-bind="click: logoutput().pauseLoading, if: logoutput().running() && !logoutput().paused()">
             Stop Loading
             <i class="glyphicon glyphicon-pause"></i>
           </span>
-          <span class="btn-xs btn btn-simple btn-default pull-right" data-bind="click: logoutput().resumeLoading, if: !logoutput().running() && logoutput().paused()">
+          <span class="btn-sm btn btn-simple btn-secondary float-right" data-bind="click: logoutput().resumeLoading, if: !logoutput().running() && logoutput().paused()">
             Resume Loading
             <i class="glyphicon glyphicon-download-alt"></i>
           </span>

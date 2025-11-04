@@ -68,7 +68,7 @@
     </div>
     <div class="row">
       <g:form action="saveProjectNodeSources" method="post" useToken="true" onsubmit="return configControl.checkForm();" class="form">
-        <div class="col-xs-12">
+        <div class="col-12">
           <div class="card"  id="createform">
             <div class="card-header">
               <h3 class="card-title">
@@ -154,7 +154,7 @@
               </div>
             </div>
                     <div class="card-footer">
-                        <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default reset_page_confirm"/>
+                        <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-secondary reset_page_confirm"/>
                         <g:submitButton name="save" value="${g.message(code:'button.action.Save',default:'Save')}" class="btn btn-cta reset_page_confirm"/>
                     </div>
                 </div>
@@ -183,7 +183,7 @@
                     </div>
 
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-sm btn-default" data-dismiss="modal"><g:message code="cancel" /></button>
+                        <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal"><g:message code="cancel" /></button>
                         <button type="submit" class="btn btn-sm btn-success obs-deletenodesource-confirm">
                             Delete
                         </button>

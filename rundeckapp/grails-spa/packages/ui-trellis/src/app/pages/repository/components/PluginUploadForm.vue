@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="col-xs-12">
+    <div class="col-12">
       <div class="input-group input-group-lg">
         <span id="sizing-addon1" class="input-group-addon">Choose a file</span>
 

@@ -158,7 +158,7 @@
       <btn type="primary" @click="doSearch">
         {{ $t("job.filter.apply.button.title") }}
       </btn>
-      <btn type="success" class="pull-right" @click="doSave">
+      <btn type="success" class="float-right" @click="doSave">
         <i class="glyphicon glyphicon-plus"></i>
         {{ $t("job.filter.save.button.title") }}
       </btn>

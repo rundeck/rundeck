@@ -23,7 +23,7 @@
           </template>
         </plugin-config>
         <div v-else class="row">
-          <div class="col-xs-12">
+          <div class="col-12">
             <job-ref-step :step="step.errorhandler"></job-ref-step>
           </div>
         </div>
@@ -39,7 +39,7 @@
       </span>
     </div>
     <div class="btn-group" role="group" aria-label="item controls">
-      <button data-testid="remove-handler-button" class="btn btn-xs btn-default" type="button" @click.stop="$emit('removeHandler', step)">
+      <button data-testid="remove-handler-button" class="btn btn-sm btn-secondary" type="button" @click.stop="$emit('removeHandler', step)">
         <i class="glyphicon glyphicon-remove"></i>
       </button>
     </div>

@@ -3,10 +3,10 @@
     <details v-if="extraDescription" class="more-info" :class="extendedCss">
       <summary>
         <span :class="descriptionCss">{{ shortDescription }}</span>
-        <span class="more-indicator-verbiage btn-link btn-xs"
+        <span class="more-indicator-verbiage btn-link btn-sm"
           >More &hellip;
         </span>
-        <span class="less-indicator-verbiage btn-link btn-xs">Less </span>
+        <span class="less-indicator-verbiage btn-link btn-sm">Less </span>
       </summary>
       <div class="more-info-content">
         <VMarkdownView

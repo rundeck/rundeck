@@ -40,7 +40,7 @@
         </div>
     </div>
     <div class="row">
-      <div class="col-xs-12">
+      <div class="col-12">
         <g:if test="${schedulerThreadRatio && schedulerThreadRatio>=1.0}">
           <div class="alert alert-warning alert-dismissable">
             <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
@@ -63,7 +63,7 @@
           <div class="card-content">
             <h4 class="card-title">
               <g:message code="gui.menu.SystemInfo" />
-              <div class="btn-group pull-right">
+              <div class="btn-group float-right">
                 <g:link uri='/metrics/metrics?pretty=true' class="btn btn-sm btn-info" title="View JSON metrics data" target="_blank">
                   Metrics (json)
                   <i class="glyphicon glyphicon-file"></i>
@@ -92,7 +92,7 @@
         <g:set var="colstart" value="${(int)(colnum)*datapercol}"/>
         <g:set var="colmax" value="${(int)(colnum+1)*datapercol-1}"/>
         <g:set var="coldata" value="${systemInfo[colstart..(colmax<systemInfo.size?colmax:systemInfo.size-1)]}"/>
-        <div class="col-xs-6">
+        <div class="col-6">
           <g:each in="${coldata}" var="dataset">
             <g:each in="${dataset.keySet().sort()}" var="dataname">
               <g:if test="${dataset[dataname] instanceof Map}">
@@ -135,7 +135,7 @@
       </g:each>
     </div>
     <div class="row">
-      <div class="col-xs-6">
+      <div class="col-6">
         <g:set var="repoEnabled" value="${cfg.getString(config: "feature.repository.enabled") in [true,'true']}"/>
 
         <div class="card">

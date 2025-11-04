@@ -51,12 +51,12 @@
                           model="[scheduledExecution: scheduledExecution,
                                   hideTitle         : false,
                                   dropdownClass     : 'dropdown-menu-right',
-                                  btnClass          : 'btn btn-default btn-transparent btn-sm']"/>
+                                  btnClass          : 'btn btn-secondary btn-transparent btn-sm']"/>
             </div>
 
             <g:if test="${readAccess}">
                 <section class="section-space">
-                    <a href="#job-definition-modal" data-toggle="modal" class="btn btn-default btn-transparent btn-simple btn-sm ">
+                    <a href="#job-definition-modal" data-toggle="modal" class="btn btn-secondary btn-transparent btn-simple btn-sm ">
 
                         <g:if test="${rundoctext}">
                             <i class="glyphicon glyphicon-book"></i>
@@ -121,7 +121,7 @@
     </g:if>
     <g:if test="${canRunJob}">
         <div class="row">
-            <div class="col-xs-12">
+            <div class="col-12">
                 <div class="card">
                     <div class="card-content">
 
@@ -140,7 +140,7 @@
         </div>
     </g:if>
     <div class="row" id="_job_main_placeholder">
-        <div class="col-xs-12">
+        <div class="col-12">
             <g:set var="hasEventReadAuth" value="${auth.resourceAllowedTest(project:scheduledExecution.project, action:AuthConstants.ACTION_READ, kind: AuthConstants.TYPE_EVENT)}"/>
 
             <div class="card" id="activity_section">

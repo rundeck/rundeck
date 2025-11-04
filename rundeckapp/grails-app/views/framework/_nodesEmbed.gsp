@@ -22,7 +22,7 @@
     <g:set var="max" value="${params.int('maxShown')}"/>
 </g:if>
 <g:if test="${max>0 && nodes.size()>max}">
-<a href="#embednodeset" class="btn btn-default " data-toggle="collapse">Show all <g:enc>${nodes.size()}</g:enc> Nodes
+<a href="#embednodeset" class="btn btn-secondary " data-toggle="collapse">Show all <g:enc>${nodes.size()}</g:enc> Nodes
     <i class="auto-caret"></i>
 </a>
 </g:if>
@@ -41,7 +41,7 @@
             <a id="${enc(attr:nkey)}_key"
                 tabindex="0"
                 role="button"
-                  class="${i%2==1?'alternateRow':''} node_entry ${nodedata.islocal?'server':''} node_ident textbtn-default textbtn-plain ${nodeIconStatusColorCss(node:node)}"
+                  class="${i%2==1?'alternateRow':''} node_entry ${nodedata.islocal?'server':''} node_ident textbtn-secondary textbtn-plain ${nodeIconStatusColorCss(node:node)}"
                   data-toggle="popover"
                   data-placement="bottom"
                   data-trigger="focus"

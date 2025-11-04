@@ -47,7 +47,7 @@
               <div>
                 <a
                   v-if="!curHook.id"
-                  class="btn btn-md btn-default"
+                  class="btn btn-md btn-secondary"
                   @click="handleCancel"
                   >{{ $t("message_cancel") }}</a
                 >
@@ -107,7 +107,7 @@
                       </div>
                       <div v-if="showRegenButton">
                         <button
-                          class="btn btn-sm btn-default"
+                          class="btn btn-sm btn-secondary"
                           @click="setRegenerate"
                         >
                           Regenerate
@@ -187,11 +187,11 @@
                   <div class="form-group">
                     <div class="btn-group">
                       <button
-                        class="btn btn-default dropdown-toggle"
+                        class="btn btn-secondary dropdown-toggle"
                         data-toggle="dropdown"
                         aria-haspopup="true"
                         :class="{
-                          'btn-default': !curHook.eventPlugin,
+                          'btn-secondary': !curHook.eventPlugin,
                           'btn-muted': curHook.eventPlugin,
                         }"
                         aria-expanded="false"

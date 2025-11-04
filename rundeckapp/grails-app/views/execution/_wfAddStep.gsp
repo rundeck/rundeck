@@ -14,12 +14,12 @@
   - limitations under the License.
   --}%
 <%@ page import="grails.util.Environment; grails.converters.JSON" %>
-<div class="panel-heading">
+<div class="card-header">
     <span class="h3 ">
         <g:message code="${addMessage}"/>
     </span>
 </div>
-<div class=" add_step_buttons panel-body">
+<div class=" add_step_buttons card-body">
 <div class="row">
     <div class="col-sm-12">
         <g:if test="${descriptionMessage}">
@@ -227,6 +227,6 @@
     </g:javascript>
 </div>
 
-<div class="panel-footer">
-    <span class="btn btn-default btn-sm cancel_add_step_type" ><g:message code="button.action.Cancel" /></span>
+<div class="card-footer">
+    <span class="btn btn-secondary btn-sm cancel_add_step_type" ><g:message code="button.action.Cancel" /></span>
 </div>

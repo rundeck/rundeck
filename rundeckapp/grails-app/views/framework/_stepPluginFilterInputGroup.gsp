@@ -21,7 +21,7 @@
 
 
 <span class="input-group-btn">
-    <a class="btn btn-default"
+    <a class="btn btn-secondary"
        tabindex="0"
        role="button"
        data-toggle='popover'
@@ -32,7 +32,7 @@
        data-container="body">
         <i class="glyphicon glyphicon-question-sign"></i>
     </a>
-    <a class="btn btn-default" data-bind="click: filterStepDescriptions" href="#">
+    <a class="btn btn-secondary" data-bind="click: filterStepDescriptions" href="#">
         <g:message code="search" />
     </a>
 </span>

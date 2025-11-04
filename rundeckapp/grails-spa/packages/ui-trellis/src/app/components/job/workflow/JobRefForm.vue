@@ -74,7 +74,7 @@
           <div class="col-sm-2">
             <span
               :id="`jobChooseBtn${rkey}`"
-              class="btn btn-sm btn-default act_choose_job"
+              class="btn btn-sm btn-secondary act_choose_job"
               :title="$t('select.an.existing.job.to.use')"
               @click="openModal"
             >
@@ -341,7 +341,7 @@
               <template v-if="filterLoaded">
                 <button
                   type="button"
-                  class="pull-right btn btn-sm refresh_nodes"
+                  class="float-right btn btn-sm refresh_nodes"
                   :title="$t('click.to.refresh')"
                   @click="triggerFetchNodes"
                 >

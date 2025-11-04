@@ -14,7 +14,7 @@
 
             <p>
               {{ $t("unauthorized.status.help.4") }}
-              <button class="btn btn-sm btn-default" type="submit">
+              <button class="btn btn-sm btn-secondary" type="submit">
                 {{ $t("acl.config.link.title") }}
               </button>
             </p>
@@ -34,7 +34,7 @@
 
           <p>
             {{ $t("unauthorized.status.help.5") }}
-            <button class="btn btn-sm btn-default" type="submit">
+            <button class="btn btn-sm btn-secondary" type="submit">
               {{ $t("acl.config.system.link.title") }}
             </button>
           </p>

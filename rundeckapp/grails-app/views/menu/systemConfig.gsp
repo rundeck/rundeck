@@ -44,7 +44,7 @@
     <div class="row">
       <g:set var="flatConfig" value="${grailsApplication.config.flatten()}"/>
       <g:set var="fwkProps" value="${rundeckFramework.propertyLookup.propertiesMap}"/>
-      <div class="col-xs-12">
+      <div class="col-12">
         <div class="card">
           <div class="card-header">
             <h3 class="card-title"><g:message code="gui.menu.SystemConfig" /></h3>

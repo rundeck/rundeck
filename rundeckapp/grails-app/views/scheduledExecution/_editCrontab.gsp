@@ -76,7 +76,7 @@ jQuery(window).load(function(){
 <div class="tab-content">
 <div class="tab-pane ${!useCrontabString?'active':''}" id="cronsimple">
 <div class="form-inline crontab tabtarget" >
-    <div class="panel-body">
+    <div class="card-body">
     <div class="col-sm-4" id="hourTab">
         <div>
             <g:set var="hourString" value="${rundeck.ScheduledExecution.zeroPaddedString(2, scheduledExecution?.hour)}"/>
@@ -150,7 +150,7 @@ jQuery(window).load(function(){
 <div class="tab-pane ${useCrontabString ? 'active' : ''}" id="cronstrtab">
 <div class="crontab tabtarget"  >
 
-    <div class="panel-body">
+    <div class="card-body">
     <div class="container">
     <div class="row">
         <div class="col-sm-4">

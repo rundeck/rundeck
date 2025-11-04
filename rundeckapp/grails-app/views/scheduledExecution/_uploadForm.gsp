@@ -152,7 +152,7 @@
     </g:if>
   </g:if>
   <div class="row">
-    <div class="col-xs-12">
+    <div class="col-12">
       <div class="card">
         <g:uploadForm method="POST"
                       useToken="true"
@@ -171,7 +171,7 @@
             %{--</g:if>--}%
             %{--<g:else>--}%
                 %{--<label for="xmlBatch">--}%
-                    %{--<span class="btn btn-default"--}%
+                    %{--<span class="btn btn-secondary"--}%
                           %{--onclick="toggleDisclosure('uploadFormDiv', 'uploadFormDiv-toggle', '${resource(dir:"images",file:"icon-tiny-disclosure.png")}', '${resource(dir:"images",file:"icon-tiny-disclosure-open.png")}')">--}%
                         %{--Upload File--}%
                         %{--<img src="${resource(dir: 'images', file: 'icon-tiny-disclosure' + (errjobs?.size() > 0 ? '-open' : '') + '.png')}"--}%
@@ -243,7 +243,7 @@
           </div>
           <div class="card-footer">
             <div id="uploadFormButtons">
-              <g:actionSubmit id="createFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
+              <g:actionSubmit id="createFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-secondary"/>
               <g:submitButton name="Upload" id="uploadFormUpload"
                               value="${g.message(code:'button.action.Upload',default:'Upload')}"
                               onclick="['uploadFormButtons','schedUploadSpinner'].each(Element.toggle)"

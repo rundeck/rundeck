@@ -27,7 +27,7 @@
 <div id="layoutBody">
   <div class="container-fluid">
     <div class="row">
-        <div class="col-xs-12">
+        <div class="col-12">
           <div class="card">
             <g:form action="update" class="form form-horizontal" useToken="true">
               <div class="card-header">
@@ -39,7 +39,7 @@
               </div>
               <div class="card-footer">
                 <hr>
-                <g:actionSubmit id="editFormCancelButton" action="Cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
+                <g:actionSubmit id="editFormCancelButton" action="Cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-secondary"/>
                 <g:submitButton name="Update" value="${g.message(code:'button.action.Update',default:'Update')}" class="btn btn-cta"/>
               </div>
             </g:form>

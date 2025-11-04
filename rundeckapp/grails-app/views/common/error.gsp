@@ -27,11 +27,11 @@
 
 <div class="row row-space">
 <div class="col-sm-6 col-sm-offset-3">
-    <div class="panel panel-default">
-    <div class="panel-heading">
-    <h2 class="panel-title "><g:enc>${pageTitle}</g:enc></h2>
+    <div class="card">
+    <div class="card-header">
+    <h2 class="card-title "><g:enc>${pageTitle}</g:enc></h2>
     </div>
-    <div class="panel-body text-danger">
+    <div class="card-body text-danger">
         <g:render template="/common/messagesText"/>
     </div>
     </div>

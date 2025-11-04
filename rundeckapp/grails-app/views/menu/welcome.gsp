@@ -40,7 +40,7 @@ Time: 12:54 PM
 <div id="layoutBody">
   <div class="container-fluid">
     <div class="row">
-      <div class="col-xs-12">
+      <div class="col-12">
         <div class="card">
           <div class="card-header">
             <div class="vue-ui-socket">

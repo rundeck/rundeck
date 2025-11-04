@@ -20,7 +20,7 @@
         <button
           v-if="!noCancel"
           type="submit"
-          class="btn btn-default"
+          class="btn btn-secondary"
           data-dismiss="modal"
         >
           {{ cancelCode ? $t(cancelCode) : $t("cancel") }}
@@ -32,7 +32,7 @@
             :key="`${modalId}_button_${index}`"
             class="btn"
             data-test="extra-buttons"
-            :class="[button.css || 'btn-default']"
+            :class="[button.css || 'btn-secondary']"
             @click="emitButtonEvent(button)"
           >
             {{ getText(button, "button") }}
@@ -44,7 +44,7 @@
               :key="`${modalId}_link_${index}`"
               data-test="extra-links"
               class="btn"
-              :class="[link.css ? link.css : 'btn-default']"
+              :class="[link.css ? link.css : 'btn-secondary']"
               :href="link.href || '#'"
               @click="emitLinkEvent(link)"
             >

@@ -17,7 +17,7 @@
 <%@ page import="org.rundeck.core.auth.AuthConstants" %>
 
 <div class="row">
-<div class="col-xs-12">
+<div class="col-12">
   <g:form controller="project" action="importArchive" params="[project: params.project ?: request.project]" useToken="true" enctype="multipart/form-data" class="form">
     <div class="card" id="importform">
       <div class="card-content">
@@ -236,7 +236,7 @@
       </div>
       <div class="card-footer">
         <div id="uploadFormButtons">
-          <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default btn-sm"/>
+          <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-secondary btn-sm"/>
           <g:actionSubmit action="importArchive" value="${g.message(code:'button.action.Import',default:'Import')}" id="uploadFormUpload" onclick="['uploadFormButtons','importUploadSpinner'].each(Element.toggle)" class="btn btn-cta btn-sm"/>
         </div>
         <div id="importUploadSpinner" class="spinner block" style="display:none;">

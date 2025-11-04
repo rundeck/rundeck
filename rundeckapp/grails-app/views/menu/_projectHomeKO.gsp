@@ -18,7 +18,7 @@
 <div data-bind="attr: { 'data-project': projectName }, ">
     <!-- ko if: project.showMotd() -->
     <div class="row">
-      <div class="col-xs-12">
+      <div class="col-12">
         <div class="alert alert-info">
           <span data-bind="html: project.readme().motdHTML()"></span>          
         </div>
@@ -33,7 +33,7 @@
     </div>
     <!-- /ko -->
     <div class="row">
-        <div class="col-xs-12">
+        <div class="col-12">
           <!--
           <div class="card">
             <div class="card-content">
@@ -53,25 +53,25 @@
                 <div class="col-xs-12 col-md-4">
                   <div data-bind="if: project">
 
-                          <div class="pull-right">
+                          <div class="float-right">
                               <span data-bind="if: !project.loaded()">
                                   <g:img class="loading-spinner" file="spinner-gray.gif" width="24px" height="24px"/>
                               </span>
                               <span data-bind="if: project.auth().admin">
                                   <a href="${g.createLink(controller: "framework", action: "editProject", params: [project: '<$>'])}"
                                      data-bind="urlPathParam: projectName"
-                                     class="btn btn-default btn-sm">
+                                     class="btn btn-secondary btn-sm">
                                       <g:message code="gui.menu.Admin"/>
                                   </a>
                               </span>
 
                               <div class="btn-group " data-bind="if: project.auth().jobCreate">
 
-                                  <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                                  <button type="button" class="btn btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown">
                                       <g:message code="create.job.button.label"/>
                                       <span class="caret"></span>
                                   </button>
-                                  <ul class="dropdown-menu pull-right" role="menu">
+                                  <ul class="dropdown-menu float-right" role="menu">
                                       <li><a href="${g.createLink(
                                               controller: "scheduledExecution",
                                               action: "create",
@@ -112,7 +112,7 @@
             </div>
           </div>
           <div class="row">
-            <div class="col-xs-12">
+            <div class="col-12">
               <div class="card">
                 <div class="card-content">
                       <span data-bind="if: project">

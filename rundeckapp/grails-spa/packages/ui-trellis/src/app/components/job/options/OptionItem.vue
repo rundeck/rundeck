@@ -35,7 +35,7 @@
       <option-view :option="option" :editable="editable" />
     </span>
     <template v-if="editable">
-      <span class="btn-group pull-right">
+      <span class="btn-group float-right">
         <btn
           size="xs"
           @click="$emit('edit', option)"

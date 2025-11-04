@@ -28,9 +28,9 @@
     def CUR_YEAR = gcal.get(java.util.GregorianCalendar.YEAR)
 %>
     <div id="extDateFilters"
-        class="panel panel-default"
+        class="card"
         style="${query.recentFilter!='-'  ? 'display:none;' : ''}">
-        <div class="panel-body">
+        <div class="card-body">
         <table class="table  table-condensed table-hover" style="border:0">
         <g:if test="${!hidestart}">
             <div>

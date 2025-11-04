@@ -32,7 +32,7 @@
             <span class="input-group-btn">
               <span
                 id="groupChooseModalBtn"
-                class="btn btn-default"
+                class="btn btn-secondary"
                 data-toggle="modal"
                 data-target="#groupChooseModal"
                 :title="$t('job.edit.groupPath.choose.text')"
@@ -93,12 +93,12 @@
             </div>
             <div
               id="descpreview"
-              class="tab-pane panel panel-default panel-tab-content"
+              class="tab-pane card panel-tab-content"
             >
               <div
                 v-if="preview"
                 id="descpreview_content"
-                class="panel-body"
+                class="card-body"
                 v-html="preview"
               ></div>
             </div>

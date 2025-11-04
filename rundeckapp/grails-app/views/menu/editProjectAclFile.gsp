@@ -64,7 +64,7 @@
               params="${[project: params.project, id: id]}"
               useToken="true"
               class="form-horizontal">
-          <div class="col-xs-12">
+          <div class="col-12">
               <g:render template="editAclFile" model="${[
                       backHref                : g.createLink(controller: 'menu', action: 'projectAcls',params:[project:project]),
                       title                   : g.message(code: 'edit.project.acl.file'),

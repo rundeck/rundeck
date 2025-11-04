@@ -84,7 +84,7 @@
                             <g:else>
                                 <g:hiddenField name="token" value="${token.token}"></g:hiddenField>
                             </g:else>
-                            <button type="button" class="btn btn-default" data-dismiss="modal"><g:message
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal"><g:message
                                     code="button.action.Cancel"/></button>
                             <input type="submit" class="btn btn-danger yes" value="Delete" data-token-id="${token.uuid}"
                                    name="${message(code: 'button.action.Delete')}">

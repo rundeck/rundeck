@@ -15,7 +15,7 @@
 
   > img,
   a > img {
-    @include img-responsive;
+    @include img-fluid;
     margin-right: auto;
     margin-left: auto;
   }

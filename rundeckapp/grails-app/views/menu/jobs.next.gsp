@@ -268,7 +268,7 @@
                 <div class="alert alert-danger" id="modalErrorContent"></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal"><g:message code="ok" default="OK"/></button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal"><g:message code="ok" default="OK"/></button>
             </div>
         </div>
     </div>

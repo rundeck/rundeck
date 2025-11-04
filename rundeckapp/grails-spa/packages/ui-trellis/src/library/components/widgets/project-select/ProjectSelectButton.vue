@@ -1,6 +1,6 @@
 <template>
   <button
-    class="btn btn-default btn-simple btn-transparent project-select-btn"
+    class="btn btn-secondary btn-simple btn-transparent project-select-btn"
     aria-describedby="projectPicker"
     aria-controls="projectPicker"
     :aria-expanded="open"

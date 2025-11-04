@@ -19,13 +19,13 @@
     <div class="card-header">
         <h3 class="card-title">
             <g:if test="${backHref}">
-                <a href="${backHref}" class="btn btn-xs btn-simple"
+                <a href="${backHref}" class="btn btn-sm btn-simple"
                    title="${titleText ?: g.message(code: 'navigation.back.title')}"><g:icon name="arrow-left"/></a>
             </g:if>
             ${title}
-            <div class="buttons pull-right">
+            <div class="buttons float-right">
               <div class="dropdown">
-                  <bs:dropdownToggle id="aclHelp" css="btn btn-default btn-sm">Help</bs:dropdownToggle>
+                  <bs:dropdownToggle id="aclHelp" css="btn btn-secondary btn-sm">Help</bs:dropdownToggle>
 
                   <bs:dropdown labelId="aclHelp" css="dropdown-menu-right">
                       <bs:menuitem
@@ -132,7 +132,7 @@
 
     <div class="card-footer">
         <g:submitButton name="cancel" value="${g.message(code: 'button.action.Cancel', default: 'Cancel')}"
-                        class="btn btn-default reset_page_confirm"/>
+                        class="btn btn-secondary reset_page_confirm"/>
         <g:submitButton name="save" value="${g.message(code: 'button.action.Save', default: 'Save')}"
                         class="btn btn-cta reset_page_confirm"/>
     </div>

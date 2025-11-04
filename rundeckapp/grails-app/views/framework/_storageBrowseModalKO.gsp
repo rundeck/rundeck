@@ -30,7 +30,7 @@
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn btn-sm btn-default" data-dismiss="modal"><g:message code="cancel" /></button>
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal"><g:message code="cancel" /></button>
                 <button type="button" class="btn btn-sm btn-success obs-storagebrowse-select"
                         data-bind="css: selectedPath()?'active':'disabled' "
                         data-dismiss="modal">

@@ -1,6 +1,6 @@
 <template>
   <div class="row">
-    <div class="col-xs-12">
+    <div class="col-12">
       <div class="card">
         <div class="card-content">
           <a class="h4" :href="`${rdBase}project/${project.name}/activity`">

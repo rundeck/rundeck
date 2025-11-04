@@ -3,7 +3,7 @@
     <div class="service-header">
       <a style="display: block" @click="toggleVisiblity">
         <h3 class="service-title">{{ service.service }}</h3>
-        <div class="visibility-toggle pull-right">
+        <div class="visibility-toggle float-right">
           <i v-show="visible" class="fas fa-sort-up fa-2x" title="Hide"></i>
           <i v-show="!visible" class="fas fa-sort-down fa-2x" title="Show"></i>
         </div>

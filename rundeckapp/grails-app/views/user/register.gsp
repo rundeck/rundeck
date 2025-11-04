@@ -29,18 +29,18 @@
     <div class="col-sm-offset-1 col-sm-10">
         <g:form action="store" class="form form-horizontal" useToken="true">
             <div class="panel panel-primary">
-                <div class="panel-heading">
-                    <h3 class="panel-title"><g:message code="userController.page.create.title" /></h3>
+                <div class="card-header">
+                    <h3 class="card-title"><g:message code="userController.page.create.title" /></h3>
                 </div>
 
-                <div class="panel-body">
+                <div class="card-body">
                     <g:render template="/common/messages"/>
                     <tmpl:edit user="${user}"/>
                 </div>
 
-                <div class="panel-footer">
+                <div class="card-footer">
 
-                    <g:actionSubmit id="editFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
+                    <g:actionSubmit id="editFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-secondary"/>
                     <g:submitButton name="${g.message(code:'button.action.Create',default:'Create')}" class="btn btn-primary"/>
 
                 </div>

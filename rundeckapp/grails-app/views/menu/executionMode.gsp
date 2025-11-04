@@ -44,7 +44,7 @@
         </div>
     </div>
     <div class="row">
-      <div class="col-xs-12">
+      <div class="col-12">
         <div class="card">
           <g:form class="form-horizontal" controller="execution" action="executionMode" method="POST" useToken="true">
           <div class="card-header">
@@ -78,14 +78,14 @@
                 </p>
               </div>
               <g:ifExecutionMode>
-              <div class="col-xs-12">
+              <div class="col-12">
                 <div class="alert alert-info">
                   <span><g:message code="action.executionMode.set.passive.help"/></span>
                 </div>
               </div>
               </g:ifExecutionMode>
               <g:ifExecutionMode passive="true">
-                <div class="col-xs-12">
+                <div class="col-12">
                   <div class="alert alert-info">
                     <span><g:message code="action.executionMode.set.active.help"/></span>
                   </div>
@@ -95,7 +95,7 @@
           </div>
           <div class="card-footer">
             <hr style="display:block;width:100%;">
-            <g:link action="index" controller="menu" class="btn btn-default " name="cancel">
+            <g:link action="index" controller="menu" class="btn btn-secondary " name="cancel">
               <g:message code="cancel"/>
             </g:link>
             <g:set var="authAction" value="${g.executionMode(active: true) ? AuthConstants.ACTION_DISABLE_EXECUTIONS : AuthConstants.ACTION_ENABLE_EXECUTIONS}"/>

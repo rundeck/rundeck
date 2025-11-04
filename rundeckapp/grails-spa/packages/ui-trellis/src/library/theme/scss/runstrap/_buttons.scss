@@ -86,7 +86,7 @@ a.btn {
 // Alternate buttons
 // --------------------------------------------------
 
-.btn-default {
+.btn-secondary {
   @include button-variant(
     --font-color,
     --font-fill-color,
@@ -254,7 +254,7 @@ a.btn {
     $btn-border-radius-small
   );
 }
-.btn-xs {
+.btn-sm {
   @include button-size(
     $padding-xs-vertical,
     $padding-xs-horizontal,
@@ -286,7 +286,7 @@ input[type="button"] {
   }
 }
 
-.btn.btn-xs {
+.btn.btn-sm {
   line-height: var(--line-height-xs);
 }
 .btn-info-hollow.autohilite {
@@ -294,7 +294,7 @@ input[type="button"] {
   background-color: var(--default-color);
   border-color: var(--default-states-color);
   box-shadow: var(--button-box-shadow);
-  & + .btn.btn-danger.btn-xs {
+  & + .btn.btn-danger.btn-sm {
     line-height: var(--line-height-md);
     border: 1px solid var(--danger-color);
   }

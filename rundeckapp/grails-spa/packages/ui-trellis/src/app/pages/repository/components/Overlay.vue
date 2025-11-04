@@ -10,7 +10,7 @@
     </div>
     <div v-if="errors && errors.length" v-show="errors" class="errors">
       <div>
-        <a class="btn btn-default" @click="closeOverlay">Close</a>
+        <a class="btn btn-secondary" @click="closeOverlay">Close</a>
       </div>
       <div class="error-list">
         <h3 v-html="errors.code"></h3>

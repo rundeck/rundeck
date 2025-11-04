@@ -40,8 +40,8 @@
             </span>
         </g:if>
         <g:if test="${hasDeleteAuth || hasEditAuth}">
-            <span class="dropdown pull-right" style="margin-left:1em;">
-                <bs:dropdownToggle css="btn btn-sm btn-default"/>
+            <span class="dropdown float-right" style="margin-left:1em;">
+                <bs:dropdownToggle css="btn btn-sm btn-secondary"/>
                 <bs:dropdown>
                     <bs:menuitem
                             shown="${hasEditAuth}"
@@ -63,7 +63,7 @@
             </span>
         </g:if>
         <g:if test="${hasEditAuth}">
-            <a href="${editHref}" class=" btn btn-default btn-sm pull-right" data-bind="urlPathParam: id" title="Edit">
+            <a href="${editHref}" class=" btn btn-secondary btn-sm float-right" data-bind="urlPathParam: id" title="Edit">
               <g:icon name="edit"/>
               <g:message code="edit"/>
             </a>

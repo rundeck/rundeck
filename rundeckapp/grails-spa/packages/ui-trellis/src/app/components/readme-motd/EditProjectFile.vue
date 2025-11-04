@@ -15,7 +15,7 @@
       </div>
       <div class="container-fluid">
         <div class="row">
-          <div class="col-xs-12">
+          <div class="col-12">
             <div id="createform" class="card">
               <div class="card-header">
                 <h3 class="card-title">
@@ -58,7 +58,7 @@
               <div class="card-footer">
                 <button
                   type="button"
-                  class="btn btn-default reset_page_confirm"
+                  class="btn btn-secondary reset_page_confirm"
                   data-test-id="cancel"
                   @click="createProjectHomeLink"
                 >

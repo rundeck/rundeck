@@ -1,6 +1,6 @@
 <template>
   <li id="appTour">
-    <!-- <a class="btn btn-xs" @click="openTourSelectorModal">
+    <!-- <a class="btn btn-sm" @click="openTourSelectorModal">
       Tours
     </a> -->
     <section>
@@ -11,8 +11,8 @@
         append-to-body
       >
         <div v-for="(tourLoader, tIndex) in tours" :key="tIndex">
-          <div class="panel panel-default" style="padding-bottom: 1px">
-            <div class="panel-heading">
+          <div class="card" style="padding-bottom: 1px">
+            <div class="card-header">
               <strong>{{ tourLoader.loader }}</strong>
             </div>
             <div class="list-group">

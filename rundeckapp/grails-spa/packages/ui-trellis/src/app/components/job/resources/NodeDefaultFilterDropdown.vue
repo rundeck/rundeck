@@ -3,7 +3,7 @@
     <li>
       <dropdown>
         <a
-          class="nodefilterlink btn btn-default btn-xs"
+          class="nodefilterlink btn btn-secondary btn-sm"
           @click.prevent="saveFilter({ filter: '.*' })"
         >
           {{ $t("all.nodes") }} {{ nodeSummary ? nodeSummary.totalCount! : 0 }}
@@ -33,7 +33,7 @@
     <li v-for="i in nodeSummary.filters">
       <dropdown>
         <a
-          class="nodefilterlink btn btn-default btn-xs"
+          class="nodefilterlink btn btn-secondary btn-sm"
           :data-node-filter-name="i.filterName"
           :data-node-filter="i.filter"
           :title="i.filter"

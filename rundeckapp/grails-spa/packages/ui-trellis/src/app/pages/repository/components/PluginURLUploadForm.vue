@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="col-xs-12">
+    <div class="col-12">
       <div class="input-group input-group-lg">
         <span class="input-group-addon">Plugin URL</span>
         <input

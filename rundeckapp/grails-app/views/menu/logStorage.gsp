@@ -167,7 +167,7 @@
                               <div data-bind="if: incompleteCount()>0">
 
                                   <div class="btn-group">
-                                      <button class="btn btn-default btn-sm"
+                                      <button class="btn btn-secondary btn-sm"
                                               data-bind="click: resumeAllIncomplete">
                                           <g:message code="menu.logStorage.button.resume.incomplete.log.storage.uploads"/>
                                           <g:icon name="play"/>
@@ -187,7 +187,7 @@
 
 
                   <div class="btn-group">
-                      <button class="btn btn-default btn-sm"
+                      <button class="btn btn-secondary btn-sm"
                               data-bind="click: loadIncomplete, attr: { disabled: incompleteCount()<1 && queuedCount()<1 }">
                           <g:message code="menu.logStorage.button.list.incomplete.log.data.storage" />
                       </button>
@@ -206,11 +206,11 @@
                               <th colspan="4" class="text-strong table-footer text-small">
 
                                   <div class="btn-group">
-                                      <button class="btn btn-default btn-xs"
+                                      <button class="btn btn-secondary btn-sm"
                                               data-bind="click: incompletePageBackward, attr: {disabled: !hasIncompletePageBackward()}">
                                           <g:message code="prev.page" />
                                       </button>
-                                      <button class="btn btn-default btn-xs"
+                                      <button class="btn btn-secondary btn-sm"
                                               data-bind="click: incompletePageForward, attr: {disabled: !hasIncompletePageForward()}">
                                           <g:message code="next.page" />
                                       </button>
@@ -270,13 +270,13 @@
                                   <span data-bind="if: !queued()">
                                       <div class="btn-group">
 
-                                          <button class="btn btn-default btn-xs"
+                                          <button class="btn btn-secondary btn-sm"
                                                   data-bind="click: $root.resumeSingleIncomplete">
                                               <g:message code="menu.logStorage.button.requeue" />
                                               <g:icon name="play"/>
                                           </button>
 
-                                          <button class="btn btn-warning btn-xs"
+                                          <button class="btn btn-warning btn-sm"
                                                   data-bind="click: $root.cleanupSingleIncomplete">
                                               <g:message code="menu.logStorage.button.remove" />
                                               <g:icon name="remove"/>

@@ -186,11 +186,11 @@
                             <!-- /ko -->
 
                         <!-- ko if: isCherrypickVisible -->
-                            <span class="btn btn-xs btn-simple  btn-hover selectall" data-bind="click: selectAllNodes">
+                            <span class="btn btn-sm btn-simple  btn-hover selectall" data-bind="click: selectAllNodes">
                                 <g:icon name="check"/>
                                 <g:message code="select.all" />
                             </span>
-                            <span class="btn btn-xs btn-simple  btn-hover selectnone"  data-bind="click: selectNoNodes">
+                            <span class="btn btn-sm btn-simple  btn-hover selectnone"  data-bind="click: selectNoNodes">
                                 <g:icon name="unchecked"/>
                                 <g:message code="select.none" />
                             </span>
@@ -203,8 +203,8 @@
                 <g:if test="${namegroups}">
                     <div>
                     <g:each in="${namegroups.keySet().sort()}" var="group">
-                        <div class="panel panel-default">
-                      <div class="panel-heading">
+                        <div class="card">
+                      <div class="card-header">
                           <g:set var="expkey" value="${g.rkey()}"/>
                             <span data-toggle="collapse" data-target="#${expkey}" data-bind="css: {in: changeTargetNodes}">
                                 <g:if test="${group!='other'}">
@@ -222,15 +222,15 @@
                                 <b class="glyphicon glyphicon-chevron-${selectedNodes!=null ? 'down' : 'right'}"></b>
                             </span>
                         </div>
-                        <div id="${enc(attr:expkey)}"  class="group_section panel-body collapse " data-bind="css: {in: changeTargetNodes}" >
+                        <div id="${enc(attr:expkey)}"  class="group_section card-body collapse " data-bind="css: {in: changeTargetNodes}" >
                                 <g:if test="${namegroups.size()>1}">
                                 <div class="group_select_control" style="">
 
-                                    <span class="btn btn-xs btn-simple btn-hover selectall" data-bind="click: function(){groupSelectAll($element)}" data-group="${enc(attr:group)}">
+                                    <span class="btn btn-sm btn-simple btn-hover selectall" data-bind="click: function(){groupSelectAll($element)}" data-group="${enc(attr:group)}">
                                         <g:icon name="check"/>
                                         <g:message code="select.all" />
                                     </span>
-                                    <span class="btn btn-xs btn-simple  btn-hover selectnone"  data-bind="click: function(){groupSelectNone($element)}" data-group="${enc(attr:group)}" >
+                                    <span class="btn btn-sm btn-simple  btn-hover selectnone"  data-bind="click: function(){groupSelectNone($element)}" data-group="${enc(attr:group)}" >
                                         <g:icon name="unchecked"/>
                                         <g:message code="select.none" />
                                     </span>
@@ -356,7 +356,7 @@
                                         <span data-bind="if: total()>maxShown()">
                                             <span data-bind="messageTemplate: [maxShown(), total()]" class="text-strong"><g:message code="count.nodes.shown" /></span>
                                         </span>
-                                        <span class="pull-right">
+                                        <span class="float-right">
                                             <a href="#" data-bind="attr: {href: nodesPageViewUrl }">
                                               <g:message code="view.in.nodes.page.prompt" />
                                           </a>

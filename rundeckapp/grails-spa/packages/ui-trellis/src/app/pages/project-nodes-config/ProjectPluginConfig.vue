@@ -126,7 +126,7 @@
                     <span v-if="editFocus === -1">
                       <a
                         :key="'edit'"
-                        class="btn btn-default btn-xs"
+                        class="btn btn-secondary btn-sm"
                         @click="editFocus = index"
                         >{{ $t("Edit") }}</a
                       >
@@ -134,12 +134,12 @@
                     <span v-if="editFocus === index">
                       <a
                         :key="'save'"
-                        class="btn btn-cta btn-xs"
+                        class="btn btn-cta btn-sm"
                         @click="savePlugin(plugin, index)"
                         >{{ $t("Save") }}</a
                       >
                       <a
-                        class="btn btn-default btn-xs"
+                        class="btn btn-secondary btn-sm"
                         @click="editFocus = -1"
                         >{{ $t("Cancel") }}</a
                       >
@@ -150,10 +150,10 @@
                     </span>
                     <div
                       v-if="editFocus === -1 || editFocus === index"
-                      class="btn-group pull-right"
+                      class="btn-group float-right"
                     >
                       <btn
-                        class="btn-xs btn-danger"
+                        class="btn-sm btn-danger"
                         :disabled="editFocus !== -1 && editFocus !== index"
                         @click="removePlugin(plugin, index)"
                       >
@@ -161,14 +161,14 @@
                         <i class="fas fa-minus"></i>
                       </btn>
                       <btn
-                        class="btn-xs"
+                        class="btn-sm"
                         :disabled="editFocus !== -1 || index == 0"
                         @click="movePlugin(index, plugin, -1)"
                       >
                         <i class="fas fa-arrow-up"></i>
                       </btn>
                       <btn
-                        class="btn-xs"
+                        class="btn-sm"
                         :disabled="
                           editFocus !== -1 || index >= pluginConfigs.length - 1
                         "

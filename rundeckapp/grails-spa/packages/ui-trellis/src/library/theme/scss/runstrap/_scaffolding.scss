@@ -73,8 +73,8 @@ img {
 }
 
 // Responsive images (ensure images don't scale beyond their parents)
-.img-responsive {
-  @include img-responsive;
+.img-fluid {
+  @include img-fluid;
 }
 
 // Rounded corners
@@ -94,7 +94,7 @@ img {
   @include transition(all 0.2s ease-in-out);
 
   // Keep them at most 100% wide
-  @include img-responsive(inline-block);
+  @include img-fluid(inline-block);
 }
 
 // Perfect circle

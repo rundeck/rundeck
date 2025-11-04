@@ -108,7 +108,7 @@ jQuery(function(){
                 <div class="${hasErrors(bean: workflow, field: 'strategy', 'has-error')}">
                     <label class="">
                       <g:message code="global.log.filters" />
-                      <span class="btn btn-default btn-xs" data-bind="click: addFilterPopup">
+                      <span class="btn btn-secondary btn-sm" data-bind="click: addFilterPopup">
                           <g:icon name="plus"/>
                           <g:message code="add" />
                       </span>
@@ -117,7 +117,7 @@ jQuery(function(){
                     <div>
                         <!-- ko foreach: {data: filters, as: 'filter' } -->
                         <div class="btn-group" style="margin-top:15px;">
-                          <span class="btn btn-sm btn-default autohilite"
+                          <span class="btn btn-sm btn-secondary autohilite"
                                 style="border-right:0;"
                                 data-bind="click: $root.editFilter"
                                 title="${message(code:"click.to.edit.filter")}">
@@ -196,12 +196,12 @@ jQuery(function(){
     <g:if test="${edit}">
     <div >
     <div id="wfnewbutton" style="margin-top:5px;">
-        <span class="btn btn-default btn-sm ready" onclick="jQuery('#wfnewtypes').show();jQuery('#wfnewbutton').hide();" title="Add a new Workflow ${g.message(code:'Workflow.step.label')} to the end">
+        <span class="btn btn-secondary btn-sm ready" onclick="jQuery('#wfnewtypes').show();jQuery('#wfnewbutton').hide();" title="Add a new Workflow ${g.message(code:'Workflow.step.label')} to the end">
             <b class="glyphicon glyphicon-plus"></b>
             Add a ${g.message(code:'Workflow.step.label')}
         </span>
     </div>
-    <div id="wfnewtypes" style="display:none; margin-top:10px; margin-left:20px;" class="panel panel-default">
+    <div id="wfnewtypes" style="display:none; margin-top:10px; margin-left:20px;" class="card">
         <g:render template="/execution/wfAddStep"
             model="[addMessage:'Workflow.step.label.add',chooseMessage:'Workflow.step.label.choose.the.type']"
         />

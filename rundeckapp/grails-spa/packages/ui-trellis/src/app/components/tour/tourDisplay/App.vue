@@ -25,20 +25,20 @@
       <div>
         <div class="btn-group" style="margin-bottom: 1em">
           <span
-            class="btn btn-default btn-sm"
+            class="btn btn-secondary btn-sm"
             :disabled="stepIndex <= 0"
             style="width: auto !important"
             @click="previousStep"
             >Previous</span
           >
           <span
-            class="btn btn-default btn-sm"
+            class="btn btn-secondary btn-sm"
             style="width: auto !important"
             @click="resume"
             >Resume</span
           >
           <span
-            class="btn btn-default btn-sm"
+            class="btn btn-secondary btn-sm"
             :disabled="stepIndex === tour.steps.length - 1"
             style="width: auto !important"
             @click="nextStep"
@@ -59,7 +59,7 @@
           <img
             :src="modalData.image"
             :alt="modalData.alt"
-            class="img-responsive"
+            class="img-fluid"
           />
           <p class="modal-image-caption">{{ modalData.alt }}</p>
         </modal>

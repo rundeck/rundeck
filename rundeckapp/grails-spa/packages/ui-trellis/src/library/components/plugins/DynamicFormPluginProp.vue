@@ -24,7 +24,7 @@
         </div>
         <div class="col-sm-1">
           <span
-            class="btn btn-xs btn-default"
+            class="btn btn-sm btn-secondary"
             :title="$t('message_delete')"
             @click="removeField(field)"
             data-testid="remove-field-button"
@@ -143,7 +143,7 @@
         <div>
           <button
             type="button"
-            class="btn btn-default reset_page_confirm"
+            class="btn btn-secondary reset_page_confirm"
             @click="modalAddField = false"
             data-testid="cancel-button"
           >

@@ -31,7 +31,7 @@
 - limitations under the License.
 --}%
 <div class="btn-group">
-    <a href="#" class=" ${enc(attr: btnClass ?: 'btn btn-default btn-sm')} dropdown-toggle"
+    <a href="#" class=" ${enc(attr: btnClass ?: 'btn btn-secondary btn-sm')} dropdown-toggle"
             data-toggle="dropdown"
             aria-expanded="false">
         <g:if test="${!hideIcon}">
@@ -103,7 +103,7 @@
                         <div class="modal-footer">
                             <g:hiddenField name="id" value="${scheduledExecution.extid}"/>
                             <g:hiddenField name="scheduleEnabled" value="${!scheduledExecution.hasScheduleEnabled()}"/>
-                            <button type="submit" class="btn btn-default btn-sm "
+                            <button type="submit" class="btn btn-secondary btn-sm "
                                     data-dismiss="modal">
                                 <g:message code="cancel"/>
                             </button>
@@ -175,7 +175,7 @@
                     <div class="modal-footer">
                         <g:hiddenField name="id" value="${scheduledExecution.extid}"/>
                         <g:hiddenField name="executionEnabled" value="${!scheduledExecution.hasExecutionEnabled()}"/>
-                        <button type="submit" class="btn btn-default btn-sm "
+                        <button type="submit" class="btn btn-secondary btn-sm "
                                 data-dismiss="modal">
                             <g:message code="cancel"/>
                         </button>
@@ -270,7 +270,7 @@ jQuery(function(){
 
                         <div class="modal-footer">
                             <g:hiddenField name="id" value="${scheduledExecution.extid}"/>
-                            <button type="submit" class="btn btn-default btn-sm "
+                            <button type="submit" class="btn btn-secondary btn-sm "
                                     data-dismiss="modal">
                                 <g:message code="cancel"/>
                             </button>

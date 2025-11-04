@@ -47,7 +47,7 @@
       </div>
     </div>
     <div class="row">
-      <div class="col-xs-12">
+      <div class="col-12">
         <div class="card card-default">
           <div class="card-content">
             <p class="text-info">

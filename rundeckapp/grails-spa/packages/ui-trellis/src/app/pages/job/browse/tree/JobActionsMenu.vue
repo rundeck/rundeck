@@ -2,7 +2,7 @@
   <dropdown
     v-if="authz"
     class="btn-group"
-    :class="{ 'pull-right': pullRight, 'visibility-hidden': showOnHover }"
+    :class="{ 'float-right': pullRight, 'visibility-hidden': showOnHover }"
     :menu-right="pullRight"
     append-to-body
   >

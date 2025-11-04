@@ -67,7 +67,7 @@
 
     <g:if test="${edit}">
         <div id="optnewbutton" style="margin:10px 0; ">
-            <span class="btn btn-default btn-sm ready" onclick="_optaddnew();" title="Add a new Option">
+            <span class="btn btn-secondary btn-sm ready" onclick="_optaddnew();" title="Add a new Option">
                 <b class="glyphicon glyphicon-plus"></b>
                 Add an option
             </span>

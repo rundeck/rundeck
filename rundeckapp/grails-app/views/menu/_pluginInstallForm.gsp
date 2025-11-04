@@ -16,7 +16,7 @@
                     </label>
                     </div>
                     <div class="col-sm-8">
-                        <input type="submit" value="Upload" class="pull-right"/><input type="file" name="pluginFile" id="pluginFile">
+                        <input type="submit" value="Upload" class="float-right"/><input type="file" name="pluginFile" id="pluginFile">
                     </div>
                 </div>
                 </g:uploadForm>
@@ -31,7 +31,7 @@
                     </label>
                     </div>
                     <div class="col-sm-8">
-                        <input type="submit" value="Install" class="pull-right" />
+                        <input type="submit" value="Install" class="float-right" />
                         <input type="text" name="pluginUrl" id="pluginUrl" class="col-sm-8">
                     </div>
                 </div>

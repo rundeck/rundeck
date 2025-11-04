@@ -32,7 +32,7 @@
             <!-- <div v-html="blog.post_summary" class="blog-summary"></div> -->
           </div>
           <div class="col-xs-12 col-sm-3">
-            <img :src="blog.featured_image" alt class="img-responsive" />
+            <img :src="blog.featured_image" alt class="img-fluid" />
           </div>
         </div>
       </article>

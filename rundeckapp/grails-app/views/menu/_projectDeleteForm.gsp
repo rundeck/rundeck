@@ -15,7 +15,7 @@
   --}%
 
 <div class="row">
-  <div class="col-xs-12">
+  <div class="col-12">
     <div class="card">
       <div class="card-content" style="padding: 2em 1em;">
         <g:if test="${flash.error}">
@@ -47,7 +47,7 @@
                   </div>
                 </div>
                 <div class="modal-footer">
-                  <button type="button" class="btn btn-default" id="btn-cancel" data-dismiss="modal"><g:message code="no" /></button>
+                  <button type="button" class="btn btn-secondary" id="btn-cancel" data-dismiss="modal"><g:message code="no" /></button>
                   <button type="submit" class="btn btn-danger" id="btn-delete" onclick="return onDeleteProject()"><g:message code="delete.project.now.button" /></button>
                   <span id="delete-project-spinner" style="display: none;">
                     <i class="fas fa-spinner fa-pulse"></i>

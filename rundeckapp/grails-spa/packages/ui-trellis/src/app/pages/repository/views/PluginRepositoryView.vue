@@ -15,7 +15,7 @@
             />
             <span v-if="searchResults.length > 0" class="input-group-btn">
               <button
-                class="btn btn-default btn-fill"
+                class="btn btn-secondary btn-fill"
                 type="button"
                 @click="clearSearch"
               >
@@ -24,7 +24,7 @@
             </span>
             <span v-else class="input-group-btn">
               <button
-                class="btn btn-default btn-fill"
+                class="btn btn-secondary btn-fill"
                 type="button"
                 @click="search"
               >
@@ -41,21 +41,21 @@
           aria-label="..."
         >
           <a
-            class="btn btn-default"
+            class="btn btn-secondary"
             :class="{ active: showWhichPlugins === true }"
             :disabled="searchResults.length > 0"
             @click="showWhichPlugins = true"
             >Installed</a
           >
           <a
-            class="btn btn-default"
+            class="btn btn-secondary"
             :class="{ active: showWhichPlugins === null }"
             :disabled="searchResults.length > 0"
             @click="showWhichPlugins = null"
             >All</a
           >
           <a
-            class="btn btn-default"
+            class="btn btn-secondary"
             :class="{ active: showWhichPlugins === false }"
             :disabled="searchResults.length > 0"
             @click="showWhichPlugins = false"
@@ -66,7 +66,7 @@
     </div>
     <div v-show="searchResults.length > 0" class="row">
       <h3
-        class="col-xs-12"
+        class="col-12"
         style="margin: 1em 0 0; font-weight: bold; text-transform: uppercase"
       >
         Search Results
@@ -74,7 +74,7 @@
       <div
         v-for="repo in searchResults"
         :key="repo.repositoryName"
-        class="col-xs-12"
+        class="col-12"
       >
         <RepositoryRow :repo="repo" type="search" />
       </div>
@@ -83,7 +83,7 @@
       <div
         v-for="repo in repositories"
         :key="repo.repositoryName"
-        class="col-xs-12"
+        class="col-12"
       >
         <RepositoryRow :repo="repo" />
       </div>
@@ -215,7 +215,7 @@ export default defineComponent({
 .input-group .form-control {
   border: 2px solid #66615b;
 }
-// .input-group-btn .btn-default:not(.btn-fill) {
+// .input-group-btn .btn-secondary:not(.btn-fill) {
 // }
 </style>
 

@@ -76,7 +76,7 @@
     <span class="text-h3"><i class="fas fa-clipboard-list"></i> ${g.message(code:"gui.menu.Dashboard")}</span>
   </div>
 <div class="row">
-<div class="col-xs-12">
+<div class="col-12">
 <div data-ko-bind="projectHome">
   <h3 style="margin-top: 0"> <span data-bind="text: project().label"></span></h3>
   <span class="text-project-description" >
@@ -92,7 +92,7 @@
 <div id="layoutBody">
   <div class="container-fluid">
     <div class="row">
-        <div class="col-xs-12">
+        <div class="col-12">
             <g:render template="/common/messages"/>
         </div>
     </div>

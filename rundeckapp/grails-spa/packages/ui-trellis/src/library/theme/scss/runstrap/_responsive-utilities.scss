@@ -123,19 +123,19 @@
 }
 
 @media (max-width: $screen-xs-max) {
-  @include responsive-invisibility(".hidden-xs");
+  @include responsive-invisibility(".d-none d-sm-block");
 }
 
 @media (min-width: $screen-sm-min) and (max-width: $screen-sm-max) {
-  @include responsive-invisibility(".hidden-sm");
+  @include responsive-invisibility(".d-none d-md-block");
 }
 
 @media (min-width: $screen-md-min) and (max-width: $screen-md-max) {
-  @include responsive-invisibility(".hidden-md");
+  @include responsive-invisibility(".d-none d-lg-block");
 }
 
 @media (min-width: $screen-lg-min) {
-  @include responsive-invisibility(".hidden-lg");
+  @include responsive-invisibility(".d-none d-xl-block");
 }
 
 // Print utilities

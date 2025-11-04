@@ -110,7 +110,7 @@
                             <div class="container">
                                 <div class="row">
                                     <div class="col-sm-12 optionvaluemulti-add">
-                                        <span class="btn btn-default btn-xs " data-bind="click: newMultivalueEntry">
+                                        <span class="btn btn-secondary btn-sm " data-bind="click: newMultivalueEntry">
                                             <g:message code="job.option.multivalue.new.value.button.title" /> <i class="glyphicon glyphicon-plus"></i>
                                         </span>
                                     </div>

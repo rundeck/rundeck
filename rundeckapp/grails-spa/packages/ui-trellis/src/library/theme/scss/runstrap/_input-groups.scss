@@ -189,7 +189,7 @@ select.input-sm {
   }
   .input-btn-toggle {
     position: relative;
-    .btn.dropdown-toggle.btn-default {
+    .btn.dropdown-toggle.btn-secondary {
       padding: 18px var(--spacing-4);
       height: 41px;
       border-radius: 0 !important;
@@ -214,7 +214,7 @@ select.input-sm {
       border: 0 !important;
     }
   }
-  .btn.btn-default.dropdown-toggle {
+  .btn.btn-secondary.dropdown-toggle {
     padding: 0;
     border: 0;
     display: flex;

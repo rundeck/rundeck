@@ -27,7 +27,7 @@
 
       <div class="col-sm-6">
         <btn
-          type="default btn-sm refresh_nodes pull-right"
+          type="default btn-sm refresh_nodes float-right"
           data-loading-text="${g.message(code: 'loading')}"
           :disabled="loading"
           :title="$t('click.to.refresh')"

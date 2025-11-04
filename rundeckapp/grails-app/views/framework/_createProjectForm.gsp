@@ -110,7 +110,7 @@
 <div id="layoutBody">
   <div class="container-fluid">
     <div class="row">
-      <div class="col-xs-12">
+      <div class="col-12">
         <div class="card" id="createform">
           <g:form action="createProject" useToken="true" method="post" >
             <div class="card-header" data-ko-bind="editProject">
@@ -141,7 +141,7 @@
               <tmpl:editProjectFormTabs serviceDefaultsList="${serviceDefaultsList}"/>
             </div>
             <div class="card-footer">
-              <g:submitButton name="cancel" value="${g.message(code: 'button.action.Cancel', default: 'Cancel')}" class="btn btn-default"/>
+              <g:submitButton name="cancel" value="${g.message(code: 'button.action.Cancel', default: 'Cancel')}" class="btn btn-secondary"/>
               <g:submitButton name="create" value="${g.message(code: 'button.action.Create', default: 'Create')}" class="btn btn-cta"/>
             </div>
           </div>

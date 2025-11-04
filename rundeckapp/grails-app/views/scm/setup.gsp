@@ -49,12 +49,12 @@
 <div id="layoutBody">
   <div class="container-fluid">
     <div class="row">
-        <div class="col-xs-12">
+        <div class="col-12">
             <g:render template="/common/messages"/>
         </div>
     </div>
     <div class="row">
-      <div class="col-xs-12">
+      <div class="col-12">
         <g:form action="saveSetup"
                 params="${[project: params.project, type: type, integration: integration]}"
                 useToken="true"

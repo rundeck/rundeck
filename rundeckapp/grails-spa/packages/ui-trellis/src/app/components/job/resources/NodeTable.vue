@@ -268,7 +268,7 @@
                 <li :class="{ disabled: page === 0 || loading }">
                   <a
                     :href="browseNodesPagePrevUrl"
-                    class="btn btn-xs btn-default"
+                    class="btn btn-sm btn-secondary"
                     :class="{ visible: maxPages > 1 }"
                     :title="$t('Previous')"
                     @click.prevent="browseNodesPagePrev"
@@ -295,7 +295,7 @@
                 </li>
                 <li :class="{ disabled: page === maxPages || loading }">
                   <a
-                    class="btn btn-xs btn-default"
+                    class="btn btn-sm btn-secondary"
                     :class="{ visible: maxPages > 1 }"
                     :href="browseNodesPageNextUrl"
                     :title="$t('Next')"

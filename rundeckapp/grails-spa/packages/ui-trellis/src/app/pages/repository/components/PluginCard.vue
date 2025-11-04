@@ -96,11 +96,11 @@
               </div>
             </div>
           </div>
-          <div v-else class="col-xs-12">
+          <div v-else class="col-12">
             <a
               href="https://www.rundeck.com/test-drive"
               target="_blank"
-              class="btn btn-default btn-md"
+              class="btn btn-secondary btn-md"
               >Learn More</a
             >
           </div>

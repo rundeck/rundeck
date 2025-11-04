@@ -59,7 +59,7 @@
                 </g:else>
             </g:each>
             <g:if test="${singletag}">
-                <span class="btn btn-sm btn-default receiver" title="See all tags"
+                <span class="btn btn-sm btn-secondary receiver" title="See all tags"
                       onclick="jQuery('#${enc(attr:urkey)}singletags').show();
                       jQuery(this).hide();">Show All&hellip;</span>
                 <span style="display:none" id="${enc(attr:urkey)}singletags">

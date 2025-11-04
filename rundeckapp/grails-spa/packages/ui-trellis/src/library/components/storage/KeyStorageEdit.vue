@@ -216,7 +216,7 @@
       <div class="text-right">
         <button
           type="button"
-          class="btn btn-default mr-3"
+          class="btn btn-secondary mr-3"
           data-testid="cancel-btn"
           @click="handleCancel"
         >

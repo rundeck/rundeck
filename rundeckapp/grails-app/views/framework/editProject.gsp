@@ -129,14 +129,14 @@
   </div>
   <div class="row">
     <g:form action="saveProject" method="post" useToken="true" class="form">
-    <div class="col-xs-12">
+    <div class="col-12">
       <div class="card"  id="createform">
           <div class="card-header" data-ko-bind="editProject">
           <h3 class="card-title">
               <g:message code="domain.Project.edit.message" default="Configure Project"/>: <g:enc>${projectName}</g:enc>
             <g:link controller="framework" action="editProjectConfig"
                     params="[project: projectName]"
-                    class="has_tooltip pull-right btn btn-default btn-sm"
+                    class="has_tooltip float-right btn btn-secondary btn-sm"
                     data-placement="bottom"
                     title="${message(
                       code: 'page.admin.EditProjectConfigFile.title',
@@ -172,7 +172,7 @@
                       model="${[editOnly: true, project: projectName, serviceDefaultsList: serviceDefaultsList]}"/>
         </div>
         <div class="card-footer">
-          <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default reset_page_confirm"/>
+          <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-secondary reset_page_confirm"/>
           <g:submitButton name="save" value="${g.message(code:'button.action.Save',default:'Save')}" class="btn btn-cta reset_page_confirm"/>
 
             <div class="project-config-plugins-vue">

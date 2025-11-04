@@ -35,7 +35,7 @@
                     action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
                     any: true,
                     context: AuthConstants.CTX_APPLICATION)}">
-                    <g:link action="create" class="btn btn-default btn-xs">
+                    <g:link action="create" class="btn btn-secondary btn-sm">
                         <i class="glyphicon glyphicon-plus"></i>
                         New Profile &hellip;
                     </g:link>

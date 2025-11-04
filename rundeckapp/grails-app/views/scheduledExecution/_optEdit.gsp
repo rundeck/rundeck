@@ -248,7 +248,7 @@ form.option.valuesType.url.authType.bearerToken.label
                     <span class="input-group-btn">
                         <g:set var="storageRoot" value="keys"/>
                         <g:set var="storageFilter" value="Rundeck-data-type=password"/>
-                        <a class="btn btn-default obs-select-storage-path"
+                        <a class="btn btn-secondary obs-select-storage-path"
                            data-toggle="modal"
                            href="#storagebrowse"
                            data-storage-root="${enc(attr:storageRoot)}"
@@ -552,7 +552,7 @@ form.option.valuesType.url.authType.bearerToken.label
                                         <span class="input-group-btn">
                                             <g:set var="storageRoot" value="keys"/>
                                             <g:set var="storageFilter" value="Rundeck-data-type=password"/>
-                                            <a class="btn btn-default obs-select-storage-path"
+                                            <a class="btn btn-secondary obs-select-storage-path"
                                                data-toggle="modal"
                                                href="#storagebrowse"
                                                data-storage-root="${enc(attr:storageRoot)}"
@@ -608,7 +608,7 @@ form.option.valuesType.url.authType.bearerToken.label
                                         <span class="input-group-btn">
                                             <g:set var="storageRoot" value="keys"/>
                                             <g:set var="storageFilter" value="Rundeck-data-type=password"/>
-                                            <a class="btn btn-default obs-select-storage-path"
+                                            <a class="btn btn-secondary obs-select-storage-path"
                                                data-toggle="modal"
                                                href="#storagebrowse"
                                                data-storage-root="${enc(attr:storageRoot)}"
@@ -669,7 +669,7 @@ form.option.valuesType.url.authType.bearerToken.label
                                     <span class="input-group-btn">
                                         <g:set var="storageRoot" value="keys"/>
                                         <g:set var="storageFilter" value="Rundeck-data-type=password"/>
-                                        <a class="btn btn-default obs-select-storage-path"
+                                        <a class="btn btn-secondary obs-select-storage-path"
                                            data-toggle="modal"
                                            href="#storagebrowse"
                                            data-storage-root="${enc(attr:storageRoot)}"
@@ -984,7 +984,7 @@ form.option.valuesType.url.authType.bearerToken.label
         <div class="floatr" style="margin:10px 0;">
             <g:if test="${newoption}">
                 <g:hiddenField name="newoption" value="true"/>
-                <span class="btn btn-default btn-sm" onclick="_optcancelnew();"
+                <span class="btn btn-secondary btn-sm" onclick="_optcancelnew();"
                       title="${g.message(code:'form.option.cancel.title',encodeAs:'HTMLAttribute')}"><g:message code="cancel" /></span>
                 <span class="btn btn-cta btn-sm" onclick="_optsavenew('optedit_${enc(attr:rkey)}', 'reqtoken_${enc(attr:rkey)}');"
                       title="${g.message(code:'form.option.create.title', encodeAs: 'HTMLAttribute')}"><g:message code="save" /></span>
@@ -995,7 +995,7 @@ form.option.valuesType.url.authType.bearerToken.label
                 </g:javascript>
             </g:if>
             <g:else>
-                <span class="btn btn-default btn-sm" onclick="_optview('${enc(js:origName?:option?.name)}',jQuery(this).closest('li.optEntry'));"
+                <span class="btn btn-secondary btn-sm" onclick="_optview('${enc(js:origName?:option?.name)}',jQuery(this).closest('li.optEntry'));"
                       title="${g.message(code:'form.option.discard.title', encodeAs: 'HTMLAttribute')}"><g:message code="discard" /></span>
                 <span class="btn btn-cta btn-sm" onclick="_optsave('optedit_${enc(attr:rkey)}','reqtoken_${enc(attr:rkey)}',jQuery(this).closest('li.optEntry'));"
                       title="${g.message(code:'form.option.save.title', encodeAs: 'HTMLAttribute')}"><g:message code="save" /></span>

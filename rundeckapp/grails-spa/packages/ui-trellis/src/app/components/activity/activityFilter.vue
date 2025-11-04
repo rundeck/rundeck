@@ -33,7 +33,7 @@
       v-if="displayOpts.showFilter"
       v-tooltip="hasQuery ? $t('Click to edit Search Query') : ''"
       size="xs"
-      :class="hasQuery ? 'btn-queried btn-info' : 'btn-default'"
+      :class="hasQuery ? 'btn-queried btn-info' : 'btn-secondary'"
       data-test-id="filter-button"
       @click="filterOpen = true"
     >
@@ -197,10 +197,10 @@
         </div>
         <div
           v-if="query.recentFilter === '-'"
-          class="date-filters panel panel-default"
+          class="date-filters card"
           data-test-id="date-filters"
         >
-          <div class="panel-body form-horizontal">
+          <div class="card-body form-horizontal">
             <div
               v-for="df in DateFilters"
               :key="df.name"
@@ -244,7 +244,7 @@
           {{ $t("search") }}
         </btn>
 
-        <btn type="default" class="btn-default pull-right" @click="saveFilter">
+        <btn type="default" class="btn-secondary float-right" @click="saveFilter">
           <i class="glyphicon glyphicon-plus"></i>
           {{ $t("Save as a Filter...") }}
         </btn>

@@ -4,7 +4,7 @@
     <modal ref="modal" v-model="openModal" append-to-body>
       <template #title><span>Search</span></template>
       <div class="row">
-        <div class="col-xs-12">
+        <div class="col-12">
           <div class="form-group" style="padding-top: 10px">
             <span class="prompt">{{ $t("message_pageUsersSummary") }}</span>
           </div>
@@ -14,7 +14,7 @@
         <form @submit.prevent="loadUsersList(0)">
           <div class="row">
             <div
-              class="col-xs-12"
+              class="col-12"
               :class="{
                 'col-sm-4': sessionIdEnabled,
                 'col-sm-6': !sessionIdEnabled,
@@ -40,7 +40,7 @@
               </div>
             </div>
             <div
-              class="col-xs-12"
+              class="col-12"
               :class="{
                 'col-sm-4': sessionIdEnabled,
                 'col-sm-6': !sessionIdEnabled,

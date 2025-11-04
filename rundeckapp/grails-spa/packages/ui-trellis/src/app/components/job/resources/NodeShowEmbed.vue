@@ -1,5 +1,5 @@
 <template>
-  <span class="col-xs-6">
+  <span class="col-6">
     <popover
       trigger="outside-click"
       :show-delay="0"

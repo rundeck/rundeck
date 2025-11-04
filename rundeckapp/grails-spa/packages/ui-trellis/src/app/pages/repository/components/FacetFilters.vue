@@ -1,5 +1,5 @@
 <template>
-  <div class="col-xs-12">
+  <div class="col-12">
     <div class="support-filters row row-flex row-flex-wrap">
       <div class="col-md-2">
         <div class="flex-col">

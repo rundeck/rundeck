@@ -81,7 +81,7 @@
   <g:if test="${knockoutBinding}">
   <div data-bind="visible: selected()" class="tab-content" style="display: none;">
     <div data-bind="visible: selected()" style="display: none; padding:0 5px 15px;">
-      <a href="#" class="btn btn-default btn-xs" data-bind="attr: { href: href() } ">
+      <a href="#" class="btn btn-secondary btn-sm" data-bind="attr: { href: href() } ">
           Filter Activity
       </a>
         <span data-bind="if: max() > 0" class="text-info" style="display:inline-block;padding-top:2px; margin-left: 1.5em;">
@@ -90,23 +90,23 @@
         </span>
 
         %{--bulk edit controls--}%
-        <div class="pull-right">
+        <div class="float-right">
             <span data-bind="visible: $root.bulkEditMode()" class="history_bulk_edit">
-                <span class="btn btn-default btn-xs act_bulk_edit_selectall  " data-bind="click: bulkEditSelectAll">
+                <span class="btn btn-secondary btn-sm act_bulk_edit_selectall  " data-bind="click: bulkEditSelectAll">
                     <g:message code="select.all"/>
                 </span>
-                <span class="btn btn-default btn-xs act_bulk_edit_deselectall  " data-toggle="modal"
+                <span class="btn btn-secondary btn-sm act_bulk_edit_deselectall  " data-toggle="modal"
                       data-target="#cleanselections">
                     <g:message code="select.none"/>
                 </span>
 
-                <span class="btn btn-xs btn-danger btn-fill"
+                <span class="btn btn-sm btn-danger btn-fill"
                       data-bind=" visible: $root.bulkEditMode(), attr: { disabled: (bulkEditIds().length<1  && bulkSelectedIds().length<1)}"
                       data-toggle="modal"
                       data-target="#bulkexecdelete">
                     <g:message code="delete.selected.executions"/>
                 </span>
-                <span class="btn btn-default btn-xs"
+                <span class="btn btn-secondary btn-sm"
                       data-bind="click: $root.toggleBulkEdit, visible: $root.bulkEditMode()">
                     <g:message code="cancel.bulk.delete"/>
                 </span>
@@ -122,7 +122,7 @@
         <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name:
                 params.project, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
         <g:if test="${deleteExecAuth}">
-            <button class="btn btn-xs btn-warning"
+            <button class="btn btn-sm btn-warning"
                     data-bind="click: $root.toggleBulkEdit, visible: !$root.bulkEditMode()">
                 <g:message code="bulk.delete"/>
             </button>
@@ -149,7 +149,7 @@
 
                         <div class="modal-footer">
 
-                                <button type="submit" class="btn btn-default  " data-dismiss="modal">
+                                <button type="submit" class="btn btn-secondary  " data-dismiss="modal">
                                     Cancel
                                 </button>
                                 <button class="btn btn-danger "
@@ -181,7 +181,7 @@
 
                         <div class="modal-footer">
 
-                                <button type="submit" class="btn btn-default  " data-bind="click: $root.bulkEditDeselectAll">
+                                <button type="submit" class="btn btn-secondary  " data-bind="click: $root.bulkEditDeselectAll">
                                     Only actual page
                                 </button>
                                 <button class="btn btn-danger "
@@ -245,7 +245,7 @@
 
                         <div class="modal-footer">
 
-                                <button type="submit" class="btn btn-default  " data-dismiss="modal">
+                                <button type="submit" class="btn btn-secondary  " data-dismiss="modal">
                                     Close
                                 </button>
                         </div>

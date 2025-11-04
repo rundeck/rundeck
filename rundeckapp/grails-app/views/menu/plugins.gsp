@@ -57,7 +57,7 @@ To change this template use File | Settings | File Templates.
   </g:if>
   <div class="container-fluid">
     <div class="row">
-      <div class="col-xs-12">
+      <div class="col-12">
         <div class="card">
           <div class="card-header">
             <h3 class="card-title">
@@ -66,11 +66,11 @@ To change this template use File | Settings | File Templates.
 
               <g:if test="${repoEnabled}">
                 <div class="btn-toolbar">
-                  <g:link controller="artifact" action="index" class="btn btn-success pull-right">
+                  <g:link controller="artifact" action="index" class="btn btn-success float-right">
                     <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
                     <i class="glyphicon glyphicon-arrow-right"></i>
                   </g:link>
-                  <a href="#installplugin" onclick="jQuery('#installplugin').modal('show');" class="btn-group btn btn-success pull-right">
+                  <a href="#installplugin" onclick="jQuery('#installplugin').modal('show');" class="btn-group btn btn-success float-right">
                     <i class="glyphicon glyphicon-plus"></i>
                     <g:message code="gui.admin.InstallPlugin" default="Install Plugin"/>
                   </a>
@@ -82,11 +82,11 @@ To change this template use File | Settings | File Templates.
                 <g:set var="pluginLinkUrl" value="${cfg.getString(config: "gui.pluginLink", default:pluginUrl)}"/>
 
                 <div class="btn-toolbar">
-                  <a href="${enc(attr:pluginLinkUrl)}" class="btn-group btn btn-success pull-right">
+                  <a href="${enc(attr:pluginLinkUrl)}" class="btn-group btn btn-success float-right">
                     <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
                     <i class="glyphicon glyphicon-arrow-right"></i>
                   </a>
-                  <a href="#installplugin" onclick="jQuery('#installplugin').modal('show');" class="btn-group btn btn-success pull-right">
+                  <a href="#installplugin" onclick="jQuery('#installplugin').modal('show');" class="btn-group btn btn-success float-right">
                     <i class="glyphicon glyphicon-plus"></i>
                     <g:message code="gui.admin.InstallPlugin" default="Install Plugin"/>
                   </a>
@@ -96,7 +96,7 @@ To change this template use File | Settings | File Templates.
           </div>
           <div class="card-content">
             <div class="row">
-              <div class="col-xs-12">
+              <div class="col-12">
                 <div class="text-info">
                   <g:markdown><g:message code="page.Plugins.description2.md"/></g:markdown>
                 </div>
@@ -107,7 +107,7 @@ To change this template use File | Settings | File Templates.
       </div>
     </div>
     <div class="row">
-      <div class="col-xs-12">
+      <div class="col-12">
         <div>
           <div class="panel-group form-horizontal" id="accordion">
             <g:each in="${descriptions}" var="plugin">
@@ -116,9 +116,9 @@ To change this template use File | Settings | File Templates.
             <g:set var="serviceDefaultScope"
             value="${serviceDefaultScopes && serviceDefaultScopes[serviceName] ? serviceDefaultScopes[serviceName] : PropertyScope.Project}"/>
             <g:set var="ukey" value="${g.rkey()}"/>
-            <div class="panel panel-default">
-              <div class="panel-heading">
-                <h4 class="panel-title">
+            <div class="card">
+              <div class="card-header">
+                <h4 class="card-title">
                   <a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordion" href="#${ukey}" title="${serviceName}">
                     <i class="auto-caret text-strong"></i>
                     <g:message code="framework.service.${serviceName}.label.plural" default="${serviceName}"/></a>
@@ -136,7 +136,7 @@ To change this template use File | Settings | File Templates.
               </div>
 
               <div id="${enc(attr:ukey)}" class="panel-collapse collapse">
-                <div class="panel-body">
+                <div class="card-body">
                   <g:set var="pluginExtendedDesc" value='${message(code:"framework.service.${serviceName}.extended.description",default:"")}'/>
                   <g:if test="${pluginExtendedDesc}">
                   <span class="text-info">
@@ -149,9 +149,9 @@ To change this template use File | Settings | File Templates.
                     <g:set var="pluginTitle" value="${pluginDescription.title}"/>
                     <g:set var="pluginDesc" value="${pluginDescription.description}"/>
                     <g:set var="ukeyx" value="${g.rkey()}"/>
-                    <div class="panel panel-default">
-                      <div class="panel-heading">
-                        <div class=" panel-title row">
+                    <div class="card">
+                      <div class="card-header">
+                        <div class=" card-title row">
                           <div class="col-sm-8">
 
                             <a class="accordion-toggle link-bare collapsed" data-toggle="collapse"
@@ -232,7 +232,7 @@ To change this template use File | Settings | File Templates.
                       </div>
 
                       <div id="${enc(attr:ukeyx)}" class="panel-collapse collapse">
-                        <div class="panel-body">
+                        <div class="card-body">
                           <div><g:message code="provider.name" />: <code>${pluginName}</code></div>
                           <g:render template="/scheduledExecution/description"
                             model="[description: stepplugin.messageText(

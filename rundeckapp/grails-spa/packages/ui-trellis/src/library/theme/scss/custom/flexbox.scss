@@ -151,7 +151,7 @@
 }
 
 ////// EXAMPLE MARKUP FOR FLEX BOX USAGE IN BOOTSTRAP 3
-// <div class="container"><h3>.row-flex (make columns equal heights in each row)</h3></div><div class="container"><div class="row row-flex row-flex-wrap"><div class="col-md-3"><div class="panel panel-default flex-col"><div class="panel-heading">Title flex-col</div><div class="panel-body flex-grow">Content here -- div with .flex-grow</div><div class="panel-footer">Footer</div></div></div><div class="col-md-3"><div class="well">Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
+// <div class="container"><h3>.row-flex (make columns equal heights in each row)</h3></div><div class="container"><div class="row row-flex row-flex-wrap"><div class="col-md-3"><div class="card flex-col"><div class="card-header">Title flex-col</div><div class="card-body flex-grow">Content here -- div with .flex-grow</div><div class="card-footer">Footer</div></div></div><div class="col-md-3"><div class="well">Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
 // totam rem aperiam,
 // eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit. </div></div><div class="col-md-3"><div class="well">Duis pharetra varius quam sit amet vulputate. </div></div><div class="col-md-3"><div class="well">Lorem ipsum dolor sit amet,
 // consectetur adipiscing elit. Duis pharetra varius quam sit amet vulputate. Quisque mauris augue,

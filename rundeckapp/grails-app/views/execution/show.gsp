@@ -125,7 +125,7 @@ search
             padding-bottom: 10px;
             border-bottom: 1px solid #eeeeee;
         }
-        .executionshow.affix.panel-heading-affix {
+        .executionshow.affix.card-header-affix {
             background-color: #eeeeee;
             width: auto;
             margin: 0 15px;
@@ -206,7 +206,7 @@ search
                                 <g:if test="${deleteExecAuth || authChecks[AuthConstants.ACTION_READ]}">
                                     <div class="btn-group" data-bind="visible: completed()">
                                         <button type="button"
-                                                class="btn btn-default btn-sm dropdown-toggle"
+                                                class="btn btn-secondary btn-sm dropdown-toggle"
                                                 data-toggle="dropdown"
                                                 aria-expanded="false">
                                             <i class="glyphicon glyphicon-list"></i>
@@ -291,7 +291,7 @@ search
                                     <span data-bind="if: canKillExec()">
                                         <span data-bind="visible: !completed() ">
                                             <!-- ko if: !killRequested() || killStatusFailed() -->
-                                            <span class="btn btn-sm btn-danger pull-right"
+                                            <span class="btn btn-sm btn-danger float-right"
                                                   data-bind="click: killExecAction">
                                                 <g:message code="button.action.kill.job"/>
                                                 <i class="glyphicon glyphicon-remove"></i>
@@ -305,7 +305,7 @@ search
                                             <span class="loading" data-bind="text: killStatusText"></span>
                                             <!-- /ko -->
                                             <!-- ko if: killedbutNotSaved() -->
-                                            <span class="btn btn-danger btn-xs pull-right"
+                                            <span class="btn btn-danger btn-sm float-right"
                                                   data-bind="click: markExecAction">
                                                 <g:message code="button.action.incomplete.job" default="Mark as Incomplete"/>
                                                 <i class="glyphicon glyphicon-remove"></i>
@@ -323,7 +323,7 @@ search
                                         <g:link controller="scheduledExecution"
                                                 action="execute"
                                                 id="${scheduledExecution.extid}"
-                                                class=" pull-right"
+                                                class=" float-right"
                                                 params="${[retryExecId: execution.id, project: execution.project]}"
                                                 title="${g.message(code: 'execution.job.action.runAgain')}"
                                                 style="${wdgt.styleVisible(
@@ -336,20 +336,20 @@ search
                                             <i class="fas fa-redo-alt"></i>
                                         </g:link>
                                     %{--Run again and retry failed links in a dropdown --}%
-                                        <div class="btn-group pull-right"
+                                        <div class="btn-group float-right"
                                             style="${wdgt.styleVisible(
                                                     if: null != execution.dateCompleted &&
                                                         null !=
                                                         execution.failedNodeList
                                             )};"
                                             data-bind="visible: failed()">
-                                            <button class="btn btn-default btn-sm dropdown-toggle"
+                                            <button class="btn btn-secondary btn-sm dropdown-toggle"
                                                     data-target="#"
                                                     data-toggle="dropdown">
                                                 <g:message code="execution.action.runAgain.ellipsis"/>
                                                 <i class="caret"></i>
                                             </button>
-                                            <ul class="dropdown-menu pull-left" role="menu">
+                                            <ul class="dropdown-menu float-left" role="menu">
                                                 <li class="retrybuttons">
                                                     <g:link controller="scheduledExecution"
                                                             action="execute"
@@ -410,7 +410,7 @@ search
                                                 action="adhoc"
                                                 params="${[fromExecId: execution.id, project: execution.project]}"
                                                 title="${g.message(code: 'execution.action.runAgain')}"
-                                                class="  pull-right"
+                                                class="  float-right"
                                                 style="${wdgt.styleVisible(
                                                         if: null != execution.dateCompleted &&
                                                             null ==
@@ -422,20 +422,20 @@ search
                                             <i class="fas fa-redo-alt"></i>
                                         </g:link>
                                     %{--run again and retry failed --}%
-                                        <div class="btn-group pull-right"
+                                        <div class="btn-group float-right"
                                             style="${wdgt.styleVisible(
                                                     if: null != execution.dateCompleted &&
                                                         null !=
                                                         execution.failedNodeList
                                             )}"
                                             data-bind="visible: failed()">
-                                            <button class="btn btn-default btn-sm dropdown-toggle "
+                                            <button class="btn btn-secondary btn-sm dropdown-toggle "
                                                     data-target="#"
                                                     data-toggle="dropdown">
                                                 <g:message code="execution.action.runAgain.ellipsis"/>
                                                 <i class="caret"></i>
                                             </button>
-                                            <ul class="dropdown-menu pull-right" role="menu">
+                                            <ul class="dropdown-menu float-right" role="menu">
 
                                                 <li>
                                                     <g:link
@@ -587,7 +587,7 @@ search
                   <div class="col-sm-12">
                       <div class="card card-plain " data-ko-bind="nodeflow">
                           <div class="btn-group " data-bind="if: views().length>2">
-                              <button class="btn btn-default btn-sm dropdown-toggle "
+                              <button class="btn btn-secondary btn-sm dropdown-toggle "
                                       id="views_dropdown_button"
                                       data-target="#"
                                       data-toggle="dropdown">
@@ -597,7 +597,7 @@ search
                                   </span>
                                   <i class="caret"></i>
                               </button>
-                              <ul class="dropdown-menu pull-left" role="menu" data-bind="foreach: views">
+                              <ul class="dropdown-menu float-left" role="menu" data-bind="foreach: views">
 
                                   <li data-bind="attr: {id: 'tab_link_'+id }">
                                       <a href="#"
@@ -624,15 +624,15 @@ search
                           <span data-bind="visible: activeTab().startsWith('output')">
 
 
-                              <span data-bind="visible: completed()" class="execution-action-links pull-right">
+                              <span data-bind="visible: completed()" class="execution-action-links float-right">
 
                                   <span class="btn-group">
-                                      <button type="button" class="btn btn-default btn-xs dropdown-toggle"
+                                      <button type="button" class="btn btn-secondary btn-sm dropdown-toggle"
                                               data-toggle="dropdown">
                                           <g:message code="execution.log" />
                                           <span class="caret"></span>
                                       </button>
-                                      <ul class="dropdown-menu pull-right" role="menu">
+                                      <ul class="dropdown-menu float-right" role="menu">
                                           <li>
                                               <g:link class=""
                                                       title="${message(
@@ -983,10 +983,10 @@ search
             <g:form controller="execution" action="delete" method="post" useToken="true">
               <g:hiddenField name="project" value="${execution.project}"/>
               <g:hiddenField name="id" value="${execution.id}"/>
-              <button type="submit" class="btn btn-default btn-xs " data-dismiss="modal">
+              <button type="submit" class="btn btn-secondary btn-sm " data-dismiss="modal">
                 <g:message code="cancel" />
               </button>
-              <input type="submit" value="${g.message(code:'button.action.Delete')}" class="btn btn-danger btn-xs"/>
+              <input type="submit" value="${g.message(code:'button.action.Delete')}" class="btn btn-danger btn-sm"/>
             </g:form>
           </div>
         </div>
@@ -1143,7 +1143,7 @@ search
         updatepagetitle:${enc(js:null == execution?.dateCompleted)},
         killjobauth:${enc(js: authChecks[AuthConstants.ACTION_KILL] ? true : false)},
       <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
-          killjobhtml: '<span class="btn btn-danger btn-xs textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <i class="glyphicon glyphicon-remove"></i></span>',
+          killjobhtml: '<span class="btn btn-danger btn-sm textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <i class="glyphicon glyphicon-remove"></i></span>',
       </g:if>
       <g:if test="${!authChecks[AuthConstants.ACTION_KILL]}">
           killjobhtml: "",

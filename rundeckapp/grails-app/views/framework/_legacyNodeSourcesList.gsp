@@ -26,8 +26,8 @@
             <g:each var="config" in="${configs}" status="n">
                 <li>
                     <div class="inpageconfig">
-                        <div class="panel panel-default">
-                            <div class="panel-body">
+                        <div class="card">
+                            <div class="card-body">
                                 <g:set var="desc" value="${resourceModelConfigDescriptions.find {it.name == config.type}}"/>
                                 <g:if test="${!desc}">
                                     <span class="warn note invalidProvider">Invalid Resource Model Source configuration: Provider not found: <g:enc>${config.type}</g:enc></span>
@@ -42,7 +42,7 @@
                                     <div class="row row-space-top">
                                         <div class="col-sm-12">
                                             <g:link
-                                                    class="btn btn-sm btn-default"
+                                                    class="btn btn-sm btn-secondary"
                                                     action="editProjectNodeSourceFile"
                                                     controller="framework"
                                                     params="${[project: project, index: (n + 1)]}">

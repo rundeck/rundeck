@@ -10,7 +10,7 @@
         <div v-if="title" class="rd-drawer__title">{{ title }}</div>
         <div
           v-if="closeable"
-          class="btn btn-default btn-link"
+          class="btn btn-secondary btn-link"
           style="margin-left: auto"
           @click="
             () => {

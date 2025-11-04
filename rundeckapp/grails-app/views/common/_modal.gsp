@@ -33,20 +33,20 @@
             <div class="modal-footer" id="${modalid}_footer">
 
                 <g:if test="${!nocancel}">
-                    <button type="submit" class="btn btn-default" data-dismiss="modal">
+                    <button type="submit" class="btn btn-secondary" data-dismiss="modal">
                         <g:message code="${cancelCode ?: 'cancel'}"/>
                     </button>
                 </g:if>
                 <span id="${modalid}_buttons">
                     <g:each in="${buttons}" var="button" status="n">
-                        <button class="btn ${button.css ?: 'btn-default'} " data-bind="${button.bind ?: ''}"
+                        <button class="btn ${button.css ?: 'btn-secondary'} " data-bind="${button.bind ?: ''}"
                                 onclick="${button.js ?: ''}" id="${button.id?:modalid+'_btn_'+n}">
                             ${button.message ?: button.messageCode ? message(code: button.messageCode) : 'button'}
                         </button>
                     </g:each>
                     <g:if test="${links}">
                         <g:each in="${links}" var="link">
-                            <a class="btn ${link.css ?: 'btn-default'} " data-bind="${link.bind ?: ''}"
+                            <a class="btn ${link.css ?: 'btn-secondary'} " data-bind="${link.bind ?: ''}"
                                onclick="${link.js ?: ''}"
                                href="${link.href ?: '#'}">
                                 ${link.message ?: link.messageCode ? message(code: link.messageCode) : 'link'}

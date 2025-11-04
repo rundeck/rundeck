@@ -1,7 +1,7 @@
 <template>
   <div id="page_jobs" class="container-fluid">
     <div class="row">
-      <div class="col-xs-12">
+      <div class="col-12">
         <div class="card">
           <div class="card-content">
             <div id="indexMain" class="runbox primary jobs">
@@ -12,7 +12,7 @@
       </div>
     </div>
     <div class="row">
-      <div class="col-xs-12">
+      <div class="col-12">
         <div class="card card-plain">
           <div class="card-header">
             <h3 class="card-title">

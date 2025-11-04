@@ -129,15 +129,15 @@
     </g:if>
   </div>
   <div class="row">
-    <div class="col-xs-12">
+    <div class="col-12">
       <div class="card">
         <div class="card-header clearfix">
           <h3 class="card-title">
             <g:message code="project.access.control.prompt" args="${[params.project]}"/>
             <span class="label label-default">${acllist?.size() ?: 0}</span>
             <g:if test="${hasCreateAuth}">
-              <div class="pull-right">
-                <span class="btn btn-sm btn-default" data-toggle="modal" data-target="#aclUpload">
+              <div class="float-right">
+                <span class="btn btn-sm btn-secondary" data-toggle="modal" data-target="#aclUpload">
                   <g:icon name="upload"/>
                   <g:message code="button.action.Upload"/>
                 </span>

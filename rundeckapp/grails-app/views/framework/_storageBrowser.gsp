@@ -25,7 +25,7 @@ implied. - See the License for the specific language governing permissions and -
 
       <!-- ko if: jumpLinks().length>0 -->
       <div class="input-group-btn">
-        <button type="button" class="btn btn-default dropdown-toggle"
+        <button type="button" class="btn btn-secondary dropdown-toggle"
                 data-toggle="dropdown" aria-haspopup="true"
                 aria-expanded="false">
           <span data-bind="text: linksTitle"></span>
@@ -45,7 +45,7 @@ implied. - See the License for the specific language governing permissions and -
 <div class="row">
   <div class="col-sm-12">
     <div style="margin-bottom:1em;">
-      <button type="button" class="btn btn-sm btn-default" data-bind="click: function(){$root.loadDir(upPath())}, css: {disabled: ( !upPath() || invalid() ) }">
+      <button type="button" class="btn btn-sm btn-secondary" data-bind="click: function(){$root.loadDir(upPath())}, css: {disabled: ( !upPath() || invalid() ) }">
         <i class="glyphicon glyphicon-folder-open"></i>
         <i class="glyphicon glyphicon-arrow-up"></i>
         <span data-bind="text: upPath() ? $root.dirName(upPath()) : '' "></span>
@@ -119,7 +119,7 @@ implied. - See the License for the specific language governing permissions and -
             <span data-bind="text: name"></span>
           </td>
           <td class="text-strong">
-            <span class="pull-right">
+            <span class="float-right">
               <span data-bind="if: $data.isPrivateKey()" title="${g.enc(code: 'storage.private.key.description')}">
                 <g:message code="storage.private.key"/>
               </span>
@@ -195,7 +195,7 @@ implied. - See the License for the specific language governing permissions and -
       </div>
 
       <div data-bind="if: selectedResource() && selectedResource().isPublicKey() && selectedIsDownloadable()">
-        <button data-bind="click: function(){$root.actionLoadContents('publicKeyContents',$element);}, visible: !selectedResource().wasDownloaded()" class="btn btn-sm btn-default" data-loading-text="${g.enc(code:"loading")}">
+        <button data-bind="click: function(){$root.actionLoadContents('publicKeyContents',$element);}, visible: !selectedResource().wasDownloaded()" class="btn btn-sm btn-secondary" data-loading-text="${g.enc(code:"loading")}">
           <g:message code="button.view.public.key.contents"/>
           (<span data-bind="text: selectedResource().contentSize()"></span>
           <g:message code="bytes"/>)

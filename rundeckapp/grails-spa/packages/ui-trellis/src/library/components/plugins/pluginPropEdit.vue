@@ -25,7 +25,7 @@
         :for="`${rkey}prop_` + pindex"
         >{{ prop.title }}</label
       >
-      <div v-if="prop.defaultValue === 'true'" class="col-xs-10">
+      <div v-if="prop.defaultValue === 'true'" class="col-10">
         <label :for="`${rkey}prop_true_` + pindex" class="radio-inline">
           <input
             v-if="!renderReadOnly"

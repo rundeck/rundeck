@@ -475,7 +475,7 @@ search
             </div>
 
             <div class="flex">
-                <span title="Click to modify filter" class="btn btn-default btn-md query" data-toggle="modal" data-target="#jobs_filters">
+                <span title="Click to modify filter" class="btn btn-secondary btn-md query" data-toggle="modal" data-target="#jobs_filters">
                     <g:message code="advanced.search" />
                 </span>
                 <g:form class="search" name="form" action="jobs" params="[project:params.project, jobListType:params.jobListType]" method="POST" style="position: relative;">
@@ -516,7 +516,7 @@ search
       </div>
   </g:if>
   <div class="row">
-    <div class="col-xs-12">
+    <div class="col-12">
 
       <div class="card">
         <div class="card-content">
@@ -559,7 +559,7 @@ search
 
   <auth:resourceAllowed project="${projectName}" action="${[AuthConstants.ACTION_READ]}" kind="${AuthConstants.TYPE_EVENT}">
   <div class="row">
-    <div class="col-xs-12">
+    <div class="col-12">
       <div class="card card-plain">
           <div class="card-header">
             <h3 class="card-title"><g:message code="page.section.Activity.for.jobs" /></h3>
@@ -604,7 +604,7 @@ search
             <div class="alert alert-danger" id="modalErrorContent"></div>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal"><g:message code="ok" default="OK"/></button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal"><g:message code="ok" default="OK"/></button>
         </div>
     </div>
   </div>

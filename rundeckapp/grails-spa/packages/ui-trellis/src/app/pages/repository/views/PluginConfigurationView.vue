@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="row">
-      <div class="col-xs-12" style="margin-bottom: 1em">
+      <div class="col-12" style="margin-bottom: 1em">
         <h3 style="margin: 0px">Installed Plugins</h3>
       </div>
       <div class="col-xs-12 col-sm-4">
@@ -33,7 +33,7 @@
             />
             <span v-if="searchResultPlugins.length > 0" class="input-group-btn">
               <button
-                class="btn btn-default btn-fill"
+                class="btn btn-secondary btn-fill"
                 type="button"
                 @click="clearSearch"
               >
@@ -43,7 +43,7 @@
             <span v-else class="input-group-btn">
               <button
                 :disabled="view === 'detail'"
-                class="btn btn-default btn-fill"
+                class="btn btn-secondary btn-fill"
                 type="button"
                 @click="search"
               >
@@ -60,21 +60,21 @@
         >
           <a
             type="button"
-            class="btn btn-default"
+            class="btn btn-secondary"
             :class="{ active: view === 'grid' }"
             @click="view = 'grid'"
             >Grid</a
           >
           <a
             type="button"
-            class="btn btn-default"
+            class="btn btn-secondary"
             :class="{ active: view === 'list' }"
             @click="view = 'list'"
             >List</a
           >
           <a
             type="button"
-            class="btn btn-default"
+            class="btn btn-secondary"
             :class="{ active: view === 'detail' }"
             @click="view = 'detail'"
             >Detail</a
@@ -83,7 +83,7 @@
       </div>
     </div>
     <div class="row">
-      <div class="col-xs-12">
+      <div class="col-12">
         <div
           v-show="searchResultsCollection.length"
           class="artifact-grid row row-flex row-flex-wrap"
@@ -95,8 +95,8 @@
             :provider="plugin"
             class="artifact col-xs-12 col-sm-4"
           />
-          <div v-show="view === 'list'" class="col-xs-12">
-            <div class="card col-xs-12" style="padding: 0">
+          <div v-show="view === 'list'" class="col-12">
+            <div class="card col-12" style="padding: 0">
               <div class="card-content" style="padding: 0">
                 <table class="table table-hover table-condensed">
                   <thead>
@@ -126,8 +126,8 @@
           v-show="!searchResultsCollection.length"
           class="artifact-grid row row-flex row-flex-wrap"
         >
-          <div v-show="view === 'list'" class="col-xs-12">
-            <div class="card col-xs-12" style="padding: 0">
+          <div v-show="view === 'list'" class="col-12">
+            <div class="card col-12" style="padding: 0">
               <div class="card-content" style="padding: 0">
                 <table class="table table-hover table-condensed">
                   <thead>

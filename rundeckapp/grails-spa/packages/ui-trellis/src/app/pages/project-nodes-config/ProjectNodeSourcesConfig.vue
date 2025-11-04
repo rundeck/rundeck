@@ -22,7 +22,7 @@
         >
           <a
             :href="editPermalink(plugin.origIndex)"
-            class="btn btn-sm btn-default"
+            class="btn btn-sm btn-secondary"
           >
             <i class="glyphicon glyphicon-pencil"></i>
             {{ $t("Edit Nodes") }}

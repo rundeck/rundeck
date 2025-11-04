@@ -16,7 +16,7 @@
 
 %{--Filter navigation/selection dropdown--}%
 <div class="input-group-btn">
-  <button type="button" class="btn btn-default dropdown-toggle" data-bind="css: { 'btn-success': filterExcludeName(), 'btn-default': !filterExcludeName() }" data-toggle="dropdown">
+  <button type="button" class="btn btn-secondary dropdown-toggle" data-bind="css: { 'btn-success': filterExcludeName(), 'btn-secondary': !filterExcludeName() }" data-toggle="dropdown">
     <span data-bind="text: filterExcludeNameDisplay() || ''"><g:message code="filter.title" /></span> <span class="caret"></span>
   </button>
   <ul class="dropdown-menu">

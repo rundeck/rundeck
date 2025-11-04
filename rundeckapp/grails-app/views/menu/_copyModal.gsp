@@ -21,7 +21,7 @@
                     <g:actionSubmit action="copy"
                                     value="${message(code:'yes')}"
                                     id="submittbn"
-                                    class="btn btn-default"/>
+                                    class="btn btn-secondary"/>
                 </div>
             </g:form>
         </div>

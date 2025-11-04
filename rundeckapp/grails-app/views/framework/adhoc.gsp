@@ -155,7 +155,7 @@ search
                 <div data-ko-bind="nodeFilter">
 
                   <div class="row">
-                    <div class="col-xs-12">
+                    <div class="col-12">
                       <div class="spacing text-warning" id="emptyerror" style="display: none"
                            data-bind="visible: !loading() && !error() && (!total() || total()==0)">
                         <span class="errormessage">
@@ -183,7 +183,7 @@ search
                                     code="count.nodes.shown"/></span>
                           </span>
 
-                          <div class="pull-right" style="margin-top:-5px">
+                          <div class="float-right" style="margin-top:-5px">
                             <a href="#" data-bind="click: nodesPageView">
                               <g:message code="view.in.nodes.page.prompt"/>
                             </a>
@@ -204,7 +204,7 @@ search
           </g:ifExecutionMode>
         </div>
         <g:ifExecutionMode active="true" project="${params.project ?: request.project}">
-          <div class="col-xs-12">
+          <div class="col-12">
             <g:jsonToken id="adhoc_req_tokens" url="${request.forwardURI}"/>
             <div class="" id="runtab">
             <g:form action="adhoc" params="[project: params.project]">
@@ -220,7 +220,7 @@ search
                     <span class="input-group multiple-control-input-group tight">
                       %{--                      <span class="input-group-addon input-group-addon-title"><g:message code="command.prompt"/></span>--}%
                       <span class="input-group-btn">
-                        <button type="button" class="btn btn-default dropdown-toggle act_adhoc_history_dropdown"
+                        <button type="button" class="btn btn-secondary dropdown-toggle act_adhoc_history_dropdown"
                                 data-toggle="dropdown">
                           <g:message code="recent"/> <span class="caret"></span>
                         </button>
@@ -256,7 +256,7 @@ search
                       <g:hiddenField name="doNodedispatch" value="true"/>
 
                       <span class="input-group-btn">
-                        <button class="btn btn-default has_tooltip" type="button"
+                        <button class="btn btn-secondary has_tooltip" type="button"
                                 title="${message(code: "node.dispatch.settings")}"
                                 data-placement="left"
                                 data-container="body"
@@ -287,7 +287,7 @@ search
                       <div class="form form-inline">
                         <h5 style="margin-top:0;">
                           <g:message code="node.dispatch.settings"/>
-                          <div class="pull-right">
+                          <div class="float-right">
                             <button class="close " data-toggle="collapse" data-target="#runconfig">&times;</button>
                           </div>
                         </h5>
@@ -363,7 +363,7 @@ search
     </div>
 
     <g:if test="${eventReadAuth}">
-    <div class="col-xs-12">
+    <div class="col-12">
 
       <div >
           <div class="card card-plain">

@@ -40,7 +40,7 @@
                     <div class="col-sm-2 ">
                         <g:link controller="scheduledExecution" action="upload"
                                 params="[project: params.project?:request.project]"
-                                class="btn btn-default btn-sm pull-right">
+                                class="btn btn-secondary btn-sm float-right">
                             <i class="glyphicon glyphicon-upload"></i>
                             <g:message code="upload.definition.button.label"/>
                         </g:link>
@@ -58,7 +58,7 @@
                                 value="${g.message(code:'cancel')}"
                                 action="cancel"
                                 onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"
-                                class="btn btn-default reset_page_confirm"/>
+                                class="btn btn-secondary reset_page_confirm"/>
                 <g:submitButton name="Create" value="${g.message(code: 'button.action.Create')}"
                                     class="btn btn-cta reset_page_confirm" />
 

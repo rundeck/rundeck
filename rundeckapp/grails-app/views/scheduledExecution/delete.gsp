@@ -36,10 +36,10 @@
 <div id="layoutBody">
 <g:form controller="scheduledExecution" useToken="true" action="delete" method="post" class="form form-horizontal">
     <div class="panel panel-primary">
-    <div class="panel-heading">
+    <div class="card-header">
         <span class="h3"><g:message code="really.delete.this.job" /></span>
     </div>
-    <div class="panel-body">
+    <div class="card-body">
         <div class="form-group">
             <label class="col-sm-2 control-label">
                 <g:message code="scheduledExecution.jobName.label"/>
@@ -68,9 +68,9 @@
 
     </div>
 
-    <div class="panel-footer">
+    <div class="card-footer">
         <g:hiddenField name="id" value="${scheduledExecution.extid}"/>
-        <g:actionSubmit value="${g.message(code:'button.action.Cancel',default:'Cancel')}" action="cancel" class="btn btn-default btn-sm "/>
+        <g:actionSubmit value="${g.message(code:'button.action.Cancel',default:'Cancel')}" action="cancel" class="btn btn-secondary btn-sm "/>
         <input type="submit" value="${g.message(code: 'Delete')}"
                class="btn btn-danger btn-sm"/>
     </div>

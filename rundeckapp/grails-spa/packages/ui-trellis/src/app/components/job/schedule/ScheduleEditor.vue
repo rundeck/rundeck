@@ -36,10 +36,10 @@
         <div class="form-group">
           <div class="col-sm-10 col-sm-offset-2">
             <div class="row">
-              <div class="col-xs-12">
+              <div class="col-12">
                 <div class="base-filters">
                   <div class="row">
-                    <div class="col-xs-10">
+                    <div class="col-10">
                       <div class="vue-tabs">
                         <div class="nav-tabs-navigation">
                           <ul class="nav nav-tabs">
@@ -73,11 +73,11 @@
                         </div>
                       </div>
                     </div>
-                    <div class="col-xs-10">
+                    <div class="col-10">
                       <div class="form-group">
                         <div v-if="!modelData.useCrontabString" id="cronsimple">
                           <div class="crontab tabtarget">
-                            <div class="panel-body">
+                            <div class="card-body">
                               <div id="hourTab" class="col-sm-4 form-inline">
                                 <label
                                   for="hourNumber"
@@ -201,7 +201,7 @@
 
                         <div v-if="modelData.useCrontabString" id="cronstrtab">
                           <div>
-                            <div class="panel-body">
+                            <div class="card-body">
                               <div class="container">
                                 <div class="row">
                                   <div class="col-sm-6">

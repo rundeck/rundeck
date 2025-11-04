@@ -11,7 +11,7 @@
     <div :class="alertStyle" :style="styleCss" style="padding: 20px">
       <button
         type="button"
-        class="btn btn-default btn-link btn-close"
+        class="btn btn-secondary btn-link btn-close"
         @click="dismissMessage"
       >
         Close

@@ -54,7 +54,7 @@ implied. - See the License for the specific language governing permissions and -
                     </div>
                     <div class="row">
 
-                        <div class="col-xs-12">
+                        <div class="col-12">
                             <div class="card">
                                 <div class="card-content">
                                     <g:render template="/framework/storageBrowser"/>
@@ -87,7 +87,7 @@ implied. - See the License for the specific language governing permissions and -
                             </div>
 
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-sm btn-default" data-dismiss="modal"><g:message code="cancel"/></button>
+                                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal"><g:message code="cancel"/></button>
 
                                 <button data-bind=" click: $root.delete" data-dismiss="modal" class="btn btn-sm btn-danger obs-storagedelete-select"><g:message code="delete"/></button>
                             </div>
@@ -205,7 +205,7 @@ implied. - See the License for the specific language governing permissions and -
                                 </div>
 
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-sm btn-default" data-dismiss="modal"><g:message code="cancel"/></button>
+                                    <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal"><g:message code="cancel"/></button>
                                     <input type="submit" class="btn btn-sm btn-cta obs-storageupload-select" data-bind="attr: { disabled: !upload.validInput() }" value="Save"/>
                                 </div>
                             </g:uploadForm>

@@ -93,7 +93,7 @@ export default defineComponent({
     </h4>
 
     <div v-if="jobCreateAuthz" class="col-sm-2">
-      <a :href="uploadHref" class="btn btn-default btn-sm pull-right">
+      <a :href="uploadHref" class="btn btn-secondary btn-sm float-right">
         <i class="glyphicon glyphicon-upload"></i>
         {{ $t("upload.definition.button.label") }}
       </a>

@@ -50,7 +50,7 @@
           <a
             href="https://docs.rundeck.com/docs/learning/"
             target="_blank"
-            class="btn btn-default btn-lg"
+            class="btn btn-secondary btn-lg"
             >Learn Here</a
           >
         </div>

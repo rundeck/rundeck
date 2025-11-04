@@ -134,7 +134,7 @@
 
   <div v-if="loaded">
     <div v-if="showMessage" class="row">
-      <div class="project_list_readme col-sm-10 col-sm-offset-1 col-xs-12">
+      <div class="project_list_readme col-sm-10 col-sm-offset-1 col-12">
         <div v-if="showMotd">
           <span
             v-if="messageMeta.data.readme.motdHTML"

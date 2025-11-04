@@ -150,7 +150,7 @@
                   </g:if>
               </div>
               <div class="modal-footer" id="jobs_filters_footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
                   <g:message code="cancel"/>
                 </button>
                 <g:actionSubmit value="${message(code:'job.filter.apply.button.title')}" controller='menu' action='jobs' class="btn btn-primary "/>
@@ -162,7 +162,7 @@
       <div style="text-align:left;vertical-align:top;" id="${enc(attr:rkey)}wfcontent" class="wfcontent">
         <div class="jobscontent head" style="margin-bottom:1em;">
           <g:if test="${!params.compact}">
-            <div class=" pull-right" id="jobpageactionbuttons">
+            <div class=" float-right" id="jobpageactionbuttons">
               <span style="display: none;" data-bind="visible: displaySCMMEssage()" id="scm_message" data-ko-bind="bulkeditor" class="" data-placement="left" data-toggle="popover" data-popover-content-ref="#scmStatusPopoverOK" data-trigger="hover" title="" data-original-title="Project Import/Export Status">
                 <span class="text-info">
                   <i class="glyphicon glyphicon-exclamation-sign "></i>
@@ -189,11 +189,11 @@
               </div>
               <div class="flex flex-justify--end">
                 <div class="btn-group">
-                  <button type="button" class="btn btn-default dropdown-toggle mr-2" data-toggle="dropdown">
+                  <button type="button" class="btn btn-secondary dropdown-toggle mr-2" data-toggle="dropdown">
                     <g:message code="job.actions" />
                     <span class="caret"></span>
                   </button>
-                  <ul class="dropdown-menu pull-right" role="menu" id="job_action_menu" data-ko-bind="bulkeditor">
+                  <ul class="dropdown-menu float-right" role="menu" id="job_action_menu" data-ko-bind="bulkeditor">
                     <auth:resourceAllowed kind="${AuthConstants.TYPE_JOB}" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
                       
                       <li>
@@ -276,10 +276,10 @@
             </div>
           </g:if>
           <span id="group_controls" data-ko-bind="bulkeditor">
-            <span class="btn btn-secondary btn-simple btn-hover btn-xs" data-bind="click: expandAllComponents">
+            <span class="btn btn-secondary btn-simple btn-hover btn-sm" data-bind="click: expandAllComponents">
               <g:message code="expand.all" />
             </span>
-            <span class="btn btn-secondary btn-simple btn-hover btn-xs" data-bind="click: collapseAllComponents">
+            <span class="btn btn-secondary btn-simple btn-hover btn-sm" data-bind="click: collapseAllComponents">
               <g:message code="collapse.all" />
             </span>
           </span>
@@ -316,7 +316,7 @@
                       </div>
                       <div class="modal-footer">
                         <button type="button"
-                          class="btn btn-default"
+                          class="btn btn-secondary"
                           data-bind="click: cancel"
                           data-dismiss="modal" ><g:message code="no"/>
                         </button>
@@ -351,7 +351,7 @@
                     </div>
                     <div class="modal-footer">
                       <button type="button"
-                        class="btn btn-default"
+                        class="btn btn-secondary"
                         data-bind="click: cancel"
                         data-dismiss="modal" ><g:message code="no"/>
                       </button>
@@ -394,29 +394,29 @@
 
                 <div class="floatr" style="margin-top: 10px; display: none;" id="bulk_edit_panel" data-bind="visible: enabled" data-ko-bind="bulkeditor">
                   <div class="bulk_edit_controls panel panel-warning"  >
-                    <div class="panel-heading">
+                    <div class="card-header">
                       <button type="button" class="close "
                         data-bind="click: cancelEdit"
                         aria-hidden="true">&times;
                       </button>
-                      <h3 class="panel-title">
+                      <h3 class="card-title">
                         <g:message code="job.bulk.panel.select.title" />
                       </h3>
                     </div>
-                    <div class="panel-body">
-                    <span class="btn btn-simple btn-xs btn-hover" data-bind="click: selectAll">
+                    <div class="card-body">
+                    <span class="btn btn-simple btn-sm btn-hover" data-bind="click: selectAll">
                       <g:icon name="check"/>
                       <g:message code="select.all" />
                     </span>
-                    <span class="btn btn-simple btn-xs btn-hover " data-bind="click: selectNone" >
+                    <span class="btn btn-simple btn-sm btn-hover " data-bind="click: selectNone" >
                       <g:icon name="unchecked"/>
                       <g:message code="select.none" />
                     </span>
                   </div>
 
-                  <div class="panel-footer">
+                  <div class="card-footer">
                     <div class="btn-group">
-                      <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                      <button type="button" class="btn btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown">
                         <g:message code="job.bulk.perform.action.menu.label" />
                         <span class="caret"></span>
                       </button>
@@ -497,7 +497,7 @@
                     </g:link>
                     <g:link controller="scheduledExecution" action="upload"
                       params="[project: params.project ?: request.project]"
-                      class="btn btn-default">
+                      class="btn btn-secondary">
                       <g:message code="job.upload.button.title" />
                     </g:link>
                   </auth:resourceAllowed>

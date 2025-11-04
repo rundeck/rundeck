@@ -149,7 +149,7 @@
             </g:if>
         </div>
         <div class="form-group">
-            %{--<div class="panel panel-default panel-tab-pane crontab tabtarget"  >--}%
+            %{--<div class="card panel-tab-pane crontab tabtarget"  >--}%
             <div class="${labelColSize}  control-label text-form-label">
                 <g:message code="execution.history.cleanup.schedule" default="Schedule clean history job (Cron expression). Default: 0 0 0 1/1 * ? * (Every days on 12:00 AM)"/>
             </div>

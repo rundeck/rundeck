@@ -18,7 +18,7 @@
       <a
         :href="pluginUrl"
         target="_blank"
-        class="btn btn-sm btn-default pull-right"
+        class="btn btn-sm btn-secondary float-right"
         >Docs</a
       >
     </div>

@@ -32,7 +32,7 @@
               >
                 <button
                   type="button"
-                  class="btn btn-default dropdown-toggle"
+                  class="btn btn-secondary dropdown-toggle"
                   :aria-expanded="isDropdownOpen"
                   @click="toggleDropdown"
                 >
@@ -56,7 +56,7 @@
               <div v-if="isRunner" class="input-group-btn">
                 <button
                   type="button"
-                  class="btn btn-default"
+                  class="btn btn-secondary"
                   @click="loadDir(path, true)"
                 >
                   <span>{{ "Reload" }}</span>
@@ -70,7 +70,7 @@
             <div class="keySelector-button-group" style="margin-bottom: 1em">
               <button
                 type="button"
-                class="btn btn-sm btn-default"
+                class="btn btn-sm btn-secondary"
                 :disabled="upPath === ''"
                 @click="loadDir(upPath)"
               >
@@ -182,7 +182,7 @@
                     ><span v-if="key.expired">{{ "[CACHE EXPIRED]" }}</span>
                   </td>
                   <td class="text-strong">
-                    <span class="pull-right">
+                    <span class="float-right">
                       <span
                         v-if="isPrivateKey(key)"
                         title="This path contains a private key that can be used for remote node execution."
@@ -255,7 +255,7 @@
             </button>
             <button
               type="button"
-              class="pull-right btn btn-sm btn-default"
+              class="float-right btn btn-sm btn-secondary"
               @click="cancelDeleteKey"
             >
               {{ "Cancel" }}
@@ -300,7 +300,7 @@
               </div>
               <div
                 v-if="selectedKey && isPublicKey(selectedKey)"
-                class="pull-right"
+                class="float-right"
               >
                 <span>
                   <a :href="downloadUrl()">
@@ -309,7 +309,7 @@
                   >
                 </span>
               </div>
-              <div v-if="selectedKey && selectedKey.expired" class="pull-right">
+              <div v-if="selectedKey && selectedKey.expired" class="float-right">
                 <span>
                   <a
                     :href="'javascript:void(0)'"

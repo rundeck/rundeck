@@ -55,7 +55,7 @@
 <div id="layoutBody">
 <div class="container-fluid">
     <div class="row">
-        <div class="col-xs-12">
+        <div class="col-12">
             <g:render template="/common/messages"/>
         </div>
     </div>
@@ -65,7 +65,7 @@
                 params="${[project: params.project]}"
                 useToken="true"
                 class="form-horizontal">
-            <div class="col-xs-12">
+            <div class="col-12">
                 <g:render template="editAclFile" model="${[
                     backHref                : g.createLink(
                         controller: 'menu',

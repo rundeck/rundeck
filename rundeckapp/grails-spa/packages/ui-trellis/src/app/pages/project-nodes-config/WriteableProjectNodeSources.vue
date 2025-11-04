@@ -32,7 +32,7 @@
         <div v-if="source.resources.writeable" class="item-section">
           <a
             :href="source.resources.editPermalink"
-            class="btn btn-sm btn-default"
+            class="btn btn-sm btn-secondary"
           >
             <i class="glyphicon glyphicon-pencil"></i>
             {{ $t("Modify") }}

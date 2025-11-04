@@ -61,7 +61,7 @@
                     </div>
 
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
                             <g:message code="no"/>
                         </button>
                         <g:actionSubmit action="disable" value="${message(code: 'yes')}" formmethod="POST"
@@ -114,7 +114,7 @@
                     </div>
 
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
                             <g:message code="no"/>
                         </button>
                         <g:actionSubmit action="enable" value="${message(code: 'yes')}" formmethod="POST"
@@ -165,7 +165,7 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
                         <g:message code="no"/>
                     </button>
                     <g:actionSubmit action="clean" value="${message(code: 'yes')}" formmethod="POST"
@@ -215,7 +215,7 @@
                     </div>
 
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
                             <g:message code="no"/>
                         </button>
                         <g:actionSubmit action="deletePluginConfig" value="${message(code: 'yes')}" formmethod="POST"
@@ -283,7 +283,7 @@
         </g:elseif>
         <g:if test="${!isConfiguredAndEnabled}">
           <g:link action="setup"
-                  class="btn  btn-default"
+                  class="btn  btn-secondary"
                   params="[type: plugins[pluginName].name, project: params.project,integration:integration]"
                   style="margin-top:1em;">
             <g:icon name="cog"/>
@@ -296,7 +296,7 @@
           </g:link>
         </g:if>
         <g:if test="${isConfiguredButDisabled}">
-          <span class="btn btn-default"
+          <span class="btn btn-secondary"
                 data-toggle="modal"
                 data-target="#cleanPlugin${integration}"
                 style="margin-top:1em;">

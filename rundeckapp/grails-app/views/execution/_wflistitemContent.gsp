@@ -50,7 +50,7 @@
                 <g:if test="${!isErrorHandler}">
             <div class="btn-group">
 
-                <button type="button" class="btn btn-xs btn-default dropdown-toggle"
+                <button type="button" class="btn btn-sm btn-secondary dropdown-toggle"
                     ${item.errorHandler && jobitem ? 'disabled="disabled"':''}
                         data-toggle="dropdown"
                         aria-haspopup="true" aria-expanded="false">
@@ -80,20 +80,20 @@
                 </ul>
             </div>
             </g:if>
-            <span class="btn btn-xs btn-default "
+            <span class="btn btn-sm btn-secondary "
                   onclick="_doRemoveItem('${i}', '${stepNum}', ${isErrorHandler?true:false});"
                   title="${g.message(code:'Workflow.'+(isErrorHandler?'stepErrorHandler':'step')+'.action.delete.label')}">
                 <i class="glyphicon glyphicon-remove"></i></span>
 
 
             <g:unless test="${isErrorHandler}">
-                <span class="btn btn-xs btn-default wfitem_copy"  title="${message(code:"workflow.step.action.duplicate.title")}">
+                <span class="btn btn-sm btn-secondary wfitem_copy"  title="${message(code:"workflow.step.action.duplicate.title")}">
                     <g:icon name="duplicate"/>
                 </span>
             </g:unless>
         </div>
             <g:unless test="${isErrorHandler}">
-            <span class="btn btn-xs dragHandle"  title="Drag to reorder"><g:icon name="resize-vertical"/></span>
+            <span class="btn btn-sm dragHandle"  title="Drag to reorder"><g:icon name="resize-vertical"/></span>
             </g:unless>
         </span>
 
@@ -135,7 +135,7 @@
                 <!-- /ko -->
                 <!-- ko foreach: filters -->
                 <div class="btn-group">
-                  <span class="btn btn-xs btn-info-hollow autohilite"
+                  <span class="btn btn-sm btn-info-hollow autohilite"
                         data-bind="click: $root.editFilter" title="${message(code:"click.to.edit.filter")}">
                       <!-- ko if: plugin() -->
                       <!-- ko with: plugin() -->
@@ -160,14 +160,14 @@
 
                       <span data-bind="text: title"></span>
                   </span>
-                  <span class="btn btn-danger btn-xs"
+                  <span class="btn btn-danger btn-sm"
                         data-bind="click: $root.removeFilter"
                         title="${message(code:"remove.filter")}"
                   ><g:icon name="remove"/></span>
                 </div>
                 <!-- /ko -->
                 <!-- ko if: filters().length -->
-                    <span class="btn btn-default btn-xs" data-bind="click: addFilterPopup">
+                    <span class="btn btn-secondary btn-sm" data-bind="click: addFilterPopup">
                       <g:icon name="plus"/>
                       <g:message code="add" />
                     </span>

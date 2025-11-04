@@ -19,7 +19,7 @@
     <span class="input-group-addon input-group-addon-title"><g:message code="nodes" /></span>
 </g:if>
 <div class="input-group-btn input-btn-toggle">
-    <button type="button" class="btn btn-default dropdown-toggle"  data-toggle="dropdown">
+    <button type="button" class="btn btn-secondary dropdown-toggle"  data-toggle="dropdown">
         <span data-bind="text: filterNameDisplay() || ''"><g:message code="filter.title" /></span> <span class="caret"></span>
     </button>
     <ul class="dropdown-menu">
@@ -49,7 +49,7 @@
        value="${enc(attr:filtvalue)}"
        id="${filterFieldId ? enc(attr: filterFieldId) : 'schedJobNodeFilter'}"/>
 <div class="input-group-btn input-btn-toggle">
-    <a class="btn btn-default dropdown-toggle"
+    <a class="btn btn-secondary dropdown-toggle"
        tabindex="0"
        role="button"
        data-toggle="popover"

@@ -53,18 +53,18 @@
     </div>
     <div v-if="jobPageStore.bulkEditMode">
       <div class="panel panel-warning bulk_edit_panel">
-        <div class="panel-heading">
+        <div class="card-header">
           <btn
             class="close"
             aria-hidden="true"
             @click="jobPageStore.bulkEditMode = false"
             >&times;
           </btn>
-          <h3 class="panel-title">
+          <h3 class="card-title">
             {{ $t("job.bulk.panel.select.title") }}
           </h3>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <btn
             id="bulk_select_all_button"
             size="xs"
@@ -93,7 +93,7 @@
           }}
         </div>
 
-        <div class="panel-footer">
+        <div class="card-footer">
           <dropdown>
             <btn
               id="bulk_perform_action_button"

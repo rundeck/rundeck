@@ -7,10 +7,10 @@
   padding: 0.2em 0.25em 0.15em;
 }
 
-.#{$fa-css-prefix}-pull-left {
+.#{$fa-css-prefix}-float-left {
   float: left;
 }
-.#{$fa-css-prefix}-pull-right {
+.#{$fa-css-prefix}-float-right {
   float: right;
 }
 
@@ -19,10 +19,10 @@
 .far,
 .fal,
 .fab {
-  &.#{$fa-css-prefix}-pull-left {
+  &.#{$fa-css-prefix}-float-left {
     margin-right: 0.3em;
   }
-  &.#{$fa-css-prefix}-pull-right {
+  &.#{$fa-css-prefix}-float-right {
     margin-left: 0.3em;
   }
 }

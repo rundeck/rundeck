@@ -97,8 +97,8 @@
 <body>
 <div class="content">
 <div id="layoutBody">
-<div class="panel panel-default panel-tab-content" data-bind="visible: ready() && !notFound() && !errorMessage() && !errors()">
-    <div class="panel-heading">
+<div class="card panel-tab-content" data-bind="visible: ready() && !notFound() && !errorMessage() && !errors()">
+    <div class="card-header">
         <g:if test="${!params.instance}">
         <g:message code="archive.request.download.title" args="${[params.project ?: request.project]}"/>
         </g:if>
@@ -107,7 +107,7 @@
         </g:if>
     </div>
 
-    <div class="panel-body">
+    <div class="card-body">
         <g:if test="${!params.instance}">
         <g:link controller="project" action="exportWait"
                 params="[project: params.project ?: request.project, token: params.token, download: true]"
@@ -129,8 +129,8 @@
         </g:if>
 
     </div>
-    <div class="panel-footer">
-        <g:link class="btn btn-default btn-sm" controller="menu" action="projectExport" params="${[project: params.project]}">
+    <div class="card-footer">
+        <g:link class="btn btn-secondary btn-sm" controller="menu" action="projectExport" params="${[project: params.project]}">
             <g:message code="return.to.configuration" />
         </g:link>
     </div>
@@ -138,11 +138,11 @@
 </div>
 
 <div class="panel panel-danger panel-tab-content" data-bind="visible: notFound">
-    <div class="panel-heading">
+    <div class="card-header">
         <g:message code="request.error.notfound.title" />
     </div>
 
-    <div class="panel-body">
+    <div class="card-body">
 
         <g:message code="archive.request.token.not.found" args="${[token]}" />
 
@@ -151,11 +151,11 @@
 </div>
 
 <div class="panel panel-danger panel-tab-content" data-bind="visible: errorMessage">
-    <div class="panel-heading">
+    <div class="card-header">
         <g:message code="archive.request.error" />
     </div>
 
-    <div class="panel-body" data-bind="text: errorMessage">
+    <div class="card-body" data-bind="text: errorMessage">
 
         ${requestError?.message}
 
@@ -164,11 +164,11 @@
 </div>
 
 <div class="panel panel-danger panel-tab-content" data-bind="visible: errors">
-    <div class="panel-heading">
+    <div class="card-header">
         <g:message code="export.another.instance.process" args="${[params.project ?: request.project,params.instance]}"/>
     </div>
 
-    <div class="panel-body">
+    <div class="card-body">
 
         <ul data-bind="foreach: errors()" class="list-unstyled">
             <li><pre data-bind="text: $data"></pre></li>
@@ -179,20 +179,20 @@
 
     </div>
 
-    <div class="panel-footer">
-        <g:link class="btn btn-default btn-sm" controller="menu" action="projectExport" params="${[project: params.project]}">
+    <div class="card-footer">
+        <g:link class="btn btn-secondary btn-sm" controller="menu" action="projectExport" params="${[project: params.project]}">
             <g:message code="return.to.configuration" />
         </g:link>
     </div>
 
 </div>
 
-<div class="panel panel-default panel-tab-content" data-bind="visible: !ready() && !errorMessage() && !notFound() && !errors()">
-    <div class="panel-heading">
+<div class="card panel-tab-content" data-bind="visible: !ready() && !errorMessage() && !notFound() && !errors()">
+    <div class="card-header">
         <g:message code="archive.request.exporting.title" args="${[params.project ?: request.project]}"/>
     </div>
 
-    <div class="panel-body">
+    <div class="card-body">
         <div class="container ">
         <div class="col-md-12 text-info" style="margin-bottom:1em">
             <g:message code="archive.request.please.wait" />
@@ -207,11 +207,11 @@
         </div>
         </div>
     </div>
-    <div class="panel-footer form-inline">
+    <div class="card-footer form-inline">
 
         <g:link controller="project" action="exportWait"
                 params="[project: params.project ?: request.project, token: params.token,instance:params.instance, iproject:params.iproject]"
-                class="btn btn-default btn-sm reload_button"
+                class="btn btn-secondary btn-sm reload_button"
                 data-loading="Loading...">
             <i class="glyphicon glyphicon-refresh"></i>
             <g:message code="refresh.this.page" />

@@ -21,7 +21,7 @@
             v-if="createProjectAllowed"
             id="createProject"
             :href="createProjectLink"
-            class="btn btn-primary pull-right"
+            class="btn btn-primary float-right"
           >
             {{ $t("page.home.new.project.button.label") }}
             <b class="glyphicon glyphicon-plus"></b>

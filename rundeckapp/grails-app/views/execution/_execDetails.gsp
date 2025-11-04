@@ -278,7 +278,7 @@
 
                 <g:if test="${knockout}">
                     <span class="ko-wrap">
-                        <span class="btn btn-sm btn-default receiver"
+                        <span class="btn btn-sm btn-secondary receiver"
                               title="${message(code:"display.matching.nodes")}"
                               data-bind="click: updateMatchedNodes"
                         >

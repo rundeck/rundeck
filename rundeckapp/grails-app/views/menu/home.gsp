@@ -127,7 +127,7 @@
 							                      kind="${AuthConstants.TYPE_PROJECT}"
 							                      context="${AuthConstants.CTX_APPLICATION}">
 								<g:link controller="framework" action="createProject"
-								        class="btn  btn-primary pull-right">
+								        class="btn  btn-primary float-right">
 									<g:message code="page.home.new.project.button.label"/>
 									<b class="glyphicon glyphicon-plus"></b>
 								</g:link>
@@ -222,7 +222,7 @@
 		%{--  card --}%
 		<div class="container-fluid">
 			<div class="row">
-				<div class="col-xs-12">
+				<div class="col-12">
 					<div class="card">
 
 						<div id="project-list" class="card-content">
@@ -376,7 +376,7 @@
 
 										<div class="col-sm-12 col-md-2 col-last"
 										     data-bind="if: $root.projectForName(project)">
-											<div class="pull-right">
+											<div class="float-right">
 												<div class="dropdown-toggle-hover">
 													<a href="#"
 													   class="as-block link-hover link-quiet link-block-padded text-inverse dropdown-toggle"
@@ -384,7 +384,7 @@
 														<g:message code="button.Action"/>
 														<span class="caret"></span>
 													</a>
-													<ul class="dropdown-menu pull-right" role="menu">
+													<ul class="dropdown-menu float-right" role="menu">
 														<li data-bind="if: !$root.projectForName(project).loaded()">
 															<a href="#" class="text-muted">
 																<b class="fas fa-spinner fa-spin loading-spinner text-muted"></b> Loading &hellip;
@@ -427,7 +427,7 @@
 
 								<div data-bind="if: $root.projectForName(project)">
 									<div class="row" data-bind="if: $root.projectForName(project).showMessage() ">
-										<div class="project_list_readme col-sm-10 col-sm-offset-1 col-xs-12">
+										<div class="project_list_readme col-sm-10 col-sm-offset-1 col-12">
 											<div data-bind="if: $root.projectForName(project).showMotd() ">
 												<span data-bind="if: $root.projectForName(project).readme().motdHTML()">
 													<span data-bind="html: $root.projectForName(project).readme().motdHTML()"></span>

@@ -394,7 +394,7 @@
   &.btn-sm {
     @include navbar-vertical-align($input-height-small);
   }
-  &.btn-xs {
+  &.btn-sm {
     @include navbar-vertical-align(22);
   }
 }
@@ -769,20 +769,20 @@
     }
   }
 
-  .btn-default {
+  .btn-secondary {
     color: var(--white-color);
     border-color: var(--white-color);
   }
-  .btn-default.btn-fill {
+  .btn-secondary.btn-fill {
     color: var(--dark-gray);
     background-color: var(--white-color);
     @include opacity(0.9);
   }
-  .btn-default.btn-fill:hover,
-  .btn-default.btn-fill:focus,
-  .btn-default.btn-fill:active,
-  .btn-default.btn-fill.active,
-  .open .dropdown-toggle.btn-fill.btn-default {
+  .btn-secondary.btn-fill:hover,
+  .btn-secondary.btn-fill:focus,
+  .btn-secondary.btn-fill:active,
+  .btn-secondary.btn-fill.active,
+  .open .dropdown-toggle.btn-fill.btn-secondary {
     border-color: var(--white-color);
     @include opacity(1);
   }

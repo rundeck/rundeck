@@ -206,7 +206,7 @@
                 <li data-bind="css: {disabled: page()==0 || $root.loading()}">
                     <a
                         href="#"
-                            class="btn btn-xs btn-default"
+                            class="btn btn-sm btn-secondary"
                             data-bind="click: $root.browseNodesPagePrev, visible: $root.maxPages() > 1, attr: {href: $root.browseNodesPagePrevUrl() }"
                             title="${message(code:"Previous")}"><g:message code="default.paginate.prev"/></a>
                 </li>
@@ -225,7 +225,7 @@
                         <li data-bind="css: {disabled: page()==maxPages() || $root.loading() } ">
                             <a
                                     href="#"
-                                    class="btn btn-xs btn-default"
+                                    class="btn btn-sm btn-secondary"
                                     data-bind="click: $root.browseNodesPageNext, visible: $root.maxPages() > 1, attr: {href: $root.browseNodesPageNextUrl() }"
                                     title="${message(code:"Next")}">
                                 <g:message code="default.paginate.next"/>

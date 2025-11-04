@@ -16,7 +16,7 @@
 // --------------------------------------------------
 
 // Common styles
-.btn-default,
+.btn-secondary,
 .btn-primary,
 .btn-success,
 .btn-info,
@@ -92,8 +92,8 @@
 }
 
 // Apply the mixin to the buttons
-.btn-default {
-  @include btn-styles($btn-default-bg);
+.btn-secondary {
+  @include btn-styles($btn-secondary-bg);
   text-shadow: 0 1px 0 #fff;
   border-color: #ccc;
 }
@@ -332,7 +332,7 @@
 }
 
 // Mixin for generating new styles
-@mixin panel-heading-styles($color) {
+@mixin card-header-styles($color) {
   @include gradient-vertical(
     $start-color: $color,
     $end-color: darken($color, 5%)
@@ -340,23 +340,23 @@
 }
 
 // Apply the mixin to the panel headings only
-.panel-default > .panel-heading {
-  @include panel-heading-styles($panel-default-heading-bg);
+.panel-default > .card-header {
+  @include card-header-styles($panel-default-heading-bg);
 }
-.panel-primary > .panel-heading {
-  @include panel-heading-styles($panel-primary-heading-bg);
+.panel-primary > .card-header {
+  @include card-header-styles($panel-primary-heading-bg);
 }
-.panel-success > .panel-heading {
-  @include panel-heading-styles($panel-success-heading-bg);
+.panel-success > .card-header {
+  @include card-header-styles($panel-success-heading-bg);
 }
-.panel-info > .panel-heading {
-  @include panel-heading-styles($panel-info-heading-bg);
+.panel-info > .card-header {
+  @include card-header-styles($panel-info-heading-bg);
 }
-.panel-warning > .panel-heading {
-  @include panel-heading-styles($panel-warning-heading-bg);
+.panel-warning > .card-header {
+  @include card-header-styles($panel-warning-heading-bg);
 }
-.panel-danger > .panel-heading {
-  @include panel-heading-styles($panel-danger-heading-bg);
+.panel-danger > .card-header {
+  @include card-header-styles($panel-danger-heading-bg);
 }
 
 //

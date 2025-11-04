@@ -29,34 +29,34 @@
       <g:if test="${edit}">
           <span class="optctrl opteditcontrols controls ">
             <g:if test="${canMoveUp || canMoveDown}">
-                <span class="dragHandle btn btn-xs" title="${message(code:"drag.to.reorder")}">
+                <span class="dragHandle btn btn-sm" title="${message(code:"drag.to.reorder")}">
                   <g:icon name="resize-vertical"/>
                 </span>
             </g:if>
             <g:else>
-                <span class="btn btn-xs btn-default disabled" ><g:icon name="resize-vertical"/></span>
+                <span class="btn btn-sm btn-secondary disabled" ><g:icon name="resize-vertical"/></span>
             </g:else>
               <div class="btn-group">
                 <g:if test="${canMoveUp}">
-                    <span class="btn btn-xs btn-default" onclick="_doReorderOption('${enc(js:option.name)}',{pos:-1});"
+                    <span class="btn btn-sm btn-secondary" onclick="_doReorderOption('${enc(js:option.name)}',{pos:-1});"
                           title="${message(code:"move.up")}">
                         <i class="glyphicon glyphicon-arrow-up"></i>
                     </span>
                 </g:if>
                 <g:else>
-                    <span class="btn btn-xs btn-default disabled" >
+                    <span class="btn btn-sm btn-secondary disabled" >
                         <i class="glyphicon glyphicon-arrow-up"></i>
                     </span>
                 </g:else>
                 <g:if test="${canMoveDown}">
 
-                    <span class="btn btn-xs btn-default" onclick="_doReorderOption('${enc(js:option.name)}',{pos:1});"
+                    <span class="btn btn-sm btn-secondary" onclick="_doReorderOption('${enc(js:option.name)}',{pos:1});"
                           title="${message(code:"move.down")}">
                         <i class="glyphicon glyphicon-arrow-down"></i>
                     </span>
                 </g:if>
                 <g:else>
-                    <span class="btn btn-xs btn-default disabled" >
+                    <span class="btn btn-sm btn-secondary disabled" >
                         <i class="glyphicon glyphicon-arrow-down"></i>
                     </span>
                 </g:else>
@@ -68,20 +68,20 @@
         </span>
 
         <div id="optdel_${enc(attr:ukey)}" class="panel panel-danger collapse">
-            <div class="panel-heading">
+            <div class="card-header">
                 <g:message code="delete.this.option" />
             </div>
 
-            <div class="panel-body">
+            <div class="card-body">
                 <g:message code="really.delete.option.0" args="${[option.name]}"/>
             </div>
 
             <g:jsonToken id="reqtoken_del_${ukey}" url="${request.forwardURI}"/>
 
-            <div class="panel-footer">
-                <span class="btn btn-default btn-xs"
+            <div class="card-footer">
+                <span class="btn btn-secondary btn-sm"
                       onclick="jQuery('#optdel_${enc(js:ukey)}').collapse('toggle');"><g:message code="cancel"/></span>
-                <span class="btn btn-danger btn-xs"
+                <span class="btn btn-danger btn-sm"
                       onclick=" _doRemoveOption('${enc(js:option.name)}', jQuery(this).closest('li.optEntry'),'reqtoken_del_${enc(js:ukey)}');"><g:message
                         code="delete"/></span>
             </div>
@@ -91,17 +91,17 @@
         <g:jsonToken id="reqtoken_duplicate_${ukey}" url="${request.requestURI}"/>
 
         <span class="optctrl opteditcontrols controls " id="optctrls_${enc(attr:option.name)}" style="position:absolute; right:0;">
-            <span class="btn btn-xs btn-default" onclick="_optedit('${enc(js:option.name)}',jQuery(this).closest('li.optEntry'));"
+            <span class="btn btn-sm btn-secondary" onclick="_optedit('${enc(js:option.name)}',jQuery(this).closest('li.optEntry'));"
                   title="${message(code:"edit.this.option")}">
                 <i class="glyphicon glyphicon-edit"></i>
                 <g:message code="edit" />
             </span>
-            <span class="btn btn-xs btn-default" onclick="_optcopy('${enc(js:option.name)}','reqtoken_duplicate_${ukey}');"
+            <span class="btn btn-sm btn-secondary" onclick="_optcopy('${enc(js:option.name)}','reqtoken_duplicate_${ukey}');"
                   title="${message(code:"duplicate.this.option")}">
                 <i class="glyphicon glyphicon-duplicate"></i>
                 <g:message code="duplicate" />
             </span>
-            <span class="btn btn-xs btn-danger "
+            <span class="btn btn-sm btn-danger "
                   data-toggle="collapse"
                   data-target="#optdel_${enc(attr:ukey)}"
                   title="${message(code:"delete.this.option")}">

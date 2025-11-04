@@ -52,7 +52,7 @@
             <g:hiddenField name="actionId" value="${params.actionId}"/>
             <g:set var="serviceName" value="${integration=='export'?'ScmExport':'ScmImport'}"/>
             <div class="panel" id="createform" style="margin-bottom: 0;">
-                <div class="panel-heading">
+                <div class="card-header">
                     <span class="h3">
 
                         <stepplugin:message
@@ -135,7 +135,7 @@
                                                     </span>
 
                                                 </label>
-                                                <g:link action="diff" class="btn btn-xs btn-info"
+                                                <g:link action="diff" class="btn btn-sm btn-info"
                                                         params="${[project: params.project, id: job.extid, integration: 'export']}">
                                                     <g:message code="button.View.Diff.title"/>
                                                 </g:link>
@@ -224,12 +224,12 @@
                                 <g:if test="${deletedPaths.size() > 1}">
                                     <div class=" row row-spacing">
                                         <div class=" col-sm-12">
-                                            <span class="btn btn-default"
+                                            <span class="btn btn-secondary"
                                                   onclick="jQuery('input[name=deletePaths]').prop('checked', true)">
                                                 <g:message code="select.all"/>
                                             </span>
                                         &bull;
-                                            <span class="btn btn-default"
+                                            <span class="btn btn-secondary"
                                                   onclick="jQuery('input[name=deletePaths]').prop('checked', false)">
                                                 <g:message code="select.none"/>
                                             </span>
@@ -294,7 +294,7 @@
                                             </label>
                                             <g:if test="${job}">
 
-                                                <g:link action="diff" class="btn btn-xs btn-info"
+                                                <g:link action="diff" class="btn btn-sm btn-info"
                                                         params="${[project: params.project, id: job.extid, integration: 'import']}">
                                                     <g:message code="button.View.Diff.title"/>
                                                 </g:link>
@@ -319,12 +319,12 @@
                                 <g:if test="${trackingItems.size() > 1}">
                                     <div class=" row row-spacing">
                                         <div class=" col-sm-12">
-                                            <span class="btn btn-default"
+                                            <span class="btn btn-secondary"
                                                   onclick="jQuery('input[name=chosenTrackedItem]').prop('checked', true)">
                                                 <g:message code="select.all"/>
                                             </span>
                                         &bull;
-                                            <span class="btn btn-default"
+                                            <span class="btn btn-secondary"
                                                   onclick="jQuery('input[name=chosenTrackedItem]').prop('checked', false)">
                                                 <g:message code="select.none"/>
                                             </span>
@@ -384,7 +384,7 @@
                                             </label>
                                             <g:if test="${job}">
 
-                                                <g:link action="diff" class="btn btn-xs btn-info"
+                                                <g:link action="diff" class="btn btn-sm btn-info"
                                                         params="${[project: params.project, id: job.extid, integration: 'import']}">
                                                     <g:message code="button.View.Diff.title"/>
                                                 </g:link>
@@ -408,12 +408,12 @@
                                 <g:if test="${toDeleteItems.size() > 1}">
                                     <div class=" row row-spacing">
                                         <div class=" col-sm-12">
-                                            <span class="btn btn-default"
+                                            <span class="btn btn-secondary"
                                                   onclick="jQuery('input[name=chosenDeleteItem]').prop('checked', true)">
                                                 <g:message code="select.all"/>
                                             </span>
                                             &bull;
-                                            <span class="btn btn-default"
+                                            <span class="btn btn-secondary"
                                                   onclick="jQuery('input[name=chosenDeleteItem]').prop('checked', false)">
                                                 <g:message code="select.none"/>
                                             </span>
@@ -440,8 +440,8 @@
                     </div>
                 </div>
 
-                <div class="panel-heading">
-                    <button class="btn btn-default" name="cancel" value="Cancel"><g:message
+                <div class="card-header">
+                    <button class="btn btn-secondary" name="cancel" value="Cancel"><g:message
                             code="button.action.Cancel"/></button>
                     <g:submitButton
                             name="submit"

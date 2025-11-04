@@ -181,14 +181,14 @@
           <div class="card">
               <g:if test="${!clusterMode}">
                   <div class="card-header clearfix">
-                      <span class="panel-title pull-left">
+                      <span class="card-title float-left">
                           <span class="text-info">${aclFileList.size()}</span>
                           <g:message code="list.of.acl.policy.files.in.directory"/>
                           <code>${fwkConfigDir.absolutePath}</code>
                       </span>
                       <g:if test="${hasCreateAuth}">
-                          <div class="btn-group pull-right">
-                              <span class="btn btn-sm btn-default" data-toggle="modal" data-target="#aclFSUpload">
+                          <div class="btn-group float-right">
+                              <span class="btn btn-sm btn-secondary" data-toggle="modal" data-target="#aclFSUpload">
                                   <g:icon name="upload"/>
                                   <g:message code="button.action.Upload"/>
                               </span>
@@ -240,13 +240,13 @@
 
               </g:if>
                   <div class="card-header clearfix" id="storedPolicies_header">
-                      <h3 class="card-title pull-left">
+                      <h3 class="card-title float-left">
                           <g:message code="stored.acl.policy.files.title"/>
                           <span class="badge" style="font-size:1em">${aclStoredList.size()}</span>
                       </h3>
                       <g:if test="${hasCreateAuth}">
-                          <div class="btn-group pull-right">
-                              <span class="btn btn-sm btn-default" data-toggle="modal" data-target="#aclStorageUpload"
+                          <div class="btn-group float-right">
+                              <span class="btn btn-sm btn-secondary" data-toggle="modal" data-target="#aclStorageUpload"
                                     id="storage_acl_upload_btn">
                                   <g:icon name="upload"/>
                                   <g:message code="button.action.Upload"/>

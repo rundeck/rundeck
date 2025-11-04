@@ -31,7 +31,7 @@
 <g:set var="valueColTypeSplit80" value="col-sm-8"/>
 <g:set var="valueColTypeSplit20" value="col-sm-2"/>
 <g:set var="offsetColType" value="col-sm-10 col-sm-offset-2"/>
-<g:set var="fullWidthCol" value="col-xs-12"/>
+<g:set var="fullWidthCol" value="col-12"/>
 <g:set var="formControlType" value="form-control ${inputSize}"/>
 <g:set var="formControlCodeType" value="form-control code apply_ace"/>
 <g:set var="hasError" value="${error ? 'has-error' : ''}"/>
@@ -344,7 +344,7 @@
                        :event-bus="eventBus"
                        :socket-data="{ storageFilter: '${enc(attr:storageFilter)}', fieldId: '${enc(attr:fieldid)}', readOnly: 'true'}"
             >
-                <a class="btn btn-sm btn-default obs-select-storage-path"
+                <a class="btn btn-sm btn-secondary obs-select-storage-path"
                         data-toggle="modal"
                         href="#storagebrowse"
                         data-storage-root="${enc(attr:storageRoot)}"

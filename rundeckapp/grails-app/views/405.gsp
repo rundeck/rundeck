@@ -72,7 +72,7 @@
       </div>
           <div class="laser-cat-container">
             <g:if test="${!grailsApplication.config.rundeck?.feature?.fourOhFour?.hideSpaceCat in [true, 'true']}">
-              <asset:image src="spacecat/laser-cat.png" class="img-responsive"
+              <asset:image src="spacecat/laser-cat.png" class="img-fluid"
                 alt="Laser Cat" />
             </g:if>
           </div>

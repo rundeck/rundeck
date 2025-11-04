@@ -8,12 +8,12 @@
 ) {
   border-color: $border;
 
-  & > .panel-heading {
+  & > .card-header {
     color: var($heading-text-color);
     background-color: var($heading-bg-color);
     border-color: $heading-border;
 
-    + .panel-collapse > .panel-body {
+    + .panel-collapse > .card-body {
       border-top-color: $border;
     }
     .badge {
@@ -21,8 +21,8 @@
       background-color: $heading-text-color;
     }
   }
-  & > .panel-footer {
-    + .panel-collapse > .panel-body {
+  & > .card-footer {
+    + .panel-collapse > .card-body {
       border-bottom-color: $border;
     }
   }

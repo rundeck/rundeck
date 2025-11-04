@@ -401,9 +401,9 @@ $table-border-color: #ddd !default;
 
 $btn-font-weight: normal !default;
 
-$btn-default-color: #333 !default;
-$btn-default-bg: #fff !default;
-$btn-default-border: #ccc !default;
+$btn-secondary-color: #333 !default;
+$btn-secondary-bg: #fff !default;
+$btn-secondary-border: #ccc !default;
 
 $btn-primary-color: #fff !default;
 $btn-primary-bg: $brand-primary !default;
@@ -905,14 +905,14 @@ $list-group-link-heading-color: #333 !default;
 //##
 
 $panel-bg: #fff !default;
-$panel-body-padding: 15px !default;
-$panel-heading-padding: 10px 15px !default;
-$panel-footer-padding: $panel-heading-padding !default;
+$card-body-padding: 15px !default;
+$card-header-padding: 10px 15px !default;
+$card-footer-padding: $card-header-padding !default;
 $panel-border-radius: $border-radius-base !default;
 
 //** Border color for elements within panels
 $panel-inner-border: #ddd !default;
-$panel-footer-bg: #f5f5f5 !default;
+$card-footer-bg: #f5f5f5 !default;
 
 $panel-default-text: $gray-dark !default;
 $panel-default-border: #ddd !default;

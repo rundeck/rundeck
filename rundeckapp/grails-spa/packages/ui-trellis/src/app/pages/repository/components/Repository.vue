@@ -3,7 +3,7 @@
     <div class="repo-header">
       <a style="display: block" @click="toggleVisibility">
         <h3 class="repo-title">{{ repo.repositoryName }} Repository</h3>
-        <div class="visibility-toggle pull-right">
+        <div class="visibility-toggle float-right">
           <i v-show="visible" class="fas fa-sort-up fa-2x" title="Hide"></i>
           <i v-show="!visible" class="fas fa-sort-down fa-2x" title="Show"></i>
         </div>

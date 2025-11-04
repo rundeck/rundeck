@@ -13,7 +13,7 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
-<span class="${enc(attr:classnames?:'')} ${classnames&&classnames.indexOf('textbtn-')>=0?'': 'textbtn-default'} textbtn  expandComponentControl toggle ${open=='true'?'expanded':'closed'}" onmousedown="${raw(enc(attr:(key?'Expander.toggle(this,\''+enc(attr:enc(js:key))+'\')':jsfunc?jsfunc:'Expander.toggle(this)')))};return false;" style="${enc(attr:style)}" id="_exp_${enc(attr:key)}">
+<span class="${enc(attr:classnames?:'')} ${classnames&&classnames.indexOf('textbtn-')>=0?'': 'textbtn-secondary'} textbtn  expandComponentControl toggle ${open=='true'?'expanded':'closed'}" onmousedown="${raw(enc(attr:(key?'Expander.toggle(this,\''+enc(attr:enc(js:key))+'\')':jsfunc?jsfunc:'Expander.toggle(this)')))};return false;" style="${enc(attr:style)}" id="_exp_${enc(attr:key)}">
   <g:enc rawtext="${text != null && !imgfirst ? text:''}"/>
   <g:if test="${hideGlyphicon != 'true'}">
     <b class="glyphicon glyphicon-chevron-${open == 'true' ? 'down' : 'right'} ${iconCss?:''}" data-expanding data-expander-open-class="glyphicon-chevron-down"  data-expander-close-class="glyphicon-chevron-right"></b>

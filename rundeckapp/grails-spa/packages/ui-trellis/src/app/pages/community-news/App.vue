@@ -1,11 +1,11 @@
 <template>
   <div>
-    <div class="col-xs-12">
+    <div class="col-12">
       <div class="card">
         <div class="card-header">
           <h2 class="card-title">
             {{ $t("message_communityNews") }}
-            <div class="pull-right">
+            <div class="float-right">
               <newsletter-subscribe />
             </div>
           </h2>

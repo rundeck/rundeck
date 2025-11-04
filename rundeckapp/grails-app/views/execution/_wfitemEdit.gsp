@@ -78,7 +78,7 @@
                         });
                         </g:javascript>
 
-                        <span class="btn btn-sm btn-default act_choose_job" onclick="loadJobChooserModal(this,'jobUuidField${rkey}', 'jobNameField${rkey}','jobGroupField${rkey}', 'jobProjectField${rkey}','jobrefpicker${rkey}','jobrefpicker${rkey}_content');"
+                        <span class="btn btn-sm btn-secondary act_choose_job" onclick="loadJobChooserModal(this,'jobUuidField${rkey}', 'jobNameField${rkey}','jobGroupField${rkey}', 'jobProjectField${rkey}','jobrefpicker${rkey}','jobrefpicker${rkey}_content');"
                               id="jobChooseBtn${rkey}"
                               title="${message(code:"select.an.existing.job.to.use")}"
                               data-loading-text="Loading...">
@@ -275,7 +275,7 @@
                     <div class=" col-sm-10  ">
 
                         <div class="well well-sm embed matchednodes">
-                            <button type="button" class="pull-right btn btn-sm refresh_nodes"
+                            <button type="button" class="float-right btn btn-sm refresh_nodes"
                                     data-loading-text="${message(code:"loading.text")}"
                                     data-bind="click: $data.updateMatchedNodes"
                                     title="${message(code:"click.to.refresh")}">
@@ -605,7 +605,7 @@
                                 <div class="popout tooltipcontent helptooltip"
                                      id="fileExtensionHelp${enc(attr: rkey)}_tooltip"
                                      style="display: none;">
-                                    <div class="panel-body">
+                                    <div class="card-body">
                                         <div class="help-block"><g:message
                                                 code="Workflow.Step.fileExtension.help"/></div>
                                     </div>
@@ -756,13 +756,13 @@
 
                 <g:if test="${isErrorHandler}">
                     <g:hiddenField name="num" value="${num}"/>
-                    <span class="btn btn-default btn-sm" onclick="_wficancelnewEH(this);"
+                    <span class="btn btn-secondary btn-sm" onclick="_wficancelnewEH(this);"
                           title="${message(code:"Workflow.stepErrorHandler.cancel.title")}"><g:message code="button.action.Cancel" /></span>
                     <span class="btn btn-cta btn-sm" onclick="_wfisave('${key}', ${num}, 'wfiedit_${rkey}',true);" title="${message(code:"Workflow.stepErrorHandler.savenew.title")}"><g:message code="button.action.Save" /></span>
                 </g:if>
                 <g:else>
 
-                    <span class="btn btn-default btn-sm" onclick="_wficancelnew(${num});"
+                    <span class="btn btn-secondary btn-sm" onclick="_wficancelnew(${num});"
                           title="${message(code:"Workflow.step.cancel.title")}"><g:message code="button.action.Cancel" /></span>
                     <span class="btn btn-cta btn-sm" onclick="_wfisavenew('wfiedit_${rkey}');" title="${message(code:"Workflow.step.savenew.title")}"><g:message code="button.action.Save" /></span>
                 </g:else>
@@ -770,7 +770,7 @@
             <g:else>
                 <g:hiddenField name="num" value="${num}"/>
                 <g:hiddenField name="origitemtype" value="${origitemtype}"/>
-                <span class="btn btn-default btn-sm" onclick="_wfiview('${key}',${num},${isErrorHandler?true:false});" title="${message(code:"Workflow."+msgItem+".discard.title")}" ><g:message code="button.action.Cancel" /></span>
+                <span class="btn btn-secondary btn-sm" onclick="_wfiview('${key}',${num},${isErrorHandler?true:false});" title="${message(code:"Workflow."+msgItem+".discard.title")}" ><g:message code="button.action.Cancel" /></span>
                 <span class="btn btn-cta btn-sm" onclick="_wfisave('${key}',${num}, 'wfiedit_${rkey}', ${ isErrorHandler?true:false});"
                       title="${message(code:"Workflow."+msgItem+".save.title")}"><g:message code="button.action.Save" /></span>
             </g:else>

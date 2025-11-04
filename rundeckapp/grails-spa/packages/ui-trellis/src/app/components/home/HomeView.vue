@@ -24,7 +24,7 @@
     </div>
     <div class="container-fluid">
       <div class="row">
-        <div class="col-xs-12">
+        <div class="col-12">
           <div
             v-if="
               projectCount < 1 && loadedProjectNames && !createProjectAllowed

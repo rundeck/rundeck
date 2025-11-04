@@ -8,13 +8,13 @@
       </div>
       <div class="container-fluid">
         <div class="row row-space-bottom">
-          <div class="col-xs-12">
+          <div class="col-12">
             <div class="card">
               <div class="card-content">
                 <div class="vue-tabs">
                   <page-confirm
                     :event-bus="rundeckContext.eventBus"
-                    class="pull-right"
+                    class="float-right"
                     :message="$t('page.unsaved.changes')"
                     :display="true"
                     style="display: inline-block"

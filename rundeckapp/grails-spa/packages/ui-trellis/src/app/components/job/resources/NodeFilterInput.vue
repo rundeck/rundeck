@@ -9,10 +9,10 @@
     <div class="input-group-btn input-btn-toggle">
       <button
         type="button"
-        class="btn btn-default dropdown-toggle job_edit__node_filter__filter_select_dropdown"
+        class="btn btn-secondary dropdown-toggle job_edit__node_filter__filter_select_dropdown"
         :class="{
           'btn-success': selectedFilterName,
-          'btn-default': !selectedFilterName,
+          'btn-secondary': !selectedFilterName,
         }"
         data-toggle="dropdown"
         data-testid="nfi-toggle"

@@ -3,7 +3,7 @@
     v-if="hasMessage && display"
     v-tooltip.bottom="!hasNewMessage && showTitle ? motdTitle : ''"
     :class="clsStyle"
-    class="btn btn-simple btn-xs"
+    class="btn btn-simple btn-sm"
     @click="activate"
   >
     <i class="fas" :class="iconStyle"></i>
@@ -40,7 +40,7 @@ export default {
 
   computed: {
     clsStyle() {
-      return this.hasNewMessage ? `btn-${this.style}` : "btn-default";
+      return this.hasNewMessage ? `btn-${this.style}` : "btn-secondary";
     },
     iconStyle() {
       return this.styleIcons[this.style] || this.styleIcons.default;

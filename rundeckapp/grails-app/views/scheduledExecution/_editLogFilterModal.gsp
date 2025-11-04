@@ -105,7 +105,7 @@
 
             <div class="modal-footer">
 
-                <button type="submit" class="btn btn-default  " data-dismiss="modal">
+                <button type="submit" class="btn btn-secondary  " data-dismiss="modal">
                     <g:message code="button.action.Cancel" />
                 </button>
             </div>
@@ -146,7 +146,7 @@
 
             <div class="modal-footer">
 
-                <button type="submit" class="btn btn-default  " data-dismiss="modal">
+                <button type="submit" class="btn btn-secondary  " data-dismiss="modal">
                     <g:message code="button.action.Cancel" />
                 </button>
                 <button type="submit" class="btn btn-cta  " data-bind="click: $root.saveFilterPopup">

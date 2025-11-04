@@ -70,17 +70,17 @@
 <div class="container-fluid">
   <input id="loginName" name="loginName" type="hidden" value="${user.login}">
   <div class="row">
-      <div class="col-xs-12">
+      <div class="col-12">
         <g:render template="/common/messages"/>
       </div>
       <div class="col-sm-12">
           <div class="card">
               <div class="card-content">
                 <div class="row">
-                    <div class="col-md-4 col-xs-6">
+                    <div class="col-md-4 col-6">
                         <g:link action="edit"
                                 params="[login: user.login]"
-                                class="btn btn-default btn-sm"
+                                class="btn btn-secondary btn-sm"
                                 title="${message(code: 'userController.action.edit.description', args: [user.login])}">
                             <g:icon name="edit"/>
                             <g:message code="button.Edit.label"/>
@@ -91,7 +91,7 @@
                     </div>
 
                     <div class="col-md-8 col-xs-6 form-inline">
-                    <div class="form-group pull-right">
+                    <div class="form-group float-right">
                         <label for="language" class=" control-label"><g:message
                             code="user.profile.language.label"/></label>
 

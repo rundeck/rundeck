@@ -69,7 +69,7 @@
                                             <g:link controller="scheduledExecution"
                                                     action="execute"
                                                     id="${scheduledExecution.extid}"
-                                                    class=" btn btn-success btn-simple btn-hover btn-xs act_execute_job"
+                                                    class=" btn btn-success btn-simple btn-hover btn-sm act_execute_job"
                                                     params="[project: scheduledExecution.project]"
                                                     title="Choose options and Run Job"
                                                     data-job-id="${scheduledExecution.extid}"
@@ -83,7 +83,7 @@
                                                       data-toggle="tooltip"
                                                       data-placement="auto bottom"
                                                 >%{--Extra span because .disabled will cancel tooltip from showing --}%
-                                                    <span class="btn btn-default btn-xs disabled ">
+                                                    <span class="btn btn-secondary btn-sm disabled ">
                                                         <b class="glyphicon glyphicon-play"></b>
                                                     </span>
                                                 </span>
@@ -105,9 +105,9 @@
                                 </span>
                                 <!-- /ko -->
 
-                                <div class="btn-group pull-right visibility-hidden">
+                                <div class="btn-group float-right visibility-hidden">
                                     <button type="button"
-                                            class="btn btn-default btn-xs dropdown-toggle act_job_action_dropdown"
+                                            class="btn btn-secondary btn-sm dropdown-toggle act_job_action_dropdown"
                                             data-job-id="${enc(attr:scheduledExecution.extid)}"
                                             data-toggle="dropdown"
                                             aria-expanded="false">

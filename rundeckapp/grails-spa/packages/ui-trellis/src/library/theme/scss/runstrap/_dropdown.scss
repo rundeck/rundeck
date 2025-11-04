@@ -1,8 +1,9 @@
 //
 // Dropdown menus
 // --------------------------------------------------
+// Updated for Bootstrap 4.6.2 compatibility
 
-// Dropdown arrow/caret
+// Dropdown arrow/caret - DEPRECATED in Bootstrap 4, kept for backward compatibility
 .caret {
   display: inline-block;
   width: 0;
@@ -26,20 +27,20 @@
   outline: 0;
 }
 
-// The dropdown menu (ul)
+// The dropdown menu (div in BS4, was ul in BS3)
 .dropdown-menu {
   position: absolute;
   top: 100%;
   left: 0;
   z-index: $zindex-dropdown;
-  display: none; // none by default, but block on "open" of the menu
+  display: none; // none by default, but block on "show" of the menu
   float: left;
   min-width: 160px;
-  padding: 0px;
-  margin: 2px 0 0; // override default ul
+  padding: 0.5rem 0;
+  margin: 2px 0 0;
   margin-top: 5px;
   font-size: $font-size-base;
-  text-align: left; // Ensures proper alignment if parent has it changed (e.g., modal footer)
+  text-align: left;
   list-style: none;
   background-color: var(--popover-background-color);
   background-clip: padding-box;
@@ -48,26 +49,80 @@
   @include box-shadow($dropdown-shadow);
 
   // Aligns the dropdown menu to right
-  //
-  // Deprecated as of 3.1.0 in favor of `.dropdown-menu-[dir]`
-  &.pull-right {
+  &.float-right {
     right: 0;
     left: auto;
   }
+}
 
-  // Dividers (basically an hr) within the dropdown
+// Bootstrap 4 Dropdown Items
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 0.25rem 1.5rem;
+  clear: both;
+  font-weight: 400;
+  color: $dropdown-link-color;
+  text-align: inherit;
+  white-space: nowrap;
+  background-color: transparent;
+  border: 0;
+
+  &:hover,
+  &:focus {
+    color: $dropdown-link-hover-color;
+    text-decoration: none;
+    background-color: $dropdown-link-hover-bg;
+  }
+
+  &.active,
+  &:active {
+    color: $dropdown-link-active-color;
+    text-decoration: none;
+    background-color: $dropdown-link-active-bg;
+  }
+
+  &.disabled,
+  &:disabled {
+    color: $dropdown-link-disabled-color;
+    pointer-events: none;
+    background-color: transparent;
+  }
+}
+
+// Bootstrap 4 Dropdown Divider
+.dropdown-divider {
+  height: 0;
+  margin: 0.5rem 0;
+  overflow: hidden;
+  border-top: 1px solid $dropdown-divider-bg;
+}
+
+// Bootstrap 4 Dropdown Header
+.dropdown-header {
+  display: block;
+  padding: 0.5rem 1.5rem;
+  margin-bottom: 0;
+  font-size: $font-size-small;
+  color: $dropdown-header-color;
+  white-space: nowrap;
+}
+
+// Backward compatibility - BS3 selectors
+.dropdown-menu {
+  // Old BS3 divider class
   .divider {
     @include nav-divider($dropdown-divider-bg);
   }
 
-  // Links within the dropdown menu
+  // Old BS3 link structure > li > a
   > li > a {
     display: block;
     clear: both;
     font-weight: 400;
     line-height: $line-height-base;
     color: $dropdown-link-color;
-    white-space: nowrap; // prevent links from randomly breaking onto new lines
+    white-space: nowrap;
 
     &:hover,
     &:focus {
@@ -145,14 +200,25 @@
   }
 }
 
-// Open state for the dropdown
-.open {
+// Open state for the dropdown - Bootstrap 4 uses .show instead of .open
+.show {
   // Show the menu
   > .dropdown-menu {
-    display: table;
+    display: block; // BS4 uses block instead of table
   }
 
   // Remove the outline when :focus is triggered
+  > a {
+    outline: 0;
+  }
+}
+
+// Backward compatibility for BS3 .open class
+.open {
+  > .dropdown-menu {
+    display: block;
+  }
+
   > a {
     outline: 0;
   }
@@ -171,7 +237,7 @@
 // to restore the default dropdown menu alignment.
 //
 // This is only for left-aligning a dropdown menu within a `.navbar-right` or
-// `.pull-right` nav component.
+// `.float-right` nav component.
 .dropdown-menu-left {
   right: auto;
   left: 0;
@@ -198,7 +264,7 @@
 }
 
 // Right aligned dropdowns
-.pull-right > .dropdown-menu {
+.float-right > .dropdown-menu {
   right: 0;
   left: auto;
 }

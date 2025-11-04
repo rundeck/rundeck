@@ -87,7 +87,7 @@
         :href="allProjectsLink"
         role="button"
         tabindex="0"
-        class="btn btn-default scroller__subbutton"
+        class="btn btn-secondary scroller__subbutton"
         data-testid="view-all-button"
         style="border-radius: 0px; border: 0px; border-right: solid 1px grey"
       >
@@ -98,7 +98,7 @@
         :href="createProjectLink"
         role="button"
         tabindex="0"
-        class="btn btn-default scroller__subbutton"
+        class="btn btn-secondary scroller__subbutton"
         data-testid="create-project-button"
         style="border-radius: 0px; border: 0px"
       >

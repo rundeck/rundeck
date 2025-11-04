@@ -73,7 +73,7 @@
                     <span v-if="editFocus === -1">
                       <a
                         :key="'edit'"
-                        class="btn btn-default btn-xs"
+                        class="btn btn-secondary btn-sm"
                         @click="editPlugin(index, plugin)"
                         >{{ $t("Edit") }}</a
                       >
@@ -81,12 +81,12 @@
                     <span v-if="editFocus === index">
                       <a
                         :key="'save'"
-                        class="btn btn-cta btn-xs"
+                        class="btn btn-cta btn-sm"
                         @click="savePlugin(plugin, index)"
                         >{{ $t("Save") }}</a
                       >
                       <a
-                        class="btn btn-default btn-xs"
+                        class="btn btn-secondary btn-sm"
                         @click="didCancel(plugin, index)"
                         >{{ $t("Cancel") }}</a
                       >
@@ -97,10 +97,10 @@
                     </span>
                     <div
                       v-if="editFocus === -1 || editFocus === index"
-                      class="btn-group pull-right"
+                      class="btn-group float-right"
                     >
                       <btn
-                        class="btn-xs btn-danger"
+                        class="btn-sm btn-danger"
                         :disabled="editFocus !== -1 && editFocus !== index"
                         @click="removePlugin(plugin, index)"
                       >

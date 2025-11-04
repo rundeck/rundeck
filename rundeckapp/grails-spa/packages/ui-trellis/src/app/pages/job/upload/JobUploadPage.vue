@@ -307,7 +307,7 @@ export default defineComponent({
 
     <!-- Upload form -->
     <div class="row">
-      <div class="col-xs-12">
+      <div class="col-12">
         <div class="card">
           <form class="form" role="form" @submit.prevent="submitForm">
             <div class="card-header">
@@ -504,7 +504,7 @@ export default defineComponent({
                 <button
                   id="createFormCancelButton"
                   type="button"
-                  class="btn btn-default"
+                  class="btn btn-secondary"
                   @click="cancel"
                 >
                   {{ $t("jobUpload.button.cancel") }}
