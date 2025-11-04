@@ -39,10 +39,11 @@ function OptionVal(data) {
     });
 }
 var _option_uid=0;
-function Option(data) {
+function Option(data, holder) {
     "use strict";
 
     var self = this;
+    self.parent = holder;
     self.remoteLoadCallback = null;
     self.name = ko.observable(data.name);
     self.label = ko.observable(data.label);
@@ -295,12 +296,12 @@ function Option(data) {
             );
     });
     self.hasTextfield = ko.computed(function () {
-        return !self.enforced()
+        return !self.isMultilineType() && ( !self.enforced()
             && (
                 !self.multivalued()
                 || (self.hasError() && !self.hasExtended())
             )
-            || self.secureInput();
+            || self.secureInput());
     });
     self.showDefaultButton = ko.computed(function () {
         return !self.enforced()
@@ -317,6 +318,11 @@ function Option(data) {
     self.isFileType=ko.computed(function () {
         return self.optionType() == 'file';
     });
+
+    self.isMultilineType = ko.computed(function () {
+        return self.optionType() === 'multiline' && self.parent && self.parent.features() && self.parent.features().multilineJobOptions!==null && self.parent.features().multilineJobOptions() === true;
+    });
+
     /**
      * Return the array of option objects to use for displaying the Select input for this option
      */
@@ -477,6 +483,7 @@ function JobOptions(data) {
     "use strict";
     var self = this;
     self.options = ko.observableArray();
+    self.features = ko.observable({});
     self.remoteoptions = null;
     self.mapping = {
         options: {
@@ -484,7 +491,7 @@ function JobOptions(data) {
                 return ko.utils.unwrapObservable(data.name);
             },
             create: function (options) {
-                return new Option(options.data);
+                return new Option(options.data, self);
             }
         }
     };

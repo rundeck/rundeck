@@ -72,7 +72,7 @@ class JobCreatePage extends BasePage {
         static By killHandlerPluginCheckbox = By.xpath('//input[@value="killhandler"]')
         static By killHandlerPluginKillSpawnedCheckbox = By.xpath('//*[@data-prop-name="killChilds"]//input[@type="checkbox"]')
         static By optionBy = By.cssSelector("#optnewbutton > button")
-        static By separatorOptionBy = By.cssSelector("#option_preview")
+        static By usageSectionBy = By.cssSelector("#option_preview")
         static By optionCloseKeyStorageBy = By.cssSelector("#storage-file.modal .modal-footer > button.btn-default")
         static By optionOpenKeyStorageBy = By.cssSelector(".opt_sec_enabled div.input-group > .input-group-btn > button")
         static By optionUndoBy = By.cssSelector("[data-test=options_undo_redo] > button:nth-child(1)")
@@ -90,7 +90,7 @@ class JobCreatePage extends BasePage {
         static By deleteStepBy = By.cssSelector('button[data-test="remove-step"]')
     }
 
-    By separatorOptionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
+    By usageSectionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
     By saveOptionBy = By.xpath("//*[@title[contains(.,'Save the new option')]]")
     By nodeDispatchTrueBy = By.id("doNodedispatchTrue")
     By nodeFilterLinkBy = By.cssSelector("#job_edit__node_filter_include .job_edit__node_filter__filter_select_dropdown")
@@ -557,8 +557,8 @@ class JobCreatePage extends BasePage {
                   By.cssSelector("#optvis_$index > div.optEditForm input[type=text][name=name]")
     }
 
-    WebElement getSeparatorOption() {
-        el nextUi ? NextUi.separatorOptionBy : separatorOptionBy
+    WebElement getUsageSection() {
+        el nextUi ? NextUi.usageSectionBy : usageSectionBy
     }
 
     WebElement getSaveOptionButton() {
