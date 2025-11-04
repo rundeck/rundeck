@@ -63,6 +63,7 @@ import org.rundeck.app.components.project.ProjectComponent
 import org.rundeck.app.components.project.ProjectMetadataComponent
 import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
+import rundeck.ExecReport
 import rundeck.data.report.SaveReportRequestImpl
 import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
 import org.rundeck.app.services.ExecutionFile
@@ -327,20 +328,18 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 }
                 def batchIds = specificExecutionIds.subList(offset, endIndex)
                 log.info("PROJECT_EXPORT: Fetching ${batchIds.size()} specific executions from database")
-                execsBatch = Execution.createCriteria().list {
-                    eq('project', projectName)
-                    'in'('id', batchIds)
-                    order('id', 'asc')
-                }
+                execsBatch = Execution.executeQuery(
+                        "SELECT e FROM Execution e WHERE e.project = :projectName AND e.id IN (:batchIds) ORDER BY e.id ASC",
+                        [projectName: projectName, batchIds: batchIds])
+
             } else {
                 // For all executions, use offset-based pagination
                 log.info("PROJECT_EXPORT: Fetching executions from database (offset: ${offset}, max: ${batchSize})")
-                execsBatch = Execution.createCriteria().list(max: batchSize, offset: offset) {
-                    eq('project', projectName)
-                    order('id', 'asc') // Ensure consistent ordering
-                }
+                execsBatch =  Execution.executeQuery(
+                        "SELECT e FROM Execution e WHERE e.project = :projectName ORDER BY e.id ASC",
+                        [projectName: projectName],
+                        [max: batchSize, offset: offset])
             }
-
             if (!execsBatch || execsBatch.isEmpty()) {
                 log.info("PROJECT_EXPORT: No more executions found, finishing export")
                 hasMoreData = false
@@ -356,7 +355,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             // Get related reports and job file records for this batch
             log.info("PROJECT_EXPORT: Fetching related data (reports and job file records)")
             List<String> executionUuids = execsBatch.collect { it.uuid }
-            List<RdExecReport> reportsBatch = execReportDataProvider.findAllByProjectAndExecutionUuidInList(projectName, executionUuids)
+            List<RdExecReport> reportsBatch = ExecReport.executeQuery(
+                    "SELECT e FROM ExecReport e WHERE e.project = :projectName AND e.executionUuid IN (:executionUuids)",
+                    [projectName: projectName, executionUuids: executionUuids]
+            )
             List<JobFileRecord> jobfilerecordsBatch = JobFileRecord.createCriteria().list {
                 'in'('execution', execsBatch)
             }
@@ -1036,14 +1038,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             def total = 0
             if (isExportExecutions) {
                 log.info("PROJECT_EXPORT: counting executions for project ${projectName}")
-                total += 3 * Execution.createCriteria().get {
-                    eq('project', projectName)
-                    projections {
-                        rowCount()
-                    }
-                }
+                total += 3 * Execution.executeQuery("SELECT COUNT(*) FROM Execution WHERE project = :projectName", [projectName: projectName])
+                + ExecReport.executeQuery("SELECT COUNT(*) FROM ExecReport WHERE project = :projectName", [projectName: projectName])
                 log.info("PROJECT_EXPORT:total executions to export for project ${projectName}: ${total / 3}")
-                + execReportDataProvider.countByProject(projectName)
             }
             if (isExportJobs) {
                 total += ScheduledExecution.countByProject(projectName)
