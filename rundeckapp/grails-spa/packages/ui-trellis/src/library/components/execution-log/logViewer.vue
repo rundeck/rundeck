@@ -3,6 +3,7 @@
     ref="root"
     class="execution-log"
     :class="[`execution-log--${colorTheme}`]"
+    data-testid="log-viewer"
   >
     <RdDrawer
       title="Settings"
@@ -14,10 +15,14 @@
       :wrap-style="{ position: 'absolute' }"
       @close="closeSettings"
     >
-      <form style="padding: 10px">
+      <form style="padding: 10px" data-testid="log-viewer-settings-form">
         <div class="form-group">
           <label>Theme</label>
-          <select v-model="settings.theme" class="form-control select">
+          <select
+            v-model="settings.theme"
+            class="form-control select"
+            data-testid="log-viewer-theme-select"
+          >
             <option
               v-for="themeOpt in themes"
               :key="themeOpt.value"
@@ -99,17 +104,30 @@
           v-if="showSettings"
           class="execution-log__settings"
           style="margin-left: 5px; margin-right: 5px"
+          data-testid="log-viewer-toolbar"
         >
           <btn-group>
-            <btn size="xs" @click="toggleSettings">
+            <btn
+              size="xs"
+              data-testid="log-viewer-settings-btn"
+              @click="toggleSettings"
+            >
               <i class="fas fa-cog" />Settings
             </btn>
-            <btn size="xs" @click="toggleFollow">
+            <btn
+              size="xs"
+              data-testid="log-viewer-follow-btn"
+              @click="toggleFollow"
+            >
               <i :class="[followIcon]" />Follow
             </btn>
           </btn-group>
           <transition name="fade">
-            <div v-if="showProgress" class="execution-log__progress-bar">
+            <div
+              v-if="showProgress"
+              class="execution-log__progress-bar"
+              data-testid="log-viewer-progress-bar"
+            >
               <progress-bar
                 v-model="barProgress"
                 :type="progressType"
@@ -118,22 +136,35 @@
                 min-width
                 striped
                 active
+                data-testid="log-viewer-progress-bar-component"
                 @click="toggleProgressBar"
               />
             </div>
           </transition>
         </div>
-        <div v-if="overSize" class="execution-log__warning">
+        <div
+          v-if="overSize"
+          class="execution-log__warning"
+          data-testid="log-viewer-oversize-warning"
+        >
           <h3>
             🐋 {{ +(logSize / 1048576).toFixed(2) }}MiB is a whale of a log! 🐋
           </h3>
           <h4>Select a download option above to avoid sinking the ship.</h4>
           <h5>Log content may be truncated</h5>
         </div>
-        <div v-if="errorMessage" class="execution-log__warning">
+        <div
+          v-if="errorMessage"
+          class="execution-log__warning"
+          data-testid="log-viewer-error-message"
+        >
           <h4>{{ errorMessage }}</h4>
         </div>
-        <div v-if="completed && logLines === 0" class="execution-log__warning">
+        <div
+          v-if="completed && logLines === 0"
+          class="execution-log__warning"
+          data-testid="log-viewer-no-output"
+        >
           <h5>No output</h5>
         </div>
         <LogNodeChunk
@@ -158,7 +189,7 @@
         />
       </div>
     </div>
-    <div v-if="settings.stats" class="stats">
+    <div v-if="settings.stats" class="stats" data-testid="log-viewer-stats">
       <span
         >Following:{{ mfollow }} Lines:{{
           logLines.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
@@ -311,7 +342,7 @@ export default defineComponent({
       percentLoaded: 0,
       entries: [],
       entriesFromViewer: [],
-      viewerEntriesByNodeCtx: null
+      viewerEntriesByNodeCtx: null,
     };
   },
   computed: {
@@ -351,7 +382,7 @@ export default defineComponent({
       }, {});
     },
     viewerEntries() {
-      if(this.viewer == null) {
+      if (this.viewer == null) {
         return [];
       }
       if (this.node) {
@@ -362,7 +393,6 @@ export default defineComponent({
         }
         return this.viewerEntriesByNode[this.node];
       }
-      return this.viewer.entries;
       return this.entriesFromViewer;
     },
   },
@@ -394,27 +424,25 @@ export default defineComponent({
       handler(newVal) {
         this.entriesFromViewer = newVal.entries;
         this.viewerEntriesByNodeCtx = this.entriesFromViewer.reduce(
-            (acc, entry) => ({
-              ...acc,
-              [`${entry.node}:${entry.stepctx ? JobWorkflow.cleanContextId(entry.stepctx) : ""}`]:
-                [
-                  ...(acc[
-                    `${entry.node}:${entry.stepctx ? JobWorkflow.cleanContextId(entry.stepctx) : ""}`
-                  ] || []),
-                  entry,
-                ],
-            }),
-            {},
-          );
+          (acc, entry) => ({
+            ...acc,
+            [`${entry.node}:${entry.stepctx ? JobWorkflow.cleanContextId(entry.stepctx) : ""}`]:
+              [
+                ...(acc[
+                  `${entry.node}:${entry.stepctx ? JobWorkflow.cleanContextId(entry.stepctx) : ""}`
+                ] || []),
+                entry,
+              ],
+          }),
+          {},
+        );
       },
-      deep: true
-    }
+      deep: true,
+    },
   },
   beforeMount() {
     this.loadConfig();
-    this.viewer = rootStore.executionOutputStore.createOrGet(
-        this.executionId,
-    );
+    this.viewer = rootStore.executionOutputStore.createOrGet(this.executionId);
   },
   async mounted() {
     await this.viewer.init();
@@ -578,7 +606,11 @@ export default defineComponent({
         if (this.viewer.error) this.errorMessage = this.viewer.error;
 
         this.logSize = this.viewer.offset;
-        this.logLines = this.viewer.entries.length;
+        this.logLines = this.stepCtx
+          ? this.entriesFromViewer.filter(
+              (entry) => entry.stepctx === this.stepCtx,
+            ).length
+          : this.viewer.entries.length;
         this.handleExecutionLogResp();
 
         if (this.viewer.completed) break;
