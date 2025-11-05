@@ -62,6 +62,7 @@ import org.rundeck.app.components.project.ProjectComponent
 import org.rundeck.app.components.project.ProjectMetadataComponent
 import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
+import rundeck.BaseReport
 import rundeck.data.report.SaveReportRequestImpl
 import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
 import org.rundeck.app.services.ExecutionFile
@@ -868,7 +869,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         } else {
             def total = 0
             if (isExportExecutions) {
-                total += 3 * Execution.countByProject(projectName) + execReportDataProvider.countByProject(projectName)
+                total += 3 * Execution.executeQuery("SELECT COUNT(*) FROM Execution WHERE project = :projectName", [projectName: projectName])
+                + BaseReport.executeQuery("SELECT COUNT(*) FROM BaseReport WHERE project = :projectName", [projectName: projectName])
             }
             if (isExportJobs) {
                 total += ScheduledExecution.countByProject(projectName)
@@ -904,11 +906,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         }
                     }
                 } else if (compName == BuiltinExportComponents.executions.name()) {
-                    List<Execution> execs = []
-                    List<RdExecReport> reports = []
+                    def batchSize = 1000
+                    List<JobFileRecord> jobfilerecords = []
+                    def execIds = null
+
                     if (options.executionsOnly) {
-                        //find execs
-                        List<Long> execIds = []
+                        execIds = []
                         options.executionIds.each {
                             if (it instanceof Long) {
                                 execIds << it
@@ -916,20 +919,41 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                 execIds << Long.parseLong(it)
                             }
                         }
-                        execs = Execution.findAllByProjectAndIdInList(projectName, execIds)
-                        reports = execReportDataProvider.findAllByProjectAndExecutionUuidInList(projectName, execs.collect{it.uuid})
-                    } else if (isExportExecutions) {
-                        execs = Execution.findAllByProject(projectName)
-                        reports = execReportDataProvider.findAllByProject(projectName)
                     }
-                    List<JobFileRecord> jobfilerecords = []
+                    dir('executions/') {
+                        String remotePathTemplate = null
+                        def offset = 0
+                        def hasMoreExecutions = true
 
-                    if (execs) {
-                        dir('executions/') {
-                            //export executions
-                            //export execution logs
-                            String remotePathTemplate = null
-                            execs.each { Execution exec ->
+                        while (hasMoreExecutions) {
+                            def execsBatch
+
+                            if (execIds != null) {
+                                // For executionsOnly: process specific IDs in batches
+                                def batchIds = execIds.drop(offset).take(batchSize)
+                                if (batchIds.isEmpty()) {
+                                    hasMoreExecutions = false
+                                    break
+                                }
+                                execsBatch = Execution.executeQuery(
+                                    "SELECT e FROM Execution e WHERE e.project = :projectName AND e.id IN (:ids) ORDER BY e.id",
+                                    [projectName: projectName, ids: batchIds]
+                                )
+                            } else {
+                                // For full export: process all executions in batches
+                                execsBatch = Execution.executeQuery(
+                                    "SELECT e FROM Execution e WHERE e.project = :projectName ORDER BY e.id",
+                                    [projectName: projectName],
+                                    [max: batchSize, offset: offset]
+                                )
+                            }
+
+                            if (execsBatch.isEmpty()) {
+                                hasMoreExecutions = false
+                                break
+                            }
+
+                            execsBatch.each { Execution exec ->
                                 if(remotePathTemplate == null)
                                     remotePathTemplate = logFileStorageService.getStorePathTemplateForExecution(exec)
 
@@ -939,21 +963,66 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
                                 listener?.inc('export', 3)
                             }
-                        }
 
-                        dir('jobfiles/') {
-                            jobfilerecords.each { JobFileRecord record ->
-                                exportFileRecord zip, record, "filerecord-${record.id}.xml"
+                            offset += batchSize
+                        }
+                    }
+
+                    dir('jobfiles/') {
+                        jobfilerecords.each { JobFileRecord record ->
+                            exportFileRecord zip, record, "filerecord-${record.id}.xml"
+                        }
+                    }
+
+                    // Process reports in batches
+                    dir('reports/') {
+                        def offset = 0
+                        def hasMoreReports = true
+
+                        while (hasMoreReports) {
+                            def reportsBatch
+
+                            if (execIds != null) {
+                                // For executionsOnly: get reports by execution UUIDs in batches
+                                def batchIds = execIds.drop(offset).take(batchSize)
+                                if (batchIds.isEmpty()) {
+                                    hasMoreReports = false
+                                    break
+                                }
+                                // Get UUIDs for this batch of execution IDs
+                                def execUuids = Execution.executeQuery(
+                                    "SELECT e.uuid FROM Execution e WHERE e.id IN (:ids)",
+                                    [ids: batchIds]
+                                )
+                                if (execUuids.isEmpty()) {
+                                    hasMoreReports = false
+                                    break
+                                }
+                                reportsBatch = BaseReport.executeQuery(
+                                    "SELECT r FROM BaseReport r WHERE r.project = :projectName AND r.executionUuid IN (:uuids) ORDER BY r.id",
+                                    [projectName: projectName, uuids: execUuids]
+                                )
+                            } else {
+                                // For full export: process all reports in batches
+                                reportsBatch = BaseReport.executeQuery(
+                                    "SELECT r FROM BaseReport r WHERE r.project = :projectName ORDER BY r.id",
+                                    [projectName: projectName],
+                                    [max: batchSize, offset: offset]
+                                )
                             }
-                        }
-                        //export history
 
-                        dir('reports/') {
-                            reports.each { RdExecReport report ->
+                            if (reportsBatch.isEmpty()) {
+                                hasMoreReports = false
+                                break
+                            }
+
+                            reportsBatch.each { RdExecReport report ->
                                 exportHistoryReport zip, report, "report-${report.id}.xml"
                                 def a = report.toMap()
                                 listener?.inc('export', 1)
                             }
+
+                            offset += batchSize
                         }
                     }
 
