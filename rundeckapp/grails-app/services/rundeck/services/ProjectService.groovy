@@ -63,6 +63,7 @@ import org.rundeck.app.components.project.ProjectComponent
 import org.rundeck.app.components.project.ProjectMetadataComponent
 import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
+import rundeck.BaseReport
 import rundeck.ExecReport
 import rundeck.data.report.SaveReportRequestImpl
 import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
@@ -355,8 +356,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             // Get related reports and job file records for this batch
             log.info("PROJECT_EXPORT: Fetching related data (reports and job file records)")
             List<String> executionUuids = execsBatch.collect { it.uuid }
-            List<RdExecReport> reportsBatch = ExecReport.executeQuery(
-                    "SELECT e FROM ExecReport e WHERE e.project = :projectName AND e.executionUuid IN (:executionUuids)",
+            List<RdExecReport> reportsBatch = BaseReport.executeQuery(
+                    "SELECT e FROM BaseReport e WHERE e.project = :projectName AND e.executionUuid IN (:executionUuids)",
                     [projectName: projectName, executionUuids: executionUuids]
             )
             List<JobFileRecord> jobfilerecordsBatch = JobFileRecord.createCriteria().list {
@@ -1039,7 +1040,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             if (isExportExecutions) {
                 log.info("PROJECT_EXPORT: counting executions for project ${projectName}")
                 total += 3 * Execution.executeQuery("SELECT COUNT(*) FROM Execution WHERE project = :projectName", [projectName: projectName])
-                + ExecReport.executeQuery("SELECT COUNT(*) FROM ExecReport WHERE project = :projectName", [projectName: projectName])
+                + BaseReport.executeQuery("SELECT COUNT(*) FROM BaseReport WHERE project = :projectName", [projectName: projectName])
                 log.info("PROJECT_EXPORT:total executions to export for project ${projectName}: ${total / 3}")
             }
             if (isExportJobs) {
