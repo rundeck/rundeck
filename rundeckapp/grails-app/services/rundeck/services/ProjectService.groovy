@@ -288,7 +288,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         ProgressListener listener,
         List<Long> specificExecutionIds = null
     ) {
-        final int batchSize = 2000
+        final int batchSize = 1000
         int offset = 0
         boolean hasMoreData = true
         String remotePathTemplate = null
