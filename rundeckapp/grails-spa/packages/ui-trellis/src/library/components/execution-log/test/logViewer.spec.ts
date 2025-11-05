@@ -209,6 +209,28 @@ describe("LogViewer", () => {
 
         expect(findByTestId(wrapper, "log-viewer-stats").exists()).toBe(false);
       });
+
+      it("persists settings to localStorage when drawer is open and settings change", async () => {
+        const setItemSpy = jest.spyOn(Storage.prototype, "setItem");
+        const wrapper = createWrapper({
+          showSettings: true,
+          useUserSettings: true,
+        });
+
+        await findByTestId(wrapper, "log-viewer-settings-btn").trigger("click");
+        await nextTick();
+
+        const gutterCheckbox = wrapper.find("#logview_gutter");
+        await gutterCheckbox.setValue(false);
+        await nextTick();
+
+        expect(setItemSpy).toHaveBeenCalledWith(
+          "execution-viewer",
+          expect.stringContaining('"gutter":false'),
+        );
+
+        setItemSpy.mockRestore();
+      });
     });
 
     describe("Follow Button", () => {
@@ -241,6 +263,51 @@ describe("LogViewer", () => {
 
         expect(followIcon.classes()).toContain("fa-eye");
         expect(followIcon.classes()).not.toContain("fa-eye-slash");
+      });
+    });
+
+    describe("Stats Content", () => {
+      it("displays follow status, line count, size, and total time with correct formatting", async () => {
+        mockViewer.entries = [
+          { node: "node1", log: "line 1" },
+          { node: "node1", log: "line 2" },
+          { node: "node2", log: "line 3" },
+        ];
+        mockViewer.offset = 56789;
+        mockViewer.execCompleted = false;
+
+        const wrapper = createWrapper({
+          showSettings: true,
+          config: { stats: true } as any,
+        });
+        await flushPromises();
+
+        const statsText = findByTestId(wrapper, "log-viewer-stats").text();
+
+        expect(statsText).toContain("Following:true");
+        expect(statsText).toContain("Lines:3");
+        expect(statsText).toContain("Size:56789b");
+        expect(statsText).toMatch(/TotalTime:\d+(\.\d+)?s/);
+      });
+
+      it("formats line count with commas for large numbers", async () => {
+        const largeMockEntries = Array.from({ length: 12345 }, (_, i) => ({
+          node: "node1",
+          log: `line ${i}`,
+        }));
+        mockViewer.entries = largeMockEntries;
+        mockViewer.offset = 100000;
+        mockViewer.execCompleted = false;
+
+        const wrapper = createWrapper({
+          showSettings: true,
+          config: { stats: true } as any,
+        });
+        await flushPromises();
+
+        const statsText = findByTestId(wrapper, "log-viewer-stats").text();
+
+        expect(statsText).toContain("Lines:12,345");
       });
     });
 
