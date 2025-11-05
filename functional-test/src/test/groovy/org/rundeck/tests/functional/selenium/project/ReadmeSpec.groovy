@@ -39,6 +39,7 @@ class ReadmeSpec extends SeleniumBase{
             projectEditPage.clickNavLink(NavProjectSettings.USER_INTERFACE)
             projectEditPage.selectReadmeAllPlaces()
             projectEditPage.save()
+            homePage.goProjectHome projectName
         then:
             projectDashboard.getCheckReadme() == readmeText
         when:
