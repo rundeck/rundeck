@@ -240,154 +240,136 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     }
 
     /**
-     * Process a single batch in a new transaction to avoid connection timeouts
-     * @param zip ZipBuilder instance
-     * @param execsBatch list of executions in this batch
-     * @param reportsBatch list of reports in this batch
-     * @param jobfilerecordsBatch list of job file records in this batch
-     * @param listener progress listener
-     * @param remotePathTemplate template for remote path
+     * Fetches a batch of executions from the database.
+     *
+     * @param projectName name of the project
+     * @param specificExecutionIds optional list of specific execution IDs to fetch
+     * @param offset current offset for pagination
+     * @param batchSize number of executions to fetch
+     * @return list of executions for this batch
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    private void processBatchInNewTransaction(ZipBuilder zip, List<Execution> execsBatch, List<RdExecReport> reportsBatch, List<JobFileRecord> jobfilerecordsBatch, ProgressListener listener, String remotePathTemplate) {
-        try {
-            log.debug("Processing batch of ${execsBatch.size()} executions in new transaction")
-
-            // Export executions directly
-            execsBatch.each { Execution exec ->
-                // Export execution XML
-                zip.file("executions/execution-${exec.id}.xml") { Writer writer ->
-                    executionUtilService.exportExecutionXml(exec, writer,
-                        getLogFilePathForExecution(exec, remotePathTemplate))
-                }
-
-                // Export log file if exists
-                File logfile = loggingService.getLogFileForExecution(exec)
-                if (logfile && logfile.isFile()) {
-                    zip.file("executions/output-${exec.id}.rdlog", logfile)
-                }
-
-                // Export state file if exists
-                File statefile = workflowService.getStateFileForExecution(exec)
-                if (statefile && statefile.isFile()) {
-                    zip.file("executions/state-${exec.id}.state.json", statefile)
-                }
-
-                listener?.inc('export', 3)
+    private List<Execution> fetchExecutionsBatch(
+        String projectName,
+        List<Long> specificExecutionIds,
+        int offset,
+        int batchSize
+    ) {
+        if (specificExecutionIds) {
+            int endIndex = Math.min(offset + batchSize, specificExecutionIds.size())
+            if (offset >= specificExecutionIds.size()) {
+                return []
             }
+            List<Long> batchIds = specificExecutionIds.subList(offset, endIndex)
 
-            // Export job file records directly
-            jobfilerecordsBatch.each { JobFileRecord record ->
-                exportFileRecord(zip, record, "jobfiles/filerecord-${record.id}.xml")
-            }
-
-            // Export reports directly
-            reportsBatch.each { RdExecReport report ->
-                exportHistoryReport(zip, report, "reports/report-${report.id}.xml")
-                listener?.inc('export', 1)
-            }
-
-            log.debug("Completed batch processing in new transaction")
-        } catch (Exception e) {
-            log.error("Error processing batch in new transaction: ${e.message}", e)
-            throw e
+            return Execution.executeQuery(
+                "SELECT e FROM Execution e WHERE e.project = :projectName AND e.id IN (:batchIds) ORDER BY e.id ASC",
+                [projectName: projectName, batchIds: batchIds]
+            ) as List<Execution>
+        } else {
+            return Execution.executeQuery(
+                "SELECT e FROM Execution e WHERE e.project = :projectName ORDER BY e.id ASC",
+                [projectName: projectName],
+                [max: batchSize, offset: offset]
+            ) as List<Execution>
         }
     }
 
     /**
-     * Export executions for a project using batched processing to avoid memory issues
-     * @param zip ZipBuilder instance
-     * @param projectName project name
-     * @param listener progress listener
+     * Export executions for a project using batched processing to avoid memory issues.
+     * Processes executions, reports, and job file records in configurable batch sizes.
+     * Each batch is fetched from the database, processed, and exported to the archive,
+     * then released from memory before moving to the next batch.
+     *
+     * @param zip ZipBuilder instance for creating the export archive
+     * @param projectName name of the project to export
+     * @param listener progress listener for tracking export progress
      * @param specificExecutionIds optional list of execution IDs to export (if null, exports all)
      */
-    private void exportExecutionsBatched(ZipBuilder zip, String projectName, ProgressListener listener, List<Long> specificExecutionIds = null) {
-        def batchSize = 1000
-        def offset = 0
-        def hasMoreData = true
+    private void exportExecutionsBatched(
+        ZipBuilder zip,
+        String projectName,
+        ProgressListener listener,
+        List<Long> specificExecutionIds = null
+    ) {
+        final int batchSize = 2000
+        int offset = 0
+        boolean hasMoreData = true
         String remotePathTemplate = null
 
-        log.info("PROJECT_EXPORT: Starting batched export with batch size: ${batchSize}${specificExecutionIds ? " for ${specificExecutionIds.size()} specific executions" : " for all executions"}")
-
-        // Create directories once at the beginning
         zip.dir('executions/') {}
         zip.dir('jobfiles/') {}
         zip.dir('reports/') {}
 
         while (hasMoreData) {
-            log.info("PROJECT_EXPORT: Processing batch starting at offset ${offset} (batchSize: ${batchSize})")
+            List<Execution> execsBatch = fetchExecutionsBatch(projectName, specificExecutionIds, offset, batchSize)
 
-            // Get batch of executions - either from specific IDs or all executions
-            List<Execution> execsBatch
-            if (specificExecutionIds) {
-                // For specific executions, get a batch from the ID list
-                def endIndex = Math.min(offset + batchSize, specificExecutionIds.size())
-                if (offset >= specificExecutionIds.size()) {
-                    log.info("PROJECT_EXPORT: Reached end of specific execution IDs list")
-                    hasMoreData = false
-                    break
-                }
-                def batchIds = specificExecutionIds.subList(offset, endIndex)
-                log.info("PROJECT_EXPORT: Fetching ${batchIds.size()} specific executions from database")
-                execsBatch = Execution.executeQuery(
-                        "SELECT e FROM Execution e WHERE e.project = :projectName AND e.id IN (:batchIds) ORDER BY e.id ASC",
-                        [projectName: projectName, batchIds: batchIds])
-
-            } else {
-                // For all executions, use offset-based pagination
-                log.info("PROJECT_EXPORT: Fetching executions from database (offset: ${offset}, max: ${batchSize})")
-                execsBatch =  Execution.executeQuery(
-                        "SELECT e FROM Execution e WHERE e.project = :projectName ORDER BY e.id ASC",
-                        [projectName: projectName],
-                        [max: batchSize, offset: offset])
-            }
             if (!execsBatch || execsBatch.isEmpty()) {
-                log.info("PROJECT_EXPORT: No more executions found, finishing export")
                 hasMoreData = false
                 break
             }
-
-            // Get remotePathTemplate from first execution if not set
-            if (remotePathTemplate == null && execsBatch.size() > 0) {
+            if (remotePathTemplate == null && !execsBatch.isEmpty()) {
                 remotePathTemplate = logFileStorageService.getStorePathTemplateForExecution(execsBatch[0])
                 log.debug("PROJECT_EXPORT: Set remotePathTemplate: ${remotePathTemplate}")
             }
+            List<String> executionUuids = execsBatch.collect { Execution exec -> exec.uuid }
 
-            // Get related reports and job file records for this batch
-            log.info("PROJECT_EXPORT: Fetching related data (reports and job file records)")
-            List<String> executionUuids = execsBatch.collect { it.uuid }
             List<RdExecReport> reportsBatch = BaseReport.executeQuery(
-                    "SELECT e FROM BaseReport e WHERE e.project = :projectName AND e.executionUuid IN (:executionUuids)",
-                    [projectName: projectName, executionUuids: executionUuids]
-            )
+                "SELECT e FROM BaseReport e WHERE e.project = :projectName AND e.executionUuid IN (:executionUuids)",
+                [projectName: projectName, executionUuids: executionUuids]
+            ) as List<RdExecReport>
+
             List<JobFileRecord> jobfilerecordsBatch = JobFileRecord.createCriteria().list {
                 'in'('execution', execsBatch)
-            }
-            // Process this batch in a new transaction to avoid connection timeouts
-            log.info("PROJECT_EXPORT: Processing batch in new transaction")
-            processBatchInNewTransaction(zip, execsBatch, reportsBatch, jobfilerecordsBatch, listener, remotePathTemplate)
+            } as List<JobFileRecord>
+            try {
+                log.debug("Processing batch of ${execsBatch.size()} executions")
+                execsBatch.each { Execution exec ->
+                    zip.file("executions/execution-${exec.id}.xml") { Writer writer ->
+                        executionUtilService.exportExecutionXml(
+                            exec,
+                            writer,
+                            getLogFilePathForExecution(exec, remotePathTemplate)
+                        )
+                    }
+                    File logfile = loggingService.getLogFileForExecution(exec)
+                    if (logfile?.isFile()) {
+                        zip.file("executions/output-${exec.id}.rdlog", logfile)
+                    }
+                    File statefile = workflowService.getStateFileForExecution(exec)
+                    if (statefile?.isFile()) {
+                        zip.file("executions/state-${exec.id}.state.json", statefile)
+                    }
 
+                    listener?.inc('export', 3)
+                }
+                jobfilerecordsBatch.each { JobFileRecord record ->
+                    exportFileRecord(zip, record, "jobfiles/filerecord-${record.id}.xml")
+                }
+                reportsBatch.each { RdExecReport report ->
+                    exportHistoryReport(zip, report, "reports/report-${report.id}.xml")
+                    listener?.inc('export', 1)
+                }
+
+                log.debug("Completed batch processing")
+
+            } catch (Exception e) {
+                log.error("Error processing batch at offset ${offset}: ${e.message}", e)
+                throw e
+            }
             offset += batchSize
 
-            // Check if we've processed all data
             if (specificExecutionIds) {
-                // For specific executions, check if we've reached the end of the ID list
                 if (offset >= specificExecutionIds.size()) {
                     log.info("PROJECT_EXPORT: Processed all specific executions (${specificExecutionIds.size()} total)")
                     hasMoreData = false
                 }
             } else {
-                // For all executions, check if we got fewer results than batch size (last batch)
                 if (execsBatch.size() < batchSize) {
                     log.info("PROJECT_EXPORT: Reached final batch (${execsBatch.size()} < ${batchSize})")
                     hasMoreData = false
                 }
             }
-
-            log.info("PROJECT_EXPORT: Completed batch with ${execsBatch.size()} executions (offset now: ${offset})")
         }
-
-        log.info("PROJECT_EXPORT: Completed batched export of ${specificExecutionIds ? "specific" : "all"} executions")
     }
 
     /**
