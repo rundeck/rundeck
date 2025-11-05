@@ -43,7 +43,6 @@ import grails.async.Promises
 import grails.compiler.GrailsCompileStatic
 import grails.events.EventPublisher
 import grails.gorm.transactions.Transactional
-import org.springframework.transaction.annotation.Propagation
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
 import groovy.transform.TypeCheckingMode
@@ -64,7 +63,6 @@ import org.rundeck.app.components.project.ProjectMetadataComponent
 import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
 import rundeck.BaseReport
-import rundeck.ExecReport
 import rundeck.data.report.SaveReportRequestImpl
 import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
 import org.rundeck.app.services.ExecutionFile
@@ -206,7 +204,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @throws ProjectServiceException
      */
     def exportExecution(ZipBuilder zip, Execution exec, String name, String remotePathTemplate = null) throws ProjectServiceException {
-        log.info("PROJECT_EXPORT: exporting execution")
         File logfile = loggingService.getLogFileForExecution(exec)
         String logfilepath = null
         if (logfile && logfile.isFile()) {
@@ -309,7 +306,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             }
             if (remotePathTemplate == null && !execsBatch.isEmpty()) {
                 remotePathTemplate = logFileStorageService.getStorePathTemplateForExecution(execsBatch[0])
-                log.debug("PROJECT_EXPORT: Set remotePathTemplate: ${remotePathTemplate}")
             }
             List<String> executionUuids = execsBatch.collect { Execution exec -> exec.uuid }
 
@@ -360,12 +356,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
             if (specificExecutionIds) {
                 if (offset >= specificExecutionIds.size()) {
-                    log.info("PROJECT_EXPORT: Processed all specific executions (${specificExecutionIds.size()} total)")
                     hasMoreData = false
                 }
             } else {
                 if (execsBatch.size() < batchSize) {
-                    log.info("PROJECT_EXPORT: Reached final batch (${execsBatch.size()} < ${batchSize})")
                     hasMoreData = false
                 }
             }
@@ -1020,10 +1014,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         } else {
             def total = 0
             if (isExportExecutions) {
-                log.info("PROJECT_EXPORT: counting executions for project ${projectName}")
                 total += 3 * Execution.executeQuery("SELECT COUNT(*) FROM Execution WHERE project = :projectName", [projectName: projectName])
                 + BaseReport.executeQuery("SELECT COUNT(*) FROM BaseReport WHERE project = :projectName", [projectName: projectName])
-                log.info("PROJECT_EXPORT:total executions to export for project ${projectName}: ${total / 3}")
             }
             if (isExportJobs) {
                 total += ScheduledExecution.countByProject(projectName)
@@ -1069,10 +1061,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                 execIds << Long.parseLong(it)
                             }
                         }
-                        log.info("PROJECT_EXPORT: exporting specified executions for project ${projectName} using batched processing")
                         exportExecutionsBatched(zip, projectName, listener, execIds)
                     } else if (isExportExecutions) {
-                        log.info("PROJECT_EXPORT: exporting all executions for project ${projectName} using batched processing")
                         exportExecutionsBatched(zip, projectName, listener)
                     }
 
