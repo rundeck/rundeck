@@ -963,7 +963,7 @@ Authorization required: `create` for resource type `project`
     @Operation(
             method = "Delete",
             summary = "Delete a project",
-            description = """Delete an existing projects on the server.  The action cannot be undone.
+            description = """Delete an existing project on the server.  The action cannot be undone.
 
 Authorization required: `delete` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
             parameters = [
