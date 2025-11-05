@@ -50,7 +50,7 @@ class ExecutionModeSpec extends SeleniumBase{
                     .setType(MultipartBody.FORM)
                     .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                     .build()
-            client.doPostWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+            client.postWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
             loginPage.go()
             loginPage.login(TEST_USER, TEST_PASS)
@@ -109,7 +109,7 @@ class ExecutionModeSpec extends SeleniumBase{
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
@@ -177,7 +177,7 @@ class ExecutionModeSpec extends SeleniumBase{
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
@@ -269,7 +269,7 @@ class ExecutionModeSpec extends SeleniumBase{
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)

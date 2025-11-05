@@ -13,14 +13,20 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.Response
 import okhttp3.ResponseBody
+import okio.Buffer
 import org.jetbrains.annotations.NotNull
 
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 
+/**
+ * Simple Rundeck API client, in general methods that start with "do*" return the raw okhttp3 Response object, without checking succes status or
+ * consuming the response body, and other methods such as get/post/put will check for success status and map the json body to a class.
+ */
 @CompileStatic
 class RdClient {
 
@@ -32,13 +38,14 @@ class RdClient {
     final ObjectMapper mapper = new ObjectMapper()
     String baseUrl
     OkHttpClient httpClient
+    private AtomicBoolean logNextRequest = new AtomicBoolean()
 
     // Api version used by this client
     int apiVersion = API_CURRENT_VERSION
 
-    RdClient(String baseUrl, OkHttpClient httpClient) {
+    RdClient(String baseUrl, OkHttpClient.Builder builder) {
         this.baseUrl = baseUrl
-        this.httpClient = httpClient
+        this.httpClient = builder.addInterceptor (new TempLogInterceptor(logNextRequest)).build()
     }
 
     static RdClient create(final String baseUrl, final String apiToken, Map<String, Integer> config = Collections.emptyMap() ) {
@@ -49,11 +56,48 @@ class RdClient {
                         connectTimeout(config.getOrDefault("connectTimeout", 25), TimeUnit.SECONDS).
                         readTimeout(config.getOrDefault("readTimeout", 25), TimeUnit.SECONDS).
                         writeTimeout(config.getOrDefault("writeTimeout", 25), TimeUnit.SECONDS).
-                        connectionPool(new ConnectionPool(2, 25, TimeUnit.SECONDS)).
-                        build()
+                        connectionPool(new ConnectionPool(2, 25, TimeUnit.SECONDS))
         )
     }
+    static class TempLogInterceptor implements Interceptor{
+        AtomicBoolean logNextRequest
+        TempLogInterceptor(AtomicBoolean logNextRequest){
+            this.logNextRequest=logNextRequest
+        }
+        @Override
+        Response intercept(@NotNull Chain chain) throws IOException {
+            def request = chain.request()
+            if(logNextRequest.getAndSet(false)){
+                println("---- REQUEST ----")
+                println("${request.method()} ${request.url()}")
+                request.headers().toMultimap().each { key, value ->
+                    println("$key: $value")
+                }
+                if(request.body() != null){
+                    def buffer = new Buffer()
+                    request.body().writeTo(buffer)
+                    println()
+                    println(buffer.readUtf8())
+                }
+                println("---- /REQUEST ----")
+            }
+            return chain.proceed(request)
+        }
+    }
+    /**
+     * Log the next request made by this client
+     * @return
+     */
+    RdClient logNextRequest(){
+        logNextRequest.set(true)
+        return this
+    }
 
+    /**
+     * Perform a GET request to the specified path
+     * @param path The API path, starting with /
+     * @return The raw Response object
+     */
     Response doGet(final String path) {
         httpClient.newCall(
                 new Request.Builder().
@@ -64,6 +108,12 @@ class RdClient {
         ).execute()
     }
 
+    /**
+     * Perform a GET request to the specified path with additional headers
+     * @param path The API path, starting with /
+     * @param headers Additional headers to include in the request
+     * @return The raw Response object
+     */
     Response doGetAddHeaders(final String path, Headers headers) {
         httpClient.newCall(
                 new Request.Builder().
@@ -74,6 +124,11 @@ class RdClient {
         ).execute()
     }
 
+    /**
+     * Perform a GET request to the specified path with Accept: "*&#47;*"
+     * @param path The API path, starting with /
+     * @return The raw Response object
+     */
     Response doGetAcceptAll(final String path) {
         httpClient.newCall(
                 new Request.Builder().
@@ -98,7 +153,7 @@ class RdClient {
         baseUrl + "/api/${customApiVersion}" + path
     }
 
-    Response request(final String path, Consumer<Request.Builder> builderConsumer) {
+    Response doRequest(final String path, Consumer<Request.Builder> builderConsumer) {
         def builder = new Request.Builder()
         builder.
                 url(apiUrl(path)).
@@ -129,10 +184,18 @@ class RdClient {
     }
 
     <T> T get(final String path, Class<T> clazz) {
-        mapper.readValue(doGet(path).body().byteStream(), clazz)
+        try (def resp = doGet(path)) {
+            if(!resp.successful){
+                throw new Exception("GET request failed: " + resp.code() + " " + resp.body().string())
+            }
+            return jsonValue(resp.body(), clazz)
+        }
     }
 
     Response doPost(final String path, final Object body = null) {
+        doReq(path, "POST", body)
+    }
+    Response doReq(final String path, String method, final Object body = null) {
         RequestBody requestBuilder
         if (body) {
             requestBuilder = RequestBody.create(
@@ -144,11 +207,20 @@ class RdClient {
         def builder = new Request.Builder()
                 .url(apiUrl(path))
                 .header('Accept', 'application/json')
-                .method("POST", requestBuilder)
+                .method(method, requestBuilder)
 
         httpClient.newCall(
                 builder.build()
         ).execute()
+    }
+
+    <T> T put(final String path, final File file, final String contentType, Class<T> clazz=Map) {
+        try(def response = doPut(path, file, contentType)) {
+            if (!response.isSuccessful()) {
+                throw new IOException("Failed to put file to rundeck: " + response.code() + " " + response.body().string())
+            }
+            return jsonValue(response.body(),clazz)
+        }
     }
 
     Response doPut(final String path, final File file, final String contentType='application/zip') {
@@ -160,6 +232,14 @@ class RdClient {
         httpClient.newCall(request).execute()
     }
 
+    <T> T putWithJsonBody(final String path, final Object body, Class<T> clazz = Map) {
+        try (def resp = doPutWithJsonBody(path, body)) {
+            if(!resp.isSuccessful()) {
+                throw new IOException("Failed to put json to rundeck: " + resp.code() + " " + resp.body().string())
+            }
+            return jsonValue(resp.body(), clazz)
+        }
+    }
     Response doPutWithJsonBody(final String path, final Object body) {
         RequestBody requestBody = RequestBody.create(
                 mapper.writeValueAsBytes(body),
@@ -167,6 +247,8 @@ class RdClient {
         )
         Request request = new Request.Builder()
                 .url(apiUrl(path))
+                .header('Content-Type', 'application/json')
+                .header('Accept', 'application/json')
                 .method("PUT", requestBody)
                 .build()
         httpClient.newCall(request).execute()
@@ -189,6 +271,23 @@ class RdClient {
                 .method("POST", body)
                 .build()
         httpClient.newCall(request).execute()
+    }
+    /**
+     * Sends a POST request to a specified path with a file and its content type, and returns successfully if the request is successful.
+     * This method is designed to transmit files, such as images or documents, to a server.
+     *
+     * @param path The endpoint URL path where the file is to be posted.
+     * @param file The file to be sent in the request body. This should be a valid {@link File} object pointing to the file intended for upload.
+     * @param contentType The MIME type of the file being sent, e.g., "image/jpeg" for JPEG images. This string must correspond to the file's actual content type.
+     * @throws IOException If an error occurs during the network request. This includes file read errors, network connectivity issues, and server response errors. Callers should handle this exception.
+     */
+    <T> T post(final String path, final File file, final String contentType, Class<T> clazz = Map) {
+        try (def resp = doPost(path, file, contentType)) {
+            if (!resp.isSuccessful()) {
+                throw new IOException("Failed to post file to rundeck: " + resp.code() + " " + resp.body().string())
+            }
+            return jsonValue(resp.body(), clazz)
+        }
     }
 
     /**
@@ -213,6 +312,23 @@ class RdClient {
         httpClient.newCall(request.build()).execute()
     }
 
+    /**
+     * Performs a POST request with multipart content, converts the expected JSON response to the specified class type.
+     *
+     * @param path The path of the resource to which the request will be sent.
+     * @param multipartBody The multipart request body.
+     * @return The response of the request.
+     * @throws IOException If an error occurs during the execution of the request.
+     * @throws Exception If the response is not successful.
+     */
+    <T> T postWithMultipart(final String path, MultipartBody multipartBody, Class<T> clazz = Map) {
+        try(def resp = doPostWithMultipart(path, multipartBody)) {
+            if(!resp.isSuccessful()){
+                throw new Exception("POST request failed: " + resp.code() + " " + resp.body().string())
+            }
+            return jsonValue(resp.body(), clazz)
+        }
+    }
     /**
      * Performs a POST request with multipart content.
      *
@@ -254,18 +370,18 @@ class RdClient {
                 .build()
         httpClient.newCall(request).execute()
     }
-
-    Response doPostWithoutBody(final String path) {
-        RequestBody body = RequestBody.create(null, new byte[]{});
+    Response doPutWithRawText(final String path, final String contentType, final String rawBody) {
+        ByteBuffer byteBuffer = StandardCharsets.UTF_8.encode(CharBuffer.wrap( rawBody.toCharArray()))
+        RequestBody body = RequestBody.create(Arrays.copyOfRange(byteBuffer.array(), byteBuffer.position(), byteBuffer.limit()), MediaType.parse(contentType))
         Request request = new Request.Builder()
                 .url(apiUrl(path))
-                .method("POST", body)
+                .method("PUT", body)
                 .build()
         httpClient.newCall(request).execute()
     }
 
     Response doPostWithContentTypeWithoutBody(final String path,String  contentType) {
-        RequestBody body = RequestBody.create(null, new byte[]{});
+        RequestBody body = RequestBody.create(new byte[]{});
         Request request = new Request.Builder()
                 .url(apiUrl(path))
                 .method("POST", body)
@@ -302,12 +418,47 @@ class RdClient {
                 ).build()
     }
 
+    /**
+     * Performs a POST request to the specified path with an optional body and maps the JSON response to the specified class type.
+     * @param path
+     * @param body
+     * @param clazz
+     * @return
+     */
     <T> T post(final String path, final Object body = null, Class<T> clazz = Map) {
-        jsonValue(doPost(path, body).body(), clazz)
+        try (def req = doReq(path, 'POST', body)) {
+            if (!req.successful) {
+                throw new Exception("POST request failed: " + req.code() + " " + req.body().string())
+            }
+            return jsonValue(req.body(), clazz)
+        }
+    }
+    /**
+     * Performs a PUT request to the specified path with an optional body and maps the JSON response to the specified class type.
+     * @param path
+     * @param body
+     * @param clazz
+     * @return
+     */
+    <T> T put(final String path, final Object body = null, Class<T> clazz = Map) {
+        try (def req = doReq(path, 'PUT', body)) {
+            if (!req.successful) {
+                throw new Exception("PUT request failed: " + req.code() + " " + req.body().string())
+            }
+            return jsonValue(req.body(), clazz)
+        }
     }
 
+    /**
+     * Maps the JSON response body to the specified class type, closes the underlying response stream.
+     * @param body
+     * @param clazz
+     * @return
+     */
     <T> T jsonValue(ResponseBody body, Class<T> clazz) {
-        mapper.readValue(body.byteStream(), clazz)
+        try (def b = body.byteStream()) {
+            mapper.readValue(b, clazz)
+        }
     }
 
 

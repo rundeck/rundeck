@@ -401,6 +401,9 @@ const messages = {
   "jobquery.title.adhocRemoteStringFilter": "Shell Command",
   "jobquery.title.adhocFilepathFilter": "Script File Path",
   "jobquery.title.argStringFilter": "Script File Arguments",
+  "jobquery.title.optionFilter": "Options",
+  "jobquery.title.optionFilter.label":
+    "Job Options by pair, name or value (e.g. -sleep 10 or -debug 1 -env prod or -debug)",
   "page.unsaved.changes": "You have unsaved changes",
   "edit.nodes.file": "Edit Nodes File",
   "project.node.file.source.label": "Source",
@@ -664,6 +667,8 @@ const messages = {
     "Discard or save changes to this option before completing changes to the job",
   "bash.prompt": "Bash:",
   "script.content.prompt": "Script Content:",
+  "script.content.multiline.prompt.warning":
+    "WARNING: this usage can be UNSAFE. See the documentation for details.",
   "rundeck.user.guide.option.model.provider":
     "Rundeck User Guide - Option model provider",
   save: "Save",
@@ -676,6 +681,8 @@ const messages = {
   "no.options.message": "No Options",
   "the.option.values.will.be.available.to.scripts.in.these.forms":
     "The option values will be available to scripts in these forms:",
+  "option.usage.multiline.note":
+    "Multiline Text option values will likely need to be quoted when used in scripts or commandline arguments:",
   "form.option.date.label": "Date",
   "form.option.enforcedType.label": "Restrictions",
   "form.option.usage.file.fileName.preview.description":
@@ -737,7 +744,12 @@ const messages = {
     "Query Parameter",
   "form.option.create.title": "Save the new option",
   "form.option.regex.label": "Match Regular Expression",
+  "form.option.regex.description.md":
+    "Enter a Regular Expression, in the [Java Pattern](https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html) format.",
+  "form.option.regex.multiline.description.md":
+    "For Multiline Text options, use `(?s)` to match across all lines.",
   "form.option.optionType.file.label": "File",
+  "form.option.optionType.multiline.label": "Multiline Text",
   "form.option.valuesDelimiter.label": "List Delimiter",
   "form.option.cancel.title": "Cancel adding new option",
   "form.option.values.label": "Allowed Values",
@@ -823,7 +835,7 @@ const messages = {
   "option.view.enforced.placeholder": "Strict",
   "option.view.regex.info.note": "Values must match the regular expression:",
   "option.view.notenforced.title": "No restrictions on input value",
-  "option.view.notenforced.placeholder": "None",
+  "option.view.notenforced.placeholder": "No restrictions",
   "option.view.action.delete.title": "Delete this Option",
   "option.view.action.edit.title": "Edit this Option",
   "option.view.action.duplicate.title": "Duplicate this Option",
@@ -1036,6 +1048,98 @@ const messages = {
   "framework.service.WorkflowNodeStep.description":
     "Runs once for each node in the workflow.",
   "framework.service.WorkflowStep.description": "Runs only once in a workflow.",
+  "archive.import.importConfig.true.help":
+    "Overwrites the project configuration with the properties stored in the archive.",
+  "archive.import.importACL.true.title": "Import Project ACL Policies",
+  "archive.import.validateJobRef.false.title": "Do not Validate",
+  "archive.import.importWebhooks.false.help":
+    "Does not import webhooks into the project",
+  "archive.import.importWebhooks.true.help": "Import Webhooks into the project",
+  "archive.import.importScm.false.help": "Does not import SCM Configuration.",
+  "archive.import.importConfig.false.help":
+    "Does not import the project configuration.",
+  "archive.import.importWebhooks.true.title": "Import Webhooks",
+  "archive.import.validateJobRef.true.help":
+    "Throw errors when using a referenced job that does not exist.",
+  "archive.import.importACL.false.help": "Does not import ACL Policies.",
+  "archive.import.validateJobRef.true.title": "Validate Referenced Jobs",
+  "archive.import.importWebhooks.false.title": "Do not import webhooks",
+  "archive.import.importACL.true.help":
+    "Imports any Project ACL Policies, overwriting policies with the same name.",
+  "archive.import.importNodesSource.false.help":
+    "Does not import the Node Sources.",
+  "archive.import.importScm.unauthorized.help":
+    "Not authorized to configure SCM.",
+  "archive.import.importConfig.true.title": "Import Project Configuration",
+  "archive.import.importScm.true.title": "Import Project SCM Configuration",
+  "archive.import.importNodesSource.true.help":
+    "Overwrites the Node Sources with the properties stored in the archive.",
+  "archive.import.importNodesSource.true.title": "Import Node Sources",
+  "archive.import.importNodesSource.failed.message":
+    "Failed to save nodes file, please contact your administrator.",
+  "archive.import.importACL.unauthorized.help":
+    "Not authorized to create ACL Policies.",
+  "archive.import.validateJobRef.false.help":
+    "Import referenced jobs without validating existence.",
+  "archive.import.importScm.true.help":
+    "Import Project SCM Configuration unless the project has SCM configuration.",
+  "archive.import.validateJobRef.label": "Validate Referenced Jobs:",
+  "archive.import.uuidOption.remove.description":
+    "Strip UUIDs from imported jobs.",
+  "archive.import.uuidOption.preserve.description":
+    "Preserve the imported Job UUIDs. Note: If a job with the same UUID exists in another project, the new job will not be imported.",
+  "archive.import.uuidOption.preserve.label": "Preserve UUIDs",
+  "archive.import.uuidOption.remove.label": "Remove UUIDs",
+  "archive.import.uuidOption.label": "Imported Jobs:",
+  // Job Upload Page messages
+  jobUpload: {
+    title: "Upload Job Definition to project",
+    fileSelectLabel: "Select a Job definition file.",
+    formatRadioLabel: {
+      xml: "XML format",
+      yaml: "YAML format",
+      json: "JSON format",
+    },
+    dupeOption: {
+      label: "When a Job with the same name already exists:",
+      update: {
+        word: "Update",
+        label: "{0} the existing Job",
+      },
+      skip: {
+        word: "Skip",
+        label: "{0} the uploaded Job",
+      },
+      create: {
+        word: "Create",
+        label: "Always {0} a new Job",
+      },
+    },
+    button: {
+      cancel: "Cancel",
+      upload: "Upload",
+      uploadAnother: "Upload Another Job Definition File...",
+    },
+    uploadingFile: "Uploading File...",
+    jobs: "Job | Jobs",
+    wasWere: {
+      singular: " was",
+      plural: "were",
+    },
+    results: {
+      error: {
+        notProcessed: "not processed due to errors",
+        definitionErrors: "Job Definition Errors",
+      },
+      skipped: {
+        skippedMessage: "skipped due to existing jobs with the same name",
+        existing: "Existing:",
+      },
+      success: {
+        successMessage: "successfully created/modified",
+      },
+    },
+  },
 };
 
 export default messages;

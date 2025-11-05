@@ -114,9 +114,7 @@ class ExecuteScriptSpec extends BaseContainer{
 
         when: "We have to remove the out file first"
         def execArgs = "rm -rf $scriptRunOutPath"
-        def runResponse = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs}")
-        def runResponseBody = runResponse.body().string()
-        def parsedResponseBody = mapper.readValue(runResponseBody, RunCommand.class)
+        def parsedResponseBody = post("/project/$projectName/run/command?exec=${execArgs}",RunCommand)
         def newExecId = parsedResponseBody.execution.id
         def deleteResponse = JobUtils.waitForExecution(
                 ExecutionStatus.SUCCEEDED.state,
@@ -186,8 +184,8 @@ class ExecuteScriptSpec extends BaseContainer{
         emptyFile
 
         when: "We run a script with scriptInterpreter and argsQuoted"
-        def scriptRunResponse = client.doPostWithoutBody("/project/$projectName/run/script")
-        Object noParamsResponse = mapper.readValue(scriptRunResponse.body().string(), Object.class)
+        def scriptRunResponse = doPost("/project/$projectName/run/script")
+        Map noParamsResponse = jsonValue(scriptRunResponse.body(), Map)
 
         then: "Job fails not having params"
         !scriptRunResponse.successful
@@ -201,7 +199,7 @@ class ExecuteScriptSpec extends BaseContainer{
                 "scriptFile",
                 emptyFile
         )
-        Object emptyScriptRunErrors = mapper.readValue(emptyScriptRunResponse.body().string(), Object.class)
+        Map emptyScriptRunErrors = jsonValue(emptyScriptRunResponse.body(), Map)
 
         then: "Api will fail with error"
         !emptyScriptRunResponse.successful

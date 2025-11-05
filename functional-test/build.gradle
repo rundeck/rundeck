@@ -32,6 +32,7 @@ dependencies {
     testImplementation "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
     testImplementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
     testImplementation "org.slf4j:slf4j-simple:${slf4jVersion}"
+    testImplementation "org.slf4j:jul-to-slf4j:${slf4jVersion}"
     testImplementation "org.seleniumhq.selenium:selenium-java:${seleniumJavaVersion}"
     testImplementation "com.squareup.okhttp3:okhttp-urlconnection:${okhttpUrlConnectionVersion}"
     testImplementation group: 'com.jcraft', name: 'jsch', version: "${jschVersion}"

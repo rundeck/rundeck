@@ -82,8 +82,9 @@ class ExecutionUtils {
          */
         static final Supplier<Execution> executionById(RdClient client, String executionId) {
             { ->
-                def r = client.doGet("/execution/${executionId}")
-                r?.successful ? OBJECT_MAPPER.readValue(r.body()?.string(), Execution.class) : null
+                try(def r = client.doGet("/execution/${executionId}")) {
+                    return r?.successful ? OBJECT_MAPPER.readValue(r.body()?.string(), Execution.class) : null
+                }
             }
         }
 

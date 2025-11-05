@@ -99,7 +99,7 @@ class ExecutionSpec extends BaseContainer {
                             "project.execution.history.cleanup.schedule": "0 0/1 * 1/1 * ? *"
                     ]
             ]
-            def client = getClient()
+            def client = clientProvider.client
             client.apiVersion = version
 
             File tmpjar = createArchiveJarFile(projectName, new File(getClass().getResource("/projects-import/archive-test").getPath()))

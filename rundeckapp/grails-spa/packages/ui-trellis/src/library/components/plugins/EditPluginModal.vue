@@ -3,6 +3,7 @@
     v-model="showModal"
     :title="title || $t('plugin.edit.title')"
     size="lg"
+    :keyboard="false"
   >
     <div v-if="provider">
       <p>
@@ -27,6 +28,7 @@
         description-css="ml-5"
         data-testid="plugin-info"
         :service-name="serviceName"
+        :extra-autocomplete-vars="extraAutocompleteVars"
       ></plugin-config>
       <slot name="extra"></slot>
     </div>
@@ -37,10 +39,10 @@
       </p>
     </div>
     <template #footer>
-      <btn @click="$emit('cancel')" data-testid="cancel-button">
+      <btn data-testid="cancel-button" @click="$emit('cancel')">
         {{ $t("Cancel") }}
       </btn>
-      <btn type="success" @click="saveChanges" data-testid="save-button">
+      <btn type="success" data-testid="save-button" @click="saveChanges">
         {{ $t("Save") }}
       </btn>
     </template>
@@ -51,8 +53,9 @@ import pluginConfig from "@/library/components/plugins/pluginConfig.vue";
 import pluginInfo from "@/library/components/plugins/PluginInfo.vue";
 import { PluginConfig } from "@/library/interfaces/PluginConfig";
 import { getServiceProviderDescription } from "@/library/modules/pluginService";
+import { ContextVariable } from "@/library/stores/contextVariables";
 import { cloneDeep } from "lodash";
-import { defineComponent } from "vue";
+import { defineComponent, type PropType } from "vue";
 
 export default defineComponent({
   name: "EditPluginModal",
@@ -80,6 +83,11 @@ export default defineComponent({
       type: Object,
       required: false,
       default: () => ({}),
+    },
+    extraAutocompleteVars: {
+      type: Array as PropType<ContextVariable[]>,
+      required: false,
+      default: () => [],
     },
   },
   emits: ["cancel", "save", "update:modelValue", "update:modalActive"],

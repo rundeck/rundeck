@@ -8,10 +8,10 @@
       :key="'before/' + job.id"
       section="job-browse-item"
       location="before-job-name"
-      :socket-data="{ job }"
+      :socket-data="{ job: loadedJob }"
     />
     <ui-socket
-      v-for="meta in job.meta"
+      v-for="meta in loadedJob.meta"
       :key="'before/' + job.id + '/' + meta.name"
       :location="`before-job-name:meta:${meta.name}`"
       section="job-browse-item"
@@ -21,7 +21,8 @@
       v-if="showJobsAsLinks"
       :href="jobLinkHref(job)"
       :data-job-id="job.uuid"
-      class="link-quiet"
+      class="link-quiet job-name"
+      :title="job.jobName"
     >
       {{ job.jobName }}
     </a>
@@ -33,11 +34,15 @@
     >
       {{ job.jobName }}
     </button>
-    <span v-if="job.description" class="text-secondary job-description">
+    <span
+      v-if="job.description"
+      class="text-secondary job-description"
+      :title="job.description"
+    >
       {{ shortDescription }}
     </span>
     <ui-socket
-      v-for="meta in job.meta"
+      v-for="meta in loadedJob.meta"
       :key="'after/' + job.id + '/' + meta.name"
       :location="`after-job-name:meta:${meta.name}`"
       section="job-browse-item"
@@ -47,7 +52,7 @@
       :key="'after/' + job.id"
       location="after-job-name"
       section="job-browse-item"
-      :socket-data="{ job }"
+      :socket-data="{ job: loadedJob }"
     />
   </div>
 </template>
@@ -59,8 +64,8 @@ import {
   JobPageStore,
   JobPageStoreInjectionKey,
 } from "@/library/stores/JobPageStore";
-import { JobBrowseItem } from "@/library/types/jobs/JobBrowse";
-import { defineComponent, PropType, inject } from "vue";
+import { JobBrowseItem, JobBrowseMeta } from "@/library/types/jobs/JobBrowse";
+import { defineComponent, PropType, inject, ref } from "vue";
 
 const context = getRundeckContext();
 const eventBus = context.eventBus;
@@ -82,13 +87,29 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    autoLoadMeta: {
+      type: Boolean,
+      default: false,
+    },
   },
   setup() {
     return {
       jobPageStore: inject(JobPageStoreInjectionKey) as JobPageStore,
+      loadedMeta: ref([] as JobBrowseMeta[]),
+      loaded: ref(false),
     };
   },
   computed: {
+    loadedJob() {
+      if (this.loaded && this.loadedMeta.length > 0) {
+        return {
+          ...this.job,
+          meta: this.loadedMeta,
+        };
+      } else {
+        return this.job;
+      }
+    },
     shortDescription() {
       if (!this.job.description) {
         return "";
@@ -98,6 +119,14 @@ export default defineComponent({
       }
       return this.job.description;
     },
+  },
+  async mounted() {
+    if (this.autoLoadMeta && !this.job.meta) {
+      this.loadedMeta = await this.jobPageStore
+        .getJobBrowser()
+        .loadJobMeta(this.job.id);
+      this.loaded = true;
+    }
   },
   methods: {
     jobLinkHref(job: JobBrowseItem) {
@@ -129,7 +158,7 @@ export default defineComponent({
         //only emit if the click was not within a button,input or link
         eventBus.emit(`browser-job-item-click:${this.job.id}`, this.job);
         if (this.loadMeta && !this.job.meta) {
-          this.job.meta = await this.jobPageStore
+          this.loadedMeta = await this.jobPageStore
             .getJobBrowser()
             .loadJobMeta(this.job.id);
         }
@@ -143,15 +172,32 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss">
-.job-description {
-  margin-left: var(--spacing-2);
-}
 .job-list-row-item {
   padding: 1px 0 1px 3px;
   border-style: solid;
   border-width: 0 0 3px 0;
   border-color: transparent;
   cursor: pointer;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--spacing-2);
+  .job-name,
+  .job-description {
+    flex: 1 2 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .job-name:has(+ .job-description) {
+    flex: 0 1 auto;
+  }
+  .btn.btn-xs {
+    margin-right: 0;
+  }
+  .job-actions {
+    margin-left: auto;
+    flex: 0 0 auto;
+  }
 }
 .hover .job-list-row-item {
   background: var(--background-color-accent-lvl2);

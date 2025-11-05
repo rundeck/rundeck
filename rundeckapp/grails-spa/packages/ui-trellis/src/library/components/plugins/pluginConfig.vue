@@ -133,6 +133,7 @@
                 :autocomplete-callback="autocompleteCallback"
                 :step-type="serviceName"
                 :plugin-type="modelValue.type"
+                :extra-autocomplete-vars="extraAutocompleteVars"
                 @plugin-props-mounted="notifyHandleAutoComplete"
               />
             </div>
@@ -192,6 +193,7 @@
                   :step-type="serviceName"
                   :plugin-type="modelValue.type"
                   :autocomplete-callback="autocompleteCallback"
+                  :extra-autocomplete-vars="extraAutocompleteVars"
                 />
               </div>
             </div>
@@ -204,8 +206,9 @@
 </template>
 
 <script lang="ts">
+import { ContextVariable } from "@/library/stores/contextVariables";
 import { getRundeckContext } from "../../rundeckService";
-import { defineComponent } from "vue";
+import { defineComponent, type PropType } from "vue";
 
 import AceEditor from "../utils/AceEditor.vue";
 import Expandable from "../utils/Expandable.vue";
@@ -260,6 +263,11 @@ export default defineComponent({
     groupCss: {
       required: false,
       default: "col-sm-2 control-label h5 header-reset",
+    },
+    extraAutocompleteVars: {
+      type: Array as PropType<ContextVariable[]>,
+      required: false,
+      default: () => [],
     },
   },
   emits: [

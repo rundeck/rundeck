@@ -1,5 +1,11 @@
 <template>
-  <modal data-testid="jobref-modal" v-model="showModal" size="lg" :title="$t('plugin.edit.title')">
+  <modal
+    v-model="showModal"
+    data-testid="jobref-modal"
+    size="lg"
+    :title="$t('plugin.edit.title')"
+    :keyboard="false"
+  >
     <div v-if="error" class="alert alert-danger">
       <ErrorsList :errors="[errorMessage]" />
     </div>
@@ -21,9 +27,7 @@
               <label for="useNameTrue">
                 {{ $t("Workflow.Step.jobreference.name.label") }}
                 <span>
-                  {{
-                    $t("Workflow.Step.jobreference.name.description")
-                  }}
+                  {{ $t("Workflow.Step.jobreference.name.description") }}
                 </span>
               </label>
             </div>
@@ -158,7 +162,9 @@
               v-model="editModel.jobref.args"
               name="argString"
               :suggestions="inputTypeContextVariables"
-              :placeholder="$t('Workflow.Step.jobreference.argString.placeholder')"
+              :placeholder="
+                $t('Workflow.Step.jobreference.argString.placeholder')
+              "
             />
           </div>
         </div>
@@ -337,7 +343,7 @@
           </label>
 
           <div class="col-sm-10">
-            <div  class="well well-sm embed matchednodes">
+            <div class="well well-sm embed matchednodes">
               <template v-if="filterLoaded">
                 <button
                   type="button"
@@ -349,19 +355,28 @@
                   <i class="glyphicon glyphicon-refresh"></i>
                 </button>
                 <span v-if="hasFilter && total">
-                  {{ $t("count.nodes.matched", [total, $t("Node.count.vue", total)]) }}
+                  {{
+                    $t("count.nodes.matched", [
+                      total,
+                      $t("Node.count.vue", total),
+                    ])
+                  }}
                 </span>
                 <span v-else-if="!hasFilter || total === 0">
                   {{ $t("JobExec.property.nodeFilter.null.description") }}
                 </span>
 
-                <div v-if="hasFilter && currentNodes.length" :id="`matchednodes${rkey}`" class="clearfix">
+                <div
+                  v-if="hasFilter && currentNodes.length"
+                  :id="`matchednodes${rkey}`"
+                  class="clearfix"
+                >
                   <node-list-embed
-                      :nodes="currentNodes"
-                      @filter="filterClicked"
+                    :nodes="currentNodes"
+                    @filter="filterClicked"
                   >
-                    <p class="text-info mb-0" v-if="isResultsTruncated">
-                      {{ $t('results.truncated.count.results.shown', [total]) }}
+                    <p v-if="isResultsTruncated" class="text-info mb-0">
+                      {{ $t("results.truncated.count.results.shown", [total]) }}
                     </p>
                   </node-list-embed>
                 </div>
@@ -613,7 +628,7 @@ import { useNodesStore } from "@/library/stores/NodesStorePinia";
 import NodeFilterInput from "@/app/components/job/resources/NodeFilterInput.vue";
 import ErrorsList from "@/app/components/job/options/ErrorsList.vue";
 import PtAutoComplete from "../../../../library/components/primeVue/PtAutoComplete/PtAutoComplete.vue";
-import { getContextVariables } from "@/library/components/utils/contextVariableUtils";
+import { getContextVariables, transformVariables } from "@/library/components/utils/contextVariableUtils";
 
 const rundeckContext = getRundeckContext();
 const eventBus = rundeckContext.eventBus;
@@ -641,6 +656,11 @@ export default defineComponent({
     modalActive: {
       type: Boolean,
       default: true,
+    },
+    extraAutocompleteVars: {
+      type: Array as PropType<ContextVariable[]>,
+      required: false,
+      default: () => [],
     },
   },
   emits: ["update:modelValue", "update:modalActive", "save", "cancel"],
@@ -694,14 +714,28 @@ export default defineComponent({
       errorMessage: "",
       showRequired: false,
       eventBus: eventBus,
-      inputTypeContextVariables: getContextVariables("input", "WorkflowStep"),
     };
   },
   computed: {
     hasFilter() {
       return Boolean(this.editModel.jobref.nodefilters.filter);
     },
-    ...mapState(useNodesStore, ["total", "nodeFilterStore", "currentNodes", "lastCountFetched", "isResultsTruncated"]),
+    inputTypeContextVariables() {
+      return [
+        ...getContextVariables("input", "WorkflowStep"),
+        ...transformVariables(
+            "input",
+            this.extraAutocompleteVars,
+        ),
+      ];
+    },
+    ...mapState(useNodesStore, [
+      "total",
+      "nodeFilterStore",
+      "currentNodes",
+      "lastCountFetched",
+      "isResultsTruncated",
+    ]),
   },
   watch: {
     modalActive(val) {
@@ -741,7 +775,10 @@ export default defineComponent({
           rundeckContext.data.nodeData,
         );
       }
-      this.nodeFilterOverrideExpanded = Boolean(this.editModel.jobref.nodefilters.filter.length || this.editModel.jobref.nodefilters.dispatch.nodeIntersect)
+      this.nodeFilterOverrideExpanded = Boolean(
+        this.editModel.jobref.nodefilters.filter.length ||
+          this.editModel.jobref.nodefilters.dispatch.nodeIntersect,
+      );
 
       await this.triggerFetchNodes();
     }
@@ -792,7 +829,7 @@ export default defineComponent({
       this.nodeFilterStore.setSelectedFilter(filter.filter);
     },
     async triggerFetchNodes() {
-      if(this.hasFilter) {
+      if (this.hasFilter) {
         try {
           this.error = null;
           this.loading = true;

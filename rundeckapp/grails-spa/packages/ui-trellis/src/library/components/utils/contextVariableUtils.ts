@@ -34,12 +34,13 @@ export const getContextVariables = (
   }
 };
 
-const transformVariables = (
+export const transformVariables = (
   fieldType: FieldType,
   variables: ContextVariable[],
   pluginType?: string,
 ): ContextVariable[] => {
-  const include_at_symbol_vars = pluginType === "script-inline" && fieldType === "script";
+  const include_at_symbol_vars =
+    pluginType === "script-inline" && fieldType === "script";
   const include_env_vars = fieldType === "script";
   return formatVars(variables, include_at_symbol_vars, include_env_vars);
 };
@@ -47,7 +48,7 @@ const transformVariables = (
 const getVariablesByTypes = (types: ContextVariable["type"][]): Array<ContextVariable> => {
   const contextVariables =
     (useJobStore().contextVariables as Record<string, ContextVariable[]>) || [];
-  return [...types, "options"].flatMap((type) => contextVariables[type]);
+  return [...types].flatMap((type) => contextVariables[type]);
 };
 
 const formatVars = (
@@ -56,10 +57,10 @@ const formatVars = (
   include_env_vars: boolean,
 ): ContextVariable[] => {
   return [
-    ...formatWithDelimiters(variables),
-    ...(include_at_symbol_vars ? formatWithDelimiters(variables, "@") : []),
+    ...(include_at_symbol_vars
+      ? formatWithDelimiters(variables, "@")
+      : formatWithDelimiters(variables)),
     ...(include_env_vars ? formatAsEnvVars(variables) : []),
-    ...(include_at_symbol_vars ? formatAsEnvVars(variables, "@") : []),
   ];
 };
 

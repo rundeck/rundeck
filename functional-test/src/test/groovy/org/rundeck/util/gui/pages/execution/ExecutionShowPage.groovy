@@ -96,6 +96,9 @@ class ExecutionShowPage extends BasePage  implements ActivityListTrait{
     List<WebElement> getLogOutput(){
         els logOutputBy
     }
+    List<String> getLogOutputText(){
+        getLogOutput()*.text
+    }
 
     WebElement getNodeFlowState(){
         el nodeFlowStateBy
@@ -115,7 +118,7 @@ class ExecutionShowPage extends BasePage  implements ActivityListTrait{
         WebElement execStatusIconElem = waitForElementVisible(execStatusIcon)
         waitForElementVisible(execCompletedIcon)
 
-        return execStatusIconElem.getAttribute(execStateAttribute)
+        return execStatusIconElem.getDomAttribute(execStateAttribute)
     }
 
     /**
@@ -127,7 +130,7 @@ class ExecutionShowPage extends BasePage  implements ActivityListTrait{
 
     String getExecutionStatus(){
         WebElement execStatusIconElem = new WebDriverWait(driver, Duration.ofSeconds(10)).until(ExpectedConditions.visibilityOfElementLocated(execStatusIcon))
-        return execStatusIconElem.getAttribute(execStateAttribute)
+        return execStatusIconElem.getDomAttribute(execStateAttribute)
     }
 
     NodesView getNodesView(){

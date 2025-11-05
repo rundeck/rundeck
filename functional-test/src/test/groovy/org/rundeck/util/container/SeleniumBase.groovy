@@ -78,7 +78,7 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
                             if (!testResourcesDir.exists()) {
                                 testResourcesDir.mkdirs()
                             }
-                            File destination = new File(testResourcesDir, "${specificationContext.currentSpec.filename}-${specificationContext.currentIteration.name}" + ".png")
+                            File destination = new File(testResourcesDir, "${specificationContext.currentSpec.filename}-${specificationContext.currentIteration.name}-${specificationContext.currentIteration.iterationIndex}" + ".png")
                             screenshot.renameTo(destination)
                         }
                     }

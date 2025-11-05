@@ -17,7 +17,9 @@ class NodesSpec extends SeleniumBase {
     public static final String NODE_KEY_PASSPHRASE = "testpassphrase123"
     public static final String NODE_USER_PASSWORD = "testpassword123"
     public static final String USER_VAULT_PASSWORD = "vault123"
-    public static final List<String> NODE_LIST = ["ssh-node-passphrase", "ssh-node", "ssh-agent-node", "password-node"]
+    public static final List<String> NODE_LIST = ["ssh-node-passphrase", "ssh-node-file-passphrase", "ssh-node-file", "ssh-node", "ssh-agent-node", "password-node"]
+    public static final List<String> ALL_NODE_LIST = NODE_LIST + ['ssh-node-option-passphrase',
+                                                                  'ssh-node-file-option-passphrase']
 
     NodesPage nodesPage
 
@@ -53,8 +55,8 @@ class NodesSpec extends SeleniumBase {
         nodesPage.setNodeInputText(".*")
         nodesPage.clickSearchNodes()
         then:
-        nodesPage.waitForNumberOfElementsToBe(nodesPage.nodeListTrBy, (NODE_LIST.size()+1))
-        nodesPage.getDisplayedNodesCount() == (NODE_LIST.size()+1)
+        nodesPage.waitForNumberOfElementsToBe(nodesPage.nodeListTrBy, (ALL_NODE_LIST.size()+1))
+        nodesPage.getDisplayedNodesCount() == (ALL_NODE_LIST.size()+1)
     }
 
     def "matching node shown when filtering by node name"() {
@@ -88,13 +90,13 @@ class NodesSpec extends SeleniumBase {
         when:
         nodesPage.els(NodesPage.nodesTableNodeFilterLinkByResolver("executor-test")).first().click()
         then:
-        nodesPage.getDisplayedNodesCount() == 4
-        nodesPage.el(nodesPage.searchNodeInputBy).getAttribute("value") == "tags: \"executor-test\""
+        nodesPage.getDisplayedNodesCount() == NODE_LIST.size()
+        nodesPage.el(nodesPage.searchNodeInputBy).getDomProperty("value") == "tags: \"executor-test\""
         when:
         nodesPage.els(NodesPage.nodesTableNodeFilterLinkByResolver("ssh-node")).first().click()
         then:
-        nodesPage.getDisplayedNodesCount() == 4
-        nodesPage.el(nodesPage.searchNodeInputBy).getAttribute("value") == "tags: \"executor-test\" tags: \"ssh-node\""
+        nodesPage.getDisplayedNodesCount() == ALL_NODE_LIST.size()
+        nodesPage.el(nodesPage.searchNodeInputBy).getDomProperty("value") == "tags: \"executor-test\" tags: \"ssh-node\""
     }
 
     def "nodes list displays appropriate node attributes"() {
@@ -164,9 +166,10 @@ class NodesSpec extends SeleniumBase {
 
     def "a command can be ran from the nodes filter"() {
         given:
-        nodesPage.setNodeInputText("tags: \"ssh-node\"")
+        def size= NODE_LIST.size()
+        nodesPage.setNodeInputText("tags: \"executor-test\"")
         nodesPage.clickSearchNodes()
-        nodesPage.waitForNumberOfElementsToBe(nodesPage.nodeListTrBy, 4)
+        nodesPage.waitForNumberOfElementsToBe(nodesPage.nodeListTrBy, size)
 
         when:
         nodesPage.byAndWaitClickable(nodesPage.actionsDropdownToggleBy).click()
@@ -176,20 +179,20 @@ class NodesSpec extends SeleniumBase {
 
         then: "Ensure the filtered nodes appear on the page"
         commandPage.waitForUrlToContain("command/run")
-        commandPage.byAndWaitClickable(By.partialLinkText("ssh-node"))
+        commandPage.byAndWaitClickable(By.partialLinkText(NODE_LIST.first()))
 
-        commandPage.expectPartialTextToExist("4 Nodes Matched")
-        commandPage.expectLinkTextToExist("ssh-node")
-        commandPage.expectLinkTextToExist("password-node")
-        commandPage.expectLinkTextToExist("ssh-agent-node")
-        commandPage.expectLinkTextToExist("ssh-node-passphrase")
+        commandPage.expectPartialTextToExist("${size} Nodes Matched")
+        NODE_LIST.each{name->
+            assert commandPage.expectLinkTextToExist(name)
+        }
     }
 
     def "a job can be created from the nodes filter"() {
         given:
-        nodesPage.setNodeInputText("tags: \"ssh-node\"")
+        def size= NODE_LIST.size()
+        nodesPage.setNodeInputText("tags: \"executor-test\"")
         nodesPage.clickSearchNodes()
-        nodesPage.waitForNumberOfElementsToBe(nodesPage.nodeListTrBy, 4)
+        nodesPage.waitForNumberOfElementsToBe(nodesPage.nodeListTrBy, size)
 
         when:
         nodesPage.byAndWaitClickable(nodesPage.actionsDropdownToggleBy).click()
@@ -199,12 +202,11 @@ class NodesSpec extends SeleniumBase {
 
         then: "Ensure the filtered nodes appear on the page"
         jobCreatePage.waitForUrlToContain("job/create")
-        jobCreatePage.byAndWaitClickable(By.partialLinkText("ssh-node"))
+        jobCreatePage.byAndWaitClickable(By.partialLinkText(NODE_LIST.first()))
 
-        jobCreatePage.expectPartialTextToExist("4 Nodes Matched")
-        jobCreatePage.expectLinkTextToExist("ssh-node")
-        jobCreatePage.expectLinkTextToExist("password-node")
-        jobCreatePage.expectLinkTextToExist("ssh-agent-node")
-        jobCreatePage.expectLinkTextToExist("ssh-node-passphrase")
+        jobCreatePage.expectPartialTextToExist("${size} Nodes Matched")
+        NODE_LIST.each{name->
+            assert jobCreatePage.expectLinkTextToExist(name)
+        }
     }
 }

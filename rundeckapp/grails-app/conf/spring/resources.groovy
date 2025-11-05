@@ -116,6 +116,7 @@ import org.rundeck.app.components.JobJSONFormat
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
+import org.rundeck.app.config.FeatureFlagConfigurable
 import org.rundeck.app.data.job.metadata.JobAuthorizationMetadataComponent
 import org.rundeck.app.data.job.metadata.JobScheduleMetadataComponent
 import org.rundeck.app.data.job.metadata.JobScmMetadataComponent
@@ -949,8 +950,8 @@ beans={
     }
 
 
-    // Activate Spring Actuator DataSourceHealthIndicator with a Rundeck specific bean name `rundeckDataSourceHeathIndicator`
-    rundeckDataSourceHeathIndicator(DataSourceHealthIndicator) {
+    // Activate Spring Actuator DataSourceHealthIndicator with a Rundeck specific bean name `rundeckDataSourceHealthIndicator`
+    rundeckDataSourceHealthIndicator(DataSourceHealthIndicator) {
         dataSource = ref("dataSource")
         // Get the validation query from config, if not provided the Spring DataSourceHealthIndicator will use the Connection.isValid() to test the database connection.
         query = grailsApplication.config.getProperty("rundeck.health.databaseValidationQuery")
@@ -1003,4 +1004,7 @@ beans={
     projectConfigMetadataComponent(ProjectConfigMetadataComponent)
     projectScmMetadataComponent(ProjectScmMetadataComponent)
     projectExecutionMetadataComponent(ProjectMessageMetadataComponent)
+
+    //defines feature flag metadata for system configuration
+    rundeckFeatureFlagConfigurable(FeatureFlagConfigurable)
 }
