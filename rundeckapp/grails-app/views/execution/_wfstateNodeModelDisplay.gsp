@@ -174,7 +174,8 @@
 
                       </div>
                   </div>
-                  <div data-bind="visible: followingOutput() && outputLineCount() < 0 " class="row row-space ">
+
+                  <div data-bind="visible: followingOutput() && outputLineCount() < 0 && (executionState() == 'RUNNING' || executionState() == 'WAITING')" class="row row-space ">
                       <div class="col-sm-12">
                           <div class="padded">
                               <span class="text-secondary">
