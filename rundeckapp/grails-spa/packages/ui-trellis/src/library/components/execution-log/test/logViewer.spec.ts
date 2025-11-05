@@ -154,15 +154,10 @@ describe("LogViewer", () => {
       const wrapper = createWrapper({ maxLogSize: 3145728 });
       await flushPromises();
 
-      expect(
-        findByTestId(wrapper, "log-viewer-oversize-warning").exists(),
-      ).toBe(true);
-      expect(
-        findByTestId(wrapper, "log-viewer-oversize-warning").text(),
-      ).toContain("🐋");
-      expect(
-        findByTestId(wrapper, "log-viewer-oversize-warning").text(),
-      ).toContain("MiB is a whale of a log!");
+      const warning = findByTestId(wrapper, "log-viewer-oversize-warning");
+      expect(warning.exists()).toBe(true);
+      expect(warning.text()).toContain("🐋");
+      expect(warning.text()).toContain("MiB is a whale of a log!");
     });
   });
 
