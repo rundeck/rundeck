@@ -302,7 +302,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param specificExecutionIds optional list of execution IDs to export (if null, exports all)
      */
     private void exportExecutionsBatched(ZipBuilder zip, String projectName, ProgressListener listener, List<Long> specificExecutionIds = null) {
-        def batchSize = 10000
+        def batchSize = 1000
         def offset = 0
         def hasMoreData = true
         String remotePathTemplate = null
