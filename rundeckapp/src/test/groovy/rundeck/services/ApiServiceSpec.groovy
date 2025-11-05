@@ -711,6 +711,24 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         0 * provider.delete(_)
     }
 
+    def "removeAllTokensByUser should remove only user type tokens"() {
+        given:
+        def user = new User(login: 'testuser').save()
+        def userId = user.id.toString()
+        def provider = setupTokenProvider(userId, [
+                new AuthToken(uuid: 'token1', creator: 'admin', authRoles: 'admin', user: userId, type: AuthTokenType.USER),
+                new AuthToken(uuid: 'token2', creator: 'admin', authRoles: 'admin', user: userId, type: AuthTokenType.WEBHOOK),
+                new AuthToken(uuid: 'token2', creator: 'admin', authRoles: 'admin', user: userId, type: AuthTokenType.RUNNER)
+        ])
+
+        when:
+        def result = service.removeAllTokensByUser(userId)
+
+        then:
+        result == 1
+        1 * provider.delete(_)
+    }
+
     def "removeAllTokensByUser handles provider error"() {
         given:
         def user = new User(login: 'testuser').save()
