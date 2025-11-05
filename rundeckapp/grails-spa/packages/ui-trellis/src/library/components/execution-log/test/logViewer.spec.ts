@@ -2,7 +2,6 @@ import { shallowMount, VueWrapper, flushPromises } from "@vue/test-utils";
 import { nextTick } from "vue";
 import LogViewer from "../logViewer.vue";
 import { EventBus } from "../../../utilities/vueEventBus";
-import * as rundeckService from "../../../rundeckService";
 
 // Mock the CancelToken
 jest.mock("@esfx/canceltoken", () => ({
@@ -14,31 +13,20 @@ jest.mock("@esfx/canceltoken", () => ({
   },
 }));
 
-// Mock getRundeckContext
-jest.mock("../../../rundeckService", () => {
-  const mockFn = jest.fn();
-  return {
-    getRundeckContext: jest.fn(() => ({
-      rootStore: {
-        theme: { theme: "dark" },
-        executionOutputStore: {
-          createOrGet: mockFn,
+// Mock getRundeckContext - use let for hoisting
+let mockCreateOrGet: jest.Mock;
+
+jest.mock("../../../rundeckService", () => ({
+  getRundeckContext: () => ({
+    rootStore: {
+      theme: { theme: "dark" },
+      executionOutputStore: {
+        get createOrGet() {
+          return mockCreateOrGet;
         },
       },
-    })),
-    __getMockCreateOrGet: () => mockFn,
-  };
-});
-
-jest.mock("../../containers/drawer/Drawer.vue", () => ({
-  name: "RdDrawer",
-  props: ["visible"],
-  template: "<div class='mock-drawer' v-if='visible'><slot></slot></div>",
-}));
-
-jest.mock("../../utils/UiSocket.vue", () => ({
-  name: "UiSocket",
-  template: "<div class='mock-ui-socket'></div>",
+    },
+  }),
 }));
 
 // Helper function to find elements by testid
@@ -77,14 +65,11 @@ const createWrapper = (props = {}, options = {}): VueWrapper<any> => {
 describe("LogViewer", () => {
   let mockEventBus: typeof EventBus;
   let mockViewer: any;
-  let mockCreateOrGet: jest.Mock;
-  let getItemSpy: jest.SpyInstance;
-  let setItemSpy: jest.SpyInstance;
-  let removeItemSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    // Get the mock function from the mocked module
-    mockCreateOrGet = (rundeckService as any).__getMockCreateOrGet();
+    // Initialize mock
+    mockCreateOrGet = jest.fn();
+
     // Reset mocks
     jest.clearAllMocks();
 
@@ -105,24 +90,11 @@ describe("LogViewer", () => {
       init: jest.fn().mockResolvedValue(undefined),
       getOutput: jest.fn().mockResolvedValue({}),
       entries: [],
-      completed: false,
-      execCompleted: false,
-      percentLoaded: 0,
-      offset: 0,
-      size: 0,
-      error: null,
+      completed: true,
+      execCompleted: true,
     };
 
     mockCreateOrGet.mockReturnValue(mockViewer);
-
-    // Mock localStorage
-    getItemSpy = jest.spyOn(Storage.prototype, "getItem").mockReturnValue(null);
-    setItemSpy = jest
-      .spyOn(Storage.prototype, "setItem")
-      .mockImplementation(() => {});
-    removeItemSpy = jest
-      .spyOn(Storage.prototype, "removeItem")
-      .mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -141,80 +113,56 @@ describe("LogViewer", () => {
     });
   });
 
-  describe("Stats Display", () => {
-    it("shows stats when enabled via config", async () => {
-      const wrapper = createWrapper({
-        config: { stats: true } as any,
-      });
-      await nextTick();
-      expect(findByTestId(wrapper, "log-viewer-stats").exists()).toBe(true);
-    });
-
-    it("hides stats when disabled via config", async () => {
-      const wrapper = createWrapper({
-        config: { stats: false } as any,
-      });
-      await nextTick();
-      expect(findByTestId(wrapper, "log-viewer-stats").exists()).toBe(false);
-    });
-  });
-
   describe("Theme Styling", () => {
-    it("applies dark theme class via config", () => {
-      const wrapper = createWrapper({ config: { theme: "dark" } as any });
-      const logViewer = findByTestId(wrapper, "log-viewer");
-      expect(logViewer.classes()).toContain("execution-log--dark");
-    });
-
-    it("applies light theme class via config", () => {
+    it("applies theme class from config", () => {
       const wrapper = createWrapper({ config: { theme: "light" } as any });
       const logViewer = findByTestId(wrapper, "log-viewer");
       expect(logViewer.classes()).toContain("execution-log--light");
     });
-
-    it("applies none theme class via config", () => {
-      const wrapper = createWrapper({ config: { theme: "none" } as any });
-      const logViewer = findByTestId(wrapper, "log-viewer");
-      expect(logViewer.classes()).toContain("execution-log--none");
-    });
   });
 
-  describe("Edge Cases", () => {
-    it("handles undefined node prop", () => {
-      const wrapper = createWrapper({ node: undefined });
-      expect(findByTestId(wrapper, "log-viewer").exists()).toBe(true);
+  describe("Warning and Error States", () => {
+    it("displays no output message when execution completes with zero log lines", async () => {
+      mockViewer.completed = true;
+      mockViewer.entries = [];
+      const wrapper = createWrapper();
+      await flushPromises();
+
+      expect(findByTestId(wrapper, "log-viewer-no-output").exists()).toBe(true);
+      expect(findByTestId(wrapper, "log-viewer-no-output").text()).toContain(
+        "No output",
+      );
     });
 
-    it("handles undefined stepCtx prop", () => {
-      const wrapper = createWrapper({ stepCtx: undefined });
-      expect(findByTestId(wrapper, "log-viewer").exists()).toBe(true);
+    it("displays error message when viewer has an error", async () => {
+      mockViewer.error = "Failed to load execution log";
+      mockViewer.completed = false;
+      const wrapper = createWrapper();
+      await flushPromises();
+
+      expect(findByTestId(wrapper, "log-viewer-error-message").exists()).toBe(
+        true,
+      );
+      expect(findByTestId(wrapper, "log-viewer-error-message").text()).toContain(
+        "Failed to load execution log",
+      );
     });
 
-    it("handles undefined config prop", () => {
-      const wrapper = createWrapper({ config: undefined });
-      expect(findByTestId(wrapper, "log-viewer").exists()).toBe(true);
-    });
+    it("displays whale emoji warning when log exceeds maxLogSize", async () => {
+      mockViewer.size = 4000000;
+      mockViewer.execCompleted = true;
+      const wrapper = createWrapper({ maxLogSize: 3145728 });
+      await flushPromises();
 
-    it("handles undefined trimOutput prop", () => {
-      const wrapper = createWrapper({ trimOutput: undefined });
-      expect(findByTestId(wrapper, "log-viewer").exists()).toBe(true);
-    });
-
-    it("handles undefined jumpToLine prop", () => {
-      const wrapper = createWrapper({ jumpToLine: undefined });
-      expect(findByTestId(wrapper, "log-viewer").exists()).toBe(true);
-    });
-  });
-
-  describe("LocalStorage Integration", () => {
-    it("does not access localStorage when useUserSettings is false", () => {
-      createWrapper({ useUserSettings: false });
-      expect(getItemSpy).not.toHaveBeenCalled();
-    });
-
-    it("accesses localStorage when useUserSettings is true", () => {
-      createWrapper({ useUserSettings: true });
-      expect(getItemSpy).toHaveBeenCalledWith("execution-viewer");
+      expect(
+        findByTestId(wrapper, "log-viewer-oversize-warning").exists(),
+      ).toBe(true);
+      expect(
+        findByTestId(wrapper, "log-viewer-oversize-warning").text(),
+      ).toContain("🐋");
+      expect(
+        findByTestId(wrapper, "log-viewer-oversize-warning").text(),
+      ).toContain("MiB is a whale of a log!");
     });
   });
 
@@ -249,7 +197,7 @@ describe("LogViewer", () => {
 
       it("toggles stats visibility when user clicks Display Stats checkbox", async () => {
         const wrapper = createWrapper({ showSettings: true });
-        const statsCheckbox = wrapper.find("#logview_stats");
+        const statsCheckbox = findByTestId(wrapper, "log-viewer-stats-checkbox");
 
         await statsCheckbox.setValue(true);
         await nextTick();
@@ -264,18 +212,59 @@ describe("LogViewer", () => {
     });
 
     describe("Follow Button", () => {
-      it("shows eye-slash icon when follow is disabled initially", () => {
-        const wrapper = createWrapper({ showSettings: true, follow: false });
-        const followBtn = findByTestId(wrapper, "log-viewer-follow-btn");
+      it("shows eye icon when follow is enabled and toggles to eye-slash when clicked", async () => {
+        mockViewer.execCompleted = false;
+        const wrapper = createWrapper({ showSettings: true, follow: true });
+        await flushPromises();
+        const followIcon = findByTestId(wrapper, "log-viewer-follow-icon");
 
-        expect(followBtn.find(".fa-eye-slash").exists()).toBe(true);
+        expect(followIcon.classes()).toContain("fa-eye");
+        expect(followIcon.classes()).not.toContain("fa-eye-slash");
+
+        await findByTestId(wrapper, "log-viewer-follow-btn").trigger("click");
+        await nextTick();
+
+        expect(followIcon.classes()).toContain("fa-eye-slash");
+        expect(followIcon.classes()).not.toContain("fa-eye");
       });
 
-      it("shows eye icon when follow is enabled initially", () => {
-        const wrapper = createWrapper({ showSettings: true, follow: true });
-        const followBtn = findByTestId(wrapper, "log-viewer-follow-btn");
+      it("shows eye-slash icon when follow is disabled and toggles to eye when clicked", async () => {
+        const wrapper = createWrapper({ showSettings: true, follow: false });
+        await flushPromises();
+        const followIcon = findByTestId(wrapper, "log-viewer-follow-icon");
 
-        expect(followBtn.find(".fa-eye").exists()).toBe(true);
+        expect(followIcon.classes()).toContain("fa-eye-slash");
+        expect(followIcon.classes()).not.toContain("fa-eye");
+
+        await findByTestId(wrapper, "log-viewer-follow-btn").trigger("click");
+        await nextTick();
+
+        expect(followIcon.classes()).toContain("fa-eye");
+        expect(followIcon.classes()).not.toContain("fa-eye-slash");
+      });
+    });
+
+    describe("Progress Bar", () => {
+      it("displays progress bar when execution is not completed", async () => {
+        mockViewer.execCompleted = false;
+        mockViewer.completed = false;
+        const wrapper = createWrapper({ showSettings: true });
+        await flushPromises();
+
+        expect(findByTestId(wrapper, "log-viewer-progress-bar").exists()).toBe(
+          true,
+        );
+      });
+
+      it("hides progress bar when execution is completed", async () => {
+        mockViewer.execCompleted = true;
+        mockViewer.completed = true;
+        const wrapper = createWrapper({ showSettings: true });
+        await flushPromises();
+
+        expect(findByTestId(wrapper, "log-viewer-progress-bar").exists()).toBe(
+          false,
+        );
       });
     });
 

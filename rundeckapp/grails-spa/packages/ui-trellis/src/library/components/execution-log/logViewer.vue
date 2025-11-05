@@ -81,7 +81,7 @@
           <label for="logview_lineWrap">Wrap Long Lines</label>
         </div>
         <div class="checkbox">
-          <input id="logview_stats" v-model="settings.stats" type="checkbox" />
+          <input id="logview_stats" v-model="settings.stats" type="checkbox" data-testid="log-viewer-stats-checkbox" />
           <label for="logview_stats">Display Stats</label>
         </div>
         <ui-socket
@@ -119,7 +119,7 @@
               data-testid="log-viewer-follow-btn"
               @click="toggleFollow"
             >
-              <i :class="[followIcon]" />Follow
+              <i :class="[followIcon]" data-testid="log-viewer-follow-icon" />Follow
             </btn>
           </btn-group>
           <transition name="fade">
