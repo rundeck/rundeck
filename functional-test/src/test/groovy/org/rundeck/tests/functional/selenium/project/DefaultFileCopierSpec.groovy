@@ -66,6 +66,7 @@ class DefaultFileCopierSpec extends SeleniumBase{
         editPage.selectFileCopier(ProjectEditPage.FileCopierEnum.SCP)
         editPage.setFileCopierValues(fileCopierConfigMap, null, selectableProps)
         editPage.save()
+        editPage.validatePage(homePage.loadPath)
         editPage.go()
         editPage.clickNavLink(NavProjectSettings.DEFAULT_FILE_COPIER)
         def defaultFileCopierConfigInGui = editPage.getFileCopierConfig(
@@ -103,6 +104,7 @@ class DefaultFileCopierSpec extends SeleniumBase{
         editPage.selectFileCopier(ProjectEditPage.FileCopierEnum.SSHJ_SCP)
         editPage.setFileCopierValues(fileCopierConfigMap, null, selectableProps)
         editPage.save()
+        editPage.validatePage(homePage.loadPath)
         editPage.go()
         editPage.clickNavLink(NavProjectSettings.DEFAULT_FILE_COPIER)
         def defaultFileCopierConfigInGui = editPage.getFileCopierConfig(fileCopierConfigMap)
@@ -126,6 +128,7 @@ class DefaultFileCopierSpec extends SeleniumBase{
         editPage.clickFileCopierDropDown()
         editPage.selectFileCopier(ProjectEditPage.FileCopierEnum.STUB)
         editPage.save()
+        editPage.validatePage(homePage.loadPath)
         editPage.go()
         editPage.clickNavLink(NavProjectSettings.DEFAULT_FILE_COPIER)
 
@@ -157,6 +160,7 @@ class DefaultFileCopierSpec extends SeleniumBase{
         editPage.selectFileCopier(ProjectEditPage.FileCopierEnum.SCRIPT_EXECUTION)
         editPage.setFileCopierValues(fileCopierConfigMap)
         editPage.save()
+        editPage.validatePage(homePage.loadPath)
         editPage.go()
         editPage.clickNavLink(NavProjectSettings.DEFAULT_FILE_COPIER)
         def defaultFileCopierConfigInGui = editPage.getFileCopierConfig(fileCopierConfigMap)
@@ -199,6 +203,7 @@ class DefaultFileCopierSpec extends SeleniumBase{
         editPage.selectFileCopier(ProjectEditPage.FileCopierEnum.WINRM_FILE_COPIER)
         editPage.setFileCopierValues(fileCopierConfigMap, clickableProps, selectableProps)
         editPage.save()
+        editPage.validatePage(homePage.loadPath)
         editPage.go()
         editPage.clickNavLink(NavProjectSettings.DEFAULT_FILE_COPIER)
         def expectedOutcome = [:]
@@ -244,6 +249,7 @@ class DefaultFileCopierSpec extends SeleniumBase{
         editPage.selectFileCopier(ProjectEditPage.FileCopierEnum.OPENSSH)
         editPage.setFileCopierValues(fileCopierConfigMap, null, selectableProps)
         editPage.save()
+        editPage.validatePage(homePage.loadPath)
         editPage.go()
         editPage.clickNavLink(NavProjectSettings.DEFAULT_FILE_COPIER)
         def expectedOutcome = [:]
