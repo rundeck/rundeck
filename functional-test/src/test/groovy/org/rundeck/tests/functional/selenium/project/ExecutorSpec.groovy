@@ -85,6 +85,7 @@ class ExecutorSpec extends SeleniumBase {
         projectEditPage.sshBindAddress.sendKeys("example/bind/address")
         projectEditPage.passRdEnv.click()
         projectEditPage.save()
+        projectEditPage.validatePage(dashboardPage.loadPath)
         projectEditPage.go(projectEditPage.loadPath)
         projectEditPage.defaultNodeExecutorLink.click()
         projectEditPage.nodeExecutorDropdown.click()
@@ -129,6 +130,7 @@ class ExecutorSpec extends SeleniumBase {
         projectEditPage.nodeExecutorDropdown.click()
         projectEditPage.localExecutorListItem.click()
         projectEditPage.save()
+        projectEditPage.validatePage(dashboardPage.loadPath)
         projectEditPage.go(projectEditPage.loadPath)
         projectEditPage.defaultNodeExecutorLink.click()
 
@@ -166,6 +168,7 @@ class ExecutorSpec extends SeleniumBase {
         projectEditPage.scriptExecutorConfigInterpreter.sendKeys("exampleInterpreter")
         projectEditPage.scriptExecutorConfigDirectory.sendKeys("/example/dir")
         projectEditPage.save()
+        projectEditPage.validatePage(dashboardPage.loadPath)
         projectEditPage.go(projectEditPage.loadPath)
         projectEditPage.defaultNodeExecutorLink.click()
         projectEditPage.nodeExecutorDropdown.click()
@@ -210,6 +213,7 @@ class ExecutorSpec extends SeleniumBase {
         projectEditPage.retryCounterInput.clear()
         projectEditPage.retryCounterInput.sendKeys("3000")
         projectEditPage.save()
+        projectEditPage.validatePage(dashboardPage.loadPath)
         projectEditPage.go(projectEditPage.loadPath)
         projectEditPage.defaultNodeExecutorLink.click()
 
