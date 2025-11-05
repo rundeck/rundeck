@@ -86,7 +86,7 @@ class ExecutorSpec extends SeleniumBase {
         projectEditPage.passRdEnv.click()
         projectEditPage.save()
         projectEditPage.validatePage(dashboardPage.loadPath)
-        projectEditPage.go(projectEditPage.loadPath)
+        projectEditPage.go()
         projectEditPage.defaultNodeExecutorLink.click()
         projectEditPage.nodeExecutorDropdown.click()
         projectEditPage.waitForElementVisible(projectEditPage.openedNodeExecutorDropdown)
@@ -131,7 +131,7 @@ class ExecutorSpec extends SeleniumBase {
         projectEditPage.localExecutorListItem.click()
         projectEditPage.save()
         projectEditPage.validatePage(dashboardPage.loadPath)
-        projectEditPage.go(projectEditPage.loadPath)
+        projectEditPage.go()
         projectEditPage.defaultNodeExecutorLink.click()
 
         then: "No errors shown and the local exec is selected by default"
@@ -169,7 +169,7 @@ class ExecutorSpec extends SeleniumBase {
         projectEditPage.scriptExecutorConfigDirectory.sendKeys("/example/dir")
         projectEditPage.save()
         projectEditPage.validatePage(dashboardPage.loadPath)
-        projectEditPage.go(projectEditPage.loadPath)
+        projectEditPage.go()
         projectEditPage.defaultNodeExecutorLink.click()
         projectEditPage.nodeExecutorDropdown.click()
 
@@ -214,7 +214,7 @@ class ExecutorSpec extends SeleniumBase {
         projectEditPage.retryCounterInput.sendKeys("3000")
         projectEditPage.save()
         projectEditPage.validatePage(dashboardPage.loadPath)
-        projectEditPage.go(projectEditPage.loadPath)
+        projectEditPage.go()
         projectEditPage.defaultNodeExecutorLink.click()
 
         then: "All config persisted"
