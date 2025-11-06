@@ -10,6 +10,7 @@ IMPORTANT: Before submitting your Pull Request, please review the following inst
 3. Please be sure the issue you are addressing is referenced in a commit, or the body of your PR,
    using [github keywords](https://help.github.com/articles/closing-issues-using-keywords/), e.g. "fixes #123".
 -->
+## Tell us about your PR
 
 **Is this a bugfix, or an enhancement? Please describe.**
 <!-- Include a clear and concise description of the bug you are fixing (reference issue number), or enhancement you are implementing. -->
@@ -22,3 +23,7 @@ IMPORTANT: Before submitting your Pull Request, please review the following inst
 
 **Additional context**
 <!-- Add any other context or screenshots about the change here. -->
+
+## Release Notes
+
+<!-- If you have suggested content that would describe this PR to other Rundeck community users please enter it here.-->
