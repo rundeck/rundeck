@@ -26,4 +26,4 @@ IMPORTANT: Before submitting your Pull Request, please review the following inst
 
 ## Release Notes
 
-<!-- If you have suggested content that would describe this PR to other Rundeck community users please enter it here.-->
+<!-- If you have suggested content that would describe this PR to other Rundeck community users, please enter it here.-->
