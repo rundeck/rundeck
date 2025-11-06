@@ -115,6 +115,46 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         // Change the default promise factory so the async project deletion in ProjectService.deleteProject()
         // happens synchronously in tests
         Promises.promiseFactory = new SynchronousPromiseFactory()
+
+        // Mock executeQuery methods for GORM compatibility in tests
+        Execution.metaClass.static.executeQuery = { String query, Map params = [:], Map options = [:] ->
+            if (query.contains("SELECT COUNT(*)")) {
+                return [Execution.countByProject(params.projectName ?: 'testproj')]
+            } else if (query.contains("SELECT e.uuid")) {
+                def executions = Execution.findAllByProject(params.projectName ?: 'testproj')
+                return executions.findAll { it.id in params.ids }.collect { it.uuid }
+            } else if (query.contains("ORDER BY e.id")) {
+                def executions = Execution.findAllByProject(params.projectName ?: 'testproj')
+                if (params.ids) {
+                    executions = executions.findAll { it.id in params.ids }
+                }
+                executions = executions.sort { it.id }
+                if (options.max) {
+                    def offset = options.offset ?: 0
+                    executions = executions.drop(offset).take(options.max)
+                }
+                return executions
+            }
+            return []
+        }
+
+        BaseReport.metaClass.static.executeQuery = { String query, Map params = [:], Map options = [:] ->
+            if (query.contains("SELECT COUNT(*)")) {
+                return [BaseReport.countByProject(params.projectName ?: 'testproj')]
+            } else if (query.contains("ORDER BY r.id")) {
+                def reports = BaseReport.findAllByProject(params.projectName ?: 'testproj')
+                if (params.uuids) {
+                    reports = reports.findAll { it.executionUuid in params.uuids }
+                }
+                reports = reports.sort { it.id }
+                if (options.max) {
+                    def offset = options.offset ?: 0
+                    reports = reports.drop(offset).take(options.max)
+                }
+                return reports
+            }
+            return []
+        }
     }
 
     def "loadJobFileRecord"() {
