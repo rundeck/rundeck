@@ -129,6 +129,7 @@ class ExecutionSpec extends SeleniumBase {
      * Steps:
      * - Executes the command 'echo 'Hello world'' and waits for it to succeed.
      * - Navigates to the log node view and validates its contents.
+     * - Verifies that the loading spinner does not appear after execution completes.
      */
     def "viewer execution check log node view"() {
         setup:
@@ -149,6 +150,7 @@ class ExecutionSpec extends SeleniumBase {
         executionShowPage.execLogNode.isDisplayed()
         executionShowPage.execLogNode.text == "Hello world"
         executionShowPage.execLogGutterEntryAttribute.matches("\\d{2}:\\d{2}:\\d{2}")
+        executionShowPage.waitForNumberOfElementsToBe executionShowPage.nodeOutputLoadingSpinnerBy, 0
     }
 
     /**

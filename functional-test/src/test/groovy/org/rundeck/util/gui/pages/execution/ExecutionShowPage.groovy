@@ -47,6 +47,7 @@ class ExecutionShowPage extends BasePage  implements ActivityListTrait{
     static final By logContentTextBy = By.className("execution-log__content-text")
     static final By logContentTextOverflowBy = By.cssSelector(".execution-log__content-text.execution-log__content-text--overflow")
     static final By gutterLineNumberBy = By.cssSelector(".gutter.line-number")
+    static final By nodeOutputLoadingSpinnerBy = By.cssSelector(".wfnodeoutput .fa-spinner.fa-pulse")
     static final By subtitleExecutionActionMenuButtonBy = By.cssSelector("#subtitlebar .execution-head-info .btn-group button")
     static final By subtitleExecutionActionMenuBy = By.cssSelector("#subtitlebar .execution-head-info .btn-group.open ul[role=menu]")
     static final By subtitleExecutionActionLinksBy = By.cssSelector("#subtitlebar .execution-head-info .btn-group.open ul[role=menu] a")
@@ -299,5 +300,9 @@ class ExecutionShowPage extends BasePage  implements ActivityListTrait{
     }
     List<WebElement> getActionMenuLinks(){
         els subtitleExecutionActionLinksBy
+    }
+
+    WebElement getNodeOutputLoadingSpinner(){
+        el nodeOutputLoadingSpinnerBy
     }
 }
