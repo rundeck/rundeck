@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.app.internal.framework.NodeExecutorServiceFactory
 import com.dtolabs.rundeck.app.internal.framework.FeatureToggleNodeExecutorProfile
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckNodeExecutorProfile
+import com.dtolabs.rundeck.app.mail.DynamicMailSender
 import com.dtolabs.rundeck.app.tree.DelegateStorageTree
 import com.dtolabs.rundeck.app.tree.RundeckBootstrapStorageTreeUpdater
 import com.dtolabs.rundeck.app.tree.JasyptEncryptionEnforcerUpdaterConfig
@@ -1007,4 +1008,6 @@ beans={
 
     //defines feature flag metadata for system configuration
     rundeckFeatureFlagConfigurable(FeatureFlagConfigurable)
+
+    rundeckDynamicMailSender(DynamicMailSender)
 }
