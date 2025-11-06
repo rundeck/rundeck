@@ -18,7 +18,7 @@ class SystemConfigurationPage extends BasePage {
 
     void validatePage() {
         try {
-            waitForUrlToContain("config")
+            waitForUrlToContainIgnoreCase("config")
         } catch (Exception e) {
             throw new IllegalStateException("Not on key system configuration page: " + driver.currentUrl)
         }

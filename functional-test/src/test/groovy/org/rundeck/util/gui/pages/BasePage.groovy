@@ -150,6 +150,16 @@ abstract class BasePage {
                 .until(ExpectedConditions.urlContains(text))
     }
 
+    boolean waitForUrlToEndWith(String text) {
+        new WebDriverWait(context.driver, Duration.ofSeconds(30))
+                .until({ driver -> driver.getCurrentUrl().endsWith(text) })
+    }
+
+    boolean waitForUrlToContainIgnoreCase(String text) {
+        new WebDriverWait(context.driver, Duration.ofSeconds(30))
+                .until({ driver -> driver.getCurrentUrl().toLowerCase().contains(text.toLowerCase()) })
+    }
+
     boolean waitForAttributeContains(WebElement locator, String attribute, String value) {
         new WebDriverWait(context.driver, Duration.ofSeconds(30))
                 .until(ExpectedConditions.attributeContains(locator, attribute, value))

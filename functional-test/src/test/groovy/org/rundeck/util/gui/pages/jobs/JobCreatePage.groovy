@@ -327,7 +327,7 @@ class JobCreatePage extends BasePage {
 
     void validatePage() {
         try {
-            waitForUrlToContain(getLoadPath())
+            waitForUrlToEndWith(getLoadPath())
         } catch (Exception e) {
             throw new IllegalStateException("Not on job create page: " + driver.currentUrl)
         }
