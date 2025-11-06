@@ -136,7 +136,7 @@ describe("LogViewer", () => {
 
     it("displays error message when viewer has an error", async () => {
       mockViewer.error = "Failed to load execution log";
-      mockViewer.completed = false;
+      mockViewer.completed = true; 
       const wrapper = createWrapper();
       await flushPromises();
 
