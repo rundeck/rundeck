@@ -36,7 +36,9 @@ class HomePage extends BasePage {
     }
 
     void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
+        try {
+            waitForUrlToContain(loadPath)
+        } catch (Exception e) {
             throw new IllegalStateException("Not on home page: " + driver.currentUrl)
         }
     }

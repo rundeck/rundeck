@@ -22,7 +22,9 @@ class LoggedOutPage extends BasePage {
     }
 
     void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
+        try {
+            waitForUrlToContain(loadPath)
+        } catch (Exception e) {
             throw new IllegalStateException("Not on logged out  page: " + driver.currentUrl)
         }
     }

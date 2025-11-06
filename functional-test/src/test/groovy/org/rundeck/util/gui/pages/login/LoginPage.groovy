@@ -24,7 +24,9 @@ class LoginPage extends BasePage {
         super(context)
     }
     void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
+        try {
+            waitForUrlToContain(loadPath)
+        } catch (Exception e) {
             throw new IllegalStateException("Not on login page: " + driver.currentUrl)
         }
     }

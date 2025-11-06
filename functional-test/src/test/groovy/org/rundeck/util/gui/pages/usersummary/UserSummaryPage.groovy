@@ -22,7 +22,9 @@ class UserSummaryPage extends BasePage{
     }
 
     void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
+        try {
+            waitForUrlToContain(loadPath)
+        } catch (Exception e) {
             throw new IllegalStateException("Not on user summary page: " + driver.currentUrl)
         }
     }
