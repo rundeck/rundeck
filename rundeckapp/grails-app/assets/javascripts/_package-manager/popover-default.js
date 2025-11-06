@@ -1,1 +1,1 @@
-$.fn.popover.Constructor.DEFAULTS.sanitize = false;
+$.fn.popover.Constructor.Default.sanitize = false;

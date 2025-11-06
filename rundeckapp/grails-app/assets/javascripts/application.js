@@ -889,7 +889,7 @@ function _initPopoverContentRef(parent, options) {
     };
     var templateClass = jQuery(e).data('popover-template-class') || options.templateClass;
     if (templateClass) {
-      opts.template = jQuery.fn.popover.Constructor.DEFAULTS.template.replace(
+      opts.template = jQuery.fn.popover.Constructor.Default.template.replace(
         /class="popover"/,
         "class=\"popover " + templateClass + "\""
       );

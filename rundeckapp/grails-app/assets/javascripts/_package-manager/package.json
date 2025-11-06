@@ -25,7 +25,6 @@
   },
   "dependencies": {
     "bootstrap": "4.6.2",
-    "popper.js": "^1.16.1",
     "dotenv-webpack": "^7.0.2",
     "install": "^0.13.0",
     "jquery": "^3.6.4",
