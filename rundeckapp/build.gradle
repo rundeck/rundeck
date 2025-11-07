@@ -367,6 +367,56 @@ tasks.register('copyApiSpecFiles', Copy){
     into additionalSpecDir
 }
 
+tasks.register('fixOpenApiSpec') {
+    description 'Fix OpenAPI spec to populate version server variable default value'
+    def specFile = file("${buildDir}/classes/groovy/main/META-INF/swagger/rundeck-api.yml")
+    def apiVersionsFile = file("${projectDir}/src/main/groovy/com/dtolabs/rundeck/app/api/ApiVersions.groovy")
+    
+    inputs.file(specFile)
+    inputs.file(apiVersionsFile)
+    outputs.file(specFile)
+    
+    doLast {
+        if (specFile.exists() && apiVersionsFile.exists()) {
+            // Parse the ApiVersions.groovy source file to extract the version
+            def apiVersion = null
+            apiVersionsFile.eachLine { line ->
+                if (line.contains('API_CURRENT_VERSION_STR') && line.contains('=')) {
+                    // Extract version from: public final static String API_CURRENT_VERSION_STR = "56"
+                    def matcher = line =~ /"(\d+)"/
+                    if (matcher) {
+                        apiVersion = matcher[0][1]
+                    }
+                }
+            }
+            
+            if (!apiVersion) {
+                throw new GradleException("Could not extract API version from ApiVersions.groovy")
+            }
+            
+            // Use SnakeYAML to parse and modify the spec
+            def yaml = new org.yaml.snakeyaml.Yaml()
+            def spec = yaml.load(specFile.text)
+            
+            // Navigate to servers[0].variables.version and add default if missing
+            if (spec.servers && spec.servers[0]?.variables?.version) {
+                if (!spec.servers[0].variables.version.default) {
+                    spec.servers[0].variables.version.default = apiVersion
+                }
+            }
+            
+            // Write back with proper YAML formatting
+            def dumperOptions = new org.yaml.snakeyaml.DumperOptions()
+            dumperOptions.setDefaultFlowStyle(org.yaml.snakeyaml.DumperOptions.FlowStyle.BLOCK)
+            dumperOptions.setPrettyFlow(true)
+            dumperOptions.setIndent(2)
+            dumperOptions.setIndicatorIndent(0)
+            def yamlWriter = new org.yaml.snakeyaml.Yaml(dumperOptions)
+            specFile.text = yamlWriter.dump(spec)
+        }
+    }
+}
+
 tasks.withType(GroovyCompile).configureEach {
     def additionalSpecDir = new File(project.buildDir, 'openapi')
     def opts=[
@@ -374,6 +424,7 @@ tasks.withType(GroovyCompile).configureEach {
     ]
     if(!project.findProperty('isRunning')) {
         dependsOn copyApiSpecFiles
+        finalizedBy fixOpenApiSpec
         opts.addAll([
             '-Dmicronaut.openapi.filename=rundeck-api',
             "-Dmicronaut.openapi.additional.files=${additionalSpecDir.absolutePath}".toString()
