@@ -50,7 +50,11 @@ import java.nio.file.Paths
               "- Metrics and health monitoring\n\n" +
               "All API endpoints require authentication via API token, password session, or JWT token (Enterprise).\n" +
               "API version must be specified in the URL path (e.g., /api/46/...).\n\n" +
-              "For detailed documentation, see: [Rundeck API Docs](https://docs.rundeck.com/docs/api/)"
+              "For detailed documentation, see: [Rundeck API Docs](https://docs.rundeck.com/docs/api/)",
+    license = @License(
+        name = "Apache 2.0",
+        url = "https://www.apache.org/licenses/LICENSE-2.0.html"
+    )
     ),
     externalDocs = @ExternalDocumentation(
         description = 'Original Rundeck API Documentation',
