@@ -358,6 +358,14 @@ class UrlMappings {
         "/helplink/name"(controller:'helplink',action:'helplinkName')
         "/workflowgraph/show"(controller:'WorkflowGraph',action:'WorkflowGraph')
 
+        // TEMPORARY: Admin endpoints for RUN-3768 testing
+        // TODO: DELETE BEFORE PRODUCTION DEPLOYMENT
+        "/admin/jobMetrics/rebuildAll"(controller:'JobMetricsAdmin',action:'rebuildAll')
+        "/admin/jobMetrics/rebuildJob"(controller:'JobMetricsAdmin',action:'rebuildJob')
+        "/admin/jobMetrics/queueStatus"(controller:'JobMetricsAdmin',action:'queueStatus')
+        "/admin/jobMetrics/forceFlush"(controller:'JobMetricsAdmin',action:'forceFlush')
+        "/admin/jobMetrics/stats"(controller:'JobMetricsAdmin',action:'stats')
+
         "404"(controller:"error",action:"notFound")
         "405"(controller:"error",action:"notAllowed")
         "500"(controller:"error",action:"fiveHundred")

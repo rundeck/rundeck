@@ -179,14 +179,20 @@ class JobMetricsSnapshotService {
         def startDateTime = Date.from(startDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
         def endDateTime = Date.from(endDate.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant())
 
-        // Query 1: Get aggregate metrics (ONE query per job)
-        def metrics = queryJobMetrics(job, startDateTime, endDateTime)
+        // Query: Get all execution data (ONE query, all fields we need)
+        def executions = Execution.createCriteria().list {
+            eq('scheduledExecution', job)
+            between('dateStarted', startDateTime, endDateTime)
+            isNotNull('dateCompleted')
+            projections {
+                property('dateStarted')
+                property('dateCompleted')
+                property('status')
+            }
+        }
 
-        // Query 2: Get daily breakdown (GROUP BY date)
-        def dailyBreakdown = queryDailyBreakdown(job, startDateTime, endDateTime)
-
-        // Query 3: Get hourly heatmap (GROUP BY hour)
-        def hourlyHeatmap = queryHourlyHeatmap(job, startDateTime, endDateTime)
+        // Calculate all metrics from execution data (in-memory, no more DB queries)
+        def metrics = calculateMetricsFromExecutions(executions)
 
         // Find or create snapshot
         def snapshot = JobMetricsSnapshot.get(job.id)
@@ -196,18 +202,18 @@ class JobMetricsSnapshotService {
         }
 
         // Update snapshot with fresh data
-        snapshot.snapshotDate = endDate
-        snapshot.total7day = metrics.total ?: 0
-        snapshot.succeeded7day = metrics.succeeded ?: 0
-        snapshot.failed7day = metrics.failed ?: 0
-        snapshot.aborted7day = metrics.aborted ?: 0
-        snapshot.timedout7day = metrics.timedout ?: 0
-        snapshot.totalDuration7day = metrics.totalDuration ?: 0L
+        snapshot.snapshotDate = Date.from(endDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
+        snapshot.total7day = metrics.total
+        snapshot.succeeded7day = metrics.succeeded
+        snapshot.failed7day = metrics.failed
+        snapshot.aborted7day = metrics.aborted
+        snapshot.timedout7day = metrics.timedout
+        snapshot.totalDuration7day = metrics.totalDuration
         snapshot.minDuration7day = metrics.minDuration
         snapshot.maxDuration7day = metrics.maxDuration
 
-        snapshot.setDailyBreakdownData(dailyBreakdown)
-        snapshot.setHourlyHeatmapData(hourlyHeatmap)
+        snapshot.setDailyBreakdownData(metrics.dailyBreakdown)
+        snapshot.setHourlyHeatmapData(metrics.hourlyHeatmap)
 
         // Reset today's counters (it's midnight, new day starting)
         snapshot.resetTodayCounters()
@@ -218,157 +224,98 @@ class JobMetricsSnapshotService {
     }
 
     /**
-     * Query aggregate metrics for a job within date range.
-     * Uses same SQL pattern as ExecutionService.queryExecutionMetricsByCriteria
+     * Calculate all metrics from execution data (in-memory).
+     * ONE pass through the data, calculate everything.
      */
-    private Map queryJobMetrics(ScheduledExecution job, Date startDate, Date endDate) {
-        try {
-            def result = Execution.createCriteria().get {
-                eq('scheduledExecution', job)
-                between('dateStarted', startDate, endDate)
-                isNotNull('dateCompleted')  // Only completed executions
+    private Map calculateMetricsFromExecutions(List executions) {
+        def total = 0
+        def succeeded = 0
+        def failed = 0
+        def aborted = 0
+        def timedout = 0
 
-                resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
-                projections {
-                    countDistinct('id', 'total')
+        def durations = []
+        def byDate = [:].withDefault { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }
+        def hourCounts = (0..23).collectEntries { [it, 0] }
 
-                    // Status counts using CASE statements (works on all databases)
-                    sqlProjection(
-                        'sum(case when status = \'succeeded\' then 1 else 0 end) as succeeded',
-                        'succeeded',
-                        StandardBasicTypes.LONG
-                    )
-                    sqlProjection(
-                        'sum(case when status in (\'failed\', \'failed-with-retry\') then 1 else 0 end) as failed',
-                        'failed',
-                        StandardBasicTypes.LONG
-                    )
-                    sqlProjection(
-                        'sum(case when status = \'aborted\' then 1 else 0 end) as aborted',
-                        'aborted',
-                        StandardBasicTypes.LONG
-                    )
-                    sqlProjection(
-                        'sum(case when status = \'timedout\' then 1 else 0 end) as timedout',
-                        'timedout',
-                        StandardBasicTypes.LONG
-                    )
+        executions.each { row ->
+            def dateStarted = row[0] as Date
+            def dateCompleted = row[1] as Date
+            def status = row[2] as String
 
-                    // Duration stats (database-specific, but fallback handled)
-                    try {
-                        // Try PostgreSQL/MySQL syntax first
-                        sqlProjection(
-                            'sum(extract(EPOCH from (date_completed - date_started)) * 1000) as totalDuration',
-                            'totalDuration',
-                            StandardBasicTypes.LONG
-                        )
-                        sqlProjection(
-                            'min(extract(EPOCH from (date_completed - date_started)) * 1000) as minDuration',
-                            'minDuration',
-                            StandardBasicTypes.LONG
-                        )
-                        sqlProjection(
-                            'max(extract(EPOCH from (date_completed - date_started)) * 1000) as maxDuration',
-                            'maxDuration',
-                            StandardBasicTypes.LONG
-                        )
-                    } catch (Exception e) {
-                        // Fallback for H2/Oracle (calculate in application if needed)
-                        log.debug("Duration SQL not supported, will calculate in application")
-                    }
-                }
+            // Count totals
+            total++
+
+            // Count by status
+            switch(status) {
+                case 'succeeded':
+                    succeeded++
+                    break
+                case 'failed':
+                case 'failed-with-retry':
+                    failed++
+                    break
+                case 'aborted':
+                    aborted++
+                    break
+                case 'timedout':
+                    timedout++
+                    break
             }
 
-            return result ?: [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0]
-        } catch (Exception e) {
-            log.error("Failed to query metrics for job ${job.id}", e)
-            return [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0]
+            // Calculate duration
+            def durationMs = dateCompleted.time - dateStarted.time
+            durations.add(durationMs)
+
+            // Daily breakdown
+            def dateKey = dateStarted.format('yyyy-MM-dd')
+            byDate[dateKey].total++
+            switch(status) {
+                case 'succeeded':
+                    byDate[dateKey].succeeded++
+                    break
+                case 'failed':
+                case 'failed-with-retry':
+                    byDate[dateKey].failed++
+                    break
+                case 'aborted':
+                    byDate[dateKey].aborted++
+                    break
+                case 'timedout':
+                    byDate[dateKey].timedout++
+                    break
+            }
+
+            // Hourly heatmap
+            def hour = dateStarted.hours
+            hourCounts[hour]++
         }
-    }
 
-    /**
-     * Query daily breakdown: executions grouped by date.
-     * Returns List<Map> with one entry per day.
-     */
-    private List<Map> queryDailyBreakdown(ScheduledExecution job, Date startDate, Date endDate) {
-        try {
-            // Get all executions in date range
-            def executions = Execution.createCriteria().list {
-                eq('scheduledExecution', job)
-                between('dateStarted', startDate, endDate)
-                isNotNull('dateCompleted')
-                projections {
-                    property('dateStarted')
-                    property('status')
-                }
-            }
+        // Calculate duration stats
+        def totalDuration = durations ? durations.sum() as Long : 0L
+        def minDuration = durations ? durations.min() as Long : null
+        def maxDuration = durations ? durations.max() as Long : null
 
-            // Group by date in application (avoids database-specific GROUP BY date syntax)
-            def byDate = [:].withDefault { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }
+        // Format daily breakdown
+        def dailyBreakdown = byDate.collect { dateKey, counts ->
+            [date: dateKey] + counts
+        }.sort { it.date }
 
-            executions.each { row ->
-                def dateStarted = row[0] as Date
-                def status = row[1] as String
-                def dateKey = dateStarted.format('yyyy-MM-dd')
+        // Format hourly heatmap
+        def hourlyHeatmap = hourCounts.values() as List<Integer>
 
-                byDate[dateKey].total++
-                switch(status) {
-                    case 'succeeded':
-                        byDate[dateKey].succeeded++
-                        break
-                    case 'failed':
-                    case 'failed-with-retry':
-                        byDate[dateKey].failed++
-                        break
-                    case 'aborted':
-                        byDate[dateKey].aborted++
-                        break
-                    case 'timedout':
-                        byDate[dateKey].timedout++
-                        break
-                }
-            }
-
-            // Convert to sorted list
-            return byDate.collect { dateKey, counts ->
-                [date: dateKey] + counts
-            }.sort { it.date }
-
-        } catch (Exception e) {
-            log.error("Failed to query daily breakdown for job ${job.id}", e)
-            return []
-        }
-    }
-
-    /**
-     * Query hourly heatmap: execution count by hour (0-23).
-     * Returns List<Integer> with 24 values.
-     */
-    private List<Integer> queryHourlyHeatmap(ScheduledExecution job, Date startDate, Date endDate) {
-        try {
-            // Get all execution start times
-            def executions = Execution.createCriteria().list {
-                eq('scheduledExecution', job)
-                between('dateStarted', startDate, endDate)
-                projections {
-                    property('dateStarted')
-                }
-            }
-
-            // Count by hour in application (avoids database-specific hour extraction)
-            def hourCounts = (0..23).collectEntries { [it, 0] }
-
-            executions.each { Date dateStarted ->
-                def hour = dateStarted.hours  // 0-23
-                hourCounts[hour]++
-            }
-
-            return hourCounts.values() as List<Integer>
-
-        } catch (Exception e) {
-            log.error("Failed to query hourly heatmap for job ${job.id}", e)
-            return (0..23).collect { 0 }
-        }
+        return [
+            total: total,
+            succeeded: succeeded,
+            failed: failed,
+            aborted: aborted,
+            timedout: timedout,
+            totalDuration: totalDuration,
+            minDuration: minDuration,
+            maxDuration: maxDuration,
+            dailyBreakdown: dailyBreakdown,
+            hourlyHeatmap: hourlyHeatmap
+        ]
     }
 
     // ============================================================

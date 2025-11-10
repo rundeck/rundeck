@@ -56,6 +56,29 @@ class JobMetricsSnapshot {
         id generator: 'assigned', name: 'jobId'  // Use jobId as primary key
         version false  // Disable optimistic locking for performance
         cache usage: 'read-write'  // Enable second-level cache
+
+        // Explicit column mappings (migration uses snake_case with underscores around numbers)
+        jobId column: 'job_id'
+        snapshotDate column: 'snapshot_date'
+        total7day column: 'total_7day'
+        succeeded7day column: 'succeeded_7day'
+        failed7day column: 'failed_7day'
+        aborted7day column: 'aborted_7day'
+        timedout7day column: 'timedout_7day'
+        totalDuration7day column: 'total_duration_7day'
+        minDuration7day column: 'min_duration_7day'
+        maxDuration7day column: 'max_duration_7day'
+        dailyBreakdown column: 'daily_breakdown'
+        hourlyHeatmap column: 'hourly_heatmap'
+        todayTotal column: 'today_total'
+        todaySucceeded column: 'today_succeeded'
+        todayFailed column: 'today_failed'
+        todayAborted column: 'today_aborted'
+        todayTimedout column: 'today_timedout'
+        todayDuration column: 'today_duration'
+        todayHourly column: 'today_hourly'
+        dateCreated column: 'date_created'
+        lastUpdated column: 'last_updated'
     }
 
     static transients = ['hourlyHeatmapData', 'dailyBreakdownData', 'todayHourlyData']
