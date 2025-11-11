@@ -110,7 +110,7 @@ export function formatDurationHumanize(ms: number) {
   }
   if (duration.seconds() > 0) {
     let s = duration.seconds();
-    if (duration.milliseconds() % 1000 > 500) {
+    if (duration.milliseconds() > 500) {
       s++;
     }
     valarr.push(s + "s");
