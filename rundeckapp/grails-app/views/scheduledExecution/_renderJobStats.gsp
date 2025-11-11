@@ -20,5 +20,5 @@
 </g:if>
 <g:else>
     <g:render template="/scheduledExecution/showStats"
-              model="[scheduledExecution: scheduledExecution, avgduration:avgduration, hasSuccessRate:hasSuccessRate, successrate: successrate, execCount:execCount ]"/>
+              model="[scheduledExecution: scheduledExecution, avgduration:avgduration, successrate: successrate, execCount:execCount ]"/>
 </g:else>

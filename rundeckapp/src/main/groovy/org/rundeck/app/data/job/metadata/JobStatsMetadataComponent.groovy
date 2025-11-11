@@ -42,7 +42,7 @@ class JobStatsMetadataComponent implements JobMetadataComponent {
             [
                 averageDuration: stats?.averageDuration ?: 0,
                 executionCount : stats?.execCount ?: 0,
-                successRate    : stats?.successRate ?: 0,
+                successRate    : stats?.successRate ?: -1,
             ]
         )
         return result
