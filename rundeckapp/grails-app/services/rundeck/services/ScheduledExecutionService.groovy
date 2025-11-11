@@ -5046,7 +5046,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         double successrate = (totalCount) > 0 ? ((successcount + refsuccesscount) / ((double)totalCount)) : -1d
         JobStats.with(
             successrate,
-            execCount,
+            totalCount,
             executionService.getAverageDuration(scheduledExecution.uuid),
             )
     }
