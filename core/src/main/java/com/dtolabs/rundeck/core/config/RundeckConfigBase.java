@@ -65,6 +65,7 @@ public class RundeckConfigBase {
     RundeckJobsConfig jobs;
     JobsImport jobsImport;
     Startup startup;
+    RundeckExecutionCleanupConfig executionCleanupConfig;
 
     RundeckAwsgateway awsgateway;
 
@@ -462,10 +463,6 @@ public class RundeckConfigBase {
         Enabled multilineJobOptions = new Enabled();
         Enabled guiHideRoiInstructions = new Enabled();
         Enabled defaultExecutionCleanup = new Enabled();
-        Integer defaultExecutionDaysToKeep;
-        Integer defaultExecutionMinimumToKeep;
-        Integer defaultExecutionMaximumDeletionSize;
-        String defaultExecutionCleanupScheduleCron;
 
 
         @Data
@@ -785,6 +782,14 @@ public class RundeckConfigBase {
     @Data
     public static class RundeckAwsgateway {
         String url;
+    }
+
+    @Data
+    public static class RundeckExecutionCleanupConfig {
+        Integer defaultExecutionDaysToKeep;
+        Integer defaultExecutionMinimumToKeep;
+        Integer defaultExecutionMaximumDeletionSize;
+        String defaultExecutionCleanupScheduleCron;
     }
 
 }
