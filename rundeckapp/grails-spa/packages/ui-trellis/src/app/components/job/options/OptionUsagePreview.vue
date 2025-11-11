@@ -1,15 +1,17 @@
 <template>
   <!-- preview (text)  -->
-  <section
+  <div
+    v-if="option.name && option.type !== 'file'"
     id="option_preview"
     class="section-separator-solo"
-    v-if="option.name && option.type !== 'file' && !validationErrors['name']"
   >
-    <div class="row">
+    <div class="form-group">
       <label class="col-sm-2 control-label">{{ $t("usage") }}</label>
       <div
-        class="col-sm-10 opt_sec_nexp_disabled"
-        v-if="!option.secure || option.valueExposed"
+        v-if="
+          (!option.secure || option.valueExposed) && !(option.type === 'multiline' && features.multilineJobOptions)
+        "
+        class="col-sm-10 form-control-static"
       >
         <span class="text-strong">{{
           $t("the.option.values.will.be.available.to.scripts.in.these.forms")
@@ -31,17 +33,40 @@
           <code>@option.{{ option.name }}@</code>
         </div>
       </div>
-      <div class="col-sm-10 opt_sec_nexp_enabled" v-else>
+      <div
+        v-if="option.type === 'multiline' && features.multilineJobOptions"
+        class="col-sm-10 col-sm-offset-2 form-control-static"
+      >
+        <span class="text-strong">{{ $t("option.usage.multiline.note") }}</span>
+        <div>
+          {{ $t("bash.prompt") }} <code>"${{ bashVarPreview }}"</code>
+        </div>
+        <div>
+          {{ $t("commandline.arguments.prompt") }}
+          <code>"${option.{{ option.name }}}"</code>
+        </div>
+        <div>
+          {{ $t("commandline.arguments.prompt.unquoted") }}
+          <code>"${unquotedoption.{{ option.name }}}"</code>
+          {{ $t("commandline.arguments.prompt.unquoted.warning") }}
+        </div>
+        <div>
+          {{ $t("script.content.prompt") }}
+          <code>@option.{{ option.name }}@</code>
+          {{ $t("script.content.multiline.prompt.warning") }}
+        </div>
+      </div>
+      <div v-if="option.secure && !option.valueExposed" class="col-sm-10">
         <span class="warn note">{{
           $t("form.option.usage.secureAuth.message")
         }}</span>
       </div>
     </div>
-  </section>
+  </div>
   <!-- preview (file) -->
   <section
+    v-if="option.name && option.type === 'file'"
     id="file_option_preview"
-    v-if="option.name && option.type === 'file' && !validationErrors['name']"
     class="section-separator-solo"
   >
     <div class="row">
@@ -98,20 +123,21 @@
 <script lang="ts">
 import { JobOption } from "@/library/types/jobs/JobEdit";
 import { defineComponent, PropType } from "vue";
+import { VMarkdownView } from "vue3-markdown";
 
 const BashVarPrefix = "RD_";
 export default defineComponent({
+  components: { VMarkdownView },
   props: {
     option: {
       type: Object as PropType<JobOption>,
       required: true,
     },
-    validationErrors: {
-      type: Object as PropType<Record<string, any>>,
-      required: true,
+    features: {
+      type: Object,
+      default: () => ({}),
     },
   },
-  components: {},
   computed: {
     bashVarPreview() {
       return this.option.name ? this.tobashvar(this.option.name) : "";

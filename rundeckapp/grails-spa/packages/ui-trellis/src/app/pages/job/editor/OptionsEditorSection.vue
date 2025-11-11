@@ -2,6 +2,7 @@
   <options-editor
     v-if="optionsData"
     :options-data="optionsData"
+    :features="features"
     @changed="changed"
   />
   <json-embed :output-data="updatedData.options" field-name="jobOptionsJson" />
@@ -26,6 +27,7 @@ export default defineComponent({
   components: { OptionsEditor, JsonEmbed },
   data() {
     return {
+      features: {},
       optionsData: null,
       updatedData: {
         options: [],
@@ -38,6 +40,7 @@ export default defineComponent({
     if (getRundeckContext() && getRundeckContext().data) {
       this.uuid = getRundeckContext().data.otherData?.uuid || "!new";
 
+      this.features = getRundeckContext().data.features;
       this.optionsData = getRundeckContext().data.optionsData;
       this.updatedData = this.optionsData;
       this.subs["job-edit-schedules-changed"] = eventBus.on(

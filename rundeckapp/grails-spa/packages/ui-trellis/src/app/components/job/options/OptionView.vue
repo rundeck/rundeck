@@ -7,6 +7,9 @@
       <template v-if="option.type == 'file'">
         <i class="glyphicon glyphicon-file"></i>
       </template>
+      <template v-if="option.type == 'multiline' && multilineEnabled">
+        <i class="far fa-list-alt"></i>
+      </template>
       <span
         class="optdetail_name"
         :class="{ required: option.required }"
@@ -61,26 +64,26 @@
     </template>
 
     <template v-if="option.enforced">
-      <span class="enforceSet">
+      <span class="enforceSet" data-test-enforced="enforced">
         <span class="enforced" :title="$t('option.view.enforced.title')">
           >{{ $t("option.view.enforced.placeholder") }}</span
         >
       </span>
     </template>
     <template v-else-if="option.regex">
-      <span class="enforceSet">
-        <popover>
-          <span class="regex" data-role="trigger">{{ option.regex }}</span>
-          <div class="info note">{{ $t("option.view.regex.info.note") }}</div>
-          <code>{{ option.regex }}</code>
-        </popover>
+      <span class="enforceSet" data-test-enforced="regex">
+        <code :title="$t('option.view.regex.info.note')">{{
+          option.regex
+        }}</code>
       </span>
     </template>
     <template v-else>
-      <span class="enforceSet">
-        <span class="any" :title="$t('option.view.notenforced.title')">{{
-          $t("option.view.notenforced.placeholder")
-        }}</span>
+      <span class="enforceSet" data-test-enforced="none">
+        <span
+          class="text-secondary"
+          :title="$t('option.view.notenforced.title')"
+          >{{ $t("option.view.notenforced.placeholder") }}</span
+        >
       </span>
     </template>
   </span>
@@ -101,8 +104,15 @@ export default defineComponent({
       type: Boolean,
       default: true,
     },
+    features: {
+      type: Object,
+      default: () => ({}),
+    },
   },
   computed: {
+    multilineEnabled() {
+      return !!this.features["multilineJobOptions"];
+    },
     displayDefaultValue() {
       return this.option.secure
         ? ""

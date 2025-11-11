@@ -887,6 +887,10 @@ function _initPopoverContentRef(parent, options) {
       },
       trigger: jQuery(e).data('trigger') || options.trigger || 'click'
     };
+    // Check for data-sanitize attribute to allow disabling sanitization when needed
+    if (jQuery(e).data('sanitize') === false || options.sanitize === false) {
+      opts.sanitize = false;
+    }
     var templateClass = jQuery(e).data('popover-template-class') || options.templateClass;
     if (templateClass) {
       opts.template = jQuery.fn.popover.Constructor.DEFAULTS.template.replace(

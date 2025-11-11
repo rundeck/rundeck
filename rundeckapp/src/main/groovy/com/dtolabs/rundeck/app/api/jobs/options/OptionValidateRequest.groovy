@@ -152,7 +152,7 @@ class OptionValidateRequest extends OptionInput implements OptionData, Validatea
         remoteUrlAuthenticationType(nullable: true, inList: RemoteUrlAuthenticationType.values()*.name())
         realValuesUrl(nullable: true)
         storagePath(nullable: true)
-        type(nullable: true, inList: ['text', 'file'])
+        type(nullable: true, inList: ['text', 'file', 'multiline'])
         valuesUrl(nullable: true, blank:true, validator: { String val, OptionValidateRequest obj, Errors errors ->
             if(val){
                 try {
