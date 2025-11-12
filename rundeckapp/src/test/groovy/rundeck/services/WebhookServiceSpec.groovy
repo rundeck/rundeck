@@ -836,6 +836,35 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         output.authToken == "abc123"
     }
 
+    def "getWebhookWithAuth should return webhook if authToken is removed"() {
+        setup:
+        Webhook hook = new Webhook()
+        hook.name = "hit"
+        hook.project = "One"
+        hook.authToken = "abc123"
+        hook.eventPlugin = "do-some-action"
+        hook.pluginConfigurationJson = '{"prop1":"true"}'
+        hook.save()
+
+        service.rundeckAuthTokenManagerService = Mock(AuthTokenManager) {
+            1 * getTokenWithType("abc123", AuthTokenType.WEBHOOK) >> null
+        }
+
+        when:
+        def output = service.getWebhookWithAuth(hook.id.toString())
+
+        then:
+        output.id == hook.id
+        output.name == "hit"
+        output.project == "One"
+        output.eventPlugin == "do-some-action"
+        output.config == ["prop1":"true"]
+        output.user == null
+        output.creator == null
+        output.roles == null
+        output.authToken == "abc123"
+    }
+
     def "getWebhookForProjectWithAuth returns null for wrong project"() {
         setup:
         def project = 'aproject'
