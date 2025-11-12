@@ -15,7 +15,6 @@
  */
 package com.dtolabs.rundeck.core.config;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
 import lombok.Data;
 
@@ -66,6 +65,7 @@ public class RundeckConfigBase {
     RundeckJobsConfig jobs;
     JobsImport jobsImport;
     Startup startup;
+    RundeckExecutionCleanupConfig executionCleanupConfig;
 
     RundeckAwsgateway awsgateway;
 
@@ -462,6 +462,7 @@ public class RundeckConfigBase {
         Enabled publicKeysDownload = new Enabled();
         Enabled multilineJobOptions = new Enabled();
         Enabled guiHideRoiInstructions = new Enabled();
+        Enabled defaultExecutionCleanup = new Enabled();
 
 
         @Data
@@ -781,6 +782,14 @@ public class RundeckConfigBase {
     @Data
     public static class RundeckAwsgateway {
         String url;
+    }
+
+    @Data
+    public static class RundeckExecutionCleanupConfig {
+        Integer defaultExecutionDaysToKeep;
+        Integer defaultExecutionMinimumToKeep;
+        Integer defaultExecutionMaximumDeletionSize;
+        String defaultExecutionCleanupScheduleCron;
     }
 
 }
