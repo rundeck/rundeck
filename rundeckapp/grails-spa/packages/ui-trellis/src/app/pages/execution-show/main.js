@@ -8,6 +8,7 @@ import { getRundeckContext } from "../../../library";
 import LogViewer from "../../../library/components/execution-log/logViewer.vue";
 import "./nodeView";
 import { initI18n } from "../../utilities/i18n";
+import loadJobStats from "../job/show/loadJobStats";
 
 const VIEWER_CLASS = "execution-log-viewer";
 
@@ -112,3 +113,5 @@ function mount(e) {
     panel.scrollTop = scrollPos;
   });
 }
+
+window.addEventListener("DOMContentLoaded", loadJobStats);
