@@ -3621,7 +3621,7 @@ Note: This endpoint has the same query parameters and response as the `/executio
         def useSnapshot = grailsApplication.config.getProperty(
             'rundeck.metrics.snapshot.enabled',
             Boolean,
-            false
+            true
         )
 
         // Parse job ID from query

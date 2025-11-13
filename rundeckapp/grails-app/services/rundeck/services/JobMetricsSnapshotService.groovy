@@ -24,6 +24,8 @@ import javax.annotation.PreDestroy
 @Transactional
 class JobMetricsSnapshotService {
 
+    static lazyInit = false  // Force eager initialization on startup
+
     def grailsApplication
     def executorService  // Grails ExecutorService bean
 
@@ -72,6 +74,9 @@ class JobMetricsSnapshotService {
      */
     @PostConstruct
     void initializeFlushTask() {
+        println("[METRICS-SNAPSHOT-INIT] PostConstruct called - service initializing")
+        log.info("[METRICS-SNAPSHOT-INIT] PostConstruct called - service initializing")
+
         if (!grailsApplication.config.getProperty('rundeck.metrics.snapshot.realtimeUpdates.enabled', Boolean, true)) {
             log.info("[METRICS-SNAPSHOT] Real-time updates disabled by configuration")
             return
@@ -190,6 +195,8 @@ class JobMetricsSnapshotService {
                 property('status')
             }
         }
+
+        log.info("[METRICS-SNAPSHOT] Job ${job.id}: fetched ${executions.size()} executions for 7-day window")
 
         // Calculate all metrics from execution data (in-memory, no more DB queries)
         def metrics = calculateMetricsFromExecutions(executions)
@@ -381,7 +388,7 @@ class JobMetricsSnapshotService {
         updateQueue.offer(update)
         def currentSize = queueSize.incrementAndGet()
 
-        log.trace("[METRICS-SNAPSHOT] Queued update for job ${jobId}: ${status}, queue size: ${currentSize}")
+        log.info("[METRICS-SNAPSHOT-QUEUE] Queued update for job ${jobId} (execution ${execution.id}): ${status}, queue size: ${currentSize}")
 
         // Check for queue overflow
         if (currentSize > MAX_QUEUE_SIZE) {

@@ -106,22 +106,50 @@ class JobMetricsAdminController {
      *
      * Usage:
      *   curl http://localhost:4440/admin/jobMetrics/stats
+     *   curl http://localhost:4440/admin/jobMetrics/stats?project=data-heavy
      */
     def stats() {
         try {
+            def projectFilter = params.project
+
             def totalSnapshots = rundeck.JobMetricsSnapshot.count()
             def totalJobs = rundeck.ScheduledExecution.count()
 
-            def snapshots = rundeck.JobMetricsSnapshot.list(max: 10, sort: 'lastUpdated', order: 'desc')
+            // Get snapshots - filter by project if specified
+            def snapshots
+            if (projectFilter) {
+                // Get job IDs from project
+                def jobIds = rundeck.ScheduledExecution.createCriteria().list {
+                    eq('project', projectFilter)
+                    projections {
+                        property('id')
+                    }
+                }
+
+                // Get snapshots for those jobs
+                snapshots = rundeck.JobMetricsSnapshot.createCriteria().list(max: 20, sort: 'todayTotal', order: 'desc') {
+                    'in'('jobId', jobIds)
+                }
+
+                log.info("[METRICS-ADMIN] Stats filtered by project '${projectFilter}': found ${snapshots.size()} snapshots")
+            } else {
+                // Default: show recent updates
+                snapshots = rundeck.JobMetricsSnapshot.list(max: 20, sort: 'lastUpdated', order: 'desc')
+            }
 
             def sampleData = snapshots.collect { snapshot ->
+                def job = rundeck.ScheduledExecution.get(snapshot.jobId)
                 [
                     jobId: snapshot.jobId,
+                    jobName: job?.jobName,
+                    project: job?.project,
                     snapshotDate: snapshot.snapshotDate,
                     total7day: snapshot.total7day,
                     succeeded7day: snapshot.succeeded7day,
                     failed7day: snapshot.failed7day,
                     todayTotal: snapshot.todayTotal,
+                    todaySucceeded: snapshot.todaySucceeded,
+                    todayFailed: snapshot.todayFailed,
                     lastUpdated: snapshot.lastUpdated
                 ]
             }
@@ -131,9 +159,10 @@ class JobMetricsAdminController {
                 stats: [
                     totalSnapshots: totalSnapshots,
                     totalJobs: totalJobs,
-                    coverage: totalJobs > 0 ? ((totalSnapshots * 100.0) / totalJobs).round(2) : 0
+                    coverage: totalJobs > 0 ? ((totalSnapshots * 100.0) / totalJobs).round(2) : 0,
+                    projectFilter: projectFilter ?: 'none'
                 ],
-                sampleSnapshots: sampleData
+                snapshots: sampleData
             ] as JSON)
 
         } catch (Exception e) {

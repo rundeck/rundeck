@@ -178,7 +178,7 @@ rundeck {
     metrics {
         snapshot {
             // Enable/disable snapshot-based metrics (feature flag)
-            enabled = false  // Start disabled, enable after Phase 6
+            enabled = true  // RUN-3768: Enabled to use snapshot table
 
             // Nightly rebuild schedule (cron expression)
             rebuildCron = '0 0 2 * * ?'  // 2:00 AM daily
