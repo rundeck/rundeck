@@ -3725,6 +3725,7 @@ Note: This endpoint has the same query parameters and response as the `/executio
             }
 
             // Return metrics in same format as ExecutionService.queryExecutionMetrics()
+            // PLUS the enhanced daily_breakdown and hourly_heatmap from snapshots
             def combined = snapshot.getCombinedMetrics()
 
             return [
@@ -3734,7 +3735,9 @@ Note: This endpoint has the same query parameters and response as the `/executio
                 aborted: combined.aborted,
                 timedout: combined.timedout,
                 successRate: combined.successRate,
-                duration: combined.duration
+                duration: combined.duration,
+                daily_breakdown: snapshot.getCombinedDailyBreakdown(),
+                hourly_heatmap: snapshot.getCombinedHourlyHeatmap()
             ]
 
         } catch (Exception e) {
