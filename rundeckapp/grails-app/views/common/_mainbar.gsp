@@ -162,12 +162,7 @@
             </div>
           </li>
           <li id="appUser">
-            <div class="dropdown">
-              <a data-toggle="dropdown" class="dropdown-toggle cursor-pointer" id="userLabel">
-                <i class="fas fa-user fa-lg"></i>
-              </a>
-              <g:render template="/menu/appUserMenu"/>
-            </div>
+            <ui-socket section="mainbar-app-user-menu" location="main"></ui-socket>
           </li>
         </g:if>
         <ui-socket section="navbar-main-menu" location="after"></ui-socket>
