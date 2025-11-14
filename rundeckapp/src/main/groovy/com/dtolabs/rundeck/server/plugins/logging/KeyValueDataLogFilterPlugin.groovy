@@ -99,7 +99,9 @@ when applying the regular expression. This allows substring matches instead of r
 
     @PluginProperty(
             title = "Allow Multiple Matches",
-            description = '''When "Match Substrings" is enabled, this option allows capturing multiple matches from the same line.''',
+            description = '''When "Match Substrings" is enabled, this option allows capturing multiple matches from the same line.
+
+This option has no effect when "Match Substrings" is disabled.''',
             defaultValue = "false"
     )
     Boolean allowMultipleMatches
