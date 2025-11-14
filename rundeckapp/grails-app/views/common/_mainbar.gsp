@@ -172,19 +172,4 @@
       </g:if>
     </div>
   </nav>
-%{--  <g:javascript>--}%
-%{--    jQuery(function(){--}%
-%{--      jQuery('.navbar-minimize button, .navbar-minimize a.triangle').click(function(){--}%
-%{--        jQuery('body').toggleClass('sidebar-mini');--}%
-%{--        var sidebarOpen = localStorage.getItem('sidebarOpen')--}%
-%{--        if(sidebarOpen === 'true'){--}%
-%{--          localStorage.setItem('sidebarOpen', 'false')--}%
-%{--        } else {--}%
-%{--          localStorage.setItem('sidebarOpen', 'true')--}%
-%{--        }--}%
-%{--      });--}%
-%{--      jQuery('button.navbar-toggle').click(function(e){--}%
-%{--        jQuery('body').toggleClass('nav-open');--}%
-%{--      });--}%
-%{--    })--}%
-%{--  </g:javascript>--}%
+
