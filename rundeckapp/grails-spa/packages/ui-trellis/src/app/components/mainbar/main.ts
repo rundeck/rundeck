@@ -1,3 +1,4 @@
+import { markRaw } from "vue";
 import AppUserMenu from "./user-menu/AppUserMenu.vue";
 import { getRundeckContext } from "../../../library";
 
@@ -13,7 +14,7 @@ function initUserMenu() {
     {
       section: "mainbar-app-user-menu",
       location: "main",
-      widget: AppUserMenu,
+      widget: markRaw(AppUserMenu),
       visible: true,
     },
   ]);
