@@ -140,6 +140,13 @@
             eventStore: {enabled: true},
             workflowDesigner: {enabled: ${feature.isEnabled(name:'workflowDesigner')}}
         },
+        profile:{
+            username:'${enc(js:session.user)}',
+            links:{
+                profile: '${enc(js:createLink(controller:"user",action:"profile"))}',
+                logout: '${enc(js:createLink(controller:"user",action:"logout"))}',
+            }
+        },
         Browser: {
             IE: !!window.attachEvent && !isOpera,
             Opera:  isOpera
@@ -157,6 +164,8 @@
     %{--  Navigation components load early too  --}%
     <asset:stylesheet href="static/css/components/navbar.css"/>
     <asset:javascript src="static/components/navbar.js"/>
+    <asset:stylesheet href="static/css/components/mainbar.css"/>
+    <asset:javascript src="static/components/mainbar.js"/>
 
     <asset:stylesheet href="static/css/components/project-picker.css"/>
     <asset:javascript src="static/components/uisockets.js"/>
