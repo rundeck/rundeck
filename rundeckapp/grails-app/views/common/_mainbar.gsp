@@ -172,6 +172,9 @@
         </g:if>
         <ui-socket section="navbar-main-menu" location="after"></ui-socket>
       </ul>
+      <g:if test="${session?.user && request.subject}">
+        <g:render template="/menu/sysConfigNavMenuScripts"/>
+      </g:if>
     </div>
   </nav>
 %{--  <g:javascript>--}%
