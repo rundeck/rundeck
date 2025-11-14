@@ -36,13 +36,29 @@ import java.nio.file.Paths
 
 @OpenAPIDefinition(
     info = @Info(
-        title = "Rundeck / Runbook Automation API",
-        version = ApiVersions.API_CURRENT_VERSION_STR,
-        description = "Rundeck / Runbook Automation REST API for job automation, execution management, and system administration"
+    title = "Rundeck / Runbook Automation API",
+    version = ApiVersions.API_CURRENT_VERSION_STR,
+    description = "Rundeck / Runbook Automation REST API for job automation, execution management, and system administration.\n\n" +
+              "The Rundeck API provides comprehensive access to:\n" +
+              "- Job management (create, update, delete, execute jobs)\n" +
+              "- Execution monitoring and control\n" +
+              "- Project and resource management\n" +
+              "- Node filtering and resource queries\n" +
+              "- System configuration and administration\n" +
+              "- SCM integration (Git and other version control)\n" +
+              "- Authentication token management\n" +
+              "- Metrics and health monitoring\n\n" +
+              "All API endpoints require authentication via API token, password session, or JWT token (Enterprise).\n" +
+              "API version must be specified in the URL path (e.g., /api/46/...).\n\n" +
+              "For detailed documentation, see: [Rundeck API Docs](https://docs.rundeck.com/docs/api/)",
+    license = @License(
+        name = "Apache 2.0",
+        url = "https://www.apache.org/licenses/LICENSE-2.0.html"
+    )
     ),
     externalDocs = @ExternalDocumentation(
         description = 'Original Rundeck API Documentation',
-        url = 'https://docs.rundeck.com/docs/api/rundeck-api.html'
+        url = 'https://docs.rundeck.com/docs/api/'
     ),
     servers = [
         @Server(
@@ -52,12 +68,14 @@ import java.nio.file.Paths
                 @ServerVariable(name = "protocol", defaultValue = "https", allowableValues = ["http", "https"], description = "Protocol (http or https)"),
                 @ServerVariable(name = "host", defaultValue = "localhost", description = "Server hostname or IP address"),
                 @ServerVariable(name = "port", defaultValue = "4440", description = "Server port number"),
-                @ServerVariable(name = "version", defaultValue = "44", description = "API version number")
+                @ServerVariable(name = "version", defaultValue = ApiVersions.API_CURRENT_VERSION_STR, description = "API version number")
             ]
         )
     ],
     security = [
-        @SecurityRequirement(name = "rundeckApiToken")
+        @SecurityRequirement(name = "rundeckApiToken"),
+        @SecurityRequirement(name = "rundeckPassword"),
+        @SecurityRequirement(name = "rundeckJWT")
     ],
     tags = [
         @Tag(name = "ACL", description = "Access Control List operations"),
@@ -93,7 +111,21 @@ import java.nio.file.Paths
     name = "rundeckApiToken",
     type = SecuritySchemeType.APIKEY,
     in = SecuritySchemeIn.HEADER,
-    paramName = "X-Rundeck-Auth-Token"
+    paramName = "X-Rundeck-Auth-Token",
+    description = "API Token authentication. Include your API token in the X-Rundeck-Auth-Token header or as an 'authtoken' query parameter. Tokens can be generated from your User Profile page and must have appropriate authorization roles and expiration settings."
+)
+@SecurityScheme(
+    name = "rundeckPassword",
+    type = SecuritySchemeType.HTTP,
+    scheme = "basic",
+    description = "Session-based authentication using username and password. Submit credentials to /j_security_check and maintain JSESSIONID cookie."
+)
+@SecurityScheme(
+    name = "rundeckJWT",
+    type = SecuritySchemeType.HTTP,
+    scheme = "bearer",
+    bearerFormat = "JWT",
+    description = "JWT token authentication for OAuth/OIDC integration (Commercial/Enterprise only). Include JWT token in Authorization header with Bearer schema."
 )
 @EnableAutoConfiguration(exclude = [SecurityFilterAutoConfiguration])
 @Slf4j
