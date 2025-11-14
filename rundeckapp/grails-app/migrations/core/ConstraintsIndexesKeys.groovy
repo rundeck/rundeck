@@ -608,4 +608,16 @@ databaseChangeLog = {
         }
     }
 
+    changeSet(author: "rundeckuser (generated)", id: "add-index-base-report-project-adoc") {
+        preConditions(onFail: "MARK_RAN"){
+            not{
+                indexExists (tableName:"base_report", indexName: "EXEC_REPORT_PROJECT_ADHOC")
+            }
+        }
+        createIndex(indexName: "EXEC_REPORT_PROJECT_ADHOC", tableName: "base_report") {
+            column(name: "ctx_project")
+            column(name: "adhoc_execution")
+        }
+    }
+
 }

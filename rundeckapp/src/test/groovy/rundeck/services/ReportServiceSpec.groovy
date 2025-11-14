@@ -28,11 +28,10 @@ import org.grails.datastore.mapping.query.Query
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.data.model.v1.execution.ExecutionData
 import org.rundeck.app.data.providers.DBExecReportSupport
-import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
 import org.springframework.context.ApplicationContext
 import rundeck.CommandExec
-import rundeck.ExecReport
+import rundeck.BaseReport
 import rundeck.Execution
 import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
@@ -46,7 +45,7 @@ import java.sql.DatabaseMetaData
 
 class ReportServiceSpec extends Specification implements ServiceUnitTest<ReportService>, DataTest {
     void setupSpec() {
-        mockDomains ScheduledExecution, ReferencedExecution, CommandExec, ExecReport
+        mockDomains ScheduledExecution, ReferencedExecution, CommandExec, BaseReport
     }
 
     def "executions history authorizations"(){
@@ -152,7 +151,7 @@ class ReportServiceSpec extends Specification implements ServiceUnitTest<ReportS
             ReferencedExecution refexec2 = new ReferencedExecution(status: 'running',scheduledExecution: job, execution: e2)
             refexec2.save()
 
-            ExecReport execReport = new ExecReport(
+            BaseReport baseReport = new BaseReport(
                     jcExecId: e1.id,
                     jobId: job.id,
                     project: "AProject",
@@ -164,8 +163,8 @@ class ReportServiceSpec extends Specification implements ServiceUnitTest<ReportS
                     status: 'success',
                     actionType: "type"
             )
-            execReport.save(flush: true, failOnError: true)
-            ExecReport execReport2 = new ExecReport(
+            baseReport.save(flush: true, failOnError: true)
+            BaseReport baseReport1 = new BaseReport(
                     jcExecId: e2.id,
                     jobId: job2.id,
                     project: "AProject",
@@ -177,7 +176,7 @@ class ReportServiceSpec extends Specification implements ServiceUnitTest<ReportS
                     status: 'success',
                     actionType: "type"
             )
-            execReport2.save(flush: true, failOnError: true)
+            baseReport1.save(flush: true, failOnError: true)
         }
         ExecQuery query =  new ExecQuery()
         query.execIdFilter = execIds
@@ -185,11 +184,11 @@ class ReportServiceSpec extends Specification implements ServiceUnitTest<ReportS
         query.jobIdFilter = "${job.id}"
         query.execProjects = ["AProject"]
         when:
-        List result = ExecReport.createCriteria().list {
+        List result = BaseReport.createCriteria().list {
             service.applyExecutionCriteria(query, delegate, true, job)
         }
 
-        DetachedCriteria detachedCriteria1 =  new DetachedCriteria(ExecReport).build {
+        DetachedCriteria detachedCriteria1 =  new DetachedCriteria(BaseReport).build {
             service.applyExecutionCriteria(query, delegate, true, job)
         }
 
