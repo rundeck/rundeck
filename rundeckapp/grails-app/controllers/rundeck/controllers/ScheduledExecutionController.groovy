@@ -3822,7 +3822,6 @@ Each job entry contains:
             )
         ]
     )
-    @Tag(name = "Jobs")
     /**
      * API: /api/14/project/NAME/jobs/import
      */
