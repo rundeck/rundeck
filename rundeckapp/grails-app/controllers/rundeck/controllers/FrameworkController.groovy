@@ -1576,7 +1576,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             description = """Create/update list-based plugin configurations (e.g. Resource Model Sources).
 Authorization required: `configure` on the project.
 Since: v55""",
-            tags = ["Project", "Configuration"],
+            tags = ["Project"],
             parameters = [
                     @Parameter(
                             name = "project",
