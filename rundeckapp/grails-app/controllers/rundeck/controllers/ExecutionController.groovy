@@ -3514,7 +3514,6 @@ Note: This endpoint has the same query parameters and response as the `/executio
             )
         ]
     )
-    @Tag(name = 'Job Executions')
     /**
      * Placeholder method to annotate for openapi spec generation.
      * Note: this method will never be used.
