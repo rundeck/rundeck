@@ -1,38 +1,21 @@
 <template>
-  <dropdown tag="div" placement="bottom-right" menu-right>
-    <btn class="dropdown-toggle btn-menu-item" size="med" type="link">
-      <i class="fas fa-user fa-lg"></i>
-    </btn>
-    <template #dropdown>
-      <ul class="dropdown-menu dropdown-menu-right">
-        <li>
-          <div style="padding: 10px 15px">Hi {{ username }}!</div>
-        </li>
-
-        <li role="separator" class="divider"></li>
-        <li>
-          <a :href="profileLink">
-            {{ $t("profile") }}
-          </a>
-        </li>
-        <li>
-          <a :href="logoutLink">
-            {{ $t("logout") }}
-          </a>
-        </li>
-      </ul>
-    </template>
-  </dropdown>
+  <user-menu
+    :username="username"
+    :profile-link="profileLink"
+    :logout-link="logoutLink"
+  />
 </template>
 
 <script>
-import { Dropdown } from "uiv";
-import { getRundeckContext } from "@/library";
+import UserMenu from "./UserMenu.vue";
+import { getRundeckContext } from "../../../../library";
 
-const context = getRundeckContext();
+/**
+ * AppUserMenu component - wraps UserMenu and provides data from Rundeck context
+ */
 export default {
   name: "AppUserMenu",
-  components: { Dropdown },
+  components: { UserMenu },
   inject: ["rootStore"],
   data() {
     return {
@@ -42,6 +25,7 @@ export default {
     };
   },
   mounted() {
+    const context = getRundeckContext();
     this.username = context.profile?.username || "(Unknown User)";
     this.profileLink =
       context.profile?.links?.profile || `${context.rdBase}user/profile`;
