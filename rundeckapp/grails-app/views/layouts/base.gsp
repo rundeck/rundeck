@@ -233,7 +233,7 @@
         }
     </style>
     </g:if>
-
+    <g:render template="/menu/sysConfigNavMenuJson"/>
 </head>
 
 <body class="view ${'ui-type-'+uiType}">
