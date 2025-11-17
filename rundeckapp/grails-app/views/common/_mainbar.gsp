@@ -154,12 +154,7 @@
 
           </g:ifExecutionMode>
           <li id="appAdmin">
-            <div class="dropdown">
-              <a data-toggle="dropdown" class="dropdown-toggle cursor-pointer">
-                <i class="fas fa-cog fa-lg"></i>
-              </a>
-              <g:render template="/menu/sysConfigNavMenu"/>
-            </div>
+            <ui-socket section="mainbar-sys-config-menu" location="main"></ui-socket>
           </li>
           <li id="appUser">
             <ui-socket section="mainbar-app-user-menu" location="main"></ui-socket>
@@ -167,9 +162,6 @@
         </g:if>
         <ui-socket section="navbar-main-menu" location="after"></ui-socket>
       </ul>
-      <g:if test="${session?.user && request.subject}">
-        <g:render template="/menu/sysConfigNavMenuScripts"/>
-      </g:if>
     </div>
   </nav>
 
