@@ -4,6 +4,7 @@ import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.jobs.JobListPage
 import org.rundeck.util.gui.pages.login.LoginPage
+import org.rundeck.util.gui.pages.project.DashboardPage
 import org.rundeck.util.gui.pages.project.ProjectEditPage
 import spock.lang.Stepwise
 
@@ -35,11 +36,14 @@ class ExpandedJobGroupsSpec extends SeleniumBase {
         when:
         // Edit Project Configuration to expand the job groups by default
         ProjectEditPage projectEditPage = page ProjectEditPage
+        DashboardPage dashboardPage = page DashboardPage
         projectEditPage.loadProjectEditForProject(projectName)
         projectEditPage.go(projectEditPage.loadPath)
         projectEditPage.clickEditConfigurationFile()
         projectEditPage.replaceConfiguration("${expandedGroupsProp}1","${expandedGroupsProp}-1")
         projectEditPage.save()
+        dashboardPage.loadDashboardForProject(projectName)
+        projectEditPage.validatePage(dashboardPage.loadPath)
 
         JobListPage jobListPage = page JobListPage
         jobListPage.loadJobListForProject(projectName)
@@ -59,6 +63,7 @@ class ExpandedJobGroupsSpec extends SeleniumBase {
         projectEditPage.clickEditConfigurationFile()
         projectEditPage.replaceConfiguration("${expandedGroupsProp}-1","${expandedGroupsProp}0")
         projectEditPage.save()
+        projectEditPage.validatePage(dashboardPage.loadPath)
 
         jobListPage.go(jobListPage.loadPath)
 
@@ -70,6 +75,7 @@ class ExpandedJobGroupsSpec extends SeleniumBase {
         projectEditPage.clickEditConfigurationFile()
         projectEditPage.replaceConfiguration("${expandedGroupsProp}0","${expandedGroupsProp}1")
         projectEditPage.save()
+        projectEditPage.validatePage(dashboardPage.loadPath)
 
         jobListPage.go(jobListPage.loadPath)
 
@@ -81,6 +87,7 @@ class ExpandedJobGroupsSpec extends SeleniumBase {
         projectEditPage.clickEditConfigurationFile()
         projectEditPage.replaceConfiguration("${expandedGroupsProp}1","${expandedGroupsProp}2")
         projectEditPage.save()
+        projectEditPage.validatePage(dashboardPage.loadPath)
 
         jobListPage.go(jobListPage.loadPath)
 
