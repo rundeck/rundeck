@@ -14,6 +14,7 @@ import org.rundeck.util.gui.pages.activity.ActivityPage
 import org.rundeck.util.gui.pages.home.HomePage
 import org.rundeck.util.gui.pages.jobs.JobListPage
 import org.rundeck.util.gui.pages.login.LoginPage
+import org.rundeck.util.gui.pages.project.DashboardPage
 import org.rundeck.util.gui.pages.project.ProjectEditPage
 import org.rundeck.util.gui.pages.project.SideBarPage
 
@@ -29,6 +30,7 @@ class ExecutionModeSpec extends SeleniumBase{
             def projectName = "disabledExecutionsProject"
             setupProject(projectName)
             def projectEditPage = page ProjectEditPage
+            def dashboardPage = page DashboardPage
             def homePage = page HomePage
             def loginPage = page LoginPage
             def jobListPage = page JobListPage
@@ -56,6 +58,8 @@ class ExecutionModeSpec extends SeleniumBase{
             loginPage.login(TEST_USER, TEST_PASS)
             projectEditPage.go("/project/${projectName}/configure")
             projectEditPage.save()
+            dashboardPage.loadDashboardForProject(projectName)
+            projectEditPage.validatePage(dashboardPage.loadPath)
             projectEditPage.go("/project/${projectName}/configure")
             projectEditPage.clickEditConfigurationFile()
             projectEditPage.replaceConfiguration("project.disable.executions=false", "project.disable.executions=true")
@@ -142,6 +146,7 @@ class ExecutionModeSpec extends SeleniumBase{
         def projectName = "disabledSchedulesProject"
         setupProject(projectName)
         def projectEditPage = page ProjectEditPage
+        def dashboardPage = page DashboardPage
         def homePage = page HomePage
         def loginPage = page LoginPage
         def jobListPage = page JobListPage
@@ -181,6 +186,8 @@ class ExecutionModeSpec extends SeleniumBase{
         loginPage.login(TEST_USER, TEST_PASS)
         projectEditPage.go("/project/${projectName}/configure")
         projectEditPage.save()
+        dashboardPage.loadDashboardForProject(projectName)
+        projectEditPage.validatePage(dashboardPage.loadPath)
         projectEditPage.go("/project/${projectName}/configure")
         projectEditPage.clickEditConfigurationFile()
         projectEditPage.replaceConfiguration("project.disable.schedule=false", "project.disable.schedule=true")
