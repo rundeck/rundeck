@@ -4,6 +4,9 @@ import { defineComponent } from "vue";
 import SysConfigMenu from "./SysConfigMenu.vue";
 import { Link } from "../types/menuTypes";
 
+/**
+ * AppSysConfigMenu - wraps SysConfigMenu and provides data from JSON script tag
+ */
 export default defineComponent({
   name: "AppSysConfigMenu",
   components: {
