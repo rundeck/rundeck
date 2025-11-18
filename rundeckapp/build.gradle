@@ -399,45 +399,64 @@ tasks.register('fixOpenApiSpec') {
             def content = specFile.text
             def originalSize = content.length()
             
-            // Pattern to match the version variable in the servers block
-            // This matches the version variable and all its nested properties
-            // Captures indentation to preserve formatting
-            def versionPattern = /(?m)(^(\s+)version:\s*\n)((?:(?:\2  |\2\t).+\n)*)/
+            // Use a simple, targeted approach: find the servers.variables.version section and update it
+            // Look for the specific pattern in the servers block (before 'security:')
+            def serversStart = content.indexOf('servers:')
+            def securityStart = content.indexOf('\nsecurity:', serversStart)
             
-            def updated = false
-            content = content.replaceAll(versionPattern) { match ->
-                updated = true
-                def versionLine = match[1]           // "    version:\n"
-                def baseIndent = match[2]            // "    " (the indent of "version:")
-                def existingProperties = match[3]    // all existing nested properties
+            if (serversStart == -1 || securityStart == -1) {
+                logger.warn("Could not find servers section in OpenAPI spec")
+            } else {
+                // Find "    version:" within the servers section (4-space indent indicates it's in variables)
+                def searchStart = serversStart
+                def versionStart = -1
+                def versionIndent = "    " // 4 spaces for variables properties
                 
-                // Parse existing properties to check if default already exists
-                def hasDefault = existingProperties =~ /\n\s+default:/
-                def hasDescription = existingProperties =~ /\n\s+description:/
-                
-                // Property indent is one level deeper than version line
-                def propIndent = baseIndent + "  "
-                
-                // Build the new property section
-                def newProperties = ""
-                
-                // Add description first if it exists
-                if (hasDescription) {
-                    def descriptionMatcher = existingProperties =~ /(?m)^(\s+description:.*)$/
-                    if (descriptionMatcher) {
-                        newProperties += propIndent + "description: API version number\n"
+                while (true) {
+                    versionStart = content.indexOf('\n' + versionIndent + 'version:', searchStart)
+                    if (versionStart == -1 || versionStart > securityStart) {
+                        break // Not found in servers section
                     }
+                    // Check if this is in the servers block (before security)
+                    if (versionStart < securityStart) {
+                        versionStart++ // Skip the leading newline
+                        break
+                    }
+                    searchStart = versionStart + 1
                 }
                 
-                // Add the default value
-                newProperties += propIndent + "default: '${apiVersion}'\n"
-                
-                // Return the updated version section
-                return versionLine + newProperties
-            }
-            
-            if (!updated) {
-                logger.warn("Could not find version variable pattern to update in OpenAPI spec")
+                if (versionStart == -1 || versionStart > securityStart) {
+                    logger.warn("Could not find version variable in servers.variables section")
+                } else {
+                    // Find the end of the version section (next property at same or lower indent level)
+                    def versionEnd = versionStart + versionIndent.length() + 'version:'.length()
+                    def nextLineStart = content.indexOf('\n', versionEnd)
+                    
+                    // Find where the version section ends (next line with <=4 space indent or end of servers)
+                    while (nextLineStart != -1 && nextLineStart < securityStart) {
+                        def nextLine = content.substring(nextLineStart + 1, Math.min(nextLineStart + 20, content.length()))
+                        // If next line starts with 0-4 spaces followed by a letter, we've hit the next section
+                        if (nextLine.matches('^[ ]{0,4}[a-zA-Z].*')) {
+                            break
+                        }
+                        def tempNext = content.indexOf('\n', nextLineStart + 1)
+                        if (tempNext == -1 || tempNext >= securityStart) {
+                            nextLineStart = securityStart
+                            break
+                        }
+                        nextLineStart = tempNext
+                    }
+                    
+                    if (nextLineStart == -1) {
+                        nextLineStart = securityStart
+                    }
+                    
+                    // Build the replacement: version with default value
+                    def replacement = versionIndent + "version:\n" + versionIndent + "  default: '${apiVersion}'\n"
+                    
+                    // Replace the version section
+                    content = content.substring(0, versionStart) + replacement + content.substring(nextLineStart + 1)
+                }
             }
             
             // Verify no data was lost during the operation
