@@ -1,23 +1,17 @@
 <script lang="ts">
-import { loadJsonData } from "../../../utilities/loadJsonData";
+import { Link } from "../types/menuTypes";
 import { defineComponent } from "vue";
-
-interface Link {
-  url?: string;
-  title?: string;
-  links?: Link[];
-  icon?: string;
-  iconCss?: string;
-  enabled?: boolean;
-  separator?: boolean;
-  group?: [id: string];
-}
 
 export default defineComponent({
   name: "SysConfigMenu",
+  props: {
+    links: {
+      type: Array as () => Link[],
+      required: true,
+    },
+  },
   data() {
     return {
-      links: [] as Link[],
       submenuOpen: null,
     };
   },
@@ -33,13 +27,10 @@ export default defineComponent({
       return sorted;
     },
   },
-  mounted() {
-    this.links = loadJsonData("sysConfigNavJSON");
-  },
   methods: {
     submenuClick(id: any, event: Event) {
       event.stopPropagation();
-      this.submenuOpen = this.submenuOpen ? null : id;
+      this.submenuOpen = this.submenuOpen === id ? null : id;
     },
   },
 });
