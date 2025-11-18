@@ -1,21 +1,21 @@
 <template>
-  <user-menu
-    :username="username"
-    :profile-link="profileLink"
-    :logout-link="logoutLink"
+  <mainbar-menu
+    :sub-header="subHeader"
+    icon-css="fas fa-user fa-lg"
+    :links="links"
   />
 </template>
 
 <script>
-import UserMenu from "./UserMenu.vue";
 import { getRundeckContext } from "../../../../library";
+import MainbarMenu from "../../../..//library/components/mainbar/MainbarMenu.vue";
 
 /**
- * AppUserMenu component - wraps UserMenu and provides data from Rundeck context
+ * AppUserMenu component - wraps MainbarMenu and provides data from Rundeck context
  */
 export default {
   name: "AppUserMenu",
-  components: { UserMenu },
+  components: { MainbarMenu },
   inject: ["rootStore"],
   data() {
     return {
@@ -23,6 +23,24 @@ export default {
       profileLink: "",
       logoutLink: "",
     };
+  },
+  computed: {
+    subHeader() {
+      return `Hi ${this.username}!`;
+    },
+    links() {
+      return [
+        {
+          title: this.$t("profile"),
+          url: this.profileLink,
+          separator: true,
+        },
+        {
+          title: this.$t("logout"),
+          url: this.logoutLink,
+        },
+      ];
+    },
   },
   mounted() {
     const context = getRundeckContext();
