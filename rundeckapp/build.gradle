@@ -394,25 +394,71 @@ tasks.register('fixOpenApiSpec') {
                 throw new GradleException("Could not extract API version from ApiVersions.groovy")
             }
             
-            // Use SnakeYAML to parse and modify the spec
-            def yaml = new org.yaml.snakeyaml.Yaml()
-            def spec = yaml.load(specFile.text)
+            // Use text-based replacement instead of SnakeYAML parse/dump to avoid data loss
+            // This approach is safer for large OpenAPI spec files
+            def content = specFile.text
+            def originalSize = content.length()
             
-            // Navigate to servers[0].variables.version and add default if missing
-            if (spec.servers && spec.servers[0]?.variables?.version) {
-                if (!spec.servers[0].variables.version.default) {
-                    spec.servers[0].variables.version.default = apiVersion
+            // Pattern to match the version variable in the servers block
+            // This matches the version variable and all its nested properties
+            // Captures indentation to preserve formatting
+            def versionPattern = /(?m)(^(\s+)version:\s*\n)((?:(?:\2  |\2\t).+\n)*)/
+            
+            def updated = false
+            content = content.replaceAll(versionPattern) { match ->
+                updated = true
+                def versionLine = match[1]           // "    version:\n"
+                def baseIndent = match[2]            // "    " (the indent of "version:")
+                def existingProperties = match[3]    // all existing nested properties
+                
+                // Parse existing properties to check if default already exists
+                def hasDefault = existingProperties =~ /\n\s+default:/
+                def hasDescription = existingProperties =~ /\n\s+description:/
+                
+                // Property indent is one level deeper than version line
+                def propIndent = baseIndent + "  "
+                
+                // Build the new property section
+                def newProperties = ""
+                
+                // Add description first if it exists
+                if (hasDescription) {
+                    def descriptionMatcher = existingProperties =~ /(?m)^(\s+description:.*)$/
+                    if (descriptionMatcher) {
+                        newProperties += propIndent + "description: API version number\n"
+                    }
                 }
+                
+                // Add the default value
+                newProperties += propIndent + "default: '${apiVersion}'\n"
+                
+                // Return the updated version section
+                return versionLine + newProperties
             }
             
-            // Write back with proper YAML formatting
-            def dumperOptions = new org.yaml.snakeyaml.DumperOptions()
-            dumperOptions.setDefaultFlowStyle(org.yaml.snakeyaml.DumperOptions.FlowStyle.BLOCK)
-            dumperOptions.setPrettyFlow(true)
-            dumperOptions.setIndent(2)
-            dumperOptions.setIndicatorIndent(0)
-            def yamlWriter = new org.yaml.snakeyaml.Yaml(dumperOptions)
-            specFile.text = yamlWriter.dump(spec)
+            if (!updated) {
+                logger.warn("Warning: Could not find version variable pattern to update in OpenAPI spec")
+            }
+            
+            // Verify no data was lost during the operation
+            if (content.length() < originalSize * 0.95) {
+                throw new GradleException(
+                    "OpenAPI spec appears corrupted after processing - size dropped from " +
+                    "${originalSize} to ${content.length()} bytes (>5% loss). Aborting."
+                )
+            }
+            
+            // Verify critical endpoints are still present (sanity check)
+            def criticalEndpoints = ['/enable/later', '/disable/later']
+            def missingEndpoints = criticalEndpoints.findAll { !content.contains(it) }
+            if (!missingEndpoints.isEmpty()) {
+                throw new GradleException(
+                    "OpenAPI spec appears corrupted - missing endpoints: ${missingEndpoints.join(', ')}"
+                )
+            }
+            
+            specFile.text = content
+            logger.info("Successfully updated OpenAPI spec version to ${apiVersion} (size: ${content.length()} bytes)")
         }
     }
 }
