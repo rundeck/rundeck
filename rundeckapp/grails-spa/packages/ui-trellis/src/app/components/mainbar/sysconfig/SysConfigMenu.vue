@@ -1,6 +1,6 @@
 <script lang="ts">
-import { Link } from "../types/menuTypes";
 import { defineComponent } from "vue";
+import { Link } from "../types/menuTypes";
 
 export default defineComponent({
   name: "SysConfigMenu",
@@ -18,13 +18,15 @@ export default defineComponent({
   computed: {
     enabledLinks() {
       const filtered = this.links.filter((link) => link.enabled !== false);
-      const sorted = filtered.sort((a, b) => {
-        if (b.order !== undefined && a.order === undefined) return -1;
-        if (a.order !== undefined && b.order === undefined) return 1;
+      return filtered.sort((a, b) => {
+        if (b.order !== undefined && a.order === undefined) return 0 - b.order;
+        if (a.order !== undefined && b.order === undefined) return b.order - 0;
+        if (a.order !== undefined && b.order !== undefined) {
+          return a.order - b.order;
+        }
 
         return 0;
       });
-      return sorted;
     },
   },
   methods: {
