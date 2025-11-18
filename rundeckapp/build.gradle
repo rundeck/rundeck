@@ -401,10 +401,6 @@ tasks.register('fixOpenApiSpec') {
             
             // Constants for readability and maintainability
             def versionIndent = "    " // 4 spaces for variables properties in YAML
-            // Pattern to detect when we've reached a sibling or parent property (same or less indentation)
-            // The version: property is at 4 spaces, so 0-4 spaces + letter indicates end of version block
-            def sectionEndPattern = ~/^[ ]{0,4}[a-zA-Z].*/
-            def maxLineCheckLength = 20  // Maximum substring length to check when matching line content
             def minSizeRatioThreshold = 0.95 // Minimum acceptable file size ratio (95%)
             
             // Use a simple, targeted approach: find the servers.variables.version section and update it
@@ -435,13 +431,30 @@ tasks.register('fixOpenApiSpec') {
             def nextLineStart = content.indexOf('\n', versionStart + versionIndent.length() + 'version:'.length())
             
             while (nextLineStart != -1 && nextLineStart < securityStart) {
-                // Extract substring for pattern matching: skip the newline (+1), then read up to maxLineCheckLength
-                def substringEnd = Math.min(nextLineStart + 1 + maxLineCheckLength, content.length())
-                def nextLine = content.substring(nextLineStart + 1, substringEnd)
-                // Check if we've hit a sibling or parent property (using the precompiled pattern)
-                if (nextLine ==~ sectionEndPattern) {
+                // Check if next line starts with a sibling/parent property (0-4 spaces + letter)
+                // Using regionMatches to avoid substring allocation in the loop
+                def checkPos = nextLineStart + 1
+                def foundMatch = false
+                
+                // Check for 0-4 spaces followed by a letter
+                for (int spaces = 0; spaces <= 4; spaces++) {
+                    if (checkPos + spaces < content.length()) {
+                        def charAtPos = content.charAt(checkPos + spaces)
+                        if (charAtPos == ' ' && spaces < 4) {
+                            continue // More spaces, keep checking
+                        } else if (Character.isLetter(charAtPos)) {
+                            foundMatch = true
+                            break
+                        } else {
+                            break // Not a space or letter, stop checking
+                        }
+                    }
+                }
+                
+                if (foundMatch) {
                     break
                 }
+                
                 def tempNext = content.indexOf('\n', nextLineStart + 1)
                 if (tempNext == -1 || tempNext >= securityStart) {
                     nextLineStart = securityStart
@@ -462,10 +475,12 @@ tasks.register('fixOpenApiSpec') {
             content = content.substring(0, versionStart) + replacement + content.substring(nextLineStart)
             
             // Verify no data was lost during the operation
+            def sizeLossPercent = ((originalSize - content.length()) / originalSize) * 100
             if (content.length() < originalSize * minSizeRatioThreshold) {
                 throw new GradleException(
                     "OpenAPI spec appears corrupted after processing - size dropped from " +
-                    "${originalSize} to ${content.length()} bytes (>${(1-minSizeRatioThreshold)*100}% loss). Aborting."
+                    "${originalSize} to ${content.length()} bytes (${String.format('%.1f', sizeLossPercent)}% data loss, " +
+                    "threshold is ${(1-minSizeRatioThreshold)*100}%). Aborting."
                 )
             }
             
