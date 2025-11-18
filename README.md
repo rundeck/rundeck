@@ -95,6 +95,15 @@ CORE_UI=rundeckapp/grails-spa/packages/ui-trellis
 npm run --prefix "$CORE_UI" dev
 ```
 
+## Run Storybook for UI
+
+Run storybook for the core UI components.
+
+```shell
+CORE_UI=rundeckapp/grails-spa/packages/ui-trellis
+npm run --prefix "$CORE_UI" storybook
+```
+
 # Documentation
 
 Available online at <https://docs.rundeck.com/docs>
