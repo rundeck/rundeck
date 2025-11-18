@@ -398,10 +398,13 @@ tasks.register('fixOpenApiSpec') {
             // This approach is safer for large OpenAPI spec files
             def content = specFile.text
             def originalSize = content.length()
+            def modified = false
             
             // Constants for readability and maintainability
             def versionIndent = "    " // 4 spaces for variables properties in YAML
-            def maxSectionIndent = 4    // Maximum indent for a new section (to detect end of version block)
+            // maxSectionIndent matches versionIndent.length() - detects when we've exited the version block
+            // (a line with <=4 spaces starting with a letter indicates a new top-level property)
+            def maxSectionIndent = versionIndent.length()
             def peekAheadLength = 20    // Characters to peek ahead when checking line content
             def minSizeRatioThreshold = 0.95 // Minimum acceptable file size ratio (95%)
             
@@ -411,62 +414,68 @@ tasks.register('fixOpenApiSpec') {
             def securityStart = content.indexOf('\nsecurity:', serversStart)
             
             if (serversStart == -1 || securityStart == -1) {
-                logger.warn("Could not find servers section in OpenAPI spec")
-            } else {
-                // Find "    version:" within the servers section (4-space indent indicates it's in variables)
-                // Simplified: single search followed by validation
-                def versionStart = content.indexOf('\n' + versionIndent + 'version:', serversStart)
-                
-                // Validate that we found it and it's within the servers section
-                if (versionStart == -1 || versionStart >= securityStart) {
-                    logger.warn("Could not find version variable in servers.variables section")
-                } else {
-                    // Skip the leading newline to position at the start of "    version:"
-                    versionStart++
-                    
-                    // Find the end of the version section (next property at same or lower indent level)
-                    def versionEnd = versionStart + versionIndent.length() + 'version:'.length()
-                    def nextLineStart = content.indexOf('\n', versionEnd)
-                    
-                    // Find where the version section ends (next line with <=4 space indent or end of servers)
-                    while (nextLineStart != -1 && nextLineStart < securityStart) {
-                        def nextLine = content.substring(nextLineStart + 1, 
-                            Math.min(nextLineStart + peekAheadLength + 1, content.length()))
-                        // If next line starts with 0-4 spaces followed by a letter, we've hit the next section
-                        if (nextLine.matches("^[ ]{0,${maxSectionIndent}}[a-zA-Z].*")) {
-                            break
-                        }
-                        def tempNext = content.indexOf('\n', nextLineStart + 1)
-                        if (tempNext == -1 || tempNext >= securityStart) {
-                            nextLineStart = securityStart
-                            break
-                        }
-                        nextLineStart = tempNext
-                    }
-                    
-                    if (nextLineStart == -1) {
-                        nextLineStart = securityStart
-                    }
-                    
-                    // Build the replacement: version with default value (no trailing newline)
-                    def replacement = versionIndent + "version:\n" + versionIndent + "  default: '${apiVersion}'"
-                    
-                    // Replace the version section, preserving the newline at nextLineStart
-                    content = content.substring(0, versionStart) + replacement + content.substring(nextLineStart)
-                }
+                throw new GradleException(
+                    "OpenAPI spec structure is invalid - could not find required 'servers' and 'security' sections"
+                )
             }
+            
+            // Find "    version:" within the servers section (4-space indent indicates it's in variables)
+            def versionStart = content.indexOf('\n' + versionIndent + 'version:', serversStart)
+            
+            // Validate that we found it and it's within the servers section
+            if (versionStart == -1 || versionStart >= securityStart) {
+                throw new GradleException(
+                    "OpenAPI spec structure is invalid - could not find 'version' variable in servers.variables section"
+                )
+            }
+            
+            // Skip the leading newline to position at the start of "    version:"
+            versionStart++
+            
+            // Find where the version section ends (next line with same or lower indent, or end of servers)
+            def nextLineStart = content.indexOf('\n', versionStart + versionIndent.length() + 'version:'.length())
+            
+            while (nextLineStart != -1 && nextLineStart < securityStart) {
+                def nextLine = content.substring(nextLineStart + 1, 
+                    Math.min(nextLineStart + peekAheadLength + 1, content.length()))
+                // If next line starts with 0-4 spaces followed by a letter, we've hit the next section
+                if (nextLine.matches("^[ ]{0,${maxSectionIndent}}[a-zA-Z].*")) {
+                    break
+                }
+                def tempNext = content.indexOf('\n', nextLineStart + 1)
+                if (tempNext == -1 || tempNext >= securityStart) {
+                    nextLineStart = securityStart
+                    break
+                }
+                nextLineStart = tempNext
+            }
+            
+            if (nextLineStart == -1) {
+                nextLineStart = securityStart
+            }
+            
+            // Build the replacement: version with default value
+            // Note: No trailing newline - the newline is preserved from the original content at nextLineStart
+            def replacement = versionIndent + "version:\n" + versionIndent + "  default: '${apiVersion}'"
+            
+            // Replace the version section
+            content = content.substring(0, versionStart) + replacement + content.substring(nextLineStart)
+            modified = true
             
             // Verify no data was lost during the operation
             if (content.length() < originalSize * minSizeRatioThreshold) {
                 throw new GradleException(
                     "OpenAPI spec appears corrupted after processing - size dropped from " +
-                    "${originalSize} to ${content.length()} bytes (>${(1-minSizeRatioThreshold)*100}% loss). Aborting."
+                    "${originalSize} to ${content.length()} bytes (≥${(1-minSizeRatioThreshold)*100}% loss). Aborting."
                 )
             }
             
-            // Verify critical endpoints are still present (sanity check)
+            // Verify critical endpoints are still present in the paths section
+            // This checks for the endpoints within the "paths:" block to avoid false positives from comments
+            def pathsStart = content.indexOf('\npaths:')
+            def pathsSection = pathsStart != -1 ? content.substring(pathsStart) : content
             def criticalEndpoints = ['/enable/later', '/disable/later']
-            def missingEndpoints = criticalEndpoints.findAll { !content.contains(it) }
+            def missingEndpoints = criticalEndpoints.findAll { !pathsSection.contains(it) }
             if (!missingEndpoints.isEmpty()) {
                 throw new GradleException(
                     "OpenAPI spec appears corrupted - missing endpoints: ${missingEndpoints.join(', ')}"
@@ -474,7 +483,9 @@ tasks.register('fixOpenApiSpec') {
             }
             
             specFile.text = content
-            logger.info("Successfully updated OpenAPI spec version to ${apiVersion} (size: ${content.length()} bytes)")
+            if (modified) {
+                logger.info("Successfully updated OpenAPI spec version to ${apiVersion} (size: ${content.length()} bytes)")
+            }
         }
     }
 }
