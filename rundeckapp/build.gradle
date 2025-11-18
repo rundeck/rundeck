@@ -404,7 +404,8 @@ tasks.register('fixOpenApiSpec') {
             def minSizeRatioThreshold = project.findProperty('openApiSizeThreshold')?.toDouble() ?: 0.95
             
             // Replace all occurrences of $API_VERSION$ placeholder with the actual version
-            content = content.replaceAll('\\$API_VERSION\\$', apiVersion)
+            // Note: Wrapped in quotes to ensure YAML treats it as a string (OpenAPI spec requires string type)
+            content = content.replaceAll('\\$API_VERSION\\$', "'${apiVersion}'")
             
             // Verify no data was lost during the operation (if threshold enabled)
             if (minSizeRatioThreshold > 0.0) {
