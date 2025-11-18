@@ -49,4 +49,9 @@ export default defineComponent({
   </dropdown>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.btn.btn-menu-item {
+  padding: 0;
+  border: 0;
+}
+</style>

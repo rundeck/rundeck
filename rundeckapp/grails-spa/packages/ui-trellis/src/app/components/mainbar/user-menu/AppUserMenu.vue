@@ -35,9 +35,4 @@ export default {
 };
 </script>
 
-<style scoped>
-.btn.btn-menu-item {
-  padding: 0;
-  border: 0;
-}
-</style>
+<style scoped></style>
