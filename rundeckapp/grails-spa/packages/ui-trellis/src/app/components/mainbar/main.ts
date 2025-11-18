@@ -1,5 +1,5 @@
 import { markRaw } from "vue";
-import SysConfigMenu from "./sysconfig/SysConfigMenu.vue";
+import AppSysConfigMenu from "./sysconfig/AppSysConfigMenu.vue";
 import AppUserMenu from "./user-menu/AppUserMenu.vue";
 import { getRundeckContext } from "../../../library";
 
@@ -21,7 +21,7 @@ function initUserMenu() {
     {
       section: "mainbar-sys-config-menu",
       location: "main",
-      widget: markRaw(SysConfigMenu),
+      widget: markRaw(AppSysConfigMenu),
       visible: true,
     },
   ]);
