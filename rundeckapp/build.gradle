@@ -398,13 +398,12 @@ tasks.register('fixOpenApiSpec') {
             // This approach is safer for large OpenAPI spec files
             def content = specFile.text
             def originalSize = content.length()
-            def modified = false
             
             // Constants for readability and maintainability
             def versionIndent = "    " // 4 spaces for variables properties in YAML
-            // maxSectionIndent matches versionIndent.length() - detects when we've exited the version block
-            // (a line with <=4 spaces starting with a letter indicates a new top-level property)
-            def maxSectionIndent = versionIndent.length()
+            // Pattern to detect when we've reached a sibling or parent property (same or less indentation)
+            // The version: property is at 4 spaces, so 0-4 spaces + letter indicates end of version block
+            def sectionEndPattern = ~/^[ ]{0,4}[a-zA-Z].*/
             def peekAheadLength = 20    // Characters to peek ahead when checking line content
             def minSizeRatioThreshold = 0.95 // Minimum acceptable file size ratio (95%)
             
@@ -438,8 +437,8 @@ tasks.register('fixOpenApiSpec') {
             while (nextLineStart != -1 && nextLineStart < securityStart) {
                 def nextLine = content.substring(nextLineStart + 1, 
                     Math.min(nextLineStart + peekAheadLength + 1, content.length()))
-                // If next line starts with 0-4 spaces followed by a letter, we've hit the next section
-                if (nextLine.matches("^[ ]{0,${maxSectionIndent}}[a-zA-Z].*")) {
+                // Check if we've hit a sibling or parent property (using the precompiled pattern)
+                if (nextLine ==~ sectionEndPattern) {
                     break
                 }
                 def tempNext = content.indexOf('\n', nextLineStart + 1)
@@ -460,13 +459,12 @@ tasks.register('fixOpenApiSpec') {
             
             // Replace the version section
             content = content.substring(0, versionStart) + replacement + content.substring(nextLineStart)
-            modified = true
             
             // Verify no data was lost during the operation
             if (content.length() < originalSize * minSizeRatioThreshold) {
                 throw new GradleException(
                     "OpenAPI spec appears corrupted after processing - size dropped from " +
-                    "${originalSize} to ${content.length()} bytes (≥${(1-minSizeRatioThreshold)*100}% loss). Aborting."
+                    "${originalSize} to ${content.length()} bytes (>${(1-minSizeRatioThreshold)*100}% loss). Aborting."
                 )
             }
             
@@ -483,9 +481,7 @@ tasks.register('fixOpenApiSpec') {
             }
             
             specFile.text = content
-            if (modified) {
-                logger.info("Successfully updated OpenAPI spec version to ${apiVersion} (size: ${content.length()} bytes)")
-            }
+            logger.info("Successfully updated OpenAPI spec version to ${apiVersion} (size: ${content.length()} bytes)")
         }
     }
 }
