@@ -437,7 +437,7 @@ tasks.register('fixOpenApiSpec') {
             }
             
             if (!updated) {
-                logger.warn("Warning: Could not find version variable pattern to update in OpenAPI spec")
+                logger.warn("Could not find version variable pattern to update in OpenAPI spec")
             }
             
             // Verify no data was lost during the operation
