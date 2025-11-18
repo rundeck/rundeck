@@ -3,8 +3,7 @@ import { Btn, Dropdown } from "uiv";
 // Import the mocked function for use in tests
 import { getRundeckContext } from "../../../../library";
 import AppUserMenu from "../user-menu/AppUserMenu.vue";
-import UserMenu from "../user-menu/UserMenu.vue";
-
+import MainbarMenu from "../../../../library/components/mainbar/MainbarMenu.vue";
 // Mock the getRundeckContext function
 jest.mock("../../../../library", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
@@ -31,7 +30,7 @@ describe("AppUserMenu", () => {
         components: {
           Dropdown,
           Btn,
-          UserMenu,
+          MainbarMenu,
         },
       },
     });
@@ -132,10 +131,11 @@ describe("AppUserMenu", () => {
   });
 
   // Additional comprehensive tests
-  it("should render the dropdown component", async () => {
+  it("should render the MainbarMenu component", async () => {
     const wrapper = await mountAppUserMenu();
 
-    expect(wrapper.findComponent({ name: "Dropdown" }).exists()).toBe(true);
+    expect(wrapper.find(".dropdown-menu").exists()).toBe(true);
+    expect(wrapper.findComponent({ name: "MainbarMenu" }).exists()).toBe(true);
   });
 
   it("should render the user icon", async () => {
