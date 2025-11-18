@@ -400,8 +400,12 @@ tasks.register('fixOpenApiSpec') {
             def originalSize = content.length()
             
             // Constants for readability and maintainability
+            // Note: Assumes OpenAPI spec uses 4-space indentation (standard YAML convention)
+            // If spec is reformatted with different indentation, this task would need adjustment
             def versionIndent = "    " // 4 spaces for variables properties in YAML
-            def minSizeRatioThreshold = 0.95 // Minimum acceptable file size ratio (95%)
+            // Size validation threshold (configurable via project property)
+            // Set to 0.0 to disable: -PopenApiSizeThreshold=0.0
+            def minSizeRatioThreshold = project.findProperty('openApiSizeThreshold')?.toDouble() ?: 0.95
             
             // Use a simple, targeted approach: find the servers.variables.version section and update it
             // Look for the specific pattern in the servers block (before 'security:')
@@ -430,41 +434,31 @@ tasks.register('fixOpenApiSpec') {
             // Find where the version section ends (next line with same or lower indent, or end of servers)
             def nextLineStart = content.indexOf('\n', versionStart + versionIndent.length() + 'version:'.length())
             
-            while (nextLineStart != -1 && nextLineStart < securityStart) {
-                // Check if next line starts with a sibling/parent property (0-4 spaces + letter)
-                // Using regionMatches to avoid substring allocation in the loop
-                def checkPos = nextLineStart + 1
-                def foundMatch = false
-                
-                // Check for 0-4 spaces followed by a letter
-                for (int spaces = 0; spaces <= 4; spaces++) {
-                    if (checkPos + spaces < content.length()) {
-                        def charAtPos = content.charAt(checkPos + spaces)
-                        if (charAtPos == ' ' && spaces < 4) {
-                            continue // More spaces, keep checking
-                        } else if (Character.isLetter(charAtPos)) {
-                            foundMatch = true
-                            break
-                        } else {
-                            break // Not a space or letter, stop checking
+            // If version section is the last item before security, nextLineStart may already be at/past securityStart
+            // In that case, just use securityStart as the boundary
+            if (nextLineStart == -1 || nextLineStart >= securityStart) {
+                nextLineStart = securityStart
+            } else {
+                // Look for the next line that starts with 0-4 spaces + letter (sibling or parent property)
+                while (nextLineStart != -1 && nextLineStart < securityStart) {
+                    // Extract a small substring to check the line start efficiently
+                    def lineStart = nextLineStart + 1
+                    def checkLength = Math.min(6, content.length() - lineStart) // 4 spaces + letter + buffer
+                    if (checkLength > 0) {
+                        def linePrefix = content.substring(lineStart, lineStart + checkLength)
+                        // Check if line starts with 0-4 spaces followed by a letter
+                        if (linePrefix.matches('^[ ]{0,4}[a-zA-Z].*')) {
+                            break // Found a sibling/parent property
                         }
                     }
+                    
+                    def tempNext = content.indexOf('\n', nextLineStart + 1)
+                    if (tempNext == -1 || tempNext >= securityStart) {
+                        nextLineStart = securityStart
+                        break
+                    }
+                    nextLineStart = tempNext
                 }
-                
-                if (foundMatch) {
-                    break
-                }
-                
-                def tempNext = content.indexOf('\n', nextLineStart + 1)
-                if (tempNext == -1 || tempNext >= securityStart) {
-                    nextLineStart = securityStart
-                    break
-                }
-                nextLineStart = tempNext
-            }
-            
-            if (nextLineStart == -1) {
-                nextLineStart = securityStart
             }
             
             // Build the replacement: version with default value
@@ -474,14 +468,18 @@ tasks.register('fixOpenApiSpec') {
             // Replace the version section
             content = content.substring(0, versionStart) + replacement + content.substring(nextLineStart)
             
-            // Verify no data was lost during the operation
-            def sizeLossPercent = ((originalSize - content.length()) / originalSize) * 100
-            if (content.length() < originalSize * minSizeRatioThreshold) {
-                throw new GradleException(
-                    "OpenAPI spec appears corrupted after processing - size dropped from " +
-                    "${originalSize} to ${content.length()} bytes (${String.format('%.1f', sizeLossPercent)}% data loss, " +
-                    "threshold is ${(1-minSizeRatioThreshold)*100}%). Aborting."
-                )
+            // Verify no data was lost during the operation (if threshold enabled)
+            if (minSizeRatioThreshold > 0.0) {
+                // Calculate size loss percentage (use max to handle case where content grows)
+                def sizeLossPercent = Math.max(0.0, ((originalSize - content.length()) / (double)originalSize) * 100)
+                if (content.length() < originalSize * minSizeRatioThreshold) {
+                    throw new GradleException(
+                        "OpenAPI spec appears corrupted after processing - size dropped from " +
+                        "${originalSize} to ${content.length()} bytes (${String.format('%.1f', sizeLossPercent)}% data loss, " +
+                        "threshold is ${(1-minSizeRatioThreshold)*100}%). Aborting. " +
+                        "To override: ./gradlew build -PopenApiSizeThreshold=0.0"
+                    )
+                }
             }
             
             // Verify critical endpoints are still present in the paths section
