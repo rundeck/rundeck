@@ -53,22 +53,6 @@ const linksWithEmbeddedSeparators = [
   },
 ];
 
-const linksWithIcons = [
-  {
-    url: "/system/info",
-    title: "System Info",
-    enabled: true,
-    icon: "info-sign",
-    iconCss: "custom-class",
-  },
-  {
-    url: "/system/log",
-    title: "Logs",
-    enabled: true,
-    icon: "list",
-  },
-];
-
 // Test fixtures with various link structures
 
 describe("MainbarMenu", () => {
@@ -425,17 +409,33 @@ describe("MainbarMenu", () => {
     it("should correctly render links with icons", async () => {
       // Mount the component
       const wrapper = await mountMainbarMenu({
-        props: { links: linksWithIcons },
+        props: {
+          links: [
+            {
+              url: "/system/info",
+              title: "System Info",
+              enabled: true,
+              iconCss: "glyphicon glyphicon-info-sign custom-class",
+            },
+            {
+              url: "/system/log",
+              title: "Logs",
+              enabled: true,
+              iconCss: "fas fa-list fa-lg",
+            },
+          ],
+        },
       });
 
       // Verify that icons are rendered
-      const icons = wrapper.findAll("i.glyphicon");
+      const icons = wrapper.findAll(".dropdown-menu a i");
       expect(icons.length).toBe(2);
 
       // Verify that the icons have the correct classes
       expect(icons.at(0)?.classes()).toContain("glyphicon-info-sign");
       expect(icons.at(0)?.classes()).toContain("custom-class");
-      expect(icons.at(1)?.classes()).toContain("glyphicon-list");
+      expect(icons.at(1)?.classes()).toContain("fas");
+      expect(icons.at(1)?.classes()).toContain("fa-list");
     });
   });
 

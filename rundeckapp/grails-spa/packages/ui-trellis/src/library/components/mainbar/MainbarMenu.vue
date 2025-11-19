@@ -85,10 +85,7 @@ export default defineComponent({
           ></li>
           <li v-if="link.url && (!link.links || link.links.length === 0)">
             <a :href="link.url">
-              <i
-                v-if="link.icon"
-                :class="`${link.iconCss} glyphicon glyphicon-${link.icon}`"
-              ></i>
+              <i v-if="link.iconCss" :class="link.iconCss"></i>
               {{ link.title }}
             </a>
           </li>
@@ -112,10 +109,7 @@ export default defineComponent({
               <template v-for="link2 in link.links" :key="link2.url">
                 <li v-if="link2.enabled !== false">
                   <a :href="link2.url">
-                    <i
-                      v-if="link2.icon"
-                      :class="`${link2.iconCss} glyphicon glyphicon-${link2.icon}`"
-                    ></i>
+                    <i v-if="link2.iconCss" :class="link2.iconCss"></i>
                     {{ link2.title }}
                   </a>
                 </li>
