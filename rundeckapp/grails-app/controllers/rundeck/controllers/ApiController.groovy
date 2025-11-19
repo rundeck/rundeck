@@ -155,44 +155,119 @@ Use this endpoint to verify API connectivity and determine the correct API versi
     )
 
     @Get(
-        uri= "/metrics/{name}",
+        uri= "/metrics",
         produces = MediaType.APPLICATION_JSON
     )
     @Operation(
         method = "GET",
-        summary = "Get Rundeck metrics",
-        description = "Return metrics and information",
-        parameters = [
-            @Parameter(
-                name='name',
-                in = ParameterIn.PATH,
-                description = 'Metric name, or blank to receive list of metrics',
-                allowEmptyValue = true,
-                schema = @Schema(
-                    type='string',
-                    allowableValues=['metrics', 'ping', 'threads', 'healthcheck']
-                )
-            )
-        ]
+        summary = "List available metrics",
+        description = "Return list of available metrics endpoints"
     )
     @ApiResponse(
         responseCode = "200",
-        description = "List of metrics available if not specified",
+        description = "List of metrics available",
         content = @Content(
             mediaType = "application/json",
             schema = @Schema(implementation = LinkListResponse)
         )
     )
+    @Tag(name = "Metrics")
+    def apiMetricsList() {
+        apiMetrics(null)
+    }
+
+    @RdAuthorizeSystem(
+        value = RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN,
+        description = 'Read System Metrics'
+    )
+
+    @Get(
+        uri= "/metrics/metrics",
+        produces = MediaType.APPLICATION_JSON
+    )
+    @Operation(
+        method = "GET",
+        summary = "Get metrics data",
+        description = "Return metrics data including gauges, counters, histograms, meters, and timers"
+    )
     @ApiResponse(
-        responseCode = "404",
-        description = "Error response",
-        content = @Content(
-            mediaType = MediaType.APPLICATION_JSON,
-            schema = @Schema(implementation = ApiErrorResponse),
-            examples = @ExampleObject('{"error":true,"errorCode":"api.error.code","message":"not ok","apiversion":41}')
-        )
+        responseCode = "200",
+        description = "Metrics data"
     )
     @Tag(name = "Metrics")
+    def apiMetricsData() {
+        apiMetrics('metrics')
+    }
+
+    @RdAuthorizeSystem(
+        value = RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN,
+        description = 'Read System Metrics'
+    )
+
+    @Get(
+        uri= "/metrics/ping",
+        produces = MediaType.APPLICATION_JSON
+    )
+    @Operation(
+        method = "GET",
+        summary = "Ping metrics endpoint",
+        description = "Simple ping endpoint that returns a text response"
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Ping response"
+    )
+    @Tag(name = "Metrics")
+    def apiMetricsPing() {
+        apiMetrics('ping')
+    }
+
+    @RdAuthorizeSystem(
+        value = RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN,
+        description = 'Read System Metrics'
+    )
+
+    @Get(
+        uri= "/metrics/threads",
+        produces = MediaType.APPLICATION_JSON
+    )
+    @Operation(
+        method = "GET",
+        summary = "Get thread dump",
+        description = "Return a dump of running JVM threads"
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Thread dump"
+    )
+    @Tag(name = "Metrics")
+    def apiMetricsThreads() {
+        apiMetrics('threads')
+    }
+
+    @RdAuthorizeSystem(
+        value = RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN,
+        description = 'Read System Metrics'
+    )
+
+    @Get(
+        uri= "/metrics/healthcheck",
+        produces = MediaType.APPLICATION_JSON
+    )
+    @Operation(
+        method = "GET",
+        summary = "Get healthcheck results",
+        description = "Return results of health checks"
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Healthcheck results"
+    )
+    @Tag(name = "Metrics")
+    def apiMetricsHealthcheck() {
+        apiMetrics('healthcheck')
+    }
+
     def apiMetrics(String name) {
         if (!apiService.requireVersion(request, response, ApiVersions.V25)) {
             return
