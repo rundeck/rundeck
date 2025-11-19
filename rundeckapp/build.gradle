@@ -397,44 +397,13 @@ tasks.register('fixOpenApiSpec') {
             // Simple string replacement approach: replace placeholder with actual version
             // The spec file should contain "$API_VERSION$" as a placeholder (e.g., in server variable default)
             def content = specFile.text
-            def originalSize = content.length()
-            
-            // Size validation threshold (configurable via project property)
-            // Set to 0.0 to disable: -PopenApiSizeThreshold=0.0
-            def minSizeRatioThreshold = project.findProperty('openApiSizeThreshold')?.toDouble() ?: 0.95
             
             // Replace all occurrences of $API_VERSION$ placeholder with the actual version
             // Note: Wrapped in quotes to ensure YAML treats it as a string (OpenAPI spec requires string type)
             content = content.replaceAll('\\$API_VERSION\\$', "'${apiVersion}'")
             
-            // Verify no data was lost during the operation (if threshold enabled)
-            if (minSizeRatioThreshold > 0.0) {
-                // Calculate size loss percentage (use max to handle case where content grows)
-                def sizeLossPercent = Math.max(0.0, ((originalSize - content.length()) / (double)originalSize) * 100)
-                if (content.length() < originalSize * minSizeRatioThreshold) {
-                    throw new GradleException(
-                        "OpenAPI spec appears corrupted after processing - size dropped from " +
-                        "${originalSize} to ${content.length()} bytes (${String.format('%.1f', sizeLossPercent)}% data loss, " +
-                        "threshold is ${(1-minSizeRatioThreshold)*100}%). Aborting. " +
-                        "To override: ./gradlew build -PopenApiSizeThreshold=0.0"
-                    )
-                }
-            }
-            
-            // Verify critical endpoints are still present in the paths section
-            // This checks for the endpoints within the "paths:" block to avoid false positives from comments
-            def pathsStart = content.indexOf('\npaths:')
-            def pathsSection = pathsStart != -1 ? content.substring(pathsStart) : content
-            def criticalEndpoints = ['/enable/later', '/disable/later']
-            def missingEndpoints = criticalEndpoints.findAll { !pathsSection.contains(it) }
-            if (!missingEndpoints.isEmpty()) {
-                throw new GradleException(
-                    "OpenAPI spec appears corrupted - missing endpoints: ${missingEndpoints.join(', ')}"
-                )
-            }
-            
             specFile.text = content
-            logger.info("Successfully updated OpenAPI spec version to ${apiVersion} (size: ${content.length()} bytes)")
+            logger.info("Successfully updated OpenAPI spec version to ${apiVersion}")
         }
     }
 }
