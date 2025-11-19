@@ -18,6 +18,8 @@ class LoggedOutPage extends BasePage {
     }
 
     WebElement getLoginAgainField() {
+        // Wait for the element to be present after logout
+        waitForElementVisible(loginAgainFieldBy)
         el loginAgainFieldBy
     }
 
