@@ -100,7 +100,8 @@
                 title: g.message(code: item.titleCode, default: item.title),
                 group: (group && group.id) ? [
                         id       : group.id,
-                ] : null
+                ] : null,
+                iconCss: item.iconCSS
         ]
 
     }%
