@@ -54,13 +54,17 @@
         ] : null,
         [url: g.createLink(controller: 'menu', action: 'storage'), title: g.message(code: 'gui.menu.KeyStorage')],
 
-        [enabled: authAclRead, url: g.createLink(controller: 'menu', action: 'acls'), title: g
-                .message(code: 'gui.menu.AccessControl')],
+        authAclRead ? [
+                url: g.createLink(controller: 'menu', action: 'acls'),
+                title: g.message(code: 'gui.menu.AccessControl')
+        ] : null,
 
-        [enabled: logfileStoragePlugin, url: g.createLink(controller: 'menu', action: 'logStorage'), title: g
-                .message(code: 'gui.menu.LogStorage')],
-        [
-                enabled: pluginRead && repoEnabled,
+        logfileStoragePlugin && opsAdminRead ? [
+                url: g.createLink(controller: 'menu', action: 'logStorage'),
+                title: g.message(code: 'gui.menu.LogStorage')
+        ] : null,
+
+        pluginRead && repoEnabled ? [
                 title  : g.message(code: 'gui.menu.Plugins', default: 'Plugins'),
                 links  : [
                         [url: g.createLink(uri: '/artifact/index/repositories'), title: g
@@ -70,17 +74,19 @@
                         [enabled: !pluginSecurityEnabled, url: g.createLink(uri: '/artifact/index/upload'), title: g
                                 .message(code: 'gui.menu.UploadPlugin')],
                 ]
-        ],
-        [
-                enabled: pluginRead && !repoEnabled,
+        ] : null,
+
+        pluginRead && !repoEnabled ? [
                 url    : g.createLink(uri: '/artifact/index/configurations'),
                 title  : g.message(code: 'gui.menu.InstalledPlugins')
-        ],
-        [
-                enabled: pluginInstall && !repoEnabled && !pluginSecurityEnabled,
+        ] : null,
+
+        pluginInstall && !repoEnabled && !pluginSecurityEnabled ? [
+
                 url    : g.createLink(uri: '/artifact/index/upload'),
                 title  : g.message(code: 'gui.menu.UploadPlugin')
-        ],
+        ] : null,
+
         [
                 url  : g.createLink(controller: "passwordUtility", action: 'index'),
                 title: g.message(code: 'gui.menu.PasswordUtility')
