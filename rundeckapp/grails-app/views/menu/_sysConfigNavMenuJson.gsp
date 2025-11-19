@@ -30,11 +30,28 @@
         any: true,
         context: AuthConstants.CTX_APPLICATION
 )}"/>
+<g:set var="execModeAuthAction" value="${g.executionMode(active: true) ? AuthConstants.ACTION_DISABLE_EXECUTIONS :
+                                         AuthConstants.ACTION_ENABLE_EXECUTIONS}"/>
+<g:set var="execModeChangeAllowed" value="${auth.resourceAllowedTest(
+        kind: AuthConstants.TYPE_SYSTEM,
+        action: [execModeAuthAction, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN, AuthConstants
+                .ACTION_APP_ADMIN],
+        any: true,
+        context: AuthConstants.CTX_APPLICATION
+)}"/>
 
 <g:set var="repoEnabled" value="${cfg.getBoolean(config: "feature.repository.enabled", default: false)}"/>
 <g:set var="pluginSecurityEnabled" value="${cfg.getBoolean(config: "feature.pluginSecurity.enabled", default: false)}"/>
 <g:set var="logfileStoragePlugin" value="${cfg.getString(config: 'execution.logs.fileStoragePlugin', default: null)}"/>
 <g:set var="links" value="${[
+        execModeChangeAllowed ? [
+                enabled  : execModeChangeAllowed,
+                url      : g.createLink(controller: 'menu', action: 'executionMode'),
+                title    : g.message(code: 'gui.menu.ExecutionMode'),
+                iconCss  : g.executionMode(active: true) ? 'glyphicon glyphicon-play text-success' : 'glyphicon glyphicon-pause text-warning',
+                order    : 1000,
+                separator: true
+        ] : null,
         [url: g.createLink(controller: 'menu', action: 'storage'), title: g.message(code: 'gui.menu.KeyStorage')],
 
         [enabled: authAclRead, url: g.createLink(controller: 'menu', action: 'acls'), title: g
@@ -87,13 +104,5 @@
         links << [separator:true];
         links.addAll(navMenuComponents)
     }
-    links.add( [
-            url    : g.createLink(controller: 'menu', action: 'executionMode'),
-            title  : g.message(code: 'gui.menu.ExecutionMode'),
-            icon   : g.executionMode(active: true) ? 'play' : 'pause',
-            iconCss: g.executionMode(active: true) ? 'text-success' : 'text-warning',
-            order:1000,
-            separator:true
-    ])
 }%
-<g:embedJSON id="sysConfigNavJSON" data="${links}"/>
+<g:embedJSON id="sysConfigNavJSON" data="${links.findAll{it}}"/>
