@@ -111,6 +111,10 @@ class BasicJobsSpec extends SeleniumBase {
             jobCreatePage.go()
             jobCreatePage.descriptionTextarea.sendKeys 'a new job description'
             jobCreatePage.updateJobButton.click()
+            // Wait for page transition after clicking update button
+            jobCreatePage.waitForUrlToContain('/job/show')
+            // Wait for description element to be visible before reading text
+            jobShowPage.waitForElementVisible(jobShowPage.descriptionTextLabel)
         expect:
             'a new job description' == jobShowPage.descriptionTextLabel.getText()
         where:
