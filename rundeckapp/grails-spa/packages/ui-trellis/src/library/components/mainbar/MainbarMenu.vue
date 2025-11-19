@@ -33,7 +33,15 @@ export default defineComponent({
   },
   computed: {
     enabledLinks() {
-      const filtered = this.links.filter((link) => link.enabled !== false);
+      const filtered = this.links.filter(
+        (link) =>
+          link &&
+          link.enabled !== false &&
+          (link.url ||
+            (link.links && link.links.length > 0) ||
+            link.separator ||
+            link.group),
+      );
       return filtered.sort((a, b) => {
         if (b.order !== undefined && a.order === undefined) return 0 - b.order;
         if (a.order !== undefined && b.order === undefined) return b.order - 0;

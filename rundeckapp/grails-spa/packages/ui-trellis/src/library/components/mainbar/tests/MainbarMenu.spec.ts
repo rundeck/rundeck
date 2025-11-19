@@ -588,12 +588,14 @@ describe("MainbarMenu", () => {
 
   // Test Case 5: Edge Cases
   describe("Edge Cases", () => {
-    it("should handle links with missing properties", async () => {
+    it("should handle invalid links", async () => {
       // Setup: Links with missing properties
       const incompleteLinks = [
         { title: "No URL" }, // Missing url
         { url: "/system/info", title: "Info" }, // Has both properties
         { url: "/empty" }, // Missing title
+        null, // null
+        {}, // empty object
       ];
 
       // Mount the component
@@ -604,8 +606,13 @@ describe("MainbarMenu", () => {
       // Verify the component renders without errors
       expect(wrapper.vm.links).toEqual(incompleteLinks);
 
+      const enabled = wrapper.vm.enabledLinks;
       // Verify the links are treated as enabled (no explicit enabled: false)
-      expect(wrapper.vm.enabledLinks.length).toBe(3);
+      expect(enabled).toEqual([
+        { url: "/system/info", title: "Info" },
+        { url: "/empty" },
+      ]);
+      expect(wrapper.vm.enabledLinks.length).toBe(2);
     });
 
     it("should handle deeply nested submenus", async () => {
