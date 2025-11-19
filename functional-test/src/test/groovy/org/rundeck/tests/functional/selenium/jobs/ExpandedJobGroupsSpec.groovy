@@ -42,8 +42,7 @@ class ExpandedJobGroupsSpec extends SeleniumBase {
         projectEditPage.clickEditConfigurationFile()
         projectEditPage.replaceConfiguration("${expandedGroupsProp}1","${expandedGroupsProp}-1")
         projectEditPage.save()
-        dashboardPage.loadDashboardForProject(projectName)
-        projectEditPage.validatePage(dashboardPage.loadPath)
+        projectEditPage.waitForElementVisible(projectEditPage.successMessageDiv)
 
         JobListPage jobListPage = page JobListPage
         jobListPage.loadJobListForProject(projectName)
@@ -63,7 +62,7 @@ class ExpandedJobGroupsSpec extends SeleniumBase {
         projectEditPage.clickEditConfigurationFile()
         projectEditPage.replaceConfiguration("${expandedGroupsProp}-1","${expandedGroupsProp}0")
         projectEditPage.save()
-        projectEditPage.validatePage(dashboardPage.loadPath)
+        projectEditPage.waitForElementVisible(projectEditPage.successMessageDiv)
 
         jobListPage.go(jobListPage.loadPath)
 
@@ -75,7 +74,7 @@ class ExpandedJobGroupsSpec extends SeleniumBase {
         projectEditPage.clickEditConfigurationFile()
         projectEditPage.replaceConfiguration("${expandedGroupsProp}0","${expandedGroupsProp}1")
         projectEditPage.save()
-        projectEditPage.validatePage(dashboardPage.loadPath)
+        projectEditPage.waitForElementVisible(projectEditPage.successMessageDiv)
 
         jobListPage.go(jobListPage.loadPath)
 
@@ -87,7 +86,7 @@ class ExpandedJobGroupsSpec extends SeleniumBase {
         projectEditPage.clickEditConfigurationFile()
         projectEditPage.replaceConfiguration("${expandedGroupsProp}1","${expandedGroupsProp}2")
         projectEditPage.save()
-        projectEditPage.validatePage(dashboardPage.loadPath)
+        projectEditPage.waitForElementVisible(projectEditPage.successMessageDiv)
 
         jobListPage.go(jobListPage.loadPath)
 
