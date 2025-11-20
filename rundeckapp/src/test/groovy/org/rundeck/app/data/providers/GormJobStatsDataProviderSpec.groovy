@@ -3,6 +3,7 @@ package org.rundeck.app.data.providers
 import grails.testing.gorm.DataTest
 import rundeck.ScheduledExecution
 import rundeck.ScheduledExecutionStats
+import rundeck.services.ConfigurationService
 import spock.lang.Specification
 
 import java.time.LocalDate
@@ -14,9 +15,15 @@ class GormJobStatsDataProviderSpec extends Specification implements DataTest {
     }
 
     GormJobStatsDataProvider provider
+    ConfigurationService mockConfigurationService
 
     def setup() {
         provider = new GormJobStatsDataProvider()
+        mockConfigurationService = Mock(ConfigurationService)
+        provider.configurationService = mockConfigurationService
+
+        // Default: Feature flag enabled for existing tests
+        mockConfigurationService.getBoolean("rundeck.feature.executionDailyMetrics.enabled", false) >> true
     }
 
     def "updateJobStats creates dailyMetrics on first execution"() {
@@ -265,5 +272,88 @@ class GormJobStatsDataProviderSpec extends Specification implements DataTest {
             contentMap.dailyMetrics[yesterday].total == 5
             contentMap.dailyMetrics[today] != null
             contentMap.dailyMetrics[today].total == 1
+    }
+
+    def "updateJobStats does NOT collect daily metrics when feature flag is disabled"() {
+        given: "feature flag disabled"
+            def jobUuid = UUID.randomUUID().toString()
+            def executionId = 123L
+            def executionTime = 5000L
+            def status = "succeeded"
+            def dateCompleted = new Date()
+
+            // Create new provider with feature flag disabled
+            def testProvider = new GormJobStatsDataProvider()
+            def testMockConfig = Mock(ConfigurationService)
+            testProvider.configurationService = testMockConfig
+            testMockConfig.getBoolean("rundeck.feature.executionDailyMetrics.enabled", false) >> false
+
+        when: "updateJobStats is called"
+            def result = testProvider.updateJobStats(jobUuid, executionId, executionTime, status, dateCompleted)
+
+        then: "stats are created but dailyMetrics is NOT populated"
+            result == true
+            def stats = ScheduledExecutionStats.findByJobUuid(jobUuid)
+            stats != null
+            def contentMap = stats.getContentMap()
+            contentMap.dailyMetrics == null || contentMap.dailyMetrics.isEmpty()
+    }
+
+    def "updateJobStats still maintains rolling-10 logic when feature flag is disabled"() {
+        given: "feature flag disabled"
+            def jobUuid = UUID.randomUUID().toString()
+            def dateCompleted = new Date()
+
+            // Create new provider with feature flag disabled
+            def testProvider = new GormJobStatsDataProvider()
+            def testMockConfig = Mock(ConfigurationService)
+            testProvider.configurationService = testMockConfig
+            testMockConfig.getBoolean("rundeck.feature.executionDailyMetrics.enabled", false) >> false
+
+        when: "10 executions are added"
+            (1..10).each { i ->
+                testProvider.updateJobStats(jobUuid, i, 1000L, "succeeded", dateCompleted)
+            }
+
+        then: "rolling-10 logic still works"
+            def stats = ScheduledExecutionStats.findByJobUuid(jobUuid)
+            def contentMap = stats.getContentMap()
+            contentMap.execCount == 10
+            contentMap.totalTime == 10000
+
+        and: "dailyMetrics is NOT populated"
+            contentMap.dailyMetrics == null || contentMap.dailyMetrics.isEmpty()
+
+        when: "one more execution is added"
+            testProvider.updateJobStats(jobUuid, 11L, 1000L, "succeeded", dateCompleted)
+
+        then: "rolling-10 logic pops oldest average"
+            def updatedStats = ScheduledExecutionStats.findByJobUuid(jobUuid)
+            def updatedContentMap = updatedStats.getContentMap()
+            updatedContentMap.execCount == 10  // Still 10
+            updatedContentMap.totalTime == 10000
+    }
+
+    def "updateJobStats collects daily metrics when feature flag is enabled"() {
+        given: "feature flag enabled (default in setup)"
+            def jobUuid = UUID.randomUUID().toString()
+            def executionId = 123L
+            def executionTime = 5000L
+            def status = "succeeded"
+            def dateCompleted = new Date()
+
+        when: "updateJobStats is called"
+            def result = provider.updateJobStats(jobUuid, executionId, executionTime, status, dateCompleted)
+
+        then: "stats are created WITH dailyMetrics"
+            result == true
+            def stats = ScheduledExecutionStats.findByJobUuid(jobUuid)
+            stats != null
+            def contentMap = stats.getContentMap()
+            def today = LocalDate.now().toString()
+            contentMap.dailyMetrics != null
+            contentMap.dailyMetrics[today] != null
+            contentMap.dailyMetrics[today].total == 1
+            contentMap.dailyMetrics[today].succeeded == 1
     }
 }

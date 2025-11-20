@@ -7,14 +7,18 @@ import org.rundeck.app.data.model.v1.execution.RdJobStats
 import org.rundeck.app.data.model.v1.execution.dto.StatsContent
 import org.rundeck.app.data.model.v1.execution.dto.StatsContentImpl
 import org.rundeck.app.data.providers.v1.execution.JobStatsDataProvider
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DuplicateKeyException
 import rundeck.ScheduledExecution
 import rundeck.ScheduledExecutionStats
+import rundeck.services.ConfigurationService
 
 import java.time.LocalDate
 
 @Slf4j
 class GormJobStatsDataProvider implements JobStatsDataProvider{
+    @Autowired
+    ConfigurationService configurationService
     @Override
     RdJobStats createJobStats(String jobUuid) {
         def stats = getOrCreate(jobUuid)
@@ -50,52 +54,59 @@ class GormJobStatsDataProvider implements JobStatsDataProvider{
                 }
 
                 // === NEW LOGIC (Date-keyed 7-day metrics) - RUN-3768 ===
-                def today = LocalDate.now().toString()
-                def dailyMetrics = statsMap.dailyMetrics ?: [:]
-                def todayMetrics = dailyMetrics[today] ?: [
-                    total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0,
-                    duration: 0, hourly: (0..23).collect { 0 }
-                ]
+                // Feature flag: rundeck.feature.executionDailyMetrics.enabled
+                if (configurationService.getBoolean("rundeck.feature.executionDailyMetrics.enabled", false)) {
+                    def today = LocalDate.now().toString()
+                    def dailyMetrics = statsMap.dailyMetrics ?: [:]
+                    def todayMetrics = dailyMetrics[today] ?: [
+                        total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0,
+                        duration: 0, hourly: (0..23).collect { 0 }
+                    ]
 
-                // Increment today's metrics
-                todayMetrics.total++
+                    // Increment today's metrics
+                    todayMetrics.total++
 
-                switch(status) {
-                    case 'succeeded':
-                        todayMetrics.succeeded++
-                        break
-                    case 'failed':
-                    case 'failed-with-retry':
-                        todayMetrics.failed++
-                        break
-                    case 'aborted':
-                        todayMetrics.aborted++
-                        break
-                    case 'timedout':
-                        todayMetrics.timedout++
-                        break
+                    switch(status) {
+                        case 'succeeded':
+                            todayMetrics.succeeded++
+                            break
+                        case 'failed':
+                        case 'failed-with-retry':
+                            todayMetrics.failed++
+                            break
+                        case 'aborted':
+                            todayMetrics.aborted++
+                            break
+                        case 'timedout':
+                            todayMetrics.timedout++
+                            break
+                    }
+                    todayMetrics.duration += time
+
+                    // Extract hour from execution completion time
+                    if (dateCompleted) {
+                        def hourOfDay = dateCompleted.toInstant()
+                            .atZone(java.time.ZoneId.systemDefault())
+                            .getHour()
+                        def hourlyList = todayMetrics.hourly as List
+                        hourlyList[hourOfDay] = (hourlyList[hourOfDay] ?: 0) + 1
+                        todayMetrics.hourly = hourlyList
+                    }
+
+                    // Save back to dailyMetrics
+                    dailyMetrics[today] = todayMetrics
+                    statsMap.dailyMetrics = dailyMetrics
+
+                    log.debug("Updated daily metrics for ${jobUuid}: today=${today}, total=${todayMetrics.total}, status=${status}")
+                } else {
+                    log.debug("Daily metrics collection disabled for ${jobUuid} (feature flag: rundeck.feature.executionDailyMetrics.enabled=false)")
                 }
-                todayMetrics.duration += time
-
-                // Extract hour from execution completion time
-                if (dateCompleted) {
-                    def hourOfDay = dateCompleted.toInstant()
-                        .atZone(java.time.ZoneId.systemDefault())
-                        .getHour()
-                    def hourlyList = todayMetrics.hourly as List
-                    hourlyList[hourOfDay] = (hourlyList[hourOfDay] ?: 0) + 1
-                    todayMetrics.hourly = hourlyList
-                }
-
-                // Save back to dailyMetrics
-                dailyMetrics[today] = todayMetrics
-                statsMap.dailyMetrics = dailyMetrics
 
                 stats.setContentMap(statsMap)
 
                 if (stats.validate()) {
                     if (stats.save(flush: true)) {
-                        log.debug("Updated job stats for ${jobUuid}: today=${today}, total=${todayMetrics.total}, status=${status}")
+                        log.debug("Updated job stats for ${jobUuid}")
                     } else {
                         stats.errors.allErrors.each { log.warn(it.defaultMessage) }
                         log.warn("failed saving execution to history")
