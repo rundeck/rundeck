@@ -168,7 +168,8 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         description = "List of metrics available",
         content = @Content(
             mediaType = "application/json",
-            schema = @Schema(implementation = LinkListResponse)
+            schema = @Schema(implementation = LinkListResponse),
+            examples = @ExampleObject(value = '''{"_links":{"metrics":{"href":"http://localhost:4440/api/56/metrics/metrics"},"ping":{"href":"http://localhost:4440/api/56/metrics/ping"},"threads":{"href":"http://localhost:4440/api/56/metrics/threads"},"healthcheck":{"href":"http://localhost:4440/api/56/metrics/healthcheck"}}}''')
         )
     )
     @Tag(name = "Metrics")
@@ -192,7 +193,11 @@ Use this endpoint to verify API connectivity and determine the correct API versi
     )
     @ApiResponse(
         responseCode = "200",
-        description = "Metrics data"
+        description = "Metrics data",
+        content = @Content(
+            mediaType = "application/json",
+            examples = @ExampleObject(value = '''{"version":"4.0.0","gauges":{"dataSource.connection.pingTime":{"value":1},"rundeck.scheduler.quartz.runningExecutions":{"value":0},"rundeck.scheduler.quartz.threadPoolSize":{"value":10}},"counters":{"rundeck.scheduler.quartz.scheduledJobs":{"count":0},"userLogin.success":{"count":11}},"histograms":{},"meters":{"rundeck.services.AuthorizationService.systemAuthorization.evaluateMeter":{"count":0,"m15_rate":0.0,"m1_rate":0.0,"m5_rate":0.0,"mean_rate":0.0,"units":"events/second"}},"timers":{"rundeck.api.requests.requestTimer":{"count":60,"max":6.317398919,"mean":0.026001214274461268,"min":0.0023142080000000003,"p50":0.026092959000000002,"p75":0.030003541,"p95":0.038119417,"p98":0.040306041,"p99":0.044510167,"p999":0.044510167,"stddev":0.01834652011881323,"m15_rate":0.03909615395387536,"m1_rate":0.0397593563491449,"m5_rate":0.054026440399837165,"mean_rate":0.07388108803406175,"duration_units":"seconds","rate_units":"calls/second"}}}''')
+        )
     )
     @ApiResponse(
         responseCode = "404",
@@ -224,7 +229,11 @@ Use this endpoint to verify API connectivity and determine the correct API versi
     )
     @ApiResponse(
         responseCode = "200",
-        description = "Ping response"
+        description = "Ping response",
+        content = @Content(
+            mediaType = "text/plain",
+            examples = @ExampleObject(value = 'pong')
+        )
     )
     @ApiResponse(
         responseCode = "404",
@@ -256,7 +265,35 @@ Use this endpoint to verify API connectivity and determine the correct API versi
     )
     @ApiResponse(
         responseCode = "200",
-        description = "Thread dump"
+        description = "Thread dump",
+        content = @Content(
+            mediaType = "text/plain",
+            examples = @ExampleObject(value = '''"qtp646391393-124" id=124 state=TIMED_WAITING
+    - waiting on <0x05c9b4f9> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+    - locked <0x05c9b4f9> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+    at java.base@11.0.28/jdk.internal.misc.Unsafe.park(Native Method)
+    at java.base@11.0.28/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:234)
+    at java.base@11.0.28/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:2123)
+    at org.eclipse.jetty.util.BlockingArrayQueue.poll(BlockingArrayQueue.java:382)
+    at org.eclipse.jetty.util.thread.QueuedThreadPool$Runner.idleJobPoll(QueuedThreadPool.java:974)
+    at org.eclipse.jetty.util.thread.QueuedThreadPool$Runner.run(QueuedThreadPool.java:1018)
+    at java.base@11.0.28/java.lang.Thread.run(Thread.java:829)
+
+"pool-3-thread-13" id=120 state=TIMED_WAITING
+    - waiting on <0x569b5d5c> (a java.util.concurrent.SynchronousQueue$TransferStack)
+    - locked <0x569b5d5c> (a java.util.concurrent.SynchronousQueue$TransferStack)
+    at java.base@11.0.28/jdk.internal.misc.Unsafe.park(Native Method)
+    at java.base@11.0.28/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:234)
+    at java.base@11.0.28/java.util.concurrent.SynchronousQueue$TransferStack.awaitFulfill(SynchronousQueue.java:462)
+    at java.base@11.0.28/java.util.concurrent.SynchronousQueue$TransferStack.transfer(SynchronousQueue.java:361)
+    at java.base@11.0.28/java.util.concurrent.SynchronousQueue.poll(SynchronousQueue.java:937)
+    at java.base@11.0.28/java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1053)
+    at java.base@11.0.28/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1114)
+    at java.base@11.0.28/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)
+    at java.base@11.0.28/java.lang.Thread.run(Thread.java:829)
+
+... (additional threads omitted for brevity)''')
+        )
     )
     @ApiResponse(
         responseCode = "404",
@@ -288,7 +325,11 @@ Use this endpoint to verify API connectivity and determine the correct API versi
     )
     @ApiResponse(
         responseCode = "200",
-        description = "Healthcheck results"
+        description = "Healthcheck results",
+        content = @Content(
+            mediaType = "application/json",
+            examples = @ExampleObject(value = '''{"dataSource.connection.time":{"healthy":true,"message":"Datasource connection healthy with timeout 5 seconds","duration":5,"timestamp":"2025-11-20T16:31:54.697Z"},"quartz.scheduler.threadPool":{"healthy":true,"duration":0,"timestamp":"2025-11-20T16:31:54.691Z"}}''')
+        )
     )
     @ApiResponse(
         responseCode = "404",
