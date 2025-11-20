@@ -6204,4 +6204,39 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             result.size() == 2
             result.containsAll(initialListeners)
     }
+
+    def "updateScheduledExecStatistics calls jobStatsDataProvider with correct parameters"() {
+        given: "a job UUID and execution details"
+            def jobUuid = UUID.randomUUID().toString()
+            def executionId = 123L
+            def executionTime = 5000L
+            def status = "succeeded"
+            def dateCompleted = new Date()
+            def mockJobStatsDataProvider = Mock(GormJobStatsDataProvider)
+            service.jobStatsDataProvider = mockJobStatsDataProvider
+
+        when: "updateScheduledExecStatistics is called"
+            def result = service.updateScheduledExecStatistics(jobUuid, executionId, executionTime, status, dateCompleted)
+
+        then: "jobStatsDataProvider is called with correct parameters"
+            1 * mockJobStatsDataProvider.updateJobStats(jobUuid, executionId, executionTime, status, dateCompleted) >> true
+            result == true
+    }
+
+    def "updateScheduledExecStatistics passes status and dateCompleted correctly"() {
+        given: "different execution statuses"
+            def jobUuid = UUID.randomUUID().toString()
+            def executionId = 456L
+            def executionTime = 3000L
+            def dateCompleted = new Date()
+            def mockJobStatsDataProvider = Mock(GormJobStatsDataProvider)
+            service.jobStatsDataProvider = mockJobStatsDataProvider
+
+        when: "updateScheduledExecStatistics is called with failed status"
+            def result = service.updateScheduledExecStatistics(jobUuid, executionId, executionTime, "failed", dateCompleted)
+
+        then: "status and dateCompleted are passed correctly"
+            1 * mockJobStatsDataProvider.updateJobStats(jobUuid, executionId, executionTime, "failed", dateCompleted) >> true
+            result == true
+    }
 }

@@ -837,4 +837,36 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
     }
 
 
+    def "apiExecutionMetrics with useStats false delegates to executionService"() {
+        given:
+            request.api_version = 29
+            request.contentType = "application/json"
+            params.project = "Test"
+            // useStats defaults to false when not specified
+
+            def apiMock = Mock(ApiService)
+            controller.apiService = apiMock
+            controller.executionService = Mock(ExecutionService)
+            response.format = "json"
+
+        when:
+            def query = new ExecutionQuery()
+            controller.apiExecutionMetrics(query)
+
+        then:
+            1 * apiMock.requireApi(_, _, 29) >> true
+            1 * controller.executionService.queryExecutionMetrics(_) >> [
+                total: 5,
+                succeeded: 3,
+                failed: 2,
+                duration: [
+                    average: 10000,
+                    min: 5000,
+                    max: 15000
+                ]
+            ]
+            response.status == 200
+    }
+
+
 }
