@@ -86,6 +86,8 @@ import rundeck.services.workflow.StateMapping
 import javax.servlet.http.HttpServletResponse
 import java.text.ParseException
 import java.text.SimpleDateFormat
+import java.time.LocalDate
+
 /**
 * ExecutionController
 */
@@ -3680,7 +3682,6 @@ Note: This endpoint has the same query parameters and response as the `/executio
             "max"
         ])
 
-
         def controller = this
         withFormat {
             '*' {
@@ -3776,19 +3777,21 @@ Note: This endpoint has the same query parameters and response as the `/executio
             }
 
             // LAZY CLEANUP: Prune entries older than 90 days (only on cache miss)
+            def needsSave = false
             if (needsCacheUpdate) {
-                def pruneOlderThan = java.time.LocalDate.now().minusDays(90)
+                def pruneOlderThan = LocalDate.now().minusDays(90)
                 def prunedMetrics = dailyMetrics.findAll { dateStr, metrics ->
-                    java.time.LocalDate.parse(dateStr) >= pruneOlderThan
+                    LocalDate.parse(dateStr) >= pruneOlderThan
                 }
 
-                // Only update if we actually pruned something (avoid unnecessary writes)
+                // Check if we actually pruned something
                 if (prunedMetrics.size() < dailyMetrics.size()) {
                     statsMap.dailyMetrics = prunedMetrics
                     log.debug("[METRICS] Pruned ${dailyMetrics.size() - prunedMetrics.size()} old entries for job ${jobUuid}")
+                    needsSave = true  // Pruning happened, must save
                 }
 
-                // Update cache
+                // Update cache values
                 statsMap.total7day = total
                 statsMap.succeeded7day = succeeded
                 statsMap.failed7day = failed
@@ -3796,6 +3799,11 @@ Note: This endpoint has the same query parameters and response as the `/executio
                 statsMap.timedout7day = timedout
                 statsMap.avgDuration7day = avgDuration
                 statsMap.lastAggregated = today
+                needsSave = true  // Cache updated, must save
+            }
+
+            // Only save if something actually changed
+            if (needsSave) {
                 stats.setContentMap(statsMap)
                 stats.save(flush: true)
             }
