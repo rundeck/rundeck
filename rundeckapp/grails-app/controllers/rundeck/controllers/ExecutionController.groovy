@@ -77,10 +77,9 @@ import org.rundeck.util.Sizes
 import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
 import rundeck.Execution
-import rundeck.JobMetricsSnapshot
 import rundeck.ScheduledExecution
+import rundeck.ScheduledExecutionStats
 import rundeck.services.*
-import rundeck.services.JobMetricsSnapshotService
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.workflow.StateMapping
 
@@ -100,7 +99,6 @@ class ExecutionController extends ControllerBase{
     WorkflowService workflowService
     FileUploadService fileUploadService
     PluginService pluginService
-    JobMetricsSnapshotService jobMetricsSnapshotService  // RUN-3768
     ConfigurationService configurationService
 
     static allowedMethods = [
@@ -2935,6 +2933,7 @@ So a value of `2w` would return executions that completed within the last two we
             @Parameter(in=ParameterIn.QUERY,name="olderFilter",description="(same format as `recentFilter`) return executions that completed before the specified relative period of time.  E.g. a value of `30d` returns executions older than 30 days.",schema=@Schema(type="string")),
             @Parameter(in=ParameterIn.QUERY,name="userFilter",description="Username who started the execution",schema=@Schema(type="string")),
             @Parameter(in=ParameterIn.QUERY,name="executionTypeFilter",description="""specify the execution type, one of: `scheduled` (schedule trigger), `user` (user trigger), `user-scheduled` (user scheduled trigger). Since: v20""",schema=@Schema(type="string",allowableValues = ['scheduled','user','user-scheduled'])),
+            @Parameter(in=ParameterIn.QUERY,name="useStats",description="""if true, use snapshot-based metrics from SCHEDULED_EXECUTION_STATS table (fast, returns null if no stats exist). if false or not provided, use execution table query (slow, always returns data).""",schema=@Schema(type="boolean")),
             @Parameter(in=ParameterIn.QUERY,name="max",description="""maximum number of results to include in response. (default: 20)""",schema=@Schema(type="integer")),
             @Parameter(in=ParameterIn.QUERY,name="offset",description="""offset for first result to include. (default: 0)""",schema=@Schema(type="integer"))
         ]
@@ -3460,6 +3459,7 @@ So a value of `2w` would return executions that completed within the last two we
             @Parameter(in=ParameterIn.QUERY,name="olderFilter",description="(same format as `recentFilter`) return executions that completed before the specified relative period of time.  E.g. a value of `30d` returns executions older than 30 days.",schema=@Schema(type="string")),
             @Parameter(in=ParameterIn.QUERY,name="userFilter",description="Username who started the execution",schema=@Schema(type="string")),
             @Parameter(in=ParameterIn.QUERY,name="executionTypeFilter",description="""specify the execution type, one of: `scheduled` (schedule trigger), `user` (user trigger), `user-scheduled` (user scheduled trigger). Since: v20""",schema=@Schema(type="string",allowableValues = ['scheduled','user','user-scheduled'])),
+            @Parameter(in=ParameterIn.QUERY,name="useStats",description="""if true, use snapshot-based metrics from SCHEDULED_EXECUTION_STATS table (fast, returns null if no stats exist). if false or not provided, use execution table query (slow, always returns data).""",schema=@Schema(type="boolean")),
             @Parameter(in=ParameterIn.QUERY,name="max",description="""maximum number of results to include in response. (default: 20)""",schema=@Schema(type="integer")),
             @Parameter(in=ParameterIn.QUERY,name="offset",description="""offset for first result to include. (default: 0)""",schema=@Schema(type="integer"))
         ]
@@ -3613,42 +3613,49 @@ Note: This endpoint has the same query parameters and response as the `/executio
         }
 
 
-        // RUN-3768: Try to use snapshot-based metrics first
+        // RUN-3768: Use stats table OR execution table (no fallback)
         def metrics
         def startTime = System.currentTimeMillis()
-
-        // Check if snapshot-based metrics are enabled (feature flag)
-        def useSnapshot = grailsApplication.config.getProperty(
-            'rundeck.metrics.snapshot.enabled',
-            Boolean,
-            true
-        )
-
-        // Parse job ID from query
         def jobId = query.jobIdListFilter?.first()
 
-        if (useSnapshot && jobId) {
-            log.debug("[METRICS-API] Using snapshot for job ${jobId}")
-            metrics = getMetricsFromSnapshot(jobId)
+        // Check if user wants stats-based metrics
+        def useStats = params.boolean('useStats', false)
 
-            // Fallback to execution table if snapshot missing
+        if (useStats) {
+            // Use SCHEDULED_EXECUTION_STATS table (fast, no fallback)
+            log.debug("[METRICS-API] useStats=true, using stats table for job ${jobId}")
+
+            if (!jobId) {
+                return apiService.renderErrorFormat(
+                    response,
+                    [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.parameter.required',
+                        args  : ['jobIdListFilter is required when useStats=true']
+                    ]
+                )
+            }
+
+            metrics = getMetricsFromStats(jobId)
+
             if (!metrics) {
-                log.warn("[METRICS-API] Snapshot not found for job ${jobId}, falling back to execution query")
-                try {
-                    metrics = executionService.queryExecutionMetrics(query)
-                } catch (ExecutionQueryException e) {
-                    return apiService.renderErrorFormat(
-                        response,
-                        [
-                            status: HttpServletResponse.SC_BAD_REQUEST,
-                            code  : 'api.error.parameter.error',
-                            args  : [message(code: e.getErrorMessageCode())]
-                        ]
-                    )
-                }
+                // No stats exist - return empty metrics (NO FALLBACK to execution table)
+                log.debug("[METRICS-API] No stats found for job ${jobId}, returning empty metrics")
+                metrics = [
+                    total: 0,
+                    succeeded: 0,
+                    failed: 0,
+                    aborted: 0,
+                    timedout: 0,
+                    successRate: 0.0,
+                    duration: [average: 0],
+                    daily_breakdown: [:],
+                    hourly_heatmap: (0..23).collect { 0 }
+                ]
             }
         } else {
-            log.debug("[METRICS-API] Snapshot disabled or no job ID, using execution query")
+            // Use execution table query (slow, original implementation)
+            log.debug("[METRICS-API] useStats=false, using execution table query")
             try {
                 metrics = executionService.queryExecutionMetrics(query)
             } catch (ExecutionQueryException e) {
@@ -3705,43 +3712,132 @@ Note: This endpoint has the same query parameters and response as the `/executio
     }
 
     /**
-     * Get metrics from snapshot table (fast) - RUN-3768.
-     * Returns null if snapshot doesn't exist.
+     * Get metrics from scheduled_execution_stats table (fast) - RUN-3768.
+     * Returns null if stats don't exist.
      */
-    private Map getMetricsFromSnapshot(String jobUuid) {
+    private Map getMetricsFromStats(String jobUuid) {
         try {
-            // Find job by UUID
             def job = ScheduledExecution.findByUuid(jobUuid)
             if (!job) {
                 log.warn("[METRICS-API] Job not found: ${jobUuid}")
                 return null
             }
 
-            // Get snapshot
-            def snapshot = JobMetricsSnapshot.get(job.id)
-            if (!snapshot) {
-                log.debug("[METRICS-API] No snapshot found for job ${job.id}")
+            def stats = ScheduledExecutionStats.findByJobUuid(jobUuid)
+            if (!stats) {
+                log.debug("[METRICS-API] No stats found for job ${jobUuid}")
                 return null
             }
 
-            // Return metrics in same format as ExecutionService.queryExecutionMetrics()
-            // PLUS the enhanced daily_breakdown and hourly_heatmap from snapshots
-            def combined = snapshot.getCombinedMetrics()
+            def statsMap = stats.getContentMap()
+            def dailyMetrics = statsMap.dailyMetrics ?: [:]
+
+            if (dailyMetrics.isEmpty()) {
+                log.debug("[METRICS-API] No daily metrics data for job ${jobUuid}")
+                return null  // No metrics data
+            }
+
+            def today = java.time.LocalDate.now().toString()
+            def lastAggregated = statsMap.lastAggregated
+
+            // Always compute last7Days for daily_breakdown and hourly_heatmap
+            def cutoff = java.time.LocalDate.now().minusDays(7)
+            def last7Days = dailyMetrics.findAll { dateStr, metrics ->
+                java.time.LocalDate.parse(dateStr) >= cutoff
+            }
+
+            // Variables for aggregated totals
+            def total, succeeded, failed, aborted, timedout, avgDuration
+            def needsCacheUpdate = false
+
+            // Check if cache is valid
+            if (lastAggregated == today && statsMap.total7day != null) {
+                // Cache hit - use cached aggregates
+                log.debug("[METRICS-API] Cache hit for job ${jobUuid}, lastAggregated=${lastAggregated}")
+                total = statsMap.total7day ?: 0
+                succeeded = statsMap.succeeded7day ?: 0
+                failed = statsMap.failed7day ?: 0
+                aborted = statsMap.aborted7day ?: 0
+                timedout = statsMap.timedout7day ?: 0
+                avgDuration = statsMap.avgDuration7day ?: 0
+            } else {
+                // Cache miss - recompute from dailyMetrics
+                log.debug("[METRICS-API] Cache miss for job ${jobUuid}, recomputing from ${dailyMetrics.size()} days")
+
+                total = last7Days.values().sum { it.total } ?: 0
+                succeeded = last7Days.values().sum { it.succeeded } ?: 0
+                failed = last7Days.values().sum { it.failed } ?: 0
+                aborted = last7Days.values().sum { it.aborted } ?: 0
+                timedout = last7Days.values().sum { it.timedout } ?: 0
+                def totalDuration = last7Days.values().sum { it.duration } ?: 0
+                avgDuration = total > 0 ? (totalDuration / total) : 0
+
+                needsCacheUpdate = true
+            }
+
+            // LAZY CLEANUP: Prune entries older than 90 days (only on cache miss)
+            if (needsCacheUpdate) {
+                def pruneOlderThan = java.time.LocalDate.now().minusDays(90)
+                def prunedMetrics = dailyMetrics.findAll { dateStr, metrics ->
+                    java.time.LocalDate.parse(dateStr) >= pruneOlderThan
+                }
+
+                // Only update if we actually pruned something (avoid unnecessary writes)
+                if (prunedMetrics.size() < dailyMetrics.size()) {
+                    statsMap.dailyMetrics = prunedMetrics
+                    log.debug("[METRICS] Pruned ${dailyMetrics.size() - prunedMetrics.size()} old entries for job ${jobUuid}")
+                }
+
+                // Update cache
+                statsMap.total7day = total
+                statsMap.succeeded7day = succeeded
+                statsMap.failed7day = failed
+                statsMap.aborted7day = aborted
+                statsMap.timedout7day = timedout
+                statsMap.avgDuration7day = avgDuration
+                statsMap.lastAggregated = today
+                stats.setContentMap(statsMap)
+                stats.save(flush: true)
+            }
+
+            // Return daily breakdown in same format as stored - object with dates as keys
+            def dailyBreakdown = last7Days.collectEntries { dateStr, metrics ->
+                [dateStr, [
+                    total: metrics.total ?: 0,
+                    succeeded: metrics.succeeded ?: 0,
+                    failed: metrics.failed ?: 0,
+                    aborted: metrics.aborted ?: 0,
+                    timedout: metrics.timedout ?: 0,
+                    duration: metrics.duration ?: 0
+                ]]
+            }
+
+            // Aggregate hourly heatmap across all days
+            def hourlyHeatmap = (0..23).collect { hour ->
+                last7Days.values().sum { dayMetrics ->
+                    (dayMetrics.hourly && dayMetrics.hourly[hour]) ? dayMetrics.hourly[hour] : 0
+                } ?: 0
+            }
+
+            // Calculate success rate
+            def successRate = total > 0 ? (succeeded * 100.0 / total) : 0.0
 
             return [
-                total: combined.total,
-                succeeded: combined.succeeded,
-                failed: combined.failed,
-                aborted: combined.aborted,
-                timedout: combined.timedout,
-                successRate: combined.successRate,
-                duration: combined.duration,
-                daily_breakdown: snapshot.getCombinedDailyBreakdown(),
-                hourly_heatmap: snapshot.getCombinedHourlyHeatmap()
+                total: total,
+                succeeded: succeeded,
+                failed: failed,
+                aborted: aborted,
+                timedout: timedout,
+                successRate: successRate,
+                duration: [
+                    average: avgDuration
+                ],
+                daily_breakdown: dailyBreakdown,
+                hourly_heatmap: hourlyHeatmap
             ]
 
         } catch (Exception e) {
-            log.error("[METRICS-API] Error retrieving snapshot for job ${jobUuid}", e)
+            log.error("[METRICS-API] Error retrieving stats for job ${jobUuid}", e)
             return null  // Fallback to execution query
         }
     }

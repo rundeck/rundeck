@@ -685,7 +685,7 @@ class ExecutionJob implements InterruptableJob {
                 "Execution ${execution.id} update job stats (${scheduledExecutionId}):",
                 executionService.&isApplicationShutdown
             ) {
-                savedJobState = executionService.updateScheduledExecStatistics(scheduledExecutionId, execution.id, time)
+                savedJobState = executionService.updateScheduledExecStatistics(scheduledExecutionId, execution.id, time, resultMap.status as String, dateCompleted)
                 savedJobState
             }
             if (!savedJobState) {

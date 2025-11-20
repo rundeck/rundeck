@@ -186,7 +186,6 @@ import rundeck.services.scm.ScmJobImporter
 import rundeck.services.workflow.DefaultStateExecutionFileProducer
 import rundeck.services.workflow.DefaultWorkflowStateDataLoader
 import rundeckapp.init.ExternalStaticResourceConfigurer
-import rundeckapp.init.JobMetricsEventSubscriber
 import rundeckapp.init.PluginCachePreloader
 import rundeckapp.init.RundeckConfigReloader
 import rundeckapp.init.RundeckExtendedMessageBundle
@@ -964,7 +963,6 @@ beans={
     }
     rundeckConfigReloader(RundeckConfigReloader)
     pluginCachePreloader(PluginCachePreloader)
-    jobMetricsEventSubscriber(JobMetricsEventSubscriber)
     interceptorHelper(DefaultInterceptorHelper)
 
     jobOptionUrlExpander(DefaultJobOptionUrlExpander) {

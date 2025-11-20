@@ -3268,13 +3268,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     /**
      * Update a scheduledExecution statistics with a successful execution duration
-     * @param schedId
+     * @param jobUuid
+     * @param eId
+     * @param time
      * @param execution
      * @return
      */
     @NotTransactional
-    def updateScheduledExecStatistics(String jobUuid, eId, long time) {
-        return jobStatsDataProvider.updateJobStats(jobUuid, eId, time)
+    def updateScheduledExecStatistics(String jobUuid, eId, long time, String status, Date dateCompleted) {
+        return jobStatsDataProvider.updateJobStats(jobUuid, eId, time, status, dateCompleted)
     }
 
     /**
