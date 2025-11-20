@@ -154,42 +154,14 @@
 
           </g:ifExecutionMode>
           <li id="appAdmin">
-            <div class="dropdown">
-              <a data-toggle="dropdown" class="dropdown-toggle cursor-pointer">
-                <i class="fas fa-cog fa-lg"></i>
-              </a>
-              <g:render template="/menu/sysConfigNavMenu"/>
-            </div>
+            <ui-socket section="mainbar-sys-config-menu" location="main"></ui-socket>
           </li>
           <li id="appUser">
-            <div class="dropdown">
-              <a data-toggle="dropdown" class="dropdown-toggle cursor-pointer" id="userLabel">
-                <i class="fas fa-user fa-lg"></i>
-              </a>
-              <g:render template="/menu/appUserMenu"/>
-            </div>
+            <ui-socket section="mainbar-app-user-menu" location="main"></ui-socket>
           </li>
         </g:if>
         <ui-socket section="navbar-main-menu" location="after"></ui-socket>
       </ul>
-      <g:if test="${session?.user && request.subject}">
-        <g:render template="/menu/sysConfigNavMenuScripts"/>
-      </g:if>
     </div>
   </nav>
-%{--  <g:javascript>--}%
-%{--    jQuery(function(){--}%
-%{--      jQuery('.navbar-minimize button, .navbar-minimize a.triangle').click(function(){--}%
-%{--        jQuery('body').toggleClass('sidebar-mini');--}%
-%{--        var sidebarOpen = localStorage.getItem('sidebarOpen')--}%
-%{--        if(sidebarOpen === 'true'){--}%
-%{--          localStorage.setItem('sidebarOpen', 'false')--}%
-%{--        } else {--}%
-%{--          localStorage.setItem('sidebarOpen', 'true')--}%
-%{--        }--}%
-%{--      });--}%
-%{--      jQuery('button.navbar-toggle').click(function(e){--}%
-%{--        jQuery('body').toggleClass('nav-open');--}%
-%{--      });--}%
-%{--    })--}%
-%{--  </g:javascript>--}%
+
