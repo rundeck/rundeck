@@ -194,6 +194,15 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         responseCode = "200",
         description = "Metrics data"
     )
+    @ApiResponse(
+        responseCode = "404",
+        description = "Error response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse),
+            examples = @ExampleObject('{"error":true,"errorCode":"api.error.code","message":"not ok","apiversion":41}')
+        )
+    )
     @Tag(name = "Metrics")
     def apiMetricsData() {
         apiMetrics('metrics')
@@ -216,6 +225,15 @@ Use this endpoint to verify API connectivity and determine the correct API versi
     @ApiResponse(
         responseCode = "200",
         description = "Ping response"
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "Error response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse),
+            examples = @ExampleObject('{"error":true,"errorCode":"api.error.code","message":"not ok","apiversion":41}')
+        )
     )
     @Tag(name = "Metrics")
     def apiMetricsPing() {
@@ -240,6 +258,15 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         responseCode = "200",
         description = "Thread dump"
     )
+    @ApiResponse(
+        responseCode = "404",
+        description = "Error response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse),
+            examples = @ExampleObject('{"error":true,"errorCode":"api.error.code","message":"not ok","apiversion":41}')
+        )
+    )
     @Tag(name = "Metrics")
     def apiMetricsThreads() {
         apiMetrics('threads')
@@ -262,6 +289,15 @@ Use this endpoint to verify API connectivity and determine the correct API versi
     @ApiResponse(
         responseCode = "200",
         description = "Healthcheck results"
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "Error response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse),
+            examples = @ExampleObject('{"error":true,"errorCode":"api.error.code","message":"not ok","apiversion":41}')
+        )
     )
     @Tag(name = "Metrics")
     def apiMetricsHealthcheck() {
