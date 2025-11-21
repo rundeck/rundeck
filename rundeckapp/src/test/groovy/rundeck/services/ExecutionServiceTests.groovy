@@ -92,7 +92,7 @@ class ExecutionServiceTests extends Specification implements DataTest {
         Execution e1 = new Execution(
                 scheduledExecution: se1,
                 project: "Test",
-                status: "true",
+                status: "succeeded",
                 dateStarted: new Date(),
                 dateCompleted: new Date(),
                 user: 'adam',
@@ -104,7 +104,7 @@ class ExecutionServiceTests extends Specification implements DataTest {
         Execution e2 = new Execution(
                 scheduledExecution: se2,
                 project: "Test",
-                status: "true",
+                status: "succeeded",
                 dateStarted: new Date(),
                 dateCompleted: new Date(),
                 user: 'bob',
@@ -115,7 +115,7 @@ class ExecutionServiceTests extends Specification implements DataTest {
         Execution e3 = new Execution(
                 scheduledExecution: se3,
                 project: "Test",
-                status: "true",
+                status: "succeeded",
                 dateStarted: new Date(),
                 dateCompleted: new Date(),
                 user: 'chuck',
@@ -211,7 +211,7 @@ class ExecutionServiceTests extends Specification implements DataTest {
         Execution e1 = new Execution(
                 scheduledExecution: execs[0].scheduledExecution,
                 project: "Test",
-                status: "false",
+                status: "failed",
                 dateStarted: new Date(),
                 dateCompleted: new Date(),
                 user: 'adam',
