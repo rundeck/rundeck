@@ -202,7 +202,7 @@ databaseChangeLog = {
         createIndex(indexName: "EXEC_IDX_PROJECT_STATUS_DATE", tableName: "execution", unique: false) {
             column(name: "project")
             column(name: "status")
-            column(name: "date_completed", descending: true)
+            column(name: "date_completed")
         }
     }
 
