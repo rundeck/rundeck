@@ -4095,7 +4095,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         and {
           order('dateCompleted', 'desc')
-          order('dateStarted', 'desc')
         }
       }
     }
