@@ -79,7 +79,20 @@ class AccessControlPage extends BasePage {
     }
 
     List<WebElement> getPoliciesTitleList() {
+        waitForElementVisible storedPoliciesListBy
         el storedPoliciesListBy findElements policiesTitleBy
+    }
+
+    void waitForPoliciesCountToBe(int expectedCount) {
+        waitForNumberOfElementsToBe policiesTitleBy, expectedCount
+    }
+
+    void waitForPoliciesCountToBeAtLeast(int minimumCount) {
+        if (minimumCount <= 0) {
+            waitForNumberOfElementsToBeMoreThan policiesTitleBy, 0
+        } else {
+            waitForNumberOfElementsToBeMoreThan policiesTitleBy, minimumCount - 1
+        }
     }
 
     WebElement getActionDropdown() {
