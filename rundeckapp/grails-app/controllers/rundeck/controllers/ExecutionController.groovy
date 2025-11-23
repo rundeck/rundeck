@@ -2936,6 +2936,7 @@ So a value of `2w` would return executions that completed within the last two we
             @Parameter(in=ParameterIn.QUERY,name="userFilter",description="Username who started the execution",schema=@Schema(type="string")),
             @Parameter(in=ParameterIn.QUERY,name="executionTypeFilter",description="""specify the execution type, one of: `scheduled` (schedule trigger), `user` (user trigger), `user-scheduled` (user scheduled trigger). Since: v20""",schema=@Schema(type="string",allowableValues = ['scheduled','user','user-scheduled'])),
             @Parameter(in=ParameterIn.QUERY,name="useStats",description="""if true, use snapshot-based metrics from SCHEDULED_EXECUTION_STATS table (fast, returns null if no stats exist). if false or not provided, use execution table query (slow, always returns data).""",schema=@Schema(type="boolean")),
+            @Parameter(in=ParameterIn.QUERY,name="groupByJob",description="""if true with useStats=true, returns metrics for all jobs in the project (batch mode). Requires project parameter. Returns format: {jobs: {uuid1: metrics, uuid2: metrics, ...}}. RUN-3768 Phase 5.""",schema=@Schema(type="boolean")),
             @Parameter(in=ParameterIn.QUERY,name="max",description="""maximum number of results to include in response. (default: 20)""",schema=@Schema(type="integer")),
             @Parameter(in=ParameterIn.QUERY,name="offset",description="""offset for first result to include. (default: 0)""",schema=@Schema(type="integer"))
         ]
@@ -3462,6 +3463,7 @@ So a value of `2w` would return executions that completed within the last two we
             @Parameter(in=ParameterIn.QUERY,name="userFilter",description="Username who started the execution",schema=@Schema(type="string")),
             @Parameter(in=ParameterIn.QUERY,name="executionTypeFilter",description="""specify the execution type, one of: `scheduled` (schedule trigger), `user` (user trigger), `user-scheduled` (user scheduled trigger). Since: v20""",schema=@Schema(type="string",allowableValues = ['scheduled','user','user-scheduled'])),
             @Parameter(in=ParameterIn.QUERY,name="useStats",description="""if true, use snapshot-based metrics from SCHEDULED_EXECUTION_STATS table (fast, returns null if no stats exist). if false or not provided, use execution table query (slow, always returns data).""",schema=@Schema(type="boolean")),
+            @Parameter(in=ParameterIn.QUERY,name="groupByJob",description="""if true with useStats=true, returns metrics for all jobs in the project (batch mode). Requires project parameter. Returns format: {jobs: {uuid1: metrics, uuid2: metrics, ...}}. RUN-3768 Phase 5.""",schema=@Schema(type="boolean")),
             @Parameter(in=ParameterIn.QUERY,name="max",description="""maximum number of results to include in response. (default: 20)""",schema=@Schema(type="integer")),
             @Parameter(in=ParameterIn.QUERY,name="offset",description="""offset for first result to include. (default: 0)""",schema=@Schema(type="integer"))
         ]
@@ -3622,6 +3624,32 @@ Note: This endpoint has the same query parameters and response as the `/executio
 
         // Check if user wants stats-based metrics
         def useStats = params.boolean('useStats', false)
+        def groupByJob = params.boolean('groupByJob', false)
+
+        // RUN-3768 Phase 5: Batch mode support
+        if (useStats && groupByJob) {
+            // Batch mode: Get metrics for all jobs in project
+            def projectName = params.project
+            if (!projectName) {
+                return apiService.renderErrorFormat(
+                    response,
+                    [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.parameter.required',
+                        args  : ['project is required when groupByJob=true']
+                    ]
+                )
+            }
+
+            log.debug("[METRICS-API] Batch mode for project ${projectName}")
+            metrics = getMetricsBatch(projectName)
+
+            def elapsed = System.currentTimeMillis() - startTime
+            log.debug("[METRICS-API] Batch request completed in ${elapsed}ms")
+
+            render metrics as JSON
+            return
+        }
 
         if (useStats) {
             // Use SCHEDULED_EXECUTION_STATS table (fast, no fallback)
@@ -3847,6 +3875,55 @@ Note: This endpoint has the same query parameters and response as the `/executio
         } catch (Exception e) {
             log.error("[METRICS-API] Error retrieving stats for job ${jobUuid}", e)
             return null  // Fallback to execution query
+        }
+    }
+
+    /**
+     * Get metrics for all jobs in a project (batch mode) - RUN-3768 Phase 5.
+     * Returns per-job breakdown for efficient job list rendering.
+     * This method requires the feature flag rundeck.feature.executionDailyMetrics.enabled=true
+     *
+     * @param projectName The project name to query jobs for
+     * @return Map with format: [jobs: [jobUuid1: metrics, jobUuid2: metrics, ...]]
+     */
+    private Map getMetricsBatch(String projectName) {
+        def startTime = System.currentTimeMillis()
+
+        try {
+            def jobs = ScheduledExecution.findAllByProject(projectName)
+            def result = [jobs: [:]]
+
+            log.debug("[METRICS-API-BATCH] Fetching metrics for ${jobs.size()} jobs in project ${projectName}")
+
+            jobs.each { job ->
+                def metrics = getMetricsFromStats(job.uuid)
+
+                if (!metrics) {
+                    // No stats exist - return empty metrics for this job
+                    metrics = [
+                        total: 0,
+                        succeeded: 0,
+                        failed: 0,
+                        aborted: 0,
+                        timedout: 0,
+                        successRate: 0.0,
+                        duration: [average: 0],
+                        daily_breakdown: [:],
+                        hourly_heatmap: (0..23).collect { 0 }
+                    ]
+                }
+
+                result.jobs[job.uuid] = metrics
+            }
+
+            def elapsed = System.currentTimeMillis() - startTime
+            log.debug("[METRICS-API-BATCH] Retrieved metrics for ${result.jobs.size()}/${jobs.size()} jobs in ${elapsed}ms")
+
+            return result
+
+        } catch (Exception e) {
+            log.error("[METRICS-API-BATCH] Error retrieving batch metrics for project ${projectName}", e)
+            return [jobs: [:]]
         }
     }
 

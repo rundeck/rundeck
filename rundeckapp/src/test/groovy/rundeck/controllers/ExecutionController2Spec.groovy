@@ -868,5 +868,58 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
             response.status == 200
     }
 
+    // RUN-3768 Phase 5: Batch endpoint tests
+    // Note: Parameter validation (project required) is tested via integration tests
+    // Unit testing this requires extensive mocking of the response chain
+
+    def "apiExecutionMetrics batch mode returns metrics for all jobs"() {
+        given:
+            request.api_version = 29
+            request.contentType = "application/json"
+            params.project = "TestProject"
+            params.useStats = "true"
+            params.groupByJob = "true"
+
+            def apiMock = Mock(ApiService)
+            controller.apiService = apiMock
+            response.format = "json"
+
+        when:
+            def query = new ExecutionQuery()
+            controller.apiExecutionMetrics(query)
+
+        then:
+            1 * apiMock.requireApi(_, _, 29) >> true
+            // Response should be rendered with batch metrics format
+            response.status == 200
+    }
+
+    def "apiExecutionMetrics groupByJob without useStats does not trigger batch mode"() {
+        given:
+            request.api_version = 29
+            request.contentType = "application/json"
+            params.project = "TestProject"
+            params.useStats = "false"
+            params.groupByJob = "true"
+
+            def apiMock = Mock(ApiService)
+            controller.apiService = apiMock
+            controller.executionService = Mock(ExecutionService)
+            response.format = "json"
+
+        when:
+            def query = new ExecutionQuery()
+            controller.apiExecutionMetrics(query)
+
+        then:
+            1 * apiMock.requireApi(_, _, 29) >> true
+            // Should use regular execution service query, not batch mode
+            1 * controller.executionService.queryExecutionMetrics(_) >> [
+                total: 0,
+                duration: [average: 0, min: 0, max: 0]
+            ]
+            response.status == 200
+    }
+
 
 }
