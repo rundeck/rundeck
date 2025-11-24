@@ -89,7 +89,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             }
             def saveStatsComplete = false
             def fail3times = throwXTimes(3)
-            retryMax * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }) >> {
+            retryMax * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }, _, _) >> {
                 fail3times()
                 saveStatsComplete = true
             }
@@ -192,7 +192,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             }, _, _
             ) >> new ExecutionCompleteEvent()
 
-            1 * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }) >> true
+            1 * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }, _, _) >> true
     }
 
     def testSaveStateWithFailureNoJob() {
@@ -239,7 +239,7 @@ class ExecutionJobIntegrationSpec extends Specification {
         then:
             !result
 
-            1 * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }) >> true
+            1 * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }, _, _) >> true
     }
 
     def testSaveStateWithFailureOnNotification() {
@@ -290,7 +290,7 @@ class ExecutionJobIntegrationSpec extends Specification {
         then:
         result
 
-        1 * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }) >> true
+        1 * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }, _, _) >> true
     }
 
 
