@@ -172,26 +172,3 @@ grails.plugin.springsecurity.logout.handlerNames = [
 grails.plugin.springsecurity.providerNames = [
         'anonymousAuthenticationProvider',
         'rememberMeAuthenticationProvider']
-
-// Job Metrics Snapshot Configuration (RUN-3768)
-rundeck {
-    metrics {
-        snapshot {
-            // Enable/disable snapshot-based metrics (feature flag)
-            enabled = true  // RUN-3768: Enabled to use snapshot table
-
-            // Nightly rebuild schedule (cron expression)
-            rebuildCron = '0 0 2 * * ?'  // 2:00 AM daily
-
-            // How many days of historical data to include
-            historyDays = 7
-
-            // Real-time update batching (covered in Phase 3)
-            realtimeUpdates {
-                enabled = true
-                batchSize = 100
-                flushIntervalSeconds = 5
-            }
-        }
-    }
-}
