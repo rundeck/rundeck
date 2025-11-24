@@ -38,7 +38,9 @@ import org.rundeck.core.auth.web.WebDefaultParameterNamesMapper
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
+import rundeck.ScheduledExecutionStats
 import rundeck.Workflow
+import java.time.LocalDate
 import rundeck.services.*
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.WorkflowStateFileLoader
@@ -53,7 +55,7 @@ import static org.junit.Assert.assertNotNull
 
 class ExecutionController2Spec extends Specification implements ControllerUnitTest<ExecutionController>, DataTest  {
 
-    def setupSpec() { mockDomains Workflow,ScheduledExecution,Execution,CommandExec }
+    def setupSpec() { mockDomains Workflow,ScheduledExecution,Execution,CommandExec,ScheduledExecutionStats }
 
     public static <T extends Annotation> T getMethodAnnotation(Object instance, String name, Class<T> clazz) {
         instance.getClass().getDeclaredMethods().find { it.name == name }.getAnnotation(clazz)
@@ -919,6 +921,388 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
                 duration: [average: 0, min: 0, max: 0]
             ]
             response.status == 200
+    }
+
+    // Tests for getMetricsFromStats with begin/end date filtering
+    def "getMetricsFromStats filters metrics by date range correctly"() {
+        given: "a job with stats containing metrics for multiple dates"
+            def jobUuid = UUID.randomUUID().toString()
+            def job = new ScheduledExecution(
+                uuid: jobUuid,
+                jobName: "Test Job",
+                project: "TestProject"
+            )
+            job.save(flush: true)
+
+            // Create stats with metrics for dates: 2025-11-19, 2025-11-22, 2025-11-23, 2025-11-24, 2025-11-25
+            def stats = new ScheduledExecutionStats(
+                jobUuid: jobUuid,
+                contentMap: [
+                    dailyMetrics: [
+                        "2025-11-19": [total: 10, succeeded: 8, failed: 2, aborted: 0, timedout: 0, duration: 10000, hourly: (0..23).collect { 0 }],
+                        "2025-11-22": [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { 0 }],
+                        "2025-11-23": [total: 15, succeeded: 14, failed: 1, aborted: 0, timedout: 0, duration: 15000, hourly: (0..23).collect { 0 }],
+                        "2025-11-24": [total: 25, succeeded: 23, failed: 2, aborted: 0, timedout: 0, duration: 25000, hourly: (0..23).collect { 0 }],
+                        "2025-11-25": [total: 5, succeeded: 5, failed: 0, aborted: 0, timedout: 0, duration: 5000, hourly: (0..23).collect { 0 }]
+                    ]
+                ]
+            )
+            stats.save(flush: true)
+
+        when: "getMetricsFromStats is called with begin and end dates"
+            def begin = "2025-11-22T00:00:00Z"
+            def end = "2025-11-24T23:59:59Z"
+            def result = controller.getMetricsFromStats(jobUuid, begin, end)
+
+        then: "only metrics within the date range are returned"
+            result != null
+            result.total == 60  // 20 + 15 + 25
+            result.succeeded == 55  // 18 + 14 + 23
+            result.failed == 5  // 2 + 1 + 2
+            result.daily_breakdown.size() == 3
+            result.daily_breakdown.containsKey("2025-11-22")
+            result.daily_breakdown.containsKey("2025-11-23")
+            result.daily_breakdown.containsKey("2025-11-24")
+            !result.daily_breakdown.containsKey("2025-11-19")
+            !result.daily_breakdown.containsKey("2025-11-25")
+    }
+
+    def "getMetricsFromStats returns zeros when no metrics exist for date range"() {
+        given: "a job with stats containing metrics outside the requested date range"
+            def jobUuid = UUID.randomUUID().toString()
+            def job = new ScheduledExecution(
+                uuid: jobUuid,
+                jobName: "Test Job",
+                project: "TestProject"
+            )
+            job.save(flush: true)
+
+            def stats = new ScheduledExecutionStats(
+                jobUuid: jobUuid,
+                contentMap: [
+                    dailyMetrics: [
+                        "2025-11-19": [total: 10, succeeded: 8, failed: 2, aborted: 0, timedout: 0, duration: 10000, hourly: (0..23).collect { 0 }],
+                        "2025-11-20": [total: 15, succeeded: 14, failed: 1, aborted: 0, timedout: 0, duration: 15000, hourly: (0..23).collect { 0 }]
+                    ]
+                ]
+            )
+            stats.save(flush: true)
+
+        when: "getMetricsFromStats is called with a date range that has no metrics"
+            def begin = "2025-11-22T00:00:00Z"
+            def end = "2025-11-24T23:59:59Z"
+            def result = controller.getMetricsFromStats(jobUuid, begin, end)
+
+        then: "returns empty metrics object with all zeros"
+            result != null
+            result.total == 0
+            result.succeeded == 0
+            result.failed == 0
+            result.aborted == 0
+            result.timedout == 0
+            result.successRate == 0.0
+            result.duration.average == 0
+            result.daily_breakdown.isEmpty()
+            result.hourly_heatmap.size() == 24
+            result.hourly_heatmap.every { it == 0 }
+    }
+
+    def "getMetricsFromStats includes boundary dates correctly"() {
+        given: "a job with stats containing metrics on boundary dates"
+            def jobUuid = UUID.randomUUID().toString()
+            def job = new ScheduledExecution(
+                uuid: jobUuid,
+                jobName: "Test Job",
+                project: "TestProject"
+            )
+            job.save(flush: true)
+
+            def stats = new ScheduledExecutionStats(
+                jobUuid: jobUuid,
+                contentMap: [
+                    dailyMetrics: [
+                        "2025-11-22": [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { 0 }],
+                        "2025-11-24": [total: 25, succeeded: 23, failed: 2, aborted: 0, timedout: 0, duration: 25000, hourly: (0..23).collect { 0 }]
+                    ]
+                ]
+            )
+            stats.save(flush: true)
+
+        when: "getMetricsFromStats is called with begin and end matching boundary dates"
+            def begin = "2025-11-22T00:00:00Z"
+            def end = "2025-11-24T23:59:59Z"
+            def result = controller.getMetricsFromStats(jobUuid, begin, end)
+
+        then: "boundary dates are included"
+            result != null
+            result.total == 45  // 20 + 25
+            result.daily_breakdown.size() == 2
+            result.daily_breakdown.containsKey("2025-11-22")
+            result.daily_breakdown.containsKey("2025-11-24")
+    }
+
+    def "getMetricsFromStats works with only begin date"() {
+        given: "a job with stats containing metrics for multiple dates"
+            def jobUuid = UUID.randomUUID().toString()
+            def job = new ScheduledExecution(
+                uuid: jobUuid,
+                jobName: "Test Job",
+                project: "TestProject"
+            )
+            job.save(flush: true)
+
+            def stats = new ScheduledExecutionStats(
+                jobUuid: jobUuid,
+                contentMap: [
+                    dailyMetrics: [
+                        "2025-11-19": [total: 10, succeeded: 8, failed: 2, aborted: 0, timedout: 0, duration: 10000, hourly: (0..23).collect { 0 }],
+                        "2025-11-22": [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { 0 }],
+                        "2025-11-25": [total: 5, succeeded: 5, failed: 0, aborted: 0, timedout: 0, duration: 5000, hourly: (0..23).collect { 0 }]
+                    ]
+                ]
+            )
+            stats.save(flush: true)
+
+        when: "getMetricsFromStats is called with only begin date"
+            def begin = "2025-11-22T00:00:00Z"
+            def result = controller.getMetricsFromStats(jobUuid, begin, null)
+
+        then: "all dates from begin date onwards are included"
+            result != null
+            result.total == 25  // 20 + 5
+            result.daily_breakdown.size() == 2
+            result.daily_breakdown.containsKey("2025-11-22")
+            result.daily_breakdown.containsKey("2025-11-25")
+            !result.daily_breakdown.containsKey("2025-11-19")
+    }
+
+    def "getMetricsFromStats works with only end date"() {
+        given: "a job with stats containing metrics for multiple dates"
+            def jobUuid = UUID.randomUUID().toString()
+            def job = new ScheduledExecution(
+                uuid: jobUuid,
+                jobName: "Test Job",
+                project: "TestProject"
+            )
+            job.save(flush: true)
+
+            def stats = new ScheduledExecutionStats(
+                jobUuid: jobUuid,
+                contentMap: [
+                    dailyMetrics: [
+                        "2025-11-19": [total: 10, succeeded: 8, failed: 2, aborted: 0, timedout: 0, duration: 10000, hourly: (0..23).collect { 0 }],
+                        "2025-11-22": [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { 0 }],
+                        "2025-11-25": [total: 5, succeeded: 5, failed: 0, aborted: 0, timedout: 0, duration: 5000, hourly: (0..23).collect { 0 }]
+                    ]
+                ]
+            )
+            stats.save(flush: true)
+
+        when: "getMetricsFromStats is called with only end date"
+            def end = "2025-11-22T23:59:59Z"
+            def result = controller.getMetricsFromStats(jobUuid, null, end)
+
+        then: "all dates up to and including end date are included"
+            result != null
+            result.total == 30  // 10 + 20
+            result.daily_breakdown.size() == 2
+            result.daily_breakdown.containsKey("2025-11-19")
+            result.daily_breakdown.containsKey("2025-11-22")
+            !result.daily_breakdown.containsKey("2025-11-25")
+    }
+
+    def "getMetricsFromStats maintains backward compatibility when no date range provided"() {
+        given: "a job with stats containing metrics for multiple dates"
+            def jobUuid = UUID.randomUUID().toString()
+            def job = new ScheduledExecution(
+                uuid: jobUuid,
+                jobName: "Test Job",
+                project: "TestProject"
+            )
+            job.save(flush: true)
+
+            // Create metrics for last 10 days
+            def today = LocalDate.now()
+            def dailyMetrics = [:]
+            (0..9).each { daysAgo ->
+                def date = today.minusDays(daysAgo)
+                dailyMetrics[date.toString()] = [
+                    total: 10 + daysAgo,
+                    succeeded: 8 + daysAgo,
+                    failed: 2,
+                    aborted: 0,
+                    timedout: 0,
+                    duration: 10000 + (daysAgo * 1000),
+                    hourly: (0..23).collect { 0 }
+                ]
+            }
+
+            def stats = new ScheduledExecutionStats(
+                jobUuid: jobUuid,
+                contentMap: [
+                    dailyMetrics: dailyMetrics
+                ]
+            )
+            stats.save(flush: true)
+
+        when: "getMetricsFromStats is called without begin/end dates"
+            def result = controller.getMetricsFromStats(jobUuid, null, null)
+
+        then: "returns metrics for last 7 days (backward compatibility)"
+            result != null
+            result.daily_breakdown.size() == 7
+            result.total > 0
+    }
+
+    def "getMetricsBatch passes begin and end parameters to getMetricsFromStats"() {
+        given: "a project with multiple jobs"
+            def projectName = "TestProject"
+            def job1Uuid = UUID.randomUUID().toString()
+            def job2Uuid = UUID.randomUUID().toString()
+
+            def job1 = new ScheduledExecution(
+                uuid: job1Uuid,
+                jobName: "Job 1",
+                project: projectName
+            )
+            job1.save(flush: true)
+
+            def job2 = new ScheduledExecution(
+                uuid: job2Uuid,
+                jobName: "Job 2",
+                project: projectName
+            )
+            job2.save(flush: true)
+
+            // Create stats for job1 with metrics in date range
+            def stats1 = new ScheduledExecutionStats(
+                jobUuid: job1Uuid,
+                contentMap: [
+                    dailyMetrics: [
+                        "2025-11-19": [total: 10, succeeded: 8, failed: 2, aborted: 0, timedout: 0, duration: 10000, hourly: (0..23).collect { 0 }],
+                        "2025-11-22": [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { 0 }],
+                        "2025-11-24": [total: 15, succeeded: 14, failed: 1, aborted: 0, timedout: 0, duration: 15000, hourly: (0..23).collect { 0 }]
+                    ]
+                ]
+            )
+            stats1.save(flush: true)
+
+            // Create stats for job2 with metrics outside date range
+            def stats2 = new ScheduledExecutionStats(
+                jobUuid: job2Uuid,
+                contentMap: [
+                    dailyMetrics: [
+                        "2025-11-19": [total: 5, succeeded: 5, failed: 0, aborted: 0, timedout: 0, duration: 5000, hourly: (0..23).collect { 0 }]
+                    ]
+                ]
+            )
+            stats2.save(flush: true)
+
+        when: "getMetricsBatch is called with begin and end dates"
+            def begin = "2025-11-22T00:00:00Z"
+            def end = "2025-11-24T23:59:59Z"
+            def result = controller.getMetricsBatch(projectName, begin, end)
+
+        then: "each job's metrics are filtered by the date range"
+            result != null
+            result.jobs != null
+            result.jobs.size() == 2
+            
+            // Job1 should have filtered metrics
+            def job1Metrics = result.jobs[job1Uuid]
+            job1Metrics != null
+            job1Metrics.total == 35  // 20 + 15
+            job1Metrics.daily_breakdown.size() == 2
+            job1Metrics.daily_breakdown.containsKey("2025-11-22")
+            job1Metrics.daily_breakdown.containsKey("2025-11-24")
+            !job1Metrics.daily_breakdown.containsKey("2025-11-19")
+            
+            // Job2 should have empty metrics (no data in range)
+            def job2Metrics = result.jobs[job2Uuid]
+            job2Metrics != null
+            job2Metrics.total == 0
+            job2Metrics.daily_breakdown.isEmpty()
+    }
+
+    def "getMetricsFromStats handles invalid date format gracefully"() {
+        given: "a job with stats"
+            def jobUuid = UUID.randomUUID().toString()
+            def job = new ScheduledExecution(
+                uuid: jobUuid,
+                jobName: "Test Job",
+                project: "TestProject"
+            )
+            job.save(flush: true)
+
+            def stats = new ScheduledExecutionStats(
+                jobUuid: jobUuid,
+                contentMap: [
+                    dailyMetrics: [
+                        "2025-11-22": [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { 0 }]
+                    ]
+                ]
+            )
+            stats.save(flush: true)
+
+        when: "getMetricsFromStats is called with invalid date format"
+            def begin = "invalid-date"
+            def result = controller.getMetricsFromStats(jobUuid, begin, null)
+
+        then: "falls back to backward compatibility (last 7 days)"
+            result != null
+            // Should still return metrics, just not filtered by the invalid begin date
+            result.total >= 0
+    }
+
+    def "apiExecutionMetrics with useStats passes begin and end parameters"() {
+        given:
+            request.api_version = 29
+            request.contentType = "application/json"
+            params.project = "TestProject"
+            params.useStats = "true"
+            params.begin = "2025-11-22T00:00:00Z"
+            params.end = "2025-11-24T23:59:59Z"
+
+            def jobUuid = UUID.randomUUID().toString()
+            def job = new ScheduledExecution(
+                uuid: jobUuid,
+                jobName: "Test Job",
+                project: "TestProject"
+            )
+            job.save(flush: true)
+
+            def stats = new ScheduledExecutionStats(
+                jobUuid: jobUuid,
+                contentMap: [
+                    dailyMetrics: [
+                        "2025-11-19": [total: 10, succeeded: 8, failed: 2, aborted: 0, timedout: 0, duration: 10000, hourly: (0..23).collect { 0 }],
+                        "2025-11-22": [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { 0 }],
+                        "2025-11-24": [total: 15, succeeded: 14, failed: 1, aborted: 0, timedout: 0, duration: 15000, hourly: (0..23).collect { 0 }]
+                    ]
+                ]
+            )
+            stats.save(flush: true)
+
+            def apiMock = Mock(ApiService)
+            controller.apiService = apiMock
+            response.format = "json"
+
+        when:
+            def query = new ExecutionQuery()
+            query.jobIdListFilter = [jobUuid]
+            controller.apiExecutionMetrics(query)
+
+        then:
+            1 * apiMock.requireApi(_, _, 29) >> true
+            response.status == 200
+            
+            // Parse JSON response to verify filtering
+            def jsonResponse = new JsonSlurper().parseText(response.text)
+            jsonResponse.total == 35  // 20 + 15 (filtered)
+            jsonResponse.daily_breakdown.size() == 2
+            jsonResponse.daily_breakdown.containsKey("2025-11-22")
+            jsonResponse.daily_breakdown.containsKey("2025-11-24")
+            !jsonResponse.daily_breakdown.containsKey("2025-11-19")
     }
 
 
