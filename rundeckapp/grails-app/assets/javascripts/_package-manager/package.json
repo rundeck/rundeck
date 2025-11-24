@@ -5,7 +5,7 @@
   "main": "",
   "scripts": {
     "test": "true",
-    "dev:build": "npm install && npm run build",
+    "dev:build": "npm ci && npm run build",
     "ci:build": "npm ci && npm run build",
     "build": "run-script-os",
     "build:darwin:linux": "./node_modules/.bin/mix",
