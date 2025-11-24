@@ -115,6 +115,9 @@ import rundeck.services.execution.ThresholdValue
 import rundeck.services.feature.FeatureService
 import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.LoggingThreshold
+import org.rundeck.app.config.SysConfigProp
+import org.rundeck.app.config.SystemConfig
+import org.rundeck.app.config.SystemConfigurable
 
 import javax.annotation.PreDestroy
 import javax.servlet.http.HttpServletRequest
@@ -137,7 +140,7 @@ import java.util.stream.Collectors
  * Coordinates Command executions via Ant Project objects
  */
 @Transactional
-class ExecutionService implements ApplicationContextAware, StepExecutor, NodeStepExecutor, EventPublisher {
+class ExecutionService implements ApplicationContextAware, StepExecutor, NodeStepExecutor, EventPublisher, SystemConfigurable {
     static Logger executionStatusLogger = LoggerFactory.getLogger("org.rundeck.execution.status")
 
     def FrameworkService frameworkService
@@ -4545,5 +4548,22 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                      context  : contextBuilder.build()]
             )
         }
+    }
+
+    @Override
+    List<SysConfigProp> getSystemConfigProps() {
+        [
+                SystemConfig.builder().with {
+                    key "rundeck.executionDailyMetrics.enabled"
+                    description "Enable Daily Execution Metrics Collection"
+                    defaultValue "false"
+                    required false
+                    datatype "Boolean"
+                    visibility 'Advanced'
+                    category 'Execution'
+                    authRequired("app_admin")
+                    build()
+                }
+        ] as List<SysConfigProp>
     }
 }

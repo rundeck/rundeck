@@ -19,6 +19,7 @@ import java.time.LocalDate
 class GormJobStatsDataProvider implements JobStatsDataProvider{
     @Autowired
     ConfigurationService configurationService
+
     @Override
     RdJobStats createJobStats(String jobUuid) {
         def stats = getOrCreate(jobUuid)
@@ -54,8 +55,10 @@ class GormJobStatsDataProvider implements JobStatsDataProvider{
                 }
 
                 // === NEW LOGIC (Date-keyed 7-day metrics) - RUN-3768 ===
-                // Feature flag: rundeck.feature.executionDailyMetrics.enabled
-                if (configurationService.getBoolean("rundeck.feature.executionDailyMetrics.enabled", false)) {
+                // Feature flag: rundeck.executionDailyMetrics.enabled
+                def featureFlagEnabled = configurationService.getBoolean("executionDailyMetrics.enabled", false)
+                log.info("[METRICS-API][RUN-3768] Feature flag check: configurationService.getBoolean('executionDailyMetrics.enabled', false) = ${featureFlagEnabled}")
+                if (featureFlagEnabled) {
                     def today = LocalDate.now().toString()
                     def dailyMetrics = statsMap.dailyMetrics ?: [:]
                     def todayMetrics = dailyMetrics[today] ?: [
@@ -99,7 +102,7 @@ class GormJobStatsDataProvider implements JobStatsDataProvider{
 
                     log.debug("Updated daily metrics for ${jobUuid}: today=${today}, total=${todayMetrics.total}, status=${status}")
                 } else {
-                    log.debug("Daily metrics collection disabled for ${jobUuid} (feature flag: rundeck.feature.executionDailyMetrics.enabled=false)")
+                    log.debug("Daily metrics collection disabled for ${jobUuid} (feature flag: rundeck.executionDailyMetrics.enabled=false)")
                 }
 
                 stats.setContentMap(statsMap)

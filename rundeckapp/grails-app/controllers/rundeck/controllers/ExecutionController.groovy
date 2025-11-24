@@ -3766,43 +3766,27 @@ Note: This endpoint has the same query parameters and response as the `/executio
                 return null  // No metrics data
             }
 
-            def today = java.time.LocalDate.now().toString()
+            def today = LocalDate.now().toString()
             def lastAggregated = statsMap.lastAggregated
 
             // Always compute last7Days for daily_breakdown and hourly_heatmap
-            def cutoff = java.time.LocalDate.now().minusDays(7)
+            // Last 7 days = today + previous 6 days (7 total days including today)
+            def cutoff = LocalDate.now().minusDays(6)
             def last7Days = dailyMetrics.findAll { dateStr, metrics ->
-                java.time.LocalDate.parse(dateStr) >= cutoff
+                LocalDate.parse(dateStr) >= cutoff
             }
 
-            // Variables for aggregated totals
-            def total, succeeded, failed, aborted, timedout, avgDuration
-            def needsCacheUpdate = false
+            // Variables for aggregated totals - ALWAYS calculate from last7Days
+            def total = last7Days.values().sum { it.total } ?: 0
+            def succeeded = last7Days.values().sum { it.succeeded } ?: 0
+            def failed = last7Days.values().sum { it.failed } ?: 0
+            def aborted = last7Days.values().sum { it.aborted } ?: 0
+            def timedout = last7Days.values().sum { it.timedout } ?: 0
+            def totalDuration = last7Days.values().sum { it.duration } ?: 0
+            def avgDuration = total > 0 ? (totalDuration / total) : 0
 
-            // Check if cache is valid
-            if (lastAggregated == today && statsMap.total7day != null) {
-                // Cache hit - use cached aggregates
-                log.debug("[METRICS-API] Cache hit for job ${jobUuid}, lastAggregated=${lastAggregated}")
-                total = statsMap.total7day ?: 0
-                succeeded = statsMap.succeeded7day ?: 0
-                failed = statsMap.failed7day ?: 0
-                aborted = statsMap.aborted7day ?: 0
-                timedout = statsMap.timedout7day ?: 0
-                avgDuration = statsMap.avgDuration7day ?: 0
-            } else {
-                // Cache miss - recompute from dailyMetrics
-                log.debug("[METRICS-API] Cache miss for job ${jobUuid}, recomputing from ${dailyMetrics.size()} days")
-
-                total = last7Days.values().sum { it.total } ?: 0
-                succeeded = last7Days.values().sum { it.succeeded } ?: 0
-                failed = last7Days.values().sum { it.failed } ?: 0
-                aborted = last7Days.values().sum { it.aborted } ?: 0
-                timedout = last7Days.values().sum { it.timedout } ?: 0
-                def totalDuration = last7Days.values().sum { it.duration } ?: 0
-                avgDuration = total > 0 ? (totalDuration / total) : 0
-
-                needsCacheUpdate = true
-            }
+            // Only set needsCacheUpdate if dailyMetrics has grown beyond 90 days (triggers pruning)
+            def needsCacheUpdate = dailyMetrics.size() > 90
 
             // LAZY CLEANUP: Prune entries older than 90 days (only on cache miss)
             def needsSave = false
@@ -3819,13 +3803,6 @@ Note: This endpoint has the same query parameters and response as the `/executio
                     needsSave = true  // Pruning happened, must save
                 }
 
-                // Update cache values
-                statsMap.total7day = total
-                statsMap.succeeded7day = succeeded
-                statsMap.failed7day = failed
-                statsMap.aborted7day = aborted
-                statsMap.timedout7day = timedout
-                statsMap.avgDuration7day = avgDuration
                 statsMap.lastAggregated = today
                 needsSave = true  // Cache updated, must save
             }
@@ -3881,7 +3858,7 @@ Note: This endpoint has the same query parameters and response as the `/executio
     /**
      * Get metrics for all jobs in a project (batch mode) - RUN-3768 Phase 5.
      * Returns per-job breakdown for efficient job list rendering.
-     * This method requires the feature flag rundeck.feature.executionDailyMetrics.enabled=true
+     * This method requires the feature flag rundeck.executionDailyMetrics.enabled=true
      *
      * @param projectName The project name to query jobs for
      * @return Map with format: [jobs: [jobUuid1: metrics, jobUuid2: metrics, ...]]

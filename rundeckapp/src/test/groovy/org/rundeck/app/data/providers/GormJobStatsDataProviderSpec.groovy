@@ -23,7 +23,7 @@ class GormJobStatsDataProviderSpec extends Specification implements DataTest {
         provider.configurationService = mockConfigurationService
 
         // Default: Feature flag enabled for existing tests
-        mockConfigurationService.getBoolean("rundeck.feature.executionDailyMetrics.enabled", false) >> true
+        mockConfigurationService.getBoolean("executionDailyMetrics.enabled", false) >> true
     }
 
     def "updateJobStats creates dailyMetrics on first execution"() {
@@ -286,7 +286,7 @@ class GormJobStatsDataProviderSpec extends Specification implements DataTest {
             def testProvider = new GormJobStatsDataProvider()
             def testMockConfig = Mock(ConfigurationService)
             testProvider.configurationService = testMockConfig
-            testMockConfig.getBoolean("rundeck.feature.executionDailyMetrics.enabled", false) >> false
+            testMockConfig.getBoolean("executionDailyMetrics.enabled", false) >> false
 
         when: "updateJobStats is called"
             def result = testProvider.updateJobStats(jobUuid, executionId, executionTime, status, dateCompleted)
@@ -308,7 +308,7 @@ class GormJobStatsDataProviderSpec extends Specification implements DataTest {
             def testProvider = new GormJobStatsDataProvider()
             def testMockConfig = Mock(ConfigurationService)
             testProvider.configurationService = testMockConfig
-            testMockConfig.getBoolean("rundeck.feature.executionDailyMetrics.enabled", false) >> false
+            testMockConfig.getBoolean("executionDailyMetrics.enabled", false) >> false
 
         when: "10 executions are added"
             (1..10).each { i ->
