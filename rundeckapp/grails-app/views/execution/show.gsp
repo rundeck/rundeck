@@ -142,6 +142,9 @@ search
         .affix .affixed-shown.affixed-shown-inline {
             display: inline;
         }
+        #output:target {
+            display: block !important;
+        }
       </style>
       <g:set var="projectName" value="${execution.project}"/>
       <g:javascript>
@@ -858,7 +861,7 @@ search
                                       </div>
                                   </div>
 
-                                  <div style="height: calc(100vh - 250px); display: none; contain: layout;"
+                                  <div style="height: calc(100vh - 250px); contain: layout; display: none;"
                                        id="output"
                                        class="card-content-full-width"
                                        data-bind="visible: activeTab() === 'output' || activeTab().startsWith('outputL')"
