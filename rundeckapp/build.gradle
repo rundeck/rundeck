@@ -256,7 +256,7 @@ dependencies {
 
     // Database drivers
     runtimeOnly "com.h2database:h2:2.2.220"
-    runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc:9.4.0.jre8'
+    runtimeOnly "com.microsoft.sqlserver:mssql-jdbc:${mssqlJdbcVersion}"
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
     runtimeOnly 'org.postgresql:postgresql:42.7.2'
     runtimeOnly 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.1'
@@ -367,6 +367,47 @@ tasks.register('copyApiSpecFiles', Copy){
     into additionalSpecDir
 }
 
+tasks.register('fixOpenApiSpec') {
+    description 'Fix OpenAPI spec to populate version server variable default value'
+    def specFile = file("${buildDir}/classes/groovy/main/META-INF/swagger/rundeck-api.yml")
+    def apiVersionsFile = file("${projectDir}/src/main/groovy/com/dtolabs/rundeck/app/api/ApiVersions.groovy")
+    
+    inputs.file(specFile)
+    inputs.file(apiVersionsFile)
+    outputs.file(specFile)
+    
+    doLast {
+        if (specFile.exists() && apiVersionsFile.exists()) {
+            // Parse the ApiVersions.groovy source file to extract the version
+            def apiVersion = null
+            apiVersionsFile.eachLine { line ->
+                if (line.contains('API_CURRENT_VERSION_STR') && line.contains('=')) {
+                    // Extract version from: public final static String API_CURRENT_VERSION_STR = "56"
+                    def matcher = line =~ /"(\d+)"/
+                    if (matcher) {
+                        apiVersion = matcher[0][1]
+                    }
+                }
+            }
+            
+            if (!apiVersion) {
+                throw new GradleException("Could not extract API version from ApiVersions.groovy")
+            }
+            
+            // Simple string replacement approach: replace placeholder with actual version
+            // The spec file should contain "$API_VERSION$" as a placeholder (e.g., in server variable default)
+            def content = specFile.text
+            
+            // Replace all occurrences of $API_VERSION$ placeholder with the actual version
+            // Note: Wrapped in quotes to ensure YAML treats it as a string (OpenAPI spec requires string type)
+            content = content.replaceAll('\\$API_VERSION\\$', "'${apiVersion}'")
+            
+            specFile.text = content
+            logger.info("Successfully updated OpenAPI spec version to ${apiVersion}")
+        }
+    }
+}
+
 tasks.withType(GroovyCompile).configureEach {
     def additionalSpecDir = new File(project.buildDir, 'openapi')
     def opts=[
@@ -374,6 +415,7 @@ tasks.withType(GroovyCompile).configureEach {
     ]
     if(!project.findProperty('isRunning')) {
         dependsOn copyApiSpecFiles
+        finalizedBy fixOpenApiSpec
         opts.addAll([
             '-Dmicronaut.openapi.filename=rundeck-api',
             "-Dmicronaut.openapi.additional.files=${additionalSpecDir.absolutePath}".toString()

@@ -1,0 +1,19 @@
+import { Meta, Subtitle, Title, Canvas, Controls, Description, Stories } from "@storybook/blocks";
+import * as OptionViewStories from './OptionView.stories.ts'
+
+<Meta of={OptionViewStories} />
+
+<Title />
+
+<Subtitle />
+
+## Import
+
+```ts
+import OptionView from '@app/components/job/options/OptionView.vue';
+```
+
+## Playground
+
+<Canvas of={OptionViewStories.Playground} sourceState="shown" />
+<Controls of={OptionViewStories.Playground} />

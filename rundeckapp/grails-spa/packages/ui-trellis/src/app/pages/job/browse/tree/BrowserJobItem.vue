@@ -21,7 +21,8 @@
       v-if="showJobsAsLinks"
       :href="jobLinkHref(job)"
       :data-job-id="job.uuid"
-      class="link-quiet"
+      class="link-quiet job-name"
+      :title="job.jobName"
     >
       {{ job.jobName }}
     </a>
@@ -33,7 +34,11 @@
     >
       {{ job.jobName }}
     </button>
-    <span v-if="job.description" class="text-secondary job-description">
+    <span
+      v-if="job.description"
+      class="text-secondary job-description"
+      :title="job.description"
+    >
       {{ shortDescription }}
     </span>
     <ui-socket
@@ -167,15 +172,32 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss">
-.job-description {
-  margin-left: var(--spacing-2);
-}
 .job-list-row-item {
   padding: 1px 0 1px 3px;
   border-style: solid;
   border-width: 0 0 3px 0;
   border-color: transparent;
   cursor: pointer;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--spacing-2);
+  .job-name,
+  .job-description {
+    flex: 1 2 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .job-name:has(+ .job-description) {
+    flex: 0 1 auto;
+  }
+  .btn.btn-xs {
+    margin-right: 0;
+  }
+  .job-actions {
+    margin-left: auto;
+    flex: 0 0 auto;
+  }
 }
 .hover .job-list-row-item {
   background: var(--background-color-accent-lvl2);

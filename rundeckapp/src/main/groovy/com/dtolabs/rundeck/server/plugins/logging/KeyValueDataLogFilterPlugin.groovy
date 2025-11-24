@@ -87,6 +87,25 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
     )
     Boolean logData
 
+    @PluginProperty(
+            title = "Match Substrings",
+            description = '''If enabled, the plugin will use Java's `find()` method instead of `matches()`
+when applying the regular expression. This allows substring matches instead of requiring the entire line to match.
+
+**Note**: Only the first match per line is captured unless "Allow Multiple Matches" is also enabled.''',
+            defaultValue = "false"
+    )
+    Boolean matchSubstrings
+
+    @PluginProperty(
+            title = "Allow Multiple Matches",
+            description = '''When "Match Substrings" is enabled, this option allows capturing multiple matches from the same line.
+
+This option has no effect when "Match Substrings" is disabled.''',
+            defaultValue = "false"
+    )
+    Boolean allowMultipleMatches
+
 
     @PluginProperty(
             title = "Invalid Character Pattern",
@@ -192,36 +211,49 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
     void handleEvent(final PluginLoggingContext context, final LogEventControl event) {
         if (event.eventType == 'log' && event.loglevel == LogLevel.NORMAL && event.message?.length() > 0) {
             Matcher match = dataPattern.matcher(event.message)
-            if (match.matches()) {
-                def key,value
-                if(match.groupCount()==1 && name){
-                    key = name
-                    value = match.group(1)
-                }else {
-                    key = match.group(1)
-                    value = match.group(2)
+            if (matchSubstrings && allowMultipleMatches) {
+                // Find all matches in the line
+                while (match.find()) {
+                    processMatch(context, match)
                 }
-                if (key) {
-                    if(invalidKeyPattern){
-                        def validKey = null
-                        if( replaceFilteredResult ){
-                            if( invalidCharactersReplacement == null ){
-                                validKey = key.replaceAll(invalidKeyPattern, '')
-                            }else{
-                                validKey = key.replaceAll(invalidKeyPattern, invalidCharactersReplacement)
-                            }
-                        }else{
-                            validKey = key.replaceAll(invalidKeyPattern,"_")
-                        }
-                        if (key != validKey) {
-                            key = validKey
-                            context.log(1,"Key contains not valid value which will be replaced")
-                        }
-                    }
-                    allData[key] = value
-                    outputContext.addOutput("data", key, value)
+            } else {
+                // Single match per line
+                boolean isMatch = matchSubstrings ? match.find() : match.matches()
+                if (isMatch) {
+                    processMatch(context, match)
                 }
             }
+        }
+    }
+
+    private void processMatch(final PluginLoggingContext context, final Matcher match) {
+        def key, value
+        if (match.groupCount() == 1 && name) {
+            key = name
+            value = match.group(1)
+        } else {
+            key = match.group(1)
+            value = match.group(2)
+        }
+        if (key) {
+            if (invalidKeyPattern) {
+                def validKey = null
+                if (replaceFilteredResult) {
+                    if (invalidCharactersReplacement == null) {
+                        validKey = key.replaceAll(invalidKeyPattern, '')
+                    } else {
+                        validKey = key.replaceAll(invalidKeyPattern, invalidCharactersReplacement)
+                    }
+                } else {
+                    validKey = key.replaceAll(invalidKeyPattern, "_")
+                }
+                if (key != validKey) {
+                    key = validKey
+                    context.log(1, "Key contains not valid value which will be replaced")
+                }
+            }
+            allData[key] = value
+            outputContext.addOutput("data", key, value)
         }
     }
 

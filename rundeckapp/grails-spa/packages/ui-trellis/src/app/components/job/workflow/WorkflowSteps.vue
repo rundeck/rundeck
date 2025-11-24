@@ -246,9 +246,12 @@ import { getRundeckContext } from "@/library";
 import ChoosePluginModal from "@/library/components/plugins/ChoosePluginModal.vue";
 import EditPluginModal from "@/library/components/plugins/EditPluginModal.vue";
 import pluginConfig from "@/library/components/plugins/pluginConfig.vue";
+import { createOptionVariables } from "@/library/stores/contextVariables";
+import { useJobStore } from "@/library/stores/JobsStore";
 import { ServiceType } from "@/library/stores/Plugins";
 import JobRefStep from "@/app/components/job/workflow/JobRefStep.vue";
 import { cloneDeep } from "lodash";
+import { mapState } from "pinia";
 import { defineComponent } from "vue";
 import LogFilters from "./LogFilters.vue";
 import CommonUndoRedoDraggableList from "@/app/components/common/CommonUndoRedoDraggableList.vue";
@@ -310,12 +313,18 @@ export default defineComponent({
           "data-testid": "extra-edit-modal",
           modalActive: this.editStepModal,
           "onUpdate:modalActive": this.toggleModalActive,
+          extraAutocompleteVars: createOptionVariables(
+            this.jobDefinition?.options || [],
+          ),
         };
       } else if (this.editJobRefModal) {
         return {
           "data-test-id": "jobref-modal",
           modalActive: this.editJobRefModal,
           "onUpdate:modalActive": this.toggleModalActive,
+          extraAutocompleteVars: createOptionVariables(
+              this.jobDefinition?.options || [],
+          ),
         };
       }
       return {};
@@ -326,6 +335,7 @@ export default defineComponent({
       }
       return this.editStepModal ? "edit-plugin-modal" : "job-ref-form";
     },
+    ...mapState(useJobStore, ["jobDefinition"]),
   },
   watch: {
     model: {

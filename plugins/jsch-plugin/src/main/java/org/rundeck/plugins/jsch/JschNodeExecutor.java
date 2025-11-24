@@ -605,6 +605,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable, ProxyRunnerP
         } else {
             failureReason = StepFailureReason.Unknown;
             errormsg = e.getMessage();
+            e.printStackTrace();
         }
         return new ExtractFailure(errormsg, failureReason);
     }

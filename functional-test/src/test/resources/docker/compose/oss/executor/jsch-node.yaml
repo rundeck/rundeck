@@ -7,7 +7,20 @@ ssh-node:
   node-executor: jsch-ssh
   file-copier: jsch-scp
   ssh-authentication: privateKey
-  tags: executor-test,ssh-node,auth-method-key
+  ssh-send-env: true
+  tags: executor-test,ssh-node,auth-method-key,envvars
+
+ssh-node-file:
+  description: "SSH Node for Rundeck using private key local file"
+  hostname: ssh-node
+  osFamily: unix
+  username: rundeck
+  ssh-keypath: /home/rundeck/privatekeys/id_rsa
+  node-executor: jsch-ssh
+  file-copier: jsch-scp
+  ssh-authentication: privateKey
+  ssh-send-env: true
+  tags: executor-test,ssh-node,auth-method-key-file,envvars
 
 password-node:
   description: "Password Node for Rundeck"
@@ -43,3 +56,39 @@ ssh-node-passphrase:
   file-copier: jsch-scp
   ssh-authentication: privateKey
   tags: executor-test,ssh-node,auth-method-key-passphrase
+
+ssh-node-option-passphrase:
+  description: "SSH-PASSPHRASE Node using job option passphrase for Rundeck"
+  hostname: ssh-node
+  osFamily: unix
+  username: rundeck
+  ssh-key-storage-path: keys/project/core-jsch-executor-test/ssh-node-passphrase.key
+  ssh-key-passphrase-option: option.sshKeyPassphrase
+  node-executor: jsch-ssh
+  file-copier: jsch-scp
+  ssh-authentication: privateKey
+  tags: option-test,ssh-node,auth-method-key-option-passphrase
+
+ssh-node-file-option-passphrase:
+  description: "SSH-PASSPHRASE for local file key using password option Node for Rundeck"
+  hostname: ssh-node
+  osFamily: unix
+  username: rundeck
+  ssh-keypath: /home/rundeck/privatekeys/id_rsa_passphrase
+  ssh-key-passphrase-option: option.sshKeyPassphrase
+  node-executor: jsch-ssh
+  file-copier: jsch-scp
+  ssh-authentication: privateKey
+  tags: option-test,ssh-node,auth-method-key-file-option-passphrase
+
+ssh-node-file-passphrase:
+  description: "SSH-PASSPHRASE for local file key using stored passphrase Node for Rundeck"
+  hostname: ssh-node
+  osFamily: unix
+  username: rundeck
+  ssh-keypath: /home/rundeck/privatekeys/id_rsa_passphrase
+  ssh-key-passphrase-storage-path: keys/project/core-jsch-executor-test/ssh-node-passphrase.pass
+  node-executor: jsch-ssh
+  file-copier: jsch-scp
+  ssh-authentication: privateKey
+  tags: executor-test,ssh-node,auth-method-key-file-passphrase
