@@ -1225,7 +1225,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
     }
 
     def "getMetricsFromStats handles invalid date format gracefully"() {
-        given: "a job with stats"
+        given: "a job with stats containing metrics within last 7 days"
             def jobUuid = UUID.randomUUID().toString()
             def job = new ScheduledExecution(
                 uuid: jobUuid,
@@ -1234,12 +1234,26 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
             )
             job.save(flush: true)
 
+            // Create metrics for today and a few days ago to ensure they're within last 7 days
+            def today = LocalDate.now()
+            def dailyMetrics = [:]
+            (0..2).each { daysAgo ->
+                def date = today.minusDays(daysAgo)
+                dailyMetrics[date.toString()] = [
+                    total: 10 + daysAgo,
+                    succeeded: 8 + daysAgo,
+                    failed: 2,
+                    aborted: 0,
+                    timedout: 0,
+                    duration: 10000 + (daysAgo * 1000),
+                    hourly: (0..23).collect { 0 }
+                ]
+            }
+
             def stats = new ScheduledExecutionStats(
                 jobUuid: jobUuid,
                 contentMap: [
-                    dailyMetrics: [
-                        "2025-11-22": [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { 0 }]
-                    ]
+                    dailyMetrics: dailyMetrics
                 ]
             )
             stats.save(flush: true)
@@ -1248,10 +1262,11 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
             def begin = "invalid-date"
             def result = controller.getMetricsFromStats(jobUuid, begin, null)
 
-        then: "falls back to backward compatibility (last 7 days)"
+        then: "falls back to backward compatibility (last 7 days) and returns metrics"
             result != null
             // Should still return metrics, just not filtered by the invalid begin date
-            result.total >= 0
+            result.total > 0
+            result.daily_breakdown.size() > 0
     }
 
     def "apiExecutionMetrics with useStats passes begin and end parameters"() {

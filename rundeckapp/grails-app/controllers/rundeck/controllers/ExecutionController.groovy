@@ -3778,10 +3778,16 @@ Note: This endpoint has the same query parameters and response as the `/executio
                 // Take first 10 characters which is "yyyy-MM-dd"
                 if (begin.length() >= 10) {
                     def beginDateStr = begin.substring(0, 10)
-                    beginDate = LocalDate.parse(beginDateStr)
-                    log.debug("[METRICS-API] Parsed begin date: ${beginDate} from ${begin}")
+                    try {
+                        beginDate = LocalDate.parse(beginDateStr)
+                        log.debug("[METRICS-API] Parsed begin date: ${beginDate} from ${begin}")
+                    } catch (Exception e) {
+                        log.warn("[METRICS-API] Invalid begin date format: ${begin}, error: ${e.message}")
+                        // Invalid date format - treat as if no begin date provided (backward compatibility)
+                        beginDate = null
+                    }
                 } else {
-                    log.warn("[METRICS-API] Invalid begin date format: ${begin}")
+                    log.warn("[METRICS-API] Invalid begin date format: ${begin} (too short)")
                 }
             }
             
@@ -3790,10 +3796,16 @@ Note: This endpoint has the same query parameters and response as the `/executio
                 // Take first 10 characters which is "yyyy-MM-dd"
                 if (end.length() >= 10) {
                     def endDateStr = end.substring(0, 10)
-                    endDate = LocalDate.parse(endDateStr)
-                    log.debug("[METRICS-API] Parsed end date: ${endDate} from ${end}")
+                    try {
+                        endDate = LocalDate.parse(endDateStr)
+                        log.debug("[METRICS-API] Parsed end date: ${endDate} from ${end}")
+                    } catch (Exception e) {
+                        log.warn("[METRICS-API] Invalid end date format: ${end}, error: ${e.message}")
+                        // Invalid date format - treat as if no end date provided (backward compatibility)
+                        endDate = null
+                    }
                 } else {
-                    log.warn("[METRICS-API] Invalid end date format: ${end}")
+                    log.warn("[METRICS-API] Invalid end date format: ${end} (too short)")
                 }
             }
 
@@ -3872,7 +3884,7 @@ Note: This endpoint has the same query parameters and response as the `/executio
             def cutoff = LocalDate.now().minusDays(6)
                 filteredMetrics = dailyMetrics.findAll { dateStr, metrics ->
                 LocalDate.parse(dateStr) >= cutoff
-                }
+            }
             }
 
             // Variables for aggregated totals - calculate from filteredMetrics
