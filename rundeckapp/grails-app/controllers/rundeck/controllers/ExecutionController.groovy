@@ -3767,7 +3767,6 @@ Note: This endpoint has the same query parameters and response as the `/executio
             }
 
             def today = LocalDate.now().toString()
-            def lastAggregated = statsMap.lastAggregated
 
             // Always compute last7Days for daily_breakdown and hourly_heatmap
             // Last 7 days = today + previous 6 days (7 total days including today)
