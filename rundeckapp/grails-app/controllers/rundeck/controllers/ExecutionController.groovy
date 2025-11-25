@@ -3985,7 +3985,7 @@ Note: This endpoint has the same query parameters and response as the `/executio
 
         } catch (Exception e) {
             log.error("[METRICS-API] Error retrieving stats for job ${jobUuid}", e)
-            return null  // Fallback to execution query
+            return null
         }
     }
 

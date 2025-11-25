@@ -15,7 +15,6 @@
  */
 package org.rundeck.app.data.providers.v1.execution;
 
-import org.rundeck.app.data.model.v1.execution.ExecutionData;
 import org.rundeck.app.data.model.v1.execution.RdJobStats;
 import org.rundeck.app.data.model.v1.execution.dto.StatsContent;
 import org.rundeck.app.data.providers.v1.DataProvider;

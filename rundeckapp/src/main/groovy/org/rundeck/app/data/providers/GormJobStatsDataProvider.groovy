@@ -53,10 +53,10 @@ class GormJobStatsDataProvider implements JobStatsDataProvider{
                     statsMap.totalTime += time
                 }
 
-                // === NEW LOGIC (Date-keyed 7-day metrics) - RUN-3768 ===
+                // === NEW LOGIC (Date-keyed daily metrics; 90-day retention handled in getMetricsFromStats()) - RUN-3768 ===
                 // Feature flag: rundeck.executionDailyMetrics.enabled
                 def featureFlagEnabled = configurationService.getBoolean("executionDailyMetrics.enabled", false)
-                log.info("[METRICS-API][RUN-3768] Feature flag check: configurationService.getBoolean('executionDailyMetrics.enabled', false) = ${featureFlagEnabled}")
+                log.debug("[METRICS-API][RUN-3768] Feature flag check: configurationService.getBoolean('executionDailyMetrics.enabled', false) = ${featureFlagEnabled}")
                 if (featureFlagEnabled) {
                     def today = LocalDate.now().toString()
                     def dailyMetrics = statsMap.dailyMetrics ?: [:]
