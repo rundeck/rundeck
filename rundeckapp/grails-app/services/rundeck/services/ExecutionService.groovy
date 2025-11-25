@@ -4035,7 +4035,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return queryExecutions(query,offset,max)
     }
 
-    private List getAllowedProjects(String project, String jobUuid){
+    List getAllowedProjects(String project, String jobUuid){
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
         def list = []
         if(project != null) {
