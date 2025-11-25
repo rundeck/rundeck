@@ -3120,6 +3120,11 @@ if executed in cluster mode.""",
         def resOffset = params.offset ? params.int('offset') : 0
         def resMax = params.max ? params.int('max') : configurationService.getInteger('pagination.default.max',20)
 
+
+        if(query.includeJobRef && query.jobIdListFilter.size()==1){
+            query.execProjects = executionService.getAllowedProjects(query.projFilter,query.jobIdListFilter.get(0));
+        }
+
         def results
         try {
             results = executionService.queryExecutions(query, resOffset, resMax)
