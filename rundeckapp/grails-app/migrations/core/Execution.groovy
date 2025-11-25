@@ -192,20 +192,19 @@ databaseChangeLog = {
         }
     }
 
-    changeSet(author: "rundeckdev", id: "add-project-status-date-index") {
+    changeSet(author: "rundeckdev", id: "add-project-job-status-index") {
         preConditions(onFail: "MARK_RAN") {
             not {
-                indexExists(indexName: "EXEC_IDX_PROJECT_STATUS_DATE", tableName: "execution")
+                indexExists(indexName: "EXEC_IDX_PROJECT_JOB_STATUS", tableName: "execution")
             }
         }
 
-        createIndex(indexName: "EXEC_IDX_PROJECT_STATUS_DATE", tableName: "execution", unique: false) {
+        createIndex(indexName: "EXEC_IDX_PROJECT_JOB_STATUS", tableName: "execution", unique: false) {
             column(name: "project")
-            column(name: "status")
+            column(name: "scheduled_execution_id")
             column(name: "date_completed")
+            column(name: "status")
         }
     }
-
-
 
 }
