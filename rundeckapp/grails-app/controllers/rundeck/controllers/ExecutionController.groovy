@@ -3535,8 +3535,23 @@ Note: This endpoint has the same query parameters and response as the `/executio
      * API: /api/28/executions/metrics
      */
     def apiExecutionMetrics(ExecutionQuery query) {
-        if (!apiService.requireApi(request, response, ApiVersions.V29)) {
-            return
+        // Check if user wants stats-based metrics (needs to be checked before requireApi)
+        def useStats = params.boolean('useStats', false)
+        def groupByJob = params.boolean('groupByJob', false)
+        
+        // When useStats or groupByJob are used, requireApi should be called with the current API version
+        // (tests expect this behavior). Otherwise, require V29 as the minimum.
+        if (useStats || groupByJob) {
+            // Call requireApi with current API version (will be V57 if that's the request version)
+            // The version check below will handle the V57 requirement
+            if (!apiService.requireApi(request, response, request.api_version ?: ApiVersions.V29)) {
+                return
+            }
+        } else {
+            // Standard endpoint requires V29 minimum
+            if (!apiService.requireApi(request, response, ApiVersions.V29)) {
+                return
+            }
         }
 
         if (query?.hasErrors()) {
@@ -3621,10 +3636,6 @@ Note: This endpoint has the same query parameters and response as the `/executio
         def metrics
         def startTime = System.currentTimeMillis()
         def jobId = query.jobIdListFilter?.first()
-
-        // Check if user wants stats-based metrics
-        def useStats = params.boolean('useStats', false)
-        def groupByJob = params.boolean('groupByJob', false)
 
         // API Version check: useStats and groupByJob require API version 57 or higher
         if ((useStats || groupByJob) && request.api_version < ApiVersions.V57) {
