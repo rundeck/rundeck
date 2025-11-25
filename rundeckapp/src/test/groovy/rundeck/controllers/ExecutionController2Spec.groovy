@@ -16,6 +16,7 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.core.logging.internal.RundeckLogFormat
 import com.dtolabs.rundeck.app.support.ExecutionQuery
@@ -876,7 +877,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
 
     def "apiExecutionMetrics batch mode returns metrics for all jobs"() {
         given:
-            request.api_version = 29
+            request.api_version = ApiVersions.V57
             request.contentType = "application/json"
             params.project = "TestProject"
             params.useStats = "true"
@@ -891,14 +892,14 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
             controller.apiExecutionMetrics(query)
 
         then:
-            1 * apiMock.requireApi(_, _, 29) >> true
+            1 * apiMock.requireApi(_, _, ApiVersions.V57) >> true
             // Response should be rendered with batch metrics format
             response.status == 200
     }
 
     def "apiExecutionMetrics groupByJob without useStats does not trigger batch mode"() {
         given:
-            request.api_version = 29
+            request.api_version = ApiVersions.V57
             request.contentType = "application/json"
             params.project = "TestProject"
             params.useStats = "false"
@@ -914,8 +915,8 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
             controller.apiExecutionMetrics(query)
 
         then:
-            1 * apiMock.requireApi(_, _, 29) >> true
-            // Should use regular execution service query, not batch mode
+            1 * apiMock.requireApi(_, _, ApiVersions.V57) >> true
+            // Should use regular execution service query, not batch mode (since useStats=false)
             1 * controller.executionService.queryExecutionMetrics(_) >> [
                 total: 0,
                 duration: [average: 0, min: 0, max: 0]
@@ -1271,7 +1272,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
 
     def "apiExecutionMetrics with useStats passes begin and end parameters"() {
         given:
-            request.api_version = 29
+            request.api_version = ApiVersions.V57
             request.contentType = "application/json"
             params.project = "TestProject"
             params.useStats = "true"
@@ -1308,7 +1309,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
             controller.apiExecutionMetrics(query)
 
         then:
-            1 * apiMock.requireApi(_, _, 29) >> true
+            1 * apiMock.requireApi(_, _, ApiVersions.V57) >> true
             response.status == 200
             
             // Parse JSON response to verify filtering
@@ -1318,6 +1319,103 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
             jsonResponse.daily_breakdown.containsKey("2025-11-22")
             jsonResponse.daily_breakdown.containsKey("2025-11-24")
             !jsonResponse.daily_breakdown.containsKey("2025-11-19")
+    }
+
+    def "apiExecutionMetrics useStats requires API version 57"() {
+        given:
+            request.api_version = ApiVersions.V56  // One version below required
+            request.contentType = "application/json"
+            params.project = "TestProject"
+            params.useStats = "true"
+
+            def apiMock = Mock(ApiService)
+            controller.apiService = apiMock
+            response.format = "json"
+
+        when:
+            def query = new ExecutionQuery()
+            query.jobIdListFilter = [UUID.randomUUID().toString()]
+            controller.apiExecutionMetrics(query)
+
+        then:
+            1 * apiMock.requireApi(_, _, ApiVersions.V56) >> true
+            1 * apiMock.renderErrorFormat(_, _) >> { response, error ->
+                response.status = 400
+                assert error.code == 'api.error.invalid.version'
+                assert error.args[0].contains('API version 57')
+            }
+            response.status == 400
+    }
+
+    def "apiExecutionMetrics groupByJob requires API version 57"() {
+        given:
+            request.api_version = ApiVersions.V56  // One version below required
+            request.contentType = "application/json"
+            params.project = "TestProject"
+            params.useStats = "true"
+            params.groupByJob = "true"
+
+            def apiMock = Mock(ApiService)
+            controller.apiService = apiMock
+            response.format = "json"
+
+        when:
+            def query = new ExecutionQuery()
+            controller.apiExecutionMetrics(query)
+
+        then:
+            1 * apiMock.requireApi(_, _, ApiVersions.V56) >> true
+            1 * apiMock.renderErrorFormat(_, _) >> { response, error ->
+                response.status = 400
+                assert error.code == 'api.error.invalid.version'
+                assert error.args[0].contains('API version 57')
+            }
+            response.status == 400
+    }
+
+    def "apiExecutionMetrics useStats works with API version 57"() {
+        given:
+            request.api_version = ApiVersions.V57
+            request.contentType = "application/json"
+            params.project = "TestProject"
+            params.useStats = "true"
+
+            def jobUuid = UUID.randomUUID().toString()
+            def job = new ScheduledExecution(
+                uuid: jobUuid,
+                jobName: "Test Job",
+                project: "TestProject"
+            )
+            job.save(flush: true)
+
+            def stats = new ScheduledExecutionStats(
+                jobUuid: jobUuid,
+                contentMap: [
+                    dailyMetrics: [
+                        "2025-11-22": [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { 0 }]
+                    ]
+                ]
+            )
+            stats.save(flush: true)
+
+            def apiMock = Mock(ApiService)
+            controller.apiService = apiMock
+            response.format = "json"
+
+        when:
+            def query = new ExecutionQuery()
+            query.jobIdListFilter = [jobUuid]
+            controller.apiExecutionMetrics(query)
+
+        then:
+            1 * apiMock.requireApi(_, _, ApiVersions.V57) >> true
+            response.status == 200
+            
+            // Verify response contains metrics from stats
+            def jsonResponse = new JsonSlurper().parseText(response.text)
+            jsonResponse.total == 20
+            jsonResponse.succeeded == 18
+            jsonResponse.failed == 2
     }
 
 
