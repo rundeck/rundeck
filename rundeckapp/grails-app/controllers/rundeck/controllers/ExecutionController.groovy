@@ -3992,7 +3992,7 @@ Note: This endpoint has the same query parameters and response as the `/executio
     /**
      * Get metrics for all jobs in a project (batch mode) - RUN-3768 Phase 5.
      * Returns per-job breakdown for efficient job list rendering.
-     * This method requires the feature flag rundeck.executionDailyMetrics.enabled=true
+     * This method returns meaningful data only if the feature flag rundeck.executionDailyMetrics.enabled was enabled during metric collection.
      *
      * @param projectName The project name to query jobs for
      * @param begin Optional begin date in format "yyyy-MM-ddTHH:mm:ssZ"
