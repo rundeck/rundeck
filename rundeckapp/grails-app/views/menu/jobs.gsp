@@ -392,9 +392,6 @@ search
             sinceUpdatedUrl:"${enc(js:g.createLink(controller:'reports',action: 'since.json', params: [project:projectName]))}",
             pagination:{
                 max: ${enc(js:params.max?params.int('max',10):10)}
-          },
-          query:{
-              jobIdFilter:'!null'
             },
             filterOpts: {
                 showFilter: false,
@@ -405,7 +402,7 @@ search
                 loadRunning:false,
                 allowAutoRefresh: false
             }
-    }
+        }
 })
       </g:javascript>
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|customFilters|idlist$/)}"/>
