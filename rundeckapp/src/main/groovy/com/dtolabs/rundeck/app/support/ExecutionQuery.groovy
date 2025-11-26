@@ -20,7 +20,7 @@ import com.google.common.collect.Lists
 import grails.gorm.DetachedCriteria
 import grails.validation.Validateable
 import rundeck.ReferencedExecution
-import rundeck.controllers.ExecutionController
+import rundeck.ExecReport
 import rundeck.services.ExecutionService
 
 /*
@@ -56,6 +56,10 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
     String recentFilter
     String userFilter
     String executionTypeFilter
+    String adhocStringFilter
+    String nodeFilter
+    String optionFilter
+
 
     static constraints={
         statusFilter(nullable:true)
@@ -87,6 +91,9 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         adhoc(nullable:true)
         executionTypeFilter( nullable: true)
         execProjects(nullable:true)
+        adhocStringFilter(nullable:true)
+        nodeFilter(nullable:true)
+        optionFilter(nullable:true)
     }
     /**
      * Modify a date by rewinding a certain number of units
@@ -435,6 +442,32 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         }
         if (query.doendafterFilter && query.endafterFilter) {
           ge('dateCompleted', query.endafterFilter)
+        }
+
+        if (query.adhocStringFilter) {
+          isNull('scheduledExecution')
+          exists(new DetachedCriteria(ExecReport, "er").build {
+              projections { property 'er.executionId' }
+              eqProperty('er.executionId', 'this.id')
+              eqProperty('er.project', 'this.project')
+              ilike('er.title', '%' + query.adhocStringFilter + '%')
+          })
+        }
+        if(query.nodeFilter){
+          if(query.nodeFilter.startsWith('name:') || !(query.nodeFilter.contains(":") || query.nodeFilter.contains(".*"))){
+              def node = query.nodeFilter.startsWith('name:')?(query.nodeFilter.split("name:")[1]).stripIndent():query.nodeFilter;
+              or {
+                  ilike("failedNodeList", '%' + node + '%')
+                  ilike("succeededNodeList", '%' + node + '%')
+              }
+
+          }else{
+              ilike("filter", '%' + query.nodeFilter + '%')
+          }
+        }
+
+        if(query.optionFilter){
+          ilike('argString', "%${query.optionFilter}%")
         }
 
         def critDelegate = delegate

@@ -2938,6 +2938,9 @@ So a value of `2w` would return executions that completed within the last two we
             @Parameter(in=ParameterIn.QUERY,name="executionTypeFilter",description="""specify the execution type, one of: `scheduled` (schedule trigger), `user` (user trigger), `user-scheduled` (user scheduled trigger). Since: v20""",schema=@Schema(type="string",allowableValues = ['scheduled','user','user-scheduled'])),
             @Parameter(in=ParameterIn.QUERY,name="useStats",description="""if true, use snapshot-based metrics from SCHEDULED_EXECUTION_STATS table (fast, returns empty metrics (all zeros) if no stats exist). if false or not provided, use execution table query (slow, always returns data). Since: v57""",schema=@Schema(type="boolean")),
             @Parameter(in=ParameterIn.QUERY,name="groupByJob",description="""if true with useStats=true, returns metrics for all jobs in the project (batch mode). Requires project parameter. Returns format: {jobs: {uuid1: metrics, uuid2: metrics, ...}}. RUN-3768 Phase 5. Since: v57""",schema=@Schema(type="boolean")),
+            @Parameter(in=ParameterIn.QUERY,name="adhocStringFilter",description="specify an exact adhoc command.",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="nodeFilter",description="specify an exact node filterm to search executions.",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="optionFilter",description="specify an exact option values to search executions (eg -test 123.",schema=@Schema(type="string")),
             @Parameter(in=ParameterIn.QUERY,name="max",description="""maximum number of results to include in response. (default: 20)""",schema=@Schema(type="integer")),
             @Parameter(in=ParameterIn.QUERY,name="offset",description="""offset for first result to include. (default: 0)""",schema=@Schema(type="integer"))
         ]
@@ -3544,7 +3547,7 @@ Note: This endpoint has the same query parameters and response as the `/executio
         // Check if user wants stats-based metrics (needs to be checked before requireApi)
         def useStats = params.boolean('useStats', false)
         def groupByJob = params.boolean('groupByJob', false)
-        
+
         // When useStats or groupByJob are used, requireApi should be called with the current API version
         // (tests expect this behavior). Otherwise, require V29 as the minimum.
         if (useStats || groupByJob) {
@@ -4009,21 +4012,21 @@ Note: This endpoint has the same query parameters and response as the `/executio
 
                 log.debug("[METRICS-API] Filtering metrics: beginDate=${beginDate}, endDate=${endDate}, beginHour=${beginHour}")
                 log.debug("[METRICS-API] Available dates in dailyMetrics: ${dailyMetrics.keySet().sort()}")
-                
+
                 filteredMetrics = dailyMetrics.findAll { dateStr, metrics ->
                     def date = LocalDate.parse(dateStr)
                     def inRange = true
-                    
+
                     // Exclude dates before beginDate (inclusive: date >= beginDate)
                     if (beginDate != null && date.isBefore(beginDate)) {
                         inRange = false
                     }
-                    
+
                     // Exclude dates after endDate (inclusive: date <= endDate)
                     if (endDate != null && date.isAfter(endDate)) {
                         inRange = false
                     }
-                    
+
                     return inRange
                 }
 
