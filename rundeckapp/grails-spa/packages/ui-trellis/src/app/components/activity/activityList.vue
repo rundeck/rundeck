@@ -526,7 +526,7 @@
 
               <span v-if="isCustomReportStatus(rpt)">
                 <span class="exec-status-text custom-status">{{
-                  rpt.status
+                  rpt.customStatus
                 }}</span>
               </span>
             </td>
