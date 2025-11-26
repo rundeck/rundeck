@@ -1125,8 +1125,6 @@ export default defineComponent({
         qparams.jobIdFilter = this.query.jobIdFilter;
       }
 
-      console.log("loading activity with query:", qparams);
-
       try {
         const response = await queryRunning(this.projectName, qparams);
         this.running = {
@@ -1150,30 +1148,20 @@ export default defineComponent({
       this.pagination.offset = offset;
       const xquery = this.parseToExecutionQuery();
 
-      console.log("loading activity with query:", xquery, " offset:", offset);
-
       try {
         const response = await getActivity(
           Object.assign({ offset: offset, max: this.pagination.max }, xquery),
         );
-
-        console.log(response);
         this.loading = false;
         if (response) {
-          console.log(response.paging.offset);
-
           this.pagination.offset = response.paging.offset;
           this.pagination.total = response.paging.total;
 
           this.lastDate = this.calculateLastDate(xquery, offset);
-          console.log("calculated lastDate: " + this.lastDate);
-
           this.reports = response.executions.map((rpt: any) => {
             rpt.node = nodeStats(rpt);
             return rpt;
           });
-          console.log(this.reports);
-
           this.eventBus &&
             this.eventBus.emit("activity-query-result", response);
         }
@@ -1190,14 +1178,17 @@ export default defineComponent({
         xquery["includeJobRef"] = "true";
         xquery["jobIdListFilter"] = this.query.jobIdFilter;
       }
-
       //map query to ExecutionQuery
       if (this.query.statFilter !== undefined && this.query.statFilter !== "") {
         xquery["statusFilter"] = this.executionState(this.query.statFilter);
       }
-
+      if (this.query.titleFilter) {
+        xquery["adhocStringFilter"] = this.query.titleFilter;
+      }
+      if (this.query.execnodeFilter) {
+        xquery["nodeFilter"] = this.query.execnodeFilter;
+      }
       Object.assign(xquery, this.query);
-
       return xquery;
     },
     changePageOffset(offset: number) {
