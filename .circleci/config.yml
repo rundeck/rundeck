@@ -712,6 +712,8 @@ workflows:
           <<: *slack-defaults
       - test-gui:
           name: T Unit UI
+          context:
+            - Cloudsmith
           <<: *slack-defaults
       - trigger-enterprise:
           name: Enterprise Snapshot
