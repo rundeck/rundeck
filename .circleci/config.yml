@@ -256,6 +256,8 @@ jobs:
   # Build rundeck War
   build-rundeck:
     <<: *job-defaults
+    context:
+      - Cloudsmith
     executor:
       name: docker-builder
       resource_class: large
@@ -641,6 +643,8 @@ slack-defaults: &slack-defaults
   <<: *slack-fail-post-step
 
 require-build: &require-build
+  context:
+    - Cloudsmith
   requires:
     - Build
 
