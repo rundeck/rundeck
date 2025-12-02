@@ -21,6 +21,8 @@ import com.dtolabs.rundeck.app.api.project.ProjectExport
 import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
+import com.dtolabs.rundeck.core.audit.ActionTypes
+import com.dtolabs.rundeck.core.audit.ResourceTypes
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.FrameworkResource
@@ -70,6 +72,7 @@ import rundeck.services.ProjectService
 import rundeck.services.ProjectServiceException
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.asyncimport.AsyncImportService
+import rundeck.services.audit.AuditEventsService
 import webhooks.component.project.WebhooksProjectComponent
 import webhooks.exporter.WebhooksProjectExporter
 import webhooks.importer.WebhooksProjectImporter
@@ -88,6 +91,7 @@ class ProjectController extends ControllerBase{
     ContextACLManager<AppACLContext> aclFileManagerService
     ConfigurationService configurationService
     AsyncImportService asyncImportService
+    AuditEventsService auditEventsService
 
     def static allowedMethods = [
             apiProjectConfigKeyDelete:['DELETE'],
@@ -529,6 +533,14 @@ class ProjectController extends ControllerBase{
                 flash.error = result.error
                 return redirect(controller: 'menu', action: 'projectDelete', params: [project: project])
             }
+            if(auditEventsService) {
+                auditEventsService.eventBuilder()
+                        .setUsername(authorizing.authContext.username)
+                        .setResourceType(ResourceTypes.PROJECT)
+                        .setActionType(ActionTypes.DELETE)
+                        .setResourceName(project)
+                        .publish()
+            }
             flash.message = 'Deleted project: ' + project
             return redirect(controller: 'menu', action: 'home')
         }.invalidToken {
@@ -941,6 +953,17 @@ Authorization required: `create` for resource type `project`
                 )
             }
         }
+
+        // Audit project creation
+        if(auditEventsService) {
+            auditEventsService.eventBuilder()
+                    .setUsername(session.user)
+                    .setResourceType(ResourceTypes.PROJECT)
+                    .setActionType(ActionTypes.PROJECT_CREATE)
+                    .setResourceName(project)
+                    .publish()
+        }
+
         switch(respFormat) {
             case 'xml':
                 if(isAllowXml()) {
@@ -1036,6 +1059,17 @@ Authorization required: `delete` access for `project` resource type or `admin` o
                 )
             )
         }
+
+        // Audit project deletion
+        if(auditEventsService) {
+            auditEventsService.eventBuilder()
+                    .setUsername(authorizing.authContext.username)
+                    .setResourceType(ResourceTypes.PROJECT)
+                    .setActionType(ActionTypes.PROJECT_DELETE)
+                    .setResourceName(project1.name)
+                    .publish()
+        }
+
         //success
         render(status:  HttpServletResponse.SC_NO_CONTENT)
     }
@@ -2330,6 +2364,17 @@ key2=value'''
             ])
         }
         checkScheduleChanges(project, currentProps, configProps)
+
+        // Audit project configuration update
+        if(auditEventsService) {
+            auditEventsService.eventBuilder()
+                    .setUsername(authorizingProject.authContext.username)
+                    .setResourceType(ResourceTypes.PROJECT)
+                    .setActionType(ActionTypes.PROJECT_UPDATE)
+                    .setResourceName(project.name)
+                    .publish()
+        }
+
         respondProjectConfig(respFormat, project)
     }
 

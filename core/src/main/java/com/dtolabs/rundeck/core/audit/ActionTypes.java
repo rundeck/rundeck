@@ -15,6 +15,11 @@ public final class ActionTypes {
   public static final String DELETE = "delete";
   public static final String RUN = "run";
 
+  // Project actions
+  public static final String PROJECT_CREATE = "project_create";
+  public static final String PROJECT_UPDATE = "project_update";
+  public static final String PROJECT_DELETE = "project_delete";
+
 
   // unallow instantiation
   private ActionTypes() {

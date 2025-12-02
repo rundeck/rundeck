@@ -24,6 +24,8 @@ import com.dtolabs.rundeck.app.api.tag.TagForNodes
 import com.dtolabs.rundeck.app.api.tag.TagsForNodesResponse
 import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.PluginConfigParams
+import com.dtolabs.rundeck.core.audit.ActionTypes
+import com.dtolabs.rundeck.core.audit.ResourceTypes
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.NodeFileParserException
@@ -86,6 +88,7 @@ import rundeck.services.PasswordFieldsService
 import rundeck.services.PluginService
 import rundeck.services.ProjectService
 import rundeck.services.ScheduledExecutionService
+import rundeck.services.audit.AuditEventsService
 
 import javax.servlet.http.HttpServletResponse
 import java.util.regex.Pattern
@@ -129,6 +132,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     UserService userService
     ProjectService projectService
     ConfigurationService configurationService
+    AuditEventsService auditEventsService
 
     PasswordFieldsService obscurePasswordFieldsService
     PasswordFieldsService resourcesPasswordFieldsService
@@ -832,6 +836,17 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     )
                 }
                 frameworkService.refreshSessionProjects(authContext, session)
+
+                // Audit project creation
+                if(auditEventsService) {
+                    auditEventsService.eventBuilder()
+                            .setUsername(session.user)
+                            .setResourceType(ResourceTypes.PROJECT)
+                            .setActionType(ActionTypes.PROJECT_CREATE)
+                            .setResourceName(proj.name)
+                            .publish()
+                }
+
                 flash.message = message(code: "project.0.was.created.flash.message", args: [proj.name])
                 return redirect(controller: 'framework', action: 'projectNodeSources', params: [project: proj.name])
             }
@@ -1386,6 +1401,17 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 }
                 frameworkService.refreshSessionProjects(authContext, session)
                 frameworkService.loadSessionProjectLabel(session, project, projProps['project.label'])
+
+                // Audit project configuration update
+                if(auditEventsService) {
+                    auditEventsService.eventBuilder()
+                            .setUsername(session.user)
+                            .setResourceType(ResourceTypes.PROJECT)
+                            .setActionType(ActionTypes.PROJECT_UPDATE)
+                            .setResourceName(project)
+                            .publish()
+                }
+
                 return redirect(controller: 'menu', action: 'index', params: [project: project])
             }
         }
