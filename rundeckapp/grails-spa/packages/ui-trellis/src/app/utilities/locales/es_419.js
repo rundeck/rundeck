@@ -389,6 +389,7 @@ const messages = {
   "jobquery.title.adhocRemoteStringFilter": "Comando Shell",
   "jobquery.title.adhocFilepathFilter": "Ruta de Archivo Script",
   "jobquery.title.argStringFilter": "Argumentos del Archivo Script",
+  "jobquery.title.execnodeFilter": "Filtro de Nodos",
   "page.unsaved.changes": "You have unsaved changes",
   "edit.nodes.file": "Edit Nodes File",
   "project.node.file.source.label": "Source",
