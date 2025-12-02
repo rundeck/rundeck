@@ -7,4 +7,4 @@ rundeck:
   - "com.github.rundeck-plugins:openssh-node-execution:2.0.4@zip"
   - "org.rundeck.plugins:multiline-regex-datacapture-filter:1.1.5"
   - "org.rundeck.plugins:attribute-match-node-enhancer:0.2.3"
-  - "com.github.rundeck-plugins:sshj-plugin:v0.1.19"
+  - "com.github.rundeck-plugins:sshj-plugin:v0.1.20"
