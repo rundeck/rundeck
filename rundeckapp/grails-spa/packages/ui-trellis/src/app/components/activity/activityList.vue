@@ -22,6 +22,7 @@
           v-if="pagination.total >= 0"
           class="summary-count"
           :class="{
+
             'text-strong': pagination.total < 1,
             'text-info': pagination.total > 0,
           }"
@@ -409,8 +410,8 @@
             :class="[
               `ali-${rpt.id}`,
               {
-                succeed: rpt.status === 'succeed',
-                fail: rpt.status === 'fail',
+                succeed: rpt.status === 'succeeded',
+                fail: rpt.status === 'failed',
                 missed: rpt.status === 'missed',
                 highlight: highlightExecutionId == rpt.id,
                 job: rpt.job,
@@ -441,14 +442,14 @@
             <td
               v-tooltip.bottom="{
                 text:
-                  rpt['date-ended'] && rpt['date-ended'].date
+                  rpt.dateEnded && rpt.dateEnded.date
                     ? $t(
                         rpt.status === 'missed'
                           ? 'info.missed.0.1'
                           : 'info.completed.0.1',
                         [
-                          jobCompletedISOFormat(rpt['date-ended']),
-                          jobCompletedFromNow(rpt['date-ended']),
+                          jobCompletedISOFormat(rpt.dateEnded),
+                          jobCompletedFromNow(rpt.dateEnded),
                         ],
                       )
                     : '',
@@ -457,20 +458,20 @@
               class="date"
             >
               <span
-                v-if="rpt['date-ended'] && rpt['date-ended'].date"
+                v-if="rpt.dateEnded && rpt.dateEnded.date"
                 class="spacing-x-2"
               >
                 <span class="timeabs">
-                  {{ momentJobFormatDate(rpt["date-ended"].date) }}
+                  {{ momentJobFormatDate(rpt.dateEnded.date) }}
                 </span>
                 <span
-                  v-if="isRecentCalendarDate(rpt['date-ended'].date)"
+                  v-if="isRecentCalendarDate(rpt.dateEnded.date)"
                   class="timerel text-muted"
                 >
-                  {{ momentCalendarFormat(rpt["date-ended"].date) }}
+                  {{ momentCalendarFormat(rpt.dateEnded.date) }}
                 </span>
                 <span v-else class="timerel text-muted">
-                  {{ momentFromNow(rpt["date-ended"].date) }}
+                  {{ momentFromNow(rpt.dateEnded.date) }}
                 </span>
               </span>
             </td>
@@ -499,7 +500,9 @@
               <span
                 v-if="!rpt.jobDeleted && rpt.job"
                 v-tooltip="
-                  purify(rpt.jobGroup ? rpt.job.group + '/' + rpt.job.name : '')
+                  purify(
+                    rpt.job.group ? rpt.job.group + '/' + rpt.job.name : '',
+                  )
                 "
               >
                 {{ rpt.job.name }}
@@ -532,17 +535,7 @@
             </td>
             <td class="activity-list__eventargs">
               <span
-                v-if="rpt.jobArguments"
-                class="activity-list__eventargs-string"
-              >
-                <span v-for="(value, key) in rpt.jobArguments" :key="key">
-                  {{ key }}:
-                  <code class="optvalue">{{ value }}</code>
-                </span>
-              </span>
-
-              <span
-                v-if="!rpt.jobArguments"
+                v-if="rpt.argstring"
                 class="activity-list__eventargs-string"
                 >{{ rpt.argstring }}</span
               >
@@ -587,20 +580,19 @@
 </template>
 
 <script lang="ts">
-import { queryRunning } from "../../../library/services/executions";
+import {getExecutions, PagedResult, queryRunning,} from "../../../library/services/executions";
 import axios from "axios";
-import { defineComponent, PropType } from "vue";
-import moment, { MomentInput } from "moment";
+import {defineComponent, PropType} from "vue";
+import moment, {MomentInput} from "moment";
 import OffsetPagination from "../../../library/components/utils/OffsetPagination.vue";
 import ActivityFilter from "./activityFilter.vue";
 
-import { EventBus, getRundeckContext } from "../../../library";
-import { ExecutionBulkDeleteResponse } from "@rundeck/client/dist/lib/models";
-import { Execution } from "../../../library/types/executions/Execution";
+import {EventBus, getRundeckContext} from "../../../library";
+import {ExecutionBulkDeleteResponse} from "@rundeck/client/dist/lib/models";
+import {Execution, ExecutionDate, Status} from "../../../library/types/executions/Execution";
 import DOMPurify from "dompurify";
 import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
-import { api } from "../../../library/services/api";
-import { getActivity } from "./services/activityService";
+import {api} from "../../../library/services/api";
 
 /**
  * Generate a URL
@@ -687,7 +679,7 @@ export default defineComponent({
       projectName: "",
       activityPageHref: "",
       sinceUpdatedUrl: "",
-      reports: [],
+      reports: [] as Execution[],
       running: null as null | { executions: any[]; paging: any },
       lastDate: -1,
       pagination: {
@@ -743,6 +735,9 @@ export default defineComponent({
     };
   },
   computed: {
+    Status() {
+      return Status;
+    },
     activityHref(): string {
       return _genUrl(this.activityPageHref, this.fullQueryParams());
     },
@@ -861,13 +856,13 @@ export default defineComponent({
       }
       return moment(date).format(this.momentJobFormat);
     },
-    jobCompletedISOFormat(date: any) {
+    jobCompletedISOFormat(date: ExecutionDate) {
       if (!date) {
         return "";
       }
       return moment(date.date).toISOString();
     },
-    jobCompletedFromNow(date: any) {
+    jobCompletedFromNow(date: ExecutionDate) {
       if (!date) {
         return "";
       }
@@ -926,10 +921,10 @@ export default defineComponent({
         this.bulkSelectedIds.splice(ndx, 1);
       }
     },
-    middleClickRow(rpt: any) {
+    middleClickRow(rpt: Execution) {
       window.open(rpt.permalink, "_blank");
     },
-    autoBulkEdit(rpt: any) {
+    autoBulkEdit(rpt: Execution) {
       if (!this.bulkEditMode) {
         window.location = rpt.permalink;
       } else if (rpt.id) {
@@ -944,10 +939,10 @@ export default defineComponent({
       }
     },
     bulkEditSelectAll() {
-      this.reports.forEach((val: any) => this.selectId(val.executionId));
+      this.reports.forEach((val: Execution) => this.selectId(val.id));
     },
     bulkEditDeselectAll() {
-      this.reports.forEach((val: any) => this.deselectId(val.executionId));
+      this.reports.forEach((val: Execution) => this.deselectId(val.id));
     },
     bulkEditDeselectAllPages() {
       this.bulkSelectedIds = [];
@@ -965,13 +960,13 @@ export default defineComponent({
       return this.executionStateCss(this.reportState(rpt));
     },
     formatDurationMomentHumanize(execution: any) {
-      // Calculate duration from date-started and date-ended
+      // Calculate duration from dateStarted and dateEnded
       let ms = 0;
 
-      if (execution["date-started"] && execution["date-ended"]) {
+      if (execution.dateStarted && execution.dateEnded) {
         // New format: unixtime in milliseconds
-        const startTime = execution["date-started"].unixtime;
-        const endTime = execution["date-ended"].unixtime;
+        const startTime = execution.dateStarted.unixtime;
+        const endTime = execution.dateEnded.unixtime;
         ms = endTime - startTime;
       }
 
@@ -1042,13 +1037,11 @@ export default defineComponent({
       }
       return "other";
     },
-    reportState(rpt: any) {
-      return rpt.cancelled
-        ? this.executionState("cancel")
-        : this.executionState(rpt.status);
+    reportState(rpt: Execution) {
+      return this.executionState(rpt.status);
     },
     reload() {
-      this.reports = [];
+      this.reports = [] as Execution[];
       this.pagination.total = -1;
       this.lastDate = -1;
       this.sincecount = 0;
@@ -1149,7 +1142,8 @@ export default defineComponent({
       const xquery = this.parseToExecutionQuery();
 
       try {
-        const response = await getActivity(
+        const response = await getExecutions(
+          this.projectName,
           Object.assign({ offset: offset, max: this.pagination.max }, xquery),
         );
         this.loading = false;
@@ -1158,7 +1152,7 @@ export default defineComponent({
           this.pagination.total = response.paging.total;
 
           this.lastDate = this.calculateLastDate(xquery, offset);
-          this.reports = response.executions.map((rpt: any) => {
+          this.reports = response.results.map((rpt: Execution) => {
             rpt.node = nodeStats(rpt);
             return rpt;
           });
