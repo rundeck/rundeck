@@ -208,6 +208,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
                   } else {
                       if(query.includeJobRef && query.execProjects){
                           or {
+                              eq("uuid", theid)
                               exists(new DetachedCriteria(ReferencedExecution, "re").build {
                                   projections { property 're.execution.id' }
                                   eq('re.jobUuid', theid)
@@ -219,7 +220,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
                                       }
                                   }
                               })
-                              eq("uuid", theid)
+
                           }
                       }else{
                           eq("uuid", theid)
@@ -384,7 +385,8 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
             //end related ScheduledExecution query
           }
         }
-        if(query.projFilter) {
+        // project filter is not applied when the jobUUID filter is set to improve the response time of that case
+        if(query.projFilter && !query.jobIdListFilter) {
           eq('project', query.projFilter)
         }
         if (query.userFilter) {
