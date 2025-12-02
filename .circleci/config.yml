@@ -714,7 +714,8 @@ workflows:
           name: T Unit UI
           context:
             - Cloudsmith
-          <<: *slack-defaults
+            - slack-secrets
+          <<: *slack-fail-post-step
       - trigger-enterprise:
           name: Enterprise Snapshot
           <<: *require-build
