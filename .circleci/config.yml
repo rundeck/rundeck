@@ -640,6 +640,12 @@ slack-defaults: &slack-defaults
     - slack-secrets
   <<: *slack-fail-post-step
 
+cloudsmith-slack-defaults: &cloudsmith-slack-defaults
+  context:
+    - Cloudsmith
+    - slack-secrets
+  <<: *slack-fail-post-step
+
 require-build: &require-build
   requires:
     - Build
@@ -670,7 +676,7 @@ workflows:
     jobs:
       - build-rundeck:
           name: Build Release
-          <<: *slack-defaults
+          <<: *cloudsmith-slack-defaults
           <<: *filter-tags
       - packaging-publish:
           name: Package and Release
@@ -682,7 +688,7 @@ workflows:
           name: Maven Publish
           requires:
             - Build Release
-          <<: *slack-defaults
+          <<: *cloudsmith-slack-defaults
           <<: *filter-tags
       - docker-publish:
           name: Docker Publish
@@ -704,13 +710,13 @@ workflows:
     jobs:
       - build-rundeck:
           name: Build
-          <<: *slack-defaults
+          <<: *cloudsmith-slack-defaults
       - test-gradle:
           name: T Unit Gradle
           <<: *slack-defaults
       - test-gui:
           name: T Unit UI
-          <<: *slack-defaults
+          <<: *cloudsmith-slack-defaults
       - trigger-enterprise:
           name: Enterprise Snapshot
           <<: *require-build
