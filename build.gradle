@@ -38,18 +38,18 @@ buildscript {
     }
     dependencies {
         classpath 'com.adaptc.gradle:nexus-workflow:0.6'
-        classpath 'com.google.gradle:osdetector-gradle-plugin:1.4.0'
+        classpath 'com.google.gradle:osdetector-gradle-plugin:1.7.0'
         classpath group: 'org.yaml', name: 'snakeyaml', version: "${snakeyamlVersion}"
-        classpath 'org.owasp:dependency-check-gradle:5.3.2'
+        classpath 'org.owasp:dependency-check-gradle:10.0.4'
     }
 }
 
 plugins {
     id "org.dvaske.gradle.git-build-info" version "0.8"
     id "com.dorongold.task-tree" version "1.5"
-    id "org.ajoberstar.grgit" version "2.2.1"
+    id "org.ajoberstar.grgit" version "5.2.2"
     id "signing"
-    id 'io.github.gradle-nexus.publish-plugin' version "1.1.0"
+    id 'io.github.gradle-nexus.publish-plugin' version "2.0.0"
 }
 
 apply plugin: 'java'
