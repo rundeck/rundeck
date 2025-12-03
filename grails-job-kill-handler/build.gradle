@@ -5,7 +5,7 @@ buildscript {
         maven { url "https://repo.grails.org/grails/core" }
     }
     dependencies {
-        classpath "org.apache.grails:grails-gradle-plugin:$grailsGradlePluginVersion"
+        classpath "org.apache.grails:grails-gradle-plugin:$grailsVersion"
     }
 }
 
@@ -58,7 +58,7 @@ dependencies {
     implementation "org.grails.plugins:async"
     implementation "org.grails.plugins:scaffolding"
     implementation "org.grails.plugins:gsp"
-    implementation "org.grails.plugins:hibernate5"
+    implementation "org.apache.grails.plugins:hibernate5"
     compileOnly "io.micronaut:micronaut-inject-groovy"
     console "org.apache.grails:grails-console"
     profile "org.grails.profiles:web-plugin"

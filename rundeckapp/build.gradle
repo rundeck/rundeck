@@ -7,11 +7,11 @@ buildscript {
         maven { url "https://repo.grails.org/grails/core" }
     }
     dependencies {
-        classpath "org.apache.grails:grails-gradle-plugin:$grailsGradlePluginVersion"
+        classpath "org.apache.grails:grails-gradle-plugin:$grailsVersion"
         classpath "gradle.plugin.com.energizedwork:idea-gradle-plugins:1.4"
-        classpath "org.grails.plugins:hibernate5:7.0.0"
-        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:$assetPluginVersion"
-        classpath("org.grails.plugins:database-migration:$dbMigrationPluginVersion"){
+        classpath "org.apache.grails.plugins:hibernate5:7.0.0"
+        classpath "cloud.wondrify:asset-pipeline-gradle:$assetPluginVersion"
+        classpath("org.apache.grails.plugins:database-migration:$dbMigrationPluginVersion"){
             exclude group: 'org.spockframework', module: 'spock-core'
         }
     }
@@ -167,7 +167,7 @@ dependencies {
     implementation "com.zaxxer:HikariCP:${hikariVersion}"
 
     // Defined by create-app
-    implementation "org.grails.plugins:hibernate5"
+    implementation "org.apache.grails.plugins:hibernate5"
     implementation "org.hibernate:hibernate-core:${hibernateVersion}"
 
     implementation( "org.hibernate:hibernate-jcache:${hibernateVersion}")
@@ -263,9 +263,9 @@ dependencies {
 
     runtimeOnly "org.apache.tomcat:tomcat-jdbc:9.0.89"
     runtimeOnly "org.springframework:spring-jcl:${springVersion}"
-    runtimeOnly "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
-    api ("com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion")
-    runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
+    runtimeOnly "org.apache.groovy:groovy-dateutil:${findProperty('groovy.version')}"
+    api ("cloud.wondrify:asset-pipeline-grails:$assetPluginVersion")
+    runtimeOnly "cloud.wondrify:asset-pipeline-grails:$assetPluginVersion"
 
     implementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
     testImplementation "org.apache.grails:grails-gorm-testing-support"

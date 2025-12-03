@@ -40,7 +40,7 @@ repositories {
 
 dependencies {
     implementation project(":core")
-    implementation "org.codehaus.groovy:groovy:${groovyVersion}"
+    implementation "org.apache.groovy:groovy:${findProperty('groovy.version')}"
     implementation 'org.slf4j:slf4j-api:1.7.29'
 }
 

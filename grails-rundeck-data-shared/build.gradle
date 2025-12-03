@@ -3,7 +3,7 @@ buildscript {
         maven { url "https://repo.grails.org/grails/core" }
     }
     dependencies {
-        classpath "org.apache.grails:grails-gradle-plugin:$grailsGradlePluginVersion"
+        classpath "org.apache.grails:grails-gradle-plugin:$grailsVersion"
     }
 }
 
@@ -57,7 +57,7 @@ dependencies {
     implementation project(":core")
     implementation project(':rundeck-app-util')
     profile "org.grails.profiles:web-plugin"
-    runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
+    runtimeOnly "cloud.wondrify:asset-pipeline-grails:$assetPluginVersion"
     testImplementation "io.micronaut:micronaut-inject-groovy"
     testImplementation "org.apache.grails:grails-gorm-testing-support"
     testImplementation "org.mockito:mockito-core"

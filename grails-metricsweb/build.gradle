@@ -4,7 +4,7 @@ buildscript {
         maven { url "https://repo.grails.org/grails/core" }
     }
     dependencies {
-        classpath "org.apache.grails:grails-gradle-plugin:$grailsGradlePluginVersion"
+        classpath "org.apache.grails:grails-gradle-plugin:$grailsVersion"
     }
 }
 
@@ -69,7 +69,7 @@ dependencies {
     profile ("org.grails.profiles:web-plugin"){
         exclude(group:"org.grails.profiles",module:"web")
     }
-    runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
+    runtimeOnly "cloud.wondrify:asset-pipeline-grails:$assetPluginVersion"
     testImplementation "org.apache.grails:grails-gorm-testing-support"
     testImplementation "org.mockito:mockito-core"
     testImplementation "org.apache.grails:grails-web-testing-support"

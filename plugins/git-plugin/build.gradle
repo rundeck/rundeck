@@ -49,7 +49,7 @@ dependencies {
         exclude group: 'org.bouncycastle'
     }
     implementation 'org.slf4j:slf4j-api:1.7.29'
-    implementation "org.codehaus.groovy:groovy:${groovyVersion}"
+    implementation "org.apache.groovy:groovy:${findProperty('groovy.version')}"
     implementation group: 'com.hierynomus', name: 'sshj', version: '0.33.0'
     implementation group: 'com.hierynomus', name: 'asn-one', version: '0.6.0'
     implementation 'net.i2p.crypto:eddsa:0.3.0'
@@ -63,7 +63,7 @@ dependencies {
     testImplementation 'junit:junit:4.8.1',
                 'org.mockito:mockito-all:1.10.19'
 
-    testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    testImplementation "org.apache.groovy:groovy-all:${findProperty('groovy.version')}"
     testImplementation "cglib:cglib-nodep:2.2.2"
     testImplementation "org.spockframework:spock-core:${spockVersion}"
 

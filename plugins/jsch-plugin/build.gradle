@@ -32,7 +32,7 @@ dependencies {
 
     testImplementation 'junit:junit:4.13.2',
             'org.mockito:mockito-all:1.10.19'
-    testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    testImplementation "org.apache.groovy:groovy-all:${findProperty('groovy.version')}"
     testImplementation "cglib:cglib-nodep:2.2.2"
     testImplementation "org.spockframework:spock-core:${spockVersion}"
 

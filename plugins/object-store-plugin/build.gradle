@@ -28,7 +28,7 @@ configurations.all {
 
 dependencies {
     // Use the latest Groovy version for building this library
-    implementation "org.codehaus.groovy:groovy:${groovyVersion}"
+    implementation "org.apache.groovy:groovy:${findProperty('groovy.version')}"
     pluginLibs("io.minio:minio:${minioVersion}") {
         exclude(group: 'com.fasterxml.jackson.core')
         exclude(group: 'com.google.guava', module: 'guava')

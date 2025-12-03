@@ -19,7 +19,7 @@ configurations{
 
 dependencies {
     // Use the latest Groovy version for building this library
-    implementation "org.codehaus.groovy:groovy:${groovyVersion}"
+    implementation "org.apache.groovy:groovy:${findProperty('groovy.version')}"
 
     testImplementation "org.spockframework:spock-core:${spockVersion}"
 }
