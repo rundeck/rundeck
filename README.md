@@ -65,6 +65,12 @@ Delete the `.npmrc` file in the ui-trellis package:
 rm rundeckapp/grails-spa/packages/ui-trellis/.npmrc
 ```
 
+And the `.npmrc` file in the _package-manager directory:
+
+```bash
+rm rundeckapp/grails-app/assets/javascripts/_package-manager/.npmrc
+```
+
 ## Build with Gradle
 
 Produces: `rundeckapp/build/libs/rundeck-X.Y.war`
