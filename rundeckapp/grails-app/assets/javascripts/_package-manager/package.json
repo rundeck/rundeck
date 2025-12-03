@@ -2,6 +2,9 @@
   "name": "rundeck-legacy-package-manager",
   "version": "1.0.0",
   "description": "",
+  "engines": {
+    "npm": "10.9.4"
+  },
   "main": "",
   "scripts": {
     "test": "true",
