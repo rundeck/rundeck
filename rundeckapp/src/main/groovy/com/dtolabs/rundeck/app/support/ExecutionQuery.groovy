@@ -300,7 +300,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
 
             txtfilters.each { key, val ->
               if (query["${key}Filter"]) {
-                ilike(val, '%' + query["${key}Filter"] + '%')
+                like(val, '%' + query["${key}Filter"] + '%')
               }
             }
 
@@ -317,7 +317,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
             excludeTxtFilters.each { key, val ->
               if (query["${key}Filter"]) {
                 not {
-                  ilike(val, '%' + query["${key}Filter"] + '%')
+                  like(val, '%' + query["${key}Filter"] + '%')
                 }
               }
             }
@@ -454,24 +454,24 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
               projections { property 'er.executionId' }
               eqProperty('er.executionId', 'this.id')
               eqProperty('er.project', 'this.project')
-              ilike('er.title', '%' + query.adhocStringFilter + '%')
+              like('er.title', '%' + query.adhocStringFilter + '%')
           })
         }
         if(query.nodeFilter){
           if(query.nodeFilter.startsWith('name:') || !(query.nodeFilter.contains(":") || query.nodeFilter.contains(".*"))){
               def node = query.nodeFilter.startsWith('name:')?(query.nodeFilter.split("name:")[1]).stripIndent():query.nodeFilter;
               or {
-                  ilike("failedNodeList", '%' + node + '%')
-                  ilike("succeededNodeList", '%' + node + '%')
+                  like("failedNodeList", '%' + node + '%')
+                  like("succeededNodeList", '%' + node + '%')
               }
 
           }else{
-              ilike("filter", '%' + query.nodeFilter + '%')
+              like("filter", '%' + query.nodeFilter + '%')
           }
         }
 
         if(query.optionFilter){
-          ilike('argString', "%${query.optionFilter}%")
+          like('argString', "%${query.optionFilter}%")
         }
 
         def critDelegate = delegate
