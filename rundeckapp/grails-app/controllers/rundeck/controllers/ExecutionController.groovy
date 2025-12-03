@@ -1014,7 +1014,7 @@ Contents:
 
 * `id`: ID of the execution
 * `message`: optional text message indicating why no entries were returned
-* `error`: optional text message indicating an error case
+* `error`: optional text message indicating an error case. Note: A 200 response may include an `error` field (e.g., "The Execution Log could not be found") when log data is not available, which is normal for executions where logs have not been generated or stored yet.
 * `unmodified`: true/false, (optional) "true" will be returned if the `lastmod` parameter was used and the file had not changed
 * `empty`: true/false, (optional) "true" will be returned if the log file does not exist or is empty, which may occur if the log data is requested before any output has been stored.
 * `offset`: Byte offset to read for the next set of data
@@ -2417,6 +2417,10 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
 }""")
             )
         ]
+    )
+    @ApiResponse(
+        responseCode = '404',
+        description = 'Execution state not found. This occurs when the execution never started (e.g., status: missed, meaning the job was scheduled but conditions prevented it from starting) or when state data is not available for the execution.'
     )
     @Tag(name = 'Job Executions')
     /**
