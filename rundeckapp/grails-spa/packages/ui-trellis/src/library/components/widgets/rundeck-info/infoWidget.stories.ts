@@ -9,7 +9,7 @@ export default {
 } as Meta<typeof RundeckInfoWidget>;
 
 export const infoWidget: StoryFn<typeof RundeckInfoWidget> = () => {
-  const rootStore = new RootStore(window._rundeck.rundeckClient);
+  const rootStore = new RootStore();
   const server = new ServerInfo(
     "xubuntu",
     "f1dbb7ed-c575-4154-8d01-216a59d7cb5e",

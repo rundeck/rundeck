@@ -20,6 +20,7 @@ import activitySummary from "./components/activitySummary.vue";
 import activityList from "../../components/activity/activityList.vue";
 
 import { getRundeckContext } from "../../../library";
+import axios from "axios";
 
 export default {
   name: "App",
@@ -47,16 +48,17 @@ export default {
       this.rdBase = window._rundeck.rdBase;
       this.eventsAuth =
         window._rundeck.data && window._rundeck.data.projectEventsAuth;
-      const response = await getRundeckContext().rundeckClient.sendRequest({
-        method: "get",
-        pathTemplate: "/menu/homeAjax",
-        baseUrl: this.rdBase,
-        queryParameters: {
+      const response = await axios.get(`${this.rdBase}menu/homeAjax`, {
+        params: {
           projects: window._rundeck.projectName,
         },
+        headers: {
+          "X-Rundeck-ajax": "true",
+          Accept: "application/json",
+        },
       });
-      if (response.parsedBody.projects) {
-        this.project = response.parsedBody.projects[0];
+      if (response.data.projects) {
+        this.project = response.data.projects[0];
       }
     }
   },

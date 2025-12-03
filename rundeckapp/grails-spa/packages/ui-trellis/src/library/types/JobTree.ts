@@ -1,4 +1,4 @@
-import { Job } from "@rundeck/client/dist/lib/models";
+import { Job } from "./rundeckApi";
 import { GroupedJobs, TreeItem } from "./TreeItem";
 
 export class JobTree implements GroupedJobs {

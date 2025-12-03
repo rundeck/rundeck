@@ -1,4 +1,4 @@
-import { WorkflowStep } from "@rundeck/client/dist/lib/models/index";
+import { WorkflowStep } from "../types/rundeckApi";
 
 export interface IRenderedStep {
   stepNumber: string;

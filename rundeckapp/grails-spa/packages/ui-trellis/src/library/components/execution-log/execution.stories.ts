@@ -6,7 +6,7 @@ import LogViewer from "./logViewer.vue";
 import { ExecutionLog } from "../../utilities/ExecutionLogConsumer";
 import { RootStore } from "../../stores/RootStore";
 
-const rootStore = new RootStore(window._rundeck.rundeckClient);
+const rootStore = new RootStore();
 window._rundeck.rootStore = rootStore;
 
 export default {
@@ -49,7 +49,7 @@ export const darkTheme: StoryFn<typeof LogViewer> = (args) => ({
     },
   },
   provide: () => ({
-    rootStore: new RootStore(window._rundeck.rundeckClient),
+    rootStore: new RootStore(),
   }),
 });
 darkTheme.args = {
@@ -155,7 +155,7 @@ export const htmlOutput: StoryFn<typeof LogViewer> = (args) => ({
     el.parentNode.style.height = "100vh";
   },
   provide: () => ({
-    rootStore: new RootStore(window._rundeck.rundeckClient),
+    rootStore: new RootStore(),
   }),
 });
 
@@ -170,7 +170,7 @@ export const ansiColorOutput: StoryFn<typeof LogViewer> = (args) => ({
     el.parentNode.style.height = "100vh";
   },
   provide: () => ({
-    rootStore: new RootStore(window._rundeck.rundeckClient),
+    rootStore: new RootStore(),
   }),
 });
 
@@ -185,7 +185,7 @@ export const largeOutput: StoryFn<typeof LogViewer> = (args) => ({
     el.parentNode.style.height = "100vh";
   },
   provide: () => ({
-    rootStore: new RootStore(window._rundeck.rundeckClient),
+    rootStore: new RootStore(),
   }),
 });
 
@@ -200,7 +200,7 @@ export const runningOutput: StoryFn<typeof LogViewer> = (args) => ({
     el.parentNode.style.height = "100vh";
   },
   provide: () => ({
-    rootStore: new RootStore(window._rundeck.rundeckClient),
+    rootStore: new RootStore(),
   }),
 });
 
@@ -215,7 +215,7 @@ export const failedOutput: StoryFn<typeof LogViewer> = () => ({
     el.parentNode.style.height = "100vh";
   },
   provide: () => ({
-    rootStore: new RootStore(window._rundeck.rundeckClient),
+    rootStore: new RootStore(),
   }),
 });
 
@@ -233,7 +233,7 @@ export const gutterOverflow: StoryFn<typeof LogViewer> = (args) => ({
     el.parentNode.style.height = "100vh";
   },
   provide: () => ({
-    rootStore: new RootStore(window._rundeck.rundeckClient),
+    rootStore: new RootStore(),
     executionLogViewerFactory: function () {
       return Promise.resolve(new ExecutionLog("900"));
     },
@@ -253,7 +253,7 @@ export const userSettings: StoryFn<typeof LogViewer> = () => ({
     el.parentNode.style.height = "100vh";
   },
   provide: () => ({
-    rootStore: new RootStore(window._rundeck.rundeckClient),
+    rootStore: new RootStore(),
     executionLogViewerFactory: function () {
       return Promise.resolve(new ExecutionLog("900"));
     },
@@ -317,7 +317,7 @@ export const missingOutput: StoryFn<typeof LogViewer> = () => ({
     el.parentNode.style.height = "100%";
   },
   provide: () => ({
-    rootStore: new RootStore(window._rundeck.rundeckClient),
+    rootStore: new RootStore(),
     executionLogViewerFactory: function () {
       return Promise.resolve(new ExecutionLog("1033"));
     },
@@ -334,7 +334,7 @@ export const oversizeOutput: StoryFn<typeof LogViewer> = () => ({
     el.parentNode.style.height = "100%";
   },
   provide: () => ({
-    rootStore: new RootStore(window._rundeck.rundeckClient),
+    rootStore: new RootStore(),
     executionLogViewerFactory: function () {
       return Promise.resolve(new ExecutionLog("900"));
     },

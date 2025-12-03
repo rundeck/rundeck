@@ -1,5 +1,4 @@
 import { RootStore } from "./RootStore";
-import { RundeckClient } from "@rundeck/client";
 
 import axios from "axios";
 import { VersionInfo } from "./System";
@@ -11,7 +10,6 @@ export class Releases {
 
   constructor(
     readonly root: RootStore,
-    readonly client: RundeckClient,
   ) {}
 
   @Serial

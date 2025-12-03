@@ -119,7 +119,6 @@ describe("ExecutionOutput Store", () => {
 
     const executionOutputStore = new ExecutionOutputStore(
       window._rundeck.rootStore,
-      null,
     );
 
     const output = executionOutputStore.createOrGet("900");

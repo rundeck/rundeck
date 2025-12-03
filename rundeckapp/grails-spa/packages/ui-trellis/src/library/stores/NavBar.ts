@@ -1,5 +1,4 @@
 import { RootStore } from "./RootStore";
-import { RundeckClient } from "@rundeck/client";
 
 export class NavBar {
   items: Array<NavItem> = [];
@@ -19,7 +18,6 @@ export class NavBar {
 
   constructor(
     readonly root: RootStore,
-    readonly client: RundeckClient,
   ) {
     if (window._rundeck.navbar) {
       window._rundeck.navbar.items.forEach((i: NavItem) => {

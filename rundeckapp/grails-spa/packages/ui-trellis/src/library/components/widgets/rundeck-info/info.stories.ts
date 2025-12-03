@@ -13,7 +13,7 @@ export default {
 
 export const infoDisplay: StoryFn<typeof RundeckInfo> = () => {
   console.log(window._rundeck.rundeckClient);
-  const rootStore = new RootStore(window._rundeck.rundeckClient);
+  const rootStore = new RootStore();
   const version = new VersionInfo();
   const server = new ServerInfo(
     "xubuntu",

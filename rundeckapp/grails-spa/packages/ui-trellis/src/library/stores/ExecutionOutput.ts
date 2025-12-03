@@ -8,10 +8,9 @@ import {
 } from "mobx";
 import { ObservableGroupMap, actionAsync, task } from "mobx-utils";
 
-import { RundeckClient } from "@rundeck/client";
 import { RootStore } from "./RootStore";
 import { JobWorkflow, RenderedStepList } from "../utilities/JobWorkflow";
-import { ExecutionStatusGetResponse } from "@rundeck/client/dist/lib/models";
+import { ExecutionStatusGetResponse } from "../types/rundeckApi";
 import { Serial } from "../utilities/Async";
 import { api, apiClient } from "../services/api";
 
@@ -25,13 +24,12 @@ export class ExecutionOutputStore {
 
   constructor(
     readonly root: RootStore,
-    readonly client: RundeckClient,
   ) {}
 
   @action
   createOrGet(id: string) {
     if (!this.executionOutputsById.has(id))
-      this.executionOutputsById.set(id, new ExecutionOutput(id, this.client));
+      this.executionOutputsById.set(id, new ExecutionOutput(id));
 
     return this.executionOutputsById.get(id)!;
   }
@@ -45,8 +43,6 @@ export class ExecutionOutputStore {
 }
 
 export class ExecutionOutput {
-  client!: RundeckClient;
-
   id!: string;
   offset: number = 0;
   clusterExec!: boolean;
@@ -76,8 +72,8 @@ export class ExecutionOutput {
     ExecutionOutputEntry
   >;
 
-  constructor(id: string, client: RundeckClient) {
-    Object.assign(this, { id, client });
+  constructor(id: string) {
+    Object.assign(this, { id });
     this.entriesbyNodeCtx = new ObservableGroupMap(this.entries, (e) => {
       return `${e.node}:${e.stepctx ? JobWorkflow.cleanContextId(e.stepctx) : ""}`;
     });

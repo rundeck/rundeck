@@ -5,7 +5,7 @@ import { RootStore } from "../../../library/stores/RootStore";
 
 const eventBus = window._rundeck.eventBus;
 
-const rootStore = new RootStore(window._rundeck.rundeckClient);
+const rootStore = new RootStore();
 
 eventBus.on("ko-adhoc-running", (data: any) => {
   const elm = document.querySelector(

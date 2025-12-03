@@ -13,7 +13,7 @@ export default {
 } as Meta<typeof UtilityBar>;
 
 export const navBar: StoryFn<typeof UtilityBar> = () => {
-  const rootStore = new RootStore(window._rundeck.rundeckClient);
+  const rootStore = new RootStore();
   const server = new ServerInfo(
     "xubuntu",
     "f1dbb7ed-c575-4154-8d01-216a59d7cb5e",
@@ -108,7 +108,7 @@ export const navBar: StoryFn<typeof UtilityBar> = () => {
 };
 
 export const widgetCounter: StoryFn<typeof UtilityBar> = (args) => {
-  const rootStore = new RootStore(window._rundeck.rundeckClient);
+  const rootStore = new RootStore();
 
   rootStore.utilityBar.addItems([
     {

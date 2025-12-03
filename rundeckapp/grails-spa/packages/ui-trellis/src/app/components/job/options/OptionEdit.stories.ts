@@ -70,7 +70,7 @@ A comprehensive form component for creating and editing job options in Rundeck. 
       },
     ],
     async beforeEach() {
-      const rootStore = new RootStore(window._rundeck.rundeckClient);
+      const rootStore = new RootStore();
 
       window._rundeck = {
         rdBase: "http://localhost:4440",

@@ -422,7 +422,7 @@ import KeyStorageSelector from "./KeyStorageSelector.vue";
 
 import AceEditorVue from "../utils/AceEditorVue.vue";
 import PluginPropVal from "./pluginPropVal.vue";
-import { client } from "../../modules/rundeckClient";
+import { api } from "../../services/api";
 import DynamicFormPluginProp from "./DynamicFormPluginProp.vue";
 import type { PropType } from "vue";
 import { getRundeckContext } from "../../rundeckService";
@@ -647,11 +647,11 @@ export default defineComponent({
         this.prop.options &&
         this.prop.options["displayType"] === "RUNDECK_JOB"
       ) {
-        client.jobInfoGet(jobUuid).then((response) => {
-          if (response.name) {
+        api.get(`job/${jobUuid}`).then((response) => {
+          if (response.data.name) {
             let output = "";
-            if (response.group) output += response.group + "/";
-            output += response.name + " (" + response.project + ")";
+            if (response.data.group) output += response.data.group + "/";
+            output += response.data.name + " (" + response.data.project + ")";
             this.jobName = output;
           }
         });

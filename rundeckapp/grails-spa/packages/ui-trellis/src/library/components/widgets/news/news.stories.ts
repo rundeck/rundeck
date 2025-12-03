@@ -23,7 +23,7 @@ export default {
 } as Meta<typeof News>;
 
 export const pickerButtonNoLabel: StoryFn<typeof News> = () => {
-  const rootStore = new RootStore(window._rundeck.rundeckClient);
+  const rootStore = new RootStore();
 
   return {
     template: `<News v-bind="$data"/>`,

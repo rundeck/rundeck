@@ -1,4 +1,3 @@
-import { RundeckBrowser } from "@rundeck/client";
 import { NavItem } from "../stores/NavBar";
 import { RootStore } from "../stores/RootStore";
 import { EventBus } from "../utilities/vueEventBus";
@@ -15,7 +14,7 @@ export interface RundeckContext {
   tokens: {
     [key: string]: RundeckToken;
   };
-  rundeckClient: RundeckBrowser;
+  rundeckClient: any; // Deprecated: kept for backward compatibility during migration
   data: { [key: string]: any };
   feature: { [key: string]: RundeckFeature };
   navbar: {

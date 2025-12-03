@@ -1,4 +1,3 @@
-import { RundeckClient } from "@rundeck/client";
 import { reactive, UnwrapNestedRefs } from "vue";
 import { api } from "../services/api";
 import { ExecutionOutputStore } from "./ExecutionOutput";
@@ -35,23 +34,22 @@ export class RootStore {
   requestCache: { [key: string]: Promise<any> } = {};
 
   constructor(
-    readonly client: RundeckClient,
     appMeta: any = {},
   ) {
-    this.executionOutputStore = new ExecutionOutputStore(this, client);
-    this.workflowStore = reactive(new WorkflowStore(this, client));
-    this.navBar = reactive(new NavBar(this, client));
-    this.utilityBar = reactive(new UtilityBar(this, client));
-    this.system = reactive(new SystemStore(this, client));
+    this.executionOutputStore = new ExecutionOutputStore(this);
+    this.workflowStore = reactive(new WorkflowStore(this));
+    this.navBar = reactive(new NavBar(this));
+    this.utilityBar = reactive(new UtilityBar(this));
+    this.system = reactive(new SystemStore(this));
     this.system.loadMeta(appMeta);
-    this.releases = reactive(new Releases(this, client));
-    this.projects = reactive(new ProjectStore(this, client));
-    this.news = reactive(new NewsStore(this, client));
-    this.plugins = reactive(new PluginStore(this, client));
-    this.webhooks = reactive(new WebhookStore(this, client));
+    this.releases = reactive(new Releases(this));
+    this.projects = reactive(new ProjectStore(this));
+    this.news = reactive(new NewsStore(this));
+    this.plugins = reactive(new PluginStore(this));
+    this.webhooks = reactive(new WebhookStore(this));
     this.theme = reactive(new ThemeStore());
     this.ui = reactive(new UIStore());
-    this.nodeSourceFile = reactive(new NodeSourceFile(this, client));
+    this.nodeSourceFile = reactive(new NodeSourceFile(this));
     this.jobPageStore = reactive(new JobPageStore());
   }
 

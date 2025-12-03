@@ -4,8 +4,7 @@ import {
   JobWorkflowGetResponse,
   ExecutionOutput,
   ExecutionOutputEntry,
-} from "@rundeck/client/dist/lib/models";
-import { Rundeck } from "@rundeck/client";
+} from "../types/rundeckApi";
 import { api } from "../services/api";
 
 import { RenderedStepList, JobWorkflow } from "./JobWorkflow";
@@ -27,8 +26,6 @@ const BACKOFF_MIN = 100;
 const BACKOFF_MAX = 5000;
 
 export class ExecutionLog {
-  client: Rundeck;
-
   offset = 0;
   size = 0;
   completed = false;
@@ -41,10 +38,7 @@ export class ExecutionLog {
 
   constructor(
     readonly id: string,
-    client?: Rundeck,
-  ) {
-    this.client = client || window._rundeck.rundeckClient;
-  }
+  ) {}
 
   /** Optional method to populate information about execution output */
   async init() {

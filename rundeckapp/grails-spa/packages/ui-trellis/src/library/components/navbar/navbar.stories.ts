@@ -11,7 +11,7 @@ export default {
 } as Meta<typeof NavBar>;
 
 export const navBar: StoryFn<typeof NavBar> = () => {
-  const rootStore = new RootStore(window._rundeck.rundeckClient);
+  const rootStore = new RootStore();
 
   rootStore.navBar.addItems([
     {

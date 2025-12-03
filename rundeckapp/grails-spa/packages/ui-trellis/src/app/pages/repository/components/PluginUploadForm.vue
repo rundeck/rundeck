@@ -28,7 +28,7 @@
 import { defineComponent } from "vue";
 import { mapActions } from "vuex";
 import axios from "axios";
-import { client } from "../../../../library/modules/rundeckClient";
+import { getRundeckContext } from "../../../../library";
 export default defineComponent({
   name: "UploadPluginForm",
   computed: {
@@ -56,23 +56,29 @@ export default defineComponent({
         loadingSpinner: true,
       });
       //use axios instead of RundeckClient, to allow multipart form with file upload
+      const rundeckContext = getRundeckContext();
+      const token = rundeckContext.token;
       axios({
         method: "post",
         headers: {
           "x-rundeck-ajax": true,
           "Content-Type": "multipart/form-data",
-          "X-RUNDECK-TOKEN-KEY": client.token,
-          "X-RUNDECK-TOKEN-URI": client.uri,
+          "X-RUNDECK-TOKEN-KEY": token.TOKEN,
+          "X-RUNDECK-TOKEN-URI": token.URI,
         },
         data: formData,
-        url: `${window._rundeck.rdBase}plugin/uploadPlugin`,
+        url: `${rundeckContext.rdBase}plugin/uploadPlugin`,
         withCredentials: true,
       })
         .then((response) => {
           this.closeOverlay();
-          client.token =
-            response.headers["x-rundeck-token-key"] || client.token;
-          client.uri = response.headers["x-rundeck-token-uri"] || client.uri;
+          // Update token from response headers if present
+          if (response.headers["x-rundeck-token-key"]) {
+            rundeckContext.token.TOKEN = response.headers["x-rundeck-token-key"];
+          }
+          if (response.headers["x-rundeck-token-uri"]) {
+            rundeckContext.token.URI = response.headers["x-rundeck-token-uri"];
+          }
           if (response.data.err) {
             this.$alert({
               title: "Error Uploading",

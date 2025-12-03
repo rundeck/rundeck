@@ -28,7 +28,7 @@ export default {
 } as Meta<typeof WebhookSelect>;
 
 export const pluginPicker: StoryFn<typeof WebhookSelect> = () => {
-  const rootStore = new RootStore(window._rundeck.rundeckClient);
+  const rootStore = new RootStore();
   window._rundeck.rootStore = rootStore;
   return {
     template: `<WebhookSelect project="Test" @item:selected="() => {}"/>`,

@@ -30,7 +30,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
-import { client } from "../../modules/rundeckClient";
+import { api } from "../../services/api";
 
 export default defineComponent({
   name: "ProjectPicker",
@@ -59,12 +59,11 @@ export default defineComponent({
     this.loadProjects();
   },
   methods: {
-    loadProjects() {
+    async loadProjects() {
       this.projects.push("");
-      client.projectList().then((result) => {
-        result.forEach((prj) => {
-          if (prj.name) this.projects.push(prj.name);
-        });
+      const response = await api.get("projects");
+      response.data.forEach((prj: any) => {
+        if (prj.name) this.projects.push(prj.name);
       });
     },
   },

@@ -23,6 +23,25 @@ jest.mock("@/library/modules/rundeckClient", () => ({
     rdBase: "mockBase",
   },
 }));
+
+jest.mock("@/library/services/api", () => ({
+  api: {
+    get: jest.fn(),
+    post: jest.fn(),
+  },
+  apiClient: jest.fn().mockImplementation(() => ({
+    get: jest.fn(),
+    post: jest.fn(),
+  })),
+}));
+
+jest.mock("@/library/rundeckService", () => ({
+  getRundeckContext: jest.fn().mockImplementation(() => ({
+    rdBase: "http://localhost:4440/",
+    projectName: "testProject",
+    apiVersion: "44",
+  })),
+}));
 jest.mock("../pluginConfig.vue", () => ({
   name: "PluginConfig",
   methods: {

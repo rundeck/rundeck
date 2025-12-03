@@ -13,6 +13,7 @@
 import activityList from "../../components/activity/activityList";
 
 import { getRundeckContext, RundeckContext } from "../../../library";
+import axios from "axios";
 
 export default {
   name: "App",
@@ -34,16 +35,17 @@ export default {
       window._rundeck.projectName
     ) {
       this.rdBase = window._rundeck.rdBase;
-      const response = await getRundeckContext().rundeckClient.sendRequest({
-        method: "get",
-        pathTemplate: "/menu/homeAjax",
-        baseUrl: this.rdBase,
-        queryParameters: {
+      const response = await axios.get(`${this.rdBase}menu/homeAjax`, {
+        params: {
           projects: window._rundeck.projectName,
         },
+        headers: {
+          "X-Rundeck-ajax": "true",
+          Accept: "application/json",
+        },
       });
-      if (response.parsedBody.projects) {
-        this.project = response.parsedBody.projects[0];
+      if (response.data.projects) {
+        this.project = response.data.projects[0];
       }
     }
   },

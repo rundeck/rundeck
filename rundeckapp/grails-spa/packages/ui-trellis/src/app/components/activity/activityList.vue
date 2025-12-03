@@ -594,7 +594,7 @@ import OffsetPagination from "../../../library/components/utils/OffsetPagination
 import ActivityFilter from "./activityFilter.vue";
 
 import { getRundeckContext } from "../../../library";
-import { ExecutionBulkDeleteResponse } from "@rundeck/client/dist/lib/models";
+import { ExecutionBulkDeleteResponse } from "../../../library/types/rundeckApi";
 import { Execution } from "../../../library/types/executions/Execution";
 import DOMPurify from "dompurify";
 import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";

@@ -1,5 +1,4 @@
 import { RootStore } from "./RootStore";
-import { RundeckClient } from "@rundeck/client";
 import axios from "axios";
 import { ref } from "vue";
 import { getRundeckContext } from "../rundeckService";
@@ -9,7 +8,6 @@ export class NewsStore {
 
   constructor(
     readonly root: RootStore,
-    readonly client: RundeckClient,
   ) {}
 
   loaded = ref<boolean>(false);

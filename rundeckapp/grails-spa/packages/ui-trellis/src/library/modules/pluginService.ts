@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { client } from "./rundeckClient";
+import { api } from "../services/api";
 
 const ServicesCache: { [svc: string]: { [provider: string]: any } } = {};
 const ServiceProvidersCache: { [provider: string]: any } = {};
@@ -44,18 +44,12 @@ export const getPluginProvidersForService = async (svcName: string) => {
   }
   const params = await getParameters();
   try {
-    //TODO: convert endpoint to API
-    const resp = await client.sendRequest({
-      pathTemplate: `/plugin/providers/{svcName}`,
-      pathParameters: { svcName: svcName },
-      baseUrl: params.rdBase,
-      method: "GET",
-    });
-    if (!resp.parsedBody) {
+    const resp = await api.get(`plugin/providers/${svcName}`);
+    if (!resp.data) {
       throw new Error(`Error getting service providers list for ${svcName}`);
     } else {
-      ServicesCache[svcName] = resp.parsedBody;
-      return resp.parsedBody;
+      ServicesCache[svcName] = resp.data;
+      return resp.data;
     }
   } catch (e) {
     return console.warn("Error getting service providers list", e);
@@ -80,15 +74,10 @@ export const getServiceProviderDescription = async (
     qparams.project = params.project;
   }
 
-  //TODO: convert endpoint to API
-  const resp = await client.sendRequest({
-    pathTemplate: `/plugin/detail/{svcName}/{provider}`,
-    pathParameters: { svcName: svcName, provider: provider },
-    baseUrl: params.apiBase,
-    method: "GET",
-    queryParameters: qparams,
+  const resp = await api.get(`plugin/detail/${svcName}/${provider}`, {
+    params: qparams,
   });
-  if (!resp.parsedBody) {
+  if (!resp.data) {
     throw new Error(
       `Error getting service provider detail for ${svcName}/${provider}`,
     );
@@ -99,8 +88,8 @@ export const getServiceProviderDescription = async (
       providers: {},
     };
   }
-  ServiceProvidersCache[svcName].providers[provider] = resp.parsedBody;
-  return resp.parsedBody;
+  ServiceProvidersCache[svcName].providers[provider] = resp.data;
+  return resp.data;
 };
 
 export const validatePluginConfig = async (
@@ -115,19 +104,15 @@ export const validatePluginConfig = async (
     qparams["ignoredScope"] = ignoredScope;
   }
 
-  //TODO: convert endpoint to API
-  const resp = await client.sendRequest({
-    pathTemplate: `/plugin/validate/{svcName}/{provider}`,
-    pathParameters: { svcName: svcName, provider: provider },
-    queryParameters: qparams,
-    baseUrl: params.rdBase,
-    method: "POST",
-    body: { config: config },
-  });
-  if (!resp.parsedBody) {
-    throw new Error(`Error getting service providers list for ${svcName}`);
+  const resp = await api.post(
+    `plugin/validate/${svcName}/${provider}`,
+    { config: config },
+    { params: qparams },
+  );
+  if (!resp.data) {
+    throw new Error(`Error validating plugin config for ${svcName}`);
   } else {
-    return resp.parsedBody;
+    return resp.data;
   }
 };
 

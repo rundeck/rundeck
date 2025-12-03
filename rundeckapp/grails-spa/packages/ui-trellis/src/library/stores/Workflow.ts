@@ -1,13 +1,12 @@
-import { RundeckClient } from "@rundeck/client";
 import { RootStore } from "./RootStore";
 import { JobWorkflow } from "../utilities/JobWorkflow";
+import { api } from "../services/api";
 
 export class WorkflowStore {
   workflows: Map<string, JobWorkflow> = new Map();
 
   constructor(
     readonly root: RootStore,
-    readonly client: RundeckClient,
   ) {}
 
   async get(jobId: string) {
@@ -19,8 +18,8 @@ export class WorkflowStore {
   }
 
   private async fetch(jobId: string) {
-    const resp = await this.client.jobWorkflowGet(jobId);
-    return new JobWorkflow(resp.workflow);
+    const resp = await api.get(`job/${jobId}/workflow`);
+    return new JobWorkflow(resp.data.workflow);
   }
 }
 

@@ -92,8 +92,8 @@
 import { defineComponent } from "vue";
 import ProjectPicker from "./ProjectPicker.vue";
 import { JobTree } from "../../types/JobTree";
-import { Job } from "@rundeck/client/dist/lib/models";
-import { client } from "../../modules/rundeckClient";
+import { Job } from "../../types/rundeckApi";
+import { api } from "../../services/api";
 
 export default defineComponent({
   name: "JobConfigPicker",
@@ -172,10 +172,10 @@ export default defineComponent({
           params["scheduledFilter"] = this.filterType === "scheduled";
         }
 
-        client.jobList(this.project, params).then((result) => {
+        api.get(`project/${this.project}/jobs`, { params }).then((response) => {
           this.jobTree = new JobTree();
-          this.jobs = result;
-          this.jobs.forEach((job) => this.jobTree.insert(job));
+          this.jobs = response.data;
+          this.jobs.forEach((job: Job) => this.jobTree.insert(job));
         });
       }
     },

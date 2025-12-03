@@ -15,7 +15,7 @@ export default {
 } as Meta<typeof Skeleton>;
 
 export const list: StoryFn<typeof Skeleton> = (args) => {
-  const rootStore = new RootStore(window._rundeck.rundeckClient);
+  const rootStore = new RootStore();
 
   window._rundeck.rootStore = rootStore;
   return {
@@ -40,7 +40,7 @@ list.args = {
 };
 
 export const listWithAvatar: StoryFn<typeof Skeleton> = (args) => {
-  const rootStore = new RootStore(window._rundeck.rundeckClient);
+  const rootStore = new RootStore();
 
   window._rundeck.rootStore = rootStore;
 

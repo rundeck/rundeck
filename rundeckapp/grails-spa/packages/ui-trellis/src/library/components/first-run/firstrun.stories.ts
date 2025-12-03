@@ -25,7 +25,7 @@ export default {
 } as Meta<typeof Firstrun>;
 
 export const firstRun: StoryFn<typeof Firstrun> = () => {
-  const rootStore = new RootStore(window._rundeck.rundeckClient);
+  const rootStore = new RootStore();
   const version = new VersionInfo();
   const server = new ServerInfo(
     "xubuntu",

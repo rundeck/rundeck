@@ -1,10 +1,9 @@
-import { RundeckClient } from "@rundeck/client";
-
 import { RundeckVersion } from "../utilities/RundeckVersion";
 import { Serial } from "../utilities/Async";
 
 import { RootStore } from "./RootStore";
 import { ref } from "vue";
+import { api } from "../services/api";
 
 export class SystemStore {
   versionInfo: VersionInfo;
@@ -15,7 +14,6 @@ export class SystemStore {
 
   constructor(
     readonly root: RootStore,
-    readonly client: RundeckClient,
   ) {
     this.versionInfo = new VersionInfo();
     this.appInfo = new AppInfo();
@@ -34,15 +32,15 @@ export class SystemStore {
   async load() {
     if (this.loaded) return;
 
-    const resp = await this.client.systemInfoGet();
+    const resp = await api.get("system/info");
 
-    const verString = resp.system!.rundeckProperty!.version;
+    const verString = resp.data.system.rundeck.version;
     const ver = new RundeckVersion({ versionString: verString });
 
     this.versionInfo.fromRundeckVersion(ver);
     this.serverInfo = new ServerInfo(
-      resp.system!.rundeckProperty!.node!,
-      resp.system!.rundeckProperty!.serverUUID!,
+      resp.data.system.rundeck.node,
+      resp.data.system.rundeck.serverUUID,
     );
 
     this.loaded = true;

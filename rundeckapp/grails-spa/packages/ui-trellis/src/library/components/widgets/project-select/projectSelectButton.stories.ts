@@ -20,7 +20,7 @@ window._rundeck.rundeckClient = new Rundeck(
 );
 
 export const pickerButton: StoryFn = () => {
-  const rootStore = new RootStore(window._rundeck.rundeckClient);
+  const rootStore = new RootStore();
 
   return {
     template: `<ProjectSelectButton v-bind="$data"/>`,
@@ -41,7 +41,7 @@ export const pickerButton: StoryFn = () => {
 };
 
 export const pickerButtonNoLabel = () => {
-  const rootStore = new RootStore(window._rundeck.rundeckClient);
+  const rootStore = new RootStore();
 
   return {
     template: `<ProjectSelectButton v-bind="$data"/>`,

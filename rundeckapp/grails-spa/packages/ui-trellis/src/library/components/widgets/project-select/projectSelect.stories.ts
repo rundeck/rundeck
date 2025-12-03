@@ -24,7 +24,7 @@ export default {
 } as Meta<typeof ProjectSelect>;
 
 export const projectPicker: StoryFn<typeof ProjectSelect> = () => {
-  const rootStore = new RootStore(window._rundeck.rundeckClient);
+  const rootStore = new RootStore();
 
   return {
     template: `<ProjectSelect />`,

@@ -1,5 +1,4 @@
 import { observable } from "mobx";
-import { RundeckClient } from "@rundeck/client";
 import Tokens from "../modules/tokens";
 import { getRundeckContext } from "../rundeckService";
 import { RootStore } from "./RootStore";
@@ -20,7 +19,6 @@ export class NodeSourceFile {
   };
   constructor(
     readonly root: RootStore,
-    readonly client: RundeckClient,
   ) {}
 
   async load() {

@@ -6,10 +6,11 @@ import {
   ExecutionOutputStore
 } from "../ExecutionOutput";
 import { RootStore } from "../RootStore";
-import { RundeckBrowser } from "@rundeck/client";
 import { JobWorkflow } from "../../utilities/JobWorkflow";
 
 // Mock the API and other dependencies
+const mockApiGet = jest.fn();
+const mockApiClientGet = jest.fn();
 jest.mock("../../services/api", () => {
   const api = {
     get: jest.fn(),
@@ -18,34 +19,35 @@ jest.mock("../../services/api", () => {
   };
   return {
     api,
-    apiClient: jest.fn().mockImplementation(() => api),
+    apiClient: jest.fn().mockImplementation(() => ({
+      get: mockApiClientGet,
+      put: jest.fn(),
+      post: jest.fn(),
+    })),
   };
 });
 
 describe("ExecutionOutput", () => {
-  let mockClient: RundeckBrowser;
   let rootStore: RootStore;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Setup mock client
-    mockClient = {
-      executions: {
-        getOutput: jest.fn(),
-      },
-    } as unknown as RundeckBrowser;
-
     rootStore = {} as RootStore;
 
     // Reset API mocks
-    (apiClient as jest.MockedFn<any>).mockImplementation(() => api);
+    (apiClient as jest.MockedFn<any>).mockImplementation(() => ({
+      get: mockApiClientGet,
+      put: jest.fn(),
+      post: jest.fn(),
+    }));
     (api.get as jest.Mock).mockReset();
+    mockApiClientGet.mockReset();
   });
 
   describe("ExecutionOutputStore", () => {
     it("should create or get an execution output instance", () => {
-      const store = new ExecutionOutputStore(rootStore, mockClient);
+      const store = new ExecutionOutputStore(rootStore);
 
       // First call should create a new instance
       const output1 = store.createOrGet("123");
@@ -63,7 +65,7 @@ describe("ExecutionOutput", () => {
     });
 
     it("should get output with a specified max lines", async () => {
-      const store = new ExecutionOutputStore(rootStore, mockClient);
+      const store = new ExecutionOutputStore(rootStore);
       const getOutputSpy = jest.spyOn(ExecutionOutput.prototype, 'getOutput').mockResolvedValue([]);
 
       await store.getOutput("123", 100);
@@ -76,7 +78,7 @@ describe("ExecutionOutput", () => {
     let executionOutput: ExecutionOutput;
 
     beforeEach(() => {
-      executionOutput = new ExecutionOutput("123", mockClient);
+      executionOutput = new ExecutionOutput("123");
     });
 
     it("should initialize with correct default values", () => {
@@ -135,8 +137,8 @@ describe("ExecutionOutput", () => {
     });
 
     it("should initialize with execution output info", async () => {
-      // Mock API response
-      (api.get as jest.Mock).mockResolvedValueOnce({
+      // Mock API response for init() which calls getExecutionOutput() that uses apiClient(43)
+      mockApiClientGet.mockResolvedValueOnce({
         data: {
           id: "123",
           offset: "0",
@@ -156,6 +158,12 @@ describe("ExecutionOutput", () => {
 
       expect(executionOutput.execCompleted).toBe(true);
       expect(executionOutput.size).toBe(500);
+      expect(mockApiClientGet).toHaveBeenCalledWith("execution/123/output", {
+        params: {
+          offset: "0",
+          maxlines: "1",
+        },
+      });
     });
 
     it("should get job workflow from execution status", async () => {
@@ -244,7 +252,7 @@ describe("ExecutionOutput", () => {
         totalSize: 200,
       };
 
-      (api.get as jest.Mock).mockResolvedValueOnce({
+      mockApiClientGet.mockResolvedValueOnce({
         data: mockOutput,
         status: 200,
       });
@@ -255,7 +263,7 @@ describe("ExecutionOutput", () => {
     });
 
     it("should throw error for non-200 API responses", async () => {
-      (api.get as jest.Mock).mockResolvedValueOnce({
+      mockApiClientGet.mockResolvedValueOnce({
         data: { error: "Not found" },
         status: 404,
       });
@@ -280,7 +288,7 @@ describe("ExecutionOutput", () => {
 
   describe("ExecutionOutputEntry", () => {
     it("should create an entry from API response", () => {
-      const executionOutput = new ExecutionOutput("123", mockClient);
+      const executionOutput = new ExecutionOutput("123");
       const mockWorkflow = new JobWorkflow([
         { exec: "echo test", type: "exec", nodeStep: "true" }
       ]);

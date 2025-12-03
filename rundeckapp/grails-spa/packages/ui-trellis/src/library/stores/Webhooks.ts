@@ -1,4 +1,3 @@
-import { RundeckClient } from "@rundeck/client";
 import { v4 as uuidv4 } from "uuid";
 import { reactive } from "vue";
 import { api } from "../services/api";
@@ -21,7 +20,6 @@ export class WebhookStore {
 
   constructor(
     readonly root: RootStore,
-    readonly client: RundeckClient,
   ) {}
 
   async load(project: string): Promise<void> {

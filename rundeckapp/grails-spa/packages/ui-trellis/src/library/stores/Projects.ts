@@ -1,17 +1,16 @@
 import { RootStore } from "./RootStore";
-import { RundeckClient } from "@rundeck/client";
 import {
   ProjectListOKResponseItem,
   ProjectListResponse,
-} from "@rundeck/client/dist/lib/models";
+} from "../types/rundeckApi";
 import { ref } from "vue";
+import { api } from "../services/api";
 
 export class ProjectStore {
   projects: Array<Project> = [];
 
   constructor(
     readonly root: RootStore,
-    readonly client: RundeckClient,
   ) {}
 
   loaded = ref<boolean>(false);
@@ -20,8 +19,9 @@ export class ProjectStore {
     if (this.loaded.value) return;
 
     this.projects = [];
-    const resp = (await this.client.projectList()) as ProjectListResponse;
-    resp.forEach((p) => {
+    const resp = await api.get("projects");
+    const projectList = resp.data as ProjectListResponse;
+    projectList.forEach((p) => {
       this.projects.push(Project.FromApi(p));
     });
     this.loaded.value = true;

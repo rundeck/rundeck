@@ -1,4 +1,4 @@
-import { Job } from "@rundeck/client/dist/lib/models";
+import { Job } from "./rundeckApi";
 export class TreeItem {
   name: string;
   jobs: Job[];

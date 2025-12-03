@@ -23,7 +23,7 @@ export default {
 } as Meta<typeof FilterList>;
 
 export const filterList: StoryFn<typeof FilterList> = () => {
-  const rootStore = new RootStore(window._rundeck.rundeckClient);
+  const rootStore = new RootStore();
   window._rundeck.rootStore = rootStore;
 
   const items = [{ label: "Foo", name: "Bar" }];

@@ -1,4 +1,3 @@
-import { RundeckClient } from "@rundeck/client";
 import { getPluginDetail } from "../services/plugins";
 
 import { Serial } from "../utilities/Async";
@@ -14,7 +13,6 @@ export class PluginStore {
 
   constructor(
     readonly root: RootStore,
-    readonly client: RundeckClient,
   ) {}
 
   @Serial
