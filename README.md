@@ -59,16 +59,16 @@ export CLOUDSMITH_NPM_TOKEN=your-cloudsmith-token-here
 
 #### For contributors without Cloudsmith access
 
-Delete the `.npmrc` file in the ui-trellis package:
+1. Delete the `.npmrc` and `package-lock.json` files in the ui-trellis package:
 
 ```bash
-rm rundeckapp/grails-spa/packages/ui-trellis/.npmrc
+rm rundeckapp/grails-spa/packages/ui-trellis/.npmrc rundeckapp/grails-spa/packages/ui-trellis/package-lock.json 
 ```
 
-And the `.npmrc` file in the _package-manager directory:
+2. And the `.npmrc` and `package-lock.json` files in the _package-manager directory:
 
 ```bash
-rm rundeckapp/grails-app/assets/javascripts/_package-manager/.npmrc
+rm rundeckapp/grails-app/assets/javascripts/_package-manager/.npmrc rundeckapp/grails-app/assets/javascripts/_package-manager/package-lock.json
 ```
 
 ## Build with Gradle
