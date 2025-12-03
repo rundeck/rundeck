@@ -210,10 +210,7 @@ import { ContextVariable } from "@/library/stores/contextVariables";
 import { getRundeckContext } from "../../rundeckService";
 import { defineComponent, type PropType } from "vue";
 
-import AceEditor from "../utils/AceEditor.vue";
-import Expandable from "../utils/Expandable.vue";
 import PluginInfo from "./PluginInfo.vue";
-import PluginValidation from "../../interfaces/PluginValidation";
 import PluginPropView from "./pluginPropView.vue";
 import PluginPropEdit from "./pluginPropEdit.vue";
 import { cleanConfigInput, convertArrayInput } from "../../modules/InputUtils";
@@ -222,7 +219,6 @@ import { diff } from "deep-object-diff";
 
 import {
   getPluginProvidersForService,
-  validatePluginConfig,
 } from "../../modules/pluginService";
 
 interface PropGroup {
@@ -234,8 +230,6 @@ interface PropGroup {
 export default defineComponent({
   name: "PluginConfig",
   components: {
-    Expandable,
-    AceEditor,
     PluginInfo,
     PluginPropView,
     PluginPropEdit,
