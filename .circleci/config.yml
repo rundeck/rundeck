@@ -369,7 +369,7 @@ jobs:
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
-          step-name: Run Redonly OpenAPI Linting
+          step-name: Run Redocly OpenAPI Linting
           command: openapi_tests
 
   #Snyk tests
