@@ -22,7 +22,7 @@
                 @click="editStepByIndex(index)"
               >
                 <plugin-config
-                  v-if="!element.jobref"
+                  v-if="!element.jobref && element.type !== 'conditional.logic'"
                   :service-name="
                     element.nodeStep
                       ? ServiceType.WorkflowNodeStep
@@ -40,7 +40,9 @@
                     <i class="fas fa-hdd node-icon"></i>
                   </template>
                 </plugin-config>
-                <job-ref-step v-else :step="element"></job-ref-step>
+                <job-ref-step v-else-if="element.jobref" :step="element"></job-ref-step>
+                <conditional-logic-step v-else ></conditional-logic-step>
+
                 <div v-if="element.description" class="wfstep-description">
                   {{ element.description }}
                 </div>
@@ -259,12 +261,14 @@ import { Operation } from "@/app/components/job/options/model/ChangeEvents";
 import { validatePluginConfig } from "@/library/modules/pluginService";
 import JobRefForm from "@/app/components/job/workflow/JobRefForm.vue";
 import ErrorHandlerStep from "@/app/components/job/workflow/ErrorHandlerStep.vue";
+import ConditionalLogicStep from "@/app/components/job/workflow/ConditionalLogicStep.vue";
 
 const context = getRundeckContext();
 const eventBus = context.eventBus;
 export default defineComponent({
   name: "WorkflowSteps",
   components: {
+    ConditionalLogicStep,
     ErrorHandlerStep,
     JobRefForm,
     CommonUndoRedoDraggableList,
@@ -361,7 +365,7 @@ export default defineComponent({
     notify() {
       eventBus.emit("workflow-editor-workflowsteps-updated", this.model);
     },
-    chooseProviderAdd({
+    async chooseProviderAdd({
       service,
       provider,
     }: {
@@ -393,6 +397,14 @@ export default defineComponent({
           },
         };
         this.editJobRefModal = true;
+      } else if (provider === "conditional.logic") {
+        this.editModel = {
+          type: provider,
+          config: {},
+          nodeStep: service === ServiceType.WorkflowNodeStep,
+          description: ""
+        }
+        await this.saveEditStep();
       } else {
         this.editModel = {
           type: provider,
@@ -505,7 +517,7 @@ export default defineComponent({
           saveData.jobref = this.editModel.jobref;
         }
 
-        if (!saveData.jobref && !this.editModel.jobref) {
+        if (!saveData.jobref && !this.editModel.jobref && this.editModel.type !== 'conditional.logic' ) {
           if(!this.isErrorHandler) {
             saveData.filters = [];
           }
@@ -613,7 +625,6 @@ export default defineComponent({
       this.editStepModal = false;
       this.isErrorHandler = false;
       this.editJobRefModal = false;
-      this.isErrorHandler = false;
       this.editModel = {};
       this.editExtra = {};
       this.editModelValidation = null;
