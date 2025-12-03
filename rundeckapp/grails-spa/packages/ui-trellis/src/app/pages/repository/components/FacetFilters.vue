@@ -36,11 +36,18 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { mapActions } from "vuex";
+import { useRepositoriesStore } from "../stores/repositories.store";
 
 export default defineComponent({
   name: "FacetFilters",
 
+  setup() {
+    const repositoriesStore = useRepositoriesStore();
+    return {
+      setSupportTypeFilter: (filters: any) =>
+        repositoriesStore.setSupportTypeFilter(filters),
+    };
+  },
   data() {
     return {
       supportType: [],
@@ -50,9 +57,6 @@ export default defineComponent({
     supportType: function (newVal, oldVal) {
       this.setSupportTypeFilter(newVal);
     },
-  },
-  methods: {
-    ...mapActions(["setSupportTypeFilter"]),
   },
 });
 </script>

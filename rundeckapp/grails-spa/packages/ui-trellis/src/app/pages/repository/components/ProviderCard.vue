@@ -54,9 +54,9 @@
   </div>
 </template>
 <script>
-import { defineComponent } from "vue";
+import { defineComponent, computed } from "vue";
 import axios from "axios";
-import { mapActions, mapState } from "vuex";
+import { usePluginsStore } from "../stores/plugins.store";
 import {
   limitString200ClickForMore,
   splitAtCapitalLetter,
@@ -65,8 +65,15 @@ import {
 export default defineComponent({
   name: "ProviderCard",
   props: ["provider"],
+  setup() {
+    const pluginsStore = usePluginsStore();
+    return {
+      selectedServiceFacet: computed(() => pluginsStore.selectedServiceFacet),
+      getProviderInfo: (properties) => pluginsStore.getProviderInfo(properties),
+      uninstallPlugin: (provider) => pluginsStore.uninstallPlugin(provider),
+    };
+  },
   methods: {
-    ...mapActions("plugins", ["getProviderInfo", "uninstallPlugin"]),
     openInfo() {
       this.getProviderInfo({
         serviceName: this.provider.service,
@@ -84,7 +91,6 @@ export default defineComponent({
     },
   },
   computed: {
-    ...mapState("plugins", ["selectedServiceFacet"]),
     displayCard() {
       if (
         this.selectedServiceFacet === null ||

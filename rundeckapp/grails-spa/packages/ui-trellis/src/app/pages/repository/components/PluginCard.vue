@@ -110,18 +110,25 @@
   </div>
 </template>
 <script>
-import { mapState, mapActions } from "vuex";
+import { computed } from "vue";
+import { useRepositoriesStore } from "../stores/repositories.store";
 
 export default {
   name: "PluginCard",
   props: ["result", "repo"],
+  setup() {
+    const repositoriesStore = useRepositoriesStore();
+    return {
+      canInstall: computed(() => repositoriesStore.canInstall),
+      rdBase: computed(() => repositoriesStore.rdBase),
+      filterSupportType: computed(() => repositoriesStore.filterSupportType),
+      showWhichPlugins: computed(() => repositoriesStore.showWhichPlugins),
+      installPlugin: (properties) => repositoriesStore.installPlugin(properties),
+      uninstallPlugin: (properties) =>
+        repositoriesStore.uninstallPlugin(properties),
+    };
+  },
   computed: {
-    ...mapState("repositories", [
-      "canInstall",
-      "rdBase",
-      "filterSupportType",
-      "showWhichPlugins",
-    ]),
     displayCard() {
       if (this.showWhichPlugins === null) {
         return true;
@@ -161,7 +168,6 @@ export default {
     return {};
   },
   methods: {
-    ...mapActions("repositories", ["installPlugin", "uninstallPlugin"]),
     unqSortedSvcs: function (serviceList) {
       if (!serviceList) return [];
       const unq = [];
