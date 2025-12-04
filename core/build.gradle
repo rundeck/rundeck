@@ -177,6 +177,13 @@ processResources.dependsOn tasks.expandTemplate
 test{
     systemProperties 'rdeck.base': "$projectDir/build/rdeck_base"
     useJUnitPlatform()
+    
+    // Java 17 + CGLIB/Spock: Open modules for mocking
+    jvmArgs = [
+        '--add-opens=java.base/java.lang=ALL-UNNAMED',
+        '--add-opens=java.base/java.io=ALL-UNNAMED',
+        '--add-opens=java.base/java.util=ALL-UNNAMED'
+    ]
 }
 
 ext.description= "Rundeck project ${project.name}"
