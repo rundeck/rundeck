@@ -6,7 +6,7 @@ import grails.testing.mixin.integration.Integration
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
 import rundeck.CommandExec
-import rundeck.ExecReport
+import rundeck.BaseReport
 import rundeck.Execution
 import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
@@ -84,7 +84,7 @@ class ReportServiceIntegrationSpec extends Specification {
         def result = service.getExecutionReports(query, true)
         then:
         result.reports.size() == 1
-        1 * service.execReportDataProvider.getExecutionReportsByExecsIds(_, _, _, [e1.id]) >> [new ExecReport(executionId: e1.id, dateCompleted: new Date())]
+        1 * service.execReportDataProvider.getExecutionReportsByExecsIds(_, _, _, [e1.id]) >> [new BaseReport(executionId: e1.id, dateCompleted: new Date())]
     }
 
 }

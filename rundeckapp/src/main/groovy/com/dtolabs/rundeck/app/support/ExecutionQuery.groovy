@@ -406,21 +406,24 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
           eq('willRetry', true)
         } else if(state == ExecutionService.EXECUTION_FAILED){
           isNotNull('dateCompleted')
-          eq('cancelled', false)
-          or{
-            eq('status',  'failed')
-            eq('status',  'false')
-          }
+          eq('status',  'failed')
+
+          //eq('cancelled', false)
+            //or{
+            //eq('status',  'failed')
+            //eq('status',  'false')
+            //}
         }else if(state == ExecutionService.EXECUTION_SUCCEEDED){
           isNotNull('dateCompleted')
-          eq('cancelled', false)
-          or{
-            eq('status',  'true')
-            eq('status',  'succeeded')
-          }
+          eq('status',  'succeeded')
+          //eq('cancelled', false)
+          //or{
+            //  eq('status',  'true')
+            //eq('status',  'succeeded')
+            //}
         }else if(state){
           isNotNull('dateCompleted')
-          eq('cancelled', false)
+          //eq('cancelled', false)
           eq('status',  state)
         }
         if (query.executionTypeFilter) {
