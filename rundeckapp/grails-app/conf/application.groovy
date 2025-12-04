@@ -5,7 +5,7 @@ hibernate {
     cache.use_query_cache = true
     cache.region.factory_class = "jcache"
     cache.ehcache.missing_cache_strategy = "create"
-    javax{
+    jakarta{
         cache{
             provider='org.ehcache.jsr107.EhcacheCachingProvider'
             missing_cache_strategy = "create"
