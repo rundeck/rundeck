@@ -69,7 +69,7 @@ class ScriptFileNodeStepExecutor {
                 context.getExecutionContext().getSharedDataContext(),
                 //add node name to qualifier to read node-data first
                 ContextView.node(entry.getNodename()),
-                ContextView::nodeStep as BiFunction,
+                { o1, o2 -> ContextView.nodeStep(o1, o2) } as BiFunction,
                 DataContextUtils.replaceMissingOptionsWithBlank,
                 false,
                 false

@@ -60,6 +60,7 @@ dependencies {
     implementation "org.apache.grails:grails-scaffolding"
     implementation "org.apache.grails:grails-gsp"
     compileOnly "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
+    implementation "io.swagger.core.v3:swagger-annotations:${swaggerVersion}"
     console "org.apache.grails:grails-console"
     implementation project(":core")
     implementation project(':rundeck-app-util')
