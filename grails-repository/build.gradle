@@ -5,6 +5,7 @@ buildscript {
         maven { url "https://repo.grails.org/grails/core" }
     }
     dependencies {
+        classpath platform("org.apache.grails:grails-bom:$grailsVersion")
         classpath "org.apache.grails:grails-gradle-plugins:$grailsVersion"
     }
 }
@@ -17,8 +18,8 @@ group "repository"
 
 apply plugin:"eclipse"
 apply plugin:"idea"
-apply plugin:"org.grails.grails-plugin"
-apply plugin:"org.grails.grails-gsp"
+apply plugin:"org.apache.grails.gradle.grails-plugin"
+apply plugin:"org.apache.grails.gradle.grails-gsp"
 apply plugin: "java-library"
 
 apply from: "../gradle/java-version.gradle"

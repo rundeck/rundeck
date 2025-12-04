@@ -5,6 +5,7 @@ buildscript {
         maven { url "https://repo.grails.org/grails/core" }
     }
     dependencies {
+        classpath platform("org.apache.grails:grails-bom:$grailsVersion")
         classpath "org.apache.grails:grails-gradle-plugins:$grailsVersion"
     }
 }
@@ -15,8 +16,8 @@ plugins {
 
 apply plugin:"eclipse"
 apply plugin:"idea"
-apply plugin:"org.grails.grails-plugin"
-apply plugin:"org.grails.grails-gsp"
+apply plugin:"org.apache.grails.gradle.grails-plugin"
+apply plugin:"org.apache.grails.gradle.grails-gsp"
 
 apply from:'../gradle/grailsopenapispec.gradle'
 
@@ -72,7 +73,7 @@ dependencies {
     console "org.apache.grails:grails-console"
     implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
     compileOnly "io.micronaut:micronaut-inject-groovy"
-    implementation "org.apache.groovy:groovy-dateutil:$groovyVersion"
+    implementation "org.apache.groovy:groovy-dateutil:${project.property('groovy.version')}"
 
     profile "org.grails.profiles:web-plugin"
     provided "org.apache.grails:grails-plugin-services"

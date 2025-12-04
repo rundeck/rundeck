@@ -6,25 +6,15 @@ buildscript {
         mavenLocal()
         mavenCentral()
         maven { url "https://repo.grails.org/grails/core" }
-    }
-    configurations.classpath {
-        resolutionStrategy.eachDependency { details ->
-            if (details.requested.group == 'org.codehaus.groovy') {
-                details.useTarget(group: 'org.apache.groovy', 
-                                name: details.requested.name, 
-                                version: '4.0.29')
-            }
-        }
+        maven { url "https://repo.grails.org/grails/restricted" }
     }
     dependencies {
-        classpath "org.apache.grails:grails-gradle-plugins:$grailsVersion"
+        classpath platform("org.apache.grails:grails-bom:$grailsVersion")
+        classpath "org.apache.grails:grails-gradle-plugins"
+        classpath "org.apache.grails:grails-data-hibernate5"
+        classpath "org.apache.grails:grails-data-hibernate5-dbmigration"
+        classpath "cloud.wondrify:asset-pipeline-gradle"
         classpath "gradle.plugin.com.energizedwork:idea-gradle-plugins:1.4"
-        classpath "org.grails.plugins:hibernate5:7.0.4"
-        classpath "cloud.wondrify:asset-pipeline-gradle:$assetPluginVersion"
-        classpath("org.grails.plugins:database-migration:$dbMigrationPluginVersion"){
-            exclude group: 'org.spockframework', module: 'spock-core'
-            exclude group: 'org.grails', module: 'grails-shell'
-        }
     }
 }
 plugins {
@@ -37,11 +27,10 @@ plugins {
 
 apply plugin:"eclipse"
 apply plugin:"idea"
-apply plugin:"war"
-apply plugin:"org.grails.grails-web"
+apply plugin:"org.apache.grails.gradle.grails-web"
 apply plugin: "com.energizedwork.idea-base"
 apply plugin:"cloud.wondrify.asset-pipeline"
-apply plugin:"org.grails.grails-gsp"
+apply plugin:"org.apache.grails.gradle.grails-gsp"
 apply plugin: "maven-publish"
 apply plugin: "signing"
 
@@ -245,7 +234,7 @@ dependencies {
     implementation ("org.apache.grails:grails-console") {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
-    implementation "org.grails.plugins:database-migration:${dbMigrationPluginVersion}"
+    implementation "org.apache.grails:grails-data-hibernate5-dbmigration"
     implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: "${httpClientVersion}"
     profile ("org.grails.profiles:web"){
         exclude(group:"org.grails.profiles",module:"web")
@@ -325,22 +314,20 @@ dependencies {
 
 
 }
-grails{
-    plugins{
-        coreGrailsPlugins.each {
-            implementation project(it)
-        }
 
-        /** It's important that the configuration addition follow the form 'compile project("")'
-         * so the Gradle magic happens. Other forms(ie 'compile proj' or 'compile project(proj)'
-         * can produce broken plugins in development mode. */
-        for(proj in project.findProperty('bundledGrailsPlugins')) {
-            logger.info("Injecting Grails plugin ${proj}")
-            implementation project("$proj")
-        }
-    }
-    pathingJar = true
+// Inject bundled Grails plugins
+coreGrailsPlugins.each {
+    dependencies.add('implementation', project(it))
 }
+
+for(proj in project.findProperty('bundledGrailsPlugins')) {
+    logger.info("Injecting Grails plugin ${proj}")
+    dependencies.add('implementation', project("$proj"))
+}
+
+// grails{
+//     pathingJar = true  // Deprecated in Grails 7
+// }
 
 task copyRuntimeLibs(type: Copy) {
     from configurations.pluginFiles
