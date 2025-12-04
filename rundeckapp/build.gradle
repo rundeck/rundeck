@@ -144,6 +144,9 @@ dependencies {
     implementation 'org.quartz-scheduler:quartz:2.3.2'
     implementation 'org.grails.plugins:quartz:2.0.13'
     implementation 'org.grails.plugins:mail:3.0.0'
+    
+    // Micronaut integration for Grails 7
+    implementation 'org.apache.grails:grails-micronaut'
 
     implementation 'org.springframework.cloud:spring-cloud-context:3.1.6'
 
