@@ -400,17 +400,17 @@ class StorageController extends ControllerBase{
             }else{
                 storageService.createResource(authContext, resourcePath, map, inputStream)
             }
-            return redirect(controller: 'menu', action: 'storage', params: [resourcePath:resourcePath]+(params.project?[project:params.project]:[:]))
+            return redirect(controller: 'menu', action: 'storage', params: ([resourcePath:resourcePath]) + (params.project ? ([project:params.project]) : ([:])))
         } catch (StorageAuthorizationException e) {
             log.error("Unauthorized: resource ${resourcePath}: ${e.message}")
             flash.errorCode = 'api.error.item.unauthorized'
             flash.errorArgs = [e.event.toString(), 'Path', e.path.toString()]
-            return redirect(controller: 'menu', action: 'storage',params: [resourcePath:resourcePath]+(params.project?[project:params.project]:[:]))
+            return redirect(controller: 'menu', action: 'storage',params: ([resourcePath:resourcePath]) + (params.project ? ([project:params.project]) : ([:])))
         } catch (StorageException e) {
             log.error("Error creating resource ${resourcePath}: ${e.message}")
             log.debug("Error creating resource ${resourcePath}", e)
             flash.error= e.message
-            return redirect(controller: 'menu', action: 'storage',params: [resourcePath:resourcePath]+(params.project?[project:params.project]:[:]))
+            return redirect(controller: 'menu', action: 'storage',params: ([resourcePath:resourcePath]) + (params.project ? ([project:params.project]) : ([:])))
         }
     }
     /**

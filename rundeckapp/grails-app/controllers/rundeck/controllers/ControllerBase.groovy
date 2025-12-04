@@ -149,7 +149,7 @@ class ControllerBase {
     }
 
     List<String> getResponseFormats(){
-        isAllowXml()?['xml', 'json']:['json']
+        isAllowXml() ? (['xml', 'json']) : (['json'])
     }
 
     protected int getApiVersion(){

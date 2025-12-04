@@ -167,6 +167,10 @@ dependencies {
     implementation "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
     implementation "commons-io:commons-io:${commonsIoVersion}"
     implementation "commons-beanutils:commons-beanutils:${beanutilsVersion}"
+    // BOMs for dependency management
+    implementation platform("org.apache.grails:grails-bom:$grailsVersion")
+    implementation platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion")
+    
     implementation "commons-codec:commons-codec:${commonsCodecVersion}"
 
     implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
@@ -208,7 +212,7 @@ dependencies {
     implementation 'org.grails.plugins:grails-executor:0.4'
     implementation "org.apache.grails:grails-async"
     implementation "org.apache.grails:grails-scaffolding"
-    implementation "org.grails.plugins:events"
+    implementation "org.apache.grails:grails-events"
     implementation "org.apache.grails:grails-gsp"
     implementation "org.apache.grails:grails-codecs"
     implementation "org.apache.grails:grails-cache"
@@ -421,6 +425,9 @@ tasks.register('fixOpenApiSpec') {
 }
 
 tasks.withType(GroovyCompile).configureEach {
+    // Disable incremental compilation - incompatible with annotation processors in Gradle 8
+    options.incremental = false
+    
     def additionalSpecDir = new File(project.buildDir, 'openapi')
     def opts=[
         '-Xmx1024m'

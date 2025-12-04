@@ -4262,7 +4262,7 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
         }
 
         // convert api parameters to node filter parameters
-        def filters = jobFilter?[filter:jobFilter]:FrameworkController.extractApiNodeFilterParams(params)
+        def filters = jobFilter ? ([filter:jobFilter]) : (FrameworkController.extractApiNodeFilterParams(params))
         if (filters) {
             inputOpts['_replaceNodeFilters']='true'
             inputOpts['doNodedispatch']=true
@@ -6109,7 +6109,7 @@ Since: v14''',
         def controller = this
         withFormat {
             '*' {
-                def datamap=serverAll?[server:[all:true]]:[server:[uuid: serverUUID]]
+                def datamap = serverAll ? ([server:[all:true]]) : ([server:[uuid: serverUUID]])
                 if(project){
                     datamap.project=project
                 }

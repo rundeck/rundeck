@@ -2861,7 +2861,7 @@ List of config values, each value contains:
             def flabels = frameworkService.projectLabels(authContext)
             session.frameworkLabels = flabels
         }
-        [projects:projects,project:params.project] + (params.page?[selectParams:[page:params.page]]:[:])
+        ([projects:projects,project:params.project]) + (params.page ? ([selectParams:[page:params.page]]) : ([:]))
     }
     /**
      * Select project via parameter, and redirect to default page for the project

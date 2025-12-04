@@ -603,7 +603,7 @@ class UtilityTagLib{
 
     def autoLink={ attrs,body->
         def outx=body()
-        def xparams = params.project?[params:[project:params.project]]:[:]
+        def xparams = params.project ? ([params:[project:params.project]]) : ([:])
         def linkopts=[
                 execution:[
                         pattern: /\{\{(Execution\s+(\d+))\}\}/ ,
