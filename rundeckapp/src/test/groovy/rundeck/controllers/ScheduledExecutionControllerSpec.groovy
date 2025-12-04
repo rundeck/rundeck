@@ -74,7 +74,7 @@ import com.dtolabs.rundeck.core.authentication.Username
 import testhelper.RundeckHibernateSpec
 
 import javax.security.auth.Subject
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 import java.lang.annotation.Annotation
 
 /**

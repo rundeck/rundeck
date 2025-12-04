@@ -49,7 +49,7 @@ import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.ReportService
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.regex.Matcher

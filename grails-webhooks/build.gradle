@@ -44,32 +44,33 @@ dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     implementation "org.springframework.boot:spring-boot-starter-log4j2"
     implementation "org.springframework.boot:spring-boot-autoconfigure"
+    implementation "jakarta.annotation:jakarta.annotation-api:3.0.0"
     implementation("org.apache.grails:grails-core") {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
     implementation "org.apache.grails:grails-web-boot"
     implementation "org.apache.grails:grails-logging"
-    implementation "org.apache.grails:grails-plugin-rest"
-    implementation "org.apache.grails:grails-plugin-databinding"
-    implementation "org.apache.grails:grails-plugin-i18n"
-    implementation "org.apache.grails:grails-plugin-services"
-    implementation "org.apache.grails:grails-plugin-url-mappings"
-    implementation "org.apache.grails:grails-plugin-interceptors"
-    implementation "org.grails.plugins:async"
-    implementation "org.grails.plugins:scaffolding"
-    implementation "org.grails.plugins:gsp"
-    implementation "io.micronaut:micronaut-inject-groovy"
+    implementation "org.apache.grails:grails-rest-transforms"
+    implementation "org.apache.grails:grails-databinding"
+    implementation "org.apache.grails:grails-core"
+    implementation "org.apache.grails:grails-services"
+    implementation "org.apache.grails:grails-url-mappings"
+    implementation "org.apache.grails:grails-interceptors"
+    implementation "org.apache.grails:grails-async"
+    implementation "org.apache.grails:grails-scaffolding"
+    implementation "org.apache.grails:grails-gsp"
+    compileOnly "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
     console "org.apache.grails:grails-console"
     implementation project(":core")
     implementation project(':rundeck-app-util')
 
 
     implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
-    compileOnly "org.apache.grails:grails-plugin-domain-class"
+    compileOnly "org.apache.grails:grails-domain-class"
     runtimeOnly "cloud.wondrify:asset-pipeline-grails:$assetPluginVersion"
-    testImplementation "org.apache.grails:grails-gorm-testing-support"
+    testImplementation "org.apache.grails:grails-testing-support-datamapping"
     testImplementation "org.mockito:mockito-core"
-    testImplementation "org.apache.grails:grails-web-testing-support"
+    testImplementation "org.apache.grails:grails-testing-support-web"
     
     constraints {
         implementation("commons-fileupload:commons-fileupload:${commonsFileuploadVersion}") {

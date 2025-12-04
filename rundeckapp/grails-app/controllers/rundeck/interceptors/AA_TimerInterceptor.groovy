@@ -8,8 +8,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 
 
 class AA_TimerInterceptor {

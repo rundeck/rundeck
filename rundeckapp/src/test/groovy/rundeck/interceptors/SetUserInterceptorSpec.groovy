@@ -25,7 +25,7 @@ import rundeck.services.UserService
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import javax.servlet.ServletContext
+import jakarta.servlet.ServletContext
 
 class SetUserInterceptorSpec extends Specification implements InterceptorUnitTest<SetUserInterceptor>, DataTest {
 

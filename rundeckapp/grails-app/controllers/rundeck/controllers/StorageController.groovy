@@ -51,8 +51,8 @@ import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.StorageService
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 
 @Controller
 class StorageController extends ControllerBase{

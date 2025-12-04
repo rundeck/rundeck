@@ -60,8 +60,8 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import javax.security.auth.Subject
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import java.lang.annotation.Annotation
 
 import static org.junit.Assert.*

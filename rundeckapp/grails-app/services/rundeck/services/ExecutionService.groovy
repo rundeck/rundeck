@@ -116,10 +116,10 @@ import rundeck.services.feature.FeatureService
 import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.LoggingThreshold
 
-import javax.annotation.PreDestroy
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
-import javax.servlet.http.HttpSession
+import jakarta.annotation.PreDestroy
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpSession
 import java.nio.charset.Charset
 import java.sql.Time
 import java.sql.Timestamp

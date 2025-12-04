@@ -8,7 +8,7 @@ import org.rundeck.core.auth.AuthConstants
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 
 
 class ExecutionModeControllerSpec extends Specification implements ControllerUnitTest<ExecutionModeController> {

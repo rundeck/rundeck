@@ -22,7 +22,7 @@ import com.dtolabs.rundeck.app.api.marshall.CustomXmlMarshaller
 import grails.converters.JSON
 import grails.converters.XML
 
-import javax.annotation.PostConstruct
+import jakarta.annotation.PostConstruct
 
 /**
  * Created by greg on 10/28/15.

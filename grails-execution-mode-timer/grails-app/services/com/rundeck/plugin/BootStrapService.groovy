@@ -1,6 +1,6 @@
 package com.rundeck.plugin
 
-import grails.events.annotation.Subscriber
+import org.grails.events.annotation.Subscriber
 
 class BootStrapService {
 

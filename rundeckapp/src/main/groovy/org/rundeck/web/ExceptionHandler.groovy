@@ -10,8 +10,8 @@ import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.error_handling.InvalidParameterException
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 
 @CompileStatic
 class ExceptionHandler implements WebExceptionHandler {

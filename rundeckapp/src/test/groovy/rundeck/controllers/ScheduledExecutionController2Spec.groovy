@@ -46,8 +46,8 @@ import rundeck.services.optionvalues.OptionValuesService
 import testhelper.RundeckHibernateSpec
 
 import javax.security.auth.Subject
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 
 import static org.junit.Assert.*
 

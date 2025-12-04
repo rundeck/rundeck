@@ -38,7 +38,7 @@ import rundeck.services.PluginApiService
 import rundeck.services.PluginService
 import rundeck.services.UiPluginService
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 
 import static org.springframework.http.HttpStatus.NOT_FOUND

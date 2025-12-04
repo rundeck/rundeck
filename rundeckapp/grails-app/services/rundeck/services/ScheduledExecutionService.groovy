@@ -135,7 +135,7 @@ import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.utils.OptionsUtil
 import org.rundeck.app.spi.AuthorizedServicesProvider
 
-import javax.servlet.http.HttpSession
+import jakarta.servlet.http.HttpSession
 import java.sql.ResultSet
 import java.sql.SQLException
 import java.text.MessageFormat

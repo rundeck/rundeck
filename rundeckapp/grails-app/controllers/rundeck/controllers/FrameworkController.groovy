@@ -87,7 +87,7 @@ import rundeck.services.PluginService
 import rundeck.services.ProjectService
 import rundeck.services.ScheduledExecutionService
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 import com.dtolabs.rundeck.core.common.INodeEntry

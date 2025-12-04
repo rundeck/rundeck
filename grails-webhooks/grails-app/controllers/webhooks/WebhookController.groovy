@@ -30,8 +30,8 @@ import org.rundeck.app.data.model.v1.webhook.RdWebhook
 import org.rundeck.core.auth.AuthConstants
 import webhooks.authenticator.AuthorizationHeaderAuthenticator
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 
 @Controller
 @SecurityScheme(

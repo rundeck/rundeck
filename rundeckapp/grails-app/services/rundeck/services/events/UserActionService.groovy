@@ -8,8 +8,8 @@ import org.springframework.security.web.authentication.logout.LogoutHandler
 import rundeck.services.FrameworkService
 import rundeck.services.UserService
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 
 @Transactional
 class UserActionService implements LogoutHandler{

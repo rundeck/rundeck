@@ -75,7 +75,7 @@ import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
 
 import javax.security.auth.Subject
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
 

@@ -35,7 +35,7 @@ import rundeck.services.FrameworkService
 import rundeck.services.PluginService
 import rundeck.services.StorageService
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 
 class WorkflowController extends ControllerBase {
     def frameworkService

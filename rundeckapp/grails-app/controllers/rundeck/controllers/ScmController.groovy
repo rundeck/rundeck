@@ -46,7 +46,7 @@ import org.rundeck.core.auth.web.RdAuthorizeProject
 import rundeck.ScheduledExecution
 import rundeck.services.ScmService
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 
 @Controller
 class ScmController extends ControllerBase {

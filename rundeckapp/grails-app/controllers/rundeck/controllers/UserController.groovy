@@ -52,7 +52,7 @@ import rundeck.data.paging.RdPageable
 import rundeck.data.util.AuthenticationTokenUtils
 import rundeck.services.UserService
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 
 @Controller
 class UserController extends ControllerBase{

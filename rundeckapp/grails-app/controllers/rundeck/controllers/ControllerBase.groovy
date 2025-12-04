@@ -40,8 +40,8 @@ import rundeck.services.ApiService
 import rundeck.services.UiPluginService
 
 import javax.security.auth.Subject
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import java.util.zip.GZIPOutputStream
 /**
  * Mixin utility for controllers

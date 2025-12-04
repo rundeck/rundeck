@@ -1,6 +1,6 @@
 package rundeck.interceptors
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 
 
 class ApiIncubatorInterceptor {

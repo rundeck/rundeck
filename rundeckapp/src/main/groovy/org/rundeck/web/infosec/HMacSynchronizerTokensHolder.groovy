@@ -20,7 +20,7 @@ import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import javax.servlet.http.HttpSession
+import jakarta.servlet.http.HttpSession
 
 /**
  * <p>HMacSynchronizerTokensHolder manages HMAC based request tokens within a session.  It extends {@link SynchronizerTokensHolder} to enable it

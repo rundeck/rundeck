@@ -74,8 +74,8 @@ import webhooks.component.project.WebhooksProjectComponent
 import webhooks.exporter.WebhooksProjectExporter
 import webhooks.importer.WebhooksProjectImporter
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 import org.apache.commons.fileupload.util.Streams
 import org.springframework.web.multipart.MultipartHttpServletRequest

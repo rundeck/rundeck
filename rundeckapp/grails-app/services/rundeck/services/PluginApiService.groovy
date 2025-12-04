@@ -49,7 +49,7 @@ import org.springframework.context.NoSuchMessageException
 import org.springframework.web.context.request.RequestContextHolder
 import rundeck.services.feature.FeatureService
 
-import javax.servlet.ServletContext
+import jakarta.servlet.ServletContext
 
 class PluginApiService {
 

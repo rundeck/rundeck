@@ -41,8 +41,8 @@ import rundeck.Execution
 import rundeck.data.util.AuthenticationTokenUtils
 import rundeck.data.util.OptionsParserUtil
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 import java.time.Clock
 

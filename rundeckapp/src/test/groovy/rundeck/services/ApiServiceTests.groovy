@@ -27,7 +27,7 @@ import groovy.util.slurpersupport.GPathResult
 import groovy.xml.MarkupBuilder
 import com.dtolabs.rundeck.app.api.ApiVersions
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 
 class ApiServiceTests implements ServiceUnitTest<ApiServiceTests> {
 

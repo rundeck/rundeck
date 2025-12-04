@@ -101,7 +101,7 @@ import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
 import rundeck.services.optionvalues.OptionValuesService
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 import java.util.stream.Collectors

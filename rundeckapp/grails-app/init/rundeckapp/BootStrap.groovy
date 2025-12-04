@@ -41,7 +41,7 @@ import rundeck.services.feature.FeatureService
 import rundeckapp.cli.CommandLineSetup
 import webhooks.Webhook
 
-import javax.servlet.ServletContext
+import jakarta.servlet.ServletContext
 import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 

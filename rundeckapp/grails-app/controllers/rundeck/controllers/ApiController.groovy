@@ -49,7 +49,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import rundeck.data.util.AuthenticationTokenUtils
 import rundeck.services.ConfigurationService
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
 
 import com.dtolabs.rundeck.app.api.ApiVersions

@@ -28,10 +28,10 @@ import org.springframework.web.context.WebApplicationContext
 import org.springframework.web.context.support.WebApplicationContextUtils
 
 import javax.security.auth.Subject
-import javax.servlet.ServletConfig
-import javax.servlet.ServletException
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.ServletConfig
+import jakarta.servlet.ServletException
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 
 /**
  * <p>Wraps the {@link AdminServlet} class, to provide selective disabling of any of the metrics servlets.
