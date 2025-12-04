@@ -3,8 +3,8 @@ import remarkGfm from "remark-gfm";
 import Path from "path";
 const config: StorybookConfig = {
   stories: [
-    "../src/library/components/primeVue/**/*.mdx",
-    "../src/library/components/primeVue/**/*.stories.@(js|jsx|mjs|ts|tsx)",
+    "../src/library/components/**/*.mdx",
+    "../src/library/components/**/*.stories.@(js|jsx|mjs|ts|tsx)",
     "../src/app/**/*.mdx",
     "../src/app/**/*.stories.@(js|jsx|mjs|ts|tsx)",
   ],
