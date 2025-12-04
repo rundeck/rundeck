@@ -195,15 +195,15 @@ databaseChangeLog = {
     changeSet(author: "rundeckdev", id: "add-project-job-status-index") {
         preConditions(onFail: "MARK_RAN") {
             not {
-                indexExists(indexName: "EXEC_IDX_PROJECT_JOB_STATUS", tableName: "execution")
+                indexExists(indexName: "EXEC_IDX_PROJECT_STATUS_CANCELLED_DATE", tableName: "execution")
             }
         }
 
-        createIndex(indexName: "EXEC_IDX_PROJECT_JOB_STATUS", tableName: "execution", unique: false) {
+        createIndex(indexName: "EXEC_IDX_PROJECT_STATUS_CANCELLED_DATE", tableName: "execution", unique: false) {
             column(name: "project")
-            column(name: "scheduled_execution_id")
-            column(name: "date_completed")
             column(name: "status")
+            column(name: "cancelled")
+            column(name: "date_completed")
         }
     }
 
