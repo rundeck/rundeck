@@ -96,6 +96,17 @@ tasks.withType(Test) {
     useJUnitPlatform()
 }
 
+// Fix Gradle 8 task ordering for OpenAPI generation
+tasks.named("findMainClass") {
+    mustRunAfter tasks.named("compileTestGroovy")
+}
+tasks.named("jar") {
+    mustRunAfter tasks.named("compileTestGroovy")
+}
+tasks.named("compileGroovyPages") {
+    mustRunAfter tasks.named("compileTestGroovy")
+}
+
 // enable if you wish to package this plugin as a standalone application
 bootJar.enabled = false
 bootRun.enabled = false

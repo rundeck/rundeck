@@ -29,13 +29,10 @@ class PluginMetadataValidatorTest extends Specification {
     def "ValidateTargetHostCompatibility"() {
         when:
         def errors = []
+        // Groovy 4/Java 17: Direct field access without modifying final modifier
         Field field = PluginMetadataValidator.getDeclaredField("OS_TYPE")
-        field.setAccessible(true);
-
-        Field modifiersField = Field.class.getDeclaredField("modifiers");
-        modifiersField.setAccessible(true);
-        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-        field.set(null,rundeckHost)
+        field.setAccessible(true)
+        field.set(null, rundeckHost)
         PluginMetadataValidator.validateTargetHostCompatibility(errors, targetHost)
         String validation = errors.isEmpty() ? "compatible" : "incompatible"
 
