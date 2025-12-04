@@ -142,6 +142,15 @@ allprojects {
     // Global dependency constraints to fix security vulnerabilities
     configurations.all {
         resolutionStrategy {
+            // Force Groovy 4 for any transitive dependencies still using old Groovy 3/codehaus coords
+            eachDependency { details ->
+                if (details.requested.group == 'org.codehaus.groovy') {
+                    details.useTarget(group: 'org.apache.groovy', 
+                                    name: details.requested.name, 
+                                    version: findProperty('groovy.version'))
+                }
+            }
+            
             force "commons-io:commons-io:${commonsIoVersion}"
             force "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
         }
