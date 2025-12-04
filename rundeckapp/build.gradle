@@ -277,7 +277,6 @@ dependencies {
     testImplementation "org.apache.grails:grails-testing-support-datamapping"
     testImplementation "org.mockito:mockito-core"
     testImplementation "org.apache.grails:grails-testing-support-web"
-    testImplementation "org.apache.grails:grails-test-mixins:3.3.0.RC1"
     testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"
     testImplementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
     testImplementation( "org.hibernate:hibernate-jcache:${hibernateVersion}")
