@@ -9,9 +9,9 @@ buildscript {
     dependencies {
         classpath "org.apache.grails:grails-gradle-plugin:$grailsVersion"
         classpath "gradle.plugin.com.energizedwork:idea-gradle-plugins:1.4"
-        classpath "org.apache.grails.plugins:hibernate5:7.0.0"
+        classpath "org.grails.plugins:hibernate5:7.0.0"
         classpath "cloud.wondrify:asset-pipeline-gradle:$assetPluginVersion"
-        classpath("org.apache.grails.plugins:database-migration:$dbMigrationPluginVersion"){
+        classpath("org.grails.plugins:database-migration:$dbMigrationPluginVersion"){
             exclude group: 'org.spockframework', module: 'spock-core'
         }
     }
@@ -221,7 +221,7 @@ dependencies {
         exclude(group:'net.sf.ehcache',module:'ehcache')
     }
     implementation 'org.kohsuke:libpam4j:1.11'
-    implementation "javax.xml.bind:jaxb-api:2.3.1"
+    implementation "jakarta.xml.bind:jakarta.xml.bind-api:4.0.0"
     implementation 'org.dom4j:dom4j:2.1.3'
     implementation ("org.bouncycastle:bcprov-jdk18on:${bouncyCastleVersion}")
     implementation ("org.bouncycastle:bcpg-jdk18on:${bouncyCastleVersion}")
