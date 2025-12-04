@@ -44,7 +44,7 @@ dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     implementation "org.springframework.boot:spring-boot-starter-log4j2"
     implementation "org.springframework.boot:spring-boot-autoconfigure"
-    implementation "jakarta.annotation:jakarta.annotation-api:3.0.0"
+    implementation "jakarta.annotation:jakarta.annotation-api:${jakartaAnnotationVersion}"
     implementation("org.apache.grails:grails-core") {
         exclude(group:"org.yaml",module:"snakeyaml")
     }

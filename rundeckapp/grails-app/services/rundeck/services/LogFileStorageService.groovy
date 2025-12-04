@@ -62,7 +62,7 @@ import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.LogFileLoader
 import rundeck.services.logging.MultiFileStorageRequestImpl
 
-import javax.validation.constraints.NotNull
+import jakarta.validation.constraints.NotNull
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.*

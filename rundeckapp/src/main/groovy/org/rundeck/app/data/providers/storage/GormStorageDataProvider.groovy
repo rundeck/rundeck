@@ -13,7 +13,7 @@ import org.springframework.context.MessageSource
 import rundeck.Storage
 import rundeck.services.data.StorageDataService
 
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @GrailsCompileStatic
 @Slf4j

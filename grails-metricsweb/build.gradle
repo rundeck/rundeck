@@ -48,7 +48,8 @@ dependencies {
     api "io.dropwizard.metrics:metrics-servlet:${metricsVersion}"
     api "io.dropwizard.metrics:metrics-jmx:${metricsVersion}"
     // Bridge for metrics 4.x (javax.servlet) to work with Jakarta
-    implementation "jakarta.servlet:jakarta.servlet-api:6.0.0"
+    implementation "jakarta.servlet:jakarta.servlet-api:${jakartaServletVersion}"
+    compileOnly "javax.servlet:javax.servlet-api:${javaxServletVersion}"  // For AdminServlet compilation
 
 
     // Added by create-app
@@ -69,6 +70,7 @@ dependencies {
     implementation "org.apache.grails:grails-scaffolding"
     implementation "org.apache.grails:grails-gsp"
     implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
+    implementation "jakarta.annotation:jakarta.annotation-api:${jakartaAnnotationVersion}"
     compileOnly "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
     console "org.apache.grails:grails-console"
     profile ("org.grails.profiles:web-plugin"){

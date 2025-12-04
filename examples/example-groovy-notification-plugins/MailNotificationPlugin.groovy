@@ -1,6 +1,6 @@
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin;
 import org.springframework.mail.javamail.*;
-import javax.mail.internet.*;
+import jakarta.mail.internet.*;
 import groovy.xml.MarkupBuilder
 import groovy.text.SimpleTemplateEngine
 

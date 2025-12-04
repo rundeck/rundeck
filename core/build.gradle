@@ -84,7 +84,7 @@ dependencies {
         "com.squareup.retrofit2:retrofit:3.0.0",
         "com.squareup.retrofit2:converter-jackson:3.0.0",
         "com.squareup.retrofit2:converter-jaxb:3.0.0",
-        'jakarta.servlet:jakarta.servlet-api:6.0.0'
+        "jakarta.servlet:jakarta.servlet-api:${jakartaServletVersion}"
 
     implementation ("commons-beanutils:commons-beanutils:${beanutilsVersion}")
 

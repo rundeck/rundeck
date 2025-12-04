@@ -17,6 +17,8 @@ tasks.withType(GroovyCompile).configureEach {
         outputs.file(file("${buildDir}/classes/groovy/main/META-INF/swagger/api-${project.name}.yml"))
         opts.add "-Dmicronaut.openapi.target.file=${buildDir}/classes/groovy/main/META-INF/swagger/api-${project.name}.yml".toString()
     }
+    // Allow OpenAPI annotation warnings without failing the build
+    options.compilerArgs.add('-Xlint:-processing')
     configure(groovyOptions) {
         forkOptions.jvmArgs = opts
     }

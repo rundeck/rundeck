@@ -41,7 +41,7 @@ dependencies {
     compileOnly "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
     console "org.apache.grails:grails-console"
     implementation "org.springframework.boot:spring-boot-autoconfigure"
-    implementation "jakarta.annotation:jakarta.annotation-api:3.0.0"
+    implementation "jakarta.annotation:jakarta.annotation-api:${jakartaAnnotationVersion}"
     implementation "org.apache.grails:grails-core"
     implementation "org.apache.grails:grails-web-boot"
     implementation "org.apache.grails:grails-logging"

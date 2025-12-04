@@ -71,7 +71,6 @@ class DisablingAdminServlet extends AdminServlet implements ApplicationContextAw
         }
     }
 
-    @Override
     void init(ServletConfig config) throws ServletException {
 
         config.getServletContext().setAttribute('com.codahale.metrics.servlet.InstrumentedFilter.registry',
@@ -121,7 +120,6 @@ class DisablingAdminServlet extends AdminServlet implements ApplicationContextAw
         }
     }
 
-    @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         def info = req.getPathInfo()
 

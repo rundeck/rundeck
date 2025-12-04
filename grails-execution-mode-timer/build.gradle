@@ -3,10 +3,12 @@ buildscript {
         mavenLocal()
         mavenCentral()
         maven { url "https://repo.grails.org/grails/core" }
+        maven { url "https://repo.grails.org/grails/restricted" }
     }
     dependencies {
         classpath platform("org.apache.grails:grails-bom:$grailsVersion")
         classpath "org.apache.grails:grails-gradle-plugins:$grailsVersion"
+        classpath "org.apache.grails:grails-events:$grailsVersion"
     }
 }
 
@@ -25,6 +27,7 @@ repositories {
     mavenLocal()
     mavenCentral()
     maven { url "https://repo.grails.org/grails/core" }
+    maven { url "https://repo.grails.org/grails/restricted" }
 }
 
 configurations{
@@ -49,6 +52,7 @@ apply from: "../gradle/java-version.gradle"
 
 dependencies {
 
+    implementation platform("org.apache.grails:grails-bom:${grailsVersion}")
     implementation project(":core")
 
     implementation 'org.quartz-scheduler:quartz:2.3.2'
@@ -56,8 +60,11 @@ dependencies {
 
     implementation "org.springframework.boot:spring-boot-starter-log4j2"
     implementation "org.springframework.boot:spring-boot-autoconfigure"
+    implementation "jakarta.annotation:jakarta.annotation-api:${jakartaAnnotationVersion}"
+    implementation "io.swagger.core.v3:swagger-annotations:${swaggerVersion}"
     implementation "org.apache.grails:grails-core"
     implementation "org.apache.grails:grails-events"
+    annotationProcessor "org.apache.grails.events:grails-events-transforms"
     implementation "org.springframework.boot:spring-boot-starter-actuator"
     implementation "org.apache.grails:grails-web-boot"
     implementation "org.apache.grails:grails-logging"
@@ -78,7 +85,7 @@ dependencies {
 
     profile "org.grails.profiles:web-plugin"
     provided "org.apache.grails:grails-services"
-    provided "org.apache.grails:grails-plugin-domain-class"
+    provided "org.apache.grails:grails-domain-class"
 
 
     testImplementation "org.apache.grails:grails-testing-support-datamapping"
@@ -102,6 +109,23 @@ bootJar.enabled = false
 
 tasks.withType(Test) {
     useJUnitPlatform()
+}
+
+tasks.withType(GroovyCompile).configureEach {
+    options.incremental = false
+}
+
+// Fix Gradle 8 task ordering for OpenAPI generation
+// The OpenAPI file is generated during compileGroovy (main), but compileTestGroovy
+// was running in parallel. Make sure test compilation happens AFTER main tasks.
+tasks.named("findMainClass") {
+    mustRunAfter tasks.named("compileTestGroovy")
+}
+tasks.named("jar") {
+    mustRunAfter tasks.named("compileTestGroovy")
+}
+tasks.named("compileGroovyPages") {
+    mustRunAfter tasks.named("compileTestGroovy")
 }
 
 jar {
