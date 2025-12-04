@@ -4,15 +4,26 @@ import java.util.regex.Matcher
 buildscript {
     repositories {
         mavenLocal()
+        mavenCentral()
         maven { url "https://repo.grails.org/grails/core" }
     }
+    configurations.classpath {
+        resolutionStrategy.eachDependency { details ->
+            if (details.requested.group == 'org.codehaus.groovy') {
+                details.useTarget(group: 'org.apache.groovy', 
+                                name: details.requested.name, 
+                                version: '4.0.29')
+            }
+        }
+    }
     dependencies {
-        classpath "org.grails:grails-gradle-plugin:$grailsVersion"
+        classpath "org.apache.grails:grails-gradle-plugins:$grailsVersion"
         classpath "gradle.plugin.com.energizedwork:idea-gradle-plugins:1.4"
         classpath "org.grails.plugins:hibernate5:7.0.4"
         classpath "cloud.wondrify:asset-pipeline-gradle:$assetPluginVersion"
         classpath("org.grails.plugins:database-migration:$dbMigrationPluginVersion"){
             exclude group: 'org.spockframework', module: 'spock-core'
+            exclude group: 'org.grails', module: 'grails-shell'
         }
     }
 }
