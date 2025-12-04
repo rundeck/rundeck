@@ -18,7 +18,7 @@ group "webhooks"
 apply plugin:"eclipse"
 apply plugin:"idea"
 apply plugin:"org.grails.grails-plugin"
-apply plugin:"asset-pipeline"
+apply plugin:"cloud.wondrify.asset-pipeline"
 apply plugin:"org.grails.grails-gsp"
 
 apply from:'../gradle/grailsopenapispec.gradle'

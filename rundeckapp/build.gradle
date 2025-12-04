@@ -29,7 +29,7 @@ apply plugin:"idea"
 apply plugin:"war"
 apply plugin:"org.grails.grails-web"
 apply plugin: "com.energizedwork.idea-base"
-apply plugin:"asset-pipeline"
+apply plugin:"cloud.wondrify.asset-pipeline"
 apply plugin:"org.grails.grails-gsp"
 apply plugin: "maven-publish"
 apply plugin: "signing"
@@ -147,6 +147,9 @@ dependencies {
     
     // Micronaut integration for Grails 7
     implementation 'org.apache.grails:grails-micronaut'
+    
+    // Layout engine for Grails 7 (Sitemesh 2.6.x continuation)
+    implementation 'org.apache.grails:grails-layout'
 
     implementation 'org.springframework.cloud:spring-cloud-context:3.1.6'
 
