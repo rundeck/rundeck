@@ -7,9 +7,9 @@ buildscript {
         maven { url "https://repo.grails.org/grails/core" }
     }
     dependencies {
-        classpath "org.apache.grails:grails-gradle-plugin:$grailsVersion"
+        classpath "org.grails:grails-gradle-plugin:$grailsVersion"
         classpath "gradle.plugin.com.energizedwork:idea-gradle-plugins:1.4"
-        classpath "org.grails.plugins:hibernate5:7.0.0"
+        classpath "org.grails.plugins:hibernate5:7.0.4"
         classpath "cloud.wondrify:asset-pipeline-gradle:$assetPluginVersion"
         classpath("org.grails.plugins:database-migration:$dbMigrationPluginVersion"){
             exclude group: 'org.spockframework', module: 'spock-core'
