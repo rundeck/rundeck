@@ -8,10 +8,10 @@ echo "current TAG: $CUR_TAG"
 
 function usage {
     echo "Usage:"
-    echo "  setversion.sh <version> [GA|rcX]           - Update version in version.properties"
-    echo "  setversion.sh --bump-minor                 - Bump minor version number"
-    echo "  setversion.sh --tag <version> [GA|rcX]     - Create git tag for release directly on current branch"
-    echo "  setversion.sh --create-release-branch <version> - Create release branch for patch releases"
+    echo "  setversion.sh <version> [GA|rc#|alpha#]           - Update version in version.properties"
+    echo "  setversion.sh --bump-minor                            - Bump minor version number"
+    echo "  setversion.sh --tag <version> [GA|rc#|alpha#]     - Create git tag for release directly on current branch"
+    echo "  setversion.sh --create-release-branch <version>       - Create release branch for patch releases"
     exit 2
 }
 
@@ -40,8 +40,11 @@ if [ "$1" == "--tag" ]; then
     # Create the appropriate tag
     if [ "$VTAG" == "GA" ]; then
         TAG_NAME="v$VNUM"
-    else
+    elif [[ "$VTAG" =~ ^[a-z]+[0-9]+$ ]]; then
         TAG_NAME="v$VNUM-$VTAG"
+    else
+      echo "Error: Invalid tag format '$VTAG'. Expected 'GA' or to match [a-z]+[0-9]+ (e.g., rc1, rc2, alpha3)."
+      exit 5
     fi
 
     echo "Creating tag: $TAG_NAME"

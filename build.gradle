@@ -107,7 +107,7 @@ def vVersion, vNum, vTag, vDate
 
 if (isTagBuild) {
     // Parse version from git tag
-    def matcher = gitTag =~ /^v(?<vNum>\d+\.\d+\.\d+)(-(?<vTag>[a-zA-Z0-9]+))?$/
+    def matcher = gitTag =~ /^v(?<vNum>\d+\.\d+\.\d+)(-(?<vTag>[a-z]+[0-9]+))?$/
 
     if (matcher.matches()) {
         vNum = ext.vNum = matcher.group('vNum')
