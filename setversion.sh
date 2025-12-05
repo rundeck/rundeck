@@ -96,7 +96,11 @@ elif [ "$1" == "--create-release-branch" ]; then
         if [[ "$use_existing" == [yY] ]]; then
             echo "Checking out existing branch: $BRANCH_NAME"
             git checkout "$BRANCH_NAME" || exit 7
-            git pull origin "$BRANCH_NAME" || echo "Warning: Failed to pull latest changes from remote"
+            if ! git pull origin "$BRANCH_NAME"; then
+                echo "Error: Failed to pull latest changes from remote branch $BRANCH_NAME"
+                echo "Please resolve any conflicts or network issues before continuing."
+                exit 8
+            fi
         else
             echo "Operation cancelled"
             exit 0
@@ -121,8 +125,7 @@ elif [ "$1" == "--create-release-branch" ]; then
 
     # Commit the version change
     git add version.properties
-    git status | grep "version.properties" --quiet
-    if [ $? -eq 0 ]; then
+    if git diff --cached --name-only | grep -q "version.properties"; then
         echo "Committing version change"
         git commit -m "Set version to $SNAPSHOT_VERSION for patch release"
         echo "Changes committed"
