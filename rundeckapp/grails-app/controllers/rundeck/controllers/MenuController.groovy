@@ -190,8 +190,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         model = executionService.finishQueueQuery(query,params,model)
 
         //include id of last completed execution for the project
-        def eid=executionService.lastExecutionId(query.projFilter)
-        model.lastExecId=eid
+        //def eid=executionService.lastExecutionId(query.projFilter)
+        //model.lastExecId=eid
         return model
     }
 
