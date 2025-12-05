@@ -30,12 +30,6 @@ if [ "$1" == "--tag" ]; then
     shift
     VTAG="${1:-GA}"
 
-    # Verify we're on main or a release branch
-    CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-    if [[ "$CURRENT_BRANCH" != "main" && ! "$CURRENT_BRANCH" =~ ^release/.* ]]; then
-        echo "Error: Must be on 'main' branch or a release branch to create release tags"
-        exit 4
-    fi
 
     # Create the appropriate tag
     if [ "$VTAG" == "GA" ]; then
@@ -46,8 +40,15 @@ if [ "$1" == "--tag" ]; then
       echo "Error: Invalid tag format '$VTAG'. Expected 'GA' or to match [a-z]+[0-9]+ (e.g., rc1, rc2, alpha3)."
       exit 5
     fi
-
     echo "Creating tag: $TAG_NAME"
+
+    # Verify we're on main or a release branch
+    CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    if [[ "$CURRENT_BRANCH" != "main" && ! "$CURRENT_BRANCH" =~ ^release/.* ]]; then
+        echo "Error: Must be on 'main' branch or a release branch to create release tags"
+        exit 4
+    fi
+
     git tag -a "$TAG_NAME" -m "Release $VNUM $VTAG"
     echo "Tag created. Use 'git push origin $TAG_NAME' to push the tag to remote."
     exit 0
