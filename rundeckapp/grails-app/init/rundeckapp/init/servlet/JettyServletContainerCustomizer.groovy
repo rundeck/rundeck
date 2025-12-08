@@ -21,8 +21,8 @@ import org.eclipse.jetty.server.Handler
 import org.eclipse.jetty.server.HostHeaderCustomizer
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.server.handler.ContextHandler
-import org.eclipse.jetty.webapp.AbstractConfiguration
-import org.eclipse.jetty.webapp.WebAppContext
+import org.eclipse.jetty.ee10.webapp.AbstractConfiguration
+import org.eclipse.jetty.ee10.webapp.WebAppContext
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.boot.web.embedded.jetty.JettyServerCustomizer

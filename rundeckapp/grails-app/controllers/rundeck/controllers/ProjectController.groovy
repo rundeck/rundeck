@@ -50,7 +50,6 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import io.swagger.v3.oas.annotations.tags.Tags
-import org.apache.commons.lang3.exception.ExceptionUtils
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.api.model.ApiErrorResponse
@@ -499,8 +498,13 @@ class ProjectController extends ControllerBase{
     private String hintErrorCause(Throwable t){
         final SIZE_CONSTRAINT_VIOLATION_STRING = 'Data too long for column \'data\''
         final SIZE_CONSTRAINT_VIOLATION_MESSAGE = "Some of the imported content was too large, this may be caused by a node source definition or other components that exceeds the supported size."
-        def cause = ExceptionUtils.getRootCause(t).message
-        if( cause.contains(SIZE_CONSTRAINT_VIOLATION_STRING) ){
+        // Get root cause manually (Apache Commons Lang3 not available in Grails 7)
+        Throwable rootCause = t
+        while (rootCause.cause != null && rootCause.cause != rootCause) {
+            rootCause = rootCause.cause
+        }
+        def cause = rootCause.message
+        if( cause?.contains(SIZE_CONSTRAINT_VIOLATION_STRING) ){
             return SIZE_CONSTRAINT_VIOLATION_MESSAGE
         }
         return ''

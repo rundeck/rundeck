@@ -145,6 +145,9 @@ dependencies {
     implementation 'org.grails.plugins:quartz:2.0.13'
     implementation 'org.grails.plugins:mail:3.0.0'
     
+    // Liquibase for compile-time exception classes (runtime provided by Spring Boot)
+    compileOnly "org.liquibase:liquibase-core:${liquibaseVersion}"
+    
     // Micronaut integration for Grails 7
     implementation 'org.apache.grails:grails-micronaut'
     
