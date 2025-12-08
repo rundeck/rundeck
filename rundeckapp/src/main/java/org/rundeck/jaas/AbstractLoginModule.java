@@ -229,8 +229,9 @@ public abstract class AbstractLoginModule implements LoginModule {
      * @return Array of [username, credentials]
      * @throws IOException if callback I/O fails
      * @throws UnsupportedCallbackException if callback not supported
+     * @throws LoginException if login fails
      */
-    protected Object[] getCallBackAuth() throws IOException, UnsupportedCallbackException {
+    protected Object[] getCallBackAuth() throws IOException, UnsupportedCallbackException, LoginException {
         NameCallback nameCallback = new NameCallback("Username: ");
         org.rundeck.jaas.callback.ObjectCallback objectCallback = new org.rundeck.jaas.callback.ObjectCallback();
         PasswordCallback passwordCallback = new PasswordCallback("Password: ", false);
@@ -271,6 +272,18 @@ public abstract class AbstractLoginModule implements LoginModule {
         credentials = null;
     }
     
+    /**
+     * Create standard callbacks for username/password/object.
+     * Helper method for subclasses that override login().
+     */
+    protected Callback[] configureCallbacks() {
+        return new Callback[] {
+            new NameCallback("Username: "),
+            new org.rundeck.jaas.callback.ObjectCallback(),
+            new PasswordCallback("Password: ", false)
+        };
+    }
+    
     // State management methods
     
     protected boolean isAuthenticated() {
@@ -307,6 +320,48 @@ public abstract class AbstractLoginModule implements LoginModule {
     
     protected Object getCredentials() {
         return credentials;
+    }
+    
+    /**
+     * Wrapper for current user (used by LDAP modules for caching/state).
+     * For subclasses that manage user state directly.
+     */
+    private JAASUserInfo currentUser;
+    
+    protected void setCurrentUser(JAASUserInfo user) {
+        this.currentUser = user;
+    }
+    
+    protected JAASUserInfo getCurrentUser() {
+        return currentUser;
+    }
+    
+    /**
+     * Simple wrapper around UserInfo to provide compatibility
+     * with existing LDAP module code.
+     */
+    public static class JAASUserInfo {
+        private final UserInfo userInfo;
+        
+        public JAASUserInfo(UserInfo userInfo) {
+            this.userInfo = userInfo;
+        }
+        
+        public UserInfo getUserInfo() {
+            return userInfo;
+        }
+        
+        public boolean checkCredential(Object credential) {
+            if (userInfo.getCredential() == null) {
+                return credential == null;
+            }
+            return userInfo.getCredential().check(credential);
+        }
+        
+        public void fetchRoles() {
+            // Placeholder method for compatibility
+            // Roles are already fetched in UserInfo
+        }
     }
 }
 

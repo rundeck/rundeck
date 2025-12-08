@@ -43,6 +43,7 @@ import javax.security.auth.login.LoginException;
 //import ch.qos.logback.classic.Level;
 import grails.util.Holders;
 import org.rundeck.jaas.AbstractLoginModule;
+import org.rundeck.jaas.AbstractLoginModule.JAASUserInfo;
 import org.rundeck.jaas.PasswordCredential;
 import org.rundeck.jaas.UserInfo;
 import org.rundeck.jaas.callback.ObjectCallback;

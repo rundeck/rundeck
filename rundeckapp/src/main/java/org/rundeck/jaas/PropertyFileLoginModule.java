@@ -131,14 +131,14 @@ public class PropertyFileLoginModule extends AbstractLoginModule {
     /**
      * Set the property file name from options.
      */
-    protected void setPropertyFileName(String fileName) {
+    public void setPropertyFileName(String fileName) {
         this.propertyFileName = fileName;
     }
     
     /**
      * Set whether to hot-reload the property file when it changes.
      */
-    protected void setHotReload(boolean hotReload) {
+    public void setHotReload(boolean hotReload) {
         this.hotReload = hotReload;
     }
 }

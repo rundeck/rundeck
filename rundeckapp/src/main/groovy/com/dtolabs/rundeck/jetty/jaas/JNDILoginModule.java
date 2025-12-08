@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.jetty.jaas;
 
 import org.rundeck.jaas.AbstractLoginModule;
+import org.rundeck.jaas.AbstractLoginModule.JAASUserInfo;
 import org.rundeck.jaas.PasswordCredential;
 import org.rundeck.jaas.UserInfo;
 import org.rundeck.jaas.callback.ObjectCallback;
@@ -216,15 +217,15 @@ public class JNDILoginModule extends AbstractLoginModule {
                 return isAuthenticated();
             }
             catch (IOException e) {
-                log.warn(e);
+                log.warn("IO error during login", e);
                 throw new LoginException(e.toString());
             }
             catch (UnsupportedCallbackException e) {
-                log.warn(e);
+                log.warn("Callback not supported", e);
                 throw new LoginException(e.toString());
             }
             catch (Exception e) {
-                log.warn(e);
+                log.warn("Login exception", e);
                 throw new LoginException(e.toString());
             }
         } else {

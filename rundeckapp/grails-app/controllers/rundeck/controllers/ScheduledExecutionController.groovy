@@ -91,7 +91,6 @@ import org.springframework.transaction.TransactionDefinition
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import org.springframework.web.multipart.MultipartRequest
-import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
 import org.rundeck.app.jobs.options.ApiTokenReporter
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
@@ -2813,7 +2812,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
             if (params.xmlBatch && params.xmlBatch instanceof String) {
                 String fileContent = params.xmlBatch
                 parseresult = scheduledExecutionService.parseUploadedFile(fileContent, fileformat)
-            } else if (params.xmlBatch && params.xmlBatch instanceof CommonsMultipartFile) {
+            } else if (params.xmlBatch && params.xmlBatch instanceof MultipartFile) {
                 InputStream fileContent = params.xmlBatch.inputStream
                 parseresult = scheduledExecutionService.parseUploadedFile(fileContent, fileformat)
             } else if (request instanceof MultipartHttpServletRequest) {
