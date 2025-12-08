@@ -200,8 +200,12 @@ public class JNDILoginModule extends AbstractLoginModule {
                     setAuthenticated(false);
                     return isAuthenticated();
                 }
-                ArrayList roleList = new ArrayList(getUserRoles(webUserName));
-                UserInfo userInfo= new UserInfo(webUserName, null, roleList);
+                
+                // Normalize username if case-insensitive feature is enabled
+                String normalizedUserName = normalizeUsername(webUserName);
+                
+                ArrayList roleList = new ArrayList(getUserRoles(normalizedUserName));
+                UserInfo userInfo= new UserInfo(normalizedUserName, null, roleList);
 
                 log.debug("userRoles: " + roleList);
                 if (userInfo == null) {

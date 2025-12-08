@@ -16,8 +16,11 @@
 
 package org.rundeck.jaas;
 
+import com.dtolabs.rundeck.core.config.Features;
+import grails.util.Holders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.*;
@@ -98,14 +101,17 @@ public abstract class AbstractLoginModule implements LoginModule {
             }
             
             Object[] credentials = getCallBackAuth();
-            this.username = (String) credentials[0];
+            String rawUsername = (String) credentials[0];
             this.credentials = credentials[1];
             
-            if (username == null) {
+            if (rawUsername == null) {
                 debug("No username provided");
                 setAuthenticated(false);
                 return false;
             }
+            
+            // Normalize username if feature is enabled
+            this.username = normalizeUsername(rawUsername);
             
             // Get user info from subclass
             UserInfo userInfo = getUserInfo(username);
@@ -282,6 +288,56 @@ public abstract class AbstractLoginModule implements LoginModule {
             new org.rundeck.jaas.callback.ObjectCallback(),
             new PasswordCallback("Password: ", false)
         };
+    }
+    
+    // Case-insensitive username support
+    
+    /**
+     * Check if case-insensitive username feature is enabled.
+     * Uses reflection to avoid compile-time dependency on Groovy FeatureService.
+     * 
+     * @return true if feature is enabled, false otherwise
+     */
+    protected boolean isCaseInsensitiveUsernameEnabled() {
+        try {
+            ApplicationContext ctx = Holders.findApplicationContext();
+            if (ctx == null || !ctx.containsBeanDefinition("featureService")) {
+                return false;
+            }
+            
+            Object featureService = ctx.getBean("featureService");
+            if (featureService == null) return false;
+            
+            // Use reflection to call: featureService.featurePresent(Features.CASE_INSENSITIVE_USERNAME)
+            java.lang.reflect.Method method = featureService.getClass().getMethod("featurePresent", Object.class);
+            Boolean result = (Boolean) method.invoke(featureService, Features.CASE_INSENSITIVE_USERNAME);
+            return result != null && result;
+            
+        } catch (Exception e) {
+            if (debug) {
+                log.debug("Unable to check case-insensitive username feature", e);
+            }
+            return false;
+        }
+    }
+    
+    /**
+     * Normalize username to lowercase if case-insensitive feature is enabled.
+     * This ensures consistent username handling across ACLs, Key Storage, and audit logs.
+     * 
+     * @param username the username to normalize
+     * @return normalized username (lowercase) if feature enabled, original username otherwise
+     */
+    protected String normalizeUsername(String username) {
+        if (username == null) return null;
+        if (isCaseInsensitiveUsernameEnabled()) {
+            String normalized = username.toLowerCase();
+            if (debug && !username.equals(normalized)) {
+                log.debug("Normalized username from '{}' to '{}'", username, normalized);
+            }
+            return normalized;
+        }
+        return username;
     }
     
     // State management methods

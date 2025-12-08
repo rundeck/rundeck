@@ -811,11 +811,14 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         getCallbackHandler().handle(callbacks);
 
         String webUserName = ((NameCallback) callbacks[0]).getName();
+        // Normalize username if case-insensitive feature is enabled
+        String normalizedUserName = normalizeUsername(webUserName);
+        
         Object webCredential = ((ObjectCallback) callbacks[1]).getObject();
         if (webCredential == null) {
             webCredential = ((PasswordCallback)callbacks[2]).getPassword();
         }
-        return new Object[]{webUserName,webCredential};
+        return new Object[]{normalizedUserName, webCredential};
     }
 
 
@@ -842,6 +845,9 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                 return isAuthenticated();
             }
 
+            // Normalize username to lowercase if feature is enabled
+            final String normalizedUserName = normalizeUsername(webUserName);
+
             loginAttempts++;
 
             if(_reportStatistics)
@@ -852,11 +858,11 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             }
 
             if (_forceBindingLogin) {
-                return bindingLogin(webUserName, webCredential);
+                return bindingLogin(normalizedUserName, webCredential);
             }
 
             // This sets read and the credential
-            UserInfo userInfo = getUserInfo(webUserName);
+            UserInfo userInfo = getUserInfo(normalizedUserName);
 
             if (userInfo == null) {
                 setAuthenticated(false);
@@ -919,7 +925,10 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     @SuppressWarnings("unchecked")
     protected boolean bindingLogin(String username, Object password) throws LoginException,
             NamingException {
-        final String cacheToken = PasswordCredential.md5Digest(username + ":" + password.toString());
+        // Normalize username to lowercase if feature is enabled
+        final String normalizedUsername = normalizeUsername(username);
+        
+        final String cacheToken = PasswordCredential.md5Digest(normalizedUsername + ":" + password.toString());
         if (_cacheDuration > 0) { // only worry about caching if there is a cacheDuration set.
             CachedUserInfo cached = USERINFOCACHE.get(cacheToken);
             if (cached != null) {
@@ -962,12 +971,12 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         }
         List roles = null;
         try {
-            roles = getUserRolesByDn(dirContext, userDn, username);
+            roles = getUserRolesByDn(dirContext, userDn, normalizedUsername);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        UserInfo userInfo = new UserInfo(username, PasswordCredential.getCredential(password.toString()), roles);
+        UserInfo userInfo = new UserInfo(normalizedUsername, PasswordCredential.getCredential(password.toString()), roles);
         if (_cacheDuration > 0) {
             USERINFOCACHE.put(cacheToken,
                 new CachedUserInfo(userInfo,
