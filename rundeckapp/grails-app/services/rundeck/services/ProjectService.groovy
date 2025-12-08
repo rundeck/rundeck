@@ -46,6 +46,7 @@ import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
 import groovy.transform.TypeCheckingMode
+import groovy.xml.XmlParser
 import groovy.xml.MarkupBuilder
 import okhttp3.ResponseBody
 import org.apache.commons.io.FileUtils

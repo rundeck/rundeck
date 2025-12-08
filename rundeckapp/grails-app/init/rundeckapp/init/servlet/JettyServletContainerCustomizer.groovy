@@ -76,6 +76,7 @@ class JettyConfigPropsInitParameterConfiguration extends AbstractConfiguration {
     Map<String, String> initParams = [:]
 
     JettyConfigPropsInitParameterConfiguration(final Map<String, String> initParams) {
+        super(new Builder())  // Jetty 12 requires explicit super() call
         this.initParams = initParams
     }
 

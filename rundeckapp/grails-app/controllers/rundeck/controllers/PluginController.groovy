@@ -39,6 +39,7 @@ import rundeck.services.PluginService
 import rundeck.services.UiPluginService
 
 import jakarta.servlet.http.HttpServletResponse
+import java.security.MessageDigest
 import java.text.SimpleDateFormat
 
 import static org.springframework.http.HttpStatus.NOT_FOUND
@@ -315,7 +316,13 @@ Since: v49''',
         }
         def meta = frameworkService.getRundeckFramework().getPluginManager().getPluginMetadata(service,provider)
         def detail = new ApiPluginProviderDetail()
-        detail.id = meta?.pluginId ?: desc.name.encodeAsSHA256().toString().substring(0,12)
+        // Generate SHA-256 hash for plugin ID (replaces Grails codec)
+        String pluginHash = MessageDigest.getInstance("SHA-256")
+            .digest(desc.name.bytes)
+            .encodeHex()
+            .toString()
+            .substring(0,12)
+        detail.id = meta?.pluginId ?: pluginHash
         detail.name = desc.name
         detail.title = uiPluginService.getPluginMessage(
             service,

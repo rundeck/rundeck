@@ -148,6 +148,9 @@ dependencies {
     // Liquibase for compile-time exception classes (runtime provided by Spring Boot)
     compileOnly "org.liquibase:liquibase-core:${liquibaseVersion}"
     
+    // Groovy 4: XML parsing is a separate module
+    implementation "org.apache.groovy:groovy-xml:${getProperty('groovy.version')}"
+    
     // Micronaut integration for Grails 7
     implementation 'org.apache.grails:grails-micronaut'
     
@@ -173,6 +176,7 @@ dependencies {
     // BOMs for dependency management
     implementation platform("org.apache.grails:grails-bom:$grailsVersion")
     implementation platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion")
+    implementation platform("org.apache.groovy:groovy-bom:${getProperty('groovy.version')}")
     
     implementation "commons-codec:commons-codec:${commonsCodecVersion}"
 

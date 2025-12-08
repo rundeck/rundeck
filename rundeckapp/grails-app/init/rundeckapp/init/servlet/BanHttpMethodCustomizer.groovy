@@ -1,11 +1,13 @@
 package rundeckapp.init.servlet
 
+import org.eclipse.jetty.http.HttpFields
 import org.eclipse.jetty.http.HttpMethod
 import org.eclipse.jetty.http.HttpStatus
 import org.eclipse.jetty.server.Connector
 import org.eclipse.jetty.server.HttpConfiguration
 import org.eclipse.jetty.server.HttpConnectionFactory
 import org.eclipse.jetty.server.Request
+import org.eclipse.jetty.server.Response
 import org.eclipse.jetty.server.Server
 import org.springframework.boot.web.embedded.jetty.JettyServerCustomizer
 
@@ -39,11 +41,12 @@ class BanHttpCustomizer implements HttpConfiguration.Customizer {
     }
 
     @Override
-    void customize(Connector connector, HttpConfiguration channelConfig, Request request) {
-        HttpMethod currentMethod = HttpMethod.fromString(request.method)
+    Request customize(Request request, HttpFields.Mutable responseHeaders) {
+        // Jetty 12 API: customize(Request, HttpFields.Mutable)
+        HttpMethod currentMethod = HttpMethod.fromString(request.getMethod())
         if (banMethods.contains(currentMethod)) {
-            request.handled = true
-            request.response.status = HttpStatus.METHOD_NOT_ALLOWED_405
+            Response.writeError(request, request.getResponse(), null, HttpStatus.METHOD_NOT_ALLOWED_405)
         }
+        return request
     }
 }
