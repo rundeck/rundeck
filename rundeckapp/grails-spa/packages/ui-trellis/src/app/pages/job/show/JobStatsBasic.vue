@@ -87,7 +87,7 @@ export default defineComponent({
           {{ formatNumber(execCount) }}
         </span>
         <span class="text-table-header">
-          {{ $tc("execution", execCount) }}
+          {{ $t("execution", execCount) }}
         </span>
       </div>
     </ui-socket>
