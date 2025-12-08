@@ -222,7 +222,8 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-core"
     implementation "com.fasterxml.jackson.core:jackson-annotations"
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonDataformatCBORVersion}"
-    implementation "org.eclipse.jetty:jetty-jaas"
+    // Jetty JAAS removed - using org.rundeck.jaas implementation instead
+    // implementation "org.eclipse.jetty:jetty-jaas"  // REMOVED - Jetty 12 doesn't have this
     implementation "org.eclipse.jetty:jetty-jmx"
     implementation "org.eclipse.jetty:jetty-util"
     implementation "org.eclipse.jetty:jetty-security"

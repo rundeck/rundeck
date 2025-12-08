@@ -23,11 +23,12 @@
 */
 package com.dtolabs.rundeck.jetty.jaas;
 
-import org.eclipse.jetty.jaas.callback.ObjectCallback;
-import org.eclipse.jetty.jaas.spi.AbstractLoginModule;
-import org.eclipse.jetty.jaas.spi.UserInfo;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.security.Credential;
+import org.rundeck.jaas.AbstractLoginModule;
+import org.rundeck.jaas.PasswordCredential;
+import org.rundeck.jaas.UserInfo;
+import org.rundeck.jaas.callback.ObjectCallback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginException;
@@ -52,7 +53,7 @@ import javax.naming.directory.*;
  * @version $Revision$
  */
 public class JNDILoginModule extends AbstractLoginModule {
-    private static final org.eclipse.jetty.util.log.Logger log = Log.getLogger(JNDILoginModule.class);
+    private static final Logger log = LoggerFactory.getLogger(JNDILoginModule.class);
 
     /**
      * Get the UserInfo for a specified username
@@ -64,7 +65,7 @@ public class JNDILoginModule extends AbstractLoginModule {
         DirContext dir = context();
         ArrayList roleList = new ArrayList(getUserRoles(username));
         String credentials = getUserCredentials(username);
-        return new UserInfo(username, Credential.getCredential(credentials), roleList);
+        return new UserInfo(username, PasswordCredential.getCredential(credentials), roleList);
 
     }
 
