@@ -373,6 +373,15 @@ tasks.register('copyApiSpecFiles', Copy){
     inputs.files configurations.apiSpecFiles
     from configurations.apiSpecFiles
     into additionalSpecDir
+    
+    // Fix Gradle 8 task ordering - ensure compile tasks run first
+    mustRunAfter(':grails-webhooks:compileGroovy')
+    mustRunAfter(':grails-webhooks:compileTestGroovy')
+    mustRunAfter(':grails-execution-mode-timer:compileGroovy')
+    mustRunAfter(':grails-execution-mode-timer:compileTestGroovy')
+    mustRunAfter(':grails-repository:compileGroovy')
+    mustRunAfter(':grails-job-kill-handler:compileGroovy')
+    mustRunAfter(':grails-metricsweb:compileGroovy')
 }
 
 tasks.register('fixOpenApiSpec') {
