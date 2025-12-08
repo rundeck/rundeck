@@ -45,6 +45,7 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 import java.time.Clock
+import java.util.function.Consumer
 
 class ApiService implements WebUtilService{
     public static final String APPLICATION_XML_CONTENT_TYPE = 'application/xml'
@@ -955,5 +956,207 @@ class ApiService implements WebUtilService{
     @CompileStatic
     List<AuthenticationToken> listTokens(){
         return tokenDataProvider.list()
+    }
+
+    @Override
+    void respondOutput(HttpServletResponse response, String contentType, String output) {
+        response.setContentType(contentType)
+        response.setCharacterEncoding('UTF-8')
+        response.setHeader("X-Rundeck-API-Version", ApiVersions.API_CURRENT_VERSION.toString())
+        def out = response.outputStream
+        out << output
+        out.flush()
+    }
+
+    @Override
+    String extractResponseFormat(HttpServletRequest request, HttpServletResponse response, List<String> allowed) {
+        return extractResponseFormat(request, response, allowed, null)
+    }
+
+    @Override
+    String extractResponseFormat(HttpServletRequest request, HttpServletResponse response, List<String> allowed, String defformat) {
+        def requestFormat = request.format
+        if (allowed && requestFormat && allowed.contains(requestFormat)) {
+            return requestFormat
+        }
+        if (defformat) {
+            return defformat
+        }
+        return requestFormat ?: 'json'
+    }
+
+    @Override
+    void renderErrorFormat(HttpServletResponse response, Map<String, Object> error) {
+        def format = error.format ?: 'json'
+        if (format == 'xml') {
+            renderErrorXml(response, error)
+        } else {
+            renderErrorJson(response, error)
+        }
+    }
+
+    @Override
+    void renderErrorJson(HttpServletResponse response, Map<String, Object> error) {
+        def status = error.status
+        if (status instanceof Integer) {
+            response.setStatus(status)
+        }
+        def result = [
+            error: true,
+            apiversion: ApiVersions.API_CURRENT_VERSION,
+            errorCode: error.code ?: 'api.error.unknown'
+        ]
+        if (error.message) {
+            result.message = error.message
+        } else if (error.code) {
+            result.message = messageSource.getMessage(
+                error.code.toString(),
+                error.args as Object[] ?: null,
+                error.code.toString(),
+                null
+            )
+        }
+        if (error.args) {
+            result.args = error.args
+        }
+        respondOutput(response, JSON_CONTENT_TYPE, groovy.json.JsonOutput.toJson(result))
+    }
+
+    @Override
+    void renderErrorXml(HttpServletResponse response, Map<String, Object> error) {
+        def status = error.status
+        if (status instanceof Integer) {
+            response.setStatus(status)
+        }
+        def message = error.message ?: messageSource.getMessage(
+            error.code?.toString() ?: 'api.error.unknown',
+            error.args as Object[] ?: null,
+            error.code?.toString() ?: 'api.error.unknown',
+            null
+        )
+        def xml = renderXml {
+            result(error: 'true', apiversion: ApiVersions.API_CURRENT_VERSION) {
+                delegate.'error'(code: error.code ?: 'api.error.unknown') {
+                    delegate.'message'(message)
+                }
+            }
+        }
+        respondOutput(response, APPLICATION_XML_CONTENT_TYPE, xml)
+    }
+
+    @Override
+    void respondError(
+        final HttpServletRequest request,
+        final HttpServletResponse response,
+        String code,
+        int status,
+        List<?> args
+    ) {
+        renderErrorFormat(response, [
+            status: status,
+            code: code,
+            args: args?.toArray()
+        ])
+    }
+
+    @Override
+    Integer getRequestApiVersion(HttpServletRequest request) {
+        def attribute = request.getAttribute('api_version')
+        if (attribute instanceof Integer) {
+            return attribute
+        }
+        return null
+    }
+
+    @Override
+    boolean isApiRequest(HttpServletRequest request) {
+        return getRequestApiVersion(request) != null
+    }
+
+    @Override
+    boolean requireApi(HttpServletRequest request, HttpServletResponse response) {
+        return requireApi(request, response, 1)
+    }
+
+    @Override
+    boolean requireApi(HttpServletRequest request, HttpServletResponse response, int min) {
+        if (!getRequestApiVersion(request)) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND)
+            return false
+        }
+        if (!requireVersion(request, response, min)) {
+            return false
+        }
+        return true
+    }
+
+    @Override
+    boolean requireVersion(HttpServletRequest request, HttpServletResponse response, int min) {
+        def apiVersion = getRequestApiVersion(request)
+        if (apiVersion == null) {
+            renderErrorFormat(response, [
+                status: HttpServletResponse.SC_BAD_REQUEST,
+                code: 'api.error.api-version.unsupported',
+                args: [0, request.forwardURI, "Minimum supported version: " + min]
+            ])
+            return false
+        }
+        if (apiVersion < min) {
+            renderErrorFormat(response, [
+                status: HttpServletResponse.SC_BAD_REQUEST,
+                code: 'api.error.api-version.unsupported',
+                args: [apiVersion, request.forwardURI, "Minimum supported version: " + min]
+            ])
+            return false
+        }
+        return true
+    }
+
+    @Override
+    boolean parseJsonXmlWith(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        Map<String, Consumer<Object>> handlers
+    ) {
+        // Stub implementation - would need full parsing logic
+        def format = request.format ?: 'json'
+        def handler = handlers[format]
+        if (!handler) {
+            renderErrorFormat(response, [
+                status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                code: 'api.error.invalid.request',
+                args: ["Format not supported: " + format]
+            ])
+            return false
+        }
+        return true
+    }
+
+    @Override
+    boolean requireRequestFormat(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        List<String> allowed
+    ) {
+        return requireRequestFormat(request, response, allowed, null)
+    }
+
+    @Override
+    boolean requireRequestFormat(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        List<String> allowed,
+        String responseFormat
+    ) {
+        def format = request.format ?: request.contentType
+        if (allowed && format && !allowed.contains(format)) {
+            renderErrorFormat(response, [
+                status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                code: 'api.error.invalid.request',
+                args: ["Format not allowed: " + format]
+            ])
+            return false
+        }
+        return true
     }
 }
