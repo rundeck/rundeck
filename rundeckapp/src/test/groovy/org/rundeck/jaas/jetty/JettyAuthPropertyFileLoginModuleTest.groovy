@@ -15,7 +15,7 @@
  */
 package org.rundeck.jaas.jetty
 
-import org.eclipse.jetty.jaas.spi.PropertyFileLoginModule
+import org.rundeck.jaas.PropertyFileLoginModule
 import spock.lang.Specification
 
 import javax.security.auth.Subject

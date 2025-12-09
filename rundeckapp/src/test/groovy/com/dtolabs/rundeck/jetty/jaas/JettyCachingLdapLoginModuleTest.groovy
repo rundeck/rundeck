@@ -15,8 +15,8 @@
  */
 package com.dtolabs.rundeck.jetty.jaas
 
-import org.eclipse.jetty.jaas.JAASRole
-import org.eclipse.jetty.jaas.spi.UserInfo
+import org.rundeck.jaas.RundeckRole
+import org.rundeck.jaas.UserInfo
 import rundeck.services.ConfigurationService
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -209,9 +209,9 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         result
         null != testSubject.getPrincipals(Principal)
         username == testSubject.getPrincipals(Principal).first().name
-        null != testSubject.getPrincipals(JAASRole)
-        2 == testSubject.getPrincipals(JAASRole).size()
-        ['role1', 'role2'] == testSubject.getPrincipals(JAASRole)*.name
+        null != testSubject.getPrincipals(RundeckRole)
+        2 == testSubject.getPrincipals(RundeckRole).size()
+        ['role1', 'role2'] == testSubject.getPrincipals(RundeckRole)*.name
 
 
         where:
@@ -311,9 +311,9 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         result2
         null != testSubject.getPrincipals(Principal)
         username == testSubject.getPrincipals(Principal).first().name
-        null != testSubject.getPrincipals(JAASRole)
-        2 == testSubject.getPrincipals(JAASRole).size()
-        ['role1', 'role2'] == testSubject.getPrincipals(JAASRole)*.name
+        null != testSubject.getPrincipals(RundeckRole)
+        2 == testSubject.getPrincipals(RundeckRole).size()
+        ['role1', 'role2'] == testSubject.getPrincipals(RundeckRole)*.name
 
 
         where:
@@ -405,9 +405,9 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         result
         null != testSubject.getPrincipals(Principal)
         username == testSubject.getPrincipals(Principal).first().name
-        null != testSubject.getPrincipals(JAASRole)
-        2 == testSubject.getPrincipals(JAASRole).size()
-        ['role1', 'role2'] == testSubject.getPrincipals(JAASRole)*.name
+        null != testSubject.getPrincipals(RundeckRole)
+        2 == testSubject.getPrincipals(RundeckRole).size()
+        ['role1', 'role2'] == testSubject.getPrincipals(RundeckRole)*.name
 
 
         where:

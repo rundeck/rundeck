@@ -15,7 +15,7 @@
  */
 package org.rundeck.security
 
-import org.eclipse.jetty.jaas.spi.PropertyFileLoginModule
+import org.rundeck.jaas.PropertyFileLoginModule
 import org.springframework.security.authentication.jaas.JaasAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContext

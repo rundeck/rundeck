@@ -400,6 +400,10 @@ tasks.register('fixOpenApiSpec') {
     inputs.file(apiVersionsFile)
     outputs.file(specFile)
     
+    // Gradle 8: Explicit task ordering
+    mustRunAfter compileGroovy
+    tasks.findByName('compileTestJava')?.mustRunAfter(tasks.named('fixOpenApiSpec'))
+    
     doLast {
         if (specFile.exists() && apiVersionsFile.exists()) {
             // Parse the ApiVersions.groovy source file to extract the version

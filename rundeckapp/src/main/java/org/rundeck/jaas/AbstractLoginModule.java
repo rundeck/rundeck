@@ -362,7 +362,7 @@ public abstract class AbstractLoginModule implements LoginModule {
         return callbackHandler;
     }
     
-    protected Subject getSubject() {
+    public Subject getSubject() {
         return subject;
     }
     

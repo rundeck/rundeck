@@ -1,8 +1,8 @@
 package com.dtolabs.rundeck.jetty.jaas
 
-import org.eclipse.jetty.jaas.JAASPrincipal
-import org.eclipse.jetty.jaas.JAASRole
-import org.eclipse.jetty.jaas.spi.AbstractLoginModule
+import org.rundeck.jaas.RundeckPrincipal
+import org.rundeck.jaas.RundeckRole
+import org.rundeck.jaas.AbstractLoginModule
 import spock.lang.Specification
 
 import javax.naming.NamingEnumeration
@@ -47,7 +47,7 @@ class JettyCombinedLdapLoginModuleSpec extends Specification {
             Subject subject = new Subject();
             userInfo.setJAASInfo(subject);
             List<String> actualRoles = subject
-                .getPrincipals(JAASRole.class).stream().map(JAASPrincipal::getName).collect(
+                .getPrincipals(RundeckRole.class).stream().map(RundeckPrincipal::getName).collect(
                 Collectors.toList()
             )
         then:
