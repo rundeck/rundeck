@@ -40,6 +40,10 @@ class AuthorizationsController extends ControllerBase {
 
 This endpoint checks permissions for a resource type (kind) such as "job", "project", "system", etc., and returns authorization results for each requested action. The evaluation is performed using the application's access control policies and the authenticated user's permissions.
 
+The `actions` parameter must be provided as a query parameter and can be specified multiple times for multiple actions.
+
+Example: `GET /api/56/authorizations/application/job?actions=create&actions=read`
+
 Useful for UI components that need to conditionally display features or for applications that need to verify permissions before attempting operations.
 
 **INCUBATING**: This endpoint is in "incubating" status, and may change.''',
@@ -90,6 +94,10 @@ Useful for UI components that need to conditionally display features or for appl
             description='''Get authorizations for the supplied set of actions for the subject executing the API call. 
 Evaluation is made in the context of the application for the supplied type and specifier.
 
+The `actions` parameter must be provided as a query parameter and can be specified multiple times for multiple actions.
+
+Example: `GET /api/56/authorizations/application/project/myproject?actions=read&actions=delete`
+
 **INCUBATING**: This endpoint is in "incubating" status, and may change.''',
             tags=['Authorization'],
             parameters = [
@@ -138,6 +146,10 @@ Evaluation is made in the context of the application for the supplied type and s
             summary = "Get authorizations for a project resource kind",
             description='''Get authorizations for the supplied set of actions for the subject executing the API call. 
 Evaluation is made in the context of the project for the supplied resource kind.
+
+The `actions` parameter must be provided as a query parameter and can be specified multiple times for multiple actions.
+
+Example: `GET /api/56/authorizations/project/myproject/node?actions=read&actions=run`
 
 **INCUBATING**: This endpoint is in "incubating" status, and may change.''',
             tags=['Authorization'],
@@ -238,6 +250,10 @@ Evaluation is made in the context of the project for the supplied job.
             summary = "Get authorizations for a type with specifier",
             description='''Get authorizations for the supplied set of actions for the subject executing the API call. 
 Evaluation is made in the context of the project for the type with a specifier.
+
+The `actions` parameter must be provided as a query parameter and can be specified multiple times for multiple actions.
+
+Example: `GET /api/56/authorizations/project/myproject/node/node1?actions=read&actions=run`
 
 **INCUBATING**: This endpoint is in "incubating" status, and may change.''',
             tags=['Authorization'],
