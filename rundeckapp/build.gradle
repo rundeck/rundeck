@@ -494,6 +494,11 @@ tasks.named('findMainClass') {
     dependsOn fixOpenApiSpec
 }
 
+// Gradle 8: javadoc uses fixOpenApiSpec output
+tasks.named('javadoc') {
+    dependsOn fixOpenApiSpec
+}
+
 tasks.withType(Test).configureEach {
     forkEvery = 500
 }
