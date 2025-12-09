@@ -476,6 +476,8 @@ tasks.withType(Test) {
     useJUnitPlatform()
     // Increased memory for Groovy 4 + Grails 7 tests
     maxHeapSize = "2048m"
+    // Gradle 8: Explicit dependency on fixOpenApiSpec
+    dependsOn fixOpenApiSpec
 }
 
 tasks.withType(Test).configureEach {
