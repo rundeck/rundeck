@@ -101,10 +101,16 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(type = 'object'),
-            examples = @ExampleObject('''{
+            examples = [
+                @ExampleObject(
+                    name = 'api-info',
+                    description = 'API Information response example',
+                    value = '''{
   "apiversion": 44,
   "href": "http://localhost:4441/api/44"
-}''')
+}'''
+                )
+            ]
         )
     )
     def info () {

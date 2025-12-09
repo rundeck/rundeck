@@ -404,14 +404,20 @@ Since: v53''',
         content = @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type = 'object'),
-                examples = @ExampleObject('''{
+                examples = [
+                    @ExampleObject(
+                        name = 'job-components-values',
+                        description = 'Job definition components values',
+                        value = '''{
      "Schedules-component":{
         "schedulesJson":"[\\n    \\n]"
      },
      "runner-job-selector":{
         "runnerSelectorJson":"{\\"runnerFilterType\\":\\"TAG_FILTER_AND\\",\\"filter\\":\\"STG-TOOLS-NEW\\",\\"runnerFilterMode\\":\\"TAGS\\"}"
      }
-}''')
+}'''
+                    )
+                ]
         )
     )
     @RdAuthorizeJob(RundeckAccess.General.AUTH_APP_READ)
@@ -442,7 +448,11 @@ Since: v53''',
         content = @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type = 'object'),
-                examples = @ExampleObject('''{
+                examples = [
+                    @ExampleObject(
+                        name = 'job-definition-components',
+                        description = 'Job definition components response',
+                        value = '''{
     "job-tags":{
       "properties":[
          {
@@ -465,7 +475,9 @@ Since: v53''',
       "section":"details",
       "messageType":"jobComponent.job-tags"
    }
-}''')
+}'''
+                    )
+                ]
         )
     )
     def apiJobDefinitionComponents() {
@@ -1263,7 +1275,13 @@ Since: V14''',
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(type = 'object'),
-            examples = @ExampleObject('''{"success": true}''')
+            examples = [
+                @ExampleObject(
+                    name = 'success-response',
+                    description = 'Success response',
+                    value = '''{"success": true}'''
+                )
+            ]
         )
     )
     protected def apiFlipExecutionDisabled(){}
@@ -1293,7 +1311,13 @@ Since: V14''',
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(type = 'object'),
-            examples = @ExampleObject('''{"success": true}''')
+            examples = [
+                @ExampleObject(
+                    name = 'success-response',
+                    description = 'Success response',
+                    value = '''{"success": true}'''
+                )
+            ]
         )
     )
     def apiFlipExecutionEnabled() {
@@ -1377,7 +1401,13 @@ Since: V14''',
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(type = 'object'),
-            examples = @ExampleObject('''{"success": true}''')
+            examples = [
+                @ExampleObject(
+                    name = 'success-response',
+                    description = 'Success response',
+                    value = '''{"success": true}'''
+                )
+            ]
         )
     )
     protected def apiFlipScheduleDisabled() {}
@@ -1407,7 +1437,13 @@ Since: V14''',
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(type = 'object'),
-            examples = @ExampleObject('''{"success": true}''')
+            examples = [
+                @ExampleObject(
+                    name = 'success-response',
+                    description = 'Success response',
+                    value = '''{"success": true}'''
+                )
+            ]
         )
     )
     def apiFlipScheduleEnabled() {
