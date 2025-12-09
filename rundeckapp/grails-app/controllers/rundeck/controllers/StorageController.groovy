@@ -560,6 +560,14 @@ Authorization under the key path `project/{project}` can be granted at the proje
         ]
     )
     @ApiResponse(
+        responseCode='200',
+        description='apiPostResource 200 response',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object')
+        )
+    )
+    @ApiResponse(
         responseCode='201',
         description='Created',
         content = @Content(

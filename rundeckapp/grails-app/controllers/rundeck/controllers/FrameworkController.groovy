@@ -4105,6 +4105,14 @@ by:
         ]
     )
     @ApiResponse(
+        responseCode = "200",
+        description = "apiSystemAcls_POST_docs 200 response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object')
+        )
+    )
+    @ApiResponse(
         responseCode = "201",
         description = "Created",
         content = @Content(
