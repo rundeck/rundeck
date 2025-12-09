@@ -1,4 +1,4 @@
-package org.rundeck.utils.org.rundeck.app.spi
+package org.rundeck.spi
 
 import org.rundeck.app.spi.AppService
 import org.rundeck.app.spi.SimpleServiceProvider
