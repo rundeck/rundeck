@@ -17,7 +17,10 @@
 <%@ page import="grails.util.Environment" %>
 <script type="text/javascript">
     <g:set var="currentProject" value="${params.project?:request.project}"/>
-    <g:set var="projParams" value="${(currentProject?[project:currentProject]:[:])}"/>
+    <%
+        def projParams = currentProject ? [project: currentProject] : [:]
+    %>
+    <g:set var="projParams" value="${projParams}"/>
     var appLinks = {
         api_version: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
         communityNews: '${createLink(controller: 'communityNews', action: 'index')}',
