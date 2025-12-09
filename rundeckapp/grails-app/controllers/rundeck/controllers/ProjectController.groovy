@@ -2794,7 +2794,7 @@ Requires `export` authorization for the project resource.""",
     @ApiResponse(
             responseCode = "200",
             description = "The project exported zip archive file",
-            content = @Content(mediaType = "application/zip" // TODO: No MediaType constant for application/zip, schema = @Schema(implementation = OutputStream))
+            content = @Content(mediaType = "application/zip", schema = @Schema(implementation = OutputStream))
     )
     @ApiResponse(
             responseCode = "400",
@@ -3101,7 +3101,7 @@ Since: v19""",
     @ApiResponse(
             responseCode = "200",
             description = "The project exported zip archive file",
-            content = @Content(mediaType = "application/zip" // TODO: No MediaType constant for application/zip, schema = @Schema(implementation = OutputStream))
+            content = @Content(mediaType = "application/zip", schema = @Schema(implementation = OutputStream))
     )
     @ApiResponse(
             responseCode = "400",
@@ -3165,7 +3165,7 @@ Since: v19""",
 Note: the import status indicates "failed" if any Jobs had failures, otherwise it indicates "successful" even if other files in the archive were not imported.
 
 Requires `import` authorization for the project resource.""",
-            requestBody = @RequestBody(content = @Content(mediaType = "application/zip" // TODO: No MediaType constant for application/zip, schema = @Schema(implementation = InputStream))),
+            requestBody = @RequestBody(content = @Content(mediaType = "application/zip", schema = @Schema(implementation = InputStream))),
             parameters = [
                     @Parameter(
                             name = 'project',
