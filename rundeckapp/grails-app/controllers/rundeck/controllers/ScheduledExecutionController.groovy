@@ -401,10 +401,10 @@ Since: v53''',
             responseCode = '200',
             description = '''Job Definition Components values response.
 ''',
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(type = 'object'),
-                    examples = @ExampleObject('''{
+        content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''{
      "Schedules-component":{
         "schedulesJson":"[\\n    \\n]"
      },
@@ -412,7 +412,7 @@ Since: v53''',
         "runnerSelectorJson":"{\\"runnerFilterType\\":\\"TAG_FILTER_AND\\",\\"filter\\":\\"STG-TOOLS-NEW\\",\\"runnerFilterMode\\":\\"TAGS\\"}"
      }
 }''')
-            )
+        )
     )
     @RdAuthorizeJob(RundeckAccess.General.AUTH_APP_READ)
     def apiJobDefinitionComponentsValues() {
@@ -439,10 +439,10 @@ Since: v53''',
 * `section`: Section of the component
 * `messageType`: Message type for the component
 ''',
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(type = 'object'),
-                    examples = @ExampleObject('''{
+        content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''{
     "job-tags":{
       "properties":[
          {
@@ -466,7 +466,7 @@ Since: v53''',
       "messageType":"jobComponent.job-tags"
    }
 }''')
-            )
+        )
     )
     def apiJobDefinitionComponents() {
         def jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
@@ -721,10 +721,10 @@ jobs ID
 * `nodeStep`: Present if `type` is present and set to `"true"` or `"false"` to indicate
 if the step is a node step. Implicitly `"true"` if not present and not a job step.
 * `workflow`: If step is a job reference contains the sub-workflow''',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(type = 'object'),
-                examples = @ExampleObject('''{
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object'),
+            examples = @ExampleObject('''{
     "workflow": [
         {
             "description": "[description]",
@@ -746,7 +746,6 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
         }
     ]
 }''')
-            )
         )
     )
     public def apiJobWorkflow (){
@@ -1710,7 +1709,7 @@ Failed results will contain:
 * `error` - result error message for the request
 * `errorCode` - a code indicating the type of failure, currently one of `failed`, `unauthorized` or 
 `notfound`.''',
-            content = @Content(
+        content = @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type = 'object'),
                 examples = @ExampleObject('''
@@ -1731,7 +1730,6 @@ Failed results will contain:
       "message": "(success or failure message)"
     }]
 }''')
-            )
         )
     )
     protected def apiFlipExecutionDisabledBulk(
@@ -1780,7 +1778,7 @@ Failed results will contain:
 * `error` - result error message for the request
 * `errorCode` - a code indicating the type of failure, currently one of `failed`, `unauthorized` or 
 `notfound`.''',
-            content = @Content(
+        content = @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type = 'object'),
                 examples = @ExampleObject('''
@@ -1801,7 +1799,6 @@ Failed results will contain:
       "message": "(success or failure message)"
     }]
 }''')
-            )
         )
     )
     def apiFlipExecutionEnabledBulk(
@@ -1931,7 +1928,7 @@ Failed results will contain:
 * `error` - result error message for the request
 * `errorCode` - a code indicating the type of failure, currently one of `failed`, `unauthorized` or 
 `notfound`.''',
-            content = @Content(
+        content = @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type = 'object'),
                 examples = @ExampleObject('''
@@ -1952,7 +1949,6 @@ Failed results will contain:
       "message": "(success or failure message)"
     }]
 }''')
-            )
         )
     )
     protected def apiFlipScheduleDisabledBulk(
@@ -2001,7 +1997,7 @@ Failed results will contain:
 * `error` - result error message for the request
 * `errorCode` - a code indicating the type of failure, currently one of `failed`, `unauthorized` or 
 `notfound`.''',
-            content = @Content(
+        content = @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type = 'object'),
                 examples = @ExampleObject('''
@@ -2022,7 +2018,6 @@ Failed results will contain:
       "message": "(success or failure message)"
     }]
 }''')
-            )
         )
     )
     def apiFlipScheduleEnabledBulk(
@@ -4164,7 +4159,6 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
     "nodec","noded"
   ]
 }""")
-            )
         )
     )
     /**
@@ -4454,7 +4448,6 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
     "nodec","noded"
   ]
 }""")
-            )
         )
     )
     def apiJobRetry() {
@@ -4828,7 +4821,6 @@ Since: v19''',
   "size": 12,
   "user": "admin"
 }''')
-            )
         )
     )
     /**
@@ -5164,11 +5156,10 @@ Since: v14''',
     @ApiResponse(
         responseCode='200',
         description='''item identifying the new execution by ID.''',
-        content = [
-            @Content(
+        content = @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 schema=@Schema(type='object'),
-                    examples=@ExampleObject('''{
+                examples=@ExampleObject('''{
   "message": "Immediate execution scheduled (X)",
   "execution": {
     "id": 1,
@@ -5176,8 +5167,6 @@ Since: v14''',
     "permalink": "[GUI Href]"
   }
 }''')
-                )
-            ]
         )
     )
     /**
@@ -5342,11 +5331,10 @@ For Content-Type: `multipart/form-data`
     @ApiResponse(
         responseCode='200',
         description='''item identifying the new execution by ID.''',
-        content = [
-            @Content(
+        content = @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 schema=@Schema(type='object'),
-                    examples=@ExampleObject('''{
+                examples=@ExampleObject('''{
   "message": "Immediate execution scheduled (X)",
   "execution": {
     "id": 1,
@@ -5354,8 +5342,6 @@ For Content-Type: `multipart/form-data`
     "permalink": "[GUI Href]"
   }
 }''')
-                )
-            ]
         )
     )
     /**
@@ -5585,11 +5571,10 @@ Since: v14''',
     @ApiResponse(
         responseCode='200',
         description='''item identifying the new execution by ID.''',
-        content = [
-            @Content(
+        content = @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 schema=@Schema(type='object'),
-                    examples=@ExampleObject('''{
+                examples=@ExampleObject('''{
   "message": "Immediate execution scheduled (X)",
   "execution": {
     "id": 1,
@@ -5597,8 +5582,6 @@ Since: v14''',
     "permalink": "[GUI Href]"
   }
 }''')
-                )
-            ]
         )
     )
     /**
@@ -5718,7 +5701,6 @@ in the results. Default is false.  Requires API version 50 or later.''',
     "nodec","noded"
   ]
 }]''')
-            )
         )
     )
     /**

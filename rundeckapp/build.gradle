@@ -401,6 +401,7 @@ tasks.register('copyApiSpecFiles', Copy){
     mustRunAfter(':grails-metricsweb:compileGroovy')
     
     // Add Pro plugin compile dependencies (only those with integration tests)
+    // Only add these dependencies if the plugins exist (Pro repo)
     def proPluginsWithIntTests = [
         'rundeckpro-calendars',
         'rundeckpro-cluster',
@@ -418,9 +419,12 @@ tasks.register('copyApiSpecFiles', Copy){
     
     proPluginsWithIntTests.each { pluginName ->
         def pluginPath = ":plugins:${pluginName}"
-        mustRunAfter("${pluginPath}:compileGroovy")
-        mustRunAfter("${pluginPath}:compileTestGroovy")
-        mustRunAfter("${pluginPath}:compileIntegrationTestGroovy")
+        // Only add mustRunAfter if the project exists
+        if (project.findProject(pluginPath)) {
+            mustRunAfter("${pluginPath}:compileGroovy")
+            mustRunAfter("${pluginPath}:compileTestGroovy")
+            mustRunAfter("${pluginPath}:compileIntegrationTestGroovy")
+        }
     }
 }
 
