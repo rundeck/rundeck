@@ -16,7 +16,7 @@
 
 package rundeck.controllers
 
-import com.dtolabs.client.utils.Constants
+
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequest
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequestLong

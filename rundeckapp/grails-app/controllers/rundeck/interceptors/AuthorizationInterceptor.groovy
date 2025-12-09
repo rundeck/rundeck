@@ -1,7 +1,6 @@
 package rundeck.interceptors
 
 import com.codahale.metrics.Counter
-import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.ApiVersions
 import org.rundeck.app.access.InterceptorHelper
 import org.springframework.beans.factory.InitializingBean

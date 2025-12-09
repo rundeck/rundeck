@@ -16,7 +16,6 @@
 
 package rundeck.controllers
 
-import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
 import com.dtolabs.rundeck.app.api.ApiRunAdhocRequest
 import com.dtolabs.rundeck.app.api.ApiVersions
@@ -71,7 +70,6 @@ import org.apache.http.client.utils.URIBuilder
 import org.grails.web.json.JSONElement
 import org.quartz.CronExpression
 import org.rundeck.app.api.model.ApiErrorResponse
-import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.components.jobs.JobDefinitionComponent
@@ -204,7 +202,6 @@ class ScheduledExecutionController  extends ControllerBase{
             result(error:"true"){
                 delegate.'error'{
                     if(flash.error){
-                        response.setHeader(Constants.X_RUNDECK_RESULT_HEADER,flash.error)
                         delegate.'message'(flash.error)
                     }
                     if(flash.errors){
@@ -222,7 +219,6 @@ class ScheduledExecutionController  extends ControllerBase{
             delegate.'result'(error:"false"){
                 delegate.'success'{
                     if(flash.message){
-                        response.setHeader(Constants.X_RUNDECK_RESULT_HEADER,flash.message)
                         delegate.'message'(flash.message)
                     }
                     if(flash.messages){

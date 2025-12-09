@@ -16,16 +16,11 @@
 
 package rundeck.controllers
 
-import com.dtolabs.client.utils.Constants
-import com.dtolabs.rundeck.app.api.ApiVersions
+
 import com.dtolabs.rundeck.app.support.ExecQuery
-import com.dtolabs.rundeck.app.support.ExecQueryFilterCommand
-import com.dtolabs.rundeck.app.support.ReportQuery
-import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Explanation
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.config.Features
 import grails.converters.JSON
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
@@ -44,7 +39,6 @@ import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvid
 import org.rundeck.core.auth.AuthConstants
 import rundeck.Execution
 import rundeck.ScheduledExecution
-import rundeck.data.util.OptionsParserUtil
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.ReportService

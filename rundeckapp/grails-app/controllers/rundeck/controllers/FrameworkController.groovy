@@ -97,7 +97,6 @@ import com.dtolabs.rundeck.core.common.Framework
 
 import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException
-import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import rundeck.support.filters.BaseNodeFilters
@@ -194,7 +193,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def roles = request.subject?.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class)?.collect { it.name }?.join(", ")
         request.title = "Unauthorized"
         request.error = "No authorized access to projects. Contact your administrator. (User roles: " + roles + ")"
-        response.setHeader(Constants.X_RUNDECK_ACTION_UNAUTHORIZED_HEADER, request.error)
 
         log.error("'${request.remoteUser}' has no authorized access. Roles: "+ roles)
         return renderErrorView([:])
