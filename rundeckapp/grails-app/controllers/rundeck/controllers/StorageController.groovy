@@ -493,17 +493,35 @@ Authorization under the key path `project/{project}` can be granted at the proje
                 @Content(
                     mediaType = 'application/octet-stream',
                     schema = @Schema(type = 'string'),
-                    examples = @ExampleObject('''...private key...''')
+                    examples = [
+                        @ExampleObject(
+                            name = 'private-key-example',
+                            description = 'Private key content',
+                            value = '''...private key...'''
+                        )
+                    ]
                 ),
                 @Content(
                     mediaType = 'application/pgp-keys',
                     schema = @Schema(type = 'string'),
-                    examples = @ExampleObject('''...public key...''')
+                    examples = [
+                        @ExampleObject(
+                            name = 'public-key-example',
+                            description = 'Public key content',
+                            value = '''...public key...'''
+                        )
+                    ]
                 ),
                 @Content(
                     mediaType = 'application/x-rundeck-data-password',
                     schema = @Schema(type = 'string'),
-                    examples = @ExampleObject('''password-value''')
+                    examples = [
+                        @ExampleObject(
+                            name = 'password-example',
+                            description = 'Password value',
+                            value = '''password-value'''
+                        )
+                    ]
                 )
             ]
         )
@@ -703,17 +721,35 @@ Authorization under the key path `project/{project}` can be granted at the proje
                 @Content(
                     mediaType = 'application/octet-stream',
                     schema = @Schema(type = 'string'),
-                    examples = @ExampleObject('''...private key...''')
+                    examples = [
+                        @ExampleObject(
+                            name = 'private-key-example',
+                            description = 'Private key content',
+                            value = '''...private key...'''
+                        )
+                    ]
                 ),
                 @Content(
                     mediaType = 'application/pgp-keys',
                     schema = @Schema(type = 'string'),
-                    examples = @ExampleObject('''...public key...''')
+                    examples = [
+                        @ExampleObject(
+                            name = 'public-key-example',
+                            description = 'Public key content',
+                            value = '''...public key...'''
+                        )
+                    ]
                 ),
                 @Content(
                     mediaType = 'application/x-rundeck-data-password',
                     schema = @Schema(type = 'string'),
-                    examples = @ExampleObject('''password-value''')
+                    examples = [
+                        @ExampleObject(
+                            name = 'password-example',
+                            description = 'Password value',
+                            value = '''password-value'''
+                        )
+                    ]
                 )
             ]
         )

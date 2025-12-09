@@ -4069,7 +4069,11 @@ Authorization required: `run` for the Job resource.
                 @Content(
                     mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(type = 'object'),
-                    examples = @ExampleObject('''{
+                    examples = [
+                        @ExampleObject(
+                            name = 'run-job-with-options-example',
+                            description = 'Run job with parameters and options',
+                            value = '''{
     "argString":"...",
     "loglevel":"...",
     "asUser":"...",
@@ -4079,7 +4083,8 @@ Authorization required: `run` for the Job resource.
         "myopt1":"value"
     }
 }'''
-                    )
+                        )
+                    ]
                 )
             ]
         ),
@@ -4347,7 +4352,11 @@ Since: v24
                 @Content(
                     mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(type = 'object'),
-                    examples = @ExampleObject('''{
+                    examples = [
+                        @ExampleObject(
+                            name = 'retry-job-with-failed-nodes-example',
+                            description = 'Retry job execution with parameters',
+                            value = '''{
     "failedNodes": true,
     "argString":"...",
     "loglevel":"...",
@@ -4358,7 +4367,8 @@ Since: v24
         "myopt1":"value"
     }
 }'''
-                    )
+                        )
+                    ]
                 )
             ]
         ),
@@ -5551,7 +5561,11 @@ Since: v14''',
                 @Content(
                     mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiRunAdhocRequest),
-                    examples = @ExampleObject('''
+                    examples = [
+                        @ExampleObject(
+                            name = 'run-script-url-example',
+                            description = 'Execute script from URL with parameters',
+                            value = '''
 {
     "project":"[project]",
     "url":"[scriptURL]",
@@ -5563,7 +5577,9 @@ Since: v14''',
     "interpreterArgsQuoted": true,
     "fileExtension": "[fileExtension]",
     "filter": "[node filter string]"
-}''')
+}'''
+                        )
+                    ]
                 )
             ]
         )
@@ -6223,7 +6239,13 @@ Since: v46''',
                 @Content(
                     mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = RdJobQueryInput),
-                    examples = @ExampleObject('')
+                    examples = [
+                        @ExampleObject(
+                            name = 'browse-jobs-query-example',
+                            description = 'Query jobs with filters',
+                            value = '''{"groupPath": "path/to/group", "jobFilter": ".*"}'''
+                        )
+                    ]
                 )
             ]
         ),

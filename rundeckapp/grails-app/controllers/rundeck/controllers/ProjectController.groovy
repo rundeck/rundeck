@@ -799,7 +799,13 @@ Authorization required: `create` for resource type `project`
             content = @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 schema=@Schema(type='object'),
-                examples=@ExampleObject('''{ "name": "myproject", "config": { "propname":"propvalue" } }''')
+                examples=[
+                    @ExampleObject(
+                        name='create-project-example',
+                        description='Create a new project with configuration',
+                        value='''{ "name": "myproject", "config": { "propname":"propvalue" } }'''
+                    )
+                ]
             )
         )
     )
@@ -1288,33 +1294,51 @@ Since: v14""",
                             @Content(
                                     mediaType = MediaType.TEXT_PLAIN,
                                     schema = @Schema(implementation = String.class),
-                                    examples = @ExampleObject('''description: "my policy"
+                                    examples = [
+                                        @ExampleObject(
+                                            name = 'project-acl-yaml-example',
+                                            description = 'Project ACL policy in YAML format',
+                                            value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                                        )
+                                    ]
                             ),
                             @Content(
                                     mediaType = MediaType.APPLICATION_YAML,
                                     schema=@Schema(type='object'),
-                                    examples = @ExampleObject('''description: "my policy"
+                                    examples = [
+                                        @ExampleObject(
+                                            name = 'project-acl-yaml-content-example',
+                                            description = 'Project ACL policy as YAML',
+                                            value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                                        )
+                                    ]
                             ),
                             @Content(
                                     mediaType = MediaType.APPLICATION_JSON,
                                     schema=@Schema(type='object'),
-                                    examples = @ExampleObject('''{
+                                    examples = [
+                                        @ExampleObject(
+                                            name = 'project-acl-json-example',
+                                            description = 'Project ACL policy as JSON with embedded YAML',
+                                            value = '''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
-}''')
+}'''
+                                        )
+                                    ]
                             )
                     ]
             ),
@@ -1408,33 +1432,51 @@ Since: v14""",
                             @Content(
                                     mediaType = MediaType.TEXT_PLAIN,
                                     schema = @Schema(type = 'string'),
-                                    examples = @ExampleObject('''description: "my policy"
+                                    examples = [
+                                        @ExampleObject(
+                                            name = 'update-project-acl-yaml-example',
+                                            description = 'Update project ACL policy in YAML format',
+                                            value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                                        )
+                                    ]
                             ),
                             @Content(
                                     mediaType = MediaType.APPLICATION_YAML,
                                     schema = @Schema(type = 'string'),
-                                    examples = @ExampleObject('''description: "my policy"
+                                    examples = [
+                                        @ExampleObject(
+                                            name = 'update-project-acl-yaml-content-example',
+                                            description = 'Update project ACL policy as YAML',
+                                            value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                                        )
+                                    ]
                             ),
                             @Content(
                                     mediaType = MediaType.APPLICATION_JSON,
                                     schema = @Schema(type = 'object'),
-                                    examples = @ExampleObject('''{
+                                    examples = [
+                                        @ExampleObject(
+                                            name = 'update-project-acl-json-example',
+                                            description = 'Update project ACL policy as JSON with embedded YAML',
+                                            value = '''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
-}''')
+}'''
+                                        )
+                                    ]
                             )
                     ]
             ),

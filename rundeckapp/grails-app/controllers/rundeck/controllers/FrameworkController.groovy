@@ -1606,7 +1606,11 @@ Since: v55""",
                     content = @Content(
                             mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
                             schema = @Schema(type = "object"),
-                            examples = @ExampleObject(value = """
+                            examples = [
+                                @ExampleObject(
+                                    name = 'save-project-plugins-example',
+                                    description = 'Save and remove project plugins',
+                                    value = """
 {
   "plugins": [
     { "type": "file", "config": { "file": "/path/resources.yml" }, "extra": {}, "origIndex": 0 }
@@ -1615,7 +1619,9 @@ Since: v55""",
     { "type": "stub", "origIndex": 2 }
   ]
 }
-""")
+"""
+                                )
+                            ]
                     )
             )
     )
@@ -1940,7 +1946,11 @@ List of config values, each value contains:
                     content = @Content(
                             mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
                             array = @ArraySchema(schema = @Schema(type = 'object')),
-                            examples = @ExampleObject('''[
+                            examples = [
+                                @ExampleObject(
+                                    name = 'update-project-config-example',
+                                    description = 'Update project configuration with extra config',
+                                    value = '''[
   {
   "extraConfig": {
       "nodeService": {
@@ -1955,7 +1965,9 @@ List of config values, each value contains:
       }
   }
   }
-]''')
+]'''
+                                )
+                            ]
                     )
             ),
             operationId = 'SaveProjectConfigurable'
@@ -3060,7 +3072,11 @@ Since: v23''',
                         url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
                         description = "Resources JSON Format"
                     )),
-                    examples = @ExampleObject('''{
+                    examples = [
+                        @ExampleObject(
+                            name = 'update-node-resources-json-example',
+                            description = 'Update node resources in JSON format',
+                            value = '''{
   "node1": {
     "nodename": "node1",
     "hostname": "node1",
@@ -3070,7 +3086,9 @@ Since: v23''',
     "description": "Rundeck server node",
     "osName": "Linux"
   }
-}''')
+}'''
+                        )
+                    ]
                 ),
                 @Content(
                     mediaType = 'text/yaml',
@@ -3078,7 +3096,11 @@ Since: v23''',
                         url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
                         description = "Resources YAML Format"
                     )),
-                    examples = @ExampleObject('''node1:
+                    examples = [
+                        @ExampleObject(
+                            name = 'update-node-resources-yaml-example',
+                            description = 'Update node resources in YAML format',
+                            value = '''node1:
   nodename: node1
   hostname: node1
   osVersion: 5.15.49-linuxkit
@@ -3086,7 +3108,9 @@ Since: v23''',
   osArch: amd64
   description: Rundeck server node
   osName: Linux
-  tags: \'\'''')
+  tags: \'\''''
+                        )
+                    ]
                 )
             ]
         )
@@ -4007,21 +4031,33 @@ Otherwise, you can use JSON to wrap the yaml content inside `contents`
                 @Content(
                     mediaType = 'application/yaml',
                     schema=@Schema(type='string'),
-                    examples = @ExampleObject('''description: "my policy"
+                    examples = [
+                        @ExampleObject(
+                            name = 'system-acl-yaml-example',
+                            description = 'System ACL policy in YAML format',
+                            value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                        )
+                    ]
                 ),
                 @Content(
                     mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
                     schema=@Schema(type='object'),
-                    examples = @ExampleObject('''{
+                    examples = [
+                        @ExampleObject(
+                            name = 'system-acl-json-example',
+                            description = 'System ACL policy as JSON with embedded YAML',
+                            value = '''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
-}''')
+}'''
+                        )
+                    ]
                 )
             ]
         )

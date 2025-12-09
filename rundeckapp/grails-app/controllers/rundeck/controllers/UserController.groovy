@@ -281,11 +281,17 @@ Since: v21''',
             content=@Content(
                 mediaType=MediaType.APPLICATION_JSON,
                 schema=@Schema(type='object'),
-                examples = @ExampleObject('''{
+                examples = [
+                    @ExampleObject(
+                        name='update-user-profile-example',
+                        description='Update user profile information',
+                        value='''{
     "firstName":"Name",
     "lastName":"LastName",
     "email":"user@server.com"
-}''')
+}'''
+                    )
+                ]
             )
         )
     )
@@ -311,11 +317,17 @@ Since: v21''',
             content=@Content(
                 mediaType=MediaType.APPLICATION_JSON,
                 schema=@Schema(type='object'),
-                examples = @ExampleObject('''{
+                examples = [
+                    @ExampleObject(
+                        name='modify-own-profile-example',
+                        description='Modify current user profile',
+                        value='''{
     "firstName":"Name",
     "lastName":"LastName",
     "email":"user@server.com"
-}''')
+}'''
+                    )
+                ]
             )
         )
     )

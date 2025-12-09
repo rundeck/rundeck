@@ -459,12 +459,18 @@ Since: v15''',
             content=@Content(
                 mediaType=MediaType.APPLICATION_JSON,
                 schema=@Schema(type='object'),
-                examples=@ExampleObject('''{
+                examples=[
+                    @ExampleObject(
+                        name='plugin-config-example',
+                        description='Configuration key-value pairs for the plugin',
+                        value='''{
     "config":{
         "key":"value",
         "key2":"value2..."
     }
-}''')
+}'''
+                    )
+                ]
             )
         )
     )
@@ -722,9 +728,15 @@ Since: v46''',
             content=@Content(
                 mediaType=MediaType.APPLICATION_JSON,
                 schema=@Schema(type='object', implementation = ScmToggleRequest),
-                examples=@ExampleObject('''{
+                examples=[
+                    @ExampleObject(
+                        name='enable-scm-example',
+                        description='Enable or disable SCM integration',
+                        value='''{
     "enabled": true
-}''')
+}'''
+                    )
+                ]
             )
         )
     )
@@ -2426,11 +2438,17 @@ Since: v15''',
             content=@Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 schema=@Schema(type='object'),
-                examples = @ExampleObject('''{
+                examples = [
+                    @ExampleObject(
+                        name='scm-action-input-example',
+                        description='Input fields for SCM action',
+                        value='''{
 "input":{
    "field1":"value1",
    "field2":"value2"
-}}''')
+}}'''
+                    )
+                ]
             )
         )
     )
