@@ -489,6 +489,11 @@ tasks.named('compileGroovyPages') {
     dependsOn fixOpenApiSpec
 }
 
+// Gradle 8: findMainClass uses fixOpenApiSpec output  
+tasks.named('findMainClass') {
+    dependsOn fixOpenApiSpec
+}
+
 tasks.withType(Test).configureEach {
     forkEvery = 500
 }
