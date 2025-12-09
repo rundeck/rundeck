@@ -444,7 +444,11 @@ List the event history for a project.''',
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(type = 'object'),
-            examples = @ExampleObject('''{
+            examples = [
+                @ExampleObject(
+                    name = 'history-events',
+                    description = 'History events response',
+                    value = '''{
   "paging": {
     "count": 10,
     "total": 110,
@@ -478,7 +482,9 @@ List the event history for a project.''',
   }
 }
   ]
-}''')
+}'''
+                )
+            ]
         )
     )
     /**

@@ -354,12 +354,18 @@ Since: v21''',
     @ApiResponse(responseCode='200',description = 'User Profile Data',
         content=@Content(
             mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object'),
-            examples = @ExampleObject('''{
+            examples = [
+                @ExampleObject(
+                    name = 'user-profile',
+                    description = 'User profile data',
+                    value = '''{
   "login": "username",
   "firstName": "first name",
   "lastName": "last name",
   "email": "email@domain"
-}''')
+}'''
+                )
+            ]
         )
     )
     protected def apiUserData_docs(){}
@@ -487,9 +493,15 @@ Since: v30''',
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(type = 'object'),
-            examples = @ExampleObject('''{
+            examples = [
+                @ExampleObject(
+                    name = 'roles-list',
+                    description = 'User roles list',
+                    value = '''{
     "roles":["admin","user"]
-}''')
+}'''
+                )
+            ]
         )
     )
     def apiListRoles() {
@@ -545,7 +557,11 @@ For APIv53+, the results will also include:
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             array = @ArraySchema(schema = @Schema(type = 'object')),
-            examples = @ExampleObject('''[{
+            examples = [
+                @ExampleObject(
+                    name = 'users-list',
+                    description = 'List of users with details',
+                    value = '''[{
     "login":"user",
     "firstName":"Name",
     "lastName":"LastName",
@@ -566,7 +582,9 @@ For APIv53+, the results will also include:
     "last_login": "2024-03-01T17:00:00Z",
     "lastJob": "2018-08-28T13:31:00Z",
     "tokens": 6
-}]''')
+}]'''
+                )
+            ]
         )
     )
     def apiUserList(){
