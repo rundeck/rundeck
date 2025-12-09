@@ -50,7 +50,7 @@ Useful for UI components that need to conditionally display features or for appl
             tags=['Authorization'],
             parameters = [
                     @Parameter(name = 'kind', description = 'Resource Kind', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
-                    @Parameter(name = 'actions', description = 'Actions to check authorization for', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(type = 'string')))
+                    @Parameter(name = 'actions', description = 'Actions to check authorization for (can be specified multiple times)', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(type = 'string')))
             ])
     @ApiResponse(
             responseCode='200',
@@ -103,7 +103,7 @@ Example: `GET /api/56/authorizations/application/project/myproject?actions=read&
             parameters = [
                     @Parameter(name = 'type', description = 'Resource Type', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
                     @Parameter(name = 'specifier', description = 'Resource specifier', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
-                    @Parameter(name = 'actions', description = 'Actions to check authorization for', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(type = 'string')))
+                    @Parameter(name = 'actions', description = 'Actions to check authorization for (can be specified multiple times)', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(type = 'string')))
             ])
     @ApiResponse(
             responseCode='200',
@@ -156,7 +156,7 @@ Example: `GET /api/56/authorizations/project/myproject/node?actions=read&actions
             parameters = [
                     @Parameter(name = 'project', description = 'Project Name', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
                     @Parameter(name = 'kind', description = 'Resource Kind', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
-                    @Parameter(name = 'actions', description = 'Actions to check authorization for', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(type = 'string')))
+                    @Parameter(name = 'actions', description = 'Actions to check authorization for (can be specified multiple times)', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(type = 'string')))
             ])
     @ApiResponse(
             responseCode='200',
@@ -205,7 +205,7 @@ Evaluation is made in the context of the project for the supplied job.
             parameters = [
                     @Parameter(name = 'project', description = 'Project Name', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
                     @Parameter(name = 'specifier', description = 'Job Id', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
-                    @Parameter(name = 'actions', description = 'Actions to check authorization for', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(type = 'string')))
+                    @Parameter(name = 'actions', description = 'Actions to check authorization for (can be specified multiple times)', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(type = 'string')))
             ])
     @ApiResponse(
             responseCode='200',
@@ -261,7 +261,7 @@ Example: `GET /api/56/authorizations/project/myproject/node/node1?actions=read&a
                     @Parameter(name = 'project', description = 'Project Name', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
                     @Parameter(name = 'type', description = 'Resource Type', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
                     @Parameter(name = 'specifier', description = 'Resource specifier', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
-                    @Parameter(name = 'actions', description = 'Actions to check authorization for', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(type = 'string')))
+                    @Parameter(name = 'actions', description = 'Actions to check authorization for (can be specified multiple times)', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(type = 'string')))
             ])
     @ApiResponse(
             responseCode='200',

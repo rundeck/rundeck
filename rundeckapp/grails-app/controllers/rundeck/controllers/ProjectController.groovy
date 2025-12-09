@@ -3099,7 +3099,7 @@ Requires `export` authorization for the project resource.''',
             @Parameter(
                 name = 'exportAcls',
                 in = ParameterIn.QUERY,
-                description = 'Include ACL policy files',
+                description = 'true/false, include project ACL Policy files, if authorized',
                 required = false,
                 schema = @Schema(type = 'boolean')
             ),
@@ -3235,7 +3235,7 @@ Since: v19''',
             @Parameter(
                 name = 'exportAcls',
                 in = ParameterIn.QUERY,
-                description = 'Include ACL policy files',
+                description = 'true/false, include project ACL Policy files, if authorized',
                 required = false,
                 schema = @Schema(type = 'boolean')
             ),
