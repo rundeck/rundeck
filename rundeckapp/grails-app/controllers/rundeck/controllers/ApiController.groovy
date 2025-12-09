@@ -153,46 +153,120 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         value = RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN,
         description = 'Read System Metrics'
     )
-
-    @Get(
-        uri= "/metrics/{name}",
-        produces = MediaType.APPLICATION_JSON
-    )
+    
+    @Get('/metrics')
     @Operation(
-        tags = ['Metrics'],
-        method = "GET",
-        summary = "Get Rundeck metrics",
-        description = "Return metrics and information",
-        parameters = [
-            @Parameter(
-                name='name',
-                in = ParameterIn.PATH,
-                description = 'Metric name, or blank to receive list of metrics',
-                allowEmptyValue = true,
-                schema = @Schema(
-                    type='string',
-                    allowableValues=['metrics', 'ping', 'threads', 'healthcheck']
-                )
-            )
-        ])
-
+        method = 'GET',
+        summary = 'List available metrics',
+        description = 'Return list of available metrics endpoints',
+        tags = ['Metrics']
+    )
     @ApiResponse(
-        responseCode = "200",
-        description = "List of metrics available if not specified",
+        responseCode = '200',
+        description = 'List of metrics available',
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = LinkListResponse)
         )
     )
+    protected def apiMetricsList_docs() {}
+    
+    @Get('/metrics/healthcheck')
+    @Operation(
+        method = 'GET',
+        summary = 'Get healthcheck results',
+        description = 'Return results of health checks',
+        tags = ['Metrics']
+    )
     @ApiResponse(
-        responseCode = "404",
-        description = "Error response",
+        responseCode = '200',
+        description = 'Healthcheck results',
         content = @Content(
-            mediaType = MediaType.APPLICATION_JSON,
-            schema = @Schema(implementation = ApiErrorResponse),
-            examples = @ExampleObject('{"error":true,"errorCode":"api.error.code","message":"not ok","apiversion":41}')
+            mediaType = MediaType.APPLICATION_JSON
         )
     )
+    @ApiResponse(
+        responseCode = '404',
+        description = 'Error response',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
+    )
+    protected def apiMetricsHealthcheck_docs() {}
+    
+    @Get('/metrics/metrics')
+    @Operation(
+        method = 'GET',
+        summary = 'Get metrics data',
+        description = 'Return metrics data including gauges, counters, histograms, meters, and timers',
+        tags = ['Metrics']
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'Metrics data',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON
+        )
+    )
+    @ApiResponse(
+        responseCode = '404',
+        description = 'Error response',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
+    )
+    protected def apiMetricsMetrics_docs() {}
+    
+    @Get('/metrics/ping')
+    @Operation(
+        method = 'GET',
+        summary = 'Ping metrics endpoint',
+        description = 'Simple ping endpoint that returns a text response',
+        tags = ['Metrics']
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'Ping response',
+        content = @Content(
+            mediaType = MediaType.TEXT_PLAIN
+        )
+    )
+    @ApiResponse(
+        responseCode = '404',
+        description = 'Error response',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
+    )
+    protected def apiMetricsPing_docs() {}
+    
+    @Get('/metrics/threads')
+    @Operation(
+        method = 'GET',
+        summary = 'Get thread dump',
+        description = 'Return a dump of running JVM threads',
+        tags = ['Metrics']
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'Thread dump',
+        content = @Content(
+            mediaType = MediaType.TEXT_PLAIN
+        )
+    )
+    @ApiResponse(
+        responseCode = '404',
+        description = 'Error response',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
+    )
+    protected def apiMetricsThreads_docs() {}
+    
     def apiMetrics(String name) {
         if (!apiService.requireVersion(request, response, ApiVersions.V25)) {
             return

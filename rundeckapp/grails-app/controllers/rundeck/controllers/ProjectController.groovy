@@ -3008,6 +3008,277 @@ Requires `export` authorization for the project resource.""",
     )
     protected def apiProjectExportAsync_docs() {}
 
+    @Post('/project/{project}/export')
+    @Operation(
+        method = 'POST',
+        summary = 'Export a zip archive of the project (POST).',
+        description = '''Performs the export to a zip archive of the project synchronously using POST method. _For large projects, consider using the async export endpoint instead._
+
+This is useful for large lists of execution IDs that exceed URL length limits when using GET.
+
+Parameters can be sent as application/x-www-form-urlencoded or as query parameters.
+
+Optional parameters:
+
+* executionIds a list (comma-separated) of execution IDs, or specified multiple times with a single ID per entry. If this is specified then the archive will contain only executions that are specified, and will not contain Jobs, ACLs, or project configuration/readme files.
+
+In APIv19 or later:
+
+By default, exportALL=true. So, in order to not export empty data, you need to include one of the parameter flags.
+
+In APIv28 or later:
+
+* exportScm true/false, include project SCM configuration, if authorized
+
+In APIv34 or later:
+
+* exportWebhooks true/false, include project webhooks in the archive
+* whkIncludeAuthTokens true/false, include the auth token information when exporting webhooks, if not included the auth tokens will be regenerated upon import
+
+Requires `export` authorization for the project resource.''',
+        tags = ['Project'],
+        operationId = 'apiProjectExportPost_docs',
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'executionIds',
+                in = ParameterIn.QUERY,
+                description = 'A list (comma-separated) of execution IDs',
+                required = false,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'exportAll',
+                in = ParameterIn.QUERY,
+                description = 'Export all project contents (default: true)',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportJobs',
+                in = ParameterIn.QUERY,
+                description = 'Include job definitions',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportExecutions',
+                in = ParameterIn.QUERY,
+                description = 'Include execution history',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportConfigs',
+                in = ParameterIn.QUERY,
+                description = 'Include project configuration',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportReadmes',
+                in = ParameterIn.QUERY,
+                description = 'Include readme/motd files',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportAcls',
+                in = ParameterIn.QUERY,
+                description = 'Include ACL policy files',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportScm',
+                in = ParameterIn.QUERY,
+                description = 'Include SCM configuration (API v28+)',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportWebhooks',
+                in = ParameterIn.QUERY,
+                description = 'Include webhooks (API v34+)',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'whkIncludeAuthTokens',
+                in = ParameterIn.QUERY,
+                description = 'Include auth tokens when exporting webhooks (API v34+)',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'whkRegenUuid',
+                in = ParameterIn.QUERY,
+                description = 'Regenerate UUIDs for webhooks on import (API v34+)',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'The project exported zip archive file',
+        content = @Content(
+            mediaType = 'application/zip',
+            schema = @Schema(type = 'string', format = 'binary')
+        )
+    )
+    @ApiResponse(
+        responseCode = '400',
+        description = 'Bad request if it has error in the parameters',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
+    )
+    protected def apiProjectExportPost_docs() {}
+
+    @Post('/project/{project}/export/async')
+    @Operation(
+        method = 'POST',
+        summary = 'Export a zip archive of the project asynchronously (POST).',
+        description = '''Performs the export to a zip archive of the project asynchronously using POST method.
+This is useful for large lists of execution IDs that exceed URL length limits.
+
+Parameters can be sent as application/x-www-form-urlencoded or as query parameters.
+
+Optional parameters:
+
+* executionIds a list (comma-separated) of execution IDs, or specified multiple times with a single ID per entry. If this is specified then the archive will contain only executions that are specified, and will not contain Jobs, ACLs, or project configuration/readme files.
+
+In APIv19 or later:
+
+By default, exportALL=true. So, in order to not export empty data, you need to include one of the parameter flags.
+
+In APIv28 or later:
+
+* exportScm true/false, include project SCM configuration, if authorized
+
+In APIv34 or later:
+
+* exportWebhooks true/false, include project webhooks in the archive
+* whkIncludeAuthTokens true/false, include the auth token information when exporting webhooks, if not included the auth tokens will be regenerated upon import
+
+Requires `export` authorization for the project resource.
+
+Since: v19''',
+        tags = ['Project'],
+        operationId = 'apiProjectExportAsyncPost_docs',
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'executionIds',
+                in = ParameterIn.QUERY,
+                description = 'A list (comma-separated) of execution IDs',
+                required = false,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'exportAll',
+                in = ParameterIn.QUERY,
+                description = 'Export all project contents (default: true)',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportJobs',
+                in = ParameterIn.QUERY,
+                description = 'Include job definitions',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportExecutions',
+                in = ParameterIn.QUERY,
+                description = 'Include execution history',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportConfigs',
+                in = ParameterIn.QUERY,
+                description = 'Include project configuration',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportReadmes',
+                in = ParameterIn.QUERY,
+                description = 'Include readme/motd files',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportAcls',
+                in = ParameterIn.QUERY,
+                description = 'Include ACL policy files',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportScm',
+                in = ParameterIn.QUERY,
+                description = 'Include SCM configuration (API v28+)',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportWebhooks',
+                in = ParameterIn.QUERY,
+                description = 'Include webhooks (API v34+)',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'whkIncludeAuthTokens',
+                in = ParameterIn.QUERY,
+                description = 'Include auth tokens when exporting webhooks (API v34+)',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'whkRegenUuid',
+                in = ParameterIn.QUERY,
+                description = 'Regenerate UUIDs for webhooks on import (API v34+)',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'Returns the Token to retrieve export status and download zip archive',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ProjectExport)
+        )
+    )
+    @ApiResponse(
+        responseCode = '400',
+        description = 'Bad request if it has error in the parameters',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
+    )
+    protected def apiProjectExportAsyncPost_docs() {}
+
 
     @Get('/project/{project}/export/status/{token}')
     @Operation(
