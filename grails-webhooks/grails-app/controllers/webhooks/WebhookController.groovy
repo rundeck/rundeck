@@ -60,7 +60,7 @@ class WebhookController {
         description = '''Updates the specified webhook.
 
 Since: v33''',
-        tags = "Webhook",
+        tags = ["Webhook"],
         parameters = [
             @Parameter(name = "project", in = ParameterIn
                 .PATH, description = "Project Name", required = true, schema = @Schema(type = "string")),
@@ -168,7 +168,7 @@ Do not specify an `authToken` or `creator` field. They will be ignored.
 
 Since: v33
 ''',
-        tags = "Webhook",
+        tags = ["Webhook"],
         parameters = [
             @Parameter(name = "project", in = ParameterIn
                 .PATH, description = "Project Name", required = true, schema = @Schema(type = "string"))
@@ -233,7 +233,7 @@ Since: v33
         description = '''Deletes the webhook.
 
 Since: v33''',
-        tags = "Webhook",
+        tags = ["Webhook"],
         parameters = [
             @Parameter(name = "project", in = ParameterIn
                 .PATH, description = "Project Name", required = true, schema = @Schema(type = "string")),
@@ -295,7 +295,7 @@ Since: v33''',
         description = '''Get the webhook definition.
 
 Since: v33''',
-        tags = "Webhook",
+        tags = ["Webhook"],
         parameters=[
             @Parameter(name = "project", in = ParameterIn
                 .PATH, description = "Project Name", required = true, schema = @Schema(type = "string")),
@@ -356,7 +356,7 @@ Since: v33''',
         description="""List the webhooks for the project.
 
 Since: v33""",
-        tags = "Webhook",
+        tags = ["Webhook"],
         parameters = @Parameter(
             name = "project",
             in = ParameterIn.PATH,
@@ -441,7 +441,7 @@ Since: v33""",
     @Operation(
         method = "POST",
         summary = "Send Webhook Event",
-        tags = "Webhook",
+        tags = ["Webhook"],
         description = '''You may post whatever data you wish to the webhook endpoint, however the plugin you are 
 using must
 be able to handle the data you post. If the webhook plugin associated with the webhook can't handle

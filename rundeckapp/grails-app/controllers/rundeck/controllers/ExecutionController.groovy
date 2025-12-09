@@ -3171,7 +3171,7 @@ Authorization Required: `read` for `system` resource
 
 Since: V32
 """,
-        tags = "System",
+        tags = ["System"],
         parameters = @Parameter(
             name="passiveAs503",
             description="if true, return 503 response when execution mode is passive. Since: v36",
@@ -3260,7 +3260,7 @@ Authorization Required: `enable_executions` on `system` resource.
 
 Since: v14
 """,
-        tags = "System",
+        tags = ["System"],
         responses = @ApiResponse(
             responseCode = "200",
             description = "Execution Mode Status",
@@ -3295,7 +3295,7 @@ Authorization Required: `disable_executions` on `system` resource.
 
 Since: v14
 """,
-        tags = "System",
+        tags = ["System"],
         responses = @ApiResponse(
             responseCode = "200",
             description = "Execution Mode Status",
@@ -3414,7 +3414,7 @@ Since: v14
         method = "GET",
         summary = "Execution Query Metrics",
         description = """Obtain metrics over the result set of an execution query.""",
-        tags = "Job Executions",
+        tags = ["Job Executions"],
         parameters = [
             @Parameter(in=ParameterIn.QUERY,name="project",description="Project name",schema=@Schema(type="string")),
             @Parameter(in=ParameterIn.QUERY,name="statusFilter",description="Execution status",schema=@Schema(type="string",allowableValues = ["running","succeeded", "failed" , "aborted"])),
@@ -3499,7 +3499,7 @@ So a value of `2w` would return executions that completed within the last two we
 
 Note: This endpoint has the same query parameters and response as the `/executions/metrics` endpoint.
 """,
-        tags = "Job Executions",
+        tags = ["Job Executions"],
         parameters = [
             @Parameter(in=ParameterIn.PATH,name="project",description="Project name",schema=@Schema(type="string"),required = true)
         ]
