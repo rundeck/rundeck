@@ -57,6 +57,7 @@ dependencies {
     api project(":rundeck-authz:rundeck-authz-core")
     api project(":rundeck-authz:rundeck-authz-yaml")
     api project(":rundeck-data-models")
+//    api project(":core-util")
 
     api ('com.google.guava:guava:32.0.1-jre') {
         exclude group:'org.codehaus.mojo', module: 'animal-sniffer-annotations'

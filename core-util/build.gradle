@@ -1,0 +1,59 @@
+import java.text.SimpleDateFormat
+
+plugins {
+    id "org.dvaske.gradle.git-build-info"
+    id "java-library"
+    id 'com.github.gmazzo.buildconfig' version '3.0.3'
+}
+
+
+apply plugin: "org.dvaske.gradle.git-build-info"
+apply plugin: 'signing'
+apply plugin: 'java-library'
+
+description = 'The Rundeck Core API project'
+
+archivesBaseName = 'rundeck-core'
+defaultTasks 'clean'
+apply plugin: "groovy"
+
+apply from: "../gradle/java-version.gradle"
+
+buildConfig {
+    className("BuildConfig")
+    packageName(project.group + '.meta')
+
+    buildConfigField('String', 'NAME', "\"rundeck\"")
+    buildConfigField('String', 'VERSION', "\"${project.version}\"")
+    buildConfigField('String', 'GIT_COMMIT', "\"${project.gitCommit}\"")
+    buildConfigField('String', 'GIT_BRANCH', "\"${project.gitBranch}\"")
+    buildConfigField('String', 'GIT_DESCRIPTION', "\"${project.gitDescribeInfo}\"")
+    buildConfigField('String', 'BUILD_NUM', "\"0\"")
+    buildConfigField('String', 'BUILD_IDENT', "\"${version + '-0'}\"")
+}
+dependencies {
+    api project(":core")
+
+
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    testImplementation 'junit:junit:4.8.1',
+                       'org.mockito:mockito-all:1.10.19'
+
+    testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    testImplementation platform("org.spockframework:spock-bom:${spockVersion}")
+    testImplementation "org.spockframework:spock-core"
+    testImplementation "org.spockframework:spock-junit4"
+}
+
+jar {
+    manifest {
+        attributes 'Rundeck-Version': version
+        attributes 'Rundeck-Build-Date': "${new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").format(new Date())}"
+    }
+}
+
+test{
+//    systemProperties 'rdeck.base': "$projectDir/build/rdeck_base"
+    useJUnitPlatform()
+}
