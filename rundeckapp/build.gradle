@@ -109,6 +109,9 @@ dependencies {
     //Rundeck plugin dependencies
     pluginFiles project.findProperty('bundledPlugins')?:[]
 
+    // Force Jakarta Annotation API 3.0.0 for annotation processing
+    annotationProcessor "jakarta.annotation:jakarta.annotation-api:${jakartaAnnotationVersion}"
+
     testImplementation group: 'com.squareup.retrofit2', name: 'retrofit-mock', version: '3.0.0'
 
     spa project(path: ':rundeckapp:grails-spa', configuration: 'spa')
