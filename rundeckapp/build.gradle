@@ -484,6 +484,11 @@ tasks.withType(Test) {
     dependsOn fixOpenApiSpec
 }
 
+// Gradle 8: compileGroovyPages uses fixOpenApiSpec output
+tasks.named('compileGroovyPages') {
+    dependsOn fixOpenApiSpec
+}
+
 tasks.withType(Test).configureEach {
     forkEvery = 500
 }
