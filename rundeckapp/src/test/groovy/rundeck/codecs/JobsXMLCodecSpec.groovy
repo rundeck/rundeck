@@ -1,4 +1,6 @@
 package rundeck.codecs
+import groovy.xml.XmlSlurper
+import groovy.xml.XmlParser
 
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import grails.testing.web.GrailsWebUnitTest

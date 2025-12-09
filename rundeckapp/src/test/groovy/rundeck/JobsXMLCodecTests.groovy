@@ -1,4 +1,6 @@
 package rundeck
+import groovy.xml.XmlSlurper
+import groovy.xml.XmlParser
 
 import groovy.xml.MarkupBuilder
 

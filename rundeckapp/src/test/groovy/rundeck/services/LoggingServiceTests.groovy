@@ -177,7 +177,6 @@ class LoggingServiceTests  extends Specification implements ServiceUnitTest<Logg
         }
     }
 
-    @DirtiesRuntime
     void testOpenLogWriterWithPlugins(){
         when:
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
@@ -269,7 +268,6 @@ class LoggingServiceTests  extends Specification implements ServiceUnitTest<Logg
         assertTrue(multiWriters[2] instanceof DisablingLogWriter)
         assertEquals(writer, multiWriters[2].writer)
     }
-    @DirtiesRuntime
     void testOpenLogWriterWithPlugins_stepLabelsDisabled(){
         when:
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
@@ -644,7 +642,6 @@ class LoggingServiceTests  extends Specification implements ServiceUnitTest<Logg
         assertNotNull(reader)
         assertEquals(test,reader)
     }
-    @DirtiesRuntime
     void testGetLogReaderWithPluginInitializesTrue(){
         when:
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
@@ -699,7 +696,6 @@ class LoggingServiceTests  extends Specification implements ServiceUnitTest<Logg
         assertEquals(ExecutionFileState.AVAILABLE, reader.state)
         assertEquals(test,reader.reader)
     }
-    @DirtiesRuntime
     void testGetLogReaderWithPluginInitializesFalse(){
         when:
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)

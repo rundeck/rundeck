@@ -15,6 +15,8 @@
  */
 
 package rundeck.services
+import groovy.xml.XmlSlurper
+import groovy.xml.XmlParser
 
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext

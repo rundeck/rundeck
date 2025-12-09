@@ -15,6 +15,8 @@
  */
 
 package rundeck.services
+import groovy.xml.XmlSlurper
+import groovy.xml.XmlParser
 
 import grails.testing.services.ServiceUnitTest
 import groovy.mock.interceptor.MockFor

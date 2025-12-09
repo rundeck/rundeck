@@ -64,7 +64,6 @@ class ScheduledExServiceSpec extends Specification implements DataTest {
     /**
      * Test getByIDorUUID method.
      */
-    @DirtiesRuntime
     public void testGetByIDorUUID() {
         when:
         def testService = new ScheduledExecutionService()
@@ -108,7 +107,6 @@ class ScheduledExServiceSpec extends Specification implements DataTest {
     /**
      * test overlap between internal ID and UUID values, the ID should take precedence (return first)
      */
-    @DirtiesRuntime
     public void testGetByIDorUUIDWithOverlap() {
         when:
         def testService = new ScheduledExecutionService()

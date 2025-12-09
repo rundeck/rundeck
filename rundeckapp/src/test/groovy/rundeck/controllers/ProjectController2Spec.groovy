@@ -16,6 +16,8 @@
  */
 
 package rundeck.controllers
+import groovy.xml.XmlSlurper
+import groovy.xml.XmlParser
 
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
