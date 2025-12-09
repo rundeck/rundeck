@@ -68,7 +68,8 @@ class ScmStatusBadgeSpec extends ScmSeleniumBase {
         configureScmPage.disableScmExport()
         configureScmPage.enableScmImport()
 
-        // Wait for SCM import to sync job status after enabling
+        // Wait for SCM import to initialize and start syncing job status after mode switch
+        // This allows the SCM system to detect the committed job in the repository
         Thread.sleep(WaitingTime.MODERATE.toMillis())
 
         JobShowPage jobShowPage = page(JobShowPage, PROJECT_NAME).forJob(jobUuid)
