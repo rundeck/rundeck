@@ -76,7 +76,7 @@ import org.rundeck.storage.api.StorageException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.http.HttpStatus
-import org.springframework.http.MediaType
+import io.micronaut.http.MediaType
 import org.springframework.util.InvalidMimeTypeException
 import rundeck.Execution
 import rundeck.ScheduledExecution
