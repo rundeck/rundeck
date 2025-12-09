@@ -3466,7 +3466,7 @@ So a value of `2w` would return executions that completed within the last two we
         description="Metrics response",
         content=[
             @Content(
-                mediaType = "application/json",
+                mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(implementation = MetricsQueryResponse),
                 examples = @ExampleObject("""{
     "duration": {
@@ -3509,7 +3509,7 @@ Note: This endpoint has the same query parameters and response as the `/executio
         description="Metrics response",
         content=[
             @Content(
-                mediaType = "application/json",
+                mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(implementation = MetricsQueryResponse)
             )
         ]

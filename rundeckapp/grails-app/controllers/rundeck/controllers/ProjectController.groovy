@@ -757,7 +757,7 @@ Authorization required: `read` access for `project` resource type to get basic p
             responseCode = "200",
             description = "Project details",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema=@Schema(type='object'),
                     examples = @ExampleObject('{"description": "",  "name": "PROJECT_NAME",  "url": "http://server:4440/api/11/project/PROJECT_NAME", "config": {  }}')
             )
@@ -1001,7 +1001,7 @@ Authorization required: `delete` access for `project` resource type or `admin` o
             responseCode = "400",
             description = "Project details",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -1231,7 +1231,7 @@ Since: v14""",
             description = "Project details",
             content = [
                     @Content(
-                            mediaType = "application/text",
+                            mediaType = MediaType.TEXT_PLAIN,
                             schema=@Schema(type='string'),
                             examples = @ExampleObject('''description: "my policy"
 context:
@@ -1243,7 +1243,7 @@ by:
   group: build''')
                     ),
                     @Content(
-                            mediaType = "application/yaml",
+                            mediaType = MediaType.APPLICATION_YAML,
                             schema=@Schema(type='object'),
                             examples = @ExampleObject('''description: "my policy"
 context:
@@ -1255,7 +1255,7 @@ by:
   group: build''')
                     ),
                     @Content(
-                            mediaType = "application/json",
+                            mediaType = MediaType.APPLICATION_JSON,
                             examples = @ExampleObject('''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
 }''')
@@ -1266,7 +1266,7 @@ by:
             responseCode = "400",
             description = "Bad request",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -1297,7 +1297,7 @@ by:
   group: build''')
                             ),
                             @Content(
-                                    mediaType = "application/yaml",
+                                    mediaType = MediaType.APPLICATION_YAML,
                                     schema=@Schema(type='object'),
                                     examples = @ExampleObject('''description: "my policy"
 context:
@@ -1309,7 +1309,7 @@ by:
   group: build''')
                             ),
                             @Content(
-                                    mediaType = "application/json",
+                                    mediaType = MediaType.APPLICATION_JSON,
                                     schema=@Schema(type='object'),
                                     examples = @ExampleObject('''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
@@ -1382,7 +1382,7 @@ by:
             responseCode = "409",
             description = "Conflict if already exists",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -1390,7 +1390,7 @@ by:
             responseCode = "400",
             description = "Bad request if validation failure",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -1470,7 +1470,7 @@ by:
             description = "ACL Policy updated",
             content = [
                     @Content(
-                            mediaType = "application/text",
+                            mediaType = MediaType.TEXT_PLAIN,
                             examples = @ExampleObject('''description: "my policy"
 context:
   application: rundeck
@@ -1481,7 +1481,7 @@ by:
   group: build''')
                     ),
                     @Content(
-                            mediaType = "application/yaml",
+                            mediaType = MediaType.APPLICATION_YAML,
                             examples = @ExampleObject('''description: "my policy"
 context:
   application: rundeck
@@ -1492,7 +1492,7 @@ by:
   group: build''')
                     ),
                     @Content(
-                            mediaType = "application/json",
+                            mediaType = MediaType.APPLICATION_JSON,
                             examples = @ExampleObject('''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
 }''')
@@ -1503,7 +1503,7 @@ by:
             responseCode = "404",
             description = "Not found",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -1549,7 +1549,7 @@ Since: v14""",
             responseCode = "404",
             description = "Not found",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -1887,12 +1887,12 @@ Authorization required: `configure` access for `project` resource type or `admin
             description = "Project details",
             content = [
                     @Content(
-                            mediaType = "application/text",
+                            mediaType = MediaType.TEXT_PLAIN,
                             schema=@Schema(type='string'),
                             examples = @ExampleObject('''The readme contents''')
                     ),
                     @Content(
-                            mediaType = "application/json",
+                            mediaType = MediaType.APPLICATION_JSON,
                             schema=@Schema(type='object'),
                             examples = @ExampleObject('''{"contents":"The readme contents"}''')
                     )
@@ -1902,7 +1902,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             responseCode = "404",
             description = "Not found",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -2037,12 +2037,12 @@ Authorization required: `configure` access for `project` resource type or `admin
             description = "Project details",
             content = [
                     @Content(
-                            mediaType = "application/text",
+                            mediaType = MediaType.TEXT_PLAIN,
                             schema=@Schema(type='string'),
                             examples = @ExampleObject('''The readme contents''')
                     ),
                     @Content(
-                            mediaType = "application/json",
+                            mediaType = MediaType.APPLICATION_JSON,
                             schema=@Schema(type='object'),
                             examples = @ExampleObject('''{"contents":"The readme contents"}''')
                     )
@@ -2052,7 +2052,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             responseCode = "404",
             description = "Not found",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -2135,7 +2135,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             responseCode = "404",
             description = "Not found",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -2374,13 +2374,13 @@ Authorization required: `configure` access for `project` resource type or `admin
             description = "Project details",
             content = [
                     @Content(
-                            mediaType = "application/text",
+                            mediaType = MediaType.TEXT_PLAIN,
                             schema=@Schema(type='object'),
                             examples = @ExampleObject('''key=value
 key2=value''')
                     ),
                     @Content(
-                            mediaType = "application/json",
+                            mediaType = MediaType.APPLICATION_JSON,
                             schema=@Schema(type='object'),
                             examples = @ExampleObject('''{
     "key":"value",
@@ -2393,7 +2393,7 @@ key2=value''')
             responseCode = "404",
             description = "Not found",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -2561,7 +2561,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             responseCode = "400",
             description = "Bad request to put project config",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -2794,13 +2794,13 @@ Requires `export` authorization for the project resource.""",
     @ApiResponse(
             responseCode = "200",
             description = "The project exported zip archive file",
-            content = @Content(mediaType = "application/zip", schema = @Schema(implementation = OutputStream))
+            content = @Content(mediaType = "application/zip" // TODO: No MediaType constant for application/zip, schema = @Schema(implementation = OutputStream))
     )
     @ApiResponse(
             responseCode = "400",
             description = "Bad request if it has error in the parameters",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -2968,7 +2968,7 @@ Requires `export` authorization for the project resource.""",
             responseCode = "400",
             description = "Bad request if it has error in the parameters",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -3030,7 +3030,7 @@ Since: v19""",
             responseCode = "400",
             description = "Bad request if it has error in the parameters",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -3101,13 +3101,13 @@ Since: v19""",
     @ApiResponse(
             responseCode = "200",
             description = "The project exported zip archive file",
-            content = @Content(mediaType = "application/zip", schema = @Schema(implementation = OutputStream))
+            content = @Content(mediaType = "application/zip" // TODO: No MediaType constant for application/zip, schema = @Schema(implementation = OutputStream))
     )
     @ApiResponse(
             responseCode = "400",
             description = "Bad request",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -3165,7 +3165,7 @@ Since: v19""",
 Note: the import status indicates "failed" if any Jobs had failures, otherwise it indicates "successful" even if other files in the archive were not imported.
 
 Requires `import` authorization for the project resource.""",
-            requestBody = @RequestBody(content = @Content(mediaType = "application/zip", schema = @Schema(implementation = InputStream))),
+            requestBody = @RequestBody(content = @Content(mediaType = "application/zip" // TODO: No MediaType constant for application/zip, schema = @Schema(implementation = InputStream))),
             parameters = [
                     @Parameter(
                             name = 'project',
@@ -3251,7 +3251,7 @@ Note: `other_errors` included since API v35""",
             responseCode = "400",
             description = "Bad request if it has error in the parameters",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )

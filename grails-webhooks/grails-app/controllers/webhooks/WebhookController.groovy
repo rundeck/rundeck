@@ -465,7 +465,7 @@ Since: v33
                 responseCode = "200",
                 description = "Default response",
                 content = @Content(
-                    mediaType = "*/*",
+                    mediaType = MediaType.ALL,
                     examples = @ExampleObject('ok')
                 )
             ),
@@ -473,7 +473,7 @@ Since: v33
                 responseCode = "400",
                 description = "Error response",
                 content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     examples = @ExampleObject('''{
 "err":"Error message"
 }''')
@@ -483,7 +483,7 @@ Since: v33
                 responseCode = "404",
                 description = "Webhook not enabled",
                 content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     examples = @ExampleObject('''{
 "err":"Webhook not enabled"
 }''')

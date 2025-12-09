@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.http.ApacheHttpClient
 import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData
 import com.jayway.jsonpath.JsonPath
 import groovy.transform.CompileStatic
+import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Post
 import io.swagger.v3.oas.annotations.Operation
@@ -525,7 +526,7 @@ class EditOptsController extends ControllerBase{
     @Operation(
         method = "POST",
         requestBody = @RequestBody(description='Option validation request',content = @Content(
-            mediaType = "application/json",
+            mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = OptionValidateRequest)
         )),
         responses=[
@@ -533,7 +534,7 @@ class EditOptsController extends ControllerBase{
                 responseCode = "200",
                 description = "Option validation with no errors",
                 content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = OptionValidateResponse)
                 )
             ),
@@ -541,7 +542,7 @@ class EditOptsController extends ControllerBase{
                 responseCode = "400",
                 description = "Option validation with errors, the messages will contain the validation errors keyed by input field path",
                 content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = OptionValidateResponse)
                 )
             )

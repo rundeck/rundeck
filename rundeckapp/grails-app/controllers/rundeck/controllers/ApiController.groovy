@@ -179,7 +179,7 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         responseCode = "200",
         description = "List of metrics available if not specified",
         content = @Content(
-            mediaType = "application/json",
+            mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = LinkListResponse)
         )
     )
@@ -273,7 +273,7 @@ Use this endpoint to verify API connectivity and determine the correct API versi
                 responseCode = "200",
                 description = "On/off status of the feature",
                 content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = FeatureEnabledResult)
                 )
             )
@@ -310,7 +310,7 @@ Use this endpoint to verify API connectivity and determine the correct API versi
                             responseCode = "200",
                             description = "List of features' on/off status",
                             content = @Content(
-                                    mediaType = "application/json",
+                                    mediaType = MediaType.APPLICATION_JSON,
                                     array = @ArraySchema(schema = @Schema(implementation = FeatureEnabledResult))
                             )
                     )
@@ -377,7 +377,7 @@ Use this endpoint to verify API connectivity and determine the correct API versi
                 responseCode = "200",
                 description = '''The token includes the `creator` of the token, as well as the `user` (the effective username) of the token.''',
                 content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = Token)
                 )
             ),
@@ -812,7 +812,7 @@ Since: v11
     @Operation(method = "GET", summary = "Get Rundeck server information and stats",
             description = "Display stats and info about the rundeck server"
     )
-    @ApiResponse(responseCode = "200", description = "System info response", content = @Content(mediaType = "application/json",
+    @ApiResponse(responseCode = "200", description = "System info response", content = @Content(mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation= SystemInfoModel.class)))
     @Tag(name = "System")
     def apiSystemInfo(){

@@ -1623,7 +1623,7 @@ Since: v55""",
                             responseCode = "200",
                             description = "Saved. Returns the saved plugins.",
                             content = @Content(
-                                    mediaType = "application/json",
+                                    mediaType = MediaType.APPLICATION_JSON,
                                     examples = @ExampleObject(value = """
 {
   "project": "Ansible-resource-model-error",
@@ -1643,7 +1643,7 @@ Since: v55""",
                             responseCode = "400",
                             description = "Bad request (missing/invalid body or parameters).",
                             content = @Content(
-                                    mediaType = "application/json",
+                                    mediaType = MediaType.APPLICATION_JSON,
                                     examples = @ExampleObject(value = """{ "errors": ["plugins and removedPlugins must be arrays"] }""")
                             )
                     ),
@@ -1655,7 +1655,7 @@ Since: v55""",
                             responseCode = "422",
                             description = "Validation errors.",
                             content = @Content(
-                                    mediaType = "application/json",
+                                    mediaType = MediaType.APPLICATION_JSON,
                                     examples = @ExampleObject(value = """
 {
   "errors": ["[0]: configuration was invalid: ..."],
@@ -3887,7 +3887,7 @@ Since: v14""",
                 responseCode = "404",
                 description = "Not Found",
                 content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
                 )
             )
@@ -3943,10 +3943,10 @@ Otherwise, you can use JSON to wrap the yaml content inside `contents`
                             mediaType = 'text/plain'
                     ),
                     @Content(
-                            mediaType = "application/yaml"
+                            mediaType = MediaType.APPLICATION_YAML
                     ),
                     @Content(
-                            mediaType = "application/json"
+                            mediaType = MediaType.APPLICATION_JSON
                     )
                 ]
             ),
@@ -3955,7 +3955,7 @@ Otherwise, you can use JSON to wrap the yaml content inside `contents`
                 responseCode = "404",
                 description = "Not Found",
                 content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
                 )
             ),
@@ -3965,7 +3965,7 @@ Otherwise, you can use JSON to wrap the yaml content inside `contents`
                 description = '''Validation failure. If Validation fails, the body will contain a list of validation errors.
 Because each ACLPOLICY document can contain multiple Yaml documents, each will be listed as a separate policy.''',
                 content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(type='object'),
                     examples = @ExampleObject('''{
   "valid": false,
@@ -4060,7 +4060,7 @@ by:
   group: build''')
                     ),
                     @Content(
-                        mediaType = "application/yaml",
+                        mediaType = MediaType.APPLICATION_YAML,
                         examples = @ExampleObject('''description: "my policy"
 context:
   application: rundeck
@@ -4071,7 +4071,7 @@ by:
   group: build''')
                     ),
                     @Content(
-                        mediaType = "application/json",
+                        mediaType = MediaType.APPLICATION_JSON,
                         examples = @ExampleObject('''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
 }''')
@@ -4083,7 +4083,7 @@ by:
                 responseCode = "409",
                 description = "Conflict. Already exists",
                 content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
                 )
             ),
@@ -4093,7 +4093,7 @@ by:
                 description = '''Validation failure. If Validation fails, the body will contain a list of validation errors.
 Because each ACLPOLICY document can contain multiple Yaml documents, each will be listed as a separate policy.''',
                 content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(type='object'),
                     examples = @ExampleObject('''{
   "valid": false,
@@ -4159,7 +4159,7 @@ by:
   group: build''')
             ),
             @Content(
-                mediaType = "application/yaml",
+                mediaType = MediaType.APPLICATION_YAML,
                 examples = @ExampleObject('''description: "my policy"
 context:
   application: rundeck
@@ -4170,7 +4170,7 @@ by:
   group: build''')
             ),
             @Content(
-                mediaType = "application/json",
+                mediaType = MediaType.APPLICATION_JSON,
                 examples = @ExampleObject('''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
 }''')

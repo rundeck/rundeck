@@ -2339,7 +2339,7 @@ Fields:
 :   Number of executions for this cluster node which have no associated storage requests
 ''',
             content = @Content(
-                mediaType = "application/json",
+                mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type = "object"),
                 examples = @ExampleObject("""{
   "enabled": true,
@@ -2457,7 +2457,7 @@ Since: V17''',
 
 :   True if all local files (`rdlog` and `state.json`) are available for upload.  False if one of them is not present on disk.''',
             content = @Content(
-                mediaType = "application/json",
+                mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type = "object"),
                 examples = @ExampleObject("""{
   "total": 100,
