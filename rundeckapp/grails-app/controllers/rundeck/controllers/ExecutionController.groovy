@@ -3245,7 +3245,7 @@ Since: V32
      *
      * @return
      */
-    @Post(uri = "/system/executions/enable")
+    @Post(uri = "/system/executions/enable", produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = "POST",
         summary = "Set Execution Mode Active",
@@ -3260,14 +3260,14 @@ Authorization Required: `enable_executions` on `system` resource.
 
 Since: v14
 """,
-        tags = ["System"],
-        responses = @ApiResponse(
-            responseCode = "200",
-            description = "Execution Mode Status",
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = ExecutionModeResult)
-            )
+        tags = ["System"]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Execution Mode Status",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ExecutionModeResult)
         )
     )
     @RdAuthorizeSystem(
@@ -3280,7 +3280,7 @@ Since: v14
      *
      * @return
      */
-    @Post(uri = "/system/executions/disable")
+    @Post(uri = "/system/executions/disable", produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = "POST",
         summary = "Set Execution Mode Passive",
@@ -3295,14 +3295,14 @@ Authorization Required: `disable_executions` on `system` resource.
 
 Since: v14
 """,
-        tags = ["System"],
-        responses = @ApiResponse(
-            responseCode = "200",
-            description = "Execution Mode Status",
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = ExecutionModeResult)
-            )
+        tags = ["System"]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Execution Mode Status",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ExecutionModeResult)
         )
     )
     @RdAuthorizeSystem(

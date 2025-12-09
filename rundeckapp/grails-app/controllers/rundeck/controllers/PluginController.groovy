@@ -164,7 +164,7 @@ class PluginController extends ControllerBase {
         sendResponse(format, istream)
     }
 
-    @Get('/plugin/list')
+    @Get(uri='/plugin/list', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'List installed plugins',
@@ -172,14 +172,14 @@ class PluginController extends ControllerBase {
 
 Since: v33
 ''',
-        tags = ['Plugins'],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = 'List of Plugins',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                array = @ArraySchema(schema = @Schema(implementation = ApiPluginListProvider))
-            )
+        tags = ['Plugins']
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'List of Plugins',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            array = @ArraySchema(schema = @Schema(implementation = ApiPluginListProvider))
         )
     )
     def listPlugins() {
@@ -238,7 +238,7 @@ Since: v33
     }
 
     @Hidden
-    @Get(uri='/plugin/detail/{service}/{provider}')
+    @Get(uri='/plugin/detail/{service}/{provider}', produces = MediaType.APPLICATION_JSON)
     /**
      *  detail about a plugin artifact, provider, and properties
      * @return
@@ -249,14 +249,14 @@ Since: v33
         description = '''Get detailed information about a plugin provide.
 
 Since: v49''',
-        tags = ['Plugins'],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = 'Plugin Provider detail',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = ApiPluginProviderDetail)
-            )
+        tags = ['Plugins']
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'Plugin Provider detail',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiPluginProviderDetail)
         )
     )
     def apiPluginDetail(

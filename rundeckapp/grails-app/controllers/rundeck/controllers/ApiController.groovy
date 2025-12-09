@@ -84,7 +84,7 @@ class ApiController extends ControllerBase{
             featureQueryAll      : ['GET']
     ]
 
-    @Get('/')
+    @Get(uri='/', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'Get API Information',
@@ -93,18 +93,18 @@ class ApiController extends ControllerBase{
 This endpoint provides essential API metadata that clients can use to determine available functionality and construct properly formatted API requests. The response includes the highest supported API version number and the base URL for making subsequent API calls.
 
 Use this endpoint to verify API connectivity and determine the correct API version to use for your integration.''',
-        tags = ['API'],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = 'API Information',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(type = 'object'),
-                examples = @ExampleObject('''{
+        tags = ['API']
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'API Information',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object'),
+            examples = @ExampleObject('''{
   "apiversion": 44,
   "href": "http://localhost:4441/api/44"
 }''')
-            )
         )
     )
     def info () {
@@ -267,17 +267,15 @@ Use this endpoint to verify API connectivity and determine the correct API versi
                             type='string'
                     )
             )
-        ],
-        responses = [
-            @ApiResponse(
-                responseCode = "200",
-                description = "On/off status of the feature",
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = FeatureEnabledResult)
-                )
-            )
         ]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "On/off status of the feature",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = FeatureEnabledResult)
+        )
     )
     @CompileStatic
     def featureQuery(@PathVariable(name = "featureName") String featureName) {
@@ -304,17 +302,15 @@ Use this endpoint to verify API connectivity and determine the correct API versi
             method = "GET",
             summary = "List all System Feature on/off Status",
             description = "The query will return all system features' status",
-            parameters = [],
-            responses = [
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "List of features' on/off status",
-                            content = @Content(
-                                    mediaType = MediaType.APPLICATION_JSON,
-                                    array = @ArraySchema(schema = @Schema(implementation = FeatureEnabledResult))
-                            )
-                    )
-            ]
+            parameters = []
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "List of features' on/off status",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    array = @ArraySchema(schema = @Schema(implementation = FeatureEnabledResult))
+            )
     )
     @CompileStatic
     def featureQueryAll() {

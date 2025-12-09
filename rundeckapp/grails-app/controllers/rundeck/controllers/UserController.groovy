@@ -471,27 +471,25 @@ Since: v21''',
         }
     }
 
-    @Get(uri='/user/roles')
+    @Get(uri='/user/roles', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'List Authorized Roles',
         description = '''Get a list of the authenticated user's roles.
 
 Since: v30''',
-        tags = ['User'],
-        responses = [
-            @ApiResponse(
-                responseCode = '200',
-                description = '''Success response, with a list of roles.''',
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(type = 'object'),
-                    examples = @ExampleObject('''{
+        tags = ['User']
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''Success response, with a list of roles.''',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object'),
+            examples = @ExampleObject('''{
     "roles":["admin","user"]
 }''')
-                )
-            )
-        ]
+        )
     )
     def apiListRoles() {
         if (!apiService.requireVersion(request, response, ApiVersions.V30)) {
@@ -520,7 +518,7 @@ Since: v30''',
         }
     }
 
-    @Get(uri='/user/list')
+    @Get(uri='/user/list', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'List users',
@@ -529,11 +527,11 @@ Since: v30''',
 Authorization required: `app_admin` for `system` resource
 
 Since: v21''',
-        tags = ['User'],
-        responses = [
-            @ApiResponse(
-                responseCode = '200',
-                description = '''Success Response, with a list of users.
+        tags = ['User']
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''Success Response, with a list of users.
 
 For APIv27+, the results will contain additional fields:
 * `created` creation date
@@ -543,10 +541,10 @@ For APIv27+, the results will contain additional fields:
 For APIv53+, the results will also include: 
 * `lastLogin` last login time
 ''',
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    array = @ArraySchema(schema = @Schema(type = 'object')),
-                    examples = @ExampleObject('''[{
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            array = @ArraySchema(schema = @Schema(type = 'object')),
+            examples = @ExampleObject('''[{
     "login":"user",
     "firstName":"Name",
     "lastName":"LastName",
@@ -568,9 +566,7 @@ For APIv53+, the results will also include:
     "lastJob": "2018-08-28T13:31:00Z",
     "tokens": 6
 }]''')
-                )
-            )
-        ]
+        )
     )
     def apiUserList(){
         if (!apiService.requireVersion(request, response, ApiVersions.V21)) {

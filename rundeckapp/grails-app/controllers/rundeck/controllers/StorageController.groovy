@@ -463,7 +463,7 @@ class StorageController extends ControllerBase{
         }
     }
 
-    @Post(uri='/storage/keys/{path}')
+    @Post(uri='/storage/keys/{path}', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = "POST",
         summary = "Create Keys",
@@ -506,17 +506,17 @@ Authorization under the key path `project/{project}` can be granted at the proje
                     examples = @ExampleObject('''password-value''')
                 )
             ]
-        ),
-        responses = [
-            @ApiResponse(
-                responseCode = "201",
-                description = "Created",
-                content = [
-                    @Content(
-                        mediaType = MediaType.APPLICATION_JSON,
-                        schema = @Schema(type = 'object'),
-                        examples = [
-                            @ExampleObject(value='''
+        )
+    )
+    @ApiResponse(
+        responseCode = "201",
+        description = "Created",
+        content = [
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = [
+                    @ExampleObject(value='''
 {
   "meta": {
     "Rundeck-key-type": "public",
@@ -528,23 +528,21 @@ Authorization under the key path `project/{project}` can be granted at the proje
   "type": "file",
   "path": "keys/test1.pub"
 }''',name='key-metadata',summary='Key Metadata Result'),
-                            ]
-                    ),
-                    @Content(
-                        mediaType = 'application/pgp-keys',
-                        schema = @Schema(type = 'string'),
-                        examples = @ExampleObject(
-                            name = 'public-key',
-                            summary = 'Public Key contents',
-                            value = '''...Public Key Contents...'''
-                        )
-                    )
-                ]
+                    ]
             ),
-            @ApiResponse(responseCode='403',description='Unauthorized'),
-            @ApiResponse(responseCode='409',description='Conflict: the specified file or path already exists')
+            @Content(
+                mediaType = 'application/pgp-keys',
+                schema = @Schema(type = 'string'),
+                examples = @ExampleObject(
+                    name = 'public-key',
+                    summary = 'Public Key contents',
+                    value = '''...Public Key Contents...'''
+                )
+            )
         ]
     )
+    @ApiResponse(responseCode='403',description='Unauthorized')
+    @ApiResponse(responseCode='409',description='Conflict: the specified file or path already exists')
     def apiPostResource(@Parameter(hidden = true) StorageParams storageParams) {
         if (!apiService.requireApi(request, response)) {
             return
@@ -598,7 +596,7 @@ Authorization under the key path `project/{project}` can be granted at the proje
     }
 
 
-    @Delete(uri = '/storage/keys/{path}')
+    @Delete(uri = '/storage/keys/{path}', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = "DELETE",
         summary = "Delete A Key",
@@ -616,13 +614,11 @@ Authorization under the key path `project/{project}` can be granted at the proje
             schema=@Schema(type='string'),
             allowReserved = true,
             required = true
-        ),
-        responses = [
-            @ApiResponse(responseCode='204',description='Deleted'),
-            @ApiResponse(responseCode='403',description='Unauthorized'),
-            @ApiResponse(responseCode='404',description='The file does not exist')
-        ]
+        )
     )
+    @ApiResponse(responseCode='204',description='Deleted')
+    @ApiResponse(responseCode='403',description='Unauthorized')
+    @ApiResponse(responseCode='404',description='The file does not exist')
     def apiDeleteResource(@Parameter(hidden = true) StorageParams storageParams) {
         if (!apiService.requireApi(request, response)) {
             return
@@ -676,7 +672,7 @@ Authorization under the key path `project/{project}` can be granted at the proje
         }
     }
 
-    @Put(uri='/storage/keys/{path}')
+    @Put(uri='/storage/keys/{path}', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = "PUT",
         summary = "Modify A Key",
@@ -720,34 +716,32 @@ Authorization under the key path `project/{project}` can be granted at the proje
                     examples = @ExampleObject('''password-value''')
                 )
             ]
-        ),
-        responses = [
-            @ApiResponse(
-                responseCode = "200",
-                description = "Key Metadata",
-                content = [
-                    @Content(
-                        mediaType = MediaType.APPLICATION_JSON,
-                        schema = @Schema(type = 'object'),
-                        examples = [
-                            @ExampleObject(value = '''{ ... }''', name = 'key-metadata', summary = 'Key Metadata Result')
-                        ]
-                    ),
-                    @Content(
-                        mediaType = 'application/pgp-keys',
-                        schema = @Schema(type = 'string'),
-                        examples = @ExampleObject(
-                            name = 'public-key',
-                            summary = 'Public Key contents',
-                            value = '''...Public Key Contents...'''
-                        )
-                    )
+        )
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Key Metadata",
+        content = [
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = [
+                    @ExampleObject(value = '''{ ... }''', name = 'key-metadata', summary = 'Key Metadata Result')
                 ]
             ),
-            @ApiResponse(responseCode='403',description='Unauthorized'),
-            @ApiResponse(responseCode='404',description='The file does not exist')
+            @Content(
+                mediaType = 'application/pgp-keys',
+                schema = @Schema(type = 'string'),
+                examples = @ExampleObject(
+                    name = 'public-key',
+                    summary = 'Public Key contents',
+                    value = '''...Public Key Contents...'''
+                )
+            )
         ]
     )
+    @ApiResponse(responseCode='403',description='Unauthorized')
+    @ApiResponse(responseCode='404',description='The file does not exist')
     def apiPutResource(@Parameter(hidden = true) StorageParams storageParams) {
         if (!apiService.requireApi(request, response)) {
             return
@@ -796,7 +790,7 @@ Authorization under the key path `project/{project}` can be granted at the proje
         }
     }
 
-    @Get(uri = '/storage/keys/{path}')
+    @Get(uri = '/storage/keys/{path}', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = "GET",
         summary = "List and Get Keys and Key Metadata",
@@ -821,17 +815,17 @@ Authorization under the key path `project/{project}` can be granted at the proje
             schema=@Schema(type='string'),
             allowReserved = true,
             allowEmptyValue = true
-        ),
-        responses = [
-            @ApiResponse(
-            responseCode = "200",
-            description = "Key Metadata",
-            content = [
-                @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(type = 'object'),
-                examples = [
-                    @ExampleObject(value='''
+        )
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Key Metadata",
+        content = [
+            @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object'),
+            examples = [
+                @ExampleObject(value='''
 {
   "meta": {
     "Rundeck-key-type": "public",
@@ -843,7 +837,7 @@ Authorization under the key path `project/{project}` can be granted at the proje
   "type": "file",
   "path": "keys/test1.pub"
 }''',name='key-metadata',summary='Key Metadata Result'),
-                    @ExampleObject(value='''
+                @ExampleObject(value='''
 {
   "resources": [
     {
@@ -890,21 +884,19 @@ Authorization under the key path `project/{project}` can be granted at the proje
   "type": "directory",
   "path": "keys"
 }''', name='list-keys',summary='List Directory')]
-            ),
-            @Content(
-                mediaType = 'application/pgp-keys',
-                schema=@Schema(type='string'),
-                examples = @ExampleObject(
-                    name='public-key',
-                    summary='Public Key contents',
-                    value='''...Public Key Contents...'''
-                )
-            )
-            ]
         ),
-        @ApiResponse(responseCode='403',description='Unauthorized')
+        @Content(
+            mediaType = 'application/pgp-keys',
+            schema=@Schema(type='string'),
+            examples = @ExampleObject(
+                name='public-key',
+                summary='Public Key contents',
+                value='''...Public Key Contents...'''
+            )
+        )
         ]
     )
+    @ApiResponse(responseCode='403',description='Unauthorized')
     def apiGetResource(@Parameter(hidden = true) StorageParams storageParams) {
         if (!apiService.requireApi(request, response)) {
             return

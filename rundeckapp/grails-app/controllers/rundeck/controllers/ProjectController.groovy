@@ -650,7 +650,7 @@ class ProjectController extends ControllerBase{
         g.createLink(absolute: true, uri: "/api/${ApiVersions.API_CURRENT_VERSION}/project/${projectName}")
     }
 
-    @Get(uri = '/projects')
+    @Get(uri = '/projects', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'List Projects',
@@ -668,10 +668,11 @@ Authorization required: `read` for each project resource. Only authorized projec
                         required = false,
                         schema = @Schema(implementation = String.class)
                 ),
-        ],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = '''
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''
 *Since API version 26*: add the project `label` to the response
 
 *Since API version 33*: add the project `created` date to the response. This is based on the creation of the 
@@ -679,17 +680,16 @@ Authorization required: `read` for each project resource. Only authorized projec
 
 *Since API version 47*: add the project `metadata` to the response. To retrieve this information, use the query param meta
 (Comma-separated list of metadata items to include, or "*" for all (default)).''',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                array = @ArraySchema(schema = @Schema(type = 'object')),
-                examples = @ExampleObject('''[
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            array = @ArraySchema(schema = @Schema(type = 'object')),
+            examples = @ExampleObject('''[
     {
         "name":"...",
         "description":"...",
         "url":"..."
     }
 ]''')
-            )
         )
     )
     /**
@@ -785,7 +785,7 @@ Authorization required: `read` access for `project` resource type to get basic p
         }
     }
 
-    @Post(uri = '/projects')
+    @Post(uri = '/projects', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'POST',
         summary = 'Create a Project',
@@ -801,24 +801,24 @@ Authorization required: `create` for resource type `project`
                 schema=@Schema(type='object'),
                 examples=@ExampleObject('''{ "name": "myproject", "config": { "propname":"propvalue" } }''')
             )
-        ),
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = '''
+        )
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''
 *Since API version 26*: add the project `label` to the response
 
 *Since API version 33*: add the project `created` date to the response. This is based on the creation of the 
 `project.properties` file in the file system or in the DB storage.''',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(type = 'object'),
-                examples = @ExampleObject('''{
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object'),
+            examples = @ExampleObject('''{
   "description": "",
   "name": "NAME",
   "url": "http://server:4440/api/11/project/NAME",
   "config": {  }
 }''')
-            )
         )
     )
     @RdAuthorizeApplicationType(

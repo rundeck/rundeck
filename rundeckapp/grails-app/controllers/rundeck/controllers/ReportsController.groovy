@@ -349,7 +349,7 @@ class ReportsController extends ControllerBase{
     }
 
 
-    @Get(uri='/project/{project}/history')
+    @Get(uri='/project/{project}/history', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'Listing History',
@@ -436,14 +436,15 @@ List the event history for a project.''',
                 description = '''indicate the 0-indexed offset for the first event to return''',
                 schema = @Schema(type = 'integer')
             )
-        ],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = 'History results',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(type = 'object'),
-                examples = @ExampleObject('''{
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'History results',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object'),
+            examples = @ExampleObject('''{
   "paging": {
     "count": 10,
     "total": 110,
@@ -478,7 +479,6 @@ List the event history for a project.''',
 }
   ]
 }''')
-            )
         )
     )
     /**

@@ -392,11 +392,36 @@ tasks.register('copyApiSpecFiles', Copy){
     // Fix Gradle 8 task ordering - ensure compile tasks run first
     mustRunAfter(':grails-webhooks:compileGroovy')
     mustRunAfter(':grails-webhooks:compileTestGroovy')
+    mustRunAfter(':grails-webhooks:compileIntegrationTestGroovy')
     mustRunAfter(':grails-execution-mode-timer:compileGroovy')
     mustRunAfter(':grails-execution-mode-timer:compileTestGroovy')
+    mustRunAfter(':grails-execution-mode-timer:compileIntegrationTestGroovy')
     mustRunAfter(':grails-repository:compileGroovy')
     mustRunAfter(':grails-job-kill-handler:compileGroovy')
     mustRunAfter(':grails-metricsweb:compileGroovy')
+    
+    // Add Pro plugin compile dependencies (only those with integration tests)
+    def proPluginsWithIntTests = [
+        'rundeckpro-calendars',
+        'rundeckpro-cluster',
+        'rundeckpro-genai',
+        'rundeckpro-jobqueue',
+        'rundeckpro-nodehealthcheck',
+        'rundeckpro-paged-job-list',
+        'rundeckpro-roimetrics',
+        'rundeckpro-runner',
+        'rundeckpro-security',
+        'rundeckpro-system-report',
+        'rundeckpro-tour-manager',
+        'rundeckpro-webhooks'
+    ]
+    
+    proPluginsWithIntTests.each { pluginName ->
+        def pluginPath = ":plugins:${pluginName}"
+        mustRunAfter("${pluginPath}:compileGroovy")
+        mustRunAfter("${pluginPath}:compileTestGroovy")
+        mustRunAfter("${pluginPath}:compileIntegrationTestGroovy")
+    }
 }
 
 tasks.register('fixOpenApiSpec') {

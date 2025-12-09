@@ -375,7 +375,7 @@ class ScheduledExecutionController  extends ControllerBase{
     }
 
     @Hidden
-    @Get(uri = "/job/{id}/components")
+    @Get(uri = "/job/{id}/components", produces = MediaType.APPLICATION_JSON)
     @Operation(
             method = 'GET',
             summary = 'Get Job Definition Component Values',
@@ -395,15 +395,16 @@ Since: v53''',
                             required = true,
                             schema = @Schema(type = 'string')
                     )
-            ],
-            responses = @ApiResponse(
-                    responseCode = '200',
-                    description = '''Job Definition Components values response.
+            ]
+    )
+    @ApiResponse(
+            responseCode = '200',
+            description = '''Job Definition Components values response.
 ''',
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(type = 'object'),
-                            examples = @ExampleObject('''{
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(type = 'object'),
+                    examples = @ExampleObject('''{
      "Schedules-component":{
         "schedulesJson":"[\\n    \\n]"
      },
@@ -411,7 +412,6 @@ Since: v53''',
         "runnerSelectorJson":"{\\"runnerFilterType\\":\\"TAG_FILTER_AND\\",\\"filter\\":\\"STG-TOOLS-NEW\\",\\"runnerFilterMode\\":\\"TAGS\\"}"
      }
 }''')
-                    )
             )
     )
     @RdAuthorizeJob(RundeckAccess.General.AUTH_APP_READ)
@@ -423,25 +423,26 @@ Since: v53''',
     }
 
     @Hidden
-    @Get(uri = "/jobs/components")
+    @Get(uri = "/jobs/components", produces = MediaType.APPLICATION_JSON)
     @Operation(
             method = 'GET',
             summary = 'Get Job Definition Components',
             description = '''Get job definition components properties. Since: v53''',
-            tags = ['Jobs'],
-            responses = @ApiResponse(
-                    responseCode = '200',
-                    description = '''Job Definition Components response.
+            tags = ['Jobs']
+    )
+    @ApiResponse(
+            responseCode = '200',
+            description = '''Job Definition Components response.
 
 **Components Fields**
 * `properties`: List of properties for the component
 * `section`: Section of the component
 * `messageType`: Message type for the component
 ''',
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(type = 'object'),
-                            examples = @ExampleObject('''{
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(type = 'object'),
+                    examples = @ExampleObject('''{
     "job-tags":{
       "properties":[
          {
@@ -465,7 +466,6 @@ Since: v53''',
       "messageType":"jobComponent.job-tags"
    }
 }''')
-                    )
             )
     )
     def apiJobDefinitionComponents() {
@@ -679,7 +679,7 @@ Since: v53''',
         dataMap
     }
 
-    @Get(uri="/job/{id}/workflow")
+    @Get(uri="/job/{id}/workflow", produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'Get Job Workflow',
@@ -702,10 +702,11 @@ Since: v34''',
                 required = true,
                 schema = @Schema(type = 'string')
             )
-        ],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = '''Workflow response.
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''Workflow response.
 
 **Workflow Step Fields**
 * `description`: Present and set to workflow step description if configured
@@ -1238,7 +1239,7 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
         }
     }
 
-    @Post(uri = '/job/{id}/execution/disable')
+    @Post(uri = '/job/{id}/execution/disable', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'POST',
         summary = 'Disable Executions for a Job',
@@ -1255,20 +1256,20 @@ Since: V14''',
             in = ParameterIn.PATH,
             required = true,
             content = @Content(schema = @Schema(implementation = String))
-        ),
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = 'Success Response',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(type = 'object'),
-                examples = @ExampleObject('''{"success": true}''')
-            )
+        )
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'Success Response',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object'),
+            examples = @ExampleObject('''{"success": true}''')
         )
     )
     protected def apiFlipExecutionDisabled(){}
 
-    @Post(uri = '/job/{id}/execution/enable')
+    @Post(uri = '/job/{id}/execution/enable', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'POST',
         summary = 'Enable Executions for a Job',
@@ -1285,15 +1286,15 @@ Since: V14''',
             in = ParameterIn.PATH,
             required = true,
             content = @Content(schema = @Schema(implementation = String))
-        ),
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = 'Success Response',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(type = 'object'),
-                examples = @ExampleObject('''{"success": true}''')
-            )
+        )
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'Success Response',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object'),
+            examples = @ExampleObject('''{"success": true}''')
         )
     )
     def apiFlipExecutionEnabled() {
@@ -1352,7 +1353,7 @@ Since: V14''',
         }
     }
 
-    @Post(uri = '/job/{id}/schedule/disable')
+    @Post(uri = '/job/{id}/schedule/disable', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'POST',
         summary = 'Disable Schedule for a Job',
@@ -1369,20 +1370,20 @@ Since: V14''',
             in = ParameterIn.PATH,
             required = true,
             content = @Content(schema = @Schema(implementation = String))
-        ),
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = 'Success Response',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(type = 'object'),
-                examples = @ExampleObject('''{"success": true}''')
-            )
+        )
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'Success Response',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object'),
+            examples = @ExampleObject('''{"success": true}''')
         )
     )
     protected def apiFlipScheduleDisabled() {}
 
-    @Post(uri = '/job/{id}/schedule/enable')
+    @Post(uri = '/job/{id}/schedule/enable', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'POST',
         summary = 'Enable Schedule for a Job',
@@ -1399,15 +1400,15 @@ Since: V14''',
             in = ParameterIn.PATH,
             required = true,
             content = @Content(schema = @Schema(implementation = String))
-        ),
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = 'Success Response',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(type = 'object'),
-                examples = @ExampleObject('''{"success": true}''')
-            )
+        )
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'Success Response',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object'),
+            examples = @ExampleObject('''{"success": true}''')
         )
     )
     def apiFlipScheduleEnabled() {
@@ -1674,7 +1675,7 @@ Since: V14''',
         }
     }
 
-    @Post(uri='/jobs/execution/disable')
+    @Post(uri='/jobs/execution/disable', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = "POST",
         summary = "Bulk Toggle Job Execution Disabled",
@@ -1697,10 +1698,11 @@ Since: v16''',
                 description='The Job IDs to delete as a single comma-separated string.',
                 schema=@Schema(type='string',format='comma-separated')
             )
-        ],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = '''Bulk toggle result.
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''Bulk toggle result.
 
 Failed results will contain:
 
@@ -1743,7 +1745,7 @@ Failed results will contain:
             ApiBulkJobDeleteRequest deleteRequest
     ){}
 
-    @Post(uri='/jobs/execution/enable')
+    @Post(uri='/jobs/execution/enable', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = "POST",
         summary = "Bulk Toggle Job Execution Enabled",
@@ -1766,10 +1768,11 @@ Since: v16''',
                 description='The Job IDs to delete as a single comma-separated string.',
                 schema=@Schema(type='string',format='comma-separated')
             )
-        ],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = '''Bulk toggle result.
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''Bulk toggle result.
 
 Failed results will contain:
 
@@ -1893,7 +1896,7 @@ Failed results will contain:
         }
     }
 
-    @Post(uri='/jobs/schedule/disable')
+    @Post(uri='/jobs/schedule/disable', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = "POST",
         summary = "Bulk Toggle Job Schedule Disabled",
@@ -1916,10 +1919,11 @@ Since: v16''',
                 description='The Job IDs to delete as a single comma-separated string.',
                 schema=@Schema(type='string',format='comma-separated')
             )
-        ],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = '''Bulk toggle result.
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''Bulk toggle result.
 
 Failed results will contain:
 
@@ -1962,7 +1966,7 @@ Failed results will contain:
             ApiBulkJobDeleteRequest deleteRequest
     ){}
 
-    @Post(uri='/jobs/schedule/enable')
+    @Post(uri='/jobs/schedule/enable', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = "POST",
         summary = "Bulk Toggle Job Schedule Enabled",
@@ -1985,10 +1989,11 @@ Since: v16''',
                 description='The Job IDs to delete as a single comma-separated string.',
                 schema=@Schema(type='string',format='comma-separated')
             )
-        ],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = '''Bulk toggle result.
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''Bulk toggle result.
 
 Failed results will contain:
 
@@ -3764,11 +3769,11 @@ Since: v14''',
                     mediaType = 'text/yaml'
                 )
             ]
-        ),
-        responses = [
-            @ApiResponse(
-                responseCode = "200",
-                description = '''Job definition import result.
+        )
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = '''Job definition import result.
 
 A set of status results.  Each imported job definition will be either "succeeded", "failed" or "skipped".
 Within each one there will be 0 or more objects representing the imported job.
@@ -3785,9 +3790,9 @@ Each job entry contains:
 * `error`: (if failed) the error message
 
 ''',
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    examples = @ExampleObject('''{
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            examples = @ExampleObject('''{
   "succeeded": [{
   "index": 1,
   "href": "http://madmartigan.local:4440/api/14/job/3b6c19f6-41ee-475f-8fd0-8f1a26f27a9a",
@@ -3809,17 +3814,15 @@ Each job entry contains:
 }],
   "skipped": []
 }''')
-                )
-            ),
-            @ApiResponse(
-                responseCode = "415",
-                description = "Unsupported media type",
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema=@Schema(implementation = ApiErrorResponse)
-                )
-            )
-        ]
+        )
+    )
+    @ApiResponse(
+        responseCode = "415",
+        description = "Unsupported media type",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema=@Schema(implementation = ApiErrorResponse)
+        )
     )
     /**
      * API: /api/14/project/NAME/jobs/import
@@ -3929,52 +3932,6 @@ Each job entry contains:
         description = '''Export a single job definition, in one of the supported formats.
 
 Authorization required: `read` for the Job.''',
-        responses = [
-            @ApiResponse(
-                responseCode = "200",
-                description = '''Job definition, depending on the requested format:
-
-* YAML: [job-yaml](https://docs.rundeck.com/docs/manual/document-format-reference/job-yaml-v12.html) format
-* JSON: [job-json](https://docs.rundeck.com/docs/manual/document-format-reference/job-json-v44.html) format (API v44+)''',
-                content = [
-                    @Content(
-                        schema = @Schema(
-                            type = 'object',
-                            externalDocs = @ExternalDocumentation(
-                                url = 'https://docs.rundeck.com/docs/manual/document-format-reference/job-json-v44.html',
-                                description = "Job JSON Format"
-                            )
-                        ),
-                        mediaType = MediaType.APPLICATION_JSON
-                    ),
-                    @Content(
-                        schema = @Schema(
-                            type = 'string',
-                            externalDocs = @ExternalDocumentation(
-                                url = 'https://docs.rundeck.com/docs/manual/document-format-reference/job-yaml-v12.html',
-                                description = "Job YAML Format"
-                            )
-                        ),
-                        mediaType = 'text/yaml'
-                    )
-                ]
-            ),
-            @ApiResponse(
-                responseCode = '404',
-                description = "Not Found",
-                content = @Content(schema = @Schema(implementation = ApiErrorResponse))
-            ),
-            @ApiResponse(
-                responseCode = '403',
-                description = "Unauthorized",
-                content = @Content(schema = @Schema(implementation = ApiErrorResponse))
-            ),
-            @ApiResponse(
-                responseCode = '415',
-                description = '''Unsupported Media type.''',
-                content = @Content(schema = @Schema(implementation = ApiErrorResponse))
-            )
-        ],
         parameters = [
             @Parameter(
                 name = "id",
@@ -3990,6 +3947,50 @@ Authorization required: `read` for the Job.''',
                 content = @Content(schema = @Schema(implementation = String))
             )
         ]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = '''Job definition, depending on the requested format:
+
+* YAML: [job-yaml](https://docs.rundeck.com/docs/manual/document-format-reference/job-yaml-v12.html) format
+* JSON: [job-json](https://docs.rundeck.com/docs/manual/document-format-reference/job-json-v44.html) format (API v44+)''',
+        content = [
+            @Content(
+                schema = @Schema(
+                    type = 'object',
+                    externalDocs = @ExternalDocumentation(
+                        url = 'https://docs.rundeck.com/docs/manual/document-format-reference/job-json-v44.html',
+                        description = "Job JSON Format"
+                    )
+                ),
+                mediaType = MediaType.APPLICATION_JSON
+            ),
+            @Content(
+                schema = @Schema(
+                    type = 'string',
+                    externalDocs = @ExternalDocumentation(
+                        url = 'https://docs.rundeck.com/docs/manual/document-format-reference/job-yaml-v12.html',
+                        description = "Job YAML Format"
+                    )
+                ),
+                mediaType = 'text/yaml'
+            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = '404',
+        description = "Not Found",
+        content = @Content(schema = @Schema(implementation = ApiErrorResponse))
+    )
+    @ApiResponse(
+        responseCode = '403',
+        description = "Unauthorized",
+        content = @Content(schema = @Schema(implementation = ApiErrorResponse))
+    )
+    @ApiResponse(
+        responseCode = '415',
+        description = '''Unsupported Media type.''',
+        content = @Content(schema = @Schema(implementation = ApiErrorResponse))
     )
     @Tag(name = "Jobs")
 
@@ -4054,7 +4055,7 @@ Authorization required: `read` for the Job.''',
         flush(response)
     }
 
-    @Post(uris = ['/job/{id}/run','/job/{id}/executions'])
+    @Post(uris = ['/job/{id}/run','/job/{id}/executions'], produces = MediaType.APPLICATION_JSON)
     @Operation(
         method='POST',
         summary='Running a Job',
@@ -4118,12 +4119,13 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
             @Parameter(name='meta.KEY',in = ParameterIn.QUERY,
                 description='Additional metadata keyd by `KEY`. (Since: v32).',
                 schema = @Schema(type='string'))
-        ],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = 'Created Execution',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'Created Execution',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
                 examples = @ExampleObject("""{
   "id": 1,
   "href": "[url]",
@@ -4329,7 +4331,7 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
         }
     }
 
-    @Post(uri='/job/{id}/retry/{executionId}')
+    @Post(uri='/job/{id}/retry/{executionId}', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method='POST',
         summary='Retry a Job based on execution',
@@ -4407,12 +4409,13 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
             @Parameter(name='meta.KEY',in = ParameterIn.QUERY,
                 description='Additional metadata keyd by `KEY`. (Since: v32).',
                 schema = @Schema(type='string'))
-        ],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = 'Created Execution',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'Created Execution',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
                 examples = @ExampleObject("""{
   "id": 1,
   "href": "[url]",
@@ -4523,7 +4526,7 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
     }
 
 
-    @Post(uri = '/job/{id}/input/file')
+    @Post(uri = '/job/{id}/input/file', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method='POST',
         summary='Upload Multiple Files for Job Options',
@@ -4555,19 +4558,19 @@ is the option name. The filename is specified normally within the multi-part req
             content = @Content(
                 mediaType = MediaType.MULTIPART_FORM_DATA
             )
-        ),
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = 'Successful response, with multiple uploaded file tokens',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = JobFileUpload)
-            )
+        )
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'Successful response, with multiple uploaded file tokens',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = JobFileUpload)
         )
     )
     protected def apiJobFileMultiUpload(){}
 
-    @Post(uri = '/job/{id}/input/file/{optionName}')
+    @Post(uri = '/job/{id}/input/file/{optionName}', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method='POST',
         summary='Upload a File for a Job Option',
@@ -4605,14 +4608,14 @@ Since: v19''',
             content=@Content(
                 mediaType = MediaType.APPLICATION_OCTET_STREAM
             )
-        ),
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = 'Successful response',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = JobFileUpload)
-            )
+        )
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'Successful response',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = JobFileUpload)
         )
     )
     /**
@@ -4791,7 +4794,7 @@ Since: v19''',
         respond(new JobFileUpload(total: uploadedFileRefs.size(), options: uploadedFileRefs), [formats: responseFormats])
     }
 
-    @Get(uri='/jobs/file/{id}')
+    @Get(uri='/jobs/file/{id}', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = "GET",
         summary = 'Get Info About an Uploaded File',
@@ -4803,13 +4806,14 @@ Since: v19''',
             in = ParameterIn.PATH,
             required = true,
             content = @Content(schema = @Schema(implementation = String))
-        ),
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = "File info",
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = JobFileInfo),
+        )
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = "File info",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = JobFileInfo),
                 examples = @ExampleObject('''
 {
   "dateCreated": "2017-02-24T19:10:33Z",
@@ -4943,7 +4947,7 @@ Since: v19''',
         )
     }
 
-    @Delete('/job/{id}')
+    @Delete(uri = '/job/{id}', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'DELETE',
         summary = 'Deleting a Job Definition',
@@ -4959,28 +4963,26 @@ Authorization required: `delete` for the job.''',
                 required = true,
                 content = @Content(schema = @Schema(implementation = String))
             )
-        ],
-        responses = [
-            @ApiResponse(
-                responseCode = '204',
-                description = "Successful delete. No Content"
-            ),
-            @ApiResponse(
-                responseCode = '404',
-                description = "Not Found",
-                content = @Content(schema = @Schema(implementation = ApiErrorResponse))
-            ),
-            @ApiResponse(
-                responseCode = '403',
-                description = "Unauthorized",
-                content = @Content(schema = @Schema(implementation = ApiErrorResponse))
-            ),
-            @ApiResponse(
-                responseCode = '409',
-                description = "Unauthorized",
-                content = @Content(schema = @Schema(implementation = ApiErrorResponse))
-            )
         ]
+    )
+    @ApiResponse(
+        responseCode = '204',
+        description = "Successful delete. No Content"
+    )
+    @ApiResponse(
+        responseCode = '404',
+        description = "Not Found",
+        content = @Content(schema = @Schema(implementation = ApiErrorResponse))
+    )
+    @ApiResponse(
+        responseCode = '403',
+        description = "Unauthorized",
+        content = @Content(schema = @Schema(implementation = ApiErrorResponse))
+    )
+    @ApiResponse(
+        responseCode = '409',
+        description = "Unauthorized",
+        content = @Content(schema = @Schema(implementation = ApiErrorResponse))
     )
     /**
      * API: DELETE job definition: /job/{id}, version 1
@@ -5037,7 +5039,7 @@ Authorization required: `delete` for the job.''',
         }
     }
 
-    @Delete(uri='/job/{id}/executions')
+    @Delete(uri='/job/{id}/executions', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'DELETE',
         summary = 'Delete all Executions for a Job',
@@ -5046,14 +5048,14 @@ Authorization required: `delete` for the job.''',
         parameters = [
             @Parameter(name = 'id', description = 'Job ID', in = ParameterIn
                 .PATH, required = true, schema = @Schema(type = 'string'))
-        ],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = """Summary of bulk delete results""",
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = DeleteBulkResponse)
-            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = """Summary of bulk delete results""",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = DeleteBulkResponse)
         )
     )
     /**
@@ -5093,7 +5095,7 @@ Authorization required: `delete` for the job.''',
         def result = scheduledExecutionService.deleteJobExecutions(scheduledExecution, authContext, session.user)
         executionService.renderBulkExecutionDeleteResult(request,response,result)
     }
-    @Post(uri='/project/{project}/run/command')
+    @Post(uri='/project/{project}/run/command', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method='POST',
         summary='Run Adhoc Command',
@@ -5157,14 +5159,15 @@ Since: v14''',
     "filter": "[node filter string]"
 }''')
             )
-        ),
-        responses = @ApiResponse(
-            responseCode='200',
-            description='''item identifying the new execution by ID.''',
-            content = [
-                @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema=@Schema(type='object'),
+        )
+    )
+    @ApiResponse(
+        responseCode='200',
+        description='''item identifying the new execution by ID.''',
+        content = [
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema=@Schema(type='object'),
                     examples=@ExampleObject('''{
   "message": "Immediate execution scheduled (X)",
   "execution": {
@@ -5229,7 +5232,7 @@ Since: v14''',
     }
 
 
-    @Post(uri='/project/{project}/run/script')
+    @Post(uri='/project/{project}/run/script', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method='POST',
         summary='Run Adhoc Script',
@@ -5334,14 +5337,15 @@ For Content-Type: `multipart/form-data`
 }''')
                 )
             ]
-        ),
-        responses = @ApiResponse(
-            responseCode='200',
-            description='''item identifying the new execution by ID.''',
-            content = [
-                @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema=@Schema(type='object'),
+        )
+    )
+    @ApiResponse(
+        responseCode='200',
+        description='''item identifying the new execution by ID.''',
+        content = [
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema=@Schema(type='object'),
                     examples=@ExampleObject('''{
   "message": "Immediate execution scheduled (X)",
   "execution": {
@@ -5482,7 +5486,7 @@ For Content-Type: `multipart/form-data`
         }
     }
 
-    @Post(uri='/project/{project}/run/url')
+    @Post(uri='/project/{project}/run/url', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method='POST',
         summary='Run Adhoc Script URL',
@@ -5576,14 +5580,15 @@ Since: v14''',
 }''')
                 )
             ]
-        ),
-        responses = @ApiResponse(
-            responseCode='200',
-            description='''item identifying the new execution by ID.''',
-            content = [
-                @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema=@Schema(type='object'),
+        )
+    )
+    @ApiResponse(
+        responseCode='200',
+        description='''item identifying the new execution by ID.''',
+        content = [
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema=@Schema(type='object'),
                     examples=@ExampleObject('''{
   "message": "Immediate execution scheduled (X)",
   "execution": {
@@ -5641,7 +5646,7 @@ Since: v14''',
         return apiResponseAdhoc(results)
     }
 
-    @Get(uris = ['/job/{id}/executions'])
+    @Get(uris = ['/job/{id}/executions'], produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'Getting Executions for a Job',
@@ -5667,13 +5672,14 @@ return.''',
             @Parameter(name = 'includeJobRef', description = '''if true, include executions from the job reference
 in the results. Default is false.  Requires API version 50 or later.''',
                 in = ParameterIn.QUERY, schema = @Schema(type = 'boolean'))
-        ],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = "Executions results",
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                array = @ArraySchema(schema = @Schema(type = 'object')),
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = "Executions results",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            array = @ArraySchema(schema = @Schema(type = 'object')),
                 examples = @ExampleObject('''[{
   "id": 1,
   "href": "[url]",
@@ -6166,7 +6172,7 @@ Since: v14''',
     }
 
 
-    @Get(uri="/project/{project}/jobs/browse")
+    @Get(uri="/project/{project}/jobs/browse", produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'Browse jobs at a path',
@@ -6178,18 +6184,15 @@ Since: v46''',
         tags = ['Jobs'],
         parameters = [
 
-        ],
-        responses = [
-            @ApiResponse(
-                responseCode = '200',
-                description = "Job results",
-                content = [
-                    @Content(
-                        mediaType = MediaType.APPLICATION_JSON,
-                        schema = @Schema(implementation = JobBrowseResponse)
-                    )
-                ]
-
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = "Job results",
+        content = [
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = JobBrowseResponse)
             )
         ]
     )
@@ -6223,7 +6226,7 @@ breakpoint are available, no metadata will be loaded''',
         @Parameter(hidden = true) RdJobQueryInput query
     ) {}
 
-    @Post(uri="/project/{project}/jobs/browse")
+    @Post(uri="/project/{project}/jobs/browse", produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'POST',
         summary = 'Project Job Group browse',
@@ -6246,18 +6249,15 @@ Since: v46''',
         ),
         parameters = [
 
-        ],
-        responses = [
-            @ApiResponse(
-                responseCode = '200',
-                description = "Job results",
-                content = [
-                    @Content(
-                        mediaType = MediaType.APPLICATION_JSON,
-                        schema = @Schema(implementation = JobBrowseResponse)
-                    )
-                ]
-
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = "Job results",
+        content = [
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = JobBrowseResponse)
             )
         ]
     )
@@ -6335,7 +6335,7 @@ breakpoint are available, no metadata will be loaded''',
         )
     }
 
-    @Get(uri="/job/{id}/meta")
+    @Get(uri="/job/{id}/meta", produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'Get Job UI Metadata',
@@ -6344,18 +6344,15 @@ breakpoint are available, no metadata will be loaded''',
 Authorization required: `read` or `view` for the Job.
 
 Since: v46''',
-        tags = ['Jobs'],
-        responses = [
-            @ApiResponse(
-                responseCode = '200',
-                description = "Job results",
-                content = [
-                    @Content(
-                        mediaType = MediaType.APPLICATION_JSON,
-                        array = @ArraySchema(schema = @Schema(implementation = ItemMeta))
-                    )
-                ]
-
+        tags = ['Jobs']
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = "Job results",
+        content = [
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                array = @ArraySchema(schema = @Schema(implementation = ItemMeta))
             )
         ]
     )
