@@ -19,7 +19,6 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
-import com.dtolabs.rundeck.app.internal.framework.RundeckFramework
 import com.dtolabs.rundeck.app.support.ProjAclFile
 import com.dtolabs.rundeck.app.support.SaveProjAclFile
 import com.dtolabs.rundeck.app.support.SaveSysAclFile

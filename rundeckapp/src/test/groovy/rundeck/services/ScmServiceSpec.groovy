@@ -16,9 +16,9 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.app.internal.framework.RundeckFramework
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.config.Features
@@ -486,7 +486,7 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
         service.pluginConfigService = Mock(PluginConfigService)
         service.jobEventsService = Mock(JobEventsService)
         service.frameworkService = Mock(FrameworkService){
-            getRundeckFramework() >> Mock(RundeckFramework){
+            getRundeckFramework() >> Mock(IFramework){
                 getFrameworkProjectMgr() >> Mock(ProjectManager) {
                     listFrameworkProjectNames() >> ['testProject']
                 }
