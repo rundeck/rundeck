@@ -470,10 +470,19 @@ tasks.withType(GroovyCompile).configureEach {
 
 tasks.withType(Test) {
     useJUnitPlatform()
+    // Increased memory for Groovy 4 + Grails 7 tests
+    maxHeapSize = "2048m"
 }
 
 tasks.withType(Test).configureEach {
     forkEvery = 500
+}
+
+// Groovy 4: Increase memory for test compilation
+tasks.named('compileTestGroovy').configure {
+    groovyOptions.forkOptions.with {
+        jvmArgs = ['-Xmx3072m', '-XX:MaxMetaspaceSize=768m']
+    }
 }
 
 // To make Spring boot bootWar task work, we need to declare the duplicateStrategy explicitly
