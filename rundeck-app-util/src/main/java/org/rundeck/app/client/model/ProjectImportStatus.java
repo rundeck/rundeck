@@ -1,4 +1,4 @@
-package com.dtolabs.rundeck.net.model;
+package org.rundeck.app.client.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

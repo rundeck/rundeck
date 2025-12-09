@@ -1,6 +1,6 @@
-package com.dtolabs.rundeck.net.api;
+package org.rundeck.app.client;
 
-import com.dtolabs.rundeck.net.model.ProjectImportStatus;
+import org.rundeck.app.client.model.ProjectImportStatus;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import retrofit2.Response;

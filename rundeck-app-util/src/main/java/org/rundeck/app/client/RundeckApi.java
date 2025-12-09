@@ -1,8 +1,8 @@
-package com.dtolabs.rundeck.net.api;
+package org.rundeck.app.client;
 import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.http.*;
-import com.dtolabs.rundeck.net.model.ProjectImportStatus;
+import org.rundeck.app.client.model.ProjectImportStatus;
 
 import java.util.Map;
 

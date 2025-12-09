@@ -9,6 +9,12 @@ apply from: "../gradle/java-version.gradle"
 
 dependencies {
     api project(':core')
+    api "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}",
+        "org.yaml:snakeyaml:${snakeyamlVersion}",
+        "com.squareup.retrofit2:retrofit:3.0.0",
+        "com.squareup.retrofit2:converter-jackson:3.0.0",
+        "com.squareup.retrofit2:converter-jaxb:3.0.0"
+
     testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
     testImplementation "org.spockframework:spock-core:${spockVersion}"
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'

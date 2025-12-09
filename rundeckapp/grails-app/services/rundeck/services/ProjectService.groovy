@@ -30,9 +30,9 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
-import com.dtolabs.rundeck.net.api.RundeckClient
-import com.dtolabs.rundeck.net.model.ErrorDetail
-import com.dtolabs.rundeck.net.model.ErrorResponse
+import org.rundeck.app.client.RundeckClient
+import org.rundeck.app.client.model.ErrorDetail
+import org.rundeck.app.client.model.ErrorResponse
 import com.dtolabs.rundeck.util.XmlParserUtil
 import com.dtolabs.rundeck.util.ZipBuilder
 import com.dtolabs.rundeck.util.ZipReader
@@ -99,7 +99,7 @@ import java.util.regex.Pattern
 import java.util.stream.Collectors
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
-import com.dtolabs.rundeck.net.model.ProjectImportStatus
+import org.rundeck.app.client.model.ProjectImportStatus
 import okhttp3.RequestBody
 import retrofit2.Response
 

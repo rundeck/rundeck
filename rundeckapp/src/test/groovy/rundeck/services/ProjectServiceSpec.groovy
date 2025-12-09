@@ -27,9 +27,9 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
-import com.dtolabs.rundeck.net.api.RundeckApi
-import com.dtolabs.rundeck.net.api.RundeckClient
-import com.dtolabs.rundeck.net.model.ProjectImportStatus
+import org.rundeck.app.client.RundeckApi
+import org.rundeck.app.client.RundeckClient
+import org.rundeck.app.client.model.ProjectImportStatus
 import com.dtolabs.rundeck.util.ZipBuilder
 import grails.async.Promises
 import grails.events.bus.EventBus
