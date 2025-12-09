@@ -1,6 +1,7 @@
 package org.rundeck.tests.functional.selenium.scm
 
 import groovy.util.logging.Slf4j
+import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.scm.ScmIntegration
 import org.rundeck.util.gui.scm.ScmStatusBadge
 import org.rundeck.util.gui.pages.jobs.JobShowPage
@@ -55,7 +56,6 @@ class ScmStatusBadgeSpec extends ScmSeleniumBase {
         scmStatusBadge.getTooltips() == 'Not Tracked for SCM Import'
     }
 
-    @Ignore("flaky test, needs to be fixed")
     def "job scm import status badge after import job changes"(){
         given:
         go(LoginPage).login(TEST_USER, TEST_PASS)
@@ -67,6 +67,9 @@ class ScmStatusBadgeSpec extends ScmSeleniumBase {
         configureScmPage.go()
         configureScmPage.disableScmExport()
         configureScmPage.enableScmImport()
+
+        // Wait for SCM import to sync job status after enabling
+        Thread.sleep(WaitingTime.MODERATE.toMillis())
 
         JobShowPage jobShowPage = page(JobShowPage, PROJECT_NAME).forJob(jobUuid)
         jobShowPage.go()
