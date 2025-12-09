@@ -2241,14 +2241,20 @@ Fields:
             content = @Content(
                     mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = HomeSummary),
-                    examples = @ExampleObject("""{
+                    examples = [
+                        @ExampleObject(
+                            name = 'home-summary',
+                            description = 'Home summary response',
+                            value = """{
     "execCount": 0,
     "totalFailedCount": 0,
     "recentUsers": [],
     "recentProjects": [],
     "frameworkNodeName": "localhost"
 
-}""")
+}"""
+                        )
+                    ]
             )
     )
 
@@ -2342,7 +2348,11 @@ Fields:
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(type = "object"),
-            examples = @ExampleObject("""{
+            examples = [
+                @ExampleObject(
+                    name = 'logstorage-info',
+                    description = 'Log storage info response',
+                    value = """{
   "enabled": true,
   "pluginName": "NAME",
   "succeededCount": 369,
@@ -2355,7 +2365,9 @@ Fields:
   "incompleteCount": 0,
   "retriesCount": 0,
   "missingCount": 0
-}""")
+}"""
+                )
+            ]
         )
     )
     @RdAuthorizeSystem(value=RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN,description='Read Logstorage Info')
@@ -2460,7 +2472,11 @@ Since: V17''',
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(type = "object"),
-            examples = @ExampleObject("""{
+            examples = [
+                @ExampleObject(
+                    name = 'incomplete-logstorage',
+                    description = 'Incomplete log storage response',
+                    value = """{
   "total": 100,
   "max": 20,
   "offset": 0,
@@ -2480,7 +2496,9 @@ Since: V17''',
       "errors": ["message","message..."]
     }
     ]
-}""")
+}"""
+                )
+            ]
         )
     )
     @RdAuthorizeSystem(value=RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN,description='Read Logstorage Info')
@@ -2596,9 +2614,15 @@ Since: V17''',
         content=@Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema=@Schema(type='object'),
-            examples = @ExampleObject('''{
+            examples = [
+                @ExampleObject(
+                    name = 'resume-logstorage',
+                    description = 'Resume log storage response',
+                    value = '''{
   "resumed": true
-}''')
+}'''
+                )
+            ]
         )
     )
     @RdAuthorizeSystem(RundeckAccess.General.AUTH_OPS_ADMIN)
@@ -3224,7 +3248,11 @@ Authorization required: `view` or `read` for each Job resource.
         content=@Content(
             mediaType=MediaType.APPLICATION_JSON,
             array = @ArraySchema(schema=@Schema(implementation = JobInfo)),
-            examples=@ExampleObject('''[
+            examples=[
+                @ExampleObject(
+                    name='jobs-list',
+                    description='Jobs list response',
+                    value='''[
   {
     "id": "[UUID]",
     "name": "[name]",
@@ -3237,7 +3265,9 @@ Authorization required: `view` or `read` for each Job resource.
     "scheduleEnabled": true,
     "enabled": true
   }
-]''')
+]'''
+                )
+            ]
         )
     )
     /**
@@ -3517,7 +3547,11 @@ if executed in cluster mode.
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(type = 'object'),
-            examples = @ExampleObject("""{
+            examples = [
+                @ExampleObject(
+                    name = 'running-executions',
+                    description = 'Running executions response',
+                    value = """{
 "paging":{
     "count": 1,
     "total": 1,
@@ -3562,7 +3596,9 @@ if executed in cluster mode.
     "nodec","noded"
   ]
 }]
-}""")
+}"""
+                )
+            ]
         )
     )
     /**
