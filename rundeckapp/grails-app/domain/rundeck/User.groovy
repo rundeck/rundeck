@@ -40,7 +40,7 @@ class User implements RdUser{
 
     @Override
     Long getId() {
-        return id
+        return this.@id  // Direct field access to avoid infinite recursion
     }
 
     static constraints={
