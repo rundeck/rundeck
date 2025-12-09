@@ -28,7 +28,6 @@ import static org.junit.Assert.*
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import grails.test.runtime.DirtiesRuntime
 
 import org.junit.Assert
 import org.quartz.*

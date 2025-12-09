@@ -22,8 +22,7 @@ import org.junit.Test
 
 import static org.junit.Assert.*
 
-import grails.test.mixin.*
-import groovy.util.slurpersupport.GPathResult
+import groovy.xml.slurpersupport.GPathResult
 import groovy.xml.MarkupBuilder
 import com.dtolabs.rundeck.app.api.ApiVersions
 

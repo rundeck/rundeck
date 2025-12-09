@@ -16,7 +16,6 @@
 
 package rundeck.services
 
-import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.config.SysConfigProp
 import spock.lang.Specification

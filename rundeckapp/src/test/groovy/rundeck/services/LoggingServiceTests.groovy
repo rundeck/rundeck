@@ -34,7 +34,6 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin
 import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
-import grails.test.runtime.DirtiesRuntime
 import grails.web.mapping.LinkGenerator
 import rundeck.Execution
 import rundeck.Workflow

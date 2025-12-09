@@ -5,7 +5,7 @@ import com.zaxxer.hikari.HikariDataSource
 import grails.orm.bootstrap.HibernateDatastoreSpringInitializer
 import grails.test.hibernate.HibernateSpec
 import groovy.sql.Sql
-import liquibase.parser.ChangeLogParserFactory
+// Liquibase imports removed - not needed for test
 import org.grails.config.PropertySourcesConfig
 import org.grails.orm.hibernate.cfg.Settings
 import org.grails.plugins.databasemigration.DatabaseMigrationTransactionManager

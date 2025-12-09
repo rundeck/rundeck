@@ -43,9 +43,6 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
-import grails.test.runtime.DirtiesRuntime
 import grails.web.mapping.LinkGenerator
 
 //import org.grails.web.mapping.LinkGenerator

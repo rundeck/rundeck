@@ -289,6 +289,10 @@ dependencies {
     testImplementation "org.apache.grails:grails-testing-support-datamapping"
     testImplementation "org.mockito:mockito-core"
     testImplementation "org.apache.grails:grails-testing-support-web"
+    testImplementation "org.apache.groovy:groovy-xml:${getProperty('groovy.version')}"
+    testImplementation "org.apache.groovy:groovy-test:${getProperty('groovy.version')}"
+    testImplementation "org.liquibase:liquibase-core:${liquibaseVersion}"
+    testImplementation "org.eclipse.jetty.ee10:jetty-ee10-webapp"
     testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"
     testImplementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
     testImplementation( "org.hibernate:hibernate-jcache:${hibernateVersion}")
