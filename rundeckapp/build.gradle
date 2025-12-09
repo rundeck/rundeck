@@ -400,9 +400,9 @@ tasks.register('fixOpenApiSpec') {
     inputs.file(apiVersionsFile)
     outputs.file(specFile)
     
-    // Gradle 8: Explicit task ordering
+    // Gradle 8: Explicit task ordering - run after main compilation
     mustRunAfter compileGroovy
-    tasks.findByName('compileTestJava')?.mustRunAfter(tasks.named('fixOpenApiSpec'))
+    mustRunAfter compileJava
     
     doLast {
         if (specFile.exists() && apiVersionsFile.exists()) {

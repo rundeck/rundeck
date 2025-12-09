@@ -358,12 +358,32 @@ public abstract class AbstractLoginModule implements LoginModule {
         this.committed = committed;
     }
     
-    protected CallbackHandler getCallbackHandler() {
+    public Subject getSubject() {
+        return subject;
+    }
+    
+    /**
+     * Set the Subject for testing purposes.
+     * @param subject The Subject to use
+     */
+    public void setSubject(Subject subject) {
+        this.subject = subject;
+    }
+    
+    /**
+     * Get the CallbackHandler.
+     * @return The CallbackHandler
+     */
+    public CallbackHandler getCallbackHandler() {
         return callbackHandler;
     }
     
-    public Subject getSubject() {
-        return subject;
+    /**
+     * Set the CallbackHandler for testing purposes.
+     * @param callbackHandler The CallbackHandler to use
+     */
+    public void setCallbackHandler(CallbackHandler callbackHandler) {
+        this.callbackHandler = callbackHandler;
     }
     
     protected boolean isDebug() {

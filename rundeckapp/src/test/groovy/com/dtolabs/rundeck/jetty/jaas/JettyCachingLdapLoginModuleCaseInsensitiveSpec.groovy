@@ -133,9 +133,7 @@ class JettyCachingLdapLoginModuleCaseInsensitiveSpec extends Specification {
         "TestUser"  | "testuser"
         "TESTUSER"  | "testuser"
         "testuser"  | "testuser"
-        "TeSt
-
-User" | "testuser"
+        "TeStUser" | "testuser"
     }
 
     def "authenticate with LDAP caching stores normalized username in cache"() {
