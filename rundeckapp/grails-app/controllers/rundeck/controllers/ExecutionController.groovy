@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.app.api.execution.MetricsQueryResponse
 import com.dtolabs.rundeck.app.api.executionmode.ExecutionModeResult
 import com.dtolabs.rundeck.app.api.jobs.upload.ExecutionFileInfoList
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfo
+import org.rundeck.app.api.model.ApiErrorResponse
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.ExecutionQueryException
@@ -2417,6 +2418,14 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
 }""")
             )
         ]
+    )
+    @ApiResponse(
+        responseCode = '404',
+        description = 'Execution state not found. This occurs when the execution never started (e.g., schedule conflict)',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
     )
     @Tag(name = 'Job Executions')
     /**

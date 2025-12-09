@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.app.api.authorizations.ProjectAuthorizationContext
 import com.dtolabs.rundeck.app.api.authorizations.TypeResource
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.Decision
+import org.rundeck.app.api.model.ApiErrorResponse
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.swagger.v3.oas.annotations.Operation
@@ -55,6 +56,14 @@ Useful for UI components that need to conditionally display features or for appl
                     schema=@Schema(implementation=AuthorizationsResponse)
             )
     )
+    @ApiResponse(
+            responseCode='400',
+            description='Bad request - missing required parameter `actions`',
+            content = @Content(
+                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                    schema=@Schema(implementation=ApiErrorResponse)
+            )
+    )
     def appContextAuthorizationsForResourceKind() {
         def kindParams = validateAndGetParamsForKind(params)
 
@@ -96,6 +105,14 @@ Evaluation is made in the context of the application for the supplied type and s
                     schema=@Schema(implementation=AuthorizationsResponse)
             )
     )
+    @ApiResponse(
+            responseCode='400',
+            description='Bad request - missing required parameter `actions`',
+            content = @Content(
+                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                    schema=@Schema(implementation=ApiErrorResponse)
+            )
+    )
     def appContextAuthorizationsForTypeWithSpecifier() {
         def typeParams = validateAndGetParamsForTypeWithSpecifier(params, APPLICATION_CONTEXT_ALLOWED_TYPES)
 
@@ -135,6 +152,14 @@ Evaluation is made in the context of the project for the supplied resource kind.
             content = @Content(
                     mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
                     schema=@Schema(implementation=AuthorizationsResponse)
+            )
+    )
+    @ApiResponse(
+            responseCode='400',
+            description='Bad request - missing required parameter `actions`',
+            content = @Content(
+                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                    schema=@Schema(implementation=ApiErrorResponse)
             )
     )
     def projectContextAuthorizationsForResourceKind() {
@@ -228,6 +253,14 @@ Evaluation is made in the context of the project for the type with a specifier.
             content = @Content(
                     mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
                     schema=@Schema(implementation=AuthorizationsResponse)
+            )
+    )
+    @ApiResponse(
+            responseCode='400',
+            description='Bad request - missing required parameter `actions`',
+            content = @Content(
+                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                    schema=@Schema(implementation=ApiErrorResponse)
             )
     )
     def projectContextAuthorizationsForTypeWithSpecifier() {

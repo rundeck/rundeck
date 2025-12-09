@@ -3893,6 +3893,14 @@ Since: v14""",
         ]
     )
     @ApiResponse(
+        responseCode = "200",
+        description = "apiSystemAcls_DELETE_docs 200 response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object')
+        )
+    )
+    @ApiResponse(
         responseCode = "204",
         description = "No Content"
     )
@@ -4095,6 +4103,14 @@ by:
 }''')
             )
         ]
+    )
+    @ApiResponse(
+        responseCode = "201",
+        description = "Created",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object')
+        )
     )
     @ApiResponse(
         responseCode = "409",

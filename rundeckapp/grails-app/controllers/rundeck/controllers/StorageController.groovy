@@ -559,6 +559,14 @@ Authorization under the key path `project/{project}` can be granted at the proje
             )
         ]
     )
+    @ApiResponse(
+        responseCode='201',
+        description='Created',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object')
+        )
+    )
     @ApiResponse(responseCode='403',description='Unauthorized')
     @ApiResponse(responseCode='409',description='Conflict: the specified file or path already exists')
     def apiPostResource(@Parameter(hidden = true) StorageParams storageParams) {
@@ -632,6 +640,14 @@ Authorization under the key path `project/{project}` can be granted at the proje
             schema=@Schema(type='string'),
             allowReserved = true,
             required = true
+        )
+    )
+    @ApiResponse(
+        responseCode='200',
+        description='apiDeleteResource 200 response',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object')
         )
     )
     @ApiResponse(responseCode='204',description='Deleted')

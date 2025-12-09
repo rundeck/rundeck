@@ -4968,6 +4968,14 @@ Authorization required: `delete` for the job.''',
         ]
     )
     @ApiResponse(
+        responseCode = '200',
+        description = "apiJobDelete 200 response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object')
+        )
+    )
+    @ApiResponse(
         responseCode = '204',
         description = "Successful delete. No Content"
     )

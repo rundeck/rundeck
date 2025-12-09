@@ -1399,6 +1399,14 @@ by:
             ]
     )
     @ApiResponse(
+            responseCode = "201",
+            description = "ACL policy created",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(type = 'object')
+            )
+    )
+    @ApiResponse(
             responseCode = "409",
             description = "Conflict if already exists",
             content = @Content(

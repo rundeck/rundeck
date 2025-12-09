@@ -510,6 +510,14 @@ Use this endpoint to verify API connectivity and determine the correct API versi
             )
         ]
     )
+    @ApiResponse(
+        responseCode = "200",
+        description = "apiTokenDelete 200 response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object')
+        )
+    )
     @ApiResponse(responseCode = "204", description = "No Content (DELETE successful)")
     @ApiResponse(
         responseCode = "404",
@@ -655,6 +663,14 @@ Since: v11
                     )
                 ]
             )
+        )
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "apiTokenCreate 200 response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object')
         )
     )
     @ApiResponse(
