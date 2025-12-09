@@ -96,7 +96,7 @@ class BasicJobsSpec extends SeleniumBase {
             jobShowPage.jobLinkTitleLabel.getText().contains('create valid job basic options')
             jobShowPage.optionInputText(optionName) != null
         where:
-            nextUi<<[false]
+            nextUi<<[false, true]
     }
 
     def "edit job set description"() {
@@ -289,7 +289,7 @@ class BasicJobsSpec extends SeleniumBase {
             expected = [
                 "selenium-option-test1",
                 "predefined job with options",
-//                "create valid job basic options next ui", //todo: uncomment this line once workflow is released and alphaUI tests merged back
+                "create valid job basic options next ui",
                 "create valid job basic options old ui"
             ]
     }
