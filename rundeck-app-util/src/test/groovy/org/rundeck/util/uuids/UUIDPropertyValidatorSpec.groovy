@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package org.rundeck.utils
+package org.rundeck.util.uuids
 
-import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
+import org.rundeck.app.util.uuids.UUIDPropertyValidator
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -48,7 +48,7 @@ class UUIDPropertyValidatorSpec extends Specification {
         when:
             UUIDPropertyValidator.validate(uuid)
         then:
-            ValidationException e = thrown()
+            Exception e = thrown()
             e.message.contains('Expected 36 characters')
 
         where:
@@ -82,7 +82,7 @@ class UUIDPropertyValidatorSpec extends Specification {
         when:
             UUIDPropertyValidator.validate(uuid)
         then:
-            ValidationException e = thrown()
+            Exception e = thrown()
             e.message.contains('Expected valid UUID')
 
         where:

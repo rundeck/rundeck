@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package org.rundeck.utils;
+package org.rundeck.app.util.uuids;
 
-import com.dtolabs.rundeck.core.plugins.configuration.ValidationException;
 
 import java.util.UUID;
 
@@ -43,7 +42,7 @@ public class UUIDs {
     public static UUID parse(String input) throws IllegalArgumentException {
         try {
             UUIDPropertyValidator.validate(input);
-        } catch (ValidationException e) {
+        } catch (Exception e) {
             throw new IllegalArgumentException(e.getMessage());
         }
         return UUID.fromString(input);

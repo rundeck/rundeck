@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package org.rundeck.utils;
+package org.rundeck.app.util.uuids;
 
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator;
-import com.dtolabs.rundeck.core.plugins.configuration.ValidationException;
 
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -25,15 +23,12 @@ import java.util.regex.Pattern;
 /**
  * Property validator for UUID input, which expects exact format '01234567-89ab-cdef-0123-456789abcdef'
  */
-public class UUIDPropertyValidator
-    implements PropertyValidator
-{
+public class UUIDPropertyValidator {
     private static final Pattern UUID_PAT = Pattern.compile(
         "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
     );
 
-    @Override
-    public boolean isValid(final String value) throws ValidationException {
+    public boolean isValid(final String value) throws Exception {
         return validate(value);
     }
 
@@ -46,7 +41,7 @@ public class UUIDPropertyValidator
     public static boolean isValidUUID(final String value) {
         try {
             return validate(value, false);
-        } catch (ValidationException ignored) {
+        } catch (Exception ignored) {
             return false;
         }
     }
@@ -56,25 +51,25 @@ public class UUIDPropertyValidator
      *
      * @param value input value
      * @return true if valid
-     * @throws ValidationException if invalid
+     * @throws Exception if invalid
      */
-    public static boolean validate(final String value) throws ValidationException {
+    public static boolean validate(final String value) throws Exception {
         return validate(value, true);
     }
 
-    private static boolean validate(final String value, boolean report) throws ValidationException {
+    private static boolean validate(final String value, boolean report) throws Exception {
         if (null == value || value.length() != 36) {
             if (!report) {
                 return false;
             }
-            throw new ValidationException(String.format("Expected 36 characters, saw input: '%s'", value));
+            throw new Exception(String.format("Expected 36 characters, saw input: '%s'", value));
 
         }
         if (!UUID_PAT.matcher(value).matches()) {
             if (!report) {
                 return false;
             }
-            throw new ValidationException(String.format("Expected valid UUID, saw input: '%s'", value));
+            throw new Exception(String.format("Expected valid UUID, saw input: '%s'", value));
         }
         try {
             UUID ignored = UUID.fromString(value);
@@ -82,7 +77,7 @@ public class UUIDPropertyValidator
             if (!report) {
                 return false;
             }
-            throw new ValidationException(e.getMessage(), e);
+            throw new Exception(e.getMessage(), e);
         }
         return true;
     }
