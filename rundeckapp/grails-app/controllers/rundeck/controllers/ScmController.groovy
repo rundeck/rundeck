@@ -1981,7 +1981,11 @@ Export plugin values for `$synchState`:
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = ScmJobStatus),
-            examples = @ExampleObject('''{
+            examples = [
+                @ExampleObject(
+                    name = 'job-scm-status',
+                    description = 'Job SCM status response',
+                    value = '''{
   "actions": [
     "$action"
   ],
@@ -1999,7 +2003,9 @@ Export plugin values for `$synchState`:
   "message": "$statusMessage",
   "project": "$project",
   "synchState": "$synchState"
-}''')
+}'''
+                )
+            ]
         )
     )
     /**
@@ -2156,7 +2162,11 @@ For `import` only, `incomingCommit` will indicate the to-be-imported change.
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = ScmJobDiff),
-            examples = @ExampleObject('''{
+            examples = [
+                @ExampleObject(
+                    name = 'job-scm-diff',
+                    description = 'Job SCM diff response',
+                    value = '''{
   "commit": {
   },
   "diffContent": "...",
@@ -2165,7 +2175,9 @@ For `import` only, `incomingCommit` will indicate the to-be-imported change.
   },
   "integration": "$integration",
   "project": "$project"
-}''')
+}'''
+                )
+            ]
         )
     )
     /**
@@ -2461,12 +2473,18 @@ If a follow-up **Action** is expected to be called, the action ID will be identi
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = ScmActionResult),
-            examples = @ExampleObject('''{
+            examples = [
+                @ExampleObject(
+                    name = 'scm-action-success',
+                    description = 'SCM action success response',
+                    value = '''{
                       "message": "Some message.",
                       "nextAction": "next-action",
                       "success": true,
                       "validationErrors": null
-                    }''')
+                    }'''
+                )
+            ]
         )
     )
     @ApiResponse(
@@ -2478,7 +2496,11 @@ The response will include information about the result.
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = ScmActionResult),
-            examples = @ExampleObject('''{
+            examples = [
+                @ExampleObject(
+                    name = 'scm-action-error',
+                    description = 'SCM action error response',
+                    value = '''{
                       "message": "Some input was invalid.",
                       "nextAction": null,
                       "success": false,
@@ -2486,7 +2508,9 @@ The response will include information about the result.
                         "dir": "required",
                         "url": "required"
                       }
-                    }''')
+                    }'''
+                )
+            ]
         )
     )
     /**

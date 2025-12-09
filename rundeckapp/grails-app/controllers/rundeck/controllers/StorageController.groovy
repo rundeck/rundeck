@@ -553,7 +553,7 @@ Authorization under the key path `project/{project}` can be granted at the proje
                 schema = @Schema(type = 'string'),
                 examples = @ExampleObject(
                     name = 'public-key',
-                    summary = 'Public Key contents',
+                    description = 'Public Key contents',
                     value = '''...Public Key Contents...'''
                 )
             )
@@ -794,7 +794,7 @@ Authorization under the key path `project/{project}` can be granted at the proje
                 schema = @Schema(type = 'string'),
                 examples = @ExampleObject(
                     name = 'public-key',
-                    summary = 'Public Key contents',
+                    description = 'Public Key contents',
                     value = '''...Public Key Contents...'''
                 )
             )
