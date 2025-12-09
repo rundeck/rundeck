@@ -69,7 +69,7 @@ class JettyCachingLdapLoginModuleCaseInsensitiveSpec extends Specification {
         
         and: "Username in subject is lowercase"
         Subject subject = new Subject()
-        module.@subject = subject
+        module.setSubject(subject)
         module.commit()
         
         def userPrincipal = subject.getPrincipals(RundeckPrincipal).find()
