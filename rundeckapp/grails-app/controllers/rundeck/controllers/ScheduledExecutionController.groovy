@@ -5881,15 +5881,15 @@ Since: v14''',
 }''',name='multiple-jobs',description='Takeover multiple jobs. Since: v32')
                 ]
             )
-        ),
-        responses=@ApiResponse(
-            responseCode='200',
-            description='Successful Response',
-            content=[
-                @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema=@Schema(type='object'),
-                    examples=[
+        )
+    )
+    @ApiResponse(
+        responseCode='200',
+        description='Successful Response',
+        content=@Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema=@Schema(type='object'),
+            examples=[
                         @ExampleObject(value='''
 {
   "takeoverSchedule": {
@@ -5965,9 +5965,7 @@ Since: v14''',
   "apiversion": 14,
   "success": true
 }''',
-                        description='response for `project` specified',name='project-specified')
-                    ]
-                )
+                description='response for `project` specified',name='project-specified')
             ]
         )
     )

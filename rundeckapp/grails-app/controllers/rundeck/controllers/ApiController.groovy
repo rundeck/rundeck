@@ -159,6 +159,7 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         produces = MediaType.APPLICATION_JSON
     )
     @Operation(
+        tags = ['Metrics'],
         method = "GET",
         summary = "Get Rundeck metrics",
         description = "Return metrics and information",
@@ -173,8 +174,8 @@ Use this endpoint to verify API connectivity and determine the correct API versi
                     allowableValues=['metrics', 'ping', 'threads', 'healthcheck']
                 )
             )
-        ]
-    )
+        ])
+
     @ApiResponse(
         responseCode = "200",
         description = "List of metrics available if not specified",
@@ -192,12 +193,10 @@ Use this endpoint to verify API connectivity and determine the correct API versi
             examples = @ExampleObject('{"error":true,"errorCode":"api.error.code","message":"not ok","apiversion":41}')
         )
     )
-    @Tag(name = "Metrics")
     def apiMetrics(String name) {
         if (!apiService.requireVersion(request, response, ApiVersions.V25)) {
             return
         }
-
 
         def names = ['metrics', 'ping', 'threads', 'healthcheck']
         def globalEnabled=configurationService.getBoolean("metrics.enabled", true) &&
@@ -234,12 +233,6 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         def servletPath = configurationService.getString('metrics.servletUrlPattern', '/metrics/*')
         forward(uri: servletPath.replace('/*', "/$name"))
     }
-
-
-
-
-
-    @Tag(name = "System")
     /**
      * API endpoint to query system features' toggle status: True/False for On/Off
      *
@@ -253,6 +246,7 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         produces = MediaType.APPLICATION_JSON
     )
     @Operation(
+        tags = ['System'],
         method = "GET",
         summary = "Get Rundeck System Feature Status",
         description = "Return whether a feature is enabled or disabled.",
@@ -287,8 +281,6 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         return respond(result, formats: ['json'])
 
     }
-
-    @Tag(name = "System")
     /**
      * API endpoint to query all system features' toggle status: True/False for On/Off
      *
@@ -299,6 +291,7 @@ Use this endpoint to verify API connectivity and determine the correct API versi
             produces = MediaType.APPLICATION_JSON
     )
     @Operation(
+            tags = ['System'],
             method = "GET",
             summary = "List all System Feature on/off Status",
             description = "The query will return all system features' status",
@@ -354,6 +347,7 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         produces = MediaType.APPLICATION_JSON
     )
     @Operation(
+        tags = ['Tokens'],
         method = "GET",
         summary = "Get a specified auth token metadata",
         description = "API Token information",
@@ -367,28 +361,24 @@ Use this endpoint to verify API connectivity and determine the correct API versi
                     format='uuid'
                 )
             )
-        ],
-        responses=[
-            @ApiResponse(
-                responseCode = "200",
-                description = '''The token includes the `creator` of the token, as well as the `user` (the effective username) of the token.''',
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = Token)
-                )
-            ),
-            @ApiResponse(
-                responseCode = "404",
-                description = "Not Found",
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ApiErrorResponse)
-                )
-            )
-
         ]
     )
-    @Tag(name = "Tokens")
+    @ApiResponse(
+        responseCode = "200",
+        description = '''The token includes the `creator` of the token, as well as the `user` (the effective username) of the token.''',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = Token)
+        )
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "Not Found",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
+    )
     @CompileStatic
     def apiTokenGet(String tokenid) {
         AuthenticationToken oldtoken = validateTokenRequest(tokenid)
@@ -431,6 +421,7 @@ Use this endpoint to verify API connectivity and determine the correct API versi
 
     @Delete(uri= "/token/{tokenid}")
     @Operation(
+        tags = ['Tokens'],
         method = "DELETE",
         summary = "Delete a specified auth token.",
         parameters = [
@@ -443,21 +434,17 @@ Use this endpoint to verify API connectivity and determine the correct API versi
                     format='uuid'
                 )
             )
-        ],
-        responses=[
-            @ApiResponse(responseCode = "204", description = "No Content (DELETE successful)"),
-
-            @ApiResponse(
-                responseCode = "404",
-                description = "Not Found",
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ApiErrorResponse)
-                )
-            )
         ]
     )
-    @Tag(name = "Tokens")
+    @ApiResponse(responseCode = "204", description = "No Content (DELETE successful)")
+    @ApiResponse(
+        responseCode = "404",
+        description = "Not Found",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
+    )
     @CompileStatic
     def apiTokenDelete(String tokenid) {
         AuthenticationToken oldtoken = validateTokenRequest(tokenid)
@@ -470,9 +457,9 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         return render(status: HttpServletResponse.SC_NO_CONTENT)
     }
 
-
     @Get(uri= "/tokens/{user}")
     @Operation(
+        tags = ['Tokens'],
         method = "GET",
         summary = "List all tokens or all tokens for a specific user.",
         parameters = [
@@ -485,21 +472,16 @@ Use this endpoint to verify API connectivity and determine the correct API versi
                     type='string'
                 )
             )
-        ],
-        responses=[
-            @ApiResponse(
-                responseCode = "200",
-                description = "Token List Response",
-
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    array = @ArraySchema(schema = @Schema(implementation = Token))
-                )
-            ),
-
         ]
     )
-    @Tag(name = "Tokens")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Token List Response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            array = @ArraySchema(schema = @Schema(implementation = Token))
+        )
+    )
     /**
      * GET /api/11/tokens/$user?
      */
@@ -519,7 +501,6 @@ Use this endpoint to verify API connectivity and determine the correct API versi
 
         def adminAuth = apiService.hasTokenAdminAuth(authContext)
 
-
         if (!adminAuth && user && user != authContext.username) {
             return apiService.renderUnauthorized(response, [AuthConstants.ACTION_ADMIN, 'User', user])
         }
@@ -532,7 +513,6 @@ Use this endpoint to verify API connectivity and determine the correct API versi
             tokenlist = apiService.listTokens()
         }
 
-
         def data = new ListTokens(user, !user, tokenlist.findAll {tkn->
             tkn.getType() != AuthTokenType.WEBHOOK
         }.collect {
@@ -542,8 +522,7 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         respond(data, [formats: responseFormats])
     }
 
-
-    @Post(uri= "/tokens/{user}", processes = MediaType.APPLICATION_JSON)
+    @Post(uri= "/tokens/{user}", produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = "POST",
         summary = "Create API Token",
@@ -559,6 +538,7 @@ then the generated token will have all roles as the authenticated user.
 
 Since: v11
 ''',
+        tags = ['Tokens'],
         parameters = [
             @Parameter(
                 name = 'user',
@@ -601,19 +581,16 @@ Since: v11
                     )
                 ]
             )
-        ),
-        responses=[
-            @ApiResponse(
-                responseCode = "201",
-                description = "Token Created",
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = Token)
-                )
-            )
-        ]
+        )
     )
-    @Tag(name = "Tokens")
+    @ApiResponse(
+        responseCode = "201",
+        description = "Token Created",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = Token)
+        )
+    )
     /**
      * POST /api/11/tokens/$user?
      * @return
@@ -670,8 +647,7 @@ Since: v11
                             tokenName = xml.'@name'.text()
                         }
                     }
-            ]
-            )
+            ])
             if (!parsed) {
                 return
             }
@@ -730,8 +706,9 @@ Since: v11
         respond(new Token(token, false, apiVersion < ApiVersions.V19), [formats: responseFormats])
     }
 
-    @Post(uri= "/tokens/{user}/removeExpired", processes = MediaType.APPLICATION_JSON)
+    @Post(uri= "/tokens/{user}/removeExpired", produces = MediaType.APPLICATION_JSON)
     @Operation(
+        tags = ['Tokens'],
         method = "POST",
         summary = "Remove Expired Tokens",
         description = 'Remove expired tokens for the specified User. Since: v19',
@@ -744,21 +721,16 @@ Since: v11
                     type = 'string'
                 )
             )
-        ],
-        responses=[
-            @ApiResponse(
-                responseCode = "200",
-                description = "Remove expired tokens result",
-
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = RemoveExpiredTokens)
-                )
-            ),
-
         ]
     )
-    @Tag(name = "Tokens")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Remove expired tokens result",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = RemoveExpiredTokens)
+        )
+    )
     /**
      * /api/19/tokens/$user/removeExpired
      */
@@ -805,12 +777,12 @@ Since: v11
      * /api/1/system/info: display stats and info about the server
      */
     @Get(uri="/system/info", produces = MediaType.APPLICATION_JSON)
-    @Operation(method = "GET", summary = "Get Rundeck server information and stats",
+    @Operation(method = "GET", summary = "Get Rundeck server information and stats", 
+            tags = ['System'],
             description = "Display stats and info about the rundeck server"
     )
     @ApiResponse(responseCode = "200", description = "System info response", content = @Content(mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation= SystemInfoModel.class)))
-    @Tag(name = "System")
     def apiSystemInfo(){
         if (!apiService.requireApi(request, response)) {
             return

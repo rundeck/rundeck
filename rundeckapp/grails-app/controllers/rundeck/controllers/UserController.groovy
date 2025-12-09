@@ -287,17 +287,14 @@ Since: v21''',
     "email":"user@server.com"
 }''')
             )
-        ),
-        responses=[
-            @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
-            @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
-            @ApiResponse(responseCode='200',description = 'User Profile Data',
-                content=@Content(
-                        mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object')
-                )
-            )
-        ]
-
+        )
+    )
+    @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse)))
+    @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse)))
+    @ApiResponse(responseCode='200',description = 'User Profile Data',
+        content=@Content(
+                mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object')
+        )
     )
     protected def apiOtherUserDataPost_docs(){}
 
@@ -320,17 +317,14 @@ Since: v21''',
     "email":"user@server.com"
 }''')
             )
-        ),
-        responses=[
-            @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
-            @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
-            @ApiResponse(responseCode='200',description = 'User Profile Data',
-                    content=@Content(
-                            mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object')
-                    )
+        )
+    )
+    @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse)))
+    @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse)))
+    @ApiResponse(responseCode='200',description = 'User Profile Data',
+            content=@Content(
+                    mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object')
             )
-        ]
-
     )
     protected def apiUserDataPost_docs(){}
 
@@ -341,23 +335,20 @@ Since: v21''',
         description='''Get the user profile data for current user.
 
 Since: v21''',
-        tags = ['User'],
-        responses=[
-            @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
-            @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
-            @ApiResponse(responseCode='200',description = 'User Profile Data',
-                content=@Content(
-                    mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object'),
-                    examples = @ExampleObject('''{
+        tags = ['User']
+    )
+    @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse)))
+    @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse)))
+    @ApiResponse(responseCode='200',description = 'User Profile Data',
+        content=@Content(
+            mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object'),
+            examples = @ExampleObject('''{
   "login": "username",
   "firstName": "first name",
   "lastName": "last name",
   "email": "email@domain"
 }''')
-                )
-            )
-        ]
-
+        )
     )
     protected def apiUserData_docs(){}
 
@@ -379,16 +370,14 @@ Since: v21''',
                 description = 'Username, for a different user',
                 schema = @Schema(type = 'string')
             )
-        ],
-        responses=[
-            @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
-            @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
-            @ApiResponse(responseCode='200',description = 'User Profile Data',
-                    content=@Content(
-                            mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object')
-                    )
-            )
         ]
+    )
+    @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse)))
+    @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse)))
+    @ApiResponse(responseCode='200',description = 'User Profile Data',
+            content=@Content(
+                    mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object')
+            )
     )
     def apiUserData(){
         if (!apiService.requireVersion(request, response, ApiVersions.V21)) {

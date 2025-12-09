@@ -529,24 +529,6 @@ class EditOptsController extends ControllerBase{
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = OptionValidateRequest)
         )),
-        responses=[
-            @ApiResponse(
-                responseCode = "200",
-                description = "Option validation with no errors",
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = OptionValidateResponse)
-                )
-            ),
-            @ApiResponse(
-                responseCode = "400",
-                description = "Option validation with errors, the messages will contain the validation errors keyed by input field path",
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = OptionValidateResponse)
-                )
-            )
-        ],
         description = """Validates an option defintion for a job, returns any validation errors.
 
 If any validation errors occur, the response will use code 400, otherwise 200 will be returned.
@@ -563,6 +545,22 @@ The data format corresponds with a Job Option definition in Job JSON format, wit
 
 Since: V47""",
         summary = "Validate an option"
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Option validation with no errors",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = OptionValidateResponse)
+        )
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "Option validation with errors, the messages will contain the validation errors keyed by input field path",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = OptionValidateResponse)
+        )
     )
     def apiValidateOption(
         @Parameter(in= ParameterIn.PATH,description='Project name') String project,

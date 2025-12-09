@@ -3172,37 +3172,35 @@ Authorization Required: `read` for `system` resource
 Since: V32
 """,
         tags = ["System"],
-        parameters = @Parameter(
+        parameters = [@Parameter(
             name="passiveAs503",
             description="if true, return 503 response when execution mode is passive. Since: v36",
             in=ParameterIn.QUERY,
             schema=@Schema(type="boolean")
-        ),
-        responses=[
-            @ApiResponse(
-                responseCode="200",
-                description="Execution Mode status result for API v36+, or for active status only for API<v36.",
-                content=[@Content(
-                    mediaType='application/json',
-                    schema = @Schema(implementation= ExecutionModeResult),
-                    examples=[
-                        @ExampleObject(name="active",value="{\"executionMode\":\"active\"}"),
-                        @ExampleObject(name="passive",value="{\"executionMode\":\"passive\"}")
-                    ]
-                )]
-            ),
-            @ApiResponse(
-                responseCode="503",
-                description="Service unavailable status result when execution mode is passive for API<v36, or for API v36+ when `passiveAs503=true`",
-                content=[@Content(
-                    mediaType='application/json',
-                    schema = @Schema(implementation= ExecutionModeResult),
-                    examples=[
-                        @ExampleObject(name="passive",value="{\"executionMode\":\"passive\"}")
-                    ]
-                )]
-            )
-        ]
+        )]
+    )
+    @ApiResponse(
+        responseCode="200",
+        description="Execution Mode status result for API v36+, or for active status only for API<v36.",
+        content=@Content(
+            mediaType='application/json',
+            schema = @Schema(implementation= ExecutionModeResult),
+            examples=[
+                @ExampleObject(name="active",value="{\"executionMode\":\"active\"}"),
+                @ExampleObject(name="passive",value="{\"executionMode\":\"passive\"}")
+            ]
+        )
+    )
+    @ApiResponse(
+        responseCode="503",
+        description="Service unavailable status result when execution mode is passive for API<v36, or for API v36+ when `passiveAs503=true`",
+        content=@Content(
+            mediaType='application/json',
+            schema = @Schema(implementation= ExecutionModeResult),
+            examples=[
+                @ExampleObject(name="passive",value="{\"executionMode\":\"passive\"}")
+            ]
+        )
     )
     /**
      * /api/V/system/executions/status

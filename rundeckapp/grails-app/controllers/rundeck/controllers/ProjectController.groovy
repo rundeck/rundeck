@@ -1282,6 +1282,7 @@ Otherwise if XML or JSON is requested, the YAML text will be wrapped within that
 
 Authorization required: `create` access for `Project ACL` resource type or `admin` or `app_admin` access for `user` resource type.
 Since: v14""",
+            tags = ['ACL'],
             requestBody = @RequestBody(
                     content = [
                             @Content(
@@ -1334,11 +1335,6 @@ by:
                             required = true,
                             schema = @Schema(implementation = String.class)
                     )
-            ]
-    )
-    @Tags(
-            [
-                    @Tag(name="ACL")
             ]
     )
     @ApiResponse(
@@ -1406,6 +1402,7 @@ Otherwise if XML or JSON is requested, the YAML text will be wrapped within that
 
 Authorization required: `update` access for `Project ACL` resource type or `admin` or `app_admin` access for `user` resource type.
 Since: v14""",
+            tags = ['ACL'],
             requestBody = @RequestBody(
                     content = [
                             @Content(
@@ -1458,11 +1455,6 @@ by:
                             required = true,
                             schema = @Schema(implementation = String.class)
                     )
-            ]
-    )
-    @Tags(
-            [
-                    @Tag(name="ACL")
             ]
     )
     @ApiResponse(

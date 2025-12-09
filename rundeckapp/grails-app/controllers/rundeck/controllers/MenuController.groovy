@@ -3216,14 +3216,15 @@ Authorization required: `view` or `read` for each Job resource.
                 description='specify a tag or comma separated list of tags to list Jobs that have matching tags. (e.g. `tags=tag1,tag2`)',
                 schema=@Schema(type='integer')
             )
-        ],
-        responses=@ApiResponse(
-            responseCode='200',
-            description='Job List',
-            content=@Content(
-                mediaType=MediaType.APPLICATION_JSON,
-                array = @ArraySchema(schema=@Schema(implementation = JobInfo)),
-                examples=@ExampleObject('''[
+        ]
+    )
+    @ApiResponse(
+        responseCode='200',
+        description='Job List',
+        content=@Content(
+            mediaType=MediaType.APPLICATION_JSON,
+            array = @ArraySchema(schema=@Schema(implementation = JobInfo)),
+            examples=@ExampleObject('''[
   {
     "id": "[UUID]",
     "name": "[name]",
@@ -3237,7 +3238,6 @@ Authorization required: `view` or `read` for each Job resource.
     "enabled": true
   }
 ]''')
-            )
         )
     )
     /**
