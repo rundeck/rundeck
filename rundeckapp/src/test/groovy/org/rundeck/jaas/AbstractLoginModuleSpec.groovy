@@ -36,7 +36,7 @@ class AbstractLoginModuleSpec extends Specification {
         UserInfo testUserInfo
         
         @Override
-        protected UserInfo getUserInfo(String username) throws Exception {
+        public UserInfo getUserInfo(String username) throws Exception {
             return testUserInfo
         }
     }
