@@ -1080,8 +1080,17 @@ one, in JSON this will be represented with a `null` value.""",
             @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type = "object"),
-                examples=@ExampleObject(
-                    value="""{
+                examples=[
+                    @ExampleObject(
+                        name = 'log-output-compacted',
+                        description = """
+In this example, four log entries are included. The first includes all Log Entry fields.
+The second is only a String, indicating only `log` value changed.
+The third is an empty object, indicating the previous Log Entry was repeated identically.
+The fourth specifies a new value for `stepctx` and `log` and `level` to use.
+The fifth specifies a `node` and `stepctx` of `null`: indicating the `node` and `stepctx` values should be removed for
+this Log Entry.""",
+                        value="""{
   "id": 1,
   
   "compacted": "true",
@@ -1109,14 +1118,9 @@ one, in JSON this will be represented with a `null` value.""",
       "node": null
     }
   ]
-}""",
-                    description="""
-In this example, four log entries are included. The first includes all Log Entry fields.
-The second is only a String, indicating only `log` value changed.
-The third is an empty object, indicating the previous Log Entry was repeated identically.
-The fourth specifies a new value for `stepctx` and `log` and `level` to use.
-The fifth specifies a `node` and `stepctx` of `null`: indicating the `node` and `stepctx` values should be removed for
-this Log Entry.""")
+}"""
+                    )
+                ]
             ),
             @Content(
                 mediaType = MediaType.TEXT_PLAIN,
