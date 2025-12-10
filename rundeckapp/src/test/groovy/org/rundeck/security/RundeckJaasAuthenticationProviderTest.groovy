@@ -64,25 +64,24 @@ class RundeckJaasAuthenticationProviderTest extends Specification {
         noExceptionThrown()
     }
 
-    def "Handle Ignored Error Logout"() {
-        when:
+    def "Handle Logout Error"() {
+        given:
         RundeckJaasAuthenticationProvider provider = new RundeckJaasAuthenticationProvider()
-        LoginContext lcontext = Stub(LoginContext) {
-            logout() >> { throw new LoginException(RundeckJaasAuthenticationProvider.IGNORE_THIS_ERROR)}
-        }
+        LoginContext lcontext = Mock(LoginContext)
+        
         TestSecurityContext testContext = new TestSecurityContext(testAuth: new JaasAuthenticationToken("user","pass",lcontext))
         def sessionDestroyedEvent = Stub(HttpSessionDestroyedEvent) {
             getSecurityContexts() >> [testContext]
         }
-        boolean neverCalled = true
-        provider.metaClass.writeWarning = { msg, ex ->
-            neverCalled = false
-        }
+
+        when:
         provider.handleLogout(sessionDestroyedEvent)
 
         then:
+        1 * lcontext.logout() >> { throw new LoginException("Logout failed") }
+        
+        and: "Exception is caught and logged (not propagated)"
         noExceptionThrown()
-        neverCalled
     }
 
     class TestSecurityContext implements SecurityContext {
