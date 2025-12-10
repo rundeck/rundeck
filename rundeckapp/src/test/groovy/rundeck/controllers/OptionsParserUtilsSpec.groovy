@@ -85,9 +85,7 @@ class OptionsParserUtilsSpec extends Specification implements ControllerUnitTest
     def "add user email to option context"() {
         setup:
         if(username) {
-            def user = new User(login: username, email: email)
-            user.id = 1L
-            user.save()
+            new User(login: username, email: email).save()
             User.list()
         }
 
