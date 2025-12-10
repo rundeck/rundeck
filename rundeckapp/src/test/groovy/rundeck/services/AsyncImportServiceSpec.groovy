@@ -1,7 +1,5 @@
 package rundeck.services
 
-import grails.testing.mixin.integration.Integration
-
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IFramework
@@ -22,7 +20,6 @@ import java.util.function.Predicate
 import java.util.stream.Collectors
 import java.util.zip.ZipOutputStream
 
-@Integration
 class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<AsyncImportService>, GrailsWebUnitTest{
 
     private def mockStatusFile(
