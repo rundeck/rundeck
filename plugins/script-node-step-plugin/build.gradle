@@ -22,6 +22,10 @@ dependencies {
     implementation "org.apache.groovy:groovy:${findProperty('groovy.version')}"
 
     testImplementation "org.spockframework:spock-core:${spockVersion}"
+    // Pattern #10: Spock mocking dependencies for Java 17 + Groovy 4
+    testImplementation "org.objenesis:objenesis:3.3"
+    testImplementation "cglib:cglib-nodep:3.3.0"
+    testImplementation "net.bytebuddy:byte-buddy:1.14.11"
 }
 
 repositories {
