@@ -309,7 +309,7 @@ class BasicJobsSpec extends SeleniumBase {
             jobShowPage.jobRowLink.collect { it.getText() } == ["selenium-option-test1"]
     }
 
-    def "job filter by name and - top group 2 results"() {
+    def "job filter by name and - top group 3 results"() {
         given:
             def jobShowPage = go JobShowPage, SELENIUM_BASIC_PROJECT
         when:
@@ -327,7 +327,7 @@ class BasicJobsSpec extends SeleniumBase {
         where:
             expected = [
                 "predefined job with options",
-//                "create valid job basic options next ui",
+                "create valid job basic options next ui",
                 "create valid job basic options old ui"
             ]
     }
