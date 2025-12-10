@@ -4013,7 +4013,11 @@ Because each ACLPOLICY document can contain multiple Yaml documents, each will b
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(type='object'),
-            examples = @ExampleObject('''{
+            examples = [
+                @ExampleObject(
+                    name = 'acl-validation-error',
+                    description = 'ACL validation error response',
+                    value = '''{
   "valid": false,
   "policies": [
     {
@@ -4032,7 +4036,9 @@ Because each ACLPOLICY document can contain multiple Yaml documents, each will b
       ]
     }
   ]
-}''')
+}'''
+                )
+            ]
         )
     )
     protected def apiSystemAcls_PUT_docs(){}
@@ -4106,31 +4112,49 @@ by:
         content = [
             @Content(
                 mediaType = 'text/plain',
-                examples = @ExampleObject('''description: "my policy"
+                examples = [
+                    @ExampleObject(
+                        name = 'acl-policy',
+                        description = 'ACL policy document',
+                        value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                    )
+                ]
             ),
             @Content(
                 mediaType = MediaType.APPLICATION_YAML,
-                examples = @ExampleObject('''description: "my policy"
+                examples = [
+                    @ExampleObject(
+                        name = 'acl-policy',
+                        description = 'ACL policy document',
+                        value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                    )
+                ]
             ),
             @Content(
                 mediaType = MediaType.APPLICATION_JSON,
-                examples = @ExampleObject('''{
+                examples = [
+                    @ExampleObject(
+                        name = 'acl-contents',
+                        description = 'ACL policy contents',
+                        value = '''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
-}''')
+}'''
+                    )
+                ]
             )
         ]
     )
@@ -4165,7 +4189,11 @@ Because each ACLPOLICY document can contain multiple Yaml documents, each will b
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(type='object'),
-            examples = @ExampleObject('''{
+            examples = [
+                @ExampleObject(
+                    name = 'acl-validation-error',
+                    description = 'ACL validation error response',
+                    value = '''{
   "valid": false,
   "policies": [
     {
@@ -4184,7 +4212,9 @@ Because each ACLPOLICY document can contain multiple Yaml documents, each will b
       ]
     }
   ]
-}''')
+}'''
+                )
+            ]
         )
     )
     protected def apiSystemAcls_POST_docs(){}
@@ -4217,31 +4247,49 @@ Since: v14""",
         content = [
             @Content(
                 mediaType = 'text/plain',
-                examples = @ExampleObject('''description: "my policy"
+                examples = [
+                    @ExampleObject(
+                        name = 'acl-policy',
+                        description = 'ACL policy document',
+                        value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                    )
+                ]
             ),
             @Content(
                 mediaType = MediaType.APPLICATION_YAML,
-                examples = @ExampleObject('''description: "my policy"
+                examples = [
+                    @ExampleObject(
+                        name = 'acl-policy',
+                        description = 'ACL policy document',
+                        value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                    )
+                ]
             ),
             @Content(
                 mediaType = MediaType.APPLICATION_JSON,
-                examples = @ExampleObject('''{
+                examples = [
+                    @ExampleObject(
+                        name = 'acl-contents',
+                        description = 'ACL policy contents',
+                        value = '''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
-}''')
+}'''
+                    )
+                ]
             )
         ]
     )
