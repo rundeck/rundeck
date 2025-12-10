@@ -1151,7 +1151,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     description = "Project configuration retrieved successfully",
     content = @Content(
         mediaType = MediaType.APPLICATION_JSON,
-        schema = @Schema(implementation = Map),
+        schema = @Schema(type = 'object', additionalProperties = Schema.AdditionalPropertiesValue.TRUE),
         examples = [
             @ExampleObject(
                 name = "projectConfig",

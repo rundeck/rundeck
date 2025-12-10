@@ -545,7 +545,7 @@ Authorization under the key path `project/{project}` can be granted at the proje
   "name": "test1.pub",
   "type": "file",
   "path": "keys/test1.pub"
-}''',name='key-metadata',summary='Key Metadata Result'),
+}''',name='key-metadata',description='Key Metadata Result'),
                     ]
             ),
             @Content(
@@ -896,7 +896,7 @@ Authorization under the key path `project/{project}` can be granted at the proje
   "name": "test1.pub",
   "type": "file",
   "path": "keys/test1.pub"
-}''',name='key-metadata',summary='Key Metadata Result'),
+}''',name='key-metadata',description='Key Metadata Result'),
                 @ExampleObject(value='''
 {
   "resources": [
@@ -943,14 +943,14 @@ Authorization under the key path `project/{project}` can be granted at the proje
   "url": "http://rundeckhost/api/11/storage/keys",
   "type": "directory",
   "path": "keys"
-}''', name='list-keys',summary='List Directory')]
+}''', name='list-keys',description='List Directory')]
         ),
         @Content(
             mediaType = 'application/pgp-keys',
             schema=@Schema(type='string'),
             examples = @ExampleObject(
                 name='public-key',
-                summary='Public Key contents',
+                description='Public Key contents',
                 value='''...Public Key Contents...'''
             )
         )
