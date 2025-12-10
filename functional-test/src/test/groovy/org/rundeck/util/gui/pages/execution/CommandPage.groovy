@@ -27,6 +27,14 @@ class CommandPage extends BasePage {
     By execLogContentBy = By.className("execution-log__content-text")
     By runningExecStateBy = By.cssSelector(".execstate.execstatedisplay.overall")
     By activityRowAdhocBy = By.cssSelector(".link.activity_row.autoclickable.succeed.adhoc")
+    
+    // Node popover selectors
+    By nodeElementsBy = By.cssSelector(".node_ident.embedded_node.tight")
+    By popoverContainerBy = By.cssSelector(".popover")
+    By popoverContentBy = By.cssSelector(".popover-content")
+    By popoverParameterRowsBy = By.cssSelector(".popover-content .node-details-simple tbody tr")
+    By parameterKeyBy = By.cssSelector(".key")
+    By parameterValueBy = By.cssSelector(".value")
 
     CommandPage(final SeleniumContext context) {
         super(context)
@@ -111,6 +119,66 @@ class CommandPage extends BasePage {
         commandTextField.sendKeys command
         runButton.click()
         waitForElementAttributeToChange runningExecutionStateButton, 'data-execstate', state
+    }
+
+    List<WebElement> getNodeElements() {
+        waitForNumberOfElementsToBeMoreThan(nodeElementsBy, 0)
+        els nodeElementsBy
+    }
+
+    void clickNode(int index) {
+        def nodes = getNodeElements()
+        if (nodes.size() <= index) {
+            throw new IndexOutOfBoundsException("Node index ${index} is out of bounds. Only ${nodes.size()} nodes available.")
+        }
+        waitForElementToBeClickable nodes[index]
+        nodes[index].click()
+        // Wait for popover container to start appearing (popover animation)
+        waitForElementVisible popoverContainerBy
+    }
+
+    void waitForPopoverToAppear() {
+        waitForElementVisible popoverContainerBy
+        waitForElementVisible popoverContentBy
+    }
+
+    WebElement getPopoverContent() {
+        waitForPopoverToAppear()
+        el popoverContentBy
+    }
+
+    List<WebElement> getPopoverParameterRows() {
+        waitForPopoverToAppear()
+        // Wait for at least one parameter row to be present, ensuring content is fully loaded
+        waitForNumberOfElementsToBeMoreThan(popoverParameterRowsBy, 0)
+        els popoverParameterRowsBy
+    }
+
+    String getParameterKey(WebElement row) {
+        try {
+            def keyElement = row.findElement(parameterKeyBy)
+            return keyElement.text.trim()
+        } catch (Exception e) {
+            return null
+        }
+    }
+
+    String getParameterValue(WebElement row) {
+        try {
+            def valueElement = row.findElement(parameterValueBy)
+            return valueElement.text.trim()
+        } catch (Exception e) {
+            // Try to get text from the row itself if value cell doesn't exist
+            return row.text.trim()
+        }
+    }
+
+    boolean isParameterRowVisible(WebElement row) {
+        try {
+            return row.isDisplayed()
+        } catch (Exception e) {
+            return false
+        }
     }
 
 }
