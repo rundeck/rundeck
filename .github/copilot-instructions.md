@@ -54,6 +54,64 @@ Changes to front-end code (javascript, and typescript) should have accompanying 
 
 Changes that add or significantly change features of the application user interface, should have Selenium based tests added in the pro-functional-test module.
 
+## Selenium Testing Guidelines
+
+Selenium tests must follow the Page Object Model pattern and these strict guidelines:
+
+### Wait Strategies
+- **AVOID using `Thread.sleep()` or `sleep()`** - These make tests slow and flaky
+- **NEVER use implicit waits** - They interfere with explicit waits and cause unpredictable behavior
+- **ALWAYS use explicit waits** provided by the Page Object base classes:
+  - `waitForElementVisible()` - Wait for element to be present AND visible
+  - `waitForElementToBeClickable()` - Wait for element to be visible AND enabled
+  - `waitForElementAttributeToChange()` - Wait for specific attribute changes
+  - `waitForNumberOfElementsToBeMoreThan()` - Wait for multiple elements to be present
+
+### Page Object Model
+- **NEVER put CSS/XPath selectors directly in test files** - All selectors belong in Page Object classes
+- **Define selectors as `By` fields** at the top of Page Object classes:
+  ```groovy
+  By nodeDetailsTableBy = By.cssSelector(".popover-content .node-details-simple")
+  By parameterKeyBy = By.cssSelector(".key")
+  ```
+- **Create getter methods** that include appropriate waits:
+  ```groovy
+  WebElement getNodeDetailsTable() {
+      waitForPopoverToAppear()
+      waitForElementVisible nodeDetailsTableBy
+      el nodeDetailsTableBy
+  }
+  ```
+- **Encapsulate interactions** - Complex operations should be methods in Page Objects, not inline in tests
+
+### Test Structure
+- Tests should read like documentation - clear when/then/expect blocks
+- Document methods with Groovydoc explaining purpose and behavior
+
+### Examples
+✅ **Correct**:
+```groovy
+// In CommandPage.groovy
+By nodeDetailsTableBy = By.cssSelector(".popover-content .node-details-simple")
+
+WebElement getNodeDetailsTable() {
+    waitForPopoverToAppear()
+    waitForElementVisible nodeDetailsTableBy
+    el nodeDetailsTableBy
+}
+
+// In CommandSpec.groovy
+def nodeDetailsTable = commandPage.getNodeDetailsTable()
+assert nodeDetailsTable.isDisplayed()
+```
+
+❌ **Incorrect**:
+```groovy
+// In test file - DON'T DO THIS
+Thread.sleep(2000)  // Never use sleep!
+def table = driver.findElement(By.cssSelector(".popover-content .node-details-simple"))  // Selector in test!
+```
+
 # APIs
 
 Changes to APIs should be documented with appropriate OpenAPI Spec annotations on the Grails controller actions that implement the API endpoints.
