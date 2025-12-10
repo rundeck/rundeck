@@ -89,8 +89,16 @@ public class PasswordCredential {
                 
             case MD5:
                 try {
-                    String hashedInput = md5Hash(passwordStr);
-                    return encodedPassword.equals(hashedInput);
+                    // Support both hex (32 chars, old Jetty format) and base64 (24 chars)
+                    if (encodedPassword.length() == 32) {
+                        // Hex format (old Jetty Credential.MD5.digest())
+                        String hexHash = md5DigestHex(passwordStr);
+                        return encodedPassword.equals(hexHash);
+                    } else {
+                        // Base64 format (new standard)
+                        String base64Hash = md5Hash(passwordStr);
+                        return encodedPassword.equals(base64Hash);
+                    }
                 } catch (NoSuchAlgorithmException e) {
                     return false;
                 }
@@ -116,6 +124,13 @@ public class PasswordCredential {
         MessageDigest md = MessageDigest.getInstance("MD5");
         byte[] digest = md.digest(password.getBytes(StandardCharsets.UTF_8));
         return Base64.getEncoder().encodeToString(digest);
+    }
+    
+    /**
+     * Generate MD5 hash as hex string (old Jetty format)
+     */
+    private String md5DigestHex(String password) throws NoSuchAlgorithmException {
+        return md5Digest(password);
     }
     
     /**
