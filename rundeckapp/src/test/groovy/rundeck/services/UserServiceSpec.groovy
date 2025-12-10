@@ -50,7 +50,7 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         mockDataService(UserDataService)
         provider.userDataService = applicationContext.getBean(UserDataService)
 
-        // service = new UserService() // Removed - let ServiceUnitTest trait provide it
+        service = new UserService()
         service.userDataProvider = provider
     }
     def "UpdateUserProfile"() {
