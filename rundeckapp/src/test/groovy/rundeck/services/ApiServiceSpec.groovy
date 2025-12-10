@@ -23,10 +23,9 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import grails.converters.JSON
 import grails.testing.gorm.DataTest
-import grails.testing.web.controllers.ControllerUnitTest
+import grails.testing.services.ServiceUnitTest
 import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
-import org.grails.plugins.codecs.JSONCodec
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
 import org.rundeck.app.data.providers.GormTokenDataProvider
@@ -49,20 +48,24 @@ import java.time.ZoneId
 /**
  * Created by greg on 7/28/15.
  */
-class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiController>, DataTest {
+class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService>, DataTest {
 
     ApiService service
     GormTokenDataProvider provider = new GormTokenDataProvider()
 
     void setup() {
-        mockCodec(JSONCodec)
         mockDomains(AuthToken, User)
         mockDataService(AuthTokenDataService)
 
         provider.authTokenDataService = applicationContext.getBean(AuthTokenDataService)
 
         provider.userDataProvider = Mock(GormUserDataProvider){
-            findOrCreateUser(_) >>  new User(login: 'auser').save()
+            findOrCreateUser(_) >> {
+                def user = new User(login: 'auser')
+                user.id = 1L  // Explicitly set id for unit test
+                user.save()
+                return user
+            }
         }
         service = new ApiService()
         service.tokenDataProvider = provider
