@@ -66,6 +66,12 @@ Selenium tests must follow the Page Object Model pattern and these strict guidel
   - `waitForElementToBeClickable()` - Wait for element to be visible AND enabled
   - `waitForElementAttributeToChange()` - Wait for specific attribute changes
   - `waitForNumberOfElementsToBeMoreThan()` - Wait for multiple elements to be present
+  - `waitForNumberOfElementsToBe()` - Wait for the number of elements to match a specific count
+  - `waitForTextToBePresentInElement()` - Wait for specific text to appear in an element
+  - `waitForUrlToContain()` - Wait for the current URL to contain a specific substring
+  - `waitForAttributeContains()` - Wait for an element's attribute to contain a specific value
+  - `waitIgnoringForElementVisible()` - Wait for element to be visible, ignoring certain exceptions
+  - `waitIgnoringForElementToBeClickable()` - Wait for element to be clickable, ignoring certain exceptions
 
 ### Page Object Model
 - **NEVER put CSS/XPath selectors directly in test files** - All selectors belong in Page Object classes
