@@ -269,21 +269,14 @@ class JettyCachingLdapLoginModuleCaseInsensitiveSpec extends Specification {
     // Helper methods
 
     private JettyCachingLdapLoginModule createModuleWithFeatureFlag(boolean enabled) {
-        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
+        JettyCachingLdapLoginModule module = Spy(JettyCachingLdapLoginModule)  // Use Spy for Groovy 4 compatibility
         
-        // Mock feature service
-        def mockFeatureService = Mock(FeatureService) {
-            featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> enabled
-        }
-        def mockContext = Mock(ApplicationContext) {
-            containsBeanDefinition("featureService") >> true
-            getBean("featureService") >> mockFeatureService
-        }
-        Holders.metaClass.static.findApplicationContext = { -> mockContext }
+        // Mock isCaseInsensitiveUsernameEnabled() directly (Pattern #9: Groovy 4 metaClass fix)
+        module.isCaseInsensitiveUsernameEnabled() >> enabled
         
-        // Mock configuration service
+        // Mock configuration service (also Pattern #9: instance metaClass)
         def mockConfigService = Mock(ConfigurationService)
-        module.metaClass.getConfigurationService = { -> mockConfigService }
+        module.getConfigurationService() >> mockConfigService
         
         // Initialize module
         Subject subject = new Subject()
