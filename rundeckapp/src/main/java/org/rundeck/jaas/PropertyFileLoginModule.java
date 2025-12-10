@@ -87,9 +87,23 @@ public class PropertyFileLoginModule extends AbstractLoginModule {
             props.load(fis);
         }
         
-        userProperties = props;
+        // Normalize property keys if case-insensitive feature is enabled
+        if (isCaseInsensitiveUsernameEnabled()) {
+            Properties normalizedProps = new Properties();
+            for (String key : props.stringPropertyNames()) {
+                String normalizedKey = key.toLowerCase();
+                normalizedProps.setProperty(normalizedKey, props.getProperty(key));
+                if (isDebug() && !key.equals(normalizedKey)) {
+                    debug("Normalized property key from '" + key + "' to '" + normalizedKey + "'");
+                }
+            }
+            userProperties = normalizedProps;
+        } else {
+            userProperties = props;
+        }
+        
         lastModified = currentModified;
-        debug("Loaded " + props.size() + " users from " + propertyFileName);
+        debug("Loaded " + userProperties.size() + " users from " + propertyFileName);
     }
     
     /**
@@ -102,12 +116,15 @@ public class PropertyFileLoginModule extends AbstractLoginModule {
     public UserInfo getUserInfo(String username) throws Exception {
         loadPropertyFile();
         
-        if (userProperties == null || !userProperties.containsKey(username)) {
-            debug("User not found in property file: " + username);
+        // Normalize username for case-insensitive lookup (if feature enabled)
+        String lookupUsername = normalizeUsername(username);
+        
+        if (userProperties == null || !userProperties.containsKey(lookupUsername)) {
+            debug("User not found in property file: " + lookupUsername);
             return null;
         }
         
-        String value = userProperties.getProperty(username);
+        String value = userProperties.getProperty(lookupUsername);
         if (value == null || value.trim().isEmpty()) {
             debug("Empty value for user: " + username);
             return null;

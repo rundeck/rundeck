@@ -45,12 +45,10 @@ class PropertyFileLoginModuleCaseInsensitiveSpec extends Specification {
         
         // Create test properties file with users
         testPropertiesFile.text = """
-# User with lowercase
-testuser: password, roles: developers,users
-# User with mixed case (stored as-is in file)
-TestUser: password, roles: developers,users  
-# User with uppercase
-ADMIN: admin123, roles: admin,users
+# User with lowercase (case-insensitive feature will normalize all lookups)
+testuser: password,developers,users
+# Admin user (lowercase in file, can be accessed with any case)
+admin: admin123,admin,users
 """
     }
 
