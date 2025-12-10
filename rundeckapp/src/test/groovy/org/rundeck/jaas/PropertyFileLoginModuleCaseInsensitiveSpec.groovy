@@ -45,10 +45,12 @@ class PropertyFileLoginModuleCaseInsensitiveSpec extends Specification {
         
         // Create test properties file with users
         testPropertiesFile.text = """
-# User with lowercase (case-insensitive feature will normalize all lookups)
-testuser: password,developers,users
-# Admin user (lowercase in file, can be accessed with any case)
-admin: admin123,admin,users
+# Property file with multiple case variations
+# Case-insensitive mode: all variations should work
+# Case-sensitive mode: exact match required
+testuser:password,developers,users
+TestUser:password,developers,users  
+ADMIN:admin123,admin,users
 """
     }
 
@@ -123,7 +125,7 @@ admin: admin123,admin,users
         PropertyFileLoginModule module = createModuleWithFeatureFlag(true, testPropertiesFile)
         Subject subject = new Subject()
         setupCallbackHandler(module, "TestUser", "password")
-        module.@subject = subject
+        module.setSubject(subject)  // Use setter instead of @field access (Groovy 4)
 
         when: "Login and commit"
         module.login()

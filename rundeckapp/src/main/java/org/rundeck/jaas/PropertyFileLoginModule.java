@@ -87,23 +87,10 @@ public class PropertyFileLoginModule extends AbstractLoginModule {
             props.load(fis);
         }
         
-        // Normalize property keys if case-insensitive feature is enabled
-        if (isCaseInsensitiveUsernameEnabled()) {
-            Properties normalizedProps = new Properties();
-            for (String key : props.stringPropertyNames()) {
-                String normalizedKey = key.toLowerCase();
-                normalizedProps.setProperty(normalizedKey, props.getProperty(key));
-                if (isDebug() && !key.equals(normalizedKey)) {
-                    debug("Normalized property key from '" + key + "' to '" + normalizedKey + "'");
-                }
-            }
-            userProperties = normalizedProps;
-        } else {
-            userProperties = props;
-        }
-        
+        // Don't normalize keys - case-insensitive lookup will handle it
+        userProperties = props;
         lastModified = currentModified;
-        debug("Loaded " + userProperties.size() + " users from " + propertyFileName);
+        debug("Loaded " + props.size() + " users from " + propertyFileName);
     }
     
     /**
@@ -116,10 +103,16 @@ public class PropertyFileLoginModule extends AbstractLoginModule {
     public UserInfo getUserInfo(String username) throws Exception {
         loadPropertyFile();
         
-        // Normalize username for case-insensitive lookup (if feature enabled)
+        if (userProperties == null) {
+            debug("User properties not loaded");
+            return null;
+        }
+        
+        // Normalize username if case-insensitive feature is enabled
+        // (handles both direct calls and calls from AbstractLoginModule.login())
         String lookupUsername = normalizeUsername(username);
         
-        if (userProperties == null || !userProperties.containsKey(lookupUsername)) {
+        if (!userProperties.containsKey(lookupUsername)) {
             debug("User not found in property file: " + lookupUsername);
             return null;
         }
