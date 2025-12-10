@@ -683,13 +683,19 @@ Authorization required: `read` for each project resource. Only authorized projec
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             array = @ArraySchema(schema = @Schema(type = 'object')),
-            examples = @ExampleObject('''[
+            examples = [
+                @ExampleObject(
+                    name = 'projects-list',
+                    description = 'List of projects',
+                    value = '''[
     {
         "name":"...",
         "description":"...",
         "url":"..."
     }
-]''')
+]'''
+                )
+            ]
         )
     )
     /**
@@ -759,7 +765,13 @@ Authorization required: `read` access for `project` resource type to get basic p
             content = @Content(
                     mediaType = MediaType.APPLICATION_JSON,
                     schema=@Schema(type='object'),
-                    examples = @ExampleObject('{"description": "",  "name": "PROJECT_NAME",  "url": "http://server:4440/api/11/project/PROJECT_NAME", "config": {  }}')
+                    examples = [
+                        @ExampleObject(
+                            name = 'project-details',
+                            description = 'Project details response',
+                            value = '{"description": "",  "name": "PROJECT_NAME",  "url": "http://server:4440/api/11/project/PROJECT_NAME", "config": {  }}'
+                        )
+                    ]
             )
     )
     @RdAuthorizeProject(RundeckAccess.General.AUTH_APP_READ)
@@ -819,12 +831,18 @@ Authorization required: `create` for resource type `project`
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(type = 'object'),
-            examples = @ExampleObject('''{
+            examples = [
+                @ExampleObject(
+                    name = 'project-created',
+                    description = 'Project created response',
+                    value = '''{
   "description": "",
   "name": "NAME",
   "url": "http://server:4440/api/11/project/NAME",
   "config": {  }
-}''')
+}'''
+                )
+            ]
         )
     )
     @RdAuthorizeApplicationType(
@@ -1134,10 +1152,11 @@ Authorization required: `configure` access for `project` resource type or `admin
     content = @Content(
         mediaType = MediaType.APPLICATION_JSON,
         schema = @Schema(implementation = Map),
-        examples = @ExampleObject(
-            name = "projectConfig",
-            summary = "Example project configuration",
-            value = '''{
+        examples = [
+            @ExampleObject(
+                name = "projectConfig",
+                description = "Example project configuration",
+                value = '''{
             "project.description": "My Project Description",
             "project.label": "My Project",
             "project.disable.executions": "false",
@@ -1156,6 +1175,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             "service.FileCopier.default.provider": "jsch-scp"
             }'''
             )
+        ]
         )
     )
     @GrailsCompileStatic
@@ -1274,9 +1294,15 @@ by:
                     ),
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            examples = @ExampleObject('''{
+                            examples = [
+                                @ExampleObject(
+                                    name = 'acl-contents',
+                                    description = 'ACL policy contents',
+                                    value = '''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
-}''')
+}'''
+                                )
+                            ]
                     )
             ]
     )
@@ -1416,9 +1442,15 @@ by:
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON,
                             schema = @Schema(type = 'object'),
-                            examples = @ExampleObject('''{
+                            examples = [
+                                @ExampleObject(
+                                    name = 'acl-contents',
+                                    description = 'ACL policy contents',
+                                    value = '''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
-}''')
+}'''
+                                )
+                            ]
                     )
             ]
     )
@@ -1571,9 +1603,15 @@ by:
                     ),
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            examples = @ExampleObject('''{
+                            examples = [
+                                @ExampleObject(
+                                    name = 'acl-contents',
+                                    description = 'ACL policy contents',
+                                    value = '''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
-}''')
+}'''
+                                )
+                            ]
                     )
             ]
     )
@@ -1967,12 +2005,24 @@ Authorization required: `configure` access for `project` resource type or `admin
                     @Content(
                             mediaType = MediaType.TEXT_PLAIN,
                             schema=@Schema(type='string'),
-                            examples = @ExampleObject('''The readme contents''')
+                            examples = [
+                                @ExampleObject(
+                                    name = 'readme-text',
+                                    description = 'Readme text content',
+                                    value = '''The readme contents'''
+                                )
+                            ]
                     ),
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON,
                             schema=@Schema(type='object'),
-                            examples = @ExampleObject('''{"contents":"The readme contents"}''')
+                            examples = [
+                                @ExampleObject(
+                                    name = 'readme-json',
+                                    description = 'Readme JSON content',
+                                    value = '''{"contents":"The readme contents"}'''
+                                )
+                            ]
                     )
             ]
     )
@@ -2117,12 +2167,24 @@ Authorization required: `configure` access for `project` resource type or `admin
                     @Content(
                             mediaType = MediaType.TEXT_PLAIN,
                             schema=@Schema(type='string'),
-                            examples = @ExampleObject('''The readme contents''')
+                            examples = [
+                                @ExampleObject(
+                                    name = 'readme-text',
+                                    description = 'Readme text content',
+                                    value = '''The readme contents'''
+                                )
+                            ]
                     ),
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON,
                             schema=@Schema(type='object'),
-                            examples = @ExampleObject('''{"contents":"The readme contents"}''')
+                            examples = [
+                                @ExampleObject(
+                                    name = 'readme-json',
+                                    description = 'Readme JSON content',
+                                    value = '''{"contents":"The readme contents"}'''
+                                )
+                            ]
                     )
             ]
     )
@@ -2454,16 +2516,28 @@ Authorization required: `configure` access for `project` resource type or `admin
                     @Content(
                             mediaType = MediaType.TEXT_PLAIN,
                             schema=@Schema(type='object'),
-                            examples = @ExampleObject('''key=value
-key2=value''')
+                            examples = [
+                                @ExampleObject(
+                                    name = 'config-text',
+                                    description = 'Project config in text format',
+                                    value = '''key=value
+key2=value'''
+                                )
+                            ]
                     ),
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON,
                             schema=@Schema(type='object'),
-                            examples = @ExampleObject('''{
+                            examples = [
+                                @ExampleObject(
+                                    name = 'config-json',
+                                    description = 'Project config in JSON format',
+                                    value = '''{
     "key":"value",
     "key2":"value2..."
-}''')
+}'''
+                                )
+                            ]
                     )
             ]
     )
