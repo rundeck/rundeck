@@ -60,7 +60,7 @@ Selenium tests must follow the Page Object Model pattern and these strict guidel
 
 ### Wait Strategies
 - **AVOID using `Thread.sleep()`** - Prefer explicit waits when possible. Only use `Thread.sleep()` with `WaitingTime` constants for special cases like external system initialization where explicit waits cannot be used.
-- **NEVER use implicit waits** - They interfere with explicit waits and cause unpredictable behavior
+- **Implicit waits are globally configured** - The framework sets a global implicit wait in the `BasePage` constructor and uses `implicitlyWait(2000)` in `go()` methods. This is an established pattern. However, for specific element interactions, **ALWAYS prefer explicit waits** to ensure reliability and avoid unpredictable behavior.
 - **ALWAYS use explicit waits** provided by the Page Object base classes:
   - `waitForElementVisible()` - Wait for element to be present AND visible
   - `waitForElementToBeClickable()` - Wait for element to be visible AND enabled
