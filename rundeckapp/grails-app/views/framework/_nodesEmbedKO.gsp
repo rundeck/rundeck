@@ -29,6 +29,7 @@
            data-container="body"
            data-delay="{&quot;show&quot;:0,&quot;hide&quot;:200}"
            data-popover-template-class="popover-wide"
+           data-sanitize="false"
            data-bind="
                   css: $root.nodeSet().nodeCss(attributes),
                   css2: {
