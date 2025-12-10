@@ -59,7 +59,7 @@ Changes that add or significantly change features of the application user interf
 Selenium tests must follow the Page Object Model pattern and these strict guidelines:
 
 ### Wait Strategies
-- **AVOID using `Thread.sleep()` or `sleep()`** - These make tests slow and flaky
+- **AVOID using `Thread.sleep()`** - Prefer explicit waits when possible. Only use `Thread.sleep()` with `WaitingTime` constants for special cases like external system initialization where explicit waits cannot be used.
 - **NEVER use implicit waits** - They interfere with explicit waits and cause unpredictable behavior
 - **ALWAYS use explicit waits** provided by the Page Object base classes:
   - `waitForElementVisible()` - Wait for element to be present AND visible
