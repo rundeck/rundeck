@@ -112,6 +112,10 @@ dependencies {
     // Force Jakarta Annotation API 3.0.0 for annotation processing
     annotationProcessor "jakarta.annotation:jakarta.annotation-api:${jakartaAnnotationVersion}"
 
+    // Jakarta Validation implementation for tests
+    testImplementation "org.hibernate.validator:hibernate-validator:8.0.1.Final"
+    testImplementation "org.glassfish.expressly:expressly:5.0.0" // EL implementation required by Hibernate Validator
+
     testImplementation group: 'com.squareup.retrofit2', name: 'retrofit-mock', version: '3.0.0'
 
     spa project(path: ':rundeckapp:grails-spa', configuration: 'spa')
