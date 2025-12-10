@@ -455,6 +455,29 @@ public abstract class AbstractLoginModule implements LoginModule {
             // Placeholder method for compatibility
             // Roles are already fetched in UserInfo
         }
+        
+        /**
+         * Add principals to a Subject based on the UserInfo.
+         * Used by tests to manually populate a Subject.
+         * @param subject The Subject to add principals to
+         */
+        public void setJAASInfo(Subject subject) {
+            if (userInfo == null) {
+                return;
+            }
+            
+            // Add user principal
+            RundeckPrincipal userPrincipal = new RundeckPrincipal(userInfo.getUserName());
+            subject.getPrincipals().add(userPrincipal);
+            
+            // Add role principals
+            if (userInfo.getRoleNames() != null) {
+                for (String roleName : userInfo.getRoleNames()) {
+                    RundeckRole rolePrincipal = new RundeckRole(roleName);
+                    subject.getPrincipals().add(rolePrincipal);
+                }
+            }
+        }
     }
 }
 
