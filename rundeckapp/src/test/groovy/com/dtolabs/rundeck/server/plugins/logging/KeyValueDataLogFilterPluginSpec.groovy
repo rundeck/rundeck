@@ -402,5 +402,120 @@ class KeyValueDataLogFilterPluginSpec extends Specification {
         matchSubstrings << [false, true]
     }
 
+    @Unroll
+    def "allowMultipleMatches captures multiple matches when matchSubstrings is enabled"() {
+        given:
+        def plugin = new KeyValueDataLogFilterPlugin()
+        plugin.regex = regex
+        plugin.logData = false
+        plugin.invalidKeyPattern = null
+        plugin.matchSubstrings = matchSubstrings
+        plugin.allowMultipleMatches = allowMultipleMatches
+
+        def sharedoutput = new DataOutput(ContextView.global())
+        def context = Mock(PluginLoggingContext) {
+            getOutputContext() >> sharedoutput
+        }
+        def event = Mock(LogEventControl) {
+            getMessage() >> line
+            getEventType() >> 'log'
+            getLoglevel() >> LogLevel.NORMAL
+        }
+
+        when:
+        plugin.init(context)
+        plugin.handleEvent(context, event)
+        plugin.complete(context)
+
+        then:
+        sharedoutput.getSharedContext().getData(ContextView.global())?.getData() ==
+                (expect ? ['data': expect] : null)
+
+        where:
+        matchSubstrings | allowMultipleMatches | regex                                      | line                                    | expect
+        // Original behavior: matchSubstrings=false, allowMultipleMatches has no effect - full line match
+        false           | false                | '^RUNDECK:DATA:\\s*([^\\s]+?)\\s*=\\s*(.+)$' | 'RUNDECK:DATA:key1=value1 key2=value2' | [key1: 'value1 key2=value2']
+        false           | true                 | '^RUNDECK:DATA:\\s*([^\\s]+?)\\s*=\\s*(.+)$' | 'RUNDECK:DATA:key1=value1 key2=value2' | [key1: 'value1 key2=value2']
+
+        // matchSubstrings=true, allowMultipleMatches=false: only first match
+        true            | false                | '([^\\s=]+)=([^\\s]+)'                     | 'key1=value1 key2=value2 key3=value3'  | [key1: 'value1']
+
+        // matchSubstrings=true, allowMultipleMatches=true: all matches
+        true            | true                 | '([^\\s=]+)=([^\\s]+)'                     | 'key1=value1 key2=value2 key3=value3'  | [key1: 'value1', key2: 'value2', key3: 'value3']
+
+        // Complex pattern with multiple matches
+        true            | true                 | 'RUNDECK:DATA:\\s*([^\\s=]+)=([^\\s]+)'    | 'RUNDECK:DATA: name=john RUNDECK:DATA: age=30 RUNDECK:DATA: city=madrid' | [name: 'john', age: '30', city: 'madrid']
+    }
+
+    @Unroll
+    def "allowMultipleMatches with single capture group and name property"() {
+        given:
+        def plugin = new KeyValueDataLogFilterPlugin()
+        plugin.regex = 'ID:([0-9]+)'
+        plugin.logData = false
+        plugin.invalidKeyPattern = null
+        plugin.name = 'identifier'
+        plugin.matchSubstrings = true
+        plugin.allowMultipleMatches = allowMultipleMatches
+
+        def sharedoutput = new DataOutput(ContextView.global())
+        def context = Mock(PluginLoggingContext) {
+            getOutputContext() >> sharedoutput
+        }
+        def event = Mock(LogEventControl) {
+            getMessage() >> 'ID:123 something ID:456 other ID:789'
+            getEventType() >> 'log'
+            getLoglevel() >> LogLevel.NORMAL
+        }
+
+        when:
+        plugin.init(context)
+        plugin.handleEvent(context, event)
+        plugin.complete(context)
+
+        then:
+        sharedoutput.getSharedContext().getData(ContextView.global())?.getData() ==
+                ['data': expect]
+
+        where:
+        allowMultipleMatches | expect
+        // Only first match when allowMultipleMatches is false
+        false                | [identifier: '123']
+        // Last match wins when allowMultipleMatches is true (same key name)
+        true                 | [identifier: '789']
+    }
+
+    @Unroll
+    def "allowMultipleMatches respects invalidKeyPattern processing"() {
+        given:
+        def plugin = new KeyValueDataLogFilterPlugin()
+        plugin.regex = '([^\\s=]+)=([^\\s]+)'
+        plugin.logData = false
+        plugin.invalidKeyPattern = '\\s|\\$'
+        plugin.matchSubstrings = true
+        plugin.allowMultipleMatches = true
+
+        def sharedoutput = new DataOutput(ContextView.global())
+        def context = Mock(PluginLoggingContext) {
+            getOutputContext() >> sharedoutput
+        }
+        def event = Mock(LogEventControl) {
+            getMessage() >> 'key$1=value1 key$2=value2 validkey=value3'
+            getEventType() >> 'log'
+            getLoglevel() >> LogLevel.NORMAL
+        }
+
+        when:
+        plugin.init(context)
+        plugin.handleEvent(context, event)
+        plugin.complete(context)
+
+        then:
+        sharedoutput.getSharedContext().getData(ContextView.global())?.getData() ==
+                ['data': [key_1: 'value1', key_2: 'value2', validkey: 'value3']]
+
+        // Should log warnings for invalid keys (2 keys with invalid characters)
+        2 * context.log(1, "Key contains not valid value which will be replaced")
+    }
 
 }

@@ -302,29 +302,6 @@ class ScheduledExecutionController  extends ControllerBase{
          offset               : params.offset ? params.offset : 0
         ]
     }
-    def detailFragment () {
-        log.debug("ScheduledExecutionController: detailFragment : params: " + params)
-        Framework framework = frameworkService.getRundeckFramework()
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
-        if(notFoundResponse(scheduledExecution,'Job',params.id)){
-            return
-        }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
-        if (unauthorizedResponse(
-            rundeckAuthContextProcessor.authorizeProjectJobAny(
-                authContext, scheduledExecution,
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
-                scheduledExecution.project
-            ),
-            AuthConstants.ACTION_VIEW,
-            'Job', params.id
-        )) {
-            return
-        }
-        def model=jobDetailData()
-
-        return render(view:'jobDetailFragment',model: model)
-    }
     def detailFragmentAjax () {
         if (requireAjax(action: 'show', controller: 'scheduledExecution', params: params)) {
             return
@@ -594,7 +571,9 @@ Since: v53''',
 
         withFormat{
             html{
-                dataMap
+                def stats = scheduledExecutionService.calculateJobStats(scheduledExecution)
+                def statsMap = [successrate: stats.successRate, execCount: stats.execCount, avgduration: stats.averageDuration]
+                statsMap + dataMap
             }
             yaml{
                 response.setHeader("Content-Disposition","attachment; filename=\"${getFname(scheduledExecution.jobName)}.yaml\"")

@@ -28,6 +28,7 @@ import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.codecs.JSONCodec
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
 import org.rundeck.app.data.providers.GormTokenDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.web.WebUtilService
@@ -667,10 +668,15 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         closureCalled
     }
 
-    private GormTokenDataProvider setupTokenProvider(String userId = null, List<AuthToken> tokens = []) {
+    private GormTokenDataProvider setupTokenProvider(String userId, List<AuthToken> tokens) {
+        setupTokenProvider(userId, AuthTokenType.USER, tokens)
+    }
+
+    private GormTokenDataProvider setupTokenProvider(String userId = null, AuthTokenType type = null, List<AuthToken> tokens = []) {
         def mockProvider = Mock(GormTokenDataProvider)
         if (userId) {
             mockProvider.findAllByUser(userId) >> tokens
+            mockProvider.findAllByUserAndType(userId, type) >> tokens.findAll { type ? it.type == type : true }
         }
         service.tokenDataProvider = mockProvider
         return mockProvider
@@ -681,8 +687,8 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         def user = new User(login: 'testuser').save()
         def userId = user.id.toString()
         def provider = setupTokenProvider(userId, [
-                new AuthToken(uuid: 'token1', creator: 'admin', authRoles: 'admin', user: userId),
-                new AuthToken(uuid: 'token2', creator: 'admin', authRoles: 'admin', user: userId)
+                new AuthToken(uuid: 'token1', creator: 'admin', authRoles: 'admin', user: userId, type: AuthTokenType.USER),
+                new AuthToken(uuid: 'token2', creator: 'admin', authRoles: 'admin', user: userId, type: AuthTokenType.USER)
         ])
 
         when:
@@ -705,6 +711,24 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         then:
         result == 0
         0 * provider.delete(_)
+    }
+
+    def "removeAllTokensByUser should remove only user type tokens"() {
+        given:
+        def user = new User(login: 'testuser').save()
+        def userId = user.id.toString()
+        def provider = setupTokenProvider(userId, [
+                new AuthToken(uuid: 'token1', creator: 'admin', authRoles: 'admin', user: userId, type: AuthTokenType.USER),
+                new AuthToken(uuid: 'token2', creator: 'admin', authRoles: 'admin', user: userId, type: AuthTokenType.WEBHOOK),
+                new AuthToken(uuid: 'token2', creator: 'admin', authRoles: 'admin', user: userId, type: AuthTokenType.RUNNER)
+        ])
+
+        when:
+        def result = service.removeAllTokensByUser(userId)
+
+        then:
+        result == 1
+        1 * provider.delete(_)
     }
 
     def "removeAllTokensByUser handles provider error"() {

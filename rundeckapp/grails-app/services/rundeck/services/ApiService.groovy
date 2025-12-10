@@ -890,7 +890,7 @@ class ApiService implements WebUtilService{
     def removeAllTokensByUser(String userId) {
         log.debug("Attempting to remove tokens for user: ${userId}")
 
-        List<AuthenticationToken> tokenlist = tokenDataProvider.findAllByUser(userId)
+        List<AuthenticationToken> tokenlist = tokenDataProvider.findAllByUserAndType(userId, AuthTokenType.USER)
 
         if(tokenlist) {
             tokenlist.forEach { token -> tokenDataProvider.delete(token.uuid)}

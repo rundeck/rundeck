@@ -459,25 +459,16 @@ tasks.register('fixOpenApiSpec') {
                 throw new GradleException("Could not extract API version from ApiVersions.groovy")
             }
             
-            // Use SnakeYAML to parse and modify the spec
-            def yaml = new org.yaml.snakeyaml.Yaml()
-            def spec = yaml.load(specFile.text)
+            // Simple string replacement approach: replace placeholder with actual version
+            // The spec file should contain "$API_VERSION$" as a placeholder (e.g., in server variable default)
+            def content = specFile.text
             
-            // Navigate to servers[0].variables.version and add default if missing
-            if (spec.servers && spec.servers[0]?.variables?.version) {
-                if (!spec.servers[0].variables.version.default) {
-                    spec.servers[0].variables.version.default = apiVersion
-                }
-            }
+            // Replace all occurrences of $API_VERSION$ placeholder with the actual version
+            // Note: Wrapped in quotes to ensure YAML treats it as a string (OpenAPI spec requires string type)
+            content = content.replaceAll('\\$API_VERSION\\$', "'${apiVersion}'")
             
-            // Write back with proper YAML formatting
-            def dumperOptions = new org.yaml.snakeyaml.DumperOptions()
-            dumperOptions.setDefaultFlowStyle(org.yaml.snakeyaml.DumperOptions.FlowStyle.BLOCK)
-            dumperOptions.setPrettyFlow(true)
-            dumperOptions.setIndent(2)
-            dumperOptions.setIndicatorIndent(0)
-            def yamlWriter = new org.yaml.snakeyaml.Yaml(dumperOptions)
-            specFile.text = yamlWriter.dump(spec)
+            specFile.text = content
+            logger.info("Successfully updated OpenAPI spec version to ${apiVersion}")
         }
     }
 }

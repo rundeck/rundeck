@@ -36,7 +36,7 @@ class JobSummarySpec extends SeleniumBase{
         def statsElements = jobShowPage.getJobStatsElements()
         then:
         statsElements.size() == 3
-        statsElements.get(0).getText().contains("EXECUTIONS")
+        statsElements.get(0).getText().contains("1 EXECUTION")
         statsElements.get(1).getText().contains("SUCCESS RATE")
         statsElements.get(2).getText().contains("AVG DURATION")
         cleanup:

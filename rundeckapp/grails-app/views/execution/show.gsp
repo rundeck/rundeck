@@ -28,6 +28,7 @@
       <g:if test="${scheduledExecution}"><g:enc>${scheduledExecution?.jobName}</g:enc> :  </g:if>
       <g:else><g:message code="execution.type.adhoc.title" /></g:else> <g:message code="execution.at.time.by.user" args="[g.relativeDateString(atDate:execution.dateStarted),execution.user]"/>
     </title>
+      <g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
       <g:set var="followmode" value="${params.mode in ['browse','tail','node']?params.mode:'tail'}"/>
       <g:set var="authKeys" value="${[AuthConstants.ACTION_KILL,
                                       AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW, AuthConstants.ACTION_CREATE, AuthConstants.ACTION_RUN]}"/>
@@ -141,6 +142,9 @@ search
         }
         .affix .affixed-shown.affixed-shown-inline {
             display: inline;
+        }
+        #output:target {
+            display: block !important;
         }
       </style>
       <g:set var="projectName" value="${execution.project}"/>
@@ -858,7 +862,7 @@ search
                                       </div>
                                   </div>
 
-                                  <div style="height: calc(100vh - 250px); display: none; contain: layout;"
+                                  <div style="height: calc(100vh - 250px); contain: layout; display: none;"
                                        id="output"
                                        class="card-content-full-width"
                                        data-bind="visible: activeTab() === 'output' || activeTab().startsWith('outputL')"

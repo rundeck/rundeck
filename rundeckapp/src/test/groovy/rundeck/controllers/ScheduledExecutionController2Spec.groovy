@@ -32,6 +32,7 @@ import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.components.jobs.stats.JobStatsProvider
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
@@ -1753,14 +1754,14 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
             }
         controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
-        sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getByIDorUUID { id -> return se }
-            getRefExecCountStats('testUUID'){jobUuid -> 1}
-            getRefExecCountStats('testUUID'){jobUuid -> 1}
-            isScheduled(1..1){ job -> return se.scheduled }
-            nextExecutionTime { job -> null }
-            getWorkflowStrategyPluginDescriptions{->[]}
-            userAuthorizedForJob { user, schedexec, framework -> return true }
+        sec.scheduledExecutionService = Mock(ScheduledExecutionService){
+            _ * getByIDorUUID(_) >> se
+            2 * getRefExecCountStats('testUUID') >> 1
+            _ * isScheduled(_) >> se.scheduled
+            _ * nextExecutionTime(_) >> null
+            _ * getWorkflowStrategyPluginDescriptions() >> []
+            _ * userAuthorizedForJob(*_) >> true
+            _ * calculateJobStats(_) >> Mock(JobStatsProvider.JobStats)
         }
 
         sec.notificationService = mockWith(NotificationService){
