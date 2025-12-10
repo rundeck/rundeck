@@ -32,6 +32,7 @@ class CommandPage extends BasePage {
     By nodeElementsBy = By.cssSelector(".node_ident.embedded_node.tight")
     By popoverContainerBy = By.cssSelector(".popover")
     By popoverContentBy = By.cssSelector(".popover-content")
+    By nodeDetailsTableBy = By.cssSelector(".popover-content .node-details-simple")
     By popoverParameterRowsBy = By.cssSelector(".popover-content .node-details-simple tbody tr")
     By parameterKeyBy = By.cssSelector(".key")
     By parameterValueBy = By.cssSelector(".value")
@@ -149,8 +150,9 @@ class CommandPage extends BasePage {
 
     List<WebElement> getPopoverParameterRows() {
         waitForPopoverToAppear()
-        // Wait for at least one parameter row to be present, ensuring content is fully loaded
+        // Wait for at least one parameter row to be present and visible
         waitForNumberOfElementsToBeMoreThan(popoverParameterRowsBy, 0)
+        waitForElementVisible popoverParameterRowsBy
         els popoverParameterRowsBy
     }
 
@@ -179,6 +181,19 @@ class CommandPage extends BasePage {
         } catch (Exception e) {
             return false
         }
+    }
+
+    WebElement getNodeDetailsTable() {
+        waitForPopoverToAppear()
+        waitForElementVisible nodeDetailsTableBy
+        el nodeDetailsTableBy
+    }
+
+    List<WebElement> getNodeDetailsKeyCells() {
+        def table = getNodeDetailsTable()
+        def keyCells = table.findElements(parameterKeyBy)
+        // Filter to only visible cells
+        keyCells.findAll { it.isDisplayed() }
     }
 
 }

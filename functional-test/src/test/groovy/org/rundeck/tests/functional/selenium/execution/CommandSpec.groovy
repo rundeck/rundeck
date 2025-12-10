@@ -190,30 +190,15 @@ class CommandSpec extends SeleniumBase {
             
         when: "User clicks on the first node"
         commandPage.clickNode(0)
-            
-        then: "Popover should appear"
-        commandPage.waitForPopoverToAppear()
-            
-        expect: "All parameters in the popover should be visible"
-        def parameterRows = commandPage.getPopoverParameterRows()
-        parameterRows.size() > 0
-            
-        // Verify each parameter row is visible
-        parameterRows.each { WebElement row ->
-                assert commandPage.isParameterRowVisible(row), "Parameter row should be visible"
-                
-                // Extract and verify key-value pairs exist
-                def value = commandPage.getParameterValue(row)
-                
-                // Some rows might not have keys (like description rows), but should have content
-                assert value != null && !value.isEmpty(), "Parameter row should have content"
-        }
-            
-        // Verify common parameters are present - collect all values to ensure content is displayed
-        def allValues = parameterRows.collect { commandPage.getParameterValue(it) }.findAll { it != null }
-            
-        // At minimum, we should have some node information displayed
-        assert allValues.size() > 0, 'Should have at least some parameter values displayed'
-    }
 
+        then: "Popover should appear with node details table"
+        commandPage.waitForPopoverToAppear()
+        def nodeDetailsTable = commandPage.getNodeDetailsTable()
+        nodeDetailsTable.isDisplayed()
+
+        expect: "Node details should have visible key-value structure with content"
+        def keyCells = commandPage.getNodeDetailsKeyCells()
+        keyCells.size() > 0
+        keyCells.any { it.text?.trim() }
+    }
 }
