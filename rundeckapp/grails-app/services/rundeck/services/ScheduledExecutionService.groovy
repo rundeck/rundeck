@@ -5042,8 +5042,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def refsuccesscount = referencedExecutionDataProvider.countByJobUuidAndStatus(scheduledExecution.uuid, 'succeeded')
         def execCount = Execution.countByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution)
         def refexecCount = referencedExecutionDataProvider.countByJobUuid(scheduledExecution.uuid)
-        def totalCount = execCount + refexecCount
-        double successrate = (totalCount) > 0 ? ((successcount + refsuccesscount) / ((double)totalCount)) : -1d
+        long total1 = execCount
+        long total2 = refexecCount
+        def totalCount = total1 + total2
+        long success1 = successcount
+        long success2 = refsuccesscount
+        long successTotal = success1 + success2
+        double successrate = (totalCount) > 0 ? (successTotal / ((double)totalCount)) : -1d
         JobStats.with(
             successrate,
             totalCount,
