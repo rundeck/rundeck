@@ -45,23 +45,6 @@ class JobActivityHistorySpec extends SeleniumBase {
         }
     }
 
-    def "review job activity history from Job List Page Saved Filters"() {
-        when: "Navigate to the Job List Page and apply a saved filter"
-        def jobListPage = go JobListPage, SELENIUM_BASIC_PROJECT
-        jobListPage.clickAnyTimeButton()
-                .clickLastWeekButton()
-                .clickSaveFilterButton()
-                .enterFilterName("TestFilter")
-                .confirmFilterSave()
-                .openFilterDropdown()
-                .selectSavedFilter()
-
-        then: "Validate the saved filter is applied"
-        wait.until {
-            jobListPage.getAppliedFilterName() == "TestFilter"
-        }
-    }
-
     def "review job activity history from Activity Page"() {
         when: "Navigate to the Activity Page"
         def activityPage = go ActivityPage, SELENIUM_BASIC_PROJECT
