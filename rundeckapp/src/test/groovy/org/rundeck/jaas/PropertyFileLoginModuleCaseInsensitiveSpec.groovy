@@ -189,8 +189,8 @@ ADMIN:admin123,admin,users
 
         then: "Credential checking works"
         userInfo != null
-        userInfo.checkCredential("password")
-        !userInfo.checkCredential("wrongpassword")
+        userInfo.getCredential().check("password")
+        !userInfo.getCredential().check("wrongpassword")
     }
 
     def "roles are preserved regardless of username case"() {
@@ -245,17 +245,10 @@ ADMIN:admin123,admin,users
     // Helper methods
 
     private PropertyFileLoginModule createModuleWithFeatureFlag(boolean enabled, File propertiesFile) {
-        PropertyFileLoginModule module = new PropertyFileLoginModule()
+        PropertyFileLoginModule module = Spy(PropertyFileLoginModule)  // Use Spy for Groovy 4 compatibility
         
-        // Mock feature service
-        def mockFeatureService = Mock(FeatureService) {
-            featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> enabled
-        }
-        def mockContext = Mock(ApplicationContext) {
-            containsBeanDefinition("featureService") >> true
-            getBean("featureService") >> mockFeatureService
-        }
-        Holders.metaClass.static.findApplicationContext = { -> mockContext }
+        // Mock isCaseInsensitiveUsernameEnabled() directly (Pattern #9: Groovy 4 metaClass fix)
+        module.isCaseInsensitiveUsernameEnabled() >> enabled
         
         // Initialize module with property file
         Subject subject = new Subject()
