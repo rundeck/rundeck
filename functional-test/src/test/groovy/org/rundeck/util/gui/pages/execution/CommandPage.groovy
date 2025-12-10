@@ -33,9 +33,7 @@ class CommandPage extends BasePage {
     By popoverContainerBy = By.cssSelector(".popover")
     By popoverContentBy = By.cssSelector(".popover-content")
     By nodeDetailsTableBy = By.cssSelector(".popover-content .node-details-simple")
-    By popoverParameterRowsBy = By.cssSelector(".popover-content .node-details-simple tbody tr")
     By parameterKeyBy = By.cssSelector(".key")
-    By parameterValueBy = By.cssSelector(".value")
 
     CommandPage(final SeleniumContext context) {
         super(context)
@@ -143,52 +141,22 @@ class CommandPage extends BasePage {
         waitForElementVisible popoverContentBy
     }
 
-    WebElement getPopoverContent() {
-        waitForPopoverToAppear()
-        el popoverContentBy
-    }
-
-    List<WebElement> getPopoverParameterRows() {
-        waitForPopoverToAppear()
-        // Wait for at least one parameter row to be present and visible
-        waitForNumberOfElementsToBeMoreThan(popoverParameterRowsBy, 0)
-        waitForElementVisible popoverParameterRowsBy
-        els popoverParameterRowsBy
-    }
-
-    String getParameterKey(WebElement row) {
-        try {
-            def keyElement = row.findElement(parameterKeyBy)
-            return keyElement.text.trim()
-        } catch (Exception e) {
-            return null
-        }
-    }
-
-    String getParameterValue(WebElement row) {
-        try {
-            def valueElement = row.findElement(parameterValueBy)
-            return valueElement.text.trim()
-        } catch (Exception e) {
-            // Try to get text from the row itself if value cell doesn't exist
-            return row.text.trim()
-        }
-    }
-
-    boolean isParameterRowVisible(WebElement row) {
-        try {
-            return row.isDisplayed()
-        } catch (Exception e) {
-            return false
-        }
-    }
-
+    /**
+     * Gets the node details table element from the popover.
+     * Waits for the popover to appear and for the table to be visible.
+     * @return The node details table WebElement
+     */
     WebElement getNodeDetailsTable() {
         waitForPopoverToAppear()
         waitForElementVisible nodeDetailsTableBy
         el nodeDetailsTableBy
     }
 
+    /**
+     * Gets all visible key cells from the node details table.
+     * Key cells contain labels like "Operating System", "User & Host", etc.
+     * @return List of visible key cell WebElements
+     */
     List<WebElement> getNodeDetailsKeyCells() {
         def table = getNodeDetailsTable()
         def keyCells = table.findElements(parameterKeyBy)

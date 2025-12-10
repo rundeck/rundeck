@@ -182,23 +182,22 @@ class CommandSpec extends SeleniumBase {
         commandPage.nodeFilterTextField.click()
         commandPage.nodeFilterTextField.sendKeys".*"
         commandPage.filterNodeButton.click()
-            
+
         then: "Nodes should be loaded and visible"
         commandPage.waitForElementToBeClickable commandPage.commandTextField
         def nodes = commandPage.getNodeElements()
         nodes.size() > 0
-            
+
         when: "User clicks on the first node"
         commandPage.clickNode(0)
 
         then: "Popover should appear with node details table"
-        commandPage.waitForPopoverToAppear()
         def nodeDetailsTable = commandPage.getNodeDetailsTable()
         nodeDetailsTable.isDisplayed()
 
         expect: "Node details should have visible key-value structure with content"
         def keyCells = commandPage.getNodeDetailsKeyCells()
         keyCells.size() > 0
-        keyCells.any { it.text?.trim() }
+        keyCells.every { it.text?.trim() }
     }
 }
