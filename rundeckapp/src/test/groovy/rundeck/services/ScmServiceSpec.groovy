@@ -601,7 +601,6 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
         job.jobName = "test"
         job.groupPath = "test"
         def bobuser = new User(login: 'bob')
-        bobuser.id = 1L
         bobuser.save()
 
         //returned by export result, should be stored in job metadata
@@ -661,7 +660,6 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
             1 * getSettingList('trackedItems') >> ['a', 'b']
         }
         def bobuser = new User(login: 'bob')
-        bobuser.id = 1L
         bobuser.save()
 
         //init plugin mocks
