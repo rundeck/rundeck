@@ -3716,7 +3716,11 @@ Since: v14''',
                     url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
                     description = "Resources YAML Format"
                 )),
-                examples=@ExampleObject('''node1:
+                examples=[
+                    @ExampleObject(
+                        name = 'resources-yaml',
+                        description = 'Resources in YAML format',
+                        value = '''node1:
   nodename: node1
   hostname: node1
   osVersion: 5.15.49-linuxkit
@@ -3724,7 +3728,9 @@ Since: v14''',
   osArch: amd64
   description: Rundeck server node
   osName: Linux
-  tags: \'\'''')
+  tags: \'\''''
+                    )
+                ]
             )
         ]
     )
