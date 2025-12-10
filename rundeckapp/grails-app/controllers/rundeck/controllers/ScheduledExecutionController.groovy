@@ -2236,7 +2236,11 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         content=[@Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = DeleteBulkResponse),
-            examples = @ExampleObject("""{
+            examples = [
+                @ExampleObject(
+                    name = 'bulk-job-delete',
+                    description = 'Bulk job delete response',
+                    value = """{
   "failures": [
     {
       "id": "82",
@@ -2255,7 +2259,9 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
   "successCount": 2,
   "allsuccessful": false,
   "requestCount": 5
-}""")
+}"""
+                )
+            ]
         )]
 
     )
@@ -3853,7 +3859,11 @@ Each job entry contains:
 ''',
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
-            examples = @ExampleObject('''{
+            examples = [
+                @ExampleObject(
+                    name = 'job-import-response',
+                    description = 'Job import response with results',
+                    value = '''{
   "succeeded": [{
   "index": 1,
   "href": "http://madmartigan.local:4440/api/14/job/3b6c19f6-41ee-475f-8fd0-8f1a26f27a9a",
@@ -3874,7 +3884,9 @@ Each job entry contains:
   "error": "error message"
 }],
   "skipped": []
-}''')
+}'''
+                )
+            ]
         )
     )
     @ApiResponse(
@@ -4192,7 +4204,11 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
         description = 'Created Execution',
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
-                examples = @ExampleObject("""{
+                examples = [
+                    @ExampleObject(
+                        name = 'job-execution-response',
+                        description = 'Job execution response',
+                        value = """{
   "id": 1,
   "href": "[url]",
   "permalink": "[url]",
@@ -4229,7 +4245,9 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
   "failedNodes": [
     "nodec","noded"
   ]
-}""")
+}"""
+                    )
+                ]
         )
     )
     /**
@@ -4486,7 +4504,11 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
         description = 'Created Execution',
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
-                examples = @ExampleObject("""{
+                examples = [
+                    @ExampleObject(
+                        name = 'job-execution-response',
+                        description = 'Job execution response',
+                        value = """{
   "id": 1,
   "href": "[url]",
   "permalink": "[url]",
@@ -4523,7 +4545,9 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
   "failedNodes": [
     "nodec","noded"
   ]
-}""")
+}"""
+                    )
+                ]
         )
     )
     def apiJobRetry() {
