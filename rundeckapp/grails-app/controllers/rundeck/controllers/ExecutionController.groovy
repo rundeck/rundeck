@@ -1121,9 +1121,13 @@ this Log Entry.""")
             @Content(
                 mediaType = MediaType.TEXT_PLAIN,
                 schema = @Schema(type = "string", description="Textual log output"),
-                examples = @ExampleObject(
-                    value = """Log output text..."""
-                )
+                examples = [
+                    @ExampleObject(
+                        name = 'log-output-text',
+                        description = 'Textual log output',
+                        value = """Log output text..."""
+                    )
+                ]
             )
         ]
     )
@@ -2094,7 +2098,11 @@ JSON response requires API v14.
         content=[
             @Content(
                 mediaType = MediaType.APPLICATION_JSON,
-                examples = @ExampleObject("""{
+                examples = [
+                    @ExampleObject(
+                        name = 'execution-info',
+                        description = 'Execution info response',
+                        value = """{
   "id": 1,
   "href": "[url]",
   "permalink": "[url]",
@@ -2131,7 +2139,9 @@ JSON response requires API v14.
   "failedNodes": [
     "nodec","noded"
   ]
-}""")
+}"""
+                    )
+                ]
             )
         ]
     )
@@ -2329,7 +2339,11 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
             @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type='object'),
-                examples = @ExampleObject("""{
+                examples = [
+                    @ExampleObject(
+                        name = 'execution-state',
+                        description = 'Execution state response with workflow details',
+                        value = """{
   "completed": true,
   "executionState": "SUCCEEDED",
   "endTime": "2014-01-13T20:38:36Z",
@@ -2415,7 +2429,9 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
       "startTime": "2014-01-13T20:38:31Z"
     }
   ]
-}""")
+}"""
+                    )
+                ]
             )
         ]
     )
@@ -2594,7 +2610,11 @@ Authorization required:
         content=[
             @Content(
                 mediaType = MediaType.APPLICATION_JSON,
-                examples = @ExampleObject("""{
+                examples = [
+                    @ExampleObject(
+                        name = 'abort-execution',
+                        description = 'Abort execution response',
+                        value = """{
   "abort": {
     "status": "[abort-state]",
     "reason": "[reason]"
@@ -2604,7 +2624,9 @@ Authorization required:
     "status": "[execution status]",
     "href": "[API href]",
   }
-}""")
+}"""
+                    )
+                ]
             )
         ]
     )
@@ -2805,7 +2827,11 @@ Note: the JSON schema also supports a basic JSON array
         content=[@Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = DeleteBulkResponse),
-            examples = @ExampleObject("""{
+            examples = [
+                @ExampleObject(
+                    name = 'bulk-delete-response',
+                    description = 'Bulk delete response with failures',
+                    value = """{
   "failures": [
     {
       "id": "82",
@@ -2824,7 +2850,9 @@ Note: the JSON schema also supports a basic JSON array
   "successCount": 2,
   "allsuccessful": false,
   "requestCount": 5
-}""")
+}"""
+                )
+            ]
         )]
 
     )
@@ -2984,7 +3012,11 @@ The `job` section contains `options` if an `argstring` value is set.  Inside `op
 if executed in cluster mode.""",
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
-            examples = @ExampleObject("""{
+            examples = [
+                @ExampleObject(
+                    name = 'executions-query',
+                    description = 'Executions query response',
+                    value = """{
   "paging": {
     "count": 2,
     "total": 2,
@@ -3030,7 +3062,9 @@ if executed in cluster mode.""",
       ]
     }
     ]
-}""")
+}"""
+                )
+            ]
         )
     )
     /**
