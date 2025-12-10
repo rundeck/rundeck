@@ -380,6 +380,7 @@ public abstract class AbstractLoginModule implements LoginModule {
     
     /**
      * Set the CallbackHandler for testing purposes.
+     * Allows tests to inject mock callback handlers instead of using direct field access.
      * @param callbackHandler The CallbackHandler to use
      */
     public void setCallbackHandler(CallbackHandler callbackHandler) {

@@ -267,7 +267,8 @@ ADMIN: admin123, roles: admin,users
             }
         } as CallbackHandler
         
-        module.@callbackHandler = handler
+        // Use setter instead of @field access (Groovy 4 incompatible)
+        module.setCallbackHandler(handler)
     }
 
     def cleanup() {

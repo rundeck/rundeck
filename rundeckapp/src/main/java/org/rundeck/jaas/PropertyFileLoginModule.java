@@ -19,11 +19,14 @@ package org.rundeck.jaas;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.security.auth.Subject;
+import javax.security.auth.callback.CallbackHandler;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -126,6 +129,18 @@ public class PropertyFileLoginModule extends AbstractLoginModule {
         debug("Found user: " + username + " with " + roles.size() + " role(s)");
         
         return new UserInfo(username, credential, roles);
+    }
+    
+    @Override
+    public void initialize(Subject subject, CallbackHandler callbackHandler,
+                          Map<String, ?> sharedState, Map<String, ?> options) {
+        super.initialize(subject, callbackHandler, sharedState, options);
+        
+        // Get the file option and set the property file name
+        if (options.containsKey("file")) {
+            String fileName = (String) options.get("file");
+            setPropertyFileName(fileName);
+        }
     }
     
     /**
