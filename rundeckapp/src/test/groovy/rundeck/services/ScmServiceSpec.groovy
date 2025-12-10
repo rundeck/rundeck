@@ -600,7 +600,9 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
         job.version = 1
         job.jobName = "test"
         job.groupPath = "test"
-        def bobuser = new User(login: 'bob').save()
+        def bobuser = new User(login: 'bob')
+        bobuser.id = 1L
+        bobuser.save()
 
         //returned by export result, should be stored in job metadata
         def commitMetadata = [commit: 'data']
@@ -658,7 +660,9 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
             1 * getConfig() >> [plugin: 'config']
             1 * getSettingList('trackedItems') >> ['a', 'b']
         }
-        def bobuser = new User(login: 'bob').save()
+        def bobuser = new User(login: 'bob')
+        bobuser.id = 1L
+        bobuser.save()
 
         //init plugin mocks
 
