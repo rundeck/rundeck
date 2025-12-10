@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dtolabs.launcher;
+package org.rundeck.app.launcher;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.utils.PropertyUtil;

@@ -20,11 +20,12 @@ package com.dtolabs.rundeck.core.tools;
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import junit.framework.TestCase;
-import com.dtolabs.launcher.Setup;
 import org.apache.tools.ant.BuildException;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.*;
 
 
@@ -168,7 +169,8 @@ public abstract class AbstractBaseTest extends TestCase {
         File projectsDir = new File(PROJECTS_BASE);
         FileUtils.deleteDir(projectsDir);
         projectsDir.mkdirs();
-        new File(baseDir,"etc").mkdirs();
+        final File etcDir = new File(baseDir, "etc");
+        etcDir.mkdirs();
         File dummykey = new File(baseDir, "etc/dummy_ssh_key.pub");
         try {
             dummykey.createNewFile();
@@ -177,22 +179,102 @@ public abstract class AbstractBaseTest extends TestCase {
         }
 
         // check to see if Setup was run, if so, just return.
-        if (new File(baseDir, "etc" + "/" + "framework.properties").exists()) {
+        final File fwkPropsFile = new File(etcDir, "framework.properties");
+        if (fwkPropsFile.exists()) {
             //System.out.println("Setup already run");
             return;
         }
 
-        final ArrayList argsList = new ArrayList(Arrays.asList(SETUP_ARGS));
-        argsList.add("--framework.ssh.keypath=" + dummykey.getAbsolutePath());
-        argsList.add("-d");
-        argsList.add(new File(baseDir).getAbsolutePath());
+        //
+        //set up minimal framework.properties and project.properties files and dir structure
+        //
 
+        final File varDir = new File(baseDir, "var");
+        final File tmpDir = new File(varDir, "tmp");
+        tmpDir.mkdirs();
+        try(OutputStream out = new FileOutputStream(fwkPropsFile)) {
+            Properties props = new Properties();
+            props.setProperty("framework.ssh.keypath", dummykey.getAbsolutePath());
 
-        try {
-            Setup setup = new Setup();
-            setup.execute((String[]) argsList.toArray(new String[argsList.size()]));
-        } catch (Exception e) {
-            throw new BuildException("Caught Setup exception: " + e.getMessage(), e);
+            /**
+             * framework.server.name = test1
+             * framework.server.hostname = test1
+             * framework.server.port = 4440
+             * framework.server.url = http://test1:4440/rundeck
+             *
+             * # ----------------------------------------------------------------
+             * # Installation locations
+             * # ----------------------------------------------------------------
+             *
+             * rdeck.base=/Users/gschueler/devel/runner-test/rundeck/core/build/rdeck_base
+             *
+             * framework.projects.dir=/Users/gschueler/devel/runner-test/rundeck/core/build/rdeck_base/projects
+             * framework.etc.dir=/Users/gschueler/devel/runner-test/rundeck/core/build/rdeck_base/etc
+             * framework.var.dir=/Users/gschueler/devel/runner-test/rundeck/core/build/rdeck_base/var
+             * framework.tmp.dir=/Users/gschueler/devel/runner-test/rundeck/core/build/rdeck_base/var/tmp
+             * framework.logs.dir=/Users/gschueler/devel/runner-test/rundeck/core/build/rdeck_base/var/logs
+             * framework.libext.dir=/Users/gschueler/devel/runner-test/rundeck/core/build/rdeck_base/libext
+             * framework.ssh.user = username
+             *
+             * # ssh connection timeout after a specified number of milliseconds.
+             * # "0" value means wait forever.
+             * framework.ssh.timeout = 0
+             *
+             * # ----------------------------------------------------------------
+             * # Auto generated server UUID: @rundeck.server.uuid@
+             * # ----------------------------------------------------------------
+             * rundeck.server.uuid = @rundeck.server.uuid@
+             */
+            props.setProperty("framework.server.name", localNodeHostname);
+            props.setProperty("framework.server.hostname", localNodeHostname);
+            props.setProperty("framework.server.port", "4440");
+            props.setProperty("framework.server.url", "http://" + localNodeHostname + ":4440/rundeck");
+            props.setProperty("rdeck.base", new File(baseDir).getAbsolutePath());
+            props.setProperty("framework.projects.dir", new File(PROJECTS_BASE).getAbsolutePath());
+            props.setProperty("framework.etc.dir", etcDir.getAbsolutePath());
+            props.setProperty("framework.var.dir", varDir.getAbsolutePath());
+
+            props.setProperty("framework.tmp.dir", tmpDir.getAbsolutePath());
+            props.setProperty("framework.logs.dir", new File(varDir,"logs").getAbsolutePath());
+            props.setProperty("framework.libext.dir", new File(baseDir, "libext").getAbsolutePath());
+            props.setProperty("framework.ssh.user", "username");
+            props.setProperty("framework.ssh.timeout", "0");
+            props.setProperty("rundeck.server.uuid", "@rundeck.server.uuid@");
+            props.store(out, "framework properties");
+        } catch (IOException e) {
+            throw new BuildException("failed to create framework properties: " + e.getMessage(), e);
+        }
+
+        File projectsProps = new File(etcDir, "projects.properties");
+        try (OutputStream out = new FileOutputStream(projectsProps)) {
+            Properties props = new Properties();
+            /**
+             * project.dir = /Users/gschueler/devel/runner-test/rundeck/core/build/rdeck_base/projects/${project.name}
+             * #
+             * # The base directory of project specific configuration files
+             * #
+             * project.etc.dir = /Users/gschueler/devel/runner-test/rundeck/core/build/rdeck_base/projects/${project.name}/etc
+             *
+             * #
+             * # The default resources file
+             * #
+             * resources.source.1.type=file
+             * resources.source.1.config.file=/Users/gschueler/devel/runner-test/rundeck/core/build/rdeck_base/projects/${project.name}/etc/resources.xml
+             * resources.source.1.config.format=resourcexml
+             * resources.source.1.config.includeServerNode=true
+             * resources.source.1.config.generateFileAutomatically=true
+             */
+            props.setProperty("project.dir", new File(PROJECTS_BASE, "${project.name}").getAbsolutePath());
+            props.setProperty("project.etc.dir", new File(PROJECTS_BASE, "${project.name}/etc").getAbsolutePath());
+            props.setProperty("resources.source.1.type", "file");
+            props.setProperty("resources.source.1.config.file",
+                new File(PROJECTS_BASE, "${project.name}/etc/resources.xml").getAbsolutePath());
+            props.setProperty("resources.source.1.config.format", "resourcexml");
+            props.setProperty("resources.source.1.config.includeServerNode", "true");
+            props.setProperty("resources.source.1.config.generateFileAutomatically", "true");
+            props.store(out, "projects properties");
+        } catch (IOException e) {
+            throw new BuildException("failed to create projects properties: " + e.getMessage(), e);
         }
 
     }

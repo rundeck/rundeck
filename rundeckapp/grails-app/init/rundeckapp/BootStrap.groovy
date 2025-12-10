@@ -4,7 +4,7 @@ import com.codahale.metrics.MetricFilter
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.health.HealthCheck
 import com.codahale.metrics.health.HealthCheckRegistry
-import com.dtolabs.launcher.Setup
+import org.rundeck.app.launcher.Setup
 
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)

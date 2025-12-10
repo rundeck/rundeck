@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package com.dtolabs.launcher;
+package org.rundeck.app.launcher;
 
 import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.cli.CLIToolLogger;
 import org.apache.tools.ant.types.FilterSet;
 import org.apache.tools.ant.types.FilterSetCollection;
 import org.apache.tools.ant.util.FileUtils;
@@ -33,7 +32,7 @@ import java.util.Properties;
  * Setup which replaces old command line parsing at the shell layer which leaves the old setup/setup.bat to only
  * blindly pass arguments along with the java.home, rdeck.base.
  */
-public class Setup implements CLIToolLogger {
+public class Setup  {
     public static final Logger logger      = LoggerFactory.getLogger(Setup.class);
     /**
      * basic bootstrapped rdeck.base
