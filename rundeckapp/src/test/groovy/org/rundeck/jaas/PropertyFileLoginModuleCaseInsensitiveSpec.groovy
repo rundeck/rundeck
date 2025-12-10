@@ -37,17 +37,26 @@ class PropertyFileLoginModuleCaseInsensitiveSpec extends Specification {
     File testPropertiesFile
     
     @Shared
+    File caseSensitivePropertiesFile
+    
+    @Shared
     File tempDir
 
     def setupSpec() {
         tempDir = File.createTempDir("propertyfile-test", "")
-        testPropertiesFile = new File(tempDir, "test-realm.properties")
         
-        // Create test properties file with users
+        // Property file for case-INSENSITIVE tests (lowercase keys)
+        testPropertiesFile = new File(tempDir, "test-realm.properties")
         testPropertiesFile.text = """
-# Property file with multiple case variations
-# Case-insensitive mode: all variations should work
-# Case-sensitive mode: exact match required
+# Property file for case-insensitive feature (all keys lowercase)
+testuser:password,developers,users
+admin:admin123,admin,users
+"""
+        
+        // Property file for case-SENSITIVE tests (mixed case keys)
+        caseSensitivePropertiesFile = new File(tempDir, "case-sensitive-realm.properties")
+        caseSensitivePropertiesFile.text = """
+# Property file for case-sensitive mode (exact match required)
 testuser:password,developers,users
 TestUser:password,developers,users  
 ADMIN:admin123,admin,users
@@ -78,7 +87,7 @@ ADMIN:admin123,admin,users
 
     def "login preserves original case when feature disabled"() {
         given: "A PropertyFile login module with feature flag disabled"
-        PropertyFileLoginModule module = createModuleWithFeatureFlag(false, testPropertiesFile)
+        PropertyFileLoginModule module = createModuleWithFeatureFlag(false, caseSensitivePropertiesFile)
         
         and: "User logs in with exact case match"
         setupCallbackHandler(module, "TestUser", "password")
@@ -209,6 +218,10 @@ ADMIN:admin123,admin,users
 
         then: "Login succeeds"
         result
+        
+        cleanup:
+        // Reset Holders.metaClass between @Unroll iterations (Groovy 4 requirement)
+        Holders.metaClass = null
 
         where:
         inputCase << ["admin", "ADMIN", "Admin", "AdMiN"]

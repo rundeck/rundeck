@@ -293,6 +293,14 @@ public abstract class AbstractLoginModule implements LoginModule {
     // Case-insensitive username support
     
     /**
+     * Get the application context. Can be overridden for testing.
+     * @return ApplicationContext or null if not available
+     */
+    protected ApplicationContext getApplicationContext() {
+        return Holders.findApplicationContext();
+    }
+    
+    /**
      * Check if case-insensitive username feature is enabled.
      * Uses reflection to avoid compile-time dependency on Groovy FeatureService.
      * 
@@ -300,7 +308,7 @@ public abstract class AbstractLoginModule implements LoginModule {
      */
     protected boolean isCaseInsensitiveUsernameEnabled() {
         try {
-            ApplicationContext ctx = Holders.findApplicationContext();
+            ApplicationContext ctx = getApplicationContext();
             if (ctx == null || !ctx.containsBeanDefinition("featureService")) {
                 return false;
             }

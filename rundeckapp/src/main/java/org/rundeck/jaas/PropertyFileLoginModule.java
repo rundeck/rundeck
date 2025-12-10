@@ -103,16 +103,11 @@ public class PropertyFileLoginModule extends AbstractLoginModule {
     public UserInfo getUserInfo(String username) throws Exception {
         loadPropertyFile();
         
-        if (userProperties == null) {
-            debug("User properties not loaded");
-            return null;
-        }
-        
-        // Normalize username if case-insensitive feature is enabled
-        // (handles both direct calls and calls from AbstractLoginModule.login())
+        // When called from AbstractLoginModule.login(), username is already normalized
+        // When called directly (e.g., from tests), we need to normalize it
         String lookupUsername = normalizeUsername(username);
         
-        if (!userProperties.containsKey(lookupUsername)) {
+        if (userProperties == null || !userProperties.containsKey(lookupUsername)) {
             debug("User not found in property file: " + lookupUsername);
             return null;
         }

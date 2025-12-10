@@ -43,8 +43,8 @@ class AbstractLoginModuleSpec extends Specification {
 
     def "normalizeUsername returns lowercase when feature enabled"() {
         given: "A login module with feature flag enabled"
-        TestLoginModule module = new TestLoginModule()
-        module.metaClass.isCaseInsensitiveUsernameEnabled = { -> true }
+        TestLoginModule module = Spy(TestLoginModule)
+        module.isCaseInsensitiveUsernameEnabled() >> true
 
         expect: "Username is converted to lowercase"
         module.normalizeUsername("Naveed") == "naveed"
@@ -54,8 +54,8 @@ class AbstractLoginModuleSpec extends Specification {
 
     def "normalizeUsername returns original when feature disabled"() {
         given: "A login module with feature flag disabled"
-        TestLoginModule module = new TestLoginModule()
-        module.metaClass.isCaseInsensitiveUsernameEnabled = { -> false }
+        TestLoginModule module = Spy(TestLoginModule)
+        module.isCaseInsensitiveUsernameEnabled() >> false
 
         expect: "Username is unchanged"
         module.normalizeUsername("Naveed") == "Naveed"
@@ -73,8 +73,8 @@ class AbstractLoginModuleSpec extends Specification {
 
     def "normalizeUsername handles empty string"() {
         given: "A login module with feature flag enabled"
-        TestLoginModule module = new TestLoginModule()
-        module.metaClass.isCaseInsensitiveUsernameEnabled = { -> true }
+        TestLoginModule module = Spy(TestLoginModule)
+        module.isCaseInsensitiveUsernameEnabled() >> true
 
         expect: "Empty string is handled correctly"
         module.normalizeUsername("") == ""
@@ -83,8 +83,8 @@ class AbstractLoginModuleSpec extends Specification {
     @Unroll
     def "normalizeUsername with special characters: '#input' -> '#expected'"() {
         given: "A login module with feature flag enabled"
-        TestLoginModule module = new TestLoginModule()
-        module.metaClass.isCaseInsensitiveUsernameEnabled = { -> true }
+        TestLoginModule module = Spy(TestLoginModule)
+        module.isCaseInsensitiveUsernameEnabled() >> true
 
         expect:
         module.normalizeUsername(input) == expected
@@ -138,21 +138,18 @@ class AbstractLoginModuleSpec extends Specification {
         given: "A login module with mocked application context"
         TestLoginModule module = new TestLoginModule()
         
-        and: "Mock application context with FeatureService that returns true"
-        def mockFeatureService = Mock(FeatureService) {
-            featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> true
-        }
-        def mockContext = Mock(ApplicationContext) {
-            containsBeanDefinition("featureService") >> true
-            getBean("featureService") >> mockFeatureService
-        }
-        Holders.metaClass.static.findApplicationContext = { -> mockContext }
+        and: "Mock application context"
+        def mockFeatureService = Mock(FeatureService)
+        mockFeatureService.featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> true
+        
+        def mockContext = Mock(ApplicationContext)
+        mockContext.containsBeanDefinition("featureService") >> true
+        mockContext.getBean("featureService") >> mockFeatureService
+        
+        module.metaClass.getApplicationContext = { -> mockContext }
 
         expect: "Feature check returns true"
         module.isCaseInsensitiveUsernameEnabled()
-        
-        cleanup:
-        Holders.metaClass = null
     }
 
     def "isCaseInsensitiveUsernameEnabled handles exceptions gracefully"() {
@@ -173,24 +170,25 @@ class AbstractLoginModuleSpec extends Specification {
 
     def "login normalizes username from callbacks when feature enabled"() {
         given: "A login module with feature flag enabled"
-        TestLoginModule module = new TestLoginModule()
+        TestLoginModule module = Spy(TestLoginModule)
         module.testUserInfo = new UserInfo(
             "naveed", 
             PasswordCredential.getCredential("password"),
             ["role1"]
         )
         
-        and: "Mock feature service to return true"
-        def mockFeatureService = Mock(FeatureService) {
-            featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> true
-        }
-        def mockContext = Mock(ApplicationContext) {
-            containsBeanDefinition("featureService") >> true
-            getBean("featureService") >> mockFeatureService
-        }
-        Holders.metaClass.static.findApplicationContext = { -> mockContext }
+        and: "Mock application context"
+        def mockFeatureService = Mock(FeatureService)
+        mockFeatureService.featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> true
         
-        and: "Mock callback handler that returns uppercase username"
+        def mockContext = Mock(ApplicationContext)
+        mockContext.containsBeanDefinition("featureService") >> true
+        mockContext.getBean("featureService") >> mockFeatureService
+        
+        module.metaClass.getApplicationContext = { -> mockContext }
+        module.metaClass.getCallBackAuth = { -> ["NAVEED", "password"] as Object[] }
+        
+        and: "Mock callback handler"
         def mockCallbackHandler = Mock(CallbackHandler)
         module.initialize(
             new Subject(), 
@@ -198,38 +196,33 @@ class AbstractLoginModuleSpec extends Specification {
             [:],
             [:]
         )
-        
-        and: "Override getCallBackAuth to return uppercase username"
-        module.metaClass.getCallBackAuth = { -> ["NAVEED", "password"] }
 
         when: "Login is called"
         boolean result = module.login()
 
         then: "Login succeeds and username is normalized"
         result
-        
-        cleanup:
-        Holders.metaClass = null
     }
 
     def "login does not normalize username when feature disabled"() {
         given: "A login module with feature flag disabled"
-        TestLoginModule module = new TestLoginModule()
+        TestLoginModule module = Spy(TestLoginModule)
         module.testUserInfo = new UserInfo(
-            "NAVEED",
+            "NAVEED", 
             PasswordCredential.getCredential("password"),
             ["role1"]
         )
         
-        and: "Mock feature service to return false"
-        def mockFeatureService = Mock(FeatureService) {
-            featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> false
-        }
-        def mockContext = Mock(ApplicationContext) {
-            containsBeanDefinition("featureService") >> true
-            getBean("featureService") >> mockFeatureService
-        }
-        Holders.metaClass.static.findApplicationContext = { -> mockContext }
+        and: "Mock application context"
+        def mockFeatureService = Mock(FeatureService)
+        mockFeatureService.featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> false
+        
+        def mockContext = Mock(ApplicationContext)
+        mockContext.containsBeanDefinition("featureService") >> true
+        mockContext.getBean("featureService") >> mockFeatureService
+        
+        module.metaClass.getApplicationContext = { -> mockContext }
+        module.metaClass.getCallBackAuth = { -> ["NAVEED", "password"] as Object[] }
         
         and: "Mock callback handler"
         def mockCallbackHandler = Mock(CallbackHandler)
@@ -239,25 +232,19 @@ class AbstractLoginModuleSpec extends Specification {
             [:],
             [:]
         )
-        
-        and: "Override getCallBackAuth to return uppercase username"
-        module.metaClass.getCallBackAuth = { -> ["NAVEED", "password"] }
 
         when: "Login is called"
         boolean result = module.login()
 
-        then: "Login succeeds and username remains uppercase"
+        then: "Login succeeds with username remaining uppercase"
         result
-        
-        cleanup:
-        Holders.metaClass = null
     }
 
     @Unroll
     def "normalizeUsername consistently handles '#username' regardless of call count"() {
         given: "A login module with feature flag enabled"
-        TestLoginModule module = new TestLoginModule()
-        module.metaClass.isCaseInsensitiveUsernameEnabled = { -> true }
+        TestLoginModule module = Spy(TestLoginModule)
+        module.isCaseInsensitiveUsernameEnabled() >> true
 
         when: "normalizeUsername is called multiple times"
         def result1 = module.normalizeUsername(username)
@@ -278,8 +265,8 @@ class AbstractLoginModuleSpec extends Specification {
 
     def "normalizeUsername logging behavior"() {
         given: "A login module with debug enabled"
-        TestLoginModule module = new TestLoginModule()
-        module.metaClass.isCaseInsensitiveUsernameEnabled = { -> true }
+        TestLoginModule module = Spy(TestLoginModule)
+        module.isCaseInsensitiveUsernameEnabled() >> true
         module.setDebug(true)  // Enable debug mode
 
         when: "Username is normalized"
