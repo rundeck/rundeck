@@ -161,5 +161,13 @@ public class PropertyFileLoginModule extends AbstractLoginModule {
     public void setHotReload(boolean hotReload) {
         this.hotReload = hotReload;
     }
+    
+    /**
+     * Check if hot-reload is enabled.
+     * @return true if hot-reload is enabled
+     */
+    public boolean isReloadEnabled() {
+        return this.hotReload;
+    }
 }
 

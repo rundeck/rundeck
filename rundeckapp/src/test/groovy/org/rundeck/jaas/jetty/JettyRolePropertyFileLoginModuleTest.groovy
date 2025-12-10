@@ -23,18 +23,28 @@ import javax.security.auth.Subject
 
 class JettyRolePropertyFileLoginModuleTest extends Specification {
     def "Initialize without hotReload set"() {
+        given: "A temporary properties file"
+        def tempFile = File.createTempFile("test-realm", ".properties")
+        tempFile.deleteOnExit()
+        tempFile.text = "testuser:testpass,user"
+        
         when:
         JettyRolePropertyFileLoginModule module = new JettyRolePropertyFileLoginModule()
-        module.initialize(new Subject(), null, [:], [useFirstPass:"true"])
+        module.initialize(new Subject(), null, [:], [useFirstPass:"true", file: tempFile.absolutePath])
 
         then:
         !module.module.isReloadEnabled()
     }
 
     def "Initialize hotReload set to true"() {
+        given: "A temporary properties file"
+        def tempFile = File.createTempFile("test-realm", ".properties")
+        tempFile.deleteOnExit()
+        tempFile.text = "testuser:testpass,user"
+        
         when:
         JettyRolePropertyFileLoginModule module = new JettyRolePropertyFileLoginModule()
-        module.initialize(new Subject(),null,[:],[useFirstPass:"true",hotReload:"true"])
+        module.initialize(new Subject(),null,[:],[useFirstPass:"true",hotReload:"true", file: tempFile.absolutePath])
 
         then:
         module.module.isReloadEnabled()
