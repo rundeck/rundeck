@@ -391,6 +391,14 @@ public abstract class AbstractLoginModule implements LoginModule {
         return debug;
     }
     
+    /**
+     * Set debug mode for testing purposes.
+     * @param debug Whether to enable debug logging
+     */
+    public void setDebug(boolean debug) {
+        this.debug = debug;
+    }
+    
     protected String getUsername() {
         return username;
     }

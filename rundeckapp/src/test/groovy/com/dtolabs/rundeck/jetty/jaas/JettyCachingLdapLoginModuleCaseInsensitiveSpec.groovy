@@ -294,7 +294,7 @@ class JettyCachingLdapLoginModuleCaseInsensitiveSpec extends Specification {
 
     private void setupCallbackHandler(JettyCachingLdapLoginModule module, String username, String password) {
         CallbackHandler handler = createMockCallbackHandler(username, password)
-        module.@callbackHandler = handler
+        module.setCallbackHandler(handler)
     }
 
     private CallbackHandler createMockCallbackHandler(String username, String password) {

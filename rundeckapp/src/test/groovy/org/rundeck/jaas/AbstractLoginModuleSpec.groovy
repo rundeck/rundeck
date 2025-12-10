@@ -280,7 +280,7 @@ class AbstractLoginModuleSpec extends Specification {
         given: "A login module with debug enabled"
         TestLoginModule module = new TestLoginModule()
         module.metaClass.isCaseInsensitiveUsernameEnabled = { -> true }
-        module.@debug = true  // Enable debug mode
+        module.setDebug(true)  // Enable debug mode
 
         when: "Username is normalized"
         def result = module.normalizeUsername("Naveed")
