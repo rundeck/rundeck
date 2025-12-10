@@ -2968,7 +2968,11 @@ Since: v23''',
         content=@Content(
             mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
             array = @ArraySchema(schema = @Schema(implementation = Source)),
-            examples=@ExampleObject('''[
+            examples=[
+                @ExampleObject(
+                    name = 'sources-list',
+                    description = 'Project sources list',
+                    value = '''[
     {
         "index": 1,
         "resources": {
@@ -2988,7 +2992,9 @@ Since: v23''',
         },
         "type": "stub"
     }
-]''')
+]'''
+                )
+            ]
         )
     )
     def apiSourcesList() {
