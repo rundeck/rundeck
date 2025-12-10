@@ -952,11 +952,13 @@ Authorization under the key path `project/{project}` can be granted at the proje
         @Content(
             mediaType = 'application/pgp-keys',
             schema=@Schema(type='string'),
-            examples = @ExampleObject(
-                name='public-key',
-                description='Public Key contents',
-                value='''...Public Key Contents...'''
-            )
+            examples = [
+                @ExampleObject(
+                    name='public-key',
+                    description='Public Key contents',
+                    value='''...Public Key Contents...'''
+                )
+            ]
         )
         ]
     )
