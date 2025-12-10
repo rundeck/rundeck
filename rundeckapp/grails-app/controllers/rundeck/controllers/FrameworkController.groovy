@@ -1630,7 +1630,11 @@ Since: v55""",
             description = "Saved. Returns the saved plugins.",
             content = @Content(
                     mediaType = MediaType.APPLICATION_JSON,
-                    examples = @ExampleObject(value = """
+                    examples = [
+                        @ExampleObject(
+                            name = 'save-plugins-request',
+                            description = 'Save project plugins request',
+                            value = """
 {
   "project": "Ansible-resource-model-error",
   "plugins": [
@@ -1642,7 +1646,9 @@ Since: v55""",
     }
   ]
 }
-""")
+"""
+                        )
+                    ]
             )
     )
     @ApiResponse(
@@ -1650,7 +1656,13 @@ Since: v55""",
             description = "Bad request (missing/invalid body or parameters).",
             content = @Content(
                     mediaType = MediaType.APPLICATION_JSON,
-                    examples = @ExampleObject(value = """{ "errors": ["plugins and removedPlugins must be arrays"] }""")
+                    examples = [
+                        @ExampleObject(
+                            name = 'bad-request-error',
+                            description = 'Bad request error response',
+                            value = """{ "errors": ["plugins and removedPlugins must be arrays"] }"""
+                        )
+                    ]
             )
     )
     @ApiResponse(
@@ -1662,12 +1674,18 @@ Since: v55""",
             description = "Validation errors.",
             content = @Content(
                     mediaType = MediaType.APPLICATION_JSON,
-                    examples = @ExampleObject(value = """
+                    examples = [
+                        @ExampleObject(
+                            name = 'validation-errors',
+                            description = 'Validation errors response',
+                            value = """
 {
   "errors": ["[0]: configuration was invalid: ..."],
   "reports": { "0": [ { "key": "file", "msg": "is required" } ] }
 }
-""")
+"""
+                        )
+                    ]
             )
     )
     def saveProjectPlugins(String project, String serviceName, String configPrefix) {
@@ -1856,7 +1874,11 @@ Since: v55""",
             description = '''All configs were successfully saved or updated. A payload reflecting save or creation status is returned. `restart` will indicate if the server must be restarted for some changes to take effect.''',
             content = @Content(
                     mediaType= io.micronaut.http.MediaType.APPLICATION_JSON,
-                    examples = @ExampleObject('''
+                    examples = [
+                        @ExampleObject(
+                            name = 'project-configurable',
+                            description = 'Project configurable response',
+                            value = '''
 {
                         "project": "projectName",
                         "projectConfigurable": [
@@ -1882,7 +1904,9 @@ Since: v55""",
                                 "delay": "0"
                            },
                         ]
-}''')
+}'''
+                        )
+                    ]
             )
     )
     @ApiResponse(responseCode = '400', description = 'Bad request')
@@ -1977,7 +2001,11 @@ List of config values, each value contains:
             description = '''All configs were successfully saved or updated. A payload reflecting save or creation status is returned. `restart` will indicate if the server must be restarted for some changes to take effect.''',
             content = @Content(
                     mediaType= io.micronaut.http.MediaType.APPLICATION_JSON,
-                    examples = @ExampleObject('''
+                    examples = [
+                        @ExampleObject(
+                            name = 'save-result',
+                            description = 'Save project configurable result',
+                            value = '''
 {
                         "result": {
                             "success": true,
@@ -1987,7 +2015,9 @@ List of config values, each value contains:
                           "error message",
                           "error message"
                         ]
-}''')
+}'''
+                        )
+                    ]
             )
     )
     @ApiResponse(responseCode = '400', description = 'Bad request')

@@ -4907,7 +4907,11 @@ Since: v19''',
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = JobFileInfo),
-                examples = @ExampleObject('''
+                examples = [
+                    @ExampleObject(
+                        name = 'job-file-info',
+                        description = 'Job file upload info',
+                        value = '''
 {
   "dateCreated": "2017-02-24T19:10:33Z",
   "execId": 2741,
@@ -4920,7 +4924,9 @@ Since: v19''',
   "sha": "9284ed4fd7fe1346904656f329db6cc49c0e7ae5b8279bff37f96bc6eb59baad",
   "size": 12,
   "user": "admin"
-}''')
+}'''
+                    )
+                ]
         )
     )
     /**
@@ -5427,7 +5433,11 @@ For Content-Type: `multipart/form-data`
                 @Content(
                     mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiRunAdhocRequest),
-                    examples = @ExampleObject('''
+                    examples = [
+                        @ExampleObject(
+                            name = 'run-script-request',
+                            description = 'Run adhoc script request',
+                            value = '''
 {
     "project":"[project]",
     "script":"[script]",
@@ -5439,7 +5449,9 @@ For Content-Type: `multipart/form-data`
     "interpreterArgsQuoted": true,
     "fileExtension": "[fileExtension]",
     "filter": "[node filter string]"
-}''')
+}'''
+                        )
+                    ]
                 )
             ]
         )
@@ -5785,7 +5797,11 @@ in the results. Default is false.  Requires API version 50 or later.''',
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             array = @ArraySchema(schema = @Schema(type = 'object')),
-                examples = @ExampleObject('''[{
+                examples = [
+                    @ExampleObject(
+                        name = 'job-executions-list',
+                        description = 'List of job executions',
+                        value = '''[{
   "id": 1,
   "href": "[url]",
   "permalink": "[url]",
@@ -5822,7 +5838,9 @@ in the results. Default is false.  Requires API version 50 or later.''',
   "failedNodes": [
     "nodec","noded"
   ]
-}]''')
+}]'''
+                    )
+                ]
         )
     )
     /**
