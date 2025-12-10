@@ -736,7 +736,11 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(type = 'object'),
-            examples = @ExampleObject('''{
+            examples = [
+                @ExampleObject(
+                    name = 'job-workflow',
+                    description = 'Job workflow structure',
+                    value = '''{
     "workflow": [
         {
             "description": "[description]",
@@ -757,7 +761,9 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
             "workflow": []
         }
     ]
-}''')
+}'''
+                )
+            ]
         )
     )
     public def apiJobWorkflow (){
@@ -1748,7 +1754,11 @@ Failed results will contain:
         content = @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type = 'object'),
-                examples = @ExampleObject('''
+                examples = [
+                    @ExampleObject(
+                        name = 'bulk-execution-disable',
+                        description = 'Bulk execution disable response',
+                        value = '''
 {
   "requestCount": 2,
   "enabled": true,
@@ -1765,7 +1775,9 @@ Failed results will contain:
       "errorCode": "(error code, see above)",
       "message": "(success or failure message)"
     }]
-}''')
+}'''
+                    )
+                ]
         )
     )
     protected def apiFlipExecutionDisabledBulk(
@@ -1817,7 +1829,11 @@ Failed results will contain:
         content = @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type = 'object'),
-                examples = @ExampleObject('''
+                examples = [
+                    @ExampleObject(
+                        name = 'bulk-execution-enable',
+                        description = 'Bulk execution enable response',
+                        value = '''
 {
   "requestCount": 2,
   "enabled": true,
@@ -1834,7 +1850,9 @@ Failed results will contain:
       "errorCode": "(error code, see above)",
       "message": "(success or failure message)"
     }]
-}''')
+}'''
+                    )
+                ]
         )
     )
     def apiFlipExecutionEnabledBulk(
@@ -1967,7 +1985,11 @@ Failed results will contain:
         content = @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type = 'object'),
-                examples = @ExampleObject('''
+                examples = [
+                    @ExampleObject(
+                        name = 'bulk-schedule-disable',
+                        description = 'Bulk schedule disable response',
+                        value = '''
 {
   "requestCount": 2,
   "enabled": true,
@@ -1984,7 +2006,9 @@ Failed results will contain:
       "errorCode": "(error code, see above)",
       "message": "(success or failure message)"
     }]
-}''')
+}'''
+                    )
+                ]
         )
     )
     protected def apiFlipScheduleDisabledBulk(
@@ -2036,7 +2060,11 @@ Failed results will contain:
         content = @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type = 'object'),
-                examples = @ExampleObject('''
+                examples = [
+                    @ExampleObject(
+                        name = 'bulk-schedule-enable',
+                        description = 'Bulk schedule enable response',
+                        value = '''
 {
   "requestCount": 2,
   "enabled": true,
@@ -2053,7 +2081,9 @@ Failed results will contain:
       "errorCode": "(error code, see above)",
       "message": "(success or failure message)"
     }]
-}''')
+}'''
+                    )
+                ]
         )
     )
     def apiFlipScheduleEnabledBulk(

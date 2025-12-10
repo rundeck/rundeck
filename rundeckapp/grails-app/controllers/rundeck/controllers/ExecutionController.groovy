@@ -3401,7 +3401,11 @@ Since: v14
                 schema = @Schema(
                     implementation = ExecutionFileInfoList
                 ),
-                examples = @ExampleObject("""{
+                examples = [
+                    @ExampleObject(
+                        name = 'input-files-list',
+                        description = 'Execution input files list',
+                        value = """{
   "files": [
     {
       "id": "382c7596-435b-4103-8781-6b32fbd629b2",
@@ -3417,7 +3421,9 @@ Since: v14
       "execId": 2837
     }
   ]
-}""")
+}"""
+                    )
+                ]
             )
         ]
     )
@@ -3509,14 +3515,20 @@ So a value of `2w` would return executions that completed within the last two we
             @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(implementation = MetricsQueryResponse),
-                examples = @ExampleObject("""{
+                examples = [
+                    @ExampleObject(
+                        name = 'execution-metrics',
+                        description = 'Execution metrics response',
+                        value = """{
     "duration": {
         "average": "1s",
         "min": "0s",
         "max": "3s"
     },
     "total": 1325
-}""")
+}"""
+                    )
+                ]
             )
         ]
     )
