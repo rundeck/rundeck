@@ -1239,26 +1239,38 @@ Since: v14""",
                     @Content(
                             mediaType = MediaType.TEXT_PLAIN,
                             schema=@Schema(type='string'),
-                            examples = @ExampleObject('''description: "my policy"
+                            examples = [
+                                @ExampleObject(
+                                    name = 'acl-policy',
+                                    description = 'ACL policy document',
+                                    value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                                )
+                            ]
                     ),
                     @Content(
                             mediaType = MediaType.APPLICATION_YAML,
                             schema=@Schema(type='object'),
-                            examples = @ExampleObject('''description: "my policy"
+                            examples = [
+                                @ExampleObject(
+                                    name = 'acl-policy',
+                                    description = 'ACL policy document',
+                                    value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                                )
+                            ]
                     ),
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON,
@@ -1368,26 +1380,38 @@ by:
                     @Content(
                             mediaType = MediaType.TEXT_PLAIN,
                             schema = @Schema(type = 'string'),
-                            examples = @ExampleObject('''description: "my policy"
+                            examples = [
+                                @ExampleObject(
+                                    name = 'acl-policy',
+                                    description = 'ACL policy document',
+                                    value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                                )
+                            ]
                     ),
                     @Content(
                             mediaType = MediaType.APPLICATION_YAML,
                             schema = @Schema(type = 'object'),
-                            examples = @ExampleObject('''description: "my policy"
+                            examples = [
+                                @ExampleObject(
+                                    name = 'acl-policy',
+                                    description = 'ACL policy document',
+                                    value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                                )
+                            ]
                     ),
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON,
@@ -1513,25 +1537,37 @@ by:
             content = [
                     @Content(
                             mediaType = MediaType.TEXT_PLAIN,
-                            examples = @ExampleObject('''description: "my policy"
+                            examples = [
+                                @ExampleObject(
+                                    name = 'acl-policy',
+                                    description = 'ACL policy document',
+                                    value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                                )
+                            ]
                     ),
                     @Content(
                             mediaType = MediaType.APPLICATION_YAML,
-                            examples = @ExampleObject('''description: "my policy"
+                            examples = [
+                                @ExampleObject(
+                                    name = 'acl-policy',
+                                    description = 'ACL policy document',
+                                    value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                                )
+                            ]
                     ),
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON,
