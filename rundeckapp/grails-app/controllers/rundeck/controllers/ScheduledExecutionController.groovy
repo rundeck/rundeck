@@ -1763,7 +1763,7 @@ Failed results will contain:
         @RequestBody(
             description = "request",
             content = @Content(
-                mediaType = 'application/json',
+                mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(implementation = ApiBulkJobDeleteRequest)
             )
         )
@@ -1838,7 +1838,7 @@ Failed results will contain:
         @RequestBody(
             description = "Bulk ID request",
             content = @Content(
-                mediaType = 'application/json',
+                mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(implementation = ApiBulkJobDeleteRequest)
             )
         )
@@ -1994,7 +1994,7 @@ Failed results will contain:
         @RequestBody(
             description = "Bulk ID request",
             content = @Content(
-                mediaType = 'application/json',
+                mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(implementation = ApiBulkJobDeleteRequest)
             )
         )
@@ -2069,7 +2069,7 @@ Failed results will contain:
         @RequestBody(
             description = "Bulk ID request",
             content = @Content(
-                mediaType = 'application/json',
+                mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(implementation = ApiBulkJobDeleteRequest)
             )
         )
@@ -2194,10 +2194,10 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
     @ApiResponse(
         responseCode='200',
         description = """Summary of bulk delete results""",
-        content=[@Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = DeleteBulkResponse)
-        )]
+        content=@Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = DeleteBulkResponse)
+        )
 
     )
     protected def apiJobDeleteBulk_docs2(){}
@@ -2212,7 +2212,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
     @ApiResponse(
         responseCode='200',
         description = """Summary of bulk delete results""",
-        content=[@Content(
+        content=@Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = DeleteBulkResponse),
             examples = [
@@ -2241,7 +2241,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
 }"""
                 )
             ]
-        )]
+        )
 
     )
     /**
@@ -2252,7 +2252,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         @RequestBody(
             description = "Bulk ID request",
             content = @Content(
-                mediaType = 'application/json',
+                mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(implementation = ApiBulkJobDeleteRequest)
             )
         )
@@ -3812,7 +3812,7 @@ Since: v14''',
                             description = "Job YAML Format"
                         )
                     ),
-                    mediaType = 'text/yaml'
+                    mediaType = MediaType.APPLICATION_YAML
                 )
             ]
         )
@@ -3981,6 +3981,7 @@ Each job entry contains:
     @Operation(
         method = "GET",
         summary = "Getting a Job Definition",
+        tags = ["Jobs"],
         description = '''Export a single job definition, in one of the supported formats.
 
 Authorization required: `read` for the Job.''',
@@ -4025,7 +4026,7 @@ Authorization required: `read` for the Job.''',
                         description = "Job YAML Format"
                     )
                 ),
-                mediaType = 'text/yaml'
+                mediaType = MediaType.APPLICATION_YAML
             )
         ]
     )
@@ -4044,7 +4045,6 @@ Authorization required: `read` for the Job.''',
         description = '''Unsupported Media type.''',
         content = @Content(schema = @Schema(implementation = ApiErrorResponse))
     )
-    @Tag(name = "Jobs")
 
     /**
      * API: export job definition: /job/{id}, version 1

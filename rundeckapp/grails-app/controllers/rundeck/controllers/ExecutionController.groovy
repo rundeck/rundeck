@@ -896,6 +896,7 @@ setTimeout(function(){
     @Operation(
         method="GET",
         summary="Execution Output",
+        tags = ["Job Executions"],
         description="""Get the output for an execution by ID. The execution can be currently running or may have already completed. Output can be filtered down to a specific node or workflow step.
 
 The log output for each execution is stored in a file on the Rundeck server, and this API endpoint allows you to retrieve some or all of the output, in several possible formats: json, and plain text. When retrieving the plain text output, some metadata about the log is included in HTTP Headers. JSON includes metadata about each output log line, as well as metadata about the state of the execution and log file, and your current index location in the file.
@@ -1135,7 +1136,6 @@ this Log Entry.""",
             )
         ]
     )
-    @Tag(name = 'Job Executions')
     /**
      * API: /api/execution/{id}/output, version 5
      */
@@ -1155,6 +1155,7 @@ this Log Entry.""",
     @Operation(
         method="GET",
         summary="Execution Output For Node",
+        tags = ["Job Executions"],
         description="""Get the output for an execution filtered for a specific node.""",
         parameters = [
             @Parameter(
@@ -1177,7 +1178,6 @@ this Log Entry.""",
         responseCode = '200',
         description = """Log Output Response. This endpoint response is the same as the Execution Output `/execution/{id}/output` response using the `nodename` parameter."""
     )
-    @Tag(name = 'Job Executions')
     /**
      * API: /api/execution/{id}/output/node/{nodename}, version 5
      */
@@ -1189,6 +1189,7 @@ this Log Entry.""",
     @Operation(
         method="GET",
         summary="Execution Output For Node and Step",
+        tags = ["Job Executions"],
         description="""Get the output for an execution filtered for a specific node and step.""",
         parameters = [
             @Parameter(
@@ -1218,7 +1219,6 @@ this Log Entry.""",
         responseCode = '200',
         description = """Log Output Response. This endpoint response is the same as the Execution Output `/execution/{id}/output` response using the `nodename` and `stepctx` parameters."""
     )
-    @Tag(name = 'Job Executions')
     /**
      * API: /api/execution/{id}/output/node/{nodename}/step/{stepctx}, version 5
      */
@@ -1230,6 +1230,7 @@ this Log Entry.""",
     @Operation(
         method="GET",
         summary="Execution Output For Step",
+        tags = ["Job Executions"],
         description="""Get the output for an execution filtered for a specific step.""",
         parameters = [
             @Parameter(
@@ -1252,7 +1253,6 @@ this Log Entry.""",
         responseCode = '200',
         description = """Log Output Response. This endpoint response is the same as the Execution Output `/execution/{id}/output` response using the `stepctx` parameter."""
     )
-    @Tag(name = 'Job Executions')
     /**
      * API: /api/execution/{id}/output/step/{stepctx}, version 5
      */
@@ -1445,6 +1445,7 @@ this Log Entry.""",
     @Get(uri="/execution/{id}/output/state")
     @Operation(
         summary="Execution Output with State",
+        tags = ["Job Executions"],
         description = """Get the metadata associated with workflow step state changes along with the log output, optionally excluding log output.
 
 JSON response requires API v14.
@@ -1476,7 +1477,6 @@ JSON response requires API v14.
     - `nodeend` finishing of execution of a node for the given step
 * metadata about the entry may be included in the entry"""
     )
-    @Tag(name = 'Job Executions')
     /**
      * API: /api/execution/{id}/output/state, version ?
      */
@@ -2088,6 +2088,7 @@ JSON response requires API v14.
         summary="Execution Info",
         description = "Get the status for an execution by ID.",
         method='GET',
+        tags = ["Job Executions"],
         parameters = @Parameter(
             name = "id",
             description = "Execution ID",
@@ -2099,10 +2100,9 @@ JSON response requires API v14.
     @ApiResponse(
         responseCode = '200',
         description = "See: Listing Running Executions. JSON response requires API v14.",
-        content=[
-            @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                examples = [
+        content=@Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            examples = [
                     @ExampleObject(
                         name = 'execution-info',
                         description = 'Execution info response',
@@ -2147,9 +2147,7 @@ JSON response requires API v14.
                     )
                 ]
             )
-        ]
     )
-    @Tag(name = 'Job Executions')
     @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def apiExecution(){
         if (!apiService.requireApi(request, response)) {
@@ -2181,6 +2179,7 @@ JSON response requires API v14.
     @Get(uri="/execution/{id}/state")
     @Operation(
         summary="Execution State",
+        tags = ["Job Executions"],
         description = """Get detail about the node and step state of an execution by ID. The execution can be currently running or completed.
 
 JSON response requires API v14.
@@ -2339,15 +2338,14 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
 
 \\* these states only apply to steps/nodes and do not apply to the overall execution or workflow.
 """,
-        content=[
-            @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(type='object'),
-                examples = [
-                    @ExampleObject(
-                        name = 'execution-state',
-                        description = 'Execution state response with workflow details',
-                        value = """{
+        content=@Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type='object'),
+            examples = [
+                @ExampleObject(
+                    name = 'execution-state',
+                    description = 'Execution state response with workflow details',
+                    value = """{
   "completed": true,
   "executionState": "SUCCEEDED",
   "endTime": "2014-01-13T20:38:36Z",
@@ -2437,7 +2435,6 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
                     )
                 ]
             )
-        ]
     )
     @ApiResponse(
         responseCode = '404',
@@ -2447,7 +2444,6 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
             schema = @Schema(implementation = ApiErrorResponse)
         )
     )
-    @Tag(name = 'Job Executions')
     /**
      * API: /api/execution/{id}/state , version 11
      */
@@ -2573,6 +2569,7 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
     @Post(uri="/execution/{id}/abort")
     @Operation(
         summary="Aborting Executions",
+        tags = ["Job Executions"],
         description = "Abort a running execution by ID.",
         method='POST',
         parameters = [
@@ -2611,10 +2608,9 @@ Authorization required:
 * action: `kill`, or `admin`, `app_admin`
 * resource: `execution`
 """,
-        content=[
-            @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                examples = [
+        content=@Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            examples = [
                     @ExampleObject(
                         name = 'abort-execution',
                         description = 'Abort execution response',
@@ -2632,9 +2628,7 @@ Authorization required:
                     )
                 ]
             )
-        ]
     )
-    @Tag(name = 'Job Executions')
     /**
      * API: /api/execution/{id}/abort, version 1
      */
@@ -2725,6 +2719,7 @@ Authorization required:
     @Delete(uri="/execution/{id}")
     @Operation(
         summary="Delete an Execution",
+        tags = ["Job Executions"],
         description = """Delete an execution by ID.
 
 Authorization requirement: Requires the `delete_execution` action allowed for a `project` in the `application` context.
@@ -2745,7 +2740,6 @@ See: [Administration - Access Control Policy - Application Scope Resources and A
         responseCode = '204',
         description = "No Content"
     )
-    @Tag(name = 'Job Executions')
     /**
      * DELETE /api/14/execution/[ID]
      * @return
@@ -2789,6 +2783,7 @@ See: [Administration - Access Control Policy - Application Scope Resources and A
     @Operation(
         method="POST",
         summary="Bulk Delete Executions",
+        tags = ["Job Executions"],
         description = """Delete a set of Executions by their IDs.
 
 The IDs can be specified in two ways:
@@ -2804,18 +2799,16 @@ Note: the JSON schema also supports a basic JSON array
 """,
         requestBody = @RequestBody(
             description = "Delete Bulk IDs request.",
-            content=[
-                @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(oneOf = [
-                        DeleteBulkRequest, DeleteBulkRequestLong, List
-                    ]),
-                    examples = [
-                        @ExampleObject(value = """{"ids": [ 1, 2, 17 ] }""", name = "object"),
-                        @ExampleObject(value = """[ 1, 2, 17 ]""", name = "array")
-                    ]
-                )
-            ]
+            content=@Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(oneOf = [
+                    DeleteBulkRequest, DeleteBulkRequestLong, List
+                ]),
+                examples = [
+                    @ExampleObject(value = """{"ids": [ 1, 2, 17 ] }""", name = "object"),
+                    @ExampleObject(value = """[ 1, 2, 17 ]""", name = "array")
+                ]
+            )
         ),
         parameters = @Parameter(
             name = "ids",
@@ -2828,7 +2821,7 @@ Note: the JSON schema also supports a basic JSON array
     @ApiResponse(
         responseCode='200',
         description = """Summary of bulk delete results""",
-        content=[@Content(
+        content=@Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = DeleteBulkResponse),
             examples = [
@@ -2857,10 +2850,9 @@ Note: the JSON schema also supports a basic JSON array
 }"""
                 )
             ]
-        )]
+        )
 
     )
-    @Tag(name = 'Job Executions')
     /**
      * Delete bulk API action
      * @return
@@ -3386,6 +3378,7 @@ Since: v14
     @Get(uri="/execution/{id}/input/files")
     @Operation(
         summary="List Input Files for an Execution",
+        tags = ["Job Executions"],
         description = "List input files used for an execution. Since: V19",
         method='GET',
         parameters = @Parameter(
@@ -3431,7 +3424,6 @@ Since: v14
             )
         ]
     )
-    @Tag(name = 'Job Executions')
     /**
      * List input files for an execution
      */
@@ -3564,12 +3556,10 @@ Note: This endpoint has the same query parameters and response as the `/executio
     @ApiResponse(
         responseCode = "200",
         description="Metrics response",
-        content=[
-            @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = MetricsQueryResponse)
-            )
-        ]
+        content=@Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = MetricsQueryResponse)
+        )
     )
     /**
      * Placeholder method to annotate for openapi spec generation.
