@@ -388,11 +388,6 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         // project filter is not applied when the jobUUID filter is set to improve the response time of that case
         if(query.projFilter && !query.jobIdListFilter) {
           eq('project', query.projFilter)
-
-          if(!query.statusFilter && !query.userFilter && !query.adhocStringFilter && !query.recentFilter ){
-              //set filter by dateCompleted to improve performance when only project filter is set
-              isNotNull('dateCompleted')
-          }
         }
         if (query.userFilter) {
           eq('user', query.userFilter)
