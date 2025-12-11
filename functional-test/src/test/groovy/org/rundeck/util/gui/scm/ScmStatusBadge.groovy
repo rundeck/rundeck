@@ -26,6 +26,11 @@ class ScmStatusBadge {
 
     void checkStatusBadge(JobShowPage jobShowPage, boolean withRetry = true){
         try{
+            // First wait for the element to be present on the page
+            new WebDriverWait(jobShowPage.driver, Duration.ofSeconds(15)).until(
+                    ExpectedConditions.presenceOfElementLocated(elementSelector)
+            )
+            // Then wait for it to finish loading (text should not be "Loading SCM Status...")
             new WebDriverWait(jobShowPage.driver, Duration.ofSeconds(10)).until(
                     ExpectedConditions.not(
                             ExpectedConditions.textToBe(elementSelector, loadingFromServerText)
