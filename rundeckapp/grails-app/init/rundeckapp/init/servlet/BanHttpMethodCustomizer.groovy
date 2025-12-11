@@ -1,52 +1,66 @@
 package rundeckapp.init.servlet
 
-import org.eclipse.jetty.http.HttpFields
 import org.eclipse.jetty.http.HttpMethod
-import org.eclipse.jetty.http.HttpStatus
-import org.eclipse.jetty.server.Connector
-import org.eclipse.jetty.server.HttpConfiguration
-import org.eclipse.jetty.server.HttpConnectionFactory
+import org.eclipse.jetty.server.Handler
 import org.eclipse.jetty.server.Request
 import org.eclipse.jetty.server.Response
 import org.eclipse.jetty.server.Server
+import org.eclipse.jetty.util.Callback
 import org.springframework.boot.web.embedded.jetty.JettyServerCustomizer
 
 /**
  * Validates jetty configuration to avoid disallowed http methods and paths
+ * 
+ * Jetty 12 Migration Note: Uses Handler.Wrapper instead of HttpConfiguration.Customizer
+ * because Customizers no longer have access to Response objects for sending error codes.
  */
 class BanHttpMethodCustomizer implements JettyServerCustomizer {
 
     @Override
     void customize(Server server) {
-
-        server.connectors.each {connector ->
-            HttpConfiguration config = connector.getConnectionFactory(HttpConnectionFactory.class).httpConfiguration
-            config.addCustomizer(new BanHttpCustomizer([HttpMethod.TRACE]))
-        }
+        // Jetty 12: Use Handler.Wrapper to intercept and reject requests
+        HttpMethodFilter filter = new HttpMethodFilter([HttpMethod.TRACE])
+        filter.setHandler(server.getHandler())
+        server.setHandler(filter)
     }
 }
 
 /**
- * Includes and validates paths and http methods banned for security reasons
+ * Handler that intercepts and rejects banned HTTP methods
+ * 
+ * Jetty 12 requires Handler.Wrapper for request rejection because HttpConfiguration.Customizer
+ * executes too early in the lifecycle (before Response is initialized) to send error codes.
  */
-class BanHttpCustomizer implements HttpConfiguration.Customizer {
+class HttpMethodFilter extends Handler.Wrapper {
 
     /**
      * Banned http methods
      */
     final List<HttpMethod> banMethods
 
-    BanHttpCustomizer(List<HttpMethod> methods) {
+    HttpMethodFilter(List<HttpMethod> methods) {
+        super()
         this.banMethods = methods
     }
 
     @Override
-    Request customize(Request request, HttpFields.Mutable responseHeaders) {
-        // Jetty 12 API: customize(Request, HttpFields.Mutable)
+    boolean handle(Request request, Response response, Callback callback) throws Exception {
         HttpMethod currentMethod = HttpMethod.fromString(request.getMethod())
+        
         if (banMethods.contains(currentMethod)) {
-            Response.writeError(request, request.getResponse(), null, HttpStatus.METHOD_NOT_ALLOWED_405)
+            // Reject the request with 405 Method Not Allowed
+            Response.writeError(request, response, callback, 405, "Method Not Allowed")
+            return true // Request handled (rejected)
         }
-        return request
+        
+        // Pass to next handler
+        return super.handle(request, response, callback)
+    }
+
+    @Override
+    List<Handler> getHandlers() {
+        // Return the wrapped handler(s) if any
+        Handler wrappedHandler = getHandler()
+        return wrappedHandler ? [wrappedHandler] : []
     }
 }
