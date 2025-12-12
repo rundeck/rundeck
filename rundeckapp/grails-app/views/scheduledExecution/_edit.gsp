@@ -220,7 +220,7 @@
 
       %{--Options--}%
     <div class="tab-pane" id="tab_workflow">
-      <g:if test="${feature.isEnabled(name:'alphaUi') && uiType=='next' }">
+      <g:if test="${uiType=='next' }">
           <div class="job-editor-workflow-vue">
             <workflow-editor-section  />
           </div>
