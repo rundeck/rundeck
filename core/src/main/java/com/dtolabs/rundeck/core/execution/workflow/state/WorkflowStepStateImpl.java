@@ -33,6 +33,7 @@ public class WorkflowStepStateImpl implements WorkflowStepState {
     private WorkflowState subWorkflowState;
     private List<String> nodeStepTargets;
     private boolean nodeStep;
+    private String runnerNode;
 
 
     public StepIdentifier getStepIdentifier() {
@@ -89,6 +90,14 @@ public class WorkflowStepStateImpl implements WorkflowStepState {
 
     public void setNodeStep(boolean nodeStep) {
         this.nodeStep = nodeStep;
+    }
+
+    public String getRunnerNode() {
+        return runnerNode;
+    }
+
+    public void setRunnerNode(String runnerNode) {
+        this.runnerNode = runnerNode;
     }
 
     @Override

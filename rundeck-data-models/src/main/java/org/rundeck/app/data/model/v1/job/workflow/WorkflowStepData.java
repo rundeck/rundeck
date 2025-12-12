@@ -67,4 +67,7 @@ public interface WorkflowStepData {
     Map<String,Object> getPluginConfig();
 
     String summarize();
+
+
+    String getRunnerNode();
 }

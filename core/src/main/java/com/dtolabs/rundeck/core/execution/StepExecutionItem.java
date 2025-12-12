@@ -23,6 +23,8 @@
 */
 package com.dtolabs.rundeck.core.execution;
 
+import com.dtolabs.rundeck.core.common.INodeEntry;
+
 /**
  * StepExecutionItem is the base interface for any step execution item to be submitted to the ExecutionService
  *
@@ -39,5 +41,9 @@ public interface StepExecutionItem {
      * @return label/id or description of this step
      */
     public String getLabel();
+
+    public default INodeEntry getRunner() {
+        return null;
+    }
 
 }

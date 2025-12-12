@@ -23,6 +23,7 @@ import grails.events.annotation.Subscriber
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -181,9 +182,14 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
                     status
             )
 
+            // Use updated workflowData from status if updateWorkflowDataValues is true
+            WorkflowData workflowDataToUse = (status?.updateWorkflowDataValues && status?.workflowData) ?
+                                              status.workflowData :
+                                              jobEvent.workflowData
+
             return jobEvent.result != null ?
                    JobExecutionEventImpl.afterRun(newContext, jobEvent.execution, jobEvent.result) :
-                   JobExecutionEventImpl.beforeRun(newContext, jobEvent.execution, jobEvent.workflow)
+                   JobExecutionEventImpl.beforeRun(newContext, jobEvent.execution, jobEvent.workflow, workflowDataToUse)
         } else {
             throw new IllegalArgumentException("Unexpected type")
         }
@@ -201,7 +207,17 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
         if (jobEvent instanceof JobExecutionEventImpl) {
             ExecutionContextImpl newContext = mergeExecutionEventContext(jobEvent.executionContext, status)
 
-            return new ExecutionLifecycleStatusImpl(successful: success, executionContext: newContext)
+            // Use updated workflowData from status if updateWorkflowDataValues is true, otherwise use original
+            WorkflowData workflowDataToUse = (status?.updateWorkflowDataValues && status?.workflowData) ?
+                                              status.workflowData :
+                                              jobEvent?.workflowData
+
+            return new ExecutionLifecycleStatusImpl(successful: success,
+                    executionContext: newContext,
+                    useNewValues: useNewValues,
+                    workflowData: workflowDataToUse,
+                    updateWorkflowDataValues: status?.updateWorkflowDataValues
+            )
         } else {
             throw new IllegalArgumentException("Unexpected type")
         }
@@ -370,4 +386,6 @@ class ExecutionLifecycleStatusImpl implements ExecutionLifecycleStatus {
     boolean successful
     boolean useNewValues
     StepExecutionContext executionContext
+    WorkflowData  workflowData
+    boolean updateWorkflowDataValues
 }

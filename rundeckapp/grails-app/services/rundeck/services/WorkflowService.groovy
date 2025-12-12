@@ -169,7 +169,11 @@ class WorkflowService implements ApplicationContextAware{
                 substeps[ndx] = new MutableWorkflowStepStateImpl(stepId,
                         createStateForWorkflow(se.workflow, project,frameworkNodeName,newContext,secureOptions))
             } else {
-                substeps[ndx] = new MutableWorkflowStepStateImpl(stepId)
+                def mutableStep = new MutableWorkflowStepStateImpl(stepId)
+                if(step.runnerNode){
+                    mutableStep.runnerNode = step.runnerNode
+                }
+                substeps[ndx] = mutableStep
             }
             substeps[ndx].nodeStep = !!step.nodeStep
         }

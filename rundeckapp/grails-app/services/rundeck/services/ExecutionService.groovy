@@ -16,7 +16,7 @@
 
 package rundeck.services
 
-
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
 import org.hibernate.sql.JoinType
@@ -1117,6 +1117,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             globalConfig
             )
 
+            def secureOptionNodeDeferred = [:]
+            if(scheduledExecution) {
+                if(!extraParamsExposed){
+                    extraParamsExposed=[:]
+                }
+                if(!extraParams){
+                    extraParams=[:]
+                }
+                Map<String, String> args = OptionsParserUtil.parseOptsFromString(execution.argString)
+                ignoreDefaultValuesForSecureOptions(scheduledExecution, extraParams, extraParamsExposed)
+                loadSecureOptionStorageDefaults(scheduledExecution, extraParamsExposed, extraParams, authContext, true,
+                        args, jobcontext, secureOptionNodeDeferred)
+            }
+            String inputCharset=frameworkService.getDefaultInputCharsetForProject(execution.project)
+
 
             NodeRecorder recorder = new NodeRecorder()
 
@@ -1124,7 +1139,43 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             WorkflowExecutionListenerImpl executionListener = new WorkflowExecutionListenerImpl(
                     recorder,
                     workflowlogger
-            );
+            )
+
+            def executionLifecyclePluginConfigs = scheduledExecution ?
+                    executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(scheduledExecution) :
+                    null
+            def executionLifecyclePluginExecHandler = executionLifecycleComponentService.getExecutionHandler(executionLifecyclePluginConfigs, execution.asReference())
+
+            WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.workflow)
+
+            StepExecutionContext createInitContext = createContext(
+                    execution,
+                    null,
+                    framework,
+                    authContext,
+                    execution.user,
+                    jobcontext,
+                    null,
+                    null,
+                    null,
+                    extraParams,
+                    extraParamsExposed,
+                    inputCharset,
+                    workflowLogManager,
+                    secureOptionNodeDeferred
+            )
+
+            if (executionLifecyclePluginExecHandler != null) {
+                ExecutionLifecycleStatus executionLifecycleStatus = executionLifecyclePluginExecHandler.beforeJobStarts(createInitContext, item, execution.workflow).get()
+                if(executionLifecycleStatus?.useNewValues){
+                    createInitContext = executionLifecycleStatus.getExecutionContext()?:createInitContext
+
+                    if(executionLifecycleStatus?.isUpdateWorkflowDataValues()){
+                        execution.workflow = executionLifecycleStatus.getWorkflowData()
+                        item = executionUtilService.createExecutionItemForWorkflow(execution.workflow)
+                    }
+                }
+            }
 
             WorkflowExecutionListener execStateListener = workflowService.createWorkflowStateListenerForExecution(
                     execution,
@@ -1153,37 +1204,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     loadAdditionalListeners(listenersList)
             )
 
-            def secureOptionNodeDeferred = [:]
-            if(scheduledExecution) {
-                if(!extraParamsExposed){
-                    extraParamsExposed=[:]
-                }
-                if(!extraParams){
-                    extraParams=[:]
-                }
-                Map<String, String> args = OptionsParserUtil.parseOptsFromString(execution.argString)
-                ignoreDefaultValuesForSecureOptions(scheduledExecution, extraParams, extraParamsExposed)
-                loadSecureOptionStorageDefaults(scheduledExecution, extraParamsExposed, extraParams, authContext, true,
-                        args, jobcontext, secureOptionNodeDeferred)
-            }
-            String inputCharset=frameworkService.getDefaultInputCharsetForProject(execution.project)
-
-            StepExecutionContext executioncontext = createContext(
-                    execution,
-                    null,
-                    framework,
-                    authContext,
-                    execution.user,
-                    jobcontext,
-                    multiListener,
-                    multiListener,
-                    null,
-                    extraParams,
-                    extraParamsExposed,
-                    inputCharset,
-                    workflowLogManager,
-                    secureOptionNodeDeferred
-            )
+            StepExecutionContext executioncontext = ExecutionContextImpl.builder(createInitContext)
+                    .executionListener(multiListener)
+                    .workflowExecutionListener(multiListener)
+                    .build()
 
             fileUploadService.executionBeforeStart(
                     new ExecutionPrepareEvent(
@@ -1222,13 +1246,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     )
             )
             logsInstalled=true
-            WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.workflow)
 
 
-            def executionLifecyclePluginConfigs = scheduledExecution ?
-                                   executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(scheduledExecution) :
-                                   null
-            def executionLifecyclePluginExecHandler = executionLifecycleComponentService.getExecutionHandler(executionLifecyclePluginConfigs, execution.asReference())
             //create service object for the framework and listener
             Thread thread = new WorkflowExecutionServiceThread(
                     framework.getWorkflowExecutionService(),

@@ -96,6 +96,7 @@ class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemF
                     !!step.keepgoingOnSuccess,
                     handler,
                     step.description,
+                    step.runnerNode,
                     WorkflowStepDataUtil.createLogFilterConfigs(WorkflowStepDataUtil.getPluginConfigListForType(step, ServiceNameConstants.LogFilter))
             )
         }
