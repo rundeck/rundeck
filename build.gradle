@@ -179,54 +179,13 @@ allprojects {
                 }
             }
             
+            // CVE fixes - only force what's needed for security
             force "commons-io:commons-io:${commonsIoVersion}"
             force "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
             
-            // Force Grails 7.0.4 to prevent Grails 6.x transitive dependencies
-            force "org.grails:grails-core:${grailsVersion}"
-            force "org.grails:grails-databinding:${grailsVersion}"
-            force "org.grails:grails-async:${grailsVersion}"
-            force "org.grails:grails-gsp:${grailsVersion}"
-            force "org.grails:grails-web-gsp:${grailsVersion}"
-            force "org.grails:grails-web-taglib:${grailsVersion}"
-            force "org.grails:grails-web-mvc:${grailsVersion}"
-            force "org.grails:grails-web-url-mappings:${grailsVersion}"
-            force "org.grails:grails-web-databinding:${grailsVersion}"
-            force "org.grails:grails-web-common:${grailsVersion}"
-            force "org.grails:grails-taglib:${grailsVersion}"
-            force "org.grails:grails-encoder:${grailsVersion}"
-            force "org.grails:grails-events:${grailsVersion}"
-            // NOTE: grails-datastore-core uses its own version scheme (8.x), not grails version (7.x)
-            // force "org.grails:grails-datastore-core:${grailsVersion}" // REMOVED - doesn't exist at 7.0.4
-            force "org.grails:grails-spring:${grailsVersion}"
-            force "org.grails:grails-bootstrap:${grailsVersion}"
-            force "org.grails:grails-events-compat:${grailsVersion}"
-            
-            // Force Micronaut 4.10.1 to prevent Grails 7's BOM from pulling in 4.10.8
-            force "io.micronaut:micronaut-http:${micronautVersion}"
-            force "io.micronaut:micronaut-context-propagation:${micronautVersion}"
-            force "io.micronaut:micronaut-discovery-core:${micronautVersion}"
-            force "io.micronaut:micronaut-context:${micronautVersion}"
-            force "io.micronaut:micronaut-aop:${micronautVersion}"
-            force "io.micronaut:micronaut-core-reactive:${micronautVersion}"
-            force "io.micronaut:micronaut-core:${micronautVersion}"
-            force "io.micronaut:micronaut-inject:${micronautVersion}"
-            
-            // Force consistent versions for other conflicting libraries
-            force "org.apache.ant:ant:${antVersion}"
-            force "org.apache.ant:ant-launcher:${antVersion}"
-            force "org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}"
-            force "org.jetbrains.kotlin:kotlin-stdlib-common:${kotlinVersion}"
-            force "com.google.guava:guava:${guavaVersion}"
-            force 'com.google.guava:failureaccess:1.0.3'
-            force "io.micrometer:micrometer-observation:${micrometerVersion}"
-            force "io.micrometer:micrometer-commons:${micrometerVersion}"
-            force "jaxen:jaxen:${jaxenVersion}"
-            force "org.ow2.asm:asm:${asmVersion}"
-            force "org.ow2.asm:asm-tree:${asmVersion}"
-            force "org.ow2.asm:asm-analysis:${asmVersion}"
-            force "org.ow2.asm:asm-commons:${asmVersion}"
-            force "org.ow2.asm:asm-util:${asmVersion}"
+            // NOTE: Removed aggressive force statements for Grails/Micronaut
+            // The Grails BOM should handle dependency versions automatically
+            // Only add force statements here if you identify ACTUAL conflicts in CI builds
         }
     }
 }
