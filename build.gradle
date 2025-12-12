@@ -212,20 +212,20 @@ allprojects {
             force "io.micronaut:micronaut-inject:${micronautVersion}"
             
             // Force consistent versions for other conflicting libraries
-            force 'org.apache.ant:ant:1.10.15'
-            force 'org.apache.ant:ant-launcher:1.10.15'
-            force 'org.jetbrains.kotlin:kotlin-stdlib:1.9.25'
-            force 'org.jetbrains.kotlin:kotlin-stdlib-common:1.9.25'
-            force 'com.google.guava:guava:33.4.8-jre'
+            force "org.apache.ant:ant:${antVersion}"
+            force "org.apache.ant:ant-launcher:${antVersion}"
+            force "org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}"
+            force "org.jetbrains.kotlin:kotlin-stdlib-common:${kotlinVersion}"
+            force "com.google.guava:guava:${guavaVersion}"
             force 'com.google.guava:failureaccess:1.0.3'
-            force 'io.micrometer:micrometer-observation:1.15.6'
-            force 'io.micrometer:micrometer-commons:1.15.6'
-            force 'jaxen:jaxen:2.0.0'
-            force 'org.ow2.asm:asm:9.9'
-            force 'org.ow2.asm:asm-tree:9.9'
-            force 'org.ow2.asm:asm-analysis:9.9'
-            force 'org.ow2.asm:asm-commons:9.9'
-            force 'org.ow2.asm:asm-util:9.9'
+            force "io.micrometer:micrometer-observation:${micrometerVersion}"
+            force "io.micrometer:micrometer-commons:${micrometerVersion}"
+            force "jaxen:jaxen:${jaxenVersion}"
+            force "org.ow2.asm:asm:${asmVersion}"
+            force "org.ow2.asm:asm-tree:${asmVersion}"
+            force "org.ow2.asm:asm-analysis:${asmVersion}"
+            force "org.ow2.asm:asm-commons:${asmVersion}"
+            force "org.ow2.asm:asm-util:${asmVersion}"
         }
     }
 }
