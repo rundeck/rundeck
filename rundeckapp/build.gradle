@@ -249,6 +249,9 @@ dependencies {
     implementation ("org.grails.plugins:spring-security-core:${grailsSpringSecurityVersion}"){
         exclude(group:'net.sf.ehcache',module:'ehcache')
         exclude(group:'org.grails',module:'grails-core')
+        exclude(group:'org.grails.plugins',module:'async')
+        exclude(group:'io.micronaut',module:'micronaut-bom')
+        exclude(group:'io.micronaut.spring',module:'micronaut-spring-context')
     }
     implementation 'org.kohsuke:libpam4j:1.11'
     implementation "jakarta.xml.bind:jakarta.xml.bind-api:${jakartaXmlBindVersion}"
