@@ -11,15 +11,20 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult;
 import com.dtolabs.rundeck.core.jobs.JobEventResult;
 import lombok.Getter;
 import lombok.Setter;
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData;
 
 import java.util.Map;
 
+@Getter
+@Setter
 public class JobExecutionEventImpl implements JobExecutionEvent {
 
-    @Getter @Setter private StepExecutionContext executionContext;
-    @Getter @Setter ExecutionReference execution;
-    @Getter @Setter JobEventResult result;
-    @Getter @Setter WorkflowExecutionItem workflow;
+    private StepExecutionContext executionContext;
+    ExecutionReference execution;
+    JobEventResult result;
+    WorkflowExecutionItem workflow;
+    WorkflowData workflowData;
+
 
 
     public JobExecutionEventImpl(StepExecutionContext executionContext) {
@@ -39,6 +44,13 @@ public class JobExecutionEventImpl implements JobExecutionEvent {
         this.workflow = workflow;
     }
 
+    public JobExecutionEventImpl(StepExecutionContext executionContext, ExecutionReference execution, WorkflowExecutionItem workflow, WorkflowData workflowData) {
+        this.executionContext = ExecutionContextImpl.builder(executionContext).build();
+        this.execution = execution;
+        this.workflow = workflow;
+        this.workflowData = workflowData;
+    }
+
     public static JobExecutionEvent beforeRun(
             StepExecutionContext executionContext,
             ExecutionReference execution,
@@ -46,6 +58,16 @@ public class JobExecutionEventImpl implements JobExecutionEvent {
     )
     {
         return new JobExecutionEventImpl(executionContext, execution, workflow);
+    }
+
+    public static JobExecutionEvent beforeRun(
+            StepExecutionContext executionContext,
+            ExecutionReference execution,
+            WorkflowExecutionItem workflow,
+            WorkflowData workflowData
+    )
+    {
+        return new JobExecutionEventImpl(executionContext, execution, workflow, workflowData);
     }
 
     private JobExecutionEventImpl(
