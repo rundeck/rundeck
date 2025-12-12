@@ -253,6 +253,20 @@ class RundeckInitializer {
             return new File(location.toURI());
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
+        } catch (IllegalArgumentException e) {
+            // Groovy 4 / Spring Boot: jar: URIs are not hierarchical and can't be converted to File
+            // For Spring Boot nested JARs, extract the actual WAR file path
+            String urlString = location.toString()
+            if (urlString.contains("nested:") && urlString.contains(".war")) {
+                // Extract path like: nested:/path/to/app.war/!WEB-INF/... -> /path/to/app.war
+                String warPath = urlString.substring(urlString.indexOf("nested:") + 7)
+                if (warPath.contains(".war")) {
+                    warPath = warPath.substring(0, warPath.indexOf(".war") + 4)
+                    return new File(warPath)
+                }
+            }
+            // Fallback: try direct path (may not work for nested JARs)
+            return new File(location.getPath())
         }
     }
 
