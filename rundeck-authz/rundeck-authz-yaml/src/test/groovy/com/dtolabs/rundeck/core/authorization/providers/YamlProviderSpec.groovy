@@ -113,6 +113,34 @@ id: any string
         then:
         validation.valid
     }
+
+    def "validate project regex"(){
+        when:
+        def validation = validationForString """
+context:
+    project: '${project}'
+by:
+    username: elf
+    group: jank
+for:
+    type:
+        - allow: '*'
+description: blah
+id: any string
+""", new ValidationSet()
+
+        then:
+            !validation.valid
+            validation.errors.size()==1
+            validation.errors['test1[1]'].size()==1
+            validation.errors['test1[1]'][0].startsWith(message)
+        where:
+            project | message
+            '*'     | 'Context section \'project:\' value is not a valid regex: '
+            'pro**' | 'Context section \'project:\' value is not a valid regex: '
+            'pro{'  | 'Context section \'project:\' value is not a valid regex: '
+    }
+
     def "validate no context"(){
         when:
         def validation = validationForString '''

@@ -816,15 +816,16 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
     }
 
     @Unroll
-    def "save sys policy enabled type #fileType #create #exists #overwrite"() {
+    def "save sys policy enabled type #aclid #name #fileType #create #exists #overwrite #src"() {
         given:
-        def id = 'test.aclpolicy'
         def input = new SaveSysAclFile(
-                id: id,
+                id: aclid,
+                name:name,
                 fileText: fileText,
                 create: create,
                 fileType: fileType,
-                overwrite: overwrite
+                overwrite: overwrite,
+                upload: upload
         )
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
@@ -835,6 +836,9 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         when:
         request.method = 'POST'
         setupFormTokens(params)
+        if(upload){
+            request.addFile('uploadFile',fileText.bytes)
+        }
         def result = controller.saveSystemAclFile(input)
         then:
         if (fileType == 'fs') {
@@ -844,14 +848,14 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, _) >> true
         if (fileType == 'fs') {
-            1 * controller.frameworkService.existsFrameworkConfigFile(id) >> exists
-            1 * controller.frameworkService.writeFrameworkConfigFile(id, fileText) >> fileText.bytes.length
+            1 * controller.frameworkService.existsFrameworkConfigFile(aclid) >> exists
+            1 * controller.frameworkService.writeFrameworkConfigFile(aclid, fileText) >> fileText.bytes.length
         } else {
-            1 * controller.aclFileManagerService.existsPolicyFile(AppACLContext.system(),id) >> exists
-            1 * controller.aclFileManagerService.storePolicyFileContents(AppACLContext.system(),id, fileText) >> fileText.bytes.length
+            1 * controller.aclFileManagerService.existsPolicyFile(AppACLContext.system(),input.createId()) >> exists
+            1 * controller.aclFileManagerService.storePolicyFileContents(AppACLContext.system(),input.createId(), fileText) >> fileText.bytes.length
         }
 
-        1 * controller.aclFileManagerService.validateYamlPolicy(AppACLContext.system(), id, fileText) >>
+        1 * controller.aclFileManagerService.validateYamlPolicy(AppACLContext.system(), src, fileText) >>
                 new PoliciesValidation( new ValidationSet(valid: true),null)
         0 * controller.frameworkService._(*_)
         0 * controller.configurationService._(*_)
@@ -862,11 +866,13 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         flash.storedFile == 'test'
         flash.storedType == fileType
         where:
-        fileType  | fileText    | create | exists | overwrite
-        'fs'      | 'test-data' | true   | false  | false
-        'fs'      | 'test-data' | false  | true   | false
-        'storage' | 'test-data' | true   | false  | false
-        'storage' | 'test-data' | false  | true   | false
+        aclid            | name   | fileType  | fileText    | create | exists | overwrite | upload |src
+        'test.aclpolicy' | null   | 'fs'      | 'test-data' | true   | false  | false     | false  |'test.aclpolicy'
+        'test.aclpolicy' | null   | 'fs'      | 'test-data' | false  | true   | false     | false  |'test.aclpolicy'
+        'test.aclpolicy' | null   | 'storage' | 'test-data' | true   | false  | false     | false  |'test.aclpolicy'
+        'test.aclpolicy' | null   | 'storage' | 'test-data' | false  | true   | false     | false  |'test.aclpolicy'
+        null             | 'test' | 'storage' | 'test-data' | false  | true   | true      | true   |'uploaded-file'
+        null             | 'test' | 'storage' | 'test-data' | false  | true   | false     | false  |'editor'
     }
 
     @Unroll
