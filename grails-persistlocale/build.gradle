@@ -68,9 +68,8 @@ dependencies {
     testImplementation "org.apache.grails:grails-testing-support-web"
     
     constraints {
-        // NOTE: commons-io constraint REMOVED - BOM provides 2.19.0 which is newer than 2.14.0!
         implementation("commons-fileupload:commons-fileupload:${commonsFileuploadVersion}") {
-            because "Fix CVE-2025-48976 - upgrade from BOM's 1.5 to 1.6.0"
+            because "Fix CVE-2025-48976"
         }
     }
 }

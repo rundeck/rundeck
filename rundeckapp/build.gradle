@@ -330,10 +330,8 @@ dependencies {
         implementation ("org.yaml:snakeyaml:${snakeyamlVersion}") {
             because "required by rundeck:repository"
         }
-        // NOTE: commons-io constraint REMOVED - BOM provides 2.19.0 which is newer!
-        // Our constraint was downgrading from 2.19.0 to 2.14.0
         implementation("commons-fileupload:commons-fileupload:${commonsFileuploadVersion}") {
-            because "Fix CVE-2025-48976 - upgrade from 1.5 to 1.6.0 (BOM has vulnerable 1.5)"
+            because "Fix CVE-2025-48976"
         }
     }
 

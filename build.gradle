@@ -179,9 +179,7 @@ allprojects {
                 }
             }
             
-            // CVE fixes - only force what's needed for security
-            // NOTE: commons-io force REMOVED - BOM provides 2.19.0 which is newer than our 2.14.0!
-            force "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}" // Fix CVE-2025-48976 (upgrade from 1.5)
+            force "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
             
             // NOTE: Removed aggressive force statements for Grails/Micronaut
             // The Grails BOM should handle dependency versions automatically
