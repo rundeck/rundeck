@@ -202,10 +202,12 @@ public class ExecutionItemFactory {
             final String type,
             final Map configuration,
             final boolean keepgoingOnSuccess,
-            final StepExecutionItem handler, final String label
+            final StepExecutionItem handler,
+            final String label,
+            final String runnerNode
     )
     {
-        return createPluginStepItem(type, configuration, keepgoingOnSuccess, handler, label, null);
+        return createPluginStepItem(type, configuration, keepgoingOnSuccess, handler, label, runnerNode,null);
     }
 
     /**
@@ -217,6 +219,7 @@ public class ExecutionItemFactory {
             final boolean keepgoingOnSuccess,
             final StepExecutionItem handler,
             final String label,
+            final String runnerNode,
             final List<PluginConfiguration> filterConfigurations
     )
     {
@@ -227,7 +230,8 @@ public class ExecutionItemFactory {
                 keepgoingOnSuccess,
                 handler,
                 label,
-                filterConfigurations
+                filterConfigurations,
+                runnerNode
         );
     }
 }

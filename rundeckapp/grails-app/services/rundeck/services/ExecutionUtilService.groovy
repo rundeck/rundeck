@@ -258,6 +258,7 @@ class ExecutionUtilService {
                         !!stepitem.keepgoingOnSuccess,
                         handler,
                         step.description,
+                        step.runnerNode,
                         createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
                 )
             }
