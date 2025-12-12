@@ -1,4 +1,5 @@
 #!/usr/bin/env groovy
+import groovy.cli.commons.CliBuilder
 import java.util.function.Predicate
 import java.util.zip.ZipEntry
 
