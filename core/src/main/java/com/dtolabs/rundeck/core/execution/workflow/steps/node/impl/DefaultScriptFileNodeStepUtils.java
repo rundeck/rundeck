@@ -513,7 +513,7 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
             if(BooleanUtils.toBoolean(nodeAttribute.get(NODE_ATTR_ENABLE_SYNC_COMMAND))) {
                 //perform sync to prevent the file from being busy when running
                 final NodeExecutorResult nodeExecutorSyncResult = framework.getExecutionService().executeCommand(
-                        context, ExecArgList.fromStrings(featureQuotingBackwardCompatible , false, "sync"), node);
+                        context, ExecArgList.fromStrings(featureQuotingBackwardCompatible , false, "sync", filepath), node);
 
                 if (!nodeExecutorSyncResult.isSuccess()) {
                     return nodeExecutorSyncResult;
