@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.core.jobs;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import lombok.Builder;
 import lombok.Data;
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData;
 
 
 @Data
@@ -29,5 +30,7 @@ public class ExecutionLifecycleStatusImpl
     private final boolean successful;
     private final String errorMessage;
     private final boolean useNewValues;
+    private final boolean updateWorkflowDataValues;
     private final StepExecutionContext executionContext;
+    private final WorkflowData workflowData;
 }
