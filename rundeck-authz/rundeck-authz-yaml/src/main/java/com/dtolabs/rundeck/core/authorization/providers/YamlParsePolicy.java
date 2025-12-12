@@ -464,6 +464,19 @@ public class YamlParsePolicy implements Policy {
                         ", it should have only one entry: 'application:' or 'project:'"
                 );
             }
+
+            final String project = context.getProject();
+            if (null != project ) {
+                //test project must be a regex
+                try {
+                    Pattern.compile(project);
+                } catch (PatternSyntaxException e) {
+                    throw new AclPolicySyntaxException(
+                            "Context section 'project:' value is not a valid regex: " + e.getMessage()
+                    );
+                }
+            }
+
             environment = new YamlParsePolicy.YamlEnvironmentalContext(AuthorizationUtil.URI_BASE, context);
         }
         if (!environment.isValid()) {
@@ -617,15 +630,22 @@ public class YamlParsePolicy implements Policy {
             try {
                 uri = new URI(uriPrefix + key);
                 matcher.put(uri, value);
-                Pattern compile = Pattern.compile(value);
-                matcherRegex.put(uri, compile);
+                if(ctx.getProject()!=null) {
+                    try {
+                        Pattern compile = Pattern.compile(value);
+                        matcherRegex.put(uri, compile);
+                    } catch (PatternSyntaxException e) {
+                        errors.add("Context section: " + key + ": invalid regex: " + e.getMessage());
+                        invalidentry = true;
+                    }
+                }
             } catch (URISyntaxException e) {
                 errors.add("Context section: " + key + ": invalid URI: " + e.getMessage());
                 invalidentry = true;
             }
 
-            if (errors.size() > 0) {
-                final StringBuffer sb = new StringBuffer();
+            if (!errors.isEmpty()) {
+                final StringBuilder sb = new StringBuilder();
                 for (final String error : errors) {
                     if (sb.length() > 0) {
                         sb.append("; ");
@@ -635,7 +655,7 @@ public class YamlParsePolicy implements Policy {
                 validation = sb.toString();
             }
 
-            valid = !invalidentry && matcher.size() >= 1;
+            valid = !invalidentry && !matcher.isEmpty();
 
             description = "YamlEnvironmentalContext{" +
                           (valid ?
