@@ -196,7 +196,8 @@ allprojects {
             force "org.grails:grails-taglib:${grailsVersion}"
             force "org.grails:grails-encoder:${grailsVersion}"
             force "org.grails:grails-events:${grailsVersion}"
-            force "org.grails:grails-datastore-core:${grailsVersion}"
+            // NOTE: grails-datastore-core uses its own version scheme (8.x), not grails version (7.x)
+            // force "org.grails:grails-datastore-core:${grailsVersion}" // REMOVED - doesn't exist at 7.0.4
             force "org.grails:grails-spring:${grailsVersion}"
             force "org.grails:grails-bootstrap:${grailsVersion}"
             force "org.grails:grails-events-compat:${grailsVersion}"
