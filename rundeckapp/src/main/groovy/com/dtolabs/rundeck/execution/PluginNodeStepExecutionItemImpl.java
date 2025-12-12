@@ -53,7 +53,8 @@ public class PluginNodeStepExecutionItemImpl extends PluginStepExecutionItemImpl
                 keepgoingOnSuccess,
                 handler,
                 label,
-                filterConfigurations
+                filterConfigurations,
+                null
         );
         this.nodeStepType = type;
     }

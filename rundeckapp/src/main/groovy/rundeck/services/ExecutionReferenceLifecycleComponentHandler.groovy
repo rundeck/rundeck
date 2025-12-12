@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.jobs.JobEventResult
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponentHandler
 import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl
 import groovy.transform.CompileStatic
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 
 /**
  * Handles execution lifecycle event calls using multiple plugins and an execution reference, via the {@link ExecutionLifecycleComponentService}
@@ -39,6 +40,16 @@ class ExecutionReferenceLifecycleComponentHandler implements ExecutionLifecycleC
     Optional<ExecutionLifecycleStatus> beforeJobStarts(final StepExecutionContext executionContext, WorkflowExecutionItem item) throws ExecutionLifecycleComponentException {
         Optional.ofNullable executionLifecycleComponentService.handleEvent(
                 JobExecutionEventImpl.beforeRun(executionContext, executionReference, item),
+                ExecutionLifecycleComponentService.EventType.BEFORE_RUN,
+                components
+        )
+
+    }
+
+    @Override
+    Optional<ExecutionLifecycleStatus> beforeJobStarts(final StepExecutionContext executionContext, WorkflowExecutionItem item, WorkflowData workflowData) throws ExecutionLifecycleComponentException {
+        Optional.ofNullable executionLifecycleComponentService.handleEvent(
+                JobExecutionEventImpl.beforeRun(executionContext, executionReference, item,workflowData),
                 ExecutionLifecycleComponentService.EventType.BEFORE_RUN,
                 components
         )
