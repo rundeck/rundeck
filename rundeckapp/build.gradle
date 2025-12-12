@@ -318,7 +318,7 @@ dependencies {
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
     // transitive dependencies constraints.
     constraints {
-        implementation("com.mchange:c3p0:0.9.5.4") {
+        implementation("com.mchange:c3p0:${c3p0Version}") {
             because "version brought by quartz affected by CVE-2019-5427"
         }
         implementation ("org.bouncycastle:bcprov-jdk18on:${bouncyCastleVersion}") {
