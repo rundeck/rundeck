@@ -80,6 +80,10 @@ configurations {
     runtimeClasspath {
         extendsFrom developmentOnly
         exclude group: 'junit', module: 'junit'
+        exclude group: 'org.junit.jupiter'
+        exclude group: 'org.junit.platform'
+        exclude group: 'org.apache.groovy', module: 'groovy-test-junit5'
+        exclude group: 'org.apache.ant', module: 'ant-junit'
         exclude group: 'org.codehaus.groovy', module: 'groovy-ant'
         exclude group: 'org.grails', module: 'grails-shell'
     }
