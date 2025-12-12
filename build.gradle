@@ -179,11 +179,19 @@ allprojects {
                 }
             }
             
+            // CVE and compatibility fixes
             force "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
             
-            // NOTE: Removed aggressive force statements for Grails/Micronaut
-            // The Grails BOM should handle dependency versions automatically
-            // Only add force statements here if you identify ACTUAL conflicts in CI builds
+            // Force centralized versions to prevent duplicates in WAR
+            force "org.apache.ant:ant:${antVersion}"
+            force "org.apache.ant:ant-launcher:${antVersion}"
+            force "org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}"
+            force "io.micrometer:micrometer-observation:${micrometerVersion}"
+            force "io.micrometer:micrometer-commons:${micrometerVersion}"
+            force "jaxen:jaxen:${jaxenVersion}"
+            // NOTE: Micronaut version now matches Grails BOM (4.10.8)
+            // TODO: Future cleanup - remove explicit ${micronautVersion} from build files and let BOM manage
+            // NOTE: guava and failureaccess excluded - cause variant resolution conflicts
         }
     }
 }
