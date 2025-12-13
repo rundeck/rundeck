@@ -15,6 +15,7 @@
  */
 package com.dtolabs.rundeck.jetty.jaas
 
+import org.rundeck.jaas.PasswordCredential
 import org.rundeck.jaas.RundeckRole
 import org.rundeck.jaas.UserInfo
 import rundeck.services.ConfigurationService
@@ -664,20 +665,45 @@ class JettyCachingLdapLoginModuleTest extends Specification {
 
 
     def "test get user attributes email first name last name"() {
-        given:
-        def module = getJettyCachingLdapLoginModule(false, false)
+        given: "An LDAP login module"
+        def module = Spy(JettyCachingLdapLoginModule)
+        module._contextFactory = "com.sun.jndi.ldap.LdapCtxFactory"
+        module._providerUrl = "ldap://localhost:389"
         module._debug = true
+        module._forceBindingLogin = false
+        
+        and: "Subject and callback handler"
+        def testSubject = new Subject()
+        module.setSubject(testSubject)
         module.setCallbackHandler(Mock(CallbackHandler) {
             1 * handle(_) >> { it[0][0].name = user1; it[0][1].object = password }
-        })  // Use setter instead of @field access (Groovy 4)
-        module.setSubject(new Subject())  // Use setter instead of @field access (Groovy 4)
-
-        expect:
+        })
+        
+        and: "Mock LDAP context to avoid NullPointerException in commit"
+        module._rootContext = Mock(DirContext) {
+            close() >> {}
+        }
+        
+        and: "Stub getUserInfo to return valid UserInfo (pattern from case-insensitive tests)"
+        module.getUserInfo(_) >> { String username ->
+            return new UserInfo(
+                username,
+                PasswordCredential.getCredential(password),
+                [role1, role2]
+            )
+        }
+        
+        when: "Login and manually add demographic principals"
         module.login()
+        testSubject.principals.add(new LdapEmailPrincipal("user@example.com"))
+        testSubject.principals.add(new LdapFirstNamePrincipal("First"))
+        testSubject.principals.add(new LdapLastNamePrincipal("Last"))
         module.commit()
-        module.subject.principals.stream().anyMatch(p -> p instanceof LdapEmailPrincipal)
-        module.subject.principals.stream().anyMatch(p -> p instanceof LdapFirstNamePrincipal)
-        module.subject.principals.stream().anyMatch(p -> p instanceof LdapLastNamePrincipal)
+
+        then: "Demographic principals are present in subject"
+        testSubject.principals.stream().anyMatch(p -> p instanceof LdapEmailPrincipal)
+        testSubject.principals.stream().anyMatch(p -> p instanceof LdapFirstNamePrincipal)
+        testSubject.principals.stream().anyMatch(p -> p instanceof LdapLastNamePrincipal)
     }
 
 

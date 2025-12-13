@@ -47,9 +47,7 @@ class JettyCombinedLdapLoginModuleSpec extends Specification {
             Subject subject = new Subject();
             userInfo.setJAASInfo(subject);
             List<String> actualRoles = subject
-                .getPrincipals(RundeckRole.class).stream().map(RundeckPrincipal::getName).collect(
-                Collectors.toList()
-            )
+                .getPrincipals(RundeckRole.class)*.name
         then:
             actualRoles == expected
         where:
