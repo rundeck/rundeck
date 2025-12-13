@@ -75,7 +75,7 @@ import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
 
 import javax.security.auth.Subject
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
 
@@ -2202,7 +2202,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     * API Actions
      */
 
-    @Get(uri="/home/summary")
+    @Get(uri="/home/summary", produces = MediaType.APPLICATION_JSON)
     @Operation(
             method="GET",
             summary="Summary of executions and projects",
@@ -2210,10 +2210,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
 Since: V45
 ''',
-            tags=["Job Executions"],
-            responses = @ApiResponse(
-                    responseCode = "200",
-                    description = '''Success response, with summary information.
+            tags=["Job Executions"]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = '''Success response, with summary information.
 
 Fields:
 
@@ -2237,18 +2238,23 @@ Fields:
 
 :   Name of framework node
 ''',
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = HomeSummary),
-                            examples = @ExampleObject("""{
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = HomeSummary),
+                    examples = [
+                        @ExampleObject(
+                            name = 'home-summary',
+                            description = 'Home summary response',
+                            value = """{
     "execCount": 0,
     "totalFailedCount": 0,
     "recentUsers": [],
     "recentProjects": [],
     "frameworkNodeName": "localhost"
 
-}""")
-                    )
+}"""
+                        )
+                    ]
             )
     )
 
@@ -2289,7 +2295,7 @@ Fields:
         )
     }
 
-    @Get(uri="/system/logstorage")
+    @Get(uri="/system/logstorage", produces = MediaType.APPLICATION_JSON)
     @Operation(
         method="GET",
         summary="Log Storage Info",
@@ -2299,10 +2305,11 @@ Authorization required: `read` for `system` resource
 
 Since: V17
 ''',
-        tags=["Log Storage"],
-        responses = @ApiResponse(
-            responseCode = "200",
-            description = '''Success response, with log storage info and stats.
+        tags=["Log Storage"]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = '''Success response, with log storage info and stats.
 
 Fields:
 
@@ -2338,10 +2345,14 @@ Fields:
 
 :   Number of executions for this cluster node which have no associated storage requests
 ''',
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(type = "object"),
-                examples = @ExampleObject("""{
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = "object"),
+            examples = [
+                @ExampleObject(
+                    name = 'logstorage-info',
+                    description = 'Log storage info response',
+                    value = """{
   "enabled": true,
   "pluginName": "NAME",
   "succeededCount": 369,
@@ -2354,8 +2365,9 @@ Fields:
   "incompleteCount": 0,
   "retriesCount": 0,
   "missingCount": 0
-}""")
-            )
+}"""
+                )
+            ]
         )
     )
     @RdAuthorizeSystem(value=RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN,description='Read Logstorage Info')
@@ -2404,7 +2416,7 @@ Fields:
         }
     }
 
-    @Get(uri="/system/logstorage/incomplete")
+    @Get(uri="/system/logstorage/incomplete", produces = MediaType.APPLICATION_JSON)
     @Operation(
         method="GET",
         summary="List Executions with Incomplete Log Storage",
@@ -2413,10 +2425,11 @@ Fields:
 Authorization required: `read` for `system` resource
 
 Since: V17''',
-        tags=["Log Storage"],
-        responses = @ApiResponse(
-            responseCode = "200",
-            description = '''
+        tags=["Log Storage"]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = '''
 `total`, `max`, `offset` (paging information)
 
 :   Total number of executions with incomplete log data storage, maximum returned in the response, offset of first result.
@@ -2456,10 +2469,14 @@ Since: V17''',
 `localFilesPresent`
 
 :   True if all local files (`rdlog` and `state.json`) are available for upload.  False if one of them is not present on disk.''',
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(type = "object"),
-                examples = @ExampleObject("""{
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = "object"),
+            examples = [
+                @ExampleObject(
+                    name = 'incomplete-logstorage',
+                    description = 'Incomplete log storage response',
+                    value = """{
   "total": 100,
   "max": 20,
   "offset": 0,
@@ -2479,8 +2496,9 @@ Since: V17''',
       "errors": ["message","message..."]
     }
     ]
-}""")
-            )
+}"""
+                )
+            ]
         )
     )
     @RdAuthorizeSystem(value=RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN,description='Read Logstorage Info')
@@ -2579,7 +2597,7 @@ Since: V17''',
         }
     }
 
-    @Post(uri="/system/logstorage/incomplete/resume")
+    @Post(uri="/system/logstorage/incomplete/resume", produces = MediaType.APPLICATION_JSON)
     @Operation(
         method="POST",
         summary="Resume Incomplete Log Storage",
@@ -2588,16 +2606,23 @@ Since: V17''',
 Authorization required: `ops_admin` for `system` resource
 
 Since: V17''',
-        tags=["Log Storage"],
-        responses = @ApiResponse(
-            responseCode = "200",
-            description = '''Resumed response''',
-            content=@Content(
-                schema=@Schema(type='object'),
-                examples = @ExampleObject('''{
+        tags=["Log Storage"]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = '''Resumed response''',
+        content=@Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema=@Schema(type='object'),
+            examples = [
+                @ExampleObject(
+                    name = 'resume-logstorage',
+                    description = 'Resume log storage response',
+                    value = '''{
   "resumed": true
-}''')
-            )
+}'''
+                )
+            ]
         )
     )
     @RdAuthorizeSystem(RundeckAccess.General.AUTH_OPS_ADMIN)
@@ -2630,7 +2655,7 @@ Since: V17''',
      * API: /api/jobs, version 1
      */
 
-    @Get(uri='/job/{id}/info')
+    @Get(uri='/job/{id}/info', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method='GET',
         summary='Get Job Metadata',
@@ -2646,14 +2671,14 @@ Since: V18''',
             in = ParameterIn.PATH,
             required = true,
             content = @Content(schema = @Schema(implementation = String))
-        ),
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = 'Job metadata',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = JobInfo)
-            )
+        )
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'Job metadata',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = JobInfo)
         )
     )
 
@@ -2774,7 +2799,7 @@ Since: V18''',
     }
 
 
-    @Get(uri = '/job/{id}/forecast')
+    @Get(uri = '/job/{id}/forecast', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = "GET",
         summary = "Get Job Forecast",
@@ -2821,17 +2846,15 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                 in = ParameterIn.QUERY,
                 schema = @Schema(type = 'integer')
             )
-        ],
-        responses = [
-            @ApiResponse(
-                responseCode = '200',
-                description = 'Forecast Response',
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = JobInfo)
-                )
-            )
         ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'Forecast Response',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = JobInfo)
+        )
     )
     @RdAuthorizeJob(RundeckAccess.Job.AUTH_APP_READ_OR_VIEW)
     def apiJobForecast() {
@@ -3071,7 +3094,7 @@ Format is a string like `2d1h4n5s` using the following characters for time units
             }
         }
     }
-    @Get(uri='/scheduler/jobs')
+    @Get(uri='/scheduler/jobs', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method='GET',
         summary='List Scheduled Jobs For this Cluster Server',
@@ -3080,14 +3103,14 @@ Format is a string like `2d1h4n5s` using the following characters for time units
 Authorization required: `read` or `view` for each job resource
 
 Since: v17''',
-        tags = ['Jobs'],
-        responses = @ApiResponse(
-            responseCode='200',
-            description='Job List',
-            content=@Content(
-                    mediaType=MediaType.APPLICATION_JSON,
-                    array = @ArraySchema(schema=@Schema(implementation = JobInfo))
-            )
+        tags = ['Jobs']
+    )
+    @ApiResponse(
+        responseCode='200',
+        description='Job List',
+        content=@Content(
+                mediaType=MediaType.APPLICATION_JSON,
+                array = @ArraySchema(schema=@Schema(implementation = JobInfo))
         )
     )
     /**
@@ -3095,7 +3118,7 @@ Since: v17''',
      */
     protected def apiSchedulerListJobsCurrent_docs(){}
 
-    @Get(uri='/scheduler/server/{uuid}/jobs')
+    @Get(uri='/scheduler/server/{uuid}/jobs', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method='GET',
         summary='List Scheduled Jobs For a Cluster Server',
@@ -3104,15 +3127,15 @@ Since: v17''',
 Authorization required: `read` or `view` for each job resource
 
 Since: v17''',
-        tags = ['Jobs'],
-        responses = @ApiResponse(
-                responseCode='200',
-                description='Job List',
-                content=@Content(
-                        mediaType=MediaType.APPLICATION_JSON,
-                        array = @ArraySchema(schema=@Schema(implementation = JobInfo))
-                )
-        )
+        tags = ['Jobs']
+    )
+    @ApiResponse(
+            responseCode='200',
+            description='Job List',
+            content=@Content(
+                    mediaType=MediaType.APPLICATION_JSON,
+                    array = @ArraySchema(schema=@Schema(implementation = JobInfo))
+            )
     )
     /**
      * Require server UUID and list all owned jobs
@@ -3217,14 +3240,19 @@ Authorization required: `view` or `read` for each Job resource.
                 description='specify a tag or comma separated list of tags to list Jobs that have matching tags. (e.g. `tags=tag1,tag2`)',
                 schema=@Schema(type='integer')
             )
-        ],
-        responses=@ApiResponse(
-            responseCode='200',
-            description='Job List',
-            content=@Content(
-                mediaType=MediaType.APPLICATION_JSON,
-                array = @ArraySchema(schema=@Schema(implementation = JobInfo)),
-                examples=@ExampleObject('''[
+        ]
+    )
+    @ApiResponse(
+        responseCode='200',
+        description='Job List',
+        content=@Content(
+            mediaType=MediaType.APPLICATION_JSON,
+            array = @ArraySchema(schema=@Schema(implementation = JobInfo)),
+            examples=[
+                @ExampleObject(
+                    name='jobs-list',
+                    description='Jobs list response',
+                    value='''[
   {
     "id": "[UUID]",
     "name": "[name]",
@@ -3237,8 +3265,9 @@ Authorization required: `view` or `read` for each Job resource.
     "scheduleEnabled": true,
     "enabled": true
   }
-]''')
-            )
+]'''
+                )
+            ]
         )
     )
     /**
@@ -3294,7 +3323,7 @@ Authorization required: `view` or `read` for each Job resource.
         respondApiJobsList(results.nextScheduled)
     }
 
-    @Get(uri='/project/{project}/jobs/export')
+    @Get(uri='/project/{project}/jobs/export', produces = [MediaType.APPLICATION_JSON, 'text/yaml'])
     @Operation(
         method='GET',
         summary='Export Jobs',
@@ -3337,36 +3366,36 @@ Since: v14
                 in = ParameterIn.QUERY,
                 content = @Content(schema = @Schema(implementation = String,allowableValues = ['json','yaml']))
             )
-        ],
-        responses = @ApiResponse(
-            responseCode = "200",
-            description = '''Job definition list, depending on the requested format:
+        ]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = '''Job definition list, depending on the requested format:
 
 * YAML: [job-yaml](https://docs.rundeck.com/docs/manual/document-format-reference/job-yaml-v12.html) format
 * JSON: [job-json](https://docs.rundeck.com/docs/manual/document-format-reference/job-json-v44.html) format (API v44+)''',
-            content = [
-                @Content(
-                    schema = @Schema(
-                        type = 'object',
-                        externalDocs = @ExternalDocumentation(
-                            url = 'https://docs.rundeck.com/docs/manual/document-format-reference/job-json-v44.html',
-                            description = "Job JSON Format"
-                        )
-                    ),
-                    mediaType = MediaType.APPLICATION_JSON
+        content = [
+            @Content(
+                schema = @Schema(
+                    type = 'object',
+                    externalDocs = @ExternalDocumentation(
+                        url = 'https://docs.rundeck.com/docs/manual/document-format-reference/job-json-v44.html',
+                        description = "Job JSON Format"
+                    )
                 ),
-                @Content(
-                    schema = @Schema(
-                        type = 'string',
-                        externalDocs = @ExternalDocumentation(
-                            url = 'https://docs.rundeck.com/docs/manual/document-format-reference/job-yaml-v12.html',
-                            description = "Job YAML Format"
-                        )
-                    ),
-                    mediaType = 'text/yaml'
-                )
-            ]
-        )
+                mediaType = MediaType.APPLICATION_JSON
+            ),
+            @Content(
+                schema = @Schema(
+                    type = 'string',
+                    externalDocs = @ExternalDocumentation(
+                        url = 'https://docs.rundeck.com/docs/manual/document-format-reference/job-yaml-v12.html',
+                        description = "Job YAML Format"
+                    )
+                ),
+                mediaType = 'text/yaml'
+            )
+        ]
     )
     /**
      * API: /api/14/project/NAME/jobs/export
@@ -3424,7 +3453,7 @@ Since: v14
         flush(response)
     }
 
-    @Get(uri='/project/{project}/executions/running')
+    @Get(uri='/project/{project}/executions/running', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'Listing Running Executions',
@@ -3469,11 +3498,11 @@ Authorization required: `read` for project resource type `event`
                 description = 'If true, include scheduled and queued executions. Since: v32',
                 schema = @Schema(type = 'boolean')
             )
-        ],
-        responses = [
-            @ApiResponse(
-                responseCode = '200',
-                description = '''Running Executions list.
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''Running Executions list.
 
 Paging info: 
 * `max`: maximum number of results per page
@@ -3515,10 +3544,14 @@ The `job` section contains `options` if an `argstring` value is set (**API v10 a
 **Since API v13**: The `serverUUID` will indicate the server UUID
 if executed in cluster mode.
 ''',
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(type = 'object'),
-                    examples = @ExampleObject("""{
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object'),
+            examples = [
+                @ExampleObject(
+                    name = 'running-executions',
+                    description = 'Running executions response',
+                    value = """{
 "paging":{
     "count": 1,
     "total": 1,
@@ -3563,10 +3596,10 @@ if executed in cluster mode.
     "nodec","noded"
   ]
 }]
-}""")
+}"""
                 )
-            )
-        ]
+            ]
+        )
     )
     /**
      * API: /project/PROJECT/executions/running, version 14

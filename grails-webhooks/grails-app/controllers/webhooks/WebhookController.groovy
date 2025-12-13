@@ -30,8 +30,8 @@ import org.rundeck.app.data.model.v1.webhook.RdWebhook
 import org.rundeck.core.auth.AuthConstants
 import webhooks.authenticator.AuthorizationHeaderAuthenticator
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 
 @Controller
 @SecurityScheme(
@@ -60,7 +60,7 @@ class WebhookController {
         description = '''Updates the specified webhook.
 
 Since: v33''',
-        tags = "Webhook",
+        tags = ["Webhook"],
         parameters = [
             @Parameter(name = "project", in = ParameterIn
                 .PATH, description = "Project Name", required = true, schema = @Schema(type = "string")),
@@ -92,32 +92,31 @@ so suppling the `user` field will have no effect. Also, specifying an `authToken
     "regenAuth": true
 }''')
             )
-        ),
-        responses = [@ApiResponse(
-            responseCode = "200",
-            description = "Successful response",
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(type = "object"),
-                examples = @ExampleObject('''{
+        )
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Successful response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = "object"),
+            examples = @ExampleObject('''{
 "msg": "Saved webhook",
 "generatedSecurityString":"generated security string"
 }
 ''')
-            )
-        ),
-            @ApiResponse(
-                responseCode = "400",
-                description = "Error response",
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(type = "object"),
-                    examples = @ExampleObject('''{
+        )
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "Error response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = "object"),
+            examples = @ExampleObject('''{
     "err":"error message"
 }''')
-                )
-            )
-        ]
+        )
     )
     def save() {
         String project = request.JSON.project
@@ -168,7 +167,7 @@ Do not specify an `authToken` or `creator` field. They will be ignored.
 
 Since: v33
 ''',
-        tags = "Webhook",
+        tags = ["Webhook"],
         parameters = [
             @Parameter(name = "project", in = ParameterIn
                 .PATH, description = "Project Name", required = true, schema = @Schema(type = "string"))
@@ -194,32 +193,31 @@ Since: v33
     "regenAuth": true
 }''')
             )
-        ),
-        responses = [@ApiResponse(
-            responseCode = "200",
-            description = "Successful response",
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(type = "object"),
-                examples = @ExampleObject('''{
+        )
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Successful response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = "object"),
+            examples = @ExampleObject('''{
 "msg": "Saved webhook",
 "generatedSecurityString":"generated security string"
 }
 ''')
-            )
-        ),
-            @ApiResponse(
-                responseCode = "400",
-                description = "Error response",
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(type = "object"),
-                    examples = @ExampleObject('''{
+        )
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "Error response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = "object"),
+            examples = @ExampleObject('''{
     "err":"error message"
 }''')
-                )
-            )
-        ]
+        )
     )
     /**
      * nb: dummy method to document create endpoint
@@ -233,37 +231,36 @@ Since: v33
         description = '''Deletes the webhook.
 
 Since: v33''',
-        tags = "Webhook",
+        tags = ["Webhook"],
         parameters = [
             @Parameter(name = "project", in = ParameterIn
                 .PATH, description = "Project Name", required = true, schema = @Schema(type = "string")),
             @Parameter(name = "id", in = ParameterIn
                 .PATH, description = "Webhook ID", required = true, schema = @Schema(type = "string"))
-        ],
-        responses = [@ApiResponse(
-            responseCode = "200",
-            description = "Successful response",
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(type = "object"),
-                examples = @ExampleObject('''{
+        ]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Successful response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = "object"),
+            examples = @ExampleObject('''{
 "msg": "deleted webhook"
 }
 ''')
-            )
-        ),
-            @ApiResponse(
-                responseCode = "400",
-                description = "Error response",
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(type = "object"),
-                    examples = @ExampleObject('''{
+        )
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "Error response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = "object"),
+            examples = @ExampleObject('''{
     "err":"error message"
 }''')
-                )
-            )
-        ]
+        )
     )
     def remove() {
         if(!params.project){
@@ -295,20 +292,21 @@ Since: v33''',
         description = '''Get the webhook definition.
 
 Since: v33''',
-        tags = "Webhook",
+        tags = ["Webhook"],
         parameters=[
             @Parameter(name = "project", in = ParameterIn
                 .PATH, description = "Project Name", required = true, schema = @Schema(type = "string")),
             @Parameter(name = "id", in = ParameterIn
                 .PATH, description = "Webhook ID", required = true, schema = @Schema(type = "string"))
-        ],
-        responses=@ApiResponse(
-            responseCode="200",
-            description = "Successful response",
-            content=@Content(
-                mediaType='application/json',
-                schema = @Schema(type="object"),
-                examples = @ExampleObject('''{
+        ]
+    )
+    @ApiResponse(
+        responseCode="200",
+        description = "Successful response",
+        content=@Content(
+            mediaType='application/json',
+            schema = @Schema(type="object"),
+            examples = @ExampleObject('''{
     "authToken": "Z1vnbhShhQF3B0dQq7UhJTZMnGS92TBl",
     "config": {
         "argString": "-payload ${raw}",
@@ -323,7 +321,6 @@ Since: v33''',
     "roles": "admin,user",
     "user": "admin"
 }''')
-            )
         )
     )
     def get() {
@@ -356,23 +353,24 @@ Since: v33''',
         description="""List the webhooks for the project.
 
 Since: v33""",
-        tags = "Webhook",
-        parameters = @Parameter(
+        tags = ["Webhook"],
+        parameters = [@Parameter(
             name = "project",
             in = ParameterIn.PATH,
             description = "Project Name",
             required = true,
             schema = @Schema(type = "string")
-        ),
-        responses = @ApiResponse(
-            responseCode = "200",
-            description = "List of webhooks",
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                array = @ArraySchema(
-                    schema = @Schema(type = "object")
-                ),
-                examples = @ExampleObject('''[
+        )]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "List of webhooks",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            array = @ArraySchema(
+                schema = @Schema(type = "object")
+            ),
+            examples = @ExampleObject('''[
     {
         "authToken": "Z1vnbhShhQF3B0dQq7UhJTZMnGS92TBl",
         "config": {
@@ -401,7 +399,6 @@ Since: v33""",
         "user": "admin"
     }
 ]''')
-            )
         )
     )
     def list() {
@@ -441,7 +438,7 @@ Since: v33""",
     @Operation(
         method = "POST",
         summary = "Send Webhook Event",
-        tags = "Webhook",
+        tags = ["Webhook"],
         description = '''You may post whatever data you wish to the webhook endpoint, however the plugin you are 
 using must
 be able to handle the data you post. If the webhook plugin associated with the webhook can't handle
@@ -455,41 +452,41 @@ with a value that matches the secret.
 
 Since: v33
 ''',
-        parameters = @Parameter(name = "authtoken", in = ParameterIn.PATH,
-            required = true, description = "Webhook auth token", schema = @Schema(type = "string")),
-        security = @SecurityRequirement(
-            name = "webhookTokenHeader"
-        ),
-        responses = [
-            @ApiResponse(
-                responseCode = "200",
-                description = "Default response",
-                content = @Content(
-                    mediaType = "*/*",
-                    examples = @ExampleObject('ok')
-                )
-            ),
-            @ApiResponse(
-                responseCode = "400",
-                description = "Error response",
-                content = @Content(
-                    mediaType = "application/json",
-                    examples = @ExampleObject('''{
+        parameters = [
+            @Parameter(name = "authtoken", in = ParameterIn.PATH,
+                required = true, description = "Webhook auth token", schema = @Schema(type = "string")),
+            @Parameter(name = "Authorization", in = ParameterIn.HEADER,
+                required = false, description = "Optional authorization secret. Required if webhook is configured to require authorization.", 
+                schema = @Schema(type = "string"))
+        ]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Default response",
+        content = @Content(
+            mediaType = MediaType.ALL,
+            examples = @ExampleObject('ok')
+        )
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "Error response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            examples = @ExampleObject('''{
 "err":"Error message"
 }''')
-                )
-            ),
-            @ApiResponse(
-                responseCode = "404",
-                description = "Webhook not enabled",
-                content = @Content(
-                    mediaType = "application/json",
-                    examples = @ExampleObject('''{
+        )
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "Webhook not enabled",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            examples = @ExampleObject('''{
 "err":"Webhook not enabled"
 }''')
-                )
-            )
-        ]
+        )
     )
     def post() {
         RdWebhook hook = webhookService.getWebhookByToken(Webhook.cleanAuthToken(params.authtoken))

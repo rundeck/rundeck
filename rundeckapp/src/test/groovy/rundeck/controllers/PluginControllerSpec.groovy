@@ -38,7 +38,7 @@ import rundeck.services.FrameworkService
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 
 class PluginControllerSpec extends Specification implements ControllerUnitTest<PluginController> {
 

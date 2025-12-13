@@ -59,7 +59,7 @@ import org.rundeck.core.auth.web.RdAuthorizeJob
 import org.rundeck.core.auth.web.WebDefaultParameterNamesMapper
 import org.rundeck.util.HttpClientCreator
 import org.slf4j.Logger
-import org.springframework.web.multipart.commons.CommonsMultipartFile
+import org.springframework.web.multipart.MultipartFile
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import org.rundeck.app.jobs.options.ApiTokenReporter
@@ -75,7 +75,7 @@ import com.dtolabs.rundeck.core.authentication.Username
 import testhelper.RundeckHibernateSpec
 
 import javax.security.auth.Subject
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 import java.lang.annotation.Annotation
 
 /**
@@ -2693,9 +2693,9 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
     def "upload job file via #type"() {
         given:
             String xmlString = ''' dummy string '''
-            def multipartfile = new CommonsMultipartFile(Mock(FileItem){
-                getInputStream()>>{new ByteArrayInputStream(xmlString.bytes)}
-            })
+            def multipartfile = Mock(MultipartFile) {
+                getInputStream() >> new ByteArrayInputStream(xmlString.bytes)
+            }
             ScheduledExecution job = new ScheduledExecution(createJobParams(project:'dunce'))
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
                 1 * parseUploadedFile(_, 'xml') >> [
@@ -2753,9 +2753,9 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
     def "upload job file via create form #type"() {
         given:
             String xmlString = ''' dummy string '''
-            def multipartfile = new CommonsMultipartFile(Mock(FileItem){
-                getInputStream()>>{new ByteArrayInputStream(xmlString.bytes)}
-            })
+            def multipartfile = Mock(MultipartFile) {
+                getInputStream() >> new ByteArrayInputStream(xmlString.bytes)
+            }
             ScheduledExecution job = new ScheduledExecution(createJobParams(project:'dunce'))
             def authContext = Mock(UserAndRolesAuthContext)
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {

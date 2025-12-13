@@ -22,7 +22,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import io.swagger.v3.oas.annotations.tags.Tags
 import org.rundeck.core.auth.AuthConstants
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 
 @Controller("/project")
 class EditProjectController {

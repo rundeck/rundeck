@@ -30,8 +30,8 @@ import org.rundeck.storage.api.Resource
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 
 
 class WebhookControllerSpec extends Specification implements ControllerUnitTest<WebhookController> {

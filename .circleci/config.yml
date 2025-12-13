@@ -202,7 +202,7 @@ commands:
     steps:
       - run-build-step:
           step-name: Install Java JDK
-          command: dependencies_install_zulu11jdk
+          command: dependencies_install_zulu17jdk
 
   ## Dependency groups
 
@@ -247,9 +247,9 @@ job-defaults: &job-defaults
   working_directory: /home/circleci/workspace
   environment:
     CIRCLE_PIPELINE_NUM: << pipeline.number >>
-    GRADLE_OPTS: -XX:MaxRAMPercentage=80.0
-    JAVA_OPTS: -XX:MaxRAMPercentage=80.0
-    JAVA_HOME: /usr/lib/jvm/zulu11
+    GRADLE_OPTS: -XX:MaxRAMPercentage=85.0
+    JAVA_OPTS: -XX:MaxRAMPercentage=85.0
+    JAVA_HOME: /usr/lib/jvm/zulu17
 
 jobs:
 
@@ -262,7 +262,7 @@ jobs:
     parameters:
       jreVersion:
         type: string
-        default: "openjdk-11-jre-headless"
+        default: "openjdk-17-jre-headless"
     steps:
       - setup_docker:
           docker_layer_caching: true

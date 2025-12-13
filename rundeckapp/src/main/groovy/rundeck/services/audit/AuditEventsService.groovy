@@ -32,8 +32,8 @@ import org.springframework.security.web.authentication.logout.LogoutHandler
 import rundeck.services.FrameworkService
 
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Function
 import java.util.stream.Collectors

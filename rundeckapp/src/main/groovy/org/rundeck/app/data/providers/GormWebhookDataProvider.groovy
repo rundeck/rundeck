@@ -12,7 +12,7 @@ import org.springframework.context.MessageSource
 import rundeck.services.data.WebhookDataService
 import webhooks.Webhook
 
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @GrailsCompileStatic(TypeCheckingMode.SKIP)
 @Slf4j

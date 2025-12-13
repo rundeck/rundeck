@@ -38,6 +38,11 @@ class User implements RdUser{
     String lastSessionId
     String lastLoggedHostName
 
+    @Override
+    Long getId() {
+        return this.@id  // Direct field access to avoid infinite recursion
+    }
+
     static constraints={
         login(matches: '^[a-zA-Z0-9\\p{L}\\p{M}\\.,@\\(\\)\\s_\\\\\'/-]+$')
         firstName(nullable:true)
