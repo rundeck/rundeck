@@ -349,6 +349,12 @@ dependencies {
         implementation("commons-fileupload:commons-fileupload:${commonsFileuploadVersion}") {
             because "Fix CVE-2025-48976"
         }
+        implementation("org.apache.commons:commons-lang3") {
+            version {
+                strictly commonsLang3Version
+            }
+            because "Fix CVE-2025-48924 (Uncontrolled Recursion) - transitive from Liquibase 4.19.0"
+        }
     }
 
 
