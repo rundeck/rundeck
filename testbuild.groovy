@@ -131,8 +131,8 @@ def manifest=[
         "WEB-INF/lib/jetty-security-${versions.jetty}.jar",
         "WEB-INF/lib/log4j-api-${versions.log4j}.jar",
         "WEB-INF/lib/log4j-core-${versions.log4j}.jar",
-        "WEB-INF/lib/log4j-slf4j2-impl-.*.jar~",  // Spring Boot managed version (2.x)
-        "WEB-INF/lib/slf4j-api-2.*.jar~",  // Spring Boot 3 uses SLF4J 2.x
+        "WEB-INF/lib/log4j-slf4j2-impl-.*\\.jar#~",  // Spring Boot managed version (2.x)
+        "WEB-INF/lib/slf4j-api-2\\..*\\.jar#~",  // Spring Boot 3 uses SLF4J 2.x
         "WEB-INF/lib/libpam4j-1.11.jar",
         ".*junit.*#!~"
     ],
