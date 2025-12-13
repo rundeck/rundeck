@@ -55,6 +55,10 @@ def runNpmBuild = tasks.register('runNpmBuild', NpmTask) {
 /** Takes package.json and sets the version in it */
 def runNpmVersion = tasks.register('runNpmVersion', NpmTask) {t ->
     t.dependsOn runNpmBuild
+    // Gradle 8.14 strictness: Declare dependency on compileJava since it outputs to lib/ which is an input
+    if (tasks.findByName('compileJava')) {
+        t.dependsOn compileJava
+    }
 
     sourceDirs.each {t.inputs.dir it }
     t.inputs.files sourceFiles
@@ -179,6 +183,11 @@ tasks.register('runNpmPublish', NpmTask) {t ->
 }
 
 assemble.dependsOn runNpmBuild
+
+// Gradle 8.14 strictness: jar task needs explicit dependency on runNpmBuild
+tasks.named('jar').configure {
+    dependsOn runNpmBuild
+}
 
 tasks.register('runNpmTest', NpmTask) {
     group = 'test'

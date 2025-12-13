@@ -122,3 +122,17 @@ java {
     withSourcesJar()
 }
 
+// Gradle 8.14 strictness: Publishing tasks need explicit dependency on sourceJar task
+afterEvaluate {
+    tasks.withType(PublishToMavenRepository).configureEach {
+        if (tasks.findByName('sourceJar')) {
+            dependsOn tasks.sourceJar
+        }
+    }
+    tasks.withType(GenerateModuleMetadata).configureEach {
+        if (tasks.findByName('sourceJar')) {
+            dependsOn tasks.sourceJar
+        }
+    }
+}
+
