@@ -28,7 +28,6 @@ node{
 
 def sourceDirs = [
         '.storybook',
-        'lib',
         'src'
 ]
 def sourceFiles = ['package.json', 'README.md']
