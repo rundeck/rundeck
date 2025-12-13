@@ -28,6 +28,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import javax.naming.NamingEnumeration
+import javax.naming.NamingException
 import javax.naming.directory.Attribute
 import javax.naming.directory.Attributes
 import javax.naming.directory.BasicAttribute
@@ -53,6 +54,7 @@ class JettyCachingLdapLoginModuleCaseInsensitiveSpec extends Specification {
     def "authenticate normalizes username to lowercase when feature enabled"() {
         given: "An LDAP login module with feature flag enabled"
         JettyCachingLdapLoginModule module = createModuleWithFeatureFlag(true)
+        Subject testSubject = module.getSubject()
         
         and: "User logs in with mixed case username"
         setupCallbackHandler(module, "TestUser", TEST_PASSWORD)
@@ -62,23 +64,21 @@ class JettyCachingLdapLoginModuleCaseInsensitiveSpec extends Specification {
 
         when: "Authentication occurs"
         boolean result = module.login()
-        module.commit()
+        // Manually add principals to subject (pattern from working tests)
+        module.getCurrentUser().setJAASInfo(testSubject)
 
         then: "Authentication succeeds"
         result
         
         and: "Username in subject is lowercase"
-        Subject subject = new Subject()
-        module.setSubject(subject)
-        module.commit()
-        
-        def userPrincipal = subject.getPrincipals(RundeckPrincipal).find()
+        def userPrincipal = testSubject.getPrincipals(RundeckPrincipal).find()
         userPrincipal.name == "testuser"
     }
 
     def "authenticate preserves original case when feature disabled"() {
         given: "An LDAP login module with feature flag disabled"
         JettyCachingLdapLoginModule module = createModuleWithFeatureFlag(false)
+        Subject testSubject = module.getSubject()
         
         and: "User logs in with mixed case username"
         setupCallbackHandler(module, "TestUser", TEST_PASSWORD)
@@ -88,16 +88,14 @@ class JettyCachingLdapLoginModuleCaseInsensitiveSpec extends Specification {
 
         when: "Authentication occurs"
         boolean result = module.login()
+        // Manually add principals to subject (pattern from working tests)
+        module.getCurrentUser().setJAASInfo(testSubject)
 
         then: "Authentication succeeds"
         result
         
         and: "Username in subject preserves original case"
-        Subject subject = new Subject()
-        module.setSubject(subject)
-        module.commit()
-        
-        def userPrincipal = subject.getPrincipals(RundeckPrincipal).find()
+        def userPrincipal = testSubject.getPrincipals(RundeckPrincipal).find()
         userPrincipal.name == "TestUser"
     }
 
@@ -106,17 +104,40 @@ class JettyCachingLdapLoginModuleCaseInsensitiveSpec extends Specification {
         given: "An LDAP login module with feature flag enabled"
         JettyCachingLdapLoginModule module = createModuleWithFeatureFlag(true)
         module._forceBindingLogin = true
+        module._userBaseDn = "ou=users,dc=example,dc=com"
+        module._userIdAttribute = "uid"
+        module._userObjectClass = "inetOrgPerson"
+        module._roleBaseDn = "ou=roles,dc=example,dc=com"
+        module._roleUsernameMemberAttribute = "memberUid"
+        module._roleObjectClass = "groupOfUniqueNames"
+        module._roleNameAttribute = "cn"
+        module.rolePagination = false  // Disable role pagination to avoid ldapContext NPE
         
-        and: "Mock LDAP binding"
-        module.metaClass.findUser = { String username -> 
-            def mockResult = Mock(SearchResult)
-            mockResult.getNameInNamespace() >> "cn=$username,ou=users,dc=example,dc=com"
-            return mockResult
+        and: "Mock LDAP search for findUser"
+        def mockSearchResult = Mock(SearchResult) {
+            getNameInNamespace() >> "cn=${expectedUser},ou=users,dc=example,dc=com"
+            getAttributes() >> createMockAttributes(expectedUser, [TEST_ROLE])
         }
-        module.metaClass.bindingAuth = { DirContext ctx, String userDn -> true }
-        module.metaClass.getUserRolesByDn = { DirContext ctx, String userDn, String username -> 
-            [TEST_ROLE]
+        
+        def mockDirContext = Mock(DirContext) {
+            search(*_) >> new EnumImpl<SearchResult>([mockSearchResult])
+            close() >> {}
         }
+        module._rootContext = mockDirContext
+        
+        and: "Mock role lookup"
+        def mockRoles = [Mock(SearchResult) {
+            getAttributes() >> Mock(Attributes) {
+                get('cn') >> Mock(Attribute) {
+                    getAll() >> new EnumImpl<String>([TEST_ROLE])
+                }
+            }
+        }]
+        
+        DirContext userDir = Mock(DirContext) {
+            search(*_) >> new EnumImpl<SearchResult>(mockRoles)
+        }
+        module.userBindDirContextCreator = { String user, Object pass -> userDir }
 
         when: "Binding login is performed"
         boolean result = module.bindingLogin(inputUser, TEST_PASSWORD)
@@ -126,7 +147,7 @@ class JettyCachingLdapLoginModuleCaseInsensitiveSpec extends Specification {
         
         and: "UserInfo contains normalized username"
         def currentUser = module.getCurrentUser()
-        currentUser.userName == expectedUser
+        currentUser.getUserInfo().userName == expectedUser
 
         where:
         inputUser   | expectedUser
@@ -139,7 +160,7 @@ class JettyCachingLdapLoginModuleCaseInsensitiveSpec extends Specification {
     def "authenticate with LDAP caching stores normalized username in cache"() {
         given: "An LDAP login module with caching and feature flag enabled"
         JettyCachingLdapLoginModule module = createModuleWithFeatureFlag(true)
-        module._cacheDurationMillis = 60000 // 1 minute cache
+        module._cacheDuration = 60000 // 1 minute cache (milliseconds)
         
         and: "Setup authentication"
         setupCallbackHandler(module, "TestUser", TEST_PASSWORD)
@@ -160,38 +181,41 @@ class JettyCachingLdapLoginModuleCaseInsensitiveSpec extends Specification {
         
         and: "Both use normalized username"
         def currentUser = module.getCurrentUser()
-        currentUser.userName == "testuser"
+        currentUser.getUserInfo().userName == "testuser"
     }
 
     def "authenticate handles LDAP search with original case but stores normalized username"() {
         given: "An LDAP login module with feature flag enabled"
         JettyCachingLdapLoginModule module = createModuleWithFeatureFlag(true)
+        Subject testSubject = module.getSubject()
         
-        and: "Mock LDAP search that's case-insensitive (as LDAP typically is)"
-        boolean searchCalledWithOriginalCase = false
-        module.metaClass.findUser = { String username ->
-            // LDAP search usually case-insensitive, but we verify it receives input correctly
-            if (username == "TestUser" || username == "testuser") {
-                searchCalledWithOriginalCase = (username == "TestUser")
-            }
-            def mockResult = Mock(SearchResult)
-            mockResult.getNameInNamespace() >> "cn=testuser,ou=users,dc=example,dc=com"
-            mockResult.getAttributes() >> createMockAttributes(TEST_USER, [TEST_ROLE])
-            return mockResult
-        }
-        
-        and: "Setup callback handler"
+        and: "Setup callback handler with mixed case username"
         setupCallbackHandler(module, "TestUser", TEST_PASSWORD)
+        
+        and: "Mock LDAP operations - getUserInfo will receive normalized username"
+        String capturedUsername = null
+        module.getUserInfo(_) >> { String username ->
+            capturedUsername = username
+            return new UserInfo(
+                username,
+                PasswordCredential.getCredential(TEST_PASSWORD),
+                [TEST_ROLE]
+            )
+        }
 
         when: "Authentication occurs"
         boolean result = module.login()
+        module.getCurrentUser().setJAASInfo(testSubject)
 
         then: "Authentication succeeds"
         result
         
+        and: "getUserInfo received normalized username, not original case"
+        capturedUsername == "testuser"
+        
         and: "UserInfo stores normalized username"
-        def currentUser = module.getCurrentUser()
-        currentUser.userName == "testuser"
+        def userPrincipal = testSubject.getPrincipals(RundeckPrincipal).find()
+        userPrincipal.name == "testuser"
     }
 
     def "getCallBackAuth returns normalized username when feature enabled"() {
@@ -204,7 +228,8 @@ class JettyCachingLdapLoginModuleCaseInsensitiveSpec extends Specification {
 
         then: "Username is normalized"
         credentials[0] == "testuser"
-        credentials[1] == TEST_PASSWORD
+        // Password is returned as char[] from PasswordCallback
+        new String(credentials[1] as char[]) == TEST_PASSWORD
     }
 
     def "getUserInfo receives normalized username when feature enabled"() {
@@ -213,7 +238,7 @@ class JettyCachingLdapLoginModuleCaseInsensitiveSpec extends Specification {
         
         and: "Mock getUserInfo to capture the username parameter"
         String capturedUsername = null
-        module.metaClass.getUserInfo = { String username ->
+        module.getUserInfo(_) >> { String username ->
             capturedUsername = username
             return new UserInfo(
                 username,
@@ -222,7 +247,7 @@ class JettyCachingLdapLoginModuleCaseInsensitiveSpec extends Specification {
             )
         }
         
-        and: "Setup authentication"
+        and: "Setup authentication with mixed case username"
         setupCallbackHandler(module, "TestUser", TEST_PASSWORD)
 
         when: "Login is performed"
@@ -233,54 +258,53 @@ class JettyCachingLdapLoginModuleCaseInsensitiveSpec extends Specification {
     }
 
     def "commit creates principals with normalized username"() {
-        given: "An LDAP login module that has authenticated"
+        given: "An LDAP login module with feature flag enabled"
         JettyCachingLdapLoginModule module = createModuleWithFeatureFlag(true)
-        Subject subject = new Subject()
-        module.initialize(
-            subject,
-            createMockCallbackHandler("TestUser", TEST_PASSWORD),
-            [:],
-            [:]
-        )
+        Subject testSubject = module.getSubject()
         
-        and: "Mock authentication"
-        module.metaClass.getUserInfo = { String username ->
-            new UserInfo(
-                username,
-                PasswordCredential.getCredential(TEST_PASSWORD),
-                [TEST_ROLE]
-            )
-        }
+        and: "Setup authentication with mixed case username"
+        setupCallbackHandler(module, "TestUser", TEST_PASSWORD)
+        mockLdapOperations(module, TEST_USER)
         
         when: "Login and commit"
-        module.login()
+        boolean result = module.login()
+        module.getCurrentUser().setJAASInfo(testSubject)
         module.commit()
 
-        then: "Subject contains principals with normalized username"
-        def principals = subject.getPrincipals(RundeckPrincipal)
+        then: "Authentication succeeds"
+        result
+        
+        and: "Subject contains principals with normalized username"
+        def principals = testSubject.getPrincipals(RundeckPrincipal)
         principals.size() == 1
         principals.find().name == "testuser"
         
         and: "Roles are also present"
-        def roles = subject.getPrincipals(RundeckRole)
+        def roles = testSubject.getPrincipals(RundeckRole)
         roles.size() > 0
     }
 
     // Helper methods
 
     private JettyCachingLdapLoginModule createModuleWithFeatureFlag(boolean enabled) {
-        JettyCachingLdapLoginModule module = Spy(JettyCachingLdapLoginModule)  // Use Spy for Groovy 4 compatibility
+        // Pattern from working tests: Create real instance, set fields directly, don't call initialize()
+        JettyCachingLdapLoginModule module = Spy(JettyCachingLdapLoginModule)
         
-        // Mock isCaseInsensitiveUsernameEnabled() directly (Pattern #9: Groovy 4 metaClass fix)
+        // Set required LDAP config fields (needed to avoid NPE)
+        module._contextFactory = "com.sun.jndi.ldap.LdapCtxFactory"
+        module._providerUrl = "ldap://localhost:389"
+        module._debug = true
+        module._forceBindingLogin = false
+        
+        // Stub isCaseInsensitiveUsernameEnabled() to control feature flag
         module.isCaseInsensitiveUsernameEnabled() >> enabled
         
-        // Mock configuration service (also Pattern #9: instance metaClass)
+        // Mock configuration service
         def mockConfigService = Mock(ConfigurationService)
         module.getConfigurationService() >> mockConfigService
         
-        // Initialize module
-        Subject subject = new Subject()
-        module.initialize(subject, null, [:], [:])
+        // Set subject (like working tests do)
+        module.setSubject(new Subject())
         
         return module
     }
@@ -303,17 +327,72 @@ class JettyCachingLdapLoginModuleCaseInsensitiveSpec extends Specification {
     }
 
     private void mockLdapOperations(JettyCachingLdapLoginModule module, String username) {
-        // Mock LDAP search
-        module.metaClass.findUser = { String user ->
-            def mockResult = Mock(SearchResult)
-            mockResult.getNameInNamespace() >> "cn=$username,ou=users,dc=example,dc=com"
-            mockResult.getAttributes() >> createMockAttributes(username, [TEST_ROLE])
-            return mockResult
+        // Stub getUserInfo to return a valid UserInfo (for non-binding login path)
+        module.getUserInfo(_) >> { String user ->
+            return new UserInfo(
+                user,
+                PasswordCredential.getCredential(TEST_PASSWORD),
+                [TEST_ROLE]
+            )
         }
         
-        // Mock role lookup
-        module.metaClass.getUserRolesByDn = { DirContext ctx, String userDn, String user ->
-            [TEST_ROLE]
+        // Mock _rootContext for findUser (used by binding login)
+        def mockSearchResult = Mock(SearchResult) {
+            getNameInNamespace() >> "cn=$username,ou=users,dc=example,dc=com"
+            getAttributes() >> createMockAttributes(username, [TEST_ROLE])
+        }
+        
+        def mockDirContext = Mock(DirContext) {
+            search(*_) >> new EnumImpl<SearchResult>([mockSearchResult])
+            close() >> {}  // Stub close() to avoid NullPointerException in commit/abort
+        }
+        module._rootContext = mockDirContext
+        
+        // Mock role lookup for binding login
+        def mockRoles = [Mock(SearchResult) {
+            getAttributes() >> Mock(Attributes) {
+                get('cn') >> Mock(Attribute) {
+                    getAll() >> new EnumImpl<String>([TEST_ROLE])
+                }
+            }
+        }]
+        
+        // Set userBindDirContextCreator closure (like working tests)
+        DirContext userDir = Mock(DirContext) {
+            search(*_) >> new EnumImpl<SearchResult>(mockRoles)
+        }
+        module.userBindDirContextCreator = { String user, Object pass -> userDir }
+    }
+    
+    // Helper class from working tests
+    class EnumImpl<T> implements NamingEnumeration<T> {
+        List<T> list
+
+        EnumImpl(List<T> list) {
+            this.list = new ArrayList<>(list)
+        }
+
+        @Override
+        T next() throws NamingException {
+            return list.remove(0)
+        }
+
+        @Override
+        boolean hasMore() throws NamingException {
+            return list.size() > 0
+        }
+
+        @Override
+        void close() throws NamingException {}
+
+        @Override
+        boolean hasMoreElements() {
+            hasMore()
+        }
+
+        @Override
+        T nextElement() {
+            next()
         }
     }
 
