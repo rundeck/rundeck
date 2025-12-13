@@ -452,11 +452,13 @@ with a value that matches the secret.
 
 Since: v33
 ''',
-        parameters = [@Parameter(name = "authtoken", in = ParameterIn.PATH,
-            required = true, description = "Webhook auth token", schema = @Schema(type = "string"))],
-        security = @SecurityRequirement(
-            name = "webhookTokenHeader"
-        )
+        parameters = [
+            @Parameter(name = "authtoken", in = ParameterIn.PATH,
+                required = true, description = "Webhook auth token", schema = @Schema(type = "string")),
+            @Parameter(name = "Authorization", in = ParameterIn.HEADER,
+                required = false, description = "Optional authorization secret. Required if webhook is configured to require authorization.", 
+                schema = @Schema(type = "string"))
+        ]
     )
     @ApiResponse(
         responseCode = "200",
