@@ -426,8 +426,12 @@ tasks.register('copyApiSpecFiles', Copy){
     def proPluginsWithIntTests = [
         'rundeckpro-calendars',
         'rundeckpro-cluster',
+        'rundeckpro-config',
         'rundeckpro-genai',
+        'rundeckpro-job-tags',
+        'rundeckpro-jobdata',
         'rundeckpro-jobqueue',
+        'rundeckpro-license',
         'rundeckpro-nodehealthcheck',
         'rundeckpro-paged-job-list',
         'rundeckpro-roimetrics',
