@@ -173,6 +173,7 @@ task expandTemplate {
     }
 }
 processResources.dependsOn tasks.expandTemplate
+sourcesJar.dependsOn tasks.expandTemplate
 
 test{
     systemProperties 'rdeck.base': "$projectDir/build/rdeck_base"
