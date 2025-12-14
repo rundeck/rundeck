@@ -83,18 +83,15 @@ class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService
 
     }
     def "jsonRenderDirlist"(){
-        given:
-        def builder = new JSONBuilder()
         when:
-        def result=builder.build {
-            service.jsonRenderDirlist(
-                    '',
-                    {it},
-                    {"http://localhost:8080/api/14/project/test/acl/${it}"},
-                    ['blah.aclpolicy','adir/']
-            )
-        }
-        def parsed=JSON.parse(result.toString())
+        // Grails 7: Service returns Map directly, no need for JSONBuilder
+        def result = service.jsonRenderDirlist(
+                '',
+                {it},
+                {"http://localhost:8080/api/14/project/test/acl/${it}"},
+                ['blah.aclpolicy','adir/']
+        )
+        def parsed = result  // Already a Map
 
         then:
         parsed==[
@@ -146,20 +143,14 @@ class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService
     }
 
     def "renderJsonAclpolicyValidation"(){
-        given:
-
-        def builder = new JSONBuilder()
         when:
         def validation=Stub(Validation){
             isValid()>>false
             getErrors()>>['file1[1]':['error1','error2'],'file2[1]':['error3','error4']]
         }
-        def result=builder.build {
-            service.renderJsonAclpolicyValidation(
-                    validation
-            )
-        }
-        def parsed=JSON.parse(result.toString())
+        // Grails 7: Service returns Map directly, no need for JSONBuilder
+        def result = service.renderJsonAclpolicyValidation(validation)
+        def parsed = result  // Already a Map
         then:
         parsed==[valid:false,
         policies:[
@@ -651,6 +642,8 @@ class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService
     def "render success xml response unwrapped"() {
         given:
         service.rundeckWebUtil= Mock(WebUtilService)
+        // Grails 7: Jakarta EE namespace (jakarta.servlet vs javax.servlet)
+        def response = Mock(jakarta.servlet.http.HttpServletResponse)
         when:
         def closureCalled = false
         service.renderSuccessXml(response) {
