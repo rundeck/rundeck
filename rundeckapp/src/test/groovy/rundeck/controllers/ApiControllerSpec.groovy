@@ -354,15 +354,13 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         0 * controller.apiService._(*_)
 
         response.status == 201
-        response.json == [
-                creator   : 'elf',
-                expired   : true,
-                roles     : ['a', 'b'],
-                expiration: '1970-01-01T00:00:00Z',
-                id        : '123uuid',
-                user      : 'bob',
-                token     : 'abc'
-        ]
+        response.json.creator == 'elf'
+        response.json.expired == true
+        response.json.roles == ['a', 'b']
+        response.json.expiration.startsWith('1970-01-01T00:00:00') // Grails 7 may include milliseconds
+        response.json.id == '123uuid'
+        response.json.user == 'bob'
+        response.json.token == 'abc'
 
         where:
         apivers | _
@@ -410,15 +408,13 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         0 * controller.apiService._(*_)
 
         response.status == 201
-        response.json == [
-                creator   : 'elf',
-                expired   : true,
-                roles     : ['a', 'b'],
-                expiration: '1970-01-01T00:00:00Z',
-                id        : '123uuid',
-                user      : 'bob',
-                token     : 'abc'
-        ]
+        response.json.creator == 'elf'
+        response.json.expired == true
+        response.json.roles == ['a', 'b'  ]
+        response.json.expiration.startsWith('1970-01-01T00:00:00') // Grails 7 may include milliseconds
+        response.json.id == '123uuid'
+        response.json.user == 'bob'
+        response.json.token == 'abc'
 
         where:
         apivers | _
@@ -567,8 +563,8 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         then:
             result.value() == access
         where:
-            endpoint          | access
-            'apiMetricsList'  | RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN
+            endpoint              | access
+            'apiMetricsList_docs' | RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN
     }
 
     private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {
