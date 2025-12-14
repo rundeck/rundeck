@@ -267,7 +267,8 @@ class BootStrap {
         //Setup the correct authentication provider for the configured authentication mechanism
         if(grailsApplication.config.getProperty("rundeck.useJaas",Boolean.class, false)) {
             log.info("Using jaas authentication")
-            SpringSecurityUtils.clientRegisterFilter("jaasApiIntegrationFilter", SecurityFilterPosition.OPENID_FILTER.order + 150)
+            // Grails 7/Spring Security 6: OPENID_FILTER removed (OpenID 2.0 deprecated), using FORM_LOGIN_FILTER as reference
+            SpringSecurityUtils.clientRegisterFilter("jaasApiIntegrationFilter", SecurityFilterPosition.FORM_LOGIN_FILTER.order + 150)
             authenticationManager.providers.add(grailsApplication.mainContext.getBean("jaasAuthProvider"))
         } else {
             log.info("Using builtin realm authentication")
