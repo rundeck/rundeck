@@ -70,6 +70,7 @@ class BootStrap {
     def EventBus grailsEventBus
     def configStorageService
     FeatureService featureService
+    ServletContext servletContext  // Injected in Grails 7 instead of passed as parameter
 
     def timer(String name,Closure clos){
         long bstart=System.currentTimeMillis()
@@ -79,7 +80,7 @@ class BootStrap {
         return res
     }
 
-    def init = { ServletContext servletContext ->
+    def init = {
         // Marshal enums to "STRING" instead of {"enumType":"com.package.MyEnum", "name":"OBJECT"}
         JSON.registerObjectMarshaller(Enum, { Enum e -> e.toString() })
 

@@ -56,7 +56,7 @@ dependencies {
     implementation project(":core")
 
     implementation 'org.quartz-scheduler:quartz:2.3.2'
-    implementation 'org.grails.plugins:quartz:2.0.13'
+    implementation 'org.apache.grails:grails-quartz:4.0.0'
 
     implementation "org.springframework.boot:spring-boot-starter-log4j2"
     implementation "org.springframework.boot:spring-boot-autoconfigure"

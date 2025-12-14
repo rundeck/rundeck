@@ -58,7 +58,7 @@ dependencies {
     implementation "jakarta.annotation:jakarta.annotation-api:${jakartaAnnotationVersion}"
     compileOnly "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
 
-    implementation ("org.grails.plugins:spring-security-core:${grailsSpringSecurityVersion}"){
+    implementation ("org.apache.grails:grails-spring-security:${grailsSpringSecurityVersion}"){
         exclude(group:'net.sf.ehcache',module:'ehcache')
         exclude(group:'org.grails',module:'grails-core')
         exclude(group:'org.grails.plugins',module:'async')

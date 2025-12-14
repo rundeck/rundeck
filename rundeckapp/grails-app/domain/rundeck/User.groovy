@@ -20,6 +20,7 @@ import org.rundeck.app.data.model.v1.user.RdUser
 import rundeck.data.validation.validators.AnyDomainEmailValidator
 
 class User implements RdUser{
+    Long id  // Explicit id field required for Hibernate 5.6.15
     String login
     String password
     String firstName
@@ -30,6 +31,7 @@ class User implements RdUser{
     
     static mapping = {
         table "rduser"
+        id generator: 'identity'
     }
     String dashboardPref
     String filterPref

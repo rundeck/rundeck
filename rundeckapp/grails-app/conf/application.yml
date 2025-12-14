@@ -25,11 +25,23 @@ build:
     ident: '@build.ident@'
 
 spring:
+    liquibase:
+        enabled: false  # Temporarily disabled for Grails 7 testing
+    cloud:
+        bootstrap:
+            enabled: false  # Spring Boot 3.x - bootstrap context deprecated
+        config:
+            enabled: false  # Disable external config server (not used in standard deployments)
+        consul:
+            enabled: false  # Disable Consul (enabled via rundeckpro-config when configured)
+    autoconfigure:
+        exclude:
+            - org.springframework.boot.autoconfigure.integration.IntegrationAutoConfiguration
     jpa:
         hibernate:
             naming:
-                implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
-                physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+                implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl
+                physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
     jmx:
         unique-names: true
     application:
@@ -348,5 +360,5 @@ rundeck:
 ---
 hibernate:
     allow_update_outside_transaction: true
-    physical_naming_strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
-    implicit_naming_strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
+    physical_naming_strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+    implicit_naming_strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl

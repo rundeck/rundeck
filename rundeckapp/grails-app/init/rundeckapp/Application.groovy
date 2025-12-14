@@ -135,6 +135,9 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     static ConfigurableApplicationContext ctx;
     static String[] startArgs = []
     static void main(String[] args) {
+        // Disable Spring Cloud Bootstrap - incompatible with Spring Boot 3.x
+        System.setProperty("spring.cloud.bootstrap.enabled", "false")
+        
         Application.startArgs = args
         boolean error = runPrebootstrap()
         if(error) {

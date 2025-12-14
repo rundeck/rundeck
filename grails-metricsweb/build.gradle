@@ -47,9 +47,9 @@ dependencies {
     api "io.dropwizard.metrics:metrics-servlets:${metricsVersion}"
     api "io.dropwizard.metrics:metrics-servlet:${metricsVersion}"
     api "io.dropwizard.metrics:metrics-jmx:${metricsVersion}"
-    // Bridge for metrics 4.x (javax.servlet) to work with Jakarta
+    // Bridge for metrics 4.x (javax.servlet) to work with Jakarta  
     implementation "jakarta.servlet:jakarta.servlet-api:${jakartaServletVersion}"
-    compileOnly "javax.servlet:javax.servlet-api:${javaxServletVersion}"  // For AdminServlet compilation
+    implementation "javax.servlet:javax.servlet-api:${javaxServletVersion}"  // For AdminServlet at runtime
 
 
     // Added by create-app
