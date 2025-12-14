@@ -83,21 +83,17 @@ class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService
 
     }
     def "jsonRenderDirlist"(){
-        given:
-        def builder = new JSONBuilder()
         when:
-        def result=builder.build {
-            service.jsonRenderDirlist(
-                    '',
-                    {it},
-                    {"http://localhost:8080/api/14/project/test/acl/${it}"},
-                    ['blah.aclpolicy','adir/']
-            )
-        }
-        def parsed=JSON.parse(result.toString())
+        // Method returns Map directly, no need for JSONBuilder
+        def result = service.jsonRenderDirlist(
+                '',
+                {it},
+                {"http://localhost:8080/api/14/project/test/acl/${it}"},
+                ['blah.aclpolicy','adir/']
+        )
 
         then:
-        parsed==[
+        result == [
                 resources:[
                         [
                                 name:'blah.aclpolicy',
@@ -146,22 +142,16 @@ class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService
     }
 
     def "renderJsonAclpolicyValidation"(){
-        given:
-
-        def builder = new JSONBuilder()
         when:
         def validation=Stub(Validation){
             isValid()>>false
             getErrors()>>['file1[1]':['error1','error2'],'file2[1]':['error3','error4']]
         }
-        def result=builder.build {
-            service.renderJsonAclpolicyValidation(
-                    validation
-            )
-        }
-        def parsed=JSON.parse(result.toString())
+        // Method returns Map directly, no need for JSONBuilder
+        def result = service.renderJsonAclpolicyValidation(validation)
+        
         then:
-        parsed==[valid:false,
+        result == [valid:false,
         policies:[
                 [policy:'file1[1]',errors:['error1','error2']],
                 [policy:'file2[1]',errors:['error3','error4']]
@@ -651,6 +641,8 @@ class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService
     def "render success xml response unwrapped"() {
         given:
         service.rundeckWebUtil= Mock(WebUtilService)
+        def response = Mock(jakarta.servlet.http.HttpServletResponse)
+        
         when:
         def closureCalled = false
         service.renderSuccessXml(response) {
