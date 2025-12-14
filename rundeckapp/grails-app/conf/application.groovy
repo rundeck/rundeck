@@ -161,6 +161,10 @@ grails.plugin.springsecurity.auth.loginFormUrl = "/user/login"
 grails.plugin.springsecurity.logout.filterProcessesUrl = '/user/logout'
 grails.plugin.springsecurity.logout.afterLogoutUrl = '/user/loggedout'
 grails.plugin.springsecurity.failureHandler.defaultFailureUrl = "/user/error"
+// Grails 7/Spring Security 6: Prevent Chrome DevTools protocol URLs from being used as redirects
+grails.plugin.springsecurity.successHandler.defaultTargetUrl = '/menu/home'
+grails.plugin.springsecurity.successHandler.alwaysUseDefault = false
+grails.plugin.springsecurity.successHandler.useReferer = false
 grails.plugin.springsecurity.ajaxHeader = 'AJAX AUTH DISABLED\u0000'
 grails.plugin.springsecurity.logout.handlerNames = [
         'rememberMeServices',
