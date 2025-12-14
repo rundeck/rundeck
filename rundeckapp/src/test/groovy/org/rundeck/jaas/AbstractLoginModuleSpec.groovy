@@ -146,7 +146,8 @@ class AbstractLoginModuleSpec extends Specification {
         mockContext.containsBeanDefinition("featureService") >> true
         mockContext.getBean("featureService") >> mockFeatureService
         
-        module.metaClass.getApplicationContext = { -> mockContext }
+        GroovySpy(Holders, global: true)
+        Holders.findApplicationContext() >> mockContext
 
         expect: "Feature check returns true"
         module.isCaseInsensitiveUsernameEnabled()
@@ -185,8 +186,9 @@ class AbstractLoginModuleSpec extends Specification {
         mockContext.containsBeanDefinition("featureService") >> true
         mockContext.getBean("featureService") >> mockFeatureService
         
-        module.metaClass.getApplicationContext = { -> mockContext }
-        module.metaClass.getCallBackAuth = { -> ["NAVEED", "password"] as Object[] }
+        GroovySpy(Holders, global: true)
+        Holders.findApplicationContext() >> mockContext
+        module.getCallBackAuth() >> ["NAVEED", "password"] as Object[]
         
         and: "Mock callback handler"
         def mockCallbackHandler = Mock(CallbackHandler)
@@ -221,8 +223,9 @@ class AbstractLoginModuleSpec extends Specification {
         mockContext.containsBeanDefinition("featureService") >> true
         mockContext.getBean("featureService") >> mockFeatureService
         
-        module.metaClass.getApplicationContext = { -> mockContext }
-        module.metaClass.getCallBackAuth = { -> ["NAVEED", "password"] as Object[] }
+        GroovySpy(Holders, global: true)
+        Holders.findApplicationContext() >> mockContext
+        module.getCallBackAuth() >> ["NAVEED", "password"] as Object[]
         
         and: "Mock callback handler"
         def mockCallbackHandler = Mock(CallbackHandler)
