@@ -5944,7 +5944,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             getNodes()>> nodeSet
             getFramework() >> Mock(Framework)
             getExecutionListener() >> executionListener
-            getUserAndRolesAuthContext()>> userAndRolesAuthContext
+            getUserAndRolesAuthContext()> userAndRolesAuthContext
 
         }
         JobRefCommand item = ExecutionItemFactory.createJobRef(

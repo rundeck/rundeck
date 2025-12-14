@@ -15,7 +15,6 @@
  */
 package com.dtolabs.rundeck.jetty.jaas
 
-import org.rundeck.jaas.PasswordCredential
 import org.rundeck.jaas.RundeckRole
 import org.rundeck.jaas.UserInfo
 import rundeck.services.ConfigurationService
@@ -664,9 +663,23 @@ class JettyCachingLdapLoginModuleTest extends Specification {
     }
 
 
-    // NOTE: "test get user attributes email first name last name" deleted as duplicate
-    // This functionality is covered by JettyCachingLdapLoginModuleTest2.testGetUserAttributesEmail_FirstName_LastName() (Java test - passing)
-    // and RundeckJaasAuthenticationSuccessEventListenerTest (integration flow - passing)
+    def "test get user attributes email first name last name"() {
+        given:
+        def module = getJettyCachingLdapLoginModule(false, false)
+        module._debug = true
+        module.setCallbackHandler(Mock(CallbackHandler) {
+            1 * handle(_) >> { it[0][0].name = user1; it[0][1].object = password }
+        })  // Use setter instead of @field access (Groovy 4)
+        module.setSubject(new Subject())  // Use setter instead of @field access (Groovy 4)
+
+        expect:
+        module.login()
+        module.commit()
+        module.subject.principals.stream().anyMatch(p -> p instanceof LdapEmailPrincipal)
+        module.subject.principals.stream().anyMatch(p -> p instanceof LdapFirstNamePrincipal)
+        module.subject.principals.stream().anyMatch(p -> p instanceof LdapLastNamePrincipal)
+    }
+
 
     def "test set options email first last"() {
         given:

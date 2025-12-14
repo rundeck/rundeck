@@ -370,13 +370,11 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
                         description: 'XYZ desc'
                 ],
         ]
-        // Verify labels structure exists in response
-        // Note: In test context, message() may not apply defaults, but production has sensible defaults
-        json.labels != null
-        json.labels.containsKey('singular')
-        json.labels.containsKey('indexed')
-        json.labels.containsKey('plural')
-        json.labels.containsKey('addButton')
+        json.labels
+        json.labels.singular == 'framework.service.Notification.label'
+        json.labels.indexed == 'framework.service.Notification.label.indexed'
+        json.labels.plural == 'framework.service.Notification.label.plural'
+        json.labels.addButton == 'framework.service.Notification.add.title'
 
         where:
         svcName        | _

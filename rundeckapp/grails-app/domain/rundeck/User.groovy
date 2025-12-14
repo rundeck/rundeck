@@ -20,7 +20,6 @@ import org.rundeck.app.data.model.v1.user.RdUser
 import rundeck.data.validation.validators.AnyDomainEmailValidator
 
 class User implements RdUser{
-    Long id  // Explicit field required for Groovy 4 + DataTest compatibility
     String login
     String password
     String firstName

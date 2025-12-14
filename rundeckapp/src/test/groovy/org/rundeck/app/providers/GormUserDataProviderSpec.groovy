@@ -11,18 +11,14 @@ import rundeck.services.FrameworkService
 import rundeck.services.UserService
 import rundeck.services.data.UserDataService
 import com.dtolabs.rundeck.core.config.FeatureService
-import spock.lang.Specification
 import spock.lang.Unroll
+import testhelper.RundeckHibernateSpec
 
-class GormUserDataProviderSpec extends Specification implements DataTest {
+class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest {
     GormUserDataProvider provider = new GormUserDataProvider()
 
-    @Override
-    Class[] getDomainClassesToMock() {
-        [User]
-    }
-
     void setup() {
+        mockDomain(User)
         mockDataService(UserDataService)
         provider.userDataService = applicationContext.getBean(UserDataService)
     }
