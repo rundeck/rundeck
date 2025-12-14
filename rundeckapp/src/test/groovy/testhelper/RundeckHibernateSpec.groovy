@@ -68,12 +68,15 @@ class RundeckHibernateSpec extends HibernateSpec {
         sql.execute("DROP ALL OBJECTS")
     }
 
+    // Grails 7: Simplified parser registration for Liquibase 4.x
+    // Manual ChangeLogParserFactory manipulation no longer needed/supported
     private void registerLogParser(def config, GenericApplicationContext applicationContext){
+        // GroovyChangeLogParser needs applicationContext to resolve Groovy scripts
+        // Register as Spring bean so Liquibase can discover it
         GroovyChangeLogParser groovyChangeLogParser = new GroovyChangeLogParser()
         groovyChangeLogParser.applicationContext = applicationContext
         groovyChangeLogParser.config = config
-        ChangeLogParserFactory.instance.unregisterAllParsers()
-        ChangeLogParserFactory.instance.register( groovyChangeLogParser )
+        applicationContext.beanFactory.registerSingleton('groovyChangeLogParser', groovyChangeLogParser)
     }
 
     private GenericApplicationContext configureApplicationContext(DataSource hikariDataSource){
