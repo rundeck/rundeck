@@ -68,17 +68,6 @@ class RundeckHibernateSpec extends HibernateSpec {
         sql.execute("DROP ALL OBJECTS")
     }
 
-    // Grails 7: Simplified parser registration for Liquibase 4.x
-    // Manual ChangeLogParserFactory manipulation no longer needed/supported
-    private void registerLogParser(def config, GenericApplicationContext applicationContext){
-        // GroovyChangeLogParser needs applicationContext to resolve Groovy scripts
-        // Register as Spring bean so Liquibase can discover it
-        GroovyChangeLogParser groovyChangeLogParser = new GroovyChangeLogParser()
-        groovyChangeLogParser.applicationContext = applicationContext
-        groovyChangeLogParser.config = config
-        applicationContext.beanFactory.registerSingleton('groovyChangeLogParser', groovyChangeLogParser)
-    }
-
     private GenericApplicationContext configureApplicationContext(DataSource hikariDataSource){
         GenericApplicationContext genericApplicationContext = new GenericApplicationContext()
         genericApplicationContext.beanFactory.registerSingleton('dataSource', hikariDataSource)
@@ -95,9 +84,17 @@ class RundeckHibernateSpec extends HibernateSpec {
         def config = new PropertySourcesConfig(mutablePropertySources)
         def datastoreInitializer = new HibernateDatastoreSpringInitializer(config, [] as Class[])
         datastoreInitializer.configureForBeanDefinitionRegistry(genericApplicationContext)
+        
+        // Grails 7: Register GroovyChangeLogParser as Spring bean for Liquibase auto-discovery
+        // Modern databasemigration plugin finds parsers via Spring context instead of ChangeLogParserFactory
+        GroovyChangeLogParser groovyChangeLogParser = new GroovyChangeLogParser()
+        groovyChangeLogParser.config = config
+        genericApplicationContext.beanFactory.registerSingleton('groovyChangeLogParser', groovyChangeLogParser)
+        
         genericApplicationContext.refresh()
-
-        registerLogParser(config, genericApplicationContext)
+        
+        // Set applicationContext AFTER refresh so parser has access to full Spring context
+        groovyChangeLogParser.applicationContext = genericApplicationContext
 
         return genericApplicationContext
     }
