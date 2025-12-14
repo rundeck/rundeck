@@ -1936,7 +1936,23 @@ Since: v55""",
         for (entry in extraConfig) {
             propertyConfig.add([
                     name: entry.key,
-                    properties: entry.value["propertyList"],
+                    // Grails 7: Convert Property objects to Maps for JSON serialization
+                    // Property objects from core module can't be serialized by JSON converter
+                    properties: entry.value["propertyList"]?.collect { prop ->
+                        [
+                                name: prop.name,
+                                title: prop.title,
+                                description: prop.description,
+                                type: prop.type?.toString(),
+                                required: prop.required,
+                                defaultValue: prop.defaultValue,
+                                selectValues: prop.selectValues,
+                                selectLabels: prop.selectLabels,
+                                scope: prop.scope?.toString(),
+                                renderingOptions: prop.renderingOptions,
+                                blankIfUnexpandable: prop.blankIfUnexpandable
+                        ]
+                    },
                     propertiesMapping: entry.value["mapping"],
                     values: entry.value["values"],
             ])
