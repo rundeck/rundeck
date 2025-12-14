@@ -193,7 +193,19 @@
              ]}"/>
 <g:embedJSON id="jobExecutionPluginsJSON"
              data="${ [
-                     pluginsInitialData: executionLifecyclePlugins.values()?.collect{it.description}?.flatten(),
+                     pluginsInitialData: executionLifecyclePlugins.values()?.collect{[
+                         name: it.description?.name,
+                         title: it.description?.title,
+                         description: it.description?.description,
+                         properties: it.description?.properties?.collect{prop -> [
+                             name: prop.name,
+                             title: prop.title,
+                             description: prop.description,
+                             type: prop.type?.toString(),
+                             required: prop.required,
+                             defaultValue: prop.defaultValue
+                         ]}
+                     ]}?.flatten(),
                      ExecutionLifecycle: scheduledExecution?.pluginConfigMap?.get('ExecutionLifecycle')?:[:],
                      validationErrors:  params.executionLifecyclePluginValidation,
              ]}"/>
