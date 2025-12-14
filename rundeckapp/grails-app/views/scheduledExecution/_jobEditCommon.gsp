@@ -191,21 +191,10 @@
                      useCrontabString:scheduledExecution?.crontabString?true:scheduledExecution?.shouldUseCrontabString()?true:false,
                      timeZones:timeZones ?: []
              ]}"/>
+<%-- Grails 7: Description and Property objects serialized via custom JSON marshallers (see BootStrap.groovy) --%>
 <g:embedJSON id="jobExecutionPluginsJSON"
              data="${ [
-                     pluginsInitialData: executionLifecyclePlugins.values()?.collect{[
-                         name: it.description?.name,
-                         title: it.description?.title,
-                         description: it.description?.description,
-                         properties: it.description?.properties?.collect{prop -> [
-                             name: prop.name,
-                             title: prop.title,
-                             description: prop.description,
-                             type: prop.type?.toString(),
-                             required: prop.required,
-                             defaultValue: prop.defaultValue
-                         ]}
-                     ]}?.flatten(),
+                     pluginsInitialData: executionLifecyclePlugins.values()?.collect{ it.description }?.flatten(),
                      ExecutionLifecycle: scheduledExecution?.pluginConfigMap?.get('ExecutionLifecycle')?:[:],
                      validationErrors:  params.executionLifecyclePluginValidation,
              ]}"/>
