@@ -2933,8 +2933,8 @@ So a value of `2w` would return executions that completed within the last two we
             @Parameter(in=ParameterIn.QUERY,name="userFilter",description="Username who started the execution",schema=@Schema(type="string")),
             @Parameter(in=ParameterIn.QUERY,name="executionTypeFilter",description="""specify the execution type, one of: `scheduled` (schedule trigger), `user` (user trigger), `user-scheduled` (user scheduled trigger). Since: v20""",schema=@Schema(type="string",allowableValues = ['scheduled','user','user-scheduled'])),
             @Parameter(in=ParameterIn.QUERY,name="adhocStringFilter",description="specify an exact adhoc command.",schema=@Schema(type="string")),
-            @Parameter(in=ParameterIn.QUERY,name="nodeFilter",description="specify an exact node filterm to search executions.",schema=@Schema(type="string")),
-            @Parameter(in=ParameterIn.QUERY,name="optionFilter",description="specify an exact option values to search executions (eg -test 123.",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="nodeFilter",description="specify an exact node filter to search executions.",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="optionFilter",description="specify an exact option values to search executions (eg -test 123).",schema=@Schema(type="string")),
             @Parameter(in=ParameterIn.QUERY,name="max",description="""maximum number of results to include in response. (default: 20)""",schema=@Schema(type="integer")),
             @Parameter(in=ParameterIn.QUERY,name="offset",description="""offset for first result to include. (default: 0)""",schema=@Schema(type="integer"))
         ]

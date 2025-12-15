@@ -524,7 +524,7 @@
               </span>
 
               <span v-if="rpt.jobDeleted" class="text-strong">
-                {{ $t("job.has.been.deleted.0", [rpt.job.name]) }}
+                {{ $t("job.has.been.deleted.0", [""]) }}
               </span>
 
               <span v-if="isCustomReportStatus(rpt)">
@@ -985,19 +985,16 @@ export default defineComponent({
       const curdate = new Date();
       let calculatedLastDate = curdate.getTime();
 
-      if (calculatedLastDate < 1 && query.recentFilter) {
-        calculatedLastDate = curdate.getTime();
-      } else if (calculatedLastDate < 1 && query.doendafterFilter) {
-        // Check if doendbeforeFilter is false or current time is less than endbeforeFilter
-        if (!query.doendbeforeFilter || !query.doendbeforeFilter) {
-          calculatedLastDate = curdate.getTime();
-        } else if (query.endbeforeFilter) {
-          // Parse endbeforeFilter date and compare with current time
+      // Apply filter-based logic for lastDate calculation
+      if (query.recentFilter || query.doendafterFilter) {
+        if (query.doendbeforeFilter && query.endbeforeFilter) {
           const endbeforeTime = new Date(query.endbeforeFilter).getTime();
-          if (curdate.getTime() < endbeforeTime) {
-            calculatedLastDate = curdate.getTime();
+          // Use current time only if it's before the endbeforeFilter
+          if (curdate.getTime() >= endbeforeTime) {
+            calculatedLastDate = -1;
           }
         }
+        // Otherwise, calculatedLastDate remains as current time
       }
 
       // If offset > 0, reset lastDate
