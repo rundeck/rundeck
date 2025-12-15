@@ -39,9 +39,10 @@ import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IProjectInfo
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import grails.web.Action
+import spock.lang.Specification
 import org.rundeck.app.acl.ACLFileManager
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.auth.CoreTypedRequestAuthorizer
@@ -101,9 +102,13 @@ import java.nio.file.Files
 /**
  * Created by greg on 3/15/16.
  */
-class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<MenuController> {
+// Grails 7: Use DataTest + ControllerUnitTest instead of RundeckHibernateSpec
+// This reveals 8 real test failures that were hidden by initializationError
+class MenuControllerSpec extends Specification implements ControllerUnitTest<MenuController>, DataTest {
 
-    List<Class> getDomainClasses() { [ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken, ScheduledExecutionStats, UserService] }
+    void setupSpec() {
+        mockDomains(ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken, ScheduledExecutionStats)
+    }
 
     def setup(){
         session.subject=new Subject()

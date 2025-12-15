@@ -72,7 +72,9 @@ import rundeck.services.optionvalues.OptionValuesService
 import spock.lang.Unroll
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
-import testhelper.RundeckHibernateSpec
+import grails.testing.gorm.DataTest
+import grails.testing.web.controllers.ControllerUnitTest
+import spock.lang.Specification
 
 import javax.security.auth.Subject
 import jakarta.servlet.http.HttpServletResponse
@@ -81,9 +83,12 @@ import java.lang.annotation.Annotation
 /**
  * Created by greg on 7/14/15.
  */
-class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
+// Grails 7: Use DataTest + ControllerUnitTest instead of RundeckHibernateSpec
+class ScheduledExecutionControllerSpec extends Specification implements ControllerUnitTest<ScheduledExecutionController>, DataTest {
 
-    List<Class> getDomainClasses() { [ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats] }
+    void setupSpec() {
+        mockDomains(ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats)
+    }
 
     def setup() {
         mockCodec(URIComponentCodec)
