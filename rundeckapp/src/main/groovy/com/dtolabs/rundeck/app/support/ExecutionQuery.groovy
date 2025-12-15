@@ -495,24 +495,14 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
      */
     def executeJobReferenceCount() {
         def query = this
-
-        def convertids = { String s ->
-            try {
-                return Long.valueOf(s)
-            } catch (NumberFormatException e) {
-                return s
-            }
-        }
-        def idlist = query.jobIdListFilter?.collect(convertids)
-
         def count = 0
 
-        if (idlist) {
-            idlist.each { jobUuid ->
-                if (jobUuid instanceof String) {
+        if (query.jobIdListFilter) {
+            //this apply when only one job UUID is specified (execution show page or job page)
+            String jobUuid = query.jobIdListFilter[0]
 
-                    // Use HQL with INNER JOIN instead of EXISTS for better performance (1900x faster)
-                    def hql = """
+            // Use HQL with INNER JOIN instead of EXISTS for better performance (1900x faster)
+            def hql = """
                         SELECT COUNT(e.id)
                         FROM Execution e
                         INNER JOIN ReferencedExecution re WITH re.execution.id = e.id
@@ -520,20 +510,17 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
                         AND re.jobUuid = :jobUuid
                         AND e.project IN (:projects)
                     """
-                    def count1 = Execution.executeQuery(hql, [jobUuid: jobUuid, projects: query.execProjects])[0] ?: 0
+            def count1 = Execution.executeQuery(hql, [jobUuid: jobUuid, projects: query.execProjects])[0] ?: 0
 
-                    // COUNT QUERY 2: Executions matching via scheduled_execution.uuid
-                    // This finds executions that are direct instances of the job
-                    def count2 = Execution.createCriteria().count {
-                        eq('project', query.projFilter)
-                        isNotNull('scheduledExecution')
-                        eq("jobUuid", jobUuid)
-                    }
-
-                    count += (count1 as Long) + (count2 as Long)
-
-                }
+            // COUNT QUERY 2: Executions matching via scheduled_execution.uuid
+            // This finds executions that are direct instances of the job
+            def count2 = Execution.createCriteria().count {
+                eq('project', query.projFilter)
+                isNotNull('scheduledExecution')
+                eq("jobUuid", jobUuid)
             }
+
+            count += (count1 as Long) + (count2 as Long)
         }
         return count
     }

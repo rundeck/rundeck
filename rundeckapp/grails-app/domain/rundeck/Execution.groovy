@@ -186,6 +186,13 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         return logFileStorageRequest?.id
     }
 
+    Boolean getJobDeleted() {
+        if (scheduledExecution == null && jobUuid != null) {
+            return true
+        }
+        return false
+    }
+
     RdNodeConfig getNodeConfig() {
         new RdNodeConfig(
                 nodeInclude : nodeInclude,
