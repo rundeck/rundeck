@@ -94,6 +94,7 @@ class AccessControlSpec extends SeleniumBase {
             aclPage.deleteButton.click()
             aclPage.deleteModal.isDisplayed()
             aclPage.deleteButtonConfirm.click()
+            aclPage.waitForPoliciesCountToBe(0)
         then:
             aclPage.alertFields.size() == 0
             aclPage.countBadge.getText() == "0"

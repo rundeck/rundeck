@@ -78,9 +78,22 @@ class AccessControlPage extends BasePage {
         el uploadedPolicyValidationTitleBy
     }
 
+    /**
+     * Get the list of policy title elements.
+     * Handles empty lists by using findElements which doesn't require visibility.
+     * Uses els() which respects implicit wait and doesn't throw if element not found.
+     * Tests should call waitForPoliciesCountToBe() first to ensure page readiness.
+     *
+     * @return List of WebElement policy titles, empty list if no policies exist
+     */
     List<WebElement> getPoliciesTitleList() {
-        waitForElementVisible storedPoliciesListBy
-        el storedPoliciesListBy findElements policiesTitleBy
+        // Use els() to find container - respects implicit wait, returns empty list if not found
+        def container = els(storedPoliciesListBy)
+        if (container.isEmpty()) {
+            return []
+        }
+        // Find child policy title elements within the container
+        container[0].findElements(policiesTitleBy)
     }
 
     void waitForPoliciesCountToBe(int expectedCount) {
