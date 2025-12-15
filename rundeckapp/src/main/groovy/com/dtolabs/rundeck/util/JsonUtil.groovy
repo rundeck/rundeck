@@ -34,10 +34,19 @@ class JsonUtil {
      * This replaces the broken request.JSON property in Grails 7/Spring Boot 3.
      * 
      * @param request HttpServletRequest with JSON body
-     * @return Parsed JSON as Map, or null if request body is empty
-     * @throws IOException if JSON parsing fails
+     * @return Parsed JSON as Map, or null if request body is empty or already consumed
+     * @throws IOException if JSON parsing fails (but not if body is unavailable)
      */
     static Map parseRequestBody(HttpServletRequest request) throws IOException {
+        // Grails 7: Check if this is actually a JSON request
+        def contentType = request.contentType
+        if (contentType) {
+            // Skip non-JSON content types (multipart/form-data, etc.)
+            if (!contentType.toLowerCase().contains('json')) {
+                return null
+            }
+        }
+        
         // Spring Boot 3: Try multiple approaches to read the request body
         
         // Attempt 1: Read from input stream
@@ -47,7 +56,16 @@ class JsonUtil {
                 return objectMapper.readValue(inputStream, Map.class)
             }
         } catch (IOException e) {
-            // Stream might be already consumed, try reader
+            // Stream might be already consumed or unavailable
+            // In Spring Boot 3, this can happen if:
+            // - Request body already parsed by filters/interceptors
+            // - Multipart form data
+            // - Body is marked as STREAMED
+            // This is not an error - just return null
+            if (e.message?.contains("STREAMED") || e.message?.contains("getInputStream")) {
+                return null
+            }
+            // For other IOExceptions, try the reader as fallback
         }
         
         // Attempt 2: Read from reader  
@@ -60,8 +78,15 @@ class JsonUtil {
                 }
             }
         } catch (Exception e) {
-            // Both failed
-            throw new IOException("Failed to read request body: ${e.message}", e)
+            // Both attempts failed
+            // If it's a "STREAMED" or "already called" error, return null gracefully
+            if (e.message?.contains("STREAMED") || 
+                e.message?.contains("getInputStream") || 
+                e.message?.contains("getReader")) {
+                return null
+            }
+            // Only throw for actual JSON parsing errors
+            throw new IOException("Failed to parse JSON request body: ${e.message}", e)
         }
         
         return null
