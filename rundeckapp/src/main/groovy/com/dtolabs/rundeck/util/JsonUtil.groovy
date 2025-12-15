@@ -55,17 +55,9 @@ class JsonUtil {
             if (inputStream && inputStream.available() > 0) {
                 return objectMapper.readValue(inputStream, Map.class)
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             // Stream might be already consumed or unavailable
-            // In Spring Boot 3, this can happen if:
-            // - Request body already parsed by filters/interceptors
-            // - Multipart form data
-            // - Body is marked as STREAMED
-            // This is not an error - just return null
-            if (e.message?.contains("STREAMED") || e.message?.contains("getInputStream")) {
-                return null
-            }
-            // For other IOExceptions, try the reader as fallback
+            // Continue to next attempt
         }
         
         // Attempt 2: Read from reader  
@@ -78,16 +70,12 @@ class JsonUtil {
                 }
             }
         } catch (Exception e) {
-            // Both attempts failed
-            // If it's a "STREAMED" or "already called" error, return null gracefully
-            if (e.message?.contains("STREAMED") || 
-                e.message?.contains("getInputStream") || 
-                e.message?.contains("getReader")) {
-                return null
-            }
-            // Only throw for actual JSON parsing errors
-            throw new IOException("Failed to parse JSON request body: ${e.message}", e)
+            // Reader might be unavailable
+            // Continue to next attempt
         }
+        
+        // NOTE: No fallback needed for Grails 7 controllers using @RequestBody
+        // Spring automatically handles JSON deserialization for @RequestBody parameters
         
         return null
     }

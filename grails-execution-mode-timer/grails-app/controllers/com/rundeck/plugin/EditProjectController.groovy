@@ -16,11 +16,12 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
-import io.swagger.v3.oas.annotations.parameters.RequestBody
+import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import io.swagger.v3.oas.annotations.tags.Tags
 import org.rundeck.core.auth.AuthConstants
+import org.springframework.web.bind.annotation.RequestBody
 
 import jakarta.servlet.http.HttpServletResponse
 
@@ -130,7 +131,7 @@ class EditProjectController {
 Since: v34
 """,
         tags = ['Execution Mode'],
-        requestBody = @RequestBody(
+        requestBody = @SwaggerRequestBody(
             required = true,
             description = """Enable Schedule or Executions.
 Specify the `type` to enable, and a `value` with a time duration expression.
@@ -171,7 +172,7 @@ The request must contain a `value` with a "Time duration expression". (See reque
             examples = @ExampleObject('{"saved":false,"msg":"Project Execution Mode Later saved"}')
         )
     )
-    def apiProjectEnableLater(String project) {
+    def apiProjectEnableLater(String project, @RequestBody ProjectExecutionModeLaterCommand command) {
         if (!requireAuth(project)) {
             return
         }
@@ -180,69 +181,84 @@ The request must contain a `value` with a "Time duration expression". (See reque
             return
         }
 
-        //TODO: use ModeLaterRequest type
-        def result = validateApi(request, response)
-        def saved = false
-        def msg = ""
-
-        if(!result.fail){
-            Properties projProps = new Properties()
-            Set removePrefixes=[]
-
-            IRundeckProject rundeckProject =  frameworkService.getFrameworkProject(project)
-            Map properties = rundeckProject.getProjectProperties()
-            projProps.putAll(properties)
-
-            //check if current status of project
-            def isExecutionDisabledNow = properties[UpdateModeProjectService.CONF_PROJECT_DISABLE_EXECUTION] == 'true'
-            def isScheduleDisabledNow = properties[UpdateModeProjectService.CONF_PROJECT_DISABLE_SCHEDULE] == 'true'
-
-            boolean canSave = true
-
-            if(result.config.type == "executions"){
-
-                if(!isExecutionDisabledNow){
-                    canSave=false
-                    saved=false
-                    msg="Executions are already enabled, cannot disable later"
+        // Grails 7 / Spring Boot 3: Modern approach using command objects with validation
+        if (!command.validate()) {
+            def errorMsg = command.errors.allErrors.collect { error ->
+                def fieldName = error.field
+                if (fieldName == 'type') {
+                    if (error.code == 'nullable' || !command.type) {
+                        return "Format was not valid, the attribute type must be set (executions or schedule)."
+                    } else {
+                        return "Format was not valid, the attribute type must be set with the proper value(executions or schedule)."
+                    }
+                } else if (fieldName == 'value') {
+                    if (error.code == 'nullable' || !command.value) {
+                        return "Format was not valid, the attribute value must be set."
+                    } else if (error.code == 'invalid.time.format') {
+                        return "Format was not valid, the attribute value is not set properly. Use something like: 3m, 1h, 3d"
+                    }
                 }
-
-                projProps.put("project.later.executions.enable", "true")
-                projProps.put("project.later.executions.enable.value", result.config.value)
-
-                removePrefixes.add("project.later.executions")
-
-            }else{
-
-                if(!isScheduleDisabledNow){
-                    canSave=false
-                    saved=false
-                    msg="Schedule are already enabled, cannot enable later"
-                }
-
-                projProps.put("project.later.schedule.enable", "true")
-                projProps.put("project.later.schedule.enable.value", result.config.value)
-
-                removePrefixes.add("project.later.schedule")
-            }
-
-            if(canSave){
-                //save project settings
-                frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
-
-                saved = updateModeProjectService.saveExecutionLaterSettings(project, projProps)
-                if(saved){
-                    msg = "Project Execution Mode Later saved"
-                }else{
-                    msg = "No changed found"
-                }
-            }
-
+                return error.defaultMessage
+            }.first()
+            
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            render([saved: false, msg: errorMsg] as JSON, contentType: 'application/json')
+            return
         }
 
-        if(result.errormsg){
-            msg = result.errormsg
-            response.status = 400
+        def saved = false
+        def msg = ""
+        
+        Properties projProps = new Properties()
+        Set removePrefixes=[]
+
+        IRundeckProject rundeckProject =  frameworkService.getFrameworkProject(project)
+        Map properties = rundeckProject.getProjectProperties()
+        projProps.putAll(properties)
+
+        //check if current status of project
+        def isExecutionDisabledNow = properties[UpdateModeProjectService.CONF_PROJECT_DISABLE_EXECUTION] == 'true'
+        def isScheduleDisabledNow = properties[UpdateModeProjectService.CONF_PROJECT_DISABLE_SCHEDULE] == 'true'
+
+        boolean canSave = true
+
+        if(command.type == "executions"){
+
+            if(!isExecutionDisabledNow){
+                canSave=false
+                saved=false
+                msg="Executions are already enabled, cannot disable later"
+            }
+
+            projProps.put("project.later.executions.enable", "true")
+            projProps.put("project.later.executions.enable.value", command.value)
+
+            removePrefixes.add("project.later.executions")
+
+        }else{
+
+            if(!isScheduleDisabledNow){
+                canSave=false
+                saved=false
+                msg="Schedule are already enabled, cannot enable later"
+            }
+
+            projProps.put("project.later.schedule.enable", "true")
+            projProps.put("project.later.schedule.enable.value", command.value)
+
+            removePrefixes.add("project.later.schedule")
+        }
+
+        if(canSave){
+            //save project settings
+            frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
+
+            saved = updateModeProjectService.saveExecutionLaterSettings(project, projProps)
+            if(saved){
+                msg = "Project Execution Mode Later saved"
+            }else{
+                msg = "No changed found"
+            }
         }
 
         render(
@@ -261,7 +277,7 @@ The request must contain a `value` with a "Time duration expression". (See reque
 Since: v34
 """,
         tags = ['Execution Mode'],
-        requestBody = @RequestBody(
+        requestBody = @SwaggerRequestBody(
             required = true,
             description = """Disable Schedule or Executions.
 Specify the `type` to enable, and a `value` with a time duration expression.
@@ -302,7 +318,7 @@ The request must contain a `value` with a "Time duration expression". (See reque
             examples = @ExampleObject('{"saved":false,"msg":"Project Execution Mode Later saved"}')
         )
     )
-    def apiProjectDisableLater(String project){
+    def apiProjectDisableLater(String project, @RequestBody ProjectExecutionModeLaterCommand command){
 
         if (!requireAuth(project)) {
             return
@@ -312,65 +328,81 @@ The request must contain a `value` with a "Time duration expression". (See reque
             return
         }
 
-        def result = validateApi(request, response)
-        def saved = false
-        def msg = ""
-
-        if(!result.fail){
-            Properties projProps = new Properties()
-            Set removePrefixes=[]
-
-            IRundeckProject rundeckProject =  frameworkService.getFrameworkProject(project)
-            Map properties = rundeckProject.getProjectProperties()
-            projProps.putAll(properties)
-
-            //check if current status of project
-            def isExecutionDisabledNow = properties[UpdateModeProjectService.CONF_PROJECT_DISABLE_EXECUTION] == 'true'
-            def isScheduleDisabledNow = properties[UpdateModeProjectService.CONF_PROJECT_DISABLE_SCHEDULE] == 'true'
-
-            boolean canSave = true
-
-            if(result.config.type == "executions"){
-                if(isExecutionDisabledNow){
-                    canSave=false
-                    saved=false
-                    msg="Execution are already disabled, cannot disable later"
+        // Grails 7 / Spring Boot 3: Modern approach using command objects with validation
+        if (!command.validate()) {
+            def errorMsg = command.errors.allErrors.collect { error ->
+                def fieldName = error.field
+                if (fieldName == 'type') {
+                    if (error.code == 'nullable' || !command.type) {
+                        return "Format was not valid, the attribute type must be set (executions or schedule)."
+                    } else {
+                        return "Format was not valid, the attribute type must be set with the proper value(executions or schedule)."
+                    }
+                } else if (fieldName == 'value') {
+                    if (error.code == 'nullable' || !command.value) {
+                        return "Format was not valid, the attribute value must be set."
+                    } else if (error.code == 'invalid.time.format') {
+                        return "Format was not valid, the attribute value is not set properly. Use something like: 3m, 1h, 3d"
+                    }
                 }
-
-                projProps.put("project.later.executions.disable", "true")
-                projProps.put("project.later.executions.disable.value", result.config.value)
-
-                removePrefixes.add("project.later.executions")
-            }else{
-                if(isScheduleDisabledNow){
-                    canSave=false
-                    saved=false
-                    msg="Schedule are already disabled, cannot disable later"
-                }
-
-                projProps.put("project.later.schedule.disable", "true")
-                projProps.put("project.later.schedule.disable.value", result.config.value)
-
-                removePrefixes.add("project.later.schedule")
-            }
-
-            if(canSave){
-                //save project settings
-                frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
-
-                saved = updateModeProjectService.saveExecutionLaterSettings(project, projProps)
-                if(saved){
-                    msg = "Project Execution Mode Later saved"
-                }else{
-                    msg = "No changed found"
-                }
-            }
-
+                return error.defaultMessage
+            }.first()
+            
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            render([saved: false, msg: errorMsg] as JSON, contentType: 'application/json')
+            return
         }
 
-        if(result.errormsg){
-            msg = result.errormsg
-            response.status = 400
+        def saved = false
+        def msg = ""
+        
+        Properties projProps = new Properties()
+        Set removePrefixes=[]
+
+        IRundeckProject rundeckProject =  frameworkService.getFrameworkProject(project)
+        Map properties = rundeckProject.getProjectProperties()
+        projProps.putAll(properties)
+
+        //check if current status of project
+        def isExecutionDisabledNow = properties[UpdateModeProjectService.CONF_PROJECT_DISABLE_EXECUTION] == 'true'
+        def isScheduleDisabledNow = properties[UpdateModeProjectService.CONF_PROJECT_DISABLE_SCHEDULE] == 'true'
+
+        boolean canSave = true
+
+        if(command.type == "executions"){
+            if(isExecutionDisabledNow){
+                canSave=false
+                saved=false
+                msg="Execution are already disabled, cannot disable later"
+            }
+
+            projProps.put("project.later.executions.disable", "true")
+            projProps.put("project.later.executions.disable.value", command.value)
+
+            removePrefixes.add("project.later.executions")
+        }else{
+            if(isScheduleDisabledNow){
+                canSave=false
+                saved=false
+                msg="Schedule are already disabled, cannot disable later"
+            }
+
+            projProps.put("project.later.schedule.disable", "true")
+            projProps.put("project.later.schedule.disable.value", command.value)
+
+            removePrefixes.add("project.later.schedule")
+        }
+
+        if(canSave){
+            //save project settings
+            frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
+
+            saved = updateModeProjectService.saveExecutionLaterSettings(project, projProps)
+            if(saved){
+                msg = "Project Execution Mode Later saved"
+            }else{
+                msg = "No changed found"
+            }
         }
 
         render(
@@ -379,63 +411,4 @@ The request must contain a `value` with a "Time duration expression". (See reque
         )
 
     }
-
-    def validateApi( request,  response){
-        boolean fail = false
-        def errormsg = ""
-        def config = null
-
-        try{
-            // Grails 7: Parse body using Jackson instead of request.JSON
-            config = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
-        }catch(Exception e){
-            errormsg = e.message
-        }
-
-        //review config value
-        if(!config){
-            fail=true
-            errormsg = 'Format was not valid, the request must be a json object with the format: {"type":"<executions|schedule>","value":"<timeExpression>"}'
-            return [config: config, fail: fail, errormsg:errormsg]
-
-        }
-
-        if(!config.type){
-            fail=true
-            errormsg = "Format was not valid, the attribute type must be set (executions or schedule)."
-            return [config: config, fail: fail, errormsg:errormsg]
-
-        }
-
-        if(config.type){
-            def allowedValues = ["executions","schedule"]
-            if(!allowedValues.contains(config.type)){
-                fail=true
-                errormsg = "Format was not valid, the attribute type must be set with the proper value(executions or schedule)."
-                return [config: config, fail: fail, errormsg:errormsg]
-
-            }
-        }
-
-        if(!config.value){
-            fail=true
-            errormsg = "Format was not valid, the attribute value must be set."
-            return [config: config, fail: fail, errormsg:errormsg]
-
-        }
-
-        if(config.value){
-            if(!PluginUtil.validateTimeDuration(config.value)){
-                fail=true
-                errormsg = "Format was not valid, the attribute value is not set properly. Use something like: 3m, 1h, 3d"
-                return [config: config, fail: fail, errormsg:errormsg]
-
-            }
-        }
-
-        return [config: config, fail: fail, errormsg:errormsg]
-
-
-    }
-
 }
