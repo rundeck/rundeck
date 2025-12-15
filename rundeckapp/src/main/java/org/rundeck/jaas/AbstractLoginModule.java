@@ -316,8 +316,9 @@ public abstract class AbstractLoginModule implements LoginModule {
             Object featureService = ctx.getBean("featureService");
             if (featureService == null) return false;
             
-            // Use reflection to call: featureService.featurePresent(Features.CASE_INSENSITIVE_USERNAME)
-            java.lang.reflect.Method method = featureService.getClass().getMethod("featurePresent", Object.class);
+            // Grails 7: Use reflection to call: featureService.featurePresent(Features.CASE_INSENSITIVE_USERNAME)
+            // Features implements FeaturesDefinition, so use that class for the method signature
+            java.lang.reflect.Method method = featureService.getClass().getMethod("featurePresent", com.dtolabs.rundeck.core.config.FeaturesDefinition.class);
             Boolean result = (Boolean) method.invoke(featureService, Features.CASE_INSENSITIVE_USERNAME);
             return result != null && result;
             
