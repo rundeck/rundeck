@@ -825,9 +825,11 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
      * @return
      */
     def sanitizeHtml(){
-        if(request.JSON.content){
+        // Grails 7: Parse body using Jackson instead of request.JSON
+        def jsonBody = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
+        if(jsonBody?.content){
             return render(contentType: 'application/json'){
-                content request.JSON.content.toString().encodeAsSanitizedHTML()
+                content jsonBody.content.toString().encodeAsSanitizedHTML()
             }
         }
         apiService.renderErrorFormat(response, [
@@ -4261,7 +4263,8 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
 
         def jobAsUser, jobArgString, jobLoglevel, jobFilter, jobRunAtTime, jobOptions
         if (request.format == 'json') {
-            def data= request.JSON
+            // Grails 7: Parse body using Jackson instead of request.JSON
+            def data= com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
             jobAsUser = data?.asUser
             jobArgString = data?.argString
             jobLoglevel = data?.loglevel
@@ -4562,18 +4565,20 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
         }
 
         if (request.format == 'json') {
-            failedOnly = request.JSON.failedNodes?:'true'
-            request.JSON.asUser = request.JSON.asUser?:null
-            request.JSON.loglevel = request.JSON.loglevel?:e.loglevel
-            if(request.JSON.options){
+            // Grails 7: Parse body using Jackson instead of request.JSON
+            def jsonBody = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
+            failedOnly = jsonBody.failedNodes?:'true'
+            jsonBody.asUser = jsonBody.asUser?:null
+            jsonBody.loglevel = jsonBody.loglevel?:e.loglevel
+            if(jsonBody.options){
                 def map = OptionsParserUtil.parseOptsFromString(e.argString)
                 map.each{k,v ->
-                    if(!request.JSON.options.containsKey(k)){
-                        request.JSON.options.put(k,v)
+                    if(!jsonBody.options.containsKey(k)){
+                        jsonBody.options.put(k,v)
                     }
                 }
-            }else if(!request.JSON.argString){
-                request.JSON.argString = request.JSON.argString?:e.argString
+            }else if(!jsonBody.argString){
+                jsonBody.argString = jsonBody.argString?:e.argString
             }
         }else{
             failedOnly = params.failedNodes?:'true'
@@ -6166,7 +6171,8 @@ Since: v14''',
                 }
             }
         } else if(request.format=='json'  || !request.format){
-            def data= request.JSON
+            // Grails 7: Parse body using Jackson instead of request.JSON
+            def data= com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
             serverUUID = data?.server?.uuid?:null
             serverAll = data?.server?.all?true:false
             project = data?.project?:null

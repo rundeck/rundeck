@@ -415,7 +415,9 @@ Since: v49''',
         }
         Map config = [:]
         if (request.method == 'POST' && request.format == 'json') {
-            config = request.JSON.config
+            // Grails 7: Parse body using Jackson instead of request.JSON
+            def jsonBody = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
+            config = jsonBody?.config ?: [:]
         }
         config = ParamsUtil.cleanMap(config)
         PropertyScope ignoredScope=null

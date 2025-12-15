@@ -386,7 +386,8 @@ The request must contain a `value` with a "Time duration expression". (See reque
         def config = null
 
         try{
-            config = request.JSON
+            // Grails 7: Parse body using Jackson instead of request.JSON
+            config = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
         }catch(Exception e){
             errormsg = e.message
         }

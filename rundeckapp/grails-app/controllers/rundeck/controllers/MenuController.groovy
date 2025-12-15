@@ -1020,11 +1020,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return
         }
 
-        if ( !(request.JSON) || !request.JSON.files) {
+        // Grails 7: Parse body using Jackson instead of request.JSON
+        def jsonBody = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
+        if ( !jsonBody || !jsonBody.files) {
             response.status = HttpServletResponse.SC_BAD_REQUEST
             return respond([error: [message: g.message(code:'api.error.invalid.request',args:['JSON body must contain files entry'])]], formats: ['json'])
         }
-        def list = request.JSON.files ?: []
+        def list = jsonBody.files ?: []
         def result = list.collect{String fname->
             def validation = loadProjectPolicyValidation(project, fname)
             Map meta = getCachedPolicyMeta(fname, project, null) {
@@ -1348,11 +1350,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         //list of acl files
 
-        if ( !(request.JSON) || !request.JSON.files) {
+        // Grails 7: Parse body using Jackson instead of request.JSON
+        def jsonBody = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
+        if ( !jsonBody || !jsonBody.files) {
             response.status = HttpServletResponse.SC_BAD_REQUEST
             return respond([error: [message: g.message(code:'api.error.invalid.request',args:['JSON body must contain files entry'])]], formats: ['json'])
         }
-        def list = request.JSON.files ?: []
+        def list = jsonBody.files ?: []
         def result = list.collect{String fname->
             def validation = aclFileManagerService.validatePolicyFile(AppACLContext.system(),fname)
             [
@@ -3724,10 +3728,11 @@ if executed in cluster mode.
 
         def results=[:]
         if(request.format=='json' ) {
-            def data = request.JSON
+            // Grails 7: Parse body using Jackson instead of request.JSON
+            def data = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
             def nextScheduled = data?.join(",")?.replaceAll(/"/, '')
             def query = new ScheduledExecutionQuery()
-            query.idlist = nextScheduled //request.format   def data= request.JSON
+            query.idlist = nextScheduled
             query.projFilter = params.project
             authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
             def result = listWorkflows(query, authContext, session.user)

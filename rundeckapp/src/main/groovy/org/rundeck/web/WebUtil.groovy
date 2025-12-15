@@ -366,7 +366,8 @@ class WebUtil implements WebUtilService, ResponseRenderer {
             error = "Unexpected content type: ${request.getHeader('Content-Type')}"
         } else if (respFormat == 'json') {
             try {
-                Object parsed = request.JSON
+                // Grails 7: Use Jackson ObjectMapper instead of broken request.JSON
+                Object parsed = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
 
                 if (!parsed) {
                     error = "Could not parse JSON"
@@ -375,6 +376,8 @@ class WebUtil implements WebUtilService, ResponseRenderer {
                 }
             } catch (ConverterException e) {
                 error = e.message + (e.cause ? ": ${e.cause.message}" : '')
+            } catch (IOException e) {
+                error = "Failed to parse JSON: ${e.message}"
             }
 
         } else {

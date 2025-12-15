@@ -1118,18 +1118,8 @@ class ApiService implements WebUtilService{
         HttpServletResponse response,
         Map<String, Consumer<Object>> handlers
     ) {
-        // Stub implementation - would need full parsing logic
-        def format = request.format ?: 'json'
-        def handler = handlers[format]
-        if (!handler) {
-            renderErrorFormat(response, [
-                status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                code: 'api.error.invalid.request',
-                args: ["Format not supported: " + format]
-            ])
-            return false
-        }
-        return true
+        // Grails 7: Delegate to WebUtil which uses Jackson instead of broken request.JSON
+        return rundeckWebUtil.parseJsonXmlWith(request, response, handlers)
     }
 
     @Override

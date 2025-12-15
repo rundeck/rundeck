@@ -66,8 +66,10 @@ class RepositoryController {
             }
             String searchTerm
 
-            if(request.JSON) {
-                searchTerm = request.JSON.searchTerm
+            // Grails 7: Parse body using Jackson instead of request.JSON
+            def jsonBody = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
+            if(jsonBody) {
+                searchTerm = jsonBody.searchTerm
             } else {
                 searchTerm = params.searchTerm
             }

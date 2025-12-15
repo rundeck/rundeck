@@ -1716,8 +1716,8 @@ Since: v55""",
             return
         }
 
-        // Parse body
-        def body = request.JSON
+        // Grails 7: Parse body using Jackson instead of request.JSON
+        def body = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
         List plugins = (body?.plugins ?: []) as List
         List removedPlugins = (body?.removedPlugins ?: []) as List
 
@@ -2026,7 +2026,8 @@ List of config values, each value contains:
     def saveProjectConfigurable(){
         def project = params.project
         def category = params.category
-        def cfgPayload = request.JSON
+        // Grails 7: Parse body using Jackson instead of request.JSON
+        def cfgPayload = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
 
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(

@@ -279,7 +279,8 @@ Specify a `value` with a time duration expression. (See request schema for synta
 
         def data
         try{
-            data = request.JSON
+            // Grails 7: Parse body using Jackson instead of request.JSON
+            data = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
         }catch(Exception e){
             errormsg = e.message
         }

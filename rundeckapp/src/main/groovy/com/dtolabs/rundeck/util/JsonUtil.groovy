@@ -16,6 +16,8 @@
 
 package com.dtolabs.rundeck.util
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import jakarta.servlet.http.HttpServletRequest
 import org.grails.web.json.JSONObject
 
 
@@ -23,6 +25,47 @@ import org.grails.web.json.JSONObject
  * JSON request handling utilities
  */
 class JsonUtil {
+
+    // Grails 7: Shared ObjectMapper instance for parsing JSON request bodies
+    private static final ObjectMapper objectMapper = new ObjectMapper()
+
+    /**
+     * Grails 7: Parse JSON from HttpServletRequest body using Jackson ObjectMapper.
+     * This replaces the broken request.JSON property in Grails 7/Spring Boot 3.
+     * 
+     * @param request HttpServletRequest with JSON body
+     * @return Parsed JSON as Map, or null if request body is empty
+     * @throws IOException if JSON parsing fails
+     */
+    static Map parseRequestBody(HttpServletRequest request) throws IOException {
+        // Spring Boot 3: Try multiple approaches to read the request body
+        
+        // Attempt 1: Read from input stream
+        try {
+            def inputStream = request.getInputStream()
+            if (inputStream && inputStream.available() > 0) {
+                return objectMapper.readValue(inputStream, Map.class)
+            }
+        } catch (IOException e) {
+            // Stream might be already consumed, try reader
+        }
+        
+        // Attempt 2: Read from reader  
+        try {
+            def reader = request.getReader()
+            if (reader) {
+                def content = reader.text
+                if (content && !content.trim().empty) {
+                    return objectMapper.readValue(content, Map.class)
+                }
+            }
+        } catch (Exception e) {
+            // Both failed
+            throw new IOException("Failed to read request body: ${e.message}", e)
+        }
+        
+        return null
+    }
 
     /**
      * Validate a json object

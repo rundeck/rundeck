@@ -119,7 +119,9 @@ so suppling the `user` field will have no effect. Also, specifying an `authToken
         )
     )
     def save() {
-        String project = request.JSON.project
+        // Grails 7: Parse body using Jackson instead of request.JSON
+        def jsonBody = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
+        String project = jsonBody?.project
         if(!project){
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                                                            code: 'api.error.parameter.required', args: ['project']])
@@ -136,7 +138,7 @@ so suppling the `user` field will have no effect. Also, specifying an `authToken
             return
         }
 
-        def msg = webhookService.saveHook(authContext,request.JSON)
+        def msg = webhookService.saveHook(authContext,jsonBody)
         if(msg.err) response.status = 400
 
         render msg as JSON

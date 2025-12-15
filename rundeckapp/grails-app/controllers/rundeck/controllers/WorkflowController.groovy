@@ -241,8 +241,10 @@ class WorkflowController extends ControllerBase {
             config = params.pluginConfig
             validation = _validateLogFilter(config, filtertype)
         } else if (params.editconfig) {
-            if(request.JSON){
-                config=request.JSON.pluginConfig
+            // Grails 7: Parse body using Jackson instead of request.JSON
+            def jsonBody = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
+            if(jsonBody){
+                config=jsonBody.pluginConfig
             }else{
                 config = params.pluginConfig
             }
