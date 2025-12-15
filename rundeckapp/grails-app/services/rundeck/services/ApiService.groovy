@@ -765,7 +765,9 @@ class ApiService implements WebUtilService{
                 def href=execdata.href
                 def status=execdata.status
                 def summary=execdata.summary
-                def Execution e = Execution.get(execdata.execution.id)
+                // Grails 7: Use the execution object directly instead of reloading it
+                // Reloading can fail if transaction isn't committed or session issues exist
+                def Execution e = execdata.execution
                 def execMap=[
                         /** attributes   **/
                         id: e.id,
@@ -979,6 +981,21 @@ class ApiService implements WebUtilService{
         if (allowed && requestFormat && allowed.contains(requestFormat)) {
             return requestFormat
         }
+        
+        // Grails 7: request.format might not be set from Accept header, check it explicitly
+        String acceptHeader = request.getHeader('Accept')
+        if (acceptHeader && allowed) {
+            if (acceptHeader.contains('application/json') && allowed.contains('json')) {
+                return 'json'
+            }
+            if (acceptHeader.contains('application/xml') && allowed.contains('xml')) {
+                return 'xml'
+            }
+            if (acceptHeader.contains('text/plain') && allowed.contains('text')) {
+                return 'text'
+            }
+        }
+        
         if (defformat) {
             return defformat
         }

@@ -3857,29 +3857,20 @@ Since: v52''',
         }
         if (!generator) {
             //try accept header
-            List<MediaType> mimes = []
-            try {
-                mimes = MediaType.parseMediaTypes(request.getHeader('accept'))
-                MediaType.sortBySpecificityAndQuality(mimes)
-            } catch (RuntimeException e) {
-                return apiService.renderErrorFormat(
-                    response,
-                    [
-                        status: HttpServletResponse.SC_BAD_REQUEST,
-                        code  : 'api.error.invalid.request',
-                        args  : [e.message]
-                    ]
-                )
-            }
-            for (MediaType mime : mimes) {
-                try {
-                    generator = service.getGeneratorForMIMEType(mime.toString())
-                    break
-                } catch (UnsupportedFormatException e) {
-                    log.debug(
-                        "could not get generator for mime type: ${request.getHeader("accept")}: ${e.message}",
-                        e
-                    )
+            String acceptHeader = request.getHeader('accept')
+            if (acceptHeader && acceptHeader != '*/*') {
+                // Grails 7: Manually parse Accept header since Micronaut MediaType.parseMediaTypes() doesn't exist
+                List<String> mimeTypes = acceptHeader.split(',').collect { it.split(';')[0].trim() }
+                for (String mimeType : mimeTypes) {
+                    try {
+                        generator = service.getGeneratorForMIMEType(mimeType)
+                        break
+                    } catch (UnsupportedFormatException e) {
+                        log.debug(
+                            "could not get generator for mime type: ${mimeType}: ${e.message}",
+                            e
+                        )
+                    }
                 }
             }
         }
