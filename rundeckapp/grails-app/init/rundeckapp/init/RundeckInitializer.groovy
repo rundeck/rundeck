@@ -124,6 +124,9 @@ class RundeckInitializer {
             installCompleteMarker.createNewFile() //mark install as complete so we don't always install
         } else {
             DEBUG("--" + CommandLineSetup.FLAG_SKIPINSTALL + ": Not extracting.");
+            // Grails 7: Ensure critical directories exist even if install was skipped
+            // This handles Docker caching, partial installs, and other edge cases
+            ensureCriticalDirectoriesExist()
         }
         setupLog4j2ConfigurationFile()
         if(config.isInstallOnly()) {
@@ -438,6 +441,24 @@ class RundeckInitializer {
         }
         dir.mkdirs()
         return dir
+    }
+
+    /**
+     * Grails 7: Ensure critical directories exist even when installation is skipped.
+     * This handles cases where:
+     * - Docker layer caching preserves install marker but not all directories
+     * - Partial installations or interrupted installs
+     * - Directory structure changes between versions
+     */
+    void ensureCriticalDirectoriesExist() {
+        basedir = new File(config.baseDir)
+        if(!basedir.exists()) basedir.mkdirs()
+        serverdir = new File(config.serverBaseDir ?: new File(basedir, "server").path)
+        if(!serverdir.exists()) serverdir.mkdirs()
+        configdir = new File(config.configDir ?: new File(serverdir, "config").path)
+        if(!configdir.exists()) configdir.mkdirs()
+        // Note: Don't create ALL directories (data, logs, work, etc.) - just critical ones
+        // Full createDirectories() will run on fresh installs
     }
 
     /**
