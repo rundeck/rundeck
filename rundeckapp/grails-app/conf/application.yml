@@ -66,6 +66,9 @@ management:
     health:
         defaults:
             enabled: true
+        # Grails 7: Disable strict health contributor validation during startup
+        # The rundeckDataSourceHealthIndicator bean is registered but Spring Boot 3 validates before full initialization
+        validate-group-membership: false
     endpoint:
         health:
             enabled: false

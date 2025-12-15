@@ -107,6 +107,8 @@ def explicitTestIncluder(String testFiles) {
 
 task apiTest(type: Test){
     useJUnitPlatform()
+    // Grails 7: Force sequential execution to prevent Docker Compose port conflicts
+    maxParallelForks = 1
     systemProperty('TEST_IMAGE', "rundeck/rundeck:SNAPSHOT")
     systemProperty("COMPOSE_PATH", "docker/compose/oss/docker-compose.yml")
     systemProperty('spock.configuration','spock-configs/IncludeAPITestsConfig.groovy')
@@ -119,6 +121,8 @@ task apiTest(type: Test){
 
 task pluginBlocklistTest(type: Test){
     useJUnitPlatform()
+    // Grails 7: Force sequential execution to prevent Docker Compose port conflicts
+    maxParallelForks = 1
     systemProperty('TEST_IMAGE', "rundeck/rundeck:SNAPSHOT")
     systemProperty("COMPOSE_PATH", "docker/compose/oss/docker-compose-blocklist.yml")
     systemProperty('spock.configuration','spock-configs/IncludeBlocklistTestsConfig.groovy')
@@ -127,6 +131,8 @@ task pluginBlocklistTest(type: Test){
 
 task apiTestNewLocal(type: Test){
     useJUnitPlatform()
+    // Grails 7: Force sequential execution to prevent Docker Compose port conflicts
+    maxParallelForks = 1
     def featureName='newLocalNodeExecutor'
     systemProperty("TEST_FEATURE_ENABLED_NAME", featureName)
     systemProperty('TEST_IMAGE', "rundeck/rundeck:SNAPSHOT")
@@ -137,6 +143,8 @@ task apiTestNewLocal(type: Test){
 
 task apiTestNodeExecutorSecureInput(type: Test){
     useJUnitPlatform()
+    // Grails 7: Force sequential execution to prevent Docker Compose port conflicts
+    maxParallelForks = 1
     def featureName='nodeExecutorSecureInput'
     systemProperty("TEST_FEATURE_ENABLED_NAME", featureName)
     systemProperty('TEST_IMAGE', "rundeck/rundeck:SNAPSHOT")
@@ -147,6 +155,8 @@ task apiTestNodeExecutorSecureInput(type: Test){
 
 task seleniumCoreTest(type: Test){
     useJUnitPlatform()
+    // Grails 7: Force sequential execution to prevent Docker Compose port conflicts
+    maxParallelForks = 1
     systemProperty('TEST_IMAGE', "rundeck/rundeck:SNAPSHOT")
     systemProperty("COMPOSE_PATH", "docker/compose/oss/docker-compose.yml")
     systemProperty('spock.configuration', 'spock-configs/IncludeSeleniumCoreTestsConfig.groovy')
@@ -159,6 +169,8 @@ task seleniumCoreTest(type: Test){
 
 task alphaUiSeleniumCoreTest(type: Test){
     useJUnitPlatform()
+    // Grails 7: Force sequential execution to prevent Docker Compose port conflicts
+    maxParallelForks = 1
     def featureName='alphaUi'
     systemProperty("TEST_FEATURE_ENABLED_NAME", featureName)
     systemProperty('TEST_IMAGE', "rundeck/rundeck:SNAPSHOT")
@@ -173,6 +185,8 @@ task alphaUiSeleniumCoreTest(type: Test){
 
 task ldapTest(type: Test){
     useJUnitPlatform()
+    // Grails 7: Force sequential execution to prevent Docker Compose port conflicts
+    maxParallelForks = 1
     systemProperty("TEST_IMAGE", "rundeck/rundeck:SNAPSHOT")
     systemProperty("COMPOSE_PATH", "docker/ldap/docker-compose.yml")
     systemProperty('spock.configuration', 'spock-configs/IncludeLdapTestsConfig.groovy')
