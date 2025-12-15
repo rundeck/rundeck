@@ -641,9 +641,22 @@ class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService
 
     def "render success xml response unwrapped"() {
         given:
-        service.rundeckWebUtil= Mock(WebUtilService)
         // Grails 7: Jakarta EE namespace (jakarta.servlet vs javax.servlet)
         def response = Mock(jakarta.servlet.http.HttpServletResponse)
+        def byteArrayStream = new ByteArrayOutputStream()
+        def servletOutputStream = new jakarta.servlet.ServletOutputStream() {
+            @Override
+            void write(int b) throws IOException {
+                byteArrayStream.write(b)
+            }
+            
+            @Override
+            boolean isReady() { true }
+            
+            @Override
+            void setWriteListener(jakarta.servlet.WriteListener writeListener) {}
+        }
+        
         when:
         def closureCalled = false
         service.renderSuccessXml(response) {
@@ -654,13 +667,16 @@ class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService
         }
 
         then:
-            1 * service.rundeckWebUtil.respondOutput(_, 'application/xml', _) >> {
-                def slurper = new XmlSlurper()
-                def gpath = slurper.parseText(it[2])
-                assert gpath.name() == 'responseData'
-                assert gpath.'@test'.text() == 'true'
-                assert gpath.value.text() == 'something'
-            }
+        1 * response.outputStream >> servletOutputStream
+        1 * response.setContentType('application/xml')
+        1 * response.setCharacterEncoding('UTF-8')
+        1 * response.setHeader('X-Rundeck-API-Version', _)
+        
+        def slurper = new XmlSlurper()
+        def gpath = slurper.parseText(byteArrayStream.toString())
+        gpath.name() == 'responseData'
+        gpath.'@test'.text() == 'true'
+        gpath.value.text() == 'something'
         closureCalled
     }
 
