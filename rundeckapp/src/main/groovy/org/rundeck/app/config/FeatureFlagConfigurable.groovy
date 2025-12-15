@@ -17,7 +17,7 @@ class FeatureFlagConfigurable implements SystemConfigurable {
         ),
         featureConfig(
             Features.EARLY_ACCESS_JOB_CONDITIONAL,
-            "Enable Job Conditional Step (Experimental)",
+            "Enable Job Conditional Step (Beta)",
             "(Beta Feature) Enable support for conditional steps in job definitions and the GUI.",
             'app_admin',
             'Early Access'
