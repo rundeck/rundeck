@@ -33,7 +33,7 @@ import rundeck.services.ReportService
  */
 @Integration
 @Rollback
-class ReportServiceTests extends GroovyTestCase {
+class ReportServiceTests {
     ReportService reportService
     ExecReportDataProvider execReportDataProvider
     def sessionFactory

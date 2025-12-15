@@ -765,9 +765,9 @@ class ApiService implements WebUtilService{
                 def href=execdata.href
                 def status=execdata.status
                 def summary=execdata.summary
-                // Grails 7: Use the execution object directly instead of reloading it
-                // Reloading can fail if transaction isn't committed or session issues exist
-                def Execution e = execdata.execution
+                // Grails 7: Reload execution to ensure it's attached to session with valid ID
+                // Pattern #39: Direct object use caused null IDs in API responses
+                Execution e = Execution.get(execdata.execution.id)
                 def execMap=[
                         /** attributes   **/
                         id: e.id,
