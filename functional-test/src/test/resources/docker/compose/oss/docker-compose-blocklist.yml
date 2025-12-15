@@ -10,6 +10,7 @@ services:
       RUNDECK_METRICS_ENABLED: "true"
       MANAGEMENT_ENDPOINT_HEALTH_ENABLED: "true"
       MANAGEMENT_ENDPOINT_HEALTH_GROUP_READINESS_INCLUDE: "readinessState,rundeckDataSourceHealthIndicator"
+      MANAGEMENT_ENDPOINT_HEALTH_VALIDATE_GROUP_MEMBERSHIP: "false"
       RUNDECK_PLUGINS_PROVIDERBLOCKLISTFILE: /home/rundeck/blocklist.yaml
     ports:
       - "4440:4440"
