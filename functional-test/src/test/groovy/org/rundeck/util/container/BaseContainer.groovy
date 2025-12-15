@@ -163,8 +163,8 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
             if (getProject.code() == 404) {
                 // Grails 7: Project creation API requires name at top-level and config as nested object
                 def projectConfig = [
-                    name: name,
-                    config: config + ["project.name": name]
+                    "name": name,
+                    "config": config + ["project.name": name]
                 ]
                 def result = client.post("/projects", projectConfig)
             } else if (!getProject.successful) {
@@ -369,8 +369,8 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
             if (getProject.code() == 404) {
                 // Grails 7: Project creation API requires name at top-level and config as nested object
                 def projectConfig = [
-                    name: name,
-                    config: ["project.name": name]
+                    "name": name,
+                    "config": ["project.name": name]
                 ]
                 try (def post = client.doPost("/projects", projectConfig)) {
                     if (!post.successful) {
