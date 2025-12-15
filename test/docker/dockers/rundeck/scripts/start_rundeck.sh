@@ -212,6 +212,9 @@ if [ -n "$SETUP_SSL" ] ; then
     setup_ssl $RDECK_BASE
 fi
 
+# Grails 7: Ensure config directory exists before writing properties
+mkdir -p $HOME/server/config
+
 cat > $HOME/server/config/rundeck-config.properties <<END
 loglevel.default=INFO
 rdeck.base=/home/rundeck
