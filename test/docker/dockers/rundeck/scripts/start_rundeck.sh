@@ -151,8 +151,11 @@ setup_project_api(){
     XJSON=$(cat "$XFILE" | grep -v '^#' | sed 's/^/"/' | sed 's/=/":"/' | sed 's/$/",/' )
   fi
   mkdir -p $DIR/projects/$PROJ/etc
+  # Grails 7: API requires top-level "name" field and nested "config" object
   cat >$DIR/projects/$PROJ/etc/project.json<<END
 {
+  "name": "$PROJ",
+  "config": {
     "project.name":"$PROJ",
     "project.nodeCache.delay":"30",
     "project.nodeCache.enabled":"true",
@@ -168,6 +171,7 @@ setup_project_api(){
     $XJSON
     "dummy":"x"
   }
+}
 END
 
   set -x
