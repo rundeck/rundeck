@@ -46,9 +46,9 @@ class RdComposeContainer extends ComposeContainer implements ClientProvider {
         withEnv("TEST_RUNDECK_FEATURE_NAME", featureName ?: 'placeholderFeatureName')
         withLogConsumer(DEFAULT_SERVICE_TO_EXPOSE, new Slf4jLogConsumer(log))
         waitingFor(DEFAULT_SERVICE_TO_EXPOSE,
-            Wait.forHttp("${CONTEXT_PATH}/health")
+            Wait.forHttp("${CONTEXT_PATH}/actuator/health/readiness")
                 .forPort(DEFAULT_PORT)
-                .forStatusCodeMatching(it -> it == 200)
+                .forStatusCodeMatching(it -> it >= 200 && it < 500 && it != 404)
                 .withStartupTimeout(Duration.ofMinutes(10))
         )
 
