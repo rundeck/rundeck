@@ -219,7 +219,13 @@ class EditProjectControllerSpec extends Specification implements ControllerUnitT
 
         when:
         request.method = 'POST'
-        request.content = body
+        // Grails 7: Set JSON content using request.json for proper test mock setup
+        if (body != null && body != 'badvalue'.bytes) {
+            request.json = new groovy.json.JsonSlurper().parseText(new String(body))
+        } else if (body == 'badvalue'.bytes) {
+            request.contentType = 'application/json'
+            request.content = body
+        }
         request.addHeader('accept', 'application/json')
         controller.apiProjectDisableLater(project)
 
@@ -272,7 +278,13 @@ class EditProjectControllerSpec extends Specification implements ControllerUnitT
 
         when:
         request.method = 'POST'
-        request.content = body
+        // Grails 7: Set JSON content using request.json for proper test mock setup
+        if (body != null && body != 'badvalue'.bytes) {
+            request.json = new groovy.json.JsonSlurper().parseText(new String(body))
+        } else if (body == 'badvalue'.bytes) {
+            request.contentType = 'application/json'
+            request.content = body
+        }
         request.addHeader('accept', 'application/json')
         controller.apiProjectEnableLater(project)
 

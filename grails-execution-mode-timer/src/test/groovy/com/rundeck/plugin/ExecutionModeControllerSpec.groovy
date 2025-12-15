@@ -120,7 +120,8 @@ class ExecutionModeControllerSpec extends Specification implements ControllerUni
 
         when:
         request.method = method
-        request.content = '{"value": "3m"}'.bytes
+        // Grails 7: Set JSON content using request.json for proper test mock setup
+        request.json = [value: "3m"]
         request.addHeader('accept', 'application/json')
         controller.apiExecutionModeLaterActive()
 
@@ -152,8 +153,9 @@ class ExecutionModeControllerSpec extends Specification implements ControllerUni
 
         when:
         request.method = method
+        // Grails 7: Set JSON content using request.json for proper test mock setup
+        request.json = [value: "3m"]
         request.addHeader('accept', 'application/json')
-        request.content = '{"value": "3m"}'.bytes
         controller.apiExecutionModeLaterPassive()
 
         then:
@@ -184,7 +186,13 @@ class ExecutionModeControllerSpec extends Specification implements ControllerUni
 
         when:
         request.method = 'POST'
-        request.content = body
+        // Grails 7: Set JSON content using request.json for proper test mock setup
+        if (body != null && body != 'dsadsadsadsad'.bytes) {
+            request.json = new groovy.json.JsonSlurper().parseText(new String(body))
+        } else if (body == 'dsadsadsadsad'.bytes) {
+            request.contentType = 'application/json'
+            request.content = body
+        }
         request.addHeader('accept', 'application/json')
         controller.apiExecutionModeLaterActive()
 
@@ -219,7 +227,13 @@ class ExecutionModeControllerSpec extends Specification implements ControllerUni
 
         when:
         request.method = 'POST'
-        request.content = body
+        // Grails 7: Set JSON content using request.json for proper test mock setup
+        if (body != null && body != 'dsadsadsadsad'.bytes) {
+            request.json = new groovy.json.JsonSlurper().parseText(new String(body))
+        } else if (body == 'dsadsadsadsad'.bytes) {
+            request.contentType = 'application/json'
+            request.content = body
+        }
         request.addHeader('accept', 'application/json')
         controller.apiExecutionModeLaterPassive()
 
