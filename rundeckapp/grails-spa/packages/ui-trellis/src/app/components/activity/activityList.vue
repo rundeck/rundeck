@@ -505,7 +505,7 @@
                   )
                 "
               >
-                {{ rpt.job.name }}
+                {{ rpt.job.group ? rpt.job.group + '/' + rpt.job.name : '' }}
               </span>
               <span v-else>
                 {{ rpt.description }}
