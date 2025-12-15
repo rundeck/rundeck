@@ -161,7 +161,12 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     void setupProject(String name, Map config = [:]) {
         try (def getProject = client.doGet("/project/${name}")) {
             if (getProject.code() == 404) {
-                def result = client.post("/projects", config + [name: name])
+                // Grails 7: Project creation API requires name at top-level and config as nested object
+                def projectConfig = [
+                    name: name,
+                    config: config + ["project.name": name]
+                ]
+                def result = client.post("/projects", projectConfig)
             } else if (!getProject.successful) {
                 throw new RuntimeException("Failed to access project: ${getProject.body().string()}")
             }
@@ -362,7 +367,12 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         }
         try (Response getProject = client.doGet("/project/${name}")) {
             if (getProject.code() == 404) {
-                try (def post = client.doPost("/projects", [name: name])) {
+                // Grails 7: Project creation API requires name at top-level and config as nested object
+                def projectConfig = [
+                    name: name,
+                    config: ["project.name": name]
+                ]
+                try (def post = client.doPost("/projects", projectConfig)) {
                     if (!post.successful) {
                         throw new RuntimeException("Failed to create project: ${post.body().string()}")
                     }
