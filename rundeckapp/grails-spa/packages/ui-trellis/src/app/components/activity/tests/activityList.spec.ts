@@ -356,7 +356,7 @@ describe("ActivityList", () => {
     jest.advanceTimersByTime(5000);
     await flushPromises();
     const sinceCountData = wrapper.find('[data-testid="since-count-data"]');
-    // expect(sinceCountData.text()).toContain("5 New Results. Click to load.");
+    expect(sinceCountData.text()).toContain("5 New Results. Click to load.");
     jest.clearAllTimers();
     jest.useRealTimers();
   });
