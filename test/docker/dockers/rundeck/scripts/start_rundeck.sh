@@ -80,7 +80,8 @@ cat > $HOME/etc/profile <<END
 RDECK_BASE=$RDECK_BASE
 export RDECK_BASE
 
-JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-11-openjdk-amd64}
+# Grails 7: Java 17 required
+JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-17-openjdk-amd64}
 export JAVA_HOME
 
 PATH=\$JAVA_HOME/bin:\$RDECK_BASE/tools/bin:\$PATH

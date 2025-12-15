@@ -433,7 +433,8 @@ jobs:
     parameters:
       jreVersion:
         type: string
-        default: "openjdk-11-jre-headless"
+        # Grails 7: Java 17 required
+        default: "openjdk-17-jre-headless"
     steps:
       - setup_docker
       - checkout
