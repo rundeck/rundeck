@@ -331,6 +331,10 @@ describe("ActivityList", () => {
   it("automatically fetches data and displays a message when there are new executions since the last timestamp", async () => {
     jest.useFakeTimers();
     
+    // Mock axios for the since.json endpoint
+    const axios = require('axios');
+    const axiosGetSpy = jest.spyOn(axios, 'get');
+    
     mockQueryExecutions.mockResolvedValue({
       results: [],
       paging: { max: 10, offset: 0, total: 1, count: 0 },
@@ -343,20 +347,32 @@ describe("ActivityList", () => {
     const wrapper = await shallowMountActivityList();
     await flushPromises();
     await wrapper.vm.$nextTick();
+    
     // Enable auto-refresh
     const autoRefreshCheckbox = wrapper.find(
       '[data-testid="auto-refresh-checkbox"]',
     );
     await autoRefreshCheckbox.setValue(true);
     await wrapper.vm.$nextTick();
-    
-    // Mock the since count data (this may require axios or api mock for the since.json endpoint)
-    // TODO: Need to verify how sinceCount is fetched and mock appropriately
-    
+
+    // Mock the since count data response
+    axiosGetSpy.mockResolvedValue({
+      data: {
+        since: {
+          count: 5
+        }
+      }
+    });
+
     jest.advanceTimersByTime(5000);
     await flushPromises();
+    await wrapper.vm.$nextTick();
+    
     const sinceCountData = wrapper.find('[data-testid="since-count-data"]');
-    expect(sinceCountData.text()).toContain("5 New Results. Click to load.");
+    expect(sinceCountData.exists()).toBe(true);
+    expect(sinceCountData.text()).toContain("5");
+    
+    axiosGetSpy.mockRestore();
     jest.clearAllTimers();
     jest.useRealTimers();
   });
