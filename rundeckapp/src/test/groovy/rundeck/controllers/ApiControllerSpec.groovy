@@ -570,7 +570,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             result.value() == access
         where:
             endpoint          | access
-            'apiMetricsList'  | RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN
+            'apiMetricsList_docs'  | RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN
     }
 
     private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {

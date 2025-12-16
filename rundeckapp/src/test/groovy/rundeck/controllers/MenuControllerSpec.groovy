@@ -1008,10 +1008,10 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         0 * controller.aclFileManagerService.validatePolicyFile(*_)
         result
         result.acllist
-        result.acllist.size == 1
-        result.acllist[0].id==id
-        result.acllist[0].name=='test'
-        result.acllist[0].valid
+        result['acllist'].size() == 1
+        result['acllist'][0].id==id
+        result['acllist'][0].name=='test'
+        result['acllist'][0].valid
     }
     def "projectAcls are sorted by name"() {
         given:
@@ -1034,13 +1034,13 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         0 * controller.aclFileManagerService.validatePolicyFile(*_)
         result
         result.acllist
-        result.acllist.size == 2
-        result.acllist[0].id==id
-        result.acllist[0].name=='atest'
-        result.acllist[0].valid
-        result.acllist[1].id==id2
-        result.acllist[1].name=='ztest'
-        result.acllist[1].valid
+        result['acllist'].size() == 2
+        result['acllist'][0].id==id
+        result['acllist'][0].name=='atest'
+        result['acllist'][0].valid
+        result['acllist'][1].id==id2
+        result['acllist'][1].name=='ztest'
+        result['acllist'][1].valid
     }
 
     def "ajaxProjectAclMeta loads metadata for policies"() {
