@@ -1142,6 +1142,8 @@ const messages = {
       },
     },
   },
+  profile: "Profile",
+  logout: "Logout",
 };
 
 export default messages;
