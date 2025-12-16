@@ -26,7 +26,10 @@ build:
 
 logging:
     level:
-        # Logging levels configured here
+        root: INFO
+        org.springframework.security: TRACE
+        org.springframework.security.web: TRACE
+        grails.plugin.springsecurity: DEBUG
 
 spring:
     liquibase:
@@ -249,6 +252,7 @@ rundeck:
                     - /actuator/health
                     - /actuator/health/liveness
                     - /actuator/health/readiness
+                    - /.well-known
     storage:
         default: deleteMe
     execution:

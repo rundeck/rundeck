@@ -105,15 +105,16 @@ grails.config.locations = [
 
 grails.plugin.springsecurity.securityConfigType = "InterceptUrlMap"
 
+// Grails 7: Order matters! More specific patterns must come before catch-all /**
 grails.plugin.springsecurity.interceptUrlMap = [
+        [pattern: '/assets/**',      access: ['permitAll']], // FIRST: Asset pipeline must be before /**
+        [pattern: '/static/**',      access: ['permitAll']],
+        [pattern: '/user-assets/**', access: ['permitAll']],
         [pattern: '/j_security_check', access: ['permitAll']],
         [pattern: '/error/**',        access: ['permitAll']],
         [pattern: '/common/error',   access: ['permitAll']],
         [pattern: '/404',            access: ['permitAll']],
         [pattern: '/404.gsp',        access: ['permitAll']],
-        [pattern: '/static/**',      access: ['permitAll']],
-        [pattern: '/user-assets/**', access: ['permitAll']],
-        [pattern: '/assets/**',      access: ['permitAll']],
         [pattern: '/favicon.ico',    access: ['permitAll']],
         [pattern: '/user/login',     access: ['permitAll']],
         [pattern: '/user/reset',     access: ['permitAll']],
@@ -127,7 +128,8 @@ grails.plugin.springsecurity.interceptUrlMap = [
         [pattern: '/health',         access: ['permitAll']],
         [pattern: '/actuator/**',    access: ['permitAll']],
         [pattern: '/actuator/health/**',    access: ['permitAll']],
-        [pattern: '/**',             access: ['IS_AUTHENTICATED_REMEMBERED']]
+        [pattern: '/.well-known/**', access: ['permitAll']],
+        [pattern: '/**',             access: ['IS_AUTHENTICATED_REMEMBERED']] // LAST: Catch-all
 ]
 
 grails.plugin.springsecurity.filterChain.chainMap = [
@@ -149,6 +151,7 @@ grails.plugin.springsecurity.filterChain.chainMap = [
         [pattern: '/health',         filters: 'none'],
         [pattern: '/actuator/**',    filters: 'none'],
         [pattern: '/actuator/health/**',    filters: 'none'],
+        [pattern: '/.well-known/**', filters: 'none'],
         [pattern: '/**',             filters: 'JOINED_FILTERS,-csrf']
 ]
 
