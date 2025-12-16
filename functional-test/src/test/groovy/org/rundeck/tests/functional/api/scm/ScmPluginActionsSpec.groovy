@@ -12,6 +12,8 @@ import org.rundeck.util.api.scm.httpbody.SetupIntegrationResponse
 import org.rundeck.util.api.storage.KeyStorageApiClient
 import org.rundeck.util.common.scm.ScmActionId
 import org.rundeck.util.common.scm.ScmIntegration
+import org.rundeck.util.common.WaitingTime
+import org.rundeck.util.common.WaitUtils
 import org.rundeck.util.container.BaseContainer
 import org.rundeck.util.common.jobs.JobUtils
 
@@ -26,6 +28,34 @@ class ScmPluginActionsSpec extends ScmBaseContainer {
         remoteRepo.setupRepo()
     }
 
+    /**
+     * Pattern #48: SCM Git-Export Plugin Setup Race Condition
+     * 
+     * Race condition between Gitea repo creation and Rundeck SCM plugin setup:
+     * - Gitea creates the git repo successfully
+     * - Rundeck's git-export plugin tries to clone/connect immediately
+     * - Git repo file system may not be fully initialized
+     * - Results in intermittent 500 errors during callSetupIntegration
+     * 
+     * Fix: Add retry logic (similar to GiteaApiRemoteRepo.setupRepo)
+     */
+    private boolean setupScmIntegrationWithRetry(GitScmApiClient scmClient, GitExportSetupRequest request) {
+        def setupCall = {
+            return scmClient.callSetupIntegration(request, 200..599) // Accept all codes for retry logic
+        }
+        def successVerify = { response ->
+            return response?.successful && response?.response?.success
+        }
+        
+        try {
+            WaitUtils.waitFor(setupCall, successVerify, WaitingTime.EXCESSIVE)
+            return true
+        } catch (Exception e) {
+            log.warn("SCM setup failed after retries: ${e.message}", e)
+            return false
+        }
+    }
+
     def "project scm status must be export needed when having a new job"(){
         given:
         ScmIntegration integration = ScmIntegration.EXPORT
@@ -34,7 +64,7 @@ class ScmPluginActionsSpec extends ScmBaseContainer {
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
 
         expect:
-        scmClient.callSetupIntegration(GitExportSetupRequest.defaultRequest().forProject(projectName).withRepo(remoteRepo)).response?.success
+        setupScmIntegrationWithRetry(scmClient, GitExportSetupRequest.defaultRequest().forProject(projectName).withRepo(remoteRepo))
 
         when:
         IntegrationStatusResponse retrievedStatus = scmClient.callGetIntegrationStatus().response
@@ -60,7 +90,7 @@ class ScmPluginActionsSpec extends ScmBaseContainer {
         String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/test.xml', client).succeeded.first().id
 
         expect:
-        scmClient.callSetupIntegration(GitExportSetupRequest.defaultRequest().forProject(projectName).withRepo(remoteRepo)).response?.success
+        setupScmIntegrationWithRetry(scmClient, GitExportSetupRequest.defaultRequest().forProject(projectName).withRepo(remoteRepo))
 
         when:
         ScmActionInputFieldsResponse actionFields = scmClient.callGetFieldsForAction(actionId).response
@@ -143,7 +173,7 @@ class ScmPluginActionsSpec extends ScmBaseContainer {
         expect:
         if(useAutoPush)
             remoteRepo.storeRepoPassInRundeck(new KeyStorageApiClient(clientProvider), keyStoragePath).successful
-        scmClient.callSetupIntegration(GitExportSetupRequest.defaultRequest().forProject(projectName).withRepo(remoteRepo)).response?.success
+        setupScmIntegrationWithRetry(scmClient, GitExportSetupRequest.defaultRequest().forProject(projectName).withRepo(remoteRepo))
 
         when:
         SetupIntegrationResponse performActionResult = scmClient.callPerformAction(actionId, actionRequest).response
