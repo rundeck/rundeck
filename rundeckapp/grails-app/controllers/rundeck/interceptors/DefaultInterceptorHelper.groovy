@@ -38,7 +38,7 @@ class DefaultInterceptorHelper implements InterceptorHelper, InitializingBean {
     }
 
     boolean matchesStaticServletPath(String servletPath, String pathInfo) {
-        return allowedPaths.contains(servletPath) || allowedPaths.contains(pathInfo)
+        return allowedPaths.any { path -> servletPath?.startsWith(path) || pathInfo?.startsWith(path) }
     }
 
     @Override
