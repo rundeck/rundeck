@@ -31,6 +31,9 @@ logging:
         org.springframework.security: TRACE
         org.springframework.security.web: TRACE
         grails.plugin.springsecurity: DEBUG
+        # JAAS authentication debugging
+        org.springframework.security.authentication.jaas: TRACE
+        com.dtolabs.rundeck.jaas: TRACE
 
 spring:
     liquibase:
