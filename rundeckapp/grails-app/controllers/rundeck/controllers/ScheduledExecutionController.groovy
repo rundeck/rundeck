@@ -113,7 +113,7 @@ class ScheduledExecutionController  extends ControllerBase{
     def FrameworkService frameworkService
     def ScheduledExecutionService scheduledExecutionService
     def OrchestratorPluginService orchestratorPluginService
-	def NotificationService notificationService
+    def NotificationService notificationService
     def UserService userService
     def ScmService scmService
     def PluginService pluginService
@@ -557,7 +557,7 @@ Since: v53''',
                 remoteClusterNodeUUID: remoteClusterNodeUUID,
                 serverNodeUUID: frameworkService.isClusterModeEnabled()?frameworkService.serverUUID:null,
                 notificationPlugins: notificationService.listNotificationPlugins(),
-				orchestratorPlugins: orchestratorPluginService.getOrchestratorPlugins(),
+                orchestratorPlugins: orchestratorPluginService.getOrchestratorPlugins(),
                 strategyPlugins: scheduledExecutionService.getWorkflowStrategyPluginDescriptions(),
                 logFilterPlugins: pluginService.listPlugins(LogFilterPlugin),
                 pluginDescriptions: pluginDescriptions,
@@ -662,7 +662,7 @@ Since: v53''',
                 remoteClusterNodeUUID: remoteClusterNodeUUID,
                 serverNodeUUID: frameworkService.isClusterModeEnabled()?frameworkService.serverUUID:null,
                 notificationPlugins: notificationService.listNotificationPlugins(),
-				orchestratorPlugins: orchestratorPluginService.getOrchestratorPlugins(),
+                orchestratorPlugins: orchestratorPluginService.getOrchestratorPlugins(),
                 max: params.int('max') ?: 10,
                 offset: params.int('offset') ?: 0] + _prepareExecute(scheduledExecution, framework,authContext)
 
@@ -4060,13 +4060,16 @@ Authorization required: `read` for the Job.''',
         if(request.api_version > ApiVersions.V43){
             supportedFormats << 'json'
         }
-        if (!(response.format in supportedFormats)) {
+        // Explicitly check for null or unsupported formats
+        // Note: Grails may default null format to 'html', so we check for both null and 'html'
+        def formatToCheck = response.format
+        if (formatToCheck == null || formatToCheck == 'html' || !(formatToCheck in supportedFormats)) {
             return apiService.renderErrorFormat(
                 response,
                 [
                     status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code  : 'api.error.item.unsupported-format',
-                    args: [response.format]
+                    args: [formatToCheck ?: 'html']
                 ]
             )
         }
@@ -4265,12 +4268,13 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
         if (request.format == 'json') {
             // Grails 7: Parse body using Jackson instead of request.JSON
             def data= com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
-            jobAsUser = data?.asUser
-            jobArgString = data?.argString
-            jobLoglevel = data?.loglevel
-            jobFilter = data?.filter
-            jobRunAtTime = data?.runAtTime
-            jobOptions = data?.options
+            // Fallback to params if body was already consumed (e.g., when called from apiJobRetry)
+            jobAsUser = data?.asUser ?: params.asUser
+            jobArgString = data?.argString ?: params.argString
+            jobLoglevel = data?.loglevel ?: params.loglevel
+            jobFilter = data?.filter ?: params.filter
+            jobRunAtTime = data?.runAtTime ?: params.runAtTime
+            jobOptions = data?.options ?: params.option
         } else {
             jobAsUser=params.asUser
             jobArgString=params.argString
@@ -4568,17 +4572,18 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
             // Grails 7: Parse body using Jackson instead of request.JSON
             def jsonBody = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
             failedOnly = jsonBody.failedNodes?:'true'
-            jsonBody.asUser = jsonBody.asUser?:null
-            jsonBody.loglevel = jsonBody.loglevel?:e.loglevel
+            params.asUser = jsonBody.asUser?:null
+            params.loglevel = jsonBody.loglevel?:e.loglevel
             if(jsonBody.options){
+                params.option = jsonBody.options
                 def map = OptionsParserUtil.parseOptsFromString(e.argString)
                 map.each{k,v ->
-                    if(!jsonBody.options.containsKey(k)){
-                        jsonBody.options.put(k,v)
+                    if(!params.option.containsKey(k)){
+                        params.option.put(k,v)
                     }
                 }
             }else if(!jsonBody.argString){
-                jsonBody.argString = jsonBody.argString?:e.argString
+                params.argString = jsonBody.argString?:e.argString
             }
         }else{
             failedOnly = params.failedNodes?:'true'

@@ -4467,17 +4467,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(se.isEmpty()) return [:]
         Date now = new Date()
         Map item = [:]
-        Execution.createCriteria().list() {
-            createAlias("scheduledExecution", "se", JoinType.LEFT_OUTER_JOIN)
-            projections {
-                property('se.id')
-                property('dateStarted')
-            }
-            and {
-                'in'('se.id', se*.id)
-                gt("dateStarted", now)
-                isNull("dateCompleted")
-            }
+        // Grails 7/Hibernate 6: Use HQL for LEFT OUTER JOIN - most reliable for complex queries
+        String hql = '''
+            SELECT se.id, e.dateStarted
+            FROM Execution e
+            LEFT JOIN e.scheduledExecution se
+            WHERE se.id IN (:seIds)
+            AND e.dateStarted > :now
+            AND e.dateCompleted IS NULL
+        '''
+        Execution.withSession { session ->
+            def query = session.createQuery(hql)
+            query.setParameterList('seIds', se*.id)
+            query.setParameter('now', now)
+            query.list()
         }?.collect{ row ->
             if(row && row[0]){
                 item[row[0]] = new Date(row[1]?.getTime())

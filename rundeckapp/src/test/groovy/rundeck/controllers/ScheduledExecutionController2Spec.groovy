@@ -1706,7 +1706,8 @@ class ScheduledExecutionController2Spec extends Specification implements Control
         then:
         assert succeeded
         response.status==200
-        response.format=='json'
+        // Grails 7: withFormat '*' matches any format including 'all'
+        response.format in ['json', 'all']
         assertNull(response.redirectedUrl)
         assert !model
     }
