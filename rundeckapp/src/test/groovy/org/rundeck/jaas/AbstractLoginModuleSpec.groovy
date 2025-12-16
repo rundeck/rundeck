@@ -34,10 +34,17 @@ class AbstractLoginModuleSpec extends Specification {
     // Test implementation of AbstractLoginModule
     class TestLoginModule extends AbstractLoginModule {
         UserInfo testUserInfo
+        Object[] mockCallBackAuth = null
         
         @Override
         public UserInfo getUserInfo(String username) throws Exception {
             return testUserInfo
+        }
+        
+        @Override
+        protected Object[] getCallBackAuth() throws Exception {
+            // Grails 7/Groovy 4: Provide safe default to avoid Spy mocking issues
+            return mockCallBackAuth ?: ["testuser", "testpass"] as Object[]
         }
     }
 
@@ -177,8 +184,10 @@ class AbstractLoginModuleSpec extends Specification {
             PasswordCredential.getCredential("password"),
             ["role1"]
         )
+        // Grails 7/Groovy 4: Set mockCallBackAuth property to avoid Spy stubbing issues
+        module.mockCallBackAuth = ["NAVEED", "password"] as Object[]
         
-        and: "Mock application context and callbacks"
+        and: "Mock application context"
         def mockFeatureService = Mock(FeatureService)
         mockFeatureService.featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> true
         
@@ -186,9 +195,7 @@ class AbstractLoginModuleSpec extends Specification {
         mockContext.containsBeanDefinition("featureService") >> true
         mockContext.getBean("featureService") >> mockFeatureService
         
-        // Grails 7/Groovy 4: Set up interaction stubs BEFORE when block
         module.getApplicationContext() >> mockContext
-        module.getCallBackAuth() >> ["NAVEED", "password"] as Object[]
         
         and: "Mock callback handler"
         def mockCallbackHandler = Mock(CallbackHandler)
@@ -214,8 +221,10 @@ class AbstractLoginModuleSpec extends Specification {
             PasswordCredential.getCredential("password"),
             ["role1"]
         )
+        // Grails 7/Groovy 4: Set mockCallBackAuth property to avoid Spy stubbing issues
+        module.mockCallBackAuth = ["NAVEED", "password"] as Object[]
         
-        and: "Mock application context and callbacks"
+        and: "Mock application context"
         def mockFeatureService = Mock(FeatureService)
         mockFeatureService.featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> false
         
@@ -223,9 +232,7 @@ class AbstractLoginModuleSpec extends Specification {
         mockContext.containsBeanDefinition("featureService") >> true
         mockContext.getBean("featureService") >> mockFeatureService
         
-        // Grails 7/Groovy 4: Set up interaction stubs BEFORE when block
         module.getApplicationContext() >> mockContext
-        module.getCallBackAuth() >> ["NAVEED", "password"] as Object[]
         
         and: "Mock callback handler"
         def mockCallbackHandler = Mock(CallbackHandler)
