@@ -463,7 +463,7 @@ public class RundeckConfigBase {
         Enabled multilineJobOptions = new Enabled();
         Enabled guiHideRoiInstructions = new Enabled();
         Enabled defaultExecutionCleanup = new Enabled();
-
+        Enabled earlyAccessJobConditional = new Enabled();
 
         @Data
         public static class Repository {
