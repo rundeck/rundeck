@@ -1548,6 +1548,11 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.projectService = Mock(ProjectService)
+        
+        // Mock session.summaryProjectStats to avoid database queries
+        session.summaryProjectStats = [summary: [:], recentUsers: recentUsers, recentProjects: recentProjects, execCount: execCount, totalFailedCount: totalFailedCount]
+        session.summaryProjectStats_expire = System.currentTimeMillis() + 60000
+        session.summaryProjectStatsSize = 1
 
         when:
         request.api_version = 45
@@ -1568,10 +1573,13 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         given:
         controller.apiService = Mock(ApiService){
             requireApi(_ as HttpServletRequest, _ as HttpServletResponse,45) >> true
-            _ * renderErrorFormat(_, { it.status == 415 }) >> {
-                it[0].status = 415
+            1 * renderErrorFormat(_, { it.status == 415 }) >> { HttpServletResponse resp, Map args ->
+                resp.status = args.status
             }
         }
+        
+        // Set format to something other than json/all to trigger error
+        response.format = 'xml'
 
         when:
         request.api_version = 45
