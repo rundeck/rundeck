@@ -46,10 +46,9 @@ class JettyCombinedLdapLoginModuleSpec extends Specification {
             final AbstractLoginModule.JAASUserInfo userInfo = module.getCurrentUser();
             Subject subject = new Subject();
             userInfo.setJAASInfo(subject);
+            // Java 17: Use lambda instead of method reference to avoid Groovy type inference issues
             List<String> actualRoles = subject
-                .getPrincipals(RundeckRole.class).stream().map(RundeckPrincipal::getName).collect(
-                Collectors.toList()
-            )
+                .getPrincipals(RundeckRole.class).stream().map(p -> p.getName()).toList()
         then:
             actualRoles == expected
         where:

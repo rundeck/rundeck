@@ -146,11 +146,14 @@ class AbstractLoginModuleSpec extends Specification {
         mockContext.containsBeanDefinition("featureService") >> true
         mockContext.getBean("featureService") >> mockFeatureService
         
-        GroovySpy(Holders, global: true)
-        Holders.findApplicationContext() >> mockContext
+        // Grails 7/Groovy 4: Use metaClass for static method mocking
+        Holders.metaClass.static.findApplicationContext = { -> mockContext }
 
         expect: "Feature check returns true"
         module.isCaseInsensitiveUsernameEnabled()
+        
+        cleanup:
+        Holders.metaClass = null
     }
 
     def "isCaseInsensitiveUsernameEnabled handles exceptions gracefully"() {
@@ -186,8 +189,8 @@ class AbstractLoginModuleSpec extends Specification {
         mockContext.containsBeanDefinition("featureService") >> true
         mockContext.getBean("featureService") >> mockFeatureService
         
-        GroovySpy(Holders, global: true)
-        Holders.findApplicationContext() >> mockContext
+        // Grails 7/Groovy 4: Use metaClass for static method mocking
+        Holders.metaClass.static.findApplicationContext = { -> mockContext }
         module.getCallBackAuth() >> ["NAVEED", "password"] as Object[]
         
         and: "Mock callback handler"
@@ -204,6 +207,9 @@ class AbstractLoginModuleSpec extends Specification {
 
         then: "Login succeeds and username is normalized"
         result
+        
+        cleanup:
+        Holders.metaClass = null
     }
 
     def "login does not normalize username when feature disabled"() {
@@ -223,8 +229,8 @@ class AbstractLoginModuleSpec extends Specification {
         mockContext.containsBeanDefinition("featureService") >> true
         mockContext.getBean("featureService") >> mockFeatureService
         
-        GroovySpy(Holders, global: true)
-        Holders.findApplicationContext() >> mockContext
+        // Grails 7/Groovy 4: Use metaClass for static method mocking
+        Holders.metaClass.static.findApplicationContext = { -> mockContext }
         module.getCallBackAuth() >> ["NAVEED", "password"] as Object[]
         
         and: "Mock callback handler"
@@ -241,6 +247,9 @@ class AbstractLoginModuleSpec extends Specification {
 
         then: "Login succeeds with username remaining uppercase"
         result
+        
+        cleanup:
+        Holders.metaClass = null
     }
 
     @Unroll
