@@ -258,7 +258,7 @@ jobs:
     <<: *job-defaults
     executor:
       name: docker-builder
-      resource_class: large
+      resource_class: xlarge
     parameters:
       jreVersion:
         type: string
@@ -779,16 +779,46 @@ workflows:
           command: bash test/run-docker-pam-tests.sh
           <<: *require-build
           <<: *slack-defaults
+      # Grails 7: Split Selenium into logical groups for faster feedback
       - test-gradle-functional:
-          name: T Selenium
+          name: T Selenium - Auth & Login
           gradle-task: seleniumCoreTest
-          parallelism: 3
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/**/*{.groovy,.java}"
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{login,ldap,execution/ExecutionShowAuthSpec,jobs/ActivitySectionAuthSpec,appadmin/AccessControlSpec}/**/*{.groovy,.java}"
+          <<: *require-build
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Selenium - Projects
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/project/**/*{.groovy,.java}"
+          <<: *require-build
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Selenium - Jobs Core
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec}.groovy"
+          <<: *require-build
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Selenium - Jobs Advanced
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{DuplicateJobSpec,JobReferenceSpec,ScheduledJobSpec,JobNotificationSpec,BulkJobActionsSpec,ExportImportSpec,DuplicateOptionsSpec,ExpandedJobGroupsSpec,JobActivityHistorySpec,JobAuditApiSpec,LogFilterSpec,LogViewerOutputSpec,steps}/**/*{.groovy,.java}"
+          <<: *require-build
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Selenium - Execution & Other
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{execution,nodes,activity,navigation,profile,appadmin/KeyStorageSpec,scm,webhook,users}/**/*{.groovy,.java}"
           <<: *require-build
           <<: *slack-defaults
       - test-gradle-functional:
           name: T Functional API
           gradle-task: apiTest
+          resource_class: xlarge
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/**/*{.groovy,.java}"
           parallelism: 3
           <<: *require-build
@@ -856,15 +886,41 @@ workflows:
           name: T Integration PAM running JRE 17
           command: bash test/run-docker-pam-tests.sh
           <<: *require-build-jre-17
+      # Grails 7: Split Selenium into logical groups for faster feedback
       - test-gradle-functional:
-          name: T Selenium running JRE 17
+          name: T Selenium - Auth & Login (JRE 17)
           gradle-task: seleniumCoreTest
-          parallelism: 3
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/**/*{.groovy,.java}"
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{login,ldap,execution/ExecutionShowAuthSpec,jobs/ActivitySectionAuthSpec,appadmin/AccessControlSpec}/**/*{.groovy,.java}"
+          <<: *require-build-jre-17
+      - test-gradle-functional:
+          name: T Selenium - Projects (JRE 17)
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/project/**/*{.groovy,.java}"
+          <<: *require-build-jre-17
+      - test-gradle-functional:
+          name: T Selenium - Jobs Core (JRE 17)
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec}.groovy"
+          <<: *require-build-jre-17
+      - test-gradle-functional:
+          name: T Selenium - Jobs Advanced (JRE 17)
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{DuplicateJobSpec,JobReferenceSpec,ScheduledJobSpec,JobNotificationSpec,BulkJobActionsSpec,ExportImportSpec,DuplicateOptionsSpec,ExpandedJobGroupsSpec,JobActivityHistorySpec,JobAuditApiSpec,LogFilterSpec,LogViewerOutputSpec,steps}/**/*{.groovy,.java}"
+          <<: *require-build-jre-17
+      - test-gradle-functional:
+          name: T Selenium - Execution & Other (JRE 17)
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{execution,nodes,activity,navigation,profile,appadmin/KeyStorageSpec,scm,webhook,users}/**/*{.groovy,.java}"
           <<: *require-build-jre-17
       - test-gradle-functional:
           name: T Functional API running JRE 17
           gradle-task: apiTest
+          resource_class: xlarge
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/**/*{.groovy,.java}"
           parallelism: 3
           <<: *require-build-jre-17
