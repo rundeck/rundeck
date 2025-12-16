@@ -61,3 +61,4 @@ rundeckapp/rundeck-runtime*
 /rundeckapp/grails-app/assets/**/node_modules
 /rundeckapp/grails-app/conf/application-development.yml
 /openapi/
+temp
