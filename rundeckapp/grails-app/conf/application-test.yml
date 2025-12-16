@@ -7,7 +7,8 @@ server:
 
 grails:
     assets:
-        url: /  # Explicit asset URL for test environment
+        url: /assets/  # Match production config - trailing slash required
+        mapping: /assets/**  # URL pattern for asset serving
 
 spring:
     liquibase:
