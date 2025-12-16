@@ -1438,6 +1438,8 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
                     new Project(name: 'proj').save(flush: true)
         def iproj = Mock(IRundeckProject) {
             getName() >> 'proj'
+            hasProperty(_) >> false
+            getInfo() >> null
         }
         def projects = [iproj]
         controller.configurationService = Mock(ConfigurationService)
@@ -1448,6 +1450,11 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         request.addHeader('x-rundeck-ajax', 'true')
         def systemAuth=Mock(UserAndRolesAuthContext)
         def projectAuth=Mock(UserAndRolesAuthContext)
+        
+        // Mock session.summaryProjectStats to provide the expected structure
+        session.summaryProjectStats = [summary: ['proj': [:]], recentUsers: [], recentProjects: [], execCount: 0, totalFailedCount: 0]
+        session.summaryProjectStats_expire = System.currentTimeMillis() + 60000
+        session.summaryProjectStatsSize = 1
 
         when:
         controller.homeAjax()
