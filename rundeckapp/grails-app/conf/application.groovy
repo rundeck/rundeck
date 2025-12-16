@@ -135,6 +135,7 @@ grails.plugin.springsecurity.interceptUrlMap = [
 grails.plugin.springsecurity.filterChain.chainMap = [
         [pattern: '/user/login',     filters: 'none'],
         [pattern: '/user/reset',     filters: 'none'],
+        [pattern: '/j_security_check', filters: 'JOINED_FILTERS,-csrf'], // Form login endpoint - needs auth filters
         [pattern: '/error/**',       filters: 'JOINED_FILTERS,-csrf'],
         [pattern: '/user/error',     filters: 'none'],
         [pattern: '/common/error',   filters: 'none'],
