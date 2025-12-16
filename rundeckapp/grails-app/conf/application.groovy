@@ -151,6 +151,10 @@ grails.plugin.springsecurity.filterChain.chainMap = [
         [pattern: '/actuator/health/**',    filters: 'none'],
         [pattern: '/**',             filters: 'JOINED_FILTERS']
 ]
+
+// Grails 7/Spring Security 6: Disable Spring Security's CSRF filter
+// Rundeck uses its own HMac-based CSRF protection (rundeck.security.useHMacRequestTokens)
+grails.plugin.springsecurity.csrf.enabled = false
 grails.plugin.springsecurity.printStatusMessages=false
 grails.plugin.springsecurity.useSecurityEventListener=true
 grails.plugin.springsecurity.useHttpSessionEventPublisher=true
