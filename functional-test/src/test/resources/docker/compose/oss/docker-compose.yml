@@ -56,6 +56,8 @@ services:
       - "-Dcom.sun.management.jmxremote.local.only=false"
       - "-Dcom.sun.management.jmxremote.rmi.port=9012"
       - "-Djava.rmi.server.hostname=localhost"
+      - "-Djava.security.auth.login.config.debug=true"
+      - "-Djava.security.debug=logincontext,failure"
       - "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
 
   rundeck-db:
