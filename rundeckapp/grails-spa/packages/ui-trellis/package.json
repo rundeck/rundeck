@@ -69,7 +69,7 @@
     "vue-router": "^4.1.6",
     "vue-scrollto": "^2.17.1",
     "vue-virtual-scroller": "^2.0.0-beta.8",
-    "vue3-markdown": "^1.1.9",
+    "vue3-markdown": "^1.2.17",
     "vuedraggable": "^4.1.0",
     "vuex": "^4.1.0",
     "webpack-node-externals": "^3.0.0"
