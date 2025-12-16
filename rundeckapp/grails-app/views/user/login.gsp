@@ -111,6 +111,7 @@
             </g:if>
             <div class="col-md-4 col-sm-6 col-md-offset-4 col-sm-offset-3">
               <form action="${g.createLink(uri:"/j_security_check")}" method="post" class="form " role="form" onsubmit="return onLoginClicked()">
+                <sec:csrfInput />
                 <div class="card" data-background="color" data-color="blue">
                   <div class="card-header">
                     <h3 class="card-title">
