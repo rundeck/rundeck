@@ -464,25 +464,10 @@ public class YamlParsePolicy implements Policy {
                         ", it should have only one entry: 'application:' or 'project:'"
                 );
             }
-
-            final String project = context.getProject();
-            if (null != project ) {
-                //test project must be a regex
-                try {
-                    Pattern.compile(project);
-                } catch (PatternSyntaxException e) {
-                    throw new AclPolicySyntaxException(
-                            "Context section 'project:' value is not a valid regex: " + e.getMessage()
-                    );
-                }
-            }
-
             environment = new YamlParsePolicy.YamlEnvironmentalContext(AuthorizationUtil.URI_BASE, context);
         }
         if (!environment.isValid()) {
             throw new AclPolicySyntaxException(
-                    "Context section is not valid: " +
-                    context +
                     environment.getValidation()
             );
         }

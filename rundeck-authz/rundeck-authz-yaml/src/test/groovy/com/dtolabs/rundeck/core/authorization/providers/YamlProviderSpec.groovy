@@ -136,9 +136,9 @@ id: any string
             validation.errors['test1[1]'][0].startsWith(message)
         where:
             project | message
-            '*'     | 'Context section \'project:\' value is not a valid regex: '
-            'pro**' | 'Context section \'project:\' value is not a valid regex: '
-            'pro{'  | 'Context section \'project:\' value is not a valid regex: '
+            '*'     | 'Context section: project: invalid regex: '
+            'pro**' | 'Context section: project: invalid regex: '
+            'pro{'  | 'Context section: project: invalid regex: '
     }
 
     def "validate no context"(){
