@@ -174,7 +174,8 @@ grails:
         twitterbootstrap:
             fixtaglib: true
     assets:
-        url: /  # Grails 7: Explicit asset URL for Jetty 12 compatibility
+        url: /assets  # Grails 7: Asset pipeline URL prefix
+        mapping: /assets/**  # Grails 7: URL pattern for asset serving
         less:
             compile: less4j
         plugin:
