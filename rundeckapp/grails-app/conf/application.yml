@@ -174,7 +174,7 @@ grails:
         twitterbootstrap:
             fixtaglib: true
     assets:
-        url: /assets  # Grails 7: Asset pipeline URL prefix
+        url: /assets/  # Grails 7: Asset pipeline URL prefix (trailing slash required)
         mapping: /assets/**  # Grails 7: URL pattern for asset serving
         less:
             compile: less4j
