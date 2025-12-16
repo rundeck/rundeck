@@ -458,13 +458,33 @@ export default defineComponent({
       if (!preserve) {
         this.setValidation(true);
       }
+      
+      // Grails 7: Add error handling and validation
+      if (!this.curHook.eventPlugin) {
+        console.error("Webhook: No eventPlugin set");
+        return;
+      }
+      
+      if (!this.curHook.eventPlugin.artifactName) {
+        console.error("Webhook: eventPlugin missing artifactName", this.curHook.eventPlugin);
+        return;
+      }
+      
+      console.log("Webhook: Loading plugin description for", this.curHook.eventPlugin.artifactName);
+      
       getServiceProviderDescription(
         "WebhookEvent",
         this.curHook.eventPlugin.artifactName,
       ).then((data) => {
+        console.log("Webhook: Plugin description loaded", data);
+        console.log("Webhook: Props length:", data.props ? data.props.length : 0);
         this.customConfigComponent = data.vueConfigComponent;
         this.showPluginConfig =
-          this.customConfigComponent || data.props.length > 0;
+          this.customConfigComponent || (data.props && data.props.length > 0);
+        console.log("Webhook: showPluginConfig set to", this.showPluginConfig);
+      }).catch((error) => {
+        console.error("Webhook: Error loading plugin description", error);
+        this.showPluginConfig = false;
       });
     },
     async handleSave() {
