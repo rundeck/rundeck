@@ -478,7 +478,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
 
         then: "the will be results"
         Files.exists(Paths.get(modelProjectPath)) // Model project dir exists
-        Files.list(Paths.get(modelProjectPath)).collect(Collectors.toList()).size() > 0 // Model project is not empty
+        Files.list(Paths.get(modelProjectPath)).toList().size() > 0 // Model project is not empty
 
         cleanup:
         if( Files.exists(Paths.get(workingDirs.workingDir)) ){
@@ -535,7 +535,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         then: "the will be results"
         Files.exists(Paths.get(modelProjectPath)) // Model project dir exists
         Files.list(Paths.get(modelProjectPath + File.separator + sampleProjectInternalProjectPath))
-                .collect(Collectors.toList()).size() == 1 // Model project has only 1 subdir (jobs)
+                .toList().size() == 1 // Model project has only 1 subdir (jobs)
 
         cleanup:
         if( Files.exists(Paths.get(workingDirs.workingDir)) ){
@@ -785,7 +785,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         Files.exists(Paths.get(workingDirs.workingDir)) // The working dir will be created
         !Files.exists(Paths.get(workingDirs.projectCopy)) // The copy of the uploaded project will be deleted after distribution
         Files.exists(Paths.get(distributedExecutionsPath)) // Distributed executions dir exist
-        Files.list(Paths.get(distributedExecutionsPath)).collect(Collectors.toList()).size() == dirQty // Bundles by the flag
+        Files.list(Paths.get(distributedExecutionsPath)).toList().size() == dirQty // Bundles by the flag
 
         cleanup:
         if( Files.exists(Paths.get(workingDirs.workingDir)) ){
