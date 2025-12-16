@@ -131,6 +131,7 @@ grails.plugin.springsecurity.interceptUrlMap = [
 ]
 
 grails.plugin.springsecurity.filterChain.chainMap = [
+        [pattern: '/j_security_check', filters: 'JOINED_FILTERS,-csrf'],
         [pattern: '/user/login',     filters: 'none'],
         [pattern: '/user/reset',     filters: 'none'],
         [pattern: '/error/**',       filters: 'JOINED_FILTERS'],
