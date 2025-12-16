@@ -19,15 +19,18 @@
 </template>
 <script>
 import { defineComponent } from "vue";
-import { mapActions } from "vuex";
+import { useOverlayStore } from "../stores/overlay.store";
 
 import PluginUploadForm from "../components/PluginUploadForm.vue";
 import PluginURLUploadForm from "../components/PluginURLUploadForm.vue";
 export default defineComponent({
   name: "UploadPluginView",
   components: { PluginUploadForm, PluginURLUploadForm },
-  methods: {
-    ...mapActions("overlay", ["openOverlay"]),
+  setup() {
+    const overlayStore = useOverlayStore();
+    return {
+      openOverlay: (properties) => overlayStore.openOverlay(properties),
+    };
   },
   created() {
     this.openOverlay(false);
