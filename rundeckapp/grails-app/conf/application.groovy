@@ -131,26 +131,25 @@ grails.plugin.springsecurity.interceptUrlMap = [
 ]
 
 grails.plugin.springsecurity.filterChain.chainMap = [
-        [pattern: '/j_security_check', filters: 'JOINED_FILTERS,-csrf'],
         [pattern: '/user/login',     filters: 'none'],
         [pattern: '/user/reset',     filters: 'none'],
-        [pattern: '/error/**',       filters: 'JOINED_FILTERS'],
+        [pattern: '/error/**',       filters: 'JOINED_FILTERS,-csrf'],
         [pattern: '/user/error',     filters: 'none'],
         [pattern: '/common/error',   filters: 'none'],
         [pattern: '/static/**',      filters: 'none'],
         [pattern: '/user-assets/**', filters: 'none'],
         [pattern: '/assets/**',      filters: 'none'],
         [pattern: '/feed/**',        filters: 'none'],
-        [pattern: '/svc/api/**',     filters: 'JOINED_FILTERS'],
-        [pattern: '/api/**',         filters: 'JOINED_FILTERS'],
-        [pattern: '/plugin/**',      filters: 'JOINED_FILTERS'],
+        [pattern: '/svc/api/**',     filters: 'JOINED_FILTERS,-csrf'],
+        [pattern: '/api/**',         filters: 'JOINED_FILTERS,-csrf'],
+        [pattern: '/plugin/**',      filters: 'JOINED_FILTERS,-csrf'],
         [pattern: '/404',            filters: 'none'],
         [pattern: '/404.gsp',        filters: 'none'],
         [pattern: '/favicon.ico',    filters: 'none'],
         [pattern: '/health',         filters: 'none'],
         [pattern: '/actuator/**',    filters: 'none'],
         [pattern: '/actuator/health/**',    filters: 'none'],
-        [pattern: '/**',             filters: 'JOINED_FILTERS']
+        [pattern: '/**',             filters: 'JOINED_FILTERS,-csrf']
 ]
 
 // Grails 7/Spring Security 6: Disable Spring Security's CSRF filter
