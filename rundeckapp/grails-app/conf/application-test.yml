@@ -1,6 +1,14 @@
 # Grails 7 Test Configuration
 # Override settings specifically for test environment
 
+server:
+    servlet:
+        context-path: "/"  # Explicit context path for asset pipeline
+
+grails:
+    assets:
+        url: /  # Explicit asset URL for test environment
+
 spring:
     liquibase:
         enabled: false  # Disable Liquibase for unit tests
