@@ -105,6 +105,19 @@ abstract class BasePage {
     }
 
     /**
+     * Wait for element to have non-empty text content.
+     *
+     * @param element The WebElement to wait for
+     */
+    void waitForTextToBeNonEmpty(WebElement element) {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30))
+        wait.until { WebDriver d ->
+            def text = element.getText()
+            text != null && !text.trim().isEmpty()
+        }
+    }
+
+    /**
      * Waits for the specified text to be present within the element located by the given selector.
      *
      * @param selector The selector used to locate the element.
