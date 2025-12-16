@@ -130,7 +130,7 @@ export default defineComponent({
   },
   methods: {
     jobLinkHref(job: JobBrowseItem) {
-      return `${context.rdBase}project/${context.projectName}/job/show/${job.id}`;
+      return `${context.rdBase}/project/${context.projectName}/job/show/${job.id}`;
     },
     /**
      * Check if the element has a parent with a nodeName in the list

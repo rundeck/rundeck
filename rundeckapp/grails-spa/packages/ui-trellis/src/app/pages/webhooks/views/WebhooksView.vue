@@ -315,7 +315,7 @@ export default defineComponent({
       errors: {},
       validation: { valid: true, errors: {} },
       selectedPlugin: null,
-      apiBasePostUrl: `${rdBase}api/${apiVersion}/webhook/`,
+      apiBasePostUrl: `${rdBase}/api/${apiVersion}/webhook/`,
       customConfigComponent: null,
       showPluginConfig: false,
       projectName,
@@ -411,7 +411,7 @@ export default defineComponent({
     getHooks() {
       this.ajax(
         "get",
-        `${this.rdBase}webhook/admin/editorData/${this.projectName}`,
+        `${this.rdBase}/webhook/admin/editorData/${this.projectName}`,
       ).then((response) => {
         this.curUser = response.data.username;
         this.curUserRoles = response.data.roles;
