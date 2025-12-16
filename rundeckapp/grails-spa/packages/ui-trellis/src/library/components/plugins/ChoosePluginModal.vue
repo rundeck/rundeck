@@ -74,15 +74,15 @@
     </template>
   </modal>
   <modal v-else v-model="modalShown" :title="title || $t('plugin.choose.title')" size="lg">
-    <p>{{ $t('message.searchForStep') }}</p>
-    <p>{{ $t('message.learnMoreSearchPatterns') }}</p>
+    <p>{{ $t('searchForStep') }}</p>
+    <p>{{ $t('learnMoreSearchPatterns') }}</p>
     <plugin-search
         v-if="showSearch"
         @search="filterLoadedServices"
     ></plugin-search>
     <select-button v-model="selectedService" :options="serviceOptions" optionLabel="name" optionValue="value"/>
-    <p>{{ $t('message.nodeSteps') }}</p>
-    <p>{{ $t('message.nodeStepsDescription') }}</p>
+    <p>{{ $t('nodeSteps') }}</p>
+    <p>{{ $t('nodeStepsDescription') }}</p>
 <!--    <p>Common node steps</p>-->
     <div class="placeholder">
       <skeleton height="1.25rem" width="1.25rem" shape="rectangle" />
@@ -94,7 +94,7 @@
           <div v-if="group.iconUrl" class="img-icon">
             <img :src="group.iconUrl" />
           </div>
-           {{key}} ({{ group.providers.length }} {{ $t('message.plugins') }})
+           {{key}} ({{ group.providers.length }} {{ $t('plugins') }})
         </div>
       </template>
     </template>
@@ -162,11 +162,11 @@ export default defineComponent({
     serviceOptions() {
       return [
         {
-          name: this.$t('message.nodeSteps'),
+          name: this.$t('nodeSteps'),
           value: ServiceType.WorkflowNodeStep,
         },
         {
-          name: this.$t('message.workflowSteps'),
+          name: this.$t('workflowSteps'),
           value: ServiceType.WorkflowStep,
         }
       ];

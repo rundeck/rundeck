@@ -285,6 +285,12 @@ class PluginApiService {
         long appEpoch = VersionConstants.DATE.time
         String appVer = VersionConstants.VERSION
         def pluginList = listPluginsDetailed()
+        
+        // Cache for group icons: group name -> iconUrl
+        Map<String, String> groupIconCache = [:]
+        // Cache for explicit representative plugin lookups: group name -> plugin name
+        Map<String, String> representativePluginCache = [:]
+        
         def tersePluginList = pluginList.descriptions.collect {
             String service = it.key
             def providers = it.value.collect { provider ->
@@ -313,6 +319,9 @@ class PluginApiService {
                  pluginDate   : meta?.pluginDate?.time?:appEpoch,
                  enabled      : true] as LinkedHashMap<Object, Object>
 
+                // Get groupBy from provider metadata
+                def groupBy = provider.metadata?.get(com.dtolabs.rundeck.plugins.PluginGroupConstants.PLUGIN_GROUP_KEY)
+
                 if(service != ServiceNameConstants.UI) {
                     def uiDesc = uiPluginService.getProfileFor(service, provider.name)
                     if (uiDesc.icon)
@@ -323,7 +332,43 @@ class PluginApiService {
                                 absolute: true)
 
                     if (uiDesc.providerMetadata) {
-                        pluginDesc.providerMetadata = uiDesc.providerMetadata
+                        pluginDesc.providerMetadata = new LinkedHashMap<>(uiDesc.providerMetadata)
+                    } else {
+                        pluginDesc.providerMetadata = new LinkedHashMap<>()
+                    }
+                } else {
+                    pluginDesc.providerMetadata = new LinkedHashMap<>()
+                }
+
+                if (groupBy) {
+                    pluginDesc.providerMetadata[com.dtolabs.rundeck.plugins.PluginGroupConstants.PLUGIN_GROUP_KEY] = groupBy
+                    
+                    String groupIconUrl = null
+                    
+                    if (groupIconCache.containsKey(groupBy)) {
+                        groupIconUrl = groupIconCache[groupBy]
+                    } else {
+                        String representativePlugin = com.dtolabs.rundeck.plugins.PluginGroupDefinitions.getRepresentativePluginName(groupBy)
+                        
+                        if (representativePlugin) {
+                            if (!representativePluginCache.containsKey(groupBy)) {
+                                representativePluginCache[groupBy] = representativePlugin
+                            }
+                            
+                            if (provider.name == representativePlugin && pluginDesc.iconUrl) {
+                                groupIconCache[groupBy] = pluginDesc.iconUrl
+                                groupIconUrl = pluginDesc.iconUrl
+                            }
+                        } else {
+                            if (pluginDesc.iconUrl && !groupIconCache.containsKey(groupBy)) {
+                                groupIconCache[groupBy] = pluginDesc.iconUrl
+                            }
+                            groupIconUrl = groupIconCache[groupBy]
+                        }
+                    }
+                    
+                    if (groupIconUrl) {
+                        pluginDesc.providerMetadata['groupIconUrl'] = groupIconUrl
                     }
                 }
 

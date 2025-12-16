@@ -26,7 +26,7 @@ export class PluginStore {
     ) {
         this._injectStaticPlugins(service);
     }
-    const plugins = await apiClient(51).get("plugin/list", {
+    const plugins = await apiClient(57).get("plugin/list", {
       params: { service },
     });
 

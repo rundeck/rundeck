@@ -428,5 +428,156 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
         Map<String, String> getFwkPropertiesMapping() {
             return [:]
         }
+
+        @Override
+        Map<String, String> getMetadata() {
+            return null
+        }
+    }
+
+    class FakePluginDescriptionWithMetadata implements Description {
+        String name
+        Map<String, String> metadata
+
+        @Override
+        String getTitle() {
+            return "Fake Plugin"
+        }
+
+        @Override
+        String getDescription() {
+            return "This is a fake plugin with metadata"
+        }
+
+        @Override
+        boolean isHighlighted() {
+            return false
+        }
+
+        @Override
+        int getOrder() {
+            return 0
+        }
+
+        @Override
+        List<Property> getProperties() {
+            return []
+        }
+
+        @Override
+        Map<String, String> getPropertiesMapping() {
+            return [:]
+        }
+
+        @Override
+        Map<String, String> getFwkPropertiesMapping() {
+            return [:]
+        }
+
+        @Override
+        Map<String, String> getMetadata() {
+            return metadata
+        }
+    }
+
+    def "list plugins with groupBy metadata auto-discovery"() {
+        given:
+        messageSource.addMessage("framework.service.WorkflowNodeStep.description",Locale.ENGLISH,"Node Step")
+        def fwksvc = Mock(FrameworkService)
+        def fwk = Mock(Framework)
+        fwksvc.getRundeckFramework() >> fwk
+        fwk.getPluginManager() >> Mock(ServiceProviderLoader)
+        service.frameworkService = fwksvc
+        service.rundeckPluginRegistry = Mock(RundeckPluginRegistry)
+        service.uiPluginService = Mock(UiPluginService)
+        service.grailsLinkGenerator = Mock(LinkGenerator)
+
+        def plugin1 = new FakePluginDescriptionWithMetadata(
+            name: 'aws-s3-cp',
+            metadata: ['groupBy': 'AWS S3']
+        )
+        def plugin2 = new FakePluginDescriptionWithMetadata(
+            name: 'aws-s3-ls',
+            metadata: ['groupBy': 'AWS S3']
+        )
+
+        def pluginDescs = [
+                "WorkflowNodeStep": [plugin1, plugin2]
+        ]
+        def pluginData = [
+                descriptions        : pluginDescs,
+                serviceDefaultScopes: [],
+                bundledPlugins      : [],
+                embeddedFilenames   : [],
+                specialConfiguration: [],
+                specialScoping      : [],
+                uiPluginProfiles    : []
+        ]
+        def fakeMeta = new FakePluginMetadata()
+
+        service.metaClass.listPluginsDetailed = { -> pluginData }
+        service.metaClass.getLocale = { -> Locale.ENGLISH }
+
+        when:
+        2 * service.rundeckPluginRegistry.getPluginMetadata(_,_) >> fakeMeta
+        2 * service.uiPluginService.getProfileFor(_, _) >> [icon: 'foo']
+        2 * service.grailsLinkGenerator.link(_) >>> ['http://localhost:8080/icon1', 'http://localhost:8080/icon2']
+        def response = service.listPlugins()
+        def serviceEntry = response[0]
+        def provider1 = serviceEntry.providers[0]
+        def provider2 = serviceEntry.providers[1]
+
+        then:
+        serviceEntry.providers.size() == 2
+        provider1.providerMetadata.groupBy == 'AWS S3'
+        provider1.providerMetadata.groupIconUrl == 'http://localhost:8080/icon1'
+        provider2.providerMetadata.groupBy == 'AWS S3'
+        provider2.providerMetadata.groupIconUrl == 'http://localhost:8080/icon1' // Cached from first plugin
+    }
+
+    def "list plugins with groupBy metadata but no icon"() {
+        given:
+        messageSource.addMessage("framework.service.WorkflowNodeStep.description",Locale.ENGLISH,"Node Step")
+        def fwksvc = Mock(FrameworkService)
+        def fwk = Mock(Framework)
+        fwksvc.getRundeckFramework() >> fwk
+        fwk.getPluginManager() >> Mock(ServiceProviderLoader)
+        service.frameworkService = fwksvc
+        service.rundeckPluginRegistry = Mock(RundeckPluginRegistry)
+        service.uiPluginService = Mock(UiPluginService)
+        service.grailsLinkGenerator = Mock(LinkGenerator)
+
+        def plugin1 = new FakePluginDescriptionWithMetadata(
+            name: 'test-plugin',
+            metadata: ['groupBy': 'Test Group']
+        )
+
+        def pluginDescs = [
+                "WorkflowNodeStep": [plugin1]
+        ]
+        def pluginData = [
+                descriptions        : pluginDescs,
+                serviceDefaultScopes: [],
+                bundledPlugins      : [],
+                embeddedFilenames   : [],
+                specialConfiguration: [],
+                specialScoping      : [],
+                uiPluginProfiles    : []
+        ]
+        def fakeMeta = new FakePluginMetadata()
+
+        service.metaClass.listPluginsDetailed = { -> pluginData }
+        service.metaClass.getLocale = { -> Locale.ENGLISH }
+
+        when:
+        1 * service.rundeckPluginRegistry.getPluginMetadata(_,_) >> fakeMeta
+        1 * service.uiPluginService.getProfileFor(_, _) >> [:] // No icon
+        def response = service.listPlugins()
+        def serviceEntry = response[0]
+        def provider1 = serviceEntry.providers[0]
+
+        then:
+        provider1.providerMetadata.groupBy == 'Test Group'
+        provider1.providerMetadata.groupIconUrl == null
     }
 }
