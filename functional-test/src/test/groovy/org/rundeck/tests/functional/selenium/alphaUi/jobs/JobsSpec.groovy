@@ -40,13 +40,15 @@ class JobsSpec extends SeleniumBase {
         return page
     }
 
-    def "job workflow alphaUi flag enabled"() {
+    def "job workflow nextUi flag enabled"() {
         when:
         jobCreatePage.tab JobTab.WORKFLOW click()
         then:
-        jobCreatePage.waitForTextToBePresentBySelector(By.xpath("//section[@id='workflowContent']//div[contains(@class, 'control-label')]"), "Workflow",60)
+        // Grails 7: NextUI workflow uses Vue components, check for workflow section
+        jobCreatePage.waitForElementVisible(By.cssSelector("section#workflowContent"))
         expect:
-        jobCreatePage.workflowAlphaUiContainer.isDisplayed()
+        // Verify NextUI workflow UI is loaded by checking for add step button
+        jobCreatePage.waitForElementVisible(By.cssSelector("[data-test='add-step']"))
     }
 
 }
