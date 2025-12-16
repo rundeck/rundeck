@@ -24,6 +24,8 @@ import rundeck.BaseReport
 import rundeck.ScheduledExecution
 import rundeck.services.ReportService
 
+import static org.junit.Assert.*
+
 /*
  * ReportServiceTests.java
  * 
