@@ -22,16 +22,19 @@ class UserSummarySpec extends SeleniumBase {
 
         and: "Log out the first user"
         topMenuPage.logOut()
+        loggedOutPage.waitForUrlToContain("/user/loggedout")
         loggedOutPage.getLoginAgainField().click()
+        loginPage.waitForUrlToContain("/user/login")
 
         and: "Login with the second user"
         loginPage.login(TEST_USER, TEST_PASS)
+        topMenuPage.waitForUrlToNotContain("/user/login")
 
         and: "Navigate to the User Manager Page"
         userSummaryPage.go()
 
         and: "Get the user count"
-        hold(3)
+        userSummaryPage.waitForElementVisible(userSummaryPage.userCountFieldBy)
         def userCount = userSummaryPage.userCountField.getText().toInteger()
 
         then: "At least two users should appear on the user summary page"
@@ -50,10 +53,13 @@ class UserSummarySpec extends SeleniumBase {
 
         and: "Log out the first user"
         topMenuPage.logOut()
+        loggedOutPage.waitForUrlToContain("/user/loggedout")
         loggedOutPage.getLoginAgainField().click()
+        loginPage.waitForUrlToContain("/user/login")
 
         and: "Login with the second user"
         loginPage.login(TEST_USER, TEST_PASS)
+        topMenuPage.waitForUrlToNotContain("/user/login")
 
         and: "Navigate to the User Manager Page"
         userSummaryPage.go()
