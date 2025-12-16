@@ -17,6 +17,10 @@ package rundeckapp.init
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import jakarta.annotation.PostConstruct
+import org.springframework.context.annotation.Configuration
+import org.springframework.core.Ordered
+import org.springframework.core.annotation.Order
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
@@ -29,14 +33,32 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
  * 
  * This fixes the issue where Vue SPA page assets like /assets/static/pages/webhooks-*.js
  * were returning 404 errors even though they existed in the WAR file.
+ * 
+ * @Configuration ensures Spring picks this up as a configuration class
+ * @Order(Ordered.HIGHEST_PRECEDENCE) ensures this runs before security filters
  */
 @Slf4j
 @CompileStatic
+@Configuration
+@Order(Ordered.HIGHEST_PRECEDENCE)
 class AssetPipelineResourceConfigurer implements WebMvcConfigurer {
+
+    @PostConstruct
+    void init() {
+        log.info("═══════════════════════════════════════════════════════")
+        log.info("AssetPipelineResourceConfigurer BEAN LOADED")
+        log.info("  This configurer will map /assets/** to classpath:/assets/")
+        log.info("═══════════════════════════════════════════════════════")
+    }
 
     @Override
     void addResourceHandlers(final ResourceHandlerRegistry registry) {
-        log.info("Configuring asset pipeline resource handlers for Grails 7 / Jetty 12")
+        log.info("═══════════════════════════════════════════════════════")
+        log.info("CONFIGURING ASSET PIPELINE RESOURCE HANDLERS")
+        log.info("  Pattern: /assets/**")
+        log.info("  Location: classpath:/assets/")
+        log.info("  Cache Period: 1 year (31536000 seconds)")
+        log.info("═══════════════════════════════════════════════════════")
         
         // Map /assets/** to classpath:/assets/ with caching and proper resource chain
         registry
@@ -45,7 +67,7 @@ class AssetPipelineResourceConfigurer implements WebMvcConfigurer {
             .setCachePeriod(31536000) // 1 year cache for asset pipeline (hashed filenames)
             .resourceChain(true)  // Enable resource chain for proper resolution
         
-        log.info("Asset pipeline resource handler configured: /assets/** -> classpath:/assets/")
+        log.info("✅ Asset pipeline resource handler configured successfully")
     }
 }
 
