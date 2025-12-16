@@ -34,6 +34,9 @@ logging:
         # JAAS authentication debugging
         org.springframework.security.authentication.jaas: TRACE
         com.dtolabs.rundeck.jaas: TRACE
+        # Hikari connection pool debugging (for Selenium test connection pool issues)
+        com.zaxxer.hikari: DEBUG
+        com.zaxxer.hikari.pool.HikariPool: DEBUG
 
 spring:
     liquibase:

@@ -12,6 +12,10 @@ services:
       MANAGEMENT_ENDPOINT_HEALTH_GROUP_READINESS_INCLUDE: "readinessState,rundeckDataSourceHealthIndicator"
       MANAGEMENT_ENDPOINT_HEALTH_VALIDATE_GROUP_MEMBERSHIP: "false"
       RUNDECK_PLUGINS_PROVIDERBLOCKLISTFILE: /home/rundeck/blocklist.yaml
+      # Grails 7: Increase Hikari connection pool for Selenium tests
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "20"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "5"
+      SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: "60000"
     ports:
       - "4440:4440"
     volumes:
