@@ -5,7 +5,7 @@ import { Popover, Tabs, Tab } from "uiv";
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
     eventBus: { on: jest.fn(), emit: jest.fn() },
-    rdBase: "http://localhost:4440/",
+    rdBase: "http://localhost:4440",
     projectName: "testProject",
     apiVersion: "44",
   })),
