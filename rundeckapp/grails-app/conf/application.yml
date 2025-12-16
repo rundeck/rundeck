@@ -24,6 +24,10 @@ info:
 build:
     ident: '@build.ident@'
 
+logging:
+    level:
+        # Logging levels configured here
+
 spring:
     liquibase:
         enabled: false  # Temporarily disabled for Grails 7 testing
@@ -37,6 +41,8 @@ spring:
     autoconfigure:
         exclude:
             - org.springframework.boot.autoconfigure.integration.IntegrationAutoConfiguration
+    security:
+        # Spring Security configured via grails.plugin.springsecurity.* in application.groovy
     jpa:
         hibernate:
             naming:
@@ -233,6 +239,9 @@ rundeck:
                     - health
                     - agent
                 paths:
+                    - /assets
+                    - /static
+                    - /user-assets
                     - /error
                     - /favicon.ico
                     - /health
