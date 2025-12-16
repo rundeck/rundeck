@@ -27,9 +27,10 @@ build:
 logging:
     level:
         root: INFO
-        org.springframework.security: TRACE
-        org.springframework.security.web: TRACE
-        grails.plugin.springsecurity: DEBUG
+        # Grails 7: Spring Security debug logging (disabled for normal builds)
+        # org.springframework.security: TRACE
+        # org.springframework.security.web: TRACE
+        # grails.plugin.springsecurity: DEBUG
 
 spring:
     liquibase:

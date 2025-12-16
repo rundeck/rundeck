@@ -1,5 +1,6 @@
 package org.rundeck.tests.functional.api.scm
 
+import groovy.util.logging.Slf4j
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.api.scm.GitScmApiClient
@@ -17,6 +18,7 @@ import org.rundeck.util.common.WaitUtils
 import org.rundeck.util.container.BaseContainer
 import org.rundeck.util.common.jobs.JobUtils
 
+@Slf4j
 @APITest
 @ExcludePro
 class ScmPluginActionsSpec extends ScmBaseContainer {
