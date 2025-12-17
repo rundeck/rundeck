@@ -86,6 +86,8 @@ class NavSidebarSpec extends SeleniumBase {
                 for (NavLinkTypes navItem : PROJ_SETTINGS_NAVLINKS) {
                     if(navItem in visible){
                         assert sideBarPage.els(By.id(navItem.id)).size()==1
+                        // Grails 7: Wait for nav item to be displayed (race condition with overflow menu calculation)
+                        sideBarPage.waitForElementVisible(By.id(navItem.id))
                         assert sideBarPage.els(By.id(navItem.id)).every{it.displayed}
                     }
                     else {
