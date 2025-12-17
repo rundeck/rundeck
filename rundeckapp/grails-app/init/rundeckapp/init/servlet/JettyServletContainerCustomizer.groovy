@@ -59,7 +59,8 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
                 }
             }
         })
-        factory.addServerCustomizers(new BanHttpMethodCustomizer())
+        // Grails 7/Jetty 12: BanHttpMethodCustomizer is now a @Configuration bean that registers
+        // a servlet filter instead of a Jetty handler to avoid ServletApiRequest NPE issues
         if(serverUrl && featureService.featurePresent("setServerUrlOnNoHostHeader", false)) {
             factory.addServerCustomizers(new RundeckHostHeaderCustomizer(serverUrl: serverUrl))
         }

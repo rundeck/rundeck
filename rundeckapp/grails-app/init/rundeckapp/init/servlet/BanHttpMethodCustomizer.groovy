@@ -1,72 +1,80 @@
 package rundeckapp.init.servlet
 
-import org.eclipse.jetty.http.HttpMethod
-import org.eclipse.jetty.server.Handler
-import org.eclipse.jetty.server.Request
-import org.eclipse.jetty.server.Response
-import org.eclipse.jetty.server.Server
-import org.eclipse.jetty.util.Callback
-import org.springframework.boot.web.embedded.jetty.JettyServerCustomizer
+import jakarta.servlet.DispatcherType
+import jakarta.servlet.Filter
+import jakarta.servlet.FilterChain
+import jakarta.servlet.FilterConfig
+import jakarta.servlet.ServletException
+import jakarta.servlet.ServletRequest
+import jakarta.servlet.ServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
+import org.springframework.boot.web.servlet.FilterRegistrationBean
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 
 /**
- * Validates jetty configuration to avoid disallowed http methods and paths
+ * Validates HTTP methods and rejects disallowed methods like TRACE
  * 
- * Jetty 12 Migration Note: Uses Handler.Wrapper instead of HttpConfiguration.Customizer
- * because Customizers no longer have access to Response objects for sending error codes.
+ * Grails 7/Jetty 12 Migration Note: Converted from Handler.Wrapper to Servlet Filter
+ * to avoid ServletApiRequest.getRequest() NPE issues. Servlet Filters operate at the
+ * Jakarta EE layer after Request objects are fully initialized.
  */
-class BanHttpMethodCustomizer implements JettyServerCustomizer {
+@Configuration
+class BanHttpMethodCustomizer {
 
-    @Override
-    void customize(Server server) {
-        // Jetty 12: Use Handler.Wrapper to intercept and reject requests
-        HttpMethodFilter filter = new HttpMethodFilter([HttpMethod.TRACE])
-        filter.setHandler(server.getHandler())
-        server.setHandler(filter)
+    @Bean
+    FilterRegistrationBean<HttpMethodFilter> httpMethodFilter() {
+        FilterRegistrationBean<HttpMethodFilter> registration = new FilterRegistrationBean<>()
+        registration.setFilter(new HttpMethodFilter(['TRACE']))
+        registration.addUrlPatterns('/*')
+        registration.setOrder(1) // Run early in filter chain
+        registration.setDispatcherTypes(
+            DispatcherType.REQUEST,
+            DispatcherType.FORWARD,
+            DispatcherType.INCLUDE,
+            DispatcherType.ERROR
+        )
+        return registration
     }
 }
 
 /**
- * Handler that intercepts and rejects banned HTTP methods
- * 
- * Jetty 12 requires Handler.Wrapper for request rejection because HttpConfiguration.Customizer
- * executes too early in the lifecycle (before Response is initialized) to send error codes.
+ * Servlet Filter that rejects banned HTTP methods
  */
-class HttpMethodFilter extends Handler.Wrapper {
+class HttpMethodFilter implements Filter {
 
-    /**
-     * Banned http methods
-     */
-    final List<HttpMethod> banMethods
+    final List<String> banMethods
 
-    HttpMethodFilter(List<HttpMethod> methods) {
-        super()
-        this.banMethods = methods
+    HttpMethodFilter(List<String> methods) {
+        this.banMethods = methods*.toUpperCase()
     }
 
     @Override
-    boolean handle(Request request, Response response, Callback callback) throws Exception {
-        HttpMethod currentMethod = HttpMethod.fromString(request.getMethod())
-        
-        if (banMethods.contains(currentMethod)) {
-            // Reject the request with 405 Method Not Allowed
-            Response.writeError(request, response, callback, 405, "Method Not Allowed")
-            return true // Request handled (rejected)
-        }
-        
-        // Grails 7/Jetty 12: Don't call super.handle() here - let the wrapped handler handle it directly
-        // This prevents ServletApiRequest.getRequest() NPE by maintaining proper request context
-        Handler next = getHandler()
-        if (next != null) {
-            return next.handle(request, response, callback)
-        }
-        
-        return false
+    void init(FilterConfig filterConfig) throws ServletException {
+        // No initialization needed
     }
 
     @Override
-    List<Handler> getHandlers() {
-        // Return the wrapped handler(s) if any
-        Handler wrappedHandler = getHandler()
-        return wrappedHandler ? [wrappedHandler] : []
+    void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+            throws IOException, ServletException {
+        
+        if (request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
+            HttpServletRequest httpRequest = (HttpServletRequest) request
+            HttpServletResponse httpResponse = (HttpServletResponse) response
+            
+            String method = httpRequest.getMethod()
+            if (banMethods.contains(method?.toUpperCase())) {
+                httpResponse.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, "Method Not Allowed")
+                return
+            }
+        }
+        
+        chain.doFilter(request, response)
+    }
+
+    @Override
+    void destroy() {
+        // No cleanup needed
     }
 }
