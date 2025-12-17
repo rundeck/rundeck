@@ -15,20 +15,15 @@
  */
 package org.rundeck.security
 
-import org.springframework.security.authentication.jaas.AuthorityGranter
 import org.springframework.security.authentication.jaas.DefaultJaasAuthenticationProvider
 import org.springframework.security.authentication.jaas.JaasAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.AuthenticationException
-import org.springframework.security.core.GrantedAuthority
-import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.core.session.SessionDestroyedEvent
 
-import javax.security.auth.Subject
 import javax.security.auth.login.LoginContext
 import javax.security.auth.login.LoginException
-import java.security.Principal
 
 
 class RundeckJaasAuthenticationProvider extends DefaultJaasAuthenticationProvider {

@@ -53,8 +53,14 @@ class HttpMethodFilter extends Handler.Wrapper {
             return true // Request handled (rejected)
         }
         
-        // Pass to next handler
-        return super.handle(request, response, callback)
+        // Grails 7/Jetty 12: Don't call super.handle() here - let the wrapped handler handle it directly
+        // This prevents ServletApiRequest.getRequest() NPE by maintaining proper request context
+        Handler next = getHandler()
+        if (next != null) {
+            return next.handle(request, response, callback)
+        }
+        
+        return false
     }
 
     @Override
