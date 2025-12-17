@@ -3,8 +3,6 @@ package com.dtolabs.rundeck.core.jobs;
 import com.dtolabs.rundeck.core.execution.ExecutionLifecycleComponentException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
-import org.rundeck.app.data.model.v1.execution.ExecutionData;
-import org.rundeck.app.data.model.v1.job.workflow.WorkflowData;
 
 import java.util.Optional;
 
@@ -22,19 +20,6 @@ public interface ExecutionLifecycleComponentHandler {
             final StepExecutionContext executionContext,
             final WorkflowExecutionItem workflowItem
     ) throws ExecutionLifecycleComponentException;
-
-
-    /**
-     * Job start event
-     *
-     * @param executionContext input execution context
-     * @throws ExecutionLifecycleComponentException
-     */
-    Optional<ExecutionLifecycleStatus> beforeJobStarts(
-            final StepExecutionContext executionContext,
-            final WorkflowExecutionItem workflowItem,
-            final WorkflowData workflowData
-            ) throws ExecutionLifecycleComponentException;
 
     /**
      * Job end event
