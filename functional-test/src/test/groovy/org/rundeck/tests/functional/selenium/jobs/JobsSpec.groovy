@@ -793,8 +793,9 @@ class JobsSpec extends SeleniumBase {
         // Grails 7: NextUI workflow uses Vue components, check for workflow section
         jobCreatePage.waitForElementVisible(By.cssSelector("section#workflowContent"))
         expect:
-        // Verify NextUI workflow UI is loaded by checking for add step button
-        jobCreatePage.waitForElementVisible(By.cssSelector("[data-test='add-step']"))
+        // Grails 7: Verify NextUI workflow UI is loaded by checking for add step button
+        // The button is rendered by CommonUndoRedoDraggableList.vue with data-testid="add-button"
+        jobCreatePage.waitForElementVisible(By.cssSelector("[data-testid='add-button']"))
     }
 
     def "Create option form next ui"() {
