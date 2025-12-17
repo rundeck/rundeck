@@ -106,12 +106,14 @@ abstract class BasePage {
 
     /**
      * Wait for element to have non-empty text content.
+     * Re-finds the element on each check to avoid stale element references.
      *
-     * @param element The WebElement to wait for
+     * @param locator The By locator to find the element
      */
-    void waitForTextToBeNonEmpty(WebElement element) {
+    void waitForTextToBeNonEmpty(By locator) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30))
         wait.until { WebDriver d ->
+            def element = d.findElement(locator)
             def text = element.getText()
             text != null && !text.trim().isEmpty()
         }

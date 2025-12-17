@@ -36,8 +36,8 @@ class UserSummarySpec extends SeleniumBase {
         and: "Get the user count"
         userSummaryPage.waitForElementVisible(userSummaryPage.userCountFieldBy)
         // Wait for text to be present and non-empty before parsing
-        userSummaryPage.waitForTextToBeNonEmpty(userSummaryPage.userCountField)
-        def userCount = userSummaryPage.userCountField.getText().trim().toInteger()
+        userSummaryPage.waitForTextToBeNonEmpty(userSummaryPage.userCountFieldBy)
+        def userCount = userSummaryPage.el(userSummaryPage.userCountFieldBy).getText().trim().toInteger()
 
         then: "At least two users should appear on the user summary page"
         userCount >= 2
