@@ -39,8 +39,11 @@ public class RundeckPrincipal implements Principal, Serializable {
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (!(obj instanceof Principal)) return false;
-        Principal other = (Principal) obj;
+        // Grails 7: Changed to check class type to prevent deduplication with RundeckRole
+        // Previously only checked name, which caused RundeckRole[admin] to be deduplicated
+        // with RundeckPrincipal[admin] when both were added to the Subject's Principal Set
+        if (!(obj instanceof RundeckPrincipal)) return false;
+        RundeckPrincipal other = (RundeckPrincipal) obj;
         return name != null ? name.equals(other.getName()) : other.getName() == null;
     }
 

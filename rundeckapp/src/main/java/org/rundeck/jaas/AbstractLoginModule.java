@@ -132,11 +132,13 @@ public abstract class AbstractLoginModule implements LoginModule {
             this.userPrincipal = new RundeckPrincipal(username);
             this.rolePrincipals = new ArrayList<>();
             for (String roleName : userInfo.getRoleNames()) {
-                this.rolePrincipals.add(new RundeckRole(roleName));
+                RundeckRole role = new RundeckRole(roleName);
+                this.rolePrincipals.add(role);
+                debug("Prepared role principal: " + role + " for user: " + username);
             }
             
             setAuthenticated(true);
-            debug("Authentication succeeded for: " + username);
+            debug("Authentication succeeded for: " + username + " with " + rolePrincipals.size() + " role(s)");
             return true;
             
         } catch (IOException | UnsupportedCallbackException e) {
@@ -168,14 +170,35 @@ public abstract class AbstractLoginModule implements LoginModule {
         
         // Add principals to subject
         if (userPrincipal != null) {
-            subject.getPrincipals().add(userPrincipal);
+            boolean addedUser = subject.getPrincipals().add(userPrincipal);
+            debug("Added user principal: " + userPrincipal + " (success: " + addedUser + ")");
         }
         if (rolePrincipals != null) {
-            subject.getPrincipals().addAll(rolePrincipals);
+            debug("About to add " + rolePrincipals.size() + " role principal(s) to Subject");
+            for (Principal rolePrincipal : rolePrincipals) {
+                boolean added = subject.getPrincipals().add(rolePrincipal);
+                debug("  Adding role principal: " + rolePrincipal + " (success: " + added + ")");
+                if (!added) {
+                    // Check if it already exists in the set
+                    boolean exists = subject.getPrincipals().contains(rolePrincipal);
+                    debug("    Role principal NOT added. Already exists: " + exists);
+                    // Check what's actually in the Subject
+                    for (Principal p : subject.getPrincipals()) {
+                        if (p.getName().equals(rolePrincipal.getName())) {
+                            debug("    Found principal with same name: " + p + " (class: " + p.getClass().getName() + ")");
+                            debug("    Equals check: " + p.equals(rolePrincipal) + ", Hash: " + p.hashCode() + " vs " + rolePrincipal.hashCode());
+                        }
+                    }
+                }
+            }
         }
         
         setCommitted(true);
-        debug("Commit succeeded, added " + (rolePrincipals != null ? rolePrincipals.size() : 0) + " role(s)");
+        debug("Commit succeeded. Subject now has " + subject.getPrincipals().size() + " total principal(s)");
+        // List all principals in the Subject
+        for (Principal p : subject.getPrincipals()) {
+            debug("  Subject principal: " + p);
+        }
         return true;
     }
     

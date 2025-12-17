@@ -25,6 +25,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.core.session.SessionDestroyedEvent
 
+import javax.security.auth.Subject
 import javax.security.auth.login.LoginContext
 import javax.security.auth.login.LoginException
 import java.security.Principal
@@ -37,36 +38,6 @@ class RundeckJaasAuthenticationProvider extends DefaultJaasAuthenticationProvide
         // Removed Jetty JAASLoginService thread-local setup - no longer needed
         // with standard Java JAAS implementation
         return super.authenticate(auth)
-    }
-
-    /**
-     * Override to NOT filter out principals matching the username.
-     * 
-     * Spring Security's DefaultJaasAuthenticationProvider filters out principals
-     * that have the same name as the authenticated username. This causes issues
-     * when the username is "admin" and there's also an "admin" role.
-     * 
-     * Grails 7: This override ensures all role principals are processed,
-     * even if they match the username.
-     */
-    @Override
-    protected Set<GrantedAuthority> getAuthorityGranters(Set<Principal> principals) {
-        Set<GrantedAuthority> authorities = new HashSet<>()
-        
-        for (Principal principal : principals) {
-            // Process ALL principals through authority granters
-            // Don't filter based on username matching
-            for (AuthorityGranter granter : getAuthorityGranters()) {
-                Set<String> roles = granter.grant(principal)
-                if (roles != null) {
-                    for (String role : roles) {
-                        authorities.add(new SimpleGrantedAuthority(role))
-                    }
-                }
-            }
-        }
-        
-        return authorities
     }
 
     @Override
