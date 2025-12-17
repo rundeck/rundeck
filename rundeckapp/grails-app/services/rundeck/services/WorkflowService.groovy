@@ -61,6 +61,7 @@ class WorkflowService implements ApplicationContextAware{
     def ConfigurationService configurationService
     WorkflowStateDataLoader workflowStateDataLoader
     ExecutionUtilService executionUtilService
+    ScheduledExecutionService scheduledExecutionService
     static transactional = false
     def stateMapping = new StateMapping()
     /**
@@ -132,7 +133,7 @@ class WorkflowService implements ApplicationContextAware{
             if (step instanceof JobReferenceItem) {
 
                 JobReferenceItem jexec = (JobReferenceItem) step
-                ScheduledExecution se = findJob(jexec, project)
+                ScheduledExecution se = scheduledExecutionService.findJobFromJobReference(jexec, project)
                 if (!se) {
                     //skip
                     return
@@ -481,33 +482,5 @@ class WorkflowService implements ApplicationContextAware{
         }
 
         return result;
-    }
-
-
-    ScheduledExecution findJob(JobReferenceItem jobRef, String project) {
-        if (!jobRef.useName && jobRef.uuid) {
-            return ScheduledExecution.findByUuid(jobRef.uuid)
-        } else {
-            String jobIdentifier = jobRef.jobIdentifier
-            String jobName = jobIdentifier
-            String jobGroup = null
-
-            // Parse the jobIdentifier to extract jobGroup and jobName
-            // Format is: "groupPath/jobName" or just "jobName" if no group
-            if (jobIdentifier?.contains('/')) {
-                int lastSlash = jobIdentifier.lastIndexOf('/')
-                jobGroup = jobIdentifier.substring(0, lastSlash)
-                jobName = jobIdentifier.substring(lastSlash + 1)
-            } else {
-                jobName = jobIdentifier
-                jobGroup = null
-            }
-
-            return ScheduledExecution.findByProjectAndJobNameAndGroupPath(
-                    jobRef.project ?: project,
-                    jobName,
-                    jobGroup ?: null
-            )
-        }
     }
 }
