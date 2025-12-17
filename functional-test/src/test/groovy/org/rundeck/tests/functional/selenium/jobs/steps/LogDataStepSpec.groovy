@@ -25,6 +25,8 @@ class LogDataStepSpec extends SeleniumBase{
 
         when:
         ExecutionShowPage executionPage = jobPage.runJob(true)
+        // Grails 7: Wait for execution to complete before asserting status
+        executionPage.waitForFinalState()
 
         then:
         List<WebElement> logOutput = executionPage.getLogOutput()
