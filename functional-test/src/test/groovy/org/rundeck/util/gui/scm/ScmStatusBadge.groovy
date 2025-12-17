@@ -12,8 +12,9 @@ class ScmStatusBadge {
     final List iconClasses
     final String badgeText
     final String tooltips
-    // Use CSS selector targeting the stable .scm_status class instead of fragile XPath with positional selectors
-    static final By elementSelector = By.cssSelector("#jobInfo_ .vue-ui-socket .scm_status > span")
+    // Use CSS selector targeting the .scm_status span which contains the title attribute
+    // The structure is: <span class="scm_status" title="tooltip"><span><i>icon</i>text</span></span>
+    static final By elementSelector = By.cssSelector("#jobInfo_ .vue-ui-socket .scm_status")
     static final String loadingFromServerText = "Loading SCM Status..."
     static final String tooltipsAttribute = "title"
 
