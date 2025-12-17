@@ -19,12 +19,14 @@ import org.springframework.context.annotation.Configuration
  * Grails 7/Jetty 12 Migration Note: Converted from Handler.Wrapper to Servlet Filter
  * to avoid ServletApiRequest.getRequest() NPE issues. Servlet Filters operate at the
  * Jakarta EE layer after Request objects are fully initialized.
+ * 
+ * TEMPORARILY DISABLED to debug ServletApiRequest NPE issue
  */
-@Configuration
-class BanHttpMethodCustomizer {
+// @Configuration
+class BanHttpMethodCustomizer_DISABLED {
 
-    @Bean
-    FilterRegistrationBean<HttpMethodFilter> httpMethodFilter() {
+    // @Bean
+    FilterRegistrationBean<HttpMethodFilter> httpMethodFilter_DISABLED() {
         FilterRegistrationBean<HttpMethodFilter> registration = new FilterRegistrationBean<>()
         registration.setFilter(new HttpMethodFilter(['TRACE']))
         registration.addUrlPatterns('/*')
