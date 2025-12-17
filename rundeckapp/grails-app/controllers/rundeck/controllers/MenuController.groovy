@@ -1543,7 +1543,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
         String fileText = input.fileText
-        def validation = aclFileManagerService.validateYamlPolicy(AppACLContext.system(), input.upload ? 'uploaded-file' : input.id, fileText)
+        def validation = aclFileManagerService.validateYamlPolicy(AppACLContext.system(), input.upload ? 'uploaded-file' : input.id ?: 'editor', fileText)
         if (!validation.valid) {
             request.error = "Validation failed"
             return renderInvalid(validation: validation)
