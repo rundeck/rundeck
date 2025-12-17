@@ -27,14 +27,13 @@ build:
 logging:
     level:
         root: INFO
-        # Grails 7: Spring Security debug logging (enabled for auth debugging)
-        org.springframework.security: TRACE
-        org.springframework.security.web: TRACE
-        grails.plugin.springsecurity: DEBUG
-        # JAAS authentication debugging
-        org.springframework.security.authentication.jaas: TRACE
-        com.dtolabs.rundeck.jaas: TRACE
-        # Hikari connection pool debugging (for Selenium test connection pool issues)
+        # Grails 7: Auth is working, reduced logging
+        org.springframework.security: INFO
+        grails.plugin.springsecurity: INFO
+        # Keep JAAS at DEBUG for troubleshooting if needed
+        org.springframework.security.authentication.jaas: DEBUG
+        com.dtolabs.rundeck.jaas: DEBUG
+        # Keep Hikari at DEBUG for connection pool monitoring
         com.zaxxer.hikari: DEBUG
         com.zaxxer.hikari.pool.HikariPool: DEBUG
 
