@@ -46,15 +46,6 @@ class ExecutionReferenceLifecycleComponentHandler implements ExecutionLifecycleC
 
     }
 
-    @Override
-    Optional<ExecutionLifecycleStatus> beforeJobStarts(final StepExecutionContext executionContext, WorkflowExecutionItem item, WorkflowData workflowData) throws ExecutionLifecycleComponentException {
-        Optional.ofNullable executionLifecycleComponentService.handleEvent(
-                JobExecutionEventImpl.beforeRun(executionContext, executionReference, item,workflowData),
-                ExecutionLifecycleComponentService.EventType.BEFORE_RUN,
-                components
-        )
-
-    }
 
     @Override
     Optional<ExecutionLifecycleStatus> afterJobEnds(final StepExecutionContext executionContext, final JobEventResult result)

@@ -23,6 +23,8 @@
 */
 package com.dtolabs.rundeck.execution;
 
+import com.dtolabs.rundeck.core.execution.PluginNodeStepExecutionItemImpl;
+import com.dtolabs.rundeck.core.execution.PluginStepExecutionItemImpl;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.jobs.JobReferenceItem;
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
@@ -202,12 +204,10 @@ public class ExecutionItemFactory {
             final String type,
             final Map configuration,
             final boolean keepgoingOnSuccess,
-            final StepExecutionItem handler,
-            final String label,
-            final String runnerNode
+            final StepExecutionItem handler, final String label
     )
     {
-        return createPluginStepItem(type, configuration, keepgoingOnSuccess, handler, label, runnerNode,null);
+        return createPluginStepItem(type, configuration, keepgoingOnSuccess, handler, label, null);
     }
 
     /**
@@ -219,7 +219,6 @@ public class ExecutionItemFactory {
             final boolean keepgoingOnSuccess,
             final StepExecutionItem handler,
             final String label,
-            final String runnerNode,
             final List<PluginConfiguration> filterConfigurations
     )
     {
@@ -231,7 +230,7 @@ public class ExecutionItemFactory {
                 handler,
                 label,
                 filterConfigurations,
-                runnerNode
+                null
         );
     }
 }

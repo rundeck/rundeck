@@ -83,6 +83,7 @@ import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePlu
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
 import com.dtolabs.rundeck.server.plugins.notification.DummyEmailNotificationPlugin
 import com.dtolabs.rundeck.server.plugins.notification.DummyWebhookNotificationPlugin
+import com.dtolabs.rundeck.server.plugins.runner.SubWorkflowWorkflowStepExecutor
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePlugin
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
@@ -755,7 +756,8 @@ beans={
     [
             //Job reference plugins
             JobReferenceNodeStepExecutor,
-            JobReferenceStepExecutor
+            JobReferenceStepExecutor,
+            SubWorkflowWorkflowStepExecutor
     ].each {
         "rundeckAppPlugin_${it.simpleName}"(JobReferencePluginFactoryBean, it)
     }
