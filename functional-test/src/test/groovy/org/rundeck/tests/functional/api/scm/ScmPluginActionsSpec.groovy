@@ -46,7 +46,8 @@ class ScmPluginActionsSpec extends ScmBaseContainer {
             return scmClient.callSetupIntegration(request, 200..599) // Accept all codes for retry logic
         }
         def successVerify = { response ->
-            return response?.successful && response?.response?.success
+            // Grails 7: RundeckResponse doesn't have 'successful' property, check response != null instead
+            return response?.response != null && response?.response?.success
         }
         
         try {
