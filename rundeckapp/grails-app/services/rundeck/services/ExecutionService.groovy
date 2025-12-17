@@ -1167,7 +1167,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             )
 
             if (executionLifecyclePluginExecHandler != null) {
-                ExecutionLifecycleStatus executionLifecycleStatus = executionLifecyclePluginExecHandler.beforeJobStarts(createInitContext, item).get()
+
+                ExecutionLifecycleStatus executionLifecycleStatus = executionLifecyclePluginExecHandler.beforeJobStarts(createInitContext, item).orElse(null)
                 if(executionLifecycleStatus?.useNewValues){
                     createInitContext = executionLifecycleStatus.getExecutionContext()?:createInitContext
 

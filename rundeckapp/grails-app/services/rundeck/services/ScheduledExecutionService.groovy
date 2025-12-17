@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
+import com.dtolabs.rundeck.core.jobs.JobReferenceItem
 import com.dtolabs.rundeck.core.utils.ResourceAcceptanceTimeoutException
 import com.dtolabs.rundeck.core.utils.WaitUtils
 import org.rundeck.app.components.jobs.stats.JobStatsProvider
@@ -4991,6 +4992,33 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             return statsContent.execCount
         }
         return 0;
+    }
+
+    ScheduledExecution findJobFromJobReference(JobReferenceItem jobRef, String project) {
+        if (!jobRef.useName && jobRef.uuid) {
+            return ScheduledExecution.findByUuid(jobRef.uuid)
+        } else {
+            String jobIdentifier = jobRef.jobIdentifier
+            String jobName = jobIdentifier
+            String jobGroup = null
+
+            // Parse the jobIdentifier to extract jobGroup and jobName
+            // Format is: "groupPath/jobName" or just "jobName" if no group
+            if (jobIdentifier?.contains('/')) {
+                int lastSlash = jobIdentifier.lastIndexOf('/')
+                jobGroup = jobIdentifier.substring(0, lastSlash)
+                jobName = jobIdentifier.substring(lastSlash + 1)
+            } else {
+                jobName = jobIdentifier
+                jobGroup = null
+            }
+
+            return ScheduledExecution.findByProjectAndJobNameAndGroupPath(
+                    jobRef.project ?: project,
+                    jobName,
+                    jobGroup ?: null
+            )
+        }
     }
 
     /**
