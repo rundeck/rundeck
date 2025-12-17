@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
+import com.dtolabs.rundeck.util.JsonUtil
 import grails.converters.JSON
 import groovy.transform.PackageScope
 import io.micronaut.http.MediaType
@@ -120,7 +121,7 @@ so suppling the `user` field will have no effect. Also, specifying an `authToken
     )
     def save() {
         // Grails 7: Parse body using Jackson instead of request.JSON
-        def jsonBody = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
+        def jsonBody = JsonUtil.parseRequestBody(request)
         String project = jsonBody?.project
         if(!project){
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
