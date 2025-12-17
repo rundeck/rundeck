@@ -286,6 +286,8 @@ dependencies {
     implementation 'org.dom4j:dom4j:2.1.3'
     implementation ("org.bouncycastle:bcprov-jdk18on:${bouncyCastleVersion}")
     implementation ("org.bouncycastle:bcpg-jdk18on:${bouncyCastleVersion}")
+    // Grails 7: BC 1.80 requires bcutil for CryptlibObjectIdentifiers
+    implementation ("org.bouncycastle:bcutil-jdk18on:${bouncyCastleVersion}")
     implementation ("org.apache.grails:grails-console") {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
