@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
+import com.dtolabs.rundeck.core.jobs.SubWorkflowExecutionItem
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
 import org.hibernate.sql.JoinType
@@ -1166,19 +1167,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             )
 
             if (executionLifecyclePluginExecHandler != null) {
-                ExecutionLifecycleStatus executionLifecycleStatus = executionLifecyclePluginExecHandler.beforeJobStarts(createInitContext, item, execution.workflow).get()
+                ExecutionLifecycleStatus executionLifecycleStatus = executionLifecyclePluginExecHandler.beforeJobStarts(createInitContext, item).get()
                 if(executionLifecycleStatus?.useNewValues){
                     createInitContext = executionLifecycleStatus.getExecutionContext()?:createInitContext
 
                     if(executionLifecycleStatus?.isUpdateWorkflowDataValues()){
-                        execution.workflow = executionLifecycleStatus.getWorkflowData()
-                        item = executionUtilService.createExecutionItemForWorkflow(execution.workflow)
+                        item = executionLifecycleStatus.workflow
                     }
                 }
             }
 
             WorkflowExecutionListener execStateListener = workflowService.createWorkflowStateListenerForExecution(
                     execution,
+                    item.workflow,
                     framework,
                     authContext,
                     jobcontext,
@@ -3416,17 +3417,25 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     StepExecutionResult executeWorkflowStep(StepExecutionContext executionContext, StepExecutionItem executionItem) throws StepException{
-        if (!(executionItem instanceof JobExecutionItem)) {
-            throw new IllegalArgumentException("Unsupported item type: " + executionItem.getClass().getName());
+        if (executionItem instanceof JobExecutionItem) {
+
+            def createFailure = { FailureReason reason, String msg ->
+                return new StepExecutionResultImpl(null, reason, msg)
+            }
+            def createSuccess = {
+                return new StepExecutionResultImpl()
+            }
+            JobExecutionItem jitem = (JobExecutionItem) executionItem
+            return runJobRefExecutionItem(executionContext, jitem, createFailure, createSuccess)
         }
-        def createFailure = { FailureReason reason, String msg ->
-            return new StepExecutionResultImpl(null, reason, msg)
+
+        if (executionItem instanceof SubWorkflowExecutionItem) {
+
+            SubWorkflowExecutionItem runnerExecutionItem = (SubWorkflowExecutionItem) executionItem
+            return runRunnerExecutionItem(executionContext, runnerExecutionItem)
+
         }
-        def createSuccess = {
-            return new StepExecutionResultImpl()
-        }
-        JobExecutionItem jitem = (JobExecutionItem) executionItem
-        return runJobRefExecutionItem(executionContext, jitem, createFailure, createSuccess)
+        throw new IllegalArgumentException("Unsupported item type: " + executionItem.getClass().getName())
     }
 
     ///////////////
@@ -4039,6 +4048,83 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         return result
+    }
+
+    /**
+     * Execute a runner execution item by triggering its subworkflow
+     * @param executionContext the execution context
+     * @param runnerExecutionItem the runner execution item containing the subworkflow
+     * @return StepExecutionResult
+     */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    private StepExecutionResult runRunnerExecutionItem(
+            StepExecutionContext executionContext,
+            SubWorkflowExecutionItem runnerExecutionItem
+    ) {
+        // Get the subworkflow from the runner execution item
+        WorkflowExecutionItem workflowItem = runnerExecutionItem.getSubWorkflow()
+
+        if (!workflowItem) {
+            def msg = "Runner execution item does not contain a subworkflow"
+            executionContext.getExecutionListener().log(0, msg)
+            return new StepExecutionResultImpl(null, StepFailureReason.ConfigurationFailure, msg)
+        }
+
+        try {
+
+            // Start timing before the execution
+            long startTime = System.currentTimeMillis()
+
+            def wresult = metricService.withTimer(this.class.name, 'runRunnerWorkflow') {
+                // Get the workflow execution service
+                WorkflowExecutionService wservice = executionContext.getFramework().getWorkflowExecutionService()
+
+                // Create and start the workflow execution thread
+                Thread thread = new WorkflowExecutionServiceThread(
+                        wservice,
+                        workflowItem,
+                        executionContext,
+                        null,
+                        null
+                )
+
+                thread.start()
+
+                // Wait for the thread to complete (no timeout for runner workflows)
+                return executionUtilService.runRefJobWithTimer(thread, startTime, false, 0)
+            }
+
+            // Process result after the workflow completes
+            def result
+            if (!wresult.result || !wresult.result.success || wresult.interrupt) {
+                result = new StepExecutionResultImpl(
+                        null,
+                        StepFailureReason.ExecutionFailure,
+                        "Runner workflow execution failed"
+                )
+            } else {
+                result = new StepExecutionResultImpl()
+
+                // Export shared context data if available
+                if (wresult.result instanceof WorkflowExecutionResult) {
+                    Map<String, String> data = ((WorkflowExecutionResult) wresult.result)?.getSharedContext()?.consolidate()?.getData(ContextView.global())
+                    if (data?.get("export")) {
+                        executionContext.getOutputContext().addOutput(ContextView.global(), "export", data.get("export"))
+                    }
+                }
+
+                // Set the source result to preserve the workflow execution details
+                result.sourceResult = wresult.result
+            }
+
+            return result
+
+        } catch (Exception e) {
+            def msg = "Error executing runner workflow: ${e.message}"
+            executionContext.getExecutionListener().log(0, msg)
+            log.error(msg, e)
+            return new StepExecutionResultImpl(null, StepFailureReason.ExecutionFailure, msg)
+        }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

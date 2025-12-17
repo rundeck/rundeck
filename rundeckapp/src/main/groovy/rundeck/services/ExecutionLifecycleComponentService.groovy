@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.ExecutionLifecycleComponentException
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponent
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
 import com.dtolabs.rundeck.core.jobs.IExecutionLifecycleComponentService
@@ -183,13 +184,13 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
             )
 
             // Use updated workflowData from status if updateWorkflowDataValues is true
-            WorkflowData workflowDataToUse = (status?.updateWorkflowDataValues && status?.workflowData) ?
-                                              status.workflowData :
-                                              jobEvent.workflowData
+            WorkflowExecutionItem workflowDataToUse = (status?.updateWorkflowDataValues && status?.workflow) ?
+                                              status.workflow :
+                                              jobEvent.workflow
 
             return jobEvent.result != null ?
                    JobExecutionEventImpl.afterRun(newContext, jobEvent.execution, jobEvent.result) :
-                   JobExecutionEventImpl.beforeRun(newContext, jobEvent.execution, jobEvent.workflow, workflowDataToUse)
+                   JobExecutionEventImpl.beforeRun(newContext, jobEvent.execution, workflowDataToUse)
         } else {
             throw new IllegalArgumentException("Unexpected type")
         }
@@ -208,14 +209,14 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
             ExecutionContextImpl newContext = mergeExecutionEventContext(jobEvent.executionContext, status)
 
             // Use updated workflowData from status if updateWorkflowDataValues is true, otherwise use original
-            WorkflowData workflowDataToUse = (status?.updateWorkflowDataValues && status?.workflowData) ?
-                                              status.workflowData :
-                                              jobEvent?.workflowData
+            WorkflowExecutionItem workflowDataToUse = (status?.updateWorkflowDataValues && status?.workflow) ?
+                                              status.workflow :
+                                              jobEvent?.workflow
 
             return new ExecutionLifecycleStatusImpl(successful: success,
                     executionContext: newContext,
                     useNewValues: useNewValues,
-                    workflowData: workflowDataToUse,
+                    workflow: workflowDataToUse,
                     updateWorkflowDataValues: status?.updateWorkflowDataValues
             )
         } else {
@@ -386,6 +387,6 @@ class ExecutionLifecycleStatusImpl implements ExecutionLifecycleStatus {
     boolean successful
     boolean useNewValues
     StepExecutionContext executionContext
-    WorkflowData  workflowData
+    WorkflowExecutionItem  workflow
     boolean updateWorkflowDataValues
 }

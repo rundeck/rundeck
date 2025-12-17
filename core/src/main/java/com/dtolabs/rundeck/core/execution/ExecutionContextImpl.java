@@ -364,6 +364,10 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             newList.addAll(other.ctx.componentList);
             ctx.componentList = newList;
 
+            //step context and number not merged
+            ctx.stepContext = other.ctx.stepContext;
+            ctx.stepNumber = other.ctx.stepNumber;
+
             return this;
         }
 

@@ -17,7 +17,7 @@
 package com.dtolabs.rundeck.core.jobs;
 
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import org.rundeck.app.data.model.v1.job.workflow.WorkflowData;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
 
 /**
  * Status result returned from execution lifecycle event handlers
@@ -38,7 +38,7 @@ public interface ExecutionLifecycleStatus extends LifecycleStatus{
     }
 
 
-    default WorkflowData getWorkflowData() {
+    default WorkflowExecutionItem getWorkflow() {
         return null;
     }
 }

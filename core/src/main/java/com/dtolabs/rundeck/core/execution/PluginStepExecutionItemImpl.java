@@ -21,11 +21,10 @@
 * Created: 11/13/12 2:30 PM
 * 
 */
-package com.dtolabs.rundeck.execution;
+package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.NodeEntryImpl;
-import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
 
 import java.util.*;

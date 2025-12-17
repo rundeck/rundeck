@@ -5,7 +5,6 @@ import com.dtolabs.rundeck.core.execution.ExecutionLogger;
 import com.dtolabs.rundeck.core.execution.ExecutionReference;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
-import org.rundeck.app.data.model.v1.job.workflow.WorkflowData;
 
 import java.util.Map;
 
@@ -71,11 +70,5 @@ public interface JobExecutionEvent extends JobEvent {
      * @return
      */
     JobEventResult getResult();
-
-
-    /*
-     * @return details of the workflow WorkflowData format
-     */
-    WorkflowData getWorkflowData();
 
 }

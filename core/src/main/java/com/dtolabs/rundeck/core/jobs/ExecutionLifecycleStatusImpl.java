@@ -16,7 +16,9 @@
 
 package com.dtolabs.rundeck.core.jobs;
 
+import com.dtolabs.rundeck.core.execution.workflow.IWorkflow;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
 import lombok.Builder;
 import lombok.Data;
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData;
@@ -32,5 +34,5 @@ public class ExecutionLifecycleStatusImpl
     private final boolean useNewValues;
     private final boolean updateWorkflowDataValues;
     private final StepExecutionContext executionContext;
-    private final WorkflowData workflowData;
+    private final WorkflowExecutionItem workflow;
 }
