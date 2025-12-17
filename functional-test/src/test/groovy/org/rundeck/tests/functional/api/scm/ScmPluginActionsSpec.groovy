@@ -50,7 +50,8 @@ class ScmPluginActionsSpec extends ScmBaseContainer {
         }
         
         try {
-            WaitUtils.waitFor(setupCall, successVerify, WaitingTime.EXCESSIVE)
+            // Grails 7: Increased timeout from 60s to 120s for Gitea filesystem race condition
+            WaitUtils.waitFor(setupCall, successVerify, WaitingTime.XTRA_EXCESSIVE)
             return true
         } catch (Exception e) {
             log.warn("SCM setup failed after retries: ${e.message}", e)
