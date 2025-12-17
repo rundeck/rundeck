@@ -138,6 +138,15 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
         // Disable Spring Cloud Bootstrap - incompatible with Spring Boot 3.x
         System.setProperty("spring.cloud.bootstrap.enabled", "false")
         
+        // Grails 7: Register BouncyCastle security provider for Jasypt encryption
+        // BC provider required for storage encryption (keys, projects) via Jasypt plugin
+        try {
+            java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider())
+            log.debug("BouncyCastle security provider registered")
+        } catch (Exception e) {
+            log.warn("Failed to register BouncyCastle security provider: ${e.message}", e)
+        }
+        
         Application.startArgs = args
         boolean error = runPrebootstrap()
         if(error) {
