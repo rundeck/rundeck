@@ -125,7 +125,11 @@ public class ZipResourceLoader implements PluginResourceLoader {
      * Resolve asset path via manifest.properties for Grails 7 hashed filenames.
      * Falls back to original path if manifest not found or path not in manifest.
      * 
-     * @param path Original path from plugin.yaml (e.g., "common.js")
+     * Handles subdirectory paths: plugin.yaml may reference "js/common.js" while
+     * manifest.properties contains "common.js=common-HASH.js". Asset-pipeline puts
+     * hashed files at the root of resources/, not in subdirectories.
+     * 
+     * @param path Original path from plugin.yaml (e.g., "js/common.js" or "common.js")
      * @return Resolved path (e.g., "common-HASH.js") or original path if not in manifest
      */
     private String resolveAssetPath(String path) {
@@ -142,9 +146,26 @@ public class ZipResourceLoader implements PluginResourceLoader {
             }
         }
         
-        // Consult manifest for hashed filename mapping
+        // Try direct lookup first (for backwards compatibility with pre-Grails 7 plugins)
         String resolved = assetManifest.getProperty(path);
-        return (resolved != null) ? resolved : path;
+        if (resolved != null) {
+            return resolved;
+        }
+        
+        // Try stripping subdirectory for Grails 7 asset-pipeline manifests
+        // Example: "js/common.js" -> lookup "common.js" in manifest -> "common-HASH.js"
+        // Note: Asset-pipeline places hashed files at ROOT of resources/, so we DON'T re-add subdir
+        int lastSlash = path.lastIndexOf('/');
+        if (lastSlash >= 0) {
+            String filename = path.substring(lastSlash + 1); // "common.js"
+            String hashedFilename = assetManifest.getProperty(filename);
+            if (hashedFilename != null) {
+                return hashedFilename; // "common-HASH.js" (at root, no subdir prefix)
+            }
+        }
+        
+        // Fallback: return original path (backwards compatible for non-hashed assets)
+        return path;
     }
 
     /**
