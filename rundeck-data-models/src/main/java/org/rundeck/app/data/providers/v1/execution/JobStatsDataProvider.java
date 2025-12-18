@@ -19,11 +19,13 @@ import org.rundeck.app.data.model.v1.execution.RdJobStats;
 import org.rundeck.app.data.model.v1.execution.dto.StatsContent;
 import org.rundeck.app.data.providers.v1.DataProvider;
 
+import java.util.Date;
+
 public interface JobStatsDataProvider extends DataProvider {
 
     RdJobStats createJobStats(String jobUuid);
     void deleteByJobUuid(String jobUuid);
-    Boolean updateJobStats(String jobUuid, Long eId, long time);
+    Boolean updateJobStats(String jobUuid, Long eId, long time, String status, Date dateCompleted);
     Boolean updateJobRefStats(String jobUuid, long time);
     StatsContent getStatsContent(String jobUuid);
 }
