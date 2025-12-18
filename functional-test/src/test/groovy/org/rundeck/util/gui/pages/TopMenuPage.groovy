@@ -15,6 +15,7 @@ class TopMenuPage extends BasePage {
     By settingsButtonBy = By.id("appAdmin")
     By systemConfigurationMenuBy = By.linkText("System Configuration")
     By appUserButtonBy = By.id("appUser")
+    By appUserMenuDropdownBy = By.cssSelector("#appUser .dropdown-menu")
     By logOutMenuBy = By.linkText("Logout")
     By divHomeIconTag = By.cssSelector("#nav-rd-home i")
 
@@ -38,6 +39,8 @@ class TopMenuPage extends BasePage {
 
     void logOut() {
         openAppUserMenu()
+        // Wait for dropdown menu to be visible before clicking items inside it
+        waitForElementVisible appUserMenuDropdownBy
         byAndWait logOutMenuBy click()
     }
 
@@ -47,6 +50,8 @@ class TopMenuPage extends BasePage {
 
     void navigateToUserProfile() {
         openAppUserMenu()
+        // Wait for dropdown menu to be visible before clicking items inside it
+        waitForElementVisible appUserMenuDropdownBy
         byAndWaitClickable(By.linkText("Profile")) click()
     }
 }
