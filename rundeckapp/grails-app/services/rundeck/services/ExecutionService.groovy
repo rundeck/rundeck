@@ -3431,10 +3431,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         if (executionItem instanceof SubWorkflowExecutionItem) {
-
             SubWorkflowExecutionItem runnerExecutionItem = (SubWorkflowExecutionItem) executionItem
-            return runRunnerExecutionItem(executionContext, runnerExecutionItem)
-
+            return runSubworkflowExecutionItem(executionContext, runnerExecutionItem)
         }
         throw new IllegalArgumentException("Unsupported item type: " + executionItem.getClass().getName())
     }
@@ -3955,6 +3953,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                    executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(se) :
                                    null
             def executionLifecyclePluginExecHandler = executionLifecycleComponentService.getExecutionHandler(executionLifecyclePluginConfigs, executionReference)
+
+            //Execute beforeJobStarts lifecycle for the job reference step
+            if (executionLifecyclePluginExecHandler != null) {
+                StepExecutionContext newExecutionContext =
+                        executionLifecyclePluginExecHandler.beforeJobStarts(newContext, newExecItem)
+                                .map(ExecutionLifecycleStatus::getExecutionContext)
+                                .orElse(null);
+                newContext = newExecutionContext != null? newExecutionContext: newContext;
+            }
+
             Thread thread = new WorkflowExecutionServiceThread(
                     wservice,
                     newExecItem,
@@ -4052,13 +4060,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     * Execute a runner execution item by triggering its subworkflow
+     * Execute a subworkflow from the Step (just for Workflow Steps)
      * @param executionContext the execution context
      * @param runnerExecutionItem the runner execution item containing the subworkflow
      * @return StepExecutionResult
      */
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    private StepExecutionResult runRunnerExecutionItem(
+    private StepExecutionResult runSubworkflowExecutionItem(
             StepExecutionContext executionContext,
             SubWorkflowExecutionItem runnerExecutionItem
     ) {
