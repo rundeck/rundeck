@@ -130,6 +130,8 @@ class WorkflowService implements ApplicationContextAware{
         Map<Integer, MutableWorkflowStepStateImpl> substeps = [:]
         wf.commands.eachWithIndex { StepExecutionItem step, int ndx ->
             def stepId= StateUtils.stepIdentifierAppend(parentId, StateUtils.stepIdentifier(ndx + 1))
+            boolean isNodeStep = false
+
             if (step instanceof JobReferenceItem) {
 
                 JobReferenceItem jexec = (JobReferenceItem) step
@@ -166,9 +168,12 @@ class WorkflowService implements ApplicationContextAware{
 
                 WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(se.workflow)
 
+                isNodeStep = jexec.nodeStep
+
                 substeps[ndx] = new MutableWorkflowStepStateImpl(stepId,
                         createStateForWorkflow(item.workflow, project,frameworkNodeName,newContext,secureOptions))
             } else if (step instanceof SubWorkflowExecutionItem) {
+                // this just apply for Workflow Step
                 SubWorkflowExecutionItem rstep = (SubWorkflowExecutionItem) step
                 substeps[ndx] = new MutableWorkflowStepStateImpl(stepId,
                         createStateForWorkflow(rstep.subWorkflow.workflow, project,frameworkNodeName,parent,secureOptions))
@@ -178,13 +183,12 @@ class WorkflowService implements ApplicationContextAware{
                     mutableStep.runnerNode = step.getRunner().nodename
                 }
                 substeps[ndx] = mutableStep
-            }
 
-            boolean isNodeStep = false
-            if(step instanceof NodeStepExecutionItem){
-                isNodeStep = true
+                //check if node step type
+                if(!isNodeStep && step instanceof NodeStepExecutionItem){
+                    isNodeStep = true
+                }
             }
-
             substeps[ndx].nodeStep = isNodeStep
         }
         return new MutableWorkflowStateImpl(parent ? (parent.nodes.nodeNames as List) : null, wf.commands.size(),
