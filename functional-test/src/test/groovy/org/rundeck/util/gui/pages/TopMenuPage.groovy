@@ -45,7 +45,7 @@ class TopMenuPage extends BasePage {
     }
 
     void clickHomeButton(){
-        byAndWaitClickable divHomeIconTag click()
+        clickElementSafely(divHomeIconTag)
     }
 
     void navigateToUserProfile() {

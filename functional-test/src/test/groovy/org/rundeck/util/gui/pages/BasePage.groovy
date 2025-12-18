@@ -198,6 +198,24 @@ abstract class BasePage {
         el locator
     }
 
+    /**
+     * Safely clicks an element by re-finding it immediately before clicking.
+     * This prevents StaleElementReferenceException by ensuring we always use
+     * a fresh element reference.
+     *
+     * @param locator The By locator to find and click the element
+     */
+    void clickElementSafely(By locator) {
+        waitForElementToBeClickable(locator)
+        try {
+            el(locator).click()
+        } catch (StaleElementReferenceException e) {
+            // Re-find and click if element became stale
+            waitForElementToBeClickable(locator)
+            el(locator).click()
+        }
+    }
+
     WebDriver getDriver() {
         context.driver
     }
