@@ -35,6 +35,7 @@ public class ZipResourceLoader implements PluginResourceLoader {
     List<String> resourcesList;
     String resourcesBasedir;
     List<String> basedirListing;
+    Properties assetManifest; // Grails 7: asset-pipeline manifest for hashed filenames
 
     public ZipResourceLoader(
             final File cacheDir,
@@ -104,15 +105,46 @@ public class ZipResourceLoader implements PluginResourceLoader {
                     zipFile.getAbsolutePath()
             ));
         }
-        File resfile = new File(cacheDir, path);
+        
+        // Grails 7: Try resolving path via asset manifest for hashed filenames
+        String resolvedPath = resolveAssetPath(path);
+        
+        File resfile = new File(cacheDir, resolvedPath);
         if (!resfile.isFile()) {
             throw new PluginException(String.format(
-                    "Resource path %s did not exist in the file: %s",
+                    "Resource path %s (resolved to %s) did not exist in the file: %s",
                     path,
+                    resolvedPath,
                     zipFile.getAbsolutePath()
             ));
         }
         return new FileInputStream(resfile);
+    }
+    
+    /**
+     * Resolve asset path via manifest.properties for Grails 7 hashed filenames.
+     * Falls back to original path if manifest not found or path not in manifest.
+     * 
+     * @param path Original path from plugin.yaml (e.g., "common.js")
+     * @return Resolved path (e.g., "common-HASH.js") or original path if not in manifest
+     */
+    private String resolveAssetPath(String path) {
+        // Load manifest on first use (lazy initialization)
+        if (assetManifest == null) {
+            assetManifest = new Properties();
+            File manifestFile = new File(cacheDir, "manifest.properties");
+            if (manifestFile.isFile()) {
+                try (FileInputStream fis = new FileInputStream(manifestFile)) {
+                    assetManifest.load(fis);
+                } catch (IOException e) {
+                    // Manifest load failed, continue without it (backwards compatible)
+                }
+            }
+        }
+        
+        // Consult manifest for hashed filename mapping
+        String resolved = assetManifest.getProperty(path);
+        return (resolved != null) ? resolved : path;
     }
 
     /**
