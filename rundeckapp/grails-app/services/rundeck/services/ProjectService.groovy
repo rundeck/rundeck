@@ -1496,7 +1496,28 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             try{
                 component.afterProjectCreate(project)
             }catch (Exception e){
-                log.error("error afterProjectCreate component ${key}: ${e.message}")
+                // Provide specific guidance for storage/encryption errors
+                def errorMessage = e.message ?: "Unknown error"
+                def exceptionName = e.class.simpleName
+                
+                if (exceptionName.contains("Encryption") || 
+                    exceptionName.contains("Storage") ||
+                    errorMessage.contains("encryption") ||
+                    errorMessage.contains("Encryption")) {
+                    
+                    log.error("Storage/encryption error for component ${key}: ${errorMessage}. " +
+                             "This often indicates encryption configuration issues. " +
+                             "Check rundeck-config.properties for storage encryption settings.", e)
+                    
+                    throw new RuntimeException(
+                        "Failed to initialize storage for new project. ${errorMessage} " +
+                        "If using encryption, verify your encryption passwords are configured correctly in rundeck-config.properties.",
+                        e
+                    )
+                } else {
+                    log.error("Error afterProjectCreate component ${key}: ${errorMessage}", e)
+                    throw new RuntimeException("Failed to initialize ${key}: ${errorMessage}", e)
+                }
             }
         }
     }

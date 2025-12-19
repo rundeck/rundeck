@@ -400,11 +400,44 @@ public class JasyptEncryptionConverterPlugin implements StorageConverterPlugin {
     }
 
     private HasInputStream encrypt(final HasInputStream hasInputStream) {
-        return new EncryptStream(hasInputStream, getEncryptor());
+        try {
+            return new EncryptStream(hasInputStream, getEncryptor());
+        } catch (Exception e) {
+            String errorMsg = "Encryption failed. This usually means the encryption password is not set, " +
+                "BouncyCastle is not available, or the configured algorithm is incompatible. " +
+                "Check rundeck-config.properties for encryption settings: " +
+                "rundeck.storage.converter.1.config.password (for keys) and " +
+                "rundeck.config.storage.converter.1.config.password (for project config).";
+            
+            if (algorithm != null) {
+                errorMsg += " Algorithm: " + algorithm + ".";
+            }
+            if (provider != null) {
+                errorMsg += " Provider: " + provider + ".";
+            }
+            
+            logger.error(errorMsg, e);
+            throw new RuntimeException(errorMsg, e);
+        }
     }
 
     private HasInputStream decrypt(final HasInputStream hasInputStream) {
-        return new DecryptStream(hasInputStream, getEncryptor());
+        try {
+            return new DecryptStream(hasInputStream, getEncryptor());
+        } catch (Exception e) {
+            String errorMsg = "Decryption failed. This usually means the wrong encryption password was provided, " +
+                "or the data was encrypted with a different algorithm/provider.";
+            
+            if (algorithm != null) {
+                errorMsg += " Algorithm: " + algorithm + ".";
+            }
+            if (provider != null) {
+                errorMsg += " Provider: " + provider + ".";
+            }
+            
+            logger.error(errorMsg, e);
+            throw new RuntimeException(errorMsg, e);
+        }
     }
 
 
