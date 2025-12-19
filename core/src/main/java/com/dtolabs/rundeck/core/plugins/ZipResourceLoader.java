@@ -110,6 +110,7 @@ public class ZipResourceLoader implements PluginResourceLoader {
         String resolvedPath = resolveAssetPath(path);
         
         File resfile = new File(cacheDir, resolvedPath);
+        
         if (!resfile.isFile()) {
             throw new PluginException(String.format(
                     "Resource path %s (resolved to %s) did not exist in the file: %s",

@@ -137,11 +137,13 @@ public class JasyptEncryptionConverterPlugin implements StorageConverterPlugin {
 
     private volatile StandardPBEByteEncryptor standardPBEByteEncryptor = null;
 
+    public JasyptEncryptionConverterPlugin() {
+    }
+
     private StandardPBEByteEncryptor getEncryptor() {
         if (null == standardPBEByteEncryptor) {
             synchronized (this) {
                 if (null == standardPBEByteEncryptor) {
-                    logger.debug("JasyptEncryptionConverterPlugin begin setup...");
                     EnvironmentPBEConfig config = new EnvironmentPBEConfig();
 
                     addPasswordValue(config, password, passwordEnvVarName, passwordSysPropName, true, "password");
@@ -223,20 +225,18 @@ public class JasyptEncryptionConverterPlugin implements StorageConverterPlugin {
     )
     {
         if (notBlank(directValue)) {
-            logger.debug("JasyptEncryptionConverterPlugin use value for " + description);
             config.setPassword(directValue);
         } else if (notBlank(envVarValue)) {
-            logger.debug("JasyptEncryptionConverterPlugin use env var for " + description);
             config.setPasswordEnvName(envVarValue);
         } else if (notBlank(sysPropValue)) {
             config.setPasswordSysPropertyName(sysPropValue);
-            logger.debug("JasyptEncryptionConverterPlugin use sys prop for " + description);
             System.clearProperty(sysPropValue);
         } else if (required) {
             throw new IllegalStateException(
                     description + ", " + description + "EnvVarName, or " + description + "SysPropName is required"
             );
         } else {
+            logger.info("  No value provided, not required");
             return false;
         }
         return true;

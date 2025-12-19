@@ -142,9 +142,9 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
         // BC provider required for storage encryption (keys, projects) via Jasypt plugin
         try {
             java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider())
-            log.debug("BouncyCastle security provider registered")
         } catch (Exception e) {
-            log.warn("Failed to register BouncyCastle security provider: ${e.message}", e)
+            System.err.println "CRITICAL: Failed to register BouncyCastle security provider: ${e.message}"
+            e.printStackTrace()
         }
         
         Application.startArgs = args
@@ -201,7 +201,14 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
         environment.propertySources.addFirst(
                 new PropertiesPropertySource("hardcoded-rundeck-props", hardCodedRundeckConfigs)
         )
-        environment.propertySources.addFirst(ReloadableRundeckPropertySource.getRundeckPropertySourceInstance())
+        println "=== Application.groovy: About to add ReloadableRundeckPropertySource to environment ==="
+        def propertySource = ReloadableRundeckPropertySource.getRundeckPropertySourceInstance()
+        environment.propertySources.addFirst(propertySource)
+        println "=== Application.groovy: ReloadableRundeckPropertySource added to environment ==="
+        println "  Property source name: ${propertySource.name}"
+        println "  Testing if password is accessible from environment:"
+        println "    rundeck.config.storage.converter.1.config.password = ${environment.getProperty('rundeck.config.storage.converter.1.config.password')}"
+        println "    rundeck.storage.converter.1.config.password = ${environment.getProperty('rundeck.storage.converter.1.config.password')}"
         if(rundeckConfig.migrate) {
             environment.propertySources.addFirst(new MapPropertySource("ensure-migration-flag",["grails.plugin.databasemigration.updateOnStart":true]))
         }
