@@ -1493,6 +1493,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     public Map<String, ProjectComponent> getProjectComponents() {
         def some = null
         def types = componentBeanProvider.getBeans()
+        def caller = Thread.currentThread().getStackTrace()[2].toString()
+        log.info("=== getProjectComponents CALLED FROM: " + caller)
         log.info("=== getProjectComponents: Found " + types.size() + " component beans")
         Map<String, ProjectComponent> values = [:]
         types.each { k, v ->
