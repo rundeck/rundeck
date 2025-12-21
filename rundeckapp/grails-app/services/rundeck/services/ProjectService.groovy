@@ -1157,8 +1157,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 authContext,
                 project.name
         )
+        log.info("=== PROJECT IMPORT: projectImporters contains: " + projectImporters.keySet())
         def baseRunBefore = [(BuiltinImportComponents.jobs.name()): [BuiltinImportComponents.executions.name()]]
         def sortOrder = BuiltinImportComponents.names() + (projectImporters?.keySet()?.toSorted() ?: [])
+        log.info("=== PROJECT IMPORT: sortOrder = " + sortOrder)
 
         def sortResult = Toposort.toposort(sortOrder, { String name ->
             if (baseRunBefore[name]) {
@@ -1491,12 +1493,16 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     public Map<String, ProjectComponent> getProjectComponents() {
         def some = null
         def types = componentBeanProvider.getBeans()
+        log.info("=== getProjectComponents: Found " + types.size() + " component beans")
         Map<String, ProjectComponent> values = [:]
         types.each { k, v ->
-            if(v.componentEnabled){
+            boolean enabled = v.componentEnabled
+            log.info("=== getProjectComponents: " + v.name + " enabled=" + enabled)
+            if(enabled){
                 values[v.name] = v
             }
         }
+        log.info("=== getProjectComponents: Returning " + values.size() + " enabled components: " + values.keySet())
         values
     }
 
@@ -1538,12 +1544,18 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         //filter import components based on authorization
         def projectAuthResource = rundeckAuthContextEvaluator.authResourceForProject(project)
         Map<String, ProjectComponent> authorized = new HashMap<>()
-        getProjectComponents()?.each { k, v ->
+        def allComponents = getProjectComponents()
+        log.info("=== getProjectComponentsAuthorizedForImport: Starting with " + allComponents.size() + " enabled components")
+        allComponents?.each { k, v ->
             if (!v.importAuthRequiredActions
                     || rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext, projectAuthResource, v.importAuthRequiredActions)) {
                 authorized[k] = v
+                log.info("=== getProjectComponentsAuthorizedForImport: AUTHORIZED: " + k)
+            } else {
+                log.info("=== getProjectComponentsAuthorizedForImport: NOT AUTHORIZED: " + k)
             }
         }
+        log.info("=== getProjectComponentsAuthorizedForImport: Final authorized components: " + authorized.keySet())
         authorized
     }
 
