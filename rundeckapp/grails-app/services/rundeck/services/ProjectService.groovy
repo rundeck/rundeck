@@ -1124,6 +1124,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             InputStream input,
             ProjectArchiveImportRequest options
     ) throws ProjectServiceException {
+        log.info("=== PROJECT IMPORT START: " + project.name)
+        if (options.importComponents) {
+            log.info("=== PROJECT IMPORT: importComponents keys: " + options.importComponents.keySet())
+        }
         ZipReader zip = new ZipReader(new ZipInputStream(input))
 //        zip.debug=true
         def jobxml = []
@@ -1420,8 +1424,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     }
 
                 } else {
+                    log.info("=== COMPONENT IMPORT: sortKey=" + sortKey)
                     if (projectImporters && projectImporters[sortKey] && options.importComponents && options.importComponents[sortKey]) {
                         ProjectComponent importer = projectImporters[sortKey]
+                        log.info("=== COMPONENT IMPORT: Calling doImport for " + importer.name)
                         if (importerstemp[importer.name]) {
                             try {
                                 def result = importer.doImport(
@@ -1433,13 +1439,18 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                 if (result) {
                                     importerErrors[importer.name] = result
                                 }
+                                log.info("=== COMPONENT IMPORT: Completed doImport for " + importer.name)
                             } catch (Throwable e) {
                                 log.warn("Error during project import for ${importer.name}: $e.message")
                                 log.debug("Error during project import for ${importer.name}: $e.message", e)
                                 importerErrors[importer.name] = [e.message]
                             }
+                        } else {
+                            log.info("=== COMPONENT IMPORT: No data in archive for " + importer.name)
                         }
 
+                    } else {
+                        log.info("=== COMPONENT IMPORT: SKIP sortKey=" + sortKey + " (not in importComponents or no importer)")
                     }
                 }
             }
