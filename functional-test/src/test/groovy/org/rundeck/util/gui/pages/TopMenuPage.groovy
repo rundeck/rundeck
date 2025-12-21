@@ -42,6 +42,7 @@ class TopMenuPage extends BasePage {
         // Wait for dropdown menu to be visible before clicking items inside it
         waitForElementVisible appUserMenuDropdownBy
         byAndWait logOutMenuBy click()
+        waitForElementVisible(By.partialLinkText("Log In Again"))
     }
 
     void clickHomeButton(){
