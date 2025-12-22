@@ -1167,8 +1167,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             )
 
             if (executionLifecyclePluginExecHandler != null) {
-
-                ExecutionLifecycleStatus executionLifecycleStatus = executionLifecyclePluginExecHandler.beforeJobStarts(createInitContext, item).orElse(null)
+                ExecutionLifecycleStatus executionLifecycleStatus = executionLifecyclePluginExecHandler.beforeWorkflowIsSet(createInitContext, item).orElse(null)
                 if(executionLifecycleStatus?.useNewValues){
                     createInitContext = executionLifecycleStatus.getExecutionContext()?:createInitContext
 
@@ -3956,11 +3955,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             //Execute beforeJobStarts lifecycle for the job reference step
             if (executionLifecyclePluginExecHandler != null) {
-                StepExecutionContext newExecutionContext =
-                        executionLifecyclePluginExecHandler.beforeJobStarts(newContext, newExecItem)
-                                .map(ExecutionLifecycleStatus::getExecutionContext)
-                                .orElse(null);
-                newContext = newExecutionContext != null? newExecutionContext: newContext;
+                ExecutionLifecycleStatus executionLifecycleStatus = executionLifecyclePluginExecHandler.beforeWorkflowIsSet(newContext, newExecItem).orElse(null)
+                if(executionLifecycleStatus?.useNewValues){
+                    newContext = executionLifecycleStatus.getExecutionContext()?:newContext
+
+                    if(executionLifecycleStatus?.isUpdateWorkflowDataValues()){
+                        newExecItem = executionLifecycleStatus.workflow
+                    }
+                }
+
             }
 
             Thread thread = new WorkflowExecutionServiceThread(

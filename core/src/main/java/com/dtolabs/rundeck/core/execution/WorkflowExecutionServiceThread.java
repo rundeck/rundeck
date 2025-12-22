@@ -83,6 +83,14 @@ public class WorkflowExecutionServiceThread
     public WorkflowExecutionResult runWorkflow() {
         try {
             StepExecutionContext executionContext = context;
+            if (executionLifecycleComponentHandler != null) {
+                //TODO: check success and stop execution
+                StepExecutionContext newExecutionContext =
+                        executionLifecycleComponentHandler.beforeJobStarts(context, weitem)
+                                                       .map(ExecutionLifecycleStatus::getExecutionContext)
+                                                       .orElse(null);
+                executionContext = newExecutionContext != null? newExecutionContext: executionContext;
+            }
             final WorkflowExecutor executorForItem = weservice.getExecutorForItem(weitem);
             setResult(executorForItem.executeWorkflow(executionContext, weitem));
             success = getResult().isSuccess();
