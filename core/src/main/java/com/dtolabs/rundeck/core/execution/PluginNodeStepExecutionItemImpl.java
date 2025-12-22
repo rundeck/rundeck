@@ -21,9 +21,8 @@
 * Created: 11/13/12 3:22 PM
 * 
 */
-package com.dtolabs.rundeck.execution;
+package com.dtolabs.rundeck.core.execution;
 
-import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
@@ -53,7 +52,8 @@ public class PluginNodeStepExecutionItemImpl extends PluginStepExecutionItemImpl
                 keepgoingOnSuccess,
                 handler,
                 label,
-                filterConfigurations
+                filterConfigurations,
+                null
         );
         this.nodeStepType = type;
     }

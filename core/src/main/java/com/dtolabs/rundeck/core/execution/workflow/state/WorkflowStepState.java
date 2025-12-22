@@ -70,4 +70,6 @@ public interface WorkflowStepState {
      * @return  true if this is a node step
      */
     public boolean isNodeStep();
+
+    public String getRunnerNode();
 }

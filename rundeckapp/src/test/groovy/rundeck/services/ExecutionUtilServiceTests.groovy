@@ -26,7 +26,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCom
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.core.jobs.JobExecutionItem
 import com.dtolabs.rundeck.core.jobs.JobRefCommand
-import com.dtolabs.rundeck.execution.PluginNodeStepExecutionItemImpl
+import com.dtolabs.rundeck.core.execution.PluginNodeStepExecutionItemImpl
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
