@@ -76,7 +76,7 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
 
 
     enum EventType{
-        BEFORE_RUN('beforeJobRun'), AFTER_RUN('afterJobRun')
+        BEFORE_RUN('beforeJobRun'), AFTER_RUN('afterJobRun'), BEFORE_WORKFLOW_IS_SET('beforeWorkflowIsSet')
         private final String value
         EventType(String value){
             this.value = value
@@ -167,6 +167,8 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
                 return plugin.beforeJobStarts(event)
             case EventType.AFTER_RUN:
                 return plugin.afterJobEnds(event)
+            case EventType.BEFORE_WORKFLOW_IS_SET:
+                return plugin.beforeWorkflowIsSet(event)
         }
     }
 
@@ -378,6 +380,10 @@ class NamedExecutionLifecycleComponent implements ExecutionLifecycleComponent {
 
     ExecutionLifecycleStatus afterJobEnds(JobExecutionEvent event) throws ExecutionLifecycleComponentException {
         component.afterJobEnds(event)
+    }
+
+    ExecutionLifecycleStatus beforeWorkflowIsSet(JobExecutionEvent event) throws ExecutionLifecycleComponentException{
+        component.beforeWorkflowIsSet(event)
     }
 
 }

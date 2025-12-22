@@ -56,4 +56,13 @@ class ExecutionReferenceLifecycleComponentHandler implements ExecutionLifecycleC
                 components
         )
     }
+
+    @Override
+    Optional<ExecutionLifecycleStatus> beforeWorkflowIsSet(final StepExecutionContext executionContext, WorkflowExecutionItem item) throws ExecutionLifecycleComponentException {
+        Optional.ofNullable executionLifecycleComponentService.handleEvent(
+                JobExecutionEventImpl.beforeRun(executionContext, executionReference, item),
+                ExecutionLifecycleComponentService.EventType.BEFORE_WORKFLOW_IS_SET,
+                components
+        )
+    }
 }
