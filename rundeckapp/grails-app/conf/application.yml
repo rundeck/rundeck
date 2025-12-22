@@ -31,8 +31,8 @@ logging:
         org.springframework.security: INFO
         grails.plugin.springsecurity: INFO
         # Keep JAAS at DEBUG for troubleshooting if needed
-        org.springframework.security.authentication.jaas: DEBUG
-        com.dtolabs.rundeck.jaas: DEBUG
+        org.springframework.security.authentication.jaas: INFO
+        com.dtolabs.rundeck.jaas: INFO
         # Keep Hikari at DEBUG for connection pool monitoring
         com.zaxxer.hikari: DEBUG
         com.zaxxer.hikari.pool.HikariPool: DEBUG

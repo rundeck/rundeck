@@ -135,7 +135,10 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     static ConfigurableApplicationContext ctx;
     static String[] startArgs = []
     static void main(String[] args) {
-        // Disable Spring Cloud Bootstrap - incompatible with Spring Boot 3.x
+        // Spring Boot 3: Disable legacy Spring Cloud Bootstrap context
+        // Grails 7 Option B: Database config is now loaded via ConfigServiceRefresher after DataSource initialization
+        // ConfigServiceRefresher listens for ContextRefreshedEvent to load app_config table
+        // This respects Grails lifecycle and ensures DataSource is ready before querying database
         System.setProperty("spring.cloud.bootstrap.enabled", "false")
         
         // Grails 7: Register BouncyCastle security provider for Jasypt encryption
