@@ -1124,10 +1124,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             InputStream input,
             ProjectArchiveImportRequest options
     ) throws ProjectServiceException {
-        log.info("=== PROJECT IMPORT START: " + project.name)
-        if (options.importComponents) {
-            log.info("=== PROJECT IMPORT: importComponents keys: " + options.importComponents.keySet())
-        }
         ZipReader zip = new ZipReader(new ZipInputStream(input))
 //        zip.debug=true
         def jobxml = []
@@ -1157,10 +1153,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 authContext,
                 project.name
         )
-        log.info("=== PROJECT IMPORT: projectImporters contains: " + projectImporters.keySet())
         def baseRunBefore = [(BuiltinImportComponents.jobs.name()): [BuiltinImportComponents.executions.name()]]
         def sortOrder = BuiltinImportComponents.names() + (projectImporters?.keySet()?.toSorted() ?: [])
-        log.info("=== PROJECT IMPORT: sortOrder = " + sortOrder)
 
         def sortResult = Toposort.toposort(sortOrder, { String name ->
             if (baseRunBefore[name]) {
@@ -1426,10 +1420,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     }
 
                 } else {
-                    log.info("=== COMPONENT IMPORT: sortKey=" + sortKey)
                     if (projectImporters && projectImporters[sortKey] && options.importComponents && options.importComponents[sortKey]) {
                         ProjectComponent importer = projectImporters[sortKey]
-                        log.info("=== COMPONENT IMPORT: Calling doImport for " + importer.name)
                         if (importerstemp[importer.name]) {
                             try {
                                 def result = importer.doImport(
@@ -1441,18 +1433,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                 if (result) {
                                     importerErrors[importer.name] = result
                                 }
-                                log.info("=== COMPONENT IMPORT: Completed doImport for " + importer.name)
                             } catch (Throwable e) {
                                 log.warn("Error during project import for ${importer.name}: $e.message")
                                 log.debug("Error during project import for ${importer.name}: $e.message", e)
                                 importerErrors[importer.name] = [e.message]
                             }
-                        } else {
-                            log.info("=== COMPONENT IMPORT: No data in archive for " + importer.name)
                         }
-
-                    } else {
-                        log.info("=== COMPONENT IMPORT: SKIP sortKey=" + sortKey + " (not in importComponents or no importer)")
                     }
                 }
             }
@@ -1493,18 +1479,13 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     public Map<String, ProjectComponent> getProjectComponents() {
         def some = null
         def types = componentBeanProvider.getBeans()
-        def caller = Thread.currentThread().getStackTrace()[2].toString()
-        log.info("=== getProjectComponents CALLED FROM: " + caller)
-        log.info("=== getProjectComponents: Found " + types.size() + " component beans")
         Map<String, ProjectComponent> values = [:]
         types.each { k, v ->
             boolean enabled = v.componentEnabled
-            log.info("=== getProjectComponents: " + v.name + " enabled=" + enabled)
             if(enabled){
                 values[v.name] = v
             }
         }
-        log.info("=== getProjectComponents: Returning " + values.size() + " enabled components: " + values.keySet())
         values
     }
 
@@ -1547,17 +1528,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def projectAuthResource = rundeckAuthContextEvaluator.authResourceForProject(project)
         Map<String, ProjectComponent> authorized = new HashMap<>()
         def allComponents = getProjectComponents()
-        log.info("=== getProjectComponentsAuthorizedForImport: Starting with " + allComponents.size() + " enabled components")
         allComponents?.each { k, v ->
             if (!v.importAuthRequiredActions
                     || rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext, projectAuthResource, v.importAuthRequiredActions)) {
                 authorized[k] = v
-                log.info("=== getProjectComponentsAuthorizedForImport: AUTHORIZED: " + k)
-            } else {
-                log.info("=== getProjectComponentsAuthorizedForImport: NOT AUTHORIZED: " + k)
             }
         }
-        log.info("=== getProjectComponentsAuthorizedForImport: Final authorized components: " + authorized.keySet())
         authorized
     }
 
