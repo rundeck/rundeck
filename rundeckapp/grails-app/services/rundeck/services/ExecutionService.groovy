@@ -3417,21 +3417,22 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     StepExecutionResult executeWorkflowStep(StepExecutionContext executionContext, StepExecutionItem executionItem) throws StepException{
-        if (executionItem instanceof JobExecutionItem) {
 
-            def createFailure = { FailureReason reason, String msg ->
-                return new StepExecutionResultImpl(null, reason, msg)
-            }
-            def createSuccess = {
-                return new StepExecutionResultImpl()
-            }
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+
+        if (executionItem instanceof JobExecutionItem) {
             JobExecutionItem jitem = (JobExecutionItem) executionItem
             return runJobRefExecutionItem(executionContext, jitem, createFailure, createSuccess)
         }
 
         if (executionItem instanceof SubWorkflowExecutionItem) {
             SubWorkflowExecutionItem runnerExecutionItem = (SubWorkflowExecutionItem) executionItem
-            return runSubworkflowExecutionItem(executionContext, runnerExecutionItem)
+            return runSubworkflowExecutionItem(executionContext, runnerExecutionItem, createFailure, createSuccess)
         }
         throw new IllegalArgumentException("Unsupported item type: " + executionItem.getClass().getName())
     }
@@ -4069,17 +4070,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return StepExecutionResult
      */
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    private StepExecutionResult runSubworkflowExecutionItem(
+    private def runSubworkflowExecutionItem(
             StepExecutionContext executionContext,
-            SubWorkflowExecutionItem runnerExecutionItem
+            SubWorkflowExecutionItem runnerExecutionItem,
+            Closure createFailure,
+            Closure createSuccess
     ) {
+        def result
+
         // Get the subworkflow from the runner execution item
         WorkflowExecutionItem workflowItem = runnerExecutionItem.getSubWorkflow()
 
         if (!workflowItem) {
             def msg = "Runner execution item does not contain a subworkflow"
             executionContext.getExecutionListener().log(0, msg)
-            return new StepExecutionResultImpl(null, StepFailureReason.ConfigurationFailure, msg)
+            return createFailure( StepFailureReason.ConfigurationFailure,msg)
         }
 
         try {
@@ -4107,26 +4112,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
 
             // Process result after the workflow completes
-            def result
             if (!wresult.result || !wresult.result.success || wresult.interrupt) {
-                result = new StepExecutionResultImpl(
-                        null,
-                        StepFailureReason.ExecutionFailure,
-                        "Runner workflow execution failed"
-                )
-            } else {
-                result = new StepExecutionResultImpl()
+                String errors = ""
 
-                // Export shared context data if available
-                if (wresult.result instanceof WorkflowExecutionResult) {
-                    Map<String, String> data = ((WorkflowExecutionResult) wresult.result)?.getSharedContext()?.consolidate()?.getData(ContextView.global())
-                    if (data?.get("export")) {
-                        executionContext.getOutputContext().addOutput(ContextView.global(), "export", data.get("export"))
-                    }
+                wresult.result.stepFailures.each { step, failure ->
+                    errors += "Step ${step}: ${failure.failureMessage}\n"
                 }
 
-                // Set the source result to preserve the workflow execution details
-                result.sourceResult = wresult.result
+                result = createFailure(StepFailureReason.PluginFailed, errors)
+
+            } else {
+                result = createSuccess()
             }
 
             return result
@@ -4135,7 +4131,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def msg = "Error executing runner workflow: ${e.message}"
             executionContext.getExecutionListener().log(0, msg)
             log.error(msg, e)
-            return new StepExecutionResultImpl(null, StepFailureReason.ExecutionFailure, msg)
+            throw new StepException(msg,StepFailureReason.Unknown)
         }
     }
 
