@@ -576,7 +576,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         def params = [project: query.projFilter]
 
         // Add status filter if present
-        if (query.statusFilter) {
+        if (query.statusFilter && query.statusFilter != ExecutionService.EXECUTION_ABORTED) {
             sql += " AND e.status = :status"
             params.status = query.statusFilter
         }
