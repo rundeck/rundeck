@@ -417,8 +417,11 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         } else if(state == ExecutionService.EXECUTION_FAILED){
           eq('status',  'failed')
           eq('cancelled', false)
+          isNotNull('dateCompleted')
         }else if(state == ExecutionService.EXECUTION_SUCCEEDED){
           eq('status',  'succeeded')
+          eq('cancelled', false)
+          isNotNull('dateCompleted')
         }else if(state){
           eq('status',  state)
         }
@@ -565,7 +568,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         // Build native SQL with USE INDEX hint to force EXEC_IDX_PROJECT_STATUS_CANCELLED
         // This is MySQL-specific syntax that forces the optimizer to use the correct index
         def sql = """
-            SELECT COUNT(e.id)
+            SELECT COUNT(*)
             FROM execution e USE INDEX (EXEC_IDX_PROJECT_STATUS_CANCELLED)
             WHERE e.project = :project
         """
