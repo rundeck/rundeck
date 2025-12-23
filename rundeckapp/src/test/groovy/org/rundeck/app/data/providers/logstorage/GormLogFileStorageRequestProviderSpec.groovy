@@ -2,9 +2,7 @@ package org.rundeck.app.data.providers.logstorage
 
 import grails.testing.gorm.DataTest
 import org.rundeck.app.data.model.v1.logstorage.LogFileStorageRequestData
-import org.rundeck.app.data.providers.GormExecReportDataProvider
 import rundeck.CommandExec
-import rundeck.ExecReport
 import rundeck.Execution
 import rundeck.JobExec
 import rundeck.LogFileStorageRequest

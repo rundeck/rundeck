@@ -17,9 +17,11 @@
 package rundeck
 
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
+import org.rundeck.app.data.model.v1.report.RdExecReport
 
-class BaseReport {
+class BaseReport implements RdExecReport{
 
+    String className = "ExecReport"
     String node
     String title
     String status
@@ -39,10 +41,31 @@ class BaseReport {
     Date dateCompleted 
     String message
 
+    @Deprecated
+    String ctxCommand
+    @Deprecated
+    String ctxController
+    Long executionId
+    String jobId
+    Boolean adhocExecution
+    String adhocScript
+    String abortedByUser
+    String succeededNodeList
+    String failedNodeList
+    String filterApplied
+    String jobUuid
+    String executionUuid
+
     static mapping = {
         message type: 'text'
         title type: 'text'
         project column: 'ctx_project'
+        adhocScript type: 'text'
+        filterApplied type: 'text'
+        succeededNodeList type: 'text'
+        failedNodeList type: 'text'
+        jobId column: 'jc_job_id'
+        className column: 'CLASS'
 
         DomainIndexHelper.generate(delegate) {
             index 'EXEC_REPORT_IDX_0', [/*'class',*/ 'ctxProject', 'dateCompleted', /*'jcExecId', 'jcJobId'*/]
@@ -50,6 +73,7 @@ class BaseReport {
             index 'BASE_REPORT_IDX_2', [/*'class',*/ 'ctxProject', 'dateCompleted', 'dateStarted']
         }
     }
+
    static constraints = {
         reportId(nullable:true, maxSize: 1024+2048 /*jobName + groupPath size limitations from ScheduledExecution*/)
         tags(nullable:true)
@@ -59,6 +83,19 @@ class BaseReport {
         ctxType(nullable:true)
         status(nullable:false, maxSize: 256)
         actionType(nullable:false, maxSize: 256)
+
+       adhocExecution(nullable:true)
+       ctxCommand(nullable:true,blank:true)
+       ctxController(nullable:true,blank:true)
+       jobId(nullable:true,blank:true)
+       executionId(nullable:true)
+       adhocScript(nullable:true,blank:true)
+       abortedByUser(nullable:true,blank:true)
+       succeededNodeList(nullable:true,blank:true)
+       failedNodeList(nullable:true,blank:true)
+       filterApplied(nullable:true,blank:true)
+       jobUuid(nullable:true)
+       executionUuid(nullable:true)
     }
     public static final ArrayList<String> exportProps = [
             'node',
@@ -71,7 +108,17 @@ class BaseReport {
             'author',
             'message',
             'dateStarted',
-            'dateCompleted'
+            'dateCompleted',
+            'executionId',
+            'jobId',
+            'adhocExecution',
+            'adhocScript',
+            'abortedByUser',
+            'succeededNodeList',
+            'failedNodeList',
+            'filterApplied',
+            'jobUuid',
+            'executionUuid'
     ]
 
     def Map toMap(){
@@ -112,5 +159,72 @@ class BaseReport {
         BaseReport.where {
             project == project
         }.deleteAll()
+    }
+
+    /**
+     * Generate an ExecReport based off of an existing execution
+     * @param exec
+     * @return
+     */
+    static BaseReport fromExec(Execution exec){
+        def failedCount = exec.failedNodeList ?exec.failedNodeList.split(',').size():0
+        def successCount=exec.succeededNodeList? exec.succeededNodeList.split(',').size():0;
+        def failedList = exec.failedNodeList ?exec.failedNodeList:''
+        def succeededList=exec.succeededNodeList? exec.succeededNodeList:'';
+        def totalCount = failedCount+successCount;
+        def adhocScript = null
+        if(
+                null == exec.scheduledExecution
+                        && exec.workflow.commands
+                        && exec.workflow.commands.size()==1
+                        && exec.workflow.commands[0] instanceof CommandExec
+        ){
+            adhocScript=exec.workflow.commands[0].adhocRemoteString
+        }
+        def summary = "[${exec.workflow.commands?exec.workflow.commands.size():0} steps]"
+        def issuccess = exec.statusSucceeded()
+        def iscancelled = exec.cancelled
+        def istimedout = exec.timedOut
+        def ismissed = exec.status == "missed"
+        def status = issuccess ? "succeed" : iscancelled ? "cancel" : exec.willRetry ? "retry" : istimedout ?
+                "timedout" : ismissed ? "missed" : "fail"
+        return fromMap([
+                executionId: exec.id,
+                jobId: exec.scheduledExecution?.id,
+                adhocExecution: null==exec.scheduledExecution,
+                adhocScript: adhocScript,
+                abortedByUser: iscancelled? exec.abortedby ?: exec.user:null,
+                node:"${successCount}/${failedCount}/${totalCount}",
+                title: adhocScript?adhocScript:summary,
+                status: status,
+                project: exec.project,
+                reportId: exec.scheduledExecution?( exec.scheduledExecution.groupPath ? exec.scheduledExecution.generateFullName() : exec.scheduledExecution.jobName): 'adhoc',
+                author: exec.user,
+                message: (issuccess ? 'Job completed successfully' : iscancelled ? ('Job killed by: ' + (exec.abortedby ?: exec.user)) : ismissed ? "Job missed execution at: ${exec.dateStarted}" : 'Job failed'),
+                dateStarted: exec.dateStarted,
+                dateCompleted: exec.dateCompleted,
+                actionType: status,
+                failedNodeList: failedList,
+                succeededNodeList: succeededList,
+                filterApplied: exec.filter,
+                jobUuid: exec.scheduledExecution?.uuid,
+                executionUuid: exec.uuid
+        ])
+    }
+
+
+    String getNodeList(){
+        def ret
+        if(this.succeededNodeList){
+            ret = this.failedNodeList?this.succeededNodeList+',': this.succeededNodeList
+        }
+        ret = this.failedNodeList?ret+ this.failedNodeList:ret
+        ret
+    }
+
+    def beforeInsert() {
+        if (!this.className) {
+            this.className = "BaseReport"
+        }
     }
 }
