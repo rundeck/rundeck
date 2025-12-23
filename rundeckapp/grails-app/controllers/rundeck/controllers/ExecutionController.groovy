@@ -2932,6 +2932,9 @@ So a value of `2w` would return executions that completed within the last two we
             @Parameter(in=ParameterIn.QUERY,name="olderFilter",description="(same format as `recentFilter`) return executions that completed before the specified relative period of time.  E.g. a value of `30d` returns executions older than 30 days.",schema=@Schema(type="string")),
             @Parameter(in=ParameterIn.QUERY,name="userFilter",description="Username who started the execution",schema=@Schema(type="string")),
             @Parameter(in=ParameterIn.QUERY,name="executionTypeFilter",description="""specify the execution type, one of: `scheduled` (schedule trigger), `user` (user trigger), `user-scheduled` (user scheduled trigger). Since: v20""",schema=@Schema(type="string",allowableValues = ['scheduled','user','user-scheduled'])),
+            @Parameter(in=ParameterIn.QUERY,name="adhocStringFilter",description="specify an exact adhoc command.",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="nodeFilter",description="specify an exact node filter to search executions.",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="optionFilter",description="specify an exact option values to search executions (eg -test 123).",schema=@Schema(type="string")),
             @Parameter(in=ParameterIn.QUERY,name="max",description="""maximum number of results to include in response. (default: 20)""",schema=@Schema(type="integer")),
             @Parameter(in=ParameterIn.QUERY,name="offset",description="""offset for first result to include. (default: 0)""",schema=@Schema(type="integer"))
         ]
@@ -3119,6 +3122,11 @@ if executed in cluster mode.""",
         }
         def resOffset = params.offset ? params.int('offset') : 0
         def resMax = params.max ? params.int('max') : configurationService.getInteger('pagination.default.max',20)
+
+
+        if(query.includeJobRef && query.jobIdListFilter.size()==1){
+            query.execProjects = executionService.getAllowedProjects(query.projFilter,query.jobIdListFilter.get(0));
+        }
 
         def results
         try {
