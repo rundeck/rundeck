@@ -49,7 +49,8 @@ public enum Features implements FeaturesDefinition{
     GUI_HIDE_ROI_INSTRUCTIONS("guiHideRoiInstructions"),
     EXECUTION_CLEANUP_ENABLE("defaultExecutionCleanup"),
     MULTILINE_JOB_OPTIONS("multilineJobOptions"),
-    EARLY_ACCESS_JOB_CONDITIONAL("earlyAccessJobConditional");
+    EARLY_ACCESS_JOB_CONDITIONAL("earlyAccessJobConditional"),
+    ENHANCED_FRAMEWORK_PROPERTY_LOOKUP("enhancedFrameworkPropertyLookup");
 
     private final String propertyName;
 
