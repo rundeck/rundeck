@@ -18,6 +18,14 @@ package rundeckapp
 class UrlMappings {
     static mappings = {
         "/favicon.ico"(redirect: [uri: "/static/images/favicon.ico"])
+        
+        // Monitoring endpoints (controlled by rundeck.metrics.monitoring.enabled)
+        "/monitoring/metrics"(controller: 'monitoring', action: 'metrics')
+        "/monitoring/prometheus"(controller: 'monitoring', action: 'prometheus')
+        "/monitoring/health"(controller: 'monitoring', action: 'health')
+        "/monitoring/info"(controller: 'monitoring', action: 'info')
+        "/monitoring/threaddump"(controller: 'monitoring', action: 'threaddump')
+        
         "/$controller/$action?/$id?" {
             constraints {
                 // apply constraints here

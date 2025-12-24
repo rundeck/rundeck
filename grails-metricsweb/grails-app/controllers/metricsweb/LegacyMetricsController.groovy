@@ -52,12 +52,12 @@ class LegacyMetricsController {
         
         if (!legacyEnabled) {
             response.status = 404  // Not Found
-            render(contentType: 'application/json') {
-                error = 'Legacy metrics endpoint is disabled by default'
-                enable = 'Set rundeck.metrics.legacy.enabled=true to re-enable'
-                migrate = 'Recommended: Use /monitoring/prometheus or /monitoring/metrics'
-                docs = 'https://docs.rundeck.com/docs/upgrading/upgrading-to-6.0.html'
-            }
+            render([
+                error: 'Legacy metrics endpoint is disabled by default',
+                enable: 'Set rundeck.metrics.legacy.enabled=true to re-enable',
+                migrate: 'Recommended: Use /monitoring/prometheus or /monitoring/metrics',
+                docs: 'https://docs.rundeck.com/docs/upgrading/upgrading-to-6.0.html'
+            ] as JSON)
             return
         }
         
@@ -89,16 +89,99 @@ class LegacyMetricsController {
         if (!legacyEnabled) {
             response.status = 404  // Not Found
             response.contentType = 'text/plain'
-            render "Legacy /ping endpoint disabled. Enable with rundeck.metrics.legacy.enabled=true or use /monitoring/health"
+            render "Legacy /metrics/ping endpoint disabled. Enable with rundeck.metrics.legacy.enabled=true or use /monitoring/health"
             return
         }
         
-        log.warn("DEPRECATED: Legacy /ping endpoint accessed. " +
+        log.warn("DEPRECATED: Legacy /metrics/ping endpoint accessed. " +
                  "This endpoint will be removed in Rundeck 7.0. " +
-                 "Migrate to /monitoring/health/ping")
+                 "Migrate to /monitoring/health")
         
         response.contentType = 'text/plain'
         render "pong"
+    }
+
+    def healthcheck() {
+        def legacyEnabled = grailsApplication.config.getProperty(
+            'rundeck.metrics.legacy.enabled',
+            Boolean,
+            false
+        )
+
+        if (!legacyEnabled) {
+            response.status = 404
+            render([
+                error: 'Legacy /metrics/healthcheck endpoint disabled',
+                enable: 'Set rundeck.metrics.legacy.enabled=true to re-enable',
+                migrate: 'Recommended: Use /monitoring/health'
+            ] as JSON)
+            return
+        }
+
+        log.warn("DEPRECATED: Legacy /metrics/healthcheck endpoint accessed. " +
+                 "This endpoint will be removed in Rundeck 7.0. " +
+                 "Migrate to /monitoring/health")
+
+        // Return Dropwizard-style healthcheck
+        def output = [:]
+        metricRegistry.gauges.each { name, gauge ->
+            if (name.contains("healthcheck") || name.contains("health")) {
+                output[name] = [healthy: true]
+            }
+        }
+        
+        // If no health checks found, return a simple healthy status
+        if (output.isEmpty()) {
+            output["rundeck"] = [healthy: true]
+        }
+
+        render output as JSON
+    }
+
+    def threads() {
+        def legacyEnabled = grailsApplication.config.getProperty(
+            'rundeck.metrics.legacy.enabled',
+            Boolean,
+            false
+        )
+
+        if (!legacyEnabled) {
+            response.status = 404
+            render([
+                error: 'Legacy /metrics/threads endpoint disabled',
+                enable: 'Set rundeck.metrics.legacy.enabled=true to re-enable',
+                migrate: 'Recommended: Use /monitoring/threaddump'
+            ] as JSON)
+            return
+        }
+
+        log.warn("DEPRECATED: Legacy /metrics/threads endpoint accessed. " +
+                 "This endpoint will be removed in Rundeck 7.0. " +
+                 "Migrate to /monitoring/threaddump")
+
+        // Return thread dump in Dropwizard format
+        def threadMXBean = java.lang.management.ManagementFactory.getThreadMXBean()
+        def threads = threadMXBean.dumpAllThreads(true, true)
+        
+        def output = threads.collect { threadInfo ->
+            [
+                name: threadInfo.threadName,
+                id: threadInfo.threadId,
+                state: threadInfo.threadState.toString(),
+                blockedCount: threadInfo.blockedCount,
+                blockedTime: threadInfo.blockedTime,
+                waitedCount: threadInfo.waitedCount,
+                waitedTime: threadInfo.waitedTime,
+                lockName: threadInfo.lockName,
+                lockOwnerId: threadInfo.lockOwnerId,
+                lockOwnerName: threadInfo.lockOwnerName,
+                inNative: threadInfo.inNative,
+                suspended: threadInfo.suspended,
+                stackTrace: threadInfo.stackTrace.collect { it.toString() }
+            ]
+        }
+
+        render output as JSON
     }
     
     private Map buildGauges() {

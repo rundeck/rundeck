@@ -18,11 +18,13 @@ package metricsweb
 class UrlMappings {
 
 	static mappings = {
-		// Legacy endpoints (deprecated, opt-in only)
+		// Legacy Dropwizard Metrics endpoints (deprecated, opt-in only)
 		// Default: disabled (404) - enable with rundeck.metrics.legacy.enabled=true
 		// Will be removed in Rundeck 7.0
-		"/metrics"(controller: "legacyMetrics", action: "metrics")
-		"/ping"(controller: "legacyMetrics", action: "ping")
+		"/metrics/metrics"(controller: "legacyMetrics", action: "metrics")
+		"/metrics/ping"(controller: "legacyMetrics", action: "ping")
+		"/metrics/healthcheck"(controller: "legacyMetrics", action: "healthcheck")
+		"/metrics/threads"(controller: "legacyMetrics", action: "threads")
 		
 		// Modern monitoring endpoints at /monitoring/* handled by Spring Boot Actuator
 		// Always enabled: /monitoring/prometheus, /monitoring/metrics, /monitoring/health

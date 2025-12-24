@@ -278,14 +278,15 @@ Use this endpoint to verify API connectivity and determine the correct API versi
             return
         }
 
+        // All /api/*/metrics/* endpoints controlled by rundeck.metrics.legacy.enabled
+        // Individual .api.*.enabled configs removed in Rundeck 6.0
+        def legacyEnabled = configurationService.getBoolean("metrics.legacy.enabled", false)
+        
         def names = ['metrics', 'ping', 'threads', 'healthcheck']
-        def globalEnabled=configurationService.getBoolean("metrics.enabled", true) &&
-                          configurationService.getBoolean("metrics.api.enabled", true)
-        Map<String,Boolean> enabled = new HashMap<>()
         LinkListResponse links = new LinkListResponse()
-        names.each { mname ->
-            enabled[mname] = globalEnabled && configurationService.getBoolean("metrics.api.${mname}.enabled", true)
-            if (enabled[mname]) {
+        
+        if (legacyEnabled) {
+            names.each { mname ->
                 links.addLink(
                     mname,
                     grailsLinkGenerator
@@ -293,11 +294,13 @@ Use this endpoint to verify API connectivity and determine the correct API versi
                 )
             }
         }
+        
         if (!name) {
             //list enabled endpoints
             return respond(links, formats: ['json'])
         }
-        if (!enabled[name]) {
+        
+        if (!legacyEnabled || !names.contains(name)) {
             return apiService.renderErrorFormat(
                 response,
                 [
@@ -310,6 +313,7 @@ Use this endpoint to verify API connectivity and determine the correct API versi
                 ]
             )
         }
+        
         def servletPath = configurationService.getString('metrics.servletUrlPattern', '/metrics/*')
         forward(uri: servletPath.replace('/*', "/$name"))
     }

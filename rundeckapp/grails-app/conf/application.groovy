@@ -125,9 +125,11 @@ grails.plugin.springsecurity.interceptUrlMap = [
         [pattern: '/feed/**',        access: ['permitAll']],
         [pattern: '/svc/api/**',     access: ['permitAll']],
         [pattern: '/api/**',         access: ['permitAll']],
+        [pattern: '/metrics/**',     access: ['permitAll']], // Legacy Dropwizard metrics endpoints
         [pattern: '/health',         access: ['permitAll']],
         [pattern: '/actuator/**',    access: ['permitAll']],
         [pattern: '/actuator/health/**',    access: ['permitAll']],
+        [pattern: '/monitoring/**',  access: ['permitAll']], // Spring Boot Actuator endpoints
         [pattern: '/.well-known/**', access: ['permitAll']],
         [pattern: '/**',             access: ['IS_AUTHENTICATED_REMEMBERED']] // LAST: Catch-all
 ]
@@ -145,6 +147,7 @@ grails.plugin.springsecurity.filterChain.chainMap = [
         [pattern: '/feed/**',        filters: 'none'],
         [pattern: '/svc/api/**',     filters: 'JOINED_FILTERS,-csrf'],
         [pattern: '/api/**',         filters: 'JOINED_FILTERS,-csrf'],
+        [pattern: '/metrics/**',     filters: 'none'], // Legacy Dropwizard metrics endpoints
         [pattern: '/plugin/**',      filters: 'JOINED_FILTERS,-csrf'],
         [pattern: '/404',            filters: 'none'],
         [pattern: '/404.gsp',        filters: 'none'],
@@ -152,6 +155,7 @@ grails.plugin.springsecurity.filterChain.chainMap = [
         [pattern: '/health',         filters: 'none'],
         [pattern: '/actuator/**',    filters: 'none'],
         [pattern: '/actuator/health/**',    filters: 'none'],
+        [pattern: '/monitoring/**',  filters: 'JOINED_FILTERS,-csrf'], // Allow filters to run (for config check)
         [pattern: '/.well-known/**', filters: 'none'],
         [pattern: '/**',             filters: 'JOINED_FILTERS,-csrf']
 ]

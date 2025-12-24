@@ -237,6 +237,7 @@ dependencies {
 
     implementation "org.apache.grails:grails-core"
     implementation "org.springframework.boot:spring-boot-starter-actuator"
+    implementation "io.micrometer:micrometer-registry-prometheus"  // Prometheus metrics endpoint
     implementation "org.springframework.boot:spring-boot-starter-mail"  // Jakarta Mail API for Spring Boot 3
     // Temporarily removed explicit micronaut-spring-context to see what Spring Security provides
     // implementation "io.micronaut.spring:micronaut-spring-context:4.6.1"

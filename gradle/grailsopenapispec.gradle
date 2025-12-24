@@ -9,6 +9,11 @@ configurations{
 }
 
 tasks.withType(GroovyCompile).configureEach {
+    // Skip OpenAPI processing for GSP compilation tasks (incompatible with Groovy 4)
+    if (name.contains('GroovyPages') || name == 'compileGroovyPages') {
+        return
+    }
+    
     def opts=['-Xmx1024m']
     if(isRunning){
         //disable openapi spec generation during bootRun
