@@ -1179,6 +1179,10 @@ export default defineComponent({
       if (this.query.execnodeFilter) {
         xquery["nodeFilter"] = this.query.execnodeFilter;
       }
+
+      //exlude running executions from history list
+      xquery["excludeRunning"] = "true";
+
       Object.assign(xquery, this.query);
       return xquery;
     },

@@ -61,6 +61,8 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
     String nodeFilter
     String optionFilter
 
+    boolean excludeRunning = false
+
 
     static constraints={
         statusFilter(nullable:true)
@@ -388,6 +390,10 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         // project filter is not applied when the jobUUID filter is set to improve the response time of that case
         if(query.projFilter && !query.jobIdListFilter) {
           eq('project', query.projFilter)
+
+          if(excludeRunning){
+              isNotNull('dateCompleted')
+          }
         }
         if (query.userFilter) {
           eq('user', query.userFilter)
