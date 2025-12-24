@@ -15,13 +15,31 @@
       <skeleton />
     </div>
     <template v-if="Object.keys(groupedProviders).length > 0">
-      <template v-for="(group, key) in groupedProviders">
-        <div class="list-group">
+      <template v-for="(group, key) in groupedProviders" :key="key">
+        <div v-if="group.isGroup" class="list-group-header">
           <div v-if="group.iconUrl" class="img-icon">
             <img :src="group.iconUrl" />
           </div>
-           {{key}} ({{ group.providers.length }} {{ $t('plugins') }})
+          {{key}} ({{ group.providers.length }} {{ $t('plugins') }})
         </div>
+        <template v-else>
+          <button
+            v-for="prov in group.providers"
+            :key="prov.name"
+            class="list-group-item"
+            data-test="provider-button"
+            v-bind="dataStepType(selectedService, prov.name)"
+            @click.prevent="chooseProviderAdd(selectedService, prov.name)"
+          >
+            <plugin-info
+              :detail="prov"
+              :show-description="true"
+              :show-extended="false"
+            >
+              <template #descriptionprefix> - </template>
+            </plugin-info>
+          </button>
+        </template>
       </template>
     </template>
     <template #footer>
@@ -35,6 +53,7 @@
 import { getRundeckContext } from "@/library";
 import { defineComponent } from "vue";
 import PluginSearch from "@/library/components/plugins/PluginSearch.vue";
+import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
 import { ServiceType } from "@/library/stores/Plugins";
 import SelectButton from 'primevue/selectbutton';
 import Skeleton from "primevue/skeleton";
@@ -43,7 +62,7 @@ const context = getRundeckContext();
 
 export default defineComponent({
   name: "ChoosePluginsEAModal",
-  components: { PluginSearch, SelectButton, Skeleton },
+  components: { PluginSearch, PluginInfo, SelectButton, Skeleton },
   props: {
     title: {
       type: String,
@@ -111,42 +130,52 @@ export default defineComponent({
       });
     },
     groupedProviders(): Object {
-      const tempMap = {};
-      const activeService = this.filteredServices?.filter(service => service.service === this.selectedService)[0];
-      if(activeService) {
-        activeService.providers.map(provider => {
-          if(provider.isHighlighted) {
-            tempMap[provider.title] = {
-              iconUrl: provider.iconUrl,
-              title: provider.title,
-              isHighlighted: true,
-              providers: [provider],
-            };
-          } else {
+      const result = {};
+      const activeService = this.filteredServices?.find(
+        service => service.service === this.selectedService
+      );
 
-            const splitChar = provider.title.includes(" / ") ? " / " : " ";
-            const key = provider.title.split(splitChar)[0];
-
-            const tempArray = tempMap[key]?.providers || [];
-            const addOtherInfo = !!tempArray.length;
-            console.log(key);
-
-
-            tempArray.push(provider);
-
-
-            tempMap[key] = {
-              iconUrl: addOtherInfo ? provider.iconUrl : tempMap[key]?.iconUrl,
-              title: addOtherInfo ? key : tempMap[key]?.title,
-              isHighlighted: false,
-              providers: tempArray,
-            };
-          }
-        })
+      if (!activeService) {
+        return result;
       }
 
+      // First, add highlighted providers (rendered individually)
+      const highlighted = activeService.providers.filter(p => p.isHighlighted);
+      const nonHighlighted = activeService.providers.filter(p => !p.isHighlighted);
 
-      return tempMap;
+      highlighted.forEach(provider => {
+        result[provider.title] = {
+          isGroup: false,
+          iconUrl: provider.iconUrl,
+          providers: [provider],
+        };
+      });
+
+      // Then, process non-highlighted providers in order
+      nonHighlighted.forEach(provider => {
+        const groupBy = provider.providerMetadata?.groupBy;
+
+        if (groupBy) {
+          // Provider belongs to a group
+          if (!result[groupBy]) {
+            result[groupBy] = {
+              isGroup: true,
+              iconUrl: provider.providerMetadata?.groupIconUrl,
+              providers: [],
+            };
+          }
+          result[groupBy].providers.push(provider);
+        } else {
+          // Ungrouped provider - render individually
+          result[provider.title] = {
+            isGroup: false,
+            iconUrl: provider.iconUrl,
+            providers: [provider],
+          };
+        }
+      });
+
+      return result;
     }
   },
   watch: {
@@ -173,6 +202,23 @@ export default defineComponent({
     this.modalShown = this.modelValue;
   },
   methods: {
+    chooseProviderAdd(service: string, provider: string) {
+      this.$emit("selected", { service, provider });
+    },
+    dataStepType(service: string, name: string) {
+      const servicesWithDataStep = {
+        [ServiceType.WorkflowStep]: "data-step-type",
+        [ServiceType.WorkflowNodeStep]: "data-node-step-type",
+      };
+
+      if (!Object.keys(servicesWithDataStep).includes(service)) {
+        return {};
+      } else {
+        return {
+          [servicesWithDataStep[service]]: name,
+        };
+      }
+    },
     filterLoadedServices(searchQuery: string) {
       this.searchQuery = searchQuery.toLowerCase();
     },
@@ -212,8 +258,6 @@ export default defineComponent({
 }
 
 .img-icon {
-  //height: var(--sizes-5);
-  //width: var(--sizes-5);
   align-items: center;
   display: inline-flex;
   justify-content: center;

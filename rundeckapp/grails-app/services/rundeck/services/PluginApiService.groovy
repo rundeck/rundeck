@@ -288,9 +288,7 @@ class PluginApiService {
         
         // Cache for group icons: group name -> iconUrl
         Map<String, String> groupIconCache = [:]
-        // Cache for explicit representative plugin lookups: group name -> plugin name
-        Map<String, String> representativePluginCache = [:]
-        
+
         def tersePluginList = pluginList.descriptions.collect {
             String service = it.key
             def providers = it.value.collect { provider ->
@@ -342,31 +340,35 @@ class PluginApiService {
 
                 if (groupBy) {
                     pluginDesc.providerMetadata[com.dtolabs.rundeck.plugins.PluginGroupConstants.PLUGIN_GROUP_KEY] = groupBy
-                    
+
                     String groupIconUrl = null
-                    
+
+                    // 1. Check cache first
                     if (groupIconCache.containsKey(groupBy)) {
                         groupIconUrl = groupIconCache[groupBy]
                     } else {
-                        String representativePlugin = com.dtolabs.rundeck.plugins.PluginGroupDefinitions.getRepresentativePluginName(groupBy)
-                        
-                        if (representativePlugin) {
-                            if (!representativePluginCache.containsKey(groupBy)) {
-                                representativePluginCache[groupBy] = representativePlugin
+                        // 2. Check for explicit groupIconUrl from PluginGroup class
+                        def pluginGroupType = provider.pluginGroupType
+                        if (pluginGroupType) {
+                            try {
+                                def method = pluginGroupType.getMethod('getGroupIconUrl', String.class)
+                                String explicitIconUrl = method.invoke(null, groupBy) as String
+                                if (explicitIconUrl) {
+                                    groupIconCache[groupBy] = explicitIconUrl
+                                    groupIconUrl = explicitIconUrl
+                                }
+                            } catch (NoSuchMethodException | Exception ignored) {
+                                // No getGroupIconUrl method or error calling it, continue to fallback
                             }
-                            
-                            if (provider.name == representativePlugin && pluginDesc.iconUrl) {
-                                groupIconCache[groupBy] = pluginDesc.iconUrl
-                                groupIconUrl = pluginDesc.iconUrl
-                            }
-                        } else {
-                            if (pluginDesc.iconUrl && !groupIconCache.containsKey(groupBy)) {
-                                groupIconCache[groupBy] = pluginDesc.iconUrl
-                            }
-                            groupIconUrl = groupIconCache[groupBy]
+                        }
+
+                        // 3. Fallback to first plugin's icon in the group
+                        if (!groupIconUrl && pluginDesc.iconUrl) {
+                            groupIconCache[groupBy] = pluginDesc.iconUrl
+                            groupIconUrl = pluginDesc.iconUrl
                         }
                     }
-                    
+
                     if (groupIconUrl) {
                         pluginDesc.providerMetadata['groupIconUrl'] = groupIconUrl
                     }

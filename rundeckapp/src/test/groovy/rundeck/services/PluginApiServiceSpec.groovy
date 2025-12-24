@@ -438,6 +438,7 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
     class FakePluginDescriptionWithMetadata implements Description {
         String name
         Map<String, String> metadata
+        Class pluginGroupType
 
         @Override
         String getTitle() {
@@ -477,6 +478,11 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
         @Override
         Map<String, String> getMetadata() {
             return metadata
+        }
+
+        @Override
+        <T> Class<T> getPluginGroupType() {
+            return pluginGroupType
         }
     }
 
@@ -579,5 +585,66 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
         then:
         provider1.providerMetadata.groupBy == 'Test Group'
         provider1.providerMetadata.groupIconUrl == null
+    }
+
+    def "list plugins with groupBy metadata and explicit PluginGroup icon URL"() {
+        given:
+        messageSource.addMessage("framework.service.WorkflowNodeStep.description",Locale.ENGLISH,"Node Step")
+        def fwksvc = Mock(FrameworkService)
+        def fwk = Mock(Framework)
+        fwksvc.getRundeckFramework() >> fwk
+        fwk.getPluginManager() >> Mock(ServiceProviderLoader)
+        service.frameworkService = fwksvc
+        service.rundeckPluginRegistry = Mock(RundeckPluginRegistry)
+        service.uiPluginService = Mock(UiPluginService)
+        service.grailsLinkGenerator = Mock(LinkGenerator)
+
+        def plugin1 = new FakePluginDescriptionWithMetadata(
+            name: 'test-plugin-1',
+            metadata: ['groupBy': 'Test Group'],
+            pluginGroupType: FakePluginGroupWithIcon.class
+        )
+        def plugin2 = new FakePluginDescriptionWithMetadata(
+            name: 'test-plugin-2',
+            metadata: ['groupBy': 'Test Group'],
+            pluginGroupType: FakePluginGroupWithIcon.class
+        )
+
+        def pluginDescs = [
+                "WorkflowNodeStep": [plugin1, plugin2]
+        ]
+        def pluginData = [
+                descriptions        : pluginDescs,
+                serviceDefaultScopes: [],
+                bundledPlugins      : [],
+                embeddedFilenames   : [],
+                specialConfiguration: [],
+                specialScoping      : [],
+                uiPluginProfiles    : []
+        ]
+        def fakeMeta = new FakePluginMetadata()
+
+        service.metaClass.listPluginsDetailed = { -> pluginData }
+        service.metaClass.getLocale = { -> Locale.ENGLISH }
+
+        when:
+        2 * service.rundeckPluginRegistry.getPluginMetadata(_,_) >> fakeMeta
+        2 * service.uiPluginService.getProfileFor(_, _) >> [icon: 'foo'] // Has icon but should be ignored
+        def response = service.listPlugins()
+        def serviceEntry = response[0]
+        def provider1 = serviceEntry.providers[0]
+        def provider2 = serviceEntry.providers[1]
+
+        then:
+        provider1.providerMetadata.groupBy == 'Test Group'
+        provider1.providerMetadata.groupIconUrl == '/explicit/group/icon.svg' // From PluginGroup class
+        provider2.providerMetadata.groupBy == 'Test Group'
+        provider2.providerMetadata.groupIconUrl == '/explicit/group/icon.svg' // Cached from first lookup
+    }
+
+    static class FakePluginGroupWithIcon {
+        static String getGroupIconUrl(String groupName) {
+            return '/explicit/group/icon.svg'
+        }
     }
 }

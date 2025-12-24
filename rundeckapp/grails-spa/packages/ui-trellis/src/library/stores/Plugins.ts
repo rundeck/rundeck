@@ -157,6 +157,8 @@ export interface Plugin {
     glyphicon?: string;
     faicon?: string;
     fabicon?: string;
+    groupBy?: string;
+    groupIconUrl?: string;
   };
   isHighlighted?: boolean;
   highlightedOrder?: number;
