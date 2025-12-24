@@ -19,8 +19,9 @@ package com.dtolabs.rundeck.app.support
 import com.google.common.collect.Lists
 import grails.gorm.DetachedCriteria
 import grails.validation.Validateable
+import rundeck.Execution
 import rundeck.ReferencedExecution
-import rundeck.controllers.ExecutionController
+import rundeck.ExecReport
 import rundeck.services.ExecutionService
 
 /*
@@ -56,6 +57,12 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
     String recentFilter
     String userFilter
     String executionTypeFilter
+    String adhocStringFilter
+    String nodeFilter
+    String optionFilter
+
+    boolean excludeRunning = false
+
 
     static constraints={
         statusFilter(nullable:true)
@@ -87,6 +94,9 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         adhoc(nullable:true)
         executionTypeFilter( nullable: true)
         execProjects(nullable:true)
+        adhocStringFilter(nullable:true)
+        nodeFilter(nullable:true)
+        optionFilter(nullable:true)
     }
     /**
      * Modify a date by rewinding a certain number of units
@@ -200,6 +210,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
                   } else {
                       if(query.includeJobRef && query.execProjects){
                           or {
+                              eq("uuid", theid)
                               exists(new DetachedCriteria(ReferencedExecution, "re").build {
                                   projections { property 're.execution.id' }
                                   eq('re.jobUuid', theid)
@@ -211,7 +222,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
                                       }
                                   }
                               })
-                              eq("uuid", theid)
+
                           }
                       }else{
                           eq("uuid", theid)
@@ -291,7 +302,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
 
             txtfilters.each { key, val ->
               if (query["${key}Filter"]) {
-                ilike(val, '%' + query["${key}Filter"] + '%')
+                like(val, '%' + query["${key}Filter"] + '%')
               }
             }
 
@@ -308,7 +319,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
             excludeTxtFilters.each { key, val ->
               if (query["${key}Filter"]) {
                 not {
-                  ilike(val, '%' + query["${key}Filter"] + '%')
+                  like(val, '%' + query["${key}Filter"] + '%')
                 }
               }
             }
@@ -376,8 +387,13 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
             //end related ScheduledExecution query
           }
         }
-        if(query.projFilter) {
+        // project filter is not applied when the jobUUID filter is set to improve the response time of that case
+        if(query.projFilter && !query.jobIdListFilter) {
           eq('project', query.projFilter)
+
+          if(excludeRunning){
+              isNotNull('dateCompleted')
+          }
         }
         if (query.userFilter) {
           eq('user', query.userFilter)
@@ -405,22 +421,14 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
           isNotNull('dateCompleted')
           eq('willRetry', true)
         } else if(state == ExecutionService.EXECUTION_FAILED){
-          isNotNull('dateCompleted')
+          eq('status',  'failed')
           eq('cancelled', false)
-          or{
-            eq('status',  'failed')
-            eq('status',  'false')
-          }
+          isNotNull('dateCompleted')
         }else if(state == ExecutionService.EXECUTION_SUCCEEDED){
-          isNotNull('dateCompleted')
+          eq('status',  'succeeded')
           eq('cancelled', false)
-          or{
-            eq('status',  'true')
-            eq('status',  'succeeded')
-          }
+          isNotNull('dateCompleted')
         }else if(state){
-          isNotNull('dateCompleted')
-          eq('cancelled', false)
           eq('status',  state)
         }
         if (query.executionTypeFilter) {
@@ -446,6 +454,32 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
           ge('dateCompleted', query.endafterFilter)
         }
 
+        if (query.adhocStringFilter) {
+          isNull('scheduledExecution')
+          exists(new DetachedCriteria(ExecReport, "er").build {
+              projections { property 'er.executionId' }
+              eqProperty('er.executionId', 'this.id')
+              eqProperty('er.project', 'this.project')
+              like('er.title', '%' + query.adhocStringFilter + '%')
+          })
+        }
+        if(query.nodeFilter){
+          if(query.nodeFilter.startsWith('name:') || !(query.nodeFilter.contains(":") || query.nodeFilter.contains(".*"))){
+              def node = query.nodeFilter.startsWith('name:')?(query.nodeFilter.split("name:")[1]).stripIndent():query.nodeFilter;
+              or {
+                  like("failedNodeList", '%' + node + '%')
+                  like("succeededNodeList", '%' + node + '%')
+              }
+
+          }else{
+              like("filter", '%' + query.nodeFilter + '%')
+          }
+        }
+
+        if(query.optionFilter){
+          like('argString', "%${query.optionFilter}%")
+        }
+
         def critDelegate = delegate
         jobQueryComponents?.each { name, jobQuery ->
           jobQuery.extendCriteria(query, [:], critDelegate)
@@ -460,5 +494,54 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
 
       return criteriaClos
     }
+
+    /**
+     * Execute count query using dual-query approach for includeJobRef scenarios
+     * Executes two separate COUNT queries and sums them (database-agnostic)
+     */
+    def executeJobReferenceCount() {
+        def query = this
+        def count = 0
+
+        if (query.jobIdListFilter) {
+            //this apply when only one job UUID is specified (execution show page or job page)
+            String jobUuid = query.jobIdListFilter[0]
+
+            // Use HQL with INNER JOIN instead of EXISTS for better performance (1900x faster)
+            def hql = """
+                        SELECT COUNT(e.id)
+                        FROM Execution e
+                        INNER JOIN ReferencedExecution re WITH re.execution.id = e.id
+                        WHERE e.scheduledExecution IS NOT NULL
+                        AND re.jobUuid = :jobUuid
+                        AND e.project IN (:projects)
+                    """
+            def count1 = Execution.executeQuery(hql, [jobUuid: jobUuid, projects: query.execProjects])[0] ?: 0
+
+            // COUNT QUERY 2: Executions matching via scheduled_execution.uuid
+            // This finds executions that are direct instances of the job
+            def count2 = Execution.createCriteria().count {
+                eq('project', query.projFilter)
+                isNotNull('scheduledExecution')
+                eq("jobUuid", jobUuid)
+            }
+
+            count += (count1 as Long) + (count2 as Long)
+        }
+        return count
+    }
+
+    /**
+     * Check if this query should use the UNION optimization
+     */
+    boolean shouldUseUnionQuery() {
+        return this.includeJobRef &&
+                this.projFilter &&
+                this.execProjects &&
+                this.jobIdListFilter &&
+                this.jobIdListFilter.size() == 1 &&
+                !(this.jobIdListFilter[0] instanceof Long)
+    }
+
 
 }
