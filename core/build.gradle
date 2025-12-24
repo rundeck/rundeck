@@ -84,7 +84,7 @@ dependencies {
         "com.squareup.retrofit2:retrofit:3.0.0",
         "com.squareup.retrofit2:converter-jackson:3.0.0",
         "com.squareup.retrofit2:converter-jaxb:3.0.0",
-        'javax.servlet:javax.servlet-api:4.0.1'
+        "jakarta.servlet:jakarta.servlet-api:${jakartaServletVersion}"
 
     implementation ("commons-beanutils:commons-beanutils:${beanutilsVersion}")
 
@@ -100,7 +100,7 @@ dependencies {
     testImplementation 'junit:junit:4.8.1',
         'org.mockito:mockito-all:1.10.19'
 
-    testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    testImplementation "org.apache.groovy:groovy-all:${findProperty('groovy.version')}"
     testImplementation platform("org.spockframework:spock-bom:${spockVersion}")
     testImplementation "org.spockframework:spock-core"
     testImplementation "org.spockframework:spock-junit4"
@@ -173,10 +173,18 @@ task expandTemplate {
     }
 }
 processResources.dependsOn tasks.expandTemplate
+// Note: sourceJar/sourcesJar dependencies on expandTemplate are handled by exported-project.gradle afterEvaluate
 
 test{
     systemProperties 'rdeck.base': "$projectDir/build/rdeck_base"
     useJUnitPlatform()
+    
+    // Java 17 + CGLIB/Spock: Open modules for mocking
+    jvmArgs = [
+        '--add-opens=java.base/java.lang=ALL-UNNAMED',
+        '--add-opens=java.base/java.io=ALL-UNNAMED',
+        '--add-opens=java.base/java.util=ALL-UNNAMED'
+    ]
 }
 
 ext.description= "Rundeck project ${project.name}"

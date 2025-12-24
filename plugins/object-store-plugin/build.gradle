@@ -28,7 +28,7 @@ configurations.all {
 
 dependencies {
     // Use the latest Groovy version for building this library
-    implementation "org.codehaus.groovy:groovy:${groovyVersion}"
+    implementation "org.apache.groovy:groovy:${findProperty('groovy.version')}"
     pluginLibs("io.minio:minio:${minioVersion}") {
         exclude(group: 'com.fasterxml.jackson.core')
         exclude(group: 'com.google.guava', module: 'guava')
@@ -71,4 +71,9 @@ jar {
 jar.dependsOn(copyToLib)
 tasks.withType(Test) {
     useJUnitPlatform()
+    jvmArgs += [
+        '--add-opens=java.base/java.lang=ALL-UNNAMED',
+        '--add-opens=java.base/java.lang.reflect=ALL-UNNAMED',
+        '--add-opens=java.base/java.util=ALL-UNNAMED'
+    ]
 }

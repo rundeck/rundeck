@@ -41,10 +41,11 @@ import rundeck.Execution
 import rundeck.data.util.AuthenticationTokenUtils
 import rundeck.data.util.OptionsParserUtil
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 import java.time.Clock
+import java.util.function.Consumer
 
 class ApiService implements WebUtilService{
     public static final String APPLICATION_XML_CONTENT_TYPE = 'application/xml'
@@ -764,7 +765,9 @@ class ApiService implements WebUtilService{
                 def href=execdata.href
                 def status=execdata.status
                 def summary=execdata.summary
-                def Execution e = Execution.get(execdata.execution.id)
+                // Grails 7: Reload execution to ensure it's attached to session with valid ID
+                // Pattern #39: Direct object use caused null IDs in API responses
+                Execution e = Execution.get(execdata.execution.id)
                 def execMap=[
                         /** attributes   **/
                         id: e.id,
@@ -955,5 +958,212 @@ class ApiService implements WebUtilService{
     @CompileStatic
     List<AuthenticationToken> listTokens(){
         return tokenDataProvider.list()
+    }
+
+    @Override
+    void respondOutput(HttpServletResponse response, String contentType, String output) {
+        response.setContentType(contentType)
+        response.setCharacterEncoding('UTF-8')
+        response.setHeader("X-Rundeck-API-Version", ApiVersions.API_CURRENT_VERSION.toString())
+        def out = response.outputStream
+        out << output
+        out.flush()
+    }
+
+    @Override
+    String extractResponseFormat(HttpServletRequest request, HttpServletResponse response, List<String> allowed) {
+        return extractResponseFormat(request, response, allowed, null)
+    }
+
+    @Override
+    String extractResponseFormat(HttpServletRequest request, HttpServletResponse response, List<String> allowed, String defformat) {
+        def requestFormat = request.format
+        if (allowed && requestFormat && allowed.contains(requestFormat)) {
+            return requestFormat
+        }
+        
+        // Grails 7: request.format might not be set from Accept header, check it explicitly
+        String acceptHeader = request.getHeader('Accept')
+        if (acceptHeader && allowed) {
+            if (acceptHeader.contains('application/json') && allowed.contains('json')) {
+                return 'json'
+            }
+            if (acceptHeader.contains('application/xml') && allowed.contains('xml')) {
+                return 'xml'
+            }
+            if (acceptHeader.contains('text/plain') && allowed.contains('text')) {
+                return 'text'
+            }
+        }
+        
+        if (defformat) {
+            return defformat
+        }
+        return requestFormat ?: 'json'
+    }
+
+    @Override
+    void renderErrorFormat(HttpServletResponse response, Map<String, Object> error) {
+        def format = error.format ?: 'json'
+        if (format == 'xml') {
+            renderErrorXml(response, error)
+        } else {
+            renderErrorJson(response, error)
+        }
+    }
+
+    @Override
+    void renderErrorJson(HttpServletResponse response, Map<String, Object> error) {
+        def status = error.status
+        if (status instanceof Integer) {
+            response.setStatus(status)
+        }
+        def result = [
+            error: true,
+            apiversion: ApiVersions.API_CURRENT_VERSION,
+            errorCode: error.code ?: 'api.error.unknown'
+        ]
+        if (error.message) {
+            result.message = error.message
+        } else if (error.code) {
+            result.message = messageSource.getMessage(
+                error.code.toString(),
+                error.args as Object[] ?: null,
+                error.code.toString(),
+                null
+            )
+        }
+        if (error.args) {
+            result.args = error.args
+        }
+        respondOutput(response, JSON_CONTENT_TYPE, groovy.json.JsonOutput.toJson(result))
+    }
+
+    @Override
+    void renderErrorXml(HttpServletResponse response, Map<String, Object> error) {
+        def status = error.status
+        if (status instanceof Integer) {
+            response.setStatus(status)
+        }
+        def message = error.message ?: messageSource.getMessage(
+            error.code?.toString() ?: 'api.error.unknown',
+            error.args as Object[] ?: null,
+            error.code?.toString() ?: 'api.error.unknown',
+            null
+        )
+        def xml = renderXml {
+            result(error: 'true', apiversion: ApiVersions.API_CURRENT_VERSION) {
+                delegate.'error'(code: error.code ?: 'api.error.unknown') {
+                    delegate.'message'(message)
+                }
+            }
+        }
+        respondOutput(response, APPLICATION_XML_CONTENT_TYPE, xml)
+    }
+
+    @Override
+    void respondError(
+        final HttpServletRequest request,
+        final HttpServletResponse response,
+        String code,
+        int status,
+        List<?> args
+    ) {
+        renderErrorFormat(response, [
+            status: status,
+            code: code,
+            args: args?.toArray()
+        ])
+    }
+
+    @Override
+    Integer getRequestApiVersion(HttpServletRequest request) {
+        def attribute = request.getAttribute('api_version')
+        if (attribute instanceof Integer) {
+            return attribute
+        }
+        return null
+    }
+
+    @Override
+    boolean isApiRequest(HttpServletRequest request) {
+        return getRequestApiVersion(request) != null
+    }
+
+    @Override
+    boolean requireApi(HttpServletRequest request, HttpServletResponse response) {
+        return requireApi(request, response, 1)
+    }
+
+    @Override
+    boolean requireApi(HttpServletRequest request, HttpServletResponse response, int min) {
+        if (!getRequestApiVersion(request)) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND)
+            return false
+        }
+        if (!requireVersion(request, response, min)) {
+            return false
+        }
+        return true
+    }
+
+    @Override
+    boolean requireVersion(HttpServletRequest request, HttpServletResponse response, int min) {
+        def apiVersion = getRequestApiVersion(request)
+        if (apiVersion == null) {
+            renderErrorFormat(response, [
+                status: HttpServletResponse.SC_BAD_REQUEST,
+                code: 'api.error.api-version.unsupported',
+                args: [0, request.forwardURI, "Minimum supported version: " + min]
+            ])
+            return false
+        }
+        if (apiVersion < min) {
+            renderErrorFormat(response, [
+                status: HttpServletResponse.SC_BAD_REQUEST,
+                code: 'api.error.api-version.unsupported',
+                args: [apiVersion, request.forwardURI, "Minimum supported version: " + min]
+            ])
+            return false
+        }
+        return true
+    }
+
+    @Override
+    boolean parseJsonXmlWith(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        Map<String, Consumer<Object>> handlers
+    ) {
+        // Grails 7: Delegate to WebUtil which uses Jackson instead of broken request.JSON
+        return rundeckWebUtil.parseJsonXmlWith(request, response, handlers)
+    }
+
+    @Override
+    boolean requireRequestFormat(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        List<String> allowed
+    ) {
+        return requireRequestFormat(request, response, allowed, null)
+    }
+
+    @Override
+    boolean requireRequestFormat(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        List<String> allowed,
+        String responseFormat
+    ) {
+        def format = request.format ?: request.contentType
+        if (allowed && format && !allowed.contains(format)) {
+            renderErrorFormat(response, [
+                status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                code: 'api.error.invalid.request',
+                args: ["Format not allowed: " + format]
+            ])
+            return false
+        }
+        return true
     }
 }

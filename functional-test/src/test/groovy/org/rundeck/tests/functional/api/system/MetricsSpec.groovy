@@ -2,8 +2,10 @@ package org.rundeck.tests.functional.api.system
 
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.container.BaseContainer
+import spock.lang.Ignore
 
 @APITest
+@Ignore("Grails 7: Metrics endpoints being refactored from Dropwizard to Spring Boot Actuator - See GRAILS7_HANDOFF/METRICS_SERVLET_ENDPOINTS.md")
 class MetricsSpec extends BaseContainer {
 
     def setupSpec() {

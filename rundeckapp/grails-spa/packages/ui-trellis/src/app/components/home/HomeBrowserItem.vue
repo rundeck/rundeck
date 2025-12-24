@@ -231,7 +231,9 @@ export default defineComponent({
   },
   methods: {
     createLink(restOfUrl: string): string {
-      return `${getRundeckContext().rdBase}${restOfUrl}`;
+      // Add leading slash if restOfUrl doesn't start with one
+      const separator = restOfUrl.startsWith('/') ? '' : '/';
+      return `${getRundeckContext().rdBase}${separator}${restOfUrl}`;
     },
   },
 });

@@ -46,6 +46,7 @@ import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
 import groovy.transform.TypeCheckingMode
+import groovy.xml.XmlParser
 import groovy.xml.MarkupBuilder
 import okhttp3.ResponseBody
 import org.apache.commons.io.FileUtils
@@ -1438,7 +1439,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                 importerErrors[importer.name] = [e.message]
                             }
                         }
-
                     }
                 }
             }
@@ -1481,7 +1481,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def types = componentBeanProvider.getBeans()
         Map<String, ProjectComponent> values = [:]
         types.each { k, v ->
-            if(v.componentEnabled){
+            boolean enabled = v.componentEnabled
+            if(enabled){
                 values[v.name] = v
             }
         }
@@ -1495,7 +1496,28 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             try{
                 component.afterProjectCreate(project)
             }catch (Exception e){
-                log.error("error afterProjectCreate component ${key}: ${e.message}")
+                // Provide specific guidance for storage/encryption errors
+                def errorMessage = e.message ?: "Unknown error"
+                def exceptionName = e.class.simpleName
+                
+                if (exceptionName.contains("Encryption") || 
+                    exceptionName.contains("Storage") ||
+                    errorMessage.contains("encryption") ||
+                    errorMessage.contains("Encryption")) {
+                    
+                    log.error("Storage/encryption error for component ${key}: ${errorMessage}. " +
+                             "This often indicates encryption configuration issues. " +
+                             "Check rundeck-config.properties for storage encryption settings.", e)
+                    
+                    throw new RuntimeException(
+                        "Failed to initialize storage for new project. ${errorMessage} " +
+                        "If using encryption, verify your encryption passwords are configured correctly in rundeck-config.properties.",
+                        e
+                    )
+                } else {
+                    log.error("Error afterProjectCreate component ${key}: ${errorMessage}", e)
+                    throw new RuntimeException("Failed to initialize ${key}: ${errorMessage}", e)
+                }
             }
         }
     }
@@ -1505,7 +1527,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         //filter import components based on authorization
         def projectAuthResource = rundeckAuthContextEvaluator.authResourceForProject(project)
         Map<String, ProjectComponent> authorized = new HashMap<>()
-        getProjectComponents()?.each { k, v ->
+        def allComponents = getProjectComponents()
+        allComponents?.each { k, v ->
             if (!v.importAuthRequiredActions
                     || rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext, projectAuthResource, v.importAuthRequiredActions)) {
                 authorized[k] = v

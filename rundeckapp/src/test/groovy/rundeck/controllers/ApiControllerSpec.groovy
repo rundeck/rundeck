@@ -358,7 +358,8 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
                 creator   : 'elf',
                 expired   : true,
                 roles     : ['a', 'b'],
-                expiration: '1970-01-01T00:00:00Z',
+                // Grails 7/Spring Boot 3: Jackson now includes milliseconds in ISO-8601 format
+                expiration: '1970-01-01T00:00:00.123Z',
                 id        : '123uuid',
                 user      : 'bob',
                 token     : 'abc'
@@ -414,7 +415,8 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
                 creator   : 'elf',
                 expired   : true,
                 roles     : ['a', 'b'],
-                expiration: '1970-01-01T00:00:00Z',
+                // Grails 7/Spring Boot 3: Jackson now includes milliseconds in ISO-8601 format
+                expiration: '1970-01-01T00:00:00.123Z',
                 id        : '123uuid',
                 user      : 'bob',
                 token     : 'abc'
@@ -568,7 +570,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             result.value() == access
         where:
             endpoint          | access
-            'apiMetricsList'  | RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN
+            'apiMetricsList_docs'  | RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN
     }
 
     private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {

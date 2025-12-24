@@ -64,7 +64,7 @@ import rundeck.services.feature.FeatureService
 
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
-import javax.servlet.http.HttpSession
+import jakarta.servlet.http.HttpSession
 import java.util.function.Predicate
 
 /**

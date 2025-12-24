@@ -27,7 +27,6 @@ import org.apache.commons.cli.ParseException
 import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypter
 import rundeckapp.Application
 import rundeckapp.init.RundeckInitConfig
-import liquibase.util.StringUtil
 
 
 class CommandLineSetup {
@@ -195,7 +194,7 @@ class CommandLineSetup {
         if(!System.getProperty("logging.config")) {
             System.setProperty("logging.config",System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR)+"/log4j2.properties")
         }
-        if(!StringUtil.isEmpty(cliOptions.tag))
+        if(cliOptions.tag && !cliOptions.tag.isEmpty())
             cliOptions.rollback = true
         cliOptions.migrate = cl.hasOption('m')
         if(cliOptions.migrate) {
@@ -216,15 +215,45 @@ class CommandLineSetup {
                 //spring boot launched jar scenario
                 //The location the jar is launched from is assumed to be the desired root
                 Class baseClass = ClassLoader.getSystemClassLoader().loadClass("org.springframework.boot.loader.Launcher")
-                return new File(baseClass.getProtectionDomain().getCodeSource().getLocation().getFile()).getParentFile().absolutePath
+                File launcherLocation = new File(baseClass.getProtectionDomain().getCodeSource().getLocation().getFile())
+                // Grails 7: Handle Spring Boot 3 nested: protocol in JAR paths
+                File actualLocation = stripNestedProtocol(launcherLocation)
+                return actualLocation.getParentFile().absolutePath
             } catch(Exception ex) {}
             //War file scenario, the exploded class should be in WEB-INF/classes which is why we back up two directories then create the root
-            File rundeckParent = new File(Application.class.getProtectionDomain().getCodeSource().getLocation().getFile()).parentFile.parentFile
+            File appLocation = new File(Application.class.getProtectionDomain().getCodeSource().getLocation().getFile())
+            // Grails 7: Handle Spring Boot 3 nested: protocol in JAR paths
+            File actualLocation = stripNestedProtocol(appLocation)
+            File rundeckParent = actualLocation.parentFile.parentFile
             File rundeckRoot = new File(rundeckParent,"rundeck")
             rundeckRoot.mkdirs()
             rundeckRoot.absolutePath
         }
 
+    }
+
+    /**
+     * Grails 7: Strip Spring Boot 3 nested: protocol prefix from file paths.
+     * Spring Boot 3 uses nested: URIs like "nested:/path/to/app.war/!WEB-INF/..."
+     * Extract the actual filesystem path.
+     */
+    private File stripNestedProtocol(File file) {
+        String path = file.getAbsolutePath()
+        if (path.contains("nested:")) {
+            // Remove nested: prefix and everything after the .war or .zip
+            path = path.replaceFirst(".*nested:", "")
+            int warIndex = path.indexOf(".war")
+            int zipIndex = path.indexOf(".zip")
+            if (warIndex >= 0 && (zipIndex < 0 || warIndex < zipIndex)) {
+                path = path.substring(0, warIndex + 4) // Include ".war"
+            } else if (zipIndex >= 0) {
+                path = path.substring(0, zipIndex + 4) // Include ".zip"
+            }
+            // Remove any remaining !/ or nested structure
+            path = path.replaceFirst('/!.*\\z', '')
+            return new File(path)
+        }
+        return file
     }
 
     Class tryToLoadCorrectBaseClass() {

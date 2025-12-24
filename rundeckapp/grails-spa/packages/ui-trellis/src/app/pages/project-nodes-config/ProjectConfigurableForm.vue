@@ -105,7 +105,7 @@ export default defineComponent({
           window._rundeck.projectName,
           this.category,
         );
-        this.apiResponse = config.response["projectConfigurable"] as [
+        this.apiResponse = (config.response["projectConfigurable"] || []) as [
           ConfigurableItem,
         ];
         const properties = [];

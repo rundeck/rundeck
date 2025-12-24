@@ -27,7 +27,7 @@ jest.mock("@/library/rundeckService", () => {
     getRundeckContext: jest.fn().mockImplementation(() => ({
       client: {},
       eventBus,
-      rdBase: "http://localhost:4440/",
+      rdBase: "http://localhost:4440",
       projectName: "testProject",
       apiVersion: "44",
       rootStore: {
