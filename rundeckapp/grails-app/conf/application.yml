@@ -78,6 +78,12 @@ spring:
 management:
     endpoints:
         enabled-by-default: false
+        web:
+            exposure:
+                # Expose modern monitoring endpoints (Rundeck 6.0+)
+                # Always enabled: prometheus (recommended), metrics (JSON), health, threaddump, info
+                include: health,metrics,threaddump,info,prometheus
+            base-path: /monitoring
     health:
         defaults:
             enabled: true
@@ -99,6 +105,10 @@ management:
                     include:
                         - readinessState
                         - rundeckDataSourceHealthIndicator
+    metrics:
+        export:
+            prometheus:
+                enabled: true
 
 ---
 

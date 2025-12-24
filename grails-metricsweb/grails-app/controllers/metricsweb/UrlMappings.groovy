@@ -18,6 +18,15 @@ package metricsweb
 class UrlMappings {
 
 	static mappings = {
+		// Legacy endpoints (deprecated, opt-in only)
+		// Default: disabled (404) - enable with rundeck.metrics.legacy.enabled=true
+		// Will be removed in Rundeck 7.0
+		"/metrics"(controller: "legacyMetrics", action: "metrics")
+		"/ping"(controller: "legacyMetrics", action: "ping")
+		
+		// Modern monitoring endpoints at /monitoring/* handled by Spring Boot Actuator
+		// Always enabled: /monitoring/prometheus, /monitoring/metrics, /monitoring/health
+		
 		"/$controller/$action?/$id?"{
 			constraints {
 				// apply constraints here
