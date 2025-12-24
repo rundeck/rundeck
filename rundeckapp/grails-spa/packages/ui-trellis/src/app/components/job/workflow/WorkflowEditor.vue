@@ -20,7 +20,7 @@
         <hr />
         <workflow-global-log-filters v-model="logFiltersData" />
         <hr />
-        <workflow-steps v-model="stepsData" />
+        <workflow-steps v-model="stepsData" :conditional-enabled="conditionalEnabled" />
       </div>
     </div>
   </section>
@@ -44,6 +44,7 @@ import WorkflowStrategy from "@/app/components/job/workflow/WorkflowStrategy.vue
 import { PluginConfig } from "@/library/interfaces/PluginConfig";
 import { defineComponent } from "vue";
 import OptionsEditorSection from "@/app/pages/job/editor/OptionsEditorSection.vue";
+import { getFeatureEnabled } from "@/library/services/feature";
 
 export default defineComponent({
   name: "WorkflowEditor",
@@ -69,6 +70,7 @@ export default defineComponent({
       logFiltersData: {} as GlobalLogFiltersData,
       stepsData: {} as StepsData,
       loaded: false,
+      conditionalEnabled: false,
     };
   },
   watch: {
@@ -97,7 +99,8 @@ export default defineComponent({
       deep: true,
     },
   },
-  mounted() {
+  async mounted() {
+    this.conditionalEnabled = await getFeatureEnabled("earlyAccessJobConditional");
     this.basicData = createBasicData(this.modelValue);
     this.strategyData = createStrategyData(this.modelValue);
     this.logFiltersData = createLogFiltersData(this.modelValue);

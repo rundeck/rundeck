@@ -1,5 +1,5 @@
 <template>
-  <modal v-if="!showWip" v-model="modalShown" :title="title || $t('plugin.choose.title')" size="lg">
+  <modal v-model="modalShown" :title="title || $t('plugin.choose.title')" size="lg">
     <slot></slot>
     <plugin-search
       v-if="showSearch"
@@ -73,37 +73,6 @@
       </btn>
     </template>
   </modal>
-  <modal v-else v-model="modalShown" :title="title || $t('plugin.choose.title')" size="lg">
-    <p>{{ $t('searchForStep') }}</p>
-    <p>{{ $t('learnMoreSearchPatterns') }}</p>
-    <plugin-search
-        v-if="showSearch"
-        @search="filterLoadedServices"
-    ></plugin-search>
-    <select-button v-model="selectedService" :options="serviceOptions" optionLabel="name" optionValue="value"/>
-    <p>{{ $t('nodeSteps') }}</p>
-    <p>{{ $t('nodeStepsDescription') }}</p>
-<!--    <p>Common node steps</p>-->
-    <div class="placeholder">
-      <skeleton height="1.25rem" width="1.25rem" shape="rectangle" />
-      <skeleton />
-    </div>
-    <template v-if="Object.keys(groupedProviders).length > 0">
-      <template v-for="(group, key) in groupedProviders">
-        <div class="list-group">
-          <div v-if="group.iconUrl" class="img-icon">
-            <img :src="group.iconUrl" />
-          </div>
-           {{key}} ({{ group.providers.length }} {{ $t('plugins') }})
-        </div>
-      </template>
-    </template>
-    <template #footer>
-      <btn data-testid="cancel-button" @click="$emit('cancel')">
-        {{ $t("Cancel") }}
-      </btn>
-    </template>
-  </modal>
 </template>
 <script lang="ts">
 import { getRundeckContext } from "@/library";
@@ -111,14 +80,12 @@ import pluginInfo from "@/library/components/plugins/PluginInfo.vue";
 import { defineComponent } from "vue";
 import PluginSearch from "@/library/components/plugins/PluginSearch.vue";
 import { ServiceType } from "@/library/stores/Plugins";
-const context = getRundeckContext();
 
-import SelectButton from 'primevue/selectbutton';
-import Skeleton from "primevue/skeleton";
+const context = getRundeckContext();
 
 export default defineComponent({
   name: "ChoosePluginModal",
-  components: { PluginSearch, pluginInfo, SelectButton, Skeleton },
+  components: { PluginSearch, pluginInfo },
   props: {
     title: {
       type: String,
@@ -154,23 +121,9 @@ export default defineComponent({
       loading: false,
       modalShown: false,
       searchQuery: "",
-      showWip: true,
-      selectedService: ServiceType.WorkflowNodeStep,
     };
   },
   computed: {
-    serviceOptions() {
-      return [
-        {
-          name: this.$t('nodeSteps'),
-          value: ServiceType.WorkflowNodeStep,
-        },
-        {
-          name: this.$t('workflowSteps'),
-          value: ServiceType.WorkflowStep,
-        }
-      ];
-    },
     filteredServices() {
       return this.loadedServices.map((service) => {
         const filteredProviders =
@@ -186,44 +139,6 @@ export default defineComponent({
         };
       });
     },
-    groupedProviders(): Object {
-      const tempMap = {};
-      const activeService = this.filteredServices?.filter(service => service.service === this.selectedService)[0];
-      if(activeService) {
-        activeService.providers.map(provider => {
-          if(provider.isHighlighted) {
-            tempMap[provider.title] = {
-              iconUrl: provider.iconUrl,
-              title: provider.title,
-              isHighlighted: true,
-              providers: [provider],
-            };
-          } else {
-
-            const splitChar = provider.title.includes(" / ") ? " / " : " ";
-            const key = provider.title.split(splitChar)[0];
-
-            const tempArray = tempMap[key]?.providers || [];
-            const addOtherInfo = !!tempArray.length;
-            console.log(key);
-
-
-            tempArray.push(provider);
-
-
-            tempMap[key] = {
-              iconUrl: addOtherInfo ? provider.iconUrl : tempMap[key]?.iconUrl,
-              title: addOtherInfo ? key : tempMap[key]?.title,
-              isHighlighted: false,
-              providers: tempArray,
-            };
-          }
-        })
-      }
-
-
-      return tempMap;
-    }
   },
   watch: {
     modelValue(val) {
@@ -319,26 +234,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style scoped lang="scss">
-.placeholder {
-  align-items: center;
-  display: flex;
-  gap: 0.5rem;
-}
-
-.img-icon {
-  //height: var(--sizes-5);
-  //width: var(--sizes-5);
-  align-items: center;
-  display: inline-flex;
-  justify-content: center;
-  height: 20px;
-  width: 20px;
-
-  img {
-    height: auto;
-    max-width: 80%;
-  }
-}
-</style>

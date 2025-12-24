@@ -144,7 +144,8 @@
       <p data-testid="no-steps">{{ $t("Workflow.noSteps") }}</p>
     </template>
     <template #extra>
-      <choose-plugin-modal
+      <component
+        :is="chooseModalComponent"
         v-model="addStepModal"
         :title="
           isErrorHandler
@@ -175,7 +176,7 @@
               : $t("Workflow.clickOnStepType")
           }}
         </span>
-      </choose-plugin-modal>
+      </component>
       <component
         v-if="editStepModal || (editJobRefModal && modalComponent)"
         :is="modalComponent"
@@ -246,6 +247,7 @@ import {
 } from "@/app/components/job/workflow/types/workflowTypes";
 import { getRundeckContext } from "@/library";
 import ChoosePluginModal from "@/library/components/plugins/ChoosePluginModal.vue";
+import ChoosePluginsEAModal from "@/library/components/plugins/ChoosePluginsEAModal.vue";
 import EditPluginModal from "@/library/components/plugins/EditPluginModal.vue";
 import pluginConfig from "@/library/components/plugins/pluginConfig.vue";
 import { createOptionVariables } from "@/library/stores/contextVariables";
@@ -275,6 +277,7 @@ export default defineComponent({
     EditPluginModal,
     pluginConfig,
     ChoosePluginModal,
+    ChoosePluginsEAModal,
     JobRefStep,
     LogFilters,
   },
@@ -283,6 +286,10 @@ export default defineComponent({
       type: Object,
       required: true,
       default: () => ({}) as StepsData,
+    },
+    conditionalEnabled: {
+      type: Boolean,
+      default: false,
     },
   },
   emits: ["update:modelValue"],
@@ -306,6 +313,9 @@ export default defineComponent({
     };
   },
   computed: {
+    chooseModalComponent() {
+      return this.conditionalEnabled ? "ChoosePluginsEAModal" : "ChoosePluginModal";
+    },
     modalAttributes() {
       if (this.editStepModal) {
         return {
