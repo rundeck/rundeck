@@ -43,6 +43,7 @@ class TopMenuPage extends BasePage {
         waitForElementVisible appUserMenuDropdownBy
         byAndWait logOutMenuBy click()
         waitForElementVisible(By.partialLinkText("Log In Again"))
+        waitForUrlToContain("/user/loggedout")
     }
 
     void clickHomeButton(){
