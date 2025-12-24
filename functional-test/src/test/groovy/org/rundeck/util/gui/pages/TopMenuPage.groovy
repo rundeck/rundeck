@@ -35,13 +35,14 @@ class TopMenuPage extends BasePage {
 
     void openAppUserMenu() {
         byAndWaitClickable appUserButtonBy click()
+        // Wait for dropdown menu to be visible after clicking
+        waitForElementVisible appUserMenuDropdownBy
     }
 
     void logOut() {
         openAppUserMenu()
-        // Wait for dropdown menu to be visible before clicking items inside it
-        waitForElementVisible appUserMenuDropdownBy
-        byAndWait logOutMenuBy click()
+        waitForElementVisible(logOutMenuBy)
+        clickElementSafely(logOutMenuBy)
         waitForElementVisible(By.partialLinkText("Log In Again"))
         waitForUrlToContain("/user/loggedout")
     }
@@ -52,8 +53,9 @@ class TopMenuPage extends BasePage {
 
     void navigateToUserProfile() {
         openAppUserMenu()
-        // Wait for dropdown menu to be visible before clicking items inside it
-        waitForElementVisible appUserMenuDropdownBy
-        byAndWaitClickable(By.linkText("Profile")) click()
+        By profileLinkBy = By.linkText("Profile")
+        waitForElementVisible(profileLinkBy)
+        clickElementSafely(profileLinkBy)
+        waitForUrlToContain("/user/profile")
     }
 }
