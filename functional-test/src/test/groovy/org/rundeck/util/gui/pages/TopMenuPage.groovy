@@ -2,6 +2,7 @@ package org.rundeck.util.gui.pages
 
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
+import org.openqa.selenium.WebElement
 import org.rundeck.util.container.SeleniumContext
 
 /**
@@ -34,15 +35,31 @@ class TopMenuPage extends BasePage {
     }
 
     void openAppUserMenu() {
-        byAndWaitClickable appUserButtonBy click()
-        // Wait for dropdown menu to be visible after clicking
-        waitForElementVisible appUserMenuDropdownBy
+        // Check if dropdown is already open
+        try {
+            def dropdown = el(appUserMenuDropdownBy)
+            if (dropdown.isDisplayed()) {
+                // Wait for menu items to be present
+                waitForElementVisible(logOutMenuBy)
+                return
+            }
+        } catch (Exception e) {
+            // Dropdown not found or not visible, need to click
+        }
+        
+        // Click user button
+        byAndWaitClickable(appUserButtonBy).click()
+        
+        // Wait for menu items to be visible (more reliable than waiting for container)
+        waitForElementVisible(logOutMenuBy)
     }
 
     void logOut() {
         openAppUserMenu()
-        waitForElementVisible(logOutMenuBy)
-        clickElementSafely(logOutMenuBy)
+        // Get element first, then use waitIgnoring to handle stale elements
+        WebElement logoutLink = waitForElementVisible(logOutMenuBy)
+        waitIgnoringForElementToBeClickable(logoutLink).click()
+        // Wait for logout to complete
         waitForElementVisible(By.partialLinkText("Log In Again"))
         waitForUrlToContain("/user/loggedout")
     }
@@ -54,8 +71,10 @@ class TopMenuPage extends BasePage {
     void navigateToUserProfile() {
         openAppUserMenu()
         By profileLinkBy = By.linkText("Profile")
-        waitForElementVisible(profileLinkBy)
-        clickElementSafely(profileLinkBy)
+        // Get element first, then use waitIgnoring to handle stale elements
+        WebElement profileLink = waitForElementVisible(profileLinkBy)
+        waitIgnoringForElementToBeClickable(profileLink).click()
+        // Wait for navigation to complete
         waitForUrlToContain("/user/profile")
     }
 }
