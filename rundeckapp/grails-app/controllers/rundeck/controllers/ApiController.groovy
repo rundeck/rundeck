@@ -273,6 +273,10 @@ Use this endpoint to verify API connectivity and determine the correct API versi
     )
     protected def apiMetricsThreads_docs() {}
     
+    @RdAuthorizeSystem(
+        value = RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN,
+        description = 'Read System Metrics'
+    )
     def apiMetrics(String name) {
         if (!apiService.requireVersion(request, response, ApiVersions.V25)) {
             return
@@ -317,12 +321,11 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         def servletPath = configurationService.getString('metrics.servletUrlPattern', '/metrics/*')
         forward(uri: servletPath.replace('/*', "/$name"))
     }
-
-    /**
-     * API forwarding for modern monitoring endpoints
-     * Forwards /api/*/monitoring/* to /monitoring/*
-     * Available in API v25+
-     */
+    
+    @RdAuthorizeSystem(
+        value = RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN,
+        description = 'Read System Monitoring Metrics'
+    )
     def apiMonitoring(String name) {
         if (!apiService.requireVersion(request, response, ApiVersions.V25)) {
             return
@@ -364,6 +367,7 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         // Forward to monitoring controller
         forward(uri: "/monitoring/$name")
     }
+    
     /**
      * API endpoint to query system features' toggle status: True/False for On/Off
      *
