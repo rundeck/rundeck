@@ -101,6 +101,7 @@ import rundeck.services.*
 import rundeck.services.optionvalues.OptionValuesService
 
 import jakarta.servlet.http.HttpServletResponse
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 import java.util.stream.Collectors
@@ -4267,7 +4268,17 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
         def jobAsUser, jobArgString, jobLoglevel, jobFilter, jobRunAtTime, jobOptions
         if (request.format == 'json') {
             // Grails 7: Parse body using Jackson instead of request.JSON
-            def data= com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
+            def data
+            try {
+                data = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
+            } catch (IOException e) {
+                return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.invalid.request',
+                    args: ["Failed to parse JSON request body: ${e.message}"],
+                    format: response.format
+                ])
+            }
             // Fallback to params if body was already consumed (e.g., when called from apiJobRetry)
             jobAsUser = data?.asUser ?: params.asUser
             jobArgString = data?.argString ?: params.argString
