@@ -317,6 +317,53 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         def servletPath = configurationService.getString('metrics.servletUrlPattern', '/metrics/*')
         forward(uri: servletPath.replace('/*', "/$name"))
     }
+
+    /**
+     * API forwarding for modern monitoring endpoints
+     * Forwards /api/*/monitoring/* to /monitoring/*
+     * Available in API v25+
+     */
+    def apiMonitoring(String name) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V25)) {
+            return
+        }
+
+        // Modern monitoring endpoints - always available (unless explicitly disabled)
+        def monitoringEnabled = configurationService.getBoolean("metrics.monitoring.enabled", true)
+        
+        def names = ['prometheus', 'metrics', 'health', 'info', 'threaddump']
+        
+        if (!name || !names.contains(name)) {
+            return apiService.renderErrorFormat(
+                response,
+                [
+                    format: 'json',
+                    code  : 'api.error.invalid.request',
+                    args  : [
+                        request.forwardURI,
+                    ],
+                    status: HttpServletResponse.SC_NOT_FOUND
+                ]
+            )
+        }
+        
+        if (!monitoringEnabled) {
+            return apiService.renderErrorFormat(
+                response,
+                [
+                    format: 'json',
+                    code  : 'api.error.monitoring.disabled',
+                    args  : [
+                        request.forwardURI,
+                    ],
+                    status: HttpServletResponse.SC_NOT_FOUND
+                ]
+            )
+        }
+        
+        // Forward to monitoring controller
+        forward(uri: "/monitoring/$name")
+    }
     /**
      * API endpoint to query system features' toggle status: True/False for On/Off
      *

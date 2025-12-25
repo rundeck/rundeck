@@ -265,6 +265,7 @@ class UrlMappings {
         }
 
         "/api/$api_version/metrics/$name**?"(controller: 'api', action: 'apiMetrics')
+        "/api/$api_version/monitoring/$name**?"(controller: 'api', action: 'apiMonitoring')
 
         "/api/$api_version/plugin/list"(controller: 'plugin', action: 'listPlugins')
         "/api/$api_version/plugin/detail/$service/$provider"(controller: 'plugin', action: 'apiPluginDetail')
