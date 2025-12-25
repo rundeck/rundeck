@@ -323,6 +323,38 @@ Use this endpoint to verify API connectivity and determine the correct API versi
      * Forwards /api/*/monitoring/* to /monitoring/*
      * Available in API v25+
      */
+    @Get(
+        uri= "/monitoring/{name}**",
+        produces = [MediaType.APPLICATION_JSON, "text/plain"]
+    )
+    @Operation(
+        tags = ['Metrics'],
+        method = "GET",
+        summary = "Access Monitoring Endpoints",
+        description = """Forwards API requests to modern monitoring endpoints (e.g., /monitoring/prometheus, /monitoring/metrics, /monitoring/health).
+        
+        Available endpoints:
+        - prometheus: Prometheus scrape format metrics
+        - metrics: List of available metrics
+        - health: Health check status
+        - info: Application information
+        - threaddump: Thread dump
+        
+        Authorization required: None (public endpoints)
+        
+        Since: v25""",
+        parameters = [
+            @Parameter(
+                name='name',
+                in = ParameterIn.PATH,
+                description = 'Name of the monitoring endpoint (prometheus, metrics, health, info, threaddump)',
+                schema = @Schema(type='string')
+            )
+        ]
+    )
+    @ApiResponse(responseCode = "200", description = "Monitoring data")
+    @ApiResponse(responseCode = "404", description = "Not Found (if monitoring is disabled or endpoint does not exist)")
+    @CompileStatic
     def apiMonitoring(String name) {
         if (!apiService.requireVersion(request, response, ApiVersions.V25)) {
             return
