@@ -571,6 +571,16 @@ tasks.withType(Test) {
     maxHeapSize = "2048m"
     // Gradle 8: Explicit dependency on fixOpenApiSpec
     dependsOn fixOpenApiSpec
+    // Increase Spring Test Context cache size to prevent premature eviction
+    // Default is 32, but integration tests need more headroom
+    systemProperty 'spring.test.context.cache.maxSize', '256'
+    // Also set as JVM arg to ensure it's picked up
+    jvmArgs += ['-Dspring.test.context.cache.maxSize=256']
+    // Unset GROOVY_HOME to prevent SDKMAN Groovy from interfering with Gradle's test execution
+    // Gradle manages its own Groovy dependencies and having GROOVY_HOME set can cause
+    // Spring Test Context eviction issues in integration tests
+    // Set to empty string to effectively unset it for the test process
+    environment['GROOVY_HOME'] = ''
 }
 
 // Gradle 8: compileGroovyPages uses fixOpenApiSpec output
@@ -590,6 +600,23 @@ tasks.named('javadoc') {
 
 tasks.withType(Test).configureEach {
     forkEvery = 500
+}
+
+// Configure integrationTest task specifically to prevent Spring Test Context eviction
+tasks.named('integrationTest').configure {
+    // Increase Spring Test Context cache size to prevent premature eviction
+    // Default is 32, but integration tests need more headroom
+    // Using 512 to handle many test configurations without eviction
+    systemProperty 'spring.test.context.cache.maxSize', '512'
+    // Also set as JVM arg to ensure it's picked up
+    jvmArgs += ['-Dspring.test.context.cache.maxSize=512']
+    // Disable parallel execution to prevent context eviction during parallel test runs
+    maxParallelForks = 1
+    // Unset GROOVY_HOME to prevent SDKMAN Groovy from interfering with Gradle's test execution
+    // Gradle manages its own Groovy dependencies and having GROOVY_HOME set can cause
+    // Spring Test Context eviction issues in integration tests
+    // Set to empty string to effectively unset it for the test process
+    environment['GROOVY_HOME'] = ''
 }
 
 // Groovy 4: Increase memory for test compilation
