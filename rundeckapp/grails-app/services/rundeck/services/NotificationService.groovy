@@ -78,7 +78,7 @@ import java.util.concurrent.TimeoutException
  * $Id$
  */
 
-public class NotificationService implements ApplicationContextAware{
+public class NotificationService implements ApplicationContextAware, EventBusAware{
     boolean transactional = false
 
     static final String POST = "post"

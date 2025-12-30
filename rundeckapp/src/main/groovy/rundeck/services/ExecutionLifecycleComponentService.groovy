@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
 import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl
 import com.dtolabs.rundeck.server.plugins.services.ExecutionLifecyclePluginProviderService
 import grails.events.annotation.Subscriber
+import grails.events.bus.EventBusAware
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -39,7 +40,7 @@ import rundeck.services.feature.FeatureService
  */
 @CompileStatic
 @Slf4j
-class ExecutionLifecycleComponentService implements IExecutionLifecycleComponentService, ExecutionLifecycleJobDataAdapter, ApplicationContextAware  {
+class ExecutionLifecycleComponentService implements IExecutionLifecycleComponentService, ExecutionLifecycleJobDataAdapter, ApplicationContextAware, EventBusAware  {
 
     @Autowired
     ExecutionLifecyclePluginProviderService executionLifecyclePluginProviderService
