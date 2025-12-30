@@ -151,35 +151,81 @@ class RundeckInitializer {
     }
 
     void initServerUuidWithServerIdFile() {
+        println "[SERVER UUID INIT] Starting server UUID initialization"
         String serverUuid = System.getenv("RUNDECK_SERVER_UUID") ?: System.getProperty("rundeck.server.uuid")
+        println "[SERVER UUID INIT] Environment/System property UUID: ${serverUuid ?: 'null'}"
+        
         String rdBase = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR)
+        println "[SERVER UUID INIT] rdeck.base: ${rdBase}"
+        
         String configBase = getConfigBase(rdBase)
+        println "[SERVER UUID INIT] Config base directory: ${configBase}"
+        
         File serverId = Paths.get(configBase,"serverId").toFile()
+        String serverIdPath = serverId.getAbsolutePath()
+        println "[SERVER UUID INIT] serverId file path: ${serverIdPath}"
+        println "[SERVER UUID INIT] serverId file exists: ${serverId.exists()}"
+        
         if(serverId.exists()) {
-            List<String> serverIdFileLines = serverId.readLines()
-            String currentServerUuid = serverIdFileLines.size() > 0 ? serverIdFileLines[0].trim() : ""
-            if(currentServerUuid.isEmpty()) {
-                if(!serverUuid) serverUuid = UUID.randomUUID().toString()
-                serverId.withPrintWriter {it.println(serverUuid) }
-            } else {
-                serverUuid = currentServerUuid
+            println "[SERVER UUID INIT] serverId file found, reading contents"
+            try {
+                List<String> serverIdFileLines = serverId.readLines()
+                println "[SERVER UUID INIT] serverId file has ${serverIdFileLines.size()} line(s)"
+                String currentServerUuid = serverIdFileLines.size() > 0 ? serverIdFileLines[0].trim() : ""
+                println "[SERVER UUID INIT] UUID read from file: '${currentServerUuid}'"
+                
+                if(currentServerUuid.isEmpty()) {
+                    println "[SERVER UUID INIT] File empty, generating new UUID"
+                    if(!serverUuid) serverUuid = UUID.randomUUID().toString()
+                    println "[SERVER UUID INIT] Writing UUID to file: ${serverUuid}"
+                    serverId.withPrintWriter {it.println(serverUuid) }
+                    println "[SERVER UUID INIT] UUID written successfully"
+                } else {
+                    serverUuid = currentServerUuid
+                    println "[SERVER UUID INIT] Using existing UUID from file: ${serverUuid}"
+                }
+            } catch (Exception e) {
+                println "[SERVER UUID INIT] ERROR reading serverId file: ${e.message}"
+                e.printStackTrace()
             }
         } else {
-            Files.createDirectories(serverId.toPath().parent)
-            if(!serverId.createNewFile()) {
-                println "Unable to create server id file. Aborting startup"
-                System.exit(-1)
+            println "[SERVER UUID INIT] serverId file does NOT exist, creating new"
+            try {
+                Files.createDirectories(serverId.toPath().parent)
+                println "[SERVER UUID INIT] Parent directory created/verified"
+                
+                if(!serverId.createNewFile()) {
+                    println "[SERVER UUID INIT] ERROR: Unable to create server id file. Aborting startup"
+                    System.exit(-1)
+                }
+                println "[SERVER UUID INIT] serverId file created successfully"
+                
+                File legacyFrameworkProps = new File(configBase,"framework.properties")
+                if(legacyFrameworkProps.exists()) { //supply the serverUuid from framework properties
+                    println "[SERVER UUID INIT] Legacy framework.properties found, checking for UUID"
+                    Properties fprops = new Properties()
+                    fprops.load(new FileReader(legacyFrameworkProps))
+                    serverUuid = fprops.getProperty("rundeck.server.uuid")
+                    println "[SERVER UUID INIT] UUID from framework.properties: ${serverUuid ?: 'null'}"
+                }
+                
+                if(!serverUuid) {
+                    serverUuid = UUID.randomUUID().toString()
+                    println "[SERVER UUID INIT] Generated new UUID: ${serverUuid}"
+                }
+                
+                println "[SERVER UUID INIT] Writing UUID to new file: ${serverUuid}"
+                serverId.withPrintWriter {it.println(serverUuid) }
+                println "[SERVER UUID INIT] UUID written successfully"
+            } catch (Exception e) {
+                println "[SERVER UUID INIT] ERROR creating serverId file: ${e.message}"
+                e.printStackTrace()
             }
-            File legacyFrameworkProps = new File(configBase,"framework.properties")
-            if(legacyFrameworkProps.exists()) { //supply the serverUuid from framework properties
-                Properties fprops = new Properties()
-                fprops.load(new FileReader(legacyFrameworkProps))
-                serverUuid = fprops.getProperty("rundeck.server.uuid")
-            }
-            if(!serverUuid) serverUuid = UUID.randomUUID().toString()
-            serverId.withPrintWriter {it.println(serverUuid) }
         }
+        
         System.setProperty("rundeck.server.uuid",serverUuid)
+        println "[SERVER UUID INIT] Final UUID set as system property: ${serverUuid}"
+        println "[SERVER UUID INIT] Initialization complete"
     }
 
     String getConfigBase(String rdBase) {
