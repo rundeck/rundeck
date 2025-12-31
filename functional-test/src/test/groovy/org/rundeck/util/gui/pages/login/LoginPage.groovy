@@ -48,7 +48,6 @@ class LoginPage extends BasePage {
         loginField.sendKeys(username)
         passwordField.sendKeys(password)
         loginBtn.click()
-        // Wait for login to complete - URL should no longer be /user/login
         waitForUrlToNotContain("/user/login")
     }
 }

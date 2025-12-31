@@ -37,7 +37,7 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
     @Delegate
     WebDriver getDriver() {
         if (null == _driver) {
-            def prefs = ["download.default_directory": downloadFolder]
+            def prefs = ["download.default_directory": downloadFolder, "profile.password_manager_leak_detection": false]
             LoggingPreferences logPrefs = new LoggingPreferences()
             logPrefs.enable(LogType.BROWSER, Level.ALL)
 

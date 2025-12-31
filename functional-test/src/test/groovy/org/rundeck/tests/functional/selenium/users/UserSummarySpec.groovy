@@ -29,8 +29,6 @@ class UserSummarySpec extends SeleniumBase {
 
         and: "Login with the second user"
         loginPage.login(TEST_USER, TEST_PASS)
-        topMenuPage.waitForUrlToNotContain("/user/login")
-        topMenuPage.waitForElementVisible(topMenuPage.appUserButtonBy)
 
         and: "Navigate to the User Manager Page"
         userSummaryPage.go()
@@ -64,8 +62,6 @@ class UserSummarySpec extends SeleniumBase {
 
         and: "Login with the second user"
         loginPage.login(TEST_USER, TEST_PASS)
-        topMenuPage.waitForUrlToNotContain("/user/login")
-        topMenuPage.waitForElementVisible(topMenuPage.appUserButtonBy)
 
         and: "Navigate to the User Manager Page"
         userSummaryPage.go()
