@@ -96,6 +96,39 @@ class MonitoringController {
     }
     
     /**
+     * /monitoring/health/readiness - Readiness probe for Kubernetes/test framework
+     * Returns readiness state from Spring Boot AvailabilityState
+     */
+    def readiness() {
+        log.debug("MonitoringController.readiness() - checking config")
+        
+        if (!isMonitoringEnabled()) {
+            log.info("Monitoring endpoint /monitoring/health/readiness accessed but disabled via config")
+            renderDisabled('health/readiness')
+            return
+        }
+        
+        try {
+            // Get ReadinessState from Spring Boot AvailabilityState
+            // This is set by RundeckReadinessHealthIndicatorService when rundeck.bootstrap fires
+            def readinessState = org.springframework.boot.availability.ReadinessState.ACCEPTING_TRAFFIC
+            def applicationAvailability = applicationContext.getBean(org.springframework.boot.availability.ApplicationAvailability)
+            def currentReadiness = applicationAvailability.getReadinessState()
+            
+            if (currentReadiness == readinessState) {
+                render([status: 'UP'] as JSON)
+            } else {
+                response.status = 503
+                render([status: 'DOWN', readiness: currentReadiness.toString()] as JSON)
+            }
+        } catch (Exception e) {
+            // If ApplicationAvailability bean not available, assume ready (backward compatibility)
+            log.debug("ApplicationAvailability bean not available, assuming ready: ${e.message}")
+            render([status: 'UP'] as JSON)
+        }
+    }
+    
+    /**
      * /monitoring/info - Application information
      */
     def info() {

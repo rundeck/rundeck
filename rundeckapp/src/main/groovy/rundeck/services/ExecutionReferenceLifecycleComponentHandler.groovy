@@ -37,6 +37,8 @@ class ExecutionReferenceLifecycleComponentHandler implements ExecutionLifecycleC
 
     @Override
     Optional<ExecutionLifecycleStatus> beforeJobStarts(final StepExecutionContext executionContext, WorkflowExecutionItem item) throws ExecutionLifecycleComponentException {
+        org.slf4j.LoggerFactory.getLogger(ExecutionReferenceLifecycleComponentHandler.class).debug(
+            "[DIAG] ExecutionReferenceLifecycleComponentHandler.beforeJobStarts: Called for project: ${executionReference.project}, components: ${components?.size() ?: 0}, component names: ${components?.collect { it.name }}")
         Optional.ofNullable executionLifecycleComponentService.handleEvent(
                 JobExecutionEventImpl.beforeRun(executionContext, executionReference, item),
                 ExecutionLifecycleComponentService.EventType.BEFORE_RUN,

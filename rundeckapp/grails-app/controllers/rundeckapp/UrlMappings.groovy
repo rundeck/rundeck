@@ -23,6 +23,7 @@ class UrlMappings {
         "/monitoring/metrics"(controller: 'monitoring', action: 'metrics')
         "/monitoring/prometheus"(controller: 'monitoring', action: 'prometheus')
         "/monitoring/health"(controller: 'monitoring', action: 'health')
+        "/monitoring/health/readiness"(controller: 'monitoring', action: 'readiness')
         "/monitoring/info"(controller: 'monitoring', action: 'info')
         "/monitoring/threaddump"(controller: 'monitoring', action: 'threaddump')
         

@@ -713,10 +713,12 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
 
         def checkIsRundeckApiResponding = {
             //use httpClient directly to invoke a non-api path
+            // Use /monitoring/health/readiness instead of /actuator/health/readiness
+            // Spring Boot Actuator web endpoints are disabled, MonitoringController provides the endpoint
             try (def response =
                 client.httpClient.newCall(
                     new Request.Builder().
-                        url("${client.baseUrl}/actuator/health/readiness").
+                        url("${client.baseUrl}/monitoring/health/readiness").
                         header('Accept', 'application/json').
                         get().
                         build()
