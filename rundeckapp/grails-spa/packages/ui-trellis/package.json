@@ -61,7 +61,7 @@
     "pinia": "^2.3.1",
     "primevue": "4.2.0",
     "uiv": "^2.0.6",
-    "vue": "^3.5.16",
+    "vue": "^3.5.17",
     "vue-cookies": "^1.8.6",
     "vue-good-table-next": "^0.2.2",
     "vue-i18n": "^10.0.8",
