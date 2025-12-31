@@ -67,5 +67,5 @@ export default defineComponent({
 });
 </script>
 <style>
-@import "~vue3-markdown/dist/style.css";
+@import "~vue3-markdown/dist/vue3-markdown.css";
 </style>
