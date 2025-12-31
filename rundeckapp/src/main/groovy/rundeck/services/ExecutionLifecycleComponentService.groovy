@@ -62,7 +62,7 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
     @Subscriber('rundeck.bootstrap')
     void init() throws Exception {
         beanComponents = applicationContext.getBeansOfType(ExecutionLifecycleComponent)
-        log.info("[DIAG] ExecutionLifecycleComponentService.init: Loaded ${beanComponents?.size() ?: 0} ExecutionLifecycleComponent beans: ${beanComponents?.keySet()}")
+        log.debug("[DIAG] ExecutionLifecycleComponentService.init: Loaded ${beanComponents?.size() ?: 0} ExecutionLifecycleComponent beans: ${beanComponents?.keySet()}")
     }
     
 
@@ -105,11 +105,11 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
      */
     ExecutionLifecycleStatus handleEvent(def event, EventType eventType, List<NamedExecutionLifecycleComponent> components) throws ExecutionLifecycleComponentException{
         if (event instanceof JobExecutionEvent) {
-            log.info("[DIAG] ExecutionLifecycleComponentService.handleEvent: Called for project: ${event.projectName}, eventType: ${eventType}, components: ${components?.size() ?: 0}, component names: ${components?.collect { it.name }}")
+            log.debug("[DIAG] ExecutionLifecycleComponentService.handleEvent: Called for project: ${event.projectName}, eventType: ${eventType}, components: ${components?.size() ?: 0}, component names: ${components?.collect { it.name }}")
         }
         if (!components) {
             if (event instanceof JobExecutionEvent) {
-                log.info("[DIAG] ExecutionLifecycleComponentService.handleEvent: No components found, returning null")
+                log.debug("[DIAG] ExecutionLifecycleComponentService.handleEvent: No components found, returning null")
             }
             return null
         }
@@ -121,7 +121,7 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
         boolean success = true
         for (NamedExecutionLifecycleComponent component : components) {
             if (event instanceof JobExecutionEvent) {
-                log.info("[DIAG] ExecutionLifecycleComponentService.handleEvent: Processing component: ${component.name} for project: ${event.projectName}")
+                    log.debug("[DIAG] ExecutionLifecycleComponentService.handleEvent: Processing component: ${component.name} for project: ${event.projectName}")
             }
             try {
 
@@ -264,25 +264,25 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
 
     List<NamedExecutionLifecycleComponent> loadConfiguredComponents(PluginConfigSet configurations, String project) {
         List<NamedExecutionLifecycleComponent> compList = []
-        log.info("[DIAG] ExecutionLifecycleComponentService.loadConfiguredComponents: Called for project: ${project}, beanComponents size: ${beanComponents?.size() ?: 0}")
+        log.debug("[DIAG] ExecutionLifecycleComponentService.loadConfiguredComponents: Called for project: ${project}, beanComponents size: ${beanComponents?.size() ?: 0}")
         if(beanComponents){
             List<NamedExecutionLifecycleComponent> namedComponents = beanComponents.collect {name, component->
                 new NamedExecutionLifecycleComponent(
                         component: component,
                         name: component.class.canonicalName)
             }
-            log.info("[DIAG] ExecutionLifecycleComponentService.loadConfiguredComponents: Created ${namedComponents.size()} named components: ${namedComponents.collect { "${it.name} (plugin=${it.isPlugin()})" }}")
+            log.debug("[DIAG] ExecutionLifecycleComponentService.loadConfiguredComponents: Created ${namedComponents.size()} named components: ${namedComponents.collect { "${it.name} (plugin=${it.isPlugin()})" }}")
 
             namedComponents.forEach {component->
                 if(!component.isPlugin()){
                     compList.add(component)
-                    log.info("[DIAG] ExecutionLifecycleComponentService.loadConfiguredComponents: Added bean component: ${component.name}")
+                    log.debug("[DIAG] ExecutionLifecycleComponentService.loadConfiguredComponents: Added bean component: ${component.name}")
                 } else {
-                    log.info("[DIAG] ExecutionLifecycleComponentService.loadConfiguredComponents: Skipped plugin component: ${component.name}")
+                    log.debug("[DIAG] ExecutionLifecycleComponentService.loadConfiguredComponents: Skipped plugin component: ${component.name}")
                 }
             }
         }
-        log.info("[DIAG] ExecutionLifecycleComponentService.loadConfiguredComponents: Returning ${compList.size()} components for project: ${project}")
+        log.debug("[DIAG] ExecutionLifecycleComponentService.loadConfiguredComponents: Returning ${compList.size()} components for project: ${project}")
         compList
     }
 
@@ -348,7 +348,7 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
      * @return execution event handler
      */
     ExecutionLifecycleComponentHandler getExecutionHandler(PluginConfigSet configurations, ExecutionReference executionReference) {
-        log.info("[DIAG] ExecutionLifecycleComponentService.getExecutionHandler: Called for project: ${executionReference.project}, feature enabled: ${featureService?.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false)}")
+        log.debug("[DIAG] ExecutionLifecycleComponentService.getExecutionHandler: Called for project: ${executionReference.project}, feature enabled: ${featureService?.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false)}")
         
         // Always load bean components (they don't require the feature flag)
         def components = loadConfiguredComponents(configurations, executionReference.project)
@@ -356,19 +356,19 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
         // Only load plugin-based components if the feature flag is enabled
         if(featureService?.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false) && configurations){
             def plugins = createConfiguredPlugins(configurations, executionReference.project)
-            log.info("[DIAG] ExecutionLifecycleComponentService.getExecutionHandler: Adding ${plugins.size()} configured plugins")
+            log.debug("[DIAG] ExecutionLifecycleComponentService.getExecutionHandler: Adding ${plugins.size()} configured plugins")
             components.addAll(plugins)
         } else if(configurations) {
-            log.info("[DIAG] ExecutionLifecycleComponentService.getExecutionHandler: Feature flag disabled, skipping plugin components")
+            log.debug("[DIAG] ExecutionLifecycleComponentService.getExecutionHandler: Feature flag disabled, skipping plugin components")
         }
         
         // Only return null if there are no components at all (neither beans nor plugins)
         if(components.isEmpty()) {
-            log.info("[DIAG] ExecutionLifecycleComponentService.getExecutionHandler: No components found, returning null")
+            log.debug("[DIAG] ExecutionLifecycleComponentService.getExecutionHandler: No components found, returning null")
             return null
         }
         
-        log.info("[DIAG] ExecutionLifecycleComponentService.getExecutionHandler: Creating handler with ${components.size()} total components: ${components.collect { it.name }}")
+        log.debug("[DIAG] ExecutionLifecycleComponentService.getExecutionHandler: Creating handler with ${components.size()} total components: ${components.collect { it.name }}")
         new ExecutionReferenceLifecycleComponentHandler(
                 executionReference: executionReference,
                 executionLifecycleComponentService: this,
