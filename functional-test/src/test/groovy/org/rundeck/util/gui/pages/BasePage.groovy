@@ -21,6 +21,7 @@ import java.util.concurrent.TimeoutException
 abstract class BasePage {
     final SeleniumContext context
     By modalField = By.cssSelector(".modal.fade.in")
+    By modalInBy = By.cssSelector(".modal.in")
 
     /**
      * Create a new page
@@ -60,6 +61,10 @@ abstract class BasePage {
         }
     }
 
+    /**
+     * Validate the page is loaded by checking the URL contains the specified path
+     * @param loadPath The path that should be present in the current URL
+     */
     void validatePage(String loadPath) {
         if (loadPath && !loadPath.empty) {
             waitForUrlToContain(loadPath)
@@ -171,6 +176,11 @@ abstract class BasePage {
                 .until(ExpectedConditions.urlContains(text))
     }
 
+    /**
+     * Wait for the current URL to not contain the specified text
+     * @param text The text that should not be present in the URL
+     * @return true if the URL does not contain the text within the timeout period
+     */
     boolean waitForUrlToNotContain(String text) {
         new WebDriverWait(context.driver, Duration.ofSeconds(30))
                 .until(ExpectedConditions.not(ExpectedConditions.urlContains(text)))

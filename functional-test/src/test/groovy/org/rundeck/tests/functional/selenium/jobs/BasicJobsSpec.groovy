@@ -248,7 +248,7 @@ class BasicJobsSpec extends SeleniumBase {
             // Wait for modal to be visible
             jobShowPage.waitForElementVisible(jobShowPage.jobDefinitionModalContentBy)
             // Wait for detail table (guaranteed to exist when modal content loads)
-            jobShowPage.waitForElementVisible(By.id("detailtable"))
+            jobShowPage.waitForElementVisible(jobShowPage.detailTableBy)
             // Wait for elements guaranteed to exist from previous tests
             jobShowPage.waitForElementVisible(jobShowPage.multipleExecBy)
             jobShowPage.waitForElementVisible(jobShowPage.notificationDefinitionBy)
@@ -299,7 +299,7 @@ class BasicJobsSpec extends SeleniumBase {
         then:
             jobShowPage.validatePage()
             jobShowPage.jobSearchButton.click()
-            jobShowPage.waitForModal 1, By.cssSelector(".modal.in")
+            jobShowPage.waitForModal 1, jobShowPage.modalInBy
             jobShowPage.jobSearchNameField.sendKeys 'option'
             jobShowPage.jobSearchSubmitButton.click()
             jobShowPage.waitForNumberOfElementsToBe jobShowPage.jobRowBy, expected.size()
@@ -322,7 +322,7 @@ class BasicJobsSpec extends SeleniumBase {
         then:
             jobShowPage.validatePage()
             jobShowPage.jobSearchButton.click()
-            jobShowPage.waitForModal 1, By.cssSelector(".modal.in")
+            jobShowPage.waitForModal 1, jobShowPage.modalInBy
             jobShowPage.jobSearchNameField.sendKeys 'option'
             jobShowPage.jobSearchGroupField.sendKeys 'test'
             jobShowPage.jobSearchSubmitButton.click()
@@ -337,7 +337,7 @@ class BasicJobsSpec extends SeleniumBase {
         when:
             jobShowPage.validatePage()
             jobShowPage.jobSearchButton.click()
-            jobShowPage.waitForModal 1, By.cssSelector(".modal.in")
+            jobShowPage.waitForModal 1, jobShowPage.modalInBy
             jobShowPage.jobSearchNameField.sendKeys 'option'
             jobShowPage.jobSearchGroupField.sendKeys '-'
             jobShowPage.jobSearchSubmitButton.click()
