@@ -2,6 +2,7 @@ package org.rundeck.util.gui.pages.project
 
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
+import org.openqa.selenium.StaleElementReferenceException
 import org.openqa.selenium.WebElement
 import org.rundeck.util.container.SeleniumContext
 import org.rundeck.util.gui.pages.BasePage
@@ -36,8 +37,8 @@ class SideBarPage extends BasePage {
                     byAndWaitClickable(isOverflow).click()
                     waitForAttributeContains overflowField, 'class', 'active'
                 }
-            } catch (Exception e) {
-                // Element might be stale, click overflow anyway
+            } catch (StaleElementReferenceException e) {
+                // Element is stale, click overflow anyway
                 byAndWaitClickable(isOverflow).click()
                 waitForAttributeContains overflowField, 'class', 'active'
             }

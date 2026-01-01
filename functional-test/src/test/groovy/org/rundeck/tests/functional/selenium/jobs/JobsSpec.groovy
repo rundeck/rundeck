@@ -777,13 +777,8 @@ class JobsSpec extends SeleniumBase {
         jobShowPage.go()
         jobShowPage.getRunJobBtn().click()
         then:
-        // Wait for either redirect to job/index OR validation alert to appear on current page
-        try {
-            jobShowPage.waitForUrlToContain("invalidInputsProject/job/index")
-        } catch (org.openqa.selenium.TimeoutException e) {
-            // If redirect doesn't happen, wait for validation alert on current page
-            jobShowPage.waitForElementVisible(jobShowPage.jobOptionAlertBy)
-        }
+        // Wait for validation alert to appear
+        jobShowPage.waitForElementVisible(jobShowPage.jobOptionAlertBy)
         // Verify the validation alert message is present
         jobShowPage.getJobOptionAlertBy().getText().contains("Option 'myOption' is required")
         cleanup:

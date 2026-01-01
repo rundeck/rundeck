@@ -580,34 +580,38 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     void deleteProject(String projectName) {
         def response = closeLater client.doDelete("/project/${projectName}")
         
+        int statusCode = response.code()
+        ResponseBody responseBody = response.body()
+        String responseBodyString = null
+        try {
+            if (responseBody != null) {
+                responseBodyString = responseBody.string()
+            }
+        } catch (IOException ignored) {
+            // If we can't read the body, we'll fall back to a generic error message later.
+        }
+        
         // Successful delete returns 204 (No Content)
-        if (response.code() == 204) {
+        if (statusCode == 204) {
             return
         }
         
         // If project doesn't exist (404), treat as success (idempotent operation)
-        if (response.code() == 404) {
+        if (statusCode == 404 && responseBodyString) {
             try {
-                def errorBody = jsonValue(response.body(), Map)
+                Map errorBody = MAPPER.readValue(responseBodyString, Map)
                 if (errorBody?.errorCode == "api.error.project.missing") {
                     // Project already deleted or doesn't exist - this is fine
                     return
                 }
                 // If 404 but different error code, fall through to throw exception
-            } catch (Exception e) {
+            } catch (Exception ignored) {
                 // If we can't parse the error, fall through to throw exception
             }
         }
         
         // For any other error (or 404 with different error code), throw exception
-        // Read body only if we haven't already consumed it
-        String errorMessage
-        try {
-            errorMessage = response.body().string()
-        } catch (IOException e) {
-            // Body was already consumed, use a generic message
-            errorMessage = "HTTP ${response.code()}: ${response.message()}"
-        }
+        String errorMessage = responseBodyString ?: "HTTP ${statusCode}: ${response.message()}"
         throw new RuntimeException("Failed to delete project: ${errorMessage}")
     }
 
