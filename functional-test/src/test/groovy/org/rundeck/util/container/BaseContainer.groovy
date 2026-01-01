@@ -570,17 +570,49 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     /**
      * Deletes the specified project.
      * This method sends a DELETE request to remove the project with the given name.
-     * If the deletion operation fails, a RuntimeException is thrown.
+     * The operation is idempotent - if the project does not exist, the method returns
+     * successfully without throwing an exception.
      *
      * @param projectName the name of the project to be deleted. Must not be null.
-     * @throws RuntimeException if the project deletion fails.
+     * @throws RuntimeException if the project deletion fails for reasons other than the project not existing.
      *         The exception contains a detailed message obtained from the server's response.
      */
     void deleteProject(String projectName) {
         def response = closeLater client.doDelete("/project/${projectName}")
-        if (!response.successful) {
-            throw new RuntimeException("Failed to delete project: ${response.body().string()}")
+        
+        int statusCode = response.code()
+        ResponseBody responseBody = response.body()
+        String responseBodyString = null
+        try {
+            if (responseBody != null) {
+                responseBodyString = responseBody.string()
+            }
+        } catch (IOException ignored) {
+            // If we can't read the body, we'll fall back to a generic error message later.
         }
+        
+        // Successful delete returns 204 (No Content)
+        if (statusCode == 204) {
+            return
+        }
+        
+        // If project doesn't exist (404), treat as success (idempotent operation)
+        if (statusCode == 404 && responseBodyString) {
+            try {
+                Map errorBody = MAPPER.readValue(responseBodyString, Map)
+                if (errorBody?.errorCode == "api.error.project.missing") {
+                    // Project already deleted or doesn't exist - this is fine
+                    return
+                }
+                // If 404 but different error code, fall through to throw exception
+            } catch (Exception ignored) {
+                // If we can't parse the error, fall through to throw exception
+            }
+        }
+        
+        // For any other error (or 404 with different error code), throw exception
+        String errorMessage = responseBodyString ?: "HTTP ${statusCode}: ${response.message()}"
+        throw new RuntimeException("Failed to delete project: ${errorMessage}")
     }
 
     /**

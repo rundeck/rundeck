@@ -84,11 +84,10 @@ class DuplicateOptionsSpec extends SeleniumBase {
      * @return the inserted date
      */
     String clickCalendarButtonTwice(JobShowPage jobShowPage, WebElement optionInputField){
-        WebElement optionParent = optionInputField.findElement(By.xpath("./.."))
-        WebElement calendarButton = optionParent.findElement(By.cssSelector(".glyphicon.glyphicon-calendar"))
+        WebElement calendarButton = jobShowPage.getCalendarButtonForOption(optionInputField)
         calendarButton.click()
 
-        jobShowPage.waitForElementVisible(By.cssSelector(".bootstrap-datetimepicker-widget.dropdown-menu.timepicker-sbs.bottom"))
+        jobShowPage.waitForElementVisible(jobShowPage.datetimepickerWidgetBy)
         calendarButton.click()
 
         return optionInputField.getAttribute("value")

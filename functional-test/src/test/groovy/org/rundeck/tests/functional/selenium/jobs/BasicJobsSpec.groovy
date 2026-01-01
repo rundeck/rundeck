@@ -111,6 +111,10 @@ class BasicJobsSpec extends SeleniumBase {
             jobCreatePage.go()
             jobCreatePage.descriptionTextarea.sendKeys 'a new job description'
             jobCreatePage.updateJobButton.click()
+            // Wait for page transition after clicking update button
+            jobCreatePage.waitForUrlToContain('/job/show')
+            // Wait for description element to be visible before reading text
+            jobShowPage.waitForElementVisible(jobShowPage.descriptionTextLabel)
         expect:
             'a new job description' == jobShowPage.descriptionTextLabel.getText()
         where:
@@ -161,6 +165,8 @@ class BasicJobsSpec extends SeleniumBase {
             }
             jobCreatePage.scheduleDaysCheckboxDivField.isDisplayed()
             jobCreatePage.updateJobButton.click()
+            // Wait for page transition after clicking update button
+            jobCreatePage.waitForUrlToContain('/job/show')
     }
 
     def "edit job and set executions tab"() {
@@ -184,6 +190,8 @@ class BasicJobsSpec extends SeleniumBase {
             }
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.updateJobButton
             jobCreatePage.updateJobButton.click()
+            // Wait for page transition after clicking update button
+            jobCreatePage.waitForUrlToContain('/job/show')
         where:
             nextUi<<[false,true]
     }
@@ -204,6 +212,8 @@ class BasicJobsSpec extends SeleniumBase {
             }
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.updateJobButton
             jobCreatePage.updateJobButton.click()
+            // Wait for page transition after clicking update button
+            jobCreatePage.waitForUrlToContain('/job/show')
     }
 
     def "edit job and set notifications"() {
@@ -220,6 +230,8 @@ class BasicJobsSpec extends SeleniumBase {
             jobCreatePage.notificationSaveButton.click()
             jobCreatePage.waitNotificationModal 0
             jobCreatePage.updateJobButton.click()
+            // Wait for page transition after clicking update button
+            jobCreatePage.waitForUrlToContain('/job/show')
     }
 
     def "showing the edited job"() {
@@ -233,6 +245,16 @@ class BasicJobsSpec extends SeleniumBase {
         then:
             jobListPage.go()
             jobShowPage.jobDefinitionModal.click()
+            // Wait for modal to be visible
+            jobShowPage.waitForElementVisible(jobShowPage.jobDefinitionModalContentBy)
+            // Wait for detail table (guaranteed to exist when modal content loads)
+            jobShowPage.waitForElementVisible(jobShowPage.detailTableBy)
+            // Wait for elements guaranteed to exist from previous tests
+            jobShowPage.waitForElementVisible(jobShowPage.multipleExecBy)
+            jobShowPage.waitForElementVisible(jobShowPage.notificationDefinitionBy)
+            // Wait for schedule-specific elements (only if schedule was set)
+            jobShowPage.waitForNumberOfElementsToBe(jobShowPage.cronBy, 2)
+            jobShowPage.waitForElementVisible(jobShowPage.scheduleTimeBy)
         expect:
             jobShowPage.cronLabel.size() == 2
             jobShowPage.scheduleTimeLabel.isDisplayed()
@@ -277,7 +299,7 @@ class BasicJobsSpec extends SeleniumBase {
         then:
             jobShowPage.validatePage()
             jobShowPage.jobSearchButton.click()
-            jobShowPage.waitForModal 1, By.cssSelector(".modal.in")
+            jobShowPage.waitForModal 1, jobShowPage.modalInBy
             jobShowPage.jobSearchNameField.sendKeys 'option'
             jobShowPage.jobSearchSubmitButton.click()
             jobShowPage.waitForNumberOfElementsToBe jobShowPage.jobRowBy, expected.size()
@@ -300,7 +322,7 @@ class BasicJobsSpec extends SeleniumBase {
         then:
             jobShowPage.validatePage()
             jobShowPage.jobSearchButton.click()
-            jobShowPage.waitForModal 1, By.cssSelector(".modal.in")
+            jobShowPage.waitForModal 1, jobShowPage.modalInBy
             jobShowPage.jobSearchNameField.sendKeys 'option'
             jobShowPage.jobSearchGroupField.sendKeys 'test'
             jobShowPage.jobSearchSubmitButton.click()
@@ -315,7 +337,7 @@ class BasicJobsSpec extends SeleniumBase {
         when:
             jobShowPage.validatePage()
             jobShowPage.jobSearchButton.click()
-            jobShowPage.waitForModal 1, By.cssSelector(".modal.in")
+            jobShowPage.waitForModal 1, jobShowPage.modalInBy
             jobShowPage.jobSearchNameField.sendKeys 'option'
             jobShowPage.jobSearchGroupField.sendKeys '-'
             jobShowPage.jobSearchSubmitButton.click()
