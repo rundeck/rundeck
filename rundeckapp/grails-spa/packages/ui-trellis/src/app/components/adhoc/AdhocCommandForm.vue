@@ -429,10 +429,10 @@ export default defineComponent({
           }
           
           // Wait for Vue to update DOM with content before initializing LogViewer
-          // command/main.ts looks for #runcontent > .execution-show-log element
+          // adhoc/main.ts looks for #runcontent > .execution-show-log element
           await this.$nextTick();
           
-          // Emit event for LogViewer initialization (command/main.ts listens for this)
+          // Emit event for LogViewer initialization (adhoc/main.ts listens for this)
           this.eventBus.emit("ko-adhoc-running", data);
           this.$emit("submit", data);
         } else {

@@ -46,7 +46,6 @@
   )}"/>
 
     <asset:stylesheet src="static/css/pages/command.css"/>
-    <asset:javascript src="static/pages/command.js"/>
     <asset:javascript src="executionState.js"/>
     <asset:javascript src="executionControl.js"/>
     <asset:javascript src="util/yellowfade.js"/>
@@ -124,9 +123,7 @@ search
 })
   </g:javascript>
   <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
-  <g:if test="${legacyUi}">
-    <asset:javascript src="static/pages/adhoc.js" defer="defer"/>
-  </g:if>
+  <asset:javascript src="static/pages/adhoc.js" defer="defer"/>
 </head>
 <body>
 

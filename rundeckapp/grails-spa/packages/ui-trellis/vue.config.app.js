@@ -40,7 +40,6 @@ module.exports = {
       entry: "./src/app/pages/project-activity/main.js",
     },
     "pages/repository": { entry: "./src/app/pages/repository/main.js" },
-    "pages/command": { entry: "./src/app/pages/command/main.ts" },
     "pages/adhoc": { entry: "./src/app/pages/adhoc/main.ts" },
     "pages/community-news": { entry: "./src/app/pages/community-news/main.js" },
     "pages/project-nodes-config": {
