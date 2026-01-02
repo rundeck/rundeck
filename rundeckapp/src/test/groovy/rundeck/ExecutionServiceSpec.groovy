@@ -2989,8 +2989,90 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     }
 
-    // NOTE: cleanupExecution tests moved to integration tests (ExecutionServiceIntegrationSpec)
-    // since cleanupExecution does database operations that require full GORM setup
+    def "cleanup execution should set custom state"() {
+        given:
+        Execution e = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: false,
+                dateStarted: new Date(),
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
+                ).save(),
+                ).save(flush: true)
+
+        def spyService = Spy(ExecutionService) {
+            // Stub out all internal methods we don't want to execute
+            triggerJobCompleteNotifications(_, _) >> { }
+            reportExecutionResult(_) >> [:]
+            logExecution(_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _) >> { }
+            logExecutionLog4j(_, _, _) >> { }
+        }
+        spyService.jobStatsDataProvider = Mock(GormJobStatsDataProvider)
+
+        when:
+        spyService.cleanupExecution(e, status)
+
+        then:
+        e.refresh()
+        e.id != null
+        e.status == result
+        e.cancelled == (status == null)
+        // No stats collected for adhoc executions (no scheduledExecution)
+        0 * spyService.jobStatsDataProvider.updateJobStats(_, _, _, _, _)
+
+        where:
+        status      | result
+        'testvalue' | 'testvalue'
+        null        | 'false'
+    }
+
+    def "updateScheduledExecStatistics should collect stats for failed executions"() {
+        given: "a job UUID, execution ID, and execution time"
+        def jobUuid = UUID.randomUUID().toString()
+        def executionId = 123L
+        def executionTime = 5000L
+        def dateCompleted = new Date()
+        def mockConfigService = Mock(ConfigurationService)
+        mockConfigService.getBoolean("executionDailyMetrics.enabled", false) >> true
+        service.jobStatsDataProvider = new GormJobStatsDataProvider()
+        service.jobStatsDataProvider.configurationService = mockConfigService
+
+        when: "updateScheduledExecStatistics is called with failed status"
+        def result = service.updateScheduledExecStatistics(jobUuid, executionId, executionTime, 'failed', dateCompleted)
+
+        then: "stats are collected"
+        result == true
+        def stats = ScheduledExecutionStats.findByJobUuid(jobUuid)
+        stats != null
+    }
+
+    def "updateScheduledExecStatistics should collect stats for all status types"() {
+        given: "a job UUID and execution details"
+        def jobUuid = UUID.randomUUID().toString()
+        def dateCompleted = new Date()
+        def mockConfigService = Mock(ConfigurationService)
+        mockConfigService.getBoolean("executionDailyMetrics.enabled", false) >> true
+        service.jobStatsDataProvider = new GormJobStatsDataProvider()
+        service.jobStatsDataProvider.configurationService = mockConfigService
+
+        when: "multiple executions with different statuses are tracked"
+        service.updateScheduledExecStatistics(jobUuid, 1L, 1000L, 'succeeded', dateCompleted)
+        service.updateScheduledExecStatistics(jobUuid, 2L, 2000L, 'failed', dateCompleted)
+        service.updateScheduledExecStatistics(jobUuid, 3L, 3000L, 'aborted', dateCompleted)
+        service.updateScheduledExecStatistics(jobUuid, 4L, 4000L, 'timedout', dateCompleted)
+
+        then: "all executions are tracked"
+        def stats = ScheduledExecutionStats.findByJobUuid(jobUuid)
+        stats != null
+        def content = stats.getContentMap()
+        // Rolling-10 should only count succeeded (our fix)
+        content.execCount == 1
+        content.totalTime == 1000
+    }
 
     def "get NodeService from origContext only if exists for referenced from another projects jobs"() {
         given:

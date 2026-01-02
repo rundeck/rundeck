@@ -1388,11 +1388,13 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
             )
             job.save(flush: true)
 
+            // Use today's date to ensure metrics are within the default 7-day window
+            def today = java.time.LocalDate.now().toString()
             def stats = new ScheduledExecutionStats(
                 jobUuid: jobUuid,
                 contentMap: [
                     dailyMetrics: [
-                        "2025-11-22": [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { 0 }]
+                        (today): [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { 0 }]
                     ]
                 ]
             )
