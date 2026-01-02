@@ -20,8 +20,17 @@
     <div
       v-if="showOutput"
       id="runcontent"
+      ref="runcontentRef"
       class="card card-modified exec-output card-grey-header nodes_run_content execution-output-content"
+      @click="handleCloseOutputClick"
     >
+      <div v-if="loading" class="card-content">
+        {{ loadingMessage }}
+      </div>
+      <div
+        v-else-if="content"
+        v-html="content"
+      ></div>
     </div>
   </div>
 </template>
@@ -52,27 +61,32 @@ export default defineComponent({
       executionId: null as string | null,
       showOutput: false,
       error: null as string | null,
-      completionCheckInterval: null as any,
+      loading: false,
+      loadingMessage: "",
+      content: "",
+      completionCheckInterval: null as number | null,
     };
   },
   mounted() {
     // Listen for execution start event
     if (this.eventBus && typeof this.eventBus.on === "function") {
       this.eventBus.on("ko-adhoc-running", this.handleExecutionStart);
+      this.eventBus.on("adhoc-output-loading", this.handleLoading);
+      this.eventBus.on("adhoc-output-content", this.handleContent);
+      this.eventBus.on("adhoc-output-error", this.handleError);
     }
 
     // Execution completion detection is handled by startCompletionCheck()
     // which is called when handleExecutionStart() receives execution data
-
-    // Listen for close output events
-    document.addEventListener("click", this.handleCloseOutputClick);
   },
   beforeUnmount() {
     // Clean up event listeners
     if (this.eventBus && typeof this.eventBus.off === "function") {
       this.eventBus.off("ko-adhoc-running", this.handleExecutionStart);
+      this.eventBus.off("adhoc-output-loading", this.handleLoading);
+      this.eventBus.off("adhoc-output-content", this.handleContent);
+      this.eventBus.off("adhoc-output-error", this.handleError);
     }
-    document.removeEventListener("click", this.handleCloseOutputClick);
     
     // Clean up completion check interval
     if (this.completionCheckInterval) {
@@ -81,15 +95,37 @@ export default defineComponent({
     }
   },
   methods: {
-    async handleExecutionStart(data: any) {
+    async handleExecutionStart(data: { id: string } | null) {
       if (data && data.id) {
         this.executionId = data.id;
         this.showOutput = true;
         this.error = null;
+        this.loading = false;
+        this.content = "";
 
         // Start checking for execution completion
         this.startCompletionCheck(data.id);
       }
+    },
+    handleLoading(message: string) {
+      this.loading = true;
+      this.loadingMessage = message || "Loading…";
+      this.showOutput = true;
+      this.error = null;
+    },
+    handleContent(html: string) {
+      this.loading = false;
+      this.content = html;
+      this.showOutput = true;
+      this.error = null;
+      
+      // Note: HTML content is server-sanitized via executionFollowFragment endpoint
+      // which uses Rundeck's SanitizedHTMLCodec for security
+    },
+    handleError(message: string) {
+      this.error = message;
+      this.loading = false;
+      this.showOutput = false;
     },
     startCompletionCheck(executionId: string) {
       // Poll execution state to detect completion
@@ -140,7 +176,9 @@ export default defineComponent({
     },
     handleCloseOutputClick(event: MouseEvent) {
       const target = event.target as HTMLElement;
-      if (target.classList.contains("closeoutput")) {
+      // Check if clicked element or its parent has the closeoutput class
+      const closeButton = target.closest(".closeoutput");
+      if (closeButton) {
         event.preventDefault();
         this.closeOutput();
       }
@@ -148,6 +186,8 @@ export default defineComponent({
     closeOutput() {
       this.showOutput = false;
       this.executionId = null;
+      this.content = "";
+      this.loading = false;
       this.adhocCommandStore.running = false;
       this.adhocCommandStore.stopFollowing();
     },

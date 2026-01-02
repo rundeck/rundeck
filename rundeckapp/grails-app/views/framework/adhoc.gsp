@@ -89,6 +89,7 @@ search
 "/>
 
   <g:set var="executionModeActive" value="${g.executionMode(active: true, project: projectName)}"/>
+  <g:set var="legacyUi" value="${params.legacyUi || feature.isEnabled(name:'legacyUi')}"/>
 
   <g:javascript>
 
@@ -123,7 +124,9 @@ search
 })
   </g:javascript>
   <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
-  <asset:javascript src="static/pages/adhoc.js" defer="defer"/>
+  <g:if test="${legacyUi}">
+    <asset:javascript src="static/pages/adhoc.js" defer="defer"/>
+  </g:if>
 </head>
 <body>
 
@@ -159,26 +162,29 @@ search
     </div>
   </div>
 
-  <!-- Vue App Mount Point -->
-  <div class="adhoc-page-vue"></div>
-
   <!-- CSRF Token for form submissions -->
   <g:jsonToken id="adhoc_req_tokens" url="${request.forwardURI}"/>
 
-  <!-- Messages and Error Areas (managed by Vue but kept for compatibility) -->
+  <!-- Messages and Error Areas -->
   <div class="container-fluid page-commands">
     <div id="nodesContent" class="row">
       <g:render template="/common/messages"/>
-      <div class="col-sm-12">
-        <div class="alert alert-warning collapse" id="runerror">
-          <span class="errormessage"></span>
-          <a class="close" data-toggle="collapse" href="#runerror" aria-hidden="true">&times;</a>
-        </div>
-        <div id="runcontent" class="card card-modified exec-output card-grey-header nodes_run_content" style="display: none; margin-top: 20px"></div>
-      </div>
+      <g:if test="${legacyUi}">
+        <g:render template="/framework/legacyadhoc" model="[projectName: projectName, eventReadAuth: eventReadAuth]"/>
+      </g:if>
+      <g:else>
+        <!-- Vue App Mount Point -->
+        <div class="adhoc-page-vue"></div>
+      </g:else>
     </div>
     <div id="loaderror"></div>
   </div>
+  
+  <g:if test="${eventReadAuth && !legacyUi}">
+    <div id="activity_section" class="vue-ui-socket">
+      <ui-socket section="project-activity" location="main"></ui-socket>
+    </div>
+  </g:if>
 </div>
 </div>
 </body>
