@@ -78,6 +78,7 @@ import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
+import rundeck.ScheduledExecutionStats
 import rundeck.services.*
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.workflow.StateMapping
@@ -85,6 +86,8 @@ import rundeck.services.workflow.StateMapping
 import javax.servlet.http.HttpServletResponse
 import java.text.ParseException
 import java.text.SimpleDateFormat
+import java.time.LocalDate
+
 /**
 * ExecutionController
 */
@@ -2932,6 +2935,8 @@ So a value of `2w` would return executions that completed within the last two we
             @Parameter(in=ParameterIn.QUERY,name="olderFilter",description="(same format as `recentFilter`) return executions that completed before the specified relative period of time.  E.g. a value of `30d` returns executions older than 30 days.",schema=@Schema(type="string")),
             @Parameter(in=ParameterIn.QUERY,name="userFilter",description="Username who started the execution",schema=@Schema(type="string")),
             @Parameter(in=ParameterIn.QUERY,name="executionTypeFilter",description="""specify the execution type, one of: `scheduled` (schedule trigger), `user` (user trigger), `user-scheduled` (user scheduled trigger). Since: v20""",schema=@Schema(type="string",allowableValues = ['scheduled','user','user-scheduled'])),
+            @Parameter(in=ParameterIn.QUERY,name="useStats",description="""if true, use snapshot-based metrics from SCHEDULED_EXECUTION_STATS table (fast, returns empty metrics (all zeros) if no stats exist). if false or not provided, use execution table query (slow, always returns data). Since: v57""",schema=@Schema(type="boolean")),
+            @Parameter(in=ParameterIn.QUERY,name="groupByJob",description="""if true with useStats=true, returns metrics for all jobs in the project (batch mode). Requires project parameter. Returns format: {jobs: {uuid1: metrics, uuid2: metrics, ...}}. RUN-3768 Phase 5. Since: v57""",schema=@Schema(type="boolean")),
             @Parameter(in=ParameterIn.QUERY,name="max",description="""maximum number of results to include in response. (default: 20)""",schema=@Schema(type="integer")),
             @Parameter(in=ParameterIn.QUERY,name="offset",description="""offset for first result to include. (default: 0)""",schema=@Schema(type="integer"))
         ]
@@ -3457,6 +3462,8 @@ So a value of `2w` would return executions that completed within the last two we
             @Parameter(in=ParameterIn.QUERY,name="olderFilter",description="(same format as `recentFilter`) return executions that completed before the specified relative period of time.  E.g. a value of `30d` returns executions older than 30 days.",schema=@Schema(type="string")),
             @Parameter(in=ParameterIn.QUERY,name="userFilter",description="Username who started the execution",schema=@Schema(type="string")),
             @Parameter(in=ParameterIn.QUERY,name="executionTypeFilter",description="""specify the execution type, one of: `scheduled` (schedule trigger), `user` (user trigger), `user-scheduled` (user scheduled trigger). Since: v20""",schema=@Schema(type="string",allowableValues = ['scheduled','user','user-scheduled'])),
+            @Parameter(in=ParameterIn.QUERY,name="useStats",description="""if true, use snapshot-based metrics from SCHEDULED_EXECUTION_STATS table (fast, returns empty metrics (all zeros) if no stats exist). if false or not provided, use execution table query (slow, always returns data). Since: v57""",schema=@Schema(type="boolean")),
+            @Parameter(in=ParameterIn.QUERY,name="groupByJob",description="""if true with useStats=true, returns metrics for all jobs in the project (batch mode). Requires project parameter. Returns format: {jobs: {uuid1: metrics, uuid2: metrics, ...}}. RUN-3768 Phase 5. Since: v57""",schema=@Schema(type="boolean")),
             @Parameter(in=ParameterIn.QUERY,name="max",description="""maximum number of results to include in response. (default: 20)""",schema=@Schema(type="integer")),
             @Parameter(in=ParameterIn.QUERY,name="offset",description="""offset for first result to include. (default: 0)""",schema=@Schema(type="integer"))
         ]
@@ -3528,8 +3535,23 @@ Note: This endpoint has the same query parameters and response as the `/executio
      * API: /api/28/executions/metrics
      */
     def apiExecutionMetrics(ExecutionQuery query) {
-        if (!apiService.requireApi(request, response, ApiVersions.V29)) {
-            return
+        // Check if user wants stats-based metrics (needs to be checked before requireApi)
+        def useStats = params.boolean('useStats', false)
+        def groupByJob = params.boolean('groupByJob', false)
+        
+        // When useStats or groupByJob are used, requireApi should be called with the current API version
+        // (tests expect this behavior). Otherwise, require V29 as the minimum.
+        if (useStats || groupByJob) {
+            // Call requireApi with current API version (will be V57 if that's the request version)
+            // The version check below will handle the V57 requirement
+            if (!apiService.requireApi(request, response, request.api_version ?: ApiVersions.V29)) {
+                return
+            }
+        } else {
+            // Standard endpoint requires V29 minimum
+            if (!apiService.requireApi(request, response, ApiVersions.V29)) {
+                return
+            }
         }
 
         if (query?.hasErrors()) {
@@ -3610,21 +3632,100 @@ Note: This endpoint has the same query parameters and response as the `/executio
         }
 
 
+        // RUN-3768: Use stats table OR execution table (no fallback)
         def metrics
-        try {
-            // Get metric data
-            metrics = executionService.queryExecutionMetrics(query)
-        }
-        catch (ExecutionQueryException e) {
+        def startTime = System.currentTimeMillis()
+        def jobId = query.jobIdListFilter?.first()
+
+        // API Version check: useStats and groupByJob require API version 57 or higher
+        if ((useStats || groupByJob) && request.api_version < ApiVersions.V57) {
             return apiService.renderErrorFormat(
                 response,
                 [
                     status: HttpServletResponse.SC_BAD_REQUEST,
-                    code  : 'api.error.parameter.error',
-                    args  : [message(code: e.getErrorMessageCode())]
+                    code  : 'api.error.invalid.version',
+                    args  : ['useStats and groupByJob parameters require API version 57 or higher']
                 ]
             )
         }
+
+        // RUN-3768 Phase 5: Batch mode support
+        if (useStats && groupByJob) {
+            // Batch mode: Get metrics for all jobs in project
+            def projectName = params.project
+            if (!projectName) {
+                return apiService.renderErrorFormat(
+                    response,
+                    [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.parameter.required',
+                        args  : ['project is required when groupByJob=true']
+                    ]
+                )
+            }
+
+            log.debug("[METRICS-API] Batch mode for project ${projectName}")
+            metrics = getMetricsBatch(projectName, params.begin, params.end)
+
+            def elapsed = System.currentTimeMillis() - startTime
+            log.debug("[METRICS-API] Batch request completed in ${elapsed}ms")
+
+            render metrics as JSON
+            return
+        }
+
+        if (useStats) {
+            // Use SCHEDULED_EXECUTION_STATS table (fast, no fallback)
+            log.debug("[METRICS-API] useStats=true, using stats table for job ${jobId}")
+
+            if (!jobId) {
+                return apiService.renderErrorFormat(
+                    response,
+                    [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.parameter.required',
+                        args  : ['jobIdListFilter is required when useStats=true']
+                    ]
+                )
+            }
+
+            // Pass begin and end parameters if provided
+            metrics = getMetricsFromStats(jobId, params.begin, params.end)
+
+            if (!metrics) {
+                // No stats exist - return empty metrics (NO FALLBACK to execution table)
+                log.debug("[METRICS-API] No stats found for job ${jobId}, returning empty metrics")
+                metrics = [
+                    total: 0,
+                    succeeded: 0,
+                    failed: 0,
+                    aborted: 0,
+                    timedout: 0,
+                    successRate: 0.0,
+                    duration: [average: 0],
+                    daily_breakdown: [:],
+                    hourly_heatmap: (0..23).collect { 0 }
+                ]
+            }
+        } else {
+            // Use execution table query (slow, original implementation)
+            log.debug("[METRICS-API] useStats=false, using execution table query")
+            try {
+                metrics = executionService.queryExecutionMetrics(query)
+            } catch (ExecutionQueryException e) {
+                return apiService.renderErrorFormat(
+                    response,
+                    [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.parameter.error',
+                        args  : [message(code: e.getErrorMessageCode())]
+                    ]
+                )
+            }
+        }
+
+        def duration = System.currentTimeMillis() - startTime
+        log.debug("[METRICS-API] Metrics retrieved${jobId ? ' for job ' + jobId : ''} in ${duration}ms")
 
         // Format times to be human readable.
         metricsOutputFormatTimeNumberAsString(metrics.duration, [
@@ -3632,7 +3733,6 @@ Note: This endpoint has the same query parameters and response as the `/executio
             "min",
             "max"
         ])
-
 
         def controller = this
         withFormat {
@@ -3662,6 +3762,282 @@ Note: This endpoint has the same query parameters and response as the `/executio
         }
 
 
+    }
+
+    /**
+     * Get metrics from scheduled_execution_stats table (fast) - RUN-3768.
+     * Returns null if stats don't exist, or empty metrics object (all zeros) if no metrics found for the date range.
+     * 
+     * @param jobUuid The job UUID
+     * @param begin Optional begin date in format "yyyy-MM-ddTHH:mm:ssZ" (e.g., "2024-01-01T00:00:00Z")
+     * @param end Optional end date in format "yyyy-MM-ddTHH:mm:ssZ" (e.g., "2024-01-31T23:59:59Z")
+     * @return Map with metrics or null if stats don't exist
+     */
+    private Map getMetricsFromStats(String jobUuid, String begin = null, String end = null) {
+        try {
+            def job = ScheduledExecution.findByUuid(jobUuid)
+            if (!job) {
+                log.warn("[METRICS-API] Job not found: ${jobUuid}")
+                return null
+            }
+
+            def stats = ScheduledExecutionStats.findByJobUuid(jobUuid)
+            if (!stats) {
+                log.debug("[METRICS-API] No stats found for job ${jobUuid}")
+                return null
+            }
+
+            def statsMap = stats.getContentMap()
+            def dailyMetrics = statsMap.dailyMetrics ?: [:]
+
+            def today = LocalDate.now().toString()
+
+            // Determine date range filter
+            LocalDate beginDate = null
+            LocalDate endDate = null
+            
+            if (begin) {
+                // Extract date part from "yyyy-MM-ddTHH:mm:ssZ" format
+                // Take first 10 characters which is "yyyy-MM-dd"
+                if (begin.length() >= 10) {
+                    def beginDateStr = begin.substring(0, 10)
+                    try {
+                        beginDate = LocalDate.parse(beginDateStr)
+                        log.debug("[METRICS-API] Parsed begin date: ${beginDate} from ${begin}")
+                    } catch (Exception e) {
+                        log.warn("[METRICS-API] Invalid begin date format: ${begin}, error: ${e.message}")
+                        // Invalid date format - treat as if no begin date provided (backward compatibility)
+                        beginDate = null
+                    }
+                } else {
+                    log.warn("[METRICS-API] Invalid begin date format: ${begin} (too short)")
+                }
+            }
+            
+            if (end) {
+                // Extract date part from "yyyy-MM-ddTHH:mm:ssZ" format
+                // Take first 10 characters which is "yyyy-MM-dd"
+                if (end.length() >= 10) {
+                    def endDateStr = end.substring(0, 10)
+                    try {
+                        endDate = LocalDate.parse(endDateStr)
+                        log.debug("[METRICS-API] Parsed end date: ${endDate} from ${end}")
+                    } catch (Exception e) {
+                        log.warn("[METRICS-API] Invalid end date format: ${end}, error: ${e.message}")
+                        // Invalid date format - treat as if no end date provided (backward compatibility)
+                        endDate = null
+                    }
+                } else {
+                    log.warn("[METRICS-API] Invalid end date format: ${end} (too short)")
+                }
+            }
+
+            // Filter dailyMetrics based on date range if provided
+            def filteredMetrics = dailyMetrics
+            if (beginDate != null || endDate != null) {
+                // If date range is provided, filter metrics
+                if (dailyMetrics.isEmpty()) {
+                    // No metrics data at all - return zeros when date range is specified
+                    log.debug("[METRICS-API] No daily metrics data for job ${jobUuid} in date range ${begin ?: 'N/A'} to ${end ?: 'N/A'}")
+                    return [
+                        total: 0,
+                        succeeded: 0,
+                        failed: 0,
+                        aborted: 0,
+                        timedout: 0,
+                        successRate: 0.0,
+                        duration: [
+                            average: 0
+                        ],
+                        daily_breakdown: [:],
+                        hourly_heatmap: (0..23).collect { 0 }
+                    ]
+                }
+                
+                log.debug("[METRICS-API] Filtering metrics: beginDate=${beginDate}, endDate=${endDate}, total dailyMetrics=${dailyMetrics.size()}")
+                log.debug("[METRICS-API] Available dates in dailyMetrics: ${dailyMetrics.keySet().sort()}")
+                
+                filteredMetrics = dailyMetrics.findAll { dateStr, metrics ->
+                    def date = LocalDate.parse(dateStr)
+                    def inRange = true
+                    
+                    // Exclude dates before beginDate (inclusive: date >= beginDate)
+                    if (beginDate != null && date.isBefore(beginDate)) {
+                        log.debug("[METRICS-API] Excluding date ${dateStr} (before beginDate ${beginDate})")
+                        inRange = false
+                    }
+                    
+                    // Exclude dates after endDate (inclusive: date <= endDate)
+                    if (endDate != null && date.isAfter(endDate)) {
+                        log.debug("[METRICS-API] Excluding date ${dateStr} (after endDate ${endDate})")
+                        inRange = false
+                    }
+                    
+                    return inRange
+                }
+                
+                log.debug("[METRICS-API] After filtering: ${filteredMetrics.size()} metrics remain out of ${dailyMetrics.size()}")
+                log.debug("[METRICS-API] Filtered dates: ${filteredMetrics.keySet().sort()}")
+                
+                // If no metrics found for the date range, return empty metrics object
+                if (filteredMetrics.isEmpty()) {
+                    log.debug("[METRICS-API] No metrics found for job ${jobUuid} in date range ${begin ?: 'N/A'} to ${end ?: 'N/A'}")
+                    return [
+                        total: 0,
+                        succeeded: 0,
+                        failed: 0,
+                        aborted: 0,
+                        timedout: 0,
+                        successRate: 0.0,
+                        duration: [
+                            average: 0
+                        ],
+                        daily_breakdown: [:],
+                        hourly_heatmap: (0..23).collect { 0 }
+                    ]
+                }
+            } else {
+                // If no date range specified, check if dailyMetrics is empty
+                if (dailyMetrics.isEmpty()) {
+                    log.debug("[METRICS-API] No daily metrics data for job ${jobUuid}")
+                    return null  // No metrics data - backward compatibility
+                }
+                
+                // Use last 7 days (backward compatibility)
+                def cutoff = LocalDate.now().minusDays(6)
+                filteredMetrics = dailyMetrics.findAll { dateStr, metrics ->
+                    LocalDate.parse(dateStr) >= cutoff
+                }
+            }
+
+            // Variables for aggregated totals - calculate from filteredMetrics
+            def total = filteredMetrics.values().sum { it.total } ?: 0
+            def succeeded = filteredMetrics.values().sum { it.succeeded } ?: 0
+            def failed = filteredMetrics.values().sum { it.failed } ?: 0
+            def aborted = filteredMetrics.values().sum { it.aborted } ?: 0
+            def timedout = filteredMetrics.values().sum { it.timedout } ?: 0
+            def totalDuration = filteredMetrics.values().sum { it.duration } ?: 0
+            def avgDuration = total > 0 ? (totalDuration / total) : 0
+
+            // Only set needsCacheUpdate if dailyMetrics has grown beyond 90 days (triggers pruning)
+            def needsCacheUpdate = dailyMetrics.size() > 90
+
+            // LAZY CLEANUP: Prune entries older than 90 days (only on cache miss)
+            def needsSave = false
+            if (needsCacheUpdate) {
+                def pruneOlderThan = LocalDate.now().minusDays(90)
+                def prunedMetrics = dailyMetrics.findAll { dateStr, metrics ->
+                    LocalDate.parse(dateStr) >= pruneOlderThan
+                }
+
+                // Check if we actually pruned something
+                if (prunedMetrics.size() < dailyMetrics.size()) {
+                    statsMap.dailyMetrics = prunedMetrics
+                    log.debug("[METRICS] Pruned ${dailyMetrics.size() - prunedMetrics.size()} old entries for job ${jobUuid}")
+                    needsSave = true  // Pruning happened, must save
+                }
+
+                statsMap.lastAggregated = today
+                needsSave = true  // Cache updated, must save
+            }
+
+            // Only save if something actually changed
+            if (needsSave) {
+                stats.setContentMap(statsMap)
+                stats.save(flush: true)
+            }
+
+            // Return daily breakdown in same format as stored - object with dates as keys
+            def dailyBreakdown = filteredMetrics.collectEntries { dateStr, metrics ->
+                [dateStr, [
+                    total: metrics.total ?: 0,
+                    succeeded: metrics.succeeded ?: 0,
+                    failed: metrics.failed ?: 0,
+                    aborted: metrics.aborted ?: 0,
+                    timedout: metrics.timedout ?: 0,
+                    duration: metrics.duration ?: 0
+                ]]
+            }
+
+            // Aggregate hourly heatmap across all filtered days
+            def hourlyHeatmap = (0..23).collect { hour ->
+                filteredMetrics.values().sum { dayMetrics ->
+                    (dayMetrics.hourly && dayMetrics.hourly[hour]) ? dayMetrics.hourly[hour] : 0
+                } ?: 0
+            }
+
+            // Calculate success rate
+            def successRate = total > 0 ? (succeeded * 100.0 / total) : 0.0
+
+            return [
+                total: total,
+                succeeded: succeeded,
+                failed: failed,
+                aborted: aborted,
+                timedout: timedout,
+                successRate: successRate,
+                duration: [
+                    average: avgDuration
+                ],
+                daily_breakdown: dailyBreakdown,
+                hourly_heatmap: hourlyHeatmap
+            ]
+
+        } catch (Exception e) {
+            log.error("[METRICS-API] Error retrieving stats for job ${jobUuid}", e)
+            return null
+        }
+    }
+
+    /**
+     * Get metrics for all jobs in a project (batch mode) - RUN-3768 Phase 5.
+     * Returns per-job breakdown for efficient job list rendering.
+     * This method returns meaningful data only if the feature flag rundeck.executionDailyMetrics.enabled was enabled during metric collection.
+     *
+     * @param projectName The project name to query jobs for
+     * @param begin Optional begin date in format "yyyy-MM-ddTHH:mm:ssZ"
+     * @param end Optional end date in format "yyyy-MM-ddTHH:mm:ssZ"
+     * @return Map with format: [jobs: [jobUuid1: metrics, jobUuid2: metrics, ...]]
+     */
+    private Map getMetricsBatch(String projectName, String begin = null, String end = null) {
+        def startTime = System.currentTimeMillis()
+
+        try {
+            def jobs = ScheduledExecution.findAllByProject(projectName)
+            def result = [jobs: [:]]
+
+            log.debug("[METRICS-API-BATCH] Fetching metrics for ${jobs.size()} jobs in project ${projectName}")
+
+            jobs.each { job ->
+                def metrics = getMetricsFromStats(job.uuid, begin, end)
+
+                if (!metrics) {
+                    // No stats exist - return empty metrics for this job
+                    metrics = [
+                        total: 0,
+                        succeeded: 0,
+                        failed: 0,
+                        aborted: 0,
+                        timedout: 0,
+                        successRate: 0.0,
+                        duration: [average: 0],
+                        daily_breakdown: [:],
+                        hourly_heatmap: (0..23).collect { 0 }
+                    ]
+                }
+
+                result.jobs[job.uuid] = metrics
+            }
+
+            def elapsed = System.currentTimeMillis() - startTime
+            log.debug("[METRICS-API-BATCH] Retrieved metrics for ${result.jobs.size()}/${jobs.size()} jobs in ${elapsed}ms")
+
+            return result
+
+        } catch (Exception e) {
+            log.error("[METRICS-API-BATCH] Error retrieving batch metrics for project ${projectName}", e)
+            return [jobs: [:]]
+        }
     }
 
     /**

@@ -115,6 +115,9 @@ import rundeck.services.execution.ThresholdValue
 import rundeck.services.feature.FeatureService
 import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.LoggingThreshold
+import org.rundeck.app.config.SysConfigProp
+import org.rundeck.app.config.SystemConfig
+import org.rundeck.app.config.SystemConfigurable
 
 import javax.annotation.PreDestroy
 import javax.servlet.http.HttpServletRequest
@@ -137,7 +140,7 @@ import java.util.stream.Collectors
  * Coordinates Command executions via Ant Project objects
  */
 @Transactional
-class ExecutionService implements ApplicationContextAware, StepExecutor, NodeStepExecutor, EventPublisher {
+class ExecutionService implements ApplicationContextAware, StepExecutor, NodeStepExecutor, EventPublisher, SystemConfigurable {
     static Logger executionStatusLogger = LoggerFactory.getLogger("org.rundeck.execution.status")
 
     def FrameworkService frameworkService
@@ -805,18 +808,25 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     private void cleanupExecution(Execution e, String status = null) {
+        def dateCompleted = new Date()
         saveExecutionState(
                 e.scheduledExecution?.uuid,
                 e.id,
                 [
                         status       : status ?: String.valueOf(false),
-                        dateCompleted: new Date(),
+                        dateCompleted: dateCompleted,
                         cancelled    : !status
                 ],
                 null,
                 null
         )
 
+        // Update job statistics for cleaned-up executions
+        if (e.scheduledExecution?.uuid && e.dateStarted) {
+            def time = dateCompleted.time - e.dateStarted.time
+            def execStatus = status ?: 'failed'
+            updateScheduledExecStatistics(e.scheduledExecution.uuid, e.id, time, execStatus, dateCompleted)
+        }
     }
 
     /**
@@ -3268,13 +3278,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     /**
      * Update a scheduledExecution statistics with a successful execution duration
-     * @param schedId
+     * @param jobUuid
+     * @param eId
+     * @param time
      * @param execution
      * @return
      */
     @NotTransactional
-    def updateScheduledExecStatistics(String jobUuid, eId, long time) {
-        return jobStatsDataProvider.updateJobStats(jobUuid, eId, time)
+    def updateScheduledExecStatistics(String jobUuid, eId, long time, String status, Date dateCompleted) {
+        return jobStatsDataProvider.updateJobStats(jobUuid, eId, time, status, dateCompleted)
     }
 
     /**
@@ -4181,7 +4193,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 average: formattedMetrics.avgDuration,
                 max    : formattedMetrics.maxDuration,
                 min    : formattedMetrics.minDuration
-            ]
+            ],
+
+            // Enhanced response with status counts and success rate
+            succeeded: formattedMetrics.succeededCount,
+            failed: formattedMetrics.failedCount,
+            successRate: formattedMetrics.successRate
         ]
 
     }
@@ -4215,6 +4232,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         'durationMax',
                         StandardBasicTypes.TIME
 
+                // Zero-overhead status count projections
+                sqlProjection 'sum(case when status = \'succeeded\' then 1 else 0 end) as succeededCount',
+                        'succeededCount',
+                        StandardBasicTypes.LONG
+                sqlProjection 'sum(case when status in (\'failed\', \'failed-with-retry\', \'timedout\') then 1 else 0 end) as failedCount',
+                        'failedCount',
+                        StandardBasicTypes.LONG
+
             }
         }
         def metricCriteriaB = {
@@ -4236,6 +4261,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         'durationMax',
                         StandardBasicTypes.LONG
 
+                // Zero-overhead status count projections
+                sqlProjection 'sum(case when status = \'succeeded\' then 1 else 0 end) as succeededCount',
+                        'succeededCount',
+                        StandardBasicTypes.LONG
+                sqlProjection 'sum(case when status in (\'failed\', \'failed-with-retry\', \'timedout\') then 1 else 0 end) as failedCount',
+                        'failedCount',
+                        StandardBasicTypes.LONG
             }
         }
         return Arrays.asList(metricCriteriaA, metricCriteriaB)
@@ -4254,6 +4286,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def minDuration = metricsData?.durationMin ? metricsData.durationMin : 0
         def durationSum = metricsData?.durationSum ? metricsData.durationSum : 0
 
+        // Extract status counts
+        def succeededCount = metricsData?.succeededCount ? metricsData.succeededCount : 0
+        def failedCount = metricsData?.failedCount ? metricsData.failedCount : 0
+
         if ( maxDuration instanceof Long || minDuration instanceof Long || durationSum instanceof Long ) {
             maxDuration = epochToTime(metricsData?.durationMax)
             minDuration = epochToTime(metricsData?.durationMin)
@@ -4265,11 +4301,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def maxDurationToMillis = maxDuration != 0 ? sqlTimeToMillis(maxDuration) : 0
         def minDurationToMillis = minDuration != 0 ? sqlTimeToMillis(minDuration) : 0
 
+        // Calculate success rate
+        def successRate = totalCount != 0 ? (succeededCount / totalCount * 100).round(1) : 0
+
         return [
                 totalCount: totalCount,
                 maxDuration: maxDurationToMillis,
                 minDuration: minDurationToMillis,
-                avgDuration: avgDuration
+                avgDuration: avgDuration,
+                succeededCount: succeededCount,
+                failedCount: failedCount,
+                successRate: successRate
         ]
 
     }
@@ -4296,6 +4338,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             projections {
                 property("dateStarted","dateStarted")
                 property("dateCompleted","dateCompleted")
+                property("status","status")  // Add status for in-memory calculation
             }
         }
         List<Map<String, Timestamp>> result =  Execution.createCriteria().list(metricCriteria2)
@@ -4303,12 +4346,24 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     * input: List of Map of String to Timestamp, containing keys dateCompleted and dateStarted
+     * input: List of Map containing keys dateCompleted, dateStarted, and status
      * @param result
      * @return
      */
-    Map<String,Object> metricsDataFromProjectionResult(List<Map<String, Timestamp>> result) {
-        List<Long> timeSpent = result?.collect { Map<String, Timestamp> dataResult ->
+    Map<String,Object> metricsDataFromProjectionResult(List<Map<String, Object>> result) {
+        // Initialize status counters
+        def succeededCount = 0
+        def failedCount = 0
+
+        List<Long> timeSpent = result?.collect { Map<String, Object> dataResult ->
+            // Count status during existing iteration (zero overhead)
+            def status = dataResult.status
+            if (status == 'succeeded') {
+                succeededCount++
+            } else if (status in ['failed', 'failed-with-retry', 'timedout']) {
+                failedCount++
+            }
+
             if( dataResult.dateCompleted != null ){
                 return dataResult.dateCompleted.getTime() - dataResult.dateStarted.getTime()
             }
@@ -4323,6 +4378,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         Long minDuration = timeSpentWithoutRunningExecs?.min()
         double avgDuration = totalCount != 0 ? (timeSpentWithoutRunningExecs?.sum() / totalCount) : 0
 
+        // Calculate success rate
+        def successRate = totalCount != 0 ? (succeededCount / totalCount * 100).round(1) : 0
+
         return  [
             total   : totalCount,
 
@@ -4330,7 +4388,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 average: avgDuration,
                 max    : maxDuration,
                 min    : minDuration
-            ]
+            ],
+
+            // Enhanced response with status counts and success rate
+            succeeded: succeededCount,
+            failed: failedCount,
+            successRate: successRate
         ]
     }
 
@@ -4492,5 +4555,22 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                      context  : contextBuilder.build()]
             )
         }
+    }
+
+    @Override
+    List<SysConfigProp> getSystemConfigProps() {
+        [
+                SystemConfig.builder().with {
+                    key "rundeck.executionDailyMetrics.enabled"
+                    description "Enable Daily Execution Metrics Collection"
+                    defaultValue "false"
+                    required false
+                    datatype "Boolean"
+                    visibility 'Advanced'
+                    category 'Execution'
+                    authRequired("app_admin")
+                    build()
+                }
+        ] as List<SysConfigProp>
     }
 }
