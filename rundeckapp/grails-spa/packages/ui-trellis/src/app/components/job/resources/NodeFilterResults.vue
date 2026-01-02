@@ -82,7 +82,7 @@ export default defineComponent({
       default: false,
     },
   },
-  emits: ["filter"],
+  emits: ["filter", "update:total", "update:loading", "update:error"],
   setup() {
     const paging = ref(true);
     const loaded = ref(false);
@@ -124,6 +124,21 @@ export default defineComponent({
     },
     excludeFilterUncheck() {
       this.update();
+    },
+    total(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.$emit("update:total", newVal);
+      }
+    },
+    loading(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.$emit("update:loading", newVal);
+      }
+    },
+    error(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.$emit("update:error", newVal || null);
+      }
     },
   },
   mounted() {
