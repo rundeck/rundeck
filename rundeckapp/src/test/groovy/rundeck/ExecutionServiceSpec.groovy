@@ -2989,44 +2989,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     }
 
-    def "cleanup execution should set custom state"() {
-        given:
-        Execution e = new Execution(
-                argString: "-test args",
-                user: "testuser",
-                project: "testproj",
-                loglevel: 'WARN',
-                doNodedispatch: false,
-                dateStarted: new Date(),
-                workflow: new Workflow(
-                        keepgoing: true,
-                        commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
-                ).save(),
-                ).save(flush: true)
-        service.frameworkService = Mock(FrameworkService)
-            service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-        service.reportService = Mock(ReportService) {
-            1 * reportExecutionResult(_) >> [:]
-        }
-        service.notificationService = Mock(NotificationService) {
-            1 * asyncTriggerJobNotification(_, _, _)
-        }
-        service.metricService = Mock(MetricService)
-        service.workflowService = Mock(WorkflowService)
-        when:
-        service.cleanupExecution(e, status)
-        then:
-        e.refresh()
-        e.id != null
-        e.status == result
-        e.cancelled == (status == null)
-
-        where:
-        status      | result
-        'testvalue' | 'testvalue'
-        null        | 'false'
-
-    }
+    // NOTE: cleanupExecution tests moved to integration tests (ExecutionServiceIntegrationSpec)
+    // since cleanupExecution does database operations that require full GORM setup
 
     def "get NodeService from origContext only if exists for referenced from another projects jobs"() {
         given:

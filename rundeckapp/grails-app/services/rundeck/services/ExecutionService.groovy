@@ -808,18 +808,25 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     private void cleanupExecution(Execution e, String status = null) {
+        def dateCompleted = new Date()
         saveExecutionState(
                 e.scheduledExecution?.uuid,
                 e.id,
                 [
                         status       : status ?: String.valueOf(false),
-                        dateCompleted: new Date(),
+                        dateCompleted: dateCompleted,
                         cancelled    : !status
                 ],
                 null,
                 null
         )
 
+        // Update job statistics for cleaned-up executions
+        if (e.scheduledExecution?.uuid && e.dateStarted) {
+            def time = dateCompleted.time - e.dateStarted.time
+            def execStatus = status ?: 'failed'
+            updateScheduledExecStatistics(e.scheduledExecution.uuid, e.id, time, execStatus, dateCompleted)
+        }
     }
 
     /**

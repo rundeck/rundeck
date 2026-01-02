@@ -334,6 +334,44 @@ class GormJobStatsDataProviderSpec extends Specification implements DataTest {
             updatedContentMap.totalTime == 10000
     }
 
+    def "updateJobStats only updates rolling-10 for succeeded status"() {
+        given: "a job UUID with some successful executions"
+            def jobUuid = UUID.randomUUID().toString()
+            def dateCompleted = new Date()
+
+        when: "3 successful executions are added"
+            provider.updateJobStats(jobUuid, 1L, 1000L, "succeeded", dateCompleted)
+            provider.updateJobStats(jobUuid, 2L, 2000L, "succeeded", dateCompleted)
+            provider.updateJobStats(jobUuid, 3L, 3000L, "succeeded", dateCompleted)
+
+        then: "rolling-10 stats are updated"
+            def stats = ScheduledExecutionStats.findByJobUuid(jobUuid)
+            def contentMap = stats.getContentMap()
+            contentMap.execCount == 3
+            contentMap.totalTime == 6000
+
+        when: "failed, aborted, and timedout executions are added"
+            provider.updateJobStats(jobUuid, 4L, 5000L, "failed", dateCompleted)
+            provider.updateJobStats(jobUuid, 5L, 7000L, "aborted", dateCompleted)
+            provider.updateJobStats(jobUuid, 6L, 9000L, "timedout", dateCompleted)
+
+        then: "rolling-10 stats are NOT updated (only succeeded updates them)"
+            def updatedStats = ScheduledExecutionStats.findByJobUuid(jobUuid)
+            def updatedContentMap = updatedStats.getContentMap()
+            updatedContentMap.execCount == 3  // Still 3
+            updatedContentMap.totalTime == 6000  // Still 6000
+
+        and: "daily metrics ARE updated with all statuses"
+            def today = LocalDate.now().toString()
+            updatedContentMap.dailyMetrics != null
+            updatedContentMap.dailyMetrics[today] != null
+            updatedContentMap.dailyMetrics[today].total == 6  // All 6 executions
+            updatedContentMap.dailyMetrics[today].succeeded == 3
+            updatedContentMap.dailyMetrics[today].failed == 1
+            updatedContentMap.dailyMetrics[today].aborted == 1
+            updatedContentMap.dailyMetrics[today].timedout == 1
+    }
+
     def "updateJobStats collects daily metrics when feature flag is enabled"() {
         given: "feature flag enabled (default in setup)"
             def jobUuid = UUID.randomUUID().toString()

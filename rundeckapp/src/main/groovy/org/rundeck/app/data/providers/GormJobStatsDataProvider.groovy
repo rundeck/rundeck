@@ -40,17 +40,19 @@ class GormJobStatsDataProvider implements JobStatsDataProvider{
                 def stats = getOrCreate(jobUuid)
                 def statsMap = stats.getContentMap()
 
-                // === EXISTING LOGIC (Rolling-10 for UI) ===
-                if (null == statsMap.execCount || 0 == statsMap.execCount || null == statsMap.totalTime || 0 == statsMap.totalTime) {
-                    statsMap.execCount = 1
-                    statsMap.totalTime = time
-                } else if (statsMap.execCount > 0 && statsMap.execCount < 10) {
-                    statsMap.execCount++
-                    statsMap.totalTime += time
-                } else if (statsMap.execCount >= 10) {
-                    def popTime = statsMap.totalTime.intdiv(statsMap.execCount)
-                    statsMap.totalTime -= popTime
-                    statsMap.totalTime += time
+                // === EXISTING LOGIC (Rolling-10 for UI) - Only for successful executions ===
+                if (status == 'succeeded') {
+                    if (null == statsMap.execCount || 0 == statsMap.execCount || null == statsMap.totalTime || 0 == statsMap.totalTime) {
+                        statsMap.execCount = 1
+                        statsMap.totalTime = time
+                    } else if (statsMap.execCount > 0 && statsMap.execCount < 10) {
+                        statsMap.execCount++
+                        statsMap.totalTime += time
+                    } else if (statsMap.execCount >= 10) {
+                        def popTime = statsMap.totalTime.intdiv(statsMap.execCount)
+                        statsMap.totalTime -= popTime
+                        statsMap.totalTime += time
+                    }
                 }
 
                 // === NEW LOGIC (Date-keyed daily metrics; 90-day retention handled in getMetricsFromStats()) - RUN-3768 ===
