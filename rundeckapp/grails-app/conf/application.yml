@@ -21,8 +21,6 @@ info:
         name: '@info.app.name@'
         version: '@info.app.version@'
         grailsVersion: '@info.app.grailsVersion@'
-build:
-    ident: '@build.ident@'
 
 logging:
     level:
