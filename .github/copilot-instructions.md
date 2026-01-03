@@ -54,6 +54,70 @@ Changes to front-end code (javascript, and typescript) should have accompanying 
 
 Changes that add or significantly change features of the application user interface, should have Selenium based tests added in the pro-functional-test module.
 
+## Selenium Testing Guidelines
+
+Selenium tests must follow the Page Object Model pattern and these strict guidelines:
+
+### Wait Strategies
+- **AVOID using `Thread.sleep()`** - Prefer explicit waits when possible. Only use `Thread.sleep()` with `WaitingTime` constants for special cases like external system initialization where explicit waits cannot be used.
+- **Implicit waits are globally configured** - The framework sets a global implicit wait in the `BasePage` constructor and uses `implicitlyWait(2000)` in `go()` methods. This is an established pattern. However, for specific element interactions, **ALWAYS prefer explicit waits** to ensure reliability and avoid unpredictable behavior.
+- **ALWAYS use explicit waits** provided by the Page Object base classes:
+  - `waitForElementVisible()` - Wait for element to be present AND visible
+  - `waitForElementToBeClickable()` - Wait for element to be visible AND enabled
+  - `waitForElementAttributeToChange()` - Wait for specific attribute changes
+  - `waitForNumberOfElementsToBeMoreThan()` - Wait for multiple elements to be present
+  - `waitForNumberOfElementsToBe()` - Wait for the number of elements to match a specific count
+  - `waitForTextToBePresentInElement()` - Wait for specific text to appear in an element
+  - `waitForUrlToContain()` - Wait for the current URL to contain a specific substring
+  - `waitForAttributeContains()` - Wait for an element's attribute to contain a specific value
+  - `waitIgnoringForElementVisible()` - Wait for element to be visible, ignoring certain exceptions
+  - `waitIgnoringForElementToBeClickable()` - Wait for element to be clickable, ignoring certain exceptions
+
+### Page Object Model
+- **NEVER put CSS/XPath selectors directly in test files** - All selectors belong in Page Object classes
+- **Define selectors as `By` fields** at the top of Page Object classes:
+  ```groovy
+  By nodeDetailsTableBy = By.cssSelector(".popover-content .node-details-simple")
+  By parameterKeyBy = By.cssSelector(".key")
+  ```
+- **Create getter methods** that include appropriate waits:
+  ```groovy
+  WebElement getNodeDetailsTable() {
+      waitForPopoverToAppear()
+      waitForElementVisible nodeDetailsTableBy
+      el nodeDetailsTableBy
+  }
+  ```
+- **Encapsulate interactions** - Complex operations should be methods in Page Objects, not inline in tests
+
+### Test Structure
+- Tests should read like documentation - clear when/then/expect blocks
+- Document methods with Groovydoc explaining purpose and behavior
+
+### Examples
+✅ **Correct**:
+```groovy
+// In CommandPage.groovy
+By nodeDetailsTableBy = By.cssSelector(".popover-content .node-details-simple")
+
+WebElement getNodeDetailsTable() {
+    waitForPopoverToAppear()
+    waitForElementVisible nodeDetailsTableBy
+    el nodeDetailsTableBy
+}
+
+// In CommandSpec.groovy
+def nodeDetailsTable = commandPage.getNodeDetailsTable()
+assert nodeDetailsTable.isDisplayed()
+```
+
+❌ **Incorrect**:
+```groovy
+// In test file - DON'T DO THIS
+Thread.sleep(2000)  // Never use sleep!
+def table = driver.findElement(By.cssSelector(".popover-content .node-details-simple"))  // Selector in test!
+```
+
 # APIs
 
 Changes to APIs should be documented with appropriate OpenAPI Spec annotations on the Grails controller actions that implement the API endpoints.
