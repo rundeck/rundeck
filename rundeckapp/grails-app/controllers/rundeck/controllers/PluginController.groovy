@@ -38,7 +38,8 @@ import rundeck.services.PluginApiService
 import rundeck.services.PluginService
 import rundeck.services.UiPluginService
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
+import java.security.MessageDigest
 import java.text.SimpleDateFormat
 
 import static org.springframework.http.HttpStatus.NOT_FOUND
@@ -163,7 +164,7 @@ class PluginController extends ControllerBase {
         sendResponse(format, istream)
     }
 
-    @Get('/plugin/list')
+    @Get(uri='/plugin/list', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'List installed plugins',
@@ -171,14 +172,14 @@ class PluginController extends ControllerBase {
 
 Since: v33
 ''',
-        tags = ['Plugins'],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = 'List of Plugins',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                array = @ArraySchema(schema = @Schema(implementation = ApiPluginListProvider))
-            )
+        tags = ['Plugins']
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'List of Plugins',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            array = @ArraySchema(schema = @Schema(implementation = ApiPluginListProvider))
         )
     )
     def listPlugins() {
@@ -237,7 +238,7 @@ Since: v33
     }
 
     @Hidden
-    @Get(uri='/plugin/detail/{service}/{provider}')
+    @Get(uri='/plugin/detail/{service}/{provider}', produces = MediaType.APPLICATION_JSON)
     /**
      *  detail about a plugin artifact, provider, and properties
      * @return
@@ -248,14 +249,14 @@ Since: v33
         description = '''Get detailed information about a plugin provide.
 
 Since: v49''',
-        tags = ['Plugins'],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = 'Plugin Provider detail',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = ApiPluginProviderDetail)
-            )
+        tags = ['Plugins']
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'Plugin Provider detail',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiPluginProviderDetail)
         )
     )
     def apiPluginDetail(
@@ -315,7 +316,13 @@ Since: v49''',
         }
         def meta = frameworkService.getRundeckFramework().getPluginManager().getPluginMetadata(service,provider)
         def detail = new ApiPluginProviderDetail()
-        detail.id = meta?.pluginId ?: desc.name.encodeAsSHA256().toString().substring(0,12)
+        // Generate SHA-256 hash for plugin ID (replaces Grails codec)
+        String pluginHash = MessageDigest.getInstance("SHA-256")
+            .digest(desc.name.bytes)
+            .encodeHex()
+            .toString()
+            .substring(0,12)
+        detail.id = meta?.pluginId ?: pluginHash
         detail.name = desc.name
         detail.title = uiPluginService.getPluginMessage(
             service,
@@ -408,7 +415,9 @@ Since: v49''',
         }
         Map config = [:]
         if (request.method == 'POST' && request.format == 'json') {
-            config = request.JSON.config
+            // Grails 7: Parse body using Jackson instead of request.JSON
+            def jsonBody = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
+            config = jsonBody?.config ?: [:]
         }
         config = ParamsUtil.cleanMap(config)
         PropertyScope ignoredScope=null

@@ -202,7 +202,7 @@ public class Workflow implements WorkflowData {
 
     /** create canonical map representation */
     public Map toMap(){
-        def plugins=pluginConfigMap?[pluginConfig:pluginConfigMap]:[:]
+        def plugins = pluginConfigMap ? ([pluginConfig:pluginConfigMap]) : ([:])
 
         //remove empty WorkflowStrategy config for the strategy
         if (!plugins.pluginConfig?.get('WorkflowStrategy')?.get(strategy)) {

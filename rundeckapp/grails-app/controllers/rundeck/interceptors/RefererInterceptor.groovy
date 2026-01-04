@@ -19,7 +19,7 @@ import org.rundeck.app.access.InterceptorHelper
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.services.ConfigurationService
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 import java.util.regex.Pattern
 
 /**

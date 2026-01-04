@@ -200,7 +200,7 @@ export default {
       axios({
         method: "post",
         headers: { "x-rundeck-ajax": true },
-        url: `${rdBase}repository/${this.repoName}/install/${pluginId}`,
+        url: `${rdBase}/repository/${this.repoName}/install/${pluginId}`,
         withCredentials: true,
       })
         .then((response) => {
@@ -220,7 +220,7 @@ export default {
       axios({
         method: "post",
         headers: { "x-rundeck-ajax": true },
-        url: `${rdBase}repository/${this.repoName}/uninstall/${pluginId}`,
+        url: `${rdBase}/repository/${this.repoName}/uninstall/${pluginId}`,
         withCredentials: true,
       })
         .then((response) => {

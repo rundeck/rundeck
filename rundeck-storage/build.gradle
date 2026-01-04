@@ -33,7 +33,7 @@ subprojects {
     }
 
     dependencies {
-        testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
+        testImplementation "org.apache.groovy:groovy-all:${findProperty('groovy.version')}"
         testImplementation "org.spockframework:spock-core:${spockVersion}"
         testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 

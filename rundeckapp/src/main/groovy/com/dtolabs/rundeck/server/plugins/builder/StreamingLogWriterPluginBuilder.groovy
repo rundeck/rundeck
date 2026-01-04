@@ -28,7 +28,8 @@ import org.slf4j.LoggerFactory
  * Date: 5/24/13
  * Time: 12:03 PM
  */
-class StreamingLogWriterPluginBuilder extends ScriptPluginBuilder implements PluginBuilder<StreamingLogWriterPlugin>{
+class StreamingLogWriterPluginBuilder extends ScriptPluginBuilder {
+    // Groovy 4: Cannot re-implement PluginBuilder with different type parameter
     static Logger logger = LoggerFactory.getLogger(StreamingLogWriterPluginBuilder)
     Map<String, Closure> handlers = [:]
     StreamingLogWriterPluginBuilder(Class clazz,String name) {

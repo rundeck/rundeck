@@ -62,7 +62,7 @@ import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.LogFileLoader
 import rundeck.services.logging.MultiFileStorageRequestImpl
 
-import javax.validation.constraints.NotNull
+import jakarta.validation.constraints.NotNull
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.*
@@ -1107,35 +1107,59 @@ class LogFileStorageService
         return found2
     }
     int countExecutionsWithoutStorageRequests(String serverUUID){
-        def found2=Execution.createCriteria().get{
-            createAlias('logFileStorageRequest', 'logid', JoinType.LEFT_OUTER_JOIN)
-            isNull( 'logid.id')
-            isNotNull('dateCompleted')
-            if(null==serverUUID){
-                isNull('serverNodeUUID')
-            }else{
-                eq('serverNodeUUID', serverUUID)
-            }
-            projections{
-                rowCount()
-            }
+        // Grails 7/Hibernate 6: Use HQL for LEFT OUTER JOIN - most reliable for complex queries
+        String hql = '''
+            SELECT COUNT(e.id)
+            FROM Execution e
+            LEFT JOIN e.logFileStorageRequest lfsr
+            WHERE lfsr.id IS NULL
+            AND e.dateCompleted IS NOT NULL
+        '''
+        if (serverUUID == null) {
+            hql += ' AND e.serverNodeUUID IS NULL'
+        } else {
+            hql += ' AND e.serverNodeUUID = :serverUUID'
         }
-        return found2
+        def params = [:]
+        if (serverUUID != null) {
+            params.serverUUID = serverUUID
+        }
+        return Execution.withSession { session ->
+            def query = session.createQuery(hql, Long)
+            params.each { key, value ->
+                query.setParameter(key, value)
+            }
+            query.uniqueResult() as Integer ?: 0
+        }
     }
     List<Execution> listExecutionsWithoutStorageRequests(String serverUUID,Map paging=[:]){
-        Execution.createCriteria().list{
-            createAlias('logFileStorageRequest', 'logid', JoinType.LEFT_OUTER_JOIN)
-            isNull( 'logid.id')
-            isNotNull('dateCompleted')
-            if(null==serverUUID){
-                isNull('serverNodeUUID')
-            }else{
-                eq('serverNodeUUID', serverUUID)
+        // Grails 7/Hibernate 6: Use HQL for LEFT OUTER JOIN - most reliable for complex queries
+        String hql = '''
+            SELECT e
+            FROM Execution e
+            LEFT JOIN e.logFileStorageRequest lfsr
+            WHERE lfsr.id IS NULL
+            AND e.dateCompleted IS NOT NULL
+        '''
+        if (serverUUID == null) {
+            hql += ' AND e.serverNodeUUID IS NULL'
+        } else {
+            hql += ' AND e.serverNodeUUID = :serverUUID'
+        }
+        def params = [:]
+        if (serverUUID != null) {
+            params.serverUUID = serverUUID
+        }
+        return Execution.withSession { session ->
+            def query = session.createQuery(hql, Execution)
+            params.each { key, value ->
+                query.setParameter(key, value)
             }
-            if(paging && paging.max){
-                maxResults(paging.max.toInteger())
-                firstResult(paging.offset?:0)
+            if (paging && paging.max) {
+                query.setMaxResults(paging.max.toInteger())
+                query.setFirstResult(paging.offset ?: 0)
             }
+            query.list()
         }
     }
 

@@ -9,6 +9,11 @@ configurations{
 }
 
 tasks.withType(GroovyCompile).configureEach {
+    // Skip OpenAPI processing for GSP compilation tasks (incompatible with Groovy 4)
+    if (name.contains('GroovyPages') || name == 'compileGroovyPages') {
+        return
+    }
+    
     def opts=['-Xmx1024m']
     if(isRunning){
         //disable openapi spec generation during bootRun
@@ -17,6 +22,8 @@ tasks.withType(GroovyCompile).configureEach {
         outputs.file(file("${buildDir}/classes/groovy/main/META-INF/swagger/api-${project.name}.yml"))
         opts.add "-Dmicronaut.openapi.target.file=${buildDir}/classes/groovy/main/META-INF/swagger/api-${project.name}.yml".toString()
     }
+    // Allow OpenAPI annotation warnings without failing the build
+    options.compilerArgs.add('-Xlint:-processing')
     configure(groovyOptions) {
         forkOptions.jvmArgs = opts
     }
@@ -34,8 +41,8 @@ dependencies{
         exclude group: 'org.slf4j', module: 'slf4j-nop'
     }
     compileOnly "io.micronaut:micronaut-http-server:${micronautVersion}"
-    compileOnly "io.micronaut:micronaut-inject:${micronautVersion}"
+    compileOnly "io.micronaut:micronaut-inject"
     compileOnly "io.micronaut:micronaut-inject-java:${micronautVersion}"
     compileOnly "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
-    compileOnly "io.micronaut:micronaut-core:${micronautVersion}"
+    compileOnly "io.micronaut:micronaut-core"
 }
