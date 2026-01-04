@@ -3667,6 +3667,13 @@ Note: This endpoint has the same query parameters and response as the `/executio
             log.debug("[METRICS-API] Batch mode for project ${projectName}")
             metrics = getMetricsBatch(projectName, params.begin, params.end)
 
+            // Format duration values for each job's metrics (consistency with single-job mode)
+            metrics.jobs?.each { jobUuid, jobMetrics ->
+                if (jobMetrics?.duration) {
+                    metricsOutputFormatTimeNumberAsString(jobMetrics.duration, ["average", "min", "max"])
+                }
+            }
+
             def elapsed = System.currentTimeMillis() - startTime
             log.debug("[METRICS-API] Batch request completed in ${elapsed}ms")
 
@@ -3767,13 +3774,14 @@ Note: This endpoint has the same query parameters and response as the `/executio
     /**
      * Get metrics from scheduled_execution_stats table (fast) - RUN-3768.
      * Returns null if stats don't exist, or empty metrics object (all zeros) if no metrics found for the date range.
-     * 
+     *
      * @param jobUuid The job UUID
      * @param begin Optional begin date in format "yyyy-MM-ddTHH:mm:ssZ" (e.g., "2024-01-01T00:00:00Z")
      * @param end Optional end date in format "yyyy-MM-ddTHH:mm:ssZ" (e.g., "2024-01-31T23:59:59Z")
+     * @param prefetchedStats Optional pre-fetched stats object to avoid N+1 queries in batch mode
      * @return Map with metrics or null if stats don't exist
      */
-    private Map getMetricsFromStats(String jobUuid, String begin = null, String end = null) {
+    private Map getMetricsFromStats(String jobUuid, String begin = null, String end = null, ScheduledExecutionStats prefetchedStats = null) {
         try {
             def job = ScheduledExecution.findByUuid(jobUuid)
             if (!job) {
@@ -3781,7 +3789,8 @@ Note: This endpoint has the same query parameters and response as the `/executio
                 return null
             }
 
-            def stats = ScheduledExecutionStats.findByJobUuid(jobUuid)
+            // Use pre-fetched stats if provided (batch mode optimization), otherwise fetch it
+            def stats = prefetchedStats ?: ScheduledExecutionStats.findByJobUuid(jobUuid)
             if (!stats) {
                 log.debug("[METRICS-API] No stats found for job ${jobUuid}")
                 return null
@@ -4008,8 +4017,17 @@ Note: This endpoint has the same query parameters and response as the `/executio
 
             log.debug("[METRICS-API-BATCH] Fetching metrics for ${jobs.size()} jobs in project ${projectName}")
 
+            // Bulk fetch all stats for jobs in this project (optimization: single query instead of N queries)
+            def jobUuids = jobs.collect { it.uuid }
+            def statsList = ScheduledExecutionStats.findAllByJobUuidInList(jobUuids)
+
+            // Build a map from job UUID to stats for O(1) lookup
+            def statsByJobUuid = statsList.collectEntries { [(it.jobUuid): it] }
+
             jobs.each { job ->
-                def metrics = getMetricsFromStats(job.uuid, begin, end)
+                // Pass pre-fetched stats to avoid N+1 query problem
+                def stats = statsByJobUuid[job.uuid]
+                def metrics = getMetricsFromStats(job.uuid, begin, end, stats)
 
                 if (!metrics) {
                     // No stats exist - return empty metrics for this job

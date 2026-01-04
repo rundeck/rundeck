@@ -897,6 +897,96 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
             response.status == 200
     }
 
+    def "apiExecutionMetrics batch mode formats duration values as strings"() {
+        given: "a project with jobs having stats with duration values"
+            request.api_version = ApiVersions.V57
+            request.contentType = "application/json"
+            params.project = "TestProject"
+            params.useStats = "true"
+            params.groupByJob = "true"
+
+            def job1Uuid = UUID.randomUUID().toString()
+            def job2Uuid = UUID.randomUUID().toString()
+
+            def job1 = new ScheduledExecution(
+                uuid: job1Uuid,
+                jobName: "Job 1",
+                project: "TestProject"
+            )
+            job1.save(flush: true)
+
+            def job2 = new ScheduledExecution(
+                uuid: job2Uuid,
+                jobName: "Job 2",
+                project: "TestProject"
+            )
+            job2.save(flush: true)
+
+            // Create stats for job1 with duration values
+            // Duration field is TOTAL duration across all executions (not average)
+            // Average = total duration / total executions
+            def stats1 = new ScheduledExecutionStats(
+                jobUuid: job1Uuid,
+                contentMap: [
+                    dailyMetrics: [
+                        (LocalDate.now().toString()): [
+                            total: 10,
+                            succeeded: 8,
+                            failed: 2,
+                            aborted: 0,
+                            timedout: 0,
+                            duration: 5 * 60 * 1000 * 10,  // 5 minutes average * 10 executions = 3,000,000ms total
+                            hourly: (0..23).collect { 0 }
+                        ]
+                    ]
+                ]
+            )
+            stats1.save(flush: true)
+
+            // Create stats for job2 with different duration
+            def stats2 = new ScheduledExecutionStats(
+                jobUuid: job2Uuid,
+                contentMap: [
+                    dailyMetrics: [
+                        (LocalDate.now().toString()): [
+                            total: 5,
+                            succeeded: 5,
+                            failed: 0,
+                            aborted: 0,
+                            timedout: 0,
+                            duration: 30 * 1000 * 5,  // 30 seconds average * 5 executions = 150,000ms total
+                            hourly: (0..23).collect { 0 }
+                        ]
+                    ]
+                ]
+            )
+            stats2.save(flush: true)
+
+            def apiMock = Mock(ApiService)
+            controller.apiService = apiMock
+            response.format = "json"
+
+        when:
+            def query = new ExecutionQuery()
+            controller.apiExecutionMetrics(query)
+
+        then:
+            1 * apiMock.requireApi(_, _, ApiVersions.V57) >> true
+            response.status == 200
+
+            // Verify duration values are formatted as strings (not raw milliseconds)
+            def json = response.json
+            json.jobs != null
+            json.jobs[job1Uuid] != null
+            json.jobs[job2Uuid] != null
+
+            // Job1 should have formatted duration "5m" (not 300000)
+            json.jobs[job1Uuid].duration.average == "5m"
+
+            // Job2 should have formatted duration "30s" (not 30000)
+            json.jobs[job2Uuid].duration.average == "30s"
+    }
+
     def "apiExecutionMetrics groupByJob without useStats does not trigger batch mode"() {
         given:
             request.api_version = ApiVersions.V57
