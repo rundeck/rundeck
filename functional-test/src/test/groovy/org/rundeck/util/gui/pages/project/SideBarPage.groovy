@@ -27,13 +27,16 @@ class SideBarPage extends BasePage {
     void goTo(NavLinkTypes navLink) {
         def navIdBy = By.id(navLink.id)
         if (navLink.projectConfig) {
-            projectSettingsField.click()
+            // Use retry logic for projectSettings click to handle Vue.js re-rendering
+            waitIgnoringForElementToBeClickable(projectSettings).click()
             waitForNavVisible()
         } else if (!(el navIdBy).isDisplayed() && overflowFields.size() == 1) {
-            overflowField.click()
+            // Use retry logic for overflow click to handle Vue.js re-rendering
+            waitIgnoringForElementToBeClickable(isOverflow).click()
             waitForAttributeContains overflowField, 'class', 'active'
         }
-        el navIdBy click()
+        // Use retry logic for nav link click to handle Vue.js re-rendering
+        waitIgnoringForElementToBeClickable(navIdBy).click()
     }
 
     WebElement waitForNavVisible() {
