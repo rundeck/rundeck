@@ -1,44 +1,35 @@
-// The Vue build version to load with the `import` command
-// (runtime-only or standalone) has been set in webpack.base.conf with an alias.
-import { createApp } from "vue";
-import VueCookies from "vue-cookies";
+import { defineComponent, markRaw, createApp } from "vue";
 import * as uiv from "uiv";
 import moment from "moment";
 
 import App from "./App.vue";
 import LogViewer from "../../../library/components/execution-log/logViewer.vue";
 import { initI18n } from "../../utilities/i18n";
-import {getRundeckContext} from "../../../library";
+import { getRundeckContext } from "../../../library";
 
-const context = getRundeckContext();
-const rootStore = context.rootStore;
-const eventBus = context.eventBus;
+const rundeckContext = getRundeckContext();
+const rootStore = rundeckContext.rootStore;
+const eventBus = rundeckContext.eventBus;
 
-
-const locale = window._rundeck.locale || "en_US";
+const locale = rundeckContext.locale || "en_US";
 moment.locale(locale);
 
-// ============================================================================
-// Vue 3 UI Initialization (Vue App Mounting)
-// ============================================================================
-// TODO: Once legacy UI is deprecated, this section can remain as-is
-const els = document.body.getElementsByClassName("adhoc-page-vue");
-
-for (let i = 0; i < els.length; i++) {
-  const e = els[i];
-
-  // Create VueI18n instance with options
-  const i18n = initI18n();
-
-  const vue = createApp({
-    components: { App },
-    template: `<app />`
-  });
-  vue.use(uiv);
-  vue.use(i18n);
-  vue.use(VueCookies);
-  vue.mount(e);
+function init() {
+  rundeckContext.rootStore.ui.addItems([
+    {
+      section: "adhoc-command-page",
+      location: "main",
+      visible: true,
+      widget: markRaw(
+        defineComponent({
+          components: { App },
+          template: `<App />`,
+        }),
+      ),
+    },
+  ]);
 }
+window.addEventListener("DOMContentLoaded", init);
 
 // ============================================================================
 // LogViewer Initialization (for both Vue 3 UI and Legacy UI)
