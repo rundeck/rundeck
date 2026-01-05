@@ -168,7 +168,9 @@ module.exports = {
       },
       proxy: {
         ".": {
-          target: "http://localhost:4440",
+          target: process.env.VUE_APP_SERVER_PORT
+            ? `http://localhost:${process.env.VUE_APP_SERVER_PORT}`
+            : "http://localhost:4440",
         },
       },
     },
