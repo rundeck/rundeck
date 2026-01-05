@@ -30,8 +30,9 @@ class SideBarPage extends BasePage {
             // Use retry logic for projectSettings click to handle Vue.js re-rendering
             waitIgnoringForElementToBeClickable(projectSettings).click()
             waitForNavVisible()
-        } else if (!(el navIdBy).isDisplayed() && overflowFields.size() == 1) {
+        } else if (!isElementDisplayedIgnoringStale(navIdBy) && overflowFields.size() == 1) {
             // Use retry logic for overflow click to handle Vue.js re-rendering
+            // If nav link is not displayed (hidden in overflow menu), click overflow button
             waitIgnoringForElementToBeClickable(isOverflow).click()
             waitForAttributeContains overflowField, 'class', 'active'
         }

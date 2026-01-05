@@ -145,6 +145,39 @@ abstract class BasePage {
                 .until(ExpectedConditions.elementToBeClickable(locator))
     }
 
+    WebElement waitIgnoringForElementToBeClickable(By locator, Duration duration = Duration.ofSeconds(30)) {
+        new WebDriverWait(context.driver, duration)
+                .ignoring(StaleElementReferenceException.class)
+                .until(ExpectedConditions.elementToBeClickable(locator))
+    }
+
+    /**
+     * Check if an element is displayed, with retry logic to handle StaleElementReferenceException.
+     * Returns true if element is displayed, false if not displayed or not found.
+     * @param locator The By locator to find the element
+     * @param duration Optional timeout duration (default 1 second - this is a quick check)
+     * @return true if element is displayed, false otherwise
+     */
+    boolean isElementDisplayedIgnoringStale(By locator, Duration duration = Duration.ofSeconds(1)) {
+        try {
+            new WebDriverWait(context.driver, duration)
+                    .ignoring(StaleElementReferenceException.class)
+                    .until { driver ->
+                        try {
+                            WebElement element = driver.findElement(locator)
+                            return element != null && element.isDisplayed()
+                        } catch (org.openqa.selenium.NoSuchElementException ignored) {
+                            return false
+                        } catch (StaleElementReferenceException ignored) {
+                            return null // Will cause the wait to continue
+                        }
+                    }
+            return true
+        } catch (org.openqa.selenium.TimeoutException ignored) {
+            return false
+        }
+    }
+
     boolean waitForUrlToContain(String text) {
         new WebDriverWait(context.driver, Duration.ofSeconds(30))
                 .until(ExpectedConditions.urlContains(text))
