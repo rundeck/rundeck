@@ -7,9 +7,13 @@ import moment from "moment";
 
 import App from "./App.vue";
 import LogViewer from "../../../library/components/execution-log/logViewer.vue";
-import { EventBus } from "../../../library/utilities/vueEventBus";
 import { initI18n } from "../../utilities/i18n";
-import { RootStore } from "../../../library/stores/RootStore";
+import {getRundeckContext} from "../../../library";
+
+const context = getRundeckContext();
+const rootStore = context.rootStore;
+const eventBus = context.eventBus;
+
 
 const locale = window._rundeck.locale || "en_US";
 moment.locale(locale);
@@ -28,11 +32,7 @@ for (let i = 0; i < els.length; i++) {
 
   const vue = createApp({
     components: { App },
-    data() {
-      return {
-        EventBus: EventBus,
-      };
-    },
+    template: `<app />`
   });
   vue.use(uiv);
   vue.use(i18n);
@@ -50,8 +50,6 @@ for (let i = 0; i < els.length; i++) {
 //
 // TODO: Once legacy UI is deprecated, the legacy-specific comments below can be removed
 //       but the LogViewer initialization logic itself should remain
-const eventBus = window._rundeck.eventBus;
-const rootStore = new RootStore(window._rundeck.rundeckClient);
 
 eventBus.on("ko-adhoc-running", (data: any) => {
   const elm = document.querySelector(

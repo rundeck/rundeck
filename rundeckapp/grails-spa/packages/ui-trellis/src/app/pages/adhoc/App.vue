@@ -1,37 +1,34 @@
 <template>
   <div id="adhoc-app">
-                        <node-filter-section
-                          v-if="executionModeActive && nodeFilterStore"
-                          :node-filter-store="nodeFilterStore"
-                          :max-shown="filterParams.matchedNodesMaxCount"
-                          :project="projectName"
-                          @node-total-changed="handleNodeTotalChanged"
-                          @node-error-changed="handleNodeErrorChanged"
-                        />
-
-                        <adhoc-command-form
-                          v-if="executionModeActive && adhocCommandStore && nodeFilterStore"
-                          :adhoc-command-store="adhocCommandStore"
-                          :node-filter-store="nodeFilterStore"
-                          :project="projectName"
-                          :event-bus="EventBus"
-                          :page-params="pageParams"
-                          :node-total="nodeTotal"
-                          :node-error="nodeError"
-                          @node-total-changed="handleNodeTotalChanged"
-                        />
-
-            <execution-output
-              v-if="adhocCommandStore"
-              :event-bus="EventBus"
-              :page-params="pageParams"
-              :adhoc-command-store="adhocCommandStore"
-            />
-
-    <activity-section
-      v-if="eventReadAuth"
-      :event-bus="EventBus"
+    <node-filter-section
+      v-if="executionModeActive && nodeFilterStore"
+      :node-filter-store="nodeFilterStore"
+      :max-shown="filterParams.matchedNodesMaxCount"
+      :project="projectName"
+      @node-total-changed="handleNodeTotalChanged"
+      @node-error-changed="handleNodeErrorChanged"
     />
+
+    <adhoc-command-form
+      v-if="executionModeActive && adhocCommandStore && nodeFilterStore"
+      :adhoc-command-store="adhocCommandStore"
+      :node-filter-store="nodeFilterStore"
+      :project="projectName"
+      :event-bus="EventBus"
+      :page-params="pageParams"
+      :node-total="nodeTotal"
+      :node-error="nodeError"
+      @node-total-changed="handleNodeTotalChanged"
+    />
+
+    <execution-output
+      v-if="adhocCommandStore"
+      :event-bus="EventBus"
+      :page-params="pageParams"
+      :adhoc-command-store="adhocCommandStore"
+    />
+
+    <activity-section v-if="eventReadAuth" :event-bus="EventBus" />
   </div>
 </template>
 
@@ -54,15 +51,9 @@ export default defineComponent({
     ExecutionOutput,
     ActivitySection,
   },
-  props: {
-    eventBus: {
-      type: Object,
-      required: true,
-    },
-  },
   data() {
     return {
-      EventBus: this.eventBus,
+      EventBus: getRundeckContext().eventBus,
       projectName: "",
       executionModeActive: true, // Set from window._rundeck.data.executionModeActive in initializeData()
       eventReadAuth: false,
@@ -111,8 +102,7 @@ export default defineComponent({
       const filterParamsData = loadJsonData("filterParamsJSON");
       if (filterParamsData) {
         this.filterParams = {
-          matchedNodesMaxCount:
-            filterParamsData.matchedNodesMaxCount || 50,
+          matchedNodesMaxCount: filterParamsData.matchedNodesMaxCount || 50,
           filter: filterParamsData.filter || "",
           filterAll: filterParamsData.filterAll || false,
         };
@@ -174,7 +164,7 @@ export default defineComponent({
       if (this.adhocCommandStore) {
         this.adhocCommandStore.updateCanRunFromNodeTotal(
           total,
-          this.adhocCommandStore.running
+          this.adhocCommandStore.running,
         );
       }
     },
@@ -184,15 +174,10 @@ export default defineComponent({
       if (this.adhocCommandStore && this.nodeFilterStore) {
         this.adhocCommandStore.updateCanRunFromNodeTotal(
           this.nodeTotal,
-          this.adhocCommandStore.running
+          this.adhocCommandStore.running,
         );
       }
     },
   },
 });
 </script>
-
-<style scoped>
-/* Styles will be inherited from existing CSS */
-</style>
-
