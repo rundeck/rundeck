@@ -423,8 +423,8 @@ class BootStrap {
             long start=System.currentTimeMillis()
             def metricDataSource=dataSource.connection
             def valid = metricDataSource.isValid(dbPingTimeout)
-            System.currentTimeMillis()-start
             metricDataSource.close()
+            return System.currentTimeMillis()-start
         }))
         //set up some metrics collection for the Quartz scheduler
         metricRegistry.register(MetricRegistry.name("rundeck.scheduler.quartz","runningExecutions"),new CallableGauge<Integer>({
