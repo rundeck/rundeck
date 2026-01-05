@@ -109,7 +109,7 @@ export default defineComponent({
     },
     handleLoading(message: string) {
       this.loading = true;
-      this.loadingMessage = message || "Loading…";
+      this.loadingMessage = message || this.$t("loading.text");
       this.showOutput = true;
       this.error = null;
     },

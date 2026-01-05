@@ -109,6 +109,12 @@ eventBus.on("ko-adhoc-running", (data: any) => {
       },
     },
   );
+
+  // Initialize i18n for LogViewer
+  const logViewerI18n = initI18n();
+  vue.use(uiv);
+  vue.use(logViewerI18n);
+
   vue.mount(elm);
 });
 

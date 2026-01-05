@@ -141,6 +141,7 @@ const messages = {
   "info.started.expected.0.1": "Started: {0}, Estimated Finish: {1}",
   "info.scheduled.0": "Scheduled; starting {0}",
   "job.execution.starting.0": "Starting {0}",
+  "job.starting.execution": "Starting Execution…",
   "job.execution.queued": "Queued",
   "info.newexecutions.since.0":
     "1 New Result. Click to load. | {0} New Results. Click to load.",
@@ -402,6 +403,12 @@ const messages = {
   "jobquery.title.adhocLocalStringFilter": "Script Content",
   "jobquery.title.adhocRemoteStringFilter": "Shell Command",
   "jobquery.title.adhocFilepathFilter": "Script File Path",
+  "adhoc.no.nodes.matched": "No Nodes",
+  "adhoc.loading.output": "Loading Output…",
+  "adhoc.form.not.found": "Form not found",
+  "adhoc.server.response.invalid": "Server response was invalid",
+  "adhoc.request.failed": "Request failed",
+  "adhoc.execution.output.load.failed": "Failed to load execution output",
   "jobquery.title.argStringFilter": "Script File Arguments",
   "jobquery.title.optionFilter": "Options",
   "jobquery.title.optionFilter.label":

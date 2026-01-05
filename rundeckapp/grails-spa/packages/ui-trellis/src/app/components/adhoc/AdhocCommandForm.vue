@@ -105,7 +105,7 @@
                   {{ $t("run.on.count.nodes", [nodeTotal, nodesTitle]) }}
                   <span class="glyphicon glyphicon-play"></span>
                 </span>
-                <span v-else>No Nodes</span>
+                <span v-else>{{ $t("adhoc.no.nodes.matched") }}</span>
               </span>
               <span v-if="adhocCommandStore?.running">
                 {{ $t("running1") }}
@@ -321,13 +321,13 @@ export default defineComponent({
 
       // Show loading in output area via EventBus
       if (this.eventBus && typeof this.eventBus.emit === "function") {
-        this.eventBus.emit("adhoc-output-loading", "Starting Execution…");
+        this.eventBus.emit("adhoc-output-loading", this.$t("job.starting.execution"));
       }
 
       // Serialize form data
       const form = this.$refs.runboxFormRef as HTMLFormElement;
       if (!form) {
-        this.showError("Form not found");
+        this.showError(this.$t("adhoc.form.not.found"));
         return false;
       }
       const formData = new FormData(form);
@@ -383,14 +383,14 @@ export default defineComponent({
         if (response.data.error) {
           this.showError(response.data.error);
         } else if (!response.data.id) {
-          this.showError("Server response was invalid: " + response.data.toString());
+          this.showError(this.$t("adhoc.server.response.invalid") + ": " + response.data.toString());
         } else {
           // Success - load execution follow fragment (matching original behavior)
           await this.loadExecutionFollow(response.data);
         }
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        this.showError("Request failed: " + errorMessage);
+        this.showError(this.$t("adhoc.request.failed") + ": " + errorMessage);
       } finally {
         // Running state will be cleared by ExecutionOutput when execution completes
         // via the adhoc-execution-complete event, which triggers handleExecutionComplete()
@@ -401,7 +401,7 @@ export default defineComponent({
     async loadExecutionFollow(data: { id: string | number }) {
       // Show loading state via EventBus
       if (this.eventBus && typeof this.eventBus.emit === "function") {
-        this.eventBus.emit("adhoc-output-loading", "Loading Output…");
+        this.eventBus.emit("adhoc-output-loading", this.$t("adhoc.loading.output"));
       }
 
       try {
@@ -422,24 +422,24 @@ export default defineComponent({
 
         if (response.ok) {
           const html = await response.text();
-          
+
           // Emit content via EventBus
           if (this.eventBus && typeof this.eventBus.emit === "function") {
             this.eventBus.emit("adhoc-output-content", html);
           }
-          
+
           // Wait for Vue to update DOM with content before initializing LogViewer
           // adhoc/main.ts looks for #runcontent > .execution-show-log element
           await this.$nextTick();
-          
+
           // Emit event for LogViewer initialization (adhoc/main.ts listens for this)
           this.eventBus.emit("ko-adhoc-running", data);
           this.$emit("submit", data);
         } else {
-          throw new Error(`Failed to load execution output: ${response.statusText}`);
+          throw new Error(`${this.$t("adhoc.execution.output.load.failed")}: ${response.statusText}`);
         }
       } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to load execution output";
+        const errorMessage = err instanceof Error ? err.message : this.$t("adhoc.execution.output.load.failed");
         this.showError(errorMessage);
       }
     },
