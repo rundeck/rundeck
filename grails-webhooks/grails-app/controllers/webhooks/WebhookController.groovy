@@ -373,7 +373,11 @@ Since: v33""",
             array = @ArraySchema(
                 schema = @Schema(type = "object")
             ),
-            examples = @ExampleObject('''[
+            examples = [
+                @ExampleObject(
+                    name = 'webhook-list',
+                    description = 'List of webhooks',
+                    value = '''[
     {
         "authToken": "Z1vnbhShhQF3B0dQq7UhJTZMnGS92TBl",
         "config": {
@@ -401,7 +405,9 @@ Since: v33""",
         "roles": "admin,user",
         "user": "admin"
     }
-]''')
+]'''
+                )
+            ]
         )
     )
     def list() {
@@ -468,7 +474,13 @@ Since: v33
         description = "Default response",
         content = @Content(
             mediaType = MediaType.ALL,
-            examples = @ExampleObject('ok')
+            examples = [
+                @ExampleObject(
+                    name = 'success',
+                    description = 'Success response',
+                    value = 'ok'
+                )
+            ]
         )
     )
     @ApiResponse(
@@ -476,9 +488,15 @@ Since: v33
         description = "Error response",
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
-            examples = @ExampleObject('''{
+            examples = [
+                @ExampleObject(
+                    name = 'error',
+                    description = 'Error response',
+                    value = '''{
 "err":"Error message"
-}''')
+}'''
+                )
+            ]
         )
     )
     @ApiResponse(

@@ -23,8 +23,8 @@ apply plugin:"org.apache.grails.gradle.grails-plugin"
 apply plugin:"cloud.wondrify.asset-pipeline"
 apply plugin:"org.apache.grails.gradle.grails-gsp"
 
-// OpenAPI spec generation disabled - conflicts with GSP compilation in Groovy 4
-// See: rundeck/grails-execution-mode-timer/build.gradle for details
+// OpenAPI generation enabled - grailsopenapispec.gradle skips GSP compilation tasks
+apply from:'../gradle/grailsopenapispec.gradle'
 
 repositories {
     mavenLocal()
@@ -107,12 +107,15 @@ tasks.withType(Test) {
 // Fix Gradle 8 task ordering for OpenAPI generation
 tasks.named("findMainClass") {
     mustRunAfter tasks.named("compileTestGroovy")
+    mustRunAfter tasks.named("compileIntegrationTestGroovy")
 }
 tasks.named("jar") {
     mustRunAfter tasks.named("compileTestGroovy")
+    mustRunAfter tasks.named("compileIntegrationTestGroovy")
 }
 tasks.named("compileGroovyPages") {
     mustRunAfter tasks.named("compileTestGroovy")
+    mustRunAfter tasks.named("compileIntegrationTestGroovy")
 }
 
 // enable if you wish to package this plugin as a standalone application
