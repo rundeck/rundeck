@@ -1,10 +1,10 @@
 ---
 rundeck:
   plugins: # Extra plugins to bundle
-  - "com.github.rundeck-plugins:ansible-plugin:4.0.12-grails7-upgrade-test"
-  - "com.github.rundeck-plugins:aws-s3-model-source:1.0.11-grails7-upgrade-test"
+  - "com.github.rundeck-plugins:ansible-plugin:4.0.15-grails7-upgrade-test"
+  - "com.github.rundeck-plugins:aws-s3-model-source:1.0.13-grails7-upgrade-test"
   - "com.github.rundeck-plugins:py-winrm-plugin:2.1.5-grails7-upgrade-test@zip"
-  - "com.github.rundeck-plugins:openssh-node-execution:2.0.6-grails7-upgrade-test@zip"
-  - "com.github.rundeck-plugins:multiline-regex-datacapture-filter:1.1.6-grails7-upgrade-test"
-  - "com.github.rundeck-plugins:attribute-match-node-enhancer:0.2.4-grails7-upgrade-test"
-  - "com.github.rundeck-plugins:sshj-plugin:0.1.21-grails7-upgrade-test"
+  - "com.github.rundeck-plugins:openssh-node-execution:2.0.8-grails7-upgrade-test@zip"
+  - "com.github.rundeck-plugins:multiline-regex-datacapture-filter:1.1.8-grails7-upgrade-test"
+  - "com.github.rundeck-plugins:attribute-match-node-enhancer:0.2.6-grails7-upgrade-test"
+  - "com.github.rundeck-plugins:sshj-plugin:0.1.23-grails7-upgrade-test"
