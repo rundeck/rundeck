@@ -14,4 +14,9 @@
     --colors-red-100: #FADCDC;
     --colors-red-500: #DE3434;
     --colors-red-600: #C12121;
+
+    /* Typography line-heights */
+    --lineHeights-heading-lg: 1.3125rem;  /* 21px */
+    --lineHeights-body-compact: 0.875rem; /* 14px */
+    --lineHeights-button: 1.0625rem;      /* 17px */
 }

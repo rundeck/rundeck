@@ -1143,10 +1143,14 @@ const messages = {
     },
   },
   searchForStep: "Search for a step",
-  learnMoreSearchPatterns: "Learn more to search using specific patterns",
+  learnMoreSearchPatterns: "to search using specific patterns",
   nodeSteps: "Node Steps",
-  nodeStepsDescription: "Node steps execute once for each node targeted by the Job's node-filter. Learn more",
+  nodeStepsDescription: "Node steps execute once for each node targeted by the Job's node-filter.",
   workflowSteps: "Workflow Steps",
+  workflowStepsDescription: "Workflow Steps execute once per Job execution.",
+  commonNodeSteps: "Common Node Steps",
+  commonWorkflowSteps: "Common Workflow Steps",
+  learnMore: "Learn more",
   plugins: "plugins",
 };
 

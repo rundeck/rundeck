@@ -1,10 +1,10 @@
 <template>
   <div class="col-sm-12">
     <div class="form-group">
-      <label for="stepFilter" class="col-sm-2 control-label">
+      <label v-if="!ea" for="stepFilter" class="col-sm-2 control-label">
         {{ $t("step.plugins.filter.prompt") }}
       </label>
-      <div class="col-sm-10">
+      <div v-if="!ea" class="col-sm-10">
         <div class="input-group stepfilters">
           <input
             id="stepFilter"
@@ -78,6 +78,17 @@
           </div>
         </div>
       </div>
+      <div v-else>
+        <input
+            id="stepFilter"
+            v-model="filterValue"
+            type="search"
+            name="nodeFilter"
+            class="schedJobStepFilter form-control allowenter"
+            :placeholder="$t('enter.a.step.filter.override')"
+            @keydown.enter.prevent="filterStepDescriptions"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -87,6 +98,12 @@ import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "PluginSearch",
+  props: {
+    ea: {
+      type: Boolean,
+      default: false,
+    },
+  },
   emits: ["search"],
   data() {
     return {
