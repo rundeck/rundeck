@@ -21,8 +21,8 @@ apply plugin:"idea"
 apply plugin:"org.apache.grails.gradle.grails-plugin"
 apply plugin:"org.apache.grails.gradle.grails-gsp"
 
-// OpenAPI spec generation disabled - conflicts with GSP compilation in Groovy 4
-// See: plugins/rundeckpro-security/build.gradle for details
+// OpenAPI generation enabled - grailsopenapispec.gradle skips GSP compilation tasks
+apply from:'../gradle/grailsopenapispec.gradle'
 
 repositories {
     mavenLocal()
@@ -128,12 +128,15 @@ tasks.withType(GroovyCompile).configureEach {
 // was running in parallel. Make sure test compilation happens AFTER main tasks.
 tasks.named("findMainClass") {
     mustRunAfter tasks.named("compileTestGroovy")
+    mustRunAfter tasks.named("compileIntegrationTestGroovy")
 }
 tasks.named("jar") {
     mustRunAfter tasks.named("compileTestGroovy")
+    mustRunAfter tasks.named("compileIntegrationTestGroovy")
 }
 tasks.named("compileGroovyPages") {
     mustRunAfter tasks.named("compileTestGroovy")
+    mustRunAfter tasks.named("compileIntegrationTestGroovy")
 }
 
 jar {

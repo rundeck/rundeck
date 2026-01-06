@@ -11,6 +11,10 @@ configurations{
 tasks.withType(GroovyCompile).configureEach {
     // Skip OpenAPI processing for GSP compilation tasks (incompatible with Groovy 4)
     if (name.contains('GroovyPages') || name == 'compileGroovyPages') {
+        // Explicitly disable Micronaut annotation processing for GSP tasks
+        configure(groovyOptions) {
+            forkOptions.jvmArgs = ['-Xmx1024m', '-Dmicronaut.openapi.enabled=false']
+        }
         return
     }
     
@@ -33,6 +37,11 @@ artifacts{
     //gradle warns about implicit dependencies
     apiSpecFiles file: file("${buildDir}/classes/groovy/main/META-INF/swagger/api-${project.name}.yml"), name: "${project.name}", type: 'file', builtBy: compileGroovy
     apiSpecFiles file: file("${buildDir}/classes/groovy/main/META-INF/swagger/api-${project.name}.yml"), name: "${project.name}", type: 'file', builtBy: copyAstClasses
+}
+
+// Fix Gradle 8 task ordering - test tasks must run after integration test compilation
+tasks.named("test").configure {
+    mustRunAfter tasks.named("compileIntegrationTestGroovy")
 }
 
 dependencies{
