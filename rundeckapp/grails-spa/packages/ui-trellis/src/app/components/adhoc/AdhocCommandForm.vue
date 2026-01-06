@@ -207,10 +207,7 @@
 import { defineComponent } from "vue";
 import { AdhocCommandStore } from "../../../library/stores/AdhocCommandStore";
 import { NodeFilterStore } from "../../../library/stores/NodeFilterLocalstore";
-import { _genUrl } from "../../../library/utilities/genUrl";
-import { getAppLinks } from "../../../library";
-import { getToken, setToken } from "../../../library/modules/tokens";
-import axios from "axios";
+import { runAdhocCommand, loadExecutionFollow } from "./services/adhocService";
 import type { PropType } from "vue";
 
 export default defineComponent({
@@ -360,48 +357,19 @@ export default defineComponent({
       data.doNodedispatch = "true";
 
       try {
-        // Get CSRF tokens (matching original _createAjaxSendTokensHandler behavior)
-        // Uses X-RUNDECK-TOKEN-KEY and X-RUNDECK-TOKEN-URI headers
-        const headers: Record<string, string> = {
-          "x-rundeck-ajax": "true",
-        };
-        
-        try {
-          // Try to get tokens using the token utility
-          const tokenData = await getToken("adhoc_req_tokens");
-          if (tokenData && tokenData.TOKEN && tokenData.URI) {
-            headers["X-RUNDECK-TOKEN-KEY"] = tokenData.TOKEN;
-            headers["X-RUNDECK-TOKEN-URI"] = tokenData.URI;
-          }
-        } catch (err) {
-          // If token not found, try window._rundeck.token as fallback
-          if (window._rundeck && window._rundeck.token) {
-            headers["X-RUNDECK-TOKEN-KEY"] = window._rundeck.token.TOKEN;
-            headers["X-RUNDECK-TOKEN-URI"] = window._rundeck.token.URI;
-          }
-        }
+        // Execute adhoc command via service (handles CSRF tokens automatically)
+        const response = await runAdhocCommand({
+          project: this.project,
+          exec: data.exec as string,
+          filter: data.filter as string,
+          filterExclude: data.filterExclude as string | undefined,
+          doNodedispatch: data.doNodedispatch as string,
+          nodeThreadcount: data.nodeThreadcount ? parseInt(data.nodeThreadcount as string, 10) : undefined,
+          nodeKeepgoing: data.nodeKeepgoing === "true" || data.nodeKeepgoing === true,
+        });
 
-        const response = await axios.post(
-          _genUrl(getAppLinks().scheduledExecutionRunAdhocInline, data),
-          data,
-          { headers }
-        );
-        
-        // Handle token refresh (matching original _createAjaxReceiveTokensHandler behavior)
-        const tokenKey = response.headers["x-rundeck-token-key"];
-        const tokenUri = response.headers["x-rundeck-token-uri"];
-        if (tokenKey && tokenUri) {
-          await setToken(response.headers, "adhoc_req_tokens");
-        }
-
-        if (response.data.error) {
-          this.showError(response.data.error);
-        } else if (!response.data.id) {
-          this.showError(this.$t("adhoc.server.response.invalid") + ": " + response.data.toString());
-        } else {
-          // Success - load execution follow fragment (matching original behavior)
-          await this.loadExecutionFollow(response.data);
-        }
+        // Success - load execution follow fragment (matching original behavior)
+        await this.loadExecutionFollow({ id: response.id! });
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         this.showError(this.$t("adhoc.request.failed") + ": " + errorMessage);
@@ -419,39 +387,21 @@ export default defineComponent({
       }
 
       try {
-        const { getAppLinks } = await import("../../../library");
-        const { _genUrl } = await import("../../../library/utilities/genUrl");
-        const appLinks = getAppLinks();
+        // Load execution follow fragment via service (handles CSRF tokens automatically)
+        const html = await loadExecutionFollow(data.id, "tail");
 
-        const followUrl = _genUrl(appLinks.executionFollowFragment, {
-          id: data.id,
-          mode: "tail",
-        });
-
-        const response = await fetch(followUrl, {
-          headers: {
-            "x-rundeck-ajax": "true",
-          },
-        });
-
-        if (response.ok) {
-          const html = await response.text();
-
-          // Emit content via EventBus
-          if (this.eventBus && typeof this.eventBus.emit === "function") {
-            this.eventBus.emit("adhoc-output-content", html);
-          }
-
-          // Wait for Vue to update DOM with content before initializing LogViewer
-          // adhoc/main.ts looks for #runcontent > .execution-show-log element
-          await this.$nextTick();
-
-          // Emit event for LogViewer initialization (adhoc/main.ts listens for this)
-          this.eventBus.emit("ko-adhoc-running", data);
-          this.$emit("submit", data);
-        } else {
-          throw new Error(`${this.$t("adhoc.execution.output.load.failed")}: ${response.statusText}`);
+        // Emit content via EventBus
+        if (this.eventBus && typeof this.eventBus.emit === "function") {
+          this.eventBus.emit("adhoc-output-content", html);
         }
+
+        // Wait for Vue to update DOM with content before initializing LogViewer
+        // adhoc/main.ts looks for #runcontent > .execution-show-log element
+        await this.$nextTick();
+
+        // Emit event for LogViewer initialization (adhoc/main.ts listens for this)
+        this.eventBus.emit("ko-adhoc-running", data);
+        this.$emit("submit", data);
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : this.$t("adhoc.execution.output.load.failed");
         this.showError(errorMessage);

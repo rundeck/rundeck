@@ -2599,22 +2599,116 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
 
     /**
      * execute the job defined via input parameters, but do not store it.
+     * REST API endpoint: /api/{api_version}/project/{project}/run/command/inline
      */
-    def runAdhocInline(ApiRunAdhocRequest apiRunAdhocRequest){
-        def results=[:]
-        withForm{
-            apiRunAdhocRequest.script=null
-            apiRunAdhocRequest.url=null
-            results=runAdhoc(apiRunAdhocRequest)
-            if(results.failed){
-                results.error=results.message
-            } else {
-                log.debug("ExecutionController: immediate execution scheduled (${results.id})")
-            }
-            g.refreshFormTokensHeader()
-        }.invalidToken{
-            results.error=g.message(code:'request.error.invalidtoken.message')
+    @Post(uri='/project/{project}/run/command/inline')
+    @Operation(
+        method='POST',
+        summary='Run Adhoc Command (Inline)',
+        description='''Run a command string via inline endpoint (maintains backward compatibility with ajax format).
+
+This endpoint accepts parameters either as query parameters or as a JSON request body. The response format matches the legacy ajax endpoint for backward compatibility.
+
+Example: `POST /api/56/project/myproject/run/command/inline?exec=echo+test&filter=.*`
+
+Authorization required: `run` for project resource type `adhoc`, as well as `runAs` if the runAs parameter is used
+
+Since: v56''',
+        tags = ['Ad Hoc'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                description = 'Project Name',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'filter',
+                description = 'Node Filter String',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'exec',
+                description = 'The shell command string to run, e.g. "echo hello".',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'nodeThreadcount',
+                description = 'threadcount to use',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'integer')
+            ),
+            @Parameter(
+                name = 'nodeKeepgoing',
+                description = 'if "true", continue executing on other nodes even if some fail.',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'filterExclude',
+                description = 'Node exclude filter string',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'doNodedispatch',
+                description = 'Enable node dispatch',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        requestBody = @RequestBody(
+            description='Request body',
+            content=@Content(
+                mediaType=MediaType.APPLICATION_JSON,
+                schema=@Schema(implementation = ApiRunAdhocRequest),
+                examples=@ExampleObject('''
+{
+    "project":"[project]",
+    "exec":"[exec]",
+    "filter":"[node filter string]",
+    "filterExclude":"[exclude filter]",
+    "doNodedispatch":"true",
+    "nodeThreadcount": 1,
+    "nodeKeepgoing": true
+}''')
+            )
+        ),
+        responses = @ApiResponse(
+            responseCode='200',
+            description='''Execution result with success flag and execution ID (backward compatible format).''',
+            content = [
+                @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema=@Schema(type='object'),
+                    examples=@ExampleObject('''{
+  "success": "true",
+  "id": 1
+}''')
+                )
+            ]
+        )
+    )
+    def runAdhocInline(@Parameter(hidden = true) ApiRunAdhocRequest apiRunAdhocRequest){
+        // Use API authentication instead of form tokens
+        if(!apiService.requireApi(request,response)){
+            return
         }
+        
+        def results=[:]
+        apiRunAdhocRequest.script=null
+        apiRunAdhocRequest.url=null
+        results=runAdhoc(apiRunAdhocRequest)
+        if(results.failed){
+            results.error=results.message
+        } else {
+            log.debug("ExecutionController: immediate execution scheduled (${results.id})")
+        }
+        
+        // Maintain backward compatible response format
         return render(contentType:'application/json'){
             if(results.error){
                 'error' results.error
