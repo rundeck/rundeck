@@ -75,7 +75,7 @@
             :value="adhocCommandStore?.commandString || ''"
             id="runFormExec"
             class="form-control"
-            :disabled="!adhocCommandStore?.allowInput"
+            :disabled="isCommandInputDisabled"
             autofocus="true"
             @input="handleCommandInput"
             @keypress="handleKeyPress"
@@ -261,6 +261,20 @@ export default defineComponent({
         !this.adhocCommandStore ||
         this.adhocCommandStore.running ||
         !this.adhocCommandStore.canRun
+      );
+    },
+    isCommandInputDisabled(): boolean {
+      // Disable command input when:
+      // 1. No nodes matched (nodeTotal < 1)
+      // 2. Node filter error exists
+      // 3. Execution is running
+      // 4. Store doesn't allow input (covers canRun state)
+      return (
+        this.nodeTotal < 1 ||
+        !!this.nodeError ||
+        !this.adhocCommandStore ||
+        this.adhocCommandStore.running ||
+        !this.adhocCommandStore.allowInput
       );
     },
     nodesTitle(): string {
