@@ -51,4 +51,10 @@ public interface WorkflowData {
      * @return Configuration data for the plugins attached to the workflow
      */
     Map<String,Object> getPluginConfigMap();
+
+    /**
+     *
+     * @return Map representation of this workflow
+     */
+    Map<String, Object> toMap();
 }

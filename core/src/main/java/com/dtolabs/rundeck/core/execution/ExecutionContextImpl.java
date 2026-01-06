@@ -82,6 +82,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private OrchestratorConfig orchestrator;
     private PluginControlService pluginControlService;
     @Getter private List<ContextComponent<?>> componentList;
+    @Getter private String workflowJson;
     
     private ExecutionReference execution;
 

@@ -166,8 +166,9 @@ class WorkflowService implements ApplicationContextAware{
                     //invalid arguments
                 }
 
+                def seWorkflowData = se.getWorkflowData()
                 substeps[ndx] = new MutableWorkflowStepStateImpl(stepId,
-                        createStateForWorkflow(se.workflow, project,frameworkNodeName,newContext,secureOptions))
+                        seWorkflowData ? createStateForWorkflow(seWorkflowData, project,frameworkNodeName,newContext,secureOptions) : null)
             } else {
                 substeps[ndx] = new MutableWorkflowStepStateImpl(stepId)
             }
@@ -190,7 +191,12 @@ class WorkflowService implements ApplicationContextAware{
     ) {
         final long id = execution.id
 
-        MutableWorkflowState state = createStateForWorkflow(execution, execution.workflow, execution.project, framework,
+        def executionWorkflowData = execution.getWorkflowData()
+        if (!executionWorkflowData) {
+            log.error("No workflow data available for execution ${id}")
+            return null
+        }
+        MutableWorkflowState state = createStateForWorkflow(execution, executionWorkflowData, execution.project, framework,
                 authContext, jobcontext, secureOpts)
         def logstate
         if(Environment.getCurrent() == Environment.DEVELOPMENT){

@@ -61,4 +61,31 @@ class RdWorkflow implements WorkflowData, Validateable {
             }
         })
     }
+
+    /**
+     * Convert to canonical map representation for serialization
+     * @return Map representation
+     */
+    Map toMap() {
+        def plugins = pluginConfigMap ? [pluginConfig: pluginConfigMap] : [:]
+
+        // Remove empty WorkflowStrategy config for the strategy
+        if (!plugins.pluginConfig?.get('WorkflowStrategy')?.get(strategy)) {
+            plugins.pluginConfig?.remove('WorkflowStrategy')
+        }
+        if (!plugins.pluginConfig) {
+            plugins.remove('pluginConfig')
+        }
+
+        // Cleanup WorkflowStrategy to only include the current strategy data
+        if (plugins.pluginConfig?.get('WorkflowStrategy')) {
+            plugins.pluginConfig['WorkflowStrategy'] = [(strategy): plugins.pluginConfig['WorkflowStrategy'][strategy]]
+        }
+
+        return [
+            keepgoing: keepgoing,
+            strategy: strategy,
+            commands: steps?.collect { it.toMap() } ?: []
+        ] + plugins
+    }
 }

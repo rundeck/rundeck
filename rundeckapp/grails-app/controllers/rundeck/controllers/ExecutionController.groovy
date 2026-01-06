@@ -261,7 +261,8 @@ class ExecutionController extends ControllerBase{
 
         eprev = result ? result[0] : null
         def readAuth = authorizingExecution.isAuthorized(RundeckAccess.General.APP_READ)
-        def workflowTree = scheduledExecutionService.getWorkflowDescriptionTree(e.project, e.workflow, readAuth,0)
+        def executionWorkflowData = e.getWorkflowData()
+        def workflowTree = scheduledExecutionService.getWorkflowDescriptionTree(e.project, executionWorkflowData, readAuth,0)
         def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
         def inputFilesMap = inputFiles.collectEntries { [it.uuid, it] }
 

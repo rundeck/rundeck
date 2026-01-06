@@ -42,4 +42,28 @@ class RdWorkflowStep implements WorkflowStepData, PluginProviderConfiguration, V
     String summarize() {
         return "implement summarization"
     }
+
+    /**
+     * Convert to canonical map representation for serialization
+     * @return Map representation
+     */
+    Map toMap() {
+        def map = [type: pluginType, nodeStep: nodeStep]
+
+        if (configuration) {
+            map.put('configuration', configuration)
+        }
+        if (description) {
+            map.description = description
+        }
+        if (errorHandler) {
+            map.errorhandler = errorHandler.toMap()
+        } else if (keepgoingOnSuccess) {
+            map.keepgoingOnSuccess = keepgoingOnSuccess
+        }
+        if (pluginConfig) {
+            map.plugins = pluginConfig
+        }
+        return map
+    }
 }

@@ -864,7 +864,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             jobstring = " job: " + e.scheduledExecution.extid + " " + (e.scheduledExecution.groupPath ?: '') + "/" +
                     e.scheduledExecution.jobName
         } else {
-            def adhocCommand = e.workflow.commands.size()==1 && (e.workflow.commands[0] instanceof CommandExec) && e.workflow.commands[0].adhocRemoteString
+            def workflowData = e.getWorkflowData() as Workflow
+            def adhocCommand = workflowData?.commands?.size()==1 && (workflowData.commands[0] instanceof CommandExec) && workflowData.commands[0].adhocRemoteString
             if (adhocCommand) {
                 mdcprops.put("command", adhocCommand)
                 jobstring += " command: " + adhocCommand
@@ -1102,7 +1103,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     logFilterPluginLoader,
                     scheduledExecution ?
                             ExecutionUtilService.createLogFilterConfigs(
-                                    execution.workflow.getPluginConfigDataList(ServiceNameConstants.LogFilter)
+                                    (execution.getWorkflowData() as Workflow)?.getPluginConfigDataList(ServiceNameConstants.LogFilter)
                             ) + globalConfig :
                             globalConfig
             )
@@ -1212,7 +1213,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     )
             )
             logsInstalled=true
-            WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.workflow)
+            def workflowData = execution.getWorkflowData() as Workflow
+            if (!workflowData) {
+                throw new ExecutionServiceException("No workflow data available for execution")
+            }
+            WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(workflowData)
 
 
             def executionLifecyclePluginConfigs = scheduledExecution ?
@@ -2208,14 +2213,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         execution.scheduledExecution = null
         execution.jobUuid = null
 
-        if(execution.workflow){
-            if(!execution.workflow.save(flush:true)){
-                def err=execution.workflow.errors.allErrors.collect { it.toString() }.join(", ")
-                log.error("unable to save workflow: ${err}")
-                throw new ExecutionServiceException("unable to save workflow: "+err)
-            }
-        }
-
         if(!execution.save(flush:true)){
             execution.errors.allErrors.each { log.warn(it.defaultMessage) }
             log.error("unable to save execution")
@@ -2602,9 +2599,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }
 
-        Workflow workflow = new Workflow(se.workflow)
-        //create duplicate workflow
-        props.workflow = workflow
+        // Clone workflow from job definition using new JSON storage approach
+        def workflowData = se.getWorkflowData()
+        if (workflowData) {
+            Workflow workflow = new Workflow(workflowData as Workflow)
+            props.workflow = workflow
+        }
 
         Execution execution = createExecution(props)
         execution.dateStarted = new Date()
@@ -2626,10 +2626,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             execution.setExtraMetadataMap(extraMeta)
         }
 
-        if (workflow && !workflow.save(flush:true)) {
-            execution.workflow.errors.allErrors.each { log.error(it.toString()) }
-            log.error("unable to save execution workflow")
-            throw new ExecutionServiceException("unable to create execution workflow")
+        // Set workflow data if we have a workflow
+        if (props.workflow) {
+            execution.setWorkflowData(props.workflow)
         }
         if (!execution.save(flush:true)) {
             execution.errors.allErrors.each { log.warn(it.toString()) }
@@ -3685,7 +3684,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         def loggingFilters = se  ?
                 ExecutionUtilService.createLogFilterConfigs(
-                        se.workflow.getPluginConfigDataList(ServiceNameConstants.LogFilter)
+                        (se.getWorkflowData() as Workflow)?.getPluginConfigDataList(ServiceNameConstants.LogFilter)
                 ) :
                 []
         def workflowLogManager = executionContext.loggingManager?.createManager(
@@ -3848,7 +3847,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     result = createFailure(JobReferenceFailureReason.Unauthorized, msg)
                     return
                 }
-                newExecItem = executionUtilService.createExecutionItemForWorkflow(se.workflow, se.project)
+                def seWorkflowData = se.getWorkflowData() as Workflow
+                if (!seWorkflowData) {
+                    def msg = "No workflow data available for job [${jitem.jobIdentifier}]: ${se.extid}"
+                    executionContext.getExecutionListener().log(0, msg);
+                    result = createFailure(JobReferenceFailureReason.NotFound, msg)
+                    return
+                }
+                newExecItem = executionUtilService.createExecutionItemForWorkflow(seWorkflowData, se.project)
 
                 try {
                     newContext = createJobReferenceContext(
@@ -4465,8 +4471,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         missed.user = scheduledExecution.user
         missed.userRoleList = scheduledExecution.userRoleList
         missed.serverNodeUUID = scheduledServer
-        missed.workflow = new Workflow()
-        missed.workflow.save()
+        missed.setWorkflowData(new Workflow())
         missed.status = 'missed'
         missed.save()
 
