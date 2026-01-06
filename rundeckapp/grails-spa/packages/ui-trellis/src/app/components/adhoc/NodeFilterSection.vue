@@ -22,29 +22,6 @@
             <span class="errormessage">{{ error }}</span>
           </div>
 
-          <div v-if="showResultsInfo" class="">
-            <span v-if="loading" class="text-info">
-              <i class="glyphicon glyphicon-time"></i>
-              {{ $t("loading.matched.nodes") }}
-            </span>
-
-            <span v-if="!loading && !error && total > 0">
-              <span class="text-muted">
-                {{ $t("count.nodes.matched", [total, nodesTitle]) }}
-              </span>
-
-              <span v-if="total > maxShown" class="text-strong">
-                {{ $t("count.nodes.shown", [maxShown, total]) }}
-              </span>
-
-              <div class="pull-right" style="margin-top: -5px">
-                <a href="#" @click.prevent="viewInNodesPage">
-                  {{ $t("view.in.nodes.page.prompt") }}
-                </a>
-              </div>
-            </span>
-          </div>
-
           <node-filter-results
             v-if="hasFilter"
             :node-filter="nodeFilterStore.selectedFilter"
@@ -111,15 +88,12 @@ export default defineComponent({
         : this.$t("Node.plural");
     },
     showEmptyState(): boolean {
+      // Show warning when no nodes matched (either no filter entered, or filter returned 0 results)
       return (
         !this.loading &&
         !this.error &&
-        (this.total === 0 || !this.total) &&
-        this.hasFilter
+        (this.total === 0 || !this.total)
       );
-    },
-    showResultsInfo(): boolean {
-      return this.total > 0 || this.loading;
     },
   },
   watch: {

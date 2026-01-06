@@ -84,6 +84,10 @@ export default defineComponent({
   mounted() {
     this.initializeData();
     this.initializeStores();
+    // Listen to filter changes from ui-socket component (when no NodeFilterStore is passed to it)
+    if (this.EventBus && typeof this.EventBus.on === "function") {
+      this.EventBus.on("nodefilter:value:changed", this.handleFilterValueChanged);
+    }
     // Event listeners are set up via component props and event handlers
     // Node filter events are handled by handleNodeTotalChanged() and handleNodeErrorChanged()
   },
@@ -91,6 +95,10 @@ export default defineComponent({
     // Cleanup if needed
     if (this.adhocCommandStore) {
       this.adhocCommandStore.stopFollowing();
+    }
+    // Remove EventBus listener
+    if (this.EventBus && typeof this.EventBus.off === "function") {
+      this.EventBus.off("nodefilter:value:changed", this.handleFilterValueChanged);
     }
   },
   methods: {
@@ -176,6 +184,17 @@ export default defineComponent({
           this.nodeTotal,
           this.adhocCommandStore.running,
         );
+      }
+    },
+    handleFilterValueChanged(data: { filter: string }) {
+      // Update our NodeFilterStore when filter changes from ui-socket component
+      console.log("[App.vue] Received nodefilter:value:changed event:", data);
+      if (this.nodeFilterStore && data && data.filter !== undefined) {
+        console.log("[App.vue] Setting filter in NodeFilterStore:", data.filter);
+        this.nodeFilterStore.setSelectedFilter(data.filter);
+        console.log("[App.vue] NodeFilterStore.selectedFilter is now:", this.nodeFilterStore.selectedFilter);
+      } else {
+        console.warn("[App.vue] Cannot set filter - nodeFilterStore:", !!this.nodeFilterStore, "data:", data);
       }
     },
   },
