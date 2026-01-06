@@ -292,9 +292,42 @@ class BootStrap {
             servletContext.setAttribute("LOGLEVEL_DEFAULT", "INFO")
         }
 
-        if(grailsApplication.config.getProperty("rss.enabled",Boolean.class, false)){
+        // Check for deprecated rss.enabled flag
+        def oldRssEnabled = grailsApplication.config.getProperty("rss.enabled", Boolean.class, false)
+        def legacyRssEnabled = grailsApplication.config.getProperty("rundeck.feature.legacyRSS.enabled", Boolean.class, false)
+        
+        if(oldRssEnabled && !legacyRssEnabled){
+            // Customer has old flag but not new flag - show error and don't enable
+            log.error("=" * 80)
+            log.error("RSS FEED FEATURE CONFIGURATION ERROR")
+            log.error("The 'rss.enabled' property is DEPRECATED and no longer works by itself.")
+            log.error("")
+            log.error("To continue using RSS feeds (NOT RECOMMENDED), you must set:")
+            log.error("  rundeck.feature.legacyRSS.enabled=true")
+            log.error("")
+            log.error("Security Risk: RSS feeds provide UNAUTHENTICATED public access to:")
+            log.error("  - Execution history and timing")
+            log.error("  - Job names and structure")
+            log.error("  - User activity patterns")
+            log.error("")
+            log.error("This feature will be REMOVED in a future Rundeck version.")
+            log.error("Please migrate to authenticated alternatives:")
+            log.error("  - API: /api/14/project/[PROJECT]/executions")
+            log.error("  - Webhooks: Real-time execution notifications")
+            log.error("")
+            log.error("For assistance, contact support at: https://support.pagerduty.com")
+            log.error("=" * 80)
+            log.info("RSS feeds disabled")
+        }else if(legacyRssEnabled){
+            // Customer explicitly enabled legacy RSS - enable but warn
             servletContext.setAttribute("RSS_ENABLED", 'true')
-            log.info("RSS feeds enabled")
+            log.warn("=" * 80)
+            log.warn("RSS FEED FEATURE IS DEPRECATED AND WILL BE REMOVED IN A FUTURE RUNDECK VERSION")
+            log.warn("This feature provides unauthenticated public access to execution history")
+            log.warn("Security Risk: Job names, execution timing, and user activity may be exposed")
+            log.warn("Please migrate to authenticated alternatives: API endpoints or Webhooks")
+            log.warn("For assistance, contact support at: https://support.pagerduty.com")
+            log.warn("=" * 80)
         }else{
             log.info("RSS feeds disabled")
         }
