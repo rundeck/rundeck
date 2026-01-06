@@ -129,18 +129,42 @@ export default defineComponent({
     },
     startCompletionCheck(executionId: string) {
       // Poll execution state to detect completion
-      // This matches the original behavior where nodeflowvm.completed.subscribe() was used
+      // This matches the original FlowState behavior from executionState.js
+      // The executionAjaxExecState endpoint returns {completed: true/false, execstate: "...", ...}
+      // We stop polling when completed === true (matching executionState.js line 245)
+      
+      // Clear any existing interval first
       if (this.completionCheckInterval) {
         clearInterval(this.completionCheckInterval);
+        this.completionCheckInterval = null;
       }
 
-      this.completionCheckInterval = setInterval(async () => {
+      // Only start if we have a valid executionId
+      if (!executionId) {
+        return;
+      }
+
+      this.completionCheckInterval = window.setInterval(async () => {
+        // Double-check interval still exists (may have been cleared)
+        if (!this.completionCheckInterval) {
+          return;
+        }
+        
+        // Verify executionId matches (prevent checking wrong execution)
+        if (this.executionId !== executionId) {
+          if (this.completionCheckInterval) {
+            clearInterval(this.completionCheckInterval);
+            this.completionCheckInterval = null;
+          }
+          return;
+        }
+
         try {
           const { getAppLinks } = await import("../../../library");
           const { _genUrl } = await import("../../../library/utilities/genUrl");
           const appLinks = getAppLinks();
 
-          // Check execution state
+          // Check execution state (matches original FlowState.callUpdate() behavior)
           const stateUrl = _genUrl(appLinks.executionAjaxExecState, { id: executionId });
           const response = await fetch(stateUrl, {
             headers: { "x-rundeck-ajax": "true" },
@@ -149,15 +173,18 @@ export default defineComponent({
           if (response.ok) {
             const data = await response.json();
             // Check if execution is completed
-            if (data.execstate === "succeeded" || data.execstate === "failed" || 
-                data.execstate === "aborted" || data.execstate === "timedout") {
+            // The original FlowState.update() stops polling when json.completed === true (executionState.js line 245)
+            // This matches the behavior where nodeflowvm.completed becomes true
+            if (data.completed === true) {
               this.handleExecutionComplete();
             }
           }
         } catch (err) {
           // Silently handle errors - execution may still be running
+          // But log for debugging
+          console.debug("[ExecutionOutput] Error checking execution state:", err);
         }
-      }, 2000); // Check every 2 seconds
+      }, 1500); // Check every 1.5 seconds (matches original reloadInterval: 1500 for adhoc)
     },
     handleExecutionComplete() {
       // Stop polling
