@@ -10,6 +10,18 @@ export interface RunAdhocRequest {
   doNodedispatch?: string;
   nodeThreadcount?: number;
   nodeKeepgoing?: boolean;
+  // Meta fields can be either:
+  // 1. Nested in meta object: { meta: { jobRunnerFilter: "...", ... } }
+  // 2. Flat fields: { "meta.jobRunnerFilter": "...", "meta.jobRunnerFilterType": "...", ... }
+  // The service will convert nested meta to flat query parameters
+  meta?: {
+    jobRunnerFilter?: string;
+    jobRunnerFilterType?: string;
+    jobRunnerFilterMode?: string;
+    [key: string]: string | undefined;
+  };
+  // Allow any additional fields (including flat meta.* fields from form)
+  [key: string]: any;
 }
 
 export interface RunAdhocResponse {
@@ -21,6 +33,10 @@ export interface RunAdhocResponse {
 /**
  * Execute an adhoc command via REST API endpoint
  * Uses: POST /api/{api_version}/project/{project}/run/command/inline
+ * 
+ * IMPORTANT: Sends data as query parameters (not JSON body) to match original jQuery.serialize() behavior
+ * This ensures meta.* fields are sent as flat query parameters (meta.jobRunnerFilter, etc.)
+ * which Grails automatically parses into the meta map object
  */
 export async function runAdhocCommand(
   request: RunAdhocRequest,
@@ -32,18 +48,54 @@ export async function runAdhocCommand(
   // So we use a relative path starting with "project/"
   const url = `project/${request.project}/run/command/inline`;
 
-  // Request body must include project parameter
-  const requestBody: RunAdhocRequest = {
+  // Convert request to query parameters (matching original jQuery.serialize() behavior)
+  // This ensures meta.* fields are sent as flat query parameters that Grails parses correctly
+  const params: Record<string, any> = {
+    formInput: "true", // Required by endpoint
     project: request.project,
     exec: request.exec,
     filter: request.filter,
-    filterExclude: request.filterExclude,
-    doNodedispatch: request.doNodedispatch,
-    nodeThreadcount: request.nodeThreadcount,
-    nodeKeepgoing: request.nodeKeepgoing,
+    doNodedispatch: request.doNodedispatch || "true",
   };
+  
+  if (request.filterExclude) {
+    params.filterExclude = request.filterExclude;
+  }
+  if (request.nodeThreadcount !== undefined) {
+    params.nodeThreadcount = request.nodeThreadcount;
+  }
+  if (request.nodeKeepgoing !== undefined) {
+    params.nodeKeepgoing = request.nodeKeepgoing;
+  }
+  
+  // Add meta fields as flat query parameters (meta.jobRunnerFilter, etc.)
+  // Grails will automatically parse these into the meta map object
+  if (request.meta) {
+    Object.keys(request.meta).forEach(key => {
+      const value = request.meta![key];
+      if (value !== undefined && value !== null && value !== '') {
+        params[`meta.${key}`] = value;
+      }
+    });
+  }
+  
+  // Also check for any other flat meta.* fields in the request object
+  Object.keys(request).forEach(key => {
+    if (key.startsWith('meta.') && !params[key]) {
+      const value = request[key];
+      if (value !== undefined && value !== null && value !== '') {
+        params[key] = value;
+      }
+    }
+  });
+  
+  // Log params for debugging (remove in production)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[adhocService] Sending request params:', params);
+  }
 
-  const response = await api.post<RunAdhocResponse>(url, requestBody);
+  // Send as POST with query parameters (not JSON body) to match original behavior
+  const response = await api.post<RunAdhocResponse>(url, null, { params });
 
   if (response.data.error) {
     throw new Error(response.data.error);

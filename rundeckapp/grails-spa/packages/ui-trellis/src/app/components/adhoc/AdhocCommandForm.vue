@@ -10,6 +10,16 @@
       >
         <input type="hidden" name="doNodedispatch" value="true" />
 
+        <!-- Runner selection widget injection point -->
+        <!-- This allows rundeckpro's JobRunnerAdhocCommand component to inject hidden fields -->
+        <!-- Placed at the top so it appears above the command input (matching UI layout) -->
+        <ui-socket
+          v-if="formMounted"
+          section="adhoc-command-page"
+          location="nodefilter"
+          :event-bus="eventBus"
+        />
+
         <span class="input-group multiple-control-input-group tight">
           <span class="input-group-btn">
             <button
@@ -209,10 +219,14 @@ import { AdhocCommandStore } from "../../../library/stores/AdhocCommandStore";
 import { NodeFilterStore } from "../../../library/stores/NodeFilterLocalstore";
 import { runAdhocCommand } from "./services/adhocService";
 import { getAppLinks } from "../../../library";
+import UiSocket from "../../../library/components/utils/UiSocket.vue";
 import type { PropType } from "vue";
 
 export default defineComponent({
   name: "AdhocCommandForm",
+  components: {
+    UiSocket,
+  },
   props: {
     adhocCommandStore: {
       type: Object as PropType<AdhocCommandStore>,
@@ -249,6 +263,7 @@ export default defineComponent({
       threadCount: 1,
       nodeKeepgoing: "true",
       running: false,
+      formMounted: false,
     };
   },
   computed: {
@@ -280,6 +295,11 @@ export default defineComponent({
     },
   },
   mounted() {
+    // Mark form as mounted to allow UiSocket to render
+    this.$nextTick(() => {
+      this.formMounted = true;
+    });
+    
     // Listen for execution completion
     if (this.eventBus && typeof this.eventBus.on === "function") {
       this.eventBus.on("adhoc-execution-complete", this.handleExecutionComplete);
@@ -339,6 +359,10 @@ export default defineComponent({
       }
       const formData = new FormData(form);
       const data: Record<string, any> = {};
+      const metaFields: Record<string, string> = {};
+      
+      // Extract all form fields - keep meta.* fields as flat fields (not nested)
+      // The service will send them as query parameters matching original jQuery.serialize() behavior
       for (const [key, value] of formData.entries()) {
         data[key] = value;
       }
@@ -353,13 +377,13 @@ export default defineComponent({
       data.doNodedispatch = "true";
 
       try {
-        // Execute adhoc command via service (handles CSRF tokens automatically)
+        // Execute adhoc command via service
+        // Service will send all fields (including meta.*) as query parameters
+        // matching original jQuery.serialize() behavior
         const response = await runAdhocCommand({
+          ...data,
           project: this.project,
-          exec: data.exec as string,
-          filter: data.filter as string,
-          filterExclude: data.filterExclude as string | undefined,
-          doNodedispatch: data.doNodedispatch as string,
+          // Override fields that need type conversion
           nodeThreadcount: data.nodeThreadcount ? parseInt(data.nodeThreadcount as string, 10) : undefined,
           nodeKeepgoing: data.nodeKeepgoing === "true" || data.nodeKeepgoing === true,
         });

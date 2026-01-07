@@ -35,16 +35,16 @@
           >
             {{ $t("view.in.nodes.page.prompt") }}
           </a>
-          <btn
+        <btn
             type="default btn-sm refresh_nodes"
-            data-loading-text="${g.message(code: 'loading')}"
-            :disabled="loading"
-            :title="$t('click.to.refresh')"
-            @click="update"
-          >
-            {{ $t("refresh") }}
-            <i class="glyphicon glyphicon-refresh"></i>
-          </btn>
+          data-loading-text="${g.message(code: 'loading')}"
+          :disabled="loading"
+          :title="$t('click.to.refresh')"
+          @click="update"
+        >
+          {{ $t("refresh") }}
+          <i class="glyphicon glyphicon-refresh"></i>
+        </btn>
         </div>
       </div>
     </div>
