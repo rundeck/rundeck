@@ -64,7 +64,8 @@ class GormJobStatsDataProvider implements JobStatsDataProvider{
                     def dailyMetrics = statsMap.dailyMetrics ?: [:]
                     def todayMetrics = dailyMetrics[today] ?: [
                         total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0,
-                        duration: 0, hourly: (0..23).collect { 0 }
+                        duration: 0,
+                        hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }
                     ]
 
                     // Increment today's metrics
@@ -87,13 +88,35 @@ class GormJobStatsDataProvider implements JobStatsDataProvider{
                     }
                     todayMetrics.duration += time
 
-                    // Extract hour from execution completion time
+                    // Extract hour from execution completion time and update hourly breakdown (RUN-3768: status per hour)
                     if (dateCompleted) {
                         def hourOfDay = dateCompleted.toInstant()
                             .atZone(java.time.ZoneId.systemDefault())
                             .getHour()
                         def hourlyList = todayMetrics.hourly as List
-                        hourlyList[hourOfDay] = (hourlyList[hourOfDay] ?: 0) + 1
+                        def hourMetrics = hourlyList[hourOfDay] ?: [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0]
+
+                        // Increment hour's total
+                        hourMetrics.total++
+
+                        // Increment hour's status count
+                        switch(status) {
+                            case 'succeeded':
+                                hourMetrics.succeeded++
+                                break
+                            case 'failed':
+                            case 'failed-with-retry':
+                                hourMetrics.failed++
+                                break
+                            case 'aborted':
+                                hourMetrics.aborted++
+                                break
+                            case 'timedout':
+                                hourMetrics.timedout++
+                                break
+                        }
+
+                        hourlyList[hourOfDay] = hourMetrics
                         todayMetrics.hourly = hourlyList
                     }
 

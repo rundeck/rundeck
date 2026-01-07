@@ -87,6 +87,7 @@ import javax.servlet.http.HttpServletResponse
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.time.LocalDate
+import java.time.ZoneId
 
 /**
 * ExecutionController
@@ -3664,8 +3665,42 @@ Note: This endpoint has the same query parameters and response as the `/executio
                 )
             }
 
+            // Parse and validate begin/end timestamps (RUN-3768: proper error handling)
+            Date batchBeginTimestamp = null
+            Date batchEndTimestamp = null
+
+            if (params.begin) {
+                try {
+                    batchBeginTimestamp = ReportsController.parseDate(params.begin)
+                } catch (Exception e) {
+                    return apiService.renderErrorFormat(
+                        response,
+                        [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code  : 'api.error.history.date-format',
+                            args  : ['begin', params.begin]
+                        ]
+                    )
+                }
+            }
+
+            if (params.end) {
+                try {
+                    batchEndTimestamp = ReportsController.parseDate(params.end)
+                } catch (Exception e) {
+                    return apiService.renderErrorFormat(
+                        response,
+                        [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code  : 'api.error.history.date-format',
+                            args  : ['end', params.end]
+                        ]
+                    )
+                }
+            }
+
             log.debug("[METRICS-API] Batch mode for project ${projectName}")
-            metrics = getMetricsBatch(projectName, params.begin, params.end)
+            metrics = getMetricsBatch(projectName, batchBeginTimestamp, batchEndTimestamp)
 
             // Format duration values for each job's metrics (consistency with single-job mode)
             metrics.jobs?.each { jobUuid, jobMetrics ->
@@ -3696,8 +3731,42 @@ Note: This endpoint has the same query parameters and response as the `/executio
                 )
             }
 
-            // Pass begin and end parameters if provided
-            metrics = getMetricsFromStats(jobId, params.begin, params.end)
+            // Parse and validate begin/end timestamps (RUN-3768: proper error handling)
+            Date beginTimestamp = null
+            Date endTimestamp = null
+
+            if (params.begin) {
+                try {
+                    beginTimestamp = ReportsController.parseDate(params.begin)
+                } catch (Exception e) {
+                    return apiService.renderErrorFormat(
+                        response,
+                        [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code  : 'api.error.history.date-format',
+                            args  : ['begin', params.begin]
+                        ]
+                    )
+                }
+            }
+
+            if (params.end) {
+                try {
+                    endTimestamp = ReportsController.parseDate(params.end)
+                } catch (Exception e) {
+                    return apiService.renderErrorFormat(
+                        response,
+                        [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code  : 'api.error.history.date-format',
+                            args  : ['end', params.end]
+                        ]
+                    )
+                }
+            }
+
+            // Pass parsed Date objects to getMetricsFromStats
+            metrics = getMetricsFromStats(jobId, beginTimestamp, endTimestamp)
 
             if (!metrics) {
                 // No stats exist - return empty metrics (NO FALLBACK to execution table)
@@ -3776,12 +3845,12 @@ Note: This endpoint has the same query parameters and response as the `/executio
      * Returns null if stats don't exist, or empty metrics object (all zeros) if no metrics found for the date range.
      *
      * @param jobUuid The job UUID
-     * @param begin Optional begin date in format "yyyy-MM-ddTHH:mm:ssZ" (e.g., "2024-01-01T00:00:00Z")
-     * @param end Optional end date in format "yyyy-MM-ddTHH:mm:ssZ" (e.g., "2024-01-31T23:59:59Z")
+     * @param beginTimestamp Optional begin timestamp (Date object)
+     * @param endTimestamp Optional end timestamp (Date object)
      * @param prefetchedStats Optional pre-fetched stats object to avoid N+1 queries in batch mode
      * @return Map with metrics or null if stats don't exist
      */
-    private Map getMetricsFromStats(String jobUuid, String begin = null, String end = null, ScheduledExecutionStats prefetchedStats = null) {
+    private Map getMetricsFromStats(String jobUuid, Date beginTimestamp = null, Date endTimestamp = null, ScheduledExecutionStats prefetchedStats = null) {
         try {
             def job = ScheduledExecution.findByUuid(jobUuid)
             if (!job) {
@@ -3801,44 +3870,23 @@ Note: This endpoint has the same query parameters and response as the `/executio
 
             def today = LocalDate.now().toString()
 
-            // Determine date range filter
+            // Extract date and hour components from timestamps (RUN-3768: 24-hour rolling window support)
+            // Note: Only BEGIN date needs hour filtering. END date is always "now", so today's data naturally stops at current hour.
             LocalDate beginDate = null
             LocalDate endDate = null
-            
-            if (begin) {
-                // Extract date part from "yyyy-MM-ddTHH:mm:ssZ" format
-                // Take first 10 characters which is "yyyy-MM-dd"
-                if (begin.length() >= 10) {
-                    def beginDateStr = begin.substring(0, 10)
-                    try {
-                        beginDate = LocalDate.parse(beginDateStr)
-                        log.debug("[METRICS-API] Parsed begin date: ${beginDate} from ${begin}")
-                    } catch (Exception e) {
-                        log.warn("[METRICS-API] Invalid begin date format: ${begin}, error: ${e.message}")
-                        // Invalid date format - treat as if no begin date provided (backward compatibility)
-                        beginDate = null
-                    }
-                } else {
-                    log.warn("[METRICS-API] Invalid begin date format: ${begin} (too short)")
-                }
+            Integer beginHour = null
+
+            if (beginTimestamp) {
+                def cal = Calendar.getInstance()
+                cal.setTime(beginTimestamp)
+                beginHour = cal.get(Calendar.HOUR_OF_DAY)
+                beginDate = beginTimestamp.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+                log.debug("[METRICS-API] Begin: date=${beginDate}, hour=${beginHour}")
             }
-            
-            if (end) {
-                // Extract date part from "yyyy-MM-ddTHH:mm:ssZ" format
-                // Take first 10 characters which is "yyyy-MM-dd"
-                if (end.length() >= 10) {
-                    def endDateStr = end.substring(0, 10)
-                    try {
-                        endDate = LocalDate.parse(endDateStr)
-                        log.debug("[METRICS-API] Parsed end date: ${endDate} from ${end}")
-                    } catch (Exception e) {
-                        log.warn("[METRICS-API] Invalid end date format: ${end}, error: ${e.message}")
-                        // Invalid date format - treat as if no end date provided (backward compatibility)
-                        endDate = null
-                    }
-                } else {
-                    log.warn("[METRICS-API] Invalid end date format: ${end} (too short)")
-                }
+
+            if (endTimestamp) {
+                endDate = endTimestamp.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+                log.debug("[METRICS-API] End: date=${endDate}")
             }
 
             // Filter dailyMetrics based on date range if provided
@@ -3847,7 +3895,7 @@ Note: This endpoint has the same query parameters and response as the `/executio
                 // If date range is provided, filter metrics
                 if (dailyMetrics.isEmpty()) {
                     // No metrics data at all - return zeros when date range is specified
-                    log.debug("[METRICS-API] No daily metrics data for job ${jobUuid} in date range ${begin ?: 'N/A'} to ${end ?: 'N/A'}")
+                    log.debug("[METRICS-API] No daily metrics data for job ${jobUuid} in date range")
                     return [
                         total: 0,
                         succeeded: 0,
@@ -3862,8 +3910,8 @@ Note: This endpoint has the same query parameters and response as the `/executio
                         hourly_heatmap: (0..23).collect { 0 }
                     ]
                 }
-                
-                log.debug("[METRICS-API] Filtering metrics: beginDate=${beginDate}, endDate=${endDate}, total dailyMetrics=${dailyMetrics.size()}")
+
+                log.debug("[METRICS-API] Filtering metrics: beginDate=${beginDate}, endDate=${endDate}, beginHour=${beginHour}")
                 log.debug("[METRICS-API] Available dates in dailyMetrics: ${dailyMetrics.keySet().sort()}")
                 
                 filteredMetrics = dailyMetrics.findAll { dateStr, metrics ->
@@ -3872,25 +3920,22 @@ Note: This endpoint has the same query parameters and response as the `/executio
                     
                     // Exclude dates before beginDate (inclusive: date >= beginDate)
                     if (beginDate != null && date.isBefore(beginDate)) {
-                        log.debug("[METRICS-API] Excluding date ${dateStr} (before beginDate ${beginDate})")
                         inRange = false
                     }
                     
                     // Exclude dates after endDate (inclusive: date <= endDate)
                     if (endDate != null && date.isAfter(endDate)) {
-                        log.debug("[METRICS-API] Excluding date ${dateStr} (after endDate ${endDate})")
                         inRange = false
                     }
                     
                     return inRange
                 }
-                
+
                 log.debug("[METRICS-API] After filtering: ${filteredMetrics.size()} metrics remain out of ${dailyMetrics.size()}")
-                log.debug("[METRICS-API] Filtered dates: ${filteredMetrics.keySet().sort()}")
-                
+
                 // If no metrics found for the date range, return empty metrics object
                 if (filteredMetrics.isEmpty()) {
-                    log.debug("[METRICS-API] No metrics found for job ${jobUuid} in date range ${begin ?: 'N/A'} to ${end ?: 'N/A'}")
+                    log.debug("[METRICS-API] No metrics found for job ${jobUuid} in date range")
                     return [
                         total: 0,
                         succeeded: 0,
@@ -3911,7 +3956,7 @@ Note: This endpoint has the same query parameters and response as the `/executio
                     log.debug("[METRICS-API] No daily metrics data for job ${jobUuid}")
                     return null  // No metrics data - backward compatibility
                 }
-                
+
                 // Use last 7 days (backward compatibility)
                 def cutoff = LocalDate.now().minusDays(6)
                 filteredMetrics = dailyMetrics.findAll { dateStr, metrics ->
@@ -3919,19 +3964,53 @@ Note: This endpoint has the same query parameters and response as the `/executio
                 }
             }
 
-            // Variables for aggregated totals - calculate from filteredMetrics
-            def total = filteredMetrics.values().sum { it.total } ?: 0
-            def succeeded = filteredMetrics.values().sum { it.succeeded } ?: 0
-            def failed = filteredMetrics.values().sum { it.failed } ?: 0
-            def aborted = filteredMetrics.values().sum { it.aborted } ?: 0
-            def timedout = filteredMetrics.values().sum { it.timedout } ?: 0
-            def totalDuration = filteredMetrics.values().sum { it.duration } ?: 0
+            // Apply hour-level filtering ONLY for BEGIN date (RUN-3768: 24-hour rolling window)
+            // END date doesn't need filtering because it's always "now" - today's data naturally stops at current hour
+            def processedMetrics = filteredMetrics.collectEntries { dateStr, dayMetrics ->
+                def date = LocalDate.parse(dateStr)
+
+                // Check if this is the first day and needs hour filtering
+                if (beginDate != null && date.equals(beginDate) && beginHour != null && beginHour > 0) {
+                    log.debug("[METRICS-API] First day ${dateStr}: filtering hours ${beginHour}-23")
+
+                    def modified = [:] + dayMetrics
+                    def hourly = dayMetrics.hourly ?: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }
+
+                    // Filter hourly array: zero out hours before beginHour
+                    modified.hourly = hourly.withIndex().collect { hourData, idx ->
+                        (idx >= beginHour) ? hourData : [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0]
+                    }
+
+                    // Recalculate aggregates from filtered hours
+                    modified.total = modified.hourly[(beginHour..23)].sum { it.total } ?: 0
+                    modified.succeeded = modified.hourly[(beginHour..23)].sum { it.succeeded } ?: 0
+                    modified.failed = modified.hourly[(beginHour..23)].sum { it.failed } ?: 0
+                    modified.aborted = modified.hourly[(beginHour..23)].sum { it.aborted } ?: 0
+                    modified.timedout = modified.hourly[(beginHour..23)].sum { it.timedout } ?: 0
+                    modified.duration = dayMetrics.total > 0 ? Math.round(dayMetrics.duration * (modified.total as double / dayMetrics.total)) as long : 0
+
+                    log.debug("[METRICS-API] Partial first day ${dateStr}: total=${modified.total}, succeeded=${modified.succeeded}, failed=${modified.failed}")
+
+                    return [(dateStr): modified]
+                } else {
+                    // Full day - include all metrics as-is
+                    return [(dateStr): dayMetrics]
+                }
+            }
+
+            // Variables for aggregated totals - calculate from processedMetrics
+            def total = processedMetrics.values().sum { it.total } ?: 0
+            def succeeded = processedMetrics.values().sum { it.succeeded } ?: 0
+            def failed = processedMetrics.values().sum { it.failed } ?: 0
+            def aborted = processedMetrics.values().sum { it.aborted } ?: 0
+            def timedout = processedMetrics.values().sum { it.timedout } ?: 0
+            def totalDuration = processedMetrics.values().sum { it.duration } ?: 0
             def avgDuration = total > 0 ? (totalDuration / total) : 0
 
-            // Only set needsCacheUpdate if dailyMetrics has grown beyond 90 days (triggers pruning)
-            def needsCacheUpdate = dailyMetrics.size() > 90
+            // Only set needsCacheUpdate if dailyMetrics has grown beyond 30 days (triggers pruning)
+            def needsCacheUpdate = dailyMetrics.size() > 30
 
-            // LAZY CLEANUP: Prune entries older than 90 days (only on cache miss)
+            // LAZY CLEANUP: Prune entries older than 30 days (only on cache miss)
             def needsSave = false
             if (needsCacheUpdate) {
                 def pruneOlderThan = LocalDate.now().minusDays(90)
@@ -3956,22 +4035,18 @@ Note: This endpoint has the same query parameters and response as the `/executio
                 stats.save(flush: true)
             }
 
-            // Return daily breakdown in same format as stored - object with dates as keys
-            def dailyBreakdown = filteredMetrics.collectEntries { dateStr, metrics ->
-                [dateStr, [
-                    total: metrics.total ?: 0,
-                    succeeded: metrics.succeeded ?: 0,
-                    failed: metrics.failed ?: 0,
-                    aborted: metrics.aborted ?: 0,
-                    timedout: metrics.timedout ?: 0,
-                    duration: metrics.duration ?: 0
-                ]]
+            // Return daily breakdown (metrics without hourly key)
+            def dailyBreakdown = processedMetrics.collectEntries { dateStr, metrics ->
+                def copy = [:] + metrics
+                copy.remove('hourly')
+                [(dateStr): copy]
             }
 
-            // Aggregate hourly heatmap across all filtered days
+            // Aggregate hourly heatmap across all processed days (extract 'total' from hourly objects)
             def hourlyHeatmap = (0..23).collect { hour ->
-                filteredMetrics.values().sum { dayMetrics ->
-                    (dayMetrics.hourly && dayMetrics.hourly[hour]) ? dayMetrics.hourly[hour] : 0
+                processedMetrics.values().sum { dayMetrics ->
+                    def hourData = (dayMetrics.hourly && dayMetrics.hourly[hour]) ? dayMetrics.hourly[hour] : null
+                    (hourData && hourData.total) ? hourData.total : 0
                 } ?: 0
             }
 
@@ -4004,11 +4079,11 @@ Note: This endpoint has the same query parameters and response as the `/executio
      * This method returns meaningful data only if the feature flag rundeck.executionDailyMetrics.enabled was enabled during metric collection.
      *
      * @param projectName The project name to query jobs for
-     * @param begin Optional begin date in format "yyyy-MM-ddTHH:mm:ssZ"
-     * @param end Optional end date in format "yyyy-MM-ddTHH:mm:ssZ"
+     * @param beginTimestamp Optional begin timestamp (Date object)
+     * @param endTimestamp Optional end timestamp (Date object)
      * @return Map with format: [jobs: [jobUuid1: metrics, jobUuid2: metrics, ...]]
      */
-    private Map getMetricsBatch(String projectName, String begin = null, String end = null) {
+    private Map getMetricsBatch(String projectName, Date beginTimestamp = null, Date endTimestamp = null) {
         def startTime = System.currentTimeMillis()
 
         try {
@@ -4027,7 +4102,7 @@ Note: This endpoint has the same query parameters and response as the `/executio
             jobs.each { job ->
                 // Pass pre-fetched stats to avoid N+1 query problem
                 def stats = statsByJobUuid[job.uuid]
-                def metrics = getMetricsFromStats(job.uuid, begin, end, stats)
+                def metrics = getMetricsFromStats(job.uuid, beginTimestamp, endTimestamp, stats)
 
                 if (!metrics) {
                     // No stats exist - return empty metrics for this job
