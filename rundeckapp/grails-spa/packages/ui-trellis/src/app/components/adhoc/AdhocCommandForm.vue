@@ -87,6 +87,8 @@
             class="form-control"
             :disabled="isCommandInputDisabled"
             autofocus="true"
+            :aria-label="$t('enter.a.command')"
+            aria-describedby="command-input-help"
             @input="handleCommandInput"
             @keypress="handleKeyPress"
           />
@@ -96,24 +98,29 @@
               class="btn btn-default has_tooltip"
               type="button"
               :title="$t('node.dispatch.settings')"
+              :aria-label="$t('node.dispatch.settings')"
               data-placement="left"
               data-container="body"
               data-toggle="collapse"
               data-target="#runconfig"
             >
-              <i class="glyphicon glyphicon-cog"></i>
+              <i class="glyphicon glyphicon-cog" aria-hidden="true"></i>
             </button>
 
             <a
               class="btn btn-cta btn-fill runbutton"
               :class="{ disabled: isRunDisabled }"
               :disabled="isRunDisabled"
+              :aria-label="adhocCommandStore?.running ? $t('running1') : (nodeTotal > 0 ? $t('run.on.count.nodes', [nodeTotal, nodesTitle]) : $t('adhoc.no.nodes.matched'))"
+              :aria-disabled="isRunDisabled"
+              role="button"
+              tabindex="0"
               @click.prevent="handleSubmit"
             >
               <span v-if="!adhocCommandStore?.running">
                 <span v-if="nodeTotal > 0">
                   {{ $t("run.on.count.nodes", [nodeTotal, nodesTitle]) }}
-                  <span class="glyphicon glyphicon-play"></span>
+                  <span class="glyphicon glyphicon-play" aria-hidden="true"></span>
                 </span>
                 <span v-else>{{ $t("adhoc.no.nodes.matched") }}</span>
               </span>
