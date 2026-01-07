@@ -107,20 +107,20 @@
               class="btn btn-cta btn-fill runbutton"
               :class="{ disabled: isRunDisabled }"
               :disabled="isRunDisabled"
-              :aria-label="state.running ? $t('running1') : (nodeTotal > 0 ? $t('run.on.count.nodes', [nodeTotal, nodesTitle]) : $t('adhoc.no.nodes.matched'))"
+              :aria-label="running ? $t('running1') : (nodeTotal > 0 ? $t('run.on.count.nodes', [nodeTotal, nodesTitle]) : $t('adhoc.no.nodes.matched'))"
               :aria-disabled="isRunDisabled"
               role="button"
               tabindex="0"
               @click.prevent="handleSubmit"
             >
-              <span v-if="!state.running">
+              <span v-if="!running">
                 <span v-if="nodeTotal > 0">
                   {{ $t("run.on.count.nodes", [nodeTotal, nodesTitle]) }}
                   <span class="glyphicon glyphicon-play" aria-hidden="true"></span>
                 </span>
                 <span v-else>{{ $t("adhoc.no.nodes.matched") }}</span>
               </span>
-              <span v-if="state.running">
+              <span v-if="running">
                 {{ $t("running1") }}
               </span>
             </a>
@@ -217,7 +217,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive, computed, watch } from "vue";
+import { defineComponent } from "vue";
 import { NodeFilterStore } from "../../../library/stores/NodeFilterLocalstore";
 import { runAdhocCommand } from "./services/adhocService";
 import { getAppLinks } from "../../../library";
@@ -295,10 +295,10 @@ export default defineComponent({
     },
   },
   emits: ["submit", "node-total-changed", "execution-started"],
-  setup(props) {
-    // Local reactive state (replaces AdhocCommandStore)
-    const state = reactive({
-      commandString: props.initialCommandString || "",
+  data() {
+    return {
+      // Local reactive state (replaces AdhocCommandStore)
+      commandString: this.initialCommandString || "",
       recentCommands: [] as RecentCommand[],
       recentCommandsLoaded: false,
       running: false,
@@ -307,76 +307,44 @@ export default defineComponent({
       error: null as string | null,
       followControl: null as any,
       loadMax: 20,
-    });
-
-    // Computed properties
-    const recentCommandsNoneFound = computed(() => {
-      return state.recentCommands.length < 1 && state.recentCommandsLoaded;
-    });
-
-    // Update canRun and allowInput based on nodeTotal and nodeError
-    watch(
-      [() => props.nodeTotal, () => props.nodeError, () => state.running],
-      () => {
-        if (state.running) {
-          state.canRun = false;
-          state.allowInput = false;
-          return;
-        }
-
-        const totalNum = typeof props.nodeTotal === "string" ? parseInt(props.nodeTotal as any, 10) : props.nodeTotal;
-        if (totalNum && totalNum !== 0 && props.nodeTotal !== "0" && !props.nodeError) {
-          state.canRun = true;
-          state.allowInput = true;
-        } else {
-          state.canRun = false;
-          state.allowInput = false;
-        }
-      },
-      { immediate: true }
-    );
-
-    return {
-      state,
-      recentCommandsNoneFound,
-    };
-  },
-  data() {
-    return {
       threadCount: 1,
       nodeKeepgoing: "true",
       formMounted: false,
-      boundExecutionCompleteHandler: null as ((...args: any[]) => void) | null,
     };
   },
   computed: {
-    commandString(): string {
-      return this.state.commandString;
-    },
-    recentCommands(): RecentCommand[] {
-      return this.state.recentCommands;
-    },
-    recentCommandsLoaded(): boolean {
-      return this.state.recentCommandsLoaded;
+    recentCommandsNoneFound(): boolean {
+      return this.recentCommands.length < 1 && this.recentCommandsLoaded;
     },
     isRunDisabled(): boolean {
       return (
         this.nodeTotal < 1 ||
         !!this.nodeError ||
-        this.state.running ||
-        !this.state.canRun
+        this.running ||
+        !this.canRun
       );
     },
     isCommandInputDisabled(): boolean {
       return (
         this.nodeTotal < 1 ||
         !!this.nodeError ||
-        this.state.running ||
-        !this.state.allowInput
+        this.running ||
+        !this.allowInput
       );
     },
     nodesTitle(): string {
       return this.nodeTotal === 1 ? this.$t("Node") : this.$t("Node.plural");
+    },
+  },
+  watch: {
+    nodeTotal() {
+      this.updateCanRunAndAllowInput();
+    },
+    nodeError() {
+      this.updateCanRunAndAllowInput();
+    },
+    running() {
+      this.updateCanRunAndAllowInput();
     },
   },
   mounted() {
@@ -386,26 +354,44 @@ export default defineComponent({
     });
     
     // Listen for execution completion
-    // Bind handler to ensure 'this' context is correct
+    // In Vue 3 Options API, methods automatically have correct 'this' binding
     if (this.eventBus && typeof this.eventBus.on === "function") {
-      this.boundExecutionCompleteHandler = this.handleExecutionComplete.bind(this);
-      this.eventBus.on("adhoc-execution-complete", this.boundExecutionCompleteHandler);
+      this.eventBus.on("adhoc-execution-complete", this.handleExecutionComplete);
     }
+    
+    // Update canRun and allowInput based on initial props
+    this.updateCanRunAndAllowInput();
   },
   beforeUnmount() {
     // Clean up event listeners
-    if (this.eventBus && typeof this.eventBus.off === "function" && this.boundExecutionCompleteHandler) {
-      this.eventBus.off("adhoc-execution-complete", this.boundExecutionCompleteHandler);
+    if (this.eventBus && typeof this.eventBus.off === "function") {
+      this.eventBus.off("adhoc-execution-complete", this.handleExecutionComplete);
     }
     // Stop following execution output if active
-    if (this.state.followControl && typeof this.state.followControl.stopFollowingOutput === "function") {
-      this.state.followControl.stopFollowingOutput();
+    if (this.followControl && typeof this.followControl.stopFollowingOutput === "function") {
+      this.followControl.stopFollowingOutput();
     }
   },
   methods: {
+    updateCanRunAndAllowInput() {
+      if (this.running) {
+        this.canRun = false;
+        this.allowInput = false;
+        return;
+      }
+
+      const totalNum = typeof this.nodeTotal === "string" ? parseInt(this.nodeTotal as any, 10) : this.nodeTotal;
+      if (totalNum && totalNum !== 0 && this.nodeTotal !== "0" && !this.nodeError) {
+        this.canRun = true;
+        this.allowInput = true;
+      } else {
+        this.canRun = false;
+        this.allowInput = false;
+      }
+    },
     handleCommandInput(event: Event) {
       const target = event.target as HTMLInputElement;
-      this.state.commandString = target.value;
+      this.commandString = target.value;
     },
     handleKeyPress(event: KeyboardEvent) {
       // Submit on Enter key
@@ -415,22 +401,22 @@ export default defineComponent({
       }
     },
     async loadRecentCommands() {
-      if (!this.state.recentCommandsLoaded) {
+      if (!this.recentCommandsLoaded) {
         try {
-          this.state.recentCommandsLoaded = false;
-          this.state.error = null;
+          this.recentCommandsLoaded = false;
+          this.error = null;
 
           const apiUrl = getAppLinks().adhocHistoryAjax;
-          const response = await fetch(`${apiUrl}?max=${this.state.loadMax}`);
+          const response = await fetch(`${apiUrl}?max=${this.loadMax}`);
           if (!response.ok) {
             throw new Error(`Request failed: ${response.statusText}`);
           }
 
           const data = await response.json();
-          this.state.recentCommandsLoaded = true;
+          this.recentCommandsLoaded = true;
 
           if (data.executions && Array.isArray(data.executions)) {
-            this.state.recentCommands = data.executions.map((exec: any) => {
+            this.recentCommands = data.executions.map((exec: any) => {
               const link: RecentCommand = {
                 href: exec.href || null,
                 title: exec.title || null,
@@ -441,7 +427,7 @@ export default defineComponent({
                 succeeded: exec.succeeded || null,
                 statusClass: getStatusClass(exec.status),
                 fillCommand: () => {
-                  this.state.commandString = exec.title || "";
+                  this.commandString = exec.title || "";
                   if (this.nodeFilterStore && exec.filter) {
                     this.nodeFilterStore.setSelectedFilter(exec.filter);
                   }
@@ -457,22 +443,22 @@ export default defineComponent({
               return link;
             });
           } else {
-            this.state.recentCommands = [];
+            this.recentCommands = [];
           }
         } catch (err: any) {
-          this.state.recentCommandsLoaded = true;
-          this.state.error = `Recent commands list: request failed: ${err.message}`;
+          this.recentCommandsLoaded = true;
+          this.error = `Recent commands list: request failed: ${err.message}`;
           console.error("Recent commands list: error receiving data", err);
-          this.state.recentCommands = [];
+          this.recentCommands = [];
         }
       }
     },
     async handleSubmit() {
-      if (this.isRunDisabled || this.state.running) {
+      if (this.isRunDisabled || this.running) {
         return false;
       }
 
-      const commandString = this.state.commandString;
+      const commandString = this.commandString;
       if (!commandString || !commandString.trim()) {
         return false;
       }
@@ -483,7 +469,7 @@ export default defineComponent({
       }
 
       // Set running state
-      this.state.running = true;
+      this.running = true;
 
       // Serialize form data
       const form = this.$refs.runboxFormRef as HTMLFormElement;
@@ -536,10 +522,10 @@ export default defineComponent({
       return false;
     },
     handleExecutionComplete() {
-      console.log("[AdhocCommandForm] handleExecutionComplete called, current running state:", this.state.running);
+      console.log("[AdhocCommandForm] handleExecutionComplete called, current running state:", this.running);
       // Clear running state IMMEDIATELY
-      this.state.running = false;
-      console.log("[AdhocCommandForm] Running state set to:", this.state.running);
+      this.running = false;
+      console.log("[AdhocCommandForm] Running state set to:", this.running);
 
       // Re-enable command input and focus it (matching original afterRun() behavior)
       this.$nextTick(() => {
@@ -553,7 +539,7 @@ export default defineComponent({
       // The original code shows .execRerun elements, but that's handled by the execution output fragment
     },
     showError(message: string) {
-      this.state.running = false;
+      this.running = false;
 
       // Error will be displayed by ExecutionOutput component if needed
       // No need to emit error event since ExecutionOutput handles its own error state
