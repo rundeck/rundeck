@@ -1,9 +1,9 @@
 # Build remco from specific commit
 ##################################
-FROM golang:1.24.1 as remco
+FROM golang:1.24.6 as remco
 
 # REMCO_VERSION can be a release version "v0.XX.X", commit id, tag or branch name.
-ENV REMCO_VERSION=fe0db414ca99ce5055ceb316f52a13948b213d36
+ENV REMCO_VERSION=be848fe56c2a44530e422b5f7442b0854eaaafac
 
 RUN go install github.com/HeavyHorst/remco/cmd/remco@$REMCO_VERSION
 
