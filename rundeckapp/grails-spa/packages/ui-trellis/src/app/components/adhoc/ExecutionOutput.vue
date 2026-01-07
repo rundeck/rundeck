@@ -59,6 +59,14 @@
               {{ killing ? $t("killing") : $t("kill.job") }}
             </button>
             <a
+              v-if="showRetryFailedNodesButton && retryFailedNodesHref"
+              :href="retryFailedNodesHref"
+              class="btn btn-default btn-xs"
+            >
+              <i class="glyphicon glyphicon-play"></i>
+              {{ $t("retry.failed.nodes") }}&hellip;
+            </a>
+            <a
               v-if="executionCompleted && executionProject && saveAsJobHref"
               :href="saveAsJobHref"
               class="btn btn-default btn-xs"
@@ -111,7 +119,7 @@ import { AdhocCommandStore } from "../../../library/stores/AdhocCommandStore";
 import LogViewer from "../../../library/components/execution-log/logViewer.vue";
 import type { PropType } from "vue";
 import { getRundeckContext } from "../../../library";
-import { killExecution } from "./services/adhocService";
+import { killExecution, getExecutionDetails } from "./services/adhocService";
 
 export default defineComponent({
   name: "ExecutionOutput",
@@ -164,6 +172,8 @@ export default defineComponent({
       executionCompleted: false,
       executionStatusString: null as string | null,
       killing: false,
+      failedNodes: [] as string[],
+      executionDetailsFetched: false, // Flag to prevent fetching execution details multiple times
     };
   },
   computed: {
@@ -213,6 +223,29 @@ export default defineComponent({
       const isRunning = !this.executionCompleted && this.executionState?.toUpperCase() === "RUNNING";
       return adhocKillAllowed && isRunning;
     },
+    retryFailedNodesHref(): string | null {
+      // Generate retry failed nodes URL: /project/{project}/command/run?retryFailedExecId={executionId}
+      if (!this.executionId || !this.executionProject) {
+        return null;
+      }
+      const rundeckContext = getRundeckContext();
+      const rdBase = (rundeckContext.rdBase || "").replace(/\/$/, ""); // Remove trailing slash
+      return `${rdBase}/project/${encodeURIComponent(this.executionProject)}/command/run?retryFailedExecId=${this.executionId}`;
+    },
+    showRetryFailedNodesButton(): boolean {
+      // Show retry failed nodes button when:
+      // 1. showHeader is true (header is visible)
+      // 2. Execution is completed
+      // 3. Execution state is FAILED
+      // 4. Execution has failed nodes (fetched via API)
+      // 5. Execution ID and project exist
+      if (!this.showHeader || !this.executionId || !this.executionProject) {
+        return false;
+      }
+      const isFailed = this.executionCompleted && this.executionState?.toUpperCase() === "FAILED";
+      const hasFailedNodes = this.failedNodes && this.failedNodes.length > 0;
+      return isFailed && hasFailedNodes;
+    },
   },
   watch: {
     executionId(newId: string | null) {
@@ -229,6 +262,8 @@ export default defineComponent({
       this.executionNodes = [];
       this.executionCompleted = false;
       this.executionStatusString = null;
+      this.failedNodes = [];
+      this.executionDetailsFetched = false;
       }
     },
   },
@@ -394,7 +429,12 @@ export default defineComponent({
             // Check if execution is completed
             // The original FlowState.update() stops polling when json.completed === true (executionState.js line 245)
             // This matches the behavior where nodeflowvm.completed becomes true
-            if (data.completed === true) {
+            if (data.completed === true && !this.executionDetailsFetched) {
+              // Stop polling immediately before calling handleExecutionComplete to prevent infinite loop
+              if (this.completionCheckInterval) {
+                clearInterval(this.completionCheckInterval);
+                this.completionCheckInterval = null;
+              }
               this.handleExecutionComplete();
             }
           }
@@ -405,8 +445,16 @@ export default defineComponent({
         }
       }, 1500); // Check every 1.5 seconds (matches original reloadInterval: 1500 for adhoc)
     },
-    handleExecutionComplete() {
-      // Stop polling
+    async handleExecutionComplete() {
+      // Prevent multiple calls to this method (guard against infinite loop)
+      if (this.executionDetailsFetched) {
+        return;
+      }
+
+      // Set flag immediately to prevent multiple calls
+      this.executionDetailsFetched = true;
+
+      // Stop polling immediately to prevent infinite loop
       if (this.completionCheckInterval) {
         clearInterval(this.completionCheckInterval);
         this.completionCheckInterval = null;
@@ -414,6 +462,23 @@ export default defineComponent({
 
       // Clear running state
       this.adhocCommandStore.running = false;
+
+      // If execution failed and showHeader is enabled, fetch execution details to get failed nodes
+      if (
+        this.showHeader &&
+        this.executionId &&
+        this.executionState?.toUpperCase() === "FAILED"
+      ) {
+        try {
+          const executionDetails = await getExecutionDetails(this.executionId);
+          if (executionDetails?.failedNodes && executionDetails.failedNodes.length > 0) {
+            this.failedNodes = executionDetails.failedNodes;
+          }
+        } catch (err) {
+          // Silently handle errors - failed nodes list is optional
+          console.debug("[ExecutionOutput] Error fetching execution details:", err);
+        }
+      }
 
       // Emit completion event for AdhocCommandForm to handle
       if (this.eventBus && typeof this.eventBus.emit === "function") {

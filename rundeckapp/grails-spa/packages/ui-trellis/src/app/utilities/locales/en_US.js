@@ -235,6 +235,7 @@ const messages = {
   "execution.page.show.tab.Nodes.title": "Nodes",
   "execution.show.mode.Log.title": "Log Output",
   "execution.action.saveAsJob": "Save as Job",
+  "retry.failed.nodes": "Retry Failed Nodes",
   "execution.status.succeeded": "Succeeded",
   "execution.status.failed": "Failed",
   "execution.status.running": "Running",

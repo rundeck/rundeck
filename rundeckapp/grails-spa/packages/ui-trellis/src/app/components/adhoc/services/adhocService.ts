@@ -98,6 +98,15 @@ export interface AbortExecutionResponse {
   error?: string;
 }
 
+export interface ExecutionDetails {
+  id: number;
+  status: string;
+  project: string;
+  failedNodes?: string[];
+  successfulNodes?: string[];
+  [key: string]: any;
+}
+
 /**
  * Abort/kill a running execution via REST API endpoint
  * Uses: POST /api/{api_version}/execution/{id}/abort
@@ -118,5 +127,51 @@ export async function killExecution(
   }
 
   return response.data;
+}
+
+/**
+ * Fetch execution details from API to get failedNodes and other execution information
+ * Uses: GET /api/{api_version}/execution/{id}
+ */
+export async function getExecutionDetails(
+  executionId: string | number,
+): Promise<ExecutionDetails | null> {
+  // Use execution API endpoint: /api/{api_version}/execution/{id}
+  const executionApiUrl = `execution/${executionId}`;
+
+  const response = await api.get(executionApiUrl);
+
+  // The API returns { executions: [...] } when multiple, or flattened execution object when single:true
+  let execution: any = null;
+  if (response.data && Array.isArray(response.data.executions) && response.data.executions.length > 0) {
+    // Multiple executions format
+    execution = response.data.executions[0];
+  } else if (response.data && response.data.id) {
+    // Single execution format (when single:true, execution is flattened directly)
+    execution = response.data;
+  }
+
+  if (!execution) {
+    return null;
+  }
+
+  // Extract failedNodes from execution data (API returns as array from comma-separated string)
+  const failedNodes: string[] = [];
+  if (execution.failedNodes && Array.isArray(execution.failedNodes)) {
+    failedNodes.push(...execution.failedNodes.filter((n: string) => n && n.trim().length > 0));
+  } else if (execution.failedNodes && typeof execution.failedNodes === "string") {
+    // Handle comma-separated string (fallback)
+    failedNodes.push(
+      ...execution.failedNodes
+        .split(",")
+        .map((n: string) => n.trim())
+        .filter((n: string) => n.length > 0),
+    );
+  }
+
+  return {
+    ...execution,
+    failedNodes: failedNodes.length > 0 ? failedNodes : undefined,
+  };
 }
 
