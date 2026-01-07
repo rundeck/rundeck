@@ -1,7 +1,7 @@
 import { mount, VueWrapper } from "@vue/test-utils";
 import App from "../App.vue";
 import { NodeFilterStore } from "../../../../library/stores/NodeFilterLocalstore";
-import { AdhocCommandStore } from "../../../../library/stores/AdhocCommandStore";
+// AdhocCommandStore removed - state is now local to AdhocCommandForm
 
 jest.mock("../../../utilities/loadJsonData", () => ({
   loadJsonData: jest.fn((id: string) => {
@@ -90,7 +90,7 @@ describe("AdhocApp", () => {
     await wrapper.vm.$nextTick(); // Extra tick for initialization
     
     expect(wrapper.vm.nodeFilterStore).toBeInstanceOf(NodeFilterStore);
-    expect(wrapper.vm.adhocCommandStore).toBeInstanceOf(AdhocCommandStore);
+    // AdhocCommandStore removed - state is now local to AdhocCommandForm
   });
 });
 

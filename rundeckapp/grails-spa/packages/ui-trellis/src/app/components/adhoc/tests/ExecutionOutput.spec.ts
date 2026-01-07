@@ -1,6 +1,5 @@
 import { mount, VueWrapper } from "@vue/test-utils";
 import ExecutionOutput from "../ExecutionOutput.vue";
-import { AdhocCommandStore } from "../../../../library/stores/AdhocCommandStore";
 
 describe("ExecutionOutput", () => {
   const mockEventBus = {
@@ -8,11 +7,6 @@ describe("ExecutionOutput", () => {
     emit: jest.fn(),
     off: jest.fn(),
   };
-
-  const mockAdhocCommandStore = {
-    running: false,
-    stopFollowing: jest.fn(),
-  } as unknown as AdhocCommandStore;
 
   const mockPageParams = {
     disableMarkdown: "",
@@ -32,7 +26,7 @@ describe("ExecutionOutput", () => {
       props: {
         eventBus: mockEventBus,
         pageParams: mockPageParams,
-        adhocCommandStore: mockAdhocCommandStore,
+        showHeader: false,
       },
     });
 
@@ -45,7 +39,7 @@ describe("ExecutionOutput", () => {
       props: {
         eventBus: mockEventBus,
         pageParams: mockPageParams,
-        adhocCommandStore: mockAdhocCommandStore,
+        showHeader: false,
       },
     });
 
@@ -60,11 +54,11 @@ describe("ExecutionOutput", () => {
       props: {
         eventBus: mockEventBus,
         pageParams: mockPageParams,
-        adhocCommandStore: mockAdhocCommandStore,
+        showHeader: false,
       },
     }) as VueWrapper<any>;
 
-    wrapper.vm.handleExecutionStart({ id: "123" });
+    wrapper.vm.handleExecutionStart("123");
 
     expect(wrapper.vm.executionId).toBe("123");
     expect(wrapper.vm.showOutput).toBe(true);

@@ -1,6 +1,5 @@
 import { mount, VueWrapper } from "@vue/test-utils";
 import AdhocCommandForm from "../AdhocCommandForm.vue";
-import { AdhocCommandStore } from "../../../../library/stores/AdhocCommandStore";
 import { NodeFilterStore } from "../../../../library/stores/NodeFilterLocalstore";
 
 jest.mock("../../../../library", () => ({
@@ -16,17 +15,6 @@ describe("AdhocCommandForm", () => {
     emit: jest.fn(),
     off: jest.fn(),
   };
-
-  const mockAdhocCommandStore = {
-    commandString: "",
-    recentCommands: [],
-    recentCommandsLoaded: false,
-    recentCommandsNoneFound: false,
-    running: false,
-    canRun: false,
-    allowInput: false,
-    loadRecentCommands: jest.fn(),
-  } as unknown as AdhocCommandStore;
 
   const mockNodeFilterStore = {
     selectedFilter: "name: test",
@@ -49,13 +37,13 @@ describe("AdhocCommandForm", () => {
   it("should render correctly", () => {
     const wrapper = mount(AdhocCommandForm, {
       props: {
-        adhocCommandStore: mockAdhocCommandStore,
         nodeFilterStore: mockNodeFilterStore,
         project: "test-project",
         eventBus: mockEventBus,
         pageParams: mockPageParams,
         nodeTotal: 0,
         nodeError: null,
+        initialCommandString: "",
       },
     });
 
@@ -66,13 +54,13 @@ describe("AdhocCommandForm", () => {
   it("should disable run button when no nodes", () => {
     const wrapper = mount(AdhocCommandForm, {
       props: {
-        adhocCommandStore: mockAdhocCommandStore,
         nodeFilterStore: mockNodeFilterStore,
         project: "test-project",
         eventBus: mockEventBus,
         pageParams: mockPageParams,
         nodeTotal: 0,
         nodeError: null,
+        initialCommandString: "",
       },
     }) as VueWrapper<any>;
 
@@ -80,21 +68,15 @@ describe("AdhocCommandForm", () => {
   });
 
   it("should enable run button when nodes available", () => {
-    const storeWithCanRun = {
-      ...mockAdhocCommandStore,
-      canRun: true,
-      allowInput: true,
-    } as unknown as AdhocCommandStore;
-
     const wrapper = mount(AdhocCommandForm, {
       props: {
-        adhocCommandStore: storeWithCanRun,
         nodeFilterStore: mockNodeFilterStore,
         project: "test-project",
         eventBus: mockEventBus,
         pageParams: mockPageParams,
         nodeTotal: 5,
         nodeError: null,
+        initialCommandString: "",
       },
     }) as VueWrapper<any>;
 

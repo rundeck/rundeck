@@ -115,9 +115,8 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { AdhocCommandStore } from "../../../library/stores/AdhocCommandStore";
+// AdhocCommandStore removed - state is now local to AdhocCommandForm
 import LogViewer from "../../../library/components/execution-log/logViewer.vue";
-import type { PropType } from "vue";
 import { getRundeckContext } from "../../../library";
 import { killExecution, getExecutionDetails } from "./services/adhocService";
 
@@ -139,10 +138,8 @@ export default defineComponent({
       type: Object,
       required: true,
     },
-    adhocCommandStore: {
-      type: Object as PropType<AdhocCommandStore>,
-      required: true,
-    },
+    // adhocCommandStore removed - state is now local to AdhocCommandForm
+    // ExecutionOutput communicates completion via event bus only
     showHeader: {
       type: Boolean,
       default: false,
@@ -270,10 +267,10 @@ export default defineComponent({
     },
   },
   mounted() {
-    // Listen for execution completion event
-    if (this.eventBus && typeof this.eventBus.on === "function") {
-      this.eventBus.on("adhoc-execution-complete", this.handleExecutionComplete);
-    }
+    // NOTE: We do NOT listen to our own "adhoc-execution-complete" event here
+    // because handleExecutionComplete() is called directly from the polling callback
+    // and we don't want to process it twice. The event is emitted for other components
+    // (like AdhocCommandForm) to listen to.
 
     // If executionId is already set (e.g., from prop), start handling it
     if (this.executionId) {
@@ -281,11 +278,6 @@ export default defineComponent({
     }
   },
   beforeUnmount() {
-    // Clean up event listeners
-    if (this.eventBus && typeof this.eventBus.off === "function") {
-      this.eventBus.off("adhoc-execution-complete", this.handleExecutionComplete);
-    }
-    
     // Clean up completion check interval
     if (this.completionCheckInterval) {
       clearInterval(this.completionCheckInterval);
@@ -518,8 +510,8 @@ export default defineComponent({
         this.completionCheckInterval = null;
       }
 
-      // Clear running state
-      this.adhocCommandStore.running = false;
+      // Running state is now managed by AdhocCommandForm via event bus
+      // No need to update store here - event will be handled by AdhocCommandForm
 
       // If execution failed and showHeader is enabled, fetch execution details to get failed nodes
       if (
@@ -539,9 +531,13 @@ export default defineComponent({
       }
 
       // Emit completion event for AdhocCommandForm to handle
-      if (this.eventBus && typeof this.eventBus.emit === "function") {
-        this.eventBus.emit("adhoc-execution-complete", { executionId: this.executionId });
-      }
+      // This must be emitted AFTER clearing running state to ensure listeners can react properly
+      // Use Vue's nextTick to ensure running state change is processed first
+      this.$nextTick(() => {
+        if (this.eventBus && typeof this.eventBus.emit === "function") {
+          this.eventBus.emit("adhoc-execution-complete", { executionId: this.executionId });
+        }
+      });
     },
     handleCloseOutputClick(event: MouseEvent) {
       const target = event.target as HTMLElement;
@@ -555,8 +551,11 @@ export default defineComponent({
     closeOutput() {
       this.showOutput = false;
       this.loading = false;
-      this.adhocCommandStore.running = false;
-      this.adhocCommandStore.stopFollowing();
+      // Running state is now managed by AdhocCommandForm via event bus
+      // Emit completion event so AdhocCommandForm can reset its state
+      if (this.eventBus && typeof this.eventBus.emit === "function") {
+        this.eventBus.emit("adhoc-execution-complete", { executionId: this.executionId });
+      }
       // Clear completion check interval when output is closed manually
       if (this.completionCheckInterval) {
         clearInterval(this.completionCheckInterval);

@@ -21,24 +21,23 @@
     />
 
     <adhoc-command-form
-      v-if="executionModeActive && adhocCommandStore && nodeFilterStore"
-      :adhoc-command-store="adhocCommandStore"
+      v-if="executionModeActive && nodeFilterStore"
       :node-filter-store="nodeFilterStore"
       :project="projectName"
       :event-bus="EventBus"
       :page-params="pageParams"
       :node-total="nodeTotal"
       :node-error="nodeError"
+      :initial-command-string="pageParams.runCommand || ''"
       @node-total-changed="handleNodeTotalChanged"
       @execution-started="handleExecutionStarted"
     />
 
     <execution-output
-      v-if="adhocCommandStore"
+      v-if="currentExecutionId"
       :execution-id="currentExecutionId"
       :event-bus="EventBus"
       :page-params="pageParams"
-      :adhoc-command-store="adhocCommandStore"
       :show-header="true"
     />
 
@@ -49,7 +48,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { NodeFilterStore } from "../../../library/stores/NodeFilterLocalstore";
-import { AdhocCommandStore } from "../../../library/stores/AdhocCommandStore";
+// AdhocCommandStore removed - state is now local to AdhocCommandForm
 import { loadJsonData } from "../../utilities/loadJsonData";
 import { getRundeckContext } from "../../../library";
 import NodeFilterSection from "../../components/adhoc/NodeFilterSection.vue";
@@ -90,7 +89,6 @@ export default defineComponent({
         adhocKillAllowed: false,
       },
       nodeFilterStore: null as NodeFilterStore | null,
-      adhocCommandStore: null as AdhocCommandStore | null,
       nodeTotal: 0,
       nodeError: null as string | null,
       currentExecutionId: null as string | null,
@@ -107,10 +105,6 @@ export default defineComponent({
     // Node filter events are handled by handleNodeTotalChanged() and handleNodeErrorChanged()
   },
   beforeUnmount() {
-    // Cleanup if needed
-    if (this.adhocCommandStore) {
-      this.adhocCommandStore.stopFollowing();
-    }
     // Remove EventBus listener
     if (this.EventBus && typeof this.EventBus.off === "function") {
       this.EventBus.off("nodefilter:value:changed", this.handleFilterValueChanged);
@@ -172,34 +166,18 @@ export default defineComponent({
         filter: this.filterParams.filter,
       });
 
-      // Initialize AdhocCommandStore
-      this.adhocCommandStore = new AdhocCommandStore({
-        commandString: this.pageParams.runCommand || "",
-      });
-
-      // Node filter total changes are handled via events from NodeFilterSection
-      // which calls handleNodeTotalChanged() to update canRun state
+      // AdhocCommandStore removed - state is now local to AdhocCommandForm
+      // Node filter total changes are handled via props passed to AdhocCommandForm
+      // which computes canRun state locally based on nodeTotal and nodeError
     },
 
     handleNodeTotalChanged(total: number) {
       this.nodeTotal = total;
-      // Update adhocCommandStore canRun state
-      if (this.adhocCommandStore) {
-        this.adhocCommandStore.updateCanRunFromNodeTotal(
-          total,
-          this.adhocCommandStore.running,
-        );
-      }
+      // AdhocCommandForm now computes canRun locally based on nodeTotal prop
     },
     handleNodeErrorChanged(error: string | null) {
       this.nodeError = error;
-      // Update adhocCommandStore canRun state when error changes
-      if (this.adhocCommandStore && this.nodeFilterStore) {
-        this.adhocCommandStore.updateCanRunFromNodeTotal(
-          this.nodeTotal,
-          this.adhocCommandStore.running,
-        );
-      }
+      // AdhocCommandForm now computes canRun locally based on nodeError prop
     },
     handleFilterValueChanged(data: { filter: string }) {
       // Update our NodeFilterStore when filter changes from ui-socket component

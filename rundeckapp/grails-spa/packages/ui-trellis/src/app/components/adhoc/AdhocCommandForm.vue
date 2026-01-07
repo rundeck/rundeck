@@ -32,32 +32,28 @@
             </button>
             <ul class="dropdown-menu">
               <li
-                v-if="adhocCommandStore && adhocCommandStore.recentCommandsNoneFound"
+                v-if="recentCommandsNoneFound"
                 role="presentation"
                 class="dropdown-header"
               >
                 {{ $t("none") }}
               </li>
               <li
-                v-if="adhocCommandStore && !adhocCommandStore.recentCommandsLoaded"
+                v-if="!recentCommandsLoaded"
                 role="presentation"
                 class="dropdown-header"
               >
                 {{ $t("loading.text") }}
               </li>
               <li
-                v-if="
-                  adhocCommandStore &&
-                  adhocCommandStore.recentCommandsLoaded &&
-                  !adhocCommandStore.recentCommandsNoneFound
-                "
+                v-if="recentCommandsLoaded && !recentCommandsNoneFound"
                 role="presentation"
                 class="dropdown-header"
               >
                 {{ $t("your.recently.executed.commands") }}
               </li>
               <li
-                v-for="(cmd, index) in (adhocCommandStore?.recentCommands || [])"
+                v-for="(cmd, index) in recentCommands"
                 :key="index"
               >
                 <a
@@ -82,7 +78,7 @@
             size="50"
             type="text"
             :placeholder="$t('enter.a.command')"
-            :value="adhocCommandStore?.commandString || ''"
+            :value="commandString"
             id="runFormExec"
             class="form-control"
             :disabled="isCommandInputDisabled"
@@ -111,20 +107,20 @@
               class="btn btn-cta btn-fill runbutton"
               :class="{ disabled: isRunDisabled }"
               :disabled="isRunDisabled"
-              :aria-label="adhocCommandStore?.running ? $t('running1') : (nodeTotal > 0 ? $t('run.on.count.nodes', [nodeTotal, nodesTitle]) : $t('adhoc.no.nodes.matched'))"
+              :aria-label="state.running ? $t('running1') : (nodeTotal > 0 ? $t('run.on.count.nodes', [nodeTotal, nodesTitle]) : $t('adhoc.no.nodes.matched'))"
               :aria-disabled="isRunDisabled"
               role="button"
               tabindex="0"
               @click.prevent="handleSubmit"
             >
-              <span v-if="!adhocCommandStore?.running">
+              <span v-if="!state.running">
                 <span v-if="nodeTotal > 0">
                   {{ $t("run.on.count.nodes", [nodeTotal, nodesTitle]) }}
                   <span class="glyphicon glyphicon-play" aria-hidden="true"></span>
                 </span>
                 <span v-else>{{ $t("adhoc.no.nodes.matched") }}</span>
               </span>
-              <span v-if="adhocCommandStore?.running">
+              <span v-if="state.running">
                 {{ $t("running1") }}
               </span>
             </a>
@@ -221,13 +217,47 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-import { AdhocCommandStore } from "../../../library/stores/AdhocCommandStore";
+import { defineComponent, reactive, computed, watch } from "vue";
 import { NodeFilterStore } from "../../../library/stores/NodeFilterLocalstore";
 import { runAdhocCommand } from "./services/adhocService";
 import { getAppLinks } from "../../../library";
 import UiSocket from "../../../library/components/utils/UiSocket.vue";
 import type { PropType } from "vue";
+
+// Types for recent commands
+interface AdhocLink {
+  href: string | null;
+  title: string | null;
+  execid: string | null;
+  filter: string | null;
+  extraMetadata: any | null;
+  status: string | null;
+  succeeded: boolean | null;
+  statusClass: string;
+}
+
+interface RecentCommand extends AdhocLink {
+  fillCommand: () => void;
+}
+
+const statusMap: Record<string, string> = {
+  scheduled: "running",
+  running: "running",
+  succeed: "succeed",
+  succeeded: "succeed",
+  fail: "fail",
+  failed: "fail",
+  cancel: "aborted",
+  aborted: "aborted",
+  retry: "failedretry",
+  timedout: "timedout",
+  timeout: "timedout",
+};
+
+function getStatusClass(status: string | null): string {
+  if (!status) return "other";
+  return statusMap[status] || "other";
+}
 
 export default defineComponent({
   name: "AdhocCommandForm",
@@ -235,10 +265,6 @@ export default defineComponent({
     UiSocket,
   },
   props: {
-    adhocCommandStore: {
-      type: Object as PropType<AdhocCommandStore>,
-      required: true,
-    },
     nodeFilterStore: {
       type: Object as PropType<NodeFilterStore>,
       required: true,
@@ -263,38 +289,89 @@ export default defineComponent({
       type: String,
       default: null,
     },
+    initialCommandString: {
+      type: String,
+      default: "",
+    },
   },
   emits: ["submit", "node-total-changed", "execution-started"],
+  setup(props) {
+    // Local reactive state (replaces AdhocCommandStore)
+    const state = reactive({
+      commandString: props.initialCommandString || "",
+      recentCommands: [] as RecentCommand[],
+      recentCommandsLoaded: false,
+      running: false,
+      canRun: false,
+      allowInput: true,
+      error: null as string | null,
+      followControl: null as any,
+      loadMax: 20,
+    });
+
+    // Computed properties
+    const recentCommandsNoneFound = computed(() => {
+      return state.recentCommands.length < 1 && state.recentCommandsLoaded;
+    });
+
+    // Update canRun and allowInput based on nodeTotal and nodeError
+    watch(
+      [() => props.nodeTotal, () => props.nodeError, () => state.running],
+      () => {
+        if (state.running) {
+          state.canRun = false;
+          state.allowInput = false;
+          return;
+        }
+
+        const totalNum = typeof props.nodeTotal === "string" ? parseInt(props.nodeTotal as any, 10) : props.nodeTotal;
+        if (totalNum && totalNum !== 0 && props.nodeTotal !== "0" && !props.nodeError) {
+          state.canRun = true;
+          state.allowInput = true;
+        } else {
+          state.canRun = false;
+          state.allowInput = false;
+        }
+      },
+      { immediate: true }
+    );
+
+    return {
+      state,
+      recentCommandsNoneFound,
+    };
+  },
   data() {
     return {
       threadCount: 1,
       nodeKeepgoing: "true",
-      running: false,
       formMounted: false,
     };
   },
   computed: {
+    commandString(): string {
+      return this.state.commandString;
+    },
+    recentCommands(): RecentCommand[] {
+      return this.state.recentCommands;
+    },
+    recentCommandsLoaded(): boolean {
+      return this.state.recentCommandsLoaded;
+    },
     isRunDisabled(): boolean {
       return (
         this.nodeTotal < 1 ||
         !!this.nodeError ||
-        !this.adhocCommandStore ||
-        this.adhocCommandStore.running ||
-        !this.adhocCommandStore.canRun
+        this.state.running ||
+        !this.state.canRun
       );
     },
     isCommandInputDisabled(): boolean {
-      // Disable command input when:
-      // 1. No nodes matched (nodeTotal < 1)
-      // 2. Node filter error exists
-      // 3. Execution is running
-      // 4. Store doesn't allow input (covers canRun state)
       return (
         this.nodeTotal < 1 ||
         !!this.nodeError ||
-        !this.adhocCommandStore ||
-        this.adhocCommandStore.running ||
-        !this.adhocCommandStore.allowInput
+        this.state.running ||
+        !this.state.allowInput
       );
     },
     nodesTitle(): string {
@@ -317,11 +394,15 @@ export default defineComponent({
     if (this.eventBus && typeof this.eventBus.off === "function") {
       this.eventBus.off("adhoc-execution-complete", this.handleExecutionComplete);
     }
+    // Stop following execution output if active
+    if (this.state.followControl && typeof this.state.followControl.stopFollowingOutput === "function") {
+      this.state.followControl.stopFollowingOutput();
+    }
   },
   methods: {
     handleCommandInput(event: Event) {
       const target = event.target as HTMLInputElement;
-      this.adhocCommandStore.commandString = target.value;
+      this.state.commandString = target.value;
     },
     handleKeyPress(event: KeyboardEvent) {
       // Submit on Enter key
@@ -331,20 +412,64 @@ export default defineComponent({
       }
     },
     async loadRecentCommands() {
-      if (!this.adhocCommandStore.recentCommandsLoaded) {
-        const apiUrl = getAppLinks().adhocHistoryAjax;
-        await this.adhocCommandStore.loadRecentCommands(
-          apiUrl,
-          this.nodeFilterStore
-        );
+      if (!this.state.recentCommandsLoaded) {
+        try {
+          this.state.recentCommandsLoaded = false;
+          this.state.error = null;
+
+          const apiUrl = getAppLinks().adhocHistoryAjax;
+          const response = await fetch(`${apiUrl}?max=${this.state.loadMax}`);
+          if (!response.ok) {
+            throw new Error(`Request failed: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          this.state.recentCommandsLoaded = true;
+
+          if (data.executions && Array.isArray(data.executions)) {
+            this.state.recentCommands = data.executions.map((exec: any) => {
+              const link: RecentCommand = {
+                href: exec.href || null,
+                title: exec.title || null,
+                execid: exec.execid || null,
+                filter: exec.filter || null,
+                extraMetadata: exec.extraMetadata || null,
+                status: exec.status || null,
+                succeeded: exec.succeeded || null,
+                statusClass: getStatusClass(exec.status),
+                fillCommand: () => {
+                  this.state.commandString = exec.title || "";
+                  if (this.nodeFilterStore && exec.filter) {
+                    this.nodeFilterStore.setSelectedFilter(exec.filter);
+                  }
+                  // Emit runner-filter-changed event
+                  if (exec.extraMetadata) {
+                    const runnerEvent = new CustomEvent("runner-filter-changed", {
+                      detail: exec.extraMetadata,
+                    });
+                    window.dispatchEvent(runnerEvent);
+                  }
+                },
+              };
+              return link;
+            });
+          } else {
+            this.state.recentCommands = [];
+          }
+        } catch (err: any) {
+          this.state.recentCommandsLoaded = true;
+          this.state.error = `Recent commands list: request failed: ${err.message}`;
+          console.error("Recent commands list: error receiving data", err);
+          this.state.recentCommands = [];
+        }
       }
     },
     async handleSubmit() {
-      if (this.isRunDisabled || this.running) {
+      if (this.isRunDisabled || this.state.running) {
         return false;
       }
 
-      const commandString = this.adhocCommandStore.commandString;
+      const commandString = this.state.commandString;
       if (!commandString || !commandString.trim()) {
         return false;
       }
@@ -355,8 +480,7 @@ export default defineComponent({
       }
 
       // Set running state
-      this.adhocCommandStore.running = true;
-      this.running = true;
+      this.state.running = true;
 
       // Serialize form data
       const form = this.$refs.runboxFormRef as HTMLFormElement;
@@ -366,7 +490,6 @@ export default defineComponent({
       }
       const formData = new FormData(form);
       const data: Record<string, any> = {};
-      const metaFields: Record<string, string> = {};
       
       // Extract all form fields - keep meta.* fields as flat fields (not nested)
       // The service will send them as query parameters matching original jQuery.serialize() behavior
@@ -411,8 +534,7 @@ export default defineComponent({
     },
     handleExecutionComplete() {
       // Clear running state
-      this.adhocCommandStore.running = false;
-      this.running = false;
+      this.state.running = false;
 
       // Re-enable command input and focus it (matching original afterRun() behavior)
       this.$nextTick(() => {
@@ -426,8 +548,7 @@ export default defineComponent({
       // The original code shows .execRerun elements, but that's handled by the execution output fragment
     },
     showError(message: string) {
-      this.adhocCommandStore.running = false;
-      this.running = false;
+      this.state.running = false;
 
       // Error will be displayed by ExecutionOutput component if needed
       // No need to emit error event since ExecutionOutput handles its own error state
@@ -443,4 +564,3 @@ export default defineComponent({
   opacity: 0.6;
 }
 </style>
-
