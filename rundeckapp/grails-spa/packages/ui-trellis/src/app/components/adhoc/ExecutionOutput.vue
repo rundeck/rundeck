@@ -72,10 +72,12 @@
         <div v-if="loading" class="card-content">
           {{ loadingMessage }}
         </div>
-        <div
-          v-else-if="content"
-          v-html="content"
-        ></div>
+        <LogViewer
+          v-else-if="executionId"
+          :executionId="executionId"
+          :showSettings="false"
+          :config="logViewerConfig"
+        />
       </template>
 
       <!-- New logic with header when showHeader is true -->
