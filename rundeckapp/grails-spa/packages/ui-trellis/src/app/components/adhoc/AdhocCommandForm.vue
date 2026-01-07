@@ -207,7 +207,8 @@
 import { defineComponent } from "vue";
 import { AdhocCommandStore } from "../../../library/stores/AdhocCommandStore";
 import { NodeFilterStore } from "../../../library/stores/NodeFilterLocalstore";
-import { runAdhocCommand, loadExecutionFollow } from "./services/adhocService";
+import { runAdhocCommand } from "./services/adhocService";
+import { getAppLinks } from "../../../library";
 import type { PropType } from "vue";
 
 export default defineComponent({
@@ -242,7 +243,7 @@ export default defineComponent({
       default: null,
     },
   },
-  emits: ["submit", "node-total-changed"],
+  emits: ["submit", "node-total-changed", "execution-started"],
   data() {
     return {
       threadCount: 1,
@@ -330,11 +331,6 @@ export default defineComponent({
       this.adhocCommandStore.running = true;
       this.running = true;
 
-      // Show loading in output area via EventBus
-      if (this.eventBus && typeof this.eventBus.emit === "function") {
-        this.eventBus.emit("adhoc-output-loading", this.$t("job.starting.execution"));
-      }
-
       // Serialize form data
       const form = this.$refs.runboxFormRef as HTMLFormElement;
       if (!form) {
@@ -368,8 +364,10 @@ export default defineComponent({
           nodeKeepgoing: data.nodeKeepgoing === "true" || data.nodeKeepgoing === true,
         });
 
-        // Success - load execution follow fragment (matching original behavior)
-        await this.loadExecutionFollow({ id: response.id! });
+        // Emit execution started event with ID (not ko-adhoc-running)
+        // App.vue will pass executionId to ExecutionOutput component
+        this.$emit("execution-started", { id: response.id! });
+        this.$emit("submit", { id: response.id! });
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         this.showError(this.$t("adhoc.request.failed") + ": " + errorMessage);
@@ -379,33 +377,6 @@ export default defineComponent({
       }
 
       return false;
-    },
-    async loadExecutionFollow(data: { id: string | number }) {
-      // Show loading state via EventBus
-      if (this.eventBus && typeof this.eventBus.emit === "function") {
-        this.eventBus.emit("adhoc-output-loading", this.$t("adhoc.loading.output"));
-      }
-
-      try {
-        // Load execution follow fragment via service (handles CSRF tokens automatically)
-        const html = await loadExecutionFollow(data.id, "tail");
-
-        // Emit content via EventBus
-        if (this.eventBus && typeof this.eventBus.emit === "function") {
-          this.eventBus.emit("adhoc-output-content", html);
-        }
-
-        // Wait for Vue to update DOM with content before initializing LogViewer
-        // adhoc/main.ts looks for #runcontent > .execution-show-log element
-        await this.$nextTick();
-
-        // Emit event for LogViewer initialization (adhoc/main.ts listens for this)
-        this.eventBus.emit("ko-adhoc-running", data);
-        this.$emit("submit", data);
-      } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : this.$t("adhoc.execution.output.load.failed");
-        this.showError(errorMessage);
-      }
     },
     handleExecutionComplete() {
       // Clear running state
@@ -427,10 +398,8 @@ export default defineComponent({
       this.adhocCommandStore.running = false;
       this.running = false;
 
-      // Emit error via EventBus
-      if (this.eventBus && typeof this.eventBus.emit === "function") {
-        this.eventBus.emit("adhoc-output-error", message);
-      }
+      // Error will be displayed by ExecutionOutput component if needed
+      // No need to emit error event since ExecutionOutput handles its own error state
     },
   },
 });

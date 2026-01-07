@@ -19,13 +19,16 @@
       :node-total="nodeTotal"
       :node-error="nodeError"
       @node-total-changed="handleNodeTotalChanged"
+      @execution-started="handleExecutionStarted"
     />
 
     <execution-output
       v-if="adhocCommandStore"
+      :execution-id="currentExecutionId"
       :event-bus="EventBus"
       :page-params="pageParams"
       :adhoc-command-store="adhocCommandStore"
+      :show-header="true"
     />
 
     <activity-section v-if="eventReadAuth" :event-bus="EventBus" />
@@ -79,6 +82,7 @@ export default defineComponent({
       adhocCommandStore: null as AdhocCommandStore | null,
       nodeTotal: 0,
       nodeError: null as string | null,
+      currentExecutionId: null as string | null,
     };
   },
   mounted() {
@@ -196,6 +200,10 @@ export default defineComponent({
       } else {
         console.warn("[App.vue] Cannot set filter - nodeFilterStore:", !!this.nodeFilterStore, "data:", data);
       }
+    },
+    handleExecutionStarted(data: { id: string }) {
+      // Receive execution ID from AdhocCommandForm and pass to ExecutionOutput
+      this.currentExecutionId = data.id;
     },
   },
 });
