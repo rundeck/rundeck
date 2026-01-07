@@ -14,6 +14,14 @@
           </div>
 
           <div
+            v-if="loading"
+            class="spacing text-info"
+          >
+            <i class="glyphicon glyphicon-time"></i>
+            {{ $t("loading.matched.nodes") }}
+          </div>
+
+          <div
             v-if="error"
             class="spacing text-danger"
             id="loaderror2"
@@ -26,6 +34,7 @@
             v-if="hasFilter"
             :node-filter="nodeFilterStore.selectedFilter"
             :max-shown="maxShown"
+            :project="project"
             empty-mode="blank"
             view="embed"
             :paging="false"
@@ -97,10 +106,14 @@ export default defineComponent({
     },
   },
   watch: {
-    "nodeFilterStore.selectedFilter"() {
-      // Reset state when filter changes
+    "nodeFilterStore.selectedFilter"(newFilter, oldFilter) {
+      // When filter changes, set loading state immediately
+      // This ensures loading indicator is visible before NodeFilterResults starts its request
+      if (newFilter && newFilter !== oldFilter) {
+        this.loading = true;
+      }
+      // Reset other state when filter changes
       this.total = 0;
-      this.loading = false;
       this.error = null;
     },
   },

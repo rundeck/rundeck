@@ -116,6 +116,7 @@ const FilterInputComp = defineComponent({
                              :filterFieldName="filterFieldName"
                              :filter-field-id="filterFieldId"
                              :query-field-placeholder-text="queryFieldPlaceholderText"
+                             :help-button="itemData?.helpButton !== false"
                              search-btn-type="cta"
                              @update:value="updatedValue"
                              @filter="filterClicked"

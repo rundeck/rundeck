@@ -85,3 +85,38 @@ export async function loadExecutionFollow(
   return response.data;
 }
 
+export interface AbortExecutionResponse {
+  abort?: {
+    status: string;
+    reason?: string;
+  };
+  execution?: {
+    id: string | number;
+    status: string;
+    href: string;
+  };
+  error?: string;
+}
+
+/**
+ * Abort/kill a running execution via REST API endpoint
+ * Uses: POST /api/{api_version}/execution/{id}/abort
+ */
+export async function killExecution(
+  executionId: string | number,
+  forceIncomplete: boolean = false,
+): Promise<AbortExecutionResponse> {
+  // Build API endpoint URL: /api/{api_version}/execution/{id}/abort
+  // The api client already has baseURL set to rdBase + "api/" + apiVersion + "/"
+  // So we use a relative path starting with "execution/"
+  const url = `execution/${executionId}/abort${forceIncomplete ? "?forceIncomplete=true" : ""}`;
+
+  const response = await api.post<AbortExecutionResponse>(url);
+
+  if (response.data.error) {
+    throw new Error(response.data.error);
+  }
+
+  return response.data;
+}
+

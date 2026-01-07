@@ -49,6 +49,15 @@
             </span>
           </div>
           <div class="col-xs-12 col-sm-6 text-right execution-action-links">
+            <button
+              v-if="showKillButton"
+              class="btn btn-danger btn-xs"
+              type="button"
+              :disabled="killing"
+              @click.stop="handleKillExecution"
+            >
+              {{ killing ? $t("killing") : $t("kill.job") }}
+            </button>
             <a
               v-if="executionCompleted && executionProject && saveAsJobHref"
               :href="saveAsJobHref"
@@ -102,6 +111,7 @@ import { AdhocCommandStore } from "../../../library/stores/AdhocCommandStore";
 import LogViewer from "../../../library/components/execution-log/logViewer.vue";
 import type { PropType } from "vue";
 import { getRundeckContext } from "../../../library";
+import { killExecution } from "./services/adhocService";
 
 export default defineComponent({
   name: "ExecutionOutput",
@@ -138,11 +148,14 @@ export default defineComponent({
       loadingMessage: "",
       completionCheckInterval: null as number | null,
       logViewerConfig: {
+        theme: "rundeck",
         gutter: true,
         command: false,
         nodeBadge: true,
         timestamps: true,
         stats: false,
+        ansiColor: true,
+        lineWrap: true,
       },
       // Execution state data
       executionState: null as string | null,
@@ -150,6 +163,7 @@ export default defineComponent({
       executionNodes: [] as string[],
       executionCompleted: false,
       executionStatusString: null as string | null,
+      killing: false,
     };
   },
   computed: {
@@ -184,6 +198,20 @@ export default defineComponent({
         return "text-info";
       }
       return "";
+    },
+    showKillButton(): boolean {
+      // Show kill button when:
+      // 1. showHeader is true (header is visible)
+      // 2. Execution is running (not completed)
+      // 3. User has kill permissions (adhocKillAllowed)
+      // 4. Execution ID exists
+      if (!this.showHeader || !this.executionId) {
+        return false;
+      }
+      const pageParams = this.pageParams as any;
+      const adhocKillAllowed = pageParams?.adhocKillAllowed === true;
+      const isRunning = !this.executionCompleted && this.executionState?.toUpperCase() === "RUNNING";
+      return adhocKillAllowed && isRunning;
     },
   },
   watch: {
@@ -414,6 +442,35 @@ export default defineComponent({
     },
     clearError() {
       this.error = null;
+    },
+    async handleKillExecution() {
+      if (!this.executionId || this.killing) {
+        return;
+      }
+
+      this.killing = true;
+      this.error = null;
+
+      try {
+        const result = await killExecution(this.executionId, false);
+        
+        // Check if abort was successful
+        if (result.abort?.status === "aborted" || result.abort?.status === "pending") {
+          // Execution is being killed, update state
+          // The polling will detect the state change and update accordingly
+          // Force a state refresh to show the updated status
+          await this.waitForExecutionState(this.executionId);
+        } else if (result.abort?.status === "failed") {
+          // Kill failed
+          const reason = result.abort.reason || "Failed to kill execution";
+          this.error = reason;
+        }
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        this.error = `Failed to kill execution: ${errorMessage}`;
+      } finally {
+        this.killing = false;
+      }
     },
   },
 });

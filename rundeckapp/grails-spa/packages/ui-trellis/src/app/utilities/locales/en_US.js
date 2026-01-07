@@ -240,6 +240,8 @@ const messages = {
   "execution.status.running": "Running",
   "execution.status.aborted": "Aborted",
   "execution.status.waiting": "Waiting",
+  "kill.job": "Kill job",
+  "killing": "Killing...",
   filter: "Filter",
   "loading.matched.nodes": "Loading matched nodes...",
   "loading.text": "Loading...",
