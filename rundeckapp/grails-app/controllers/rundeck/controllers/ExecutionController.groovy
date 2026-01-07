@@ -3982,11 +3982,11 @@ Note: This endpoint has the same query parameters and response as the `/executio
                     }
 
                     // Recalculate aggregates from filtered hours
-                    modified.total = modified.hourly[(beginHour..23)].sum { it.total } ?: 0
-                    modified.succeeded = modified.hourly[(beginHour..23)].sum { it.succeeded } ?: 0
-                    modified.failed = modified.hourly[(beginHour..23)].sum { it.failed } ?: 0
-                    modified.aborted = modified.hourly[(beginHour..23)].sum { it.aborted } ?: 0
-                    modified.timedout = modified.hourly[(beginHour..23)].sum { it.timedout } ?: 0
+                    modified.total = modified.hourly[beginHour..23].sum { it.total } ?: 0
+                    modified.succeeded = modified.hourly[beginHour..23].sum { it.succeeded } ?: 0
+                    modified.failed = modified.hourly[beginHour..23].sum { it.failed } ?: 0
+                    modified.aborted = modified.hourly[beginHour..23].sum { it.aborted } ?: 0
+                    modified.timedout = modified.hourly[beginHour..23].sum { it.timedout } ?: 0
                     modified.duration = dayMetrics.total > 0 ? Math.round(dayMetrics.duration * (modified.total as double / dayMetrics.total)) as long : 0
 
                     log.debug("[METRICS-API] Partial first day ${dateStr}: total=${modified.total}, succeeded=${modified.succeeded}, failed=${modified.failed}")
