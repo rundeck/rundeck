@@ -3666,38 +3666,12 @@ Note: This endpoint has the same query parameters and response as the `/executio
             }
 
             // Parse and validate begin/end timestamps (RUN-3768: proper error handling)
-            Date batchBeginTimestamp = null
-            Date batchEndTimestamp = null
-
-            if (params.begin) {
-                try {
-                    batchBeginTimestamp = ReportsController.parseDate(params.begin)
-                } catch (Exception e) {
-                    return apiService.renderErrorFormat(
-                        response,
-                        [
-                            status: HttpServletResponse.SC_BAD_REQUEST,
-                            code  : 'api.error.history.date-format',
-                            args  : ['begin', params.begin]
-                        ]
-                    )
-                }
+            def timestampParseResult = parseTimestampParameters(params.begin, params.end, response)
+            if (timestampParseResult.error) {
+                return timestampParseResult.error
             }
-
-            if (params.end) {
-                try {
-                    batchEndTimestamp = ReportsController.parseDate(params.end)
-                } catch (Exception e) {
-                    return apiService.renderErrorFormat(
-                        response,
-                        [
-                            status: HttpServletResponse.SC_BAD_REQUEST,
-                            code  : 'api.error.history.date-format',
-                            args  : ['end', params.end]
-                        ]
-                    )
-                }
-            }
+            Date batchBeginTimestamp = timestampParseResult.beginTimestamp
+            Date batchEndTimestamp = timestampParseResult.endTimestamp
 
             log.debug("[METRICS-API] Batch mode for project ${projectName}")
             metrics = getMetricsBatch(projectName, batchBeginTimestamp, batchEndTimestamp)
@@ -3732,41 +3706,13 @@ Note: This endpoint has the same query parameters and response as the `/executio
             }
 
             // Parse and validate begin/end timestamps (RUN-3768: proper error handling)
-            Date beginTimestamp = null
-            Date endTimestamp = null
-
-            if (params.begin) {
-                try {
-                    beginTimestamp = ReportsController.parseDate(params.begin)
-                } catch (Exception e) {
-                    return apiService.renderErrorFormat(
-                        response,
-                        [
-                            status: HttpServletResponse.SC_BAD_REQUEST,
-                            code  : 'api.error.history.date-format',
-                            args  : ['begin', params.begin]
-                        ]
-                    )
-                }
-            }
-
-            if (params.end) {
-                try {
-                    endTimestamp = ReportsController.parseDate(params.end)
-                } catch (Exception e) {
-                    return apiService.renderErrorFormat(
-                        response,
-                        [
-                            status: HttpServletResponse.SC_BAD_REQUEST,
-                            code  : 'api.error.history.date-format',
-                            args  : ['end', params.end]
-                        ]
-                    )
-                }
+            def timestampParseResult = parseTimestampParameters(params.begin, params.end, response)
+            if (timestampParseResult.error) {
+                return timestampParseResult.error
             }
 
             // Pass parsed Date objects to getMetricsFromStats
-            metrics = getMetricsFromStats(jobId, beginTimestamp, endTimestamp)
+            metrics = getMetricsFromStats(jobId, timestampParseResult.beginTimestamp, timestampParseResult.endTimestamp)
 
             if (!metrics) {
                 // No stats exist - return empty metrics (NO FALLBACK to execution table)
@@ -3841,6 +3787,161 @@ Note: This endpoint has the same query parameters and response as the `/executio
     }
 
     /**
+     * Helper method to aggregate hourly heatmap across all days (RUN-3768)
+     * Extracts 'total' field from hourly metrics objects for each hour
+     * Handles both old format (Integer) and new format (Map with total field)
+     *
+     * @param processedMetrics Map of date strings to metrics
+     * @return List of 24 integers representing executions per hour
+     */
+    private List<Integer> aggregateHourlyHeatmap(Map processedMetrics) {
+        def heatmap = (0..23).inject([]) { accumulator, hour ->
+            def hourTotal = processedMetrics.values().inject(0) { sum, dayMetrics ->
+                def hourlyArray = dayMetrics.hourly
+                if (!hourlyArray || hour >= hourlyArray.size()) {
+                    return sum
+                }
+
+                def hourData = hourlyArray[hour]
+                def hourCount = 0
+
+                // Handle both formats: old (Integer) and new (Map with total field)
+                if (hourData instanceof Map) {
+                    hourCount = hourData.total ?: 0
+                } else if (hourData instanceof Number) {
+                    hourCount = hourData as Integer
+                }
+
+                return sum + hourCount
+            }
+            accumulator << hourTotal
+            return accumulator
+        }
+        return heatmap
+    }
+
+    /**
+     * Helper method to apply hour-level filtering to a day's metrics (RUN-3768)
+     * Zeros out hours before the specified begin hour and recalculates aggregates
+     * Handles both old format (Integer array) and new format (Map array with status fields)
+     *
+     * @param dateStr The date string
+     * @param dayMetrics The metrics for the day
+     * @param beginHour The first hour to include (0-23)
+     * @return Modified metrics with filtered hours
+     */
+    private Map applyHourLevelFilter(String dateStr, Map dayMetrics, Integer beginHour) {
+        log.debug("[METRICS-API] First day ${dateStr}: filtering hours ${beginHour}-23")
+
+        def modified = [:] + dayMetrics
+        def emptyHourMetrics = [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0]
+        def hourly = dayMetrics.hourly ?: (0..23).collect { emptyHourMetrics.clone() }
+
+        // Normalize old format (Integer) to new format (Map) if needed
+        def normalizedHourly = hourly.collect { hourData ->
+            if (hourData instanceof Map) {
+                return hourData
+            } else if (hourData instanceof Number) {
+                // Old format: just a count, no status breakdown - convert to new format
+                def count = hourData as Integer
+                return [total: count, succeeded: 0, failed: 0, aborted: 0, timedout: 0]
+            } else {
+                return emptyHourMetrics.clone()
+            }
+        }
+
+        // Filter hourly array: zero out hours before beginHour using indexed iteration
+        def filteredHourly = []
+        normalizedHourly.eachWithIndex { hourData, hourIndex ->
+            filteredHourly << (hourIndex >= beginHour ? hourData : emptyHourMetrics.clone())
+        }
+        modified.hourly = filteredHourly
+
+        // Recalculate aggregates from filtered hours (only hours >= beginHour)
+        def relevantHours = modified.hourly[beginHour..23]
+        def aggregations = ['total', 'succeeded', 'failed', 'aborted', 'timedout']
+        aggregations.each { field ->
+            modified[field] = relevantHours.sum { it[field] } ?: 0
+        }
+
+        // Proportionally adjust duration based on filtered execution count
+        def originalTotal = dayMetrics.total
+        def filteredTotal = modified.total
+        modified.duration = originalTotal > 0
+            ? Math.round(dayMetrics.duration * (filteredTotal / originalTotal as double)) as long
+            : 0
+
+        log.debug("[METRICS-API] Partial first day ${dateStr}: total=${modified.total}, succeeded=${modified.succeeded}, failed=${modified.failed}")
+
+        return modified
+    }
+
+    /**
+     * Helper method to extract LocalDate and hour from a timestamp (RUN-3768)
+     *
+     * @param timestamp Date object (optional)
+     * @param extractHour Whether to extract hour component (default: true)
+     * @return Map with [date: LocalDate, hour: Integer]
+     */
+    private Map extractDateAndHour(Date timestamp, boolean extractHour = true) {
+        if (!timestamp) {
+            return [date: null, hour: null]
+        }
+
+        def zoneId = ZoneId.systemDefault()
+        def zonedDateTime = timestamp.toInstant().atZone(zoneId)
+        def localDate = zonedDateTime.toLocalDate()
+        def hour = extractHour ? zonedDateTime.getHour() : null
+
+        if (extractHour) {
+            log.debug("[METRICS-API] Extracted from timestamp: date=${localDate}, hour=${hour}")
+        } else {
+            log.debug("[METRICS-API] Extracted from timestamp: date=${localDate}")
+        }
+
+        return [date: localDate, hour: hour]
+    }
+
+    /**
+     * Helper method to parse and validate timestamp parameters (RUN-3768)
+     *
+     * @param beginParam Begin parameter string (optional)
+     * @param endParam End parameter string (optional)
+     * @param response HttpServletResponse for error formatting
+     * @return Map with parsed timestamps or error [beginTimestamp: Date, endTimestamp: Date, error: Object]
+     */
+    private Map parseTimestampParameters(String beginParam, String endParam, HttpServletResponse response) {
+        def result = [beginTimestamp: null, endTimestamp: null, error: null]
+
+        [begin: beginParam, end: endParam].each { paramName, paramValue ->
+            if (!paramValue) return
+
+            Date parsedDate = null
+            try {
+                parsedDate = ReportsController.parseDate(paramValue)
+            } catch (Exception e) {
+                result.error = apiService.renderErrorFormat(
+                    response,
+                    [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.history.date-format',
+                        args  : [paramName, paramValue]
+                    ]
+                )
+                return
+            }
+
+            if (paramName == 'begin') {
+                result.beginTimestamp = parsedDate
+            } else {
+                result.endTimestamp = parsedDate
+            }
+        }
+
+        return result
+    }
+
+    /**
      * Get metrics from scheduled_execution_stats table (fast) - RUN-3768.
      * Returns null if stats don't exist, or empty metrics object (all zeros) if no metrics found for the date range.
      *
@@ -3872,22 +3973,12 @@ Note: This endpoint has the same query parameters and response as the `/executio
 
             // Extract date and hour components from timestamps (RUN-3768: 24-hour rolling window support)
             // Note: Only BEGIN date needs hour filtering. END date is always "now", so today's data naturally stops at current hour.
-            LocalDate beginDate = null
-            LocalDate endDate = null
-            Integer beginHour = null
+            def beginDateInfo = extractDateAndHour(beginTimestamp)
+            def endDateInfo = extractDateAndHour(endTimestamp, false)
 
-            if (beginTimestamp) {
-                def cal = Calendar.getInstance()
-                cal.setTime(beginTimestamp)
-                beginHour = cal.get(Calendar.HOUR_OF_DAY)
-                beginDate = beginTimestamp.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
-                log.debug("[METRICS-API] Begin: date=${beginDate}, hour=${beginHour}")
-            }
-
-            if (endTimestamp) {
-                endDate = endTimestamp.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
-                log.debug("[METRICS-API] End: date=${endDate}")
-            }
+            LocalDate beginDate = beginDateInfo.date
+            LocalDate endDate = endDateInfo.date
+            Integer beginHour = beginDateInfo.hour
 
             // Filter dailyMetrics based on date range if provided
             def filteredMetrics = dailyMetrics
@@ -3966,35 +4057,15 @@ Note: This endpoint has the same query parameters and response as the `/executio
 
             // Apply hour-level filtering ONLY for BEGIN date (RUN-3768: 24-hour rolling window)
             // END date doesn't need filtering because it's always "now" - today's data naturally stops at current hour
-            def processedMetrics = filteredMetrics.collectEntries { dateStr, dayMetrics ->
+            def processedMetrics = [:]
+            filteredMetrics.each { dateStr, dayMetrics ->
                 def date = LocalDate.parse(dateStr)
+                def shouldFilterHours = beginDate != null && date.equals(beginDate) && beginHour != null && beginHour > 0
 
-                // Check if this is the first day and needs hour filtering
-                if (beginDate != null && date.equals(beginDate) && beginHour != null && beginHour > 0) {
-                    log.debug("[METRICS-API] First day ${dateStr}: filtering hours ${beginHour}-23")
-
-                    def modified = [:] + dayMetrics
-                    def hourly = dayMetrics.hourly ?: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }
-
-                    // Filter hourly array: zero out hours before beginHour
-                    modified.hourly = hourly.withIndex().collect { hourData, idx ->
-                        (idx >= beginHour) ? hourData : [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0]
-                    }
-
-                    // Recalculate aggregates from filtered hours
-                    modified.total = modified.hourly[beginHour..23].sum { it.total } ?: 0
-                    modified.succeeded = modified.hourly[beginHour..23].sum { it.succeeded } ?: 0
-                    modified.failed = modified.hourly[beginHour..23].sum { it.failed } ?: 0
-                    modified.aborted = modified.hourly[beginHour..23].sum { it.aborted } ?: 0
-                    modified.timedout = modified.hourly[beginHour..23].sum { it.timedout } ?: 0
-                    modified.duration = dayMetrics.total > 0 ? Math.round(dayMetrics.duration * (modified.total as double / dayMetrics.total)) as long : 0
-
-                    log.debug("[METRICS-API] Partial first day ${dateStr}: total=${modified.total}, succeeded=${modified.succeeded}, failed=${modified.failed}")
-
-                    return [(dateStr): modified]
+                if (shouldFilterHours) {
+                    processedMetrics[dateStr] = applyHourLevelFilter(dateStr, dayMetrics, beginHour)
                 } else {
-                    // Full day - include all metrics as-is
-                    return [(dateStr): dayMetrics]
+                    processedMetrics[dateStr] = dayMetrics
                 }
             }
 
@@ -4043,12 +4114,7 @@ Note: This endpoint has the same query parameters and response as the `/executio
             }
 
             // Aggregate hourly heatmap across all processed days (extract 'total' from hourly objects)
-            def hourlyHeatmap = (0..23).collect { hour ->
-                processedMetrics.values().sum { dayMetrics ->
-                    def hourData = (dayMetrics.hourly && dayMetrics.hourly[hour]) ? dayMetrics.hourly[hour] : null
-                    (hourData && hourData.total) ? hourData.total : 0
-                } ?: 0
-            }
+            def hourlyHeatmap = aggregateHourlyHeatmap(processedMetrics)
 
             // Calculate success rate
             def successRate = total > 0 ? (succeeded * 100.0 / total) : 0.0
