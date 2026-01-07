@@ -106,10 +106,10 @@ export default defineComponent({
   },
   methods: {
     handleTotalUpdate(total: number) {
-      if (total !== this.total) {
-        this.total = total;
-        this.$emit("node-total-changed", total);
-      }
+      // Always update and emit, even if total is 0, to ensure App.vue receives the update
+      // This is critical for disabling the Run button when no nodes are matched
+      this.total = total;
+      this.$emit("node-total-changed", total);
     },
     handleLoadingUpdate(loading: boolean) {
       this.loading = loading;
