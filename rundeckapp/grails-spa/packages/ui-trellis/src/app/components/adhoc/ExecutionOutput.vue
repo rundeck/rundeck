@@ -155,6 +155,8 @@ export default defineComponent({
       loading: false,
       loadingMessage: "",
       completionCheckInterval: null as number | null,
+      completionCheckStartTime: null as number | null, // Track when polling started
+      maxPollingDuration: 300000, // Maximum 5 minutes of polling (300000ms)
       logViewerConfig: {
         theme: "rundeck",
         gutter: true,
@@ -393,7 +395,35 @@ export default defineComponent({
         return;
       }
 
+      // Track when polling started to prevent infinite loops
+      this.completionCheckStartTime = Date.now();
+
       this.completionCheckInterval = window.setInterval(async () => {
+        // CRITICAL: Check if execution already completed BEFORE making any API calls
+        // This prevents infinite loops when handleExecutionComplete() has already been called
+        if (this.executionDetailsFetched || this.executionCompleted) {
+          if (this.completionCheckInterval) {
+            clearInterval(this.completionCheckInterval);
+            this.completionCheckInterval = null;
+          }
+          return;
+        }
+        
+        // CRITICAL: Check if we've exceeded maximum polling duration to prevent infinite loops
+        // This handles cases where executions get stuck on the server side
+        if (this.completionCheckStartTime && (Date.now() - this.completionCheckStartTime) > this.maxPollingDuration) {
+          console.warn(`[ExecutionOutput] Polling exceeded maximum duration (${this.maxPollingDuration}ms), stopping to prevent infinite loop`);
+          if (this.completionCheckInterval) {
+            clearInterval(this.completionCheckInterval);
+            this.completionCheckInterval = null;
+          }
+          // Mark as completed to prevent further polling
+          this.executionDetailsFetched = true;
+          this.executionCompleted = true;
+          this.handleError("Execution polling timeout - execution may be stuck on server");
+          return;
+        }
+        
         // Double-check interval still exists (may have been cleared)
         if (!this.completionCheckInterval) {
           return;
@@ -422,20 +452,48 @@ export default defineComponent({
 
           if (response.ok) {
             const data = await response.json();
-            // Update execution state data only if showHeader is enabled
-            if (this.showHeader) {
-              this.updateExecutionState(data);
-            }
-            // Check if execution is completed
-            // The original FlowState.update() stops polling when json.completed === true (executionState.js line 245)
-            // This matches the behavior where nodeflowvm.completed becomes true
-            if (data.completed === true && !this.executionDetailsFetched) {
-              // Stop polling immediately before calling handleExecutionComplete to prevent infinite loop
+            
+            // CRITICAL: Check completion flag again AFTER async fetch (may have changed during fetch)
+            if (this.executionDetailsFetched || this.executionCompleted) {
               if (this.completionCheckInterval) {
                 clearInterval(this.completionCheckInterval);
                 this.completionCheckInterval = null;
               }
+              return;
+            }
+            
+            // Check if execution is completed FIRST (before updating state)
+            // The original FlowState.update() stops polling when json.completed === true (executionState.js line 245)
+            // Also check executionState for ABORTED, FAILED, SUCCEEDED as completion states
+            const executionState = data.executionState?.toUpperCase();
+            const isCompleted = data.completed === true || 
+                               executionState === 'ABORTED' || 
+                               executionState === 'FAILED' || 
+                               executionState === 'SUCCEEDED';
+            
+            if (isCompleted) {
+              // Stop polling IMMEDIATELY before any async operations to prevent infinite loop
+              if (this.completionCheckInterval) {
+                clearInterval(this.completionCheckInterval);
+                this.completionCheckInterval = null;
+              }
+              // Set flags immediately to prevent any other interval callbacks from proceeding
+              this.executionDetailsFetched = true;
+              this.executionCompleted = true;
+              
+              // Update execution state data only if showHeader is enabled (after setting flags)
+              if (this.showHeader) {
+                this.updateExecutionState(data);
+              }
+              
+              // Then handle completion
               this.handleExecutionComplete();
+              return; // CRITICAL: Return immediately to prevent any further processing
+            }
+            
+            // Update execution state data only if showHeader is enabled (for non-completed executions)
+            if (this.showHeader) {
+              this.updateExecutionState(data);
             }
           }
         } catch (err) {

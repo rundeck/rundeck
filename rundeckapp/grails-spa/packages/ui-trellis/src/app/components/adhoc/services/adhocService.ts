@@ -70,11 +70,33 @@ export async function runAdhocCommand(
   
   // Add meta fields as flat query parameters (meta.jobRunnerFilter, etc.)
   // Grails will automatically parse these into the meta map object
+  // IMPORTANT: For runner-related meta fields, if they're empty, set them to LOCAL_RUNNER defaults
+  // Empty runner fields cause executions to hang waiting for a runner that doesn't exist
+  // When no runner is selected, we must explicitly indicate LOCAL_RUNNER to avoid timeouts
+  const runnerMetaFields = ['meta.jobRunnerFilter', 'meta.jobRunnerFilterType', 'meta.jobRunnerFilterMode'];
+  
+  // Track if we have any runner meta fields
+  let hasRunnerFilter = false;
+  let hasRunnerFilterType = false;
+  let hasRunnerFilterMode = false;
+  
   if (request.meta) {
     Object.keys(request.meta).forEach(key => {
       const value = request.meta![key];
-      if (value !== undefined && value !== null && value !== '') {
-        params[`meta.${key}`] = value;
+      const metaKey = `meta.${key}`;
+      if (runnerMetaFields.includes(metaKey)) {
+        if (metaKey === 'meta.jobRunnerFilter') hasRunnerFilter = true;
+        if (metaKey === 'meta.jobRunnerFilterType') hasRunnerFilterType = true;
+        if (metaKey === 'meta.jobRunnerFilterMode') hasRunnerFilterMode = true;
+        // Include runner fields if they have a non-empty value
+        if (value !== undefined && value !== null && value !== '') {
+          params[metaKey] = value;
+        }
+      } else {
+        // For other meta fields, include all values except undefined and null
+        if (value !== undefined && value !== null) {
+          params[metaKey] = value;
+        }
       }
     });
   }
@@ -83,19 +105,61 @@ export async function runAdhocCommand(
   Object.keys(request).forEach(key => {
     if (key.startsWith('meta.') && !params[key]) {
       const value = request[key];
-      if (value !== undefined && value !== null && value !== '') {
-        params[key] = value;
+      if (runnerMetaFields.includes(key)) {
+        if (key === 'meta.jobRunnerFilter') hasRunnerFilter = true;
+        if (key === 'meta.jobRunnerFilterType') hasRunnerFilterType = true;
+        if (key === 'meta.jobRunnerFilterMode') hasRunnerFilterMode = true;
+        // Include runner fields if they have a non-empty value
+        if (value !== undefined && value !== null && value !== '') {
+          params[key] = value;
+        }
+      } else {
+        // For other meta fields, include all values except undefined and null
+        if (value !== undefined && value !== null) {
+          params[key] = value;
+        }
       }
     }
   });
+  
+  // If runner meta fields are missing or empty, set LOCAL_RUNNER defaults
+  // This prevents the server from waiting for runner reports that will never come
+  // Default values match JobRunnerAdhocCommand.vue defaults:
+  // - filter: "local" (but can be empty for LOCAL_RUNNER)
+  // - runnerFilterType: "LOCAL_RUNNER"
+  // - runnerFilterMode: "LOCAL"
+  if (!hasRunnerFilterType || !params['meta.jobRunnerFilterType'] || params['meta.jobRunnerFilterType'] === '') {
+    params['meta.jobRunnerFilterType'] = 'LOCAL_RUNNER';
+  }
+  if (!hasRunnerFilterMode || !params['meta.jobRunnerFilterMode'] || params['meta.jobRunnerFilterMode'] === '') {
+    params['meta.jobRunnerFilterMode'] = 'LOCAL';
+  }
+  // jobRunnerFilter can be empty for LOCAL_RUNNER, so we only set it if it's explicitly provided
   
   // Log params for debugging (remove in production)
   if (process.env.NODE_ENV === 'development') {
     console.log('[adhocService] Sending request params:', params);
   }
 
-  // Send as POST with query parameters (not JSON body) to match original behavior
-  const response = await api.post<RunAdhocResponse>(url, null, { params });
+  // Build URL with query parameters (matching original _genUrl behavior)
+  // The original code uses _genUrl(appLinks.scheduledExecutionRunAdhocInline, data)
+  // which appends serialized form data as query parameters to the URL
+  // IMPORTANT: Include ALL parameters, even empty strings (meta fields can be empty)
+  const queryParams = new URLSearchParams();
+  Object.keys(params).forEach(key => {
+    const value = params[key];
+    // Include all values except undefined and null (empty strings are valid, especially for meta fields)
+    if (value !== undefined && value !== null) {
+      queryParams.append(key, String(value));
+    }
+  });
+  
+  const urlWithParams = `${url}?${queryParams.toString()}`;
+
+  // Send as POST with query parameters in URL (matching original jQuery.ajax behavior)
+  // The original code: jQuery.ajax({ type: 'POST', url: _genUrl(appLinks.scheduledExecutionRunAdhocInline, data) })
+  // This sends POST with query params in URL, not in body
+  const response = await api.post<RunAdhocResponse>(urlWithParams);
 
   if (response.data.error) {
     throw new Error(response.data.error);
