@@ -1,5 +1,16 @@
 <template>
   <div id="adhoc-app">
+    <!-- Execution Mode Warning: Show when execution mode is inactive -->
+    <div
+      v-if="!executionModeActive"
+      class="alert alert-warning"
+      role="alert"
+    >
+      <i class="glyphicon glyphicon-warning-sign"></i>
+      <span>{{ $t("disabled.execution.run") }}</span>
+    </div>
+
+    <!-- Execution Features: Show only when execution mode is active -->
     <node-filter-section
       v-if="executionModeActive && nodeFilterStore"
       :node-filter-store="nodeFilterStore"
