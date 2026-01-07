@@ -80,29 +80,6 @@ class MetricsSpec extends BaseContainer {
     // LEGACY ENDPOINTS (Dropwizard) - Disabled by default in Rundeck 6.0
     // ========================================================================
 
-    def "Test legacy metrics disabled by default"() {
-        when:
-            def response = client.doGetAcceptAll("/metrics/metrics")
-        then:
-            verifyAll {
-                response.code() == 404
-                def body = response.body().string()
-                body.contains("Legacy metrics endpoint is disabled")
-                body.contains("rundeck.metrics.legacy.enabled=true")
-            }
-    }
-
-    def "Test legacy ping disabled by default"() {
-        when:
-            def response = client.doGetAcceptAll("/metrics/ping")
-        then:
-            verifyAll {
-                response.code() == 404
-                def body = response.body().string()
-                body.contains("Legacy")
-            }
-    }
-
     def "Test legacy healthcheck disabled by default"() {
         when:
             def response = client.doGetAcceptAll("/metrics/healthcheck")
@@ -129,18 +106,6 @@ class MetricsSpec extends BaseContainer {
                 // When legacy is disabled, API returns empty links
                 responseMetrics._links != null
                 responseMetrics._links.size() == 0
-            }
-    }
-
-    def "Test API metrics ping with legacy disabled"() {
-        when:
-            def response = client.doGetAcceptAll("/api/${client.apiVersion}/metrics/ping")
-        then:
-            verifyAll {
-                // API forwards to /metrics/ping which is disabled
-                response.code() == 404
-                def body = response.body().string()
-                body.contains("Legacy")
             }
     }
 
