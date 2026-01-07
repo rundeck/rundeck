@@ -173,6 +173,7 @@ export default defineComponent({
       killing: false,
       failedNodes: [] as string[],
       executionDetailsFetched: false, // Flag to prevent fetching execution details multiple times
+      completionEventEmitted: false, // Flag to prevent emitting completion event multiple times
     };
   },
   computed: {
@@ -263,6 +264,7 @@ export default defineComponent({
       this.executionStatusString = null;
       this.failedNodes = [];
       this.executionDetailsFetched = false;
+      this.completionEventEmitted = false;
       }
     },
   },
@@ -289,6 +291,9 @@ export default defineComponent({
       if (!executionId) {
         return;
       }
+
+      // Reset completion event flag for new execution
+      this.completionEventEmitted = false;
 
       this.showOutput = true;
       this.error = null;
@@ -330,10 +335,9 @@ export default defineComponent({
         throw new Error(data.error);
       }
 
-      // Store execution state data only if showHeader is enabled
-      if (this.showHeader) {
-        this.updateExecutionState(data);
-      }
+      // ALWAYS update execution state data (regardless of showHeader)
+      // showHeader only controls UI visibility, not state tracking
+      this.updateExecutionState(data);
     },
     updateExecutionState(data: any) {
       // Update execution state from ajaxExecState response
@@ -463,6 +467,10 @@ export default defineComponent({
                                executionState === 'FAILED' || 
                                executionState === 'SUCCEEDED';
             
+            // ALWAYS update execution state data (regardless of showHeader)
+            // showHeader only controls UI visibility, not state tracking
+            this.updateExecutionState(data);
+            
             if (isCompleted) {
               // Stop polling IMMEDIATELY before any async operations to prevent infinite loop
               if (this.completionCheckInterval) {
@@ -473,19 +481,9 @@ export default defineComponent({
               this.executionDetailsFetched = true;
               this.executionCompleted = true;
               
-              // Update execution state data only if showHeader is enabled (after setting flags)
-              if (this.showHeader) {
-                this.updateExecutionState(data);
-              }
-              
               // Then handle completion
               this.handleExecutionComplete();
               return; // CRITICAL: Return immediately to prevent any further processing
-            }
-            
-            // Update execution state data only if showHeader is enabled (for non-completed executions)
-            if (this.showHeader) {
-              this.updateExecutionState(data);
             }
           }
         } catch (err) {
@@ -497,12 +495,14 @@ export default defineComponent({
     },
     async handleExecutionComplete() {
       // Prevent multiple calls to this method (guard against infinite loop)
-      if (this.executionDetailsFetched) {
+      // NOTE: executionDetailsFetched and executionCompleted are already set to true 
+      // before this method is called from the polling callback (line 476-477),
+      // so we need to check if we've already processed completion
+      // Use a separate flag to track if we've already emitted the event
+      if (this.completionEventEmitted) {
         return;
       }
-
-      // Set flag immediately to prevent multiple calls
-      this.executionDetailsFetched = true;
+      this.completionEventEmitted = true;
 
       // Stop polling immediately to prevent infinite loop
       if (this.completionCheckInterval) {
@@ -531,13 +531,11 @@ export default defineComponent({
       }
 
       // Emit completion event for AdhocCommandForm to handle
-      // This must be emitted AFTER clearing running state to ensure listeners can react properly
-      // Use Vue's nextTick to ensure running state change is processed first
-      this.$nextTick(() => {
-        if (this.eventBus && typeof this.eventBus.emit === "function") {
-          this.eventBus.emit("adhoc-execution-complete", { executionId: this.executionId });
-        }
-      });
+      // Emit IMMEDIATELY (don't wait for nextTick) so button state updates promptly
+      if (this.eventBus && typeof this.eventBus.emit === "function") {
+        console.log("[ExecutionOutput] Emitting adhoc-execution-complete event for executionId:", this.executionId);
+        this.eventBus.emit("adhoc-execution-complete", { executionId: this.executionId });
+      }
     },
     handleCloseOutputClick(event: MouseEvent) {
       const target = event.target as HTMLElement;

@@ -346,6 +346,7 @@ export default defineComponent({
       threadCount: 1,
       nodeKeepgoing: "true",
       formMounted: false,
+      boundExecutionCompleteHandler: null as ((...args: any[]) => void) | null,
     };
   },
   computed: {
@@ -385,14 +386,16 @@ export default defineComponent({
     });
     
     // Listen for execution completion
+    // Bind handler to ensure 'this' context is correct
     if (this.eventBus && typeof this.eventBus.on === "function") {
-      this.eventBus.on("adhoc-execution-complete", this.handleExecutionComplete);
+      this.boundExecutionCompleteHandler = this.handleExecutionComplete.bind(this);
+      this.eventBus.on("adhoc-execution-complete", this.boundExecutionCompleteHandler);
     }
   },
   beforeUnmount() {
     // Clean up event listeners
-    if (this.eventBus && typeof this.eventBus.off === "function") {
-      this.eventBus.off("adhoc-execution-complete", this.handleExecutionComplete);
+    if (this.eventBus && typeof this.eventBus.off === "function" && this.boundExecutionCompleteHandler) {
+      this.eventBus.off("adhoc-execution-complete", this.boundExecutionCompleteHandler);
     }
     // Stop following execution output if active
     if (this.state.followControl && typeof this.state.followControl.stopFollowingOutput === "function") {
@@ -533,8 +536,10 @@ export default defineComponent({
       return false;
     },
     handleExecutionComplete() {
-      // Clear running state
+      console.log("[AdhocCommandForm] handleExecutionComplete called, current running state:", this.state.running);
+      // Clear running state IMMEDIATELY
       this.state.running = false;
+      console.log("[AdhocCommandForm] Running state set to:", this.state.running);
 
       // Re-enable command input and focus it (matching original afterRun() behavior)
       this.$nextTick(() => {
