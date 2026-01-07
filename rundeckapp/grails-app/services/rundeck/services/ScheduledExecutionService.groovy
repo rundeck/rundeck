@@ -4048,7 +4048,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             Map validationMap,
             Validator.Report report
     ) {
-        def name=scheduledExecution.workflow.strategy
+        def workflowData = scheduledExecution.getWorkflowData() as Workflow
+        def name = workflowData?.strategy
         if (params !=null) {
             if (!params['strategyValidation']) {
                 params['strategyValidation'] = [:]
@@ -4073,7 +4074,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                                                "Workflow strategy {0}: Some config values were not valid"
         )
 
-        scheduledExecution.workflow.errors.rejectValue(
+        workflowData.errors.rejectValue(
                 'strategy',
                 'scheduledExecution.workflowStrategy.invalidPlugin.message',
                 [name] as Object[],

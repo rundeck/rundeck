@@ -1674,7 +1674,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if(execMap instanceof Execution) {
             executionReference = execMap.asReference()
         }
-        
+
+        // Get workflowData from execMap
+        def wfData = null
+        if(execMap instanceof Execution) {
+            wfData = execMap.getWorkflowData()
+        } else if(execMap instanceof ScheduledExecution) {
+            wfData = execMap.getWorkflowData()
+        }
 
         //create execution context
         def builder = ExecutionContextImpl.builder((StepExecutionContext)origContext)
@@ -1694,6 +1701,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             executionListener(listener)
             workflowExecutionListener(wlistener)
             execution(executionReference)
+            if(wfData) {
+                workflowData(wfData)
+            }
         }
         builder.charsetEncoding(charsetEncoding)
         builder.framework(framework)
@@ -4489,6 +4499,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 storageTree(storageService.storageTreeWithContext(authContext))
                 framework(frameworkService.rundeckFramework)
                 frameworkProject(scheduledExecution.project)
+                workflowData(scheduledExecution.getWorkflowData())
             }
             contextBuilder.authContext(authContext)
             notificationService.triggerJobNotification(
