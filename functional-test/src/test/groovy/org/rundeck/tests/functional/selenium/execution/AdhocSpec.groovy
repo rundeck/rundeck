@@ -27,50 +27,6 @@ class AdhocSpec extends SeleniumBase {
             adhocPage.runButton.isDisplayed()
     }
 
-    def "node filter input works (legacy UI)"() {
-        when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, [legacyUi: true]
-        then:
-            adhocPage.enterNodeFilter(".*")
-            adhocPage.submitNodeFilter()
-            adhocPage.waitForElementToBeVisible adhocPage.nodeFilterResultsBy
-        expect:
-            adhocPage.nodeFilterResults.isDisplayed()
-    }
-
-    def "node filter input works (nextUI)"() {
-        when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, [nextUi: true]
-        then:
-            adhocPage.enterNodeFilter(".*")
-            adhocPage.submitNodeFilter()
-            adhocPage.waitForElementToBeVisible adhocPage.nodeFilterResultsBy
-        expect:
-            adhocPage.nodeFilterResults.isDisplayed()
-    }
-
-    def "node filter input works (legacy UI)"() {
-        when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, [legacyUi: true]
-        then:
-            adhocPage.enterNodeFilter(".*")
-            adhocPage.submitNodeFilter()
-            adhocPage.waitForElementToBeVisible adhocPage.nodeFilterResultsBy
-        expect:
-            adhocPage.nodeFilterResults.isDisplayed()
-    }
-
-    def "node filter input works (nextUI)"() {
-        when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, [nextUi: true]
-        then:
-            adhocPage.enterNodeFilter(".*")
-            adhocPage.submitNodeFilter()
-            adhocPage.waitForElementToBeVisible adhocPage.nodeFilterResultsBy
-        expect:
-            adhocPage.nodeFilterResults.isDisplayed()
-    }
-
     def "node filter input works"() {
         when:
             def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT

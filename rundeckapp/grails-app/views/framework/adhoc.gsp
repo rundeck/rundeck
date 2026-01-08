@@ -88,9 +88,7 @@ search
 "/>
 
   <g:set var="executionModeActive" value="${g.executionMode(active: true, project: projectName)}"/>
-  <g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
-  <g:set var="nextUi" value="${uiType == 'next'}"/>
-  <g:set var="legacyUi" value="${uiType == 'legacy' || (!nextUi && !params.nextUi)}"/>
+  <g:set var="legacyUi" value="${params.legacyUi || feature.isEnabled(name:'legacyUi')}"/>
 
   <g:javascript>
 
@@ -125,12 +123,7 @@ search
 })
   </g:javascript>
   <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
-  <g:if test="${nextUi}">
-    <asset:javascript src="static/pages/adhoc.js" defer="defer"/>
-  </g:if>
-  <g:else>
-    <asset:javascript src="static/pages/command.js" defer="defer"/>
-  </g:else>
+  <asset:javascript src="static/pages/adhoc.js" defer="defer"/>
 </head>
 <body>
 
@@ -141,7 +134,7 @@ search
   </div>
   
   <!-- Node Filter Input (via ui-socket - already Vue) -->
-<div>
+  <div>
     <div>
       <div class="row">
         <div class="col-xs-12">
@@ -164,27 +157,27 @@ search
         </div>
       </div>
     </div>
-</div>
+  </div>
 
   <!-- CSRF Token for form submissions -->
   <g:jsonToken id="adhoc_req_tokens" url="${request.forwardURI}"/>
 
   <!-- Messages and Error Areas -->
-<div class="container-fluid page-commands">
-  <div id="nodesContent" class="row">
-    <g:render template="/common/messages"/>
-      <g:if test="${nextUi}">
-        <!-- Vue App Mount Point -->
-        <div class="adhoc-page-vue"></div>
+  <div class="container-fluid page-commands">
+    <div id="nodesContent" class="row">
+      <g:render template="/common/messages"/>
+      <g:if test="${legacyUi}">
+        <g:render template="/framework/legacyadhoc" model="[projectName: projectName, eventReadAuth: eventReadAuth]"/>
       </g:if>
       <g:else>
-        <g:render template="/framework/legacyadhoc" model="[projectName: projectName, eventReadAuth: eventReadAuth]"/>
+        <!-- Vue App Mount Point -->
+        <div class="adhoc-page-vue"></div>
       </g:else>
     </div>
     <div id="loaderror"></div>
-            </div>
-
-  <g:if test="${eventReadAuth}">
+  </div>
+  
+  <g:if test="${eventReadAuth && !legacyUi}">
     <div id="activity_section" class="vue-ui-socket">
       <ui-socket section="project-activity" location="main"></ui-socket>
     </div>
