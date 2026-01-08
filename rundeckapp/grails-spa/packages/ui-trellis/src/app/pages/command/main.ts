@@ -1,11 +1,25 @@
-import { createApp } from "vue";
+import { createApp, markRaw } from "vue";
 
 import LogViewer from "../../../library/components/execution-log/logViewer.vue";
+import NextUiToggle from "../job/browse/NextUiToggle.vue";
 import { RootStore } from "../../../library/stores/RootStore";
+import { getRundeckContext } from "../../../library";
 
-const eventBus = window._rundeck.eventBus;
+const rundeckContext = getRundeckContext();
+const rootStore = rundeckContext.rootStore;
+const eventBus = rundeckContext.eventBus;
 
-const rootStore = new RootStore(window._rundeck.rundeckClient);
+function init() {
+  // Add NextUiToggle to UI store (similar to adhoc/main.ts pattern)
+  rootStore.ui.addItems([
+    {
+      section: "theme-select",
+      location: "after",
+      visible: true,
+      widget: markRaw(NextUiToggle),
+    },
+  ]);
+}
 
 eventBus.on("ko-adhoc-running", (data: any) => {
   const elm = document.querySelector(
@@ -59,3 +73,5 @@ eventBus.on("ko-adhoc-running", (data: any) => {
   );
   vue.mount(elm);
 });
+
+window.addEventListener("DOMContentLoaded", init);
