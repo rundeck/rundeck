@@ -268,6 +268,66 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     def adhoc(ExtNodeFilters query) {
+        // Check for nextUi cookie FIRST (similar to MenuController pattern) - before any other processing
+        // Match MenuController pattern exactly: request.getCookies().find { it.name == 'nextUi' }?.value == 'true'
+        def cookieValue = request.getCookies()?.find { it.name == 'nextUi' }?.value
+        if (cookieValue == 'true' || params.nextUi == 'true') {
+            params.nextUi = true
+            // Still need to process query for the model
+            if (query.hasErrors()) {
+                request.errors = query.errors
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+                return renderErrorView([:])
+            }
+            AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
+            if (unauthorizedResponse(
+                    rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_ADHOC,
+                            AuthConstants.ACTION_RUN, params.project),
+                    AuthConstants.ACTION_RUN, 'adhoc', 'commands')) {
+                return
+            }
+            String runCommand;
+            if (params.fromExecId || params.retryFailedExecId) {
+                Execution e = Execution.get(params.fromExecId ?: params.retryFailedExecId)
+                if (e && unauthorizedResponse(
+                        rundeckAuthContextProcessor.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW]),
+                        AuthConstants.ACTION_VIEW, 'Execution', params.fromExecId ?: params.retryFailedExecId)) {
+                    return
+                }
+
+                if (e && !e.scheduledExecution && e.workflow.commands.size() == 1) {
+                    def cmd = e.workflow.commands[0]
+                    if (cmd.adhocRemoteString) {
+                        runCommand = cmd.adhocRemoteString
+                        //configure node filters
+                        if (params.retryFailedExecId) {
+                            query = new ExtNodeFilters(filter: OptsUtil.join("name:", e.failedNodeList), project: e.project)
+                        } else {
+                            if(e.doNodedispatch){
+                                query = ExtNodeFilters.from(e, e.project)
+                            }else{
+                                query=new ExtNodeFilters(filter: OptsUtil.join("name:", frameworkService.getFrameworkNodeName()),
+                                        project: e.project)
+                            }
+                        }
+                    }
+                }
+            } else if (params.exec) {
+                runCommand = params.exec
+            }
+
+            query.project = params.project
+            def result
+            if(!query.nodeFilterIsEmpty()){
+                params.requireRunAuth='true'
+                result = [query: query, params: params, allnodes: [:]]
+            }else{
+                result= [query: query, params: params, allnodes:[:]]
+            }
+            def model = result
+            return render(view: 'adhocNext', model: model + [runCommand: runCommand, emptyQuery: query.nodeFilterIsEmpty(), matchedNodesMaxCount: scheduledExecutionService.getMatchedNodesMaxCount()])
+        }
+        
         if (query.hasErrors()) {
             request.errors = query.errors
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
