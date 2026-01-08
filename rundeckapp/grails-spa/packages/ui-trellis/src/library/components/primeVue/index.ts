@@ -1,4 +1,4 @@
 import PtAutoComplete from "./PtAutoComplete/PtAutoComplete.vue";
-import PtToggleButton from "./PtToggleButton/PtToggleButton.vue";
+import PtSelectButton from "./PtSelectButton/PtSelectButton.vue";
 
-export { PtAutoComplete, PtToggleButton };
+export { PtAutoComplete, PtSelectButton };

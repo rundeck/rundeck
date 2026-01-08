@@ -11,7 +11,7 @@
           :ea="true"
           @search="filterLoadedServices"
       ></plugin-search>
-      <select-button v-model="selectedService" :options="serviceOptions" optionLabel="name" optionValue="value"/>
+      <pt-select-button v-model="selectedService" :options="serviceOptions" option-label="name" option-value="value"/>
       <p class="text-heading--lg section-heading">{{ sectionHeading }}</p>
       <p class="text-body--lg">
         {{ sectionDescription }}
@@ -64,14 +64,14 @@ import { defineComponent } from "vue";
 import PluginSearch from "@/library/components/plugins/PluginSearch.vue";
 import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
 import { ServiceType } from "@/library/stores/Plugins";
-import SelectButton from 'primevue/selectbutton';
+import { PtSelectButton } from "@/library/components/primeVue";
 import Skeleton from "primevue/skeleton";
 
 const context = getRundeckContext();
 
 export default defineComponent({
   name: "ChoosePluginsEAModal",
-  components: { PluginSearch, PluginInfo, SelectButton, Skeleton },
+  components: { PluginSearch, PluginInfo, PtSelectButton, Skeleton },
   props: {
     title: {
       type: String,
