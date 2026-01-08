@@ -40,13 +40,21 @@ class AdhocPage extends BasePage implements ActivityListTrait {
     By activitySectionBy = By.id("activity_section")
     By activityListBy = By.cssSelector("._history_content.vue-project-activity")
 
-    AdhocPage(final SeleniumContext context, final String project) {
+    AdhocPage(final SeleniumContext context, final String project, Map params = [:]) {
         super(context)
-        loadDashboardForProject(project)
+        loadDashboardForProject(project, params)
     }
 
-    void loadDashboardForProject(String projectName) {
-        this.loadPath = "/project/${projectName}/command/run"
+    void loadDashboardForProject(String projectName, Map params = [:]) {
+        def queryParams = []
+        if (params.nextUi) {
+            queryParams << "nextUi=true"
+        }
+        if (params.legacyUi) {
+            queryParams << "legacyUi=true"
+        }
+        def queryString = queryParams ? "?${queryParams.join('&')}" : ""
+        this.loadPath = "/project/${projectName}/command/run${queryString}"
     }
 
     // Node Filter Methods

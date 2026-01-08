@@ -1,11 +1,13 @@
-import { createApp } from "vue";
+import { createApp, markRaw } from "vue";
 import VueCookies from "vue-cookies";
 import * as uiv from "uiv";
 import moment from "moment";
 
 import App from "./App.vue";
+import NextUiToggle from "../job/browse/NextUiToggle.vue";
 import { initI18n, updateLocaleMessages } from "../../utilities/i18n";
 import { getRundeckContext } from "../../../library";
+import { loadJsonData } from "../../utilities/loadJsonData";
 import type { UiMessage } from "../../../library/stores/UIStore";
 
 const rundeckContext = getRundeckContext();
@@ -17,6 +19,24 @@ moment.locale(locale);
 
 // Mount Vue app to adhoc-page-vue elements
 async function mountAdhocApp() {
+  // Add NextUiToggle to UI store (similar to job/browse pattern)
+  const uiMeta = loadJsonData("pageUiMeta");
+  const uiType = uiMeta?.uiType || "current";
+  
+  rootStore.ui.addItems([
+    {
+      section: "theme-select",
+      location: "after",
+      visible: true,
+      widget: markRaw(NextUiToggle),
+    },
+  ]);
+
+  // Only mount Vue app if nextUI is enabled
+  if (uiType !== "next") {
+    return;
+  }
+
   const els = document.body.getElementsByClassName("adhoc-page-vue");
   console.log("[adhoc/main.ts] Looking for .adhoc-page-vue elements, found:", els.length);
 
