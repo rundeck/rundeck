@@ -44,6 +44,9 @@ class AdhocPage extends BasePage implements ActivityListTrait {
     By nextUiToggleBy = By.id("nextUi")
     By nextUiToggleLabelBy = By.cssSelector("label[for='nextUi']")
 
+    // Vue App Mount Point Selector (for adhocNext.gsp)
+    By vueAppMountBy = By.cssSelector(".adhoc-page-vue")
+
     AdhocPage(final SeleniumContext context, final String project) {
         super(context)
         loadDashboardForProject(project)
@@ -60,16 +63,35 @@ class AdhocPage extends BasePage implements ActivityListTrait {
 
     void loadDashboardForProject(String projectName, Map params) {
         def queryParams = new StringBuilder()
-        if (params.nextUi) {
+        if (params && params.nextUi) {
             queryParams.append("?nextUi=true")
-        } else if (params.legacyUi) {
-            queryParams.append("?legacyUi=true")
         }
         this.loadPath = "/project/${projectName}/command/run${queryParams.toString()}"
     }
 
+    /**
+     * Wait for Vue app to mount if using next UI version
+     * This ensures Vue components are ready before interacting with them
+     */
+    void waitForVueAppIfNeeded() {
+        if (loadPath.contains("nextUi=true")) {
+            // Wait for Vue mount point to be present
+            waitForElementVisible(vueAppMountBy)
+            // Wait for Vue app to render command input (indicates app is ready)
+            waitForElementToBeClickable(commandInputBy)
+        }
+    }
+
+    /**
+     * Check if this page instance is using the Vue (next) UI
+     */
+    boolean isNextUi() {
+        return loadPath.contains("nextUi=true")
+    }
+
     // Node Filter Methods
     WebElement getNodeFilterInput() {
+        waitForVueAppIfNeeded()
         waitForElementToBeClickable nodeFilterInputBy
         el nodeFilterInputBy
     }
@@ -80,7 +102,7 @@ class AdhocPage extends BasePage implements ActivityListTrait {
     }
 
     WebElement getNodeFilterResults() {
-        waitForElementToBeVisible nodeFilterResultsBy
+        waitForElementVisible nodeFilterResultsBy
         el nodeFilterResultsBy
     }
 
@@ -114,6 +136,7 @@ class AdhocPage extends BasePage implements ActivityListTrait {
 
     // Command Form Methods
     WebElement getCommandInput() {
+        waitForVueAppIfNeeded()
         waitForElementToBeClickable commandInputBy
         el commandInputBy
     }
@@ -124,7 +147,7 @@ class AdhocPage extends BasePage implements ActivityListTrait {
     }
 
     WebElement getRecentCommandsMenu() {
-        waitForElementToBeVisible recentCommandsMenuBy
+        waitForElementVisible recentCommandsMenuBy
         el recentCommandsMenuBy
     }
 
@@ -162,7 +185,9 @@ class AdhocPage extends BasePage implements ActivityListTrait {
     }
 
     void enterCommand(String command) {
+        waitForVueAppIfNeeded()
         commandInput.click()
+        // Wait for input to be enabled (not disabled)
         waitForElementAttributeToChange(commandInput, 'disabled', null)
         commandInput.clear()
         commandInput.sendKeys(command)
@@ -170,7 +195,7 @@ class AdhocPage extends BasePage implements ActivityListTrait {
 
     void clickRecentCommands() {
         recentCommandsDropdown.click()
-        waitForElementToBeVisible recentCommandsMenuBy
+        waitForElementVisible recentCommandsMenuBy
     }
 
     void selectRecentCommand(int index) {
@@ -184,7 +209,7 @@ class AdhocPage extends BasePage implements ActivityListTrait {
     void openSettings() {
         if (!runConfigPanel.displayed) {
             settingsButton.click()
-            waitForElementToBeVisible runConfigPanelBy
+            waitForElementVisible runConfigPanelBy
         }
     }
 
@@ -209,7 +234,7 @@ class AdhocPage extends BasePage implements ActivityListTrait {
 
     // Execution Output Methods
     WebElement getRunContent() {
-        waitForElementToBeVisible runContentBy
+        waitForElementVisible runContentBy
         el runContentBy
     }
 
@@ -286,7 +311,7 @@ class AdhocPage extends BasePage implements ActivityListTrait {
         // Ensure nodes are filtered first
         if (!nodeFilterResults.displayed) {
             filterNodes(".*")
-            waitForElementToBeVisible nodeFilterResultsBy
+            waitForElementVisible nodeFilterResultsBy
         }
         
         enterCommand(command)
@@ -294,14 +319,14 @@ class AdhocPage extends BasePage implements ActivityListTrait {
         
         // Wait for execution to reach desired state
         if (state) {
-            waitForElementToBeVisible runContentBy
+            waitForElementVisible runContentBy
             // Additional wait logic for execution state can be added here
         }
     }
 
     def runCommandWithSettings(String command, int threadCount, boolean keepgoing) {
         filterNodes(".*")
-        waitForElementToBeVisible nodeFilterResultsBy
+        waitForElementVisible nodeFilterResultsBy
         
         setThreadCount(threadCount)
         setNodeKeepgoing(keepgoing)
@@ -309,6 +334,6 @@ class AdhocPage extends BasePage implements ActivityListTrait {
         enterCommand(command)
         clickRun()
         
-        waitForElementToBeVisible runContentBy
+        waitForElementVisible runContentBy
     }
 }

@@ -4,6 +4,7 @@ import org.rundeck.util.gui.pages.project.AdhocPage
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
+import spock.lang.Unroll
 
 @SeleniumCoreTest
 class AdhocSpec extends SeleniumBase {
@@ -17,143 +18,200 @@ class AdhocSpec extends SeleniumBase {
         loginPage.login(TEST_USER, TEST_PASS)
     }
 
-    def "page loads and displays correctly"() {
+    @Unroll
+    def "page loads and displays correctly in #uiVersion UI"() {
         when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT
+            def params = uiVersion == 'next' ? [nextUi: true] : [:]
+            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
         then:
             adhocPage.validatePage()
             adhocPage.nodeFilterInput.isDisplayed()
             adhocPage.commandInput.isDisplayed()
             adhocPage.runButton.isDisplayed()
+        where:
+            uiVersion << ['legacy', 'next']
     }
 
-    def "node filter input works"() {
+    @Unroll
+    def "node filter input works in #uiVersion UI"() {
         when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT
+            def params = uiVersion == 'next' ? [nextUi: true] : [:]
+            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
         then:
             adhocPage.enterNodeFilter(".*")
             adhocPage.submitNodeFilter()
-            adhocPage.waitForElementToBeVisible adhocPage.nodeFilterResultsBy
+            adhocPage.waitForElementVisible adhocPage.nodeFilterResultsBy
         expect:
             adhocPage.nodeFilterResults.isDisplayed()
+        where:
+            uiVersion << ['legacy', 'next']
     }
 
-    def "empty state message shows when no nodes matched"() {
+    @Unroll
+    def "empty state message shows when no nodes matched in #uiVersion UI"() {
         when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT
+            def params = uiVersion == 'next' ? [nextUi: true] : [:]
+            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
         then:
             adhocPage.enterNodeFilter("name: nonexistent-node-12345")
             adhocPage.submitNodeFilter()
-            adhocPage.waitForElementToBeVisible adhocPage.emptyErrorBy
+            adhocPage.waitForElementVisible adhocPage.emptyErrorBy
         expect:
             adhocPage.emptyError.isDisplayed()
+        where:
+            uiVersion << ['legacy', 'next']
     }
 
-    def "command input is disabled when no nodes matched"() {
+    @Unroll
+    def "command input is disabled when no nodes matched in #uiVersion UI"() {
         when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT
+            def params = uiVersion == 'next' ? [nextUi: true] : [:]
+            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
         then:
             adhocPage.enterNodeFilter("name: nonexistent-node-12345")
             adhocPage.submitNodeFilter()
-            adhocPage.waitForElementToBeVisible adhocPage.emptyErrorBy
+            adhocPage.waitForElementVisible adhocPage.emptyErrorBy
         expect:
-            adhocPage.commandInput.getAttribute("disabled") != null || 
-            !adhocPage.runButton.enabled
+            // Vue version may use different disabled attribute handling
+            def disabledAttr = adhocPage.commandInput.getAttribute("disabled")
+            disabledAttr != null || 
+            !adhocPage.runButton.enabled ||
+            adhocPage.commandInput.getAttribute("readonly") != null
+        where:
+            uiVersion << ['legacy', 'next']
     }
 
-    def "command input is enabled when nodes matched"() {
+    @Unroll
+    def "command input is enabled when nodes matched in #uiVersion UI"() {
         when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT
+            def params = uiVersion == 'next' ? [nextUi: true] : [:]
+            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
         then:
             adhocPage.filterNodes(".*")
             adhocPage.waitForElementToBeVisible adhocPage.nodeFilterResultsBy
         expect:
             adhocPage.commandInput.getAttribute("disabled") == null
             adhocPage.runButton.enabled
+        where:
+            uiVersion << ['legacy', 'next']
     }
 
-    def "run button shows correct text based on node count"() {
+    @Unroll
+    def "run button shows correct text based on node count in #uiVersion UI"() {
         when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT
+            def params = uiVersion == 'next' ? [nextUi: true] : [:]
+            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
         then:
             adhocPage.filterNodes(".*")
             adhocPage.waitForElementToBeVisible adhocPage.nodeFilterResultsBy
         expect:
             def buttonText = adhocPage.runButton.getText()
             buttonText.contains("Run on") || buttonText.contains("Node")
+        where:
+            uiVersion << ['legacy', 'next']
     }
 
-    def "recent commands dropdown loads"() {
+    @Unroll
+    def "recent commands dropdown loads in #uiVersion UI"() {
         when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT
+            def params = uiVersion == 'next' ? [nextUi: true] : [:]
+            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
         then:
             adhocPage.filterNodes(".*")
             adhocPage.waitForElementToBeVisible adhocPage.nodeFilterResultsBy
             adhocPage.clickRecentCommands()
-            adhocPage.waitForElementToBeVisible adhocPage.recentCommandsMenuBy
+            adhocPage.waitForElementVisible adhocPage.recentCommandsMenuBy
         expect:
             adhocPage.recentCommandsMenu.isDisplayed()
+        where:
+            uiVersion << ['legacy', 'next']
     }
 
-    def "settings panel toggles"() {
+    @Unroll
+    def "settings panel toggles in #uiVersion UI"() {
         when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT
+            def params = uiVersion == 'next' ? [nextUi: true] : [:]
+            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
         then:
             adhocPage.openSettings()
         expect:
             adhocPage.runConfigPanel.isDisplayed()
+        where:
+            uiVersion << ['legacy', 'next']
     }
 
-    def "thread count can be set"() {
+    @Unroll
+    def "thread count can be set in #uiVersion UI"() {
         when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT
+            def params = uiVersion == 'next' ? [nextUi: true] : [:]
+            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
         then:
             adhocPage.setThreadCount(3)
         expect:
             adhocPage.threadCountInput.getAttribute("value") == "3"
+        where:
+            uiVersion << ['legacy', 'next']
     }
 
-    def "node keepgoing setting can be changed"() {
+    @Unroll
+    def "node keepgoing setting can be changed in #uiVersion UI"() {
         when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT
+            def params = uiVersion == 'next' ? [nextUi: true] : [:]
+            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
         then:
             adhocPage.setNodeKeepgoing(false)
         expect:
             adhocPage.nodeKeepgoingFalse.selected
+        where:
+            uiVersion << ['legacy', 'next']
     }
 
-    def "command execution works"() {
+    @Unroll
+    def "command execution works in #uiVersion UI"() {
         when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT
+            def params = uiVersion == 'next' ? [nextUi: true] : [:]
+            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
         then:
             adhocPage.runCommandAndWaitToBe("echo test command", null)
-            adhocPage.waitForElementToBeVisible adhocPage.runContentBy
+            adhocPage.waitForElementVisible adhocPage.runContentBy
         expect:
             adhocPage.isRunContentVisible()
+        where:
+            uiVersion << ['legacy', 'next']
     }
 
-    def "execution output displays"() {
+    @Unroll
+    def "execution output displays in #uiVersion UI"() {
         when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT
+            def params = uiVersion == 'next' ? [nextUi: true] : [:]
+            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
         then:
             adhocPage.runCommandAndWaitToBe("echo test output", null)
-            adhocPage.waitForElementToBeVisible adhocPage.runContentBy
+            adhocPage.waitForElementVisible adhocPage.runContentBy
         expect:
             adhocPage.runContent.isDisplayed()
+        where:
+            uiVersion << ['legacy', 'next']
     }
 
-    def "command execution with settings works"() {
+    @Unroll
+    def "command execution with settings works in #uiVersion UI"() {
         when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT
+            def params = uiVersion == 'next' ? [nextUi: true] : [:]
+            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
         then:
             adhocPage.runCommandWithSettings("echo test", 2, true)
         expect:
             adhocPage.isRunContentVisible()
+        where:
+            uiVersion << ['legacy', 'next']
     }
 
-    def "view in nodes page link works"() {
+    @Unroll
+    def "view in nodes page link works in #uiVersion UI"() {
         when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT
+            def params = uiVersion == 'next' ? [nextUi: true] : [:]
+            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
         then:
             adhocPage.filterNodes(".*")
             adhocPage.waitForElementToBeVisible adhocPage.nodeFilterResultsBy
@@ -163,27 +221,36 @@ class AdhocSpec extends SeleniumBase {
                 href.contains("/nodes")
                 href.contains("filter")
             }
+        where:
+            uiVersion << ['legacy', 'next']
     }
 
-    def "activity section displays when authorized"() {
+    @Unroll
+    def "activity section displays when authorized in #uiVersion UI"() {
         when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT
+            def params = uiVersion == 'next' ? [nextUi: true] : [:]
+            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
         then:
             adhocPage.validatePage()
         expect:
             // Activity section visibility depends on permissions
             // This test verifies the component exists, visibility is permission-based
+            // Vue version uses ui-socket, legacy uses direct element
             try {
                 adhocPage.activitySection.isDisplayed()
             } catch (Exception e) {
                 // Activity section may not be visible if user lacks permissions
                 // This is expected behavior
             }
+        where:
+            uiVersion << ['legacy', 'next']
     }
 
-    def "error message displays on execution failure"() {
+    @Unroll
+    def "error message displays on execution failure in #uiVersion UI"() {
         when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT
+            def params = uiVersion == 'next' ? [nextUi: true] : [:]
+            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
         then:
             // Try to run command without nodes filtered
             try {
@@ -195,42 +262,56 @@ class AdhocSpec extends SeleniumBase {
         expect:
             // Run button should be disabled or error should show
             !adhocPage.runButton.enabled || adhocPage.isRunErrorVisible()
+        where:
+            uiVersion << ['legacy', 'next']
     }
 
-    def "execution mode warning shows when inactive"() {
+    @Unroll
+    def "execution mode warning shows when inactive in #uiVersion UI"() {
         // This test would require setting execution mode to inactive
         // Skipping for now as it requires admin permissions
         when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT
+            def params = uiVersion == 'next' ? [nextUi: true] : [:]
+            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
         then:
             adhocPage.validatePage()
         expect:
             // Execution mode check is handled server-side
             // Vue component will show warning if executionModeActive is false
             true
+        where:
+            uiVersion << ['legacy', 'next']
     }
 
-    def "command input updates store"() {
+    @Unroll
+    def "command input updates store in #uiVersion UI"() {
         when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT
+            def params = uiVersion == 'next' ? [nextUi: true] : [:]
+            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
         then:
             adhocPage.filterNodes(".*")
             adhocPage.waitForElementToBeVisible adhocPage.nodeFilterResultsBy
             adhocPage.enterCommand("echo test command")
         expect:
             adhocPage.commandInput.getAttribute("value").contains("echo test command")
+        where:
+            uiVersion << ['legacy', 'next']
     }
 
-    def "run button disabled during execution"() {
+    @Unroll
+    def "run button disabled during execution in #uiVersion UI"() {
         when:
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT
+            def params = uiVersion == 'next' ? [nextUi: true] : [:]
+            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
         then:
             adhocPage.runCommandAndWaitToBe("sleep 5", null)
-            adhocPage.waitForElementToBeVisible adhocPage.runContentBy
+            adhocPage.waitForElementVisible adhocPage.runContentBy
         expect:
             // Run button should show "Running" text or be disabled
             def buttonText = adhocPage.runButton.getText()
             buttonText.contains("Running") || !adhocPage.runButton.enabled
+        where:
+            uiVersion << ['legacy', 'next']
     }
 }
 
