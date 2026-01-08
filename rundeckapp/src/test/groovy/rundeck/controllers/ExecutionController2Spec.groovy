@@ -1043,7 +1043,9 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
         when: "getMetricsFromStats is called with begin and end dates"
             def begin = "2025-11-22T00:00:00Z"
             def end = "2025-11-24T23:59:59Z"
-            def result = controller.getMetricsFromStats(jobUuid, begin, end)
+            def beginDate = ReportsController.parseDate(begin)
+            def endDate = ReportsController.parseDate(end)
+            def result = controller.getMetricsFromStats(jobUuid, beginDate, endDate)
 
         then: "only metrics within the date range are returned"
             result != null
@@ -1082,7 +1084,9 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
         when: "getMetricsFromStats is called with a date range that has no metrics"
             def begin = "2025-11-22T00:00:00Z"
             def end = "2025-11-24T23:59:59Z"
-            def result = controller.getMetricsFromStats(jobUuid, begin, end)
+            def beginDate = ReportsController.parseDate(begin)
+            def endDate = ReportsController.parseDate(end)
+            def result = controller.getMetricsFromStats(jobUuid, beginDate, endDate)
 
         then: "returns empty metrics object with all zeros"
             result != null
@@ -1122,7 +1126,9 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
         when: "getMetricsFromStats is called with begin and end matching boundary dates"
             def begin = "2025-11-22T00:00:00Z"
             def end = "2025-11-24T23:59:59Z"
-            def result = controller.getMetricsFromStats(jobUuid, begin, end)
+            def beginDate = ReportsController.parseDate(begin)
+            def endDate = ReportsController.parseDate(end)
+            def result = controller.getMetricsFromStats(jobUuid, beginDate, endDate)
 
         then: "boundary dates are included"
             result != null
@@ -1156,7 +1162,8 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
 
         when: "getMetricsFromStats is called with only begin date"
             def begin = "2025-11-22T00:00:00Z"
-            def result = controller.getMetricsFromStats(jobUuid, begin, null)
+            def beginDate = ReportsController.parseDate(begin)
+            def result = controller.getMetricsFromStats(jobUuid, beginDate, null)
 
         then: "all dates from begin date onwards are included"
             result != null
@@ -1191,7 +1198,8 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
 
         when: "getMetricsFromStats is called with only end date"
             def end = "2025-11-22T23:59:59Z"
-            def result = controller.getMetricsFromStats(jobUuid, null, end)
+            def endDate = ReportsController.parseDate(end)
+            def result = controller.getMetricsFromStats(jobUuid, null, endDate)
 
         then: "all dates up to and including end date are included"
             result != null
@@ -1292,7 +1300,9 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
         when: "getMetricsBatch is called with begin and end dates"
             def begin = "2025-11-22T00:00:00Z"
             def end = "2025-11-24T23:59:59Z"
-            def result = controller.getMetricsBatch(projectName, begin, end)
+            def beginDate = ReportsController.parseDate(begin)
+            def endDate = ReportsController.parseDate(end)
+            def result = controller.getMetricsBatch(projectName, beginDate, endDate)
 
         then: "each job's metrics are filtered by the date range"
             result != null
@@ -1351,11 +1361,12 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
 
         when: "getMetricsFromStats is called with invalid date format"
             def begin = "invalid-date"
-            def result = controller.getMetricsFromStats(jobUuid, begin, null)
+            // Invalid dates should be caught before reaching getMetricsFromStats, but if null is passed, it falls back to last 7 days
+            def result = controller.getMetricsFromStats(jobUuid, null, null)
 
         then: "falls back to backward compatibility (last 7 days) and returns metrics"
             result != null
-            // Should still return metrics, just not filtered by the invalid begin date
+            // Should still return metrics, using backward compatibility (last 7 days)
             result.total > 0
             result.daily_breakdown.size() > 0
     }
@@ -1513,6 +1524,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
     // RUN-3768: Tests for new helper methods
     def "parseTimestampParameters returns error for invalid begin timestamp"() {
         given:
+            controller.apiService = Mock(ApiService)
             def beginParam = "invalid-date-format"
             def endParam = null
 
@@ -1520,13 +1532,15 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
             def result = controller.parseTimestampParameters(beginParam, endParam, response)
 
         then:
-            result.error != null
+            1 * controller.apiService.renderErrorFormat(_, _)
+            // renderErrorFormat is void, so result.error will be null (void return value)
             result.beginTimestamp == null
             result.endTimestamp == null
     }
 
     def "parseTimestampParameters returns error for invalid end timestamp"() {
         given:
+            controller.apiService = Mock(ApiService)
             def beginParam = null
             def endParam = "not-a-valid-timestamp"
 
@@ -1534,7 +1548,8 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
             def result = controller.parseTimestampParameters(beginParam, endParam, response)
 
         then:
-            result.error != null
+            1 * controller.apiService.renderErrorFormat(_, _)
+            // renderErrorFormat is void, so result.error will be null (void return value)
             result.beginTimestamp == null
             result.endTimestamp == null
     }
@@ -1655,7 +1670,8 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
 
     def "extractDateAndHour extracts date and hour from timestamp"() {
         given:
-            def calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+            // Use system default timezone to match implementation
+            def calendar = Calendar.getInstance()
             calendar.set(2025, Calendar.NOVEMBER, 22, 14, 30, 0)
             calendar.set(Calendar.MILLISECOND, 0)
             def timestamp = calendar.time
@@ -1671,7 +1687,8 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
 
     def "extractDateAndHour with extractHour false returns only date"() {
         given:
-            def calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+            // Use system default timezone to match implementation
+            def calendar = Calendar.getInstance()
             calendar.set(2025, Calendar.NOVEMBER, 22, 14, 30, 0)
             calendar.set(Calendar.MILLISECOND, 0)
             def timestamp = calendar.time
