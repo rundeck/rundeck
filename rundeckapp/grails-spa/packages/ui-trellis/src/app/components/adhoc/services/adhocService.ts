@@ -45,10 +45,11 @@ export async function runAdhocCommand(
 ): Promise<RunAdhocResponse> {
   const rundeckContext = getRundeckContext();
   
-  // Build API endpoint URL: /api/{api_version}/project/{project}/run/command/inline
+  // Build API endpoint URL: /api/{api_version}/project/{project}/run/command/inline/api
+  // Use the new API authentication endpoint for v56+
   // The api client already has baseURL set to rdBase + "api/" + apiVersion + "/"
   // So we use a relative path starting with "project/"
-  const url = `project/${request.project}/run/command/inline`;
+  const url = `project/${request.project}/run/command/inline/api`;
 
   // Convert request to query parameters (matching original jQuery.serialize() behavior)
   // This ensures meta.* fields are sent as flat query parameters that Grails parses correctly
@@ -345,4 +346,3 @@ export async function loadAdhocHistory(
 
   return response.data;
 }
-
