@@ -1,9 +1,10 @@
-import { createApp } from "vue";
+import { createApp, markRaw } from "vue";
 import VueCookies from "vue-cookies";
 import * as uiv from "uiv";
 import moment from "moment";
 
 import App from "./App.vue";
+import NextUiToggle from "../job/browse/NextUiToggle.vue";
 import { initI18n, updateLocaleMessages } from "../../utilities/i18n";
 import { getRundeckContext } from "../../../library";
 import type { UiMessage } from "../../../library/stores/UIStore";
@@ -14,6 +15,18 @@ const eventBus = rundeckContext.eventBus;
 
 const locale = rundeckContext.locale || "en_US";
 moment.locale(locale);
+
+function init() {
+  // Add NextUiToggle to UI store (similar to job/browse pattern)
+  rootStore.ui.addItems([
+    {
+      section: "theme-select",
+      location: "after",
+      visible: true,
+      widget: markRaw(NextUiToggle),
+    },
+  ]);
+}
 
 // Mount Vue app to adhoc-page-vue elements
 async function mountAdhocApp() {
@@ -91,6 +104,8 @@ if (document.readyState === "loading") {
   // DOM already ready, mount immediately
   mountAdhocApp();
 }
+
+window.addEventListener("DOMContentLoaded", init);
 
 // Note: LogViewer is now rendered directly in ExecutionOutput.vue component
 // No need for separate initialization here

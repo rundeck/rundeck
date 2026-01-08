@@ -40,13 +40,32 @@ class AdhocPage extends BasePage implements ActivityListTrait {
     By activitySectionBy = By.id("activity_section")
     By activityListBy = By.cssSelector("._history_content.vue-project-activity")
 
+    // NextUI Toggle Selectors
+    By nextUiToggleBy = By.id("nextUi")
+    By nextUiToggleLabelBy = By.cssSelector("label[for='nextUi']")
+
     AdhocPage(final SeleniumContext context, final String project) {
         super(context)
         loadDashboardForProject(project)
     }
 
+    AdhocPage(final SeleniumContext context, final String project, Map params) {
+        super(context)
+        loadDashboardForProject(project, params)
+    }
+
     void loadDashboardForProject(String projectName) {
-        this.loadPath = "/project/${projectName}/command/run"
+        loadDashboardForProject(projectName, [:])
+    }
+
+    void loadDashboardForProject(String projectName, Map params) {
+        def queryParams = new StringBuilder()
+        if (params.nextUi) {
+            queryParams.append("?nextUi=true")
+        } else if (params.legacyUi) {
+            queryParams.append("?legacyUi=true")
+        }
+        this.loadPath = "/project/${projectName}/command/run${queryParams.toString()}"
     }
 
     // Node Filter Methods
@@ -240,6 +259,23 @@ class AdhocPage extends BasePage implements ActivityListTrait {
     boolean isActivitySectionVisible() {
         try {
             return activitySection.displayed
+        } catch (Exception e) {
+            return false
+        }
+    }
+
+    // NextUI Toggle Methods
+    WebElement getNextUiToggle() {
+        el nextUiToggleBy
+    }
+
+    WebElement getNextUiToggleLabel() {
+        el nextUiToggleLabelBy
+    }
+
+    boolean isNextUiToggleDisplayed() {
+        try {
+            return nextUiToggle.displayed
         } catch (Exception e) {
             return false
         }
