@@ -936,7 +936,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
                             aborted: 0,
                             timedout: 0,
                             duration: 5 * 60 * 1000 * 10,  // 5 minutes average * 10 executions = 3,000,000ms total
-                            hourly: (0..23).collect { 0 }
+                            hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }
                         ]
                     ]
                 ]
@@ -955,7 +955,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
                             aborted: 0,
                             timedout: 0,
                             duration: 30 * 1000 * 5,  // 30 seconds average * 5 executions = 150,000ms total
-                            hourly: (0..23).collect { 0 }
+                            hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }
                         ]
                     ]
                 ]
@@ -1030,11 +1030,11 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
                 jobUuid: jobUuid,
                 contentMap: [
                     dailyMetrics: [
-                        "2025-11-19": [total: 10, succeeded: 8, failed: 2, aborted: 0, timedout: 0, duration: 10000, hourly: (0..23).collect { 0 }],
-                        "2025-11-22": [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { 0 }],
-                        "2025-11-23": [total: 15, succeeded: 14, failed: 1, aborted: 0, timedout: 0, duration: 15000, hourly: (0..23).collect { 0 }],
-                        "2025-11-24": [total: 25, succeeded: 23, failed: 2, aborted: 0, timedout: 0, duration: 25000, hourly: (0..23).collect { 0 }],
-                        "2025-11-25": [total: 5, succeeded: 5, failed: 0, aborted: 0, timedout: 0, duration: 5000, hourly: (0..23).collect { 0 }]
+                        "2025-11-19": [total: 10, succeeded: 8, failed: 2, aborted: 0, timedout: 0, duration: 10000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }],
+                        "2025-11-22": [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }],
+                        "2025-11-23": [total: 15, succeeded: 14, failed: 1, aborted: 0, timedout: 0, duration: 15000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }],
+                        "2025-11-24": [total: 25, succeeded: 23, failed: 2, aborted: 0, timedout: 0, duration: 25000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }],
+                        "2025-11-25": [total: 5, succeeded: 5, failed: 0, aborted: 0, timedout: 0, duration: 5000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }]
                     ]
                 ]
             )
@@ -1072,8 +1072,8 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
                 jobUuid: jobUuid,
                 contentMap: [
                     dailyMetrics: [
-                        "2025-11-19": [total: 10, succeeded: 8, failed: 2, aborted: 0, timedout: 0, duration: 10000, hourly: (0..23).collect { 0 }],
-                        "2025-11-20": [total: 15, succeeded: 14, failed: 1, aborted: 0, timedout: 0, duration: 15000, hourly: (0..23).collect { 0 }]
+                        "2025-11-19": [total: 10, succeeded: 8, failed: 2, aborted: 0, timedout: 0, duration: 10000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }],
+                        "2025-11-20": [total: 15, succeeded: 14, failed: 1, aborted: 0, timedout: 0, duration: 15000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }]
                     ]
                 ]
             )
@@ -1112,8 +1112,8 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
                 jobUuid: jobUuid,
                 contentMap: [
                     dailyMetrics: [
-                        "2025-11-22": [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { 0 }],
-                        "2025-11-24": [total: 25, succeeded: 23, failed: 2, aborted: 0, timedout: 0, duration: 25000, hourly: (0..23).collect { 0 }]
+                        "2025-11-22": [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }],
+                        "2025-11-24": [total: 25, succeeded: 23, failed: 2, aborted: 0, timedout: 0, duration: 25000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }]
                     ]
                 ]
             )
@@ -1146,9 +1146,9 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
                 jobUuid: jobUuid,
                 contentMap: [
                     dailyMetrics: [
-                        "2025-11-19": [total: 10, succeeded: 8, failed: 2, aborted: 0, timedout: 0, duration: 10000, hourly: (0..23).collect { 0 }],
-                        "2025-11-22": [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { 0 }],
-                        "2025-11-25": [total: 5, succeeded: 5, failed: 0, aborted: 0, timedout: 0, duration: 5000, hourly: (0..23).collect { 0 }]
+                        "2025-11-19": [total: 10, succeeded: 8, failed: 2, aborted: 0, timedout: 0, duration: 10000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }],
+                        "2025-11-22": [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }],
+                        "2025-11-25": [total: 5, succeeded: 5, failed: 0, aborted: 0, timedout: 0, duration: 5000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }]
                     ]
                 ]
             )
@@ -1181,9 +1181,9 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
                 jobUuid: jobUuid,
                 contentMap: [
                     dailyMetrics: [
-                        "2025-11-19": [total: 10, succeeded: 8, failed: 2, aborted: 0, timedout: 0, duration: 10000, hourly: (0..23).collect { 0 }],
-                        "2025-11-22": [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { 0 }],
-                        "2025-11-25": [total: 5, succeeded: 5, failed: 0, aborted: 0, timedout: 0, duration: 5000, hourly: (0..23).collect { 0 }]
+                        "2025-11-19": [total: 10, succeeded: 8, failed: 2, aborted: 0, timedout: 0, duration: 10000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }],
+                        "2025-11-22": [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }],
+                        "2025-11-25": [total: 5, succeeded: 5, failed: 0, aborted: 0, timedout: 0, duration: 5000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }]
                     ]
                 ]
             )
@@ -1224,7 +1224,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
                     aborted: 0,
                     timedout: 0,
                     duration: 10000 + (daysAgo * 1000),
-                    hourly: (0..23).collect { 0 }
+                    hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }
                 ]
             }
 
@@ -1270,9 +1270,9 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
                 jobUuid: job1Uuid,
                 contentMap: [
                     dailyMetrics: [
-                        "2025-11-19": [total: 10, succeeded: 8, failed: 2, aborted: 0, timedout: 0, duration: 10000, hourly: (0..23).collect { 0 }],
-                        "2025-11-22": [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { 0 }],
-                        "2025-11-24": [total: 15, succeeded: 14, failed: 1, aborted: 0, timedout: 0, duration: 15000, hourly: (0..23).collect { 0 }]
+                        "2025-11-19": [total: 10, succeeded: 8, failed: 2, aborted: 0, timedout: 0, duration: 10000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }],
+                        "2025-11-22": [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }],
+                        "2025-11-24": [total: 15, succeeded: 14, failed: 1, aborted: 0, timedout: 0, duration: 15000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }]
                     ]
                 ]
             )
@@ -1283,7 +1283,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
                 jobUuid: job2Uuid,
                 contentMap: [
                     dailyMetrics: [
-                        "2025-11-19": [total: 5, succeeded: 5, failed: 0, aborted: 0, timedout: 0, duration: 5000, hourly: (0..23).collect { 0 }]
+                        "2025-11-19": [total: 5, succeeded: 5, failed: 0, aborted: 0, timedout: 0, duration: 5000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }]
                     ]
                 ]
             )
@@ -1337,7 +1337,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
                     aborted: 0,
                     timedout: 0,
                     duration: 10000 + (daysAgo * 1000),
-                    hourly: (0..23).collect { 0 }
+                    hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }
                 ]
             }
 
@@ -1381,9 +1381,9 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
                 jobUuid: jobUuid,
                 contentMap: [
                     dailyMetrics: [
-                        "2025-11-19": [total: 10, succeeded: 8, failed: 2, aborted: 0, timedout: 0, duration: 10000, hourly: (0..23).collect { 0 }],
-                        "2025-11-22": [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { 0 }],
-                        "2025-11-24": [total: 15, succeeded: 14, failed: 1, aborted: 0, timedout: 0, duration: 15000, hourly: (0..23).collect { 0 }]
+                        "2025-11-19": [total: 10, succeeded: 8, failed: 2, aborted: 0, timedout: 0, duration: 10000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }],
+                        "2025-11-22": [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }],
+                        "2025-11-24": [total: 15, succeeded: 14, failed: 1, aborted: 0, timedout: 0, duration: 15000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }]
                     ]
                 ]
             )
@@ -1484,7 +1484,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
                 jobUuid: jobUuid,
                 contentMap: [
                     dailyMetrics: [
-                        (today): [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { 0 }]
+                        (today): [total: 20, succeeded: 18, failed: 2, aborted: 0, timedout: 0, duration: 20000, hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }]
                     ]
                 ]
             )
@@ -1508,6 +1508,181 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
             jsonResponse.total == 20
             jsonResponse.succeeded == 18
             jsonResponse.failed == 2
+    }
+
+    // RUN-3768: Tests for new helper methods
+    def "parseTimestampParameters returns error for invalid begin timestamp"() {
+        given:
+            def beginParam = "invalid-date-format"
+            def endParam = null
+
+        when:
+            def result = controller.parseTimestampParameters(beginParam, endParam, response)
+
+        then:
+            result.error != null
+            result.beginTimestamp == null
+            result.endTimestamp == null
+    }
+
+    def "parseTimestampParameters returns error for invalid end timestamp"() {
+        given:
+            def beginParam = null
+            def endParam = "not-a-valid-timestamp"
+
+        when:
+            def result = controller.parseTimestampParameters(beginParam, endParam, response)
+
+        then:
+            result.error != null
+            result.beginTimestamp == null
+            result.endTimestamp == null
+    }
+
+    def "parseTimestampParameters parses valid timestamps correctly"() {
+        given:
+            def beginParam = "2025-11-22T10:30:00Z"
+            def endParam = "2025-11-24T14:45:00Z"
+
+        when:
+            def result = controller.parseTimestampParameters(beginParam, endParam, response)
+
+        then:
+            result.error == null
+            result.beginTimestamp != null
+            result.endTimestamp != null
+    }
+
+    def "aggregateHourlyHeatmap handles new Map format correctly"() {
+        given: "metrics with new hourly Map format"
+            def processedMetrics = [
+                "2025-11-22": [
+                    hourly: (0..23).collect { hour ->
+                        hour == 10 ? [total: 5, succeeded: 3, failed: 2, aborted: 0, timedout: 0] :
+                        hour == 14 ? [total: 3, succeeded: 2, failed: 1, aborted: 0, timedout: 0] :
+                        [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0]
+                    }
+                ],
+                "2025-11-23": [
+                    hourly: (0..23).collect { hour ->
+                        hour == 10 ? [total: 2, succeeded: 2, failed: 0, aborted: 0, timedout: 0] :
+                        hour == 16 ? [total: 4, succeeded: 3, failed: 0, aborted: 1, timedout: 0] :
+                        [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0]
+                    }
+                ]
+            ]
+
+        when:
+            def heatmap = controller.aggregateHourlyHeatmap(processedMetrics)
+
+        then:
+            heatmap.size() == 24
+            heatmap[10] == 7  // 5 + 2
+            heatmap[14] == 3  // 3 + 0
+            heatmap[16] == 4  // 0 + 4
+            heatmap[0] == 0
+            heatmap[23] == 0
+    }
+
+    def "aggregateHourlyHeatmap handles old Integer format for backward compatibility"() {
+        given: "metrics with old hourly Integer format"
+            def processedMetrics = [
+                "2025-11-22": [
+                    hourly: (0..23).collect { hour ->
+                        hour == 10 ? 5 : hour == 14 ? 3 : 0
+                    }
+                ]
+            ]
+
+        when:
+            def heatmap = controller.aggregateHourlyHeatmap(processedMetrics)
+
+        then:
+            heatmap.size() == 24
+            heatmap[10] == 5
+            heatmap[14] == 3
+            heatmap[0] == 0
+    }
+
+    def "applyHourLevelFilter correctly filters hours and recalculates aggregates"() {
+        given: "a day's metrics with executions spread across hours"
+            def dateStr = "2025-11-22"
+            def dayMetrics = [
+                total: 20,
+                succeeded: 15,
+                failed: 3,
+                aborted: 1,
+                timedout: 1,
+                duration: 20000,
+                hourly: (0..23).collect { hour ->
+                    // Hour 8: 5 executions
+                    if (hour == 8) return [total: 5, succeeded: 4, failed: 1, aborted: 0, timedout: 0]
+                    // Hour 10: 8 executions
+                    if (hour == 10) return [total: 8, succeeded: 6, failed: 1, aborted: 1, timedout: 0]
+                    // Hour 14: 7 executions
+                    if (hour == 14) return [total: 7, succeeded: 5, failed: 1, aborted: 0, timedout: 1]
+                    return [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0]
+                }
+            ]
+            def beginHour = 10
+
+        when:
+            def filtered = controller.applyHourLevelFilter(dateStr, dayMetrics, beginHour)
+
+        then:
+            // Hours before 10 should be zeroed out
+            filtered.hourly[8].total == 0
+            filtered.hourly[8].succeeded == 0
+
+            // Hour 10 and after should be preserved
+            filtered.hourly[10].total == 8
+            filtered.hourly[10].succeeded == 6
+            filtered.hourly[14].total == 7
+            filtered.hourly[14].succeeded == 5
+
+            // Aggregates should be recalculated (only hours 10-23)
+            filtered.total == 15  // 8 + 7
+            filtered.succeeded == 11  // 6 + 5
+            filtered.failed == 2  // 1 + 1
+            filtered.aborted == 1  // 1 + 0
+            filtered.timedout == 1  // 0 + 1
+
+            // Duration should be proportionally adjusted
+            // Original: 20 executions with 20000ms duration
+            // Filtered: 15 executions, so 20000 * (15/20) = 15000ms
+            filtered.duration == 15000
+    }
+
+    def "extractDateAndHour extracts date and hour from timestamp"() {
+        given:
+            def calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+            calendar.set(2025, Calendar.NOVEMBER, 22, 14, 30, 0)
+            calendar.set(Calendar.MILLISECOND, 0)
+            def timestamp = calendar.time
+
+        when:
+            def result = controller.extractDateAndHour(timestamp, true)
+
+        then:
+            result.date != null
+            result.date.toString() == "2025-11-22"
+            result.hour == 14
+    }
+
+    def "extractDateAndHour with extractHour false returns only date"() {
+        given:
+            def calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+            calendar.set(2025, Calendar.NOVEMBER, 22, 14, 30, 0)
+            calendar.set(Calendar.MILLISECOND, 0)
+            def timestamp = calendar.time
+
+        when:
+            def result = controller.extractDateAndHour(timestamp, false)
+
+        then:
+            result.date != null
+            result.date.toString() == "2025-11-22"
+            result.hour == null
     }
 
 

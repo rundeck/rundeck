@@ -71,7 +71,7 @@ class GormJobStatsDataProviderSpec extends Specification implements DataTest {
                             aborted: 0,
                             timedout: 0,
                             duration: 1000,
-                            hourly: (0..23).collect { 0 }
+                            hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }
                         ]
                     ]
                 ]
@@ -128,12 +128,72 @@ class GormJobStatsDataProviderSpec extends Specification implements DataTest {
             provider.updateJobStats(jobUuid, 1L, 1000L, "succeeded", dateCompleted)
             provider.updateJobStats(jobUuid, 2L, 2000L, "succeeded", dateCompleted)
 
-        then: "hourly distribution is tracked"
+        then: "hourly distribution is tracked with status breakdown"
             def stats = ScheduledExecutionStats.findByJobUuid(jobUuid)
             def contentMap = stats.getContentMap()
             def todayMetrics = contentMap.dailyMetrics[today]
-            todayMetrics.hourly[14] == 2  // Two executions at 2 PM
-            todayMetrics.hourly.findAll { it > 0 }.size() == 1  // Only one hour has executions
+            todayMetrics.hourly[14].total == 2  // Two executions at 2 PM
+            todayMetrics.hourly[14].succeeded == 2  // Both succeeded
+            todayMetrics.hourly[14].failed == 0
+            todayMetrics.hourly[14].aborted == 0
+            todayMetrics.hourly[14].timedout == 0
+            todayMetrics.hourly.findAll { it.total > 0 }.size() == 1  // Only one hour has executions
+    }
+
+    def "updateJobStats tracks hourly status breakdown for different statuses"() {
+        given: "a job UUID and specific hours"
+            def jobUuid = UUID.randomUUID().toString()
+            def today = LocalDate.now().toString()
+            def calendar = Calendar.getInstance()
+
+        when: "executions with different statuses are added at different hours"
+            // Hour 10: 2 succeeded
+            calendar.set(Calendar.HOUR_OF_DAY, 10)
+            provider.updateJobStats(jobUuid, 1L, 1000L, "succeeded", calendar.time)
+            provider.updateJobStats(jobUuid, 2L, 2000L, "succeeded", calendar.time)
+
+            // Hour 14: 1 succeeded, 1 failed
+            calendar.set(Calendar.HOUR_OF_DAY, 14)
+            provider.updateJobStats(jobUuid, 3L, 3000L, "succeeded", calendar.time)
+            provider.updateJobStats(jobUuid, 4L, 4000L, "failed", calendar.time)
+
+            // Hour 16: 1 aborted, 1 timedout
+            calendar.set(Calendar.HOUR_OF_DAY, 16)
+            provider.updateJobStats(jobUuid, 5L, 5000L, "aborted", calendar.time)
+            provider.updateJobStats(jobUuid, 6L, 6000L, "timedout", calendar.time)
+
+        then: "each hour tracks its status breakdown correctly"
+            def stats = ScheduledExecutionStats.findByJobUuid(jobUuid)
+            def contentMap = stats.getContentMap()
+            def todayMetrics = contentMap.dailyMetrics[today]
+
+            // Hour 10 verification
+            todayMetrics.hourly[10].total == 2
+            todayMetrics.hourly[10].succeeded == 2
+            todayMetrics.hourly[10].failed == 0
+            todayMetrics.hourly[10].aborted == 0
+            todayMetrics.hourly[10].timedout == 0
+
+            // Hour 14 verification
+            todayMetrics.hourly[14].total == 2
+            todayMetrics.hourly[14].succeeded == 1
+            todayMetrics.hourly[14].failed == 1
+            todayMetrics.hourly[14].aborted == 0
+            todayMetrics.hourly[14].timedout == 0
+
+            // Hour 16 verification
+            todayMetrics.hourly[16].total == 2
+            todayMetrics.hourly[16].succeeded == 0
+            todayMetrics.hourly[16].failed == 0
+            todayMetrics.hourly[16].aborted == 1
+            todayMetrics.hourly[16].timedout == 1
+
+            // Total verification
+            todayMetrics.total == 6
+            todayMetrics.succeeded == 3
+            todayMetrics.failed == 1
+            todayMetrics.aborted == 1
+            todayMetrics.timedout == 1
     }
 
     def "updateJobStats maintains rolling-10 logic for existing UI"() {
@@ -255,7 +315,7 @@ class GormJobStatsDataProviderSpec extends Specification implements DataTest {
                             aborted: 0,
                             timedout: 0,
                             duration: 5000,
-                            hourly: (0..23).collect { 0 }
+                            hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }
                         ]
                     ]
                 ]
