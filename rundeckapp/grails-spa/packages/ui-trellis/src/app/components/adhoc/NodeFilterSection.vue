@@ -38,6 +38,7 @@
             empty-mode="blank"
             view="embed"
             :paging="false"
+            :no-margin-bottom="true"
             @filter="handleFilter"
             @update:total="handleTotalUpdate"
             @update:loading="handleLoadingUpdate"
@@ -153,7 +154,5 @@ export default defineComponent({
 });
 </script>
 
-<style scoped>
-/* Styles inherited from existing CSS */
-</style>
+
 

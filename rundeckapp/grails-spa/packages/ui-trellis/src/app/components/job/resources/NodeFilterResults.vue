@@ -1,5 +1,5 @@
 <template>
-  <div class="well well-sm matchednodes node_filter_results__matched_nodes">
+  <div class="well well-sm matchednodes node_filter_results__matched_nodes" :class="{ 'no-margin-bottom': noMarginBottom }">
     <div class="row">
       <div class="col-sm-6">
         <span
@@ -96,6 +96,11 @@ export default defineComponent({
       type: String,
       required: false,
       default: () => getRundeckContext().projectName,
+    },
+    noMarginBottom: {
+      type: Boolean,
+      required: false,
+      default: false,
     },
   },
   emits: ["filter", "update:total", "update:loading", "update:error"],
@@ -268,3 +273,9 @@ export default defineComponent({
   },
 });
 </script>
+
+<style scoped>
+.no-margin-bottom {
+  margin-bottom: 0 !important;
+}
+</style>

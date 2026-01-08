@@ -103,14 +103,13 @@
               <i class="glyphicon glyphicon-cog" aria-hidden="true"></i>
             </button>
 
-            <a
+            <button
+              type="button"
               class="btn btn-cta btn-fill runbutton"
               :class="{ disabled: isRunDisabled }"
               :disabled="isRunDisabled"
               :aria-label="running ? $t('running1') : (nodeTotal > 0 ? $t('run.on.count.nodes', [nodeTotal, nodesTitle]) : $t('adhoc.no.nodes.matched'))"
               :aria-disabled="isRunDisabled"
-              role="button"
-              tabindex="0"
               @click.prevent="handleSubmit"
             >
               <span v-if="!running">
@@ -123,7 +122,7 @@
               <span v-if="running">
                 {{ $t("running1") }}
               </span>
-            </a>
+            </button>
           </span>
         </span>
 

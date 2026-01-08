@@ -11,14 +11,16 @@
     </div>
 
     <!-- Execution Features: Show only when execution mode is active -->
-    <node-filter-section
-      v-if="executionModeActive && nodeFilterStore"
-      :node-filter-store="nodeFilterStore"
-      :max-shown="filterParams.matchedNodesMaxCount"
-      :project="projectName"
-      @node-total-changed="handleNodeTotalChanged"
-      @node-error-changed="handleNodeErrorChanged"
-    />
+    <div class="col-xs-12">
+      <node-filter-section
+        v-if="executionModeActive && nodeFilterStore"
+        :node-filter-store="nodeFilterStore"
+        :max-shown="filterParams.matchedNodesMaxCount"
+        :project="projectName"
+        @node-total-changed="handleNodeTotalChanged"
+        @node-error-changed="handleNodeErrorChanged"
+      />
+    </div>
 
     <adhoc-command-form
       v-if="executionModeActive && nodeFilterStore"
@@ -198,3 +200,4 @@ export default defineComponent({
   },
 });
 </script>
+
