@@ -2,7 +2,23 @@ import { mount, VueWrapper } from "@vue/test-utils";
 import AdhocCommandForm from "../AdhocCommandForm.vue";
 import { NodeFilterStore } from "../../../../library/stores/NodeFilterLocalstore";
 
+jest.mock("../../../../library/services/api", () => ({
+  apiClient: jest.fn(() => ({
+    get: jest.fn(),
+    post: jest.fn(),
+  })),
+  api: {
+    get: jest.fn(),
+    post: jest.fn(),
+  },
+}));
+
 jest.mock("../../../../library", () => ({
+  getRundeckContext: jest.fn().mockReturnValue({
+    apiVersion: "44",
+    rdBase: "http://localhost:4440",
+    projectName: "test-project",
+  }),
   getAppLinks: jest.fn().mockReturnValue({
     adhocHistoryAjax: "/api/adhoc/history",
     scheduledExecutionRunAdhocInline: "/api/execution/runAdhoc",

@@ -3,6 +3,16 @@ import App from "../App.vue";
 import { NodeFilterStore } from "../../../../library/stores/NodeFilterLocalstore";
 // AdhocCommandStore removed - state is now local to AdhocCommandForm
 
+// Mock CancelToken before importing components that use logViewer
+jest.mock("@esfx/canceltoken", () => ({
+  CancelToken: {
+    source: jest.fn(() => ({
+      token: { signaled: false },
+      cancel: jest.fn(),
+    })),
+  },
+}));
+
 jest.mock("../../../utilities/loadJsonData", () => ({
   loadJsonData: jest.fn((id: string) => {
     if (id === "filterParamsJSON") {
@@ -33,11 +43,39 @@ jest.mock("../../../../library/services/api", () => ({
   })),
 }));
 
+jest.mock("../../../../library/rundeckService", () => ({
+  getRundeckContext: jest.fn().mockReturnValue({
+    projectName: "test-project",
+    apiVersion: "44",
+    rdBase: "http://localhost:4440",
+    rootStore: {
+      theme: { theme: "dark" },
+      executionOutputStore: {
+        createOrGet: jest.fn(),
+      },
+      ui: {
+        itemsForLocation: jest.fn(() => []),
+        addWatcher: jest.fn(),
+      },
+    },
+  }),
+}));
+
 jest.mock("../../../../library", () => ({
   getRundeckContext: jest.fn().mockReturnValue({
     projectName: "test-project",
     apiVersion: "44",
     rdBase: "http://localhost:4440",
+    rootStore: {
+      theme: { theme: "dark" },
+      executionOutputStore: {
+        createOrGet: jest.fn(),
+      },
+      ui: {
+        itemsForLocation: jest.fn(() => []),
+        addWatcher: jest.fn(),
+      },
+    },
     data: {
       jobslistDateFormatMoment: "YYYY-MM-DD",
       runningDateFormatMoment: "YYYY-MM-DD HH:mm:ss",
