@@ -23,34 +23,54 @@
         <skeleton />
       </div>
     </div>
-    <template v-if="Object.keys(groupedProviders).length > 0">
-      <template v-for="(group, key) in groupedProviders" :key="key">
-        <div v-if="group.isGroup" class="list-group-header text-body">
-          <div v-if="group.iconUrl" class="img-icon">
-            <img :src="group.iconUrl" />
+    <Accordion v-if="Object.keys(groupedProviders.highlighted).length > 0" :value="[]" multiple>
+      <AccordionPanel
+        v-for="(group, key) in groupedProviders.highlighted"
+        :key="key"
+        :value="key"
+      >
+        <AccordionHeader @click="handleAccordionClick(group, key)">
+          <div class="accordion-header-content">
+            <div v-if="group.iconUrl" class="img-icon">
+              <img :src="group.iconUrl" />
+            </div>
+            <span class="accordion-title">{{ key }}</span>
+            <span v-if="group.isGroup" class="provider-count">
+              ({{ group.providers.length }} {{ $t('plugins') }})
+            </span>
           </div>
-          {{key}} ({{ group.providers.length }} {{ $t('plugins') }})
-        </div>
-        <template v-else>
-          <button
-            v-for="prov in group.providers"
-            :key="prov.name"
-            class="list-group-item"
-            data-test="provider-button"
-            v-bind="dataStepType(selectedService, prov.name)"
-            @click.prevent="chooseProviderAdd(selectedService, prov.name)"
-          >
-            <plugin-info
-              :detail="prov"
-              :show-description="true"
-              :show-extended="false"
-            >
-              <template #descriptionprefix> - </template>
-            </plugin-info>
-          </button>
-        </template>
-      </template>
-    </template>
+        </AccordionHeader>
+      </AccordionPanel>
+    </Accordion>
+
+    <!-- Divider title -->
+    <p v-if="dividerTitle" class="text-heading--md subsection-heading divider-title">
+      {{ dividerTitle }}
+    </p>
+
+    <!-- Non-highlighted providers accordion -->
+    <Accordion v-if="Object.keys(groupedProviders.nonHighlighted).length > 0" :value="[]" multiple>
+      <AccordionPanel
+        v-for="(group, key) in groupedProviders.nonHighlighted"
+        :key="key"
+        :value="key"
+      >
+        <AccordionHeader @click="handleAccordionClick(group, key)">
+          <div class="accordion-header-content">
+            <div v-if="group.iconUrl" class="img-icon">
+              <img :src="group.iconUrl" />
+            </div>
+            <span class="accordion-title">{{ key }}</span>
+            <span v-if="group.isGroup" class="provider-count">
+              ({{ group.providers.length }} {{ $t('plugins') }})
+            </span>
+          </div>
+        </AccordionHeader>
+        <AccordionContent v-if="group.isGroup">
+          <p class="text-body--sm">Grouped provider layout (to be implemented)</p>
+        </AccordionContent>
+      </AccordionPanel>
+    </Accordion>
     <template #footer>
       <btn data-testid="cancel-button" class="text-button" @click="$emit('cancel')">
         {{ $t("Cancel") }}
@@ -66,12 +86,16 @@ import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
 import { ServiceType } from "@/library/stores/Plugins";
 import { PtSelectButton } from "@/library/components/primeVue";
 import Skeleton from "primevue/skeleton";
+import Accordion from "primevue/accordion";
+import AccordionPanel from "primevue/accordionpanel";
+import AccordionHeader from "primevue/accordionheader";
+import AccordionContent from "primevue/accordioncontent";
 
 const context = getRundeckContext();
 
 export default defineComponent({
   name: "ChoosePluginsEAModal",
-  components: { PluginSearch, PluginInfo, PtSelectButton, Skeleton },
+  components: { PluginSearch, PluginInfo, PtSelectButton, Skeleton, Accordion, AccordionPanel, AccordionHeader, AccordionContent },
   props: {
     title: {
       type: String,
@@ -108,6 +132,7 @@ export default defineComponent({
       modalShown: false,
       searchQuery: "",
       selectedService: ServiceType.WorkflowNodeStep,
+      groupExpanded: false,
     };
   },
   computed: {
@@ -163,14 +188,15 @@ export default defineComponent({
         };
       });
     },
-    groupedProviders(): Object {
-      const result = {};
+    groupedProviders(): { highlighted: Object; nonHighlighted: Object } {
+      const highlightedResult = {};
+      const nonHighlightedResult = {};
       const activeService = this.filteredServices?.find(
         service => service.service === this.selectedService
       );
 
       if (!activeService) {
-        return result;
+        return { highlighted: highlightedResult, nonHighlighted: nonHighlightedResult };
       }
 
       // First, add highlighted providers (rendered individually)
@@ -178,7 +204,7 @@ export default defineComponent({
       const nonHighlighted = activeService.providers.filter(p => !p.isHighlighted);
 
       highlighted.forEach(provider => {
-        result[provider.title] = {
+        highlightedResult[provider.title] = {
           isGroup: false,
           iconUrl: provider.iconUrl,
           providers: [provider],
@@ -191,17 +217,17 @@ export default defineComponent({
 
         if (groupBy) {
           // Provider belongs to a group
-          if (!result[groupBy]) {
-            result[groupBy] = {
+          if (!nonHighlightedResult[groupBy]) {
+            nonHighlightedResult[groupBy] = {
               isGroup: true,
               iconUrl: provider.providerMetadata?.groupIconUrl,
               providers: [],
             };
           }
-          result[groupBy].providers.push(provider);
+          nonHighlightedResult[groupBy].providers.push(provider);
         } else {
           // Ungrouped provider - render individually
-          result[provider.title] = {
+          nonHighlightedResult[provider.title] = {
             isGroup: false,
             iconUrl: provider.iconUrl,
             providers: [provider],
@@ -209,7 +235,24 @@ export default defineComponent({
         }
       });
 
-      return result;
+      return { highlighted: highlightedResult, nonHighlighted: nonHighlightedResult };
+    },
+    dividerTitle(): string {
+      // Count total providers, not accordion items
+      let totalProviders = 0;
+      Object.values(this.groupedProviders.nonHighlighted).forEach((group: any) => {
+        totalProviders += group.providers.length;
+      });
+
+      if (totalProviders === 0) {
+        return "";
+      }
+
+      let titleString = "node.step.plugin.plural";
+      if (this.selectedService === ServiceType.WorkflowStep) {
+        titleString = "workflow.step.plugin.plural";
+      }
+      return this.$t(titleString, [totalProviders]);
     }
   },
   watch: {
@@ -280,6 +323,18 @@ export default defineComponent({
         (provider) => provider.isHighlighted === false,
       );
     },
+    handleAccordionClick(group: any, key: string) {
+      if (group.isGroup) {
+        // For grouped providers: set flag for future layout
+        this.groupExpanded = true;
+        // Future: show different layout for group selection
+      } else {
+        // For single providers: emit selected event
+        const provider = group.providers[0];
+        this.chooseProviderAdd(this.selectedService, provider.name);
+        // Note: chooseProviderAdd already emits 'selected' which closes the modal
+      }
+    },
   },
 });
 </script>
@@ -323,6 +378,10 @@ export default defineComponent({
   .subsection-heading {
     margin-bottom: 12px;
   }
+
+  .divider-title {
+    margin-top: 16px;
+  }
 }
 
 .placeholder {
@@ -342,5 +401,21 @@ export default defineComponent({
     height: auto;
     max-width: 80%;
   }
+}
+
+.accordion-header-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.accordion-title {
+  font-weight: var(--fontWeights-medium);
+}
+
+.provider-count {
+  color: var(--colors-gray-600);
+  margin-left: 0.25rem;
 }
 </style>
