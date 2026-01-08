@@ -62,7 +62,7 @@ class AccessControlSpec extends SeleniumBase {
             aclPage.uploadSubmitButton.click()
             aclPage.waitForPoliciesCountToBeAtLeast 1
         then:
-            aclPage.policiesTitleList.size() >= 1
+            aclPage.policiesTitleList.size() == 1
             aclPage.policiesTitleList.any { it.getText() == validPolicyName }
     }
 
