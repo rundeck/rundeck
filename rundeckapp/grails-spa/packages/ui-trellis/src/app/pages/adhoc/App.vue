@@ -190,9 +190,10 @@ export default defineComponent({
         console.warn("[App.vue] Cannot set filter - nodeFilterStore:", !!this.nodeFilterStore, "data:", data);
       }
     },
-    handleExecutionStarted(data: { id: string }) {
+    handleExecutionStarted(data: { id: string | number }) {
       // Receive execution ID from AdhocCommandForm and pass to ExecutionOutput
-      this.currentExecutionId = data.id;
+      // Convert to string to match prop type expectations (ExecutionOutput expects String)
+      this.currentExecutionId = String(data.id);
     },
   },
 });

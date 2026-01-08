@@ -533,7 +533,6 @@ export default defineComponent({
       // Emit completion event for AdhocCommandForm to handle
       // Emit IMMEDIATELY (don't wait for nextTick) so button state updates promptly
       if (this.eventBus && typeof this.eventBus.emit === "function") {
-        console.log("[ExecutionOutput] Emitting adhoc-execution-complete event for executionId:", this.executionId);
         this.eventBus.emit("adhoc-execution-complete", { executionId: this.executionId });
       }
     },

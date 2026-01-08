@@ -1,5 +1,7 @@
 import { api } from "../../../../library/services/api";
 import { getRundeckContext } from "../../../../library/rundeckService";
+import { getAppLinks } from "../../../../library";
+import { _genUrl } from "../../../../library/utilities/genUrl";
 import axios from "axios";
 
 export interface RunAdhocRequest {
@@ -289,5 +291,58 @@ export async function getExecutionDetails(
     ...execution,
     failedNodes: failedNodes.length > 0 ? failedNodes : undefined,
   };
+}
+
+export interface RecentCommandExecution {
+  href?: string;
+  title?: string;
+  execid?: string;
+  filter?: string;
+  extraMetadata?: any;
+  status?: string;
+  succeeded?: boolean;
+}
+
+export interface AdhocHistoryResponse {
+  executions?: RecentCommandExecution[];
+}
+
+/**
+ * Load recent adhoc command history
+ * Uses: GET /execution/adhocHistoryAjax?project={project}&max={max}
+ * Note: This is not an API endpoint, so we use axios directly with full URL
+ * 
+ * The original code uses: _genUrl(appLinks.adhocHistoryAjax, {max: self.loadMax})
+ * The appLinks.adhocHistoryAjax URL already includes the project parameter from projParams,
+ * so we use _genUrl to append max parameter correctly (using & if URL has ?, ? otherwise)
+ */
+export async function loadAdhocHistory(
+  project: string,
+  max: number = 20,
+): Promise<AdhocHistoryResponse> {
+  const rundeckContext = getRundeckContext();
+  
+  // Get appLinks - adhocHistoryAjax already includes project parameter from projParams
+  // Format: /execution/adhocHistoryAjax?project={project}
+  const appLinks = getAppLinks();
+  const baseUrl = `${rundeckContext.rdBase}${appLinks.adhocHistoryAjax}`;
+  
+  // Use _genUrl to append max parameter correctly (matches original behavior)
+  // _genUrl checks if URL has ? and uses & or ? accordingly
+  const url = _genUrl(baseUrl, { max });
+
+  // Use axios directly since this is not an API endpoint
+  const response = await axios.get<AdhocHistoryResponse>(url, {
+    headers: {
+      "x-rundeck-ajax": "true",
+      "Accept": "application/json",
+    },
+  });
+
+  if (response.status !== 200) {
+    throw new Error(`Failed to load adhoc history: ${response.statusText}`);
+  }
+
+  return response.data;
 }
 

@@ -221,6 +221,7 @@ import { defineComponent } from "vue";
 import { NodeFilterStore } from "../../../library/stores/NodeFilterLocalstore";
 import { runAdhocCommand } from "./services/adhocService";
 import { getAppLinks } from "../../../library";
+import { loadAdhocHistory } from "./services/adhocService";
 import UiSocket from "../../../library/components/utils/UiSocket.vue";
 import type { PropType } from "vue";
 
@@ -406,13 +407,8 @@ export default defineComponent({
           this.recentCommandsLoaded = false;
           this.error = null;
 
-          const apiUrl = getAppLinks().adhocHistoryAjax;
-          const response = await fetch(`${apiUrl}?max=${this.loadMax}`);
-          if (!response.ok) {
-            throw new Error(`Request failed: ${response.statusText}`);
-          }
-
-          const data = await response.json();
+          // Use adhocService to load recent commands (matches original API call)
+          const data = await loadAdhocHistory(this.project, this.loadMax);
           this.recentCommandsLoaded = true;
 
           if (data.executions && Array.isArray(data.executions)) {
@@ -509,8 +505,10 @@ export default defineComponent({
 
         // Emit execution started event with ID (not ko-adhoc-running)
         // App.vue will pass executionId to ExecutionOutput component
-        this.$emit("execution-started", { id: response.id! });
-        this.$emit("submit", { id: response.id! });
+        // Convert to string to match prop type expectations
+        const executionId = String(response.id!);
+        this.$emit("execution-started", { id: executionId });
+        this.$emit("submit", { id: executionId });
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         this.showError(this.$t("adhoc.request.failed") + ": " + errorMessage);
@@ -522,10 +520,8 @@ export default defineComponent({
       return false;
     },
     handleExecutionComplete() {
-      console.log("[AdhocCommandForm] handleExecutionComplete called, current running state:", this.running);
       // Clear running state IMMEDIATELY
       this.running = false;
-      console.log("[AdhocCommandForm] Running state set to:", this.running);
 
       // Re-enable command input and focus it (matching original afterRun() behavior)
       this.$nextTick(() => {
