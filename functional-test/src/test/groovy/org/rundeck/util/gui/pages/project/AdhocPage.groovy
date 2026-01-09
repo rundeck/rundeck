@@ -9,6 +9,8 @@ import org.rundeck.util.gui.pages.BasePage
 @CompileStatic
 class AdhocPage extends BasePage implements ActivityListTrait {
     String loadPath = ""
+    boolean nextUi = false
+    String projectName
 
     // Node Filter Selectors
     By nodeFilterInputBy = By.cssSelector("input[name='filter'], #schedJobNodeFilter")
@@ -49,24 +51,22 @@ class AdhocPage extends BasePage implements ActivityListTrait {
 
     AdhocPage(final SeleniumContext context, final String project) {
         super(context)
+        this.projectName = project
         loadDashboardForProject(project)
     }
 
-    AdhocPage(final SeleniumContext context, final String project, Map params) {
-        super(context)
-        loadDashboardForProject(project, params)
-    }
-
     void loadDashboardForProject(String projectName) {
-        loadDashboardForProject(projectName, [:])
+        this.projectName = projectName
+        this.loadPath = "/project/${projectName}/command/run${nextUi ? '?nextUi=true' : ''}"
     }
 
-    void loadDashboardForProject(String projectName, Map params) {
-        def queryParams = new StringBuilder()
-        if (params && params.nextUi) {
-            queryParams.append("?nextUi=true")
+    @Override
+    void go() {
+        // Rebuild loadPath with current nextUi value before navigating
+        if (projectName) {
+            loadDashboardForProject(projectName)
         }
-        this.loadPath = "/project/${projectName}/command/run${queryParams.toString()}"
+        super.go()
     }
 
     /**
@@ -74,7 +74,7 @@ class AdhocPage extends BasePage implements ActivityListTrait {
      * This ensures Vue components are ready before interacting with them
      */
     void waitForVueAppIfNeeded() {
-        if (loadPath.contains("nextUi=true")) {
+        if (nextUi) {
             // Wait for Vue mount point to be present
             waitForElementVisible(vueAppMountBy)
             // Wait for Vue app to render command input (indicates app is ready)
@@ -86,7 +86,7 @@ class AdhocPage extends BasePage implements ActivityListTrait {
      * Check if this page instance is using the Vue (next) UI
      */
     boolean isNextUi() {
-        return loadPath.contains("nextUi=true")
+        return nextUi
     }
 
     // Node Filter Methods
