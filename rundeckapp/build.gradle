@@ -125,7 +125,14 @@ repositories {
     mavenLocal()
     maven { url "https://repo.grails.org/grails/core" }
     maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
-    maven { url "https://jitpack.io" }
+    
+    // PackageCloud com.rundeck.plugins repositories
+    maven {
+        url "https://packagecloud.io/pagerduty/rundeckpro-test/maven2"
+    }
+    maven {
+        url "https://packagecloud.io/pagerduty/rundeckpro/maven2"
+    }
 }
 sourceSets {
     main {
