@@ -97,6 +97,7 @@
       class="schedJobNodeFilter form-control"
       :autofocus="autofocus"
       :placeholder="queryFieldPlaceholderText || $t('enter.a.node.filter')"
+      :aria-label="queryFieldPlaceholderText || $t('enter.a.node.filter')"
       data-testid="filter-input"
       @keydown.enter.prevent="doSearch"
       @blur="doSearch"

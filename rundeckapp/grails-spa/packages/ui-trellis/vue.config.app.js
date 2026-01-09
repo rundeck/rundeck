@@ -40,6 +40,7 @@ module.exports = {
       entry: "./src/app/pages/project-activity/main.js",
     },
     "pages/repository": { entry: "./src/app/pages/repository/main.js" },
+    "pages/adhoc": { entry: "./src/app/pages/adhoc/main.ts" },
     "pages/command": { entry: "./src/app/pages/command/main.ts" },
     "pages/community-news": { entry: "./src/app/pages/community-news/main.js" },
     "pages/project-nodes-config": {
@@ -168,7 +169,9 @@ module.exports = {
       },
       proxy: {
         ".": {
-          target: "http://localhost:4440",
+          target: process.env.VUE_APP_SERVER_PORT
+            ? `http://localhost:${process.env.VUE_APP_SERVER_PORT}`
+            : "http://localhost:4440",
         },
       },
     },

@@ -56,12 +56,19 @@ const FilterInputComp = defineComponent({
       this.nodeFilterKo()?.selectNodeFilter({ filter: val }, false);
       if (this.isNodeStoreAvailable) {
         this.extraAttrs.nodeFilterStore.setSelectedFilter(val);
+      } else {
+        // Emit EventBus event for adhoc page and other pages without NodeFilterStore
+        console.log("[FilterInputComp] Emitting nodefilter:value:changed event with filter:", val);
+        rundeckContext.eventBus.emit("nodefilter:value:changed", { filter: val });
       }
     },
     filterClicked(filter: any) {
       this.nodeFilterKo()?.selectNodeFilter(filter, false);
       if (this.isNodeStoreAvailable) {
         this.extraAttrs.nodeFilterStore.setSelectedFilter(filter.filter);
+      } else {
+        // Emit EventBus event for adhoc page and other pages without NodeFilterStore
+        rundeckContext.eventBus.emit("nodefilter:value:changed", { filter: filter.filter || filter });
       }
     },
     nodeFilterKo() {
@@ -109,6 +116,7 @@ const FilterInputComp = defineComponent({
                              :filterFieldName="filterFieldName"
                              :filter-field-id="filterFieldId"
                              :query-field-placeholder-text="queryFieldPlaceholderText"
+                             :help-button="itemData?.helpButton !== false"
                              search-btn-type="cta"
                              @update:value="updatedValue"
                              @filter="filterClicked"
