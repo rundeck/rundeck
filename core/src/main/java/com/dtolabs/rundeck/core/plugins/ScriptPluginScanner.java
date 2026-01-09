@@ -29,6 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import java.util.zip.ZipInputStream;
 
 /**
@@ -78,6 +80,35 @@ public class ScriptPluginScanner extends DirPluginScanner {
     }
 
     public static boolean validatePluginFile(final File file) {
+        // For .jar files, check if it's a compiled JAR plugin (not a ZIP plugin)
+        // Compiled JAR plugins have Rundeck-Plugin-Classnames in their manifest
+        // ZIP plugins packaged as .jar do NOT have this attribute
+        if (file.getName().endsWith(".jar")) {
+            try (JarFile jarFile = new JarFile(file)) {
+                Manifest manifest = jarFile.getManifest();
+                if (manifest != null && manifest.getMainAttributes() != null) {
+                    String classnames = manifest.getMainAttributes().getValue("Rundeck-Plugin-Classnames");
+                    if (classnames != null && !classnames.trim().isEmpty()) {
+                        // This is a compiled JAR plugin, not a ZIP plugin
+                        // Skip it - JarPluginScanner will handle it
+                        if (log.isDebugEnabled()) {
+                            log.debug(String.format(
+                                "Skipping compiled JAR plugin (has Rundeck-Plugin-Classnames): %s",
+                                file.getAbsolutePath()
+                            ));
+                        }
+                        return false;
+                    }
+                }
+            } catch (IOException e) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Error reading JAR manifest for: " + file.getAbsolutePath(), e);
+                }
+                // Continue to try as ZIP plugin
+            }
+        }
+        
+        // Validate as ZIP plugin (handles both .zip files and ZIP-as-JAR files)
         try {
             final ZipInputStream zipinput = new ZipInputStream(new FileInputStream(file));
             final PluginMeta metadata = ScriptPluginProviderLoader.loadMeta(file, zipinput);
