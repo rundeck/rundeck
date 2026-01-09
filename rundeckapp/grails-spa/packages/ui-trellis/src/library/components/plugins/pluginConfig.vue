@@ -80,6 +80,7 @@
             "
             :prop="prop"
             :value="config[prop.name]"
+            :allow-copy="allowCopy"
           />
         </span>
         <div class="col-sm-12">
@@ -258,6 +259,7 @@ export default defineComponent({
       required: false,
       default: "col-sm-2 control-label h5 header-reset",
     },
+    allowCopy: { type: Boolean, default: false },
     extraAutocompleteVars: {
       type: Array as PropType<ContextVariable[]>,
       required: false,

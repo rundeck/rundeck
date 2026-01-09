@@ -69,7 +69,7 @@ import { cloneDeep } from "lodash";
 
 const emitter = mitt();
 const localEB: Emitter<Record<EventType, any>> = emitter;
-const eventBus = getRundeckContext().eventBus;
+
 
 export default defineComponent({
   name: "CommonUndoRedoDraggableList",
@@ -111,7 +111,7 @@ export default defineComponent({
   emits: ["addButtonClick", "update:modelValue"],
   data() {
     return {
-      eventBus,
+      eventBus: getRundeckContext().eventBus,
       localEB,
       internalData: null,
       originalData: null,
@@ -204,7 +204,12 @@ export default defineComponent({
       this.wasChanged();
     },
     wasChanged() {
-      eventBus.emit("job-edit:edited", true);
+      if(this.eventBus) {
+        this.eventBus.emit("job-edit:edited", true);
+      } else {
+        this.localEB.emit("job-edit:edited", true);
+      }
+
       this.$emit("update:modelValue", this.internalData);
     },
   },
