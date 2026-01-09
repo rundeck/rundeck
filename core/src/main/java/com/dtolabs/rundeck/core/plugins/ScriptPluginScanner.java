@@ -40,7 +40,10 @@ public class ScriptPluginScanner extends DirPluginScanner {
     private static final Logger     log             = LoggerFactory.getLogger(ScriptPluginScanner.class.getName());
     public static final  FileFilter FILENAME_FILTER = new FileFilter() {
         public boolean accept(final File file) {
-            return file.isFile() && file.getName().endsWith(".zip");
+            // Accept both .zip and .jar files for script plugins
+            // ZIP plugins may be packaged as .jar for Maven repository compatibility
+            // The validation step will ensure only valid script plugins are loaded
+            return file.isFile() && (file.getName().endsWith(".zip") || file.getName().endsWith(".jar"));
         }
     };
 
