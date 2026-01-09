@@ -1,13 +1,7 @@
 <template>
   <span>
     <slot></slot>
-    <span v-if="showIcon">
-      <img v-if="iconUrl" class="plugin-icon" :src="iconUrl" />
-      <i v-else-if="glyphicon" :class="'glyphicon glyphicon-' + glyphicon"></i>
-      <i v-else-if="faicon" :class="'fas fa-' + faicon"></i>
-      <i v-else-if="fabicon" :class="'fab fa-' + fabicon"></i>
-      <i v-else class="rdicon icon-small plugin"></i>
-    </span>
+    <PluginIcon v-if="showIcon" :detail="detail" />
     <slot name="titleprefix"> </slot>
     <span v-if="showTitle" :class="titleCss" style="margin-left: 5px">
       {{ title }}
@@ -29,11 +23,13 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import PluginDetails from "./PluginDetails.vue";
+import PluginIcon from "./PluginIcon.vue";
 
 export default defineComponent({
   name: "PluginInfo",
   components: {
     PluginDetails,
+    PluginIcon,
   },
   props: {
     showIcon: {
@@ -87,21 +83,6 @@ export default defineComponent({
     },
     title(): string {
       return this.detail.title;
-    },
-    providerMeta(): any {
-      return (this.detail && this.detail.providerMetadata) || {};
-    },
-    iconUrl(): string {
-      return this.detail.iconUrl;
-    },
-    glyphicon(): string {
-      return this.providerMeta.glyphicon;
-    },
-    faicon(): string {
-      return this.providerMeta.faicon;
-    },
-    fabicon(): string {
-      return this.providerMeta.fabicon;
     },
   },
 });

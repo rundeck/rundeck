@@ -2,7 +2,6 @@
   <modal v-model="modalShown" :title="title || $t('plugin.choose.title')" size="lg">
     <div class="modal-content-wrapper">
       <p class="text-heading--sm">{{ $t('searchForStep') }}</p>
-      // todo: fix margin here
       <p class="text-body--sm text-body--muted">
         <a :href="searchPatternsLearnMoreUrl" target="_blank" rel="noopener noreferrer">{{ $t('learnMore') }}</a> {{ $t('learnMoreSearchPatterns') }}
       </p>
@@ -18,7 +17,7 @@
         <a :href="sectionLearnMoreUrl" target="_blank" rel="noopener noreferrer">{{ $t('learnMore') }}</a>
       </p>
       <p class="text-heading--md subsection-heading">{{ commonStepsHeading }}</p>
-      <div class="placeholder">
+      <div v-if="loading" class="placeholder">
         <skeleton height="1.25rem" width="1.25rem" shape="rectangle" />
         <skeleton />
       </div>
@@ -31,9 +30,7 @@
       >
         <AccordionHeader @click="handleAccordionClick(group, key)">
           <div class="accordion-header-content">
-            <div v-if="group.iconUrl" class="img-icon">
-              <img :src="group.iconUrl" />
-            </div>
+            <PluginIcon :detail="group.iconDetail" icon-class="img-icon" />
             <span class="accordion-title">{{ key }}</span>
             <span v-if="group.isGroup" class="provider-count">
               ({{ group.providers.length }} {{ $t('plugins') }})
@@ -57,9 +54,7 @@
       >
         <AccordionHeader @click="handleAccordionClick(group, key)">
           <div class="accordion-header-content">
-            <div v-if="group.iconUrl" class="img-icon">
-              <img :src="group.iconUrl" />
-            </div>
+            <PluginIcon :detail="group.iconDetail" icon-class="img-icon" />
             <span class="accordion-title">{{ key }}</span>
             <span v-if="group.isGroup" class="provider-count">
               ({{ group.providers.length }} {{ $t('plugins') }})
@@ -83,6 +78,7 @@ import { getRundeckContext } from "@/library";
 import { defineComponent } from "vue";
 import PluginSearch from "@/library/components/plugins/PluginSearch.vue";
 import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
+import PluginIcon from "@/library/components/plugins/PluginIcon.vue";
 import { ServiceType } from "@/library/stores/Plugins";
 import { PtSelectButton } from "@/library/components/primeVue";
 import Skeleton from "primevue/skeleton";
@@ -95,7 +91,7 @@ const context = getRundeckContext();
 
 export default defineComponent({
   name: "ChoosePluginsEAModal",
-  components: { PluginSearch, PluginInfo, PtSelectButton, Skeleton, Accordion, AccordionPanel, AccordionHeader, AccordionContent },
+  components: { PluginSearch, PluginInfo, PluginIcon, PtSelectButton, Skeleton, Accordion, AccordionPanel, AccordionHeader, AccordionContent },
   props: {
     title: {
       type: String,
@@ -206,7 +202,7 @@ export default defineComponent({
       highlighted.forEach(provider => {
         highlightedResult[provider.title] = {
           isGroup: false,
-          iconUrl: provider.iconUrl,
+          iconDetail: provider,
           providers: [provider],
         };
       });
@@ -220,7 +216,10 @@ export default defineComponent({
           if (!nonHighlightedResult[groupBy]) {
             nonHighlightedResult[groupBy] = {
               isGroup: true,
-              iconUrl: provider.providerMetadata?.groupIconUrl,
+              iconDetail: {
+                iconUrl: provider.providerMetadata?.groupIconUrl,
+                providerMetadata: {},
+              },
               providers: [],
             };
           }
@@ -229,7 +228,7 @@ export default defineComponent({
           // Ungrouped provider - render individually
           nonHighlightedResult[provider.title] = {
             isGroup: false,
-            iconUrl: provider.iconUrl,
+            iconDetail: provider,
             providers: [provider],
           };
         }
@@ -396,11 +395,6 @@ export default defineComponent({
   justify-content: center;
   height: 20px;
   width: 20px;
-
-  img {
-    height: auto;
-    max-width: 80%;
-  }
 }
 
 .accordion-header-content {
